@@ -1,4 +1,4 @@
-loadMacros("unionTables.pl");
+loadMacros("parserUtils.pl");
 
 #############################################
 #
@@ -73,5 +73,3 @@ sub Title {
     HTML => '<CENTER><H2>'.$title.'</H2></CENTER>'
   );
 }
-
-$x = Formula('x');
