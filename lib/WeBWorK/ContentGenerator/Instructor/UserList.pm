@@ -44,6 +44,18 @@ sub initialize {
 			$db->putUser($userRecord);
 			$db->putPermissionLevel($permissionLevelRecord);
 		}
+	} elsif (defined($r->param('addStudent'))) {
+		my $newUser = $db->newUser;
+		my $newPermissionLevel = $db->newPermissionLevel;
+		my $newPassword = $db->newPassword;
+		$newUser->user_id($r->param('newUserID'));
+		$newPermissionLevel->user_id($r->param('newUserID'));
+		$newPassword->user_id($r->param('newUserID'));
+		$newUser->status('C');
+		$newPermissionLevel->permission(0);
+		$db->addUser($newUser);
+		$db->addPermissionLevel($newPermissionLevel);
+		$db->addPassword($newPassword);
 	}
 }
 
@@ -53,18 +65,51 @@ sub body {
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $db = $self->{db};
+	my $userTemplate = $db->newUser;
+	my $permissionLevelTemplate = $db->newPermissionLevel;
 	
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	# This code will require changing if the permission and user tables ever have different keys.
 	my @users = $db->listUsers;
+
+	# This table can be consulted when display-ready forms of field names are needed.
+	my %prettyFieldNames = map {$_ => $_} ($userTemplate->FIELDS(), $permissionLevelTemplate->FIELDS());
+	@prettyFieldNames{qw(
+		user_id 
+		first_name 
+		last_name 
+		email_address 
+		student_id 
+		status 
+		section 
+		recitation 
+		comment 
+		permission
+	)} = (
+		"User ID", 
+		"First Name", 
+		"Last Name", 
+		"E-mail", 
+		"Student ID", 
+		"Status", 
+		"Section", 
+		"Recitation", 
+		"Comment", 
+		"Perm. Level"
+	);
+
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 	print CGI::start_table({});
+	
+	# Table headings, prettied-up
 	print CGI::Tr({},
 		CGI::th({}, [
-			$db->{user}->{record}->KEYFIELDS(),
-			$db->{user}->{record}->NONKEYFIELDS(),
-			$db->{permission}->{record}->NONKEYFIELDS(),
+			map {$prettyFieldNames{$_}} (
+				$userTemplate->KEYFIELDS(),
+				$userTemplate->NONKEYFIELDS(),
+				$permissionLevelTemplate->NONKEYFIELDS(),
+			)
 		])
 	);
 	
@@ -72,6 +117,7 @@ sub body {
 		my $userRecord = $db->getUser($currentUser);
 		my $permissionLevel = $db->getPermissionLevel($currentUser);
 		
+		# A concise way of printing a row containing a cell for each field, editable unless it's a key
 		print CGI::Tr({},
 			CGI::td({}, [
 				(map {$userRecord->$_} $userRecord->KEYFIELDS),
@@ -79,18 +125,19 @@ sub body {
 				(map {CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})} $permissionLevel->NONKEYFIELDS()),
 			])
 		);
-		
-#		foreach my $key ($userRecord->FIELDS) {
-#			print "$key: ", $userRecord->$key, CGI::br();
-#		}
-#		foreach my $key ($permissionLevel->FIELDS) {
-#			print "$key: ", $permissionLevel->$key, CGI::br();
-#		}
-#		print CGI::p();
 	}
+	
 	print CGI::end_table();
 	print $self->hidden_authen_fields();
 	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
+	print CGI::end_form();
+	
+	# Add a student form
+	print CGI::start_form({method=>"post", action=>$r->uri()});
+	print $self->hidden_authen_fields();
+	print "User ID:";
+	print CGI::input({type=>"text", name=>"newUserID", value=>"", size=>"20"});
+	print CGI::submit({name=>"addStudent", value=>"Add Student"});
 	print CGI::end_form();
 	
 	return "";
