@@ -314,7 +314,7 @@ sub addUserProblem($$) {
 	die "addUserProblem failed: user set ", $UserProblem->set_id, " does not exist.\n"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 	die "addUserProblem failed: problem ", $UserProblem->problem_id, " does not exist.\n"
-		unless $self->{problem}->exists($UserProblem->user_id, $UserProblem->set_id);
+		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
 	return $self->{problem_user}->add($UserProblem);
 }
 
