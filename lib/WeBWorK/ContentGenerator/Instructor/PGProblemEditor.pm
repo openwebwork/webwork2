@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.51 2004/12/21 18:44:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.52 2005/01/29 01:23:57 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,7 @@ use WeBWorK::Utils qw(readFile surePathToFile);
 use Apache::Constants qw(:common REDIRECT);
 use HTML::Entities;
 use URI::Escape;
+use WeBWorK::Utils;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ###########################################################
@@ -42,6 +43,7 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # The course information and problems are located in the course templates directory.
 # Course information has the name  defined by courseFiles->{course_info}
 # 
+# Only files under the template directory ( or linked to this location) can be edited.
 #
 # editMode = temporaryFile    (view the temp file defined by course_info.txt.user_name.tmp
 #                              instead of the file course_info.txt)
@@ -345,7 +347,8 @@ sub pre_header_initialize {
 			    
 				my $targetSetName = $r->param('target_set');
 				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-					courseID => $courseName, setID => $targetSetName, problemID => scalar($r->db->listGlobalProblems($targetSetName))
+					courseID => $courseName, setID => $targetSetName, 
+					problemID => WeBWorK::Utils::max( $r->db->listGlobalProblems($targetSetName)) 
 				);
 				$viewURL = $self->systemLink($problemPage,
 						params => {
@@ -951,7 +954,7 @@ sub saveFileChanges {
 		($action eq 'add_problem_to_set') and do {
 				my $sourceFile = $editFilePath;
 				my $targetSetName  = $r->param('target_set');
-				my $freeProblemID  = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;	
+				my $freeProblemID  = WeBWorK::Utils::max($db->listGlobalProblems($targetSetName)) + 1;	
 				$sourceFile    =~ s|^$ce->{courseDirs}->{templates}/||;
 				my $problemRecord  = $self->addProblemToSet(
 									   setName        => $targetSetName,
