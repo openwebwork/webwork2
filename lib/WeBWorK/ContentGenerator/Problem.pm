@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Problem;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,7 +14,6 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
 use File::Temp qw(tempdir);
 use WeBWorK::Form;
@@ -37,32 +37,25 @@ use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
 # 
 # redisplay - name of the "Redisplay Problem" button
 # submitAnswers - name of "Submit Answers" button
+# checkAnswers - name of the "Check Answers" button
+# previewAnswers - name of the "Preview Answers" button
 #
 ############################################################
 
 sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
-	my $courseEnv = $self->{ce};
 	my $r = $self->{r};
+	my $courseEnv = $self->{ce};
+	my $db = $self->{db};
 	my $userName = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
 	
-	##### database setup #####
-	
-	my $cldb   = WeBWorK::DB::Classlist->new($courseEnv);
-	my $wwdb   = WeBWorK::DB::WW->new($courseEnv);
-	my $authdb = WeBWorK::DB::Auth->new($courseEnv);
-	
-	my $user            = $cldb->getUser($userName);
-	my $effectiveUser   = $cldb->getUser($effectiveUserName);
-	my $set             = $wwdb->getSet($effectiveUserName, $setName);
-	my $problem         = $wwdb->getProblem($effectiveUserName, $setName, $problemNumber);
-	my $psvn            = $wwdb->getPSVN($effectiveUserName, $setName);
-	my $permissionLevel = $authdb->getPermissions($userName);
-	
-	$self->{cldb}            = $cldb;
-	$self->{wwdb}            = $wwdb;
-	$self->{authdb}          = $authdb;
+	my $user            = $db->getUser($userName);
+	my $effectiveUser   = $db->getUser($effectiveUserName);
+	my $set             = $db->getGlobalUserSet($effectiveUserName, $setName);
+	my $problem         = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	my $psvn            = $set->psvn();
+	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -197,8 +190,8 @@ sub head {
 sub path {
 	my $self = shift;
 	my $args = $_[-1];
-	my $setName = $self->{set}->id;
-	my $problemNumber = $self->{problem}->id;
+	my $setName = $self->{set}->set_id;
+	my $problemNumber = $self->{problem}->problem_id;
 	
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
@@ -213,34 +206,35 @@ sub path {
 
 sub siblings {
 	my $self = shift;
-	my $setName = $self->{set}->id;
-	my $problemNumber = $self->{problem}->id;
+	my $setName = $self->{set}->set_id;
+	my $problemNumber = $self->{problem}->problem_id;
 	
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
 	print CGI::strong("Problems"), CGI::br();
 	
-	my $wwdb = $self->{wwdb};
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @problems;
-	push @problems, $wwdb->getProblem($effectiveUser, $setName, $_)
-		foreach ($wwdb->getProblems($effectiveUser, $setName));
-	foreach my $problem (sort { $a->id <=> $b->id } @problems) {
-		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->id."/?"
+	push @problems, $db->getGlobalUserProblem($effectiveUser, $setName, $_)
+		foreach ($db->listUserProblems($effectiveUser, $setName));
+	foreach my $problem (sort { $a->problem_id <=> $b->problem_id } @problems) {
+		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->problem_id."/?"
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
-				"Problem ".$problem->id), CGI::br();
+				"Problem ".$problem->problem_id), CGI::br();
 	}
 }
 
 sub nav {
 	my $self = shift;
 	my $args = $_[-1];
-	my $setName = $self->{set}->id;
-	my $problemNumber = $self->{problem}->id;
+	my $setName = $self->{set}->set_id;
+	my $problemNumber = $self->{problem}->problem_id;
 	
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
@@ -250,13 +244,13 @@ sub nav {
 	
 	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
 	
-	my $prevProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber-1);
-	my $nextProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber+1);
+	my $prevProblem = $db->getGlobalUserProblem($effectiveUser, $setName, $problemNumber-1);
+	my $nextProblem = $db->getGlobalUserProblem($effectiveUser, $setName, $problemNumber+1);
 	unshift @links, "Previous Problem" , ($prevProblem
-		? "$root/$courseName/$setName/".$prevProblem->id
+		? "$root/$courseName/$setName/".$prevProblem->problem_id
 		: "") , "navPrev";
 	push @links, "Next Problem" , ($nextProblem
-		? "$root/$courseName/$setName/".$nextProblem->id
+		? "$root/$courseName/$setName/".$nextProblem->problem_id
 		: "") , "navNext";
 	
 	return $self->navMacro($args, $tail, @links);
@@ -264,8 +258,8 @@ sub nav {
 
 sub title {
 	my $self = shift;
-	my $setName = $self->{set}->id;
-	my $problemNumber = $self->{problem}->id;
+	my $setName = $self->{set}->set_id;
+	my $problemNumber = $self->{problem}->problem_id;
 	
 	return "$setName : Problem $problemNumber";
 }
@@ -278,7 +272,7 @@ sub body {
 	
 	# unpack some useful variables
 	my $r               = $self->{r};
-	my $wwdb            = $self->{wwdb};
+	my $db              = $self->{db};
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $permissionLevel = $self->{permissionLevel};
@@ -301,6 +295,8 @@ sub body {
 	
 	# if answers were submitted:
 	if ($submitAnswers) {
+		# get a "pure" (unmerged) UserProblem to modify
+		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
 		# store answers in DB for sticky answers
 		my %answersToStore;
 		my %answerHash = %{ $pg->{answers} };
@@ -308,30 +304,35 @@ sub body {
 			foreach (keys %answerHash);
 		my $answerString = encodeAnswers(%answersToStore,
 			@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} });
+		$pureProblem->last_answer($answerString);
 		$problem->last_answer($answerString);
-		$wwdb->setProblem($problem);
+		$db->putUserProblem($pureProblem);
 		
 		# store state in DB if it makes sense
 		if ($will{recordAnswers}) {
-			$problem->attempted(1);
 			$problem->status($pg->{state}->{recorded_score});
+			$problem->attempted(1);
 			$problem->num_correct($pg->{state}->{num_of_correct_ans});
 			$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-			$wwdb->setProblem($problem);
+			$pureProblem->status($pg->{state}->{recorded_score});
+			$pureProblem->attempted(1);
+			$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
+			$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+			$db->putUserProblem($pureProblem);
 			# write to the transaction log, just to make sure
 			writeLog($self->{ce}, "transaction",
-				$problem->id."\t".
+				$problem->problem_id."\t".
 				$problem->set_id."\t".
-				$problem->login_id."\t".
+				$problem->user_id."\t".
 				$problem->source_file."\t".
 				$problem->value."\t".
 				$problem->max_attempts."\t".
 				$problem->problem_seed."\t".
-				$problem->status."\t".
-				$problem->attempted."\t".
-				$problem->last_answer."\t".
-				$problem->num_correct."\t".
-				$problem->num_incorrect
+				$pureProblem->status."\t".
+				$pureProblem->attempted."\t".
+				$pureProblem->last_answer."\t".
+				$pureProblem->num_correct."\t".
+				$pureProblem->num_incorrect
 			);
 		}
 	}
@@ -347,9 +348,9 @@ sub body {
 			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
 				foreach (sort keys  %answerHash);
 			writeLog($self->{ce}, "pastAnswerList",
-					'|'.$problem->login_id.
+					'|'.$problem->user_id.
 					'|'.$problem->set_id.
-					'|'.$problem->id.'|'."\t".
+					'|'.$problem->problem_id.'|'."\t".
 					time()."\t".
 					$answerString,
 					
@@ -466,8 +467,8 @@ sub body {
 		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::hidden("module",             __PACKAGE__),"\n",
-		CGI::hidden("set",                $set->id),"\n",
-		CGI::hidden("problem",            $problem->id),"\n",
+		CGI::hidden("set",                $set->set_id),"\n",
+		CGI::hidden("problem",            $problem->problem_id),"\n",
 		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
 		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
 		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
@@ -485,9 +486,9 @@ sub body {
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
 				$self->hidden_authen_fields,"\n",
 				CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
-				CGI::hidden(-name => 'probNum', -value=>$problem->id), "\n",
+				CGI::hidden(-name => 'probNum', -value=>$problem->problem_id), "\n",
 				CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
-				CGI::hidden(-name => 'User',    -value=>$problem->login_id), "\n",
+				CGI::hidden(-name => 'User',    -value=>$problem->user_id), "\n",
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers'), "\n",
 				CGI::endform();
 	
@@ -644,7 +645,7 @@ sub previewAnswer($$) {
 	
 	my $tex = $answerResult->{preview_latex_string};
 	
-	return "" unless $tex;
+	return "" if $tex eq "";
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
@@ -664,8 +665,8 @@ sub previewAnswer($$) {
 		# how are we going to name this?
 		my $targetPathCommon = "/png/"
 			. $effectiveUser->id . "."
-			. $set->id . "."
-			. $problem->id . "."
+			. $set->set_id . "."
+			. $problem->problem_id . "."
 			. $answerResult->{ans_name} . ".png";
 
 		# figure out where to put things
@@ -678,7 +679,6 @@ sub previewAnswer($$) {
 		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
 
 		# call dvipng to generate a preview
-		warn $tex;
 		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
 		if (-e $targetPath) {
 			return "<img src=\"$targetURL\" alt=\"$tex\" />";

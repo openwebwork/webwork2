@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::Constants;
+use base qw(Exporter);
 
 =head1 NAME
 
@@ -13,7 +14,7 @@ WeBWorK::Constants - provide constant values for other WeBWorK modules.
 
 use strict;
 use warnings;
-use base qw(Exporter);
+
 our @EXPORT    = qw();
 our @EXPORT_OK = qw(SECRET);
 

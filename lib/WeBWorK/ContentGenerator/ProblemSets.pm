@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProblemSets;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,24 +14,8 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
-use Apache::Constants qw(:common);
 use CGI qw();
-use WeBWorK::ContentGenerator;
-use WeBWorK::DB::WW;
-use WeBWorK::DB::Auth;
 use WeBWorK::Utils qw(readFile formatDateTime);
-
-sub initialize {
-	my $self = shift;
-	my $courseEnvironment = $self->{ce};
-	
-	# Open a database connection that we can use for the rest of
-	# the content generation.
-	
-	$self->{wwdb} = new WeBWorK::DB::WW $courseEnvironment;
-	$self->{authdb} = new WeBWorK::DB::Auth $courseEnvironment;
-}
 
 sub path {
 	my ($self, $args) = @_;
@@ -46,21 +31,18 @@ sub path {
 
 sub title {
 	my $self = shift;
-	my $courseEnvironment = $self->{ce};
-	
-	return $courseEnvironment->{courseName};
+	return $self->{ce}->{courseName};
 }
 
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{ce};
+	my $db = $self->{db};
 	my $user = $r->param("user");
 	my $effectiveUser = $r->param("effectiveUser");
 	my $sort = $r->param("sort") || "status";
-	my $wwdb = $self->{wwdb};
-	my $authdb = $self->{authdb};
-	my $permissionLevel = $authdb->getPermissions($user);
+	my $permissionLevel = $db->getPermissionLevel($user)->permission();
 	
 	if (defined $courseEnvironment->{courseFiles}->{motd}
 		and $courseEnvironment->{courseFiles}->{motd}) {
@@ -84,7 +66,8 @@ sub body {
 	);
 	
 	my @sets;
-	push @sets, $wwdb->getSet($effectiveUser, $_) foreach ($wwdb->getSets($effectiveUser));
+	push @sets, $db->getGlobalUserSet($effectiveUser, $_)
+		foreach ($db->listUserSets($effectiveUser));
 	@sets = sort byname @sets if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
@@ -117,7 +100,7 @@ sub body {
 sub setListRow($$$) {
 	my ($self, $set, $multiSet, $preOpenSets) = @_;
 	
-	my $name = $set->id;
+	my $name = $set->set_id;
 	
 	my $interactiveURL = "$name/?" . $self->url_authen_args;
 	#my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
@@ -126,7 +109,7 @@ sub setListRow($$$) {
 	my $dueDate = formatDateTime($set->due_date);
 	my $answerDate = formatDateTime($set->answer_date);
 	
-	#my $checkbox = CGI::checkbox(-name=>"hcSet", -value=>$set->id, -label=>"");
+	#my $checkbox = CGI::checkbox(-name=>"hcSet", -value=>$set->set_id, -label=>"");
 	
 	my $control = "";
 	if ($multiSet) {

@@ -16,7 +16,6 @@ use warnings;
 use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
 use WeBWorK::PG::Translator;
-use WeBWorK::Problem;
 use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry);
 
 sub new($$$$$$$$) {
@@ -37,7 +36,7 @@ sub new($$$$$$$$) {
 	
 	# write timing log entry
 	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
-		"user=".$user->id.",problem=".$courseEnv->{courseName}."/".$set->id."/".$problem->id.",mode=".$translationOptions->{displayMode},
+		"user=".$user->id.",problem=".$courseEnv->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
 		"begin");
 	
 	# install a local warn handler to collect warnings
@@ -237,7 +236,7 @@ sub defineProblemEnvir($$$$$$$) {
 	
 	$envir{psvn}              = $psvn;			 
 	$envir{psvnNumber}        = $envir{psvn};		 
-	$envir{probNum}           = $problem->id;		 
+	$envir{probNum}           = $problem->problem_id;		 
 	$envir{questionNumber}    = $envir{probNum};		 
 	$envir{fileName}          = $problem->source_file;	 
 	$envir{probFileName}      = $envir{fileName};		 
@@ -272,7 +271,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{sectionNumber}    = $envir{sectionName};
 	$envir{recitationName}   = $user->recitation;
 	$envir{recitationNumber} = $envir{recitationName};
-	$envir{setNumber}        = $set->id;
+	$envir{setNumber}        = $set->set_id;
 	$envir{studentLogin}     = $user->id;
 	$envir{studentName}      = $user->first_name . " " . $user->last_name;
 	$envir{studentID}        = $user->student_id;
@@ -373,10 +372,10 @@ __END__
 
  $pg = WeBWorK::PG->new(
 	 $courseEnv,  # a WeBWorK::CourseEnvironment object
-	 $user,       # a WeBWorK::User object
+	 $user,       # a WeBWorK::DB::Record::User object
 	 $sessionKey,
-	 $set,        # a WeBWorK::Set object
-	 $problem,    # a WeBWorK::Problem object
+	 $set,        # a WeBWorK::DB::Record::UserSet object
+	 $problem,    # a WeBWorK::DB::Record::UserProblem object
 	 $psvn,
 	 $formFields  # in &WeBWorK::Form::Vars format
 	 { # translation options
@@ -438,9 +437,10 @@ a WeBWorK::Set object
 
 =item PROBLEM
 
-a WeBWorK::Problem object. The contents of the source_file field can specify a
-PG file either by absolute path or path relative to the "templates" directory.
-I<The caller should remove taint from this value before passing!>
+a WeBWorK::DB::Record::UserProblem object. The contents of the source_file
+field can specify a PG file either by absolute path or path relative to the
+"templates" directory. I<The caller should remove taint from this value before
+passing!>
 
 =item PSVN
 

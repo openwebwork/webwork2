@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::Utils;
+use base qw(Exporter);
 
 =head1 NAME
 
@@ -13,7 +14,6 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
-use base qw(Exporter);
 use Date::Format;
 use Date::Parse;
 

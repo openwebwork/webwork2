@@ -18,8 +18,6 @@ use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
 use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
-use WeBWorK::DB::Classlist;
-use WeBWorK::DB::WW;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readFile);
 
@@ -28,6 +26,7 @@ sub go {
 	
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	my @sets = $r->param("hcSet");
 	my @users = $r->param("hcUser");
 	
@@ -42,12 +41,9 @@ sub go {
 		unshift @users, $r->param("effectiveUser");
 	}
 	
-	$self->{cldb}   = WeBWorK::DB::Classlist->new($ce);
-	$self->{authdb} = WeBWorK::DB::Auth->new($ce);
-	$self->{wwdb}   = WeBWorK::DB::WW->new($ce);
-	$self->{user}            = $self->{cldb}->getUser($r->param("user"));
-	$self->{permissionLevel} = $self->{authdb}->getPermissions($r->param("user"));
-	$self->{effectiveUser}   = $self->{cldb}->getUser($r->param("effectiveUser"));
+	$self->{user}            = $db->getUser($r->param("user"));
+	$self->{permissionLevel} = $db->getPermissionLevel($r->param("user"))->permission();
+	$self->{effectiveUser}   = $db->getUser($r->param("effectiveUser"));
 	$self->{sets}  = \@sets;
 	$self->{users} = \@users;
 	$self->{errors}   = [];
@@ -164,6 +160,7 @@ EOF
 sub displayForm($) {
 	my $self = shift;
 	my $r = $self->{r};
+	my $db = $self->{db};
 	
 	print CGI::start_p(), "Select the problem sets for which to generate hardcopy versions.";
 	if ($self->{permissionLevel} > 0) {
@@ -204,11 +201,11 @@ sub displayForm($) {
 		print CGI::h3("Sets");
 		print CGI::start_table();
 		my @sets;
-		push @sets, $self->{wwdb}->getSet($self->{effectiveUser}->id, $_)
-			foreach ($self->{wwdb}->getSets($self->{effectiveUser}->id));
-		@sets = sort { $a->id cmp $b->id } @sets;
+		push @sets, $db->getGlobalUserSet($self->{effectiveUser}->id, $_)
+			foreach ($db->listUserSets($self->{effectiveUser}->id));
+		@sets = sort { $a->set_id cmp $b->set_id } @sets;
 		foreach my $set (@sets) {
-			my $checked = grep { $_ eq $set->id } @{$self->{sets}};
+			my $checked = grep { $_ eq $set->set_id } @{$self->{sets}};
 			my $control;
 			if (time < $set->open_date and not $preOpenSets) {
 				$control = "";
@@ -216,22 +213,22 @@ sub displayForm($) {
 				if ($multiSet) {
 					$control = CGI::checkbox(
 						-name=>"hcSet",
-						-value=>$set->id,
+						-value=>$set->set_id,
 						-label=>"",
 						-checked=>$checked
 					);
 				} else {
 					$control = CGI::radio_group(
 						-name=>"hcSet",
-						-values=>[$set->id],
-						-default=>($checked ? $set->id : "-"),
-						-labels=>{$set->id => ""}
+						-values=>[$set->set_id],
+						-default=>($checked ? $set->set_id : "-"),
+						-labels=>{$set->set_id => ""}
 					);
 				}
 			}
 			print CGI::Tr(CGI::td([
 				$control,
-				$set->id,
+				$set->set_id,
 			]));
 		}
 		print CGI::end_table();
@@ -250,7 +247,7 @@ sub displayForm($) {
 		#print CGI::Tr(CGI::td({-colspan=>"3"}, "&nbsp;"));
 		my @users;
 		push @users, $self->{cldb}->getUser($_)
-			foreach ($self->{cldb}->getUsers());
+			foreach ($self->{cldb}->listUsers());
 		@users = sort { $a->last_name cmp $b->last_name } @users;
 		foreach my $user (@users) {
 			my $checked = grep { $_ eq $user->id } @{$self->{users}};
@@ -408,15 +405,16 @@ sub getMultiSetTeX {
 sub getSetTeX {
 	my ($self, $setName) = @_;
 	my $ce = $self->{ce};
-	my $wwdb = $self->{wwdb};
+	my $db = $self->{db};
 	my $effectiveUserName = $self->{effectiveUser}->id;
-	my @problemNumbers = sort { $a <=> $b } $wwdb->getProblems($effectiveUserName, $setName);
+	my @problemNumbers = sort { $a <=> $b }
+		$db->listUserProblems($effectiveUserName, $setName);
 	
 	# get header and footer
-	my $setHeader = $wwdb->getSet($effectiveUserName, $setName)->set_header
+	my $setHeader = $db->getGlobalUserSet($effectiveUserName, $setName)->set_header
 		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
-	#my $setFooter = $wwdb->getSet($effectiveUserName, $setName)->set_footer
+	#my $setFooter = $wwdb->getGlobalUserSet($effectiveUserName, $setName)->set_footer
 	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
 	# so we don't allow per-set customization, which is probably okay :)
 	my $setFooter = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
@@ -448,23 +446,21 @@ sub getProblemTeX {
 	my ($self, $setName, $problemNumber, $pgFile) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	
-	my $wwdb   = $self->{wwdb};
-	my $cldb   = $self->{cldb};
-	my $authdb = $self->{authdb};
 	my $effectiveUser = $self->{effectiveUser};
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $wwdb->getSet($effectiveUser->id, $setName);
-	my $psvn = $wwdb->getPSVN($effectiveUser->id, $setName);
+	my $set  = $db->getGlobalUserSet($effectiveUser->id, $setName);
+	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {
-		$problem = $wwdb->getProblem($effectiveUser->id, $setName, $problemNumber);
+		$problem = $db->getGlobalUserProblem($effectiveUser->id, $setName, $problemNumber);
 	} elsif ($pgFile) {
-		$problem = WeBWorK::Problem->new(
-			id => 0,
-			set_id => $set->id,
+		$problem = WeBWorK::DB::Record::UserProblem->new(
+			set_id => $set->set_id,
+			problem_id => 0,
 			login_id => $effectiveUser->id,
 			source_file => $pgFile,
 			# the rest of Problem's fields are not needed, i think

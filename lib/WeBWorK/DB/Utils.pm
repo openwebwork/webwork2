@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Utils;
+use base qw(Exporter);
 
 =head1 NAME
 
@@ -13,7 +14,6 @@ WeBWorK::DB::Utils - useful utilities for the database modules.
 
 use strict;
 use warnings;
-use base qw(Exporter);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(

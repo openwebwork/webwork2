@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Logout;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,10 +14,7 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
-use Apache::Constants qw(:common);
 use CGI qw();
-use WeBWorK::ContentGenerator;
 
 sub title {
 	return "Logout";

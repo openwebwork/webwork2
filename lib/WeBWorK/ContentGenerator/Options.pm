@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Options;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,20 +14,15 @@ WeBWorK::ContentGenerator::Options - Change user options.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
-use Apache::Constants qw(:common);
 use CGI qw();
-use WeBWorK::ContentGenerator;
-use WeBWorK::DB::WW;
 
 sub initialize {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	
-	$self->{cldb} = WeBWorK::DB::Classlist->new($ce);
-	$self->{authdb} = WeBWorK::DB::Auth->new($ce);
-	$self->{effectiveUser} = $self->{cldb}->getUser($r->param('effectiveUser'));
+	$self->{effectiveUser} = $db->getUser($r->param('effectiveUser'));
 }
 
 sub path {
@@ -52,6 +48,7 @@ sub title {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
+	my $db = $self->{db};
 	my $effectiveUser = $self->{effectiveUser};
 	
 	my $changeOptions = $r->param("changeOptions");
@@ -100,7 +97,7 @@ sub body {
 				# possibly do some format checking?
 				my $oldA = $effectiveUser->email_address;
 				$effectiveUser->email_address($newA);
-				eval { $self->{cldb}->setUser($effectiveUser) };
+				eval { $db->putUser($effectiveUser) };
 				if ($@) {
 					$effectiveUser->email_address($oldA);
 					print CGI::p("Couldn't change your

@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Feedback;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -11,20 +12,15 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 
 =cut
 
-# *** feedback has to be exempt from authentication, so that people can send
+# *** feedback should be exempt from authentication, so that people can send
 # feedback from the login page!
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
 use Data::Dumper;
 use CGI qw();
 use Mail::Sender;
 use Text::Wrap qw(wrap);
-use WeBWorK::ContentGenerator;
-use WeBWorK::DB::Auth;
-use WeBWorK::DB::Classlist;
-use WeBWorK::DB::WW;
 use WeBWorK::Utils qw(dequoteHere wrapText);
 
 # request paramaters used
@@ -71,6 +67,7 @@ sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	
 	# get form fields 
 	my $key                = $r->param("key");
@@ -86,22 +83,18 @@ sub body {
 	my $from               = $r->param("from");
 	my $feedback           = $r->param("feedback");
 	
-	# bring up the databases; get user, set, problem objects
-	my $authdb = WeBWorK::DB::Auth->new($ce);
-	my $cldb   = WeBWorK::DB::Classlist->new($ce);
-	my $wwdb   = WeBWorK::DB::WW->new($ce);
-	
 	my $permissionLevel = ($userName
-		? $authdb->getPermissions($userName)
+		? $db->getPermissionLevel($userName)->permission()
 		: undef);
-	my $user = ($userName ne ""
-		? $cldb->getUser($userName)
+	my $user = (defined $userName && $userName ne ""
+		? $db->getUser($userName)
 		: undef);
-	my $set = ($setName ne ""
-		? $wwdb->getSet($userName, $setName)
+	my $set = (defined $setName && $setName ne ""
+		? $db->getGlobalUserSet($userName, $setName)
 		: undef);
-	my $problem = ($setName ne "" && $problemNumber ne ""
-		? $wwdb->getProblem($userName, $setName, $problemNumber)
+	my $problem = (defined $setName && $setName ne ""
+	               && defined $problemNumber && $problemNumber ne ""
+		? $db->getGlobalUserProblem($userName, $setName, $problemNumber)
 		: undef);
 	
 	if (defined $r->param("sendFeedback")) {
@@ -118,10 +111,12 @@ sub body {
 		if (defined $ce->{mail}->{feedbackRecipients}) {
 			@recipients = @{$ce->{mail}->{feedbackRecipients}};
 		} else {
-			foreach my $rcptName ($cldb->getUsers()) {
-				my $rcptPerm = $authdb->getPermissions($rcptName);
-				if ($rcptPerm == 5 or $rcptPerm == 10) {
-					my $rcpt = $cldb->getUser($rcptName);
+			# send to all professors and TAs
+			foreach my $rcptName ($db->listUsers()) {
+				my $rcptPerm = $db->getPermissionLevel($rcptName);
+				next unless $rcptPerm;
+				if ($rcptPerm->permission() == 5 or $rcptPerm->permission() == 10) {
+					my $rcpt = $db->getUser($rcptName);
 					if ($rcpt->email_address) {
 						push @recipients, $rcpt->email_address;
 					}
@@ -154,7 +149,7 @@ sub body {
 				. $ce->{webworkURLs}->{root}
 				. "/" . $ce->{courseName}
 				. ($set 
-					? "/".$problem->set_id . ($problem ? "/".$problem->id : "")
+					? "/".$problem->set_id . ($problem ? "/".$problem->problem_id : "")
 					: "")
 				. "/" . "?effectiveUser=$userName"
 				. ($problem 

@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Login;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,17 +14,7 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
-use Apache::Constants qw(:common);
 use CGI qw();
-use WeBWorK::ContentGenerator;
-
-# TODO: The HTML code here has two failings:
-# - It is hard-coded into the script, which is against policy
-
-# Other than that, this file is done for the forseeable future,
-# and should serve us nicely unless the interface to WeBWorK::Authen
-# changes.
 
 sub title {
 	return "Login";
