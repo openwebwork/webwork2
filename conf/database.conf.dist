@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.9 2004/05/03 20:39:16 jj Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.10 2004/05/21 23:41:49 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -159,18 +159,16 @@ and WeBWorK 2.
 
 The C<globalUserID> parameter given for the C<set> and C<problem> tables denotes
 the ID of the user that the GlobalTableEmulator will use to store data for the
-C<set> and C<problem> tables. This is set to "global_user" by default.
-
-If a course will be used under WeBWorK 1.x, this value should be overridden on a
-course-by-course basis to the ID of the professor who is most likely to be
-involved in creating new problem sets. Sets which have not been assigned will
-only be visible to this user when logging into WeBWorK 1.x.
+C<set> and C<problem> tables. This is set to "global_user" by default, but can
+be overridden on a course-by-course basis to the ID of the professor who is most
+likely to be involved in creating new problem sets. Sets which have not been
+assigned will only be visible to this user when logging into WeBWorK 1.x.
 
 Use the following code to override these values in a course's F<course.conf>
 file:
 
- $dbLayouts{gdbm}->{set}->{params}->{globalUserID} = "some_user";
- $dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "some_user";
+ $dbLayout{set}->{params}->{globalUserID} = "some_user";
+ $dbLayout{problem}->{params}->{globalUserID} = "some_user";
 
 =cut
 
