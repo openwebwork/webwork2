@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.32 2004/05/08 19:35:21 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.33 2004/05/11 19:06:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,8 +93,7 @@ sub pre_header_initialize {
 				$sourceFile =~ s|^$ce->{courseDirs}->{templates}/||;
 				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 					courseID => $courseName, setID => 'Undefined_Set', problemID => $problemNumber);
-				$viewURL = $self->systemLink($problemPage,
-params=>{sourceFilePath => $sourceFile, edit_level=>$edit_level});
+				$viewURL = $self->systemLink($problemPage, params=>{sourceFilePath => $sourceFile, edit_level=>$edit_level});
 			} else { # other problems redirect to Problem.pm
 				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 					courseID => $courseName, setID => $setName, problemID => $problemNumber);
@@ -104,7 +103,8 @@ params=>{sourceFilePath => $sourceFile, edit_level=>$edit_level});
 						problemSeed     => $problemSeed,
 						editMode        => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
 						sourceFilePath  => $self->{currentSourceFilePath},
-						submiterror     => $self->{submiterror},  
+						success		=> $self->{sucess},
+						failure		=> $self->{failure},
 					}
 				);
 			} 
@@ -453,14 +453,15 @@ sub saveFileChanges {
 	my $openTempFileErrors = $@ if $@;
 	
 	if ($openTempFileErrors) {
-		$self->{submiterror}	= "Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly. See log for details.";
+		$self->{failure} = "Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly. See log for details.";
 		#diagnose errors:
 		warn "Unable to write to $currentSourceFilePath: $openTempFileErrors";
 		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath; #FIXME 
 		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
 		warn "The file $currentSourceFilePath does not have write permissions. \n"
 		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
-	} else {	
+	} else {
+		$self->{success} = "Problem saved to: $currentSourceFilePath";
 		# unlink the temporary file if there are no errors and the save button has been pushed
 		unlink("$editFilePath.$editFileSuffix")
 			if defined $submit_button and ($submit_button eq 'Save' or $submit_button eq 'Save as');
