@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.2 2004/03/07 02:29:25 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.3 2004/03/15 21:35:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,8 +106,9 @@ sub read_scoring_file    { # used in SendMail and Grades?....?
 			$index++;
 		}
 		close(FILE);
-     } else {
+     } elsif (-e $filePath) {
      	warn "Couldn't read file $filePath";
+     } else {
      }
      return \%assocArray;
 }
