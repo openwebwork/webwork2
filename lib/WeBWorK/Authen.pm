@@ -24,6 +24,8 @@ WeBWorK::Authen - Check user identity, manage session keys.
 
 use strict;
 use warnings;
+use Apache::Cookie;
+use Data::Dumper;
 
 sub new($$$) {
 	my $invocant = shift;
@@ -88,6 +90,32 @@ sub unexpiredKeyExists($$) {
 	}
 }
 
+sub checkCookie {
+	my ($self, $user, $key) = @_;
+	my $r = $self->{r};
+	my %cookies = Apache::Cookie->fetch;
+	my $cookie = $cookies{WeBWorKAuthentication};
+	if ($cookie) {
+		my ($user, $key) = $cookie->value =~ m/^user=([^&]*)&key=([^&]*)$/;
+		return $user, $key;
+	}
+}
+
+sub sendCookie {
+	my ($self, $user, $key) = @_;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $cookie = Apache::Cookie->new($r,
+		-name => "WeBWorKAuthentication",
+		-value => "user=$user&key=$key",
+		-expires => "+30D",
+		-domain => $r->hostname,
+		-path => $ce->{webworkURLRoot},
+		-secure => 0,
+	);
+	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+}
+
 # verify will return 1 if the person is who they say the are. If the
 # verification failed because of of invalid authentication data, a note will be
 # written in the request explaining why it failed. If the request failed because
@@ -117,8 +145,19 @@ sub verify($) {
 		
 		# no authentication data was given. this is OK.
 		unless (defined $user or defined $passwd or defined $key) {
-			$failWithoutError = 1;
-			last VERIFY;
+			# check to see if a cookie was sent by the browser. if so, use the
+			# user and key from the cookie for authentication. note that the
+			# cookie is only used if no credentials are sent as parameters.
+			my ($cookieUser, $cookieKey) = $self->checkCookie;
+			if ($cookieUser and $cookieKey) {
+				$r->param("user", $cookieUser);
+				$r->param("key", $cookieKey);
+				$user = $cookieUser;
+				$key = $cookieKey;
+			} else {
+				$failWithoutError = 1;
+				last VERIFY;
+			}
 		}
 		
 		if (defined $user and $force_passwd_authen) {
@@ -233,11 +272,18 @@ sub verify($) {
 		return 0;
 	} else {
 		# autentication succeeded!
+		# send a cookie with the user and key that were accepted.
+		if ($r->param("send_cookie")) {
+			$self->sendCookie($r->param("user"), $r->param("key"));
+		}
 		return 1;
 	}
 	
 	# Whatever you do, don't delete this!
 	critical($r);
+	# One time, I deleted it, and my mother broke her back, my cat died, and
+	# the Pope got a tummy ache. When I replaced the line, I received eternal
+	# salvation and a check for USD 500.
 }
 
 1;

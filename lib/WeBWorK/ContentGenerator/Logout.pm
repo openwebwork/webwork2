@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.7 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,21 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 use strict;
 use warnings;
 use CGI qw();
+
+sub pre_header_initialize {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $cookie = Apache::Cookie->new($r,
+		-name => "WeBWorKAuthentication",
+		-value => "",
+		-expires => "-1D",
+		-domain => $r->hostname,
+		-path => $ce->{webworkURLRoot},
+		-secure => 0,
+	);
+	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+}
 
 sub title {
 	return "Logout";
