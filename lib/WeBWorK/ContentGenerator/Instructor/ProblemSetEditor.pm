@@ -28,7 +28,6 @@ use warnings;
 use CGI qw();
 use File::Copy;
 use WeBWorK::DB::Record::Problem;
-use WeBWorK::HTML::OptionList qw/optionList/;
 use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirectory max);
 
 our $rowheight = 20;  #controls the length of the popup menus.  
@@ -353,8 +352,7 @@ sub body {
 			CGI::td({}, [	"Set Header:" , 
 					($forOneUser) 
 						? $setRecord->set_header || "None selected."
-						: 
-						CGI::popup_menu(
+						: CGI::popup_menu(
 							-name=>'set_header', 
 							-values=>\@headers, 
 							-default=>0) .
