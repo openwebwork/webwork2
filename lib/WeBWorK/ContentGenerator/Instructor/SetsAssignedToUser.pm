@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.15 2004/06/17 14:35:05 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.16 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,8 +49,12 @@ sub initialize {
 	
 	if (defined $r->param("assignToAll")) {
 		$self->assignAllSetsToUser($userID);
-	} elsif (defined $r->param("unassignFromAll")) {
+		$WeBWorK::timer->continue("assignAllSetsToUser($userID)") if defined $WeBWorK::timer;
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been assigned to all current sets."));
+		$WeBWorK::timer->continue("done assignAllSetsToUsers($userID)") if defined $WeBWorK::timer;
+	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		if ($userID ne $globalUserID) {
+		  $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been unassigned from all sets."));
 			$self->unassignAllSetsFromUser($userID);
 		}
 	} elsif (defined $r->param('assignToSelected')) {
@@ -61,6 +65,8 @@ sub initialize {
 		# get current user
 		my $User = $db->getUser($userID); # checked
 		die "record not found for $userID.\n" unless $User;
+		
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User's sets have been reassigned."));
 		
 		unless ($User->user_id eq $globalUserID) {
 			# go through each possible set
@@ -81,6 +87,9 @@ sub initialize {
 				}
 			}
 		}
+	} elsif (defined $r->param("unassignFromAll")) {
+	   # no action taken
+	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
 	}
 }
 
@@ -147,13 +156,22 @@ sub body {
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 	
 	if ($userID ne $globalUserID) {
-		print CGI::p(
-			CGI::submit({name=>"assignToAll", value=>"Assign all sets"}),
-			CGI::submit({name=>"unassignFromAll", value=>"Unassign all sets"}),
-		);
+		print CGI::p(CGI::submit({name=>"assignToAll", value=>"Assign All Aets"}));
 	}
 	
+	print CGI::div({-style=>"color:red"},
+		       "Do not uncheck a set unless you know what you are doing.", CGI::br(),
+		       "There is NO undo for unassigning a set.");
+
+	print CGI::p("When you uncheck a problem set (and save the changes), you destroy all
+		      of the data for that set for this student.   If You then need to
+		      reassign the set and the student will receive new versions of the problems.
+		      Make sure this is what you want to do before unchecking sets."
+	);
+				        
 	print CGI::start_table({});
+        print CGI::Tr(CGI::th(["Assigned","&nbsp;&nbsp;","Set Name","&nbsp;&nbsp;","Due Date", "&nbsp;"]));
+        print CGI::Tr(CGI::td([CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	
 	foreach my $Set (@Sets) {
 		my $setID = $Set->set_id;
@@ -171,13 +189,14 @@ sub body {
 # 		my $url = $ce->{webworkURLs}->{root}
 # 			. "/$courseName/instructor/sets/$setID/?editForUser=$userID&"
 # 			. $self->url_authen_args();
-        my $setListPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemSetEditor",
-                                                   courseID => $courseName,
-                                                   setID    => $setID
-        );
+        my $setListPage = $urlpath->new(type =>'instructor_set_detail',
+					args =>{
+						courseID => $courseName,
+						setID    => $setID
+	});
 		my $url = $self->systemLink($setListPage,params =>{editForUser => $userID});
 		print CGI::Tr({}, 
-			CGI::td({}, [
+			      CGI::td({-align=>"center"},
 				($userID eq $globalUserID
 					? "" # no checkboxes for global user!
 					: CGI::checkbox({
@@ -187,18 +206,33 @@ sub body {
 						value=>$setID,
 						label=>"",
 					})
-				),
-				$setID,
-				"($prettyDate)",
-				" ",
+				)),
+			      CGI::td({}, [ "",
+				$setID, "",
+				"($prettyDate)", "",
 				$currentlyAssigned
 					? CGI::a({href=>$url}, "Edit user-specific set data")
 					: (),
 			])
 		);
 	}
+        print CGI::Tr(CGI::td([CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	print CGI::end_table();
 	print CGI::submit({name=>"assignToSelected", value=>"Save"});
+
+	print CGI::p( CGI::hr(),
+		      CGI::div( {class=>'ResultsWithError'},
+				"There is NO undo for this function.  
+				 Do not use it unless you know what you are doing!  When you unassign
+				 sets using this button, or by unchecking their set names, you destroy all
+				 of the data for those sets for this student.",
+				CGI::br(),
+				CGI::submit({name=>"unassignFromAll", value=>"Unassign All Sets"}),
+				CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
+				  ),
+				  CGI::hr(),
+	);
+
 	print CGI::end_form();
 	
 	return "";
