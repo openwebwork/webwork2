@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.61 2003/12/09 01:12:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.62 2004/01/05 01:02:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,6 +47,7 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
+use HTML::Entities;
 use WeBWorK;
 
 sub handler($) {
@@ -110,9 +111,10 @@ sub htmlWarningsList(@) {
 }
 
 sub htmlEscape($) {
-	$_[0] =~ s/\</&lt;/g;
-	$_[0] =~ s/\>/&gt;/g;
-	return $_[0];
+	my ($s) = @_;
+	$s = encode_entities($s);
+	$s =~ s/\n/<br>/g;
+	return $s;
 }
 
 sub message($$) {
