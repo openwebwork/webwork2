@@ -5,13 +5,11 @@
 #	!WEBWORK_PORT! -> the port on which you want to run this server
 #	                  (please use 10000 + your UID)
 #	!PG_ROOT! -> the root of your personal pg tree
-# If your home directories are stored somewhere other than /home (for example,
-# /u) you should also replace /home with the directory used at your site.
-
+# 
 # After those find/replace operations, you should edit the access control
 # statements at the bottom of this file.
 
-Include /usr/local/etc/apache/httpd-wwmp-header.conf
+Include !WEBWORK_ROOT!/conf/httpd-wwmp-header.conf
 
 Port !WEBWORK_PORT!
 User !WEBWORK_USER!
@@ -70,7 +68,7 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
 
 # Possible forms of access limitation (edit to taste)
 
-# The user maintains his own htpasswd file, presumably with only herself in it
+# The developer maintains a personal htpasswd file
 #<Location />
 #	AuthType Basic
 #	AuthName "!WEBWORK_USER!'s WeBWorK development system"
@@ -78,18 +76,18 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
 #	Require valid-user
 #</Location>
 
-# The system administrator maintains an htpasswd file that all users reference
+# There is a site-wide htpasswd file somewhere, with all developers in it
 #<Location />
 #	AuthType Basic
 #	AuthName "!WEBWORK_USER!'s WeBWorK development system"
-#	AuthUserFile /usr/local/etc/apache/htpasswd-wwmp
+#	AuthUserFile /path/to/site/htpasswd/file
 #	Require valid-user
 #</Location>
 
-# You have mod_pam_auth and would like to authenticate against your
-# /etc/passwd file.  (NOTE: It is a good idea to use Digest authentication
-# instead of Basic, even though this limits your choice of browsers, because
-# of the heightened sensitivity of normal system passwords.)
+# You have mod_pam_auth and would like to authenticate against your /etc/passwd   
+# file.  (NOTE: It is a good idea to use Digest authentication instead of Basic,  
+# even though this limits your choice of browsers, because of the heightened      
+# sensitivity of normal system passwords.)
 #<Location />
 #	AuthType Digest
 #	AuthName "!WEBWORK_USER!'s WeBWorK development system"

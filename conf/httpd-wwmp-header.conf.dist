@@ -1,7 +1,7 @@
-# This is the configuration that is common to every developer's apache
-# process.  httpd-wwmp-sample.conf expects to find this file in
-# /usr/local/etc/apache, but that can be customized for your shop.
-# You should also at least change the ServerName parameter.
+# This file contains apache configuration directives that should be suitable for
+# any WeBWorK 2 development installation. http-wwmp.conf.dist expects to find
+# this file at /path/to/webwork-modperl/conf/httpd-wwmp-header.conf. Simply
+# copying this file to that location should suffice.
 
 ### Section 1: Global Environment
 ServerType standalone
