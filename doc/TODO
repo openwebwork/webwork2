@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.37 2003-02-18 07:04:11 sh002i Exp $
+# $Id: TODO,v 1.38 2003-02-21 21:16:47 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -93,7 +93,7 @@ DONE	effectiveUser for at least Problem.pm
 DONE	add a "check answers" button if the user has the apropriate permissions
 DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
 	calling logout requires valid key -- doesn't make sense.
---->	hardcopy - allow hardcopy with correct answers (BRANCH)
+DONE	hardcopy - allow hardcopy with correct answers (BRANCH)
 DONE	sort problems by due date
 DONE	disable "show hint/solution" when there's no hint/solution
 DONE	results table
@@ -105,7 +105,7 @@ DONE	check TTH mode character encodings on mac
 
 mike wants:
 	problem credit indicator (graphical?)
-	answers/solutions in hardcopy
+DONE	answers/solutions in hardcopy
 	turn off verbose debugging in feedback mail
 	URL on feedback from any module
 	email address change notification by email

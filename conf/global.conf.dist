@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.12 2003-02-18 07:04:11 sh002i Exp $
+# $Id: global.conf.dist,v 1.13 2003-02-21 21:16:47 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -112,6 +112,11 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	#	"prof1\@host.yourdomain.edu",
 	#	"prof2\@host.yourdomain.edu",
 	#],
+	# feedbackVerbosity:
+	#  0: send only the feedback comment and context link
+	#  1: as in 0, plus user, set, problem, and PG data
+	#  2: as in 1, plus the problem environment (debugging data)
+	feedbackVerbosity => 1,
 );
 
 %externalPrograms = (
