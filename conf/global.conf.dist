@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.27 2003-06-10 00:52:00 gage Exp $
+# $Id: global.conf.dist,v 1.28 2003-06-10 16:27:26 malsyned Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -235,7 +235,7 @@ $dbLayout{problem}->{params}->{globalUserID} = "professor";
 my $ta = 5;
 my $professor = 10;
 %permissionLevels = (
-	"become_student" => 10,
+	"become_student" => $professor,
 	"access_instructor_tools" => $ta,
 	"create_and_delete_problem_sets" => $professor,
 	"modify_problem_sets" => $professor,
@@ -284,7 +284,7 @@ $practiceUserPrefix = "practice";
 		CAPA_MCTools              =>    "$courseDirs{macros}/CAPA_MCTools/",  
 		CAPA_Graphics_URL         =>    "$courseDirs{html}/CAPA_Graphics/",   
 		CAPA_GraphicsDirectory    =>    "$courseDirs{html}CAPA_Graphics/", 
-    },
+	},
 	# modules lists module names and the packages each contains
 	modules => [
 		[qw(DynaLoader)],
