@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.29 2002-12-13 21:14:52 sh002i Exp $
+# $Id: TODO,v 1.30 2003-01-06 19:17:27 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -79,39 +79,36 @@ DONE	Options - email address and password
 
 --------------------------------------------------------------------------------
 
->>>>> FOR DECEMBER PREVIEW RELEASE <<<<<
+>>>>> FOR JANUARY PREVIEW RELEASE <<<<<
 
 DONE	Feedback - need nice modular way of sending email
 		customize reciever, make object dumps prettier, link to context
 DONE	Professor - redirect to the old system
 	pretty die messages (from outside of the translator)
 DONE	make sure students can't look at not-yet-open problem sets
-	make answer previews use $displayMode
-	make preview-on-submit optional
+DONE	make answer previews use $displayMode
+DONE	make preview-on-submit optional
 	check TTH mode character encodings on mac
 	grep for "***" in source, address all issues (hah!)
 	Increase border size on images by a couple pixels
 	effectiveUser for at least Problem.pm
 	calling logout requires valid key -- doesn't make sense.
-	sort problems by due date
+DONE	sort problems by due date
 	disable "show hint/solution" when there's no hint/solution
 	results table
 		part(or blank)/entered/preview/result/messages
 		don't show messages unless there are some
 	make displayMode sticky (for nav and siblings)
 	hardcopy - allow hardcopy with correct answers
-	write a template escape for printing $user, $effectiveUser, &c. nicely 
+DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
 	add a "check answers" button if the user has the apropriate permissions
 
->>>>> FOR JANUARY PREVIEW RELEASE <<<<<
+>>>>> FOR SPRING RELEASE <<<<<
 
 	write TeXImage module to take care of TeX image caching and generation
 	replace direct access of $permissionLevel with calls to Authz
 	replace hardcoded URL construction with some other method
 		(unify dispatcher URL parsing and module URL generation)
-
->>>>> FOR SPRING RELEASE <<<<<
-
 	implement professor pages
 		have the prof modules be subclasses of the single Professor
 		ContentGenerator module? more structured? less structured?

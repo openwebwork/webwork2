@@ -314,10 +314,10 @@ sub body {
 	if ($submitAnswers or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
 		print $self->attemptResults($pg, $submitAnswers, $will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers});
+			$pg->{flags}->{showPartialCorrectAnswers}, 0);
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print $self->attemptResults($pg, 1, 0, 0);
+		print $self->attemptResults($pg, 1, 0, 0, 1);
 			# don't show correctness
 			# don't show correct answers
 	}
@@ -452,12 +452,13 @@ sub attemptResults($$$$$) {
 	my $showAttemptAnswers = shift;
 	my $showCorrectAnswers = shift;
 	my $showAttemptResults = $showAttemptAnswers && shift;
+	my $showAttemptPreview = shift || 0;
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $header = CGI::th("answer");
 	$header .= $showAttemptAnswers ? CGI::th("attempt")  : "";
-	$header .= $showAttemptAnswers ? CGI::th("preview")  : "";
+	$header .= $showAttemptPreview ? CGI::th("preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("result")   : "";
 	$header .= $showAttemptAnswers ? CGI::th("messages") : "";
@@ -466,7 +467,9 @@ sub attemptResults($$$$$) {
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
-		my $preview       = $self->previewAnswer($answerResult);
+		my $preview       = ($showAttemptPreview
+		                    	? $self->previewAnswer($answerResult)
+					: "");
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showAttemptAnswers ? $answerResult->{ans_message} : "";
@@ -475,12 +478,12 @@ sub attemptResults($$$$$) {
 		my $resultString = $answerScore ? "correct" : "incorrect";
 		
 		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes
+		# of the answer names is changeable. this only fixes it for "AnSwEr"
 		$name =~ s/^AnSwEr//;
 		
 		my $row = CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td($studentAnswer) : "";
-		$row .= $showAttemptAnswers ? CGI::td($preview)       : "";
+		$row .= $showAttemptPreview ? CGI::td($preview)       : "";
 		$row .= $showCorrectAnswers ? CGI::td($correctAnswer) : "";
 		$row .= $showAttemptResults ? CGI::td($resultString)  : "";
 		$row .= $answerMessage      ? CGI::td($answerMessage) : "";

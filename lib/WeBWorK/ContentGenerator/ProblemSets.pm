@@ -54,22 +54,30 @@ sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
-	my $user = $r->param('user');
+	my $user = $r->param("user");
+	my $sort = $r->param("sort");
 	my $wwdb = $self->{wwdb};
+	
+	$sort = "status" unless $sort eq "status" or $sort eq "name";
+	my $baseURL = $r->uri . "?" . $self->url_authen_args();
+	my $nameHeader = ($sort eq "name") ? "Name" : CGI::a({-href=>"$baseURL&sort=name"}, "Name");
+	my $statusHeader = ($sort eq "status") ? "Status" : CGI::a({-href=>"$baseURL&sort=status"}, "Status");
 	
 	print CGI::startform(-method=>"POST", -action=>$r->uri."hardcopy/");
 	print $self->hidden_authen_fields;
 	print CGI::start_table();
 	print CGI::Tr(
 		CGI::th("Sel."),
-		CGI::th("Name"),
-		CGI::th("Status"),
+		CGI::th($nameHeader),
+		CGI::th($statusHeader),
 		CGI::th("Hardcopy"),
 	);
 	
 	my @sets;
 	push @sets, $wwdb->getSet($user, $_) foreach ($wwdb->getSets($user));
-	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
+	@sets = sort byname @sets if $sort eq "name";
+	@sets = sort byduedate @sets if $sort eq "status";
+	foreach my $set (@sets) {
 		print $self->setListRow($set);
 	}
 	
@@ -132,5 +140,8 @@ sub setListRow($$) {
 		$hardcopy,
 	]));
 }
+
+sub byname { $a->id cmp $b->id; }
+sub byduedate { $a->due_date <=> $b->due_date; }
 
 1;

@@ -104,12 +104,10 @@ sub handler() {
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
 		my $user = $r->param("user");
-		my $effectiveUser = $r->param("effectiveUser") || "";
+		my $effectiveUser = $r->param("effectiveUser") || $user;
 		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
-		#if (!($user ne $effectiveUser && $su_authorized) || !defined $effectiveUser) {
-		$r->param("effectiveUser", $user) unless $su_authorized;
-		
-		warn "WeBWorK: user=$user eUser=", $r->param("effectiveUser"), "\n";
+		$effectiveUser = $user unless $su_authorized;
+		$r->param("effectiveUser", $effectiveUser);
 		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
