@@ -29,6 +29,8 @@ Define some special parameters that are recognized by the dispatcher:
 	"o" specifies objects on which to perform an action (like "o=sh002i&o=dl001i")
 
 We should reserve all single-letter parameter names.
+(UPDATE: I changed my mind. Single-letter param names are unneccesarily
+obfuscated and annnoying.)
 
 We can't use <BUTTON TYPE="submit"> because of a longstanding bug in IE. To
 avoid use of the value of an <INPUT TYPE="submit"> (which is displayed to the
@@ -44,6 +46,8 @@ allowing us to say things like:
 
 We might also want to be able to put multiple parameters into a single name.
 This would be a little more byzantine, but it might be worth it:
+
+(UPDATE: can't use semicolon, since Apache treats `;' the same as `&'.)
 
 my %params;
 my @params = split m/\,/, $name;
