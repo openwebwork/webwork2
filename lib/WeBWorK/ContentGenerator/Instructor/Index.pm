@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.44 2004/09/21 20:20:25 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.45 2004/10/09 03:07:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -10,7 +10,7 @@
 # 
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
 
@@ -39,6 +39,8 @@ use constant E_ONE_USER     => "Please select exactly one user.";
 use constant E_ONE_SET      => "Please select exactly one set.";
 use constant E_MIN_ONE_USER => "Please select at least one user.";
 use constant E_MIN_ONE_SET  => "Please select at least one set.";
+use constant E_SET_NAME     => "Please specify a homework set name.";
+use constant E_BAD_NAME     => "Please use only letter, digits, -, _ and . in your set name.";
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -51,7 +53,7 @@ sub pre_header_initialize {
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
-    $self->{courseName} = $courseID;
+	$self->{courseName} = $courseID;
 	# Check permissions
 	return unless ($authz->hasPermissions($userID, "access_instructor_tools"));
 	
@@ -80,6 +82,7 @@ sub pre_header_initialize {
 		if ($nusers == 1) {
 			$module = "${ipfx}::SetsAssignedToUser";
 			$args{userID} = $firstUserID;
+			$params{fromTools} = 1;
 		} else {
 			push @error, E_ONE_USER;
 		}
@@ -89,6 +92,7 @@ sub pre_header_initialize {
 		if ($nsets == 1) {
 			$module = "${ipfx}::UsersAssignedToSet";
 			$args{setID} = $firstSetID;
+			$params{fromTools} = 1;
 		} else {
 			push @error, E_ONE_SET;
 		}
@@ -108,6 +112,18 @@ sub pre_header_initialize {
 		if ($nsets == 1) {
 			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
+		} else {
+			push @error, E_ONE_SET;
+			
+		}
+	};
+	
+	defined param $r "prob_lib" and do {
+		if ($nsets == 1) {
+					$module = "${ipfx}::SetMaker";
+			$params{local_sets} = $firstSetID;
+		} elsif ($nsets == 0) {
+				$module = "${ipfx}::SetMaker";
 		} else {
 			push @error, E_ONE_SET;
 			
@@ -134,6 +150,26 @@ sub pre_header_initialize {
 		}
 	};
 	
+	defined param $r "user_progress" and do {
+		if ($nusers == 1) {
+			$module = "${ipfx}::StudentProgress";
+			$args{statType} = "student"; # FIXME: fix URLPath -- i shouldn't have to type this!
+			$args{userID} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER;
+		}
+	};
+	
+	defined param $r "set_progress" and do {
+		if ($nsets == 1) {
+			$module = "${ipfx}::StudentProgress";
+			$args{statType} = "set"; # FIXME: fix URLPath -- i shouldn't have to type this!
+			$args{setID} = $firstSetID;
+		} else {
+			push @error, E_ONE_SET;
+		}
+	};
+	
 	defined param $r "user_options" and do {
 		if ($nusers == 1) {
 			$module = "${pfx}::Options";
@@ -150,6 +186,18 @@ sub pre_header_initialize {
 			$params{scoreSelected} = 1;
 		} else {
 			push @error, E_MIN_ONE_SET;
+		}
+	};
+	
+	defined param $r "assign_users" and do {
+		if ($nusers >= 1 and $nsets >= 1) {
+			$module = "${ipfx}::Assigner";
+			$params{selected_users} = \@selectedUserIDs;
+			$params{selected_sets} = \@selectedSetIDs;
+			$params{assign} = "Assign selected sets to selected users";
+		} else {
+			push @error, E_MIN_ONE_USER unless $nusers >= 1;
+			push @error, E_MIN_ONE_SET unless $nsets >= 1;
 		}
 	};
 	
@@ -180,9 +228,32 @@ sub pre_header_initialize {
 		}
 	};
 	
+	defined param $r "create_set" and do {
+	  my $setname = $r->param("new_set_name");
+	  if ($setname && $setname ne 'Name for new set here') {
+		if ($setname =~ /^[\w.-]*$/) {
+		$module = "${ipfx}::SetMaker";
+		$params{new_local_set} = "Create a New Set in this Course";
+		$params{new_set_name} = $setname;
+		$params{selfassign} = 1;
+		  } else {
+		push @error, E_BAD_NAME;
+		  }
+	  } else {
+		push @error, E_SET_NAME;
+	  }
+	};
+
 	defined param $r "add_users" and do {
 		$module = "${ipfx}::AddUsers";
+	};
 
+	defined param $r "email_users" and do {
+		$module = "${ipfx}::SendMail";
+	};
+
+	defined param $r "transfer_files" and do {
+		$module = "${ipfx}::FileManager";
 	};
 
 	push @error, "You are not allowed to act as a student." 
@@ -198,10 +269,7 @@ sub pre_header_initialize {
 	
 	# handle errors, redirect to target page
 	if (@error) {
-		$self->addbadmessage(
-			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:") .
-			CGI::ul(CGI::li(\@error)),
-		);
+		$self->addbadmessage(CGI::p(join(CGI::br(),@error)));
 
 	} elsif ($module) {
 		my $page = $urlpath->newFromModule($module, %args);
@@ -300,29 +368,42 @@ sub body {
 			]),
 			CGI::td([
 				CGI::submit("edit_users", "Edit"). " selected <b>users</b>",
-				CGI::submit("edit_sets", "Edit"). " one <b>set</b>",
+				CGI::submit("edit_sets", "Edit"). " one <b>set</b>" . "&nbsp; &nbsp; ".
+				"or &nbsp; ".CGI::submit("prob_lib","add problems")." to one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("user_stats", "View stats"). " for one <b>user</b>",
-				CGI::submit("set_stats", "View stats"). " for one <b>set</b>",
+				CGI::submit("user_stats", "Statistics")." or ".
+				CGI::submit("user_progress", "progress")." for one <b>user</b>",
+				CGI::submit("set_stats", "Statistics")." or ".
+				CGI::submit("set_progress", "progress")." for one <b>set</b>",
 			]),
 			CGI::td([
 				CGI::submit("user_options", "Change password")." for one <b>user</b>",
 				CGI::submit("score_sets", "Score"). " selected <b>sets</b>",
 			]),
+			CGI::td([
+				CGI::submit("add_users", "Add")." new users",
+				CGI::submit("create_set", "Create"). " new set: ".
+				   CGI::textfield(-name=>"new_set_name", 
+					   -default=>"Name for new set here",
+					   -override=>1, -size=>20),
+				]),
 		]),
-		CGI::Tr({class=>"ButtonRowCenter"}, [
-			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)",
-			),
-			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::submit("edit_set_for_users", "Edit"). " one <b>set</b> for selected <b>users</b>",
-			),
-			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::submit("add_users", "Add"). " new users.",
-			),
-
-		]),
+		CGI::Tr({class=>"ButtonRowCenter"},
+			CGI::td({-colspan=>2, align=>"center"},
+				CGI::table({-border=>0, align=>"center"},
+					CGI::Tr({-align=>"left"}, [
+						CGI::td({-height=>2}),
+						CGI::td(CGI::submit("assign_users", "Assign")." selected <b>users</b> to selected <b>sets</b>"),
+						CGI::td(CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)"),
+						CGI::td(CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>"),
+						CGI::td({-height=>4}),
+						CGI::td(CGI::submit("email_users", "Email"). " your students"),
+						CGI::td(CGI::submit("transfer_files", "Transfer"). " course files"),
+					])
+				)
+			)
+		),
 	);
 	
 	print CGI::end_form();
