@@ -49,9 +49,9 @@ sub initialize {
 		foreach my $wannaDelete ($r->param('selectedSet')) {
 			$db->deleteGlobalSet($wannaDelete);
 		}
-	} elsif (defined($r->param('scoreSelected'))) {
-		
-	}elsif (   defined($r->param('makeNewSet'))   ) {
+	} elsif (defined $r->param('scoreSelected')) {
+		# FIXME: this doesn't do anything!
+	} elsif (defined $r->param('makeNewSet')) {
 		my $newSetRecord = $db->{set}->{record}->new();
 		my $newSetName = $r->param('newSetName');
 		$newSetRecord->set_id($newSetName);
@@ -61,54 +61,61 @@ sub initialize {
 		$newSetRecord->due_date("0");
 		$newSetRecord->answer_date("0");
 		eval {$db->addGlobalSet($newSetRecord)};
-	} elsif (defined($r->param('importSet') )  )   {
-		my $newSetRecord = $db->{set}->{record}->new();
-		my $newSetName = $r->param('newSetName');
-	##############################################
-	# read data in set definition file
-	# add the data to the set record
-	##############################################
-		my $set_definition_file = $r->param('set_definition_file');
-		
-		
-		my ( $setName, $paperHeaderFile, $screenHeaderFile,
-		     $openDate, $dueDate,  $answerDate,
-		     $ra_problemData,    
-		)    =    $self->readSetDef($set_definition_file);
-		
-		# Use the original name if form doesn't specify a new one.
-		$newSetName = $setName unless $newSetName;
-		
-		# The set acquires the new name specified by the form.  A blank
-		# entry on the form indicates that the imported set name will be used. 
-		$newSetRecord->set_id($newSetName);
-		$newSetRecord->set_header($screenHeaderFile);
-		$newSetRecord->problem_header($paperHeaderFile);
-		$newSetRecord->open_date($openDate);
-		$newSetRecord->due_date($dueDate);
-		$newSetRecord->answer_date($answerDate);
-		
-		#create the set
-		eval {$db->addGlobalSet($newSetRecord)};
-		die "addGlobalSet $newSetName in ProblemSetList:  $@" if $@;
-		##############################################
-		my @problemList = @{$ra_problemData};
-		# add problems
-		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($newSetName)) + 1;
-		foreach my $rh_problem (@problemList) {
-			
-			my $problemRecord = new WeBWorK::DB::Record::Problem;
-			$problemRecord->problem_id($freeProblemID++);
-			#warn "Adding problem $freeProblemID ", $rh_problem->source_file;
-			$problemRecord->set_id($newSetName);
-			$problemRecord->source_file($rh_problem->{source_file});
-			$problemRecord->value($rh_problem->{value});
-			$problemRecord->max_attempts($rh_problem->{max_attempts});
-			# continuation flags???
-			$db->addGlobalProblem($problemRecord);
-			$self->assignProblemToAllSetUsers($problemRecord);  # handled by parent
+	} elsif (defined $r->param('importSet') or defined $r->param('importSets')) {
+		my @setDefFiles = ();
+		my $newSetName = "";
+		if (defined $r->param('importSet')) {
+			@setDefFiles = $r->param('set_definition_file');
+			$newSetName = $r->param('newSetName');
+		} elsif (defined $r->param('importSets')) {
+			@setDefFiles = $r->param('set_definition_files');
 		}
-	
+		
+		foreach my $set_definition_file (@setDefFiles) {
+			# read data in set definition file
+			my ($setName, $paperHeaderFile, $screenHeaderFile,
+		    	$openDate, $dueDate, $answerDate, $ra_problemData,
+			) = $self->readSetDef($set_definition_file);
+			my @problemList = @{$ra_problemData};
+
+			# Use the original name if form doesn't specify a new one.
+			# The set acquires the new name specified by the form.  A blank
+			# entry on the form indicates that the imported set name will be used.
+			$setName = $newSetName if $newSetName;
+			
+			# add the data to the set record
+			#my $newSetRecord = $db->{set}->{record}->new();
+			my $newSetRecord = $db->newGlobalSet;
+			$newSetRecord->set_id($setName);
+			$newSetRecord->set_header($screenHeaderFile);
+			$newSetRecord->problem_header($paperHeaderFile);
+			$newSetRecord->open_date($openDate);
+			$newSetRecord->due_date($dueDate);
+			$newSetRecord->answer_date($answerDate);
+
+			#create the set
+			eval {$db->addGlobalSet($newSetRecord)};
+			die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
+
+			# add problems
+			my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
+			foreach my $rh_problem (@problemList) {
+				#my $problemRecord = new WeBWorK::DB::Record::Problem;
+				my $problemRecord = $db->newGlobalProblem;
+				$problemRecord->problem_id($freeProblemID++);
+				#warn "Adding problem $freeProblemID ", $rh_problem->source_file;
+				$problemRecord->set_id($setName);
+				$problemRecord->source_file($rh_problem->{source_file});
+				$problemRecord->value($rh_problem->{value});
+				$problemRecord->max_attempts($rh_problem->{max_attempts});
+				# continuation flags???
+				$db->addGlobalProblem($problemRecord);
+				#$self->assignProblemToAllSetUsers($problemRecord);  # handled by parent
+			}
+			
+			# assign the set to all users
+			$self->assignSetToAllUsers($setName);
+		}
 	} 
 }
 
@@ -228,19 +235,37 @@ sub body {
 		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),"\n",
 		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),"\n",
 		CGI::end_form(),"\n",
+		
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
 		$self->hidden_authen_fields,"\n",
 		"New Set Name: ",
 		CGI::input({type=>"text", name=>"newSetName", value=>""}),
 		CGI::submit({"name"=>"makeNewSet", "label"=>"Create"}),"\n",
 		CGI::end_form(),"\n",
+		
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
 		$self->hidden_authen_fields,"\n",
-		CGI::submit({"name"=>"importSet", "label"=>"Import"}),"\n",
-		CGI::popup_menu(-name=>'set_definition_file', 
-				                 -values=>\@set_definition_files, 
-		),' as set ',
-		CGI::input({type=>"text", name=>"newSetName", value=>""}),
+		CGI::b("Import a Single Set"), CGI::br(), "\n",
+		"From file: ", CGI::popup_menu(
+			-name=>'set_definition_file', 
+			-values=>\@set_definition_files, 
+		), CGI::br(), "\n",
+		"Set name: ", CGI::input({type=>"text", name=>"newSetName", value=>""}),
+		CGI::br(), "\n",
+		CGI::submit({"name"=>"importSet", "label"=>"Import a Single Set"}),"\n",
+		CGI::br(), "\n",
+		CGI::b("Import Multiple Sets"), CGI::br(),
+		"Each set will be named based on the name of the set definition file, omitting",
+		" any leading ", CGI::i("set"), " and trailing ", CGI::i(".def"), ". Note that",
+		" the name of a set cannot be changed once it has been created.",
+		CGI::br(), "\n",
+		CGI::scrolling_list(
+			-name=>"set_definition_files",
+			-values=>\@set_definition_files,
+			-size=>10,
+			-multiple=>"true",
+		), CGI::br(),
+		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),"\n",
 		CGI::end_form(),"\n"
 	);
 	print $form;
