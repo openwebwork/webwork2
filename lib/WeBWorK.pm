@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.43 2004/01/25 19:56:09 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.44 2004/02/06 17:27:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -239,7 +239,7 @@ The dispatcher implements a virtual heirarchy that looks like this:
  	options (User Options) - change email address and password
  	feedback (Feedback) - send feedback to professor via email
  	logout (Logout) - expire session and erase authentication tokens
- 	test (Test) - display request information
+ 	#test (Test) - display request information
  	quiz_mode (Quiz) - "quiz" containing all problems from a set
  	instructor (Instructor Tools) - main menu for instructor tools
  		add_users (Add Users) - to be removed
@@ -286,9 +286,9 @@ The dispatcher implements a virtual heirarchy that looks like this:
 			$contentGenerator = "WeBWorK::ContentGenerator::Logout";
 			@arguments = ();
 		}
-		elsif ($arg eq "test") {
-			$contentGenerator = "WeBWorK::ContentGenerator::Test";
-			@arguments = ();
+		#elsif ($arg eq "test") {
+		#	$contentGenerator = "WeBWorK::ContentGenerator::Test";
+		#	@arguments = ();
 		}
 		elsif ($arg eq "quiz_mode" ) {
 			$contentGenerator = "WeBWorK::ContentGenerator::GatewayQuiz";
