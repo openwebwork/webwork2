@@ -82,7 +82,7 @@ sub body {
 	
 	print CGI::end_table();
 	my $pl = ($permissionLevel > 0 ? "s" : "");
-	print CGI::p(CGI::submit("hardcopy", "Download Harcopy for Selected Set$pl"));
+	print CGI::p(CGI::submit("hardcopy", "Download Hardcopy for Selected Set$pl"));
 	print CGI::endform();
 	
 	# feedback form
