@@ -66,14 +66,34 @@ sub verify($) {
 		$return = 0;
 	}
 	# OK, we're done with the trivia.  Now lets authenticate.
-	# This is the part that will get rewritten after Sam finishes
-	# his work on the database stuff.
 	elsif ($passwd) {
-		if ($auth->verifyPassword($user, $passwd)) {
+		# A bit of extra logic for practice users
+		# Practice users are different because:
+		# - They aren't allowed to log in if an active key exists
+		#   (except for $debugPracticeUser)
+		# - They are allowed to log in with any password
+		$practiceUserPrefix = $course_env->{"practiceUserPrefix"};
+		$debugPracticeUser = $course_env->{"debugPracticeUser"};
+		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
+			if (!$auth->getPassword($user)) { # the only way DB::Auth provides for checking the existence of a user
+				$error = "That practice account does not exist";
+				$return = 0;
+			} elsif ($auth->getKey($user) and $user ne $debugPracticeUser) {
+				$error = "That practice account is in use";
+				$return = 0;
+			} else {
+				$key = generate_key;
+				$auth->setKey($user, $key);
+				$r->param('key',$key);
+				$return = 1;
+			}
+		}
+		# Not a practice user.  Do normal authentication.
+		elsif ($auth->verifyPassword($user, $passwd)) {
 			# Remove the passwd field from subsequent requests.
 			$r->param('passwd',undef);
-			$key = generate_key;
-			$auth->setKey($user, $key, time);
+			$key = $auth->getKey($user) || generate_key;
+			$auth->setKey($user, $key);
 			$r->param('key',$key);
 			$return = 1;
 		} else {
@@ -81,8 +101,8 @@ sub verify($) {
 			$return = 0;
 		}
 	} elsif ($key) {
-		# The timestamp gets updated by verifyKey with the time passed in
-		if ($auth->verifyKey($user, $key, time)) {
+		# The timestamp gets updated by verifyKey
+		if ($auth->verifyKey($user, $key)) {
 			$return = 1;
 		} else {
 			$error = "Your session has expired.  You must login again";

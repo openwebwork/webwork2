@@ -19,15 +19,6 @@ sub new($$$) {
 	return $self;
 }
 
-# Call this if you want the standard HTML headers, as specified in the
-# template.  A common call to this would be:
-# $self->headers; return OK if $r->headers_only;
-sub header {
-	my $self = shift;
-	my $r=$self->{r};
-	$r->content_type('text/html');
-	$r->send_http_header();
-}
 
 # This generates the template code (eventually using a secondary storage
 # data source, I hope) for the common elements of all WeBWorK pages.
@@ -88,19 +79,53 @@ sub hidden_authen_fields {
 	return $html;
 }
 
-# Abstract as they get, this go() is meant to be over-ridden by
-# absolutely /anything/ that subclasses it.  Most subclasses, however,
-# will find it a useful thing to copy and modify, rather than writing from
-# scratch.
+sub pre_header_initialize {}
 
-sub go() {
+sub header {
+	my $self = shift;
+	my $r=$self->{r};
+	$r->content_type('text/html');
+	$r->send_http_header();
+}
+
+sub initialize {}
+
+sub title {
+	print "Superclass";
+}
+
+sub body {
+	print "Generated content";
+}
+
+sub go {
 	my $self = shift;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 
-	$self->header; return OK if $r->header_only;
+	$self->pre_header_initialize(@_);
+	$self->header(@_); return OK if $r->header_only;
+	$self->initialize(@_);
 	
-	print "You shouldn't see this.  This is only a prototype.";
+	my $templateFile = $courseEnvironment->{templates}->{system};
+	
+	open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
+	my @template = <TEMPLATE>;
+	close TEMPLATE;
+	
+	foreach my $line (@template) {
+		my $pos = 0;
+
+		while ($line =~ m/\G(.*?)<!--#(.*?)\s*-->/g) {
+			print "$1";
+			$pos = pos($line);
+			print $self->$2(@_) if $self->can($2);
+		}
+		# I thought I could use pos($line) here, but /noooooo/
+		print substr $line, $pos;
+	}
+	
+	return OK;
 }
 
 1;
