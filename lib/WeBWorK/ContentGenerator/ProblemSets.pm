@@ -57,7 +57,8 @@ sub body {
 	my $user = $r->param('user');
 	my $wwdb = $self->{wwdb};
 	
-	print CGI::startform(-method=>"POST", -action=>$r->uri."/hardcopy");
+	print CGI::startform(-method=>"POST", -action=>$r->uri."hardcopy/");
+	print $self->hidden_authen_fields;
 	print CGI::start_table();
 	print CGI::Tr(
 		CGI::th("Sel."),
@@ -73,7 +74,6 @@ sub body {
 	}
 	
 	print CGI::end_table();
-	print $self->hidden_authen_fields;
 	print CGI::p(CGI::submit("hardcopy", "Download Harcopy for Selected Sets"));
 	print CGI::endform();
 	
