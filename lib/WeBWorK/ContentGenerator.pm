@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.73 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.74 2003/12/18 23:15:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -544,9 +544,10 @@ sub links {
 		: 0);
 	
 	return join("",
-		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"), CGI::br(),
+		CGI::div( {style=>'font-size:larger'},CGI::a({-href=>$probSets}, "Problem&nbsp;Sets")
+		), 
 		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
-		CGI::a({-href=>$help}, "Help"), CGI::br(),
+		CGI::a({-href=>$help,-target=>'_help_'}, "Help"), CGI::br(),
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 		($permLevel > 0
 			? $self->instructor_links(@components) : ""
@@ -599,21 +600,23 @@ sub instructor_links {
 	
 	return join("",
 		 CGI::hr(),
-		 CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") , CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
+		 CGI::div( {style=>'font-size:larger'},
+		 	CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") 
+		 ), 
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
 		 $setLink,
 		 $problemLink,
-		 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Mail&nbsp;Merge"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Scoring"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, "Statistics"), CGI::br(),
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$email}, "Mail&nbsp;Merge"), CGI::br(),
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Scoring"), CGI::br(),
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$stats}, "Statistics"), CGI::br(),
 		 (defined($set))
-		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
+		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
 			: '',
 		 (defined($userName))
-		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
+		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
 			: '',
-		 '&nbsp;&nbsp;',CGI::a({-href=>$fileXfer}, "File&nbsp;Transfer"), CGI::br(),
+		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$fileXfer}, "File&nbsp;Transfer"), CGI::br(),
 	);
 }
 
