@@ -56,6 +56,7 @@ sub assignProblemToUser {
 	
 	initializeUserProblem($userProblem);
 	eval {$db->addUserProblem($userProblem)};
+	warn $@ if $@;
 }
 
 sub assignSetToUser {

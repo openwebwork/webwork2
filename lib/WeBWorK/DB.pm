@@ -942,7 +942,7 @@ sub addUserProblem($$) {
 	croak "addUserProblem: argument 1 must be of type ", $self->{problem_user}->{record}
 		unless ref $UserProblem eq $self->{problem_user}->{record};
 	croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)"
-		if $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
+		if $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
