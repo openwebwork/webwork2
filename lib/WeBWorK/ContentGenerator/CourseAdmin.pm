@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.18 2004/06/16 01:58:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.19 2004/06/23 19:19:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -197,6 +197,20 @@ sub add_course_form {
 	#my $urlpath = $r->urlpath;
 	
 	my $add_courseID                     = $r->param("add_courseID") || "";
+	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
+	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+	
+	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	
+	my $add_initial_userID               = $r->param("add_initial_userID") || "";
+	my $add_initial_password             = $r->param("add_initial_password") || "";
+	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
+	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
+	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
+	my $add_initial_email                = $r->param("add_initial_email") || "";
+	
+	my $add_templates_course             = $r->param("add_templates_course") || "";
+	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
 	my $add_sql_host                     = $r->param("add_sql_host") || "";
 	my $add_sql_port                     = $r->param("add_sql_port") || "";
@@ -205,18 +219,6 @@ sub add_course_form {
 	my $add_sql_database                 = $r->param("add_sql_database") || "";
 	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
 	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
-	my $add_initial_userID               = $r->param("add_initial_userID") || "";
-	my $add_initial_password             = $r->param("add_initial_password") || "";
-	my $add_initial_password_confirm     = $r->param("add_initial_password_confirm") || "";
-	my $add_feedback_email               = $r->param("add_feedback_email") || "";
-	my $add_templates_course             = $r->param("add_templates_course") || "";
-	my $add_contact_first_name           = $r->param("add_contact_first_name") || "";
-	my $add_contact_last_name            = $r->param("add_contact_last_name") || "";
-	my $add_contact_institution          = $r->param("add_contact_institution") || "";
-	my $add_course_title                 = $r->param("add_course_title") || "";
-	my $add_contact_email                = $r->param("add_contact_email") || "";
-	my $add_admin_userID                 = $r->param("add_admin_userID") || $r->param("user") || "";
-	my $add_admin_password               = $r->param("add_admin_password") || "";
 	
 	my @dbLayouts = sort keys %{ $ce->{dbLayouts} };
 	
@@ -245,8 +247,8 @@ sub add_course_form {
 		$source;
 	};
 	
-	my @existingCourses =  listCourses($ce);
-	@existingCourses    = sort @existingCourses;
+	my @existingCourses = listCourses($ce);
+	@existingCourses = sort @existingCourses;
 	
 	print CGI::h2("Add Course");
 	
@@ -254,69 +256,66 @@ sub add_course_form {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Specify a name for the new course.");
+	print CGI::p("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores.");
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Course ID:"),
 			CGI::td(CGI::textfield("add_courseID", $add_courseID, 25)),
-			CGI::th({class=>"LeftHeader"}, "Course Title"),
-			CGI::td(CGI::textfield("add_course_title", $add_course_title, 25)),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Title:"),
+			CGI::td(CGI::textfield("add_courseTitle", $add_courseTitle, 25)),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Institution:"),
+			CGI::td(CGI::textfield("add_courseInstitution", $add_courseInstitution, 25)),
 		),
 	);
 	
-	print CGI::p("To add an initial user to the new course, enter a user ID and password below. If you do not do so, you will not be able to log into the course.");
+	print CGI::p("To add the WeBWorK administrators to the new course (as instructors) check the box below.");
 	
-	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
-			CGI::th({class=>"CenterHeader"}, "Instructor  ID"),
-			CGI::th({class=>"CenterHeader"}, "Instructor Password"),
-			CGI::th({class=>"CenterHeader"}, "Confirm Instructor Password"),
-			
-			
-		),
-		CGI::Tr(
-			CGI::td(CGI::textfield("add_initial_userID", $add_initial_userID || "professor", 25)),
-			CGI::td(CGI::password_field("add_initial_password", $add_initial_password, 25)),
-			CGI::td(CGI::password_field("add_initial_password_confirm", $add_initial_password_confirm, 25)),
-			
-		),
-		
-		CGI::Tr(
-			CGI::th({class=>"CenterHeader"}, "First name"),
-			CGI::th({class=>"CenterHeader"}, "Last name"),
-			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
-		),
-		CGI::Tr(
-			CGI::td(CGI::textfield("add_contact_first_name", $add_contact_first_name, 20)),
-			CGI::td(CGI::textfield("add_contact_last_name", $add_contact_last_name, 20)),
-			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
-		),
-		CGI::Tr(
-			CGI::th({class=>"CenterHeader"}, "Contact institution"),
-			CGI::th({class=>"CenterHeader"}, "Contact e-mail"),
-			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
-		),
-		CGI::Tr(
-			CGI::td(CGI::textfield("add_contact_institution", $add_contact_institution, 35)),
-			CGI::td(CGI::textfield("add_contact_email", $add_contact_email, 35)),
-			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
-		),
-		CGI::Tr(
-			CGI::th({class=>"CenterHeader"}, "Administrator ID"),
-			CGI::th({class=>"CenterHeader"}, "Administrator Password"),
-			CGI::th({class=>"CenterHeader"}, "Feedback e-mail"),
-			
-		),
-		CGI::Tr(
-			CGI::td(CGI::textfield("add_admin_userID", $add_admin_userID, 25)),
-			CGI::td(CGI::password_field("add_admin_password", $add_admin_password, 25)),
-			CGI::td(CGI::textfield("add_feedback_email", $add_feedback_email, 25)),
-			
-		),
-	);
+	print CGI::p(CGI::checkbox("add_admin_users", $add_admin_users, "on", "Add WeBWorK administrators to new course"));
 	
-		print CGI::p("Select an existing course from which to copy templates:");
+	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, and underscores.");
+	
+	print CGI::table({class=>"FormLayout"}, CGI::Tr(
+		CGI::td(
+			CGI::table({class=>"FormLayout"},
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "User ID:"),
+					CGI::td(CGI::textfield("add_initial_userID", $add_initial_userID, 25)),
+				),
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "Password:"),
+					CGI::td(CGI::password_field("add_initial_password", $add_initial_password, 25)),
+				),
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "Confirm Password:"),
+					CGI::td(CGI::password_field("add_initial_confirmPassword", $add_initial_confirmPassword, 25)),
+				),
+			),
+		),
+		CGI::td(
+			CGI::table({class=>"FormLayout"},
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "First Name:"),
+					CGI::td(CGI::textfield("add_initial_firstName", $add_initial_firstName, 25)),
+				),
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "Last Name:"),
+					CGI::td(CGI::textfield("add_initial_lastName", $add_initial_lastName, 25)),
+				),
+				CGI::Tr(
+					CGI::th({class=>"LeftHeader"}, "Email Address:"),
+					CGI::td(CGI::textfield("add_initial_email", $add_initial_email, 25)),
+				),
+			),
+			
+		),
+	));
+	
+	print CGI::p("To copy problem templates from an existing course, select the course below.");
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
@@ -335,11 +334,7 @@ sub add_course_form {
 		),
 	);
 	
-	print CGI::p("Select a database layout below. Some database layouts require additional information.");
-	
-	#print CGI::start_Tr();
-	#print CGI::th({class=>"LeftHeader"}, "Database Layout:");
-	#print CGI::start_td();
+	print CGI::p("Select a database layout below.");
 	
 	foreach my $dbLayout (@dbLayouts) {
 		print CGI::start_table({class=>"FormLayout"});
@@ -358,10 +353,9 @@ sub add_course_form {
 		print CGI::start_td();
 		
 		if ($dbLayout eq "sql") {
-			
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(CGI::td({colspan=>2}, 
-					"The SQL Admin is a user in the SQL database with sufficient permissions to create a new database."
+					"Enter the user ID and password for an SQL account with sufficient permissions to create a new database."
 				)
 			);
 			print CGI::Tr(
@@ -373,10 +367,10 @@ sub add_course_form {
 				CGI::td(CGI::password_field("add_sql_password", $add_sql_password, 25)),
 			);
 			
-			print CGI::Tr(CGI::td({colspan=>2}, CGI::hr(),
-					"The optionial SQL settings you enter below must match the settings in the DBI source",
-					" specification ", CGI::tt($dbi_source), ". Replace ", CGI::tt("COURSENAME"),
-					" with the course name you entered above."
+			print CGI::Tr(CGI::td({colspan=>2},
+					"The optionial SQL settings you enter below must match the settings in the DBI source"
+					. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
+					. " with the course name you entered above."
 				)
 			);
 			print CGI::Tr(
@@ -427,12 +421,6 @@ sub add_course_form {
 		print CGI::end_table();
 	}
 	
-	
-	
-	
-
-
-	
 	print CGI::p({style=>"text-align: center"}, CGI::submit("add_course", "Add Course"));
 	
 	print CGI::end_form();
@@ -447,6 +435,20 @@ sub add_course_validate {
 	#my $urlpath = $r->urlpath;
 	
 	my $add_courseID                     = $r->param("add_courseID") || "";
+	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
+	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+	
+	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	
+	my $add_initial_userID               = $r->param("add_initial_userID") || "";
+	my $add_initial_password             = $r->param("add_initial_password") || "";
+	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
+	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
+	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
+	my $add_initial_email                = $r->param("add_initial_email") || "";
+	
+	my $add_templates_course             = $r->param("add_templates_course") || "";
+	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
 	my $add_sql_host                     = $r->param("add_sql_host") || "";
 	my $add_sql_port                     = $r->param("add_sql_port") || "";
@@ -455,40 +457,41 @@ sub add_course_validate {
 	my $add_sql_database                 = $r->param("add_sql_database") || "";
 	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
 	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
-	my $add_initial_userID               = $r->param("add_initial_userID") || "";
-	my $add_initial_password             = $r->param("add_initial_password") || "";
-	my $add_initial_password_confirm     = $r->param("add_initial_password_confirm") || "";
-	my $add_templates_course             = $r->param("add_templates_course") || "";
-	my $add_contact_first_name           = $r->param("add_contact_first_name") || "";
-	my $add_contact_last_name            = $r->param("add_contact_last_name") || "";
-	my $add_contact_institution          = $r->param("add_contact_institution") || "";
-	my $add_contact_email                = $r->param("add_contact_email")  || "";
-	my $add_course_title                 = $r->param("add_course_title") || "";
-	my $add_admin_userID                 = $r->param("add_admin_userID")   || "";
-	my $add_admin_password               = $r->param("add_admin_password") || "";
-
+	
 	my @errors;
 	
 	if ($add_courseID eq "") {
-		push @errors, "You must specify a course name.";
+		push @errors, "You must specify a course ID.";
 	}
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
-		push @errors, "A course named $add_courseID already exists." ;
+		push @errors, "A course with ID $add_courseID already exists.";
 	}
-	if ($add_contact_institution eq "") {
-		push @errors, "You must specify a contact institution." ;
+	if ($add_courseTitle eq "") {
+		push @errors, "You must specify a course title.";
 	}
-	if ($add_contact_last_name eq "") {
-		push @errors, "You must specify a contact person.";
+	if ($add_courseInstitution eq "") {
+		push @errors, "You must specify an institution for this course.";
 	}
-	if ($add_contact_email eq "") {
-		push @errors, "You must specify an email address for the contact person." ;
-	}
-	if ($add_initial_password ne $add_initial_password_confirm) {
-		push @errors, "The instructor's passwords don't match";
-	}
-	if ($add_course_title eq "") {
-		push @errors, "You must specify a title for the course.";
+	
+	if ($add_initial_userID ne "") {
+		if ($add_initial_password eq "") {
+			push @errors, "You must specify a password for the initial instructor.";
+		}
+		if ($add_initial_confirmPassword eq "") {
+			push @errors, "You must confirm the password for the initial instructor.";
+		}
+		if ($add_initial_password ne $add_initial_confirmPassword) {
+			push @errors, "The password and password confirmation for the instructor must match.";
+		}
+		if ($add_initial_firstName eq "") {
+			push @errors, "You must specify a first name for the initial instructor.";
+		}
+		if ($add_initial_lastName eq "") {
+			push @errors, "You must specify a last name for the initial instructor.";
+		}
+		if ($add_initial_email eq "") {
+			push @errors, "You must specify an email address for the initial instructor.";
+		}
 	}
 	
 	if ($add_dbLayout eq "") {
@@ -497,8 +500,6 @@ sub add_course_validate {
 		if (exists $ce->{dbLayouts}->{$add_dbLayout}) {
 			if ($add_dbLayout eq "sql") {
 				push @errors, "You must specify the SQL admin username." if $add_sql_username eq "";
-				#push @errors, "You must specify the SQL admin password." if $add_sql_password eq "";
-				#push @errors, "You must specify the SQL database name." if $add_sql_database eq "";
 				push @errors, "You must specify the WeBWorK host." if $add_sql_wwhost eq "";
 			} elsif ($add_dbLayout eq "gdbm") {
 				push @errors, "You must specify the GDBM global user ID." if $add_gdbm_globalUserID eq "";
@@ -506,13 +507,6 @@ sub add_course_validate {
 		} else {
 			push @errors, "The database layout $add_dbLayout doesn't exist.";
 		}
-	}
-	
-	if ($add_initial_userID ne "") {
-		push @errors, "You must specify a professor password." if $add_initial_password eq "";
-	}
-	if ($add_admin_userID ne "") {
-		push @errors, "You must specify an admin password for $add_admin_userID." if $add_admin_password eq "";
 	}
 	
 	return @errors;
@@ -526,25 +520,29 @@ sub do_add_course {
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $add_courseID               = $r->param("add_courseID") || "";
-	my $add_dbLayout               = $r->param("add_dbLayout") || "";
-	my $add_sql_host               = $r->param("add_sql_host") || "";
-	my $add_sql_port               = $r->param("add_sql_port") || "";
-	my $add_sql_username           = $r->param("add_sql_username") || "";
-	my $add_sql_password           = $r->param("add_sql_password") || "";
-	my $add_sql_database           = $r->param("add_sql_database") || "";
-	my $add_sql_wwhost             = $r->param("add_sql_wwhost") || "";
-	my $add_gdbm_globalUserID      = $r->param("add_gdbm_globalUserID") || "";
-	my $add_initial_userID         = $r->param("add_initial_userID") || "";
-	my $add_initial_password       = $r->param("add_initial_password") || "";
-	my $add_templates_course       = $r->param("add_templates_course") || "";
-	my $add_contact_first_name     = $r->param("add_contact_first_name") || "";
-	my $add_contact_last_name      = $r->param("add_contact_last_name") || "";
-	my $add_contact_institution    = $r->param("add_contact_institution") || "";
-	my $add_contact_email          = $r->param("add_contact_email") || "";
-	my $add_course_title           = $r->param("add_course_title") || "";
-	my $add_admin_userID           = $r->param("add_admin_userID") || $r->param("user") || "";
-	my $add_admin_password         = $r->param("add_admin_password") || "";
+	my $add_courseID                     = $r->param("add_courseID") || "";
+	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
+	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+	
+	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	
+	my $add_initial_userID               = $r->param("add_initial_userID") || "";
+	my $add_initial_password             = $r->param("add_initial_password") || "";
+	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
+	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
+	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
+	my $add_initial_email                = $r->param("add_initial_email") || "";
+	
+	my $add_templates_course             = $r->param("add_templates_course") || "";
+	
+	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
+	my $add_sql_host                     = $r->param("add_sql_host") || "";
+	my $add_sql_port                     = $r->param("add_sql_port") || "";
+	my $add_sql_username                 = $r->param("add_sql_username") || "";
+	my $add_sql_password                 = $r->param("add_sql_password") || "";
+	my $add_sql_database                 = $r->param("add_sql_database") || "";
+	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
+	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
 
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -567,47 +565,39 @@ sub do_add_course {
 		$dbOptions{database} = $add_sql_database || "webwork_$add_courseID";
 		$dbOptions{wwhost}   = $add_sql_wwhost;
 	}
-	# add professor and administor if defined.
+	
 	my @users;
+	
+	# copy users from current (admin) course if desired
+	if ($add_admin_users ne "") {
+		foreach my $userID ($db->listUsers) {
+			my $User            = $db->getUser($userID);
+			my $Password        = $db->getPassword($userID);
+			my $PermissionLevel = $db->getPermissionLevel($userID);
+			push @users, [ $User, $Password, $PermissionLevel ];
+		}
+	}
+	
+	# add initial instructor if desired
 	if ($add_initial_userID ne "") {
 		my $User = $db->newUser(
 			user_id    => $add_initial_userID,
-			last_name  => $add_contact_last_name,
-			first_name => $add_contact_first_name,
+			first_name => $add_initial_firstName,
+			last_name  => $add_initial_lastName,
 			student_id => $add_initial_userID,
 			status     => "C",
 		);
-# 		$User->last_name(   $add_contact_last_name  );
-# 		$User->first_name(  $add_contact_first_name );
-# 		$User->student_id(  $add_initial_userID     );
 		my $Password = $db->newPassword(
-			user_id => $add_initial_userID,
+			user_id  => $add_initial_userID,
 			password => cryptPassword($add_initial_password),
 		);
 		my $PermissionLevel = $db->newPermissionLevel(
-			user_id => $add_initial_userID,
+			user_id    => $add_initial_userID,
 			permission => "10",
 		);
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
-	if ($add_admin_userID ne "") {
-		my $User = $db->newUser(
-			user_id => $add_admin_userID,
-			last_name  => " Administrator",
-			first_name => "Sir",
-			student_id => $add_admin_userID,
-			status => "C",
-		);
-		my $Password = $db->newPassword(
-			user_id => $add_admin_userID,
-			password => cryptPassword($add_admin_password),
-		);
-		my $PermissionLevel = $db->newPermissionLevel(
-			user_id => $add_admin_userID,
-			permission => "10",
-		);
-		push @users, [ $User, $Password, $PermissionLevel ];
-	}	
+	
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
@@ -623,7 +613,6 @@ sub do_add_course {
 			%optional_arguments,
 		);
 	};
-	
 	if ($@) {
 		my $error = $@;
 		print CGI::div({class=>"ResultsWithError"},
@@ -645,12 +634,12 @@ sub do_add_course {
 	    #log the action
 	    writeLog($ce, "hosted_courses", join("\t",
 	    	"\tAdded",
-	    	$add_contact_institution,
-	    	$add_course_title,
+	    	$add_courseInstitution,
+	    	$add_courseTitle,
 	    	$add_courseID,
-	    	$add_contact_first_name,
-	    	$add_contact_last_name,
-	  		$add_contact_email,
+	    	$add_initial_firstName,
+	    	$add_initial_lastName,
+	  		$add_initial_email,
 	    ));
 	    # add contact to admin course as student?
 	    # FIXME -- should we do this?
@@ -914,7 +903,7 @@ sub do_delete_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("Possibly deleted the course $delete_courseID. (We need better error checking in deleteCourse().)"),
+			CGI::p("Successfully deleted the course $delete_courseID."),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tDeleted",
