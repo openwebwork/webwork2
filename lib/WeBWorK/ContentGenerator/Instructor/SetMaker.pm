@@ -77,9 +77,16 @@ my %ignoredir = (
 
 sub get_library_sets {
 	my $top = shift; my $dir =	shift;
-	my @lis = readDirectory($dir); my @pgdirs;
+	# ignore directories that give us an error
+	my @lis = eval { readDirectory($dir) };
+	if ($@) {
+		warn $@;
+		return (0);
+	}
 	return (0) if grep /^=library-ignore$/, @lis;
 
+	my @pgdirs;
+	
 	my $pgcount = scalar(grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis);
 	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
 	                            !m/(\.(tmp|bak)|~)$/ && -f "$dir/$_" } @lis);
