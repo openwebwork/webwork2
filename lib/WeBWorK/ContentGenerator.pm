@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.106 2004/06/21 19:07:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.107 2004/06/21 20:11:58 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -524,7 +524,7 @@ sub links {
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
 	# only users with appropriate permissions can report bugs
-	print CGI::p(CGI::a({style=>"font-size:larger", href=>REPORT_BUGS_URL}, "Report bugs")),CGI::hr() if $authz->hasPermissions($user, "report_bugs");
+	print CGI::p(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs")),CGI::hr() if $authz->hasPermissions($user, "report_bugs");
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
@@ -859,37 +859,6 @@ The implementation in this package checks for a note in the request named
 
 =cut
 
-=item helpMacro($name)
-
-This escape is represented by a question mark which links to an html page in the
-helpFiles  directory.  Currently the link is made to the file $name.html
-
-=cut
-
-sub helpMacro {
-    my $self = shift;
-	my $name = shift;
-	my $ce   = $self->r->ce;
-	my $basePath = $ce->{webworkDirs}->{local_help};
-	$name        = 'no_help' unless -e "$basePath/$name.html";
-	my $path     = "$basePath/$name.html";
-	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
-	return CGI::a({href      => $url,
-	               target    => 'ww_help',
-	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=on')"},
-	               CGI::img({src=>$imageURL}));
-}
-
-sub help {
-	my $self = shift;
-	my $args = shift;
-	my $name = $args->{name};
-	$name = lc($self->r->urlpath->name) unless defined($name);
-	$name =~ s/\s/_/g;
-	$self->helpMacro($name);
-}
-
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -899,6 +868,23 @@ sub warnings {
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
 	return "";
+}
+
+=item help()
+
+Display a link to context-sensitive help. If the argument C<name> is defined,
+the link will be to the help document for that name. Otherwise the name of the
+WeBWorK::URLPath node for the current system location will be used.
+
+=cut
+
+sub help {
+	my $self = shift;
+	my $args = shift;
+	my $name = $args->{name};
+	$name = lc($self->r->urlpath->name) unless defined($name);
+	$name =~ s/\s/_/g;
+	$self->helpMacro($name);
 }
 
 =back
@@ -1205,6 +1191,28 @@ sub navMacro {
 	}
 	
 	return join($args{separator}, @result) . "\n";
+}
+
+=item helpMacro($name)
+
+This escape is represented by a question mark which links to an html page in the
+helpFiles  directory.  Currently the link is made to the file $name.html
+
+=cut
+
+sub helpMacro {
+    my $self = shift;
+	my $name = shift;
+	my $ce   = $self->r->ce;
+	my $basePath = $ce->{webworkDirs}->{local_help};
+	$name        = 'no_help' unless -e "$basePath/$name.html";
+	my $path     = "$basePath/$name.html";
+	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
+	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
+	return CGI::a({href      => $url,
+	               target    => 'ww_help',
+	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=on')"},
+	               CGI::img({src=>$imageURL}));
 }
 
 =back
