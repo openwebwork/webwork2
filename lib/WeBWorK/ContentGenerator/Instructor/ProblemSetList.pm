@@ -43,6 +43,20 @@ sub initialize {
 	}
 }
 
+sub path {
+	my ($self, $args) = @_;
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		'sets'      => ''
+	);
+}
+
 sub title {
 	my $self = shift;
 	return "Instructor Tools - Problem Set List for ".$self->{ce}->{courseName};

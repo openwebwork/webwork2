@@ -16,6 +16,20 @@ use strict;
 use warnings;
 use CGI qw();
 
+sub path {
+	my $self          = shift;
+	my $args          = $_[-1];
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => '',
+	);
+}
+
 sub title {
 	my $self = shift;
 	return "Instructor tools for ".$self->{ce}->{courseName};

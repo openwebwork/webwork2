@@ -57,26 +57,24 @@ sub setRowHTML {
 			
 }
 
-sub title {
-	my ($self, @components) = @_;
-	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
-}
+
 
 # Initialize does all of the form processing.  It's extensive, and could probably be cleaned up and
 # consolidated with a little abstraction.
 sub initialize {
 	my ($self, @components) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $setName = $self->getSetName(@components);
-	my $setRecord = $db->getGlobalSet($setName);
+	my $r           = $self->{r};
+	my $db          = $self->{db};
+	my $ce          = $self->{ce};
+	my $authz       = $self->{authz};
+	my $user        = $r->param('user');
+	my $setName     = $self->getSetName(@components);
+	my $setRecord   = $db->getGlobalSet($setName);
+	$self->{set}    = $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
-	my $forUsers = scalar(@editForUser);
-	my $forOneUser = $forUsers == 1;
+	my $forUsers    = scalar(@editForUser);
+	my $forOneUser  = $forUsers == 1;
 
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
@@ -120,7 +118,27 @@ sub initialize {
 	} 
 }
 
+sub path {
+	my $self          = shift;
+	my $args          = $_[-1];
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $set_id    = $self->{set}->set_id;
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		'sets'          => "$root/$courseName/instructor/sets/",
+		"set:$set_id"   => '',
+	);
+}
 
+sub title {
+	my ($self, @components) = @_;
+	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
+}
 sub body {
 	my ($self, @components) = @_;
 	my $r = $self->{r};

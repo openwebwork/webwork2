@@ -99,6 +99,26 @@ sub fieldEditHTML {
 	}
 }
 
+sub title {
+	my $self = shift;
+	return $self->{ce}->{courseName}. ' class list';
+}
+
+sub path {
+	my $self          = shift;
+	my $args          = $_[-1];
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		"class:$courseName"      => ''
+	);
+}
+
 sub body {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};

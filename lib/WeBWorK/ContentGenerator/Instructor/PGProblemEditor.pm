@@ -197,6 +197,25 @@ sub initialize {
 	
 }
 
+sub path {
+	my $self          = shift;
+	my $set_id        = shift;
+	my $problem_id    = shift;
+	my $args          = $_[-1];
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		'sets'          => "$root/$courseName/instructor/sets/",
+		"set:$set_id"   => "$root/$courseName/instructor/sets/$set_id/",
+		"problems"      => "$root/$courseName/instructor/sets/$set_id/problems",
+		"problem:$problem_id"   => ''
+	);
+}
 sub body {
 	my $self = shift;
 	

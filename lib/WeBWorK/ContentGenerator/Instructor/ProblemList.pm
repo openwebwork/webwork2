@@ -75,6 +75,7 @@ sub initialize {
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $setRecord = $db->getGlobalSet($setName);
+	$self->{set}  = $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
 	my $forUsers = scalar(@editForUser);
@@ -170,6 +171,23 @@ sub initialize {
 		$self->{path} = [@path];
 	}
 
+}
+
+sub path {
+	my $self           = shift;
+	my $args           = $_[-1];
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $set_id     = $self->{set}->set_id;
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		'sets'          => "$root/$courseName/instructor/sets/",
+		"set $set_id"   => "$root/$courseName/instructor/sets/$set_id",
+		'problems'  => '',    
+	);
 }
 
 sub title {
