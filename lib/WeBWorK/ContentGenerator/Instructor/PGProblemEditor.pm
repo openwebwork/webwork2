@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.29 2004/05/06 21:53:41 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.32 2004/05/08 19:35:21 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetEditor - Edit a set definition 
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils qw(readFile surePathToFile);
 use Apache::Constants qw(:common REDIRECT);
 use HTML::Entities;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
@@ -434,6 +434,8 @@ sub saveFileChanges {
 	if (defined $submit_button and $submit_button eq 'Save as' and defined $currentSourceFilePath and -e $currentSourceFilePath) {
 		warn "File $currentSourceFilePath exists.  File not saved.";
 	} else {
+	    # make sure any missing directories are created
+	    $currentSourceFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$currentSourceFilePath);
 		eval {
 			local *OUTPUTFILE;
 			open OUTPUTFILE, ">", $currentSourceFilePath
