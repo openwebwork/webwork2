@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.39 2004/01/18 00:12:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.40 2004/01/19 04:26:45 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -214,17 +214,17 @@ sub body {
 	
 	my $table = CGI::Tr({}, 
 		CGI::th("Sel.")
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=set_id"},       "ID"))
+		. CGI::th("Edit ", CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=set_id"}, "set"), " dates")
 		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=open_date"},    "Open Date"))
 		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=due_date"},     "Due Date"))
 		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=answer_date"},  "Answer Date"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_probs"},    "Num. Problems"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:"))
+		. CGI::th("Edit problems")                                  # CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_probs"}"Num. Problems"),
+		. CGI::th("Assign users")                                   #, CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:") )
 	) . "\n";
 	
 	foreach my $set (@sets) {
-		my $count = $counts{$set->set_id};
-		
+		my $count         = $counts{$set->set_id};
+		my $totalUsers    = scalar(@users);   #FIXME -- probably shouldn't count those who have dropped.
 		my $userCountMessage = $self->userCountMessage($count, scalar(@users));
 	
 		$table .= CGI::Tr({}, 
@@ -241,7 +241,7 @@ sub body {
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
 			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/problems/?".$self->url_authen_args}, $problemCounts{$set->set_id}))
-			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/?".$self->url_authen_args}, $userCountMessage))
+			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/?".$self->url_authen_args}, "$count/$totalUsers")   )   #$userCountMessage))
 		) . "\n"
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
