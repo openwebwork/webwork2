@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.13 2004/05/22 00:38:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.14 2004/05/22 01:50:35 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -117,9 +117,6 @@ sub add_selected {
   for $selected (@selected) {
     if($selected->[1] & ADDED) {
       $file = $selected->[0];
-      @path = split "/", $selected->[0];
-      pop @path;			# Remove the file name from the path
-      shift @path if $path[0] eq ""; # remove the null element from the begining
       my $problemRecord = $db->newGlobalProblem();
       $problemRecord->problem_id($freeProblemID++);
       $problemRecord->set_id($setName);
