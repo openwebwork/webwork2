@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.56 2004/07/03 17:29:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.57 2004/08/28 13:56:54 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,12 +93,12 @@ sub defineProblemEnvir {
 	# ADDED: courseName, formatedDueDate
 	
 	$envir{openDate}            = $set->open_date;
-	$envir{formattedOpenDate}   = formatDateTime($envir{openDate});
+	$envir{formattedOpenDate}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone});
 	$envir{dueDate}             = $set->due_date;
-	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
+	$envir{formattedDueDate}    = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone});
 	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
 	$envir{answerDate}          = $set->answer_date;
-	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
+	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone});
 	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
