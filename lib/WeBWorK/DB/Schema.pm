@@ -86,6 +86,11 @@ sub new {
 
 =over
 
+=item count(@keyparts)
+
+Returns the number of records matching @keyparts is found in the table. (This
+is currently implemented only for the WW1Hash schema.)
+
 =item list(@keyparts)
 
 Returns a list containing the key of each record in the table that matches the

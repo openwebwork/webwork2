@@ -291,7 +291,7 @@ sub body {
 	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)}, "Edit the list of problems in this set");
 	
 	my $userCount = $db->listUsers;
-	my $usersOfSet = $db->listSetUsers($setName);
+	my $usersOfSet = $db->countSetUsers($setName);
 	print CGI::h2({}, "Users"), "\n";
 	print CGI::p({}, "This set is assigned to ".$self->userCountMessage($usersOfSet, $userCount).".");
 	print CGI::a({href=>$r->uri."users/?".$self->url_authen_args}, "Determine who this set is assigned to");

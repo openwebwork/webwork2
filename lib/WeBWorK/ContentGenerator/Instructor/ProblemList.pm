@@ -221,7 +221,7 @@ sub body {
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $userCount = $db->listUsers();
-	my $setUserCount = $db->listSetUsers($setName);
+	my $setUserCount = $db->countSetUsers($setName);
 	my $userCountMessage = "This set is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
 
 	if (@editForUser) {

@@ -29,6 +29,57 @@ use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
 # table access functions
 ################################################################################
 
+sub count {
+	my ($self, @keyparts) = @_;
+	my ($matchUserID, $matchSetID) = @keyparts[0 .. 1];
+	
+	# connect
+	return unless $self->{driver}->connect("ro");
+	
+	# get a list of PSVNs that match the userID and setID given
+	my @matchingPSVNs;
+	if (defined $matchUserID and not defined $matchSetID) {
+		@matchingPSVNs = $self->getPSVNsForUser($matchUserID);
+	} elsif (defined $matchSetID and not defined $matchUserID) {
+		@matchingPSVNs = $self->getPSVNsForSet($matchSetID);
+	} elsif (defined $matchUserID and defined $matchSetID) {
+		@matchingPSVNs = $self->getPSVN($matchUserID, $matchSetID);
+	} else {
+		# we need all PSVNs, so we have to do this ourselves.
+		@matchingPSVNs =
+			grep { m/^\d+$/ }
+				keys %{ $self->{driver}->hash() };
+	}
+	
+	my $result = 0;
+	if ($self->{table} eq "set_user") {
+		$result = @matchingPSVNs;
+	} elsif ($self->{table} eq "problem_user") {
+		my $matchProblemID = $keyparts[2];
+		foreach (@matchingPSVNs) {
+			my $string = $self->fetchString($_);
+			next unless defined $string;
+			my %hash = string2hash($string);
+			my $userID = $hash{stlg};
+			my $setID = $hash{stnm};
+			if (defined $matchProblemID) {
+				# we only want one 
+				if (exists $hash{"pfn$matchProblemID"}) {
+					$result++;
+				}
+			} else {
+				my (undef, undef, @problemIDs) = $self->hash2IDs(%hash);
+				$result += @problemIDs;
+			}
+		}
+	}
+	
+	# disconnect
+	$self->{driver}->disconnect();
+	
+	return $result;
+}
+
 sub list {
 	my ($self, @keyparts) = @_;
 	my ($matchUserID, $matchSetID) = @keyparts[0 .. 1];

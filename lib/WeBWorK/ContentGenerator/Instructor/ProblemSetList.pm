@@ -168,14 +168,15 @@ sub body {
 	$WeBWorK::timer->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer;
 	foreach my $set_id (@set_IDs) {
 		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
-	#	$counts{$set_id} = $db->listSetUsers($set_id);
+		#$counts{$set_id} = $db->listSetUsers($set_id);
 	}
 	$WeBWorK::timer->continue("End obtaining problem on sets") if defined $WeBWorK::timer;
 	
 	$WeBWorK::timer->continue("Begin obtaining assigned user info on sets") if defined $WeBWorK::timer;
 	foreach my $set_id (@set_IDs) {
-	#	$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
-		$counts{$set_id} = $db->listSetUsers($set_id);
+		#$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
+		#$counts{$set_id} = $db->listSetUsers($set_id);
+		$counts{$set_id} = $db->countSetUsers($set_id);
 	}	
 	$WeBWorK::timer->continue("End obtaining assigned user info on sets") if defined $WeBWorK::timer;
 

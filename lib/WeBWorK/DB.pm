@@ -981,8 +981,26 @@ sub newUserSet {
 	return $self->{set_user}->{record}->new(@prototype);
 }
 
+sub countSetUsers {
+	my ($self, $setID) = @_;
+	
+	croak "listSetUsers: requires 1 argument"
+		unless @_ == 2;
+	croak "listSetUsers: argument 1 must contain a set_id"
+		unless defined $setID;
+	
+	# inefficient way
+	#return scalar $self->{set_user}->list(undef, $setID);
+	
+	# efficient way
+	return $self->{set_user}->count(undef, $setID);
+}
+
 sub listSetUsers {
 	my ($self, $setID) = @_;
+	
+	carp "listSetUsers called in SCALAR context: use countSetUsers instead!\n"
+		unless wantarray;
 	
 	croak "listSetUsers: requires 1 argument"
 		unless @_ == 2;
@@ -1242,8 +1260,28 @@ sub newUserProblem {
 	return $self->{problem_user}->{record}->new(@prototype);
 }
 
+sub countProblemUsers {
+	my ($self, $setID, $problemID) = @_;
+	
+	croak "countProblemUsers: requires 2 arguments"
+		unless @_ == 3;
+	croak "countProblemUsers: argument 1 must contain a set_id"
+		unless defined $setID;
+	croak "countProblemUsers: argument 2 must contain a problem_id"
+		unless defined $problemID;
+	
+	# the slow way
+	#return scalar $self->{problem_user}->list(undef, $setID, $problemID);
+	
+	# the fast way
+	return $self->{problem_user}->count(undef, $setID, $problemID);
+}
+
 sub listProblemUsers {
 	my ($self, $setID, $problemID) = @_;
+	
+	carp "listProblemUsers called in SCALAR context: use countProblemUsers instead!\n"
+		unless wantarray;
 	
 	croak "listProblemUsers: requires 2 arguments"
 		unless @_ == 3;
