@@ -1,5 +1,8 @@
-CREATE DATABASE webwork;
-USE webwork;
+# Feed this file to the mysql client to create a course database. Replace the
+# string !!COURSENAME!! with the name of your course. 
+
+CREATE DATABASE webwork_!!COURSENAME!!;
+USE webwork_!!COURSENAME!!;
 
 CREATE TABLE user (
 	id VARCHAR(255) NOT NULL PRIMARY KEY,
@@ -72,5 +75,5 @@ CREATE TABLE problem_user (
 	num_incorrect INT
 );
 
-GRANT select ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'zaqwsxcderfv';
-GRANT select, insert, update, delete ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'qwerfdsazxcv';
+GRANT select ON webwork_!!COURSENAME!!.* TO webworkRead@localhost IDENTIFIED BY 'zaqwsxcderfv';
+GRANT select, insert, update, delete ON webwork_!!COURSENAME!!.* TO webworkWrite@localhost IDENTIFIED BY 'qwerfdsazxcv';
