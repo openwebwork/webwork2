@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.3 2004/03/15 21:35:12 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.4 2004/04/29 16:29:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -211,6 +211,8 @@ sub displayStudentStats {
 	my $max_problems=0;
 	
 	foreach my $setName (@setIDs)   {
+	    my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
+			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
 	    my $status = 0;
 	    my $attempted = 0;
 	    my $longStatus = '';
@@ -279,7 +281,7 @@ sub displayStudentStats {
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
 		push @rows, CGI::Tr(
-			CGI::td($setName),
+			CGI::td(CGI::a({-href=>$act_as_student_set_url},$setName)),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
