@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.26 2004/01/17 17:05:53 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.28 2004/01/18 03:39:06 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,8 +25,9 @@ WeBWorK::Authen - Check user identity, manage session keys.
 use strict;
 use warnings;
 use Apache::Cookie;
-use Apache::Util qw(unescape_uri_info);
-use Data::Dumper;
+use Date::Format;
+
+use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 
 sub new($$$) {
 	my $invocant = shift;
@@ -91,29 +92,50 @@ sub unexpiredKeyExists($$) {
 	}
 }
 
-sub checkCookie {
+sub fetchCookie {
 	my ($self, $user, $key) = @_;
 	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $courseID = $ce->{courseName};
+	
 	my %cookies = Apache::Cookie->fetch;
-	my $cookie = $cookies{WeBWorKAuthentication};
+	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+	
 	if ($cookie) {
-		my ($user, $key) = $cookie->value =~ m/^user=([^&]*)&key=([^&]*)$/;
-		return $user, $key;
+		#warn __PACKAGE__, ": fetchCookie: found a cookie for this course: \"", $cookie->as_string, "\"\n";
+		#warn __PACKAGE__, ": fetchCookie: cookie has this value: \"", $cookie->value, "\"\n";
+		my ($userID, $key) = split "\t", $cookie->value;
+		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
+			#warn __PACKAGE__, ": fetchCookie: looks good, returning userID=$userID key=$key\n";
+			return $userID, $key;
+		} else {
+			#warn __PACKAGE__, ": fetchCookie: malformed cookie. returning empty strings.\n";
+			return "", "";
+		}
+	} else {
+		#warn __PACKAGE__, ": fetchCookie: found no cookie for this course. returning empty strings.\n";
+		return "", "";
 	}
 }
 
 sub sendCookie {
-	my ($self, $user, $key) = @_;
+	my ($self, $userID, $key) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $courseID = $ce->{courseName};
+	
+	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
 	my $cookie = Apache::Cookie->new($r,
-		-name => "WeBWorKAuthentication",
-		-value => "user=$user&key=$key",
-		-expires => "+30D",
-		-domain => $r->hostname,
-		-path => $ce->{webworkURLRoot},
-		-secure => 0,
+		-name    => "WeBWorKCourseAuthen.$courseID",
+		-value   => "$userID\t$key",
+		-expires => $expires,
+		-domain  => $r->hostname,
+		-path    => $ce->{webworkURLRoot},
+		-secure  => 0,
 	);
+	my $cookieString = $cookie->as_string;
+	
+	#warn __PACKAGE__, ": sendCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
@@ -121,14 +143,20 @@ sub killCookie {
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $courseID = $ce->{courseName};
+	
+	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
 	my $cookie = Apache::Cookie->new($r,
-		-name => "WeBWorKAuthentication",
-		-value => "user=&key=",
-		-expires => "-1D",
+		-name => "WeBWorKCourseAuthen.$courseID",
+		-value => "\t",
+		-expires => $expires,
 		-domain => $r->hostname,
 		-path => $ce->{webworkURLRoot},
 		-secure => 0,
 	);
+	my $cookieString = $cookie->as_string;
+	
+	#warn __PACKAGE__, ": killCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
@@ -159,9 +187,8 @@ sub verify($) {
 	my $passwd = $r->param('passwd');
 	my $key = $r->param('key');
 	
-	my ($cookieUser, $cookieKey) = $self->checkCookie;
-	$cookieUser ||= "";
-	$cookieKey ||= "";
+	my ($cookieUser, $cookieKey) = $self->fetchCookie;
+	#warn __PACKAGE__, ": verify: cookieUser=$cookieUser cookieKey=$cookieKey\n";
 	
 	VERIFY: {
 		# This block is here so we can "last" out of it when we've
@@ -227,7 +254,7 @@ sub verify($) {
 		########################################################
 		unless (defined $userRecord->status) {
 			$userRecord-> status('C');
-			warn "Setting status for user $user to C.  It was previously undefined.";
+			#warn "Setting status for user $user to C.  It was previously undefined.";
 		}
 		unless ($userRecord->status eq 'C') {
 			$error  = "The user $user has been dropped from this course. ";
