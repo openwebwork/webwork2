@@ -404,29 +404,25 @@ sub body {
 	##### answer processing #####
 	$WeBWorK::timer0->continue("begin answer processing") if $timer0_ON;
 	# if answers were submitted:
+	my $scoreRecordedMessage;
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
 		# this will be undefined if the problem has not been assigned to this user
 		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
-		# store answers in DB for sticky answers
-		my %answersToStore;
-		my %answerHash = %{ $pg->{answers} };
-		$answersToStore{$_} = $answerHash{$_}->{original_student_ans}
-			foreach (keys %answerHash);
-		my $answerString = encodeAnswers(%answersToStore,
-			@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} });
-		
-		$problem->last_answer($answerString);
-		# if $pureProblem is defined ( there is a user ) then record the last answer.
-		# FIXME  (we're assuming that not being able to get a pure problem is enough to determine
-		# whether or not the problem database needs to be updated.  This should be thought through
-		# more carefully to be sure.
-		if ( defined($pureProblem) )  {
+		if (defined $pureProblem) {
+			# store answers in DB for sticky answers
+			my %answersToStore;
+			my %answerHash = %{ $pg->{answers} };
+			$answersToStore{$_} = $answerHash{$_}->{original_student_ans}
+				foreach (keys %answerHash);
+			my $answerString = encodeAnswers(%answersToStore,
+				@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} });
+			
+			# store last answer to database
+			$problem->last_answer($answerString);
 			$pureProblem->last_answer($answerString);
 			$db->putUserProblem($pureProblem);
-			#die "pureProblem = ", defined($pureProblem);
-		
-		
+			
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
 				$problem->status($pg->{state}->{recorded_score});
@@ -437,7 +433,11 @@ sub body {
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-				$db->putUserProblem($pureProblem);
+				if ($db->putUserProblem($pureProblem)) {
+					$scoreRecordedMessage = "Your score was recorded.";
+				} else {
+					$scoreRecordedMessage = "Your score was not recorded because there was a failure in storing the problem record to the database.";
+				}
 				# write to the transaction log, just to make sure
 				writeLog($self->{ce}, "transaction",
 					$problem->problem_id."\t".
@@ -453,9 +453,18 @@ sub body {
 					$pureProblem->num_correct."\t".
 					$pureProblem->num_incorrect
 				);
+			} else {
+				if (time < $set->open_date or time > $set->due_date) {
+					$scoreRecordedMessage = "Your score was not recorded because this problem set is closed.";
+				} else {
+					$scoreRecordedMessage = "Your score was not recorded.";
+				}
 			}
+		} else {
+			$scoreRecordedMessage = "Your score was not recorded because this problem has not been built for you.";
 		}
 	}
+	
 	# logging student answers
 	my $pastAnswerLog = undef;
 	if (defined( $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
@@ -475,7 +484,6 @@ sub body {
 				);
 		}
 	}
-	# end logging student answers
 	
 	$WeBWorK::timer0->continue("end answer processing") if $timer0_ON;
 	
@@ -566,6 +574,7 @@ sub body {
 		}
 	}
 	print CGI::p(
+		$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 		"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
 		$problem->attempted
 			? "Your recorded score is $lastScore." . CGI::br()
@@ -700,7 +709,8 @@ sub attemptResults($$$$$$) {
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
-	my $header = CGI::th("Part");
+	my $header;
+	#$header .= CGI::th("Part");
 	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
 	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
@@ -725,7 +735,8 @@ sub attemptResults($$$$$$) {
 		# of the answer names is changeable. this only fixes it for "AnSwEr"
 		$name =~ s/^AnSwEr//;
 		
-		my $row = CGI::td($name);
+		my $row;
+		#$row .= CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td(nbsp($studentAnswer)) : "";
 		$row .= $showAttemptPreview ? CGI::td(nbsp($preview))       : "";
 		$row .= $showCorrectAnswers ? CGI::td(nbsp($correctAnswer)) : "";
@@ -812,7 +823,7 @@ sub previewAnswer($$) {
 	
 	my $tex = $answerResult->{preview_latex_string};
 	
-	return "" if $tex eq "";
+	return "" unless defined $tex and $tex ne "";
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
@@ -844,7 +855,7 @@ sub previewAnswer($$) {
 				# should use surePathToTmpFile, but we have to
 				# isolate it from the problem enivronment first
 		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
-
+		
 		# call dvipng to generate a preview
 		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
 		rmtree($wd, 0, 0);
