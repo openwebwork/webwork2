@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.42 2004/03/06 00:48:16 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.43 2004/03/06 18:50:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,27 +28,27 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime sortByName);
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "",
-	);
-}
+#sub path {
+#	my ($self, $args) = @_;
+#	
+#	my $ce = $self->{ce};
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseName = $ce->{courseName};
+#	return $self->pathMacro($args,
+#		"Home" => "$root",
+#		$courseName => "",
+#	);
+#}
 
-sub title {
-	my $self        = shift;
-	my $r           = $self ->{r};
-	my $db          = $self ->{db};
-	my $userName    = ($r-> param("effectiveUser")) ? $r-> param("effectiveUser"): $r-> param("user");
-	my $courseName  = $self ->{ce} -> {courseName};
-	
-	return "WeBWorK welcomes student $userName to $courseName" ;
-}
+#sub title {
+#	my $self        = shift;
+#	my $r           = $self ->{r};
+#	my $db          = $self ->{db};
+#	my $userName    = ($r-> param("effectiveUser")) ? $r-> param("effectiveUser"): $r-> param("user");
+#	my $courseName  = $self ->{ce} -> {courseName};
+#	
+#	return "WeBWorK welcomes student $userName to $courseName" ;
+#}
 
 sub body {
 	my $self            = shift;
