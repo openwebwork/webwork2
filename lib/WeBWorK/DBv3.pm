@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.58 2004/10/22 23:06:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DBv3.pm,v 1.2 2004/11/25 05:50:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -16,6 +16,7 @@
 
 package WeBWorK::DBv3;
 use base 'Class::DBI';
+use WeBWorK::DBv3::NormalizerMixin;
 
 =head1 NAME
 
@@ -66,8 +67,28 @@ database.
 
 use strict;
 use warnings;
-use vars qw/$dbh/;
+use vars qw/$dbh $dt_format/;
+use DateTime::Format::DBI;
 use WeBWorK::DBv3::Utils;
+
+=head1 INITIALIZATION
+
+The init($wwdbv3_settings) function allows the user to set up the details of the
+database connection at runtime rather than at compile time. This lets us use
+values from the WeBWorK::CourseEnvironment (loaded at runtime) in specifying the
+database connection.
+
+$wwdbv3_settings is a reference to a hash containing the following values:
+
+ dsn          => The DBI data source, e.g. "dbi:mysql:wwdbv3"
+ user         => The user name with which to connect.
+ pass         => The password to supply to connect.
+ attr         => A reference to a hash containing DBI attributes.
+                 See L<DBI> for more information.
+ upgrade_lock => Path to a file which is flock()'d while performing
+                 database upgrades.
+
+=cut
 
 sub init {
 	my ($wwdbv3_settings) = @_;
@@ -83,53 +104,53 @@ sub init {
 	
 	$dbh = DBI->connect_cached($dsn, $user, $pass, \%attr);
 	
+	$dt_format = new DateTime::Format::DBI($dbh);
+	
 	my $lockfile = $wwdbv3_settings->{upgrade_lock};
 	upgrade_schema($dbh, $lockfile);
 }
 
+# override db_Main to get database handle initialized in init() above. note that
+# Class::DBI->connection() is never called.
 sub db_Main {
-	my ($self) = @_;
 	return $dbh;
 }
 
-#__PACKAGE__->set_db(Main => DSN, USER, PASS, ATTR);
-
 ################################################################################
 
-package WeBWorK::DBv3::Setting;
-use base 'WeBWorK::DBv3';
+=head1 PUBLIC CLASS::DBI EXTENSIONS
 
-#__PACKAGE__->set_up_table("setting");
-__PACKAGE__->table("setting");
-__PACKAGE__->columns(All => qw/name val/);
+WeBWorK::DBv3 extends Class::DBI to provide several features useful to users to
+the WWDBv3 system.
 
-=head1 METHODS AVAILABLE TO ALL WWDBv3 CLASSES
+=head2 TABLE LOCKING
+
+When using a table type that doesn't support transactions, we need to be able to
+do table-level locks. The currently implementations are from
+Class::DBI::Extension and are MySQL-specific.
 
 =over
 
-=item Class->lock_table(); Class->unlock_table();
+=item lock_table()
 
-(From Class::DBI::Extension.) Without transaction support (like MyISAM), we need
-to lock tables in some cases. NOTE: Implemented SQL syntax is specific for
-MySQL.
+Write-lock the current table.
 
 =cut
 
-__PACKAGE__->set_sql('LockTable', <<'SQL');
-LOCK TABLES %s WRITE
-SQL
-    ;
+__PACKAGE__->set_sql(LockTable => "LOCK TABLES %s WRITE");
 
 sub lock_table {
     my $class = shift;
     $class->sql_LockTable($class->table)->execute;
 }
 
+=item unlock_table()
 
-__PACKAGE__->set_sql('UnlockTable', <<'SQL');
-UNLOCK TABLES
-SQL
-    ;
+Unlock I<all> locked tables.
+
+=cut
+
+__PACKAGE__->set_sql(UnlockTable => "UNLOCK TABLES");
 
 sub unlock_table {
     my $class = shift;
@@ -142,60 +163,376 @@ sub unlock_table {
 
 ################################################################################
 
-package WeBWorK::DBv3::EquationCache;
+=head1 INTERNAL IMPROVEMENTS
+
+WeBWorK::DBv3 extends Class::DBI to provide several features useful in the
+definition of table classes.
+
+=head2 DATETIME SUPPORT
+
+The method has_a_datetime() has been defined as a shortcut to specifying that a
+DATETIME column should be inflated to and deflated from a DateTime.pm object.
+
+ __PACKAGE__->has_a_datetime("open_date");
+
+=cut
+
+sub datetime_inflate {
+	my $dt = $dt_format->parse_datetime($_[0]) or _croak("invalid date: '$_[0]'");
+	return $dt->set_time_zone("UTC");
+}
+
+sub datetime_deflate {
+	my $dt = $_[0]->clone->set_time_zone("UTC"); # clone to avoid changing timezone of original object
+	return $dt_format->format_datetime($dt);
+}
+
+# this declares a column to be of type DateTime and defines inflation/deflation
+# subroutines for it
+sub has_a_datetime {
+	my ($class, $field) = @_;
+	return unless $field;
+	
+	$class->has_a(
+		$field  => "DateTime",
+		inflate => \&datetime_inflate,
+		deflate => \&datetime_deflate,
+	);
+}
+
+=head2 PER-COLUMN NORMALIZATION SUPPORT
+
+WeBWorK::DBv3 adds per-column normalization support to Class::DBI via
+WeBWorK::DBv3::NormalizerMixin. The interface and implementation are similar to
+that of Class::DBI triggers (via Class::Trigger).
+
+To add a normalizer to a field:
+
+ __PACKAGE__->add_normalizer(field => \&normalizer_sub);
+
+&normalizer_sub takes one argument, the value to be normalized. It should return
+the normalized value. For example:
+
+ sub bool_normalizer { $_[0] ? 1 : 0 }
+ WeBWorK::DBv3::Course->add_normalizer(visible => \&bool_normalizer);
+
+Like triggers, multiple normalizers can be added for a single field. However,
+you cannot specify the order in which they will be run.
+
+=cut
+
+sub normalize_column_values {
+	my ($self, $column_values) = @_;
+	
+	my @errors;
+	
+	foreach my $column (keys %$column_values) {
+		#warn "callig normalizers for column '$column'.\n";
+		eval { $self->call_normalizer($column_values, $column) };
+		push @errors, $column => $@ if $@;
+	}
+	
+	return unless @errors;
+	$self->_croak(
+		"normalize_column_values error: " . join(" ", @errors),
+		method => "normalize_column_values",
+		data => { @errors },
+	);
+}
+
+=head3 PREDEFINED NORMALIZERS
+
+Several normalizers are conveniently predefined using a syntax similar to that
+of has_a() relationship declarations.
+
+=over
+
+=item has_a_boolean($field)
+
+True values will be normalized to C<1>, false values to C<0>.
+
+=cut
+
+sub bool_normalizer { $_[0] ? 1 : 0 }
+sub has_a_boolean {
+	my ($class, $field) = @_;
+	return unless $field;
+	
+	$class->add_normalizer($field => \&bool_normalizer);
+}
+
+=back
+
+=cut
+
+################################################################################
+# Table classes: each table in the database is a subclass of WeBWorK::DBv3.
+# (http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DatabaseSchemaV3)
+# 
+# These are in the reverse order from the order in DatabaseSchemaV3, to ensure
+# that the has_a() part of a relationship occurs before the has_many() part.
+# 
+# From C<Class::DBI/has_many>:
+# 
+# When setting up the relationship we examine the foreign class's has_a()
+# declarations to discover which of its columns reference our class. (Note that
+# because this happens at compile time, if the foreign class is defined in the
+# same file, the class with the has_a() must be defined earlier than the class
+# with the has_many(). If the classes are in different files, Class::DBI should
+# be able to do the right thing).
+################################################################################
+
+package WeBWorK::DBv3::ProblemAttempt;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("equation_cache");
-__PACKAGE__->table("equation_cache");
-__PACKAGE__->columns(All => qw/id tex width height depth/);
+__PACKAGE__->table("problem_attempt");
+__PACKAGE__->columns(All => qw/id problem_version creation_date score data/);
+
+__PACKAGE__->has_a(problem_version => "WeBWorK::DBv3::ProblemVersion");
+__PACKAGE__->has_a_datetime("creation_date");
+
+# FIXME need trigger to set creation_date
 
 ################################################################################
 
-package WeBWorK::DBv3::Course;
+package WeBWorK::DBv3::ProblemVersion;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("course");
-__PACKAGE__->table("course");
-__PACKAGE__->columns(All => qw/id name visible locked archived/);
-__PACKAGE__->has_many(statuses => "WeBWorK::DBv3::Status");
-__PACKAGE__->has_many(roles => "WeBWorK::DBv3::Role");
-__PACKAGE__->has_many(sections => "WeBWorK::DBv3::Section");
-__PACKAGE__->has_many(recitations => "WeBWorK::DBv3::Recitation");
-__PACKAGE__->has_many(participants  => "WeBWorK::DBv3::Participant");
-__PACKAGE__->has_many(abstract_sets => "WeBWorK::DBv3::AbstractSet");
+__PACKAGE__->table("problem_version");
+__PACKAGE__->columns(All => qw/id set_version problem_assignment creation_date
+source_file seed/);
+
+__PACKAGE__->has_a(set_version => "WeBWorK::DBv3::SetVersion");
+__PACKAGE__->has_a(problem_assignment => "WeBWorK::DBv3::ProblemAssignment");
+__PACKAGE__->has_a_datetime("creation_date");
+
+__PACKAGE__->has_many(problem_attempts => "WeBWorK::DBv3::ProblemAttempt");
+
+# FIXME need trigger to set creation_date
 
 ################################################################################
 
-package WeBWorK::DBv3::User;
+package WeBWorK::DBv3::SetVersion;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("user");
-__PACKAGE__->table("user");
-__PACKAGE__->columns(All => qw/id first_name last_name email_address student_id
-login_id password display_mode show_old_answers/);
-__PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
+__PACKAGE__->table("set_version");
+__PACKAGE__->columns(All => qw/id set_assignment problem_order creation_date/);
+
+__PACKAGE__->has_a(set_assignment => "WeBWorK::DBv3::SetAssignment");
+__PACKAGE__->has_a_datetime("creation_date");
+
+__PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
+
+# FIXME need trigger to set creation_date
+
+sub problem_order_list {
+	my ($self, @problem_order) = @_;
+	if (@problem_order) {
+		return $self->problem_order(join(",", @problem_order));
+	} else {
+		return split(",", $self->problem_order);
+	}
+}
 
 ################################################################################
 
-package WeBWorK::DBv3::Status;
+package WeBWorK::DBv3::ProblemOverride;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("status");
-__PACKAGE__->table("status");
-__PACKAGE__->columns(All => qw/id course name allow_course_access
-include_in_assignment include_in_stats include_in_scoring/);
+__PACKAGE__->table("problem_override");
+__PACKAGE__->columns(All => qw/id abstract_problem section recitation
+participant source_type source_file source_group_set_id weight
+max_attempts_per_version version_creation_interval versions_per_interval
+version_due_date_offset version_answer_date_offset/);
+
+__PACKAGE__->has_a(abstract_problem => "WeBWorK::DBv3::AbstractProblem");
+__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
+__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
+__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
+
+# FIXME need to make version_due_date_offset/version_answer_date_offset
+# DateTime::Offset objects
+
+################################################################################
+
+package WeBWorK::DBv3::SetOverride;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("set_override");
+__PACKAGE__->columns(All => qw/id abstract_set section recitation participant
+set_header hardcopy_header open_date due_date answer_date published
+problem_order reorder_type reorder_subset_size atomicity
+max_attempts_per_version version_creation_interval versions_per_interval
+version_due_date_offset version_answer_date_offset/);
+
+__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
+__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
+__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
+__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
+
+__PACKAGE__->has_a_datetime("open_date");
+__PACKAGE__->has_a_datetime("due_date");
+__PACKAGE__->has_a_datetime("answer_date");
+
+# FIXME need to make version_due_date_offset/version_answer_date_offset
+# DateTime::Offset objects
+
+sub problem_order_list {
+	my ($self, @problem_order) = @_;
+	if (@problem_order) {
+		return $self->problem_order(join(",", @problem_order));
+	} else {
+		return split(",", $self->problem_order);
+	}
+}
+
+################################################################################
+
+package WeBWorK::DBv3::ProblemAssignment;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("problem_assignment");
+__PACKAGE__->columns(All => qw/id set_assignment abstract_problem source_file/);
+
+__PACKAGE__->has_a(set_assignment => "WeBWorK::DBv3::SetAssignment");
+__PACKAGE__->has_a(abstract_problem => "WeBWorK::DBv3::AbstractProblem");
+
+__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
+__PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
+
+################################################################################
+
+package WeBWorK::DBv3::SetAssignment;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("set_assignment");
+__PACKAGE__->columns(All => qw/id abstract_set participant problem_order/);
+
+__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
+__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
+
+__PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment");
+__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
+__PACKAGE__->has_many(set_versions => "WeBWorK::DBv3::SetVersion");
+
+sub problem_order_list {
+	my ($self, @problem_order) = @_;
+	if (@problem_order) {
+		return $self->problem_order(join(",", @problem_order));
+	} else {
+		return split(",", $self->problem_order);
+	}
+}
+
+################################################################################
+
+package WeBWorK::DBv3::AbstractProblem;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("abstract_problem");
+__PACKAGE__->columns(All => qw/id abstract_set name source_type source_file
+source_group_set_id source_group_select_time weight max_attempts_per_version
+version_creation_interval versions_per_interval version_due_date_offset
+version_answer_date_offset/);
+
+__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
+
+__PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment");
+
+# FIXME need to make version_due_date_offset/version_answer_date_offset
+# DateTime::Offset objects
+
+################################################################################
+
+package WeBWorK::DBv3::AbstractSet;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("abstract_set");
+__PACKAGE__->columns(All => qw/id course name set_header problem_header
+open_date due_date answer_date published problem_order reorder_type
+reorder_subset_size reorder_time atomicity max_attempts_per_version
+version_creation_interval versions_per_interval version_due_date_offset
+version_answer_date_offset/);
+
 __PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+__PACKAGE__->has_a_datetime("open_date");
+__PACKAGE__->has_a_datetime("due_date");
+__PACKAGE__->has_a_datetime("answer_date");
+__PACKAGE__->has_a_boolean("published");
+
+__PACKAGE__->has_many(abstract_problems => "WeBWorK::DBv3::AbstractProblem");
+__PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
+
+# FIXME need to make version_due_date_offset/version_answer_date_offset
+# DateTime::Offset objects
+
+sub problem_order_list {
+	my ($self, @problem_order) = @_;
+	if (@problem_order) {
+		return $self->problem_order(join(",", @problem_order));
+	} else {
+		return split(",", $self->problem_order);
+	}
+}
+
+################################################################################
+
+package WeBWorK::DBv3::Participant;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("participant");
+__PACKAGE__->columns(All => qw/id course user status role section recitation
+last_access comment/);
+
+__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+__PACKAGE__->has_a(user => "WeBWorK::DBv3::User");
+__PACKAGE__->has_a(status => "WeBWorK::DBv3::Status");
+__PACKAGE__->has_a(role => "WeBWorK::DBv3::Role");
+__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
+__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
+
+__PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
+__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
+__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
+
+################################################################################
+
+package WeBWorK::DBv3::Recitation;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("recitation");
+__PACKAGE__->columns(All => qw/id course name/);
+
+__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
+__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
+__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
+
+################################################################################
+
+package WeBWorK::DBv3::Section;
+use base 'WeBWorK::DBv3';
+
+__PACKAGE__->table("section");
+__PACKAGE__->columns(All => qw/id course name/);
+
+__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+
+__PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
+__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
+__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 
 ################################################################################
 
 package WeBWorK::DBv3::Role;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("role");
 __PACKAGE__->table("role");
 __PACKAGE__->columns(All => qw/id course name privs/);
+
 __PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
 
 sub priv_list {
@@ -209,172 +546,68 @@ sub priv_list {
 
 ################################################################################
 
-package WeBWorK::DBv3::Section;
+package WeBWorK::DBv3::Status;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("section");
-__PACKAGE__->table("section");
-__PACKAGE__->columns(All => qw/id course name/);
+__PACKAGE__->table("status");
+__PACKAGE__->columns(All => qw/id course name allow_course_access
+include_in_assignment include_in_stats include_in_scoring/);
+
 __PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+__PACKAGE__->has_a_boolean("allow_course_access");
+__PACKAGE__->has_a_boolean("include_in_assignment");
+__PACKAGE__->has_a_boolean("include_in_stats");
+__PACKAGE__->has_a_boolean("include_in_scoring");
+
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
-__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
-__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 
 ################################################################################
 
-package WeBWorK::DBv3::Recitation;
+package WeBWorK::DBv3::User;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("recitation");
-__PACKAGE__->table("recitation");
-__PACKAGE__->columns(All => qw/id course name/);
-__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
+__PACKAGE__->table("user");
+__PACKAGE__->columns(All => qw/id first_name last_name email_address student_id
+login_id password display_mode show_old_answers/);
+
+__PACKAGE__->has_a_boolean("show_old_answers");
+
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
-__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
-__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 
 ################################################################################
 
-package WeBWorK::DBv3::Participant;
+package WeBWorK::DBv3::Course;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("participant");
-__PACKAGE__->table("participant");
-__PACKAGE__->columns(All => qw/id course user status role section recitation
-last_access comment/);
-__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
-__PACKAGE__->has_a(user => "WeBWorK::DBv3::User");
-__PACKAGE__->has_a(status => "WeBWorK::DBv3::Status");
-__PACKAGE__->has_a(role => "WeBWorK::DBv3::Role");
-__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
-__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
-__PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
-__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
-__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
+__PACKAGE__->table("course");
+__PACKAGE__->columns(All => qw/id name visible locked archived/);
+
+__PACKAGE__->has_a_boolean("visible");
+__PACKAGE__->has_a_boolean("locked");
+__PACKAGE__->has_a_boolean("archived");
+
+__PACKAGE__->has_many(statuses => "WeBWorK::DBv3::Status");
+__PACKAGE__->has_many(roles => "WeBWorK::DBv3::Role");
+__PACKAGE__->has_many(sections => "WeBWorK::DBv3::Section");
+__PACKAGE__->has_many(recitations => "WeBWorK::DBv3::Recitation");
+__PACKAGE__->has_many(participants  => "WeBWorK::DBv3::Participant");
+__PACKAGE__->has_many(abstract_sets => "WeBWorK::DBv3::AbstractSet");
 
 ################################################################################
 
-package WeBWorK::DBv3::AbstractSet;
+package WeBWorK::DBv3::EquationCache;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("abstract_set");
-__PACKAGE__->table("abstract_set");
-__PACKAGE__->columns(All => qw/id course name set_header problem_header
-open_date due_date answer_date published problem_order reorder_type
-reorder_subset_size reorder_time atomicity max_attempts_per_version
-version_creation_interval versions_per_interval version_due_date_offset
-version_answer_date_offset/);
-__PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
-__PACKAGE__->has_many(abstract_problems => "WeBWorK::DBv3::AbstractProblem");
-__PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
+__PACKAGE__->table("equation_cache");
+__PACKAGE__->columns(All => qw/id tex width height depth/);
 
 ################################################################################
 
-package WeBWorK::DBv3::AbstractProblem;
+package WeBWorK::DBv3::Setting;
 use base 'WeBWorK::DBv3';
 
-#__PACKAGE__->set_up_table("abstract_problem");
-__PACKAGE__->table("abstract_problem");
-__PACKAGE__->columns(All => qw/id abstract_set name source_type source_file
-source_group_set_id source_group_select_time weight max_attempts_per_version
-version_creation_interval versions_per_interval version_due_date_offset
-version_answer_date_offset/);
-__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
-__PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment");
-
-################################################################################
-
-package WeBWorK::DBv3::SetAssignment;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("set_assignment");
-__PACKAGE__->table("set_assignment");
-__PACKAGE__->columns(All => qw/id abstract_set participant problem_order/);
-__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
-__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
-__PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment");
-__PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
-__PACKAGE__->has_many(set_versions => "WeBWorK::DBv3::SetVersion");
-
-################################################################################
-
-package WeBWorK::DBv3::ProblemAssignment;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("problem_assignment");
-__PACKAGE__->table("problem_assignment");
-__PACKAGE__->columns(All => qw/id set_assignment abstract_problem source_file/);
-__PACKAGE__->has_a(set_assignment => "WeBWorK::DBv3::SetAssignment");
-__PACKAGE__->has_a(abstract_problem => "WeBWorK::DBv3::AbstractProblem");
-__PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
-__PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
-
-################################################################################
-
-package WeBWorK::DBv3::SetOverride;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("set_override");
-__PACKAGE__->table("set_override");
-__PACKAGE__->columns(All => qw/id abstract_set section recitation participant
-set_header hardcopy_header open_date due_date answer_date published
-problem_order reorder_type reorder_subset_size atomicity
-max_attempts_per_version version_creation_interval versions_per_interval
-version_due_date_offset version_answer_date_offset/);
-__PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
-__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
-__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
-__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
-
-################################################################################
-
-package WeBWorK::DBv3::ProblemOverride;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("problem_override");
-__PACKAGE__->table("problem_override");
-__PACKAGE__->columns(All => qw/id abstract_problem section recitation
-participant source_type source_file source_group_set_id weight
-max_attempts_per_version version_creation_interval versions_per_interval
-version_due_date_offset version_answer_date_offset/);
-__PACKAGE__->has_a(abstract_problem => "WeBWorK::DBv3::AbstractProblem");
-__PACKAGE__->has_a(section => "WeBWorK::DBv3::Section");
-__PACKAGE__->has_a(recitation => "WeBWorK::DBv3::Recitation");
-__PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
-
-################################################################################
-
-package WeBWorK::DBv3::SetVersion;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("set_version");
-__PACKAGE__->table("set_version");
-__PACKAGE__->columns(All => qw/id set_assignment problem_order creation_date/);
-__PACKAGE__->has_a(set_assignment => "WeBWorK::DBv3::SetAssignment");
-__PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
-
-################################################################################
-
-package WeBWorK::DBv3::ProblemVersion;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("problem_version");
-__PACKAGE__->table("problem_version");
-__PACKAGE__->columns(All => qw/id set_version problem_assignment creation_date
-source_file seed/);
-__PACKAGE__->has_a(set_version => "WeBWorK::DBv3::SetVersion");
-__PACKAGE__->has_a(problem_assignment => "WeBWorK::DBv3::ProblemAssignment");
-__PACKAGE__->has_many(problem_attempts => "WeBWorK::DBv3::ProblemAttempt");
-
-################################################################################
-
-package WeBWorK::DBv3::ProblemAttempt;
-use base 'WeBWorK::DBv3';
-
-#__PACKAGE__->set_up_table("problem_attempt");
-__PACKAGE__->table("problem_attempt");
-__PACKAGE__->columns(All => qw/id problem_version creation_date score data/);
-__PACKAGE__->has_a(problem_version => "WeBWorK::DBv3::ProblemVersion");
+__PACKAGE__->table("setting");
+__PACKAGE__->columns(All => qw/name val/);
 
 ################################################################################
 
