@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/httpd-wwmp-header.conf.dist,v 1.4 2003/12/09 01:12:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp-header.conf.dist,v 1.5 2004/01/05 01:02:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -112,7 +112,7 @@ AddModule mod_perl.c
 ExtendedStatus On
 
 ### Section 2: 'Main' server configuration
-ServerName webwork-dev.math.rochester.edu
+ServerName devel.webwork.rochester.edu
 
 <Directory />
     Options FollowSymLinks
