@@ -42,6 +42,24 @@ sub pre_header_initialize {
 	$self->{selected_sets}   = "Set(s) chosen: "      . join(" ", $r->param("setList"));
 	$self->{selected_users}  = "Student(s) chosen: "  .join(" ", $r->param("classList")) ;
 #   Redirect actions
+    defined($r->param('student-dates')) && do {
+    #FIXME  will only do one student and one set at a time
+    # it would be good to be able to do many sets for many student
+    # this would require a separate module
+     	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @userList        = $r->param("classList");
+		# can only become the first user listed.
+		my $student     = shift @userList;
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
 	defined($r->param('act-as-student')) && do {
 		# fix url and redirect
 		my @userList        = $r->param("classList");
@@ -58,8 +76,154 @@ sub pre_header_initialize {
 		# even that might not work with every browser since there are two effective User assignments.
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
-		#return REDIRECT;
+		return;
 	};
+	defined($r->param('edit-set-dates')) && do {
+	#FIXME  this should be replaced by redirecting to a module where you can edit
+	# dates for several sets at once
+     	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('reset-password')) && do {
+    # FIXME this should allow me to assign studentID to a number of students
+    # requires a new module
+		my @userList        = $r->param("classList");
+		# can only become the first user listed.
+		my $effectiveUser   = shift @userList;
+		my @setList         = $r->param("setList");
+		my $setName         =  shift @setList;
+		my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+
+		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
+		#FIXME  does the display mode need to be defined?
+		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
+		# even that might not work with every browser since there are two effective User assignments.
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('assign-passwords')) && do {
+  		my @userList        = $r->param("classList");
+		# can only become the first user listed.
+		my $effectiveUser   = shift @userList;
+		my @setList         = $r->param("setList");
+		my $setName         =  shift @setList;
+		my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+
+		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
+		#FIXME  does the display mode need to be defined?
+		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
+		# even that might not work with every browser since there are two effective User assignments.
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('set-stats')) && do {
+     	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/stats/set/$setName?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('drop-students')) && do {
+    #FIXME  this operation should be made faster
+    	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('edit-students-sets')) && do {
+      	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @userList        = $r->param("classList");
+		# can only become the first user listed.
+		my $student     = shift @userList;
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('edit-sets')) && do {
+    	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('student-stats')) && do {
+    	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @userList        = $r->param("classList");
+		# can only become the first user listed.
+		my $studentName     = shift @userList;
+		my $uri="$root/$courseName/instructor/stats/student/$studentName?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('edit-class-data')) && do {
+    	my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+		my @setList        = $r->param("setList");
+		# can only become the first user listed.
+		my $setName         = shift @setList;
+		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
+		warn "redirect to $uri";
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+    };
+    defined($r->param('add-students')) && do {
+		my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+
+		my $uri="$root/$courseName/instructor/?".$self->url_authen_args;
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+	};
+	defined($r->param('send-email')) && do {
+		my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+
+		my $uri="$root/$courseName/instructor/send_mail/?".$self->url_authen_args;
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+	};
+	
+	
 		
 # 		unless (substr($current_uri,-1) eq '/') {
 # 		$r->header_out(Location => "$current_uri/" . ($args ? "?$args" : ""));
@@ -167,9 +331,10 @@ sub body {
 	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
 	my $actionURL= $r->uri;
 	return join("", 
-		defined($self->{current_action}) ? CGI::h4($self->{current_action}) :'' ,
-		defined($self->{selected_users}) ? CGI::p($self->{selected_users}) : '',
-		defined($self->{selected_sets}) ? CGI::p($self->{selected_sets}) : '',
+		#defined($self->{current_action}) ? CGI::h4($self->{current_action}) :'' ,
+		#defined($self->{selected_users}) ? CGI::p($self->{selected_users}) : '',
+		#defined($self->{selected_sets}) ? CGI::p($self->{selected_sets}) : '',
+		CGI::a({href=>$prof_url},"Link to WeBWorK 1.9 Instructor tools")
 		CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::start_table({-border=>2,-cellpadding=>5}),	
