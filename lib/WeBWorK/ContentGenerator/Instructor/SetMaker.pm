@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.16 2004/05/28 23:15:44 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.17 2004/05/31 02:20:27 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,7 +144,7 @@ sub get_problem_directories {
     $all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
   }
   @all_problem_directories = sort @all_problem_directories;
-  unshift @all_problem_directories, '  -- Top --  ' if($includetop);
+  unshift @all_problem_directories, '  My Problems  ' if($includetop);
   return (\@all_problem_directories);
 }
 
@@ -361,11 +361,11 @@ sub make_top_row {
   }
 
   print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Adding Problems to ",
-  			CGI::b("Current Set: "),
+  			CGI::b("Target Set: "),
 			CGI::popup_menu(-name=> 'local_sets', 
 					-values=>$list_of_local_sets, 
 					-default=> $set_selected),
-			CGI::submit(-name=>"edit_local", -value=>"Edit Current Set"),
+			CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
 			CGI::br(), 
 			CGI::br(), 
 			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
@@ -489,7 +489,7 @@ sub pre_header_initialize {
     my $checkset = $db->getGlobalSet($r->param('local_sets'));
     if (not defined($checkset)) {
       $self->{error} = 1;
-      $self->addbadmessage('You need to select a "Current Set" before you can edit it.');
+      $self->addbadmessage('You need to select a "Target Set" before you can edit it.');
     } else {
       my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
       my $url = $self->systemLink($page);
@@ -562,7 +562,7 @@ sub pre_header_initialize {
     if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
       $self->addbadmessage('You need to select a set to view.');
     } else {
-      $set_to_display = '.' if $set_to_display eq '  -- Top --  ';
+      $set_to_display = '.' if $set_to_display eq '  My Problems  ';
       @pg_files = list_pg_files($ce->{courseDirs}->{templates},
 				"$set_to_display");
       $use_previous_problems=0;
@@ -663,7 +663,7 @@ sub pre_header_initialize {
       if (not defined($localSet) or 
           $localSet eq SELECT_SET_STRING or 
 	  $localSet eq NO_LOCAL_SET_STRING) {
-	$self->addbadmessage('You are trying to add problems to something, but you did not select a "Current Set" name as a target.');
+	$self->addbadmessage('You are trying to add problems to something, but you did not select a "Target Set" name as a target.');
       } else {
 	my $newSetRecord   = $db->getGlobalSet($localSet);
 	if (not defined($newSetRecord)) {
