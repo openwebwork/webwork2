@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.21 2004/01/25 18:16:27 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.22 2004/03/17 08:16:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -107,7 +107,11 @@ sub body {
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
-	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
+	#print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
+	
+	# preserve the form data posted to the requested URI
+	my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
+	print $self->hidden_fields(@fields_to_print);
 	
 	print CGI::table({class=>"FormLayout"}, 
 	  CGI::Tr([
@@ -135,12 +139,17 @@ sub body {
 	# form for guest login
 	if (grep m/^$practiceUserPrefix/, $db->listUsers) {
 		print CGI::startform({-method=>"POST", -action=>$r->uri});
-		print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
+		
+		# preserve the form data posted to the requested URI
+		my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
+		print $self->hidden_fields(@fields_to_print);
+		
 		print CGI::p(dequote <<"		EOT");
 			This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
 			to log into this course as a guest.
 		EOT
 		print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
+	    
 	    print CGI::endform();
 	}
 	
