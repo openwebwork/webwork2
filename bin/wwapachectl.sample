@@ -1,0 +1,31 @@
+#!/bin/sh
+HTTPD=httpd
+WEBWORKROOT=/home/yourname/webwork-modperl
+
+CONFIG=${WEBWORKROOT}/conf/httpd-wwmp-malsyned.conf
+PID=${WEBWORKROOT}/logs/httpd.pid
+
+usage() {
+	echo "$0 { start | stop | restart }"
+}
+
+case $1 in
+	start)
+		"${HTTPD}" -f "${CONFIG}"
+		;;
+	stop)
+		kill -TERM `cat "${PID}"`
+		;;
+	restart)
+		kill -HUP `cat "${PID}"`
+		;;
+	graceful)
+		kill -USR1 `cat "${PID}"`
+		;;
+	configtest)
+		"${HTTPD}" -t -f "${CONFIG}"
+		;;
+	*)
+		usage
+		;;
+esac
