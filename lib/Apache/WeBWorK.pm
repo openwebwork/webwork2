@@ -49,10 +49,11 @@ sub handler() {
 	# This stuff is pretty much copied out of the O'Reilly mod_perl book.
 	# It's for figuring out the basepath.  I may change this up if I
 	# find a better way to do it.
-	my $path_info = $r->path_info;
-	my $path_translated = $r->lookup_uri($path_info)->filename;
+	my $path_info = $r->path_info || "";
 	my $current_uri = $r->uri;
 	my $args = $r->args;
+	
+	#warn "path_info=$path_info current_uri=$current_uri args=$args\n";
 	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
@@ -69,6 +70,7 @@ sub handler() {
 	# If no course was specified, phreak out.
 	# Eventually, display a list of courses, or something.
 	unless (defined $course) {
+		warn "No course specified.\n";
 		return DECLINED;
 	}
 	
@@ -83,6 +85,8 @@ sub handler() {
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
 	if (!-e $course_env->{webworkDirs}->{courses} . "/$course") {
+		warn "Course directory for $course not found at "
+			. $course_env->{webworkDirs}->{courses} . "/$course" ."\n";
 		return DECLINED;
 	}
 	
