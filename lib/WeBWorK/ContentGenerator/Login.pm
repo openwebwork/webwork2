@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.17 2003/12/24 00:59:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.18 2004/01/16 01:14:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -100,18 +100,19 @@ sub body {
 	;
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
+	print CGI::endform();
 	
 	if (grep m/^$practiceUserPrefix/, $db->listUsers) {
+	    print CGI::startform({-method=>"POST", -action=>$r->uri});
+	    print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
 		print CGI::p(
 			"This course supports guest logins. Click " . CGI::b("Guest Login")
 			. " to log into this course as a guest.",
 			CGI::br(),
 			CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"}),
 		);
+	    print CGI::endform();
 	}
-	
-	print CGI::endform();
-	
 	return "";
 }
 
