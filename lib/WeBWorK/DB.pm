@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.52 2004/06/17 20:11:17 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.53 2004/07/20 23:21:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -344,7 +344,7 @@ sub hashDatabaseOK {
 		$self->{set_user}->{driver}->connect("ro")
 			or return 0, @results, "Failed to connect to set_user database.";
 		
-		# get PSVNs for global user (²N)
+		# get PSVNs for global user (¾N)
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
 		
@@ -358,7 +358,7 @@ sub hashDatabaseOK {
 			#warn "got setID '$setID'\n";
 		}
 		
-		# get PSVNs for each setID (²N*M)
+		# get PSVNs for each setID (¾N*M)
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
 		
@@ -556,9 +556,7 @@ sub getPasswords {
 		my $Password = $Passwords[$i];
 		my $userID = $userIDs[$i];
 		if (not defined $Password) {
-			#warn "not defined\n";
 			if ($self->{user}->exists($userID)) {
-				#warn "user exists\n";
 				$Password = $self->newPassword(user_id => $userID);
 				eval { $self->addPassword($Password) };
 				if ($@ and $@ !~ m/password exists/) {
@@ -575,8 +573,8 @@ sub getPasswords {
 
 $Password is a record object. If a password record with the same user ID exists
 in the password table, the data in the record is replaced with the data in
-$Password. If a matching password record does not exist, an exception is
-thrown.
+$Password. If a matching password record does not exist, one will be created.
+(This is different from most other "put" methods.)
 
 =cut
 
@@ -590,10 +588,13 @@ sub putPassword($$) {
 	
 	checkKeyfields($Password);
 	
-	croak "putPassword: password not found (perhaps you meant to use addPassword?)"
-		unless $self->{password}->exists($Password->user_id);
-	
-	return $self->{password}->put($Password);
+	# For Passwords and PermissionLevels, auto-create a record when it doesn't
+	# already exist. This should be safe.
+	if ($self->{password}->exists($Password->user_id)) {
+		return $self->{password}->put($Password);
+	} else {
+		return $self->addPassword($Password);
+	}
 }
 
 =item deletePassword($userID)
@@ -723,11 +724,8 @@ sub getPermissionLevels {
 		my $PermissionLevel = $PermissionLevels[$i];
 		my $userID = $userIDs[$i];
 		if (not defined $PermissionLevel) {
-			#warn "not defined\n";
 			if ($self->{user}->exists($userID)) {
-				#warn "user exists\n";
 				$PermissionLevel = $self->newPermissionLevel(user_id => $userID);
-				#warn $PermissionLevel->toString, "\n";
 				eval { $self->addPermissionLevel($PermissionLevel) };
 				if ($@ and $@ !~ m/permission level exists/) {
 					die "error while auto-creating permission level record for user $userID: \"$@\"";
@@ -745,7 +743,7 @@ sub getPermissionLevels {
 $PermissionLevel is a record object. If a permission level record with the same
 user ID exists in the permission table, the data in the record is replaced with
 the data in $PermissionLevel. If a matching permission level record does not
-exist, an exception is thrown.
+exist, one will be created. (This is different from most other "put" methods.)
 
 =cut
 
@@ -759,10 +757,13 @@ sub putPermissionLevel($$) {
 	
 	checkKeyfields($PermissionLevel);
 	
-	croak "putPermissionLevel: permission level not found (perhaps you meant to use addPermissionLevel?)"
-		unless $self->{permission}->exists($PermissionLevel->user_id);
-	
-	return $self->{permission}->put($PermissionLevel);
+	# For Passwords and PermissionLevels, auto-create a record when it doesn't
+	# already exist. This should be safe.
+	if ($self->{permission}->exists($PermissionLevel->user_id)) {
+		return $self->{permission}->put($PermissionLevel);
+	} else {
+		return $self->{permission}->add($PermissionLevel);
+	}
 }
 
 =item deletePermissionLevel($userID)
