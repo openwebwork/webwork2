@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.17 2004/03/06 21:49:48 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.18 2004/03/17 08:18:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,31 +28,14 @@ use warnings;
 use CGI qw();
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
-#sub path {
-#	my $self          = shift;
-#	my $args          = $_[-1];
-#	
-#	my $ce = $self->{ce};
-#	my $root = $ce->{webworkURLs}->{root};
-#	my $courseName = $ce->{courseName};
-#	
-#	return $self->pathMacro($args,
-#		"Home"             => "$root",
-#		$courseName        => "$root/$courseName",
-#		"Instructor Tools" => "$root/$courseName/instructor",
-#		"Set Assigner"     => ""
-#	);
-#}
-
-#sub title {
-#	my ($self) = @_;
-#	return "Set Assigner"
-#}
-
 sub body {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $db = $r->db;
+	my $authz = $r->authz;
+	
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
 	print CGI::p("Select one or more sets and one or more users below to assign"
 		. "each selected set to all selected users.");
