@@ -104,9 +104,6 @@ sub body {
 		? $wwdb->getProblem($userName, $setName, $problemNumber)
 		: undef);
 	
-	warn "Feedback: module=$module permissionLevel=$permissionLevel ",
-		"user=$user set=$set problem=$problem\n";
-	
 	if (defined $r->param("sendFeedback")) {
 		# determine the sender of the email
 		my $sender = ($user ? $user->email_address : $from);

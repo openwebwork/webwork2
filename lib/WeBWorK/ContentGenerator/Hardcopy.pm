@@ -65,87 +65,111 @@ sub title {
 sub body {
 	my $self = shift;
 	
-	my $courseName = $self->{courseEnvironment}->{courseName};
-	my $userName = $self->{r}->param("user");
-	my @sets = @{$self->{sets}};
-	
-	unless (@sets) {
-		print CGI::p("No problem sets were specified.");
-		return "";
-	}
-	
-	# determine where hardcopy is going to go
-	my $tempDir = $self->{courseEnvironment}->{courseDirs}->{html_temp}
-		. "/hardcopy";
-	my $tempURL = $self->{courseEnvironment}->{courseURLs}->{html_temp}
-		. "/hardcopy";
-	
-	# determine name of PDF file
-	my $fileName;
-	if (@sets > 1) {
-		# multiset output
-		$fileName = "$courseName.$userName.multiset.pdf"
-	} elsif (@sets == 1) {
-		# only one set
-		my $setName = $sets[0];
-		$fileName = "$courseName.$userName.$setName.pdf";
-	} else {
-		$fileName = "$courseName.$userName.pdf";
-	}
-	
-	# determine full URL
-	my $fullURL = "$tempURL/$fileName";
-	
-	# generate TeX from sets
-	my $tex = $self->getMultiSetTeX(@sets);
-	#print CGI::pre($tex);
-	
-	# check for PG errors (fatal)
-	if (@{$self->{errors}}) {
-		my @errors = @{$self->{errors}};
-		print CGI::h2("Software Errors");
-		print CGI::p(<<EOF);
+	STUFF: {
+		my $courseName = $self->{courseEnvironment}->{courseName};
+		my $userName = $self->{r}->param("user");
+		my @sets = @{$self->{sets}};
+
+		unless (@sets) {
+			print CGI::p("No problem sets were specified.");
+			last STUFF;
+		}
+
+		# determine where hardcopy is going to go
+		my $tempDir = $self->{courseEnvironment}->{courseDirs}->{html_temp}
+			. "/hardcopy";
+		my $tempURL = $self->{courseEnvironment}->{courseURLs}->{html_temp}
+			. "/hardcopy";
+
+		# make sure tempDir exists
+		unless (-e $tempDir) {
+			if (system "mkdir", "-p", $tempDir) {
+				print CGI::p("An error occured while trying to generate your PDF hardcopy:");
+				print CGI::blockquote(CGI::pre("Failed to mkdir $tempDir: $!\n"));
+			}
+		}
+
+		# determine name of PDF file
+		my $fileName;
+		if (@sets > 1) {
+			# multiset output
+			$fileName = "$courseName.$userName.multiset.pdf"
+		} elsif (@sets == 1) {
+			# only one set
+			my $setName = $sets[0];
+			$fileName = "$courseName.$userName.$setName.pdf";
+		} else {
+			$fileName = "$courseName.$userName.pdf";
+		}
+
+		# determine full URL
+		my $fullURL = "$tempURL/$fileName";
+
+		# generate TeX from sets
+		my $tex = $self->getMultiSetTeX(@sets);
+		#print CGI::pre($tex);
+
+		# check for PG errors (fatal)
+		if (@{$self->{errors}}) {
+			my @errors = @{$self->{errors}};
+			print CGI::h2("Software Errors");
+			print CGI::p(<<EOF);
 WeBWorK has encountered one or more software errors while attempting to process these sets.
 It is likely that there are error(s) in the problem itself.
 If you are a student, contact your professor to have the error(s) corrected.
 If you are a professor, please consut the error output below for more informaiton.
 EOF
-		foreach my $error (@errors) {
-			print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
-			print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
-			print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
+			foreach my $error (@errors) {
+				print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
+				print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
+				print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
+			}
+
+			last STUFF;
 		}
-		
-		return "";
-	}
-	
-	# "try" to generate hardcopy
-	eval { $self->latex2pdf($tex, $tempDir, $fileName) };
-	if ($@) {
-		print CGI::p("An error occured while trying to generate your PDF hardcopy:");
-		print CGI::blockquote(CGI::pre($@));
-		return "";
-	} else {
-		print CGI::p({-align=>"center"},
-			CGI::big(CGI::a({-href=>$fullURL}, "Download PDF Hardcopy"))
-		);
-	}
-	
-	# check for PG warnings (non-fatal)
-	if (@{$self->{warnings}}) {
-		my @warnings = @{$self->{warnings}};
-		print CGI::h2("Software Warnings");
-		print CGI::p(<<EOF);
+
+		# "try" to generate hardcopy
+		eval { $self->latex2pdf($tex, $tempDir, $fileName) };
+		if ($@) {
+			print CGI::p("An error occured while trying to generate your PDF hardcopy:");
+			print CGI::blockquote(CGI::pre($@));
+			last STUFF;
+		} else {
+			print CGI::p({-align=>"center"},
+				CGI::big(CGI::a({-href=>$fullURL}, "Download PDF Hardcopy"))
+			);
+		}
+
+		# check for PG warnings (non-fatal)
+		if (@{$self->{warnings}}) {
+			my @warnings = @{$self->{warnings}};
+			print CGI::h2("Software Warnings");
+			print CGI::p(<<EOF);
 WeBWorK has encountered warnings while attempting to process these sets.
 It is likely that this indicates an error or ambiguity in the problem(s) themselves.
 If you are a student, contact your professor to have the problem(s) corrected.
 If you are a professor, please consut the error output below for more informaiton.
 EOF
-		foreach my $warning (@warnings) {
-			print CGI::h3("Set: ", $warning->{set}, ", Problem: ", $warning->{problem});
-			print CGI::h4("Warning messages"), CGI::blockquote(CGI::pre($warning->{message}));
+			foreach my $warning (@warnings) {
+				print CGI::h3("Set: ", $warning->{set}, ", Problem: ", $warning->{problem});
+				print CGI::h4("Warning messages"), CGI::blockquote(CGI::pre($warning->{message}));
+			}
 		}
 	}
+	
+	# feedback form
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $feedbackURL = "$root/$courseName/feedback/";
+	print
+		CGI::startform("POST", $feedbackURL),
+		$self->hidden_authen_fields,
+		CGI::hidden("module", __PACKAGE__),
+		CGI::p({-align=>"right"},
+			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
+		),
+		CGI::endform();
 	
 	return "";
 }

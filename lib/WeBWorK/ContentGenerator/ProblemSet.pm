@@ -158,6 +158,21 @@ sub body {
 	
 	print CGI::end_table();
 	
+	# feedback form
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $feedbackURL = "$root/$courseName/feedback/";
+	print
+		CGI::startform("POST", $feedbackURL),
+		$self->hidden_authen_fields,
+		CGI::hidden("module", __PACKAGE__),
+		CGI::hidden("set",    $set->id),
+		CGI::p({-align=>"right"},
+			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
+		),
+		CGI::endform();
+	
 	return "";
 }
 
