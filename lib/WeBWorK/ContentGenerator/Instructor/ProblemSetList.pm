@@ -84,6 +84,7 @@ use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
+use constant ONE_WEEK => 60*60*24*7;  
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
@@ -912,13 +913,16 @@ sub create_handler {
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetID =~ /\S/;
 	
 	my $type = $actionParams->{"action.create.type"}->[0];
+	# It's convenient to set the open date one week from now so that it is 
+	# not accidentally available to students.  We set the due and answer date
+	# to be two weeks from now.
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("");
 		$newSetRecord->hardcopy_header("");
-		$newSetRecord->open_date("0");
-		$newSetRecord->due_date("0");
-		$newSetRecord->answer_date("0");
+		$newSetRecord->open_date(time + ONE_WEEK);
+		$newSetRecord->due_date(time + 2*ONE_WEEK );
+		$newSetRecord->answer_date(time + 2*ONE_WEEK );
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
@@ -1264,10 +1268,24 @@ sub duplicate_handler {
 sub bySetID         { $a->set_id         cmp $b->set_id         }
 sub bySetHeader     { $a->set_header     cmp $b->set_header     }
 sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
-sub byOpenDate      { $a->open_date      <=> $b->open_date      }
-sub byDueDate       { $a->due_date       <=> $b->due_date       }
-sub byAnswerDate    { $a->answer_date    <=> $b->answer_date    }
-sub byPublished     { $a->published      cmp $b->published      }
+#FIXME  eventually we may be able to remove these checks, if we can trust 
+# that the dates are always defined
+sub byOpenDate      { my $result = eval{$a->open_date      <=> $b->open_date };
+                      return $result unless $@;
+                      return 0;
+}
+sub byDueDate       { my $result = eval{$a->due_date       <=> $b->due_date    };      
+                      return $result unless $@;
+                      return 0;
+}
+sub byAnswerDate    { my $result = eval{$a->answer_date    <=> $b->answer_date };    
+                      return $result unless $@;
+                      return 0;
+}
+sub byPublished     { my $result = eval{$a->published      cmp $b->published   };      
+                      return $result unless $@;
+                      return 0;
+}
 
 sub byOpenDue       { &byOpenDate || &byDueDate }
 
