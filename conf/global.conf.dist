@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.60 2004/05/07 14:13:03 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.61 2004/05/14 18:31:12 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -110,7 +110,7 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 $webworkFiles{logs}->{transaction}    = "$courseDirs{logs}/transaction.log";
 $webworkFiles{logs}->{pastAnswerList} = "$courseDirs{logs}/past_answers.log";
 
-my $courseURLRoot = "/webwork2_courses/$courseName";
+my $courseURLRoot = "/webwork2_course_files/$courseName";
 %courseURLs = (
 	root      => "$courseURLRoot",
 	html      => "$courseURLRoot",
