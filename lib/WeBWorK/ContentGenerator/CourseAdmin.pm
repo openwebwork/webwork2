@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.24 2004/07/10 16:28:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.25 2004/08/18 01:41:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -676,7 +676,7 @@ sub do_add_course {
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 	
-	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->email_address } @users;
+	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->user_id } @users;
 	
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
