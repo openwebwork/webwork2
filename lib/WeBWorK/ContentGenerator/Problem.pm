@@ -45,6 +45,10 @@ use WeBWorK::Timing;
 #
 ############################################################
 
+sub templateName {
+	"problem";
+}
+
 sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
 	my $r                    = $self->{r};
