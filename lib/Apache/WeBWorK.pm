@@ -35,15 +35,16 @@ use WeBWorK::CourseEnvironment;
 # to your httpd.conf file to achieve this:
 #
 # <IfModule mod_perl.c>
-#     PerlFreshRestart On
-#     <Location /modperl-sam>
-#         SetHandler perl-script
-#         PerlSetVar webwork_root /opt/webwork
-#         <Perl>
-#             use lib '/opt/webwork/lib';
-#         </Perl>
-#         PerlHandler Apache::WeBWorK
-#     </Location>
+#   PerlFreshRestart On
+#   <Location /webwork>
+#     SetHandler perl-script
+#     PerlHandler Apache::WeBWorK
+#     PerlSetVar webwork_root /path/to/webwork-modperl
+#     <Perl>
+#       use lib '/path/to/webwork-modperl/lib';
+#       use lib '/path/to/webwork-modperl/pglib';
+#     </Perl>
+#   </Location>
 # </IfModule>
 
 sub handler() {
