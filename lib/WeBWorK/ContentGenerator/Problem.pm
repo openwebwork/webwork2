@@ -238,11 +238,11 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
-sub if_warnings($$) {
-	my ($self, $arg) = @_;
-	return 0 unless $self->{isOpen};
-	return $self->{pg}->{warnings} ne "";
-}
+#sub if_warnings($$) {
+#	my ($self, $arg) = @_;
+#	return 0 unless $self->{isOpen};
+#	return $self->{pg}->{warnings} ne "";
+#}
 
 sub if_errors($$) {
 	my ($self, $arg) = @_;
@@ -254,6 +254,19 @@ sub head {
 	my $self = shift;
 	return "" unless $self->{isOpen};
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
+}
+
+sub options {
+	my $self = shift;
+	return join("",
+		CGI::start_form("POST", $self->{r}->uri),
+		$self->hidden_authen_fields,
+		CGI::hr(), 
+		CGI::start_div({class=>"viewOptions"}),
+		$self->viewOptions(),
+		CGI::end_div(),
+		CGI::end_form()
+	);
 }
 
 sub path {
@@ -452,7 +465,9 @@ sub body {
 	# end logging student answers
 	
 	##### output #####
+	
 	print CGI::start_div({class=>"problemHeader"});
+	
 	# attempt summary
 	if ($submitAnswers or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
@@ -478,7 +493,7 @@ sub body {
 	print CGI::end_div();
 	
 	print CGI::start_div({class=>"problem"});
-	#print CGI::hr();
+	
 	# main form
 	print
 		CGI::startform("POST", $r->uri),
@@ -500,6 +515,7 @@ sub body {
 	print CGI::end_div();
 	
 	print CGI::start_div({class=>"scoreSummary"});
+	
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $attemptsNoun = $attempts != 1 ? "times" : "time";
@@ -520,7 +536,7 @@ sub body {
 		$setClosed = 1;
 		$setClosedMessage = "This problem set is closed.";
 		if ($permissionLevel > 0) {
-			$setClosedMessage .= " Since you are a privileged user, additional attempts will be recorded.";
+			$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
 		} else {
 			$setClosedMessage .= " Additional attempts will not be recorded.";
 		}
@@ -533,32 +549,37 @@ sub body {
 		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
 	print CGI::end_div();
-#	print CGI::hr(), CGI::start_div({class=>"viewOptions"});
-#	print		$self->viewOptions(),CGI::end_div(),
-#   save state for viewOptions
-	print  CGI::hidden(-name    => "showOldAnswers",
-			            -value   => $will{showOldAnswers},
-		  ),
-		  CGI::hidden(-name    => "showCorrectAnswers",
-			           -value   => $will{showCorrectAnswers},
-		  ),
-		  CGI::hidden(-name    => "showHints",
-			           -value   => $will{showHints},
-		  ),
-		  CGI::hidden(-name    => "showSolutions",
-			          -value   => $will{showSolutions},
-	      ),
-		  CGI::hidden(-name    => "displayMode",
-			          -value => $self->{displayMode}
-		  );
-    print		CGI::endform();
 		
-	print  CGI::start_div({class=>"problemFooter"});
-	# feedback form
+	# save state for viewOptions
+	print CGI::hidden(
+			-name  => "showOldAnswers",
+			-value => $will{showOldAnswers}
+		),
+		CGI::hidden(
+			-name  => "showCorrectAnswers",
+			-value => $will{showCorrectAnswers}
+		),
+		CGI::hidden(
+			-name  => "showHints",
+			-value => $will{showHints}),
+		CGI::hidden(
+			-name  => "showSolutions",
+			-value => $will{showSolutions},
+		),
+		CGI::hidden(
+			-name  => "displayMode",
+			-value => $self->{displayMode}
+		);
+	
+	# end of main form
+	print CGI::endform();
+	
+	# stuff we need below (pull these out at the beginning?)
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	my $feedbackURL = "$root/$courseName/feedback/";
+	
+	print  CGI::start_div({class=>"problemFooter"});
 	
 	# arguments for answer inspection button
 	my $prof_url = $ce->{webworkURLs}->{oldProf};
@@ -567,30 +588,29 @@ sub body {
 	my $authen_args = $self->url_authen_args();
 	my $showPastAnswersURL = "$cgi_url/showPastAnswers.pl";
 	
-
-	print CGI::end_div();
-	print CGI::start_div();
 	# print answer inspection button
-	if ($self->{permissionLevel} >0)      {
-    	
-
+	if ($self->{permissionLevel} > 0) {
 		print "\n",
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
-				$self->hidden_authen_fields,"\n",
-				CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
-				CGI::hidden(-name => 'probNum', -value=>$problem->problem_id), "\n",
-				CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
-				CGI::hidden(-name => 'User',    -value=>$problem->user_id), "\n",
-				CGI::p( {-align=>"left"},
-					CGI::submit(-name => 'action',  -value=>'Show Past Answers')
-				), "\n",
-				CGI::endform();
+			$self->hidden_authen_fields,"\n",
+			CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
+			CGI::hidden(-name => 'probNum', -value=>$problem->problem_id), "\n",
+			CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
+			CGI::hidden(-name => 'User',    -value=>$problem->user_id), "\n",
+			CGI::p( {-align=>"left"},
+				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+			), "\n",
+			CGI::endform();
+	}
 	
+	#print CGI::end_div();
+	#
+	#print CGI::start_div();
 	
+	# arguments for feedback form
+	my $feedbackURL = "$root/$courseName/feedback/";
 	
-	}	#print feedback form
-
-	
+	#print feedback form
 	print
 		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
 		$self->hidden_authen_fields,"\n",
@@ -614,13 +634,12 @@ sub body {
 		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
 	}
 	
-    print CGI::end_div();
+	print CGI::end_div();
 	
-	# end answer inspection button
 	# warning output
-	if ($pg->{warnings} ne "") {
-		print CGI::hr(), $self->warningOutput($pg->{warnings});
-	}
+	#if ($pg->{warnings} ne "") {
+	#	print CGI::hr(), $self->warningOutput($pg->{warnings});
+	#}
 	
 	# debugging stuff
 	if (0) {
@@ -813,20 +832,6 @@ sub previewAnswer($$) {
 	}
 }
 
-sub options {
-	my $self=shift;
-	my $out;
-	$out     .=join("", 
-                    CGI::start_form("POST", $self->{r}->uri),
-                    $self->hidden_authen_fields,
-                    CGI::hr(), 
-                    CGI::start_div({class=>"viewOptions"}),
-                    $self->viewOptions(),CGI::end_div(),
-                    CGI::end_form()
-	);
-return $out;
-
-}
 ##### logging subroutine ####
 
 

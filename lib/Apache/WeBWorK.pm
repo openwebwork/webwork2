@@ -33,62 +33,121 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
-use WeBWorK; # leave compile-time errors alone.
+use DB;
+use WeBWorK;
 
 sub handler($) {
 	my ($r) = @_;
-	my $result = eval {
-		WeBWorK::dispatch($r)
+	
+	my $result = do { # scope of signal localization
+		# the __WARN__ handler stores warnings for later retrieval
+		local $SIG{__WARN__} = sub {
+			my ($warning) = @_;
+			my $warnings = $r->notes("warnings");
+			$warnings .= "$warning\n";
+			$r->notes("warnings" => $warnings);
+			warn $warning; # send it to the log
+		};
+		
+		# the __DIE__ handler stores the call stack at the time of an error
+		local $SIG{__DIE__} = sub {
+			my ($error) = @_;
+			my $trace = join "\n", DB::backtrace();
+			$r->notes("lastCallStack" => $trace);
+			die $error;
+		};
+		
+		eval { WeBWorK::dispatch($r) };
 	};
+	
 	if ($@) {
+		print STDERR "uncaught exception in Apache::WeBWorK::handler: $@";
 		my $message = message($r, $@);
 		unless ($r->bytes_sent) {
-			$message = "<html><body>$message</body></html>";
 			$r->content_type("text/html");
 			$r->send_http_header;
+			$message = "<html><body>$message</body></html>";
 		}
 		$r->print($message);
-		die $@;
+		$r->exit;
 	}
 	return $result;
+}
+
+sub htmlBacktrace(@) {
+	foreach (@_) {
+		s/\</&lt;/g;
+		s/\>/&gt;/g;
+		$_ = "<li><tt>$_</tt></li>";
+	}
+	return join "\n", @_;
+}
+
+sub htmlWarningsList(@) {
+	foreach (@_) {
+		next unless m/\S/;
+		s/\</&lt;/g;
+		s/\>/&gt;/g;
+		$_ = "<li><tt>$_</tt></li>";
+	}
+	return join "\n", @_;
+}
+
+sub htmlEscape($) {
+	$_[0] =~ s/\</&lt;/g;
+	$_[0] =~ s/\>/&gt;/g;
+	return $_[0];
 }
 
 sub message($$) {
 	my ($r, $exception) = @_;
 	
+	$exception = htmlEscape($exception);
 	my $admin = ($ENV{SERVER_ADMIN}
 		? "(<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
 		: "");
-	# Error context doesn't work yet -- calling longmess() from here is stupid
-	#my $context = Carp::longmess();
+	my $context = $r->notes("lastCallStack")
+		? htmlBacktrace(split m/\n/, $r->notes("lastCallStack"))
+		: "";
+	my $warnings = $r->notes("warnings")
+		? htmlWarningsList(split m/\n/, $r->notes("warnings"))
+		: "";
 	my $method = $r->method;
 	my $uri = $r->uri;
 	my $headers = do {
 		my %headers = $r->headers_in;
-		join("", map { "<tr><td>$_</td><td>$headers{$_}</td></tr>" } keys %headers);
+		join("", map { "<tr><td><small>$_</small></td><td><small>$headers{$_}</small></td></tr>" } keys %headers);
 	};
 	
 	return <<EOF;
 <div align="left">
  <h1>Software Error</h1>
- <p>An error has occured while trying to process you request. For help, please send mail to this site's webmaster $admin giving the following information about the error and the date and time that the error occured.</p>
+ <p>An error has occured while trying to process your request. For help, please
+ send mail to this site's webmaster $admin giving the following information
+ about the error and the date and time that the error occured. Some hints:</p>
+ <ul>
+  <li>An error about an <tt>undefined value</tt> often means that you asked for
+  an object (like a user, problem set, or problem) that does not exist, and the
+  we (the programmers) were negligent in checking for that.</li>
+ </ul>
  <h2>Error message</h2>
- <pre>$exception</pre>
+ <p><tt>$exception</tt></p>
+ <h2>Call stack</h2>
+ <ul>$context</ul>
+ <h2>Warnings</h2>
+ <ul>$warnings</ul>
  <h2>Request information</h2>
- <dl>
-  <dt>Method</dt>
-  <dd>$method</dd>
-  <dt>URI</dt>
-  <dd>$uri</dd>
- </dl>
- <h2>Headers received</h2>
- <table>$headers</table>
+ <table border="1">
+  <tr><td>Method</td><td>$method</td></tr>
+  <tr><td>URI</td><td>$uri</td></tr>
+  <tr><td>HTTP Headers</td><td>
+   <table>
+    $headers
+   </table>
+  </td></tr>
+ </table>
 </div>
 EOF
-	# <h2>Error context</h2>
-	# <blockquote>
-	#  <pre>$context</pre>
-	# </blockquote>
 }
 
 1;

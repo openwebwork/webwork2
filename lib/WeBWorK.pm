@@ -59,6 +59,9 @@ sub dispatch($) {
 		$r->header_out(Location => "$current_uri/" . ($args ? "?$args" : ""));
 		return REDIRECT;
 		# *** any post data gets lost here -- fix that.
+		# (actually, it's not a problem, since all URLs generated
+		# from within the system have trailing slashes, and we don't 
+		# need POST data from outside the system anyway!)
 	}
 	
 	# Create the @components array, which contains the path specified in the URL
@@ -70,9 +73,7 @@ sub dispatch($) {
 	# Try to get the course environment.
 	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $pg_root, $course);};
 	if ($@) { # If there was an error getting the requested course
-		# TODO: display an error page.  For now, 404 it.
-		warn $@;
-		return DECLINED;
+		die "Failed to read course environment for $course: $@";
 	}
 	
 	# If no course was specified, redirect to the home URL
@@ -83,10 +84,9 @@ sub dispatch($) {
 	
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
-	if (!-e $ce->{webworkDirs}->{courses} . "/$course") {
-		warn "Course directory for $course not found at "
-			. $ce->{webworkDirs}->{courses} . "/$course" ."\n";
-		return DECLINED;
+	my $courseDir = $ce->{webworkDirs}->{courses} . "/$course";
+	unless (-e $courseDir) {
+		die "Course directory for $course ($courseDir) not found. Perhaps the course does not exist?";
 	}
 	
 	# Bring up a connection to the database (for Authen/Authz, and eventually

@@ -126,6 +126,10 @@ width="66" /><br />
        </td>
       </tr>
      </table>
+     <!--#if warnings="1"-->
+      <hr>
+      <div class="warnings"><!--#warnings--></div>
+     <!--#endif-->
     </td>
    </tr>
   </table>

@@ -69,7 +69,7 @@ sub go {
 	my $self = shift;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{ce};
-
+	
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
 	$self->header(@_);
 	return OK if $r->header_only;
@@ -359,10 +359,10 @@ sub errorOutput($$$) {
 	return
 		CGI::h2("Software Error"),
 		CGI::p(<<EOF),
-WeBWorK has encountered a software error while attempting to process this problem.
-It is likely that there is an error in the problem itself.
-If you are a student, contact your professor to have the error corrected.
-If you are a professor, please consut the error output below for more informaiton.
+WeBWorK has encountered a software error while attempting to process this
+problem. It is likely that there is an error in the problem itself. If you are
+a student, contact your professor to have the error corrected. If you are a
+professor, please consut the error output below for more informaiton.
 EOF
 		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
 		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
@@ -374,10 +374,10 @@ sub warningOutput($$) {
 	return
 		CGI::h2("Software Warnings"),
 		CGI::p(<<EOF),
-WeBWorK has encountered warnings while attempting to process this problem.
-It is likely that this indicates an error or ambiguity in the problem itself.
-If you are a student, contact your professor to have the problem corrected.
-If you are a professor, please consut the error output below for more informaiton.
+WeBWorK has encountered warnings while attempting to process this problem. It
+is likely that this indicates an error or ambiguity in the problem itself. If
+you are a student, contact your professor to have the problem corrected. If you
+are a professor, please consut the error output below for more informaiton.
 EOF
 		CGI::h3("Warning messages"),
 		CGI::blockquote(CGI::pre($warnings)),
@@ -389,6 +389,7 @@ EOF
 ################################################################################
 
 # Reminder: here are the template functions currently defined:
+# FIXME: this list is out of date!!!!!!!!
 # 
 # head
 # path
@@ -433,7 +434,7 @@ sub loginstatus {
 	return "";
 }
 
-# *** drunk code. rewrite.
+# FIXME: drunk code. rewrite.
 # also, this should be structured s.t. subclasses can add items to the links
 # area, i.e. "stacking"
 sub links {
@@ -465,15 +466,6 @@ sub links {
 	;
 }
 
-sub submiterror {
-	my ($self) = @_;
-	if (exists $self->{submitError}) {
-		return $self->{submitError};
-	} else {
-		return "";
-	}
-}
-
 # &if_can will return 1 if the current object->can("do $_[1]")
 sub if_can ($$) {
 	my ($self, $arg) = (@_);
@@ -492,12 +484,40 @@ sub if_loggedin($$) {
 	return $arg;
 }
 
+# Handling of errors in submissions
+
 sub if_submiterror($$) {
 	my ($self, $arg) = @_;
 	if (exists $self->{submitError}) {
 		return $arg;
 	} else {
 		return !$arg;
+	}
+}
+
+sub submiterror {
+	my ($self) = @_;
+	if (exists $self->{submitError}) {
+		return $self->{submitError};
+	} else {
+		return "";
+	}
+}
+
+# General warning handling
+
+sub if_warnings($$) {
+	my ($self, $arg) = @_;
+	return $self->{r}->notes("warnings") ? $arg : !$arg;
+}
+
+sub warnings {
+	my ($self) = @_;
+	my $r = $self->{r};
+	if ($r->notes("warnings")) {
+		return $self->warningOutput($r->notes("warnings"));
+	} else {
+		return "";
 	}
 }
 
