@@ -27,6 +27,7 @@ our @EXPORT_OK = qw(
 	writeTimingLogEntry
 	list2hash
 	max
+	readDirectory
 	dbDecode
 	dbEncode
 	decodeAnswers
@@ -51,6 +52,15 @@ sub readFile($) {
 	my $result = <INPUTFILE>;
 	close INPUTFILE;
 	return $result;
+}
+
+sub readDirectory($) {
+	my ($dirname) = @_;
+	
+	opendir my $dirhandle, $dirname or die "couldn't open directory $dirname: $!";
+	my @contents = readdir $dirhandle;
+	closedir $dirhandle;
+	return @contents;
 }
 
 sub formatDateTime($) {
