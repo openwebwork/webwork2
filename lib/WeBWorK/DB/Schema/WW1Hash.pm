@@ -147,6 +147,7 @@ sub add($$) {
 	my ($self, $Record) = @_;
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
+	my $db = $self->{db};
 	
 	return 0 unless $self->{driver}->connect("rw");
 	
@@ -154,6 +155,10 @@ sub add($$) {
 	
 	my $result;
 	if ($self->{table} eq "set_user") {
+		$self->{driver}->disconnect();
+		my $globalSet = $db->getGlobalSet($setID);
+		$self->{driver}->connect("rw");
+		$self->copyOverrides($globalSet, $Record);
 		if (defined $PSVN) {
 			$self->{driver}->disconnect();
 			die "($userID, $setID): UserSet exists.\n";
@@ -164,6 +169,10 @@ sub add($$) {
 		$result = 1;
 	} elsif ($self->{table} eq "problem_user") {
 		my $problemID = $Record->problem_id();
+		$self->{driver}->disconnect();
+		my $globalProblem = $db->getGlobalProblem($setID, $problemID);
+		$self->{driver}->connect("rw");
+		$self->copyOverrides($globalProblem, $Record);
 		unless (defined $PSVN) {
 			$self->{driver}->disconnect();
 			die "($userID, $setID): UserSet not found.\n";
@@ -242,6 +251,7 @@ sub put($$) {
 	my ($self, $Record) = @_;
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
+	my $db = $self->{db};
 	
 	return 0 unless $self->{driver}->connect("rw");
 	
@@ -258,9 +268,19 @@ sub put($$) {
 	if (defined $string) {
 		my ($Set, @Problems) = $self->string2records($string);
 		if ($self->{table} eq "set_user") {
+			$self->{driver}->disconnect();
+			# This call makes database connections, so we
+			# have to release our control on it.
+			my $globalSet = $db->getGlobalSet($setID);
+			$self->{driver}->connect("rw");
+	 		$self->copyOverrides($globalSet, $Record);
 			$string = $self->records2string($Record, @Problems);
 		} elsif ($self->{table} eq "problem_user") {
 			my $problemID = $Record->problem_id();
+			$self->{driver}->disconnect();
+			my $globalProblem = $db->getGlobalProblem($setID, $problemID);
+			$self->{driver}->connect("rw");
+			$self->copyOverrides($globalProblem, $Record);
 			my $found = 0;
 			foreach (@Problems) {
 				if ($_->problem_id() eq $problemID) {
@@ -353,6 +373,28 @@ sub _deleteOne {
 	}
 	
 	return $result;
+}
+
+################################################################################
+# add/put override copy helper
+################################################################################
+
+sub copyOverrides {
+	my ($self, $globalRecord, $userRecord) = @_;
+	
+	# This could happen if a Null schema is being used.
+	unless (defined $globalRecord and defined $userRecord) {
+		return $userRecord;
+	}
+	
+	foreach my $field ($globalRecord->FIELDS) {
+		unless (defined $userRecord->$field) {
+			$userRecord->$field($globalRecord->$field);
+		}
+	}
+	
+	return $userRecord; # The edit happens in place, so this is unneccesary.
+	                    # Nevertheless, it is common courtesy.
 }
 
 ################################################################################
