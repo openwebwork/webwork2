@@ -65,10 +65,14 @@ sub body {
 		#CGI::th("Hardcopy"),
 	);
 	
+	my @setIDs = $db->listUserSets($effectiveUser);
+	
 	my @sets;
-	foreach my $setID ($db->listUserSets($effectiveUser)) {
+	foreach my $setID (@setIDs) {
 		push @sets, $db->getMergedSet($effectiveUser, $setID);
 	}
+	
+	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
