@@ -33,9 +33,11 @@ our @EXPORT_OK = qw(
 #  not in the Record classes, since they are for legacy support
 ################################################################################
 
+# FIXME: this should go away -- let WW1Hash and Classlist1Hash handle their own
+# stupid conversions!
+
 # RECORDHASH defines the correspondance between WWDBv1 hash keys and WWDBv2
 # record fields.
-
 use constant RECORDHASH => {
 	"WeBWorK::DB::Record::User" => [
 		['stfn', "first_name"   ],
@@ -47,34 +49,33 @@ use constant RECORDHASH => {
 		['clrc', "recitation"   ],
 		['comt', "comment"      ],
 	],
-	"WeBWorK::DB::Record::UserSet" => [
-		['stlg', "user_id"       ],
-		['stnm', "set_id"        ],
-		['shfn', "set_header"    ],
-		['phfn', "problem_header"],
-		['opdt', "open_date"     ],
-		['dudt', "due_date"      ],
-		['andt', "answer_date"   ],
-	],
-	# a hash destined to be converted into a UserProblem must be converted
-	# so that the hash keys, rather than containing the problem number,
-	# contain the character '#'. Also, a new hash key '#' must be added
-	# which contains the problem number.
-	"WeBWorK::DB::Record::UserProblem" => [
-		['stlg',  "user_id"      ],
-		['stnm',  "set_id"       ],
-		['#',     "problem_id"   ],
-		['pfn#',  "source_file"  ],
-		['pva#',  "value"        ],
-		['pmia#', "max_attempts" ],
-		['pse#',  "problem_seed" ],
-		['pst#',  "status"       ],
-		['pat#',  "attempted"    ],
-		['pan#',  "last_answer"  ],
-		['pca#',  "num_correct"  ],
-		['pia#',  "num_incorrect"],
-	],
-	# *** add tables for the rest of the record types
+#	"WeBWorK::DB::Record::UserSet" => [
+#		['stlg', "user_id"       ],
+#		['stnm', "set_id"        ],
+#		['shfn', "set_header"    ],
+#		['phfn', "problem_header"],
+#		['opdt', "open_date"     ],
+#		['dudt', "due_date"      ],
+#		['andt', "answer_date"   ],
+#	],
+#	# a hash destined to be converted into a UserProblem must be converted
+#	# so that the hash keys, rather than containing the problem number,
+#	# contain the character '#'. Also, a new hash key '#' must be added
+#	# which contains the problem number.
+#	"WeBWorK::DB::Record::UserProblem" => [
+#		['stlg',  "user_id"      ],
+#		['stnm',  "set_id"       ],
+#		['#',     "problem_id"   ],
+#		['pfn#',  "source_file"  ],
+#		['pva#',  "value"        ],
+#		['pmia#', "max_attempts" ],
+#		['pse#',  "problem_seed" ],
+#		['pst#',  "status"       ],
+#		['pat#',  "attempted"    ],
+#		['pan#',  "last_answer"  ],
+#		['pca#',  "num_correct"  ],
+#		['pia#',  "num_incorrect"],
+#	],
 };
 
 sub record2hash($) {
@@ -106,7 +107,7 @@ sub hash2record($@) {
 ################################################################################
 
 sub hash2string(@) {
-	my %hash = @_;
+	my (%hash) = @_;
 	my $string;
 	return "" unless keys %hash;
 	foreach (keys %hash) {
