@@ -81,19 +81,19 @@ use constant  FIELD_PROPERTIES => {
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "20",
+		size      => "24",
 		override  => "any",
 	},
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "20",
+		size      => "24",
 		override  => "any",
 	},
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "20",
+		size      => "24",
 		override  => "any",
 	},
 	published => {
