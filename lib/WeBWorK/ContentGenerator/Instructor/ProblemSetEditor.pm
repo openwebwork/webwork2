@@ -191,6 +191,8 @@ sub body {
 	my ($self, @components) = @_;
 	my $r = $self->{r};
 	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $courseName = $ce->{courseName};
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
@@ -265,7 +267,7 @@ sub body {
 		
 		print CGI::Tr({}, 
 			CGI::td({}, [
-				$problemID,
+				CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
 				($forUsers ? (
 					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
 					problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),

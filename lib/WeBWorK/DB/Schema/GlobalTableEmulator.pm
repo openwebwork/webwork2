@@ -165,9 +165,7 @@ sub get($@) {
 	my $globalUserID = $self->{params}->{globalUserID};
 	
 	if ($globalUserID) {
-		warn "gonna try to get a user record for ($globalUserID @keyparts)...\n";
 		my $UserRecord = $userSchema->get($globalUserID, @keyparts);
-		warn "UserRecord=$UserRecord\n";
 		return user2global($self->{record}, $UserRecord);
 	} else {
 		warn "WARNING: using slow, slow consensus";
