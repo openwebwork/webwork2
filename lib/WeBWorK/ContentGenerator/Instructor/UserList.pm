@@ -148,21 +148,19 @@ sub initialize {
 		return;
 	}
 	
-	if (defined($r->param('save_classlist'))) {
-	} elsif (defined($r->param('delete_selected'))) {
-	} elsif (defined($r->param('addStudent'))) {
-		my $newUser = $db->newUser;
-		my $newPermissionLevel = $db->newPermissionLevel;
-		my $newPassword = $db->newPassword;
-		$newUser->user_id($r->param('newUserID'));
-		$newPermissionLevel->user_id($r->param('newUserID'));
-		$newPassword->user_id($r->param('newUserID'));
-		$newUser->status('C');
-		$newPermissionLevel->permission(0);
-		$db->addUser($newUser);
-		$db->addPermissionLevel($newPermissionLevel);
-		$db->addPassword($newPassword);
-	}
+	#if (defined($r->param('addStudent'))) {
+	#	my $newUser = $db->newUser;
+	#	my $newPermissionLevel = $db->newPermissionLevel;
+	#	my $newPassword = $db->newPassword;
+	#	$newUser->user_id($r->param('newUserID'));
+	#	$newPermissionLevel->user_id($r->param('newUserID'));
+	#	$newPassword->user_id($r->param('newUserID'));
+	#	$newUser->status('C');
+	#	$newPermissionLevel->permission(0);
+	#	$db->addUser($newUser);
+	#	$db->addPermissionLevel($newPermissionLevel);
+	#	$db->addPassword($newPassword);
+	#}
 }
 
 sub title {
@@ -260,6 +258,15 @@ sub body {
 	
 	$self->{sortField} = $r->param("sortField") || "last_name";
 	
+	my @allUsers = $db->getUsers(@allUserIDs);
+	my (%sections, %recitations);
+	foreach my $User (@allUsers) {
+		push @{$sections{$User->section}}, $User->user_id;
+		push @{$recitations{$User->recitation}}, $User->user_id;
+	}
+	$self->{sections} = \%sections;
+	$self->{recitations} = \%recitations;
+	
 	########## call action handler
 	
 	my $actionID = $r->param("action");
@@ -295,8 +302,8 @@ sub body {
 	#warn "editMode=$editMode\n";
 	
 	########## get required users
-	
-	my @Users = @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
+		
+	my @Users = grep { defined $_ } @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
 	
 	# presort users
 	my %sortSubs = %{ SORT_SUBS() };
@@ -439,20 +446,52 @@ sub getTableParams {
 
 sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return join("",
-		"Show ",
-		CGI::popup_menu(
-			-name => "action.filter.scope",
-			-values => [qw(all none selected)],
-			-default => $actionParams{"action.filter.scope"}->[0] || "selected",
-			-labels => {
-				all => "all users",
-				none => "no users",
-				selected => "selected users"
-			},
-			-onchange => $onChange,
-		),
+	#return CGI::table({}, CGI::Tr({-valign=>"top"},
+	#	CGI::td({}, 
+	return join("", 
+			"Show ",
+			CGI::popup_menu(
+				-name => "action.filter.scope",
+				-values => [qw(all none selected match_ids match_section match_recitation)],
+				-default => $actionParams{"action.filter.scope"}->[0] || "selected",
+				-labels => {
+					all => "all users",
+					none => "no users",
+					selected => "selected users",
+					match_ids => "users with matching user IDs:",
+					match_section => "users in selected section",
+					match_recitation => "users in selected recitation",
+				},
+				-onchange => $onChange,
+			),
+			" ",
+			CGI::textfield(
+				-name => "action.filter.user_ids",
+				-value => $actionParams{"action.filter.user_ids"}->[0] || "",,
+				-width => "50",
+				-onchange => $onChange,
+			),
+			" (separate multiple IDs with commas)",
+			CGI::br(),
+			"sections: ",
+			CGI::popup_menu(
+				-name => "action.filter.section",
+				-values => [ keys %{ $self->{sections} } ],
+				-default => $actionParams{"action.filter.section"}->[0] || "",
+				-labels => { $self->menuLabels($self->{sections}) },
+				-onchange => $onChange,
+			),
+			" recitations: ",
+			CGI::popup_menu(
+				-name => "action.filter.recitation",
+				-values => [ keys %{ $self->{recitations} } ],
+				-default => $actionParams{"action.filter.recitation"}->[0] || "",
+				-labels => { $self->menuLabels($self->{recitations}) },
+				-onchange => $onChange,
+			),
 	);
+	#	),
+	#));
 }
 
 # this action handler modifies the "visibleUserIDs" field based on the contents
@@ -472,6 +511,15 @@ sub filter_handler {
 	} elsif ($scope eq "selected") {
 		$result = "showing selected users";
 		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
+	} elsif ($scope eq "match_ids") {
+		my @userIDs = split /\s*,\s*/, $actionParams->{"action.filter.user_ids"}->[0];
+		$self->{visibleUserIDs} = \@userIDs;
+	} elsif ($scope eq "match_section") {
+		my $section = $actionParams->{"action.filter.section"}->[0];
+		$self->{visibleUserIDs} = $self->{sections}->{$section};
+	} elsif ($scope eq "match_recitation") {
+		my $recitation = $actionParams->{"action.filter.recitation"}->[0];
+		$self->{visibleUserIDs} = $self->{recitations}->{$recitation};
 	}
 	
 	return $result;

@@ -485,7 +485,7 @@ sub popup_user_form {
 							   -labels=>\%classlistLabels,
 							   -size  => 10,
 							   -multiple => 1,
-							   -default=>$user
+							   #-default=>$user
 					),
 
 
