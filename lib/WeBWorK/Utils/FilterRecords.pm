@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FilterRecords.pm,v 1.1 2004/05/23 23:20:31 mschmitt Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/FilterRecords.pm,v 1.2 2004/05/24 15:30:34 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -16,6 +16,8 @@
 
 package WeBWorK::Utils::FilterRecords;
 use base qw(Exporter);
+
+use WeBWorK::Utils qw(sortByName);
 
 =head1 NAME
 
@@ -102,22 +104,26 @@ sub getFiltersForClass {
 			$recitations{$user->recitation}++;
 		}
 	
-		foreach my $sec (keys %sections){
+		if (scalar(keys %sections) > 1) {
+		  foreach my $sec (sortByName(undef, keys %sections)){
 			push @names, "section:$sec";
 			if ($sec ne ""){
 				$labels{"section:$sec"} = "Display section $sec";
+			} else {
+				$labels{"section:$sec"} = "Display section <blank>";
 			}
-			else {
-				$labels{"section:$sec"} = "Display section <none>";
-			}
+		  }
 		}
-		foreach my $rec (keys %recitations){
+
+		if (scalar(keys %recitations) > 1) {
+		  foreach my $rec (sortByName(undef, keys %recitations)){
 			push @names, "recitation:$rec";
 			if ($rec ne ""){
 				$labels{"recitation:$rec"} = "Display recitation $rec";
+			} else {
+			        $labels{"recitation:$rec"} = "Display recitation <blank>";
 			}
-			else { $labels{"recitation:$rec"} = "Display recitation <none>";
-			}
+		  }
 		}
 	}
 	return ( \@names, \%labels );
@@ -169,7 +175,7 @@ sub filterRecords {
 		#warn "value = $value";
 		#warn "section = $record->section";
 #		my @data = split(/::/, $record);
-		if ($record->$name eq $value){push @GoodRecords, $record;}
+		if ($record->$name eq $value) {push @GoodRecords, $record}
 	}
 	}
 	return @GoodRecords;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.4 2004/05/23 23:35:42 mschmitt Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.5 2004/06/08 00:04:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,7 +139,7 @@ sub scrollingRecordList {
 		-values => $filters,
 		-default => \@selected_filters,
 		-labels => $filter_labels,
-		-size => 3,
+		-size => 5,
 		-multiple => 1,
 	);
 
@@ -154,12 +154,21 @@ sub scrollingRecordList {
 	$list_options{-multiple} = $multiple if $multiple;
 	
 	return CGI::div({-class=>"ScrollingRecordList"},
-		"Sort: ", CGI::popup_menu(%sort_popup_options), CGI::br(),
-		"Format: ", CGI::popup_menu(%format_popup_options), CGI::br(),
-		"Filter: ", CGI::scrolling_list(%filter_options), CGI::br(),
-		CGI::submit("$name!refresh", "Change Display Settings"), CGI::br(),
-		CGI::scrolling_list(%list_options)
-	);
+	       CGI::table({-border=>0, -cellspacing=>0, -cellpadding=>0},
+			  CGI::Tr({valign=>"top"},[
+		   CGI::td({-align=>"right"},"Sort:&nbsp;").
+		   CGI::td(CGI::popup_menu(%sort_popup_options)),
+
+		   CGI::td({-align=>"right"},"Format:&nbsp;").
+		   CGI::td(CGI::popup_menu(%format_popup_options)),
+
+		   CGI::td({-align=>"right"},"Filter:&nbsp;").
+		   CGI::td(CGI::scrolling_list(%filter_options)),
+		 ]),
+	       ),
+	       CGI::submit("$name!refresh", "Change Display Settings"), CGI::br(),
+	       CGI::scrolling_list(%list_options),
+       );
 }
 
 1;
