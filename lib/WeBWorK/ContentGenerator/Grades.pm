@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.9 2004/10/26 03:13:00 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.10 2004/11/11 15:52:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,7 +75,7 @@ sub getRecord {
         $line.=$delimiter;                              # add 'A' to end of line so that
                                                         # last field is never empty
         @lineArray = split(/\s*${delimiter}\s*/,$line);
-        $lineArray[0] =~s/^\s*//;                       # remove white space from first element
+        $lineArray[0] =~s/^\s*// if defined($lineArray[0]);                       # remove white space from first element
         @lineArray;
 }
 
