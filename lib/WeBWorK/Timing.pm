@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.8 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,6 +56,8 @@ use Time::HiRes qw(gettimeofday tv_interval);
 our $TASK_COUNT = 0; # number of tasks processed in this child process
 # You can customize the output to go to some file besides STDERR (usually ErrorLog for Apache)
 our $TIMING_LOG = '';
+
+#our $TIMING_LOG = '/home/gage/webwork/webwork-modperl/logs/timing.log';
 =head1 CONSTRUCTOR
 
 =over
