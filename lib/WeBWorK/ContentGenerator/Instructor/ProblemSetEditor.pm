@@ -190,7 +190,7 @@ sub body {
 }
 
 sub gatherInfo {
-	#fix me.  This is very much hacked together.  In particular can we pass the key inside the post?
+	#FIXME: This is very much hacked together.  In particular can we pass the key inside the post?
 	my $self			=	shift;
 	my $ce 				= 	$self->{ce};
 	my $r				=	$self->{r};
