@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.46 2004/04/27 03:37:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.47 2004/05/13 21:14:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -235,6 +235,134 @@ sub new($$) {
 }
 
 =head1 METHODS
+
+=cut
+
+################################################################################
+# general functions
+################################################################################
+
+=head2 General Methods
+
+=over
+
+=cut
+
+=item hashDatabaseOK($fix)
+
+If the schema module in use for the C<set> and C<problem> tables is
+WeBWorK::DB::Schema::GlobalTableEmulator, the database is checked to make sure
+that the "global user" exists and all sets and problems are assigned to it. If
+$fix is true, problems found will be fixed: A global user will be created and
+all sets/problems assigned to it.
+
+A list of values is returned. The first value is a boolean value indicating
+whether problems remain in the database after hashDatabaseOK() is called. The
+remaining values are a list of strings indicating the particular ways in which
+the database is (or was) broken.
+
+=cut
+
+sub hashDatabaseOK {
+	my ($self, $fix) = @_;
+	
+	my $errorsExist;
+	my @results;
+	
+	##### do we need to run? #####
+	
+	unless (ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
+		#warn "hashDatabaseOK($fix): no checks necessary, set table does not use GlobalTableEmulator.\n";
+		return 1;
+	}
+	
+	##### is globalUserID defined? #####
+	
+	my $globalUserID = $self->{set}->{params}->{globalUserID};
+	if ($globalUserID eq "") {
+		return 0, "globalUserID not specified (fix this in %dbLayout.)";
+	} else {
+		#warn "hashDatabaseOK($fix): globalUserID not empty ($globalUserID) -- good.\n";
+	}
+	
+	##### does a user with ID globalUserID exist? #####
+	
+	my $GlobalUser = $self->getUser($globalUserID);
+	if (defined $GlobalUser) {
+		#warn "hashDatabaseOK($fix): user with ID '$globalUserID' exists -- good.\n";
+	} else {
+		#warn "hashDatabaseOK($fix): user with ID '$globalUserID' not found -- bad!\n";
+		if ($fix) {
+			$self->addUser($self->newUser(
+				user_id => $globalUserID,
+				first_name => "Global",
+				last_name => "User",
+				email_address => "",
+				student_id => $globalUserID,
+				status => "D",
+				section => "",
+				recitation => "",
+				comment => "This user is used to store data about global set and problem records when using a hash-style database.",
+			));
+			push @results, "User $globalUserID does not exist -- FIXED.";
+			#warn "hashDatabaseOK($fix): created user with ID '$globalUserID' -- good.\n";
+		} else {
+			# at this point, we don't go on. no global user means everything below is going to fail.
+			return 0, "User $globalUserID does not exist.";
+		}
+	}
+	
+	##### are all sets assigned to the user with ID globalUserID? #####
+	
+	my @userSetIDs = $self->{set_user}->list(undef, undef);
+	
+	my %userSetStatus;
+	foreach my $userSetID (@userSetIDs) {
+		my ($userID, $setID) = @$userSetID;
+		$userSetStatus{$setID}->{$userID} = 1;
+	}
+	
+	foreach my $setID (keys %userSetStatus) {
+		delete $userSetStatus{$setID}
+			if exists $userSetStatus{$setID}->{$globalUserID};
+	}
+	
+	if (keys %userSetStatus) {
+		if ($fix) {
+			foreach my $setID (keys %userSetStatus) {
+				my $userID = ( keys %{$userSetStatus{$setID}} )[0];
+				
+				# grab the first UserSet of this set (connect and disconnect required for get1*)
+				$self->{set_user}->{driver}->connect("ro");
+				my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
+				$self->{set_user}->{driver}->disconnect();
+				
+				# change user ID to globalUserID and add to database
+				$RawUserSet->user_id($globalUserID);
+				$self->{set_user}->add($RawUserSet);
+				
+				push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
+				
+				#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
+			}
+		} else {
+			foreach my $setID (keys %userSetStatus) {
+				#warn "hashDatabaseOK($fix): set '$setID' not assigned to global user '$globalUserID' -- bad!\n";
+				push @results, "Set '$setID' not assigned to global user '$globalUserID'.";
+			}
+			$errorsExist = 1;
+		}
+	} else {
+		#warn "hashDatabaseOK($fix): all sets assigned to global user '$globalUserID' -- good.\n";
+	}
+	
+	##### done! #####
+	
+	my $status = not $errorsExist;
+	return $status, @results;
+}
+
+=back
 
 =cut
 
@@ -513,7 +641,7 @@ sub getPermissionLevels {
 			if ($self->{user}->exists($userID)) {
 				#warn "user exists\n";
 				$PermissionLevel = $self->newPermissionLevel(user_id => $userID);
-				warn $PermissionLevel->toString, "\n";
+				#warn $PermissionLevel->toString, "\n";
 				eval { $self->addPermissionLevel($PermissionLevel) };
 				if ($@ and $@ !~ m/permission level exists/) {
 					die "error while auto-creating permission level record for user $userID: \"$@\"";
