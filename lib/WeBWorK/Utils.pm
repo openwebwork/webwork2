@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.40 2004/04/05 03:58:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.41 2004/05/05 22:01:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,6 +55,7 @@ our @EXPORT_OK = qw(
 	makeTempDirectory
 	removeTempDirectory
 	pretty_print_rh
+	surePathToFile
 	cryptPassword
 	dequote
 	undefstr
@@ -153,6 +154,46 @@ sub writeCourseLog($$@) {
 	}
 }
 
+# A very useful macro for making sure that all of the directories to a file have been constructed.
+
+sub surePathToFile {
+	# constructs intermediate 
+	# the input path must be the path relative to this starting directory
+	my $start_directory = shift;
+	my $path = shift;
+	my $delim = "/"; #&getDirDelim();
+	unless ($start_directory and $path ) {
+		warn "missing directory<br> surePathToFile  start_directory   path ";
+		return '';
+	}
+	# use the permissions/group on the start directory itself as a template
+	my ($perms, $groupID) = (stat $start_directory)[2,5];
+	#warn "&urePathToTmpFile: perms=$perms groupID=$groupID\n";
+	
+	# if the path starts with $start_directory (which is permitted but optional) remove this initial segment
+	$path =~ s|^$start_directory|| if $path =~ m|^$start_directory|;
+	#$path = convertPath($path);
+
+	
+	# find the nodes on the given path
+        my @nodes = split("$delim",$path);
+	
+	# create new path
+	$path = $start_directory; #convertPath("$tmpDirectory");
+	
+	while (@nodes>1) {
+		$path = $path . shift (@nodes) . "/"; #convertPath($path . shift (@nodes) . "/");
+		#FIXME  this make directory command may not be fool proof.
+		unless (-e $path) {
+			mkdir($path, $perms)
+				or warn "Failed to create directory $path";
+		}
+
+	}
+	
+	$path = $path . shift(@nodes); #convertPath($path . shift(@nodes));
+	return $path;
+}
 
 # $ce - a WeBWork::CourseEnvironment object
 # $function - fully qualified function name
