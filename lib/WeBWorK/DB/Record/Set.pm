@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/Set.pm,v 1.6 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,7 @@ sub NONKEYFIELDS {qw(
 	open_date
 	due_date
 	answer_date
+	published
 )}
 
 sub FIELDS {qw(
@@ -45,6 +46,7 @@ sub FIELDS {qw(
 	open_date
 	due_date
 	answer_date
+	published
 )}
 
 1;
