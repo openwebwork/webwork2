@@ -364,8 +364,8 @@ problem. It is likely that there is an error in the problem itself. If you are
 a student, contact your professor to have the error corrected. If you are a
 professor, please consut the error output below for more informaiton.
 EOF
-		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
-		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
+		CGI::h3("Error messages"), CGI::p(CGI::tt($error)),
+		CGI::h3("Error context"), CGI::p(CGI::tt($details));
 }
 
 sub warningOutput($$) {
@@ -377,10 +377,10 @@ sub warningOutput($$) {
 WeBWorK has encountered warnings while attempting to process this problem. It
 is likely that this indicates an error or ambiguity in the problem itself. If
 you are a student, contact your professor to have the problem corrected. If you
-are a professor, please consut the error output below for more informaiton.
+are a professor, please consut the warning output below for more informaiton.
 EOF
 		CGI::h3("Warning messages"),
-		CGI::blockquote(CGI::pre($warnings)),
+		CGI::p(CGI::tt($warnings)),
 	;
 }
 
