@@ -22,6 +22,8 @@ our @EXPORT_OK = qw(
 	hash2record
 	hash2string
 	string2hash
+	global2user
+	user2global
 	findDefaults
 );
 
@@ -121,6 +123,28 @@ sub string2hash($) {
 	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
 	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
 	return %hash;
+}
+
+################################################################################
+# global <-> user record conversion
+################################################################################
+
+sub global2user($$) {
+	my ($userRecordClass, $GlobalRecord) = @_;
+	my $UserRecord = $userRecordClass->new();
+	foreach my $field ($GlobalRecord->FIELDS()) {
+		$UserRecord->$field($GlobalRecord->$field());
+	}
+	return $UserRecord;
+}
+
+sub user2global($$) {
+	my ($globalRecordClass, $UserRecord) = @_;
+	my $GlobalRecord = $globalRecordClass->new();
+	foreach my $field ($GlobalRecord->FIELDS()) {
+		$GlobalRecord->$field($UserRecord->$field());
+	}
+	return $GlobalRecord;
 }
 
 ################################################################################

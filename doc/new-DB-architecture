@@ -158,8 +158,8 @@ table		keyparts
 password	user_id
 permission	user_id
 key		user_id
-user		     id
-set		             id
+user		user_id
+set		         set_id
 set_user	user_id, set_id
-problem		         set_id,         id
+problem		         set_id, problem_id
 problem_user	user_id, set_id, problem_id

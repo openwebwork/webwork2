@@ -115,8 +115,6 @@ sub exists($@) {
 		my $string = $self->fetchString($PSVN);
 		my (undef, @Problems) = $self->string2records($string);
 		return grep { $_->problem_id() eq $problemID } @Problems;
-		# optimization, if IDs are guaranteed to be numeric
-		# and in order: return (@Problems >= $keyparts[2])
 	}
 }
 
