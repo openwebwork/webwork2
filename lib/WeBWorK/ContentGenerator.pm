@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.94 2004/05/04 16:03:09 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.95 2004/05/06 20:21:48 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -504,9 +504,9 @@ sub links {
 		
 		my $userID    = $r->param("effectiveUser");
 		my $setID     = $urlpath->arg("setID");
-		$setID = "" unless grep /$setID/, $db->listUserSets($userID);
+		$setID = "" if (defined $setID && !(grep /$setID/, $db->listUserSets($userID)));
 		my $problemID = $urlpath->arg("problemID");
-		$problemID = "" unless grep /$problemID/, $db->listUserProblems($userID, $setID);
+		$problemID = "" if (defined $problemID && !(grep /$problemID/, $db->listUserProblems($userID, $setID)));
 		
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
 		my $addUsers = $urlpath->newFromModule("${ipfx}AddUsers", %args);
