@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.108 2004/06/24 17:22:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.109 2004/06/24 20:54:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -491,10 +491,6 @@ sub links {
 	# we're linking to other places in the same course, so grab the courseID from the current path
 	my $courseID = $urlpath->arg("courseID");
 	
-	# some links are only available if you have the correct permissions.
-	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
-	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
-
 	# to make things more concise
 	my %args = ( courseID => $courseID );
 	my $pfx = "WeBWorK::ContentGenerator::";
@@ -515,7 +511,7 @@ sub links {
 	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  GRADES));
 	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  LOG_OUT));
 	
-	if ($permLevel > 0) {
+	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		my $ipfx = "${pfx}Instructor::";
 		
 		my $userID    = $r->param("effectiveUser");
@@ -555,7 +551,7 @@ sub links {
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, space2nbsp($instr->name)));
 		print CGI::start_ul();
-		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, ADD_USERS));
+		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, ADD_USERS)) if $authz->hasPermissions($user, "modify_student_data");
 		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, USER_LIST));
 		print CGI::start_li();
 		print CGI::a({href=>$self->systemLink($setList)}, SET_LIST);
@@ -572,8 +568,8 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
-		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, SET_MAKER));
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, ASSIGNER));
+		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, SET_MAKER)) if $authz->hasPermissions($user, "modify_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, ASSIGNER)) if $authz->hasPermissions($user, "assign_problem_sets");
 		
 		
 		print CGI::start_li();
@@ -605,8 +601,8 @@ sub links {
 		}
 		print CGI::end_li();
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, SCORING));
-		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, MAIL));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, SCORING)) if $authz->hasPermissions($user, "score_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, MAIL)) if $authz->hasPermissions($user, "send_mail");
 		print CGI::li(CGI::a({href=>$self->systemLink($files)}, FILE_TRANSFER));
 		print CGI::end_ul();
 		print CGI::end_li();
