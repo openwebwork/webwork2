@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.36 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.37 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -129,8 +129,10 @@ sub initialize {
 				#$self->assignProblemToAllSetUsers($problemRecord);  # handled by parent
 			}
 			
-			# assign the set to all users
-			$self->assignSetToAllUsers($setName);
+			if ($r->param("assignNewSet")) {
+				# assign the set to all users
+				$self->assignSetToAllUsers($setName);
+			}
 		}
 	} 
 }
@@ -244,48 +246,63 @@ sub body {
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
 
-	my $form = join("",
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n", # This form is for deleting sets, and points to itself
-		$table,"\n",
-		CGI::br(),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),"\n",
-		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),"\n",
-		CGI::end_form(),"\n",
+	print join("\n",
+    	# Set table form (for deleting checked sets)
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		$self->hidden_authen_fields,
+		$table,
+		CGI::br(),
+		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),
+		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),
+		CGI::end_form(),
+		CGI::br(),
 		
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
-		$self->hidden_authen_fields,"\n",
+        # Empty set creation form
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		$self->hidden_authen_fields,
+		CGI::b("Create an Empty Set"),
+        CGI::br(),
 		"New Set Name: ",
 		CGI::input({type=>"text", name=>"newSetName", value=>""}),
-		CGI::submit({"name"=>"makeNewSet", "label"=>"Create"}),"\n",
-		CGI::end_form(),"\n",
+		CGI::submit({"name"=>"makeNewSet", "label"=>"Create"}),
+		CGI::end_form(),
+		CGI::br(),
 		
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::b("Import a Single Set"), CGI::br(), "\n",
-		"From file: ", CGI::popup_menu(
-			-name=>'set_definition_file', 
-			-values=>\@set_definition_files, 
-		), CGI::br(), "\n",
-		"Set name: ", CGI::input({type=>"text", name=>"newSetName", value=>""}),
-		CGI::br(), "\n",
-		CGI::submit({"name"=>"importSet", "label"=>"Import a Single Set"}),"\n",
-		CGI::br(), "\n",
-		CGI::b("Import Multiple Sets"), CGI::br(),
+        # Single set import form
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		$self->hidden_authen_fields,
+		CGI::b("Import a Single Set"),
+        CGI::br(),
+		"From file: ",
+        CGI::popup_menu(-name=>'set_definition_file', -values=>\@set_definition_files),
+        CGI::br(),
+		"Set name: ",
+        CGI::input({type=>"text", name=>"newSetName", value=>""}),
+        " (leave blank to use name of set definition file)",
+		CGI::br(),
+		CGI::checkbox(-name=>"assignNewSet",
+			-label=>"Assign imported set to all users"),
+		CGI::br(),
+		CGI::submit({"name"=>"importSet", "label"=>"Import a Single Set"}),
+		CGI::end_form(),
+		CGI::br(),
+		
+        # Multiple set import form
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		$self->hidden_authen_fields,
+		CGI::b("Import Multiple Sets"),
+        CGI::br(),
 		"Each set will be named based on the name of the set definition file, omitting",
 		" any leading ", CGI::i("set"), " and trailing ", CGI::i(".def"), ". Note that",
 		" the name of a set cannot be changed once it has been created.",
-		CGI::br(), "\n",
-		CGI::scrolling_list(
-			-name=>"set_definition_files",
-			-values=>\@set_definition_files,
-			-size=>10,
-			-multiple=>"true",
-		), CGI::br(),
-		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),"\n",
-		CGI::end_form(),"\n"
+		CGI::br(),
+		CGI::scrolling_list(-name=>"set_definition_files", -values=>\@set_definition_files, -size=>10, -multiple=>"true"),
+		CGI::br(),
+		CGI::checkbox(-name=>"assignNewSet", -label=>"Assign imported sets to all users"),
+		CGI::br(),
+		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),
+		CGI::end_form(),
 	);
-	print $form;
 	
 	return "";
 }
