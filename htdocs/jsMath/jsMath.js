@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.5b-ww
+ *  Version: 1.5c-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -279,8 +279,9 @@ var jsMath = {
   CheckFonts: function () {
     var wh = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>');
     if (wh.w*3 < wh.h && wh.h != 0) return;
-    wh = this.BBoxFor('<SPAN STYLE="font-family: cmr10">'+this.TeX.cmr10[124].c+'</SPAN>');
-    if (wh.w*2 > wh.h && wh.h != 0) return;
+    var wh1 = this.BBoxFor('<SPAN STYLE="font-family: cmr10, serif">'+this.TeX.cmr10[124].c+'</SPAN>');
+    var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX.cmr10[124].c+'</SPAN>');
+    if (wh1.w > 2*wh2.w && wh1.h != 0) return;
     this.NoFontMessage();
     if (navigator.platform == 'Win32') {
       document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
@@ -299,7 +300,7 @@ var jsMath = {
    *  
    *      <SCRIPT>jsMath.NoFontMessage = function () {}</SCRIPT>
    *
-   *  in your HTML file, if you want.  Be this means the user may not know
+   *  in your HTML file, if you want.  But this means the user may not know
    *  that he or she can get a better version of your page.
    */
   NoFontMessage: function () {
