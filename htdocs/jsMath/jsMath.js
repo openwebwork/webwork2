@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.5d-ww
+ *  Version: 1.6b-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -262,6 +262,27 @@ var jsMath = {
     this.renameOK = (document.getElementsByName('jsMath_test').length > 0);
     this.hidden.innerHTML = '';
   },
+
+  /*
+   *  Look to see if a font is found.  HACK!
+   *  Check the character in the '|' position, and see if it is
+   *  wider than the usual '|'.
+   */
+  TestFont: function (name,n,factor) {
+    if (n == null) {n = 124}; if (factor == null) {factor = 2}
+    var wh1 = this.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+this.TeX[name][n].c+'</SPAN>');
+    var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX[name][n].c+'</SPAN>');
+//alert([wh1.w,wh1.h,wh2.w,wh2.h,factor,wh1.w>factor*wh2.w && wh1.h != 0]);
+    return (wh1.w > factor*wh2.w && wh1.h != 0);
+  },
+
+  TestFont2: function (name,n,factor) {
+    if (n == null) {n = 124}; if (factor == null) {factor = 2}
+    var wh1 = this.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+this.TeX[name][n].c+'</SPAN>');
+    var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX[name][n].c+'</SPAN>');
+//alert([this.TeX[name][n].c,wh1.w,wh1.h,wh2.w,wh2.h,factor,wh2.w > factor*wh1.w && wh1.h != 0]);
+    return (wh2.w > factor*wh1.w && wh1.h != 0);
+  },
   
   /*
    *  Check for the availability of TeX fonts.  We do this by looking at
@@ -277,12 +298,11 @@ var jsMath = {
    *  
    */
   CheckFonts: function () {
+    jsMath.nofonts = 0;
     var wh = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>');
     if (wh.w*3 < wh.h && wh.h != 0) return;
-    var wh1 = this.BBoxFor('<SPAN STYLE="font-family: cmr10, serif">'+this.TeX.cmr10[124].c+'</SPAN>');
-    var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX.cmr10[124].c+'</SPAN>');
-    if (wh1.w > 2*wh2.w && wh1.h != 0) return;
-    if (NoFontMessage) {NoFontMessage()} else {this.NoFontMessage()}
+    if (this.TestFont('cmr10')) return;
+    if (window.NoFontMessage) {window.NoFontMessage()} else {this.NoFontMessage()}
     if (navigator.platform == 'Win32') {
       document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
     } else if (navigator.platform == 'MacPPC') {
@@ -291,14 +311,14 @@ var jsMath = {
       // default to unix?  Is there a better way to tell if unix?
       document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-unix.js"></SCRIPT>');
     }
-    document.writeln('<SCRIPT>jsMath.AddMessage()</SCRIPT>');
+    jsMath.nofonts = 1;
   },
 
   /*
    *  The message for when no TeX fonts.  You can eliminate this message
    *  by including
    *  
-   *      <SCRIPT>jsMath.NoFontMessage = function () {}</SCRIPT>
+   *      <SCRIPT>function NoFontMessage() {}</SCRIPT>
    *
    *  in your HTML file, if you want.  But this means the user may not know
    *  that he or she can get a better version of your page.
@@ -318,9 +338,6 @@ var jsMath = {
       +'</FONT></SMALL></DIV></CENTER><p><HR><p>');
   },
   
-  // for additional browser messages
-  AddMessage: function () {},
-
   /*
    *  Initialize jsMath.  This determines the em size, and a variety
    *  of other parameters used throughout jsMath.
@@ -362,23 +379,28 @@ var jsMath = {
   },
   
   /*
-   *  Look up the default height and depth for the TeX fonts
+   *  Look up the default height and depth for a TeX font
    *  and set the skewchar
    */
+  InitTeXfont: function (name) {
+    var font = this.TeX[name];
+    var WH = this.EmBoxFor('<SPAN CLASS="'+name+'">'+font[65].c+'</SPAN>');
+    font.hd = WH.h;
+    font.d = this.EmBoxFor('<SPAN CLASS="'+name+'">'+ font[65].c +
+      '<IMG SRC="'+jsMath.black+'" STYLE="height:'+font.hd+'em; width:1"></SPAN>').h 
+      - font.hd;
+    font.h = font.hd - font.d;
+    font.dh = .05;
+    if (name == 'cmmi10') {font.skewchar = 0177} 
+    else if (name == 'cmsy10') {font.skewchar = 060}
+  },
+
+  /*
+   *  Init all the TeX fonts
+   */
   InitTeXfonts: function () {
-    for (var i = 0; i < this.TeX.fam.length; i++) {
-      if (this.TeX.fam[i]) {
-        var font = this.TeX[this.TeX.fam[i]];
-        var WH = this.EmBoxFor('<SPAN CLASS="'+this.TeX.fam[i]+'">'+font[65].c+'</SPAN>');
-        font.hd = WH.h;
-        font.d = this.EmBoxFor('<SPAN CLASS="'+this.TeX.fam[i]+'">'+ font[65].c +
-          '<IMG SRC="'+jsMath.black+'" STYLE="height:'+font.hd+'em; width:1"></SPAN>').h 
-          - font.hd;
-        font.h = font.hd - font.d;
-        font.dh = .05;
-        if (i == 1) {font.skewchar = 0177} else if (i == 2) {font.skewchar = 060}
-      }
-    }
+    for (var i = 0; i < this.TeX.fam.length; i++) 
+      {if (this.TeX.fam[i]) {this.InitTeXfont(this.TeX.fam[i])}}
   },
 
   /*
@@ -401,6 +423,7 @@ var jsMath = {
    *  to overcome specific browser bugs
    */
   InitBrowser: function () {
+    jsMath.browser = 'unknown';
     this.isSafari = navigator.userAgent.match(/Safari/);
     this.TestSpanHeight();
     this.TestRenameOK();
@@ -409,11 +432,14 @@ var jsMath = {
     //  Check for bug-filled Internet Explorer
     //
     if (this.spanHeightVaries) {
+      jsMath.browser = 'MSIE';
       if (navigator.platform == 'Win32') {
         this.UpdateTeXfonts({
           cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
-          cmmi10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
-          cmmi10: {'126': {c: '&#x7E;<SPAN STYLE="margin-left:.1em"></SPAN>'}},
+          cmmi10: {
+	     '10':  {c: '<I>&Omega;</I>', tclass: 'normal'},
+	     '126': {c: '&#x7E;<SPAN STYLE="margin-left:.1em"></SPAN>'}
+	  },
           cmsy10: {'10': {c: '&#x2297;', tclass: 'arial'}},
           cmex10: {'10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'}},
           cmti10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
@@ -436,6 +462,7 @@ var jsMath = {
     //  Look for Netscape/Mozilla (any flavor)
     //
     if (this.hidden.ATTRIBUTE_NODE) {
+      jsMath.browser = 'Mozilla';
       if (navigator.platform == 'MacPPC') {
         this.UpdateTeXfonts({
           cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
@@ -461,6 +488,7 @@ var jsMath = {
     //  Look for OmniWeb
     //
     if (navigator.accentColorName) {
+      jsMath.browser = 'OmniWeb';
       this.allowAbsolute = 0;
     }
     
@@ -468,6 +496,7 @@ var jsMath = {
     //  Look for Opera
     //
     if (navigator.userAgent.search(" Opera ") >= 0) {
+      jsMath.browser = 'Opera';
       this.isOpera = 1;
       this.UpdateTeXfonts({
         cmr10:  {
@@ -503,6 +532,7 @@ var jsMath = {
     //  Look for Safari
     //
     if (this.isSafari) {
+      jsMath.browser = 'Safari';
       var version = navigator.userAgent.match("Safari/([0-9]+)")[1];
       if (version < 125) {this.allowAbsolute = 0; this.oldSafari = 1}
       for (var i = 0; i < this.TeX.fam.length; i++)
@@ -534,15 +564,19 @@ var jsMath = {
   },
   
   /*
+   *  Define some styles
+   */
+  WriteStyles: function (styles) {
+    document.writeln('<STYLE TYPE="text/css">');
+    for (var id in styles) {document.writeln('  '+id+'  {'+styles[id]+'}')}
+    document.writeln('</STYLE>');
+  },
+  
+  /*
    *  Send the style definitions to the browser (these may be adjusted
    *  by the browser-specific code)
    */
-  InitStyles: function () {
-    document.writeln('<STYLE TYPE="text/css">');
-    for (var id in this.styles)
-      {document.writeln('  '+id+'  {'+this.styles[id]+'}')}
-    document.writeln('</STYLE>');
-  },
+  InitStyles: function () {this.WriteStyles(this.styles)},
   
   /*
    *  Update specific parameters for a limited number of font entries
@@ -1648,7 +1682,7 @@ jsMath.Add(jsMath.Box,{
     box.style = style; box.size = size; box.tclass = tclass;
     if (d != null) {if (d != 1) {box.d = d}} else {box.d = 0}
     if (a == null || a == 1) {box.h = .9*TeX.M_height}
-      else {box.h = 1.1*TeX.x_height + a}
+      else {box.h = 1.1*TeX.x_height + 1*a}; // sometimes a is a string?
     return box;
   },
 
@@ -2162,8 +2196,8 @@ jsMath.Add(jsMath.mItem,{
         tclass: tclass
       }
     });
-    if (a != null)   {atom.nuc.ascend = a}
-    if (d != null)   {atom.nuc.descend = d}
+    if (a != null) {atom.nuc.ascend = a}
+    if (d != null) {atom.nuc.descend = d}
     return atom;
   },
   
@@ -3698,6 +3732,12 @@ jsMath.Package(jsMath.Parser,{
    */
   environments: {
     array:      'Array',
+    matrix:     ['Array',null,null,'c'],
+    pmatrix:    ['Array','(',')','c'],
+    bmatrix:    ['Array','[',']','c'],
+    Bmatrix:    ['Array','\\{','\\}','c'],
+    vmatrix:    ['Array','\\vert','\\vert','c'],
+    Vmatrix:    ['Array','\\Vert','\\Vert','c'],
     cases:      ['Array','\\{','.','ll'],
     eqnarray:   ['Array',null,null,'rcl',[5/18,5/18]]
   },
@@ -4029,7 +4069,7 @@ jsMath.Package(jsMath.Parser,{
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
     arg = arg.split(','); arg[0] = '&#'+arg[0]+';';
     if (!arg[1]) {arg[1] = 'normal'}
-    this.mlist.Add(jsMath.mItem.TextAtom('ord',arg[0],arg[1],arg[2]));
+    this.mlist.Add(jsMath.mItem.TextAtom('ord',arg[0],arg[1],arg[2],arg[3]));
   },
   
   /*
@@ -4273,7 +4313,10 @@ jsMath.Package(jsMath.Parser,{
     if (h == 0 || w == 0) {gif = "blank"}
     var html = '<IMG SRC="'+jsMath[gif]+'" STYLE="height: '+jsMath.HTML.Em(h)+'; '
                 + 'width: '+jsMath.HTML.Em(w)+'">';
-    if (d) {html = jsMath.HTML.Place(html,0,-d)}
+    if (d) {
+      html = '<SPAN STYLE="vertical-align:'+jsMath.HTML.Em(-d)+'">'
+           +  html + '</SPAN>';
+    }
     this.mlist.Add(jsMath.mItem.Typeset(new jsMath.Box('html',html,w,h-d,d)));
   },
   
