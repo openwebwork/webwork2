@@ -101,7 +101,6 @@ sub assignProblemToAllSetUsers {
 sub assignSetToAllUsers {
 	my ($self, $setID) = @_;
 	my $db = $self->{db};
-	my @problems = ();
 	my @users = $db->listUsers;
 	my @problemRecords = map { $db->getGlobalProblem($setID, $_) } # checked
 		$db->listGlobalProblems($setID);
@@ -116,6 +115,38 @@ sub assignSetToAllUsers {
 		foreach my $problemRecord (@problemRecords) {
 			$self->assignProblemToUser($user, $problemRecord);
 		}
+	}
+}
+
+sub assignAllSetsToUser {
+	my ($self, $userID) = @_;
+	my $db = $self->{db};
+	
+	# assign only sets that are not already assigned
+	my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
+	my @globalSetIDs = grep { not exists $userSetIDs{$_} } $db->listGlobalSets;
+	
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	
+	my $i = 0;
+	foreach my $GlobalSet (@GlobalSets) {
+		if (not defined $GlobalSet) {
+			warn "record not found for global set $globalSetIDs[$i]";
+		} else {
+			$self->assignSetToUser($userID, $GlobalSet);
+		}
+		$i++;
+	}
+}
+
+sub unassignAllSetsFromUser {
+	my ($self, $userID) = @_;
+	my $db = $self->{db};
+	
+	my @userSetIDs = $db->listUserSets($userID);
+	
+	foreach my $userSetID (@userSetIDs) {
+		$db->deleteUserSet($userID, $userSetID);
 	}
 }
 

@@ -31,24 +31,10 @@ sub initialize {
 		return;
 	}
 	
-	#if (defined $r->param('assignToAll')) {
-	#	$self->assignSetToAllUser($setID);
-	#} elsif (defined $r->param('assignToSelected')) {
-	#	my $setRecord = $db->getGlobalSet($setID);
-	#	
-	#	foreach my $selectedUser (@users) {
-	#		if (exists $selectedUsers{$selectedUser}) {
-	#			$self->assignSetToUser($selectedUser, $setRecord)
-	#		} else {
-	#			$db->deleteUserSet($selectedUser, $setID);
-	#		}
-	#	}
-	#}
-	
 	if (defined $r->param("assignToAll")) {
-		$self->assignUserToAllSets($userID);
+		$self->assignAllSetsToUser($userID);
 	} elsif (defined $r->param("unassignFromAll")) {
-		$self->unassignUserFromAllSets($userID);
+		$self->unassignAllSetsFromUser($userID);
 	} elsif (defined $r->param('assignToSelected')) {
 		# get list of all sets and a hash for checking selectedness
 		my @setIDs = $db->listGlobalSets;
@@ -56,7 +42,7 @@ sub initialize {
 		
 		# get current user
 		my $User = $db->getUser($userID);
-		die "user $userID does not exist!\n" unless $User;
+		die "record not found for $userID.\n" unless $User;
 		
 		# go through each possible set
 		foreach my $setID (@setIDs) {
