@@ -360,8 +360,12 @@ sub saveFileChanges {
 		# store this name in the $self->currentSourceFilePath for use in body 
 		
 		# try to read file
-		eval { $problemContents = WeBWorK::Utils::readFile($inputFilePath) };
-		$problemContents = $@ if $@;
+		if(-e $inputFilePath) {
+			eval { $problemContents = WeBWorK::Utils::readFile($inputFilePath) };
+			$problemContents = $@ if $@;
+		} else { # file not existing is not an error
+			$problemContents = '';
+		}
 		
 		$currentSourceFilePath = "$editFilePath.$editFileSuffix"; 
 		$self->{currentSourceFilePath} = $currentSourceFilePath; 
