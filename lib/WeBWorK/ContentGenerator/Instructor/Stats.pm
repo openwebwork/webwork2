@@ -331,7 +331,7 @@ sub displaySets {
     my %attempts_percentiles_for_problem = ();
     foreach my $probID (@problemIDs) {
     	$attempts_percentiles_for_problem{$probID} =   {
-    		determine_percentiles(\@brackets, @{$attempts_list_for_problem{$probID}})
+    		determine_percentiles([@brackets, 0], @{$attempts_list_for_problem{$probID}})
     	};    
     }
     
