@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.38 2004/05/08 15:49:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.39 2004/05/08 20:31:28 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,6 +210,7 @@ sub displaySets {
    	my @index_list                           = ();  # list of all student index 
 	my @score_list                           = ();  # list of all student total percentage scores 
     my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
+    my %number_of_attempts_for_problem       = ();  # the total number of attempst for this problem (sum of above list)
     my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
     my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
 	my $sort_method = sub {
@@ -311,8 +312,9 @@ sub displaySets {
 			 # add on the scores for this problem
 			if (defined($attempted) and $attempted) {
 				$number_of_students_attempting_problem{$probID}++;
-				push( @{ $attempts_list_for_problem{$probID} } ,     $num_correct + $num_incorrect);
-				$correct_answers_for_problem{$probID} += $status;
+				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+				$correct_answers_for_problem{$probID}                += $status;
 			}
 				
 		}
@@ -355,13 +357,14 @@ sub displaySets {
 	# sort the problem IDs
 	my @problemIDs   = sort {$a<=>$b} keys %correct_answers_for_problem;
 	# determine index quartiles
-    my @brackets          = (75, 50,25,5);
-	my %index_percentiles = determine_percentiles(\@brackets, @index_list);
-    my %score_percentiles = determine_percentiles(\@brackets, @score_list);
+    my @brackets1          = (90,80,70,60,50,40,30,20,10);  #% students having scores or indices above this cutoff value
+    my @brackets2          = (95, 75,50,25);       # % students having this many incorrect attempts or more  
+	my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
+    my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
     my %attempts_percentiles_for_problem = ();
     foreach my $probID (@problemIDs) {
     	$attempts_percentiles_for_problem{$probID} =   {
-    		determine_percentiles([@brackets, 0], @{$attempts_list_for_problem{$probID}})
+    		determine_percentiles([@brackets2, 0], @{$attempts_list_for_problem{$probID}})
     	};    
     }
     
@@ -383,6 +386,13 @@ print
 			                       @problemIDs 
 			]
 		)),
+		CGI::Tr(CGI::td(
+			[ 'avg attempts',map {($number_of_students_attempting_problem{$_})
+			                      ? sprintf("%0.0f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_}) 
+			                      : '-'}			                   
+			                       @problemIDs 
+			]
+		)),
 		CGI::end_table();
 
 #####################################################################################
@@ -390,19 +400,21 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage of active students whose percentage scores and success indices are greater than the given values.'),
+	    	CGI::p(CGI::i('The percentage of students receiving at least these scores.<br/>
+	    	       The median score is in the 50% column. ')),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
-					          (map {  "&nbsp;$_"  } @brackets) ,
+					          (map {  "&nbsp;".$_   } @brackets1) ,
 					          'top score ', 
+					         
 					         ]
 					)
 				),
 				CGI::Tr(
 					CGI::td( [
 						'Score',
-						(map { '&ge; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets),
+						(map { '&ge; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -410,7 +422,7 @@ print
 				CGI::Tr(
 					CGI::td( [
 						'Success Index',
-						(map { '&ge; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets),
+						(map { '&ge; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -426,11 +438,11 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage of active students with no more than the indicated number of total attempts'),
+	    	CGI::p(CGI::i('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts')),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
-					          (map {  "&nbsp;".(100-$_)  } @brackets, 0) ,
+					          (map {  "&nbsp;".(100-$_)  } @brackets2, 0) ,
 					        
 					         ]
 					)
@@ -443,7 +455,7 @@ print
 		print	CGI::Tr(
 					CGI::td( [
 						CGI::a({href=>$self->systemLink($problemPage)},"Prob $probID"),
-						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets, 0),
+						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2, 0),
 
 						]
 					)
@@ -459,7 +471,10 @@ print
 		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
 	}
 	print
-		CGI::p("Details"),
+		CGI::p("Details:",CGI::i('The success indicator for each student is calculated as'),CGI::br(),
+			'(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)',CGI::br(),
+			CGI::i('or 0 if there are no attempts.')
+		),
 		"Click heading to sort table: ",
 	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
