@@ -34,8 +34,28 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 
 require WeBWorK::Utils::ListingDB;
 
-
 use constant MAX_SHOW => 20;
+
+## Flags for operations on files
+
+use constant ADDED => 1;
+use constant HIDDEN => (1 << 1);
+use constant SUCCESS => (1 << 2);
+
+## Maybe this should be in ContentGenerator.pm
+
+sub adderrmsg {
+  my $self = shift;
+  my $msg = shift;
+  $self->addmessage(CGI::div({class=>"ResultsWithError"}, $msg));
+}
+
+sub addgoodmsg {
+  my $self = shift;
+  my $msg = shift;
+  $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $msg));
+}
+
 
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
@@ -85,12 +105,13 @@ sub get_past_problem_files {
   my @found=();
   my $count =1;
   while (defined($r->param("filetrial$count"))) {
-    push @found, [$r->param("filetrial$count"), 
-		  defined($r->param("trial$count")) ? $r->param("trial$count"):0,
-		  defined($r->param("hideme$count")) ?$r->param("hideme$count"):0];
+    my $val = 0;
+    $val |= ADDED if($r->param("trial$count"));
+    $val |= HIDDEN if($r->param("hideme$count"));
+    push @found, [$r->param("filetrial$count"), $val];		  
     $count++;
   }
-  return(@found);
+  return(\@found);
 }
 
 #### For adding new problems
@@ -99,24 +120,31 @@ sub add_selected {
   my $self = shift;
   my $db = shift;
   my $setName = shift;
-  my @selected = @_;
+  my @past_problems = @{$self->{past_problems}};
+  my @selected = @past_problems;
   my (@path, $file, $selected, $freeProblemID);
   $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
+  my $addedcount=0;
 
   for $selected (@selected) {
-    $file = $selected;
-    @path = split "/", $selected;
-    pop @path;			# Remove the file name from the path
-    shift @path if $path[0] eq ""; # remove the null element from the begining
-    my $problemRecord = $db->newGlobalProblem();
-    $problemRecord->problem_id($freeProblemID++);
-    $problemRecord->set_id($setName);
-    $problemRecord->source_file($file);
-    $problemRecord->value("1");
-    $problemRecord->max_attempts("-1");
-    $db->addGlobalProblem($problemRecord);
-    $self->assignProblemToAllSetUsers($problemRecord);
+    if($selected->[1] & ADDED) {
+      $file = $selected->[0];
+      @path = split "/", $selected->[0];
+      pop @path;			# Remove the file name from the path
+      shift @path if $path[0] eq ""; # remove the null element from the begining
+      my $problemRecord = $db->newGlobalProblem();
+      $problemRecord->problem_id($freeProblemID++);
+      $problemRecord->set_id($setName);
+      $problemRecord->source_file($file);
+      $problemRecord->value("1");
+      $problemRecord->max_attempts("-1");
+      $db->addGlobalProblem($problemRecord);
+      $self->assignProblemToAllSetUsers($problemRecord);
+      $selected->[1] &= SUCCESS;
+      $addedcount++;
+    }
   }
+  return($addedcount);
 }
 
 
@@ -214,7 +242,7 @@ for the Problem Library to function.  It should be a link pointing to
 I tried to make the link for you, but that failed.  Check the permissions
 in your <code>templates</code> directory.
 HERE
-      $self->addmessage(CGI::div({class=>"ResultsWithError"}, $msg));
+      $self->adderrmsg($msg);
     }
   }
 
@@ -424,7 +452,7 @@ sub pre_header_initialize {
     my $checkset = $db->getGlobalSet($r->param('local_sets'));
     if (not defined($checkset)) {
       $self->{error} = 1;
-      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 'You need to select a "Current Set" before you can edit it.'));
+      $self->adderrmsg('You need to select a "Current Set" before you can edit it.');
     } else {
       my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
       my $url = $self->systemLink($page);
@@ -436,7 +464,8 @@ sub pre_header_initialize {
 
   ############# List of problems we have already printed
 
-  my @past_problems = get_past_problem_files($r);
+  $self->{past_problems} = get_past_problem_files($r);
+  my $none_shown = scalar(@{$self->{past_problems}})==0;
   my @pg_files=();
   my $use_previous_problems = 1;
   my $first_shown = $r->param('first_shown') || 0;
@@ -476,12 +505,14 @@ sub pre_header_initialize {
   } elsif ($r->param('rerandomize')) {
     $problem_seed++;
     $r->param('problem_seed', $problem_seed);
+    $self->adderrmsg('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
 
     ##### Clear the display
 
   } elsif ($r->param('cleardisplay')) {
     @pg_files = ();
     $use_previous_problems=0;
+    $self->adderrmsg('The display was already cleared.') if $none_shown;
 
     ##### View problems selected from the local list
 
@@ -489,8 +520,7 @@ sub pre_header_initialize {
 
     my $set_to_display = $r->param('library_sets');
     if (not defined($set_to_display) or $set_to_display eq "Select a Local Problem Collection" or $set_to_display eq "Found no directories containing problems") {
-      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-				 'You need to select a set to view.'));
+      $self->adderrmsg('You need to select a set to view.');
     } else {
       $set_to_display = '.' if $set_to_display eq '  -- Top --  ';
       @pg_files = list_pg_files($ce->{courseDirs}->{templates},
@@ -506,8 +536,7 @@ sub pre_header_initialize {
     if (not defined($set_to_display) 
         or $set_to_display eq "Select a Problem Set"
         or $set_to_display eq 'There are no local sets yet') {
-      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-		   "You need to select a set from this course to view."));
+      $self->adderrmsg("You need to select a set from this course to view.");
     } else {
       my @problemList = $db->listGlobalProblems($set_to_display);
       my $problem;
@@ -553,8 +582,7 @@ sub pre_header_initialize {
 
   } elsif ($r->param('new_local_set')) {
     if ($r->param('new_set_name') !~ /^[\w.-]*$/) {
-      $self->addmessage(CGI::div({class=>"ResultsWithError"},
-        "The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and ."));
+      $self->adderrmsg("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
     } else {
       my $newSetName = $r->param('new_set_name');
       $newSetName =~ s/^set//;
@@ -562,7 +590,7 @@ sub pre_header_initialize {
       $r->param('local_sets',$newSetName);
       my $newSetRecord   = $db->getGlobalSet($newSetName);
       if (defined($newSetRecord)) {
-	$self->addmessage(CGI::div({class=>"ResultsWithError"}, "The set name $newSetName is already in use.  Pick a different name if you would like to start a new set."));
+	$self->adderrmsg("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
       } else {			# Do it!
 	$newSetRecord = $db->{set}->{record}->new();
 	$newSetRecord->set_id($newSetName);
@@ -581,27 +609,35 @@ sub pre_header_initialize {
     ## first handle problems to be added before we hide them
     my($localSet, @selected);
 
-    @pg_files = grep {$_->[1] != 0 } @past_problems; 
+    @pg_files = grep {($_->[1] & ADDED) != 0 } @{$self->{past_problems}}; 
     @selected = map {$_->[0]} @pg_files;
+
+    my @action_files = grep {$_->[1] > 0 } @{$self->{past_problems}};
+    if(scalar(@action_files) == 0) {
+      $self->adderrmsg('Act on marked problems requested, but no problems were marked.');
+    }
 
     if (scalar(@selected)>0) {	# if some are to be added, they need a place to go
       $localSet = $r->param('local_sets');
       if (not defined($localSet)) {
-	$self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-	'You are trying to add problems to something, but you did not select a "Current Set" name as a target.'));
+	$self->adderrmsg('You are trying to add problems to something, but you did not select a "Current Set" name as a target.');
       } else {
 	my $newSetRecord   = $db->getGlobalSet($localSet);
 	if (not defined($newSetRecord)) {
-	  $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-           'You are trying to add problems to something, but you did not select a "Current Set" name as a target.'));
+	  $self->adderrmsg("You are trying to add problems to $localSet, but that set does not seem to exist!  I bet you used your \"Back\" button.");
 	} else {
-	  add_selected($self, $db, $localSet, @selected);
+	  my $addcount = add_selected($self, $db, $localSet);
+	  if($addcount > 0) {
+	    $self->adderrmsg("Successfully added $addcount problem".(($addcount>1)?'s':'').
+	      " to $localSet.");
+	  }
 	}
       }
     }
     ## now handle problems to be hidden
 
-    @pg_files = grep {$_->[2]==0 } @past_problems;
+    ## only keep the ones which are not hidden
+    @pg_files = grep {($_->[1] & HIDDEN) ==0 } @{$self->{past_problems}};
     @pg_files = map {$_->[0]} @pg_files;
     @all_past_list = (@all_past_list[0..($first_shown-1)],
 		      @pg_files,
