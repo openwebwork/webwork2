@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.36 2004/03/04 21:04:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.37 2004/03/23 01:10:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -453,6 +453,13 @@ sub getDefList {
 	my $ce = $self->{ce};
 	my $dir = $ce->{courseDirs}->{templates};
 	return $self->read_dir($dir, qr/.*\.def/);
+}
+
+sub getScoringFileList {
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my $dir = $ce->{courseDirs}->{scoring};
+	return $self->read_dir($dir, qr/.*\.csv/);
 }
 
 =back
