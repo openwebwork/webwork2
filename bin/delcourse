@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.11 2004/05/05 22:02:50 sh002i Exp $
+# $CVSHeader: webwork2/bin/delcourse,v 1.1 2004/05/05 22:38:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,13 @@ Delete a course, including its database and course directory.
 
 =over
 
-If the course's database layout is , the following options are valid:
+=item I<COURSEID>
+
+The name of the course to delete.
+
+=back
+
+If the course's database layout is sql, the following options are valid:
 
 =over
 
@@ -60,12 +66,6 @@ Specifies the password to use when connecting to the SQL server.
 Specifies the name of the database to delete. (This is usually
 "webwork_COURSENAME", but can be overridden by changing the database layout in
 F<global.conf>.)
-
-=back
-
-=item I<COURSEID>
-
-The name of the course to delete.
 
 =back
 
