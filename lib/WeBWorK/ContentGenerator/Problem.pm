@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.134 2004/05/24 01:03:05 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.135 2004/05/24 02:01:25 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -413,11 +413,11 @@ sub siblings {
 	print CGI::start_li();
 	print CGI::span({style=>"font-size:larger"}, "Problems");
 	print CGI::start_ul();
-	
+
 	foreach my $problemID (@problemIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, "Problem $problemID"));
+		print CGI::li(CGI::a({href=>$self->systemLink($problemPage, params=>{displayMode => $self->{displayMode}})}, "Problem $problemID"));
 	}
 	
 	print CGI::end_ul();
