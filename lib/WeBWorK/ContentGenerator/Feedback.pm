@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.18 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.19 2004/02/12 20:55:10 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,28 +56,11 @@ use Text::Wrap qw(wrap);
 # problem object for current problem (if from Problem)
 # display options (if from Problem)
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		"Feedback" => "",
-	);
-}
-
-sub title {
-	return "Feedback";
-}
-
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
 	# get form fields 
 	my $key                = $r->param("key");
@@ -290,22 +273,22 @@ sub body {
 		# print confirmation
 		print CGI::p("Your message was sent successfully.");
 		print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
-		print CGI::pre( wrap("", "", $feedback) );
+		print CGI::pre(wrap("", "", $feedback));
 	} else {
 		# just print the feedback form, with no message
-		$self->feedbackForm(  $user, $returnURL,"",);
+		$self->feedbackForm($user, $returnURL, "");
 	}
 	
 	return "";
 }
 
-sub feedbackForm($;$$$) {
-	my ($self, $user,$returnURL,  $message, ) = @_;
-	my $r = $self->{r};
+sub feedbackForm {
+	my ($self, $user, $returnURL, $message) = @_;
+	my $r = $self->r;
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
-	print $self->hidden_state_fields($r);
+	print $self->hidden_state_fields;
 	print CGI::p(CGI::b("From:"), " ",
 		($user && $user->email_address
 			? CGI::tt($user->email_address)
@@ -323,13 +306,12 @@ sub feedbackForm($;$$$) {
 	);
 	print CGI::submit("sendFeedback", "Send Feedback");
 	print CGI::end_form();
-	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel feedback"));
-	
+	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback"));
 }
 
-sub hidden_state_fields($) {
-	my $self = shift;
-	my $r = $self->{r};
+sub hidden_state_fields {
+	my ($self) = @_;
+	my $r = $self->r;
 	
 	print CGI::hidden("$_", $r->param("$_"))
 		foreach (qw(module set problem displayMode showOldAnswers
