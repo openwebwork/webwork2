@@ -5,7 +5,7 @@ sub new($$$$$) {
 	my ($r, $courseEnvironment, $user, $key) = @_;
 	
 	my $self = {
-		request			=> $r,
+		r			=> $r,
 		courseEnvironment	=> $courseEnvironment,
 		user			=> $user,
 		key			=> $key,
@@ -16,16 +16,21 @@ sub new($$$$$) {
 
 sub go {
 	my $self = shift;
-	$self{request}->content_type("text/html");
-	$self{request}->send_http_header;
+	$self->{r}->content_type("text/html");
+	$self->{r}->send_http_header;
+
+	# get some stuff together
+	my $user = $self->{user};
+	my $key = $self->{key};
+
 print<<EOT;
 <html>
 <head><title>Welcome to Hell.</title></head>
 <body>
 <h1>There you go.</h1>
 <pre>
-user = $self{user}
-key = $self{key}
+user = $user
+key = $key
 </pre>
 </body>
 </html>
