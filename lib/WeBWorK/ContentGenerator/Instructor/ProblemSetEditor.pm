@@ -32,6 +32,8 @@ sub title {
 	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
 }
 
+# Initialize does all of the form processing.  It's extensive, and could probably be cleaned up and
+# consolidated with a little abstraction.
 sub initialize {
 	my ($self, @components) = @_;
 	my $r = $self->{r};
@@ -103,6 +105,7 @@ sub initialize {
 						$userProblemRecord->$field($r->param($paramName));
 					}
 				}
+				$userProblemRecord->attempted($userProblemRecord->num_correct + $userProblemRecord->num_incorrect);
 				foreach my $field (@{PROBLEM_FIELDS()}) {
 					my $paramName = "problem_${problem}_${field}";
 					if (defined($r->param("${paramName}_override"))) {
