@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.35 2003-06-21 00:53:09 sh002i Exp $
+# $Id: global.conf.dist,v 1.36 2003-06-21 02:34:10 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -233,7 +233,7 @@ $practiceUserPrefix = "practice";
 	},
 	# this will be customized in the course.conf file
 	specialPGEnvironmentVars => {
-		PRINT_FILE_NAMES_FOR   => qw(gage apizer voloshin lr003k professor),
+		PRINT_FILE_NAMES_FOR   => [ qw(gage apizer voloshin lr003k professor) ],
 		CAPA_Tools             => "$courseDirs{macros}/CAPA_Tools/", 
 		CAPA_MCTools           => "$courseDirs{macros}/CAPA_MCTools/",  
 		CAPA_Graphics_URL      => "$courseDirs{html}/CAPA_Graphics/",   
