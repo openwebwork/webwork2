@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.45 2004/08/26 02:38:08 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.46 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -110,7 +110,7 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats",
 			courseID => $courseID, setID => $setID,statType => 'set',);
-		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, "Set $setID"));
+		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, underscore2nbsp($setID)));
 	}
 	
 	print CGI::end_ul();
@@ -193,7 +193,7 @@ sub index {
 	                                                      statType => 'set',
 	                                                      setID    => $set
 	    );
-		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) },"set $set" );	
+		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, underscore2nbsp($set));
 	}
 	
 	foreach my $student (@studentList) {
@@ -589,13 +589,20 @@ print
 # Utility function NOT a method
 #################################
 sub threeSpaceFill {
-    my $num = shift @_ || 0;
-    
-    if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
-    elsif (length($num)==2) {return "$num".'&nbsp;';}
-    else {return "## ";}
+	my $num = shift @_ || 0;
+
+	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
+	elsif (length($num)==2) {return "$num".'&nbsp;';}
+	else {return "## ";}
 }
 sub round_score{
 	return shift;
 }
+
+sub underscore2nbsp {
+	my $str = shift;
+	$str =~ s/_/&nbsp;/g;
+	return($str);
+}                    
+
 1;
