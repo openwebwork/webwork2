@@ -1,6 +1,7 @@
 package WeBWorK::PG;
 
 # hide PG::* from the not-yet-insane.
+# "PG Render" or something
 
 use strict;
 use warnings;
