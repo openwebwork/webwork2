@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.34 2004/06/15 20:43:53 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.35 2004/06/24 18:08:43 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -823,7 +823,7 @@ sub process_message {
 	if ($merge_file ne 'None' && not defined($rh_merge_data->{$SID})  ) {
 		$self->addbadmessage(CGI::p("No merge data for student id:$SID; name:$FN $LN; login:$LOGIN"));
 	}
-	
+	unshift(@COL,"");			## this makes COL[1] the first column
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
  	my $msg = $text;    
@@ -835,14 +835,15 @@ sub process_message {
  	$msg =~ s/(\$RECITATION)/eval($1)/ge;
  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
- 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
- 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge if defined($COL[0]);  # prevents extraneous error messages.   
- 	
+# 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;  ## Perl handles negative indexes correctly, so there is no need to do this
+	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge if defined($COL[1]);  # prevents extraneous error messages.   
+
  	$msg =~ s/\r//g;
-
-	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"<br>", data_format2(@COL)).
+	
+	my @preview_COL = @COL;
+	shift @preview_COL; ## shift back for preview
+	my $preview_header = 	CGI::pre("",data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
 		                    CGI::h3( "This sample mail would be sent to $EMAIL");
-
 
 	return $msg, $preview_header;
 }
