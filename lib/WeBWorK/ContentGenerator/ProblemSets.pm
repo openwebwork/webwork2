@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.49 2004/05/23 18:51:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.50 2004/05/24 16:05:10 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,22 +34,20 @@ sub info {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+	my $authz = $r->authz;
 	
 	my $courseID = $urlpath->arg("courseID");
-	my $userID = $r->param("user");
+	my $user = $r->param("user");
 	
 	my $course_info = $ce->{courseFiles}->{course_info};
 	
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
-		my $PermissionLevel = $db->getPermissionLevel($userID);
-		my $level = $PermissionLevel ? $PermissionLevel->permission() : 0;
-		
 		# deal with instructor crap
-		if ($level > 0) {
+		if ($authz->hasPermissions($user, "access_instructor_tools")) {
 			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-				$course_info_path .= ".$userID.tmp"; # this gets a big FIXME for obvious reasons
+				$course_info_path .= ".$user.tmp"; # this gets a big FIXME for obvious reasons
 			}
 			
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
@@ -81,39 +79,29 @@ sub body {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	my $user            = $r->param("user");
 	my $effectiveUser   = $r->param("effectiveUser");
 	my $sort            = $r->param("sort") || "status";
 	
-	my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked
-	$permissionLevel    = 0 unless defined $permissionLevel;
-	
 	my $courseName      = $urlpath->arg("courseID");
 	
 	# Print link to instructor page for instructors
-	if ($permissionLevel >= 10) {
+	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		my $instructorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", courseID => $courseName);
 		my $instructorLink = $self->systemLink($instructorPage);
 		print CGI::p({-align=>'center'},CGI::a({-href=>$instructorLink},'Instructor Tools'));
 	}
 	
-	# I think this is deprecated!
-	# Print message of the day (motd)
-	#if (defined $ce->{courseFiles}->{motd}
-	#	and $ce->{courseFiles}->{motd}) {
-	#	my $motd = eval { readFile($ce->{courseFiles}->{motd}) };
-	#	$@ or print $motd;
-	#}
-	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 	my $nameHeader = $sort eq "name"
-		? CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name")
-		: CGI::u("Name");
+		? CGI::u("Name")
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name");
 	my $statusHeader = $sort eq "status"
-		? CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status")
-		: CGI::u("Status");
+		? CGI::u("Status")
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status");
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 	
@@ -154,14 +142,13 @@ sub body {
 		}
 	    }
 	    warn "undefined published button".$set->set_id unless defined($set->published);
-		if ($set->published || $permissionLevel == 10) {
-			print $self->setListRow($set, ($permissionLevel > 0),
-				($permissionLevel > 0));
+		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"));
 		}
 	}
 	
 	print CGI::end_table();
-	my $pl = ($permissionLevel > 0 ? "s" : "");
+	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
 	print CGI::p(CGI::submit("hardcopy", "Download Hardcopy for Selected Set$pl"));
 	print CGI::endform();
 	
