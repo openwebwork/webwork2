@@ -9,7 +9,7 @@
 #use lib '/home/gage/webwork/pg/lib';
 #use lib '/home/gage/webwork/webwork-modperl/lib';
 
-package WebworkWebserice::MathTranslators;
+package WebworkWebservice::MathTranslators;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
 
@@ -30,8 +30,9 @@ our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 
-our $ce           = $WebworkWebservice::SeedCE;
-
+our $ce           =$WebworkWebservice::SeedCE;
+# create a local course environment for some course
+    $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
 
 
 
