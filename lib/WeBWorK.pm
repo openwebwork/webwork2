@@ -136,9 +136,15 @@ sub dispatch($) {
 		if (!defined $arg) { # We want the list of problem sets
 			$result = WeBWorK::ContentGenerator::ProblemSets->new($r, $ce, $db)->go;
 		} elsif ($arg eq "hardcopy") {
+			
 			my $hardcopyArgument = shift @components;
+			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
+			$WeBWorK::timer1->start;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			$result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
+			my $result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
+			$WeBWorK::timer1 ->stop;
+			$WeBWorK::timer1 ->save;
+			return $result;
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
@@ -183,7 +189,16 @@ sub dispatch($) {
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
+<<<<<<< WeBWorK.pm
+				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
+				$WeBWorK::timer0->start;
+				my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
+				$WeBWorK::timer0->stop;
+				$WeBWorK::timer0->save;
+				return $result;
+=======
 				$result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
+>>>>>>> 1.13
 			}
 		}
 	}
