@@ -47,7 +47,7 @@ sub path {
 }
 
 sub title {
-	return "Hardcore Generator";
+	return "Hardcopy Generator";
 }
 
 sub body {
@@ -101,8 +101,8 @@ sub makeHardcopy {
 	} else {
 		$fileName = "$courseName.$userName.pdf";
 	}
-	
 	my $tex = $self->getMultiSetTeX(@sets);
+	#print CGI::pre($tex);
 	$self->latex2pdf($tex, $tempDir, $fileName) or return;
 	
 	return "$tempURL/$fileName";
@@ -187,7 +187,7 @@ sub getSetTeX {
 	
 	# render header
 	$tex .= texBlockComment("BEGIN $setName : $setHeader");
-	#$tex .= $self->getProblemTeX($setName, 0, $setHeader);
+	$tex .= $self->getProblemTeX($setName, 0, $setHeader);
 	
 	# render each problem
 	while (my $problemNumber = shift @problemNumbers) {
@@ -247,7 +247,6 @@ sub getProblemTeX {
 		},
 	);
 	
-	# *** # handle errors/warnings here!
 	return $pg->{body_text};
 }
 

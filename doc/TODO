@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.9 2002-08-29 19:56:23 sh002i Exp $
+# $Id: TODO,v 1.10 2002-09-13 20:54:59 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -58,18 +58,24 @@ DONE	New interface to PG.pm
 			- CON: uses a package array to queue equations :p
 	
 DONE	display of screen set header in ProblemSet.pm (easy)
+DONE	add <!--#if can="blah" warning="1" error="1"-->
+	time and transaction logging
 	make "enter" on the problem form trigger "submit answer", not "redisplay"
 	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
+	remove webwork-dvipng-xxxxx temp directories when finished with them
 	have logout button invalidate key
-DONE	add <!--#if can="blah" warning="1" error="1"-->
 	handling of PG warnings (?!?!?!?!)
-	time and transaction logging
 	Options
 		- email address and password
 		- or link to old system
 	Feedback (or link to old system)
 		- need nice modular way of sending email
 	Pretty die messages (from outside of the translator)
+	GD not compiling
+	
+	
+--------------------------------------------------------------------------------
+	
 	
 	Calling LaTeX/dvipng and PDFLaTeX in a nice way
 		- create LaTeX.pm (?)
