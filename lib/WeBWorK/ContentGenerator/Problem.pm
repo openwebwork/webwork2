@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.113 2004/02/04 00:32:12 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.114 2004/02/04 13:22:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,26 +172,7 @@ sub pre_header_initialize {
 	my $checkAnswers       = $r->param("checkAnswers");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
-	# fields which may be defined when using Problem Editor
-	#my $override_seed = ($permissionLevel>=10) ? $r->param('problemSeed') : undef;
-	#my $override_problem_source = ($permissionLevel>=10) ? $r->param('sourceFilePath') : undef;
-	#my $editMode = undef;
-	#my $submit_button = $r->param('submit_button');
-	#if ( defined($submit_button ) ) {
-	#	$editMode = "temporaryFile" if $submit_button eq 'Refresh';
-	#	$editMode = 'savedFile'     if $submit_button eq 'Save';
-	#}
-	#
-	##override using the source file data from the form field
-	#$problem->source_file($override_problem_source) if defined($override_problem_source);
-	#$problem->problem_seed($override_seed)          if defined($override_seed);
-	#
-	## store path to source file for title.
-	#$self->{problem_source_name}    =  $problem->source_file;
-	#$self->{edit_mode}		=	$editMode;
-	#$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
-	
-	# coerce form fields into CGI::Vars format
+
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
 	
