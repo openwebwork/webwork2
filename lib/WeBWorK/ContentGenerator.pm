@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.112 2004/07/10 21:53:31 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.113 2004/08/16 11:35:15 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1473,6 +1473,39 @@ EOF
 		# FIXME: this message shouldn't refer the the "problem" since it is for general warning reporting
 		CGI::h3("Warning messages"),
 		CGI::ul(CGI::li(\@warnings));
+}
+
+=item $dateTime = parseDateTime($string, $display_tz)
+
+Parses $string as a datetime. If $display_tz is given, $string is assumed to be
+in that timezone. Otherwise, the timezone defined in the course environment
+variable $siteDefaults{timezone} is used. The result, $dateTime, is an integer
+UNIX datetime (epoch) in the server's timezone.
+
+=cut
+
+sub parseDateTime {
+	my ($self, $string, $display_tz) = @_;
+	my $ce = $self->r->ce;
+	$display_tz ||= $ce->{siteDefaults}{timezone};
+	return WeBWorK::Utils::parseDateTime($string, $display_tz);
+};
+
+=item $string = formatDateTime($dateTime, $display_tz)
+
+Formats the UNIX datetime $dateTime in the standard WeBWorK datetime format.
+$dateTime is assumed to be in the server's time zone. If $display_tz is given,
+the datetime is converted from the server's timezone to the timezone specified.
+Otherwise, the timezone defined in the course environment variable
+$siteDefaults{timezone} is used.
+
+=cut
+
+sub formatDateTime {
+	my ($self, $dateTime, $display_tz) = @_;
+	my $ce = $self->r->ce;
+	$display_tz ||= $ce->{siteDefaults}{timezone};
+	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz);
 }
 
 =back
