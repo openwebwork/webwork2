@@ -1,9 +1,20 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::ContentGenerator;
+
+=head1 NAME
+
+WeBWorK::ContentGenerator - base class for modules that generate page content.
+
+=cut
 
 use strict;
 use warnings;
-use CGI ();
 use Apache::Constants qw(:common);
+use CGI qw();
 
 # Send 'die' message to the browser window
 #use CGI::Carp qw(fatalsToBrowser);

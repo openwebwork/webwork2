@@ -5,6 +5,13 @@
 
 package WeBWorK::CourseEnvironment;
 
+=head1 NAME
+
+WeBWorK::CourseEnvironment - Read configuration information from global.conf
+and course.conf files.
+
+=cut
+
 use strict;
 use warnings;
 use Safe;
@@ -80,11 +87,6 @@ sub new {
 1;
 
 __END__
-
-=head1 NAME
-
-WeBWorK::CourseEnvironment - Read configuration information from global.conf
-and course.conf files
 
 =head1 SYNOPSIS
 

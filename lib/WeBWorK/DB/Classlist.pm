@@ -5,10 +5,16 @@
 
 package WeBWorK::DB::Classlist;
 
+=head1 NAME
+
+WeBWorK::DB::Classlist - interface with the WeBWorK classlist database.
+
+=cut
+
 use strict;
 use warnings;
-use WeBWorK::Utils qw(dbDecode dbEncode);
 use WeBWorK::User;
+use WeBWorK::Utils qw(dbDecode dbEncode);
 
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;

@@ -1,19 +1,29 @@
-#TODO: The HTML code here has two failings:
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
+package WeBWorK::ContentGenerator::Login;
+
+=head1 NAME
+
+WeBWorK::ContentGenerator::Login - display a login form.
+
+=cut
+
+use strict;
+use warnings;
+use base qw(WeBWorK::ContentGenerator);
+use Apache::Constants qw(:common);
+use CGI qw();
+use WeBWorK::ContentGenerator;
+
+# TODO: The HTML code here has two failings:
 # - It is hard-coded into the script, which is against policy
 
 # Other than that, this file is done for the forseeable future,
 # and should serve us nicely unless the interface to WeBWorK::Authen
 # changes.
-
-package WeBWorK::ContentGenerator::Login;
-
-use strict;
-use warnings;
-use WeBWorK::ContentGenerator;
-use Apache::Constants qw(:common);
-use CGI qw();
-
-our @ISA = qw(WeBWorK::ContentGenerator);
 
 sub title {
 	return "Login";

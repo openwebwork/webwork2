@@ -3,7 +3,27 @@
 # $Id$
 ################################################################################
 
-# Apache::WeBWorK - The WeBWorK dispatcher module
+package Apache::WeBWorK;
+
+=head1 NAME
+
+Apache::WeBWorK - The WeBWorK dispatcher module.
+
+=cut
+
+use strict;
+use warnings;
+use Apache::Constants qw(:common REDIRECT);
+use Apache::Request;
+use WeBWorK::Authen;
+use WeBWorK::Authz;
+use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::Problem;
+use WeBWorK::ContentGenerator::ProblemSet;
+use WeBWorK::ContentGenerator::ProblemSets;
+use WeBWorK::ContentGenerator::Test;
+use WeBWorK::CourseEnvironment;
+
 # Place something like the following in your Apache configuration to load the
 # WeBWorK module and install it as a handler for the WeBWorK system
 
@@ -15,21 +35,6 @@
 # </Location>
 
 # In addition, you will have to edit init.pl in what should be obvious ways.
-
-package Apache::WeBWorK;
-
-use strict;
-use warnings;
-use Apache::Constants qw(:common REDIRECT);
-use Apache::Request;
-use WeBWorK::CourseEnvironment;
-use WeBWorK::Authen;
-use WeBWorK::Authz;
-use WeBWorK::ContentGenerator::Test;
-use WeBWorK::ContentGenerator::Login;
-use WeBWorK::ContentGenerator::ProblemSets;
-use WeBWorK::ContentGenerator::ProblemSet;
-use WeBWorK::ContentGenerator::Problem;
 
 # Sets up the common environment needed for every subsystem and then dispatches
 # the page request to the appropriate content generator.

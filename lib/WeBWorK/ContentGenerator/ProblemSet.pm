@@ -1,11 +1,23 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::ContentGenerator::ProblemSet;
-our @ISA = qw(WeBWorK::ContentGenerator);
+
+=head1 NAME
+
+WeBWorK::ContentGenerator::ProblemSet - display an index of the problems in a 
+problem set.
+
+=cut
 
 use strict;
 use warnings;
-use WeBWorK::ContentGenerator;
+use base qw(WeBWorK::ContentGenerator);
 use Apache::Constants qw(:common);
 use CGI qw();
+use WeBWorK::ContentGenerator;
 
 sub title {
 	my ($self, $problem_set) = @_;

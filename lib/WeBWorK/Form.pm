@@ -1,4 +1,12 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::Form::TiedParam;
+
+# See package WeBWorK::Form, below.
+
 use strict;
 use warnings;
 
@@ -31,8 +39,16 @@ sub STORE {
 ###
 
 package WeBWorK::Form;
-# This package will extract form input from an Apache::Request and provides
-# an interface to it.
+
+=head1 NAME
+
+WeBWorK::Form - extract form input from an Apache::Request and provide an
+interface to it.
+
+=cut
+
+use strict;
+use warnings;
 
 sub new {
 	print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";

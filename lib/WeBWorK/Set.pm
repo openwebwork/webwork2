@@ -5,6 +5,12 @@
 
 package WeBWorK::Set;
 
+=head1 NAME
+
+WeBWorK::Set - store information about a problem set.
+
+=cut
+
 use strict;
 use warnings;
 use Class::Struct;

@@ -5,12 +5,18 @@
 
 package WeBWorK::PG;
 
+=head1 NAME
+
+WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API
+
+=cut
+
 use strict;
 use warnings;
-use WeBWorK::Utils qw(readFile formatDateTime);
 use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
+use WeBWorK::Utils qw(readFile formatDateTime);
 
 sub new($$$$$$$$) {
 	my $invocant = shift;
@@ -292,10 +298,6 @@ sub safetyFilter {
 1;
 
 __END__
-
-=head1 NAME
-
-WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API
 
 =head1 SYNOPSIS
 

@@ -5,6 +5,12 @@
 
 package WeBWorK::Utils;
 
+=head1 NAME
+
+WeBWorK::Utils - useful utilities used by other WeBWorK modules.
+
+=cut
+
 use strict;
 use warnings;
 use base qw(Exporter);
@@ -22,8 +28,6 @@ our @EXPORT_OK = qw(
 	decodeAnswers
 	encodeAnswers
 	ref2string
-	hash2string
-	array2string
 );
 
 sub runtime_use($) {
@@ -166,83 +170,5 @@ sub refBaseType($) {
 	return "SCALAR" if eval { $_ = $$ref; 1 };
 	return 0;
 }
-
-# -----
-
-#sub hash2string($;$$) {
-#	my $hr = shift;
-#	my $table = shift || 0;
-#	my $indent = shift || 0;
-#	my $result = $table ? '<table border="1">' : "";
-#	foreach my $key (keys %$hr) {
-#		my $value = $hr->{$key};
-#		$result .= $table
-#			? "<tr><td>$key</td>"
-#			: "\t"x$indent . "{$key} =";
-#		if (ref $value eq 'HASH') {
-#			$result .= $table ? "<td>" : "\n";
-#			$result .= hash2string($value, $table, $indent+1);
-#			$result .= $table ? "</td>" : "";
-#		} elsif (ref $value eq 'ARRAY') {
-#			$result .= $table ? "<td>" : "\n";
-#			$result .= array2string($value, $table, $indent+1);
-#			$result .= $table ? "</td>" : "";
-#		} elsif (defined $value) {
-#			$result .= $table
-#				? "<td>$value</td>"
-#				: " $value\n";
-#		} else {
-#			$result .= $table ? "" : "\n";
-#		}
-#		$result .= $table ? "</tr>" : "";
-#	}
-#	$result .= "</table>";
-#	return $result;
-#}
-#
-#sub array2string($;$$) {
-#	my $ar = shift;
-#	my $table = shift || 0;
-#	my $indent = shift || 0;
-#	my $result = $table ? '<table border="1">' : "";
-#	foreach my $index (0 .. @$ar-1) {
-#		my $value = $ar->[$index];
-#		$result .= $table
-#			? "<tr><td>$index</td>"
-#			: "\t"x$indent . "[$index] =";
-#		if (ref $value eq 'HASH') {
-#			$result .= $table ? "<td>" : "\n";
-#			$result .= hash2string($value, $table, $indent+1);
-#			$result .= $table ? "</td>" : "";
-#		} elsif (ref $value eq 'ARRAY') {
-#			$result .= $table ? "<td>" : "\n";
-#			$result .= array2string($value, $table, $indent+1);
-#			$result .= $table ? "</td>" : "";
-#		} elsif (defined $value) {
-#			$result .= $table
-#				? "<td>$value</td>"
-#				: " $value\n";
-#		} else {
-#			$result .= $table ? "" : "\n";
-#		}
-#		$result .= $table ? "</tr>" : "";
-#	}
-#	$result .= "</table>";
-#	return $result;
-#}
-#
-#sub isHashRef($) {
-#	my $ref = shift;
-#	local $SIG{__DIE__} = 'IGNORE';
-#	$_ = eval{ %$ref };
-#	return not defined $@;
-#}
-#
-#sub isArrayRef($) {
-#	my $ref = shift;
-#	local $SIG{__DIE__} = 'IGNORE';
-#	$_ = eval{ @$ref };
-#	return not defined $@;
-#}
 
 1;

@@ -5,6 +5,14 @@
 
 package WeBWorK::DB::GDBM;
 
+=head1 NAME
+
+WeBWorK::DB::GDBM - connect to a GDBM database.
+
+=cut
+
+use strict;
+use warnings;
 use GDBM_File;
 
 # these should probably be in a constants file somewhere...

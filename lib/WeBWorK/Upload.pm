@@ -1,14 +1,23 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
+package WeBWorK::Upload;
+
+=head1 NAME
+
+WeBWorK::Upload - everything we need to be confident about an upload.
+
+=cut
+
+use Data::UUID;
+use MD5 qw();
+use WeBWorK::Constants qw(SECRET);
+
 # This package allows a file to be reliably cached on disk and replaced with
 # a string that universally and unforgeably represents that file, and then
 # retrieved later given that string.
-
-package WeBWorK::SecureUpload;
-
-# Everything we need to be confident about the upload
-use WeBWorK::Constants qw(SECRET);
-use MD5 ();
-use Data::UUID;
-
 
 sub store_upload {}
 

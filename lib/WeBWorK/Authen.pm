@@ -1,8 +1,19 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::Authen;
 
-use WeBWorK::DB::Auth;
+=head1 NAME
+
+WeBWorK::Authen - Check user identity, manage session keys.
+
+=cut
+
 use strict;
 use warnings;
+use WeBWorK::DB::Auth;
 
 sub new($$$) {
 	my $invocant = shift;

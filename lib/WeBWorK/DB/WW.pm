@@ -5,12 +5,18 @@
 
 package WeBWorK::DB::WW;
 
+=head1 NAME
+
+WeBWorK::DB::WW - interface with the WeBWorK problem set database.
+
+=cut
+
 use strict;
 use warnings;
 use Carp;
-use WeBWorK::Utils qw(dbDecode dbEncode);
-use WeBWorK::Set;
 use WeBWorK::Problem;
+use WeBWorK::Set;
+use WeBWorK::Utils qw(dbDecode dbEncode);
 
 use constant LOGIN_PREFIX => "login<>";
 use constant SET_PREFIX => "set<>";

@@ -5,6 +5,15 @@
 
 package WeBWorK::DB::Auth;
 
+=head1 NAME
+
+WeBWorK::DB::Auth - interface with the WeBWorK authentication/authorization
+databases.
+
+=cut
+
+use strict;
+use warnings;
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
 

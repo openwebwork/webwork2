@@ -5,6 +5,12 @@
 
 package WeBWorK::User;
 
+=head1 NAME
+
+WeBWorK::User - store information about a user.
+
+=cut
+
 use strict;
 use warnings;
 use Class::Struct;

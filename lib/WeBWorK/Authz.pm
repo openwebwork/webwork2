@@ -1,8 +1,18 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::Authz;
+
+=head1 NAME
+
+WeBWorK::Authz - check user permissions.
+
+=cut
 
 use strict;
 use warnings;
-
 use WeBWorK::DB::Auth;
 
 sub new($$$) {

@@ -1,8 +1,19 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::ContentGenerator::ProblemSets;
-our @ISA = qw(WeBWorK::ContentGenerator);
+
+=head1 NAME
+
+WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
+
+=cut
 
 use strict;
 use warnings;
+use base qw(WeBWorK::ContentGenerator);
 use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;

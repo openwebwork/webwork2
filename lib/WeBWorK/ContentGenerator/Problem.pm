@@ -5,13 +5,19 @@
 
 package WeBWorK::ContentGenerator::Problem;
 
+=head1 NAME
+
+WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
+
+=cut
+
 use strict;
 use warnings;
 use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
-use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
-use WeBWorK::PG;
 use WeBWorK::Form;
+use WeBWorK::PG;
+use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
 
 # TODO:
 # :) enforce permissions for showCorrectAnswers and showSolutions
@@ -42,7 +48,7 @@ use WeBWorK::Form;
 #
 ############################################################
 
-sub initialize {
+sub prepare {
 	my ($self, $setName, $problemNumber) = @_;
 	my $courseEnv = $self->{courseEnvironment};
 	my $r = $self->{r};
@@ -170,7 +176,7 @@ sub title {
 sub body {
 	my $self = shift;
 	
-	#$self->prepare(@_);
+	$self->prepare(@_);
 	
 	# unpack some useful variables
 	my $r             = $self->{r};
