@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.130 2005/01/15 21:24:29 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.131 2005/01/15 23:56:12 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -956,6 +956,33 @@ sub help {
 	$name =~ s/://g;
 
 	$self->helpMacro($name);
+}
+
+=item url($args)
+
+Defined in this package.
+
+Returns the specified URL from either %webworkURLs or %courseURLs in the course
+environment. $args is a reference to a hash containing the following fields:
+
+ type => type of URL: webwork|course
+ name => name of URL (key in URL hash)
+
+=cut
+
+sub url {
+	my ($self, $args) = @_;
+	my $ce = $self->r->ce;
+	my $type = $args->{type};
+	my $name = $args->{name};
+	
+	if ($type eq "webwork") {
+		return $ce->{webworkURLs}->{$name};
+	} elsif ($type eq "course") {
+		return $ce->{courseURLs}->{$name};
+	} else {
+		warn __PACKAGE__."::url: unrecognized type '$type'.\n";
+	}
 }
 
 =back
