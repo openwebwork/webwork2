@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.122 2004/10/15 04:30:20 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.123 2004/10/21 01:16:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -798,6 +798,8 @@ sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 	
+	# remove this comment on the next line if they get left in by accident
+	print "HEAD ";
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
 	print $r->urlpath->name;
 	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
@@ -830,7 +832,7 @@ sub warnings {
 =item help()
 
 Display a link to context-sensitive help. If the argument C<name> is defined,
-the link will be to the help document for that name. Otherwise the name of the
+the link will be to the help document for that name. Otherwise the module of the
 WeBWorK::URLPath node for the current system location will be used.
 
 =cut
@@ -839,8 +841,15 @@ sub help {
 	my $self = shift;
 	my $args = shift;
 	my $name = $args->{name};
-	$name = lc($self->r->urlpath->name) unless defined($name);
-	$name =~ s/\s/_/g;
+
+	# old naming scheme
+	#$name = lc($self->r->urlpath->name) unless defined($name);
+	#$name =~ s/\s/_/g;
+
+	$name = $self->r->urlpath->module unless defined($name);
+	$name =~ s/WeBWorK::ContentGenerator:://;
+	$name =~ s/://g;
+
 	$self->helpMacro($name);
 }
 
