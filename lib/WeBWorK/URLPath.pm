@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.11 2004/04/05 03:58:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.12 2004/05/03 20:56:06 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,6 +80,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
+ 
+ instructor_progress                  /$courseID/instructor/StudentProgress/
+ instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
+ instructor_user_progress             /$courseID/instructor/StudentProgress/student/$userID/
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
@@ -209,6 +213,7 @@ our %pathTypes = (
 			instructor_problem_editor instructor_set_maker
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_statistics
+			instructor_progress			
 		/ ],
 		match   => qr|^instructor/|,
 		capture => [ qw// ],
@@ -415,6 +420,36 @@ our %pathTypes = (
 		capture => [ qw/statType userID/ ],
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
+	},
+	
+	################################################################################
+	
+	instructor_progress => {
+		name    => 'StudentProgress',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_progress instructor_user_progress/ ],
+		match   => qr|^progress/|,
+		capture => [ qw// ],
+		produce => 'progress/',
+		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
+	},
+	instructor_set_progress => {
+		name    => 'StudentProgress',
+		parent  => 'instructor_progress',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
+	},
+	instructor_user_progress => {
+		name    => 'StudentProgress',
+		parent  => 'instructor_progress',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	
 	################################################################################
