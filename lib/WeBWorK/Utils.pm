@@ -30,6 +30,7 @@ our @EXPORT_OK = qw(
 	formatDateTime
 	parseDateTime
 	writeLog
+	writeCourseLog
 	writeTimingLogEntry
 	list2hash
 	max
@@ -118,6 +119,23 @@ sub writeLog($$@) {
 		warn "failed to open $logFile for writing: $!";
 	}
 }
+
+sub writeCourseLog($$@) {
+	my ($ce, $facility, @message) = @_;
+	unless ($ce->{courseFiles}->{logs}->{$facility}) {
+		warn "There is no course log file for the $facility facility defined.\n";
+		return;
+	}
+	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
+	local *LOG;
+	if (open LOG, ">>", $logFile) {
+		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close LOG;
+	} else {
+		warn "failed to open $logFile for writing: $!";
+	}
+}
+
 
 # $ce - a WeBWork::CourseEnvironment object
 # $function - fully qualified function name

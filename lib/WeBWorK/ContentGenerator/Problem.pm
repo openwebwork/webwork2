@@ -20,7 +20,7 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
+use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
 
@@ -467,22 +467,26 @@ sub body {
 	}
 	
 	# logging student answers
-	my $pastAnswerLog = undef;
-	if (defined( $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
-		$pastAnswerLog = $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'};
-		if ($submitAnswers and defined $pastAnswerLog) {
+
+	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
+	if ( defined($answer_log )) {
+		if ($submitAnswers ) {
 			my $answerString = "";
 			my %answerHash = %{ $pg->{answers} };
 			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
 				foreach (sort keys  %answerHash);
 			$answerString = '' unless defined($answerString); # insure string is defined. 
-			writeLog($self->{ce}, "pastAnswerList",
-					'|'.$problem->user_id.
-					'|'.$problem->set_id.
-					'|'.$problem->problem_id.'|'."\t".
-					time()."\t".
-					$answerString,
-				);
+			writeCourseLog($self->{ce}, "answer_log",
+			        join("",
+						'|', $problem->user_id,
+						'|', $problem->set_id,
+						'|', $problem->problem_id,
+						'|',"\t",
+						time(),"\t",
+						$answerString,
+					),
+			);
+			
 		}
 	}
 	

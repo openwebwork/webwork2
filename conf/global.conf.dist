@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.37 2003-07-14 15:21:52 gage Exp $
+# $Id: global.conf.dist,v 1.38 2003-07-15 00:56:31 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -79,6 +79,9 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 %courseFiles = (
 	environment => "$courseDirs{root}/course.conf",
 	motd        => "$courseDirs{root}/motd.txt",
+	logs => {
+		answer_log  => "$courseDirs{logs}/answer_log",
+	},	
 );
 
 # quick hack to fix transaction logging. blah.
