@@ -139,8 +139,7 @@ sub links {
 	if ($permLevel > 0 ) {
 		$pathString .="<hr>";
 		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
-		$pathString .=  '&nbsp;&nbsp;'.CGI::a({-href=>$addStudent}, "Add&nbsp;Student") . CGI::br();
-		$pathString .= CGI::a({-href=>$problemSetList}, "ProbSet&nbsp;list") . CGI::br();
+		$pathString .= CGI::a({-href=>$problemSetList}, "Sets") . CGI::br();
 	}
 	return $self->SUPER::links() . $pathString;
 }
