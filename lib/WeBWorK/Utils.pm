@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.46 2004/07/10 18:13:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.47 2004/09/08 01:42:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,6 +39,7 @@ our @EXPORT_OK = qw(
 	runtime_use
 	readFile
 	readDirectory
+	listFilesRecursive
 	formatDateTime
 	parseDateTime
 	textDateTime
@@ -85,6 +86,14 @@ sub runtime_use {
 #	}
 #}
 
+# Convert Windows and Mac (classic) line endings to UNIX line endings in a string.
+# Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
+sub force_eoln($) {
+	my ($string) = @_;
+	$string =~ s/\015\012?/\012/g;
+	return $string;
+}
+
 sub readFile($) {
 	my $fileName = shift;
 	local $/ = undef; # slurp the whole thing into one string
@@ -94,12 +103,6 @@ sub readFile($) {
 	close $dh;
 	return force_eoln($result);
 }
-sub force_eoln {     # convert windows and mac line endings to unix line endings in string
-                     # \r = \015  \n = \012  windows: \r\n  mac: \r  unix: \n
-	my $string = shift;
-	$string =~ s/\015\012?/\012/g;  
-	$string;
-}
 
 sub readDirectory($) {
 	my $dirName = shift;
@@ -108,6 +111,69 @@ sub readDirectory($) {
 	my @result = readdir $dh;
 	close $dh;
 	return @result;
+}
+
+=item @matches = listFilesRecusive($dir, $match_qr, $prune_qr, $match_full, $prune_full)
+
+Traverses the directory tree rooted at $dir, returning a list of files, named
+pipes, and sockets matching the regular expression $match_qr. Directories
+matching the regular expression $prune_qr are not visited.
+
+$match_full and $prune_full are boolean values that indicate whether $match_qr
+and $prune_qr, respectively, should be applied to the bare directory entry
+(false) or to the path to the directory entry relative to $dir.
+
+@matches is a list of paths relative to $dir.
+
+=cut
+
+sub listFilesRecursiveHelper($$$$$$);
+sub listFilesRecursive($;$$$$) {
+	my ($dir, $match_qr, $prune_qr, $match_full, $prune_full) = @_;
+	return listFilesRecursiveHelper($dir, "", $match_qr, $prune_qr, $match_full, $prune_full);
+}
+
+sub listFilesRecursiveHelper($$$$$$) {
+	my ($base_dir, $curr_dir, $match_qr, $prune_qr, $match_full, $prune_full) = @_;
+	
+	my $full_dir = "$base_dir/$curr_dir";
+	
+	my @dir_contents = readDirectory($full_dir);
+	
+	my @matches;
+	
+	foreach my $dir_entry (@dir_contents) {
+		my $full_path = "$full_dir/$dir_entry";
+		if (-d $full_path or -l $full_path) {
+			# standard things to skip
+			next if $dir_entry eq ".";
+			next if $dir_entry eq "..";
+			
+			# skip unreadable directories (and broken symlinks, incidentally)
+			unless (-r $full_path) {
+				warn "Directory/symlink $full_path not readable";
+				next;
+			}
+			
+			# check $prune_qr
+			my $subdir = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
+			if (defined $prune_qr) {
+				my $prune_string = $prune_full ? $subdir : $dir_entry;
+				next if $prune_string =~ m/$prune_qr/;
+			}
+			
+			# everything looks good, time to recurse!
+			push @matches, listFilesRecursiveHelper($base_dir, $subdir, $match_qr, $prune_qr, $match_full, $prune_full);
+		} elsif (-f $full_path or -p $full_path or -S $full_path) {
+			my $file = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
+			my $match_string = $match_full ? $file : $dir_entry;
+			if (not defined $match_string or $dir_entry =~ m/$match_qr/) {
+				push @matches, $file;
+			}
+		}
+	}
+	
+	return @matches;
 }
 
 sub formatDateTime($) {
