@@ -190,7 +190,7 @@ use constant  FIELD_PROPERTIES => {
 # if only the setID is included, it creates a table of set information
 # if the problemID is included, it creates a table of problem information
 sub FieldTable {
-	my ($self, $userID, $setID, $problemID) = @_;
+	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord) = @_;
 
 	my $r = $self->r;	
 	my @editForUser = $r->param('editForUser');
@@ -208,12 +208,13 @@ sub FieldTable {
 	foreach my $field (@fieldOrder) {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		unless ($properties{type} eq "hidden") {
-			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $field)]));
+			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)]));
 		}
 	} 
 
 	if (defined $problemID) {
-		my $problemRecord = $r->{db}->getUserProblem($userID, $setID, $problemID);
+		#my $problemRecord = $r->{db}->getUserProblem($userID, $setID, $problemID);
+		my $problemRecord = $userRecord; # we get this from the caller, hopefully
 		$output .= CGI::Tr({}, CGI::td({}, ["","Attempts", ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0)])) if $forOneUser;
 	}		
 	$output .= CGI::end_table();
@@ -226,7 +227,7 @@ sub FieldTable {
 # if only the setID is included, it creates a list of set information
 # if the problemID is included, it creates a list of problem information
 sub FieldHTML {
-	my ($self, $userID, $setID, $problemID, $field) = @_;
+	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $field) = @_;
 	
 	my $r = $self->r;
 	my $db = $r->db;
@@ -234,16 +235,16 @@ sub FieldHTML {
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
 
-	my ($globalRecord, $userRecord, $mergedRecord);
-	if (defined $problemID) { 	
-		$globalRecord = $db->getGlobalProblem($setID, $problemID);
-		$userRecord = $db->getUserProblem($userID, $setID, $problemID);
-		$mergedRecord = $db->getMergedProblem($userID, $setID, $problemID);
-	} else {
-		$globalRecord = $db->getGlobalSet($setID);
-		$userRecord = $db->getUserSet($userID, $setID);
-		$mergedRecord = $db->getMergedSet($userID, $setID);
-	}
+	#my ($globalRecord, $userRecord, $mergedRecord);
+	#if (defined $problemID) { 	
+	#	$globalRecord = $db->getGlobalProblem($setID, $problemID);
+	#	$userRecord = $db->getUserProblem($userID, $setID, $problemID);
+	#	#$mergedRecord = $db->getMergedProblem($userID, $setID, $problemID); # never used --sam
+	#} else {
+	#	$globalRecord = $db->getGlobalSet($setID);
+	#	$userRecord = $db->getUserSet($userID, $setID);
+	#	#$mergedRecord = $db->getMergedSet($userID, $setID); # never user --sam
+	#}
 	
 	return "No data exists for set $setID and problem $problemID" unless $globalRecord;
 	return "No user specific data exists for user $userID" if $forOneUser and $globalRecord and not $userRecord;
@@ -417,47 +418,47 @@ sub handle_problem_numbers {
 # leftover from when we had up/down buttons
 # maybe we will bring them back
 
-sub moveme {
-	my $index = shift;
-	my $db = shift;
-	my $setID = shift;
-	my (@problemIDList) = @_;
-	my ($prob1, $prob2, $prob);
-
-	foreach my $problemID (@problemIDList) {
-		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
-		die "global $problemID for set $setID not found." unless $problemRecord;
-		if ($problemRecord->problem_id == $index) {
-			$prob1 = $problemRecord;
-		} elsif ($problemRecord->problem_id == $index + 1) {
-			$prob2 = $problemRecord;
-		}
-	}
-	if (not defined $prob1 or not defined $prob2) {
-		die "cannot find problem $index or " . ($index + 1);
-	}
-
-	$prob1->problem_id($index + 1);
-	$prob2->problem_id($index);
-	$db->putGlobalProblem($prob1);
-	$db->putGlobalProblem($prob2);
-
-	my @setUsers = $db->listSetUsers($setID);
-
-	my $user;
-	foreach $user (@setUsers) {
-		$prob1 = $db->getUserProblem($user, $setID, $index); #checked
-		die " problem $index for set $setID and effective user $user not found"
-			unless $prob1;
-		$prob2 = $db->getUserProblem($user, $setID, $index+1); #checked
-		die " problem $index for set $setID and effective user $user not found"
-			unless $prob2;
-    		$prob1->problem_id($index+1);
-		$prob2->problem_id($index);
-		$db->putUserProblem($prob1);
-		$db->putUserProblem($prob2);
-	}
-}
+#sub moveme {
+#	my $index = shift;
+#	my $db = shift;
+#	my $setID = shift;
+#	my (@problemIDList) = @_;
+#	my ($prob1, $prob2, $prob);
+#
+#	foreach my $problemID (@problemIDList) {
+#		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
+#		die "global $problemID for set $setID not found." unless $problemRecord;
+#		if ($problemRecord->problem_id == $index) {
+#			$prob1 = $problemRecord;
+#		} elsif ($problemRecord->problem_id == $index + 1) {
+#			$prob2 = $problemRecord;
+#		}
+#	}
+#	if (not defined $prob1 or not defined $prob2) {
+#		die "cannot find problem $index or " . ($index + 1);
+#	}
+#
+#	$prob1->problem_id($index + 1);
+#	$prob2->problem_id($index);
+#	$db->putGlobalProblem($prob1);
+#	$db->putGlobalProblem($prob2);
+#
+#	my @setUsers = $db->listSetUsers($setID);
+#
+#	my $user;
+#	foreach $user (@setUsers) {
+#		$prob1 = $db->getUserProblem($user, $setID, $index); #checked
+#		die " problem $index for set $setID and effective user $user not found"
+#			unless $prob1;
+#		$prob2 = $db->getUserProblem($user, $setID, $index+1); #checked
+#		die " problem $index for set $setID and effective user $user not found"
+#			unless $prob2;
+#    		$prob1->problem_id($index+1);
+#		$prob2->problem_id($index);
+#		$db->putUserProblem($prob1);
+#		$db->putUserProblem($prob2);
+#	}
+#}
 
 # primarily saves any changes into the correct set or problem records (global vs user)
 # also deals with deleting or rearranging problems
@@ -512,7 +513,7 @@ sub initialize {
 		my $od_param = $r->param("set.$setID.open_date");
 		my $dd_param = $r->param("set.$setID.due_date");
 		my $ad_param = $r->param("set.$setID.answer_date");
-		my $setRecord = $db->getGlobalSet($setID);
+		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
 
 		$open_date = $od_param ? $self->parseDateTime($od_param) : $setRecord->open_date;
 		$due_date = $dd_param ? $self->parseDateTime($dd_param) : $setRecord->due_date;
@@ -536,7 +537,7 @@ sub initialize {
 
 	if (defined $r->param('submit_changes') && !$error) {
 
-		my $setRecord = $db->getGlobalSet($setID);
+		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
 
 		#####################################################################
 		# Save general set information (including headers)
@@ -970,9 +971,14 @@ sub body {
 	print CGI::Tr({}, CGI::th({}, [
 		"General Information",
 	]));
-
+	
+	# this is kind of a hack -- we need to get a user record here, so we can
+	# pass it to FieldTable, so FieldTable can pass it to FieldHTML, so
+	# FieldHTML doesn't have to fetch it itself.
+	my $userSetRecord = $db->getUserSet($userToShow, $setID);
+	
 	print CGI::Tr({}, CGI::td({}, [
-		$self->FieldTable($userToShow, $setID),
+		$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord),
 	]));
 	print CGI::end_table();	
 
@@ -1066,6 +1072,20 @@ sub body {
 	#####################################################################
 
 	my @problemIDList = sort { $a <=> $b } $db->listGlobalProblems($setID);
+	
+	# get global problem records for all problems in one go
+	my %GlobalProblems;
+	my @globalKeypartsRef = map { [$setID, $_] } @problemIDList;
+	@GlobalProblems{@problemIDList} = $db->getGlobalProblems(@globalKeypartsRef);
+	
+	# if needed, get user problem records for all problems in one go
+	my (%UserProblems, %MergedProblems);
+	if ($forOneUser) {
+		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
+		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
+		@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
+	}
+	
 	if (scalar @problemIDList) {
 
 		print CGI::start_table({border=>1, cellpadding=>4});
@@ -1083,14 +1103,16 @@ sub body {
 		
 			my $problemRecord;
 			if ($forOneUser) {
-				$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
+				#$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
+				$problemRecord = $MergedProblems{$problemID}; # already fetched above --sam
 			} else {
-				$problemRecord = $db->getGlobalProblem($setID, $problemID);
+				#$problemRecord = $db->getGlobalProblem($setID, $problemID);
+				$problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
 			}
-
-#$self->addgoodmessage("");
-#$self->addbadmessage($problemRecord->toString());
-
+			
+			#$self->addgoodmessage("");
+			#$self->addbadmessage($problemRecord->toString());
+			
 			
 			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
@@ -1133,7 +1155,7 @@ sub body {
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
 				CGI::end_table(),
-				$self->FieldTable($userToShow, $setID, $problemID),
+				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $UserProblems{$problemID}),
 # A comprehensive list of problems is just TOO big to be handled well
 #				comboBox({
 #					name => "set.$setID.$problemID",
@@ -1143,7 +1165,14 @@ sub body {
 #					values => \@problemFileList,
 #				}) .
 				
-				join ("\n", $self->FieldHTML($userToShow, $setID, $problemID, "source_file")) .
+				join ("\n", $self->FieldHTML(
+					$userToShow,
+					$setID,
+					$problemID,
+					$GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
+					$UserProblems{$problemID}, # pass previously fetched user record to FieldHTML --sam
+					"source_file"
+				)) .
 			        	CGI::br() . 
 					($error ? 
 						CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) 
