@@ -175,16 +175,16 @@ sub body {
 		
 		#CGI::a({-href=>$ce->{viewProblemURL},-target=>'_viewProblem'},'view problem'),
 		CGI::end_form(),
-		"<p> the parameters passed are "  #FIXME -- debugging code
-		. join("<BR>", %{$r->param()}) . 
-		"</p> and the gatheredInfo is ",
-		"problemPath=$problemPath<br> formURL=".$r->uri . "<br>"   ,
+#		"<p> the parameters passed are "  #FIXME -- debugging code
+#		. join("<BR>", %{$r->param()}) . 
+#		"</p> and the gatheredInfo is ",
+#		"problemPath=$problemPath<br> formURL=".$r->uri . "<br>"   ,
 #		"viewProblemURL ".$ce->{viewProblemURL}."<br>",
 #		"problem_obj =". $ce->{problem_obj}."<br>",
-		"path_components ". $ce->{path_components}.'<br>',
+#		"path_components ". $ce->{path_components}.'<br>',
 # 		"hostname =$hostname<br>",
 # 		"port =$port <br>",
- 		"uri = $uri <br>",
+# 		"uri = $uri <br>",
 # 		"viewURL =".$ce->{viewURL}."<br>",
 		 
 	;
