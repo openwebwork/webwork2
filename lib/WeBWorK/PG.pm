@@ -140,6 +140,11 @@ EOF
 	#warn "PG: installing a safety filter\n";
 	$translator->rf_safety_filter(\&safetyFilter);
 	
+	# write timing log entry -- the translator is now all set up
+	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
+		"initialized",
+		"intermediate");
+	
 	# translate the PG source into text
 	#warn "PG: translating the PG source into text\n";
 	$translator->translate();

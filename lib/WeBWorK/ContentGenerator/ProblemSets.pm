@@ -55,7 +55,7 @@ sub body {
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param("user");
-	my $sort = $r->param("sort");
+	my $sort = $r->param("sort") || "status";
 	my $wwdb = $self->{wwdb};
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";

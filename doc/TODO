@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.32 2003-01-06 19:41:43 sh002i Exp $
+# $Id: TODO,v 1.33 2003-01-07 21:19:37 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -82,26 +82,26 @@ DONE	Options - email address and password
 >>>>> FOR JANUARY PREVIEW RELEASE <<<<<
 
 DONE	Feedback - need nice modular way of sending email
-		customize reciever, make object dumps prettier, link to context
+DONE		customize reciever, make object dumps prettier, link to context
 DONE	Professor - redirect to the old system
 	pretty die messages (from outside of the translator)
 DONE	make sure students can't look at not-yet-open problem sets
 DONE	make answer previews use $displayMode
 DONE	make preview-on-submit optional
-	check TTH mode character encodings on mac
-	grep for "***" in source, address all issues (hah!)
 	Increase border size on images by a couple pixels
 	effectiveUser for at least Problem.pm
+	add a "check answers" button if the user has the apropriate permissions
+DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
 	calling logout requires valid key -- doesn't make sense.
+	hardcopy - allow hardcopy with correct answers
 DONE	sort problems by due date
 DONE	disable "show hint/solution" when there's no hint/solution
 DONE	results table
-		part(or blank)/entered/preview/result/messages
-		don't show messages unless there are some
-	make displayMode sticky (for nav and siblings)
-	hardcopy - allow hardcopy with correct answers
-DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
-	add a "check answers" button if the user has the apropriate permissions
+DONE		part(or blank)/entered/preview/result/messages
+DONE		don't show messages unless there are some
+DONE	make displayMode sticky (for nav and siblings)
+	check TTH mode character encodings on mac
+	grep for "***" in source, address all issues (hah!)
 
 >>>>> FOR SPRING RELEASE <<<<<
 

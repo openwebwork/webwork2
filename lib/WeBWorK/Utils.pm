@@ -87,12 +87,13 @@ sub writeLog($$@) {
 # $ce - a WeBWork::CourseEnvironment object
 # $function - fully qualified function name
 # $details - any information, do not use the characters '[' or ']'
-# $beginEnd - the string "begin" or "end"
+# $beginEnd - the string "begin", "intermediate", or "end"
+# use the intermediate step begun or completed for INTERMEDIATE
 # use an empty string for $details when calling for END
 sub writeTimingLogEntry($$$$) {
 	my ($ce, $function, $details, $beginEnd) = @_;
 	return unless defined $ce->{webworkFiles}->{logs}->{timing};
-	$beginEnd = ($beginEnd eq "begin") ? ">" : "<";
+	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
 	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
 }
 

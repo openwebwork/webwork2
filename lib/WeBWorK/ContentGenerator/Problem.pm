@@ -43,7 +43,8 @@ sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
 	my $courseEnv = $self->{courseEnvironment};
 	my $r = $self->{r};
-	my $userName = $r->param('user');
+	my $authUserName = $r->param("user");
+	my $userName = $r->param("effectiveUser");
 	
 	##### database setup #####
 	
@@ -55,12 +56,12 @@ sub pre_header_initialize {
 	my $set             = $wwdb->getSet($userName, $setName);
 	my $problem         = $wwdb->getProblem($userName, $setName, $problemNumber);
 	my $psvn            = $wwdb->getPSVN($userName, $setName);
-	my $permissionLevel = $authdb->getPermissions($userName);
+	my $permissionLevel = $authdb->getPermissions($authUserName);
 	
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode        = $r->param("displayMode")        || $courseEnv->{pg}->{options}->{displayMode};
+	my $displayMode        = $r->param("displayMode") || $courseEnv->{pg}->{options}->{displayMode};
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
 	my $previewAnswers     = $r->param("previewAnswers");
@@ -143,6 +144,7 @@ sub pre_header_initialize {
 	$self->{wwdb}            = $wwdb;
 	$self->{authdb}          = $authdb;
 	
+	$self->{userName}        = $userName;
 	$self->{user}            = $user;
 	$self->{set}             = $set;
 	$self->{problem}         = $problem;
@@ -207,13 +209,14 @@ sub siblings {
 	print CGI::strong("Problems"), CGI::br();
 	
 	my $wwdb = $self->{wwdb};
-	my $user = $self->{r}->param("user");
+	my $user = $self->{userName};
 	my @problems;
 	push @problems, $wwdb->getProblem($user, $setName, $_)
 		foreach ($wwdb->getProblems($user, $setName));
 	foreach my $problem (sort { $a->id <=> $b->id } @problems) {
 		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->id."/?"
-			. $self->url_authen_args}, "Problem ".$problem->id), CGI::br();
+			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
+				"Problem ".$problem->id), CGI::br();
 	}
 }
 
@@ -228,7 +231,8 @@ sub nav {
 	my $courseName = $ce->{courseName};
 	
 	my $wwdb = $self->{wwdb};
-	my $user = $self->{r}->param("user");
+	my $user = $self->{userName};
+	my $tail = "&displayMode=".$self->{displayMode};
 	
 	my @links = ("Problem List" => "$root/$courseName/$setName");
 	
@@ -241,7 +245,7 @@ sub nav {
 		? "$root/$courseName/$setName/".$nextProblem->id
 		: "";
 	
-	return $self->navMacro($args, @links);
+	return $self->navMacro($args, $tail, @links);
 }
 
 sub title {
@@ -398,19 +402,19 @@ sub body {
 	}
 	
 	# debugging stuff
-	print
-		CGI::hr(),
-		CGI::h2("debugging information"),
-		CGI::h3("form fields"),
-		ref2string($self->{formFields}),
-		CGI::h3("user object"),
-		ref2string($self->{user}),
-		CGI::h3("set object"),
-		ref2string($set),
-		CGI::h3("problem object"),
-		ref2string($problem),
-		CGI::h3("PG object"),
-		ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	#print
+	#	CGI::hr(),
+	#	CGI::h2("debugging information"),
+	#	CGI::h3("form fields"),
+	#	ref2string($self->{formFields}),
+	#	CGI::h3("user object"),
+	#	ref2string($self->{user}),
+	#	CGI::h3("set object"),
+	#	ref2string($set),
+	#	CGI::h3("problem object"),
+	#	ref2string($problem),
+	#	CGI::h3("PG object"),
+	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	
 	return "";
 }

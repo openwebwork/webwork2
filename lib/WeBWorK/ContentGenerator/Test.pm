@@ -20,7 +20,6 @@ use WeBWorK::Utils qw(ref2string);
 
 sub initialize {
 	my $self = shift;
-	$self->{funny} = "foobar!";
 }
 
 sub path {
@@ -37,7 +36,7 @@ sub siblings {
 sub nav {
 	my $self = shift;
 	my $args = $_[-1];
-	return $self->navMacro($args, TestMinus1 => "-1/", TestPlusOne => "+1/");
+	return $self->navMacro($args, "", TestMinus1 => "-1/", TestPlusOne => "+1/");
 }
 
 sub title {
@@ -52,7 +51,6 @@ sub body {
 		CGI::h2("URL Authentication Arguments"), CGI::p($self->url_authen_args()),
 		CGI::h2("Form Fields"), ref2string($formFields),
 		CGI::h2("Course Environment"), ref2string($courseEnvironment),
-		CGI::h2("Funny"), CGI::p($self->{funny});
 }
 
 1;

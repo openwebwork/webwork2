@@ -240,6 +240,7 @@ sub siblingsMacro {
 sub navMacro {
 	my $self = shift;
 	my %args = %{ shift() };
+	my $tail = shift;
 	my @links = @_;
 	my $auth = $self->url_authen_args;
 	my @result;
@@ -247,7 +248,7 @@ sub navMacro {
 		my $name = shift @links;
 		my $url = shift @links;
 		push @result, $url
-			? CGI::a({-href=>"$url?$auth"}, $name)
+			? CGI::a({-href=>"$url?$auth$tail"}, $name)
 			: $name;
 	}
 	return join($args{separator}, @result), "\n";
@@ -368,10 +369,15 @@ sub loginstatus {
 	my $eUser = $r->param("effectiveUser");
 	my $key = $r->param("key");
 	return "" unless $key;
-	warn "user=$user eUser=$eUser\n";
+	my $exitURL = $r->uri() . "?user=$user&key=$key";
 	print CGI::small("Logged in as:", CGI::br(), "$user");
 	if ($user ne $eUser) {
-		print CGI::br(), CGI::font({-color=>'red'}, CGI::small("Acting as:", CGI::br(), "$eUser"));
+		print CGI::br(), CGI::font({-color=>'red'},
+				CGI::small("Acting as:", CGI::br(), "$eUser")
+			),
+			CGI::br(), CGI::a({-href=>$exitURL},
+				CGI::small("Stop Acting")
+			);
 	}
 	return "";
 }
