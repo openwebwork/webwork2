@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.39 2004/06/15 14:46:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.41 2004/06/17 16:52:24 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -165,6 +165,18 @@ sub pre_header_initialize {
 		} else {
 			push @error, E_ONE_USER unless $nusers == 1;
 			push @error, E_MAX_ONE_SET unless $nsets <= 1;
+		}
+	};
+	
+	defined param $r "edit_set_for_user" and do {
+		if ($nusers == 1 and $nsets == 1) {
+			$module = "${ipfx}::ProblemSetEditor";
+			$args{setID} = $firstSetID;
+			$params{editForUser} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER unless $nusers == 1;
+			push @error, E_ONE_SET unless $nsets == 1;
+			
 		}
 	};
 	
