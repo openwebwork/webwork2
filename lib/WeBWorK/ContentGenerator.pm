@@ -20,30 +20,6 @@ sub new($$$) {
 }
 
 
-# This generates the template code (eventually using a secondary storage
-# data source, I hope) for the common elements of all WeBWorK pages.
-# Arguments are substitutions for data points within the template.
-sub top {
-	my (
-		$self,			# invocant
-		$title,			# Page title
-	) = @_;
-	
-	my $r = $self->{r};
-	
-	print start_html("WeBWorK - $title");
-
-	print h1("WeBWorK $title");
-}
-
-# This generates the "bottom" of pages.  It'll probably be mostly for
-# closing <body> and stuff like that.
-sub bottom {
-	my $self = @_;
-	print end_html();
-}
-
-
 # This is a quick and dirty function to print out all (or almost all) of the
 # fields in a form in a specified format.  As you can see from the print
 # statement, it just prints out $begining$name$middle$value$end for every
@@ -54,6 +30,7 @@ sub bottom {
 
 sub print_form_data {
 	my ($self, $begin, $middle, $end, $qr_omit) = @_;
+	my $return_string = "";
 	
 	$r=$self->{r};
 	my @form_data = $r->param;
@@ -61,9 +38,11 @@ sub print_form_data {
 		next if ($qr_omit and $name =~ /$qr_omit/);
 		my @values = $r->param($name);
 		foreach my $value (@values) {
-			print $begin, $name, $middle, $value, $end;
+			$return_string .= "$begin$name$middle$value$end";
 		}
 	}
+	
+	return $return_string;
 }
 
 sub hidden_authen_fields {
@@ -91,11 +70,22 @@ sub header {
 sub initialize {}
 
 sub title {
-	print "Superclass";
+	return "Superclass";
 }
 
 sub body {
 	print "Generated content";
+	"";
+}
+
+sub logo {
+	my $self = shift;
+	return $self->{courseEnvironment}->{urls}->{logo};
+}
+
+sub htdocs_base {
+	my $self = shift;
+	return $self->{courseEnvironment}->{urls}->{base};
 }
 
 sub go {
@@ -114,15 +104,14 @@ sub go {
 	close TEMPLATE;
 	
 	foreach my $line (@template) {
-		my $pos = 0;
-
-		while ($line =~ m/\G(.*?)<!--#(.*?)\s*-->/g) {
+		# This is incremental regex processing.
+		# the /c is so that pos($line) doesn't die when the regex fails.
+		while ($line =~ m/\G(.*?)<!--#(.*?)\s*-->/gc) {
 			print "$1";
-			$pos = pos($line);
 			print $self->$2(@_) if $self->can($2);
 		}
 		# I thought I could use pos($line) here, but /noooooo/
-		print substr $line, $pos;
+		print substr $line, pos($line);
 	}
 	
 	return OK;

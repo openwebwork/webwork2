@@ -16,12 +16,12 @@ use strict;
 use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Test;
 use WeBWorK::Authen;
-use WeBWorK::Login;
-use WeBWorK::ProblemSets;
-use WeBWorK::ProblemSet;
-use WeBWorK::Problem;
+use WeBWorK::ContentGenerator::Test;
+use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::ProblemSets;
+use WeBWorK::ContentGenerator::ProblemSet;
+use WeBWorK::ContentGenerator::Problem;
 
 # registering discontent: wanted to call this dispatch, but mod_perl gave me lip
 sub handler() {
@@ -52,40 +52,43 @@ sub handler() {
 	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $course);};
 	if ($@) { # If no course exists matching the requested course
 		# TODO: display an error page.  For now, 404 it.
+		warn $@;
 		return DECLINED;
 	}
 	
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
-		return WeBWorK::Login->new($r, $course_env)->go;
+		return WeBWorK::ContentGenerator::Login->new($r, $course_env)->go;
 	} else {
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
-			return WeBWorK::ProblemSets->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::ProblemSets->new($r, $course_env)->go;
 		} elsif ($arg eq "prof") {
 			###
 		} elsif ($arg eq "prefs") {
 			###
+		} elsif ($arg eq "test") {
+			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
 			my $ps_arg = shift @components;
 
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
-				return WeBWorK::ProblemSet->new($r, $course_env)->go($problem_set);
+				return WeBWorK::ContentGenerator::ProblemSet->new($r, $course_env)->go($problem_set);
 			} elsif ($ps_arg eq "hardcopy") {
 				###
 			}
 			else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-				return WeBWorK::Problem->new($r, $course_env)->go($problem_set, $problem);
+				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
 			}
 		}
 		
 		if (1) {
-			return WeBWorK::Test->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		}
 	}
 

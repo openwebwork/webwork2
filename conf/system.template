@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+ <head>
+  <title>WeBWorK - <!--#title--></title>
+ </head>
+ <body>
+  <div style="text-align:center"><img src="<!--#logo-->" alt="WeBWorK" /></div>
+  <hr />
+  <h1 style="text-align:center">WeBWorK <!--#title--></h1>
+  <!--#body-->
+ </body>
+</html>

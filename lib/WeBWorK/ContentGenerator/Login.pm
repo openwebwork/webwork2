@@ -5,7 +5,7 @@
 # and should serve us nicely unless the interface to WeBWorK::Authen
 # changes.
 
-package WeBWorK::Login;
+package WeBWorK::ContentGenerator::Login;
 
 use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
@@ -39,7 +39,7 @@ sub body {
 	print startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
-	$self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key)$/);
+	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key)$/);
 	
 	print
 		table({-border => 0}, 
