@@ -97,7 +97,8 @@ sub formatDateTime($) {
 	# %I 	hour, 12 hour clock, leading 0's)
 	# %M 	minute, leading 0's
 	# %P 	am or pm (Yes %p and %P are backwards :)
-	return time2str("%m/%d/%y %I:%M%P", $dateTime);
+	#return time2str("%m/%d/%y %I:%M%P", $dateTime);
+	return time2str("%m/%d/%y at %I:%M%P", $dateTime);
 }
 
 sub parseDateTime($) {
