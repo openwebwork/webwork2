@@ -133,8 +133,8 @@ sub initialize {
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
-	my %overrides = list2hash $r->param('override');
 	# build a quick lookup table
+	my %overrides = list2hash $r->param('override');
 	
 	# The set form was submitted
 	if (defined($r->param('submit_set_changes'))) {
@@ -333,7 +333,7 @@ sub body {
 			print CGI::Tr({}, 
 				CGI::td({}, [
 					($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
-					CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
+					CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
 					($forUsers ? (
 						problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
 						problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),

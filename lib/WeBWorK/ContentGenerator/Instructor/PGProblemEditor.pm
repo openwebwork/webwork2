@@ -47,7 +47,7 @@ sub go {
 		my $displayMode		=	($r->param('displayMode')) ? $r->param('displayMode') : '';
 
 		my $viewURL  		= 	"http://$hostname:$port";
-		$viewURL		   .= 	"/webwork/$courseName/$setName/$problemNumber/?";
+		$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
 		$viewURL		   .=	$self->url_authen_args;
 		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
 		$viewURL		   .=	"&editMode=temporaryFile";
