@@ -1,6 +1,6 @@
 package WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use WeBWorK::Utils qw(readFile formatDateTime parseDateTime);
+use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash);
 
 =head1 NAME
 
@@ -27,6 +27,69 @@ sub getSetName {
 	return $pathSetName;
 }
 
+# One wrinkle here: if $override is undefined, do the global thing, otherwise, it's truth value determines the checkbox.
+sub setRowHTML {
+	my ($description, $fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
+	
+	my $attributeHash = {type=>"text", name=>$fieldName, value=>$fieldValue};
+	$attributeHash->{size} = $size if defined $size;
+	
+	my $html = CGI::td({}, [$description, CGI::input($attributeHash)]);
+	
+	if (defined $override) {
+		$attributeHash->{name}="${fieldName}_override";
+		$attributeHash->{value}=($override ? $overrideValue : "" );
+	
+		$html .= CGI::td({}, [
+			CGI::checkbox({
+				type=>"checkbox", 
+				name=>"override", 
+				label=>"override with:",
+				value=>$fieldName,
+				checked=>($override ? 1 : 0)
+			}),
+			CGI::input($attributeHash)
+		]);
+	}
+	
+	return $html;
+			
+}
+
+sub hiddenEditForUserFields {
+	my @editForUser = @_;
+	my $return = "";
+	foreach my $editUser (@editForUser) {
+		$return .= CGI::input({type=>"hidden", name=>"editForUser", value=>$editUser});
+	}
+	
+	return $return;
+}
+
+sub problemElementHTML {
+	my ($fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
+	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
+	$attributeHash->{size} = $size if defined $size;
+	
+	my $html = CGI::input($attributeHash);
+	if (defined $override) {
+		$attributeHash->{name} = "${fieldName}_override";
+		$attributeHash->{value} = ($override ? $overrideValue : "");
+		$html = "default:".CGI::br().$html.CGI::br()
+			. CGI::checkbox({
+				type => "checkbox",
+				name => "override",
+				label => "override:",
+				value => $fieldName,
+				checked => ($override ? 1 : 0)
+			})
+			. CGI::br()
+			. CGI::input($attributeHash);
+	}
+	
+	return $html;
+}
+
 sub title {
 	my ($self, @components) = @_;
 	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
@@ -45,11 +108,8 @@ sub initialize {
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
-	my %overrides;
+	my %overrides = list2hash $r->param('override');
 	# build a quick lookup table
-	foreach my $param ($r->param('override')) {
-		$overrides{$param} = "DUMMY";
-	}
 	
 	# The set form was submitted
 	if (defined($r->param('submit_set_changes'))) {
@@ -86,6 +146,9 @@ sub initialize {
 	} 
 	# the Problem form was submitted
 	elsif (defined($r->param('submit_problem_changes'))) {
+		foreach my $problem ($r->param('deleteProblem')) {
+			$db->deleteGlobalProblem($setName, $problem);
+		}
 		my @problemList = $db->listGlobalProblems($setName);
 		foreach my $problem (@problemList) {
 			my $problemRecord = $db->getGlobalProblem($setName, $problem);
@@ -121,76 +184,8 @@ sub initialize {
 				
 			}
 		}
-	} elsif (defined($r->param('makeNewSet'))) {
-		my $newSetRecord = WeBWorK::DB::Record::Set->new();
-		$newSetRecord->set_id($r->param('newSetName'));
-		warn "Adding new set: ", $newSetRecord->set_id;
-		$db->addGlobalSet($newSetRecord);
-	}
 }
 
-# One wrinkle here: if $override is undefined, do the global thing, otherwise, it's truth value determines the checkbox.
-sub setRowHTML {
-	my ($description, $fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
-	
-	my $attributeHash = {type=>"text", name=>$fieldName, value=>$fieldValue};
-	$attributeHash->{size} = $size if defined $size;
-	
-	my $html = CGI::td({}, [$description, CGI::input($attributeHash)]);
-	
-	if (defined $override) {
-		$attributeHash->{name}="${fieldName}_override";
-		$attributeHash->{value}=($override ? $overrideValue : "" );
-	
-		$html .= CGI::td({}, [
-			CGI::checkbox({
-				type=>"checkbox", 
-				name=>"override", 
-				label=>"override with:",
-				value=>$fieldName,
-				checked=>($override ? 1 : 0)
-			}),
-			CGI::input($attributeHash)
-		]);
-	}
-	
-	return $html;
-			
-}
-
-sub hiddenUserFields {
-	my @editForUser = @_;
-	my $return = "";
-	foreach my $editUser (@editForUser) {
-		$return .= CGI::input({type=>"hidden", name=>"editForUser", value=>$editUser});
-	}
-	
-	return $return;
-}
-
-sub problemElementHTML {
-	my ($fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
-	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
-	$attributeHash->{size} = $size if defined $size;
-	
-	my $html = CGI::input($attributeHash);
-	if (defined $override) {
-		$attributeHash->{name} = "${fieldName}_override";
-		$attributeHash->{value} = ($override ? $overrideValue : "");
-		$html = "default:".CGI::br().$html.CGI::br()
-			. CGI::checkbox({
-				type => "checkbox",
-				name => "override",
-				label => "override:",
-				value => $fieldName,
-				checked => ($override ? 1 : 0)
-			})
-			. CGI::br()
-			. CGI::input($attributeHash);
-	}
-	
-	return $html;
-}
 
 sub body {
 	my ($self, @components) = @_;
@@ -231,7 +226,7 @@ sub body {
 		])
 	);
 	
-	print hiddenUserFields(@editForUser);
+	print hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"});
 	print CGI::end_form();
@@ -244,7 +239,7 @@ sub body {
 	print CGI::start_form({method=>"POST", action=>$r->uri});
 	print CGI::start_table({border=>1, cellpadding=>4});
 	print CGI::Tr({}, CGI::th({}, [
-		"Problem",
+		"Delete?", "Problem",
 		($forUsers ? ("Status", "Problem Seed") : ()),
 		"Source File", "Max. Attempts", "Weight",
 		($forUsers ? ("Number Correct", "Number Incorrect") : ())
@@ -272,6 +267,7 @@ sub body {
 		
 		print CGI::Tr({}, 
 			CGI::td({}, [
+				CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}),
 				CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
 				($forUsers ? (
 					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
@@ -289,7 +285,7 @@ sub body {
 		)
 	}
 	print CGI::end_table();
-	print hiddenUserFields(@editForUser);
+	print hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
 	print CGI::end_form();
