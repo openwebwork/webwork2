@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.14 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.15 2003/12/28 21:02:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,7 +177,9 @@ sub displaySets {
 		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
 		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
 		if ($sort_method_name =~/p(\d+)/) {
-			return $b->{problemData}->{$1} <=> $a->{problemData}->{$1};  # sort by number of attempts.
+		    my $left  =  $b->{problemData}->{$1} ||0;
+		    my $right =  $a->{problemData}->{$1} ||0;
+			return $left <=> $right;  # sort by number of attempts.
 		}
 
 	};
@@ -194,7 +196,7 @@ sub displaySets {
 	$WeBWorK::timer->continue("Begin obtaining user records for set $setName") if defined($WeBWorK::timer);
 	my @userRecords  = $db->getUsers(@studentList);
 	$WeBWorK::timer->continue("End obtaining user records for set $setName") if defined($WeBWorK::timer);
-
+$WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
  	my @augmentedUserRecords    = ();
 	foreach my $studentRecord (@userRecords)   {
 		next unless ref($studentRecord);
@@ -213,7 +215,8 @@ sub displaySets {
 		my $probNum         = 0;
 		my @triplets = map {[$student, $setName, $_ ]} @problems;
 		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
-		my @problemRecords = $db->getUserProblems( @triplets );
+		#my @problemRecords = $db->getUserProblems( @triplets );
+		my @problemRecords = $db->getAllUserProblems( $student, $setName );
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 
 		foreach my $problemRecord (@problemRecords) {
@@ -288,6 +291,7 @@ sub displaySets {
 		push( @augmentedUserRecords, $temp_hash );
 		                                
 	}	
+	$WeBWorK::timer->continue("end mainloop") if defined($WeBWorK::timer);
 	
 	@augmentedUserRecords = sort {           &$sort_method($a,$b)
 												||
@@ -302,7 +306,7 @@ sub displaySets {
 	}
 	print
 	    defined($sort_method_name) ?"sort method is $sort_method_name":"",
-		CGI::start_table({-border=>5}),
+		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::th(  {-align=>'center'},
 			[CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=name"},'Name'),
 			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=score"},'Score'),
