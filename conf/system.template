@@ -7,10 +7,21 @@
  <head>
   <title>WeBWorK - <!--#title--></title>
  </head>
- <body>
-  <div style="text-align:center"><img src="<!--#logo-->" alt="WeBWorK" /></div>
-  <h1 style="text-align:center">WeBWorK <!--#title--></h1>
-  <hr />
-  <!--#body-->
+ <body style="margin: 0px">
+  <table style="width: 100%">
+   <tr>
+    <td style="background-color: darkblue"><img src="" width="100" height="100" /></td>
+    <td style="background-color: darkblue"><h1 style="color: white; text-align: center">WeBWorK II</h1></td>
+   </tr>
+   <tr>
+    <td style="background-color: darkblue">
+     <div><!--#quicklinks--></div>
+     <div><!--#siblings--></div>
+    </td>
+    <td style="background-color: white">
+     <h1><!--#title--></h1>
+     <!--#body-->
+    </td>
+   </tr>
+  </table>
  </body>
-</html>
