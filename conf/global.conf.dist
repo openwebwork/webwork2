@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.40 2003-08-16 01:30:46 gage Exp $
+# $Id: global.conf.dist,v 1.41 2003-09-23 21:19:29 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -20,14 +20,18 @@
 ################################################################################
 
 %webworkDirs = (
-	root    => "$webworkRoot",
-	bin     => "$webworkRoot/bin",
-	conf    => "$webworkRoot/conf",
-	courses => "$webworkRoot/courses",
-	lib     => "$webworkRoot/lib",
-	logs    => "$webworkRoot/logs",
-	macros  => "$pgRoot/macros",
-	tmp     => "$webworkRoot/tmp",
+	root          => "$webworkRoot",
+	DATA          => "$webworkRoot/DATA",
+	bin           => "$webworkRoot/bin",
+	conf          => "$webworkRoot/conf",
+	courses       => "$webworkRoot/courses",
+	htdocs        => "$webworkRoot/htdocs",
+	htdocs_temp   => "$webworkRoot/htdocs/tmp",
+	equationCache => "$webworkRoot/htdocs/tmp/equations",
+	lib           => "$webworkRoot/lib",
+	logs          => "$webworkRoot/logs",
+	macros        => "$pgRoot/macros",
+	tmp           => "$webworkRoot/tmp",
 );
 
 %webworkFiles = (
@@ -47,14 +51,17 @@
 	logs => {
 		timing         => "$webworkDirs{logs}/timing.log",
 	},
+	equationCacheDB => "$webworkDirs{DATA}/equationcache",
 );
 
 %webworkURLs = (
-	root    => "$webworkURLRoot",
-	home    => "/webwork2_files/index.html",
-	htdocs  => "/webwork2_files",
-	docs    => "http://webhost.math.rochester.edu/webworkdocs/docs",
-	oldProf => "/webwork-old/profLogin.pl",
+	root          => "$webworkURLRoot",
+	home          => "/webwork2_files/index.html",
+	htdocs        => "/webwork2_files",
+	htdocs_temp   => "/webwork2_files/tmp",
+	equationCache => "/webwork2_files/tmp/equations",
+	docs          => "http://webhost.math.rochester.edu/webworkdocs/docs",
+	oldProf       => "/webwork-old/profLogin.pl",
 );
 
 ################################################################################
