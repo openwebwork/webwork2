@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.51 2004/05/17 05:06:36 jj Exp $
+# $CVSHeader: 
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,448 +19,1124 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::ProblemSetList - Entry point for Problem and Set editing
+WeBWorK::ContentGenerator::Instructor::ProblemSetList - Entry point for Set-specific
+data editing/viewing
+
+=cut
+
+=for comment
+
+What do we want to be able to do here?
+
+filter sort edit publish import create delete
+
+Filter what sets are shown:
+	- none, all, selected
+	- matching set_id, visable to students, hidden from students
+
+Sort sets by:
+	- set name
+	- open date
+	- due date
+	- answer date
+	- header files
+	- visibility to students	
+	
+Switch from view mode to edit mode:
+	- showing visible sets
+	- showing selected sets
+Switch from edit mode to view and save changes
+Switch from edit mode to view and abandon changes
+
+Make sets visible to or hidden from students:
+	- all, selected
+
+Import sets:
+	- replace:
+		- any users
+		- visible users
+		- selected users
+		- no users
+	- add:
+		- any users
+		- no users
+
+Create a set with a given name
+
+Delete sets:
+	- visible
+	- selected
 
 =cut
 
 use strict;
 use warnings;
-use Apache::Constants qw(REDIRECT);
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime);
-use WeBWorK::Compatibility;
+use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptPassword);
 
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts continuation)];
+use constant HIDE_SETS_THRESHOLD => 20;
 
-sub header {
-	my $self       = shift;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $ce         = $r->ce;
-	my $courseName = $urlpath->arg("courseID");
-	my $scoringPage  = $urlpath -> newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring',
-	                                              courseID => $courseName
-	);
-	if (defined $r->param('scoreSelected')) {
-	    my $scoringPageURL = $self->systemLink($scoringPage,
-	                     params=>['scoreSelected','selectedSet','recordSingleSetScores' ]
-	    );
-		$r->header_out(Location => $scoringPageURL);
-		$self->{noContent} = 1;
-		return REDIRECT;
-	}
-	$r->content_type("text/html");
-	$r->send_http_header();
-}
+use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+use constant VIEW_FORMS => [qw(filter sort edit publish import create delete)];
+
+use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header problem_header) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header problem_header) ];
+
+use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode primarySortField secondarySortField)];
+
+use constant SORT_SUBS => {
+	set_id		=> \&bySetID,
+	set_header	=> \&bySetHeader,
+	problem_header	=> \&byProblemHeader,
+	open_date	=> \&byOpenDate,
+	due_date	=> \&byDueDate,
+	answer_date	=> \&byAnswerDate,
+	published	=> \&byPublished,
+
+};
+
+use constant  FIELD_PROPERTIES => {
+	set_id => {
+		type => "text",
+		size => 8,
+		access => "readonly",
+	},
+	set_header => {
+		type => "filelist",
+		size => 10,
+		access => "readwrite",
+	},
+	problem_header => {
+		type => "filelist",
+		size => 10,
+		access => "readwrite",
+	},
+	open_date => {
+		type => "text",
+		size => 20,
+		access => "readwrite",
+	},
+	due_date => {
+		type => "text",
+		size => 20,
+		access => "readwrite",
+	},
+	answer_date => {
+		type => "text",
+		size => 20,
+		access => "readwrite",
+	},
+	published => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
+	},	
+};
 
 sub initialize {
-	my $self       = shift;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $courseName = $urlpath->arg("courseID");
-	my $user       = $r->param('user');
-	
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You aren't authorized to create or delete problems")));
+	my ($self) = @_;
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "modify_student_data")) {
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data")));
 		return;
 	}
-	if (defined($r->param('update_global_user'))  ){
-		my $global_user_message = WeBWorK::Compatibility::update_global_user($self);
-		$self->{global_user_message} = $global_user_message;
-	}
-	if (defined($r->param('deleteSelected')) and defined($r->param('deleteSelectedSafety') ) 
-	    and $r->param('deleteSelectedSafety') == 1) {
-	    
-		foreach my $wannaDelete ($r->param('selectedSet')) {
-			$db->deleteGlobalSet($wannaDelete);
-		}
-	} elsif (defined $r->param('scoreSelected')) {
-		# FIXME: this doesn't do anything!
-	} elsif (defined $r->param('publishSelected')) {
-		my @selectedSets = $r->param('selectedSet');
-		foreach my $selectedSet (@selectedSets) {
-			my $setRecord = $db->getGlobalSet($selectedSet);
-			if ($setRecord) {
-				unless ($setRecord->published eq "1") {
-					$setRecord->published("1");
-					$db->putGlobalSet($setRecord);
-				}
-			} else {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Set $selectedSet was selected but no such set record exists!")));
-			}
-		}
-	} elsif (defined $r->param('unpublishSelected')) {
-		my @selectedSets = $r->param('selectedSet');
-		foreach my $selectedSet (@selectedSets) {
-			my $setRecord = $db->getGlobalSet($selectedSet);
-			if ($setRecord) {
-				unless ($setRecord->published eq "0") {
-					$setRecord->published("0");
-					$db->putGlobalSet($setRecord);
-				}
-			} else {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Set $selectedSet was selected but no such set record exists!")));
-			}
-		}
-	} elsif (defined $r->param('makeNewSet')) {
-		my $newSetRecord = $db->{set}->{record}->new();
-		my $newSetName = $r->param('newSetName');
-		$newSetRecord->set_id($newSetName);
-		$newSetRecord->set_header("");
-		$newSetRecord->problem_header("");
-		$newSetRecord->open_date("0");
-		$newSetRecord->due_date("0");
-		$newSetRecord->answer_date("0");
-		eval {$db->addGlobalSet($newSetRecord)};
-	} elsif (defined $r->param('importSet') or defined $r->param('importSets')) {
-		my @setDefFiles = ();
-		my $newSetName = "";
-		if (defined $r->param('importSet')) {
-			@setDefFiles = $r->param('set_definition_file');
-			$newSetName = $r->param('newSetName');
-		} elsif (defined $r->param('importSets')) {
-			@setDefFiles = $r->param('set_definition_files');
-		}
-		
-		foreach my $set_definition_file (@setDefFiles) {
-			$WeBWorK::timer->continue("$set_definition_file: reading set definition file") if defined $WeBWorK::timer;
-			# read data in set definition file
-			my ($setName, $paperHeaderFile, $screenHeaderFile,
-		    	$openDate, $dueDate, $answerDate, $ra_problemData,
-			) = $self->readSetDef($set_definition_file);
-			my @problemList = @{$ra_problemData};
-
-			# Use the original name if form doesn't specify a new one.
-			# The set acquires the new name specified by the form.  A blank
-			# entry on the form indicates that the imported set name will be used.
-			$setName = $newSetName if $newSetName;
-			
-			$WeBWorK::timer->continue("$set_definition_file: adding set") if defined $WeBWorK::timer;
-			# add the data to the set record
-			#my $newSetRecord = $db->{set}->{record}->new();
-			my $newSetRecord = $db->newGlobalSet;
-			$newSetRecord->set_id($setName);
-			$newSetRecord->set_header($screenHeaderFile);
-			$newSetRecord->problem_header($paperHeaderFile);
-			$newSetRecord->open_date($openDate);
-			$newSetRecord->due_date($dueDate);
-			$newSetRecord->answer_date($answerDate);
-
-			#create the set
-			eval {$db->addGlobalSet($newSetRecord)};
-			die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
-
-			$WeBWorK::timer->continue("$set_definition_file: adding problems to database") if defined $WeBWorK::timer;
-			# add problems
-			my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
-			foreach my $rh_problem (@problemList) {
-				#my $problemRecord = new WeBWorK::DB::Record::Problem;
-				my $problemRecord = $db->newGlobalProblem;
-				$problemRecord->problem_id($freeProblemID++);
-				#warn "Adding problem $freeProblemID ", $rh_problem->source_file;
-				$problemRecord->set_id($setName);
-				$problemRecord->source_file($rh_problem->{source_file});
-				$problemRecord->value($rh_problem->{value});
-				$problemRecord->max_attempts($rh_problem->{max_attempts});
-				# continuation flags???
-				$db->addGlobalProblem($problemRecord);
-				#$self->assignProblemToAllSetUsers($problemRecord);  # handled by parent
-			}
-			
-			if ($r->param("assignNewSet")) {
-				$WeBWorK::timer->continue("$set_definition_file: assigning set to all users") if defined $WeBWorK::timer;
-				# assign the set to all users
-				$self->assignSetToAllUsers($setName);
-			}
-		}
-	} 
+	
 }
 
-
-
-
 sub body {
-	my $self       = shift;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $root       = $ce->{webworkURLs}->{root};
-	my $courseName = $urlpath->arg("courseID");
-	my $user       = $r->param('user');
-	my $key        = $r->param('key');
-	my $effectiveUserName = $r->param('effectiveUser');
+	my ($self)       = @_;
+	my $r            = $self->r;
+	my $urlpath      = $r->urlpath;
+	my $db           = $r->db;
+	my $ce           = $r->ce;
+	my $authz        = $r->authz;	
+	my $courseName   = $urlpath->arg("courseID");
+	my $setID        = $urlpath->arg("setID");       
+	my $user         = $r->param('user');
 	
-	my $problemSetListPage  = $urlpath->newFromModule($urlpath->module, courseID => $courseName) ;
-	my $problemSetListURL   = $self->systemLink($problemSetListPage, authen=>0);
+	my $root = $ce->{webworkURLs}->{root};
+
+	# templates for getting field names
+	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 	
-	#my $instructorBaseURL = "$root/$courseName/instructor";
-	#my $importURL = "$instructorBaseURL/problemSetImport/";
-	my $instructorPage      = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", 
-	                                                   courseID => $courseName
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($user, "access_instructor_tools");
+	
+	# This table can be consulted when display-ready forms of field names are needed.
+	my %prettyFieldNames = map { $_ => $_ } 
+		$setTemplate->FIELDS();
+	
+	@prettyFieldNames{qw(
+		select
+		problems
+		users
+		set_id
+		set_header
+		problem_header
+		open_date
+		due_date
+		answer_date
+		published		
+	)} = (
+		"Select",
+		"Problems",
+		"Assigned Users",
+		"Set Name", 
+		"Set Header", 
+		"Problem Header", 
+		"Open Date", 
+		"Due Date", 
+		"Answer Date", 
+		"Visible", 
 	);
-	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
-	my @set_definition_files    = $self->read_dir($ce->{courseDirs}->{templates},'\\.def');
-	return CGI::em("You are not authorized to access the instructor tools") 
-	                      unless $authz->hasPermissions($user, "access_instructor_tools");
+	########## set initial values for state fields
 	
-	###############################################################################
-	# Slurp each set record for this course in @sets
-	# Gather data from the database
-	###############################################################################
+	my @allSetIDs = $db->listGlobalSets;
 	my @users = $db->listUsers;
-		###############################################################################
-		# for compatibility  check to make sure that the global user has been defined.
-		###############################################################################
-		my $globalUser           =  $ce->{dbLayout}->{set}->{params}->{globalUserID};
-		my $database_type        = $ce->{dbLayoutName};
-		my $global_user_alert    = "";
-		my $global_user_message  = "";
-		$global_user_message     = $self->{global_user_message} if defined($self->{global_user_message});
-		if (defined($globalUser) and $globalUser and $database_type eq 'gdbm') {  # if a name for the global user has been defined in database.conf
-			my $flag = 0;
-			foreach $user (@users) {
-				$flag = 1 if $user eq $globalUser;
-			}
+	$self->{allSetIDs} = \@allSetIDs;
+	$self->{totalUsers} = scalar @users;
+	
+	if (defined $r->param("visible_sets")) {
+		$self->{visibleSetIDs} = [ $r->param("visible_sets") ];
+	} elsif (defined $r->param("no_visible_sets")) {
+		$self->{visibleSetIDs} = [];
+	} else {
+		if (@allSetIDs > HIDE_SETS_THRESHOLD) {
+			$self->{visibleSetIDs} = [];
+		} else {
+			$self->{visibleSetIDs} = [ @allSetIDs ];
+		}
+	}
+	
+	$self->{prevVisibleSetIDs} = $self->{visibleSetIDs};
+	
+	if (defined $r->param("selected_sets")) {
+		$self->{selectedSetIDs} = [ $r->param("selected_sets") ];
+	} else {
+		$self->{selectedSetIDs} = [];
+	}
+	
+	$self->{editMode} = $r->param("editMode") || 0;
+	
+	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
+	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
+	
+	my @allSets = $db->getGlobalSets(@allSetIDs);
+
+	my (%open_dates, %due_dates, %answer_dates);
+	foreach my $Set (@allSets) {
+		push @{$open_dates{defined $Set->open_date ? $Set->open_date : ""}}, $Set->set_id;
+		push @{$due_dates{defined $Set->due_date ? $Set->due_date : ""}}, $Set->set_id;
+		push @{$answer_dates{defined $Set->answer_date ? $Set->answer_date : ""}}, $Set->set_id;
+	}
+	$self->{open_dates} = \%open_dates;
+	$self->{due_dates} = \%due_dates;
+	$self->{answer_dates} = \%answer_dates;
+	
+	########## call action handler
+	
+	my $actionID = $r->param("action");
+	if ($actionID) {
+		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }) {
+			die "Action $actionID not found";
+		}
+		my $actionHandler = "${actionID}_handler";
+		my %genericParams;
+		foreach my $param (qw(selected_sets)) {
+			$genericParams{$param} = [ $r->param($param) ];
+		}
+		my %actionParams = $self->getActionParams($actionID);
+		my %tableParams = $self->getTableParams();
+		print CGI::div({class=>"Message"}, CGI::p("Results of last action performed: ", $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))), CGI::hr();
+#		print CGI::p(
+#		    '<div style="color:green">',
+#			"Result of last action performed: ",
+#			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)),
+#			'</div>',
+#			CGI::hr()
 			
-			if ($flag == 0 ) {   # no global user has been added to this course
-			    $global_user_alert = join("", 
-			    	CGI::div({class=>'ResultsWithError'}, 
-						CGI::p("This is the first time that this course
-							has been used with WeBWorK 2.0 and no 'Global User' has been defined.  In WeBWorK 2.0
-							a set and it's problems can exist without being assigned to any real student or instructor --
-							instead it is assigned to this fictional 'Global User' whose id is $globalUser.  
-							Press this button to initialize the global user files so that you can view sets built in 
-							WW1.9 in 2.0. You should only need to do this once -- the first time you use WW2.0 on a pre-existing course."
-						),
-						CGI::p("Depending on the number of sets, this operation may take many minutes.  Even if your browser times out
-						the updating process will continue until it is done. Time for coffee? :-)"
-						),
-						CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
-						$self->hidden_authen_fields,
-						CGI::submit({-name=>'update_global_user', -value=>"Update Global User" }),
-						CGI::end_form(),
-			    	),
-			    );
-				#$global_user_message = WeBWorK::Compatibility::update_global_user($self);
-			}
-		}
-		###############################################################################
-		# end compatibility check
-		###############################################################################
-	my @set_IDs = $db->listGlobalSets;
-	my @sets  = $db->getGlobalSets(@set_IDs); #checked
-	my %counts;
-	my %problemCounts;
-	
-	
-	$WeBWorK::timer->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer;
-	foreach my $set_id (@set_IDs) {
-		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
-		#$counts{$set_id} = $db->listSetUsers($set_id);
+#		);
 	}
-	$WeBWorK::timer->continue("End obtaining problem on sets") if defined $WeBWorK::timer;
+		
+	########## retrieve possibly changed values for member fields
 	
-	$WeBWorK::timer->continue("Begin obtaining assigned user info on sets") if defined $WeBWorK::timer;
-	foreach my $set_id (@set_IDs) {
-		#$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
-		#$counts{$set_id} = $db->listSetUsers($set_id);
-		$counts{$set_id} = $db->countSetUsers($set_id);
-	}	
-	$WeBWorK::timer->continue("End obtaining assigned user info on sets") if defined $WeBWorK::timer;
+	@allSetIDs = @{ $self->{allSetIDs} }; # do we need this one? YES, deleting or importing a set will change this.
+	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
+	my @prevVisibleSetIDs = @{ $self->{prevVisibleSetIDs} };
+	my @selectedSetIDs = @{ $self->{selectedSetIDs} };
+	my $editMode = $self->{editMode};
+	my $primarySortField = $self->{primarySortField};
+	my $secondarySortField = $self->{secondarySortField};
+	
+	#warn "visibleSetIDs=@visibleSetIDs\n";
+	#warn "prevVisibleSetIDs=@prevVisibleSetIDs\n";
+	#warn "selectedSetIDs=@selectedSetIDs\n";
+	#warn "editMode=$editMode\n";
+	
+	########## get required users
+		
+	my @Sets = grep { defined $_ } @visibleSetIDs ? $db->getGlobalSets(@visibleSetIDs) : ();
+	
+	# presort users
+	my %sortSubs = %{ SORT_SUBS() };
+	my $primarySortSub = $sortSubs{$primarySortField};
+	my $secondarySortSub = $sortSubs{$secondarySortField};	
+	
+	# don't forget to sort in opposite order of importance
+	@Sets = sort $secondarySortSub @Sets;
+	@Sets = sort $primarySortSub @Sets;
 
-	# Sort @sets based on the sort parameter
-	# Invalid sort types will just cause an unpredictable ordering, which is no big deal.
-	@sets = sort {
-		if ($sort eq "set_id") {
-			return $a->$sort cmp $b->$sort;
-		}elsif ($sort =~ /_date$/) {
-			return $a->$sort <=> $b->$sort;
-		} elsif ($sort eq "num_probs") {
-			return $problemCounts{$a->set_id} <=> $problemCounts{$b->set_id};
-		} elsif ($sort eq "num_students") {
-			return $counts{$a->set_id} <=> $counts{$b->set_id};
-		}
-	} @sets;
+	########## print beginning of form
 	
-	my $table = CGI::Tr({}, 
-		CGI::th([
-			 "Sel.",
-			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'set_id'      })}, "Sort by name"        ),
-			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'open_date'   })}, "Sort by Open Date"   ),
-			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'due_date'    })}, "Sort by Due Date"    ),
-			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'answer_date' })}, "Sort by Answer Date" ),
-			 "Edit problems",                                  
-			 "Assign users" , 
-		 ])
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist"});
+	print $self->hidden_authen_fields();
+	
+	########## print state data
+	
+	print "\n<!-- state data here -->\n";
+	
+	if (@visibleSetIDs) {
+		print CGI::hidden(-name=>"visible_sets", -value=>\@visibleSetIDs);
+	} else {
+		print CGI::hidden(-name=>"no_visible_sets", -value=>"1");
+	}
+	
+	if (@prevVisibleSetIDs) {
+		print CGI::hidden(-name=>"prev_visible_sets", -value=>\@prevVisibleSetIDs);
+	} else {
+		print CGI::hidden(-name=>"no_prev_visible_sets", -value=>"1");
+	}
+	
+	print CGI::hidden(-name=>"editMode", -value=>$editMode);
+	
+	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
+	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);	
+	
+	print "\n<!-- state data here -->\n";
+	
+	########## print action forms
+	
+	print CGI::start_table({});
+	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
+	
+	my @formsToShow;
+	if ($editMode) {
+		@formsToShow = @{ EDIT_FORMS() };
+	} else {
+		@formsToShow = @{ VIEW_FORMS() };
+	}
+	
+	my $i = 0;
+	foreach my $actionID (@formsToShow) {
+		my $actionForm = "${actionID}_form";
+		my $onChange = "document.problemsetlist.action[$i].checked=true";
+		my %actionParams = $self->getActionParams($actionID);
+		
+		print CGI::Tr({-valign=>"top"},
+			CGI::td({}, CGI::input({-type=>"radio", -name=>"action", -value=>$actionID})),
+			CGI::td({}, $self->$actionForm($onChange, %actionParams))
+		);
+		
+		$i++;
+	}
+	
+	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
+		CGI::submit(-value=>"Take Action!"))
 	);
-
-	foreach my $set (@sets) {
-		my $count         = $counts{$set->set_id};
-		my $totalUsers    = scalar(@users);   #FIXME -- probably shouldn't count those who have dropped.
-		my $userCountMessage = $self->userCountMessage($count, scalar(@users));
-	     my $setEditorPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemSetEditor",
-	                                               courseID => $courseName,
-	                                               setID    => $set->set_id,
-        );
-        my $problemListPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemList",
-	                                               courseID => $courseName,
-	                                               setID    => $set->set_id,
-        );
-        my $usersAssignedToSetPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
-	                                               courseID => $courseName,
-	                                               setID    => $set->set_id,
-        );
-        my $problemSetEditorPage   = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor',
-        	                                       courseID => $courseName,
-	                                               setID    => $set->set_id,
-        );
+	print CGI::end_table();
 	
-	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-		$table .= CGI::Tr({}, 
-			CGI::td([ 
-				CGI::checkbox({
-					"name"=>"selectedSet",
-					"value"=>$set->set_id,
-					"label"=>"",
-					"checked"=>"0"
-				}),
-				CGI::font({class=>$publishedClass}, '&nbsp;&nbsp;'.$set->set_id) . '&nbsp;'.CGI::a({href=>$self->systemLink($setEditorPage)}, 'Edit'),
-				formatDateTime($set->open_date),
-				formatDateTime($set->due_date),
-				formatDateTime($set->answer_date),
-				CGI::a({href=>$self->systemLink($problemListPage       )}, $problemCounts{$set->set_id}),
-				CGI::a({href=>$self->systemLink($usersAssignedToSetPage)}, "$count/$totalUsers")   , 
-			])
-		) . "\n"
-	}
-	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
+	########## print table
 	
-	my $slownessWarning = "";
-	if ($ce->{dbLayoutName} eq "sql") {
-		$slownessWarning = "In this version of WeBWorK, assigning sets is very slow. Your browser"
-		. " may time out if you import many sets or have many users to whom to assign them. If this"
-		. " happens, click your browser's reload button. This issue will be resolved in a later"
-		. " version of WeBWorK. (Hopefully the next version!)"
-		. CGI::br();
-	}
-
-	print join("\n",
-	    $global_user_alert,
-	    $global_user_message,
-    	# Set table form (for deleting checked sets)
-		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
-		$self->hidden_authen_fields,
-		$table,
-		CGI::br(),
-		CGI::submit({"name"=>"publishSelected",		"label"=>"Publish Selected"}),
-		CGI::submit({"name"=>"unpublishSelected",	"label"=>"Unpublished Selected"}),
-	CGI::br(),
-		"Publishing or Unpublishing several sets at once may take some time.",
-	CGI::br(), CGI::br(),
-		CGI::submit({"name"=>"scoreSelected",		"label"=>"Score Selected"}),
-		CGI::div( {class=>'ResultsWithError'},
-		    "There is NO undo when deleting sets. Use cautiously. All data for the set is lost.
-		    <br>If the set is re-assigned (rebuilt) all of the problem versions will be different.",
-		    CGI::br(),
-			CGI::submit({"name"=>"deleteSelected",	"label"=>"Delete Selected"}),
-			CGI::radio_group(-name=>"deleteSelectedSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow delete'}),
-
-		),
-		CGI::end_form(),
-		CGI::br(),
-		
-        # Empty set creation form
-	CGI::hr(),
-		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
-		$self->hidden_authen_fields,
-		CGI::b("Create an Empty Set"),
-        CGI::br(),
-		"New Set Name: ",
-		CGI::input({type=>"text", name=>"newSetName", value=>""}),
-		CGI::submit({"name"=>"makeNewSet", "label"=>"Create"}),
-		CGI::end_form(),
-		CGI::br(),
-		
-        # Single set import form
-        CGI::hr(),
-		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
-		$self->hidden_authen_fields,
-		CGI::b("Import a Single Set"),
-        CGI::br(),
-		"From file: ",
-        CGI::popup_menu(-name=>'set_definition_file', -values=>\@set_definition_files),
-        CGI::br(),
-		"Set name: ",
-        CGI::input({type=>"text", name=>"newSetName", value=>""}),
-        " (leave blank to use name of set definition file)",
-		CGI::br(),
-		CGI::checkbox(-name=>"assignNewSet",
-			-label=>"Assign imported set to all current users"),
-		CGI::br(),
-		CGI::submit({"name"=>"importSet", "label"=>"Import a Single Set"}),
-		CGI::end_form(),
-		CGI::br(),
-		
-        # Multiple set import form
-        CGI::hr(),
-		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
-		$self->hidden_authen_fields,
-		CGI::b("Import Multiple Sets"),
-        CGI::br(),
-		"Each set will be named based on the name of the set definition file, omitting",
-		" any leading ", CGI::i("set"), " and trailing ", CGI::i(".def"), ". Note that",
-		" the name of a set cannot be changed once it has been created.",
-		CGI::br(),
-		CGI::scrolling_list(-name=>"set_definition_files", -values=>\@set_definition_files, -size=>10, -multiple=>"true"),
-		CGI::br(),
-		CGI::checkbox(-name=>"assignNewSet", -label=>"Assign imported sets to all current users"),
-		CGI::br(),
-		$slownessWarning,
-		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),
-		CGI::end_form(),
+	print CGI::p("Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
+	
+	$self->printTableHTML(\@Sets, \%prettyFieldNames,
+		editMode => $editMode,
+		selectedSetIDs => \@selectedSetIDs,
 	);
 	
+	
+	########## print end of form
+	
+ 	print CGI::end_form();
+
 	return "";
 }
 
-##############################################################################################
-#  Utility scripts -- may be moved to Utils.pm
-##############################################################################################
+################################################################################
+# extract particular params and put them in a hash (values are ARRAYREFs!)
+################################################################################
 
+sub getActionParams {
+	my ($self, $actionID) = @_;
+	my $r = $self->{r};
+	
+	my %actionParams;
+	foreach my $param ($r->param) {
+		next unless $param =~ m/^action\.$actionID\./;
+		$actionParams{$param} = [ $r->param($param) ];
+	}
+	return %actionParams;
+}
+
+sub getTableParams {
+	my ($self) = @_;
+	my $r = $self->{r};
+	
+	my %tableParams;
+	foreach my $param ($r->param) {
+		next unless $param =~ m/^(?:set)\./;
+		$tableParams{$param} = [ $r->param($param) ];
+	}
+	return %tableParams;
+}
+
+################################################################################
+# actions and action triggers
+################################################################################
+
+# filter, edit, cancelEdit, and saveEdit should stay with the display module and
+# not be real "actions". that way, all actions are shown in view mode and no
+# actions are shown in edit mode.
+
+sub filter_form {
+	my ($self, $onChange, %actionParams) = @_;
+	#return CGI::table({}, CGI::Tr({-valign=>"top"},
+	#	CGI::td({}, 
+	return join("", 
+			"Show ",
+			CGI::popup_menu(
+				-name => "action.filter.scope",
+				-values => [qw(all none selected match_ids published unpublished)],
+				-default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
+				-labels => {
+					all => "all sets",
+					none => "no sets",
+					selected => "sets checked below",
+					published => "sets visible to students",
+					unpublished => "sets hidden from students", 
+					match_ids => "sets with matching set IDs:",
+				},
+				-onchange => $onChange,
+			),
+			" ",
+			CGI::textfield(
+				-name => "action.filter.set_ids",
+				-value => $actionParams{"action.filter.set_ids"}->[0] || "",,
+				-width => "50",
+				-onchange => $onChange,
+			),
+			" (separate multiple IDs with commas)",
+			CGI::br(),
+#			"Open dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.open_date",
+#				-values => [ keys %{ $self->{open_dates} } ],
+#				-default => $actionParams{"action.filter.open_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{open_dates}) },
+#				-onchange => $onChange,
+#			),
+#			" Due dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.due_date",
+#				-values => [ keys %{ $self->{due_dates} } ],
+#				-default => $actionParams{"action.filter.due_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{due_dates}) },
+#				-onchange => $onChange,
+#			),
+#			" Answer dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.answer_date",
+#				-values => [ keys %{ $self->{answer_dates} } ],
+#				-default => $actionParams{"action.filter.answer_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{answer_dates}) },
+#				-onchange => $onChange,
+#			),
+			
+	);
+}
+
+# this action handler modifies the "visibleUserIDs" field based on the contents
+# of the "action.filter.scope" parameter and the "selected_users" 
+sub filter_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $r = $self->r ;
+	my $db = $r->db;
+	
+	my $result;
+	
+	my $scope = $actionParams->{"action.filter.scope"}->[0];
+	if ($scope eq "all") {
+		$result = "showing all sets";
+		$self->{visibleSetIDs} = $self->{allSetIDs};
+	} elsif ($scope eq "none") {
+		$result = "showing no sets";
+		$self->{visibleSetIDs} = [];
+	} elsif ($scope eq "selected") {
+		$result = "showing selected sets";
+		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
+	} elsif ($scope eq "match_ids") {
+		my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
+		$self->{visibleSetIDs} = \@setIDs;
+	} elsif ($scope eq "match_open_date") {
+		my $open_date = $actionParams->{"action.filter.open_date"}->[0];
+		$self->{visibleSetIDs} = $self->{open_dates}->{$open_date}; # an arrayref
+	} elsif ($scope eq "match_due_date") {
+		my $due_date = $actionParams->{"action.filter.due_date"}->[0];
+		$self->{visibleSetIDs} = $self->{due_date}->{$due_date}; # an arrayref
+	} elsif ($scope eq "match_answer_date") {
+		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
+		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
+	} elsif ($scope eq "published") {
+		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
+		my @publishedSetIDs = map { $_->published ? $_->set_id : ""} @setRecords;		
+		$self->{visibleSetIDs} = \@publishedSetIDs;
+	} elsif ($scope eq "unpublished") {
+		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
+		my @unpublishedSetIDs = map { (not $_->published) ? $_->set_id : ""} @setRecords;
+		$self->{visibleSetIDs} = \@unpublishedSetIDs;
+	}
+	
+	return $result;
+}
+
+sub sort_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return join ("",
+		"Primary sort: ",
+		CGI::popup_menu(
+			-name => "action.sort.primary",
+			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
+			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
+			-labels => {
+				set_id		=> "set name",
+				set_header 	=> "set header",
+				problem_header	=> "problem header",
+				open_date	=> "open date",
+				due_date	=> "due date",
+				answer_date	=> "answer date",
+				published	=> "visibility",
+			},
+			-onchange => $onChange,
+		),
+		" Secondary sort: ",
+		CGI::popup_menu(
+			-name => "action.sort.secondary",
+			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
+			-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
+			-labels => {
+				set_id		=> "set name",
+				set_header 	=> "set header",
+				problem_header	=> "problem header",
+				open_date	=> "open date",
+				due_date	=> "due date",
+				answer_date	=> "answer date",
+				published	=> "visibility",
+			},
+			-onchange => $onChange,
+		),
+		".",
+	);
+}
+
+sub sort_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $primary = $actionParams->{"action.sort.primary"}->[0];
+	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
+	
+	$self->{primarySortField} = $primary;
+	$self->{secondarySortField} = $secondary;
+
+	my %names = (
+		set_id		=> "set name",
+		set_header	=> "set header",
+		problem_header	=> "problem header",
+		open_date	=> "open date",
+		due_date	=> "due date",
+		answer_date	=> "answer date",
+		published	=> "visibility",
+	);
+	
+	return "sort by $names{$primary} and then by $names{$secondary}.";
+}
+
+
+sub edit_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return join("",
+		"Edit ",
+		CGI::popup_menu(
+			-name => "action.edit.scope",
+			-values => [qw(all visible selected)],
+			-default => $actionParams{"action.edit.scope"}->[0] || "selected",
+			-labels => {
+				all => "all sets",
+				visible => "visible sets",
+				selected => "selected sets",
+			},
+			-onchange => $onChange,
+		),
+	);
+}
+
+sub edit_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $result;
+	
+	my $scope = $actionParams->{"action.edit.scope"}->[0];
+	if ($scope eq "all") {
+		$result = "editing all sets";
+		$self->{visibleSetIDs} = $self->{allSetIDs};
+	} elsif ($scope eq "visible") {
+		$result = "editing visible sets";
+		# leave visibleUserIDs alone
+	} elsif ($scope eq "selected") {
+		$result = "editing selected sets";
+		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
+	}
+	$self->{editMode} = 1;
+	
+	return $result;
+}
+
+sub publish_form {
+	my ($self, $onChange, %actionParams) = @_;
+
+	return join ("",
+		"Make ",
+		CGI::popup_menu(
+			-name => "action.publish.scope",
+			-values => [ qw(none all selected) ],
+			-default => $actionParams{"action.publish.scope"}->[0] || "none",
+			-labels => {
+				none => "",
+				all => "all sets",
+#				visible => "visible sets",
+				selected => "selected sets",
+			},
+			-onchange => $onChange,
+		),
+		CGI::popup_menu(
+			-name => "action.publish.value",
+			-values => [ 0, 1 ],
+			-default => $actionParams{"action.publish.value"}->[0] || "1",
+			-labels => {
+				0 => "hidden",
+				1 => "visible",
+			},
+			-onchange => $onChange,
+		),
+		" for students.",
+	);
+}
+
+sub publish_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $r = $self->r;
+	my $db = $r->db;
+	
+	my $result = "";
+	
+	my $scope = $actionParams->{"action.publish.scope"}->[0];
+	my $value = $actionParams->{"action.publish.value"}->[0];
+
+	my $verb = $value ? "made visible for" : "hidden from";
+	
+	my @setIDs;
+	
+	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
+		@setIDs = ();
+		$result = "No change made to any set.";
+	} elsif ($scope eq "all") {
+		@setIDs = @{ $self->{allSetIDs} };
+		$result = "All sets $verb all students.";
+	} elsif ($scope eq "visible") {
+		@setIDs = @{ $self->{visibleSetIDs} };
+		$result = "All visible sets $verb all students.";
+	} elsif ($scope eq "selected") {
+		@setIDs = @{ $genericParams->{selected_sets} };
+		$result = "All selected sets $verb all students.";
+	}
+	
+	my @sets = $db->getGlobalSets(@setIDs);
+	
+	map { $_->published("$value") if $_; $db->putGlobalSet($_); } @sets;
+	
+	return $result
+	
+}
+
+
+sub delete_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return join("",
+	    qq!\n<div style="background-color:red">!,
+		"Delete ",
+		CGI::popup_menu(
+			-name => "action.delete.scope",
+			-values => [qw(none visible selected)],
+			-default => $actionParams{"action.delete.scope"}->[0] || "none",
+			-labels => {
+				none => "no sets.",
+				#visble => "visible sets.",
+				selected => "selected sets.",
+			},
+			-onchange => $onChange,
+		),
+		CGI::em(" Deletion destroys all set-related data and is not undoable!"),
+		"</div>\n",
+	);
+}
+
+sub delete_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r         = $self->r;
+	my $db        = $r->db;
+	my $scope = $actionParams->{"action.delete.scope"}->[0];
+	
+	my @setIDsToDelete = ();
+
+	if ($scope eq "selected") {
+		@setIDsToDelete = @{ $self->{selectedSetIDs} };
+	}
+	
+	my %allSetIDs = map { $_ => 1 } @{ $self->{allSetIDs} };
+	my %visibleSetIDs = map { $_ => 1 } @{ $self->{visibleSetIDs} };
+	my %selectedSetIDs = map { $_ => 1 } @{ $self->{selectedSetIDs} };
+
+	foreach my $setID (@setIDsToDelete) {
+		delete $allSetIDs{$setID};
+		delete $visibleSetIDs{$setID};
+		delete $selectedSetIDs{$setID};
+		$db->deleteGlobalSet($setID);
+	}
+	
+	$self->{allSetIDs} = [ keys %allSetIDs ];
+	$self->{visibleSetIDs} = [ keys %visibleSetIDs ];
+	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
+	
+	my $num = @setIDsToDelete;
+	return "deleted $num set" . ($num == 1 ? "" : "s");
+}
+
+sub create_form {
+	my ($self, $onChange, %actionParams) = @_;
+	
+	return "Create a new set named: ", 
+		CGI::textfield(
+			-name => "action.create.name",
+			-value => $actionParams{"action.create.name"}->[0] || "",
+			-width => "50",
+			-onchange => $onChange,
+		);
+}
+
+sub create_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $db = $self->{r}->{db};
+	
+	my $newSetRecord = $db->newGlobalSet;
+	my $newSetName = $actionParams->{"action.create.name"}->[0];
+	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetName =~ /\S/;
+	$newSetRecord->set_id($newSetName);
+	$newSetRecord->set_header("");
+	$newSetRecord->problem_header("");
+	$newSetRecord->open_date("0");
+	$newSetRecord->due_date("0");
+	$newSetRecord->answer_date("0");
+	$newSetRecord->published("0");	# don't want students to see an empty set
+	eval {$db->addGlobalSet($newSetRecord)};
+	
+	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: $@") if $@;
+	
+	return "Successfully created new set $newSetName";
+	
+}
+
+sub import_form {
+	my ($self, $onChange, %actionParams) = @_;
+	
+	# this will make the popup menu alternate between a single selection and a multiple selection menu
+	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
+	# a valid reference to the object named 'action.import.number'
+	my $importScript = join (" ",
+				"var number = document.getElementsByName('action.import.number')[0].value;",
+				"document.getElementsByName('action.import.source')[0].size = number;",
+				"document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);",
+				"document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');",
+			);
+	
+	return join(" ",
+		"Import ",
+		CGI::popup_menu(
+			-name => "action.import.number",
+			-values => [ 1, 8 ],
+			-default => $actionParams{"action.import.number"}->[0] || "1",
+			-labels => {
+				1 => "a single set",
+				8 => "multiple sets",
+			},
+			-onchange => "$onChange;$importScript",
+		),
+		" from set definition file(s) ",
+		CGI::popup_menu(
+			-name => "action.import.source",
+			-values => [ "", $self->getDefList() ],
+			-default => $actionParams{"action.import.source"}->[0] || "",
+			-size => $actionParams{"action.import.number"}->[0] || "1",
+			-onchange => $onChange,
+		),
+		" with set name: ",
+		CGI::textfield(
+			-name => "action.import.name",
+			-value => $actionParams{"action.import.name"}->[0] || "",
+			-width => "50",
+			-onchange => $onChange,
+		),
+		"assigning this set to ",
+		CGI::popup_menu(
+			-name => "action.import.assign",
+			-value => [qw(all visible selected none)],
+			-default => $actionParams{"action.import.assign"}->[0] || "none",
+			-labels => {
+				all => "all current users.",
+				#visible => "visible users.",
+				visible => "",
+				#selected => "selected users.",
+				selected => "",
+				none => "no users.",
+			},
+			-onchange => $onChange,
+		),
+	);
+}
+
+sub import_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my @fileNames = @{ $actionParams->{"action.import.source"} };
+	my $newSetName = $actionParams->{"action.import.name"}->[0];
+	$newSetName = "" if $newSetName =~ /\(/;
+	my $assign = $actionParams->{"action.import.assign"}->[0];
+	
+	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, @fileNames);
+
+	# make new sets visible... do we really want to do this? probably.
+	push @{ $self->{visibleSetIDs} }, @$added;
+	push @{ $self->{allSetIDs} }, @$added;
+	
+	my $numAdded = @$added;
+	my $numSkipped = @$skipped;
+
+	return 	$numAdded . " set" . ($numAdded == 1 ? "" : "s") . " added, "
+		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped.";
+}
+
+sub export_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return CGI::i("Exporting multiple sets would probably require a different form if you want to specify their names");
+	return join("",
+		"Export ",
+		CGI::popup_menu(
+			-name => "action.export.scope",
+			-values => [qw(all visible selected)],
+			-default => $actionParams{"action.export.scope"}->[0] || "visible",
+			-labels => {
+				all => "all sets",
+				visible => "visible sets",
+				selected => "selected sets",
+			},
+			-onchange => $onChange,
+		),
+		" to ",
+		CGI::popup_menu(
+			-name=>"action.export.target",
+			-values => [ "new", $self->getDefList() ],
+			-labels => { new => "a new file named:" },
+			-default => $actionParams{"action.export.target"}->[0] || "",
+			-onchange => $onChange,
+		),
+		#CGI::br(),
+		#"new file to create: ",
+		CGI::textfield(
+			-name => "action.export.new",
+			-value => $actionParams{"action.export.new"}->[0] || "",,
+			-width => "50",
+			-onchange => $onChange,
+		),
+		CGI::tt(".def"),
+	);
+}
+
+# FIXME: this will NOT work as is
+sub export_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $scope = $actionParams->{"action.export.scope"}->[0];
+	my $target = $actionParams->{"action.export.target"}->[0];
+	my $new = $actionParams->{"action.export.new"}->[0];
+	
+	my $fileName;
+	if ($target eq "new") {
+		$fileName = $new;
+	} else {
+		$fileName = $target;
+	}
+	
+	$fileName .= ".def" unless $fileName =~ m/\.def$/;
+	
+	my @setIDsToExport;
+	if ($scope eq "all") {
+		@setIDsToExport = @{ $self->{allSetIDs} };
+	} elsif ($scope eq "visible") {
+		@setIDsToExport = @{ $self->{visibleSetIDs} };
+	} elsif ($scope eq "selected") {
+		@setIDsToExport = @{ $self->{selectedSetIDs} };
+	}
+
+	foreach my $set (@setIDsToExport) {
+		$self->exportSetsToDef($fileName);
+	}
+	
+	return scalar @setIDsToExport . " sets exported";
+}
+
+sub cancelEdit_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return "Abandon changes";
+}
+
+sub cancelEdit_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r      = $self->r;
+	
+	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
+		# only do the above if we arrived here via "edit selected users"
+	if (defined $r->param("prev_visible_sets")) {
+		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
+	} elsif (defined $r->param("no_prev_visible_sets")) {
+		$self->{visibleSetIDs} = [];
+	} else {
+		# leave it alone
+	}
+	$self->{editMode} = 0;
+	
+	return "changes abandoned";
+}
+
+sub saveEdit_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return "Save changes";
+}
+
+sub saveEdit_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r           = $self->r;
+	my $db          = $r->db;
+	
+	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
+	foreach my $setID (@visibleSetIDs) {
+		my $Set = $db->getGlobalSet($setID); # checked
+# FIXME: we may not want to die on bad sets, they're not as bad as bad users
+		die "record for visible set $setID not found" unless $Set;
+
+		foreach my $field ($Set->NONKEYFIELDS()) {
+			my $param = "set.${setID}.${field}";
+			if (defined $tableParams->{$param}->[0]) {
+				if ($field =~ /_date/) {
+					$Set->$field(parseDateTime($tableParams->{$param}->[0]));
+				} else {
+					$Set->$field($tableParams->{$param}->[0]);
+				}
+			}
+		}
+
+		###################################################
+		# Check that the open, due and answer dates are in increasing order.
+		# Bail if this is not correct.
+		###################################################
+		if ($Set->open_date > $Set->due_date)  {
+			return CGI::div({class=>'ResultsWithError'}, "Error: Due date must come after open date in set $setID");
+		}
+		if ($Set->due_date > $Set->answer_date) {
+			return CGI::div({class=>'ResultsWithError'}, "Error: Answer date must come after due date in set $setID");
+		}
+		###################################################
+		# End date check section.
+		###################################################
+		$db->putGlobalSet($Set);
+	}
+	
+	if (defined $r->param("prev_visible_sets")) {
+		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
+	} elsif (defined $r->param("no_prev_visble_sets")) {
+		$self->{visibleSetIDs} = [];
+	} else {
+		# leave it alone
+	}
+	
+	$self->{editMode} = 0;
+	
+	return "changes saved";
+}
+
+################################################################################
+# sorts
+################################################################################
+
+sub bySetID         { $a->set_id         cmp $b->set_id         }
+sub bySetHeader     { $a->set_header     cmp $b->set_header     }
+sub byProblemHeader { $a->problem_header cmp $b->problem_header }
+sub byOpenDate      { $a->open_date      <=> $b->open_date      }
+sub byDueDate       { $a->due_date       <=> $b->due_date       }
+sub byAnswerDate    { $a->answer_date    <=> $b->answer_date    }
+sub byPublished     { $a->published      cmp $b->published      }
+
+sub byOpenDue       { &byOpenDate || &byDueDate }
+
+################################################################################
+# utilities
+################################################################################
+
+# generate labels for open_date/due_date/answer_date popup menus
+sub menuLabels {
+	my ($self, $hashRef) = @_;
+	my %hash = %$hashRef;
+	
+	my %result;
+	foreach my $key (keys %hash) {
+		my $count = @{ $hash{$key} };
+		my $displayKey = formatDateTime($key) || "<none>";
+		$result{$key} = "$displayKey ($count sets)";
+	}
+	return %result;
+}
+
+sub importSetsFromDef {
+	my ($self, $newSetName, $assign, @setDefFiles) = @_;
+	my $r     = $self->r;
+	my $ce    = $r->ce;
+	my $db    = $r->db;
+	my $dir   = $ce->{courseDirs}->{templates};
+
+	# FIXME: do we really want everything to fail on one bad file name?
+	foreach my $fileName (@setDefFiles) {
+		die "illegal character in input: \"/\"" if $fileName =~ m|/|;
+		die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
+			unless -r "$dir/$fileName";
+	}
+
+	my @allSetIDs = $db->listGlobalSets();
+	# FIXME: getGlobalSets takes a lot of time just for checking to see if a set already exists
+	# 	this could be avoided by waiting until the call to addGlobalSet below
+	#	and checking to see if the error message says that the set already exists
+	#	but if the error message is ever changed the code here might be broken
+	#	then again, one call to getGlobalSets and skipping unnecessary calls to addGlobalSet
+	#	could be faster than no call to getGlobalSets and lots of unnecessary calls to addGlobalSet
+	my %allSets = map { $_->set_id => 1 if $_} $db->getGlobalSets(@allSetIDs); # checked
+
+	my (@added, @skipped);
+
+	foreach my $set_definition_file (@setDefFiles) {
+
+		$WeBWorK::timer->continue("$set_definition_file: reading set definition file") if defined $WeBWorK::timer;
+		# read data in set definition file
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData) = $self->readSetDef($set_definition_file);
+		my @problemList = @{$ra_problemData};
+
+		# Use the original name if form doesn't specify a new one.
+		# The set acquires the new name specified by the form.  A blank
+		# entry on the form indicates that the imported set name will be used.
+		$setName = $newSetName if $newSetName;
+
+		if ($allSets{$setName}) {
+			# this set already exists!!
+			push @skipped, $setName;
+			next;
+		} else {
+			push @added, $setName;
+		}
+
+		$WeBWorK::timer->continue("$set_definition_file: adding set") if defined $WeBWorK::timer;
+		# add the data to the set record
+		my $newSetRecord = $db->newGlobalSet;
+		$newSetRecord->set_id($setName);
+		$newSetRecord->set_header($screenHeaderFile);
+		$newSetRecord->problem_header($paperHeaderFile);
+		$newSetRecord->open_date($openDate);
+		$newSetRecord->due_date($dueDate);
+		$newSetRecord->answer_date($answerDate);
+		$newSetRecord->published("0"); # FIXME: unpublished by default?
+
+		#create the set
+		eval {$db->addGlobalSet($newSetRecord)};
+		die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
+
+		$WeBWorK::timer->continue("$set_definition_file: adding problems to database") if defined $WeBWorK::timer;
+		# add problems
+		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
+		foreach my $rh_problem (@problemList) {
+			my $problemRecord = $db->newGlobalProblem;
+			$problemRecord->problem_id($freeProblemID++);
+			$problemRecord->set_id($setName);
+			$problemRecord->source_file($rh_problem->{source_file});
+			$problemRecord->value($rh_problem->{value});
+			$problemRecord->max_attempts($rh_problem->{max_attempts});
+			$db->addGlobalProblem($problemRecord);
+		}
+
+
+		if ($assign eq "all") {
+			$self->assignSetToAllUsers($setName);
+		}
+	}
+
+
+	return \@added, \@skipped;
+}
 
 sub readSetDef {
-	my $self          = shift;
-	my $fileName      = shift;
+	my ($self, $fileName) = @_;
 	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
 	my $filePath      = "$templateDir/$fileName";
-    my $setNumber = '';
-    if ($fileName =~ m|^set([\w-]+)\.def$|) {
-    	$setNumber = $1;
-    } else {
-        warn qq{The setDefinition file name must begin with   <CODE>set</CODE>},
-			 qq{and must end with   <CODE>.def</CODE>  . Every thing in between becomes the name of the set. },
-			 qq{For example <CODE>set1.def</CODE>, <CODE>setExam.def</CODE>, and <CODE>setsample7.def</CODE> },
-			 qq{define sets named <CODE>1</CODE>, <CODE>Exam</CODE>, and <CODE>sample7</CODE> respectively. },
-			 qq{The filename, $fileName, you entered is not legal\n };
 
-    }
+	my $setName = '';
 
-    my ($line,$name,$value,$attemptLimit,$continueFlag);
+	if ($fileName =~ m|^set([\w-]+)\.def$|) {
+		$setName = $1;
+	} else {
+		warn qq{The setDefinition file name must begin with   <CODE>set</CODE>},
+			qq{and must end with   <CODE>.def</CODE>  . Every thing in between becomes the name of the set. },
+			qq{For example <CODE>set1.def</CODE>, <CODE>setExam.def</CODE>, and <CODE>setsample7.def</CODE> },
+			qq{define sets named <CODE>1</CODE>, <CODE>Exam</CODE>, and <CODE>sample7</CODE> respectively. },
+			qq{The filename, $fileName, you entered is not legal\n };
+
+	}
+
+	my ($line, $name, $value, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
-	my ($dueDate,$openDate,$answerDate);
+	my ($dueDate, $openDate, $answerDate);
 	my @problemData;	
-    if ( open (SETFILENAME, "$filePath") )    {
+
+
+	my %setInfo;
+	if ( open (SETFILENAME, "$filePath") )    {
 	#####################################################################
 	# Read and check set data
 	#####################################################################
 		while (<SETFILENAME>) {
+		
 			chomp($line = $_);
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
@@ -485,7 +1161,7 @@ sub readSetDef {
 				$dueDate = $value;
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
-			} elsif ($1 eq 'answerDate') {
+			} elsif ($item eq 'answerDate') {
 				$answerDate = $value;
 			} elsif ($item eq 'problemList') {
 				last;
@@ -493,24 +1169,23 @@ sub readSetDef {
 				warn "readSetDef error, can't read the line: ||$line||";
 			}
 		}
-	#####################################################################
-	# Check and format dates
-	#####################################################################
-		my ($time1,$time2,$time3) = map { $_ =~ s/\s*at\s*/ /; WeBWorK::Utils::parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+
+		#####################################################################
+		# Check and format dates
+		#####################################################################
+		my ($time1, $time2, $time3) = map { $_ =~ s/\s*at\s*/ /; WeBWorK::Utils::parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn "The open date: $openDate, due date: $dueDate, and answer date: $answerDate must be defined and in chronologicasl order.";
+			warn "The open date: $openDate, due date: $dueDate, and answer date: $answerDate must be defined and in chronological order.";
 		}
-	# Check header file names
+
+		# Check header file names
 		$paperHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 	
-	 #   warn "setNumber: $setNumber\ndueDate: $dueDate\nopenDate: $openDate\nanswerDate: $answerDate\n";
-	 #   warn "time1 $time1 time2 $time2 time3 $time3";
-	#####################################################################
-	# Read and check list of problems for the set
-	#####################################################################
-
+		#####################################################################
+		# Read and check list of problems for the set
+		#####################################################################
 		while(<SETFILENAME>) {
 			chomp($line=$_);
 			$line =~ s/(#.*)//;                             ## don't read past comments
@@ -521,18 +1196,14 @@ sub readSetDef {
 			#  clean up problem values
 			###########################
 			$name =~ s/\s*//g;
-			#                                 push(@problemList, $name);
 			$value = "" unless defined($value);
 			$value =~ s/[^\d\.]*//g;
 			unless ($value =~ /\d+/) {$value = 1;}
-			#                                 push(@problemValueList, $value);
 			$attemptLimit = "" unless defined($attemptLimit);
 			$attemptLimit =~ s/[^\d-]*//g;
 			unless ($attemptLimit =~ /\d+/) {$attemptLimit = -1;}
-			#                                 push(@problemAttemptLimitList, $attemptLimit);
 			$continueFlag = "0" unless( defined($continueFlag) && @problemData );  
-				# can't put continuation flag ont the first problem
-			#                                 push(@problemContinuationFlagList, $continueFlag);
+			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $value,
 			                    max_attempts   =>, $attemptLimit,
@@ -540,7 +1211,7 @@ sub readSetDef {
 			                    });
 		}
 		close(SETFILENAME);
-		($setNumber,
+		($setName,
 		 $paperHeaderFile,
 		 $screenHeaderFile,
 		 $time1,
@@ -553,4 +1224,253 @@ sub readSetDef {
 	}
 }
 
+# search recursively through a directory looking for all filenames matching a given pattern
+sub recurseDirectory {
+
+	my ($self, $dir, $pattern) = @_;
+	
+	my @dirs = grep {$_ ne "." and $_ ne ".." and $_ ne "Library" and $_ ne "CVS" and -d "$dir/$_"} readDirectory($dir);
+
+	my @files = map { "$dir/$_" } $self->read_dir($dir, $pattern);
+
+	foreach (@dirs) {
+		push (@files, $self->recurseDirectory("$dir/$_", $pattern));
+	}
+
+	return @files;
+}
+
+################################################################################
+# "display" methods
+################################################################################
+
+sub fieldEditHTML {
+	my ($self, $fieldName, $value, $properties) = @_;
+	my $size = $properties->{size};
+	my $type = $properties->{type};
+	my $access = $properties->{access};
+	my $items = $properties->{items};
+	my $synonyms = $properties->{synonyms};
+	my $headerFiles = $self->{headerFiles};
+	
+	if ($access eq "readonly") {
+		return $value;
+	}
+	
+	if ($type eq "number" or $type eq "text") {
+		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
+	}
+	
+	if ($type eq "filelist") {
+		return CGI::popup_menu({
+			name => $fieldName,
+			value => [ sort keys %$headerFiles ],
+			labels => $headerFiles,
+			default => $value || 0,
+		});
+	}
+
+	if ($type eq "enumerable") {
+		my $matched = undef; # Whether a synonym match has occurred
+
+		# Process synonyms for enumerable objects
+		foreach my $synonym (keys %$synonyms) {
+			if ($synonym ne "*" and $value =~ m/$synonym/) {
+				$value = $synonyms->{$synonym};
+				$matched = 1;
+			}
+		}
+		
+		if (!$matched and exists $synonyms->{"*"}) {
+			$value = $synonyms->{"*"};
+		}
+		
+		return CGI::popup_menu({
+			name => $fieldName, 
+			values => [keys %$items],
+			default => $value,
+			labels => $items,
+		});
+	}
+	
+	if ($type eq "checked") {
+		
+		# FIXME: kludge (R)
+		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
+		# in which case the hidden field overrides the parameter with a 0
+		return CGI::checkbox(
+			-name => $fieldName,
+			-checked => $value,
+			-label => "",
+			-value => 1
+		) . CGI::hidden(
+			-name => $fieldName,
+			-value => 0
+		);
+	}
+}
+
+sub recordEditHTML {
+	my ($self, $Set, %options) = @_;
+	my $r           = $self->r;
+	my $urlpath     = $r->urlpath;
+	my $ce          = $r->ce;
+	my $db		= $r->db;
+	my $root        = $ce->{webworkURLs}->{root};
+	my $courseName  = $urlpath->arg("courseID");
+	
+	my $editMode = $options{editMode};
+	my $setSelected = $options{setSelected};
+
+	my $publishedClass = $Set->published ? "Published" : "Unpublished";
+
+	my $users = $db->countSetUsers($Set->set_id);
+	my $totalUsers = $self->{totalUsers};
+	my $problems = $db->listGlobalProblems($Set->set_id);
+	
+        my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_problem_list', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	
+	my @tableCells;
+	my %fakeRecord;
+	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $Set->set_id, -checked => $setSelected, -label => "", );
+	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $Set->set_id);
+	$fakeRecord{problems} = CGI::a({href=>$problemListURL}, "$problems");
+	$fakeRecord{users} = CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
+		
+	# Select
+	if ($editMode) {
+		# column not there
+	} else {
+		# selection checkbox
+		push @tableCells, CGI::checkbox(
+			-name => "selected_sets",
+			-value => $Set->set_id,
+			-checked => $setSelected,
+			-label => "",
+		);
+	}
+	
+
+
+	# Set ID
+	push @tableCells, CGI::font({class=>$publishedClass}, $Set->set_id);
+
+	# Problems link
+	if ($editMode) {
+		# column not there
+	} else {
+		# "problem list" link
+		push @tableCells, CGI::a({href=>$problemListURL}, "$problems");
+	}
+	
+	# Users link
+	if ($editMode) {
+		# column not there
+	} else {
+		# "edit users assigned to set" link
+		push @tableCells, CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
+	}
+	
+	# Set Fields
+	foreach my $field ($Set->NONKEYFIELDS) {
+		my $fieldName = "set." . $Set->set_id . "." . $field,		
+		my $fieldValue = $Set->$field;
+		my %properties = %{ FIELD_PROPERTIES()->{$field} };
+		$properties{access} = "readonly" unless $editMode;
+		$fieldValue = formatDateTime($fieldValue) if $field =~ /_date/;
+		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
+		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /published/ and not $editMode;
+		push @tableCells, CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		$fakeRecord{$field} = CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+	}
+
+	my @fieldsToShow;
+	if ($editMode) {
+		@fieldsToShow = @{ EDIT_FIELD_ORDER() };
+	} else {
+		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
+	}
+
+	@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
+
+	return CGI::Tr({}, CGI::td({}, \@tableCells));
+}
+
+sub printTableHTML {
+	my ($self, $SetsRef, $fieldNamesRef, %options) = @_;
+	my $r                       = $self->r;
+	my $setTemplate	            = $self->{setTemplate};
+	my @Sets                    = @$SetsRef;
+	my %fieldNames              = %$fieldNamesRef;
+	
+	my $editMode                = $options{editMode};
+	my %selectedSetIDs          = map { $_ => 1 } @{ $options{selectedSetIDs} };
+	my $currentSort             = $options{currentSort};
+	
+	# names of headings:
+	my @realFieldNames = (
+			$setTemplate->KEYFIELDS,
+			$setTemplate->NONKEYFIELDS,
+	);
+
+	if ($editMode) {
+		@realFieldNames = @{ EDIT_FIELD_ORDER() };
+	} else {
+		@realFieldNames = @{ VIEW_FIELD_ORDER() };
+	}
+
+	
+	my %sortSubs = %{ SORT_SUBS() };
+
+	# FIXME: should this always presume to use the templates directory?
+	my @headers = $self->recurseDirectory($self->{ce}->{courseDirs}->{templates}, '(?i)header.*?\\.pg$');
+	map { s|^$self->{ce}->{courseDirs}->{templates}/?|| } @headers;
+	@headers = sort @headers;
+	my %headers = map { $_ => $_ } @headers;
+	$headers{""} = "Use System Default";
+	$self->{headerFiles} = \%headers;	# store these header files so we don't have to look for them later.
+
+	my @tableHeadings;
+	foreach my $field (@realFieldNames) {
+		my $result = $fieldNames{$field};
+		push @tableHeadings, $result;
+	};
+	
+	# prepend selection checkbox? only if we're NOT editing!
+#	unshift @tableHeadings, "Select", "Set", "Problems" unless $editMode;
+
+
+	
+	# print the table
+	if ($editMode) {
+		print CGI::start_table({});
+	} else {
+		print CGI::start_table({-border=>1});
+	}
+	
+	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
+	
+
+	for (my $i = 0; $i < @Sets; $i++) {
+		my $Set = $Sets[$i];
+		
+		print $self->recordEditHTML($Set,
+			editMode => $editMode,
+			setSelected => exists $selectedSetIDs{$Set->set_id}
+		);
+	}
+	
+	print CGI::end_table();
+	#########################################
+	# if there are no users shown print message
+	# 
+	##########################################
+	
+	print CGI::p(
+                      CGI::i("No sets shown.  Choose one of the options above to list the sets in the course.")
+	) unless @Sets;
+}
+
 1;
+
