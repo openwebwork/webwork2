@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.153 2004/07/06 21:23:58 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.154 2004/07/12 22:15:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -800,6 +800,7 @@ sub body {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
+	my $effectiveUser = $r->param('effectiveUser');
 
 	if ($self->{invalidSet}) {
 		return CGI::div({class=>"ResultsWithError"},
@@ -1045,7 +1046,13 @@ sub body {
 		print CGI::submit(-name=>"checkAnswers", -label=>"Check Answers");
 	}
 	if ($can{recordAnswers}) {
+		if ($user ne $effectiveUser) {
+			# if acting as a student, make it clear that answer submissions will
+			# apply to the student's records, not the professor's.
+			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers for $effectiveUser");
+		} else {
 			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers");
+		}
 	}
 	
 	print CGI::end_p();
