@@ -171,6 +171,9 @@ use constant STATUS_MAP => {
 	Drop     => { allow_course_access => 0, include_in_assignment => 0, include_in_stats => 0, include_in_scoring => 0 },
 };
 
+use constant DEFAULT_STATUS => "Enrolled";
+use constant DEFAULT_PERMISSION_LEVEL => "0";
+
 our ($opt_c, $opt_r, $opt_s, $opt_u, $opt_v);
 getopts("crsuv");
 
@@ -188,14 +191,14 @@ sub main {
 	
 	WeBWorK::DBv3::init($ce->{wwdbv3_settings});
 	
-	my %level_to_role_id = set_up_roles($ce->{permissionLevels});
-	warn Dumper(\%level_to_role_id);
-	
 	my %abbrev_to_status_id = set_up_statuses($ce->{siteDefaults}{status});
-	warn Dumper(\%abbrev_to_status_id);
+	warn "abbrev_to_status_id: ", Dumper(\%abbrev_to_status_id);
+	
+	my %level_to_role_id = set_up_roles($ce->{permissionLevels});
+	warn "level_to_role_id: ", Dumper(\%level_to_role_id);
 	
 	foreach my $courseID (@courseIDs) {
-		eval { copy_course_data($courseID) };
+		eval { copy_course_data($courseID, \%abbrev_to_status_id, \%level_to_role_id) };
 		if ($@) {
 			warn "An error occured while copying data from course '$courseID':\n\n$@\n\n";
 			if ($opt_c) {
@@ -354,7 +357,7 @@ sub reverse_hash {
 ################################################################################
 
 sub copy_course_data {
-	my ($courseID) = @_;
+	my ($courseID, $abbrev_to_status_id, $level_to_role_id) = @_;
 	
 	debug("Processing course '$courseID'...\n");
 	
@@ -369,42 +372,154 @@ sub copy_course_data {
 	# and we throw an exception.
 	if (WeBWorK::DBv3::Course->search(name => $courseID)) {
 		die "Course '$courseID' exists in v3 DB";
-	} else {
-		debug("Course '$courseID' doesn't exist in v3 DB -- adding.\n");
-		my $Course = WeBWorK::DBv3::Course->create({name => $courseID});
 	}
 	
-	# Then, deal with users.
+	debug("Course '$courseID' doesn't exist in v3 DB -- adding.\n");
+	my $v3Course = WeBWorK::DBv3::Course->create({name => $courseID});
+	
+	copy_users($course_db, $v3Course, $abbrev_to_status_id, $level_to_role_id);
+	
+	copy_abstract_data($course_db, $v3Course);
+}
+
+sub copy_users {
+	my ($course_db, $v3Course, $abbrev_to_status_id, $level_to_role_id) = @_;
+	
 	my @userIDs = $course_db->listUsers;
 	my %Users; @Users{@userIDs} = $course_db->getUsers(@userIDs);
+	my %Passwords; @Passwords{@userIDs} = $course_db->getPasswords(@userIDs);
+	my %PermissionLevels; @PermissionLevels{@userIDs} = $course_db->getPermissionLevels(@userIDs);
 	
 	foreach my $userID (keys %Users) {
 		my $User = $Users{$userID};
+		my $Password = $Passwords{$userID};
+		my $PermissionLevel = $PermissionLevels{$userID};
+		
 		unless (defined $User) {
 			debug("User record for user ID '$userID' not found -- skipping.\n");
 			next;
 		}
 		
-		my $v3User = WeBWorK::DBv3::User->search(login_id => $userID);
+		debug("Processing user '$userID'...\n");
+		
+		# create/update user record
+		my ($v3User) = WeBWorK::DBv3::User->search(login_id => $userID);
 		if ($v3User) {
-			debug("User with login_id '$userID' exists in v3 database -- ");
+			debug("A user with login_id '$userID' exists in v3 database -- ");
 			if ($opt_u) {
-				debug("updating.\n");
+				debug("updating (as per -u switch).\n");
 				$v3User->first_name($User->first_name) if $User->first_name ne "";
 				$v3User->last_name($User->first_name) if $User->last_name ne "";
 				$v3User->email_address($User->email_address) if $User->email_address ne "";
 				$v3User->student_id($User->student_id) if $User->student_id ne "";
+				$v3User->password($Password->password) if $Password->password ne "";
 				$v3User->update;
 			} else {
-				debug("skipping.\n");
+				debug("not updating (as per lack of -u switch).\n");
 			}
 		} else {
-			debug("User with login_id '$userID' does not exists in v3 database -- adding.\n");
-			WeBWorK::DBv3::User->create({
-				
+			debug("No user with login_id '$userID' exists in v3 database -- adding.\n");
+			$v3User = WeBWorK::DBv3::User->create({
+				first_name    => $User->first_name,
+				last_name     => $User->last_name,
+				email_address => $User->email_address,
+				student_id    => $User->student_id,
+				login_id      => $User->user_id,
+				password      => $Password->password,
 			});
 		}
+		
+		# get status
+		my $status = $User->status;
+		if ($status eq "") {
+			$status = DEFAULT_STATUS;
+			debug("This user has no status -- using '$status'.\n");
+		}
+		my $v3Status_id = $abbrev_to_status_id->{$status};
+		my $v3Status;
+		if (defined $v3Status_id) {
+			debug("This user has status '", $User->status, "', which maps to v3 status ID '$v3Status_id'.\n");
+			$v3Status = WeBWorK::DBv3::Status->retrieve($v3Status_id);
+		} else {
+			debug("This user has status '", $User->status, "', which doesn't map to any v3 status.\n");
+		}
+		
+		# get role
+		my $level = $PermissionLevel->permission;
+		if ($level eq "") {
+			$level = DEFAULT_PERMISSION_LEVEL;
+			debug("This user has no permission level -- using '$level'.\n");
+		}
+		my $v3Role_id = $level_to_role_id->{$level};
+		my $v3Role;
+		if (defined $v3Role_id) {
+			debug("This user has permission level '", $PermissionLevel->permission, "', which maps to v3 role ID '$v3Role_id'.\n");
+			$v3Role = WeBWorK::DBv3::Role->retrieve($v3Role_id);
+		} else {
+			debug("This user has permission level '", $PermissionLevel->permission, "', which doesn't map to any v3 role.\n");
+		}
+		
+		# find/create section record
+		my $section = $User->section;
+		my $v3Section;
+		if ($section ne "") {
+			debug("This user has section '$section'.\n");
+			($v3Section) = WeBWorK::DBv3::Section->search(course => $v3Course->id, name => $section);
+			if ($v3Section) {
+				debug("This corresponds to existing section ID $v3Section in v3 database.\n");
+			} else {
+				debug("No corresponding section exists in v3 DB -- adding.\n");
+				$v3Section = WeBWorK::DBv3::Section->create({
+					course => $v3Course->id,
+					name   => $section,
+				});
+				debug("Added section '", $v3Section->name, "' (ID $v3Section).\n");
+			}
+		} else {
+			debug("This user has no section.\n");
+		}
+		
+		
+		# find/create recitation record
+		my $recitation = $User->recitation;
+		my $v3Recitation;
+		if ($recitation ne "") {
+			debug("This user has recitation '$recitation'.\n");
+			($v3Recitation) = WeBWorK::DBv3::Recitation->search(course => $v3Course->id, name => $User->recitation);
+			if ($v3Recitation) {
+				debug("This correponds to existing recitation ID $v3Recitation in v3 database.\n");
+			} else {
+				debug("No corresponding recitation exists in v3 DB -- adding.\n");
+				$v3Recitation = WeBWorK::DBv3::Recitation->create({
+					course => $v3Course->id,
+					name   => $User->recitation,
+				});
+				debug("Added recitation '", $v3Recitation->name, "' (ID $v3Recitation).\n");
+			}
+		} else {
+			debug("This user has no recitation.\n");
+		}
+		
+		# create participant record
+		debug("Adding participant record for user '", $v3User->login_id, "' (ID $v3User).\n");
+		my $sectionID = $v3Section->id if defined $v3Section;
+		my $recitationID = $v3Recitation->id if defined $v3Recitation;
+		my $v3Participant = WeBWorK::DBv3::Participant->create({
+			course     => $v3Course->id,
+			user       => $v3User->id,
+			status     => $v3Status->id,
+			role       => $v3Role->id,
+			section    => $sectionID,
+			recitation => $recitationID,
+			comment    => $User->comment,
+		});
 	}
+}
+
+sub copy_abstract_data {
+	my ($course_db, $v3Course) = @_;
+	
+	
 }
 
 ################################################################################
