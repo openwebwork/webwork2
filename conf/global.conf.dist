@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.33 2003-06-18 23:04:51 malsyned Exp $
+# $Id: global.conf.dist,v 1.34 2003-06-20 23:08:39 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -26,7 +26,6 @@
 	courses => "$webworkRoot/courses",
 	lib     => "$webworkRoot/lib",
 	logs    => "$webworkRoot/logs",
-	macros  => "$pgRoot/macros",
 	tmp     => "$webworkRoot/tmp",
 );
 
@@ -208,11 +207,19 @@ $practiceUserPrefix = "practice";
 ################################################################################
 
 %pg = (
+	# options for various renderers
+	renderers => {
+		"WeBWorK::PG::Remote" => {
+			uri => "http://localhost:8089/RPC2"
+		}
+	},
+	# currently selected renderer
+	renderer => "WeBWorK::PG",
+	# directories used by PG
 	directories => {
-		# directories used only by PG
 		lib    => "$pgRoot/lib",
 		macros => "$pgRoot/macros",
-	}, # (not used yet)
+	},
 	options => {
 		# default translation options
 		displayMode        => "images",
@@ -226,11 +233,11 @@ $practiceUserPrefix = "practice";
 	},
 	# this will be customized in the course.conf file
 	specialPGEnvironmentVars => {
-		PRINT_FILE_NAMES_FOR      =>    ['gage','apizer','voloshin','lr003k','professor'],
-		CAPA_Tools                =>    "$courseDirs{macros}/CAPA_Tools/", 
-		CAPA_MCTools              =>    "$courseDirs{macros}/CAPA_MCTools/",  
-		CAPA_Graphics_URL         =>    "$courseDirs{html}/CAPA_Graphics/",   
-		CAPA_GraphicsDirectory    =>    "$courseDirs{html}CAPA_Graphics/", 
+		PRINT_FILE_NAMES_FOR   => qw(gage apizer voloshin lr003k professor),
+		CAPA_Tools             => "$courseDirs{macros}/CAPA_Tools/", 
+		CAPA_MCTools           => "$courseDirs{macros}/CAPA_MCTools/",  
+		CAPA_Graphics_URL      => "$courseDirs{html}/CAPA_Graphics/",   
+		CAPA_GraphicsDirectory => "$courseDirs{html}CAPA_Graphics/", 
 	},
 	# modules lists module names and the packages each contains
 	modules => [
