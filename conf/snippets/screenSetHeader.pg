@@ -26,8 +26,4 @@ which WeBWorK understands.
 $PAR
 END_TEXT
 
-# This is where you will put the correct answers to check against
-# those submitted by the student
-ANS( answer_evalutors );  
-   
 ENDDOCUMENT();
