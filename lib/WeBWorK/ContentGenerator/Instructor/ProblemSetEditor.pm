@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.48 2004/05/07 20:09:01 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.49 2004/05/11 21:31:04 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,7 @@ use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirect
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
 
-use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header)];
+use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header published)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -129,8 +129,16 @@ sub initialize {
 						}
 					}
 				}
+			} else {
+				if (m/published$/) {
+					$setRecord->$_(0);
+				}
 			}
 		}
+		
+
+		
+		
 		###################################################
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
@@ -146,6 +154,7 @@ sub initialize {
 		###################################################
 		# End date check section.
 		###################################################
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName were successfully saved."));
 		$db->putGlobalSet($setRecord);
 		
 		if ($forOneUser) {
@@ -183,6 +192,7 @@ sub initialize {
 			###################################################
 			# End date check section.
 			###################################################
+			$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName for user ",CGI::b($editForUser[0]) ,"were successfully saved."));
 			$db->putUserSet($userSetRecord);
 		}
 
@@ -306,9 +316,17 @@ sub body {
 # 						"problem_header", 
 # 						$setRecord->problem_header, 
 # 						undef, 
-# 						@{$overrideArgs{problem_header}})."\n"
+# 						@{$overrideArgs{problem_header}})."\n",
 		])
 	);
+	
+	if (@editForUser) {
+		my $publishedColor = ($setRecord->published) ? "Published" : "Unpublished";
+		print CGI::p("This set is currently", CGI::font({class=>$publishedColor}, (($setRecord->published) ? "Published" : "Unpublished")), CGI::br(), "(You cannot publish/unpublish a set for specific users.)");
+	} else {
+		print CGI::checkbox({type=>"checkbox", name=>"published", label=>"Published", value=>"1", checked=>(($setRecord->published) ? 1 : 0)}), CGI::br();
+
+	}
 	
 	print $self->hiddenEditForUserFields(@editForUser),
 	      $self->hidden_authen_fields,
