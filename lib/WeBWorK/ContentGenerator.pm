@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.121 2004/10/12 20:27:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.122 2004/10/15 04:30:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1498,7 +1498,7 @@ sub warningOutput($$) {
 WeBWorK has encountered warnings while processing your request. If this occured
 when viewing a problem, it was likely caused by an error or ambiguity in that
 problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If
-you are a student, reprot these warnings to your professor to have them
+you are a student, report these warnings to your professor to have them
 corrected. If you are a professor, please consult the warning output below for
 more information.
 EOF
