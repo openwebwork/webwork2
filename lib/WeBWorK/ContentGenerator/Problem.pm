@@ -320,7 +320,7 @@ sub siblings {
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @problemIDs = $db->listUserProblems($effectiveUser, $setName);
 	foreach my $problem (sort { $a <=> $b } @problemIDs) {
-		print CGI::a({-href=>"$root/$courseName/$setName/".$problem."/?"
+		print '&nbsp;&nbsp;'.CGI::a({-href=>"$root/$courseName/$setName/".$problem."/?"
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
 			"Problem ".$problem), CGI::br();
 	}

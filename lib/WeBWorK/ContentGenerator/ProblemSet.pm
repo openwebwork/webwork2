@@ -118,7 +118,7 @@ sub siblings {
 # hack to put links up quickly FIXME when database is faster.
 	foreach my $setName (@setNames) {
 	
-		print CGI::a({-href=>"$root/$courseName/".$setName."/?"
+		print '&nbsp;&nbsp;'.CGI::a({-href=>"$root/$courseName/".$setName."/?"
  				. $self->url_authen_args}, $setName), CGI::br();
 	
 	
