@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.4ww
+ *  Version: 1.4b-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -275,7 +275,6 @@ var jsMath = {
    *  pointing the user to the jsMath site, and load one of the fallback
    *  definitions.
    *  
-   *  ### still need a jsMath-fallback-unix.js file ###
    */
   CheckFonts: function () {
     var wh = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>');
@@ -285,6 +284,9 @@ var jsMath = {
         document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
       } else if (navigator.platform == 'MacPPC') {
         document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-mac.js"></SCRIPT>');
+      } else {
+        // default to unix?  Is there a better way to tell if unix?
+        document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-unix.js"></SCRIPT>');
       }
       document.writeln('<SCRIPT>jsMath.AddMessage()</SCRIPT>');
     }
@@ -332,8 +334,8 @@ var jsMath = {
     
     this.InitTeXfonts();
     
-    this.TeX.x_height = this.EmBoxFor('<SPAN CLASS="cmr10">M</SPAN>').w/2;
-    this.TeX.M_height = this.TeX.x_height*(26/14);
+    var x_height = this.EmBoxFor('<SPAN CLASS="cmr10">M</SPAN>').w/2;
+    this.TeX.M_height = x_height*(26/14);
     this.TeX.h = this.h; this.TeX.d = this.d; this.TeX.hd = this.hd;
     // factor for \big and its brethren
     this.p_height = (this.TeX.cmex10[0].h+this.TeX.cmex10[0].d) / .85;
@@ -2807,7 +2809,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     }
 
     if (!mitem.sup) {
-      sub.y = -Math.max(v,TeX.sub1,sub.h-(4/5)*TeX.x_height);
+      sub.y = -Math.max(v,TeX.sub1,sub.h-(4/5)*jsMath.Typeset.TeX(Cd,size).x_height);
       mitem.nuc = jsMath.Box.SetList([box,sub],style,size).Styled(); delete mitem.sub;
       return;
     }
@@ -2817,7 +2819,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     if (style == 'D') {p = TeX.sup1}
     else if (style.charAt(style.length-1) == "'") {p = TeX.sup3}
     else {p = TeX.sup2}
-    u = Math.max(u,p,sup.d+TeX.x_height/4);
+    u = Math.max(u,p,sup.d+jsMath.Typeset.TeX(Cu,size).x_height/4);
 
     if (!mitem.sub) {
       sup.y = u;
@@ -2825,7 +2827,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
       return;
     }
 
-    v = Math.max(v,TeX.sub2);
+    v = Math.max(v,jsMath.Typeset.TeX(Cd,size).sub2);
     var t = TeX.default_rule_thickness;
     if ((u-sup.d) - (sub.h -v) < 4*t) {
       v = 4*t + sub.h - (u-sup.d);
