@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.34 2004/01/23 21:03:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.35 2004/02/12 04:26:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,8 +53,9 @@ use WeBWorK::DB::Utils qw(global2user initializeUserProblem);
 
 =item assignSetToUser($userID, $GlobalSet)
 
-Assigns the given set and all problems contained therein to the given user.
-Silently fails if the set is already assigned to the user.
+Assigns the given set and all problems contained therein to the given user. If
+the set (or any problems in the set) are already assigned to the user, a list of
+failure messages is returned.
 
 =cut
 
@@ -67,23 +68,26 @@ sub assignSetToUser {
 	$UserSet->user_id($userID);
 	$UserSet->set_id($setID);
 	
+	my @results;
+	my $set_assigned = 0;
+	
 	eval { $db->addUserSet($UserSet) };
 	if ($@) {
-		return if $@ =~ m/user set exists/;
-		die $@;
+		if ($@ =~ m/user set exists/) {
+			push @results, "set $setID is already assigned to user $userID.";
+			$set_assigned = 1;
+		} else {
+			die $@;
+		}
 	}
 	
-	# FIXME: this can be optimized with getAllGlobalProblems
-	#foreach my $problemID ($db->listGlobalProblems($setID)) {
-	#	my $GlobalProblem = $db->getGlobalProblem($setID, $problemID); # checked
-		#if (not defined $GlobalProblem) {
-		#	warn "GlobalProblem not found for set $setID problem $problemID, skipping";
-		#	next;
-		#}
 	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 	foreach my $GlobalProblem (@GlobalProblems) {
-		$self->assignProblemToUser($userID, $GlobalProblem);
+		my @result = $self->assignProblemToUser($userID, $GlobalProblem);
+		push @results, @result if @result and not $set_assigned;
 	}
+	
+	return @results;
 }
 
 =item unassignSetFromUser($userID, $setID, $problemID)
@@ -101,8 +105,8 @@ sub unassignSetFromUser {
 
 =item assignProblemToUser($userID, $GlobalProblem)
 
-Assigns the given problem to the given user. Silently fails if the problem is
-already assigned to the user.
+Assigns the given problem to the given user. If the problem is already assigned
+to the user, an error string is returned.
 
 =cut
 
@@ -118,9 +122,16 @@ sub assignProblemToUser {
 	
 	eval { $db->addUserProblem($UserProblem) };
 	if ($@) {
-		return if $@ =~ m/user problem exists/;
-		die $@;
+		if ($@ =~ m/user problem exists/) {
+			return "problem " . $GlobalProblem->problem_id
+				. " in set " . $GlobalProblem->set_id
+				. " is already assigned to user $userID.";
+		} else {
+			die $@;
+		}
 	}
+	
+	return ();
 }
 
 =item unassignProblemFromUser($userID, $setID, $problemID)
@@ -152,6 +163,7 @@ sub unassignProblemFromUser {
 
 Assigns the set specified and all problems contained therein to all users in
 the course. This is more efficient than repeatedly calling assignSetToUser().
+If any assignments fail, a list of failure messages is returned.
 
 =cut
 
@@ -163,6 +175,8 @@ sub assignSetToAllUsers {
 	$WeBWorK::timer->continue("$setID: getting problem list") if defined $WeBWorK::timer;
 	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+	
+	my @results;
 	
 	foreach my $userID (@userIDs) {
 		my $UserSet = $db->newUserSet;
@@ -178,10 +192,13 @@ sub assignSetToAllUsers {
 		
 		$WeBWorK::timer->continue("$setID: adding UserProblems for $userID") if defined $WeBWorK::timer;
 		foreach my $GlobalProblem (@GlobalProblems) {
-			$self->assignProblemToUser($userID, $GlobalProblem);
+			my @result = $self->assignProblemToUser($userID, $GlobalProblem);
+			push @results, @result if @result;
 		}
 		$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
 	}
+	
+	return @results;
 }
 
 =item unassignSetFromAllUsers($setID)
@@ -205,7 +222,8 @@ sub unassignSetFromAllUsers {
 
 Assigns all sets in the course and all problems contained therein to the
 specified user. This is more efficient than repeatedly calling
-assignSetToUser().
+assignSetToUser(). If any assignments fail, a list of failure messages is
+returned.
 
 =cut
 
@@ -222,15 +240,20 @@ sub assignAllSetsToUser {
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	
+	my @results;
+	
 	my $i = 0;
 	foreach my $GlobalSet (@GlobalSets) {
 		if (not defined $GlobalSet) {
 			warn "record not found for global set $globalSetIDs[$i]";
 		} else {
-			$self->assignSetToUser($userID, $GlobalSet);
+			my @result = $self->assignSetToUser($userID, $GlobalSet);
+			push @results, @result if @result;
 		}
 		$i++;
 	}
+	
+	return @results;
 }
 
 =item unassignAllSetsFromUser($userID)
@@ -264,7 +287,8 @@ sub unassignAllSetsFromUser {
 
 =item assignSetsToUsers($setIDsRef, $userIDsRef)
 
-Assign each of the given sets to each of the given users.
+Assign each of the given sets to each of the given users. If any assignments
+fail, a list of failure messages is returned.
 
 =cut
 
@@ -276,13 +300,16 @@ sub assignSetsToUsers {
 	my @userIDs = @$userIDsRef;
 	my @GlobalSets = $db->getGlobalSets(@setIDs);
 	
+	my @results;
+	
 	foreach my $GlobalSet (@GlobalSets) {
 		foreach my $userID (@userIDs) {
-			warn "assignSetsToUsers: assignSetToUser($userID, GlobalSet(",
-				$GlobalSet->set_id, "))\n";
-			$self->assignSetToUser($userID, $GlobalSet);
+			my @result = $self->assignSetToUser($userID, $GlobalSet);
+			push @results, @result if @result;
 		}
 	}
+	
+	return @results;
 }
 
 =item unassignSetsFromUsers($setIDsRef, $userIDsRef)
@@ -306,7 +333,7 @@ sub unassignSetsFromUsers {
 =item assignProblemToAllSetUsers($GlobalProblem)
 
 Assigns the problem specified to all users to whom the problem's set is
-assigned.
+assigned. If any assignments fail, a list of failure messages is returned.
 
 =cut
 
@@ -316,9 +343,14 @@ sub assignProblemToAllSetUsers {
 	my $setID = $GlobalProblem->set_id;
 	my @userIDs = $db->listSetUsers($setID);
 	
+	my @results;
+	
 	foreach my $userID (@userIDs) {
-		$self->assignProblemToUser($userID, $GlobalProblem);
+		my @result = $self->assignProblemToUser($userID, $GlobalProblem);
+		push @results, @result if @result;
 	}
+	
+	return @results;
 }
 
 =back
