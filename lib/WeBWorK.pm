@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.45 2004/02/12 04:26:17 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.43 2004/01/25 19:56:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,8 +75,7 @@ sub dispatch($) {
 	# It's for figuring out the basepath. I may change this up if I find a
 	# better way to do it.
 	my $path_info = $r->path_info || "";
-	#$path_info =~ s|/+|/|g; # strip multiple forward slashes
-	#$r->path_info($path_info); # store that back into the request object
+	$path_info =~ s!/+!/!g; # strip multiple forward slashes
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
@@ -103,7 +102,7 @@ POST requests include a "/" at the end of the URI.
 	}
 	
 	# Create the @components array, which contains the path specified in the URL
-	my($junk, @components) = split /\/+/, $path_info;
+	my($junk, @components) = split "/", $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $pg_root = $r->dir_config('pg_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
@@ -239,7 +238,7 @@ The dispatcher implements a virtual heirarchy that looks like this:
  	options (User Options) - change email address and password
  	feedback (Feedback) - send feedback to professor via email
  	logout (Logout) - expire session and erase authentication tokens
- 	#test (Test) - display request information
+ 	test (Test) - display request information
  	quiz_mode (Quiz) - "quiz" containing all problems from a set
  	instructor (Instructor Tools) - main menu for instructor tools
  		add_users (Add Users) - to be removed
@@ -286,10 +285,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 			$contentGenerator = "WeBWorK::ContentGenerator::Logout";
 			@arguments = ();
 		}
-		#elsif ($arg eq "test") {
-		#	$contentGenerator = "WeBWorK::ContentGenerator::Test";
-		#	@arguments = ();
-		#}
+		elsif ($arg eq "test") {
+			$contentGenerator = "WeBWorK::ContentGenerator::Test";
+			@arguments = ();
+		}
 		elsif ($arg eq "quiz_mode" ) {
 			$contentGenerator = "WeBWorK::ContentGenerator::GatewayQuiz";
 			@arguments = @components;
@@ -398,15 +397,31 @@ The dispatcher implements a virtual heirarchy that looks like this:
 			# $arg is a set ID
 			my $setID = $arg;
 			my $problemID = shift @components;
-			
-			if (defined $problemID) {
-				$contentGenerator = "WeBWorK::ContentGenerator::Problem";
-				@arguments = ($setID, $problemID);
-			}
+
+			# check that the set is valid
+			if (grep /$setID/, $db->listUserSets($effectiveUser)) {
+				if (defined $problemID) {
+					# check that the problem is valid for this set
+					if (grep /$problemID/, $db->listUserProblems($effectiveUser, $setID)) {
+						$contentGenerator = "WeBWorK::ContentGenerator::Problem";
+						@arguments = ($setID, $problemID);
+					}
+					else {
+						$contentGenerator = "WeBWorK::ContentGenerator::Error";
+						@arguments = ($setID, "$problemID (error)", "Problem $problemID is not a valid problem in set $setID", "The problem number ($problemID) entered in the URL in your web browser does not seem to be a valid problem for the current set ($setID).  Please check to make sure that the problem number was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.  You can view a list of sets by clicking on the link \"Problem Sets\" on the left.");
+					}
+				}
+				else {
+					$contentGenerator = "WeBWorK::ContentGenerator::ProblemSet";
+					@arguments = ($setID);
+				}
+
+			} 
 			else {
-				$contentGenerator = "WeBWorK::ContentGenerator::ProblemSet";
-				@arguments = ($setID);
+				$contentGenerator = "WeBWorK::ContentGenerator::Error";
+				@arguments = ("$setID (error)", "$problemID (error)", "$setID is not a valid set for user $user", "The set ($setID) entered in the URL in your web browser does not seem to be a valid set for the current user.  Please check to make sure that the set was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.");
 			}
+
 		}
 	}
 
