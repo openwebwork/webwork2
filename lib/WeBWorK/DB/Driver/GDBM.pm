@@ -47,8 +47,10 @@ sub connect($$) {
 	my $source = $self->{source};
 	
 	return 1 if tied %$hash; # already tied!
-	die "$source: must exist to open for reading"
-		if lc $mode eq "ro" and not -e $source;
+	if (lc $mode eq "ro" and not -e $source) {
+		$self->connect("rw");
+		$self->disconnect;
+	}
 	my $flags = lc $mode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
 		return 1 if tie %$hash,
@@ -56,6 +58,7 @@ sub connect($$) {
 			$source,        # file name
 			$flags,         # I/O flags
 			TIE_PERMISSION; # access mode
+		warn __PACKAGE__, ": tie failed with error $!, (attempt $_)\n";
 		sleep TIE_RETRY_DELAY;
 	}
 	die "$source: connection failed";
