@@ -511,8 +511,8 @@ sub instructor_links {
 	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
 	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
 	
-	my $stats      = "$root/$courseName/instructor/stats/".((defined($set)) ? $set:'') 
-	                 .'/?' . $self->url_authen_args();
+	my $stats      = "$root/$courseName/instructor/stats/".((defined($set)) ? "$set/?":'?') 
+	                 . $self->url_authen_args();
 	
 	#  Add direct links to sets e.g.  3:4 for set3 problem 4
 	my $setURL     = (defined($set)) ? "$root/$courseName/instructor/sets/$set/?" .

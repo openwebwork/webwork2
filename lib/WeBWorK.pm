@@ -30,6 +30,7 @@ use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
 use WeBWorK::ContentGenerator::Instructor::Scoring;
+use WeBWorK::ContentGenerator::Instructor::ScoringTotals;
 use WeBWorK::ContentGenerator::Instructor::Stats;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
@@ -144,7 +145,9 @@ sub dispatch($) {
 			if (!defined $instructorArgument) {
 				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "scoring") {
-				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go;
+				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go; #FIXME!!!!
+			} elsif ($instructorArgument eq "scoring_totals") {
+				$result = WeBWorK::ContentGenerator::Instructor::ScoringTotals->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "users") {
 				$result = WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "sets") {
