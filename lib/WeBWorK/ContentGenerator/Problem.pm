@@ -54,20 +54,32 @@ sub pre_header_initialize {
 	
 	my $user                 = $db->getUser($userName);
 	my $effectiveUser        = $db->getUser($effectiveUserName);
+
 	# obtain the effective user set, or if that is not yet defined obtain global set
 	my $set                  = $db->getGlobalUserSet($effectiveUserName, $setName);
-	#$set                = $db->getGlobalSet($setName) unless defined($set);
 	unless (defined $set) {
-		my $userSetClass = $courseEnv->{dbLayout}->{set_user}->{record};
+		my $userSetClass     = $courseEnv->{dbLayout}->{set_user}->{record};
 		$set                 = global2user($userSetClass, $db->getGlobalSet($setName));
 		$set->psvn('000');
 	}
+	my	$psvn                = $set->psvn();
+	
 	# obtain the effective user problem, or if that is not yet defined obtain global problem
 	my $problem              = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
 	unless (defined $problem) {
 		my $userProblemClass = $courseEnv->{dbLayout}->{problem_user}->{record};
 		$problem             = global2user($userProblemClass, $db->getGlobalProblem($setName,$problemNumber));
-		$problem->max_attempts(-1);
+
+#		$problem->max_attempts(-1);   # default is infinite number of attempts
+#		$problem->value;
+#		$problem->problem_seed;
+#		$problem->source_file;
+		$problem->user_id($userName);    # is this the right value for this unassigned problem? FIXME
+		$problem->status(0);
+		$problem->attempted(0);
+		$problem->num_correct(0);
+		$problem->num_incorrect(0);
+		$problem->last_answer(' ');		
 	}
 	#$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
 	# FIXME  
@@ -82,12 +94,12 @@ sub pre_header_initialize {
 	# data in many places and it might not even have methods defined.
 	
 	# global sets will not have a defined psvn
-	my $psvn;
-	if ($set->can('psvn') ) {
-		$psvn           = $set->psvn();
-	} else {            # we are viewing an unassigned problem set, psvn's are irrelevant
-		$psvn           = '0000';
-	}
+# 	my $psvn;
+# 	if ($set->can('psvn') ) {
+# 		$psvn           = $set->psvn();
+# 	} else {            # we are viewing an unassigned problem set, psvn's are irrelevant
+# 		$psvn           = '0000';
+# 	}
 	
 	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
 	
@@ -115,7 +127,18 @@ sub pre_header_initialize {
 	if ( defined($submit_button ) ) {
 		$editMode = "temporaryFile" if $submit_button eq 'Refresh';
 		$editMode = 'savedFile'     if $submit_button eq 'Save';
-	}
+	}	
+	
+	#override using the source file data from the form field
+	$problem->source_file($override_problem_source) if defined($override_problem_source);
+	$problem->problem_seed($override_seed)          if defined($override_seed);
+	
+	# store path to source file for title.
+	$self->{problem_source_name}    =  $problem->source_file;
+	$self->{edit_mode}		=	$editMode;
+# 	$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
+# 									 		$override_problem_source :
+# 											$problem->source_file;
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
@@ -126,10 +149,7 @@ sub pre_header_initialize {
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 	
-	$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
-									 			$override_problem_source :
-												$problem->source_file;
-	$self->{edit_mode}					=	$editMode;
+
 	##### permissions #####
 	
 	# are we allowed to view this problem?
@@ -314,9 +334,9 @@ sub title {
 	if ( not defined($edit_mode) ) {
 		$file_action = '';
 	} elsif (  $edit_mode eq 'temporaryFile') {
-		$file_action 	.=	 'Editing temporary file : '. CGI::br() . $self->{current_problem_source};
+		$file_action 	.=	 'Editing temporary file : '. CGI::br() . $self->{problem_source_name};
 	} elsif ( $edit_mode eq 'savedFile' ){
-		$file_action 	.=	 'Problem saved to : '. CGI::br()  . $self->{current_problem_source};
+		$file_action 	.=	 'Problem saved to : '. CGI::br()  . $self->{problem_source_name};
 	}
 	my $problemNumber = $self->{problem}->problem_id . " : " . $file_action;
 	
@@ -355,6 +375,7 @@ sub body {
 	# if answers were submitted:
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
+		# this will be undefined if the problem has not been assigned to this user
 		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
 		# store answers in DB for sticky answers
 		my %answersToStore;
@@ -363,36 +384,45 @@ sub body {
 			foreach (keys %answerHash);
 		my $answerString = encodeAnswers(%answersToStore,
 			@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} });
-		$pureProblem->last_answer($answerString);
-		$problem->last_answer($answerString);
-		$db->putUserProblem($pureProblem);
 		
-		# store state in DB if it makes sense
-		if ($will{recordAnswers}) {
-			$problem->status($pg->{state}->{recorded_score});
-			$problem->attempted(1);
-			$problem->num_correct($pg->{state}->{num_of_correct_ans});
-			$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-			$pureProblem->status($pg->{state}->{recorded_score});
-			$pureProblem->attempted(1);
-			$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
-			$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+		$problem->last_answer($answerString);
+		# if $pureProblem is defined ( there is a user ) then record the last answer.
+		# FIXME  (we're assuming that not being able to get a pure problem is enough to determine
+		# whether or not the problem database needs to be updated.  This should be thought through
+		# more carefully to be sure.
+		if ( defined($pureProblem) )  {
+			$pureProblem->last_answer($answerString);
 			$db->putUserProblem($pureProblem);
-			# write to the transaction log, just to make sure
-			writeLog($self->{ce}, "transaction",
-				$problem->problem_id."\t".
-				$problem->set_id."\t".
-				$problem->user_id."\t".
-				$problem->source_file."\t".
-				$problem->value."\t".
-				$problem->max_attempts."\t".
-				$problem->problem_seed."\t".
-				$pureProblem->status."\t".
-				$pureProblem->attempted."\t".
-				$pureProblem->last_answer."\t".
-				$pureProblem->num_correct."\t".
-				$pureProblem->num_incorrect
-			);
+			#die "pureProblem = ", defined($pureProblem);
+		
+		
+			# store state in DB if it makes sense
+			if ($will{recordAnswers}) {
+				$problem->status($pg->{state}->{recorded_score});
+				$problem->attempted(1);
+				$problem->num_correct($pg->{state}->{num_of_correct_ans});
+				$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+				$pureProblem->status($pg->{state}->{recorded_score});
+				$pureProblem->attempted(1);
+				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
+				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+				$db->putUserProblem($pureProblem);
+				# write to the transaction log, just to make sure
+				writeLog($self->{ce}, "transaction",
+					$problem->problem_id."\t".
+					$problem->set_id."\t".
+					$problem->user_id."\t".
+					$problem->source_file."\t".
+					$problem->value."\t".
+					$problem->max_attempts."\t".
+					$problem->problem_seed."\t".
+					$pureProblem->status."\t".
+					$pureProblem->attempted."\t".
+					$pureProblem->last_answer."\t".
+					$pureProblem->num_correct."\t".
+					$pureProblem->num_incorrect
+				);
+			}
 		}
 	}
 	# logging student answers
@@ -406,6 +436,7 @@ sub body {
 			my %answerHash = %{ $pg->{answers} };
 			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
 				foreach (sort keys  %answerHash);
+			$answerString = '' unless defined($answerString); # insure string is defined. 
 			writeLog($self->{ce}, "pastAnswerList",
 					'|'.$problem->user_id.
 					'|'.$problem->set_id.
