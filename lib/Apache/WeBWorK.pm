@@ -33,7 +33,7 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
-use DB;
+use Apache::DB;
 use WeBWorK;
 
 sub handler($) {
@@ -52,7 +52,7 @@ sub handler($) {
 		# the __DIE__ handler stores the call stack at the time of an error
 		local $SIG{__DIE__} = sub {
 			my ($error) = @_;
-			my $trace = join "\n", DB::backtrace();
+			my $trace = join "\n", Apache::DB->backtrace();
 			$r->notes("lastCallStack" => $trace);
 			die $error;
 		};
