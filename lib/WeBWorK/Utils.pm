@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.41 2004/05/05 22:01:48 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.42 2004/05/11 19:07:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -235,7 +235,7 @@ sub decodeAnswers($) {
 sub encodeAnswers(\%\@) {
 	my %hash = %{ shift() };
 	my @order = @{ shift() };
-	my $string;
+	my $string = "";
 	foreach my $name (@order) {
 		my $value = defined $hash{$name} ? $hash{$name} : "";
 		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
