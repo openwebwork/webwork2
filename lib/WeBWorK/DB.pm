@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.41 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.42 2003/12/12 20:23:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1218,6 +1218,30 @@ sub getGlobalProblems {
 	return $self->{problem}->gets(@problemIDs);
 }
 
+=item getAllGlobalProblems($setID)
+
+Returns a list of Problem objects representing all the problems in the given
+global set. When using the WW1Hash/GlobalTableEmulator schemas, this is far
+more efficient than using listGlobalProblems and getGlobalProblems.
+
+=cut
+
+sub getAllGlobalProblems {
+	my ($self, $setID) = @_;
+	
+	croak "getAllGlobalProblems: requires 1 arguments"
+		unless @_ == 2;
+	croak "getAllGlobalProblems: argument 1 must contain a set_id"
+		unless defined $setID;
+	
+	if ($self->{problem}->can("getAll")) {
+		return $self->{problem}->getAll($setID);
+	} else {
+		my @problemIDPairs = $self->{problem}->list($setID, undef);
+		return $self->{problem}->gets(@problemIDPairs);
+	}
+}
+
 sub putGlobalProblem {
 	my ($self, $GlobalProblem) = @_;
 	
@@ -1393,11 +1417,11 @@ more efficient than using listUserProblems and getUserProblems.
 sub getAllUserProblems {
 	my ($self, $userID, $setID) = @_;
 	
-	croak "getUserProblem: requires 2 arguments"
+	croak "getAllUserProblems: requires 2 arguments"
 		unless @_ == 3;
-	croak "getUserProblem: argument 1 must contain a user_id"
+	croak "getAllUserProblems: argument 1 must contain a user_id"
 		unless defined $userID;
-	croak "getUserProblem: argument 2 must contain a set_id"
+	croak "getAllUserProblems: argument 2 must contain a set_id"
 		unless defined $setID;
 	
 	if ($self->{problem_user}->can("getAll")) {
