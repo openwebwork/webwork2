@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.36 2004/09/14 18:55:58 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.38 2004/09/16 19:44:44 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,8 @@ use Mail::Sender;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
-my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
+#my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
+my $UPDATE_SETTINGS_BUTTON = "Update settings and refresh page"; # handle submit value idiocy
 sub initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
@@ -79,8 +80,10 @@ sub initialize {
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
 	$self->{merge_file}             =   (defined($r->param('merge_file'  )))    ? $r->param('merge_file')   : 'None';
-	$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
-	
+	#$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
+	# an expermiment -- share the scrolling list for preivew and sendTo actions.
+	my @classList                   =   (defined($r->param('classList')))    ? $r->param('classList') : ($user);
+	$self->{preview_user}           =   $classList[0] || $user;
 	
 #############################################################################################
 #	gather database data
@@ -303,8 +306,8 @@ sub initialize {
 	my $script_action     = '';
 	
 	
-	if(not defined($action) or $action eq 'Open' or $action eq $REFRESH_RESIZE_BUTTON or $action eq 'Sort by'
-	   or $action eq 'Set merge file to:' ){  
+	if(not defined($action) or $action eq 'Open'  
+	   or $action eq $UPDATE_SETTINGS_BUTTON ){  
 
 		return '';
 	}
@@ -509,7 +512,7 @@ sub print_form {
 	my $permissionLevelTemplate = $db->newPermissionLevel;
 	
 	# This code will require changing if the permission and user tables ever have different keys.
-	my @users                 = @{ $self->{ra_users} };
+	my @users                 = sort @{ $self->{ra_users} };
 	my $ra_user_records       = $self->{ra_user_records};
 	my %classlistLabels       = ();#  %$hr_classlistLabels;
 	foreach my $ur (@{ $ra_user_records }) {
@@ -525,6 +528,7 @@ sub print_form {
 		default_filters => ["all"],
 		size => 5,
 		multiple => 1,
+		refresh_button_name =>'Update settings and refresh page',
 	}, @{$ra_user_records});
 
 ##############################################################################################################
@@ -563,17 +567,31 @@ sub print_form {
 #	first column
 #############################################################################################	
 
-			 CGI::td(CGI::strong("Message file: $input_file"),"\n",CGI::br(),
+			 CGI::td(CGI::strong("Message file: "), $input_file,"\n",CGI::br(),
 				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
 				                 -default=>$input_file
-				 ), "\n",CGI::br(),
-
-				 "Save file to: $output_file","\n",CGI::br(),
-				 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
-				 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>30, -override=>1),  
+				 ), 
+				 "\n",CGI::br(),
+				 CGI::strong("Save file to: "), $output_file,
+				 "\n",CGI::br(),
+				 CGI::strong('Merge file: '), $merge_file, 
+				 CGI::br(),
+				 CGI::popup_menu(-name=>'merge_file', 
+				                 -values=>\@sorted_merge_files, 
+				                 -default=>$merge_file,
+				 ), "\n",
+				 "\n",
+				 #CGI::hr(),
+				 CGI::div({style=>"background-color: #CCCCCC"},
+					 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
+					 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>30, -override=>1),  
+				),
+				#CGI::hr(),
+				CGI::submit(-name=>'action', -value=>$UPDATE_SETTINGS_BUTTON),
+				 
 			),
 #############################################################################################
 #	second column
@@ -591,7 +609,11 @@ sub print_form {
 		                                       CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
 		                                                        -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
 		                                                        -default=>'studentID', -linebreak=>0), 
-							CGI::br(),$scrolling_user_list),
+							CGI::br(),$scrolling_user_list,
+							CGI::i("Preview set to: "), $preview_record->last_name,
+							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
+					),
+				
 ## Edit here to insert filtering 
 ## be sure to fail GRACEFULLY!
 #
@@ -620,28 +642,30 @@ sub print_form {
 #	third column
 #############################################################################################	
 			CGI::td({align=>'left'},
-			     "<b>Merge file:</b> $merge_file", CGI::br(),
-				 CGI::submit(-name=>'action', -value=>'Set merge file to:'),CGI::br(),
-				 CGI::popup_menu(-name=>'merge_file', 
-				                 -values=>\@sorted_merge_files, 
-				                 -default=>$merge_file,
-				 ), "\n",CGI::hr(),
-				CGI::b("Viewing email for: "), "$preview_user",CGI::br(),
-				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),'&nbsp;',
-				CGI::popup_menu(-name=>'preview_user',
-							   -values=>\@users,
-							   #-labels=>\%classlistLabels,
-							   -default=>$preview_user,
-				),
-				CGI::br(),
-				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
-				
-				CGI::br(),
-				
-				CGI::hr(),
+#			     "<b>Merge file:</b> $merge_file", CGI::br(),
+# 				 CGI::submit(-name=>'action', -value=>'Set merge file to:'),CGI::br(),
+# 				 CGI::popup_menu(-name=>'merge_file', 
+# 				                 -values=>\@sorted_merge_files, 
+# 				                 -default=>$merge_file,
+# 				 ), "\n",
+#				 CGI::hr(),
+# 				CGI::b("Viewing email for: "), "$preview_user",CGI::br(),
+# 				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),'&nbsp;',
+# 				CGI::popup_menu(-name=>'preview_user',
+# 							   -values=>\@users,
+# 							   #-labels=>\%classlistLabels,
+# 							   -default=>$preview_user,
+# 				),
+# 				CGI::br(),
+# 				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
+# 				
+# 				CGI::br(),
+# 				
+# 				CGI::hr(),
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
-				CGI::br(),CGI::i('Press any action button to update display'),CGI::br(),
+				CGI::br(),
+#				CGI::i('Press any action button to update display'),CGI::br(),
 			#show available macros
 				CGI::popup_menu(
 						-name=>'dummyName',
