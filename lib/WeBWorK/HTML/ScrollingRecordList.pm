@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.2 2004/03/04 21:05:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.3 2004/05/23 18:28:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,16 +29,19 @@ use warnings;
 use Carp;
 use WeBWorK::Utils::FormatRecords qw/getFormatsForClass formatRecords/;
 use WeBWorK::Utils::SortRecords qw/getSortsForClass sortRecords/;
+use WeBWorK::Utils::FilterRecords qw/getFiltersForClass filterRecords/;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	scrollingRecordList
 );
 
+
+
 sub scrollingRecordList {
 	my ($options, @Records) = @_;
 	
-	my %options = %$options;
+	my %options = (default_filters=>[],default_sort=>"",default_format=>"",%$options);
 	# %options must contain:
 	#  name - name of scrolling list -- use $r->param("$name")
 	#  request - the WeBWorK::Request object for the current request
@@ -57,7 +60,9 @@ sub scrollingRecordList {
 	
 	my $default_sort = $options{default_sort} || "";
 	my $default_format = $options{default_format} || "";
-	
+
+	my @default_filters = @{$options{default_filters}} ;
+
 	my $size = $options{size};
 	my $multiple = $options{multiple};
 	
@@ -69,14 +74,27 @@ sub scrollingRecordList {
 	my $format_labels = {};
 	my $selected_format = "";
 	
+	my $filters = [];
+	my $filter_labels = {};
+	my @selected_filters= ();
+	
 	my @ids = ();
 	my %labels = ();
 	
 	my @selected_records = $r->param("$name");
-	
+
 	if (@Records) {
 		my $class = ref $Records[0];
-		
+
+		($filters, $filter_labels) = getFiltersForClass(@Records);
+		if (defined $r->param("$name!filter")){warn "Param =", $r->param("$name!filter");
+			@selected_filters = $r->param("$name!filter");
+			@selected_filters = ("all") unless @selected_filters;
+		}
+		else {
+			@selected_filters = @default_filters;
+		}
+	
 		($sorts, $sort_labels) = getSortsForClass($class);
 		$selected_sort = $r->param("$name!sort")
 			|| $default_sort
@@ -86,6 +104,8 @@ sub scrollingRecordList {
 		$selected_format = $r->param("$name!format")
 			|| $default_format
 			|| (@$formats ? $formats->[0] : "");
+		
+		@Records = filterRecords({filter=>\@selected_filters},@Records);
 		
 		@Records = sortRecords({preset=>$selected_sort}, @Records);
 		
@@ -113,7 +133,16 @@ sub scrollingRecordList {
 		-default => $selected_format,
 		-labels => $format_labels,
 	);
-	
+
+	my %filter_options = (
+		-name => "$name!filter",
+		-values => $filters,
+		-default => \@selected_filters,
+		-labels => $filter_labels,
+		-size => 3,
+		-multiple => 1,
+	);
+
 	my %list_options = (
 		-class=>"ScrollingRecordList",
 		-name => "$name",
@@ -127,6 +156,7 @@ sub scrollingRecordList {
 	return CGI::div({-class=>"ScrollingRecordList"},
 		"Sort: ", CGI::popup_menu(%sort_popup_options), CGI::br(),
 		"Format: ", CGI::popup_menu(%format_popup_options), CGI::br(),
+		"Filter: ", CGI::scrolling_list(%filter_options), CGI::br(),
 		CGI::submit("$name!refresh", "Change Display Settings"), CGI::br(),
 		CGI::scrolling_list(%list_options)
 	);
