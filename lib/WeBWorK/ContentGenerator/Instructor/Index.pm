@@ -278,7 +278,7 @@ sub initialize {
 	$WeBWorK::timer2->continue("End listing sets") if defined $WeBWorK::timer2;
 	my @set_records = ();
 	$WeBWorK::timer2->continue("Begin obtaining sets") if defined $WeBWorK::timer2;
-	@set_records = $db->getMergedSets(map {[$user,$_]} @setNames);
+	@set_records = $db->getGlobalSets( @setNames);
 	$WeBWorK::timer2->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer2;
 # 	foreach my $name (@setNames) {
 # 	    my $set_record;
