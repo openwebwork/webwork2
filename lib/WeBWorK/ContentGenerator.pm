@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.88 2004/03/17 08:15:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.90 2004/03/23 01:48:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -688,6 +688,27 @@ Print links to siblings of the current object.
 
 #sub siblings {  }
 
+=item timestamp()
+
+Defined in this package.
+
+Display the current time and date using default format "3:37pm on Jan 7, 2004".
+The display format can be adjusted by giving a style in the template.
+For example,
+
+  <!--#timestamp style="%m/%d/%y at %I:%M%P"-->
+
+will give standard WeBWorK time format.  Wording and other formatting
+can be done in the template itself.
+=cut
+
+sub timestamp {
+	my ($self, $args) = @_;
+	my $formatstring = "%l:%M%P on %b %e, %Y";
+	$formatstring = $args->{style} if(defined($args->{style}));
+	return(Date::Format::time2str($formatstring, time()));
+}
+	
 =item submiterror()
 
 Defined in this package.
