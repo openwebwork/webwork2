@@ -276,6 +276,11 @@ given when the conditions of the constraint are not met.
 
 =cut
 
+# FIXME this is broken -- it doesn't allow multiple NULL values! I'd rather just
+# catch the DBI uniqneness violation errors and munge them in some way to get a
+# useful error message out. Is there some way to do that? Would it me MySQL
+# specific?
+
 sub has_unique_columns {
 	my ($class, $name, @columns) = @_;
 	
