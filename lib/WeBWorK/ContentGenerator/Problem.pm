@@ -784,7 +784,7 @@ sub previewAnswer($$) {
 		return $result;
 	} elsif ($displayMode eq "images") {
 		# how are we going to name this?
-		my $targetPathCommon = "/png/"
+		my $targetPathCommon = "/m2i/"
 			. $effectiveUser->user_id . "."
 			. $set->set_id . "."
 			. $problem->problem_id . "."
