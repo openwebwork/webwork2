@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.53 2004/03/16 20:00:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.54 2004/03/23 01:04:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,7 +37,7 @@ C<WeBWorK::ContentGenerator> to call.
 BEGIN { $main::VERSION = "2.0"; }
 
 
-my $timingON = 1;
+my $timingON = 0;
 
 use strict;
 use warnings;
@@ -46,7 +46,7 @@ use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-#use WeBWorK::Timing;
+use WeBWorK::Timing;
 use WeBWorK::Upload;
 use WeBWorK::Utils qw(runtime_use);
 use WeBWorK::Request;
@@ -233,13 +233,16 @@ sub dispatch($) {
 	debug("...and call it:\n");
 	debug("-------------------- call to ${displayModule}::go\n");
 	
+	$WeBWorK::timer = WeBWorK::Timing->new("$displayArgs{courseID}") if $timingON;
+	$WeBWorK::timer -> start() if $timingON;
 	my $result = $instance->go();
 	
 	debug("-------------------- call to ${displayModule}::go\n");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
-	
+	$WeBWorK::timer -> save() if $timingON;
 	return $result;
+	
 }
 
 sub mungeParams {
