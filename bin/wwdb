@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwdb,v 1.5 2003/12/09 01:12:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwdb,v 1.6 2004/01/03 21:00:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,98 +33,31 @@ use lib "$FindBin::Bin/../lib";
 use WeBWorK::ContentGenerator; # for cook_args
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-
-# Command line syntax
-# 
-# wwdb course command [ argument ... ]
-# 
-# Commands correspond to the functions of WeBWorK::DB. Arguments are either
-# strings or records. To represent records, use the following syntax:
-# 
-#         {id="sh002i" first_name="Sam" last_name="Hathaway"}
-# 
-# You'll have to protect arguments like this from your shell by enclosing them
-# in single quotes.
-# 
-# The special string \undef represents an undefined value. You'll have to
-# protect this from your shell as well. Use \\undef or '\undef'.
+use WeBWorK::Utils::DBImportExport qw/dbExport dbImport/;
 
 sub main(@) {
-	my ($course, $command, @arguments) = @_;
+	my ($course, $command, $file, @arguments) = @_;
 	
-	unless ($course and $command) {
-		die "usage: $0 course command [arguments ...]\n";
+	unless ($course and $command and $file) {
+		die "usage: $0 course { import | export } file [table ...]\n";
 	}
 	
 	my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $course);
 	my $db = WeBWorK::DB->new($ce->{dbLayout});
 	
-	if ($command eq "dumpDB") {
-		print $db->$command("set_user");
-		exit;
-	}
-	
-	die "$command: unsupported command.\n"
-		unless $db->can($command);
-	
-	my ($verb, $noun) = $command =~ m/^(list|add|get|put|delete)(.*?)s?$/;
-	
-	my $type = "WeBWorK::DB::Record::";
-	if ($noun =~ m/^Global(User)?(Set|Problem)$/) {
-		$type .= "$1$2";
+	if ($command eq "export") {
+		open my $fh, ">", $file or die "failed to open file '$file' for writing: $!\n";
+		dbExport(
+			db => $db,
+			xml => $fh,
+			tables => \@arguments,
+		);
+		close $fh;
+	} elsif ($command eq "import") {
+		# ...
 	} else {
-		$type .= $noun;
+		die "$command: unrecognized command.\n";
 	}
-	
-	foreach (@arguments) {
-		if (m/^\\undef$/) {
-			$_ = undef;
-		} elsif (m/^{(.*)}$/) {
-			$_ = string2record($type, $1);
-		}
-	}
-	
-	my @result = $db->$command(@arguments);
-	
-	if ($verb eq "list") {
-		print join("\n", @result), "\n";
-	} elsif ($verb eq "add") {
-		print "result: $result[0]\n";
-	} elsif ($verb eq "get") {
-		if (defined $result[0]) {
-			print "{", record2string($result[0]), "}\n";
-		} else {
-			print join("/", @arguments), ": record not found\n";
-		}
-	} elsif ($verb eq "put") {
-		print "result: $result[0]\n";
-	} elsif ($verb eq "delete") {
-		print "result: $result[0]\n";
-	}
-}
-
-sub string2record($$) {
-	my ($type, $string) = @_;
-	my %hash = WeBWorK::ContentGenerator::cook_args($string);
-	my $record = $type->new(%hash);
-	return $record;
-}
-
-sub record2string($) {
-	my ($record) = @_;
-	my $string;
-	foreach my $key ($record->FIELDS()) {
-		my $value = $record->$key();
-		if (defined $value) {
-			$value =~ s/"/\\"/g;
-			$value = "\"$value\"";
-		} else {
-			$value = "NULL";
-		}
-		$string .= "$key=$value ";
-	}
-	chop $string;
-	return $string;
 }
 
 main(@ARGV);
