@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.55 2004/06/21 19:51:49 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.56 2004/09/29 16:19:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,6 +62,7 @@ Export users:
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use WeBWorK::Authen qw(checkKey);
 use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
@@ -970,7 +971,7 @@ sub importUsersFromCSV {
 	my $dir   = $ce->{courseDirs}->{templates};
 	my $user  = $r->param('user');
 	
-	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
+	die "illegal character in input: '/'" if $fileName =~ m|/|;
 	die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
 		unless -r "$dir/$fileName";
 	
@@ -986,14 +987,12 @@ sub importUsersFromCSV {
 	
 	my (@replaced, @added, @skipped);
 	
-	my @contents = split /\n/, readFile("$dir/$fileName");
-	foreach my $string (@contents) {
-		$string =~ s/^\s+//;
-		$string =~ s/\s+$//;
-		my (
-			$student_id, $last_name, $first_name, $status, $comment,
-			$section, $recitation, $email_address, $user_id
-		) = split /\s*,\s*/, $string;
+	# get list of hashrefs representing lines in classlist file
+	my @classlist = parse_classlist("$dir/$fileName");
+	
+	foreach my $record (@classlist) {
+		my %record = %$record;
+		my $user_id = $record{user_id};
 		
 		if ($user_id eq $user) { # don't replace yourself!!
 			push @skipped, $user_id;
@@ -1010,24 +1009,9 @@ sub importUsersFromCSV {
 			next;
 		}
 		
-		my $User = $db->newUser;
-		$User->user_id($user_id);
-		$User->first_name($first_name);
-		$User->last_name($last_name);
-		$User->email_address($email_address);
-		$User->student_id($student_id);
-		$User->status($status);
-		$User->section($section);
-		$User->recitation($recitation);
-		$User->comment($comment);
-		
-		my $PermissionLevel = $db->newPermissionLevel;
-		$PermissionLevel->user_id($user_id);
-		$PermissionLevel->permission(0);
-		
-		my $Password = $db->newPassword;
-		$Password->user_id($user_id);
-		$Password->password(cryptPassword($student_id));
+		my $User = $db->newUser(%record);
+		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => 0);
+		my $Password = $db->newPassword(user_id => $user_id, password => cryptPassword($record{student_id}));
 		
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
@@ -1052,30 +1036,12 @@ sub exportUsersToCSV {
 	my $db      = $r->db;
 	my $dir     = $ce->{courseDirs}->{templates};
 		
-	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
+	die "illegal character in input: '/'" if $fileName =~ m|/|;
 	
-	open my $fh, ">", "$dir/$fileName"
-		or die "failed to open file $dir/$fileName for writing: $!\n";
+	# assemble list of hashrefs representing records to export
+	my @records = map { {$_->toHash} } $db->getUsers(@userIDsToExport);
 	
-	foreach my $userID (@userIDsToExport) {
-		my $User = $db->getUser($userID); # checked
-		die "record for user $userID not found." unless $User;
-		my @fields = (
-			$User->student_id,
-			$User->last_name,
-			$User->first_name,
-			$User->status,
-			$User->comment,
-			$User->section,
-			$User->recitation,
-			$User->email_address,
-			$User->user_id,
-		);
-		my $string = join ",", @fields;
-		print $fh "$string\n";
-	}
-	
-	close $fh;
+	write_classlist("$dir/$fileName", @records);
 }
 
 ################################################################################
