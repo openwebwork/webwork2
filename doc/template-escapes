@@ -1,0 +1,13 @@
+path
+	style = text|image
+	image = URL of image
+	text  = text separator
+quicklinks
+siblings
+nav
+	style       = text|image
+	imageprefix = prefix to image URL
+	imagesuffix = suffix to image URL
+	separator   = HTML to place in between links
+title
+body
