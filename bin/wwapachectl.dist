@@ -5,7 +5,7 @@ HTTPD=httpd
 WEBWORKUSER=yourname
 WEBWORKROOT=/home/yourname/webwork-modperl
 
-CONFIG=$WEBWORKROOT/conf/httpd-wwmp-$WEBWORKUSER.conf
+CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
 PID=$WEBWORKROOT/logs/httpd.pid
 
 usage() {
