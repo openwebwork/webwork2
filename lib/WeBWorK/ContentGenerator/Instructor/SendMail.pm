@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.33 2004/05/24 18:05:26 mschmitt Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.34 2004/06/15 20:43:53 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -66,9 +66,14 @@ sub initialize {
 	my $old_default_msg_file   =    'old_default.msg';
 	
 
+	#  get user record
+	my $ur = $self->{db}->getUser($user);
+
 	# store data
-	$self->{defaultFrom}            =   'FIXME from';
-	$self->{defaultReply}           =   'FIXME reply';	
+	$self->{defaultFrom}            =   $ur->email_address . " (".$ur->first_name." ".$ur->last_name.")";
+	$self->{defaultReply}           =   $ur->email_address;
+	$self->{defaultSubject}         =   $self->r->urlpath->arg("courseID") . " notice";
+
 	$self->{rows}                   =   (defined($r->param('rows'))) ? $r->param('rows') : $ce->{mail}->{editor_window_rows};
 	$self->{columns}                =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
 	$self->{default_msg_file}	    =   $default_msg_file;
@@ -759,7 +764,7 @@ sub read_input_file {
 		$from           = $self->{defaultFrom};
 		$replyTo        = $self->{defaultReply};
 		$text           =  (-e "$filePath") ? "FIXME file $filePath can't be read" :"FIXME file $filePath doesn't exist";
-		$subject        = "FIXME default subject";
+		$subject        = $self->{defaultSubject};
 	}
 	return ($from, $replyTo, $subject, \$text);
 }
