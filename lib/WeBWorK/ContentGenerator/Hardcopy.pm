@@ -53,7 +53,7 @@ sub go {
 	$self->{errors}   = [];
 	$self->{warnings} = [];
 	
-	# security checks - these have to be put somewhere
+	# security checks
 	my $multiSet = $self->{permissionLevel} > 0;
 	my $multiUser = $self->{permissionLevel} > 0;
 	if (@sets > 1 and not $multiSet) {
@@ -173,6 +173,24 @@ sub displayForm($) {
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
+	warn "showHints=", $r->param("showHints"), "\n";
+	print CGI::p(
+		CGI::checkbox(
+			-name    => "showCorrectAnswers",
+			-checked => $r->param("showCorrectAnswers") || 0,
+			-label   => "Correct answers",
+		), CGI::br(),
+		CGI::checkbox(
+			-name    => "showHints",
+			-checked => $r->param("showHints") || 0,
+			-label   => "Hints",
+		), CGI::br(),
+		CGI::checkbox(
+			-name    => "showSolutions",
+			-checked => $r->param("showSolutions") || 0,
+			-label   => "Solutions",
+		),
+	);
 	print CGI::start_table({-width=>"100%"}), CGI::start_Tr({-valign=>"top"});
 	
 	my $multiSet = $self->{permissionLevel} > 0;
@@ -410,9 +428,11 @@ sub getProblemTeX {
 	my $r = $self->{r};
 	my $ce = $self->{courseEnvironment};
 	
-	my $wwdb = $self->{wwdb};
-	my $cldb = $self->{cldb};
+	my $wwdb   = $self->{wwdb};
+	my $cldb   = $self->{cldb};
+	my $authdb = $self->{authdb};
 	my $effectiveUser = $self->{effectiveUser};
+	my $permissionLevel = $self->{permissionLevel};
 	my $set  = $wwdb->getSet($effectiveUser->id, $setName);
 	my $psvn = $wwdb->getPSVN($effectiveUser->id, $setName);
 	
@@ -428,6 +448,15 @@ sub getProblemTeX {
 			source_file => $pgFile,
 			# the rest of Problem's fields are not needed, i think
 		);
+	}
+	
+	# *** right here, figure out if we're allowed to get solutions and call PG->new accordingly.
+	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
+	my $showHints          = $r->param("showHints") || 0;
+	my $showSolutions      = $r->param("showSolutions") || 0;
+	unless ($permissionLevel > 0 or time > $set->due_date) {
+		$showCorrectAnswers = 0;
+		$showSolutions      = 0;
 	}
 	
 	my $pg = WeBWorK::PG->new(
@@ -465,6 +494,8 @@ sub getProblemTeX {
 		# the error context, not TeX code
 		$pg->{body_text} = undef;
 	}
+	
+	# *** right here, append list of correct answers to body text
 	
 	return $pg->{body_text};
 }

@@ -22,14 +22,36 @@ use WeBWorK::DB::WW;
 use WeBWorK::DB::Classlist;
 
 sub initialize {
-	my $self = shift;
+	my ($self, $setName) = @_;
 	my $courseEnvironment = $self->{courseEnvironment};
+	my $r = $self->{r};
+	my $userName = $r->param("user");
+	my $effectiveUserName = $r->param("effectiveUser");
 	
-	# Open a database connection that we can use for the rest of
-	# the content generation.
+	##### database setup #####
 	
-	$self->{wwdb} = WeBWorK::DB::WW->new($courseEnvironment);
-	$self->{cldb} = WeBWorK::DB::Classlist->new($courseEnvironment);
+	my $cldb   = WeBWorK::DB::Classlist->new($courseEnvironment);
+	my $wwdb   = WeBWorK::DB::WW->new($courseEnvironment);
+	my $authdb = WeBWorK::DB::Auth->new($courseEnvironment);
+	
+	my $user            = $cldb->getUser($userName);
+	my $effectiveUser   = $cldb->getUser($effectiveUserName);
+	my $set             = $wwdb->getSet($effectiveUserName, $setName);
+	my $permissionLevel = $authdb->getPermissions($userName);
+	
+	$self->{cldb} = $cldb;
+	$self->{wwdb} = $wwdb;
+	$self->{authdb} = $authdb;
+	
+	$self->{userName}        = $userName;
+	$self->{user}            = $user;
+	$self->{effectiveUser}   = $effectiveUser;
+	$self->{set}             = $set;
+	$self->{permissionLevel} = $permissionLevel;
+	
+	##### permissions #####
+	
+	$self->{isOpen} = time >= $set->open_date || $permissionLevel > 0;
 }
 
 sub path {
@@ -79,6 +101,8 @@ sub info {
 	
 	my $r = $self->{r};
 	my $ce = $self->{courseEnvironment};
+	
+	return "" unless $self->{isOpen};
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
@@ -130,6 +154,9 @@ sub body {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $effectiveUser = $r->param('effectiveUser');
 	my $wwdb = $self->{wwdb};
+	
+	return CGI::p(CGI::font({-color=>"red"}, "This problem set is not available because it is not yet open."))
+		unless ($self->{isOpen});
 	
 	my $hardcopyURL =
 		$courseEnvironment->{webworkURLs}->{root} . "/"

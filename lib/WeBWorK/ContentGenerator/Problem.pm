@@ -60,6 +60,17 @@ sub pre_header_initialize {
 	my $psvn            = $wwdb->getPSVN($effectiveUserName, $setName);
 	my $permissionLevel = $authdb->getPermissions($userName);
 	
+	$self->{cldb}            = $cldb;
+	$self->{wwdb}            = $wwdb;
+	$self->{authdb}          = $authdb;
+	
+	$self->{userName}        = $userName;
+	$self->{user}            = $user;
+	$self->{effectiveUser}   = $effectiveUser;
+	$self->{set}             = $set;
+	$self->{problem}         = $problem;
+	$self->{permissionLevel} = $permissionLevel;
+	
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
@@ -72,7 +83,18 @@ sub pre_header_initialize {
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
+	$self->{displayMode}    = $displayMode;
+	$self->{redisplay}      = $redisplay;
+	$self->{submitAnswers}  = $submitAnswers;
+	$self->{checkAnswers}   = $checkAnswers;
+	$self->{previewAnswers} = $previewAnswers;
+	$self->{formFields}     = $formFields;
+	
 	##### permissions #####
+	
+	# are we allowed to view this problem?
+	$self->{isOpen} = time >= $set->open_date || $permissionLevel > 0;
+	return unless $self->{isOpen};
 	
 	# what does the user want to do?
 	my %want = (
@@ -144,24 +166,6 @@ sub pre_header_initialize {
 	
 	##### store fields #####
 	
-	$self->{cldb}            = $cldb;
-	$self->{wwdb}            = $wwdb;
-	$self->{authdb}          = $authdb;
-	
-	$self->{userName}        = $userName;
-	$self->{user}            = $user;
-	$self->{effectiveUser}   = $effectiveUser;
-	$self->{set}             = $set;
-	$self->{problem}         = $problem;
-	$self->{permissionLevel} = $permissionLevel;
-	
-	$self->{displayMode}    = $displayMode;
-	$self->{redisplay}      = $redisplay;
-	$self->{submitAnswers}  = $submitAnswers;
-	$self->{checkAnswers}   = $checkAnswers;
-	$self->{previewAnswers} = $previewAnswers;
-	$self->{formFields}     = $formFields;
-	
 	$self->{want} = \%want;
 	$self->{must} = \%must;
 	$self->{can}  = \%can;
@@ -172,17 +176,19 @@ sub pre_header_initialize {
 
 sub if_warnings($$) {
 	my ($self, $arg) = @_;
+	return 0 unless $self->{isOpen};
 	return $self->{pg}->{warnings} ne "";
 }
 
 sub if_errors($$) {
 	my ($self, $arg) = @_;
+	return 0 unless $self->{isOpen};
 	return $self->{pg}->{flags}->{error_flag};
 }
 
 sub head {
 	my $self = shift;
-	
+	return "" unless $self->{isOpen};
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
@@ -264,6 +270,10 @@ sub title {
 
 sub body {
 	my $self = shift;
+	
+	unless ($self->{isOpen}) {
+		return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."));
+	}
 	
 	# unpack some useful variables
 	my $r               = $self->{r};
@@ -430,19 +440,21 @@ sub body {
 	}
 	
 	# debugging stuff
-	#print
-	#	CGI::hr(),
-	#	CGI::h2("debugging information"),
-	#	CGI::h3("form fields"),
-	#	ref2string($self->{formFields}),
-	#	CGI::h3("user object"),
-	#	ref2string($self->{user}),
-	#	CGI::h3("set object"),
-	#	ref2string($set),
-	#	CGI::h3("problem object"),
-	#	ref2string($problem),
-	#	CGI::h3("PG object"),
-	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	if (1) {
+		print
+			CGI::hr(),
+			CGI::h2("debugging information"),
+			CGI::h3("form fields"),
+			ref2string($self->{formFields}),
+			CGI::h3("user object"),
+			ref2string($self->{user}),
+			CGI::h3("set object"),
+			ref2string($set),
+			CGI::h3("problem object"),
+			ref2string($problem),
+			CGI::h3("PG object"),
+			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	}
 	
 	return "";
 }
