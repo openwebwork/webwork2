@@ -499,6 +499,7 @@ sub links {
 		my $problemID = $urlpath->arg("problemID");
 		
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
+		my $addUsers = $urlpath->newFromModule("${ipfx}AddUsers", %args);
 		my $userList = $urlpath->newFromModule("${ipfx}UserList", %args);
 		
 		# set list links
@@ -506,6 +507,7 @@ sub links {
 		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetEditor", %args, setID => $setID);
 		my $problemEditor = $urlpath->newFromModule("${ipfx}PGProblemEditor", %args, setID => $setID, problemID => $problemID);
 		
+		my $assigner = $urlpath->newFromModule("${ipfx}Assigner", %args);
 		my $mail     = $urlpath->newFromModule("${ipfx}SendMail", %args);
 		my $scoring  = $urlpath->newFromModule("${ipfx}Scoring", %args);
 		
@@ -519,6 +521,7 @@ sub links {
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
 		print CGI::start_ul();
+		print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, $addUsers->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
 		print CGI::start_li();
 		print CGI::a({href=>$self->systemLink($setList)}, $setList->name);
@@ -535,6 +538,7 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, $assigner->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
 		print CGI::start_li();
