@@ -220,7 +220,13 @@ sub deleteGlobalSet($$) {
 # set_user functions
 ################################################################################
 
-sub listUserSets($) {
+sub listSetUsers($$) {
+	my ($self, $setID) = @_;
+	return map { $_->[0] } # extract user_id
+		$self->{set_user}->list(undef, $setID);
+}
+
+sub listUserSets($$) {
 	my ($self, $userID) = @_;
 	return map { $_->[1] } # extract set_id
 		$self->{set_user}->list($userID, undef);
@@ -235,7 +241,7 @@ sub addUserSet($$) {
 	return $self->{set_user}->add($UserSet);
 }
 
-sub getUserSet($$) {
+sub getUserSet($$$) {
 	my ($self, $userID, $setID) = @_;
 	return $self->{set_user}->get($userID, $setID);
 }
@@ -245,7 +251,7 @@ sub putUserSet($$) {
 	return $self->{set_user}->put($UserSet);
 }
 
-sub deleteUserSet($$) {
+sub deleteUserSet($$$) {
 	my ($self, $userID, $setID) = @_;
 	$self->deleteUserProblem($userID, $setID, $_)
 		foreach $self->listUserProblems($userID, $setID);
@@ -295,6 +301,12 @@ sub listUserProblems($$$) {
 	my ($self, $userID, $setID) = @_;
 	return map { $_->[2] }
 		$self->{problem_user}->list($userID, $setID, undef);
+}
+
+sub listProblemUsers($$$) {
+	my ($self, $setID, $problemID) = @_;
+	return map { $_->[2] }
+		$self->{problem_user}->list(undef, $setID, $problemID);
 }
 
 sub addUserProblem($$) {

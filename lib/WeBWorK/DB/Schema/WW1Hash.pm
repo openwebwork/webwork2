@@ -86,10 +86,14 @@ sub list($@) {
 			push @result, [$UserSet->user_id(), $UserSet->set_id()];
 		}
 	} elsif ($self->{table} eq "problem_user") {
+		my $matchProblemID = $keyparts[2];
 		foreach (@matchingPSVNs) {
 			my $string = $self->{driver}->hash()->{$_};
 			my (undef, @UserProblems) = $self->string2records($string);
 			foreach (@UserProblems) {
+				# if we're looking for a particular problem:
+				next if defined $matchProblemID
+					and $matchProblemID ne $_->problem_id();
 				push @result, [$_->user_id(), $_->set_id(),
 					       $_->problem_id()];
 			}

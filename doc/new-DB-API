@@ -52,6 +52,7 @@ set
 
 set_user
 
+	listSetUsers($setID)
 	listUserSets($userID)
 	newUserSet($UserSet)
 	getUserSet($userID, $setID)
@@ -70,6 +71,7 @@ problem
 
 problem_user
 
+	listProblemUsers($setID, $problemID)
 	listUserProblems($userID, $setID)
 	newUserProblem($UserProblem)
 	getUserProblem($userID, $setID, $problemID)
