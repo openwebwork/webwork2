@@ -14,7 +14,8 @@ API.
 
 use strict;
 use warnings;
-use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::PG::ImageGenerator;
+use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 
 sub new {
 	shift; # throw away invocant -- we don't need it
@@ -26,6 +27,184 @@ sub new {
 	runtime_use $renderer;
 	
 	return $renderer->new(@_);
+}
+
+sub defineProblemEnvir {
+	my (
+		$self,
+		$ce,
+		$user,
+		$key,
+		$set,
+		$problem,
+		$psvn,
+		$formFields,
+		$options,
+	) = @_;
+	
+	my %envir;
+	
+	# ----------------------------------------------------------------------
+	
+	# PG environment variables
+	# from docs/pglanguage/pgreference/environmentvariables as of 06/25/2002
+	# any changes are noted by "ADDED:" or "REMOVED:"
+	
+	# Vital state information
+	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img,
+	#        texDisposition
+	
+	$envir{psvn}              = $set->psvn;
+	$envir{psvnNumber}        = $envir{psvn};
+	$envir{probNum}           = $problem->problem_id;
+	$envir{questionNumber}    = $envir{probNum};
+	$envir{fileName}          = $problem->source_file;	 
+	$envir{probFileName}      = $envir{fileName};		 
+	$envir{problemSeed}       = $problem->problem_seed;
+	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
+	$envir{languageMode}      = $envir{displayMode};	 
+	$envir{outputMode}        = $envir{displayMode};	 
+	$envir{displayHintsQ}     = $options->{showHints};	 
+	$envir{displaySolutionsQ} = $options->{showSolutions};
+	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
+	
+	# Problem Information
+	# ADDED: courseName, formatedDueDate
+	
+	$envir{openDate}            = $set->open_date;
+	$envir{formattedOpenDate}   = formatDateTime($envir{openDate});
+	$envir{dueDate}             = $set->due_date;
+	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
+	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
+	$envir{answerDate}          = $set->answer_date;
+	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
+	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
+	$envir{problemValue}        = $problem->value;
+	$envir{sessionKey}          = $key;
+	$envir{courseName}          = $ce->{courseName};
+	
+	# Student Information
+	# ADDED: studentID
+	
+	$envir{sectionName}      = $user->section;
+	$envir{sectionNumber}    = $envir{sectionName};
+	$envir{recitationName}   = $user->recitation;
+	$envir{recitationNumber} = $envir{recitationName};
+	$envir{setNumber}        = $set->set_id;
+	$envir{studentLogin}     = $user->user_id;
+	$envir{studentName}      = $user->first_name . " " . $user->last_name;
+	$envir{studentID}        = $user->student_id;
+	
+	# Answer Information
+	# REMOVED: refSubmittedAnswers
+	
+	$envir{inputs_ref} = $formFields;
+	
+	# External Programs
+	# ADDED: externalLaTeXPath, externalDvipngPath,
+	#        externalGif2EpsPath, externalPng2EpsPath
+	
+	$envir{externalTTHPath}      = $ce->{externalPrograms}->{tth};
+	$envir{externalLaTeXPath}    = $ce->{externalPrograms}->{latex};
+	$envir{externalDvipngPath}   = $ce->{externalPrograms}->{dvipng};
+	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
+	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
+	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
+	
+	# Directories and URLs
+	# REMOVED: courseName
+	# ADDED: dvipngTempDir
+	
+	$envir{cgiDirectory}           = undef;
+	$envir{cgiURL}                 = undef;
+	$envir{classDirectory}         = undef;
+	$envir{courseScriptsDirectory} = $ce->{pg}->{directories}->{macros}."/";
+	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
+	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
+	$envir{macroDirectory}         = $ce->{courseDirs}->{macros}."/";
+	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";
+	$envir{tempDirectory}          = $ce->{courseDirs}->{html_temp}."/";
+	$envir{tempURL}                = $ce->{courseURLs}->{html_temp}."/";
+	$envir{scriptDirectory}        = undef;
+	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
+	
+	# Information for sending mail
+	
+	$envir{mailSmtpServer} = $ce->{mail}->{smtpServer};
+	$envir{mailSmtpSender} = $ce->{mail}->{smtpSender};
+	$envir{ALLOW_MAIL_TO}  = $ce->{mail}->{allowedRecipients};
+	
+	# Default values for evaluating answers
+	
+	my $ansEvalDefaults = $ce->{pg}->{ansEvalDefaults};
+	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
+	
+	# ----------------------------------------------------------------------
+	
+	my $basename = "equation-$envir{psvn}.$envir{probNum}";
+	$basename .= ".$envir{problemSeed}" if $envir{problemSeed};
+		
+	# Object for generating equation images
+	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
+		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
+		latex	 => $envir{externalLaTeXPath},
+		dvipng   => $envir{externalDvipngPath},
+		useCache => 1,
+		cacheDir => $ce->{webworkDirs}->{equationCache},
+		cacheURL => $ce->{webworkURLs}->{equationCache},
+		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
+	);
+	
+	# Other things...
+	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
+	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
+	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
+	
+	# variables for interpreting capa problems.
+	$envir{CAPA_Tools}               = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
+	$envir{CAPA_MCTools}             = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
+	$envir{CAPA_Graphics_URL}        = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
+	$envir{CAPA_GraphicsDirectory}   = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
+	
+	return \%envir;
+}
+
+sub translateDisplayModeNames($) {
+	my $name = shift;
+	return {
+		tex           => "TeX",
+		plainText     => "HTML",
+		formattedText => "HTML_tth",
+		images        => "HTML_dpng", # "HTML_img",
+	}->{$name};
+}
+
+sub oldSafetyFilter {
+	my $answer = shift; # accepts one answer and checks it
+	my $submittedAnswer = $answer;
+	$answer = '' unless defined $answer;
+	my ($errorno);
+	$answer =~ tr/\000-\037/ /;
+	# Return if answer field is empty
+	unless ($answer =~ /\S/) {
+		#$errorno = "<BR>No answer was submitted.";
+		$errorno = 0;  ## don't report blank answer as error
+		return ($answer,$errorno);
+	}
+	# replace ^ with **    (for exponentiation)
+	# $answer =~ s/\^/**/g;
+	# Return if forbidden characters are found
+	unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\[\]\(\)\,\|]+$/ )  {
+		$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
+		$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";
+		return ($answer,$errorno);
+	}
+	$errorno = 0;
+	return($answer, $errorno);
+}
+
+sub nullSafetyFilter {
+	return shift, 0; # no errors
 }
 
 1;
@@ -74,7 +253,7 @@ Modules which support this API must implement the following method:
 
 =over
 
-=item new (ENVIRONMENT, USER, KEY, SET, PROBLEM, PSVN, FIELDS, OPTIONS)
+=item new ENVIRONMENT, USER, KEY, SET, PROBLEM, PSVN, FIELDS, OPTIONS
 
 The C<new> method creates a translator, initializes it using the parameters
 specified, translates a PG file, and processes answers. It returns a reference
@@ -195,6 +374,22 @@ A string containing any warnings encountered while rendering the problem.
 =item flags
 
 A hash containing PG_flags (see the Translator docs).
+
+=back
+
+=head1 METHODS PROVIDED BY THE BASE CLASS
+
+The following methods are provided for use by subclasses of WeBWorK::PG.
+
+=over
+
+=item defineProblemEnvir ENVIRONMENT, USER, KEY, SET, PROBLEM, PSVN, FIELDS, OPTIONS
+
+Generate a problem environment hash to pass to the renderer.
+
+=item translateDisplayModeNames NAME
+
+NAME contains 
 
 =back
 
