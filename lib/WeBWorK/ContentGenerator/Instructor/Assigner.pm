@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.9 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.10 2004/01/15 22:45:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -121,19 +121,19 @@ sub body {
 	
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action=>$r->uri});
-	
+	 
 	print CGI::p(
-		CGI::submit({name=>"assignToAll", value=>"Assign to All Users"}),
-		
-	);
-	print CGI::p(qq{<div style="color:red"> Do not uncheck students, unless you know what you are doing.<br>
-	                    There is NO undo for unassigning students. <br></div>
-	                    When you unassign
+		    CGI::submit({name=>"assignToAll", value=>"Assign to All Users"})
+		  ),
+		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
+	           "There is NO undo for unassigning students. "),
+	      CGI::p("When you unassign
 				        by unchecking a student's name, you destroy all
 				        of the data for problem set $setID for this student. You will then need to
 				        reassign the set to these students and they will receive new versions of the problems.
-				        Make sure this is what you want to do before unchecking students.}
+				        Make sure this is what you want to do before unchecking students."
 	);
+				        
 	print CGI::start_table({});
 	# get user records
 	my @userRecords  = ();
@@ -191,11 +191,13 @@ sub body {
 	print $self->hidden_authen_fields;
 	print CGI::submit({name=>"assignToSelected", value=>"Save"});
 	print CGI::p( CGI::hr(),
-				  CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
-				  qq{<div style="color:red"> There is NO undo for this function.  
+				  CGI::div({ style=>"background-color:red"}, "There is NO undo for this function.  
 				        Do not use it unless you know what you are doing!  When you unassign
 				        a student using this button, or by unchecking their name, you destroy all
-				        of the data for problem set $setID for this student.</div>},
+				        of the data for problem set $setID for this student.",
+				        CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
+				  ),
+				  
 				  CGI::hr(),
 	);
 	print CGI::end_form();
