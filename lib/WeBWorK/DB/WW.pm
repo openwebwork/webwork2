@@ -183,7 +183,8 @@ sub getProblem($$$$) {
 	my $problemNumber = shift;
 	my $PSVN = $self->getPSVN($userID, $setID);
 	return unless $PSVN;
-	return hash2problem($problemNumber, $self->fetchRecord($PSVN));
+	my $problem = hash2problem($problemNumber, $self->fetchRecord($PSVN));
+	return $problem->source_file ? $problem : undef;
 }
 
 # setProblem($problem) - if a problem with the same ID for the specified user

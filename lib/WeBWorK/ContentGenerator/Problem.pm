@@ -20,14 +20,6 @@ use WeBWorK::PG;
 use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
 
 # TODO:
-# :) enforce permissions for showCorrectAnswers and showSolutions
-#    (use $PRIV = $canPRIV && ($wantPRIV || $mustPRIV) -- cool syntax!)
-# :) if answers were not submitted and there are student answers in the DB,
-#    decode them and put them into $formFields for the translator
-# :) store submitted answers hash in database for sticky answers
-# :) deal with the results of answer evaluation and grading :p
-# :) introduce a recordAnswers option, which works on the same principle as
-#    the other permission-based options
 # 7. make warnings work
 
 ############################################################
@@ -48,7 +40,7 @@ use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
 #
 ############################################################
 
-sub prepare {
+sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
 	my $courseEnv = $self->{courseEnvironment};
 	my $r = $self->{r};
@@ -167,25 +159,94 @@ sub prepare {
 	$self->{pg} = $pg;
 }
 
+#sub header {
+#	# *** we need to print $pg->{header_text} here!
+#}
+
+sub path {
+	my $self = shift;
+	my $args = $_[-1];
+	my $setName = $self->{set}->id;
+	my $problemNumber = $self->{problem}->id;
+	
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home" => "$root",
+		$courseName => "$root/$courseName",
+		$setName => "$root/$courseName/set$setName",
+		"Problem $problemNumber" => "",
+	);
+}
+
+sub siblings {
+	my $self = shift;
+	my $setName = $self->{set}->id;
+	my $problemNumber = $self->{problem}->id;
+	
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	
+	my $wwdb = $self->{wwdb};
+	my $user = $self->{r}->param("user");
+	my @problems;
+	push @problems, $wwdb->getProblem($user, $setName, $_)
+		foreach ($wwdb->getProblems($user, $setName));
+	foreach my $problem (sort { $a->id <=> $b->id } @problems) {
+		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->id."/?"
+			. $self->url_authen_args}, "Problem ".$problem->id), CGI::br();
+	}
+}
+
+sub nav {
+	my $self = shift;
+	my $args = $_[-1];
+	my $setName = $self->{set}->id;
+	my $problemNumber = $self->{problem}->id;
+	
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	
+	my $wwdb = $self->{wwdb};
+	my $user = $self->{r}->param("user");
+	
+	my @links = ("Problem List" => "$root/$courseName/set$setName");
+	
+	my $prevProblem = $wwdb->getProblem($user, $setName, $problemNumber-1);
+	my $nextProblem = $wwdb->getProblem($user, $setName, $problemNumber+1);
+	unshift @links, "Previous Problem" => "$root/$courseName/set$setName/prob".$prevProblem->id
+		if $prevProblem;
+	push @links, "Next Problem" => "$root/$courseName/set$setName/prob".$nextProblem->id
+		if $nextProblem;
+	
+	return $self->navMacro($args, @links);
+}
+
 sub title {
 	my $self = shift;
-	#return "Set " . $self->{set}->id . " problem " . $self->{problem}->id;
-	return "hold on a sec";
+	my $setName = $self->{set}->id;
+	my $problemNumber = $self->{problem}->id;
+	
+	return "$setName : Problem $problemNumber";
 }
 
 sub body {
 	my $self = shift;
 	
-	$self->prepare(@_);
+	#$self->prepare(@_);
 	
 	# unpack some useful variables
-	my $r             = $self->{r};
-	my $wwdb          = $self->{wwdb};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $submitAnswers = $self->{submitAnswers};
-	my %will          = %{ $self->{will} };
-	my $pg            = $self->{pg};
+	my $r               = $self->{r};
+	my $wwdb            = $self->{wwdb};
+	my $set             = $self->{set};
+	my $problem         = $self->{problem};
+	my $permissionLevel = $self->{permissionLevel};
+	my $submitAnswers   = $self->{submitAnswers};
+	my %will            = %{ $self->{will} };
+	my $pg              = $self->{pg};
 	
 	##### translation errors? #####
 	
@@ -214,8 +275,6 @@ sub body {
 			$problem->status($pg->{state}->{recorded_score});
 			$problem->num_correct($pg->{state}->{num_of_correct_ans});
 			$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-			#warn "Would have stored the following:\n",
-			#	$problem->toString, "\n";
 			$wwdb->setProblem($problem);
 		}
 	}
@@ -242,12 +301,22 @@ sub body {
 		$attemptsLeft = $problem->max_attempts - $attempts;
 		$attemptsLeftNoun = $attemptsLeft == 1 ? "attempt" : "attempts";
 	}
+	my $setClosedMessage;
+	if (time < $set->open_date or time > $set->due_date) {
+		$setClosedMessage = "This problem set is closed.";
+		if ($permissionLevel > 0) {
+			$setClosedMessage .= " Since you are a privileged user, additional attempts will be recorded.";
+		} else {
+			$setClosedMessage .= " Additional attempts will not be recorded.";
+		}
+	}
 	print CGI::p(
 		"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
 		$problem->attempted
 			? "Your recorded score is $lastScore." . CGI::br()
 			: "",
-		"You have $attemptsLeft $attemptsLeftNoun remaining."
+		"You have $attemptsLeft $attemptsLeftNoun remaining.", CGI::br(),
+		$setClosedMessage,
 	);
 	
 	# BY THE WAY..........
@@ -340,7 +409,7 @@ sub attemptResults($$$) {
 	my $scorePercent = int ($problemResult->{score} * 100) . "\%";
 	my $summary = "On this attempt, you answered $numCorrect $numCorrectNoun out of "
 		. scalar @answerNames . " correct, for a score of $scorePercent.";
-	return CGI::table({-border=>1}, CGI::tr(\@tableRows)) . CGI::p($summary);
+	return CGI::table({-border=>1}, CGI::Tr(\@tableRows)) . CGI::p($summary);
 }
 
 sub viewOptions($) {

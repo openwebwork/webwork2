@@ -51,7 +51,7 @@ use strict;
 use warnings;
 
 sub new {
-	print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";
+	#print "new called with \@_ = ( " . (join ", ", @_)  . " )\n";
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};

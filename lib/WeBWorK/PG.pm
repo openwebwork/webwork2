@@ -7,7 +7,7 @@ package WeBWorK::PG;
 
 =head1 NAME
 
-WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API
+WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API.
 
 =cut
 
@@ -41,6 +41,10 @@ sub new($$$$$$$$) {
 	my $problem = $wwdb->getProblem($userName, $setName, $problemNumber);
 	my $psvn = $wwdb->getPSVN($userName, $setName);
 	
+	# *** NOTE: in order to support set header files, I propose adding a
+	# magic problemNumber (i.e. 0 or -1) which would cuase $problem to
+	# contain a dummy problem whose source file is the set header file.
+	
 	# create a Translator
 	warn "PG: creating a Translator\n";
 	my $translator = WeBWorK::PG::Translator->new;
@@ -57,11 +61,12 @@ sub new($$$$$$$$) {
 	# evaluate modules and "extra packages"
 	warn "PG: evaluating modules and \"extra packages\"\n";
 	my @modules = @{ $courseEnv->{pg}->{modules} };
-	foreach my $module_packages (@modules) {
-		# the first item in $module_packages is the main package
-		$translator->evaluate_modules(shift @$module_packages);
+	foreach my $module_packages_ref (@modules) {
+		my ($module, @extra_packages) = @$module_packages_ref;
+		# the first item is the main package
+		$translator->evaluate_modules($module);
 		# the remaining items are "extra" packages
-		$translator->load_extra_packages(@$module_packages);
+		$translator->load_extra_packages(@extra_packages);
 	}
 	
 	# set the environment (from defineProblemEnvir)
@@ -101,49 +106,52 @@ sub new($$$$$$$$) {
 	warn "PG: translating the PG source into text\n";
 	$translator->translate();
 	
-	# [in Problem.pm and processProblem8.pl, "install a grader" is here]
-	
-	# process student answers
-	warn "PG: processing student answers\n";
-	$translator->process_answers($formFields);
-	
-	# retrieve the problem state and give it to the translator
-	warn "PG: retrieving the problem state and giving it to the translator\n";
-	$translator->rh_problem_state({
-		recorded_score =>       $problem->status,
-		num_of_correct_ans =>   $problem->num_correct,
-		num_of_incorrect_ans => $problem->num_incorrect,
-	});
-	
-	# determine an entry order -- the ANSWER_ENTRY_ORDER flag is built by
-	# the PG macro package (PG.pl)
-	warn "PG: determining an entry order\n";
-	my @answerOrder =
-		$translator->rh_flags->{ANSWER_ENTRY_ORDER}
-			? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
-			: keys %{ $translator->rh_evaluated_answers };
-	
-	# install a grader -- use the one specified in the problem,
-	# or fall back on the default from the course environment.
-	# (two magic strings are accepted, to avoid having to
-	# reference code when it would be difficult.)
-	warn "PG: installing a grader\n";
-	my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
-		|| $courseEnv->{pg}->{options}->{grader};
-	$grader = $translator->rf_std_problem_grader
-		if $grader eq "std_problem_grader";
-	$grader = $translator->rf_avg_problem_grader
-		if $grader eq "avg_problem_grader";
-	die "Problem grader $grader is not a CODE reference."
-		unless ref $grader eq "CODE";
-	$translator->rf_problem_grader($grader);
-	
-	# grade the problem
-	warn "PG: grading the problem\n";
-	my ($result, $state) = $translator->grade_problem(
-		answers_submitted  => $translationOptions->{processAnswers},
-		ANSWER_ENTRY_ORDER => \@answerOrder,
-	);
+	my ($result, $state); # we'll need these on the other side of the if block!
+	if ($translationOptions->{processAnswers}) {
+		
+		# process student answers
+		warn "PG: processing student answers\n";
+		$translator->process_answers($formFields);
+
+		# retrieve the problem state and give it to the translator
+		warn "PG: retrieving the problem state and giving it to the translator\n";
+		$translator->rh_problem_state({
+			recorded_score =>       $problem->status,
+			num_of_correct_ans =>   $problem->num_correct,
+			num_of_incorrect_ans => $problem->num_incorrect,
+		});
+
+		# determine an entry order -- the ANSWER_ENTRY_ORDER flag is built by
+		# the PG macro package (PG.pl)
+		warn "PG: determining an entry order\n";
+		my @answerOrder =
+			$translator->rh_flags->{ANSWER_ENTRY_ORDER}
+				? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
+				: keys %{ $translator->rh_evaluated_answers };
+
+		# install a grader -- use the one specified in the problem,
+		# or fall back on the default from the course environment.
+		# (two magic strings are accepted, to avoid having to
+		# reference code when it would be difficult.)
+		warn "PG: installing a grader\n";
+		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
+			|| $courseEnv->{pg}->{options}->{grader};
+		$grader = $translator->rf_std_problem_grader
+			if $grader eq "std_problem_grader";
+		$grader = $translator->rf_avg_problem_grader
+			if $grader eq "avg_problem_grader";
+		die "Problem grader $grader is not a CODE reference."
+			unless ref $grader eq "CODE";
+		$translator->rf_problem_grader($grader);
+
+		# grade the problem
+		warn "PG: grading the problem\n";
+		($result, $state) = $translator->grade_problem(
+			answers_submitted  => $translationOptions->{processAnswers},
+			ANSWER_ENTRY_ORDER => \@answerOrder,
+		);
+		
+	}
 	
 	# return an object which contains the translator and the results of
 	# the translation process. this is DIFFERENT from the "format expected
@@ -182,7 +190,7 @@ sub defineProblemEnvir($$$$$$$) {
 	# any changes are noted by "ADDED:" or "REMOVED:"
 	
 	# Vital state information
-	# ADDED: displayHintsQ, displaySolutionsQ
+	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img
 	
 	$envir{psvn}              = $psvn;			 
 	$envir{psvnNumber}        = $envir{psvn};		 
@@ -265,6 +273,7 @@ sub defineProblemEnvir($$$$$$$) {
 sub translateDisplayModeNames($) {
 	my $name = shift;
 	return {
+		tex           => "TeX",
 		plainText     => "HTML",
 		formattedText => "HTML_tth",
 		images        => "HTML_img"

@@ -82,6 +82,10 @@ sub body {
 	my $user = $r->param('user');
 	my $wwdb = $self->{wwdb};
 	
+	# *** *** *** ***
+	# somewhere in here, we have to print the problem set header!
+	# *** *** *** ***
+	
 	print CGI::start_table();
 	print CGI::Tr(
 		CGI::th("Name"),

@@ -16,6 +16,7 @@ use warnings;
 use Apache::Constants qw(:common);
 use CGI qw();
 use URI::Escape;
+use WeBWorK::Utils qw(readFile);
 #use CGI::Carp qw(fatalsToBrowser);
 
 ################################################################################
@@ -89,11 +90,20 @@ sub template {
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 	
-	open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
-	my @template = <TEMPLATE>;
-	close TEMPLATE;
+	# so even though the variable $/ APPEARS to contain a newline,
+	# <TEMPLATE> is slurping the whole file into the first element of
+	# @template ONLY AFTER THE TRANSLATOR RUNS. WTF!!!
+	#
+	#open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
+	#my @template = <TEMPLATE>;
+	#close TEMPLATE;
+	#
+	# Let's try something else instead:
+	
+	my @template = split /\n/, readFile($templateFile);
 	
 	foreach my $line (@template) {
+		#warn "foo: $line\n";
 		# This is incremental regex processing.
 		# the /c is so that pos($line) doesn't die when the regex fails.
 		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
@@ -102,7 +112,9 @@ sub template {
 			my $args = $raw_args =~ /\S/ ? cook_args($raw_args) : {};
 			print $before;
 			
-			print $self->$function(@_, $args) if $self->can($function);
+			if ($self->can($function)) {
+				print $self->$function(@_, $args);
+			}
 		}
 		
 		print substr $line, (defined(pos($line)) ? pos($line) : 0);
@@ -314,11 +326,13 @@ sub quicklinks {
 	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
 #	my $prefs    = "$root/prefs/?" . $self->url_authen_args();
 #	my $help     = $ce->{webworkURLs}->{docs} . "?" . $self->url_authen_args();
-	return CGI::p(
+	my $logout   = "$root/$courseName/";
+	return
 		CGI::a({-href=>$probSets}, "Problem Sets"), CGI::br(),
 #		CGI::a({-href=>$prefs}, "User Options"), CGI::br(),
 #		CGI::a({-href=>$help}, "Help"), CGI::br(),
-	);
+		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+	;
 }
 
 sub title {

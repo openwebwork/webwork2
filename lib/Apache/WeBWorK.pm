@@ -18,33 +18,32 @@ use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::Hardcopy;
 use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 
-# Place something like the following in your Apache configuration to load the
-# WeBWorK module and install it as a handler for the WeBWorK system
-
-# PerlRequire /path/to/webwork/conf/init.pl
-# PerlSetVar webwork_root /path/to/webwork
-# <Location /webwork>
-#	SetHandler perl-script
-#	PerlHandler Apache::WeBWorK
-# </Location>
-
-# In addition, you will have to edit init.pl in what should be obvious ways.
-
-# Sets up the common environment needed for every subsystem and then dispatches
-# the page request to the appropriate content generator.
-
-# This function has MANY MANY points of exit (return statements)!  woo!
-# call it a quirk of my coding style.  I think it makes it easier to read in this case.
+# This module should be installed as a Handler for the location selected for
+# WeBWorK on your webserver. Here is an example of a stanza that can be added
+# to your httpd.conf file to achieve this:
+#
+# <IfModule mod_perl.c>
+#     PerlFreshRestart On
+#     <Location /modperl-sam>
+#         SetHandler perl-script
+#         PerlSetVar webwork_root /opt/webwork
+#         <Perl>
+#             use lib '/opt/webwork/lib';
+#         </Perl>
+#         PerlHandler Apache::WeBWorK
+#     </Location>
+# </IfModule>
 
 sub handler() {
 	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data, and sift through it for the key.  So use Apache::Request
-
+	
 	# This stuff is pretty much copied out of the O'Reilly mod_perl book.
 	# It's for figuring out the basepath.  I may change this up if I
 	# find a better way to do it.
@@ -64,6 +63,12 @@ sub handler() {
 	my($junk, @components) = split "/", $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
+	
+	# If no course was specified, phreak out.
+	# Eventually, display a list of courses, or something.
+	unless (defined $course) {
+		return DECLINED;
+	}
 	
 	# Try to get the course environment.
 	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $course);};
@@ -101,6 +106,9 @@ sub handler() {
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
 			return WeBWorK::ContentGenerator::ProblemSets->new($r, $course_env)->go;
+		} elsif ($arg eq "hardcopy") {
+			my $hardcopyArgument = shift @components || "";
+			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
 			###
 		} elsif ($arg eq "prefs") {
