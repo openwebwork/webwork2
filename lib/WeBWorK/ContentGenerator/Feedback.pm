@@ -53,7 +53,7 @@ use WeBWorK::Utils qw(dequoteHere wrapText);
 sub path {
 	my ($self, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -70,7 +70,7 @@ sub title {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	# get form fields 
 	my $key                = $r->param("key");

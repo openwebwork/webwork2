@@ -29,7 +29,7 @@ sub links {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	my $authdb = WeBWorK::DB::Auth->new($ce);
 	my $root = $ce->{webworkURLs}->{root};

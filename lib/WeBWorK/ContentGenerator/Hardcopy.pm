@@ -27,7 +27,7 @@ sub go {
 	my ($self, $singleSet) = @_;
 	
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my @sets = $r->param("hcSet");
 	my @users = $r->param("hcUser");
 	
@@ -103,7 +103,7 @@ sub go {
 sub path {
 	my ($self, undef, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -287,7 +287,7 @@ sub generateHardcopy($) {
 	}
 	
 	# determine where hardcopy is going to go
-	#my $tempDir = $self->{courseEnvironment}->{courseDirs}->{html_temp} . "/hardcopy";
+	#my $tempDir = $self->{ce}->{courseDirs}->{html_temp} . "/hardcopy";
 	my $tempDir = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
 
 	# make sure tempDir exists
@@ -298,7 +298,7 @@ sub generateHardcopy($) {
 	#}
 
 	# determine name of PDF file
-	my $courseName = $self->{courseEnvironment}->{courseName};
+	my $courseName = $self->{ce}->{courseName};
 	my $fileNameSet = (@sets > 1 ? "multiset" : $sets[0]);
 	my $fileNameUser = (@users > 1 ? "multiuser" : $users[0]);
 	my $fileName = "$courseName.$fileNameUser.$fileNameSet.pdf";
@@ -330,7 +330,7 @@ sub latex2pdf {
 	# module at some point (or put it in Utils).
 	my ($self, $tex, $fileBase, $fileName) = @_;
 	my $finalFile = "$fileBase/$fileName";
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	# create a temporary directory for tex to shit in
 	my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
@@ -385,7 +385,7 @@ sub texBlockComment(@) { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)
 
 sub getMultiSetTeX {
 	my ($self, @sets) = @_;
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $tex = "";
 	
 	# the document preamble
@@ -407,7 +407,7 @@ sub getMultiSetTeX {
 
 sub getSetTeX {
 	my ($self, $setName) = @_;
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $wwdb = $self->{wwdb};
 	my $effectiveUserName = $self->{effectiveUser}->id;
 	my @problemNumbers = sort { $a <=> $b } $wwdb->getProblems($effectiveUserName, $setName);
@@ -447,7 +447,7 @@ sub getSetTeX {
 sub getProblemTeX {
 	my ($self, $setName, $problemNumber, $pgFile) = @_;
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	my $wwdb   = $self->{wwdb};
 	my $cldb   = $self->{cldb};

@@ -19,7 +19,7 @@ sub new($$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
-	($self->{r}, $self->{courseEnvironment}) = @_;
+	($self->{r}, $self->{ce}) = @_;
 	bless $self, $class;
 	return $self;
 }
@@ -29,7 +29,7 @@ sub new($$$) {
 sub hasPermissions {
 	my ($self, $user, $activity) = @_;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my $permissionLevels = $courseEnvironment->{permissionLevels};
 	my $auth = WeBWorK::DB::Auth->new($courseEnvironment);
 	

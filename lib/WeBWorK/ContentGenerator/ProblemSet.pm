@@ -23,7 +23,7 @@ use WeBWorK::DB::Classlist;
 
 sub initialize {
 	my ($self, $setName) = @_;
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my $r = $self->{r};
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
@@ -57,7 +57,7 @@ sub initialize {
 sub path {
 	my ($self, $setName, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -70,7 +70,7 @@ sub path {
 sub nav {
 	my ($self, $setName, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my @links = ("Problem Sets" , "$root/$courseName", "navUp");
@@ -83,7 +83,7 @@ sub nav {
 sub siblings {
 	my ($self, $setName) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
@@ -113,7 +113,7 @@ sub info {
 	my ($self, $setName) = @_;
 	
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	return "" unless $self->{isOpen};
 	
@@ -164,7 +164,7 @@ sub info {
 sub body {
 	my ($self, $setName) = @_;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my $effectiveUser = $r->param('effectiveUser');
 	my $wwdb = $self->{wwdb};
 	
@@ -196,7 +196,7 @@ sub body {
 	print CGI::end_table();
 	
 	# feedback form
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";

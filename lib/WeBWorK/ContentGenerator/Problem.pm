@@ -42,7 +42,7 @@ use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
 
 sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
-	my $courseEnv = $self->{courseEnvironment};
+	my $courseEnv = $self->{ce};
 	my $r = $self->{r};
 	my $userName = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
@@ -200,7 +200,7 @@ sub path {
 	my $setName = $self->{set}->id;
 	my $problemNumber = $self->{problem}->id;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -216,7 +216,7 @@ sub siblings {
 	my $setName = $self->{set}->id;
 	my $problemNumber = $self->{problem}->id;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
@@ -240,7 +240,7 @@ sub nav {
 	my $setName = $self->{set}->id;
 	my $problemNumber = $self->{problem}->id;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
@@ -319,7 +319,7 @@ sub body {
 			$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
 			$wwdb->setProblem($problem);
 			# write to the transaction log, just to make sure
-			writeLog($self->{courseEnvironment}, "transaction",
+			writeLog($self->{ce}, "transaction",
 				$problem->id."\t".
 				$problem->set_id."\t".
 				$problem->login_id."\t".
@@ -337,16 +337,16 @@ sub body {
 	}
 	# logging student answers
 	my $pastAnswerLog = undef;
-	if (defined( $self->{courseEnvironment}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
+	if (defined( $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
 	
-		$pastAnswerLog 	= 	$self->{courseEnvironment}->{webworkFiles}->{logs}->{'pastAnswerList'};
+		$pastAnswerLog 	= 	$self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'};
 	
 		if ($submitAnswers and defined($pastAnswerLog) ) {
 			my $answerString = "";
 			my %answerHash = %{ $pg->{answers} };
 			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
 				foreach (sort keys  %answerHash);
-			writeLog($self->{courseEnvironment}, "pastAnswerList",
+			writeLog($self->{ce}, "pastAnswerList",
 					'|'.$problem->login_id.
 					'|'.$problem->set_id.
 					'|'.$problem->id.'|'."\t".
@@ -449,7 +449,7 @@ sub body {
 		
 	print  CGI::start_div({class=>"problemFooter"});
 	# feedback form
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";
@@ -631,7 +631,7 @@ sub viewOptions($) {
 
 sub previewAnswer($$) {
 	my ($self, $answerResult) = @_;
-	my $ce            = $self->{courseEnvironment};
+	my $ce            = $self->{ce};
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
 	my $problem       = $self->{problem};

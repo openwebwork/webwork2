@@ -46,7 +46,7 @@ sub title {
 sub body {
 	my $self = shift;
 	my $formFields = WeBWorK::Form->new_from_paramable($self->{r});
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	return
 		CGI::h2("URL Authentication Arguments"), CGI::p($self->url_authen_args()),
 		CGI::h2("Form Fields"), ref2string($formFields),

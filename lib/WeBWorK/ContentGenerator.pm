@@ -30,16 +30,17 @@ use Carp qw(cluck);
 # be able to use it for things like "sub-requests". Uh... uh... I have to think
 # about that one. The dispatcher uses this idiom:
 # 
-# 
 # 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce)->go(@whatever);
 # 
 # and throws away the result ;)
 #
 sub new($$$) {
-	my $invocant = shift;
+	my ($invocant, $r, $ce) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
-	($self->{r}, $self->{courseEnvironment}) = @_;
+	my $self = {
+		r  => $r,
+		ce => $ce,
+	};
 	bless $self, $class;
 	return $self;
 }
@@ -65,7 +66,7 @@ sub new($$$) {
 sub go {
 	my $self = shift;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
 	$self->header(@_);
@@ -89,7 +90,7 @@ sub go {
 sub template {
 	my ($self, $templateFile) = (shift, shift);
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my @ifstack = (1); # Start off in printing mode
 		# say $ifstack[-1] to get the result of the last <#!--if-->
 	
@@ -244,7 +245,7 @@ sub navMacro {
 	my $tail = shift;
 	my @links = @_;
 	my $auth = $self->url_authen_args;
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $prefix = $ce->{webworkURLs}->{htdocs}."/images";
 	my @result;
 	while (@links) {
@@ -275,7 +276,7 @@ sub hidden_fields($;@) {
 	my $r = $self->{r};
 	my @fields = @_;
 	@fields or @fields = $r->param;
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my $html = "";
 	
 	foreach my $param (@fields) {
@@ -302,7 +303,7 @@ sub url_args($;@) {
 	my $r = $self->{r};
 	my @fields = @_;
 	@fields or @fields = $r->param;
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	
 	my @pairs;
 	foreach my $param (@fields) {
@@ -430,7 +431,7 @@ sub loginstatus {
 # area, i.e. "stacking"
 sub links {
 	my $self = shift;
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $userName = $self->{r}->param("user");
 	my $courseName = $ce->{courseName};
 	my $root = $ce->{webworkURLs}->{root};

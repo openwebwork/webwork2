@@ -36,7 +36,7 @@ sub links {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $course_env = $self->{courseEnvironment};
+	my $course_env = $self->{ce};
 	# get some stuff together
 	my $user = $r->param("user") || "";
 	my $key = $r->param("key");

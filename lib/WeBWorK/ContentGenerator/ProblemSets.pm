@@ -23,7 +23,7 @@ use WeBWorK::Utils qw(readFile formatDateTime);
 
 sub initialize {
 	my $self = shift;
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	
 	# Open a database connection that we can use for the rest of
 	# the content generation.
@@ -35,7 +35,7 @@ sub initialize {
 sub path {
 	my ($self, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -46,7 +46,7 @@ sub path {
 
 sub title {
 	my $self = shift;
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	
 	return $courseEnvironment->{courseName};
 }
@@ -54,7 +54,7 @@ sub title {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
+	my $courseEnvironment = $self->{ce};
 	my $user = $r->param("user");
 	my $effectiveUser = $r->param("effectiveUser");
 	my $sort = $r->param("sort") || "status";
@@ -98,7 +98,7 @@ sub body {
 	print CGI::endform();
 	
 	# feedback form
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";

@@ -22,7 +22,7 @@ use WeBWorK::Utils qw(formatDateTime dequoteHere);
 sub path {
 	my ($self, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
@@ -41,7 +41,7 @@ sub title {
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $course_env = $self->{courseEnvironment};
+	my $course_env = $self->{ce};
 	my $course_name = $course_env->{courseName};
 	my $authen_args = $self->url_authen_args();
 	my $prof_url = $course_env->{webworkURLs}->{oldProf};

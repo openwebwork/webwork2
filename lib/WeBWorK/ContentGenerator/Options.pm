@@ -22,7 +22,7 @@ use WeBWorK::DB::WW;
 sub initialize {
 	my $self = shift;
 	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	
 	$self->{cldb} = WeBWorK::DB::Classlist->new($ce);
 	$self->{authdb} = WeBWorK::DB::Auth->new($ce);
@@ -32,7 +32,7 @@ sub initialize {
 sub path {
 	my ($self, $args) = @_;
 	
-	my $ce = $self->{courseEnvironment};
+	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,

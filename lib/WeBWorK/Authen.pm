@@ -19,7 +19,7 @@ sub new($$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
-	($self->{r}, $self->{courseEnvironment}) = @_;
+	($self->{r}, $self->{ce}) = @_;
 	bless $self, $class;
 	return $self;
 }
@@ -48,7 +48,7 @@ sub generate_key {
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
-	my $course_env = $self->{courseEnvironment};
+	my $course_env = $self->{ce};
 	
 	my $user = $r->param('user');
 	my $passwd = $r->param('passwd');
