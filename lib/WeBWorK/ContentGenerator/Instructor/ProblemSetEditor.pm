@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.44 2004/04/03 16:24:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.46 2004/04/27 23:30:03 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,14 +44,17 @@ sub getSetName {
 	return $pathSetName;
 }
 
-# One wrinkle here: if $override is undefined, do the global thing, otherwise, it's truth value determines the checkbox.
+# One wrinkle here: if $override is undefined, do the global thing, 
+# otherwise, it's truth value determines the checkbox and the current fieldValue is not directly editable
 sub setRowHTML {
 	my ($description, $fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
 	
 	my $attributeHash = {type=>"text", name=>$fieldName, value=>$fieldValue};
 	$attributeHash->{size} = $size if defined $size;
 	
-	my $html = CGI::td({}, [$description, CGI::input($attributeHash)]);
+	my $input = (defined $override) ? $fieldValue : CGI::input($attributeHash);
+	
+	my $html = CGI::td({}, [$description, $input]);
 	
 	if (defined $override) {
 		$attributeHash->{name}="${fieldName}_override";
