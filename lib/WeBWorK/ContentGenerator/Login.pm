@@ -37,8 +37,6 @@ sub body {
 		print CGI::font({-color => 'red'}, CGI::b($r->notes("authen_error"))),CGI::br();
 	}
 	
-	print CGI::p("This is a test.");
-	
 	print CGI::p("Please enter your username and password for ",CGI::b($course)," below:");
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 

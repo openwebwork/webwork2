@@ -13,6 +13,11 @@ use CGI qw();
 use WeBWorK::Utils qw(ref2string);
 use WeBWorK::Form;
 
+sub initialize {
+	my $self = shift;
+	$self->{funny} = "foobar!";
+}
+
 sub title {
 	return "Welcome to Hell";
 }
@@ -23,7 +28,8 @@ sub body {
 	my $courseEnvironment = $self->{courseEnvironment};
 	return
 		CGI->h2("Form Fields"), ref2string($formFields),
-		CGI->h2("Course Environment"), ref2string($courseEnvironment);
+		CGI->h2("Course Environment"), ref2string($courseEnvironment),
+		CGI->h2("Funny"), p($self->{funny});
 }
 
 1;

@@ -1,13 +1,31 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::ContentGenerator::Problem;
-use base qw(WeBWorK::ContentGenerator);
 
 use strict;
 use warnings;
-use CGI qw(:html :form);
+use base qw(WeBWorK::ContentGenerator);
+use CGI qw();
 use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
 use WeBWorK::PG;
 use WeBWorK::Form;
 
+# TODO:
+# :) enforce permissions for showCorrectAnswers and showSolutions
+#    (use $PRIV = $canPRIV && ($wantPRIV || $mustPRIV) -- cool syntax!)
+# :) if answers were not submitted and there are student answers in the DB,
+#    decode them and put them into $formFields for the translator
+# :) store submitted answers hash in database for sticky answers
+# :) deal with the results of answer evaluation and grading :p
+# :) introduce a recordAnswers option, which works on the same principle as
+#    the other permission-based options
+# 7. make warnings work
+
+############################################################
+# 
 # user
 # key
 # 
@@ -21,25 +39,10 @@ use WeBWorK::Form;
 # 
 # redisplay - name of the "Redisplay Problem" button
 # submitAnswers - name of "Submit Answers" button
+#
+############################################################
 
-sub title {
-	my ($self, $setName, $problemNumber) = @_;
-	my $userName = $self->{r}->param('user');
-	return "Problem $problemNumber of problem set $setName for $userName";
-}
-
-# TODO:
-# :) enforce permissions for showCorrectAnswers and showSolutions
-#    (use $PRIV = $mustPRIV || ($canPRIV && $wantPRIV) -- cool syntax!)
-# :) if answers were not submitted and there are student answers in the DB,
-#    decode them and put them into $formFields for the translator
-# :) store submitted answers hash in database for sticky answers
-# :) deal with the results of answer evaluation and grading :p
-# :) introduce a recordAnswers option, which works on the same principle as
-#    the other permission-based options
-# 7. make warnings work
-
-sub body {
+sub initialize {
 	my ($self, $setName, $problemNumber) = @_;
 	my $courseEnv = $self->{courseEnvironment};
 	my $r = $self->{r};
@@ -50,15 +53,14 @@ sub body {
 	$problemNumber =~ s/^prob//;
 	
 	##### database setup #####
-	# this should probably go in initialize() or whatever it's called
 	
-	my $classlist = WeBWorK::DB::Classlist->new($courseEnv);
-	my $wwdb      = WeBWorK::DB::WW->new($courseEnv);
-	my $authdb    = WeBWorK::DB::Auth->new($courseEnv);
+	my $cldb   = WeBWorK::DB::Classlist->new($courseEnv);
+	my $wwdb   = WeBWorK::DB::WW->new($courseEnv);
+	my $authdb = WeBWorK::DB::Auth->new($courseEnv);
 	
-	my $user = $classlist->getUser($userName);
-	my $set = $wwdb->getSet($userName, $setName);
-	my $problem = $wwdb->getProblem($userName, $setName, $problemNumber);
+	my $user            = $cldb->getUser($userName);
+	my $set             = $wwdb->getSet($userName, $setName);
+	my $problem         = $wwdb->getProblem($userName, $setName, $problemNumber);
 	my $permissionLevel = $authdb->getPermissions($userName);
 	
 	##### form processing #####
@@ -68,6 +70,12 @@ sub body {
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
 	
+	# coerce form fields into CGI::Vars format
+	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+	
+	##### permissions #####
+	
+	# what does the user want to do?
 	my %want = (
 		showOldAnswers     => $r->param("showOldAnswers")     || $courseEnv->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $courseEnv->{pg}->{options}->{showCorrectAnswers},
@@ -75,11 +83,6 @@ sub body {
 		showSolutions      => $r->param("showSolutions")      || $courseEnv->{pg}->{options}->{showSolutions},
 		recordAnswers      => $r->param("recordAnswers")      || 1,
 	);
-	
-	# coerce form fields into CGI::Vars format
-	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-	
-	##### permissions #####
 	
 	# are certain options enforced?
 	my %must = (
@@ -134,13 +137,54 @@ sub body {
 		$formFields
 	);
 	
-	# handle any errors in translation
+	##### store fields #####
+	
+	$self->{cldb}            = $cldb;
+	$self->{wwdb}            = $wwdb;
+	$self->{authdb}          = $authdb;
+	
+	$self->{user}            = $user;
+	$self->{set}             = $set;
+	$self->{problem}         = $problem;
+	$self->{permissionLevel} = $permissionLevel;
+	
+	$self->{displayMode}   = $displayMode;
+	$self->{redisplay}     = $redisplay;
+	$self->{submitAnswers} = $submitAnswers;
+	$self->{formFields}    = $formFields;
+	
+	$self->{want} = \%want;
+	$self->{must} = \%must;
+	$self->{can}  = \%can;
+	$self->{will} = \%will;
+	
+	$self->{pg} = $pg;
+}
+
+sub title {
+	my $self = shift;
+	#return "Set " . $self->{set}->id . " problem " . $self->{problem}->id;
+	return "hold on a sec";
+}
+
+sub body {
+	my $self = shift;
+	
+	#$self->prepare(@_);
+	
+	# unpack some useful variables
+	my $r             = $self->{r};
+	my $wwdb          = $self->{wwdb};
+	my $set           = $self->{set};
+	my $problem       = $self->{problem};
+	my $submitAnswers = $self->{submitAnswers};
+	my %will          = %{ $self->{will} };
+	my $pg            = $self->{pg};
+	
+	##### translation errors? #####
+	
 	if ($pg->{flags}->{error_flag}) {
-		# there was an error in translation
-		print
-			h2("Software Error"),
-			translationError($pg->{errors}, $pg->{body_text});
-		
+		print translationError($pg->{errors}, $pg->{body_text});
 		return "";
 	}
 	
@@ -158,11 +202,8 @@ sub body {
 		$problem->last_answer($answerString);
 		$wwdb->setProblem($problem);
 		
-		# store score in DB if it makes sense
+		# store state in DB if it makes sense
 		if ($will{recordAnswers}) {
-			# the grader makes a lot of decisions for us...
-			# all we have to do is update information from
-			# the 'state' hash in the $pg hash.
 			$problem->attempted(1);
 			$problem->status($pg->{state}->{recorded_score});
 			$problem->num_correct($pg->{state}->{num_of_correct_ans});
@@ -170,8 +211,6 @@ sub body {
 			#warn "Would have stored the following:\n",
 			#	$problem->toString, "\n";
 			$wwdb->setProblem($problem);
-		} else {
-			print p("Your score was not recorded for some reason. ;)");
 		}
 	}
 	
@@ -197,10 +236,10 @@ sub body {
 		$attemptsLeft = $problem->max_attempts - $attempts;
 		$attemptsLeftNoun = $attemptsLeft == 1 ? "attempt" : "attempts";
 	}
-	print p(
-		"You have attempted this problem $attempts $attemptsNoun.", br(),
+	print CGI::p(
+		"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
 		$problem->attempted
-			? "Your recorded score is $lastScore." . br()
+			? "Your recorded score is $lastScore." . CGI::br()
 			: "",
 		"You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
@@ -212,17 +251,17 @@ sub body {
 	# cases where the answer is NOT being recorded, because of things decided
 	# in &canRecordAnswers...
 	
-	print hr();
+	print CGI::hr();
 	
 	# main form
 	print
-		startform("POST", $r->uri),
+		CGI::startform("POST", $r->uri),
 		$self->hidden_authen_fields,
-		p(i($pg->{result}->{msg})),
-		p($pg->{body_text}),
-		p(submit(-name=>"submitAnswers", -label=>"Submit Answers")),
-		viewOptions($displayMode, \%must, \%can, \%will),
-		endform();
+		CGI::p(CGI::i($pg->{result}->{msg})),
+		CGI::p($pg->{body_text}),
+		CGI::p(CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers")),
+		$self->viewOptions,
+		CGI::endform();
 	
 	# debugging stuff
 	#print
@@ -247,14 +286,15 @@ sub body {
 sub translationError($$) {
 	my ($error, $details) = @_;
 	return
-		p(<<EOF),
+		CGI::h2("Software Error"),
+		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this problem.
 It is likely that there is an error in the problem itself.
 If you are a student, contact your professor to have the error corrected.
 If you are a professor, please consut the error output below for more informaiton.
 EOF
-		h3("Error messages"), blockquote(pre($error)),
-		h3("Error context"), blockquote(pre($details));
+		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
+		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
 }
 
 sub attemptResults($$$) {
@@ -265,11 +305,11 @@ sub attemptResults($$$) {
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
-	my $header = th("answer");
-	$header .= $showAttemptAnswers ? th("attempt")  : "";
-	$header .= $showCorrectAnswers ? th("correct")  : "";
-	$header .= $showAttemptResults ? th("result")   : "";
-	$header .= $showAttemptAnswers ? th("messages") : "";
+	my $header = CGI::th("answer");
+	$header .= $showAttemptAnswers ? CGI::th("attempt")  : "";
+	$header .= $showCorrectAnswers ? CGI::th("correct")  : "";
+	$header .= $showAttemptResults ? CGI::th("result")   : "";
+	$header .= $showAttemptAnswers ? CGI::th("messages") : "";
 	my @tableRows = ( $header );
 	my $numCorrect;
 	foreach my $name (@answerNames) {
@@ -282,60 +322,59 @@ sub attemptResults($$$) {
 		$numCorrect += $answerScore > 0;
 		my $resultString = $answerScore ? "correct :^)" : "incorrect >:(";
 		
-		my $row = td($name);
-		$row .= $showAttemptAnswers ? td($studentAnswer) : "";
-		$row .= $showCorrectAnswers ? td($correctAnswer) : "";
-		$row .= $showAttemptResults ? td($resultString)  : "";
-		$row .= $answerMessage      ? td($answerMessage) : "";
+		my $row = CGI::td($name);
+		$row .= $showAttemptAnswers ? CGI::td($studentAnswer) : "";
+		$row .= $showCorrectAnswers ? CGI::td($correctAnswer) : "";
+		$row .= $showAttemptResults ? CGI::td($resultString)  : "";
+		$row .= $answerMessage      ? CGI::td($answerMessage) : "";
 		push @tableRows, $row;
 	}
 	
 	my $numCorrectNoun = $numCorrect == 1 ? "question" : "questions";
 	my $scorePercent = int ($problemResult->{score} * 100) . "\%";
-	#my $message = i($problemResult->{msg});
 	my $summary = "On this attempt, you answered $numCorrect $numCorrectNoun out of "
 		. scalar @answerNames . " correct, for a score of $scorePercent.";
-	#return table({-border=>1}, Tr(\@tableRows)) . p($message, br(), $summary);
-	return table({-border=>1}, Tr(\@tableRows)) . p($summary);
+	return CGI::table({-border=>1}, CGI::tr(\@tableRows)) . CGI::p($summary);
 }
 
-sub viewOptions($\%\%\%) {
-	my $displayMode = shift;
-	my %must = %{ shift() };
-	my %can  = %{ shift() };
-	my %will = %{ shift() };
+sub viewOptions($) {
+	my $self = shift;
+	my $displayMode = $self->{displayMode};
+	my %must = %{ $self->{must} };
+	my %can  = %{ $self->{can}  };
+	my %will = %{ $self->{will} };
 	
 	my $optionLine;
 	$can{showOldAnswers} and $optionLine .= join "",
 		"Show: &nbsp;",
-		checkbox(
+		CGI::checkbox(
 			-name    => "showOldAnswers",
 			-checked => $will{showOldAnswers},
 			-label   => "Saved answers",
 		), "&nbsp;&nbsp;";
 	$can{showCorrectAnswers} and $optionLine .= join "",
-		checkbox(
+		CGI::checkbox(
 			-name    => "showCorrectAnswers",
 			-checked => $will{showCorrectAnswers},
 			-label   => "Correct answers",
 		), "&nbsp;&nbsp;";
 	$can{showHints} and $optionLine .= join "",
-		checkbox(
+		CGI::checkbox(
 			-name    => "showHints",
 			-checked => $will{showHints},
 			-label   => "Hints",
 		), "&nbsp;&nbsp;";
 	$can{showSolutions} and $optionLine .= join "",
-		checkbox(
+		CGI::checkbox(
 			-name    => "showSolutions",
 			-checked => $will{showSolutions},
 			-label   => "Solutions",
 		), "&nbsp;&nbsp;";
-	$optionLine and $optionLine .= join "", br();
+	$optionLine and $optionLine .= join "", CGI::br();
 	
-	return div({-style=>"border: thin groove; padding: 1ex; margin: 2ex"},
+	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex"},
 			"View equations as: &nbsp;",
-		radio_group(
+		CGI::radio_group(
 			-name    => "displayMode",
 			-values  => ['plainText', 'formattedText', 'images'],
 			-default => $displayMode,
@@ -344,9 +383,9 @@ sub viewOptions($\%\%\%) {
 				formattedText => "formatted text",
 				images        => "images",
 			}
-		), br(),
+		), CGI::br(),
 		$optionLine,
-		submit(-name=>"redisplay", -label=>"Redisplay Problem"),
+		CGI::submit(-name=>"redisplay", -label=>"Redisplay Problem"),
 	);
 }
 
