@@ -35,26 +35,20 @@ sub body {
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
 	# Slurp each set record for this course in @sets
-	# FIXME: getGlobalUser* should be getGlobal* once the database
-	#        supports it, and the $user field should go away.
 	my @sets;
-	push @sets, $db->getGlobalUserSet($user, $_)
-		foreach ($db->listUserSets($user));
-		
+	push @sets, $db->getGlobalSet($_)
+		foreach ($db->listGlobalSets);
+	
+	warn "counting started";
 	# Count the number of users each set is assigned to
 	my %counts;
 	foreach my $set (@sets) {
-		my @problems = $db->listUserProblems($user, $set->set_id);
+		my @problems = $db->listGlobalProblems($set->set_id);
 		my @users = $db->listUsers();
 		my $count = 0;
-		foreach my $user (@users) {
-			if ($db->getGlobalUserSet($user, $set->set_id)) {
-				# if the user has the set assigned to her
-				$count++;
-			}
-		}
-		$counts{$set->set_id} = $count;
+		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
+	warn "counting done";
 	
 	# Sort @sets based on the sort parameter
 	# Invalid sort types will just cause an unpredictable ordering, which is no big deal.
@@ -64,7 +58,7 @@ sub body {
 		}elsif ($sort =~ /_date$/) {
 			return $a->$sort <=> $b->$sort;
 		} elsif ($sort eq "num_probs") {
-			return scalar($db->listUserProblems($user, $a->set_id)) <=> scalar($db->listUserProblems($user, $b->set_id));
+			return scalar($db->listGlobalProblems($a->set_id)) <=> scalar($db->listGlobalProblems($b->set_id));
 		} elsif ($sort eq "num_students") {
 			return $counts{$a->set_id} <=> $counts{$b->set_id};
 		}
@@ -81,17 +75,17 @@ sub body {
 	) . "\n";
 	
 	foreach my $set (@sets) {
-		my @problems = $db->listUserProblems($user, $set->set_id);
+		my @problems = $db->listGlobalProblems($set->set_id);
 		my $count = $counts{$set->set_id};
-		my @users = $db->listUsers();
+		my @users = $db->listUsers;
 		
 		my $userCountMessage;
 		if ($count == 0) {
 			$userCountMessage = "Not assigned";
-		} elsif ($count == 1) {
-			$userCountMessage = "1 user";
 		} elsif ($count == scalar(@users)) {
 			$userCountMessage = "All users";
+		} elsif ($count == 1) {
+			$userCountMessage = "1 user";
 		} elsif ($count > scalar(@users) || $count < 0) {
 			$userCountMessage = CGI::em("Impossible number of users: $count");
 		} else {
@@ -106,7 +100,7 @@ sub body {
 					"label"=>"",
 					"checked"=>"0"
 				})
-			)				
+			)
 			. CGI::td({}, CGI::a({href=>"$setEditorURL?setName=".$set->set_id."&".$self->url_authen_args}, $set->set_id))
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
@@ -136,4 +130,5 @@ sub body {
 	
 	return "";
 }
+
 1;

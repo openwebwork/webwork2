@@ -14,6 +14,7 @@ WeBWorK::Authz - check user permissions.
 use strict;
 use warnings;
 
+# WeBWorK::Authz->new($r, $ce, $db)
 sub new($$$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;

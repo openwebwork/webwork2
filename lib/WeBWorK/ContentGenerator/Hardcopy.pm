@@ -246,8 +246,8 @@ sub displayForm($) {
 		#);
 		#print CGI::Tr(CGI::td({-colspan=>"3"}, "&nbsp;"));
 		my @users;
-		push @users, $self->{cldb}->getUser($_)
-			foreach ($self->{cldb}->listUsers());
+		push @users, $self->{db}->getUser($_)
+			foreach ($self->{db}->listUsers());
 		@users = sort { $a->last_name cmp $b->last_name } @users;
 		foreach my $user (@users) {
 			my $checked = grep { $_ eq $user->user_id } @{$self->{users}};
