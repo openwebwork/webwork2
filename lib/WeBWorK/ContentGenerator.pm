@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.103 2004/06/06 00:21:26 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.104 2004/06/06 02:48:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,7 +50,44 @@ use URI::Escape;
 use WeBWorK::Template qw(template);
 
 ################################################################################
+# perl 5.6 doesn't seem to allow multiple definitions of constants??
+use constant 
+	REPORT_BUGS_URL => "http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl";
+use constant 
+	PROBLEM_SETS   => "Homework&nbsp;Sets";
+use constant 
+	OPTIONS   => "Password/Email";
+use constant 
+	GRADES   => "Grades";
+use constant 
+	LOG_OUT   => "Logout";
 
+use constant  
+	ADD_USERS => "Add&nbsp;Users";
+use constant
+	USER_LIST => "Class&nbsp;List&nbsp;Editor";
+use constant
+	SET_LIST  => "Homework&nbsp;Editor";
+use constant
+	SET_MAKER => "Library&nbsp;Browser";
+use constant
+	ASSIGNER => "Set&nbsp;Assigner";
+use constant
+	MAIL => "Email";
+use constant
+	SCORING => "Scoring tools";
+use constant
+	STATS         => "Statistics";
+use constant  
+	PROGRESS =>"Student&nbsp;Progress";
+use constant
+	FILE_TRANSFER    => "File&nbsp;Transfer";
+
+
+
+
+
+###############################################################################
 =head1 CONSTRUCTOR
 
 =over
@@ -464,11 +501,16 @@ sub links {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	
 	# we're linking to other places in the same course, so grab the courseID from the current path
 	my $courseID = $urlpath->arg("courseID");
 	
+	# some links are only available if you have the correct permissions.
+	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
+	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
+
 	# to make things more concise
 	my %args = ( courseID => $courseID );
 	my $pfx = "WeBWorK::ContentGenerator::";
@@ -479,15 +521,16 @@ sub links {
 	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
+	# only users with appropriate permissions can report bugs
+	print CGI::p(CGI::a({style=>"font-size:larger", href=>REPORT_BUGS_URL}, "Report bugs")),CGI::hr() if $permLevel>= $ce->{permissionLevels}->{report_bugs};
+	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets)}, 'Problem&nbsp;Sets')));
-	print CGI::li(CGI::a({href=>$self->systemLink($options)}, space2nbsp($options->name)));
-	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  space2nbsp($grades->name)));
-	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  space2nbsp($logout->name)));
+		CGI::a({href=>$self->systemLink($sets)}, PROBLEM_SETS)));
+	print CGI::li(CGI::a({href=>$self->systemLink($options)}, OPTIONS));
+	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  GRADES));
+	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  LOG_OUT));
 	
-	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
-	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
 	
 	if ($permLevel > 0) {
 		my $ipfx = "${pfx}Instructor::";
@@ -529,10 +572,10 @@ sub links {
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, space2nbsp($instr->name)));
 		print CGI::start_ul();
-		print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, space2nbsp($addUsers->name)));
-		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, space2nbsp($userList->name)));
+		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, ADD_USERS));
+		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, USER_LIST));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($setList)}, space2nbsp($setList->name));
+		print CGI::a({href=>$self->systemLink($setList)}, SET_LIST);
 		if (defined $setID and $setID ne "") {
 			print CGI::start_ul();
 			print CGI::start_li();
@@ -546,12 +589,12 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
-		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, space2nbsp($maker->name)));
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, space2nbsp($assigner->name)));
-		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, space2nbsp($mail->name)));
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, space2nbsp($scoring->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, SET_MAKER));
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, ASSIGNER));
+		
+		
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($stats)}, space2nbsp($stats->name));
+		print CGI::a({href=>$self->systemLink($stats)}, STATS);
 		if (defined $userID and $userID ne "") {
 			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
@@ -566,7 +609,7 @@ sub links {
 		
 	## Added Link for Student Progress	
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($progress)}, space2nbsp($progress->name));
+		print CGI::a({href=>$self->systemLink($progress)}, PROGRESS);
 		if (defined $userID and $userID ne "") {
 			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
@@ -579,7 +622,9 @@ sub links {
 		}
 		print CGI::end_li();
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($files)}, space2nbsp($files->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, SCORING));
+		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, MAIL));
+		print CGI::li(CGI::a({href=>$self->systemLink($files)}, FILE_TRANSFER));
 		print CGI::end_ul();
 		print CGI::end_li();
 	}
