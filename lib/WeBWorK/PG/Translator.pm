@@ -3,9 +3,7 @@
 # $Id$
 ################################################################################
 
-
 package WeBWorK::PG::Translator;
-
 
 use strict;
 use warnings;
@@ -272,24 +270,32 @@ The macros shared with the safe compartment are
 =cut
 
 # SHARE variables and routines with safe compartment
+# 
+# Some symbols are defined here (or in the IO module), and used inside the safe
+# compartment. Under WeBWorK 1.x, functions defined here had access to the
+# Global:: namespace, which contained course-specific data such things as
+# directory locations, the address of the SMTP server, and so on. Under WeBWorK
+# 2, there is no longer a global namespace. To get around this, IO functions
+# which need access to course-specific data are now defined in the IO.pl macro
+# file, which has access to the problem environment. Several entries have been
+# added to the problem environment to support this move.
+# 
 my %shared_subroutine_hash = (
-#IO#	'&read_whole_problem_file' => 'PGtranslator', #the values are dummies.
-#IO#	'&convertPath'             => 'PGtranslator', # if they're dummies, why set them to
-#IO#	'&surePathToTmpFile'       => 'PGtranslator', # something that seems meaningful,
-#IO#	'&fileFromPath'            => 'PGtranslator', # instead of '1' or something?
-#IO#	'&directoryFromPath'       => 'PGtranslator',
-#IO#	'&createFile'              => 'PGtranslator',
-	'&PG_answer_eval'          => 'PGtranslator',
-	'&PG_restricted_eval'      => 'PGtranslator',
-	'&be_strict'               => 'PGtranslator',
-#IO#	'&send_mail_to'            => 'PGtranslator',
-	'&PGsort'                  => 'PGtranslator',
-	'&dumpvar'                 => 'PGtranslator',
-#IO#	'&includePGtext'           => 'PGtranslator',
-	'&getImageDimmensions'     => 'PGtranslator',
+	'&PG_answer_eval'          => 'Translator',
+	'&PG_restricted_eval'      => 'Translator',
+	'&be_strict'               => 'Translator',
+	'&PGsort'                  => 'Translator',
+	'&dumpvar'                 => 'Translator',
+	'&includePGtext'           => 'IO',
+	#'&send_mail_to'           => 'IO', # moved to IO.pl
+	'&read_whole_problem_file' => 'IO',
+	'&convertPath'             => 'IO',
+	#'&surePathToTmpFile'      => 'IO', # moved to IO.pl
+	'&fileFromPath'            => 'IO',
+	'&directoryFromPath'       => 'IO',
+	'&createFile'              => 'IO',
+	'&getImageDimmensions'     => 'IO',
 );
-
-# *** # remember to document the IO.pl vs. IO.pm issues!
 
 sub initialize {
     my $self = shift;

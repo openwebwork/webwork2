@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.17 2002-10-30 22:09:53 sh002i Exp $
+# $Id: TODO,v 1.18 2002-11-01 22:57:24 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -73,11 +73,11 @@ DONE	make static images work
 DONE	make GD-generated images work
 DONE	make HTML links work
 DONE	make images in PDFs work
-	remove dependancies on Global:: from IO functions
+	remove dependancies on Global:: from IO functions (send_mail_to)
 	handle PG errors (and warnings) in Hardcopy
-	fix TTH mode character encodings (check on mac and windows)
+	check TTH mode character encodings on mac and windows
 	have logout button invalidate key
-	answer preview button
+	preview button in Problem
 	Pretty die messages (from outside of the translator)
 	Feedback - need nice modular way of sending email
 	Options - email address and password
@@ -102,7 +102,7 @@ send_mail_to
 	$REMOTE_ADDR
 	$Global::smtpServer
 	$Global::webmaster
-	&Global::wwerror
+	(&Global::wwerror)
 read_whole_problem_file
 read_whole_file
 convertPath				stub
@@ -112,7 +112,7 @@ getCourseTempDirectory
 surePathToTmpFile
 	#$Global::tmp_directory_permission
 	#$Global::numericalGroupID
-	&Global::wwerror
+	(&Global::wwerror)
 fileFromPath
 directoryFromPath
 createFile

@@ -45,7 +45,6 @@ sub new($$$$$$$$) {
 	# install a local warn handler to collect warnings
 	my $warnings = "";
 	if ($courseEnv->{pg}->{options}->{catchWarnings}) {
-		warn "PG: about to install a warnings handler...\n"; # ***
 		local $SIG{__WARN__} = sub { $warnings .= shift };
 	}
 	
