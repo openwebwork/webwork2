@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.19 2004/06/23 19:19:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.20 2004/06/23 23:10:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -552,6 +552,12 @@ sub do_add_course {
 	);
 	
 	my %courseOptions = ( dbLayoutName => $add_dbLayout );
+	
+	if ($add_initial_email ne "") {
+		$courseOptions{allowedRecipients} = [ $add_initial_email ];
+		$courseOptions{feedbackRecipients} = [ $add_initial_email ];
+	}
+	
 	if ($add_dbLayout eq "gdbm") {
 		$courseOptions{globalUserID} = $add_gdbm_globalUserID if $add_gdbm_globalUserID ne "";
 	}
@@ -581,11 +587,12 @@ sub do_add_course {
 	# add initial instructor if desired
 	if ($add_initial_userID ne "") {
 		my $User = $db->newUser(
-			user_id    => $add_initial_userID,
-			first_name => $add_initial_firstName,
-			last_name  => $add_initial_lastName,
-			student_id => $add_initial_userID,
-			status     => "C",
+			user_id       => $add_initial_userID,
+			first_name    => $add_initial_firstName,
+			last_name     => $add_initial_lastName,
+			student_id    => $add_initial_userID,
+			email_address => $add_initial_email,
+			status        => "C",
 		);
 		my $Password = $db->newPassword(
 			user_id  => $add_initial_userID,
@@ -597,6 +604,8 @@ sub do_add_course {
 		);
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
+	
+	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->email_address } @users;
 	
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
