@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.7 2004/01/23 21:04:05 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.8 2004/01/23 23:01:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,12 +127,6 @@ sub body {
 	my $courseName = $ce->{courseName};
 	my $authen_args = $self->url_authen_args();
 	my $user = $r->param('user');
-	my $prof_url = $ce->{webworkURLs}->{oldProf};
-	my $full_url = "$prof_url?course=$courseName&$authen_args";
-	my $userEditorURL = "users/?" . $self->url_args;
-	my $problemSetEditorURL = "sets/?" . $self->url_args;
-	my $statsURL       = "stats/?" . $self->url_args;
-	my $emailURL       = "send_mail/?" . $self->url_args;
 	
 	################### debug code
 	#my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission(); #checked
@@ -156,11 +150,14 @@ sub body {
 }
 
 sub addStudentForm {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
+	my $self                  = shift;
+	my $r                     = $self->{r};
+	my $db                    = $self->{db};
+	my $ce                    = $self->{ce};
+	my $numberOfStudents      = $r->param("number_of_students") || 5;
 	
-	my $numberOfStudents   = $r->param("number_of_students") || 5;
+
+	
 	# Add a student form
 	
 	my @entryLines = ();
@@ -181,7 +178,15 @@ sub addStudentForm {
 			),"\n",
 		);
 	}
-	return join("",
+
+	return join("",		
+		CGI::start_form({method=>"post", action=>$r->uri(),name=>"add_users"}),
+		$self->hidden_authen_fields(),"\n",
+		CGI::submit(-name=>"Create", -value=>"Create"),"&nbsp;&nbsp;","\n",
+		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " entry rows. ","\n",
+		CGI::end_form(),"\n",
+		CGI::hr(),
+		
 		CGI::start_form({method=>"post", action=>$r->uri()}),
 		$self->hidden_authen_fields(),
 		CGI::input({type=>'hidden', name => "number_of_students", value => $numberOfStudents}),
@@ -192,18 +197,22 @@ sub addStudentForm {
 			)
 		),
 		@entryLines,
-		CGI::end_table(),
+		CGI::end_table(),    
+		
+
+		
 		CGI::p("Select sets below to assign them to the newly-created users."),
 		CGI::popup_menu(
 			-name     => "assignSets",
 			-values   => [ $db->listGlobalSets ],
 			-size     => 10,
-			-multiple => "true",
+			-multiple => "multiple",
 		),
 		CGI::p(
 			CGI::submit({name=>"addStudents", value=>"Add Students"}),
 		),
-		CGI::end_form(),
+		CGI::end_form(),		
+
 		#qq{ <div style="color:red"> After entering new students you will still 
 		#need to assign sets to them.  This is done from the "set list" page. <br> 
 		#Click on the entry "xx users" in 
