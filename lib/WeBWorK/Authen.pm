@@ -1,12 +1,27 @@
 package WeBWorK::Authen;
 
+# Package constants.  These should never be changed in other places ever
+my $key_length = 40;			# number of chars in each key
+my @key_chars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
+
 sub new($$$) {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
+	my $invocant = shift;
+	my $class = ref($invocant) || $invocant;
 	my $self = {};
 	($self->{r}, $self->{courseEnvironment}) = @_;
 	bless $self, $class;
 	return $self;
+}
+
+sub generate_key {
+	my $i = $key_length;
+	my $key = '';
+	srand;
+	while($i) {
+		$key .= $key_chars[rand(@key_chars)];
+		$i--;
+	}
+	return $key;
 }
 
 # verify will return 1 if the person is who they say the are.
@@ -16,17 +31,19 @@ sub new($$$) {
 # no note will be written, as this is expected to happen whenever someone
 # types in a URL manually, and is not considered an error condition.
 sub verify($) {
-	# Definition: "magic data": passwd or key
 	my $self = shift;
 	my $r = $self->{r};
 	
 	my $user = $r->param('user');
 	my $passwd = $r->param('passwd');
 	my $key = $r->param('key');
+	my $time = time;
 	
 	# Get this out of the way first thing.  We don't want anything else
 	# having access to this.  It's bad enough that it goes over the wire
 	# plaintext.
+	# I wish there was a way to delete this entirely, rather than just
+	# undefining it, just because it would be neater.
 	$r->param('passwd',undef);
 	
 	my $return, $error;
@@ -54,14 +71,16 @@ sub verify($) {
 		$return = 0;
 	} elsif ($passwd) {
 		if ($passwd eq "helloworld") {
-			$r->param('key','tH1siS@pH0n3Yk3y');
+			$key = generate_key;
+			#TODO: enter $key and $time into the database
+			$r->param('key',$key);
 			$return = 1;
 		} else {
 			$error = "Incorrect password";
 			$return = 0;
 		}
 	} elsif ($key) {
-		if ($key eq 'tH1siS@pH0n3Yk3y') {
+		if ($key ne 'invalidkeyhahaha') {
 			$return = 1;
 		} else {
 			$error = "Your session has expired.  You must re-login";

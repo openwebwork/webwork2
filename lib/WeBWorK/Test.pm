@@ -12,7 +12,7 @@ use WeBWorK::ContentGenerator;
 
 our @ISA = qw(WeBWorK::ContentGenerator);
 
-sub go($) {
+sub go() {
 	my $self = shift;
 	my $r = $self->{r};
 	$r->content_type("text/html");
