@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.19 2004/02/12 20:55:10 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.20 2004/03/11 03:19:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 use strict;
 use warnings;
 use Data::Dumper;
-use CGI qw();
+use CGI::Pretty qw();
 use Mail::Sender;
 use Text::Wrap qw(wrap);
 
@@ -97,29 +97,44 @@ sub body {
 	my $remoteIdent = $r->get_remote_logname() || "UNKNOWN";
 	my $remoteHost = $r->get_remote_host();
 	
-	# generate context URL
-	my $URL;
+	# generate context URLs
 	my $emailableURL;
 	my $returnURL;
 	if ($user) {
-		$URL = "http://$hostname:$port"
-			. $ce->{webworkURLs}->{root}
-			. "/" . $ce->{courseName}
-			. ($set 
-				? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
-				: "")
-			. "/?" 
-			. ($problem 
-				? "&displayMode=$displayMode" 
-				. "&showOldAnswers=$showOldAnswers"
-				. "&showCorrectAnswers=$showCorrectAnswers"
-				. "&showHints=$showHints"
-				. "&showSolutions=$showSolutions" 
-				: "" );
-		$emailableURL = $URL . "&effectiveUser=$userName";
-		$returnURL = $URL . '&'. $self->url_authen_args;
+		my $modulePath;
+		my @args;
+		if ($set) {
+			if ($problem) {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $set->set_id,
+					problemID => $problem->problem_id,
+				);
+				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+			} else {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $set->set_id,
+				);
+				@args = ();
+			}
+		} else {
+			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+				courseID => $r->urlpath->arg("courseID"),
+			);
+			@args = ();
+		}
+		my $URL = "http://$hostname:$port"; # FIXME: there should probably be an option for adding this stuff in systemLink()
+		$emailableURL = $URL . $self->systemLink($modulePath,
+			authen => 0,
+			params => [ "effectiveUser", @args ],
+		);
+		$returnURL = $URL . $self->systemLink($modulePath,
+			authen => 1,
+			params => [ @args ],
+		);
 	} else {
-		$URL = $emailableURL = "(not available)";
+		$emailableURL = "(not available)";
 		$returnURL = "";
 	}
 	
@@ -165,33 +180,6 @@ sub body {
 			$self->feedbackForm($user, $returnURL,
 				"Message was blank.");
 			return "";
-		}
-		
-		# get some network settings
-		my $hostname = $r->hostname();
-		my $port     = $r->get_server_port();
-		my $remoteIdent = $r->get_remote_logname() || "UNKNOWN";
-		my $remoteHost = $r->get_remote_host();
-		
-		# generate context URL
-		my $URL;
-		if ($user) {
-			$URL = "http://$hostname:$port"
-				. $ce->{webworkURLs}->{root}
-				. "/" . $ce->{courseName}
-				. ($set 
-					? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
-					: "")
-				. "/" . "?effectiveUser=$userName"
-				. ($problem 
-					? "&displayMode=$displayMode" 
-					. "&showOldAnswers=$showOldAnswers"
-					. "&showCorrectAnswers=$showCorrectAnswers"
-					. "&showHints=$showHints"
-					. "&showSolutions=$showSolutions" 
-					: "" );
-		} else {
-			$URL = "(not available)";
 		}
 		
 		# bring up a mailer
@@ -288,7 +276,10 @@ sub feedbackForm {
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
-	print $self->hidden_state_fields;
+	print $self->hidden_fields(qw(
+		module set problem displayMode showOldAnswers showCorrectAnswers
+		showHints showSolutions
+	));
 	print CGI::p(CGI::b("From:"), " ",
 		($user && $user->email_address
 			? CGI::tt($user->email_address)
@@ -307,15 +298,6 @@ sub feedbackForm {
 	print CGI::submit("sendFeedback", "Send Feedback");
 	print CGI::end_form();
 	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback"));
-}
-
-sub hidden_state_fields {
-	my ($self) = @_;
-	my $r = $self->r;
-	
-	print CGI::hidden("$_", $r->param("$_"))
-		foreach (qw(module set problem displayMode showOldAnswers
-		            showCorrectAnswers showHints showSolutions));
 }
 
 1;
