@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.47 2004/04/07 00:13:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.48 2004/05/13 16:02:33 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,7 +139,19 @@ sub body {
 	
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
-		# don't show unpublished sets to 
+		
+		# FIXME: This is a temporary fix to fill in the database
+		#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
+		#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
+	    # $set->published("1") unless $set->published("1") eq "0";
+	    # don't show unpublished sets to students
+	    unless ( defined($set->published) ) {
+	    	my $globalSet = $db->getGlobalSet($set->set_id);
+	    	$globalSet->published("1") unless defined ($globalSet->published);
+			$db->putGlobalSet($globalSet);
+			$set->published("1");  # refresh
+	    }
+	    warn "undefined published button".$set->set_id unless defined($set->published);
 		if ($set->published || $permissionLevel == 10) {
 			print $self->setListRow($set, ($permissionLevel > 0),
 				($permissionLevel > 0));
