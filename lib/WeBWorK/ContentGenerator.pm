@@ -78,7 +78,7 @@ sub go {
 	my $self = shift;
 	
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
+	my $ce = $self->{ce};
 	my $returnValue = OK;
 	
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
@@ -94,7 +94,16 @@ sub go {
 	if ($self->can("content")) {
 		$self->content(@_);
 	} else {
-		$self->template($courseEnvironment->{templates}->{system}, @_);
+		# if the content generator specifies a custom template name, use that
+		# field in the $ce->{templates} hash instead of "system" if it exists.
+		my $templateName;
+		if ($self->can("templateName")) {
+			$templateName = $self->templateName;
+		} else {
+			$templateName = "system";
+		}
+		$templateName = "system" unless exists $ce->{templates}->{$templateName};
+		$self->template($ce->{templates}->{$templateName}, @_);
 	}
 	
 	return $returnValue;
