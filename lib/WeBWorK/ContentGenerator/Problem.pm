@@ -11,7 +11,7 @@ use base qw(WeBWorK::ContentGenerator);
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
-my $timer0_ON=0;  # times pg translation phase
+
 use strict;
 use warnings;
 use CGI qw();
@@ -23,6 +23,8 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
+
+my $timer0_ON=0;  # times pg translation phase
 
 ############################################################
 # 
@@ -42,6 +44,8 @@ use WeBWorK::Timing;
 # submitAnswers - name of "Submit Answers" button
 # checkAnswers - name of the "Check Answers" button
 # previewAnswers - name of the "Preview Answers" button
+# 
+# FIXME: this table is heinously out of date
 #
 ############################################################
 
