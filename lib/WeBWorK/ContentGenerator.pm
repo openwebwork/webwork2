@@ -25,16 +25,16 @@ use WeBWorK::Utils qw(readFile);
 # it into logical sections.
 ################################################################################
 
-# new(Apache::Request, WeBWorK::CourseEnvironment) - create a new instance of a
-# content generator. Usually only called by the dispatcher, although one might
-# be able to use it for things like "sub-requests". Uh... uh... I have to think
-# about that one. The dispatcher uses this idiom:
+# new(Apache::Request, WeBWorK::CourseEnvironment, WeBWorK::DB) - create a new    
+# instance of a content generator. Usually only called by the dispatcher, although
+# one might be able to use it for things like "sub-requests". Uh... uh... I have  
+# to think about that one. The dispatcher uses this idiom:                        
 # 
-# 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce)->go(@whatever);
+# 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce, $db)->go(@whatever);
 # 
 # and throws away the result ;)
 #
-sub new($$$$) {
+sub new {
 	my ($invocant, $r, $ce, $db) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {
@@ -42,7 +42,7 @@ sub new($$$$) {
 		ce => $ce,
 		db => $db,
 		authz => WeBWorK::Authz->new($r, $ce, $db),
-		noContent => undef, # false
+		noContent => undef,
 	};
 	bless $self, $class;
 	return $self;
@@ -86,6 +86,11 @@ sub go {
 	$returnValue = $headerReturn if defined $headerReturn;
 	return $returnValue if $r->header_only or $self->{noContent};
 	
+	# if the sendFile flag is set, send the file and exit;
+	if ($self->{sendFile}) {
+		return $self->sendFile;
+	}
+	
 	$self->initialize(@_) if $self->can("initialize");
 	
 	# A content generator will have a "content" method if it does not
@@ -107,6 +112,24 @@ sub go {
 	}
 	
 	return $returnValue;
+}
+
+sub sendFile {
+	my ($self) = @_;
+	
+	my $file = $self->{sendFile}->{source};
+	
+	return NOT_FOUND unless -e $file;
+	return FORBIDDEN unless -r $file;
+	
+	open my $fh, "<", $file
+		or return SERVER_ERROR;
+	while (<$fh>) {
+		print $_;
+	}
+	close $fh;
+	
+	return OK;
 }
 
 # template(STRING, @otherArguments) - parse a template, looking for escapes of
@@ -443,7 +466,17 @@ EOF
 sub header {
 	my $self = shift;
 	my $r = $self->{r};
-	$r->content_type('text/html');
+	
+	if ($self->{sendFile}) {
+		my $contentType = $self->{sendFile}->{type};
+		my $fileName = $self->{sendFile}->{name};
+		$r->content_type($contentType);
+		$r->header_out("Content-Disposition" => "attachment; filename=\"$fileName\"");
+	} else {
+		$r->content_type("text/html");
+		
+	}
+	
 	$r->send_http_header();
 	return OK;
 }
@@ -515,6 +548,7 @@ sub instructor_links {
 	my $scoring    = "$root/$courseName/instructor/scoring/?" . $self->url_authen_args();
 	my $statsRoot  = "$root/$courseName/instructor/stats";     
 	my $stats      = $statsRoot. '/?'.$self->url_authen_args();
+	my $fileXfer   = "$root/$courseName/instructor/files/?" . $self->url_authen_args();
 
 	
 	#  Add direct links to sets e.g.  3:4 for set3 problem 4
@@ -558,6 +592,7 @@ sub instructor_links {
 		 (defined($userName))
 		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
 			: '',
+		 '&nbsp;&nbsp;',CGI::a({-href=>$fileXfer}, "File&nbsp;Transfer"), CGI::br(),
 	);
 }
 
