@@ -18,7 +18,7 @@ use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;
 use WeBWorK::DB::WW;
-use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils qw(readFile formatDateTime);
 
 sub initialize {
 	my $self = shift;
@@ -57,6 +57,9 @@ sub body {
 	my $user = $r->param("user");
 	my $sort = $r->param("sort") || "status";
 	my $wwdb = $self->{wwdb};
+	
+	my $motd = eval { readFile($courseEnvironment->{courseFiles}->{motd}) };
+	$@ or print $motd;
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 	my $baseURL = $r->uri . "?" . $self->url_authen_args();

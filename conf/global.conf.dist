@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.8 2003-01-10 17:28:19 sh002i Exp $
+# $Id: global.conf.dist,v 1.9 2003-01-10 21:39:28 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -76,6 +76,7 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 
 %courseFiles = (
 	environment => "$courseDirs{root}/course.conf",
+	motd        => "$courseDirs{root}/motd.txt",
 );
 
 my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
