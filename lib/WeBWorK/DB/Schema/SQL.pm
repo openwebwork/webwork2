@@ -96,9 +96,6 @@ sub add($$) {
 	
 	my $stmt = "INSERT INTO $table ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
-	#no warnings;
-	#$self->debug("SQL-add: fieldvalues=@fieldvalues\n");
-	#use warnings;
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->dbi()->prepare($stmt);
@@ -131,7 +128,6 @@ sub get($@) {
 	my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
 	$self->{driver}->disconnect();
 	# $result comes back undefined if there are no matches. hmm...
-	#croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return undef unless defined $result;
 	
 	my @record = @$result;
@@ -175,8 +171,6 @@ sub put($$) {
 	$self->{driver}->disconnect();
 	
 	unless (defined $result) {
-		#my @realKeynames = $self->{record}->KEYFIELDS();
-		#my @keyvalues = map { $Record->$_() } @realKeynames;
 		croak "(" . join(", ", @keyparts) . "): failed to UPDATE: $DBI::errstr";
 	}
 	
@@ -186,7 +180,6 @@ sub put($$) {
 sub delete($@) {
 	my ($self, @keyparts) = @_;
 	
-	#croak "(" . join(", ", @keyparts) . "): not found"
 	return 0 unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
