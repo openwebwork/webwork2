@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.43 2004/07/08 18:42:01 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -517,7 +517,9 @@ sub getTemplateFileList {  # find all .pg files under the template tree (time co
 	my $ce = $self->{ce};
 	$subDir = '' unless defined $subDir;
 	my $dir = $ce->{courseDirs}->{templates}."/$subDir";
-	return $self->read_dir($dir, qr/.*\.pg$/);
+	# FIXME  currently allows one to see most files in the templates directory.  
+	# a better facility for handling auxiliary files would be nice.
+	return $self->read_dir($dir, qr/\.pg$|.*\.html|\.png|\.gif|\.txt|\.pl/);
 }
 sub getTemplateDirList {  # find all .pg files under the template tree (time consuming)
 	my ($self) = @_;
