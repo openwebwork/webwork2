@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.71 2004/10/07 23:08:13 gage Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.72 2004/10/15 04:30:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,19 +48,19 @@ use WeBWorK;
 sub handler($) {
 	my ($r) = @_;
 	my $log = $r->log;
-	
-	# *** FIXME: ContentGenerator is still checking $r->notes("warnings").
-	# how can we give it access to this warning list?
+	my $uri = $r->uri;
 	
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
-	#my @warnings;
 	my $warning_handler = sub {
 		my ($warning) = @_;
+		chomp $warning;
+		
 		my $warnings = $r->notes("warnings");
 		$warnings .= "$warning\n";
 		$r->notes("warnings", $warnings);
-		warn $warning;
+		
+		$log->warn("[$uri] $warning");
 	};
 	
 	# the exception handler generates a backtrace when catching an exception
@@ -81,18 +81,17 @@ sub handler($) {
 		my $exception = $@;
 		
 		my $warnings = $r->notes("warnings");
-		my $message = message($r, $warnings, $exception, @backtrace);
+		my $htmlMessage = htmlMessage($r, $warnings, $exception, @backtrace);
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
 			$r->send_http_header;
-			$message = "<html><body>$message</body></html>";
+			$htmlMessage = "<html><body>$htmlMessage</body></html>";
 		}
-		$r->print($message);
+		$r->print($htmlMessage);
 		
 		# log the error to the apache error log
-		my $time = time2str("%a %b %d %H:%M:%S %Y", time);
-		my $uri = $r->uri;
-		$log->error("[$uri] $exception");
+		my $textMessage = textMessage($r, $warnings, $exception, @backtrace);
+		$log->error($textMessage);
 	}
 	
 	return $result;
@@ -137,16 +136,17 @@ sub backtrace {
 
 =over
 
-=item message($r, $warnings, $exception, @backtrace)
+=item htmlMessage($r, $warnings, $exception, @backtrace)
 
-Format a message reporting an exception, backtrace, and any associated warnings.
+Format a message for HTML output reporting an exception, backtrace, and any
+associated warnings.
 
 =cut
 
-sub message($$$@) {
+sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
 	
-	my @warnings = split m/\n+/, $warnings;
+	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 	$warnings = htmlWarningsList(@warnings);
 	$exception = htmlEscape($exception);
 	my $backtrace = htmlBacktrace(@backtrace);
@@ -190,6 +190,25 @@ sub message($$$@) {
 EOF
 }
 
+=item textMessage($r, $warnings, $exception, @backtrace)
+
+Format a message for HTML output reporting an exception, backtrace, and any
+associated warnings.
+
+=cut
+
+sub textMessage($$$@) {
+	my ($r, $warnings, $exception, @backtrace) = @_;
+	
+	#my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
+	#$warnings = textWarningsList(@warnings);
+	chomp $exception;
+	my $backtrace = textBacktrace(@backtrace);
+	my $uri = $r->uri;
+	
+	return "[$uri] $exception\n$backtrace";
+}
+
 =item htmlBacktrace(@frames)
 
 Formats a list of stack frames in a backtrace as list items for HTML output.
@@ -205,6 +224,20 @@ sub htmlBacktrace(@) {
 	return join "\n", @frames;
 }
 
+=item textBacktrace(@frames)
+
+Formats a list of stack frames in a backtrace as list items for text output.
+
+=cut
+
+sub textBacktrace(@) {
+	my (@frames) = @_;
+	foreach my $frame (@frames) {
+		$frame = " * $frame";
+	}
+	return join "\n", @frames;
+}
+
 =item htmlWarningsList(@warnings)
 
 Formats a list of warning strings as list items for HTML output.
@@ -216,6 +249,20 @@ sub htmlWarningsList(@) {
 	foreach my $warning (@warnings) {
 		$warning = htmlEscape($warning);
 		$warning = "<li><code>$warning</code></li>";
+	}
+	return join "\n", @warnings;
+}
+
+=item textWarningsList(@warnings)
+
+Formats a list of warning strings as list items for text output.
+
+=cut
+
+sub textWarningsList(@) {
+	my (@warnings) = @_;
+	foreach my $warning (@warnings) {
+		$warning = " * $warning";
 	}
 	return join "\n", @warnings;
 }
