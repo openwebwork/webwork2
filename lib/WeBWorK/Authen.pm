@@ -1,5 +1,7 @@
 package WeBWorK::Authen;
 
+use WeBWorK::DB::Auth
+
 # Package constants.  These should never be changed in other places ever
 my $key_length = 40;			# number of chars in each key
 my @key_chars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
@@ -33,6 +35,7 @@ sub generate_key {
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
+	my $course_env = $self->{courseEnvironment};
 	
 	my $user = $r->param('user');
 	my $passwd = $r->param('passwd');
@@ -47,6 +50,8 @@ sub verify($) {
 	$r->param('passwd',undef);
 	
 	my $return, $error;
+	
+	my $auth = WeBWorK::DB::Auth->new($course_env);
 	
 	# The first part of this big conditional checks to make that we have
 	# all of the form info that we need. It's pretty boring.  The kooky
@@ -66,21 +71,19 @@ sub verify($) {
 	# OK, we're done with the trivia.  Now lets authenticate.
 	# This is the part that will get rewritten after Sam finishes
 	# his work on the database stuff.
-	elsif ($user ne "dennis") {
-		$error = "Unknown user";
-		$return = 0;
-	} elsif ($passwd) {
-		if ($passwd eq "helloworld") {
+	elsif ($passwd) {
+		if ($auth->verifyPassword($user, $passwd)) {
 			$key = generate_key;
-			#TODO: enter $key and $time into the database
+			$auth->setKey($user, $key, time);
 			$r->param('key',$key);
 			$return = 1;
 		} else {
-			$error = "Incorrect password";
+			$error = "Incorrect username or password";
 			$return = 0;
 		}
 	} elsif ($key) {
-		if ($key ne 'invalidkeyhahaha') {
+		# The timestamp gets updated by verifyKey with the time passed in
+		if ($auth->verifyKey($user, $key, time)) {
 			$return = 1;
 		} else {
 			$error = "Your session has expired.  You must login again";
