@@ -811,9 +811,21 @@ sub deleteUser {
 	return $self->{user}->delete($userID);
 }
 
+=back
+
+=cut
+
 ################################################################################
 # set functions
 ################################################################################
+
+=head2 Global Set Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub newGlobalSet {
 	my ($self, $prototype) = @_;
@@ -909,9 +921,21 @@ sub deleteGlobalSet($$) {
 	return $self->{set}->delete($setID);
 }
 
+=back
+
+=cut
+
 ################################################################################
 # set_user functions
 ################################################################################
+
+=head2 User-Specific Set Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub newUserSet {
 	my ($self, $prototype) = @_;
@@ -1035,9 +1059,21 @@ sub deleteUserSet($$$) {
 	return $self->{set_user}->delete($userID, $setID);
 }
 
+=back
+
+=cut
+
 ################################################################################
 # problem functions
 ################################################################################
+
+=head2 Global Problem Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub newGlobalProblem {
 	my ($self, $prototype) = @_;
@@ -1145,9 +1181,21 @@ sub deleteGlobalProblem($$$) {
 	return $self->{problem}->delete($setID, $problemID);
 }
 
+=back
+
+=cut
+
 ################################################################################
 # problem_user functions
 ################################################################################
+
+=head2 User-Specific Problem Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub newUserProblem {
 	my ($self, $prototype) = @_;
@@ -1278,9 +1326,21 @@ sub deleteUserProblem($$$$) {
 	return $self->{problem_user}->delete($userID, $setID, $problemID);
 }
 
+=back
+
+=cut
+
 ################################################################################
 # set+set_user functions
 ################################################################################
+
+=head2 Set Merging Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub getGlobalUserSet {
 	carp "getGlobalUserSet: this method is deprecated -- use getMergedSet instead";
@@ -1290,8 +1350,6 @@ sub getGlobalUserSet {
 sub getMergedSet {
 	my ($self, $userID, $setID) = @_;
 	
-	#my $timer = WeBWorK::Timing->new("getMergedSet");
-	
 	croak "getMergedSet: requires 2 arguments"
 		unless @_ == 3;
 	croak "getMergedSet: argument 1 must contain a user_id"
@@ -1299,22 +1357,19 @@ sub getMergedSet {
 	croak "getMergedSet: argument 2 must contain a set_id"
 		unless defined $setID;
 	
-	#$timer->start;
-	my $UserSet = $self->getUserSet($userID, $setID);
-	#$timer->continue("got user set");
-	return unless $UserSet;
-	my $GlobalSet = $self->getGlobalSet($setID);
-	#$timer->continue("got global set");
-	if ($GlobalSet) {
-		foreach ($UserSet->FIELDS()) {
-			next unless $GlobalSet->can($_);
-			next if $UserSet->$_();
-			$UserSet->$_($GlobalSet->$_());
-		}
-	}
-	#$timer->continue("merged records");
-	#$timer->stop;
-	return $UserSet;
+	#my $UserSet = $self->getUserSet($userID, $setID);
+	#return unless $UserSet;
+	#my $GlobalSet = $self->getGlobalSet($setID);
+	#if ($GlobalSet) {
+	#	foreach ($UserSet->FIELDS()) {
+	#		next unless $GlobalSet->can($_);
+	#		next if $UserSet->$_();
+	#		$UserSet->$_($GlobalSet->$_());
+	#	}
+	#}
+	#return $UserSet;
+	
+	return $self->getMergedSets([$userID, $setID]);
 }
 
 =item geMegedSets(@userSetIDs)
@@ -1340,15 +1395,42 @@ sub getMergedSets {
 			       and defined $userSetIDs[$i]->[1];
 	}
 	
-	return map { $self->getMergedSet(@{$_}) } @userSetIDs;
-
+	my @UserSets = $self->getUserSets(@userSetIDs);
+	
+	my @globalSetIDs = map { [ $_->[1] ] } @userSetIDs;
+	my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
+	
+	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
+	my @commonFields = grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
+	
+	for (my $i = 0; $i < @UserSets; $i++) {
+		my $UserSet = $UserSets[$i];
+		my $GlobalSet = $GlobalSets[$i];
+		next unless $UserSet and $GlobalSet;
+		foreach my $field (@commonFields) {
+			next if $UserSet->$field;
+			$UserSet->$field($GlobalSet->$field);
+		}
+	}
+	
+	return @UserSets;
 }
 
+=back
 
+=cut
 
 ################################################################################
 # problem+problem_user functions
 ################################################################################
+
+=head2 Problem Merging Methods
+
+FIXME: write this
+
+=over
+
+=cut
 
 sub getGlobalUserProblem {
 	carp "getGlobalUserProblem: this method is deprecated -- use getMergedProblem instead";
@@ -1357,8 +1439,6 @@ sub getGlobalUserProblem {
 
 sub getMergedProblem {
 	my ($self, $userID, $setID, $problemID) = @_;
-	
-	#my $timer = WeBWorK::Timing->new("getMergedSet");
 	
 	croak "getGlobalUserSet: requires 3 arguments"
 		unless @_ == 4;
@@ -1369,22 +1449,19 @@ sub getMergedProblem {
 	croak "getGlobalUserSet: argument 3 must contain a problem_id"
 		unless defined $problemID;
 	
-	#$timer->start;
-	my $UserProblem = $self->getUserProblem($userID, $setID, $problemID);
-	#$timer->continue("got user problem");
-	return unless $UserProblem;
-	my $GlobalProblem = $self->getGlobalProblem($setID, $problemID);
-	#$timer->continue("got global problem");
-	if ($GlobalProblem) {
-		foreach ($UserProblem->FIELDS()) {
-			next unless $GlobalProblem->can($_);
-			next if $UserProblem->$_();
-			$UserProblem->$_($GlobalProblem->$_());
-		}
-	}
-	#$timer->continue("merged records");
-	#$timer->stop;
-	return $UserProblem;
+	#my $UserProblem = $self->getUserProblem($userID, $setID, $problemID);
+	#return unless $UserProblem;
+	#my $GlobalProblem = $self->getGlobalProblem($setID, $problemID);
+	#if ($GlobalProblem) {
+	#	foreach ($UserProblem->FIELDS()) {
+	#		next unless $GlobalProblem->can($_);
+	#		next if $UserProblem->$_();
+	#		$UserProblem->$_($GlobalProblem->$_());
+	#	}
+	#}
+	#return $UserProblem;
+	
+	return $self->getMergedProblems([$userID, $setID, $problemID]);
 }
 
 =item getMergedProblems(@userProblemIDs)
@@ -1396,6 +1473,24 @@ element is the user_id, the second element is the set_id, and the third element
 is the problem_id.
 
 =cut
+
+#sub getMergedProblems {
+#	my ($self, @userProblemIDs) = @_;
+#	
+#	croak "getMergedProblems: requires 1 or more argument"
+#		unless @_ >= 2;
+#	foreach my $i (0 .. $#userProblemIDs) {
+#		croak "getMergedProblems: element $i of argument list must contain a <user_id, set_id, problem_id> triple"
+#			unless defined $userProblemIDs[$i]
+#			       and ref $userProblemIDs[$i] eq "ARRAY"
+#			       and @{$userProblemIDs[$i]} == 3
+#			       and defined $userProblemIDs[$i]->[0]
+#			       and defined $userProblemIDs[$i]->[1]
+#			       and defined $userProblemIDs[$i]->[2];
+#	}
+#	
+#	return map { $self->getMergedProblem(@{$_}) } @userProblemIDs;
+#}
 
 sub getMergedProblems {
 	my ($self, @userProblemIDs) = @_;
@@ -1412,17 +1507,39 @@ sub getMergedProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
-	return map { $self->getMergedProblem(@{$_}) } @userProblemIDs;
+	my @UserProblems = $self->getUserProblems(@userProblemIDs);
+	
+	my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @userProblemIDs;
+	my @GlobalProblems = $self->getGlobalProblems(@globalProblemIDs);
+	
+	my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
+	my @commonFields = grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
+	
+	for (my $i = 0; $i < @UserProblems; $i++) {
+		my $UserProblem = $UserProblems[$i];
+		my $GlobalProblem = $GlobalProblems[$i];
+		next unless $UserProblem and $GlobalProblem;
+		foreach my $field (@commonFields) {
+			next if $UserProblem->$field;
+			$UserProblem->$field($GlobalProblem->$field);
+		}
+	}
+	
+	return @UserProblems;
 }
+
+=back
+
+=cut
 
 ################################################################################
 # debugging
 ################################################################################
 
-sub dumpDB($$) {
-	my ($self, $table) = @_;
-	return $self->{$table}->dumpDB();
-}
+#sub dumpDB($$) {
+#	my ($self, $table) = @_;
+#	return $self->{$table}->dumpDB();
+#}
 
 ################################################################################
 # sanity checking
