@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.49 2004/12/17 17:08:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.50 2004/12/17 18:06:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -548,7 +548,11 @@ sub body {
 	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
 	my $setName         = $r->urlpath->arg("setID") ;
 	my $problemNumber   = $r->urlpath->arg("problemID") ;
-
+    $setName            = defined($setName) ? $setName : '';  # we need this instead of using the || construction 
+                                                              # to keep set 0 from being set to the 
+                                                              # empty string.
+    $problemNumber      = defined($problemNumber) ? $problemNumber : '';
+    
 
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
@@ -574,7 +578,7 @@ sub body {
 	} else {
 		#warn "obtaining input from r_problemContents";
 	}
-	
+
 	my $protected_file = not -w $inputFilePath;
 	my $header = CGI::i("Editing problem".CGI::b("set $setName/ problem $problemNumber</emphasis>").CGI::br()." in file $inputFilePath");
 	$header = ($inputFilePath =~ /$TEMPFILESUFFIX/) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
