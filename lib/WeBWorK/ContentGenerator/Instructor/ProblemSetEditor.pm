@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.43 2004/03/28 04:46:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.44 2004/04/03 16:24:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -187,9 +187,11 @@ sub initialize {
 		$fileName    .= '.def' unless $fileName =~ /\.def$/;
 		my $filePath  = $ce->{courseDirs}->{templates}.'/'.$fileName;
 		# back up existing file
-		rename($filePath,"$filePath.bak") or 
+		if(-e $filePath) {
+		    rename($filePath,"$filePath.bak") or 
 	    	       die "Can't rename $filePath to $filePath.bak ",
 	    	           "Check permissions for webserver on directories. $!";
+		}
 	    my $openDate     = formatDateTime($setRecord->open_date);
 	    my $dueDate      = formatDateTime($setRecord->due_date);
 	    my $answerDate   = formatDateTime($setRecord->answer_date);
