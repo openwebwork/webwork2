@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.117 2004/09/29 21:38:04 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.118 2004/10/06 21:01:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -490,7 +490,7 @@ sub links {
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets)}, sp2nbsp($sets->name))));
+		CGI::a({href=>$self->systemLink($sets)}, sp2nbsp("Homework Sets"))));
 	
 	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
 		print CGI::li(CGI::a({href=>$self->systemLink($options)}, sp2nbsp($options->name)));
