@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.125 2004/11/18 16:04:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.126 2004/11/19 18:30:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -295,7 +295,7 @@ Must be called before the message() template escape is invoked.
 
 =cut
 
-# FIXME: we should probably 
+
 
 sub addmessage {
 	my ($self, $message) = @_;
@@ -488,28 +488,26 @@ sub links {
 	if ($authz->hasPermissions($user, "report_bugs")) {
 		print CGI::p(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs")),CGI::hr();
 	}
-	
+	my %displayOptions = (displayMode    => $self->{displayMode},
+	                      showOldAnswers => $self->{will}->{showOldAnswers}
+	);
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
 		CGI::a({href=>$self->systemLink($sets,
-		                                params=>{  displayMode => $self->{displayMode}, 
-									               showOldAnswers => $self->{will}->{showOldAnswers}
-									    }
+		                                params=>{  %displayOptions,}
 									    )}, sp2nbsp("Homework Sets")))
 	);
 	
 	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
 		print CGI::li(CGI::a({href=>$self->systemLink($options,
-		                                              params=>{  displayMode => $self->{displayMode}, 
-									                             showOldAnswers => $self->{will}->{showOldAnswers}
-									                  }
-									                  )}, sp2nbsp($options->name)));
+		                                              params=>{  %displayOptions,}
+									                  )
+							  }, sp2nbsp($options->name))
+		);
 	}
 	
 	print CGI::li(CGI::a({href=>$self->systemLink($grades,
-	                                              params=>{  displayMode => $self->{displayMode}, 
-															 showOldAnswers => $self->{will}->{showOldAnswers}
-												  }
+	                                              params=>{  %displayOptions,}
 												  )},  sp2nbsp($grades->name)));
 	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  sp2nbsp($logout->name)));
 	
@@ -553,49 +551,48 @@ sub links {
 		print CGI::hr();
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"},
-		                 CGI::a({href=>$self->systemLink($instr)},  space2nbsp($instr->name))
+		                 CGI::a({href=>$self->systemLink($instr,params=>{  %displayOptions,})},  space2nbsp($instr->name))
 		);
 		print CGI::start_ul();
-		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, sp2nbsp($addUsers->name))) if $authz->hasPermissions($user, "modify_student_data");
-		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, sp2nbsp($userList->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($userList,params=>{  %displayOptions,})}, sp2nbsp($userList->name)));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($setList)}, sp2nbsp($setList->name));
+		print CGI::a({href=>$self->systemLink($setList,params=>{  %displayOptions,})}, sp2nbsp($setList->name));
 		if (defined $setID and $setID ne "") {
 			print CGI::start_ul();
 			print CGI::start_li();
-			print CGI::a({href=>$self->systemLink($setDetail)}, $setID);
+			print CGI::a({href=>$self->systemLink($setDetail,params=>{  %displayOptions,})}, $setID);
 			if (defined $problemID and $problemID ne "") {
 				print CGI::ul(
-					CGI::li(CGI::a({href=>$self->systemLink($problemEditor)}, $problemID))
+					CGI::li(CGI::a({href=>$self->systemLink($problemEditor,params=>{  %displayOptions,})}, $problemID))
 				);
 			}
 			print CGI::end_li();
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
-		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($maker,params=>{  %displayOptions,})}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner,params=>{  %displayOptions,})}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($stats)}, sp2nbsp($stats->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($stats,params=>{  %displayOptions,})}, sp2nbsp($stats->name)));
 		
 	## Added Link for Student Progress	
-	    print CGI::li(CGI::a({href=>$self->systemLink($progress)}, sp2nbsp($progress->name)));
+	    print CGI::li(CGI::a({href=>$self->systemLink($progress,params=>{  %displayOptions,})}, sp2nbsp($progress->name)));
 		print CGI::start_li();
 			if (defined $userID and $userID ne "") {
 				print CGI::ul(
-					CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
+					CGI::li(CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID))
 				);
 			}
 			if (defined $setID and $setID ne "") {
 				print CGI::ul(
-					CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, space2nbsp($setID)))
+					CGI::li(CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, space2nbsp($setID)))
 				);
 			}
 		print CGI::end_li();
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
-		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
-		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr)}, sp2nbsp($fileMgr->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring,params=>{  %displayOptions,})}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($mail,params=>{  %displayOptions,})}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
+		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr,params=>{  %displayOptions,})}, sp2nbsp($fileMgr->name)));
 		#print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
 		print CGI::li( $self->helpMacro('instructor_links'));
 		print CGI::end_ul();
@@ -687,7 +684,7 @@ C<body>.
 
 sub options {
 	my ($self) = @_;
-	
+
 	return "" if $self->{invalidProblem};
 	my $sourceFilePathfield = '';
         if($self->r->param("sourceFilePath")) {
@@ -887,6 +884,7 @@ sub message {
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
 	print $self->{status_message} if exists $self->{status_message};
+	
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
 	
 	return "";
