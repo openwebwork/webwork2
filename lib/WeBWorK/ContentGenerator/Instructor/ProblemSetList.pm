@@ -103,7 +103,7 @@ sub body {
 		
 		my $userCountMessage;
 		if ($count == 0) {
-			$userCountMessage = "Not assigned";
+			$userCountMessage = CGI::em("No users");
 		} elsif ($count == scalar(@users)) {
 			$userCountMessage = "All users";
 		} elsif ($count == 1) {

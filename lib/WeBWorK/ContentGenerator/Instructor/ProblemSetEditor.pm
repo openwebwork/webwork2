@@ -99,11 +99,13 @@ sub directoryListHTML {
 	$selected = [$selected] unless ref $selected eq "ARRAY";
 	my $dirName = join "/", @path[0..$level];
 	my @contents = sort grep {m/\.pg$/ or -d $dirName.'/'.$_ and not m/^\.{1,2}$/} readDirectory($dirName);
+	my %contentsPretty = map {$_ => (-d $dirName.'/'.$_ ? $_.'/' : $_)} @contents;
 	
 	my $html = ($level eq "0" ? "problem library" : $path[$level]) . CGI::br();
 	$html .= CGI::scrolling_list({
 		name=>"directory_level_$level",
 		values=>\@contents,
+		labels=>\%contentsPretty,
 		default=>$selected,
 		multiple=>'true',
 		size=>"20",
@@ -295,65 +297,67 @@ sub body {
 	print CGI::end_form();
 	
 	## Problems Form ##
+	my @problemList = $db->listGlobalProblems($setName);
 	print CGI::a({name=>"problems"});
 	print CGI::h2({}, "Problems");
-	
-	my @problemList = $db->listGlobalProblems($setName);
-	
-	print CGI::start_form({method=>"POST", action=>$r->uri.'#problems'});
-	print CGI::start_table({border=>1, cellpadding=>4});
-	print CGI::Tr({}, CGI::th({}, [
-		($forUsers ? () : ("Delete?")), 
-		"Problem",
-		($forUsers ? ("Status", "Problem Seed") : ()),
-		"Source File", "Max. Attempts", "Weight",
-		($forUsers ? ("Number Correct", "Number Incorrect") : ())
-	]));
-	foreach my $problem (sort {$a <=> $b} @problemList) {
-		my $problemRecord = $db->getGlobalProblem($setName, $problem);
-		my $problemID = $problemRecord->problem_id;
-		my $userProblemRecord;
-		my %problemOverrideArgs;
-		
-		if ($forOneUser) {
-			$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
-			foreach my $field (@{PROBLEM_FIELDS()}) {
-				$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
-			}
-#		} elsif ($forUsers) {
-#			foreach my $field (@{PROBLEM_FIELDS()}) {
-#				$problemOverrideArgs{$field} = ["", ""];
-#			}
-		} else {
-			foreach my $field (@{PROBLEM_FIELDS()}) {
-				$problemOverrideArgs{$field} = [undef, undef];
-			}
-		}
-		
-		print CGI::Tr({}, 
-			CGI::td({}, [
-				($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
-				CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
-				($forUsers ? (
-					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
-					problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),
-				) : ()),
-				problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
-				problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
-				problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
-				($forUsers ? (
-					problemElementHTML("problem_${problemID}_num_correct", $userProblemRecord->num_correct, "7"),
-					problemElementHTML("problem_${problemID}_num_incorrect", $userProblemRecord->num_incorrect, "7")
-				) : ())
-			])
+	if (scalar(@problemList)) {
+		print CGI::start_form({method=>"POST", action=>$r->uri.'#problems'});
+		print CGI::start_table({border=>1, cellpadding=>4});
+		print CGI::Tr({}, CGI::th({}, [
+			($forUsers ? () : ("Delete?")), 
+			"Problem",
+			($forUsers ? ("Status", "Problem Seed") : ()),
+			"Source File", "Max. Attempts", "Weight",
+			($forUsers ? ("Number Correct", "Number Incorrect") : ())
+		]));
+		foreach my $problem (sort {$a <=> $b} @problemList) {
+			my $problemRecord = $db->getGlobalProblem($setName, $problem);
+			my $problemID = $problemRecord->problem_id;
+			my $userProblemRecord;
+			my %problemOverrideArgs;
 
-		)
+			if ($forOneUser) {
+				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
+				foreach my $field (@{PROBLEM_FIELDS()}) {
+					$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
+				}
+	#		} elsif ($forUsers) {
+	#			foreach my $field (@{PROBLEM_FIELDS()}) {
+	#				$problemOverrideArgs{$field} = ["", ""];
+	#			}
+			} else {
+				foreach my $field (@{PROBLEM_FIELDS()}) {
+					$problemOverrideArgs{$field} = [undef, undef];
+				}
+			}
+
+			print CGI::Tr({}, 
+				CGI::td({}, [
+					($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
+					CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
+					($forUsers ? (
+						problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
+						problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),
+					) : ()),
+					problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
+					problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
+					problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
+					($forUsers ? (
+						problemElementHTML("problem_${problemID}_num_correct", $userProblemRecord->num_correct, "7"),
+						problemElementHTML("problem_${problemID}_num_incorrect", $userProblemRecord->num_incorrect, "7")
+					) : ())
+				])
+
+			)
+		}
+		print CGI::end_table();
+		print hiddenEditForUserFields(@editForUser);
+		print $self->hidden_authen_fields;
+		print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
+		print CGI::end_form();
+	} else {
+		print CGI::p("This set doesn't contain any problems yet.");
 	}
-	print CGI::end_table();
-	print hiddenEditForUserFields(@editForUser);
-	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
-	print CGI::end_form();
 	
 	unless ($forUsers) {
 		my $libraryRoot = $ce->{courseDirs}->{templates};

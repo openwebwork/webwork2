@@ -121,7 +121,7 @@ sub max {
 			$soFar = $item;
 		}
 	}
-	return $soFar;
+	return defined $soFar ? $soFar : 0;
 }
 
 # -----
