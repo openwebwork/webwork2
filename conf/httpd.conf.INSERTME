@@ -1,67 +1,73 @@
-# To add WeBWorK2 to an existing http.conf file (which already has mod_perl enabled)
+################################################################################
+# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
+# $Id: httpd.conf.INSERTME,v 1.2 2003-06-17 21:36:34 sh002i Exp $
+################################################################################
+# 
+# To add WeBWorK 2 to an existing Apache installation:
+# 
+# (1) Make sure that mod_perl is installed and working.
+# 
+# See http://perl.apache.org/docs/1.0/guide/install.html for more information.
+# 
+# (2) Customize the links below to point the correct directories in your system
+#     by replacing WEBWORK_DIR  with your local webwork directory path.
+# 
+# In my system, running a personal development WeBWorK 2 in my home directory,
+# I replace WEBWORK_DIR with /home/gage/webwork/. I have checked out the
+# webwork-modperl and pg CVS modules into this directory.
+# 
+# You can use a global find/replace to change WEBWORK_DIR to the appropriate
+# directory. There are 7 occurences, plus 3 occurences in the comments.
+# 
+# (3) insert the following code in a section of the httpd.conf file where other
+#     <Location> and <Alias> blocks are defined.
+# 
+# The ww_status link is used for testing your mod_perl installation. The
+# Apache::Status module is available on all machines on which mod_perl has been
+# installed.
+# 
+################################################################################
 
-# (1) Customize the links below to point the correct directories in your system by replacing 
-WEBWORK_DIR  with your local webwork directory path.
+# This stanza sets the Apache::Status module to handle requests for the location
+# /ww_status. This can be used to see if mod_perl is running correctly. Remove
+# this when you are satisfied that everything is working properly.
+# 
+<Location /ww_status>
+	SetHandler perl-script 
+	PerlHandler Apache::Status
+	
+</Location>
 
-
-
-# In my system, running a personal development WeBWorK2 in my home directory
-# I replace WEBWORK_DIR   by /home/gage/webwork/
-# I have checked out the webwork-modperl and pg modules into this directory
-
-# You can use a global replace to change WEBWORK_DIR to the appropriate directory.
-# There are 7 occurences, plus  3 occurences in the comments.
-
-
-# (2) insert the following code in a section of the httpd.conf file where <Location> and <Alias>
-# objects are being defined.
-
-
-
-# The ww_status link is used in testing.  The Apache::Status module is available on all machines
-# for which Apache has been installed.
-
-
-##################################################################################
+# This stanza sets the Apache::WeBWorK module to handle requests for the
+# location /webwork2.
+# 
 <IfModule mod_perl.c>
 	PerlFreshRestart On
 	<Location /webwork2>
 		SetHandler perl-script
-		PerlModule Apache::DProf
 		PerlHandler Apache::WeBWorK
 	
 		PerlSetVar webwork_root WEBWORK_DIR/webwork-modperl
 		PerlSetVar pg_root /WEBWORK_DIR/pg
 		
 		<Perl>
-		use lib 'WEBWORK_DIR/webwork-modperl/lib';
-		use lib 'WEBWORK_DIR/pg/lib';
+			use lib 'WEBWORK_DIR/webwork-modperl/lib';
+			use lib 'WEBWORK_DIR/pg/lib';
 		</Perl>
 	</Location>
 </IfModule>
-# This DocumentRoot doesn't actually make a lot of sense.  In a
-# WeBWorK mod_perl system, there is no static document root, but the
-# DocumentRoot does have to exist, and not have a subdirectory
-# named "webwork".  It suffices.
-DocumentRoot "WEBWORK_DIR/webwork-modperl/htdocs"
 
-# This alias, however, is important.
+# This Alias should point to the WeBWorK 2 htdocs directory. It contains
+# resources referenced by scripts within the system.
+# 
 Alias /webwork2_files/ /WEBWORK_DIR/webwork-modperl/htdocs/
 
-# This should match the DocumentRoot
+# This stanza sets the access permissions on the WeBWorK 2 htdocs directory.
+# The path given here should match the path given above in the Alias directive.
+# 
 <Directory "/WEBWORK_DIR/webwork-modperl/htdocs">
     Options Indexes FollowSymLinks MultiViews
     AllowOverride None
     Order allow,deny
     Allow from all
 </Directory>
-
-
-# status test
-<Location /ww_status>
-	SetHandler perl-script 
-	PerlHandler Apache::Status
-</Location>
-
-
-##################################################################################
