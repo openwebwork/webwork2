@@ -124,9 +124,9 @@ sub save {
 	my $task = $self->{task};
 	my $now = gettimeofday();
 	
+	my $diff = sprintf("%.6f", 0);
 	if ($self->{start}) {
 		my $start = sprintf("%.6f", $self->{start});
-		my $diff = sprintf("%.6f",0);
 		print STDERR "TIMING $$ $id $start ($diff) $task: START\n";
 	} else {
 		my $ctime = sprintf("%.6f", $self->{ctime});
@@ -139,7 +139,7 @@ sub save {
 			my ($time, $data) = @$step;
 			$time = sprintf("%.6f", $time);
 			my $start = sprintf("%.6f", $self->{start});
-		    my $diff  = sprintf("%.6f",$time-$start);
+			my $diff  = sprintf("%.6f", $time-$start);
 			print STDERR "TIMING $$ $id $time ($diff) $task: $data\n";
 		}
 	}
@@ -147,12 +147,12 @@ sub save {
 	if ($self->{stop}) {
 		my $stop = sprintf("%.6f", $self->{stop});
 		my $start = sprintf("%.6f", $self->{start});
-		my $diff  = sprintf("%.6f",$stop-$start);
+		my $diff  = sprintf("%.6f", $stop-$start);
 		print STDERR "TIMING $$ $id $stop ($diff) $task: END\n";
 	} else {
 		$now = sprintf("%.6f", $now);
 		my $start = sprintf("%.6f", $self->{start});
-		my $diff  = sprintf("%.6f",$now-$start);
+		my $diff  = sprintf("%.6f", $now-$start);
 		print STDERR "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
 	}
 	

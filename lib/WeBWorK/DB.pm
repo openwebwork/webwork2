@@ -274,6 +274,8 @@ sub addPassword($$) {
 	croak "addPassword: user ", $Password->user_id, " not found"
 		unless $self->{user}->exists($Password->user_id);
 	
+	checkKeyfields($Password);
+	
 	return $self->{password}->add($Password);
 }
 
@@ -314,6 +316,8 @@ sub putPassword($$) {
 		unless ref $Password eq $self->{password}->{record};
 	croak "putPassword: password not found (perhaps you meant to use addPassword?)"
 		unless $self->{password}->exists($Password->user_id);
+	
+	checkKeyfields($Password);
 	
 	return $self->{password}->put($Password);
 }
@@ -386,6 +390,8 @@ sub addPermissionLevel($$) {
 	croak "addPermissionLevel: user ", $PermissionLevel->user_id, " not found"
 		unless $self->{user}->exists($PermissionLevel->user_id);
 	
+	checkKeyfields($PermissionLevel);
+	
 	return $self->{permission}->add($PermissionLevel);
 }
 
@@ -426,6 +432,8 @@ sub putPermissionLevel($$) {
 		unless ref $PermissionLevel eq $self->{permission}->{record};
 	croak "putPermissionLevel: permission level not found (perhaps you meant to use addPermissionLevel?)"
 		unless $self->{permission}->exists($PermissionLevel->user_id);
+	
+	checkKeyfields($PermissionLevel);
 	
 	return $self->{permission}->put($PermissionLevel);
 }
@@ -494,6 +502,8 @@ sub addKey($$) {
 	croak "addKey: user ", $Key->user_id, " not found"
 		unless $self->{user}->exists($Key->user_id);
 	
+	checkKeyfields($Key);
+	
 	return $self->{key}->add($Key);
 }
 
@@ -533,6 +543,8 @@ sub putKey($$) {
 		unless ref $Key eq $self->{key}->{record};
 	croak "putKey: key not found (perhaps you meant to use addKey?)"
 		unless $self->{key}->exists($Key->user_id);
+	
+	checkKeyfields($Key);
 	
 	return $self->{key}->put($Key);
 }
@@ -598,6 +610,8 @@ sub addUser($$) {
 	croak "addUser: user exists (perhaps you meant to use putUser?)"
 		if $self->{user}->exists($User->user_id);
 	
+	checkKeyfields($User);
+	
 	return $self->{user}->add($User);
 }
 
@@ -637,6 +651,8 @@ sub putUser($$) {
 		unless ref $User eq $self->{user}->{record};
 	croak "putUser: user not found (perhaps you meant to use addUser?)"
 		unless $self->{user}->exists($User->user_id);
+	
+	checkKeyfields($User);
 	
 	return $self->{user}->put($User);
 }
@@ -692,6 +708,8 @@ sub addGlobalSet($$) {
 	croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)"
 		if $self->{set}->exists($GlobalSet->set_id);
 	
+	checkKeyfields($GlobalSet);
+	
 	return $self->{set}->add($GlobalSet);
 }
 
@@ -715,6 +733,8 @@ sub putGlobalSet($$) {
 		unless ref $GlobalSet eq $self->{set}->{record};
 	croak "putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)"
 		unless $self->{set}->exists($GlobalSet->set_id);
+	
+	checkKeyfields($GlobalSet);
 	
 	return $self->{set}->put($GlobalSet);
 }
@@ -778,6 +798,8 @@ sub addUserSet($$) {
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
 	
+	checkKeyfields($UserSet);
+	
 	return $self->{set_user}->add($UserSet);
 }
 
@@ -807,6 +829,8 @@ sub putUserSet($$) {
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "putUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
+	
+	checkKeyfields($UserSet);
 	
 	return $self->{set_user}->put($UserSet);
 }
@@ -855,6 +879,8 @@ sub addGlobalProblem($$) {
 	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
 	
+	checkKeyfields($GlobalProblem);
+	
 	return $self->{problem}->add($GlobalProblem);
 }
 
@@ -882,6 +908,8 @@ sub putGlobalProblem($$) {
 		unless $self->{problem}->exists($GlobalProblem->set_id, $GlobalProblem->problem_id);
 	croak "putGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
+	
+	checkKeyfields($GlobalProblem);
 	
 	return $self->{problem}->put($GlobalProblem);
 }
@@ -948,6 +976,8 @@ sub addUserProblem($$) {
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
 		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
 	
+	checkKeyfields($UserProblem);
+	
 	return $self->{problem_user}->add($UserProblem);
 }
 
@@ -979,6 +1009,8 @@ sub putUserProblem($$) {
 		unless $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
 	croak "putUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
 		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
+	
+	checkKeyfields($UserProblem);
 	
 	return $self->{problem_user}->put($UserProblem);
 }
@@ -1071,6 +1103,18 @@ sub getMergedProblem {
 sub dumpDB($$) {
 	my ($self, $table) = @_;
 	return $self->{$table}->dumpDB();
+}
+
+################################################################################
+# sanity checking
+################################################################################
+
+sub checkKeyfields($) {
+	my ($Record) = @_;
+	foreach my $keyfield ($Record->KEYFIELDS) {
+		croak "checkKeyfields: invalid character in $keyfield field (valid characters are [A-Za-z0-9_])"
+			unless $Record->$keyfield =~ m/^\w*$/;
+	}
 }
 
 =head1 AUTHOR
