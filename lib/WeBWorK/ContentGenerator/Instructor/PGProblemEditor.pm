@@ -18,27 +18,32 @@ our $rowheight;
 
 sub title {
 	my $self = shift;
-	return "Instructor Tools - PG Problem Editor for ?????";
+	#FIXME  don't need the entire path  ??
+	return "Instructor Tools - PG Problem Editor for ". $self->{ce}->{problemPath};
 }
 
 sub body {
 	my $self = shift;
 	
 	# test area
-	my $r = $self->{r};
-	my $db = $self->{db};
-	
-	my $user = $r->param('user');
-	my $key = $db->getKey($user)->key();
+	my $r 		= 	$self->{r};
+	my $db 		= 	$self->{db};
+	my $ce		=	$self->{ce};
+	my $user 	= 	$r->param('user');
+	my $key 	= 	$db->getKey($user)->key();
 	
 	
 	################
 	# Gathering info
 	# What is needed
 	#     $problemPath  -- 
-	#     $formURL -- the action URL for the form 
+	#     $formURL -- given by $r->uri
 	#     $tmpProblemPath 
-	my ($problemPath,$formURL,$tmpProblemPath) = $self->initialize();
+	#my ($problemPath,$formURL,$tmpProblemPath) = $self->initialize();
+	my $problemPath 	= 	$ce->{problemPath};
+
+	my $tmpProblemPath	=	$ce->{tmpProblemPath};
+	
 	
 
 	
@@ -46,15 +51,34 @@ sub body {
 
 	my $header = 'Problem Editor';
 
-	
-	#########################################################################	
-	# Define the popup strings used for selecting the library set directory, and the problem from that directory
-	#fix me
-	# he problem of multiple selections needs to be handled properly.
 	#########################################################################
-#	my $popUpSetDirectoryString = $self->fetchSetDirectories($setDirectory);  #pass default choice as current directory
-#	my $popUpPGProblemString = $self->fetchPGproblems($setDirectory);
+	# Find the text for the problem, either in the tmp file, if it exists
+	# or in the original file in the template directory
+	#########################################################################
+	my $problemContents = '';
+	my $editMode		= (defined($r->param('problemContents')))? 
+								'tmpMode':'stdMode';
 	
+	if ( $editMode eq 'tmpMode') {
+		$problemContents	=	$r->param('problemContents');
+
+	} else {
+		eval {
+			$problemContents	=	WeBWorK::Utils::readFile($problemPath);
+		};
+		$problemContents = $@ if $@;
+	
+		# create tmp file version for later use 
+		# So that you don't need duplicate information in forms
+		# FIXME
+		# open(FILE,">$tmpProblemPath") || die "Failed to open $tmpProblemPath";
+		# print FILE "tmpfileVersion\n\n" . $problemContents;
+		# close(FILE);
+	}
+		
+	# Define parameters for textarea
+	my $rows 	= 	40;
+	my $columns	= 	80;
 	
 	#########################################################################
 	# Define a link to view the problem
@@ -70,11 +94,16 @@ sub body {
 	#########################################################################
 	           
 	return CGI::p($header),
-		
-		"<p> the parameters passed are "  #fix me -- debugging code
+		CGI::startform("POST",$r->uri),
+		$self->hidden_authen_fields,
+		CGI::textarea(-name => 'problemContents', -default => $problemContents,
+					  -rows => $rows, -columns => $columns, -override => 1,
+		),
+		"<p> the parameters passed are "  #FIXME -- debugging code
 		. join("<BR>", %{$r->param()}) . 
 		"</p> and the gatheredInfo is ",
-		join("<br>",$self->initialize() ), 
+		"problemPath=$problemPath<br> formURL=".$r->uri . "<br> tmpProblemPath=$tmpProblemPath<br>"   ,
+		 
 	;
 
 }
@@ -86,18 +115,18 @@ sub initialize {
 	my $r				=	$self->{r};
 	my $path_info 		= $r->path_info || "";
 	
-	## Determine the set name
-	my $remaining_path 	= $path_info;
-	$remaining_path =~ s/^.*pgProblemEditor//;
-	my($junk,  @components) = split "/", $remaining_path;
-	my $problemPath = $remaining_path;	
-	# Find the URL for the form
-	$path_info =~s|pgProblemEditor.*$|pgProblemEditor/|;   # remove trailing info, if any, from the path
-	my $formURL = "/webwork$path_info";   
+	## Determine relative path to the file to be edited
 	
-	my $tmpProblemPath = "unknown";
+	my $templateDirectory 	= $self->{ce}->{courseDirs}->{templates};
+	my $problemPath 		=  join("/",$templateDirectory,@path_components) .'.pg';
 	
-	($problemPath,$formURL,$tmpProblemPath);
+	
+	# find path to the temporary file
+	my $tmpDirectory 		= 	$ce->{courseDirs}->{html_temp};
+	my $fileName 			=	join("-", $r->param('user'),@path_components).'.pg'; 
+	my $tmpProblemPath		=	"$tmpDirectory/$fileName";
+	$ce->{problemPath} 		= 	$problemPath;
+	$ce->{tmpProblemPath}	= 	$tmpProblemPath;	
 }
 
 # sub gatherProblemList {   #workaround for obtaining the definition of a problem set (awaiting implementation of db function)
