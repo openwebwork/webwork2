@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.1 2004/04/27 03:38:15 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.2 2004/04/29 23:33:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,6 +34,7 @@ use WeBWorK::Utils qw();
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
+	listTables
 	dbExport
 	dbImport
 );
@@ -101,6 +102,16 @@ our %PUT_SUBS = (
 
 =over
 
+=item listTables()
+
+List the names of the tables supported for export.
+
+=cut
+
+sub listTables {
+	return @TABLE_ORDER;
+}
+
 =item dbExport(%options)
 
 Exports data from a WeBWorK database to a WWDBv2 XML document.
@@ -158,10 +169,15 @@ sub dbExport {
 			$writer->endTag;
 		}
 		$writer->endTag;
+		delete$tables{$table}; # finished with that table
 	}
 	$writer->endTag;
 	
 	$writer->end;
+	
+	foreach my $table (keys %tables) {
+		warn "skipped unknown table \"$table\".\n";
+	}
 	
 	return ();
 }
