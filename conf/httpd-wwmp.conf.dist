@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.13 2004/01/05 01:02:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.14 2004/06/24 16:59:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,21 +43,6 @@ ErrorLog !WEBWORK_ROOT!/logs/error.log
 # systems.
 #ScoreBoardFile /var/run/httpd.scoreboard
 
-########## WeBWorK 2 ##########
-
-PerlFreshRestart On
-<Location /webwork2>
-    SetHandler perl-script
-    PerlHandler Apache::WeBWorK
-
-    PerlSetVar webwork_root !WEBWORK_ROOT!
-    PerlSetVar pg_root !PG_ROOT!
-    <Perl>
-	use lib '!WEBWORK_ROOT!/lib';
-	use lib '!PG_ROOT!/lib';
-    </Perl>
-</Location>
-
 # We're limiting the number of children because we'll be running a lot and
 # don't want to bog the development box down.
 StartServers 2
@@ -74,22 +59,36 @@ MaxRequestsPerChild 100
 # named "webwork2".  It suffices.
 DocumentRoot "!WEBWORK_ROOT!/htdocs"
 
-# These aliases are important. 
-# The segment !COURSES_ROOT!  should be replaced by the full path reference
-# to the location where your courses are stored. 
-# The AliasMatch directive directs to files stored in the html directory of each course.
-AliasMatch ^/webwork2_files/courses/([^/]*)/(.*) !COURSES_ROOT!/$1/html/$2
+########## WeBWorK 2 ##########
 
-# The alias directive redirects to the toplevel material in the global webwork2/htdocs directory 
-Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
+# Define the location that is handled by the Apache::WeBWorK module, and tell
+# perl where to find the libraries Apache::WeBWorK will need to run:
+# 
+<Location /webwork2>
+   PerlSetVar webwork_root !WEBWORK_ROOT!
+   PerlSetVar pg_root !PG_ROOT!
+   <Perl>
+     use lib "!WEBWORK_ROOT!/lib";
+     use lib "!PG_ROOT!/lib";
+   </Perl>
+   SetHandler perl-script
+   PerlHandler Apache::WeBWorK
+</Location>
 
-# This sets the permissions on the toplevel webwork2/htdocs directory
-# This should match the DocumentRoot
-<Directory "!WEBWORK_ROOT!/htdocs">
-    Options Indexes FollowSymLinks MultiViews
-    AllowOverride None
-    Order allow,deny
-    Allow from all
+# Provide access to system-wide resources:
+# 
+Alias /webwork2_files !WEBWORK_ROOT!/htdocs
+<Directory !WEBWORK_ROOT!/htdocs>
+   Options None
+   AllowOverride None
+</Directory>
+
+# Provide access to course-specific resources:
+# 
+AliasMatch /webwork2_course_files/([^/]*)/(.*) !COURSES_ROOT!/$1/html/$2
+<Directory !COURSES_ROOT!/*/html>
+   Options FollowSymLinks
+   AllowOverride None
 </Directory>
 
 ########## Access control ##########
