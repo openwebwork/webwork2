@@ -7,7 +7,24 @@ package WeBWorK;
 
 =head1 NAME
 
-WeBWorK - Dispatch requests to the appropriate ContentGenerator.
+WeBWorK - Dispatch requests to the appropriate content generator.
+
+=head1 SYNOPSIS
+
+ my $r = Apache->request;
+ my $result = eval { WeBWorK::dispatch($r) };
+ die "something bad happened: $@" if $@;
+
+=head1 DESCRIPTION
+
+C<WeBWorK> is the dispatcher for the WeBWorK system. Given an Apache request
+object, it performs authentication and determines which subclass of
+C<WeBWorK::ContentGenerator> to call.
+
+=head1 REQUEST FORMAT
+
+ FIXME: write this part
+ summary: the URI controls 
 
 =cut
 
@@ -47,6 +64,15 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Timing;
 
+=head1 THE C<&dispatch> FUNCTION
+
+The C<&dispatch> function takes an Apache request object (REQUEST) and returns
+an apache status code. Below is an overview of its operation:
+
+=over
+
+=cut
+
 sub dispatch($) {
 	my ($apache) = @_;
 	my $r = Apache::Request->new($apache);
@@ -62,6 +88,15 @@ sub dispatch($) {
 	my $args = $r->args;
 	
 	my ($urlRoot) = $current_uri =~ m/^(.*)$path_info/;
+
+=item Ensure that the URI ends with a "/"
+
+Parts of WeBWorK assume that the current URI of a request ends with a "/". If
+this is not the case, a redirection is issued to add the "/". This action will
+discard any POST data associated with the request, so it is essential that all
+POST requests include a "/" at the end of the URI.
+
+=cut
 	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
@@ -79,18 +114,45 @@ sub dispatch($) {
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $pg_root = $r->dir_config('pg_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
+
+=item Read the course environment
+
+C<WeBWorK::CourseEnvironment> is used to read the F<global.conf> configuration
+file. If a course name was given in the request's URI, it is passed to
+C<WeBWorK::CourseEnvironment>. In this case, the course-specific configuration
+file (usually F<course.conf>) is also read by C<WeBWorK::CourseEnvironment> at
+this point.
+
+See also L<WeBWorK::CourseEnvironment>.
+
+=cut
 	
 	# Try to get the course environment.
 	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $pg_root, $course);};
 	if ($@) { # If there was an error getting the requested course
 		die "Failed to read course environment for $course: $@";
 	}
+
+=item If no course was given, go to the site home page
+
+If the URI did not include the name of a course, a redirection is issued to the
+site home page, given but the course environemnt variable
+C<$ce-E<gt>{webworkURLs}-E<gt>{home}>.
+
+=cut
 	
 	# If no course was specified, redirect to the home URL
 	unless (defined $course) {
 		$r->header_out(Location => $ce->{webworkURLs}->{home});
 		return REDIRECT;
 	}
+
+=item If the given course does not exist, fail
+
+If the URI did include the name of a course, but the course directory was not
+found, an exception is thrown.
+
+=cut
 	
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
@@ -98,6 +160,14 @@ sub dispatch($) {
 	unless (-e $courseDir) {
 		die "Course directory for $course ($courseDir) not found. Perhaps the course does not exist?";
 	}
+
+=item Initialize the database system
+
+A C<WeBWorK::DB> object is created from the current course environment.
+
+See also L<WeBWorK::DB>.
+
+=cut
 	
 	# Bring up a connection to the database (for Authen/Authz, and eventually
 	# to be passed to content generators, when we clean this file up).
@@ -109,11 +179,31 @@ sub dispatch($) {
 	#$dispatchTimer->start;
 	
 	my $result;
+
+=item Check authentication
+
+Use C<WeBWorK::Authen> to verify that the remote user has authenticated.
+
+See also L<WeBWorK::Authen>.
+
+=cut
+	
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $ce, $db)->verify) {
 		$result = WeBWorK::ContentGenerator::Login->new($r, $ce, $db)->go;
 	} else {
+
+=item Determine if the user is allowed to set C<effectiveUser>
+
+Use C<WeBWorK::Authz> to determine if the user is allowed to set
+C<effectiveUser>. If so, set it to the requested value (or set it to the real
+user name if no value is supplied). If not, set it to the real user name.
+
+See also L<WeBWorK::Authz>.
+
+=cut
+	
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
@@ -122,6 +212,15 @@ sub dispatch($) {
 		my $su_authorized = WeBWorK::Authz->new($r, $ce, $db)->hasPermissions($user, "become_student", $effectiveUser);
 		$effectiveUser = $user unless $su_authorized;
 		$r->param("effectiveUser", $effectiveUser);
+
+=item Create and call the appropriate subclass of C<WeBWorK::ContentGenerator> based on the URI.
+
+The dispatcher logic currently looks like this:
+
+ FIXME: write this part
+ for now, consult the code
+
+=cut
 		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
@@ -229,8 +328,22 @@ sub dispatch($) {
 	}
 	
 	#$dispatchTimer->stop;
+
+=item Return the result of calling the content generator
+
+The return value of the content generator's C<&go> function is returned.
+
+=cut
 	
 	return $result;
 }
+
+=back
+
+=head1 AUTHOR
+
+Written by Dennis Lambe, malsyned at math.rochester.edu.
+
+=cut
 
 1;
