@@ -13,6 +13,7 @@ WeBWorK::DB::Schema::SQL - support SQL access to all tables.
 
 use strict;
 use warnings;
+use Carp qw(croak);
 
 use constant TABLES => qw(password permission key user set set_user problem problem_user);
 use constant STYLE  => "sql";
@@ -62,17 +63,17 @@ sub list($@) {
 	my @keynames = $self->sqlKeynames();
 	my $keynames = join(", ", @keynames);
 	
-	die "too many keyparts for table $table (need at most: @keynames)"
+	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
 	my $stmt = "SELECT $keynames FROM $table ";
 	$stmt .= $self->makeWhereClause(@keyparts);
-	warn "SQL-list: $stmt\n";
+	$self->debug("SQL-list: $stmt\n");
 	
 	$self->{driver}->connect("ro");
 	my $result = $self->{driver}->handle()->selectall_arrayref($stmt);
 	$self->{driver}->disconnect();
-	die "failed to SELECT: $DBI::errstr" unless defined $result;
+	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return @$result;
 }
 
@@ -82,17 +83,17 @@ sub exists($@) {
 	my $table = $self->{table};
 	my @keynames = $self->sqlKeynames();
 	
-	die "wrong number of keyparts for table $table (needs: @keynames)"
+	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
 	my $stmt = "SELECT COUNT(*) FROM $table ";
 	$stmt .= $self->makeWhereClause(@keyparts);
-	warn "SQL-exists: $stmt\n";
+	$self->debug("SQL-exists: $stmt\n");
 	
 	$self->{driver}->connect("ro");
 	my ($result) = $self->{driver}->handle()->selectrow_array($stmt);
 	$self->{driver}->disconnect();
-	die "failed to SELECT: $DBI::errstr" unless defined $result;
+	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return $result > 0;
 }
 
@@ -101,7 +102,7 @@ sub add($$) {
 	
 	my @realKeynames = $self->{record}->KEYFIELDS();
 	my @keyparts = map { $Record->$_() } @realKeynames;
-	die "(" . join(", ", @keyparts) . "): exists (use put)"
+	croak "(" . join(", ", @keyparts) . "): exists (use put)"
 		if $self->exists(@keyparts);
 	
 	my $table = $self->{table};
@@ -113,7 +114,7 @@ sub add($$) {
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
 	my $stmt = "INSERT INTO $table ($fieldnames) VALUES ($marks)";
-	warn "SQL-add: $stmt\n";
+	$self->debug("SQL-add: $stmt\n");
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->handle()->prepare($stmt);
@@ -123,7 +124,7 @@ sub add($$) {
 	unless (defined $result) {
 		my @realKeynames = $self->{record}->KEYFIELDS();
 		my @keyvalues = map { $Record->$_() } @realKeynames;
-		die "(" . join(", ", @keyvalues) . "): failed to INSERT: $DBI::errstr";
+		croak "(" . join(", ", @keyvalues) . "): failed to INSERT: $DBI::errstr";
 	}
 	
 	return 1;
@@ -135,18 +136,18 @@ sub get($@) {
 	my $table = $self->{table};
 	my @keynames = $self->sqlKeynames();
 	
-	die "wrong number of keyparts for table $table (needs: @keynames)"
+	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
 	my $stmt = "SELECT * FROM $table ";
 	$stmt .= $self->makeWhereClause(@keyparts);
-	warn "SQL-get: $stmt\n";
+	$self->debug("SQL-get: $stmt\n");
 	
 	$self->{driver}->connect("ro");
 	my $result = $self->{driver}->handle()->selectrow_arrayref($stmt);
 	$self->{driver}->disconnect();
 	# $result comes back undefined if there are no matches. hmm...
-	#die "failed to SELECT: $DBI::errstr" unless defined $result;
+	#croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return undef unless defined $result;
 	
 	my @record = @$result;
@@ -164,7 +165,7 @@ sub put($$) {
 	
 	my @realKeynames = $self->{record}->KEYFIELDS();
 	my @keyparts = map { $Record->$_() } @realKeynames;
-	die "(" . join(", ", @keyparts) . "): not found (use add)"
+	croak "(" . join(", ", @keyparts) . "): not found (use add)"
 		unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
@@ -180,7 +181,7 @@ sub put($$) {
 		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
 	}
-	warn "SQL-put: $stmt\n";
+	$self->debug("SQL-put: $stmt\n");
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->handle()->prepare($stmt);
@@ -190,7 +191,7 @@ sub put($$) {
 	unless (defined $result) {
 		#my @realKeynames = $self->{record}->KEYFIELDS();
 		#my @keyvalues = map { $Record->$_() } @realKeynames;
-		die "(" . join(", ", @keyparts) . "): failed to UPDATE: $DBI::errstr";
+		croak "(" . join(", ", @keyparts) . "): failed to UPDATE: $DBI::errstr";
 	}
 	
 	return 1;
@@ -199,23 +200,23 @@ sub put($$) {
 sub delete($@) {
 	my ($self, @keyparts) = @_;
 	
-	die "(" . join(", ", @keyparts) . "): not found"
+	croak "(" . join(", ", @keyparts) . "): not found"
 		unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
 	my @keynames = $self->sqlKeynames();
 	
-	die "wrong number of keyparts for table $table (needs: @keynames)"
+	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
 	my $stmt = "DELETE FROM $table ";
 	$stmt .= $self->makeWhereClause(@keyparts);
-	warn "SQL-delete: $stmt\n";
+	$self->debug("SQL-delete: $stmt\n");
 	
 	$self->{driver}->connect("rw");
 	my $result = $self->{driver}->handle()->do($stmt);
 	$self->{driver}->disconnect();
-	die "failed to DELETE: $DBI::errstr" unless defined $result;
+	croak "failed to DELETE: $DBI::errstr" unless defined $result;
 	
 	if ($result > 1) {
 		warn "danger! deleted more than one record!";
@@ -261,6 +262,14 @@ sub sqlFieldnames($) {
 	my @keynames = $self->{record}->FIELDS();
 	return map { $self->{params}->{fieldOverride}->{$_} || $_ }
 		@keynames;
+}
+
+sub debug($@) {
+	my ($self, @string) = @_;
+	
+#	if ($self->{params}->{debug}) {
+		warn @string;
+#	}
 }
 
 1;
