@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.11 2004/05/23 23:40:24 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.12 2004/06/05 19:20:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -135,9 +135,14 @@ sub addCourse {
 	my $courseDir = "$coursesDir/$courseID";
 	
 	# fail if the course already exists
+	# IMPORTANT: this must be the first check! if any check other than this one
+	# fails, CourseAdmin deletes the course!! Oh no!!!
 	if (-e $courseDir) {
 		croak "$courseID: course exists";
 	}
+	
+	croak "Invalid characters in course ID: '$courseID' (valid characters are [A-Za-z0-9_])"
+		unless $courseID =~ m/^[\w-]*$/;
 	
 	# fail if the database layout is invalid
 	if (defined $dbLayoutName and not exists $ce->{dbLayouts}->{$dbLayoutName}) {
