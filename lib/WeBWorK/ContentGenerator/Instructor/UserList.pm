@@ -45,7 +45,6 @@ Export users:
 	- to:
 		- existing file on server (overwrite): [ list of files ]
 		- new file on server (create): [ filename ]
-		- client [no]
 
 =cut
 
@@ -1023,6 +1022,12 @@ sub recordEditHTML {
 		. "&effectiveUser=" . $User->user_id
 		. "&key="           . $r->param("key");
 	
+	my $setsAssignedToUserURL = "$root/$courseName/instructor/users/"
+		. $User->user_id . "/sets/?"
+		. "user="           . $r->param("user")
+		. "&effectiveUser=" . $r->param("effectiveUser")
+		. "&key="           . $r->param("key");
+	
 	my @tableCells;
 	
 	# Select
@@ -1038,13 +1043,21 @@ sub recordEditHTML {
 		);
 	}
 	
+	# Act As
+	if ($editMode) {
+		# column not there
+	} else {
+		# selection checkbox
+		push @tableCells, CGI::a({href=>$changeEUserURL}, "Act&nbsp;As");
+	}
+	
 	# User ID
 	if ($editMode) {
 		# straight user ID
 		push @tableCells, $User->user_id;
 	} else {
-		# "become user" link
-		push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id);
+		# "edit sets assigned to user" link
+		push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, $User->user_id);
 	}
 	
 	# User Fields
@@ -1103,7 +1116,7 @@ sub printTableHTML {
 	};
 	
 	# prepend selection checkbox? only if we're NOT editing!
-	unshift @tableHeadings, "Sel." unless $editMode;
+	unshift @tableHeadings, "Select", "Act As" unless $editMode;
 	
 	# print the table
 	if ($editMode) {
