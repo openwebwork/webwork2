@@ -67,7 +67,7 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
-# getSets($userID) - returns a list of sets in the current database for the
+# getSets($userID) - returns a list of SetIDs in the current database for the
 #                    specified user
 # $userID - the user ID (a.k.a. login name) of the user to get sets for
 sub getSets($$) {
