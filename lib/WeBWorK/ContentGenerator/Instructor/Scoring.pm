@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.36 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.37 2004/12/18 20:31:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -131,10 +131,10 @@ sub body {
 	
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to score sets.")
-		unless $authz->hasPermissions($r->param("user"), "score_sets");
+		unless $authz->hasPermissions($user, "score_sets");
 
 	print join("",
 			CGI::start_form(-method=>"POST", -action=>$scoringURL),"\n",
