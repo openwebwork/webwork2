@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.13 2004/05/22 21:25:14 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.14 2004/05/28 15:54:25 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,6 +76,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
  instructor_answer_log               /$courseID/instructor/show_answers/
+ instructor_preflight               /$courseID/instructor/preflight/
  
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
@@ -212,7 +213,7 @@ our %pathTypes = (
 			instructor_set_assigner instructor_file_transfer
 			instructor_problem_editor instructor_set_maker
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_statistics
+			instructor_answer_log instructor_preflight instructor_statistics
 			instructor_progress			
 		/ ],
 		match   => qr|^instructor/|,
@@ -390,6 +391,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'show_answers/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
+	},
+	instructor_preflight => {
+		name    => 'Preflight Log',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^preflight/|,
+		capture => [ qw// ],
+		produce => 'preflight/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Preflight',
 	},
 	
 	################################################################################
