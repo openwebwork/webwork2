@@ -50,7 +50,7 @@ sub initialize {
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
 	$self->{merge_file}             =   (defined($r->param('merge_file'  )))    ? $r->param('merge_file')   : 'None';
-	$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : 'Yourself';
+	$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
 	
 	
 #############################################################################################
@@ -223,14 +223,6 @@ sub initialize {
 # and various actions resulting from different buttons
 #############################################################################################
 
-	
-
-	# user_errors
-	# save
-	# save as
-	# save as default
-	# send mail
-	# set defaults
 
 	if ($action eq 'Save' or $action eq 'Save as:' or $action eq 'Save as Default') {
 	
@@ -282,7 +274,12 @@ sub initialize {
 		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 		my $delimiter       = ',';
 		my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
-		warn "No data for merge file $merge_file" unless ref($rh_merge_data);
+		unless (ref($rh_merge_data) ) {
+			warn "no merge data file";
+			$self->submission_error("Can't read merge file $merge_file. No message sent");
+			return;
+		} ;
+		
 		
 		foreach my $recipient (@recipients) {
 			#warn "FIXME sending email to $recipient";
@@ -306,17 +303,12 @@ sub initialize {
 				next;
 			}
 			my $MAIL = $mailer->GetHandle() or warn "Couldn't get handle";
-			$msg = 'Hi ' . $msg;
 			print $MAIL  $msg || warn "Couldn't print to $MAIL";
 			close $MAIL || warn "Couldn't close $MAIL";
 		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
 			 
 		} 
-		
 			
-#&success;
-	
-	
 	} else {
 		warn "Didn't recognize button $action";
 	}
@@ -460,7 +452,7 @@ sub print_form {
 				 "Save file to: $output_file","\n",CGI::br(),
 				 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
 				 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>35, -override=>1),  
+				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>30, -override=>1),  
 			),
 #############################################################################################
 #	second column
@@ -580,7 +572,7 @@ sub print_form {
 sub submission_error {
 	my $self = shift;
     my $msg = join( " ", @_);
-	$self->{submitError}= $msg; #CGI::b(HTML::Entities::encode($msg));
+	$self->{submitError} .= CGI::br().$msg; #CGI::b(HTML::Entities::encode($msg));
 # 		qq{Please hit the &quot;<B>Back</B>&quot; button on your browser to 
 # 		try again, or notify your web master
 # 		if you believe this message is in error.
@@ -672,11 +664,10 @@ sub read_merge_file    {
         #       Blank lines are skipped. White space is removed
     my(@dbArray,$key,$dbString);
     my %assocArray = ();
-    return
     local(*FILE);
     if ($fileName eq 'None') {
     	# do nothing
-    }elsif ( open(FILE, "$filePath")  )   {
+    } elsif ( open(FILE, "$filePath")  )   {
 		my $index=0;
 		while (<FILE>){
 			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
