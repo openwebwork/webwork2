@@ -43,13 +43,13 @@ sub go {
 		my $uri		 		= 	$r->uri;
 		my $courseName		=	$self->{ce}->{courseName};
 		my $editFileSuffix  =	$self->{ce}->{editFileSuffix};
-		my $seed			= 	($r->param('seed')) ? $r->param('seed') : '';
+		my $problemSeed		= 	($r->param('problemSeed')) ? $r->param('problemSeed') : '';
 		my $displayMode		=	($r->param('displayMode')) ? $r->param('displayMode') : '';
 
 		my $viewURL  		= 	"http://$hostname:$port";
 		$viewURL		   .= 	"/webwork/$courseName/$setName/$problemNumber/?";
 		$viewURL		   .=	$self->url_authen_args;
-		$viewURL		   .=   "&displayMode=$displayMode&seed=$seed";   # optional displayMode and seed overrides
+		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
 		$viewURL		   .=	"&editMode=temporaryFile";
 		$viewURL		   .=	'&sourceFilePath='.$self->{ce}->{currentSourceFilePath}; # path to pg text for viewing
 		$viewURL		   .=	"&submit_button=$submit_button";                         # allows Problem.pg to recognize state
@@ -129,12 +129,14 @@ sub body {
 	# Format the page
 	#########################################################################
 	# Define parameters for textarea
-	# FIXME these parameters should be capable of being updated dynamically.
+	# FIXME 
+	# Should the seed be set from some particular user instance??
+	# The mode list should be obtained from global.conf ultimately
 	my $rows 		= 	20;
 	my $columns		= 	80;
-	my $mode_list 	= 	['HTML', 'HTML_tth','HTML_dpng', 'Latex2HTML'];
-	my $mode	  	= 	( defined($r->param('mode')) 	) ? $r->param('mode') : 'HTML_tth';
-	my $seed		=	( defined($r->param('seed'))	) ? $r->param('seed') : '1234';	
+	my $mode_list 	= 	['plainText','formattedText','images'];
+	my $displayMode	= 	$self->{displayMode};
+	my $problemSeed	=	$self->{problemSeed};	
 	my $uri			=	$r->uri;
 	########################################################################
 	# Define a link to view the problem
@@ -151,10 +153,10 @@ sub body {
 		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="_problem">!,
 		$self->hidden_authen_fields,
 		CGI::div(
-		CGI::textfield(-name=>'seed',-value=>$seed),
+		CGI::textfield(-name=>'problemSeed',-value=>$problemSeed),
 		'Mode: ',
-		CGI::popup_menu(-name=>'mode', -'values'=>$mode_list,
-													 -default=>$mode),
+		CGI::popup_menu(-name=>'displayMode', -'values'=>$mode_list,
+													 -default=>$displayMode),
 		CGI::a(
 			{-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
 			'Manpages',
@@ -200,21 +202,26 @@ sub initialize {
 	my $user					=	$r->param('user');
 	my $effectiveUserName		=	$r->param('effectiveUser');
 	my $courseName				=	$ce->{courseName};
-	
-	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
-	my $setID					=	$set->set_id;
+
+#   FIXME -- sometimes this doesn't find a set	
+#	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
+#	my $setID					=	$set->set_id;
 	
 	# Find URL for viewing problem
-#	my $viewProblemURL		=	"/webwork/$courseName/".join("/",$setID,$problemNumber)."?" .$self->url_authen_args();
 	
 	# find path to pg file for the problem
-	# FIXME  there is a descrepency in the way that the problems are found.
+	# FIXME  there is a discrepancy in the way that the problems are found.
+	# FIXME  more error checking is needed in case the problem doesn't exist.
 	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
 	my $problem_record          = 	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
-	my $templateDirectory	=	$ce->{courseDirs}->{templates};
-	my $problemPath			=	$templateDirectory."/".$problem_record->source_file;
-	my $editFileSuffix		=	'tmp';
-	my $submit_button		= 	$r->param('submit');
+	my $templateDirectory		=	$ce->{courseDirs}->{templates};
+	my $problemPath				=	$templateDirectory."/".$problem_record->source_file;
+	my $editFileSuffix			=	'tmp';
+	my $submit_button			= 	$r->param('submit');
+
+	my $displayMode	  			= 	( defined($r->param('displayMode')) 	) ? $r->param('displayMode') : $ce->{pg}->{options}->{displayMode};
+	my $problemSeed				=	( defined($r->param('problemSeed'))	) ? $r->param('problemSeed') : $problem_record->problem_seed;	
+	$problemSeed				=	'1234' unless defined($problemSeed) and $problemSeed =~/\S/;
 	
 	my $problemContents	= '';
 	my $currentSourceFilePath	=	'';
@@ -271,9 +278,12 @@ sub initialize {
 	
 		
 	# return values.  FIXME  -- is this the right way to pass the values to body??
+	# Should temporary results be passed in self or in ce??
 	# $ce->{viewProblemURL}	=	$viewProblemURL;
 	$ce->{problemPath} 		= 	$problemPath;
-	$ce->{path_components}	=	join("/",$setID,$problemNumber);
+	$self->{displayMode}	=	$displayMode;
+	$self->{problemSeed}	=	$problemSeed;
+#	$ce->{path_components}	=	join("/",$setID,$problemNumber);
 	
 	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
 

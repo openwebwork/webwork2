@@ -75,7 +75,7 @@ sub pre_header_initialize {
 	my $previewAnswers     = $r->param("previewAnswers");
 	
 	# fields which may be defined when using Problem Editor
-	my $override_seed		   = ($permissionLevel>=10) ? $r->param('seed') : undef;
+	my $override_seed		   = ($permissionLevel>=10) ? $r->param('problemSeed') : undef;
 	my $override_problem_source = ($permissionLevel>=10) ? $r->param('sourceFilePath') : undef;
 	my $editMode = undef;
 	my $submit_button = $r->param('submit_button');
