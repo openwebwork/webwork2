@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.47 2004/01/05 01:02:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.48 2004/05/22 22:14:07 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,6 +139,7 @@ sub defineProblemEnvir {
 	$envir{tempURL}                = $ce->{courseURLs}->{html_temp}."/";
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
+	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
 	$envir{jsMathURL}	       = $ce->{webworkURLs}->{jsMath};
 	
 	# Information for sending mail
