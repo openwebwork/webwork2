@@ -15,6 +15,7 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 use strict;
 use warnings;
 use CGI qw();
+use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
 use WeBWorK::Form;
 use WeBWorK::PG;
@@ -670,7 +671,7 @@ sub previewAnswer($$) {
 	} elsif ($displayMode eq "images") {
 		# how are we going to name this?
 		my $targetPathCommon = "/png/"
-			. $effectiveUser->id . "."
+			. $effectiveUser->user_id . "."
 			. $set->set_id . "."
 			. $problem->problem_id . "."
 			. $answerResult->{ans_name} . ".png";
@@ -686,6 +687,7 @@ sub previewAnswer($$) {
 
 		# call dvipng to generate a preview
 		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
+		rmtree($envir->{dvipngTempDir}, 0, 0);
 		if (-e $targetPath) {
 			return "<img src=\"$targetURL\" alt=\"$tex\" />";
 		} else {

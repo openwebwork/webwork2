@@ -36,7 +36,7 @@ sub new($$$$$$$$) {
 	
 	# write timing log entry
 	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
-		"user=".$user->id.",problem=".$courseEnv->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
+		"user=".$user->user_id.",problem=".$courseEnv->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
 		"begin");
 	
 	# install a local warn handler to collect warnings
@@ -272,7 +272,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{recitationName}   = $user->recitation;
 	$envir{recitationNumber} = $envir{recitationName};
 	$envir{setNumber}        = $set->set_id;
-	$envir{studentLogin}     = $user->id;
+	$envir{studentLogin}     = $user->user_id;
 	$envir{studentName}      = $user->first_name . " " . $user->last_name;
 	$envir{studentID}        = $user->student_id;
 	

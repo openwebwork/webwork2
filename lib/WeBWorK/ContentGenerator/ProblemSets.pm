@@ -152,7 +152,7 @@ sub setListRow($$$) {
 	]));
 }
 
-sub byname { $a->id cmp $b->id; }
+sub byname { $a->set_id cmp $b->set_id; }
 sub byduedate { $a->due_date <=> $b->due_date; }
 
 1;

@@ -64,7 +64,7 @@ sub body {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
 				# possibly do some format checking?
-				eval { $self->{authdb}->setPassword($effectiveUser->id, $newP) };
+				eval { $self->{authdb}->setPassword($effectiveUser->user_id, $newP) };
 				if ($@) {
 					print CGI::p("Couldn't change your
 					password: $@");

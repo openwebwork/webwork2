@@ -1,11 +1,11 @@
 # Feed this file to the mysql client to create a course database. Replace the
-# string !!COURSENAME!! with the name of your course. 
+# string sam_course_sql with the name of your course. 
 
-CREATE DATABASE webwork_!!COURSENAME!!;
-USE webwork_!!COURSENAME!!;
+CREATE DATABASE webwork_sam_course_sql;
+USE webwork_sam_course_sql;
 
 CREATE TABLE user (
-	id VARCHAR(255) NOT NULL PRIMARY KEY,
+	user_id VARCHAR(255) NOT NULL PRIMARY KEY,
 	first_name TEXT,
 	last_name TEXT,
 	email_address TEXT,
@@ -33,7 +33,7 @@ CREATE TABLE key_not_a_keyword (
 );
 
 CREATE TABLE set_not_a_keyword (
-	id VARCHAR(255) NOT NULL PRIMARY KEY,
+	set_id VARCHAR(255) NOT NULL PRIMARY KEY,
 	set_header TEXT,
 	problem_header TEXT,
 	open_date INT,
@@ -53,8 +53,8 @@ CREATE TABLE set_user (
 );
 
 CREATE TABLE problem (
-	id VARCHAR(255) NOT NULL PRIMARY KEY,
 	set_id VARCHAR(255) NOT NULL,
+	problem_id VARCHAR(255) NOT NULL PRIMARY KEY,
 	source_file TEXT,
 	value INT,
 	max_attempts INT
@@ -75,5 +75,5 @@ CREATE TABLE problem_user (
 	num_incorrect INT
 );
 
-GRANT select ON webwork_!!COURSENAME!!.* TO webworkRead@localhost IDENTIFIED BY 'zaqwsxcderfv';
-GRANT select, insert, update, delete ON webwork_!!COURSENAME!!.* TO webworkWrite@localhost IDENTIFIED BY 'qwerfdsazxcv';
+GRANT select ON webwork_sam_course_sql.* TO webworkRead@localhost IDENTIFIED BY 'zaqwsxcderfv';
+GRANT select, insert, update, delete ON webwork_sam_course_sql.* TO webworkWrite@localhost IDENTIFIED BY 'qwerfdsazxcv';

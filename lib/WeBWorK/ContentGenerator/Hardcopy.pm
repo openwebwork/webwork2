@@ -58,7 +58,7 @@ sub go {
 	if (@users > 1 and not $multiUser) {
 		$self->{generationError} = ["SIMPLE", "You are not permitted to generate hardcopy for multiple users. Please select a single user and try again."];
 	}
-	if ($users[0] ne $self->{effectiveUser}->id and not $multiUser) {
+	if ($users[0] ne $self->{effectiveUser}->user_id and not $multiUser) {
 		$self->{generationError} = ["SIMPLE", "You are not permitted to generate hardcopy for other users."];
 	}
 	
@@ -201,8 +201,8 @@ sub displayForm($) {
 		print CGI::h3("Sets");
 		print CGI::start_table();
 		my @sets;
-		push @sets, $db->getGlobalUserSet($self->{effectiveUser}->id, $_)
-			foreach ($db->listUserSets($self->{effectiveUser}->id));
+		push @sets, $db->getGlobalUserSet($self->{effectiveUser}->user_id, $_)
+			foreach ($db->listUserSets($self->{effectiveUser}->user_id));
 		@sets = sort { $a->set_id cmp $b->set_id } @sets;
 		foreach my $set (@sets) {
 			my $checked = grep { $_ eq $set->set_id } @{$self->{sets}};
@@ -250,10 +250,10 @@ sub displayForm($) {
 			foreach ($self->{cldb}->listUsers());
 		@users = sort { $a->last_name cmp $b->last_name } @users;
 		foreach my $user (@users) {
-			my $checked = grep { $_ eq $user->id } @{$self->{users}};
+			my $checked = grep { $_ eq $user->user_id } @{$self->{users}};
 			print CGI::Tr(CGI::td([
-				CGI::checkbox(-name=>"hcUser", -value=>$user->id, -label=>"", -checked=>$checked),
-				$user->id,
+				CGI::checkbox(-name=>"hcUser", -value=>$user->user_id, -label=>"", -checked=>$checked),
+				$user->user_id,
 				$user->last_name.", ".$user->first_name,
 			]));
 		}
@@ -406,7 +406,7 @@ sub getSetTeX {
 	my ($self, $setName) = @_;
 	my $ce = $self->{ce};
 	my $db = $self->{db};
-	my $effectiveUserName = $self->{effectiveUser}->id;
+	my $effectiveUserName = $self->{effectiveUser}->user_id;
 	my @problemNumbers = sort { $a <=> $b }
 		$db->listUserProblems($effectiveUserName, $setName);
 	
@@ -450,18 +450,18 @@ sub getProblemTeX {
 	
 	my $effectiveUser = $self->{effectiveUser};
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $db->getGlobalUserSet($effectiveUser->id, $setName);
+	my $set  = $db->getGlobalUserSet($effectiveUser->user_id, $setName);
 	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {
-		$problem = $db->getGlobalUserProblem($effectiveUser->id, $setName, $problemNumber);
+		$problem = $db->getGlobalUserProblem($effectiveUser->user_id, $setName, $problemNumber);
 	} elsif ($pgFile) {
 		$problem = WeBWorK::DB::Record::UserProblem->new(
 			set_id => $set->set_id,
 			problem_id => 0,
-			login_id => $effectiveUser->id,
+			login_id => $effectiveUser->user_id,
 			source_file => $pgFile,
 			# the rest of Problem's fields are not needed, i think
 		);

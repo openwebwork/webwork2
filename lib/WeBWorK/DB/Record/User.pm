@@ -16,11 +16,11 @@ use strict;
 use warnings;
 
 sub KEYFIELDS($) {qw(
-	id
+	user_id
 )}
 
 sub FIELDS($) {qw(
-	id
+	user_id
 	first_name
 	last_name
 	email_address

@@ -14,6 +14,7 @@ WeBWorK::DB::Utils - useful utilities for the database modules.
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -21,6 +22,7 @@ our @EXPORT_OK = qw(
 	hash2record
 	hash2string
 	string2hash
+	findDefaults
 );
 
 ################################################################################
@@ -119,6 +121,52 @@ sub string2hash($) {
 	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
 	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
 	return %hash;
+}
+
+################################################################################
+# default generation
+################################################################################
+
+sub findDefaults($@) {
+	my ($globalClass, @Records) = @_;
+	
+	my %fields = map { $_ => {} } $globalClass->FIELDS();
+	#delete $fields{$_} foreach $globalClass->KEYFIELDS();
+	
+	foreach my $Record (@Records) {
+		print "RECORD IS: ", $Record->toString(), "\n";
+		foreach my $field (keys %fields) {
+			my $value = $Record->$field();
+			if ($value eq "UNDEFINED") {
+				die "Uh oh... value eq \"UNDEFINED\"\n";
+			}
+			unless (defined $value) {
+				$value = "UNDEFINED";
+			}
+			$fields{$field}{$value}++;
+		}
+	}
+	
+	warn "Frequencies: ", Dumper(\%fields);
+	
+	my $Defaults = $globalClass->new();
+	foreach my $field (keys %fields) {
+		my $maxFreq = 0;
+		my $maxValue;
+		foreach my $value (keys %{$fields{$field}}) {
+			my $freq = $fields{$field}{$value};
+			if ($freq > $maxFreq) {
+				$maxFreq = $freq;
+				$maxValue = $value;
+			}
+		}
+		undef $maxValue if $maxValue eq "UNDEFINED";
+		$Defaults->$field($maxValue);
+	}
+	
+	warn "Consensus defaults: ", Dumper($Defaults);
+	
+	return $Defaults;
 }
 
 1;

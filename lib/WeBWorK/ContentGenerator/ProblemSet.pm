@@ -107,7 +107,7 @@ sub info {
 	return "" unless $self->{isOpen};
 	
 	my $effectiveUser = $db->getUser($r->param("effectiveUser"));
-	my $set  = $db->getGlobalUserSet($effectiveUser->id, $setName);
+	my $set  = $db->getGlobalUserSet($effectiveUser->user_id, $setName);
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->problem_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
@@ -119,7 +119,7 @@ sub info {
 	my $problem = WeBWorK::DB::Record::UserProblem->new(
 		problem_id => 0,
 		set_id => $set->set_id,
-		login_id => $effectiveUser->id,
+		login_id => $effectiveUser->user_id,
 		source_file => $screenSetHeader,
 		# the rest of Problem's fields are not needed, i think
 	);

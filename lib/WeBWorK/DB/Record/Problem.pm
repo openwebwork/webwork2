@@ -17,12 +17,12 @@ use warnings;
 
 sub KEYFIELDS($) {qw(
 	set_id
-	id
+	problem_id
 )}
 
 sub FIELDS($) {qw(
-	id
 	set_id
+	problem_id
 	source_file
 	value
 	max_attempts

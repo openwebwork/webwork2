@@ -80,8 +80,8 @@ sub add($$) {
 	my ($self, $User) = @_;
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
-	die $User->id, ": user exists" if exists $hash->{$User->id};
-	$hash->{$User->id} = hash2string(record2hash($User));
+	die $User->user_id, ": user exists" if exists $hash->{$User->user_id};
+	$hash->{$User->user_id} = hash2string(record2hash($User));
 	$self->{driver}->disconnect();
 }
 
@@ -92,7 +92,7 @@ sub get($$) {
 	$self->{driver}->disconnect();
 	return undef unless defined $string;
 	my $record = hash2record($self->{record}, string2hash($string));
-	$record->id($userID);
+	$record->user_id($userID);
 	return $record;
 }
 
@@ -100,8 +100,8 @@ sub put($$) {
 	my ($self, $User) = @_;
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
-	die $User->id, ": user not found" unless exists $hash->{$User->id};
-	$hash->{$User->id} = hash2string(record2hash($User));
+	die $User->user_id, ": user not found" unless exists $hash->{$User->user_id};
+	$hash->{$User->user_id} = hash2string(record2hash($User));
 	$self->{driver}->disconnect();
 }
 

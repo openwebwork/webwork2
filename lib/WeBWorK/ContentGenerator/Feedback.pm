@@ -112,7 +112,7 @@ sub body {
 				. $ce->{webworkURLs}->{root}
 				. "/" . $ce->{courseName}
 				. ($set 
-					? "/".$problem->set_id . ($problem ? "/".$problem->id : "")
+					? "/".$problem->set_id . ($problem ? "/".$problem->problem_id : "")
 					: "")
 				. "/?" 
 				. ($problem 

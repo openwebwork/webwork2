@@ -16,11 +16,11 @@ use strict;
 use warnings;
 
 sub KEYFIELDS($) {qw(
-	id
+	set_id
 )}
 
 sub FIELDS($) {qw(
-	id
+	set_id
 	set_header
 	problem_header
 	open_date

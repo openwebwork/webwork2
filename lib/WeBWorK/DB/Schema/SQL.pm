@@ -267,9 +267,9 @@ sub sqlFieldnames($) {
 sub debug($@) {
 	my ($self, @string) = @_;
 	
-#	if ($self->{params}->{debug}) {
+	if ($self->{params}->{debug}) {
 		warn @string;
-#	}
+	}
 }
 
 1;
