@@ -137,7 +137,7 @@ sub body {
 sub addStudentForm {
 	my $self            = shift;
 	my $r               = $self->{r};
-	my $numberOfStudents   = 5;
+	my $numberOfStudents   = $r->param("number_of_students") || 5;
 	# Add a student form
 	
 	my @entryLines = ();
@@ -172,6 +172,9 @@ sub addStudentForm {
 		CGI::end_table(),
 		CGI::submit({name=>"addStudents", value=>"Add Students"}),
 		CGI::end_form(),
+		qq! <div style="color:red"> After entering new students you will still need to assign sets to them.  This is done from the "set list" page. <br> 
+		Click on the entry "xx users" in 
+		the "assigned to" column at the far right. <br> Then click either "assign to all"  or check individual users and click "save" at the bottom.  </div>!
 	);
 }
 
