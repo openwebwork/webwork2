@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.98 2004/05/07 18:47:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.99 2004/05/21 23:38:52 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -312,6 +312,19 @@ message() template escape handler.
 sub addgoodmessage {
 	my ($self, $message) = @_;
 	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $message));
+}
+
+=item addbadmessage($message)
+
+Adds a failure message to the list of messages to be printed by the
+message() template escape handler.
+
+=cut
+
+
+sub addbadmessage {
+	my ($self, $message) = @_;
+	$self->addmessage(CGI::div({class=>"ResultsWithError"}, $message));
 }
 
 =back
