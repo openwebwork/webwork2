@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.44 2003/12/09 01:12:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.45 2004/01/03 20:07:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -121,8 +121,8 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 ################################################################################
 
 %mail = (
-	smtpServer => "mail.math.rochester.edu",
-	smtpSender => "webwork\@math.rochester.edu",
+	smtpServer => "mail.yourdomain.edu",
+	smtpSender => "webwork\@yourdomain.edu",
 	# allowedRecipients defines addresses that the PG system is allowed to
 	# send mail to. this prevents subtle PG exploits. This should be set
 	# in course.conf to the addresses of professors of each course. Sending
@@ -153,7 +153,6 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	tth      => "/usr/local/bin/tth",
 	pdflatex => "/usr/local/bin/pdflatex",
 	latex    => "/usr/local/bin/latex",
-	#dvipng   => "/usr/local/bin/dvipng -mode ljfivemp -D600 -Q6 -x1000.5 -bgTransparent",
 	dvipng   => "/usr/local/bin/dvipng",
 	gif2eps  => "$webworkDirs{bin}/gif2eps",
 	png2eps  => "$webworkDirs{bin}/png2eps",
@@ -259,7 +258,7 @@ $practiceUserPrefix = "practice";
 	},
 	# this will be customized in the course.conf file
 	specialPGEnvironmentVars => {
-		PRINT_FILE_NAMES_FOR   => [ qw(gage apizer voloshin lr003k professor) ],
+		PRINT_FILE_NAMES_FOR   => [ qw(professor) ],
 		CAPA_Tools             => "$courseDirs{macros}/CAPA_Tools/", 
 		CAPA_MCTools           => "$courseDirs{macros}/CAPA_MCTools/",  
 		CAPA_Graphics_URL      => "$courseDirs{html}/CAPA_Graphics/",   
