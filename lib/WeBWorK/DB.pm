@@ -243,8 +243,8 @@ Returns a new, empty password object.
 =cut 
 
 sub newPassword {
-	my ($self, $prototype) = @_;
-	return $self->{password}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{password}->{record}->new(@prototype);
 }
 
 =item listPasswords()
@@ -279,12 +279,13 @@ sub addPassword {
 		unless @_ == 2;
 	croak "addPassword: argument 1 must be of type ", $self->{password}->{record}
 		unless ref $Password eq $self->{password}->{record};
+	
+	checkKeyfields($Password);
+	
 	croak "addPassword: password exists (perhaps you meant to use putPassword?)"
 		if $self->{password}->exists($Password->user_id);
 	croak "addPassword: user ", $Password->user_id, " not found"
 		unless $self->{user}->exists($Password->user_id);
-	
-	checkKeyfields($Password);
 	
 	return $self->{password}->add($Password);
 }
@@ -292,8 +293,7 @@ sub addPassword {
 =item getPassword($userID)
 
 If a record with a matching user ID exists, a record object containting that
-record's data will be returned. If no such record exists, an undefined value
-will be returned.
+record's data will be returned. If no such record exists, one will be created.
 
 =cut
 
@@ -305,14 +305,14 @@ sub getPassword {
 	croak "getPassword: argument 1 must contain a user_id"
 		unless defined $userID;
 	
-	return $self->{password}->get($userID);
+	#return $self->{password}->get($userID);
+	return ( $self->getPasswords($userID) )[0];
 }
 
 =item getPasswords(@uesrIDs)
 
 Return a list of password records associated with the user IDs given. If there
-is no record associated with a given user ID, that element of the list will be
-undefined.
+is no record associated with a given user ID, one will be created.
 
 =cut
 
@@ -326,7 +326,25 @@ sub getPasswords {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{password}->gets(map { [$_] } @userIDs);
+	my @Passwords = $self->{password}->gets(map { [$_] } @userIDs);
+	
+	for (my $i = 0; $i < @Passwords; $i++) {
+		my $Password = $Passwords[$i];
+		my $userID = $userIDs[$i];
+		if (not defined $Password) {
+			#warn "not defined\n";
+			if ($self->{user}->exists($userID)) {
+				#warn "user exists\n";
+				$Password = $self->newPassword(user_id => $userID);
+				eval { $self->addPassword($Password) };
+				if ($@ and $@ !~ m/password exists/) {
+					die "error while auto-creating password record for user $userID: \"$@\"";
+				}
+			}
+		}
+	}
+	
+	return @Passwords;
 }
 
 =item putPassword($Password)
@@ -345,10 +363,11 @@ sub putPassword($$) {
 		unless @_ == 2;
 	croak "putPassword: argument 1 must be of type ", $self->{password}->{record}
 		unless ref $Password eq $self->{password}->{record};
-	croak "putPassword: password not found (perhaps you meant to use addPassword?)"
-		unless $self->{password}->exists($Password->user_id);
 	
 	checkKeyfields($Password);
+	
+	croak "putPassword: password not found (perhaps you meant to use addPassword?)"
+		unless $self->{password}->exists($Password->user_id);
 	
 	return $self->{password}->put($Password);
 }
@@ -391,8 +410,8 @@ Returns a new, empty permission level object.
 =cut 
 
 sub newPermissionLevel {
-	my ($self, $prototype) = @_;
-	return $self->{permission}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{permission}->{record}->new(@prototype);
 }
 
 =item listPermissionLevels()
@@ -427,12 +446,13 @@ sub addPermissionLevel($$) {
 		unless @_ == 2;
 	croak "addPermissionLevel: argument 1 must be of type ", $self->{permission}->{record}
 		unless ref $PermissionLevel eq $self->{permission}->{record};
+	
+	checkKeyfields($PermissionLevel);
+	
 	croak "addPermissionLevel: permission level exists (perhaps you meant to use putPermissionLevel?)"
 		if $self->{permission}->exists($PermissionLevel->user_id);
 	croak "addPermissionLevel: user ", $PermissionLevel->user_id, " not found"
 		unless $self->{user}->exists($PermissionLevel->user_id);
-	
-	checkKeyfields($PermissionLevel);
 	
 	return $self->{permission}->add($PermissionLevel);
 }
@@ -440,8 +460,7 @@ sub addPermissionLevel($$) {
 =item getPermissionLevel($userID)
 
 If a record with a matching user ID exists, a record object containting that
-record's data will be returned. If no such record exists, an undefined value
-will be returned.
+record's data will be returned. If no such record exists, one will be created.
 
 =cut
 
@@ -453,14 +472,14 @@ sub getPermissionLevel($$) {
 	croak "getPermissionLevel: argument 1 must contain a user_id"
 		unless defined $userID;
 	
-	return $self->{permission}->get($userID);
+	#return $self->{permission}->get($userID);
+	return ( $self->getPermissionLevels($userID) )[0];
 }
 
 =item getPermissionLevels(@uesrIDs)
 
 Return a list of permission level records associated with the user IDs given. If
-there is no record associated with a given user ID, that element of the list
-will be undefined.
+there is no record associated with a given user ID, one will be created.
 
 =cut
 
@@ -474,7 +493,26 @@ sub getPermissionLevels {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{permission}->gets(map { [$_] } @userIDs);
+	my @PermissionLevels = $self->{permission}->gets(map { [$_] } @userIDs);
+	
+	for (my $i = 0; $i < @PermissionLevels; $i++) {
+		my $PermissionLevel = $PermissionLevels[$i];
+		my $userID = $userIDs[$i];
+		if (not defined $PermissionLevel) {
+			#warn "not defined\n";
+			if ($self->{user}->exists($userID)) {
+				#warn "user exists\n";
+				$PermissionLevel = $self->newPermissionLevel(user_id => $userID);
+				warn $PermissionLevel->toString, "\n";
+				eval { $self->addPermissionLevel($PermissionLevel) };
+				if ($@ and $@ !~ m/permission level exists/) {
+					die "error while auto-creating permission level record for user $userID: \"$@\"";
+				}
+			}
+		}
+	}
+	
+	return @PermissionLevels;
 }
 
 =item putPermissionLevel($PermissionLevel)
@@ -493,10 +531,11 @@ sub putPermissionLevel($$) {
 		unless @_ == 2;
 	croak "putPermissionLevel: argument 1 must be of type ", $self->{permission}->{record}
 		unless ref $PermissionLevel eq $self->{permission}->{record};
-	croak "putPermissionLevel: permission level not found (perhaps you meant to use addPermissionLevel?)"
-		unless $self->{permission}->exists($PermissionLevel->user_id);
 	
 	checkKeyfields($PermissionLevel);
+	
+	croak "putPermissionLevel: permission level not found (perhaps you meant to use addPermissionLevel?)"
+		unless $self->{permission}->exists($PermissionLevel->user_id);
 	
 	return $self->{permission}->put($PermissionLevel);
 }
@@ -535,8 +574,8 @@ Returns a new, empty key object.
 =cut 
 
 sub newKey {
-	my ($self, $prototype) = @_;
-	return $self->{key}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{key}->{record}->new(@prototype);
 }
 
 =item listKeys()
@@ -571,12 +610,13 @@ sub addKey($$) {
 		unless @_ == 2;
 	croak "addKey: argument 1 must be of type ", $self->{key}->{record}
 		unless ref $Key eq $self->{key}->{record};
+	
+	checkKeyfields($Key);
+	
 	croak "addKey: key exists (perhaps you meant to use putKey?)"
 		if $self->{key}->exists($Key->user_id);
 	croak "addKey: user ", $Key->user_id, " not found"
 		unless $self->{user}->exists($Key->user_id);
-	
-	checkKeyfields($Key);
 	
 	return $self->{key}->add($Key);
 }
@@ -636,10 +676,11 @@ sub putKey($$) {
 		unless @_ == 2;
 	croak "putKey: argument 1 must be of type ", $self->{key}->{record}
 		unless ref $Key eq $self->{key}->{record};
-	croak "putKey: key not found (perhaps you meant to use addKey?)"
-		unless $self->{key}->exists($Key->user_id);
 	
 	checkKeyfields($Key);
+	
+	croak "putKey: key not found (perhaps you meant to use addKey?)"
+		unless $self->{key}->exists($Key->user_id);
 	
 	return $self->{key}->put($Key);
 }
@@ -678,8 +719,8 @@ Returns a new, empty user object.
 =cut 
 
 sub newUser {
-	my ($self, $prototype) = @_;
-	return $self->{user}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{user}->{record}->new(@prototype);
 }
 
 =item listUsers()
@@ -713,10 +754,11 @@ sub addUser {
 		unless @_ == 2;
 	croak "addUser: argument 1 must be of type ", $self->{user}->{record}
 		unless ref $User eq $self->{user}->{record};
-	croak "addUser: user exists (perhaps you meant to use putUser?)"
-		if $self->{user}->exists($User->user_id);
 	
 	checkKeyfields($User);
+	
+	croak "addUser: user exists (perhaps you meant to use putUser?)"
+		if $self->{user}->exists($User->user_id);
 	
 	return $self->{user}->add($User);
 }
@@ -776,10 +818,11 @@ sub putUser {
 		unless @_ == 2;
 	croak "putUser: argument 1 must be of type ", $self->{user}->{record}
 		unless ref $User eq $self->{user}->{record};
-	croak "putUser: user not found (perhaps you meant to use addUser?)"
-		unless $self->{user}->exists($User->user_id);
 	
 	checkKeyfields($User);
+	
+	croak "putUser: user not found (perhaps you meant to use addUser?)"
+		unless $self->{user}->exists($User->user_id);
 	
 	return $self->{user}->put($User);
 }
@@ -828,8 +871,8 @@ FIXME: write this
 =cut
 
 sub newGlobalSet {
-	my ($self, $prototype) = @_;
-	return $self->{set}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{set}->{record}->new(@prototype);
 }
 
 sub listGlobalSets($) {
@@ -849,10 +892,11 @@ sub addGlobalSet($$) {
 		unless @_ == 2;
 	croak "addGlobalSet: argument 1 must be of type ", $self->{set}->{record}
 		unless ref $GlobalSet eq $self->{set}->{record};
-	croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)"
-		if $self->{set}->exists($GlobalSet->set_id);
 	
 	checkKeyfields($GlobalSet);
+	
+	croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)"
+		if $self->{set}->exists($GlobalSet->set_id);
 	
 	return $self->{set}->add($GlobalSet);
 }
@@ -896,10 +940,11 @@ sub putGlobalSet($$) {
 		unless @_ == 2;
 	croak "putGlobalSet: argument 1 must be of type ", $self->{set}->{record}
 		unless ref $GlobalSet eq $self->{set}->{record};
-	croak "putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)"
-		unless $self->{set}->exists($GlobalSet->set_id);
 	
 	checkKeyfields($GlobalSet);
+	
+	croak "putGlobalSet: global set not found (perhaps you meant to use addGlobalSet?)"
+		unless $self->{set}->exists($GlobalSet->set_id);
 	
 	return $self->{set}->put($GlobalSet);
 }
@@ -938,8 +983,8 @@ FIXME: write this
 =cut
 
 sub newUserSet {
-	my ($self, $prototype) = @_;
-	return $self->{set_user}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{set_user}->{record}->new(@prototype);
 }
 
 sub listSetUsers($$) {
@@ -973,14 +1018,15 @@ sub addUserSet($$) {
 		unless @_ == 2;
 	croak "addUserSet: argument 1 must be of type ", $self->{set_user}->{record}
 		unless ref $UserSet eq $self->{set_user}->{record};
+	
+	checkKeyfields($UserSet);
+	
 	croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)"
 		if $self->{set_user}->exists($UserSet->user_id, $UserSet->set_id);
 	croak "addUserSet: user ", $UserSet->user_id, " not found"
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
-	
-	checkKeyfields($UserSet);
 	
 	return $self->{set_user}->add($UserSet);
 }
@@ -1032,14 +1078,15 @@ sub putUserSet($$) {
 		unless @_ == 2;
 	croak "putUserSet: argument 1 must be of type ", $self->{set_user}->{record}
 		unless ref $UserSet eq $self->{set_user}->{record};
+	
+	checkKeyfields($UserSet);
+	
 	croak "putUserSet: user set not found (perhaps you meant to use addUserSet?)"
 		unless $self->{set_user}->exists($UserSet->user_id, $UserSet->set_id);
 	croak "putUserSet: user ", $UserSet->user_id, " not found"
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "putUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
-	
-	checkKeyfields($UserSet);
 	
 	return $self->{set_user}->put($UserSet);
 }
@@ -1077,8 +1124,8 @@ FIXME: write this
 =cut
 
 sub newGlobalProblem {
-	my ($self, $prototype) = @_;
-	return $self->{problem}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{problem}->{record}->new(@prototype);
 }
 
 sub listGlobalProblems($$) {
@@ -1100,12 +1147,13 @@ sub addGlobalProblem($$) {
 		unless @_ == 2;
 	croak "addGlobalProblem: argument 1 must be of type ", $self->{problem}->{record}
 		unless ref $GlobalProblem eq $self->{problem}->{record};
+	
+	checkKeyfields($GlobalProblem);
+	
 	croak "addGlobalProblem: global problem exists (perhaps you meant to use putGlobalProblem?)"
 		if $self->{problem}->exists($GlobalProblem->set_id, $GlobalProblem->problem_id);
 	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
-	
-	checkKeyfields($GlobalProblem);
 	
 	return $self->{problem}->add($GlobalProblem);
 }
@@ -1156,12 +1204,13 @@ sub putGlobalProblem($$) {
 		unless @_ == 2;
 	croak "putGlobalProblem: argument 1 must be of type ", $self->{problem}->{record}
 		unless ref $GlobalProblem eq $self->{problem}->{record};
+	
+	checkKeyfields($GlobalProblem);
+	
 	croak "putGlobalProblem: global problem not found (perhaps you meant to use addGlobalProblem?)"
 		unless $self->{problem}->exists($GlobalProblem->set_id, $GlobalProblem->problem_id);
 	croak "putGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
-	
-	checkKeyfields($GlobalProblem);
 	
 	return $self->{problem}->put($GlobalProblem);
 }
@@ -1199,8 +1248,8 @@ FIXME: write this
 =cut
 
 sub newUserProblem {
-	my ($self, $prototype) = @_;
-	return $self->{problem_user}->{record}->new($prototype);
+	my ($self, @prototype) = @_;
+	return $self->{problem_user}->{record}->new(@prototype);
 }
 
 sub listProblemUsers($$$) {
@@ -1238,14 +1287,15 @@ sub addUserProblem($$) {
 		unless @_ == 2;
 	croak "addUserProblem: argument 1 must be of type ", $self->{problem_user}->{record}
 		unless ref $UserProblem eq $self->{problem_user}->{record};
+	
+	checkKeyfields($UserProblem);
+	
 	croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)"
 		if $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
 		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
-	
-	checkKeyfields($UserProblem);
 	
 	return $self->{problem_user}->add($UserProblem);
 }
@@ -1301,14 +1351,15 @@ sub putUserProblem($$) {
 		unless @_ == 2;
 	croak "putUserProblem: argument 1 must be of type ", $self->{problem_user}->{record}
 		unless ref $UserProblem eq $self->{problem_user}->{record};
+	
+	checkKeyfields($UserProblem);
+	
 	croak "putUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 	croak "putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)"
 		unless $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
 	croak "putUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
 		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
-	
-	checkKeyfields($UserProblem);
 	
 	return $self->{problem_user}->put($UserProblem);
 }
@@ -1397,10 +1448,10 @@ sub getMergedSets {
 			       and defined $userSetIDs[$i]->[1];
 	}
 	
-	my @UserSets = $self->getUserSets(@userSetIDs);
+	my @UserSets = $self->getUserSets(@userSetIDs); # checked
 	
 	my @globalSetIDs = map { $_->[1] } @userSetIDs;
-	my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
+	my @GlobalSets = $self->getGlobalSets(@globalSetIDs); # checked
 	
 	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
 	my @commonFields = grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
@@ -1408,7 +1459,7 @@ sub getMergedSets {
 	for (my $i = 0; $i < @UserSets; $i++) {
 		my $UserSet = $UserSets[$i];
 		my $GlobalSet = $GlobalSets[$i];
-		next unless $UserSet and $GlobalSet;
+		next unless defined $UserSet and defined $GlobalSet;
 		#warn "---------- USER SET\n", $UserSet->toString, "---------- USER SET\n";
 		#warn "---------- GLOBAL SET\n", $GlobalSet->toString, "---------- GLOBAL SET\n";
 		foreach my $field (@commonFields) {
@@ -1512,10 +1563,10 @@ sub getMergedProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
-	my @UserProblems = $self->getUserProblems(@userProblemIDs);
+	my @UserProblems = $self->getUserProblems(@userProblemIDs); # checked
 	
 	my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @userProblemIDs;
-	my @GlobalProblems = $self->getGlobalProblems(@globalProblemIDs);
+	my @GlobalProblems = $self->getGlobalProblems(@globalProblemIDs); # checked
 	
 	my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
 	my @commonFields = grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
@@ -1523,7 +1574,7 @@ sub getMergedProblems {
 	for (my $i = 0; $i < @UserProblems; $i++) {
 		my $UserProblem = $UserProblems[$i];
 		my $GlobalProblem = $GlobalProblems[$i];
-		next unless $UserProblem and $GlobalProblem;
+		next unless defined $UserProblem and defined $GlobalProblem;
 		foreach my $field (@commonFields) {
 			next if defined $UserProblem->$field;
 			$UserProblem->$field($GlobalProblem->$field);
@@ -1547,7 +1598,7 @@ sub getMergedProblems {
 #}
 
 ################################################################################
-# sanity checking
+# utilities
 ################################################################################
 
 sub checkKeyfields($) {
@@ -1556,7 +1607,7 @@ sub checkKeyfields($) {
 		my $value = $Record->$keyfield;
 		croak "checkKeyfields: $keyfield is empty"
 			unless defined $value and $value ne "";
-			
+		
 		if ($keyfield eq "problem_id") {
 			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
 				unless $value =~ m/^\d*$/;
