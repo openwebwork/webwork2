@@ -510,8 +510,11 @@ sub body {
 	}
 	
 	# attempt summary
-	if ($submitAnswers or $will{showCorrectAnswers}) {
+	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
+	# until after the due date
+	if (($pg->{flags}->{showPartialCorrectAnswers}>= 0 and $submitAnswers) or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
+		
 		print $self->attemptResults($pg, $submitAnswers,
 			$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
