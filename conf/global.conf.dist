@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.38 2003-07-15 00:56:31 gage Exp $
+# $Id: global.conf.dist,v 1.39 2003-08-04 08:05:50 malsyned Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -184,6 +184,7 @@ my $professor = 10;
 	modify_problem_sets            => $professor,
 	assign_problem_sets            => $professor,
 	modify_student_data            => $professor,
+	score_sets                     => $professor,
 	send_mail					   => $professor,
 );
 
