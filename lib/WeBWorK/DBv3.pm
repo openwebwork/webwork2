@@ -214,8 +214,8 @@ To add a normalizer to a field:
 &normalizer_sub takes one argument, the value to be normalized. It should return
 the normalized value. For example:
 
- sub bool_normalizer { $_[0] ? 1 : 0 }
- WeBWorK::DBv3::Course->add_normalizer(visible => \&bool_normalizer);
+ sub _bool_normalizer { $_[0] ? 1 : 0 }
+ WeBWorK::DBv3::Course->add_normalizer(visible => \&_bool_normalizer);
 
 Like triggers, multiple normalizers can be added for a single field. However,
 you cannot specify the order in which they will be run.
@@ -259,7 +259,7 @@ sub has_a_boolean {
 	my ($class, $field) = @_;
 	return unless $field;
 	
-	$class->add_normalizer($field => \&bool_normalizer);
+	$class->add_normalizer($field => \&_bool_normalizer);
 }
 
 =back
@@ -697,10 +697,6 @@ login_id password display_mode show_old_answers/);
 __PACKAGE__->has_a_boolean("show_old_answers");
 
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
-
-__PACKAGE__->add_constraint("student_id_unique", student_id => sub {
-	return __PACKAGE__->search(student_id => $_[0])->count == 0;
-});
 
 __PACKAGE__->has_unique_columns('student_id_unique' => qw/student_id/);
 __PACKAGE__->has_unique_columns('login_id_unique' => qw/login_id/);
