@@ -322,7 +322,7 @@ sub body {
 	print CGI::br(),
 	      CGI::submit({ name=>"export_set", label=>"Export Set"} ),
 	      ' as ',
-	      CGI::input({type=>'text',name=>'export_file_name',value=>"set$setName.def",size=>10});
+	      CGI::input({type=>'text',name=>'export_file_name',value=>"set$setName.def",size=>32});
 	      
 	print CGI::br(), $self->{message}  if defined $self->{message};
 
