@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.24 2004/04/07 01:17:58 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.25 2004/05/05 01:53:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -312,7 +312,8 @@ sub initialize {
 		$self->{response}         = 'send_email';
 
 		my @recipients            = @{$self->{ra_send_to}};
-		warn "No recipients selected " unless @recipients;
+		$self->addmessage(CGI::div({class=>'ResultsWithError'},
+			"No recipients selected")) unless @recipients;
 		#  get merge file
 		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 		my $delimiter       = ',';
@@ -329,7 +330,8 @@ sub initialize {
 			my $ur      = $self->{db}->getUser($recipient); #checked
 			die "record for user $recipient not found" unless $ur;
 			unless ($ur->email_address) {
-				warn "user $recipient does not have an email address -- skipping";
+				$self->addmessage(CGI::div({class=>'ResultsWithError'},
+					"user $recipient does not have an email address -- skipping"));
 				next;
 			}
 			my ($msg, $preview_header);
