@@ -33,6 +33,12 @@ $BSMALL = HTML('<SMALL>','{\small ');
 $ESMALL = HTML('</SMALL>','}');
 
 #
+#  Block quotes
+#
+$BBLOCKQUOTE = HTML('<BLOCKQUOTE>','\hskip3em ');
+$EBLOCKQUOTE = HTML('</BLOCKQUOTE>');
+
+#
 #  Smart-quotes in TeX mode, regular quotes in HTML mode
 #
 $LQ = MODES(TeX => '``', Latex2HTML => '"', HTML => '"');

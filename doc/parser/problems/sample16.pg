@@ -1,7 +1,7 @@
 ###########################################################
 #
-#  Example showing how to use the Parser's differentiation
-#  capabilities.
+#  Example showing how to use the Parser's function
+#  answer checker.
 #
 
 DOCUMENT();        # This should be the first executable line in the problem.
@@ -17,7 +17,7 @@ TEXT(beginproblem());
 
 ###########################################################
 #
-#   Use standard numeric mode
+#   The setup
 #
 Context('Numeric');
 $x = Formula('x');  # used to construct formulas below.
@@ -38,24 +38,24 @@ $x = random(-8,8,1);
 #
 #  The problem text
 #
+
+Context()->texStrings;
 BEGIN_TEXT
 
-Suppose \(f(x) = \{$f->TeX\}\).
+Suppose \(f(x) = $f\).
 $PAR
 Then \(f'(x)=\) \{ans_rule(20)\},$BR
 and \(f'($x)=\) \{ans_rule(20)\}.
-$PAR
-(Same as previous problem, but using the formal differentiation package.
-Note that automatic differentiation does not always produce the simples form.)
 
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #
 #  The answers
 #
-ANS(fun_cmp($df->string));
-ANS(num_cmp($df->eval(x=>$x)));
+ANS($df->cmp);
+ANS($df->eval(x=>$x)->cmp);
 $showPartialCorrectAnswers = 1;
 
 ###########################################################
