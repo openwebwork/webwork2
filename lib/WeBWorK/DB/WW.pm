@@ -346,7 +346,7 @@ sub setPSVN($$$) {
 # deletePSVN($userID, $setID) - remove an entry from the PSVN indexes.
 # $userID - the user to remove
 # $setID - the set to remove
-sub deletePSVN($$) {
+sub deletePSVN($$$) {
 	my $self = shift;
 	my $userID = shift;
 	my $setID = shift;
