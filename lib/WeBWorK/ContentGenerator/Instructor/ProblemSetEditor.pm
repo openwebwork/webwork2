@@ -18,41 +18,103 @@ sub title {
 
 sub body {
 	my $self = shift;
-	my $initialData = "Enter problem set definition here";
-	my $textAreaString = qq!<textarea cols="40", rows="20">$initialData</textarea>!;
+	
+	# test area
+	my $r = $self->{r};
+	my $db = $self->{db};
+	my $setDirectory = $r->param('setDirectory');
+	my $user = $r->param('user');
+	my $key = $db->getKey($user)->key();
+	
+	# Determine the set number, if there is one. Otherwise make setName = "new set".
+	# fix me
+	my ($path_info,@components) = $self->gatherInfo();
+	my $setName = $components[0];  # get GET  address for set name
+
+	# Override the setName if it is defined in a form.
+	$setName = $r->param('setName') if defined($r->param('setName'));
+	$path_info =~s|problemSetEditor.*$|problemSetEditor/|;   # remove the setName, if any, from the path
+	my $formPath = "/webwork$path_info";   # . $setName$self->url_authen_args();
+	
+	
+	
+	# Determine  values for strings
+	
+	#Enter data in the text area region
+	my $problem_list = ($r->param('problem_list'))?$r->param('problem_list'): "# Enter problem set definition here\r\n";
+	$problem_list .= $setDirectory.'/'.$r->param('pgProblem').", 1 \r\n" if defined($r->param('pgProblem'));  
+	my $textAreaString = qq!<textarea name="problem_list", cols="40", rows="20">$problem_list</textarea>!;
+	
+	
+	#Determine the headline for the page   
+	#fix me   Debugging code
 	my $header = "Choose problems from " . $self->{ce}->{courseDirs}->{templates} . " directory" .
-		"<p>This form is not yet operational";
-	my $popUpSetDirectoryString = $self->fetchSetDirectories();
-	my $popUpPGProblemString = $self->fetchPGproblems();
+		"<p>This form is not yet operational. 
+		<p>SetDirectory is $setDirectory.  
+		<p>formPath is $formPath 
+		<p>path_info  is $path_info";
+
+	
+		
+	# Define the popup strings used.
+	my $popUpSetDirectoryString = $self->fetchSetDirectories($setDirectory);  #pass default choice as current directory
+	my $popUpPGProblemString = $self->fetchPGproblems($setDirectory);
+	
 	return CGI::p($header),
-		CGI::start_form(),
+		#CGI::start_form(-action=>"/webwork/mth143/instructor/problemSetEditor/"),
+		CGI::start_form(-action=>$formPath),
 		CGI::table( {-border=>2},
 			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
+				CGI::th('Editing set : '),
+				CGI::td(CGI::textfield(  -name=>'definitionName',-size=>'20',-value=>$setName,-override=>1)), 
+				CGI::td(CGI::submit(-name=>'Save',-value=>'save'))
+			),
+			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
 				CGI::td($textAreaString),
-					CGI::td($popUpSetDirectoryString), 
-					CGI::td($popUpPGProblemString)
+				CGI::td($popUpSetDirectoryString), 
+				CGI::td($popUpPGProblemString)
              	
             ),
             CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-            	 CGI::th(["Open date","Due date", "Answer date"]),
+            	CGI::th(["Open date","Due date", "Answer date"]),
             
             ),
             CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-  		 		 CGI::td(CGI::textfield(-name=>'open_date', -size=>'20') ),
-            	 CGI::td(CGI::textfield(-name=>'due_date', -size=>'20') ),
-            	 CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20') ),             
+  		 		CGI::td(CGI::textfield(-name=>'open_date', -size=>'20') ),
+            	CGI::td(CGI::textfield(-name=>'due_date', -size=>'20') ),
+            	CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20') ),             
             )
         ),
-        CGI::p( "Save set definition file ".CGI::submit(-name=>'Save',-value=>'save') ),
-		CGI::end_form()
+        CGI::hidden(-name=>'user', -value=>$user),
+        CGI::hidden(-name=>'key',-value=>$key),
+#        CGI::textfield(-name=>'setName',-value=>'bar'),
+#         CGI::hidden(-name=>'gage',-value=>'mike'),
+#         CGI::submit(),
+		CGI::end_form(),
+		"<p> the parameters passed are "  #fix me -- debugging code
+		. join("<BR>", %{$r->param()})  
 	;
 
 }
 
+sub gatherInfo {
+	#fix me.  This is very much hacked together.  In particular can we pass the key inside the post?
+	my $self	=	shift;
+	my $ce 		= 	$self->{ce};
+	my $r		=	$self->{r};
+	my $path_info = $r->path_info || "";
+	my $remaining_path = $path_info;
+	$remaining_path =~ s/^.*problemSetEditor//;
+	# $remaining_path =~ s/\?.*$//;    #remove the trailing lines?? perhaps not needed.
 
+	my($junk, @components) = split "/", $remaining_path;
+	
+	($path_info,@components);
+}
 sub fetchSetDirectories {
 
 	my $self = shift;
+	my $defaultChoice = shift;
 	my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
 	opendir SETDEFDIR, $templateDirectory 
 		or return "Can't open directory $templateDirectory";
@@ -87,17 +149,20 @@ sub fetchSetDirectories {
 # 	}
 
 return CGI::popup_menu(-name=>'setDirectory', -size=>20,
-	 -values=>\@sortedNames,  ) .CGI::br() .
+	 -values=>\@sortedNames, -default=>$defaultChoice ) .CGI::br() .
 	  CGI::submit(-name=>'select_set'  , -value =>'Select set')  ;
 }
 
 sub fetchPGproblems {
 
 	my $self = shift;
+	my $setDirectory = shift;
+	
+	# Handle default for setDirectory  
+	# fix me -- this is not bullet proof
+	$setDirectory = "set0" unless defined($setDirectory);
 	my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
 	
-	## fix me.  We need to get the current set Directory.
-	my $setDirectory = 'setAlgebra10Intervals';
 	## 
 	opendir SETDEFDIR, "$templateDirectory/$setDirectory" 
 		or return "Can't open directory $templateDirectory/$setDirectory";
@@ -130,9 +195,10 @@ sub fetchPGproblems {
 		$labels{$ind} = "$ind"; # $label";
 	}
 
-return "$setDirectory <br> ".  CGI::popup_menu(-name=>'pgProblems', -size=>20, -multiple=>undef,
-	 -values=>\@sortedNames, -labels=>\%labels ) . CGI::br() . 
-	    CGI::submit(-name=>'view_problem'  , -value =>'View problem') . CGI::br() .
-	    CGI::submit(-name=>'choose_problem'  , -value =>'Choose problem')  ;
+return "$setDirectory <br> ".  
+	CGI::popup_menu(-name=>'pgProblem', -size=>20, -multiple=>undef, -values=>\@sortedNames, -labels=>\%labels ) . 
+	CGI::br() . 
+	CGI::submit(-name=>'view_problem'  , -value =>'View problem') . CGI::br() .
+	CGI::submit(-name=>'choose_problem'  , -value =>'Choose problem')  ;
 }
 1;
