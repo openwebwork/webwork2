@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.69 2004/08/30 19:22:27 dpvc Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.70 2004/10/06 21:00:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -83,7 +83,9 @@ sub handler($) {
 			#  are in effect from 5 or 6 places, and all of them end up here, with
 			#  the additional error messages already appended.
 			#
-			$error .= traceback()."--------------------------------------\n"
+			$error .= "\nCall Stack:   The information below can help experts locate the source of an error which is due to WeBWorK.
+                       \n".
+           traceback()."--------------------------------------\n"
 			  unless $error =~ m/-------------\n/;
 			# Traces are still causing problems
 			#my $trace = join "\n", Apache::WeBWorK->backtrace();
@@ -167,8 +169,10 @@ sub message($$) {
  <ul>$warnings</ul>
  <h3>Error messages</h3>
  <blockquote style="color:red"><tt>$exception</tt></blockquote>
- <!--<h2>Call stack</h2>-->
- <!--<ul>$context</ul>-->
+ <!-- <h4>Call stack</h4>
+   <p>The information below can help experts locate the source of the problem.</p>
+   <ul>$context</ul>
+ -->
  <hr />
  <h2>Request information</h2>
  <table border="1">

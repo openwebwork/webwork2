@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.54 2004/09/24 15:21:50 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.55 2004/10/04 18:28:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -324,7 +324,8 @@ sub unformatDateAndTime {
 	$min=$2;
 	$hour = $1;
 	if ($hour < 1 or $hour > 12) {
-		die "Incorrect date/time format $orgString. Hour must be in the range [1,12]. Correct format is MM/DD/YYYY at HH:MM AMPM ZONE\n";
+		die "Incorrect date/time format \"$orgString\". Hour must be in the range [1,12]. 
+		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE (e.g.  \"03/29/2004 at 06:00am EST\")\n";
 	}
 	if ($min < 0 or $min > 59) {
 		die "Incorrect date/time format $orgString. Minute must be in the range [0-59]. Correct format is MM/DD/YYYY at HH:MM AMPM ZONE\n";
