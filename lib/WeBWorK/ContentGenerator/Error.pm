@@ -19,35 +19,46 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(ref2string);
 
 sub initialize {
-	my $self = shift;
+#	my $self = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+
 }
 
 sub path {
-	my $self = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+
+#	my $self = shift;
 	my $args = $_[-1];
 	return $self->pathMacro($args, Home => "../", Error => "");
 }
 
 sub siblings {
-	my $self = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+
+#	my $self = shift;
 	return "";
 }
 
 sub nav {
-	my $self = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+
+#	my $self = shift;
 	return "";
 }
 
 sub title {
-	my $self = shift;
-	my $error = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+#	my $self = shift;
+#	my $error = shift;
 	(!defined $error or $error eq "") ? return "An Error Occurred" : return $error;
 }
 
 sub body {
-	my $self = shift;
-	my $error = shift;
-	my $msg = shift;
+	my ($self, $setID, $problemID, $error, $msg) = @_;
+
+#	my $self = shift;
+#	my $error = shift;
+#	my $msg = shift;
 	my $formFields = WeBWorK::Form->new_from_paramable($self->{r});
 	my $courseEnvironment = $self->{ce};
 	( defined $msg and $msg eq "") ? return $self->errorOutput() : return $msg;
