@@ -252,7 +252,7 @@ sub body {
 						@{$overrideArgs{answer_date}})."\n",
 			setRowHTML( "Set Header:", "set_header", 
 						$setRecord->set_header, 
-						undef, 
+						32, 
 						@{$overrideArgs{set_header}})."\n",
 # FIXME  we're not using this right at the moment as far as I know.  There may someday be a use for it, so don't take this out yet.
 # 			setRowHTML( "Problem Header:", 
