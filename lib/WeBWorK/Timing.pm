@@ -43,7 +43,8 @@ use warnings;
 use Time::HiRes qw(gettimeofday tv_interval);
 
 our $TASK_COUNT = 0; # number of tasks processed in this child process
-
+# You can customize the output to go to some file besides STDERR (usually ErrorLog for Apache)
+our $TIMING_LOG = '';
 =head1 CONSTRUCTOR
 
 =over
@@ -119,7 +120,13 @@ not called explicitly, it is called when the object goes out of scope.
 
 sub save {
 	my ($self) = @_;
-	
+	local(*TIMING);
+	if ($TIMING_LOG =~ /\S/) { 
+		open(TIMING, ">>$TIMING_LOG") || die "Can't open timing log: $TIMING_LOG";
+	} else {
+		*TIMING_LOG = *STDERR;
+	} 
+		
 	my $id = $self->{id};
 	my $task = $self->{task};
 	my $now = gettimeofday();
@@ -127,10 +134,10 @@ sub save {
 	my $diff = sprintf("%.6f", 0);
 	if ($self->{start}) {
 		my $start = sprintf("%.6f", $self->{start});
-		print STDERR "TIMING $$ $id $start ($diff) $task: START\n";
+		print TIMING_LOG "TIMING $$ $id $start ($diff) $task: START\n";
 	} else {
 		my $ctime = sprintf("%.6f", $self->{ctime});
-		print STDERR "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
+		print TIMING_LOG "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
 	}
 	
 	if ($self->{steps}) {
@@ -140,7 +147,7 @@ sub save {
 			$time = sprintf("%.6f", $time);
 			my $start = sprintf("%.6f", $self->{start});
 			my $diff  = sprintf("%.6f", $time-$start);
-			print STDERR "TIMING $$ $id $time ($diff) $task: $data\n";
+			print TIMING_LOG "TIMING $$ $id $time ($diff) $task: $data\n";
 		}
 	}
 	
@@ -148,12 +155,12 @@ sub save {
 		my $stop = sprintf("%.6f", $self->{stop});
 		my $start = sprintf("%.6f", $self->{start});
 		my $diff  = sprintf("%.6f", $stop-$start);
-		print STDERR "TIMING $$ $id $stop ($diff) $task: END\n";
+		print TIMING_LOG "TIMING $$ $id $stop ($diff) $task: END\n";
 	} else {
 		$now = sprintf("%.6f", $now);
 		my $start = sprintf("%.6f", $self->{start});
 		my $diff  = sprintf("%.6f", $now-$start);
-		print STDERR "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
+		print TIMING_LOG "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
 	}
 	
 	$self->{saved} = 1;
