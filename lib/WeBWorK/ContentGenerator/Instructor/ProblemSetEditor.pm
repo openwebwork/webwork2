@@ -34,9 +34,9 @@ sub initialize {
 	my $db = $self->{db};
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
-	my $changed = 0;
 
-	if (defined($r->param('save_set_changes'))) {
+	if (defined($r->param('submit_set_changes'))) {
+		my $changed = 0;
 		foreach (qw(open_date due_date answer_date)) {
 			if (defined($r->param($_))) {
 				if (m/_date$/) {
@@ -47,9 +47,21 @@ sub initialize {
 				$changed = 1;
 			}
 		}
-
-		if ($changed) {
-			$db->putGlobalSet($setRecord);
+		$db->putGlobalSet($setRecord) if $changed;
+	} 
+	elsif (defined($r->param('submit_problem_changes'))) {
+		my @problemList = $db->listGlobalProblems($setName);
+		foreach my $problem (@problemList) {
+			my $changed = 0;
+			my $problemRecord = $db->getGlobalProblem($setName, $problem);
+			foreach (qw(source_file value max_attempts)) {
+				my $paramName = "problem_${problem}_$_";
+				if (defined($r->param($paramName))) {
+					$problemRecord->$_($r->param($paramName));
+					$changed = 1;
+				}
+			}
+			$db->putGlobalProblem($problemRecord)
 		}
 	}
 }
@@ -60,7 +72,8 @@ sub body {
 	my $db = $self->{db};
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
-	
+	my @editForUser = $r->param('editForUser');
+	my $forUser = scalar(@editForUser);
 	
 	print CGI::h2({}, "Set Data");	
 	print CGI::start_form({method=>"post", action=>$r->uri});
@@ -111,15 +124,16 @@ sub body {
 	);
 	
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"save_set_changes", value=>"Save Changes"});
+	print CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"});
 	print CGI::end_form();
 	
 	print CGI::h2({}, "Problems");
 	
 	my @problemList = $db->listGlobalProblems($setName);
 	
+	print CGI::start_form({method=>"POST", action=>$r->uri});
 	print CGI::start_table({});
-	print CGI::Tr({}, CGI::th({}, ["Problem", "Weight", "Max. Attempts", "Source File"]));
+	print CGI::Tr({}, CGI::th({}, ["Problem", "Max. Attempts", "Weight", "Source File"]));
 	foreach my $problem (sort {$a <=> $b} @problemList) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem);
 		my $problemID = $problemRecord->problem_id;
@@ -149,6 +163,10 @@ sub body {
 
 		)
 	}
+	print CGI::end_table();
+	print $self->hidden_authen_fields;
+	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
+	print CGI::end_form();
 	
 	return "";
 }
