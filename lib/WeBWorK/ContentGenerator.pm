@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.132 2005/01/27 00:15:55 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.133 2005/01/29 01:19:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -519,17 +519,19 @@ sub links {
 		$setID = "" if (defined $setID && !(grep /$setID/, $db->listUserSets($userID)));
 		my $problemID = $urlpath->arg("problemID");
 		$problemID = "" if (defined $problemID && !(grep /$problemID/, $db->listUserProblems($userID, $setID)));
-		
+		# instructor tools link
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
-		my $addUsers = $urlpath->newFromModule("${ipfx}AddUsers", %args);
+		# Class list editor
 		my $userList = $urlpath->newFromModule("${ipfx}UserList", %args);
 		
-		# set list links
+		# Homework sets editor and set editing list links
 		my $setList       = $urlpath->newFromModule("${ipfx}ProblemSetList", %args);
 		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetDetail", %args, setID => $setID);
 		my $problemEditor = $urlpath->newFromModule("${ipfx}PGProblemEditor", %args, setID => $setID, problemID => $problemID);
 		
+		# Library browser
 		my $maker = $urlpath->newFromModule("${ipfx}SetMaker", %args);
+		
 		my $assigner = $urlpath->newFromModule("${ipfx}Assigner", %args);
 		my $mail     = $urlpath->newFromModule("${ipfx}SendMail", %args);
 		my $scoring  = $urlpath->newFromModule("${ipfx}Scoring", %args);
@@ -546,51 +548,62 @@ sub links {
 		
 		
 		my $fileMgr = $urlpath->newFromModule("${ipfx}FileManager", %args);
-		#my $fileXfer = $urlpath->newFromModule("${ipfx}FileXfer", %args);
 		
 		print CGI::hr();
 		print CGI::start_li();
+	##  Instructor tools
 		print CGI::span({style=>"font-size:larger"},
-		                 CGI::a({href=>$self->systemLink($instr,params=>{  %displayOptions,})},  space2nbsp($instr->name))
+		                 CGI::a({href=>$self->systemLink($instr,params=>{  %displayOptions,})},  sp2nbsp($instr->name))
 		);
+	## Class list editor
 		print CGI::start_ul();
 		print CGI::li(CGI::a({href=>$self->systemLink($userList,params=>{  %displayOptions,})}, sp2nbsp($userList->name)));
 		print CGI::start_li();
+	## Homework sets editor and sub links
 		print CGI::a({href=>$self->systemLink($setList,params=>{  %displayOptions,})}, sp2nbsp($setList->name));
 		if (defined $setID and $setID ne "") {
-			print CGI::start_ul();
-			print CGI::start_li();
-			print CGI::a({href=>$self->systemLink($setDetail,params=>{  %displayOptions,})}, $setID);
+			print CGI::li( CGI::a({href=>$self->systemLink($setDetail,params=>{  %displayOptions,})}, $setID) );
 			if (defined $problemID and $problemID ne "") {
 				print CGI::ul(
 					CGI::li(CGI::a({href=>$self->systemLink($problemEditor,params=>{  %displayOptions,})}, $problemID))
 				);
 			}
-			print CGI::end_li();
-			print CGI::end_ul();
 		}
 		print CGI::end_li();
+	## Library browser
 		print CGI::li(CGI::a({href=>$self->systemLink($maker,params=>{  %displayOptions,})}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
 		print CGI::li(CGI::a({href=>$self->systemLink($assigner,params=>{  %displayOptions,})}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
-		
+	## Stats	
 		print CGI::li(CGI::a({href=>$self->systemLink($stats,params=>{  %displayOptions,})}, sp2nbsp($stats->name)));
-		
-	## Added Link for Student Progress	
+		print CGI::start_li();
+			if (defined $userID and $userID ne "") {
+				print '&nbsp;&nbsp;&nbsp;',
+					CGI::a({href=>$self->systemLink($userStats,params=>{  %displayOptions,})}, $userID),
+					CGI::br();
+			}
+			if (defined $setID and $setID ne "") {
+				print '&nbsp;&nbsp;&nbsp;',
+					CGI::a({href=>$self->systemLink($setStats,params=>{  %displayOptions,})}, sp2nbsp($setID)),
+					CGI::br();
+			}
+		print CGI::end_li();
+	## Student Progress	
 	    print CGI::li(CGI::a({href=>$self->systemLink($progress,params=>{  %displayOptions,})}, sp2nbsp($progress->name)));
 		print CGI::start_li();
 			if (defined $userID and $userID ne "") {
-				print CGI::ul(
-					CGI::li(CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID))
-				);
+				print '&nbsp;&nbsp;&nbsp;',
+					CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID),
+					CGI::br();
 			}
 			if (defined $setID and $setID ne "") {
-				print CGI::ul(
-					CGI::li(CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, space2nbsp($setID)))
-				);
+				print '&nbsp;&nbsp;&nbsp;',
+					CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, sp2nbsp($setID)),
+					CGI::br();
 			}
 		print CGI::end_li();
-		
+	## Scoring tools
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring,params=>{  %displayOptions,})}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
+	## Email
 		print CGI::li(CGI::a({href=>$self->systemLink($mail,params=>{  %displayOptions,})}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
 		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr,params=>{  %displayOptions,})}, sp2nbsp($fileMgr->name)));
 		#print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
@@ -675,7 +688,6 @@ For example:
 
 =item options()
 
-Not defined in this package.
 
 Print an auxiliary options form, related to the content displayed in the
 C<body>.
@@ -1572,21 +1584,24 @@ C<&nbsp;> entity.
 sub sp2nbsp {
 	my ($str) = @_;
 	return unless defined $str;
-	$str =~ s/ /&nbsp;/g;
+	#$str =~ s/ /&nbsp;/g;
+	$str =~ s/\s/&nbsp;/g;
 	return $str;
 }
 
-=item space2nbsp($string)
-
-Replace spaces in the string with html non-breaking spaces.
-
-=cut
-
-sub space2nbsp {
-	my $str = shift;
-	$str =~ s/\s/&nbsp;/g;
-	return($str);
-}
+# FIXME -- I don't think we need both this and the one above.  
+# Remove this comment block  after some time.(2/6/05)
+# =item space2nbsp($string)
+# 
+# Replace spaces in the string with html non-breaking spaces.
+# 
+# =cut
+# 
+# sub space2nbsp {
+# 	my $str = shift;
+# 	$str =~ s/\s/&nbsp;/g;
+# 	return($str);
+# }
 
 =item errorOutput($error, $details)
 
