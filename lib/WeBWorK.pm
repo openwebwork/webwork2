@@ -116,12 +116,15 @@ sub dispatch($) {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
 				return WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "userList") {
+			} elsif ($instructorArgument eq "users") {
 				return WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "problemSetList") {
-				return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "problemSetEditor") {
-				return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go(@components);
+			} elsif ($instructorArgument eq "sets") {
+				my $setID = shift @components;
+				if (defined $setID) {
+					return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go($setID);
+				} else {
+					return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
+				}
 			} elsif ($instructorArgument eq "pgProblemEditor") {
 				return WeBWorK::ContentGenerator::Instructor::PGProblemEditor->new($r, $ce, $db)->go(@components);
 			}

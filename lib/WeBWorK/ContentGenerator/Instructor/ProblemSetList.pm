@@ -55,7 +55,6 @@ sub body {
 	my $effectiveUserName = $r->param('effectiveUser');
 	my $URL = $r->uri;
 	my $instructorBaseURL = "$root/$courseName/instructor";
-	my $setEditorURL = "$instructorBaseURL/problemSetEditor/";
 	my $importURL = "$instructorBaseURL/problemSetImport/";
 	my $addURL = "$instructorBaseURL/problemSetAdd/";
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
@@ -123,7 +122,7 @@ sub body {
 					"checked"=>"0"
 				})
 			)
-			. CGI::td({}, CGI::a({href=>"$setEditorURL".$set->set_id."/?".$self->url_authen_args}, $set->set_id))
+			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/?".$self->url_authen_args}, $set->set_id))
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))

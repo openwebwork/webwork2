@@ -148,7 +148,6 @@ sub initialize {
 			}
 		}
 		$db->putGlobalSet($setRecord);
-		
 		if ($forOneUser) {
 			
 			my $userSetRecord = $db->getUserSet($editForUser[0], $setName);

@@ -30,7 +30,7 @@ use CGI qw();
 	# new URLS
 	my $classList	= "$root/$courseName/instructor/userList/?". $self->url_authen_args();
 	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
-	my $problemSetList = "$root/$courseName/instructor/problemSetList/?". $self->url_authen_args();
+	my $problemSetList = "$root/$courseName/instructor/sets/?". $self->url_authen_args();
 	
 	if ($permLevel > 0 ) {
 		$pathString .="<hr>";
