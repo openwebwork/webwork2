@@ -37,12 +37,9 @@ your httpd.conf file to achieve this:
 use strict;
 use warnings;
 use WeBWorK;
-use WeBWorK::Timing;
 
 sub handler($) {
 	my ($r) = @_;
-	
-	#my $timer = WeBWorK::Timing->new(__PACKAGE__."::handler call to WeBWorK::dispatch");
 	
 	my $result;
 	{ # limit the scope of signal localization
@@ -64,9 +61,7 @@ sub handler($) {
 			die $error;
 		};
 		
-		#$timer->start;
 		$result = eval { WeBWorK::dispatch($r) };
-		#$timer->stop;
 	}
 	
 	if ($@) {
