@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.4 2004/10/12 18:13:58 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.5 2004/10/21 01:06:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,7 +224,7 @@ EOF
 	print CGI::Tr({valign=>"middle"},
 		CGI::td(CGI::scrolling_list(
 			-name => "files", id => "files",
-			-style => "font-family:monospace; width:30em; height:100%",
+			-style => "font-family:monospace; width:30em",
 			-size => 15,
 			-multiple => 1,
 			-values => $files,
