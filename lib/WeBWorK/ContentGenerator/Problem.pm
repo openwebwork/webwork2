@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.111 2004/01/23 13:13:53 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.112 2004/01/23 21:46:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -548,7 +548,11 @@ sub body {
 		if ($submitAnswers ) {
 			my $answerString = "";
 			my %answerHash = %{ $pg->{answers} };
-			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
+			# FIXME  this is the line 552 error.  make sure original student ans is defined.
+			# The fact that it is not defined is probably due to an error in some answer evaluator.
+			# But I think it is useful to suppress this error message in the log.
+			my $student_ans = $answerHash{$_}->{original_student_ans} ||'';
+			$answerString = $answerString . $student_ans."\t"
 				foreach (sort keys  %answerHash);
 			$answerString = '' unless defined($answerString); # insure string is defined. 
 			writeCourseLog($self->{ce}, "answer_log",
