@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.53 2004/06/21 19:07:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.54 2004/06/23 01:19:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -179,6 +179,10 @@ sub defineProblemEnvir {
 		cacheDir => $ce->{webworkDirs}->{equationCache},
 		cacheURL => $ce->{webworkURLs}->{equationCache},
 		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
+		useMarkers   => ($ce->{pg}->{renderers}->{dvipng_align} &&
+		  $ce->{pg}->{renderers}->{dvipng_align} eq 'mysql'),
+		dvipng_align => $ce->{pg}->{renderers}->{dvipng_align},
+		dvipng_depth_db => $ce->{pg}->{renderers}->{dvipng_depth_db},
 	);
 	
 	# Other things...
