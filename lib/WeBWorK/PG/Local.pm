@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.11 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.12 2004/01/05 01:02:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,9 @@ use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 
+# Problem processing will time out after this number of seconds.
+use constant TIMEOUT => 5*60;
+
 BEGIN {
 	# This safe compartment is used to read the large macro files such as
 	# PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
@@ -50,6 +53,16 @@ BEGIN {
 }
 
 sub new {
+	my $invocant = shift;
+	local $SIG{ALRM} = sub { die "Timeout after processing this problem for ", TIMEOUT, " seconds. Check for infinite loops in problem source.\n" };
+	alarm TIMEOUT;
+	my $result = eval { $invocant->new_helper(@_) };
+	alarm 0;
+	die $@ if $@;
+	return $result;
+}
+
+sub new_helper {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my (
