@@ -188,10 +188,16 @@ sub pre_header_initialize {
     defined($r->param('edit-class-data')) && do {
     	my $root            = $ce->{webworkURLs}->{root};
 		my $courseName      = $ce->{courseName};
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
+		#my @setList        = $r->param("setList");
+		## can only become the first user listed.
+		#my $setName         = shift @setList;
+		# ...not sure what those are about
+		# get list of users selected
+		my @userIDs = $r->param("classList");
+		my $uri="$root/$courseName/instructor/users/?";
+		$uri .= join("&", map { "visible_users=$_" } @userIDs);
+		$uri .= "&editMode=1",
+		$uri .= "&" . $self->url_authen_args;
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
