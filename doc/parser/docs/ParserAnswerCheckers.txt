@@ -271,16 +271,20 @@ In addition to these, the individual types have their own flags:
 			       constitutes a type mismatch error).
 			       (default: dynamically determined from list)
 
-      allowParens=>1 or 0      Allow/don't allow the student's answer
-			       to include parentheses around the list.
-			       (If allowParens is 1, then "(1,2)" is
-			       treated as "1,2").
-			       (default: 0)
+      requireParenMatch=>1 or 0
+                               Do/don't require the parentheses in the
+			       student's answer to match those in the
+			       professor's answer exactly.
+			       (default: 1)
 
-      showParens=>1 or 0       Do/don't show the parens for the
+      removeParens=>1 or 0     Do/don't remove the parentheses from the
 			       professor's list as part of the correct
-			       answer string.
-			       (default: 0)
+			       answer string.  This is so that if you
+			       use List() to create the list (which
+			       doesn't allow you to control the parens
+			       directly), you can still get a list
+			       with no parentheses.
+			       (default: 0 for List() and 1 for Formula())
 
   Formula()->cmp:
 
