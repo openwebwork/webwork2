@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.24 2004/01/16 04:15:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.25 2004/01/18 00:12:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -298,13 +298,7 @@ sub initialize {
 	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
 	@set_records = $db->getGlobalSets( @setNames);
 	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
-# 	foreach my $name (@setNames) {
-# 	    my $set_record;
-# 		$set_record = $db->getMergedSet($user,$name,) ;
-# 		
-# 			#warn "Adding set $name", ref($set_record);
-# 			push @set_records, $set_record;
-# 	}
+
 	
 
 	# store data
@@ -361,7 +355,7 @@ sub body {
 				CGI::a({-href=>$emailURL}, "Mail Merge"), 
 				CGI::a({-href=>$scoringURL}, "Scoring"),
 				CGI::a({-href=>$statsURL}, "Statistics"),
-				CGI::a({-href=>$emailURL}, "File Transfer"),
+				CGI::a({-href=>$filexferURL}, "File Transfer"),
 			]),
 			"\n",
 		),
