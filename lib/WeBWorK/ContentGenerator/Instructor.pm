@@ -28,7 +28,7 @@ use CGI qw();
 	return "" unless defined $key;
 	
 	# new URLS
-	my $classList	= "$root/$courseName/instructor/userList/?". $self->url_authen_args();
+	my $classList	= "$root/$courseName/instructor/users/?". $self->url_authen_args();
 	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
 	my $problemSetList = "$root/$courseName/instructor/sets/?". $self->url_authen_args();
 	
