@@ -23,7 +23,7 @@ use constant TIE_RETRY_DELAY  => 2;
 use constant TIE_PERMISSION => 0660;
 
 ################################################################################
-# static function
+# static functions
 ################################################################################
 
 sub style() {
@@ -55,8 +55,9 @@ sub connect($$) {
 	my $source = $self->{source};
 	
 	return 1 if tied %$hash; # already tied!
+	die "$source: must exist to open for reading"
+		if lc $mode eq "ro" and not -e $source;
 	my $flags = lc $mode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
-	return 0 if lc $mode eq "ro" and not -e $self->{source};
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
 		return 1 if tie %$hash,
 			"GDBM_File",    # class
@@ -65,7 +66,7 @@ sub connect($$) {
 			TIE_PERMISSION; # access mode
 		sleep TIE_RETRY_DELAY;
 	}
-	return 0;
+	die "$source: connection failed";
 }
 
 sub disconnect($) {
@@ -80,7 +81,8 @@ sub disconnect($) {
 
 sub hash($) {
 	my ($self) = @_;
-	return 0 unless tied %{$self->{hash}}; # not tied!
+	die "hash not tied"
+		unless tied %{$self->{hash}};
 	return $self->{hash};
 }
 

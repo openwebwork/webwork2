@@ -138,7 +138,7 @@ sub template {
 # cook_args(STRING) - parses a string of the form ARG1="FOO" ARG2="BAR". Returns
 # a list which pairs into key/values and fits nicely in {}s.
 # 
-sub cook_args($) {
+sub cook_args($) { # ... also used by bin/wwdb, so watch out
 	my ($raw_args) = @_;
 	my @args = ();
 	

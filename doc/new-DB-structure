@@ -12,13 +12,13 @@ The order of key fields in this list is the order that arguments should be passe
 ~  indicates a "dynamic" field
 
 password
-	login_id	*,=> user.id
+	user_id		*,=> user.id
 	password
-permissions
-	login_id	*,=> user.id
-	permissions
+permission
+	user_id		*,=> user.id
+	permission
 key
-	login_id	*,=> user.id
+	user_id		*,=> user.id
 	key
 user
 	id		*

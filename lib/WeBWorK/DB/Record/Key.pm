@@ -18,6 +18,7 @@ use warnings;
 sub FIELDS($) {qw(
 	user_id
 	key
+	timestamp
 )}
 
 1;

@@ -18,9 +18,10 @@ use Safe;
 use WeBWorK::Utils qw(readFile);
 
 # new($invocant, $webworkRoot, $courseName)
-# $invocant	implicitly set by caller
-# $webworkRoot	directory that contains the WeBWorK distribution
-# $courseName	name of the course being used
+# $invocant		implicitly set by caller
+# $webworkRoot		directory that contains the WeBWorK distribution
+# $webworkURLRoot	URL that points to the WeBWorK system
+# $courseName		name of the course being used
 sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;

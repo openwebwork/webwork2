@@ -15,7 +15,7 @@ use strict;
 use warnings;
 use WeBWorK::Utils qw(runtime_use);
 
-use constant TABLES => qw(password permission user set set_user problem problem_user);
+use constant TABLES => qw(password permission key user set set_user problem problem_user);
 
 ################################################################################
 # constructor
@@ -25,19 +25,26 @@ sub new($$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $ce = shift;
+	my $self = {};
 	
 	# load the modules required to handle each table, and create driver
 	foreach my $table (TABLES) {
-		die "Layout for table $table not specified in dbLayout.\n"
-			unless defined $ce->{dbLayout}->{$table};
+		unless (defined $ce->{dbLayout}->{$table}) {
+			#warn "ignoring table $table: layout not specified in dbLayout";
+			next;
+		}
 		
 		my $layout = $ce->{dbLayout}->{$table};
+		my $record = $layout->{record};
 		my $schema = $layout->{schema};
 		my $driver = $layout->{driver};
 		my $source = $layout->{source};
+		#warn "table=$table record=$record schema=$schema driver=$driver source=$source\n";
 		
-		runtime_use($schema, $driver);
-		$self->{$table} = $schema->new($driver->new($source), $table);
+		runtime_use($record);
+		runtime_use($schema);
+		runtime_use($driver);
+		$self->{$table} = $schema->new($driver->new($source), $table, $record);
 	}
 	
 	bless $self, $class;
@@ -296,7 +303,7 @@ sub newUserProblem($$) {
 	return $self->{problem_user}->add($UserProblem);
 }
 
-sub getUserProblem($$) {
+sub getUserProblem($$$$) {
 	my ($self, $userID, $setID, $problemID) = @_;
 	return $self->{problem_user}->get($userID, $setID, $problemID);
 }
@@ -306,7 +313,7 @@ sub putUserProblem($$) {
 	return $self->{problem_user}->put($UserProblem);
 }
 
-sub deleteUserProblem($$) {
+sub deleteUserProblem($$$$) {
 	my ($self, $userID, $setID, $problemID) = @_;
 	return $self->{problem_user}->delete($userID, $setID, $problemID);
 }
@@ -315,12 +322,18 @@ sub deleteUserProblem($$) {
 # set+set_user functions
 ################################################################################
 
-# ***
+sub getGlobalUserSet($$$) {
+	my ($self, $userID, $setID) = @_;
+	# ***
+}
 
 ################################################################################
 # problem+problem_user functions
 ################################################################################
 
-# ***
+sub getGlobalUserProblem($$$$) {
+	my ($self, $userID, $setID, $problemID) = @_;
+	# ***
+}
 
 1;

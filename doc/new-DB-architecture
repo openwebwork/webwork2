@@ -16,22 +16,23 @@ listed in doc/new-DB-API, and uses schema modules (via tables) to implement thos
 +------------------------------------------------------------------+
  \ password permission key user set set_user problem problem_user /  <- tables
 
+
 MIDDLE LAYER: SCHEMAS
 ---------------------
 
-The middle layer of the architecture is provided by one or more schema modules. They are called "schema" modules because they control the structure of the data for a table. This includes odd things like the way multiple tables are encoded in a single hash in the WW1Hash schema, and the encoding scheme used.
+The middle layer of the architecture is provided by one or more schema modules. They are called "schema" modules because they control the structure of the data for a table. This includes odd things like the way multiple tables are encoded in a single hash in the WWHash schema, and the encoding scheme used.
 
-The schema modules provide an API that matches the requirements of the DB layer, on a per-table basis. Each schema module has a style that determines which drivers it can interface with. For example, WW1Hash is a "hash" style schema. SQL is a "dbi" style schema.
+The schema modules provide an API that matches the requirements of the DB layer, on a per-table basis. Each schema module has a style that determines which drivers it can interface with. For example, WWHash is a "hash" style schema. SQL is a "dbi" style schema.
 
 The null schema, "0", can handle all tables, but merely returns a false value for any method call. The null schema has no style.
 
 Both WeBWorK 1.x and 2.x courses use:
 
-  / password \      / permission \	/ key \   <- tables
-+--------------+  +----------------+  +---------+
-| PasswordHash |  | PermissionHash |  | KeyHash |
-+--------------+  +----------------+  +---------+
-    \ hash /	       \ hash / 	\ hash /  <- style
+ / password  permission  key \        / user \      <- tables
++-----------------------------+  +----------------+
+|          Auth1Hash          |  | Classlist1Hash |
++-----------------------------+  +----------------+
+            \ hash /                  \ hash /      <- style
 
 WeBWorK 1.x courses also use:
 
@@ -58,6 +59,7 @@ Other drop-in schema modules could be:
 |  SQL  |  | PasswordLDAP |
 +-------+  +--------------+
  \ dbi /       \ ldap /    
+
 
 BOTTOM LAYER: DRIVERS
 ---------------------
@@ -87,10 +89,10 @@ $record   - an object representing a record in the table
 $style = style()
 	returns the required driver style.
 
-$handle = new($driver, $table)
+$handle = new($driver, $table, $record)
 	creates a schema interface for $table, using the driver interface
-	provided by $driver. returns a false value if the $driver does not 
-	support the driver style needed by the schema.
+	provided by $driver and using the record class named in $record. dies
+	if the $driver does not support the driver style needed by the schema.
 
 @keys = $handle->list()
 	returns a list containing the key of each record in the table. the
@@ -99,21 +101,21 @@ $handle = new($driver, $table)
 $result = $handle->exists(@keyparts)
 	returns whether a record matching @keyparts exists in the table.
 
-$result = $handle->new($record)
-	attempts to add $record to the table. returns a false value if a record
-	with the same key exists.
+$result = $handle->add($record)
+	attempts to add $record to the table. die if a record with the same key
+	exists.
 
 $record = $handle->get(@keyparts)
 	attempts to retrieve the record matching @keyparts from the table.
-	returns a false value if no record matches.
+	returns undef if no record matches.
 
 $result = $handle->put($record)
 	attempts to replace the record in the table that matches the key of
-	$record. returns a false value if no such record exists.
+	$record. dies if no such record exists.
 
 $result = $handle->delete(@keyparts)
-	attempts to delete the record matching @keyparts from the table.
-	returns a false value if no such record exists.
+	attempts to delete the record matching @keyparts from the table. dies
+	if no such record exists.
 
 --------------------------------------------------------------------------------
 Driver API
@@ -129,23 +131,15 @@ $handle = new($source)
 	creates a new interface to the data contained in $source.
 
 $result = $handle->connect($mode)
-	connects to the data source with access mode $mode. returns a false
-	value if connecting fails.
+	connects to the data source with access mode $mode. dies if connection
+	fails.
 
 $result = $handle->disconnect()
-	disconnects from the data source. returns a false value if disconnecting
-	fails. this should never happen.
+	disconnects from the data source. dies if disconnection fails.
 
 STYLE: hash
 -----------
 
 $ref = $handle->hash()
-	returns a reference to the underlying tied hash. returns a false value
-	if the hash is not available (i.e. not connected).
-
-STYLE: dbi
-----------
-
-$dbh = $handle->dbh()
-	returns a DBI database handle. returns a false value if the handle is
-	unavailable (i.e. not connected).
+	returns a reference to the underlying tied hash. dies if the hash is
+	not available (i.e. not connected).
