@@ -7,7 +7,7 @@ package WeBWorK::ContentGenerator::Hardcopy;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Test - generate a PDF version of one or more
+WeBWorK::ContentGenerator::Hardcopy - generate a PDF version of one or more
 problem sets.
 
 =cut
@@ -15,7 +15,7 @@ problem sets.
 use strict;
 use warnings;
 use base qw(WeBWorK::ContentGenerator);
-use Apache::Constants qw(:common);
+#use Apache::Constants qw(:common);
 use CGI qw();
 use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
@@ -24,13 +24,25 @@ use WeBWorK::DB::WW;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readFile);
 
-sub texBlockComment { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)."\n\n"; }
+sub texBlockComment(@) { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)."\n\n"; }
 
 sub initialize {
-	my $self = shift;
+	my ($self, $singleSet, undef) = @_;
+	
+	my $r = $self->{r};
 	my $ce = $self->{courseEnvironment};
+	my @sets = $r->param("set");
+	
+	if (length $singleSet > 0) {
+		$singleSet =~ s/^set//;
+		unshift @sets, $singleSet;
+	}
+	
 	$self->{cldb} = WeBWorK::DB::Classlist->new($ce);
 	$self->{wwdb} = WeBWorK::DB::WW->new($ce);
+	$self->{sets} = \@sets;
+	$self->{errors} = [];
+	$self->{warnings} = [];
 }
 
 sub path {
@@ -51,42 +63,18 @@ sub title {
 }
 
 sub body {
-	my ($self, $singleSet) = @_;
-	$singleSet =~ s/^set//;
-	my $r = $self->{r};
-	my $ce = $self->{courseEnvironment};
-	$self->{wwdb} = WeBWorK::DB::WW->new($ce);
+	my $self = shift;
 	
-	my @sets = $r->param("set");
-	unshift @sets, $singleSet;
-	unless (@sets) {
-		print CGI::p("No problem sets were specified.");
-		return OK;
-	}
-	
-	#print CGI::pre($self->getMultiSetTeX(@sets));
-	#return "";
-	
-	print CGI::p("Generating your hardcopy...");
-	my $url = $self->makeHardcopy(@sets);
-	if ($url) {
-		print CGI::p("Ok, your hardcopy is ready. Click the following link to download it.");
-		print CGI::p({-align=>"center"}, 
-			CGI::big(CGI::a({-href=>$url}, "Download PDF Hardcopy"))
-		);
-	} else {
-		print CGI::p("Hmm, looks like I was unable to generate the hardcopy you requested. I'm really sorry... :(");
-	}
-	
-	return "";
-}
-
-# -----
-
-sub makeHardcopy {
-	my ($self, @sets) = @_;
 	my $courseName = $self->{courseEnvironment}->{courseName};
 	my $userName = $self->{r}->param("user");
+	my @sets = @{$self->{sets}};
+	
+	unless (@sets) {
+		print CGI::p("No problem sets were specified.");
+		return "";
+	}
+	
+	# determine where hardcopy is going to go
 	my $tempDir = $self->{courseEnvironment}->{courseDirs}->{html_temp}
 		. "/hardcopy";
 	my $tempURL = $self->{courseEnvironment}->{courseURLs}->{html_temp}
@@ -104,11 +92,65 @@ sub makeHardcopy {
 	} else {
 		$fileName = "$courseName.$userName.pdf";
 	}
-	my $tex = $self->getMultiSetTeX(@sets);
-	$self->latex2pdf($tex, $tempDir, $fileName) or return;
 	
-	return "$tempURL/$fileName";
+	# determine full URL
+	my $fullURL = "$tempURL/$fileName";
+	
+	# generate TeX from sets
+	my $tex = $self->getMultiSetTeX(@sets);
+	#print CGI::pre($tex);
+	
+	# check for PG errors (fatal)
+	if (@{$self->{errors}}) {
+		my @errors = @{$self->{errors}};
+		print CGI::h2("Software Errors");
+		print CGI::p(<<EOF);
+WeBWorK has encountered one or more software errors while attempting to process these sets.
+It is likely that there are error(s) in the problem itself.
+If you are a student, contact your professor to have the error(s) corrected.
+If you are a professor, please consut the error output below for more informaiton.
+EOF
+		foreach my $error (@errors) {
+			print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
+			print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
+			print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
+		}
+		
+		return "";
+	}
+	
+	# "try" to generate hardcopy
+	eval { $self->latex2pdf($tex, $tempDir, $fileName) };
+	if ($@) {
+		print CGI::p("An error occured while trying to generate your PDF hardcopy:");
+		print CGI::blockquote(CGI::pre($@));
+		return "";
+	} else {
+		print CGI::p({-align=>"center"},
+			CGI::big(CGI::a({-href=>$fullURL}, "Download PDF Hardcopy"))
+		);
+	}
+	
+	# check for PG warnings (non-fatal)
+	if (@{$self->{warnings}}) {
+		my @warnings = @{$self->{warnings}};
+		print CGI::h2("Software Warnings");
+		print CGI::p(<<EOF);
+WeBWorK has encountered warnings while attempting to process these sets.
+It is likely that this indicates an error or ambiguity in the problem(s) themselves.
+If you are a student, contact your professor to have the problem(s) corrected.
+If you are a professor, please consut the error output below for more informaiton.
+EOF
+		foreach my $warning (@warnings) {
+			print CGI::h3("Set: ", $warning->{set}, ", Problem: ", $warning->{problem});
+			print CGI::h4("Warning messages"), CGI::blockquote(CGI::pre($warning->{message}));
+		}
+	}
+	
+	return "";
 }
+
+# -----
 
 sub latex2pdf {
 	# this is a little ad-hoc function which I will replace with a LaTeX
@@ -125,25 +167,24 @@ sub latex2pdf {
 	
 	# write the tex file
 	local *TEX;
-	open TEX, ">", $texFile;
+	open TEX, ">", $texFile or die "Failed to open $texFile: $!\n";
 	print TEX $tex;
 	close TEX;
 	
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex = $ce->{externalPrograms}->{pdflatex};
-	system "cd $wd && $pdflatex $texFile";
+	system "cd $wd && $pdflatex $texFile" and die "Failed to call pdflatex: $!\n";
 	
 	if (-e $pdfFile) {
 		# move resulting PDF file to appropriate location
-		my $mv = $ce->{externalPrograms}->{mv};
-		system $mv, $pdfFile, $finalFile and die "Failed to mv: $!\n";
+		system "/bin/mv", $pdfFile, $finalFile and die "Failed to mv: $!\n";
 	}
 	
 	# remove temporary directory
 	rmtree($wd, 0, 1);
 	
-	return -e $finalFile;
+	-e $finalFile or die "Failed to create $finalFile for no apparent reason.\n";
 }
 
 # -----
@@ -156,8 +197,8 @@ sub getMultiSetTeX {
 	# the document preamble
 	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{preamble});
 	
-	while (my $set = shift @sets) {
-		$tex .= $self->getSetTeX($set);
+	while (defined (my $setName = shift @sets)) {
+		$tex .= $self->getSetTeX($setName);
 		if (@sets) {
 			# divide sets, but not after the last set
 			$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{setDivider});
@@ -216,9 +257,9 @@ sub getProblemTeX {
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
-	my $user            = $cldb->getUser($r->param("user"));
-	my $set             = $wwdb->getSet($user->id, $setName);
-	my $psvn            = $wwdb->getPSVN($user->id, $setName);
+	my $user = $cldb->getUser($r->param("user"));
+	my $set  = $wwdb->getSet($user->id, $setName);
+	my $psvn = $wwdb->getPSVN($user->id, $setName);
 	
 	# decide what to do about problem number
 	my $problem;
@@ -250,8 +291,25 @@ sub getProblemTeX {
 		},
 	);
 	
-	warn "***GET READY FOR PG WARNINGS!!!!!\n***SET=$setName PROBLEM=$problemNumber\n",
-		$pg->{warnings}, "***OK NO MORE PG WARNINGS!!!!\n" if $pg->{warnings};
+	if ($pg->{warnings} ne "") {
+		push @{$self->{warnings}}, {
+			set     => $setName,
+			problem => $problemNumber,
+			message => $pg->{warnings},
+		};
+	}
+	
+	if ($pg->{flags}->{error_flag}) {
+		push @{$self->{errors}}, {
+			set     => $setName,
+			problem => $problemNumber,
+			message => $pg->{errors},
+			context => $pg->{body_text},
+		};
+		# if there was an error, body_text contains
+		# the error context, not TeX code
+		$pg->{body_text} = undef;
+	}
 	
 	return $pg->{body_text};
 }
