@@ -73,6 +73,14 @@
        <!--#siblings-->
       </small>
      </div>
+<!--#if can="options"-->
+	<div>
+	 <small>
+	  <!--#options-->
+	 </small>
+	</div>
+<!--#endif-->   
+
 
     </td>
     <!--#if can="path"-->
