@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.11 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,7 +20,8 @@
 #	!WEBWORK_USER! -> your user name
 #	!WEBWORK_PORT! -> the port on which you want to run this server
 #	                  (please use 10000 + your UID)
-#	!PG_ROOT! -> the root of your personal pg tree
+#	!PG_ROOT!      -> the root of your personal pg tree
+#   !COURSES_ROOT! -> the root of courses tree
 # 
 # After those find/replace operations, you should edit the access control
 # statements at the bottom of this file.
@@ -67,12 +68,24 @@ MaxRequestsPerChild 100
 
 # This DocumentRoot doesn't actually make a lot of sense.  In a
 # WeBWorK mod_perl system, there is no static document root, but the
+
 # DocumentRoot does have to exist, and not have a subdirectory
 # named "webwork2".  It suffices.
-DocumentRoot "!WEBWORK_ROOT!/htdocs"
 
-# This alias, however, is important.
+# If no document root is defined by the webserver, you can uncomment the line below
+
+# DocumentRoot "!WEBWORK_ROOT!/htdocs"
+
+# These aliases are important. 
+# The segment !COURSES_ROOT!  should be replaced by the full path reference
+# to the location where your courses are stored. 
+# The AliasMatch directive directs to files stored in the html directory of each course.
+AliasMatch ^/webwork2_files/courses/([^/]*)/(.*) !COURSES_ROOT!/$1/html/$2
+
+# The alias directive redirects to the toplevel material in the global webwork-modperl/htdocs directory 
 Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
+
+# This sets the permissions on the toplevel webwork-modperl htdocs directory
 
 # This should match the DocumentRoot
 <Directory "!WEBWORK_ROOT!/htdocs">
