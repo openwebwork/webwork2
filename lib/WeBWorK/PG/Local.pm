@@ -29,7 +29,16 @@ use File::Path qw(rmtree);
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry makeTempDirectory);
+BEGIN {
 
+#	This safe compartment is used to read the large macro files such as 
+#   PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
+#   future calls have preloaded versions of these large files.
+#   This saves a significant amount of time.
+
+	$WeBWorK::PG::Local::safeCache = new Safe;
+#	warn "Creating new Safe cache compartment ".$WeBWorK::PG::Local::safeCache->root;
+}
 sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
@@ -57,7 +66,7 @@ sub new {
 		if $ce->{pg}->{options}->{catchWarnings};
 	
 	# create a Translator
-	#warn "PG: creating a Translator\n";
+	#warn "PG: creating a Translator\n"; 
 	my $translator = WeBWorK::PG::Translator->new;
 	
 	# set the directory hash
@@ -97,17 +106,46 @@ sub new {
 	# initialize the Translator
 	#warn "PG: initializing the Translator\n";
 	$translator->initialize();
-	
-	# load IO.pl, PG.pl, and dangerousMacros.pl using unrestricted_load
-	# i'd like to change this at some point to have the same sort of interface to global.conf
+#	$translator->dumpSafe;   # debugging code
+###############################################################################
+#   Preload the macros files which are used routinely:  PG.pl, dangerousMacros.pl, IO.pl
+#   PGbasicmacros.pl and PGanswermacros.pl
+#   Preloading the last two files safes a significant amount of time.
+###############################################################################
+
+	#  IO.pl, PG.pl, and dangerousMacros.pl are loaded using unrestricted_load
+	# This is hard wired into the Translator::pre_load_macro_files subroutine
+	# I'd like to change this at some point to have the same sort of interface to global.conf
 	# that the module loading does -- have a list of macros to load unrestrictedly.
-	#warn "PG: loading IO.pl, PG.pl, and dangerousMacros.pl using unrestricted_load\n";
+    
+#    This has been replaced by the pre_load_macro_files subroutine.  It loads AND caches the files.
+#   While PG.pl and dangerousMacros are not large, they are referred to by PGbasicmacros and PGanswermacros.
+#   Because these are loaded into the cached name space (e.g. Safe::Root1::) all calls to, say NEW_ANSWER_NAME
+#   are actually calls to Safe::Root1::NEW_ANSWER_NAME.  It is useful to have these names inside the Safe::Root1:
+#   cached safe compartment.  (NEW_ANSWER_NAME and all other subroutine names are also automatically exported into 
+#   the current safe compartment Safe::Rootx::
+
+#   The headers of both PGbasicmacros and PGanswermacros has code that insures that the constants used are imported into
+#   the current safe compartment.  This involves evaluating references to, say $main::displayMode, at runtime to insure that main
+#   refers to Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main:: at compile time.
+
+
+###############################################################################
+#   TO ENABLE CACHEING UNCOMMENT THE CACHEING CODE AND COMMENT OUT THE STANDARD LOADING CODE
+#   On webwork3  cached code is .2 seconds faster than non-cached code for an existing child.
+
+#   CACHING CODE:
+# 	$translator->pre_load_macro_files($WeBWorK::PG::Local::safeCache, $ce->{pg}->{directories}->{macros}, 
+#       'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl');
+
+#   STANDARD LOADING CODE:
 	foreach (qw(IO.pl PG.pl dangerousMacros.pl)) {
 		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
-		warn "Error while loading $macroPath: $err" if $err;
+		warn "Error while loading $macroPath: |$err|" if $err;
 	}
-	
+############################################################################### 
+
 	# set the opcode mask (using default values)
 	#warn "PG: setting the opcode mask (using default values)\n";
 	$translator->set_mask();
@@ -122,9 +160,9 @@ sub new {
 		# well, we couldn't get the problem source, for some reason.
 		return bless {
 			translator => $translator,
-			head_text  => "",
+			head_text  => "", 
 			body_text  => <<EOF,
-WeBWorK::Utils::readFile($sourceFile) says:
+WeBWorK::Utils::readFile($sourceFile) says: 
 $@
 EOF
 			answers    => {},
