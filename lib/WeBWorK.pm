@@ -38,7 +38,7 @@ BEGIN { $main::VERSION = "2.0"; }
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common :http REDIRECT DONE);
+use Apache::Constants qw(:common REDIRECT DONE);
 
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
@@ -58,7 +58,6 @@ use WeBWorK::Utils qw(runtime_use);
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
-use constant ERROR_MODULE => "WeBWorK::ContentGenerator::Error";
 
 sub dispatch($) {
 	my ($apache) = @_;
@@ -113,12 +112,12 @@ sub dispatch($) {
 	
 	unless ($urlPath) {
 		debug("This path is invalid... see you later!\n");
-		return DECLINED;
+		die "The path '$path' is not valid.\n";
 	}
 	
 	my $displayModule = $urlPath->module;
 	my %displayArgs = $urlPath->args;
-
+	
 	debug("The display module for this path is: $displayModule\n");
 	debug("...and here are the arguments we'll pass to it:\n");
 	foreach my $key (keys %displayArgs) {
@@ -127,7 +126,7 @@ sub dispatch($) {
 	
 	unless ($displayModule) {
 		debug("The display module is empty, so we can DECLINE here.\n");
-		return DECLINED;
+		die "No display module found for this path.";
 	}
 	
 	my $selfPath = $urlPath->path;
@@ -171,17 +170,6 @@ sub dispatch($) {
 	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
-
-	my $validCourse = 0;
-	if ($displayArgs{courseID}) {
-		my $courseRoot = $ce->{courseDirs}->{root};
-		$validCourse = -e $courseRoot and -r $courseRoot;
-		
-		unless ($validCourse) { # send the user to an 404 style error page
-			$displayModule = ERROR_MODULE;
-			$r->status(HTTP_NOT_FOUND);
-		}
-	}
 	
 	my @uploads = $r->upload;
 	foreach my $u (@uploads) {
@@ -198,11 +186,10 @@ sub dispatch($) {
 		my $hash = $upload->hash;
 		$r->param($u->name => "$id $hash");
 	}
-
 	
 	my ($db, $authz);
-
-	if ($displayArgs{courseID} and $validCourse) {
+	
+	if ($displayArgs{courseID} and not $ce->{'!'}) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
 		debug("...we can create a database object...\n");
 		$db = new WeBWorK::DB($ce->{dbLayout});
@@ -248,6 +235,15 @@ sub dispatch($) {
 			$displayModule = AUTHEN_MODULE;
 			debug("set displayModule to $displayModule\n");
 		}
+	}
+	
+	# if a course ID was given in the URL and resulted in an error (as stored in $!)
+	# it probably means that the course does not exist or was misspelled
+	if ($displayArgs{courseID} and $ce->{'!'}) {
+		debug("Something was wrong with the courseID: \n");
+		debug("\t\t" . $ce->{'!'} . "\n");
+		debug("Time to bail!\n");
+		die "An error occured while accessing '$displayArgs{courseID}': '", $ce->{'!'}, "'.\n";
 	}
 	
 	debug(("-" x 80) . "\n");
