@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.7 2004/02/14 04:07:37 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.8 2004/04/05 03:58:21 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -147,6 +147,20 @@ $dbLayouts{sql} = {
 		schema => "WeBWorK::DB::Schema::SQL",
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => "dbi:mysql:webwork_$courseName",
+		params => { %sqlParams },
+	},
+	problem_library_classify => {
+		record => "WeBWorK::DB::Record::ProblemLibraryClassify",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:ProblemLibrary",
+		params => { %sqlParams },
+	},
+	problem_library_pgfiles => {
+		record => "WeBWorK::DB::Record::ProblemLibraryPgfiles",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:ProblemLibrary",
 		params => { %sqlParams },
 	},
 };
