@@ -22,9 +22,16 @@ sub initialize {
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
-	
+	my $authz = $self->{authz};
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $courseName = $ce->{courseName};
+	my $user = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "score_sets")) {
+		$self->{submitError} = "You aren't authorized to score problem sets";
+		return;
+	}
+
 	if (defined $r->param('scoreSelected')) {
 		my @selected = $r->param('selectedSet');
 		my @totals = ();
@@ -41,6 +48,41 @@ sub initialize {
 		}
 		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
 	}
+}
+
+sub title {
+	"Scoring data for ".(shift)->{ce}->{courseName};
+}
+
+sub body {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $authz = $self->{authz};
+	my $scoringDir = $ce->{courseDirs}->{scoring};
+	my $courseName = $ce->{courseName};
+	my $user = $r->param('user');
+	
+	if ($authz->hasPermissions($user, "score_sets")) {
+		my @selected = $r->param('selectedSet');
+		print CGI::p("All of these files will also be made available for mail merge");
+		foreach my $setID (@selected) {
+			print CGI::h2("$setID");
+			foreach my $type ("scr", "ful") {
+				my $filename = "s$setID$type.csv";
+				my $path = "$scoringDir/$filename";
+				if (-f $path) {
+					print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
+					print CGI::br();
+				}
+			}
+			print CGI::hr();
+		}
+		print CGI::h2("Totals");
+		print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
+	}
+	
+	return "";
 }
 
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
@@ -187,7 +229,7 @@ sub everything2normal {
 		for (my $i = 5; $i < @row; $i+=3) {
 			push @newRow, $row[$i];
 		}
-		push @newRow, $row[$#row];
+		#push @newRow, $row[$#row];
 		push @result, [@newRow];
 	}
 	return @result;
@@ -208,13 +250,16 @@ sub everything2totals {
 	foreach my $row (@everything) {
 		push @result, [${$row}[$#{$row}]];
 	}
+	return @result;
 }
 
 sub appendColumns {
 	my ($self, $a1, $a2) = @_;
 	my @a1 = @$a1;
 	my @a2 = @$a2;
-	# FIXME you were here
+	for (my $i = 0; $i < @a1; $i++) {
+		push @{$a1[$i]}, @{$a2[$i]};
+	}
 }
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
