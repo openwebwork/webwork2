@@ -14,9 +14,12 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
+use Apache::DB;
 use Date::Format;
 use Date::Parse;
-use DB; # DeBug, not DataBase
+use Errno;
+
+use constant MKDIR_ATTEMPTS => 10;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -36,6 +39,8 @@ our @EXPORT_OK = qw(
 	encodeAnswers
 	ref2string
 	sortByName
+	makeTempDirectory
+	pretty_print_rh
 );
 
 sub runtime_use($) {
@@ -265,10 +270,27 @@ sub sortByName {
 	} @items;
 }
 
+sub makeTempDirectory($$) {
+	my ($parent, $basename) = @_;
+	# Loop until we're able to create a directory, or it fails for some
+	# reason other than there already being something there.
+	my $triesRemaining = MKDIR_ATTEMPTS;
+	my ($fullPath, $success);
+	do {
+		my $suffix = join "", map { ('A'..'Z','a'..'z','0'..'9')[int rand 62] } 1 .. 8;
+		$fullPath = "$parent/$basename.$suffix";
+		$success = mkdir $fullPath;
+	} until ($success or not $!{EEXIST});
+	die "Failed to create directory $fullPath: $!"
+		unless $success;
+	return $fullPath;
+}
+
 sub pretty_print_rh {
 	my $rh = shift;
 	foreach my $key (sort keys %{$rh})  {
 		warn "  $key => ",$rh->{$key},"\n";
 	}
 }
+
 1;
