@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.2 2004/08/18 01:42:33 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.3 2004/08/24 16:53:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,9 +25,11 @@ the sql_single database layout.
 
 use strict;
 use warnings;
+use Data::Dumper;
 use DBI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use undefstr);
+use WeBWorK::Utils::CourseManagement qw/dbLayoutSQLSources/;
 
 =head1 HELPER FUNCTIONS
 
@@ -160,6 +162,148 @@ sub addCourseHelper {
 	}
 	
 	$dbh->disconnect;
+	
+	return 1;
+}
+
+=item renameCourseHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
+
+Uses addCourseHelper() to create a new course database on the same server.
+Copies the data from the old course database to the new one. Uses
+deleteCourseHelper() to delete the old course database.
+
+=cut
+
+sub copyCourseDataHelper {
+	my ($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options) = @_;
+	debug("fromCourseID=$fromCourseID, fromCE=$fromCE toCourseID=$toCourseID toCE=$toCE dbLayoutName=$dbLayoutName\n");
+	
+	##### get list of tables to copy data FROM #####
+	
+	my $fromDBLayout = $fromCE->{dbLayouts}->{$dbLayoutName};
+	debug("fromDBLayout=$fromDBLayout\n");
+	my %fromSources = dbLayoutSQLSources($fromDBLayout);
+	debug("fromSources: ", Dumper(\%fromSources));
+	my $fromSource = mostPopularSource(%fromSources);
+	debug("fromSource=$fromSource\n");
+	my %fromSource = %{ $fromSources{$fromSource} };
+	my @fromTables = @{ $fromSource{tables} };
+	my $fromUsername = $fromSource{username};
+	my $fromPassword = $fromSource{password};
+	
+	##### get list of tables to copy data TO #####
+	
+	my $toDBLayout = $toCE->{dbLayouts}->{$dbLayoutName};
+	my %toSources = dbLayoutSQLSources($toDBLayout);
+	my $toSource = mostPopularSource(%toSources);
+	my %toSource = %{ $toSources{$toSource} };
+	my @toTables = @{ $toSource{tables} };
+	my $toUsername = $toSource{username};
+	my $toPassword = $toSource{password};
+	
+	##### make sure the same tables are present in each list #####
+	
+	my %fromTables; @fromTables{@fromTables} = ();
+	
+	foreach my $toTable (@toTables) {
+		if (exists $fromTables{$toTable}) {
+			# present in both
+			delete $fromTables{$toTable};
+		} else {
+			die "Table '$toTable' exists in \@toTables but not in \@fromTables. Can't continue";
+		}
+	}
+	
+	if (keys %fromTables) {
+		my @leftovers = keys %fromTables;
+		die "Tables '@leftovers' exist in \@fromTables but not in \@toTables. Can't continue";
+	}
+	
+	if ($fromUsername ne $toUsername) {
+		die "Usernames for from/to sources don't match. Can't continue";
+	}
+	
+	if ($fromPassword ne $toPassword) {
+		die "Passwords for from/to sources don't match. Can't continue";
+	}
+	
+	##### consruct SQL statements to copy the data in each table #####
+	
+	my @stmts;
+	
+	foreach my $table (@fromTables) {
+		debug("Table: $table\n");
+		my $fromTable = do {
+			my $fromParamsRef = $fromDBLayout->{$table}->{params};
+			if ($fromParamsRef) {
+				if (exists $fromParamsRef->{tableOverride}) {
+					$fromParamsRef->{tableOverride}
+				} else {
+					""; # no override
+				}
+			} else {
+				""; # no params
+			}
+		} || $table;
+		debug("sql \"from\" table name: $fromTable\n");
+		
+		my $toTable = do {
+			my $toParamsRef = $toDBLayout->{$table}->{params};
+			if ($toParamsRef) {
+				if (exists $toParamsRef->{tableOverride}) {
+					$toParamsRef->{tableOverride};
+				} else {
+					""; # no override
+				}
+			} else {
+				""; # no params
+			}
+		} || $table;
+		debug("sql \"to\" table name: $toTable\n");
+		
+		my $stmt = "INSERT INTO `$toTable` SELECT * FROM `$fromTable`";
+		debug("stmt = $stmt\n");
+		push @stmts, $stmt;
+	}
+	
+	##### issue SQL statements #####
+	
+	my $dbh = DBI->connect($fromSource, $fromUsername, $fromPassword);
+	unless (defined $dbh) {
+		die "sql_single: failed to connect to DBI source '$fromSource': $DBI::errstr\n";
+	}
+	
+	foreach my $stmt (@stmts) {
+		my $rows = $dbh->do($stmt);
+		unless (defined $rows) {
+			die "sql_single: failed to execute SQL statement '$stmt': $DBI::errstr\n";
+		}
+	}
+	
+	$dbh->disconnect;
+	
+	return 1;
+}
+
+# returns the name of the source with the most tables
+sub mostPopularSource {
+	my (%sources) = @_;
+	
+	my $source;
+	if (keys %sources > 1) {
+		# more than one -- warn and select the most popular source
+ 		debug("more than one SQL source defined.\n");
+		foreach my $curr (keys %sources) {
+			$source = $curr if not defined $source or @{ $sources{$curr}->{tables} } > @{ $sources{$source}->{tables} };
+ 		}
+ 		debug("only handling tables with source \"$source\".\n");
+ 		debug("others will have to be handled manually (or not at all).\n");
+ 	} else {
+		# there's only one
+		($source) = keys %sources;
+	}
+	
+	return $source;
 }
 
 =item deleteCourseHelper($courseID, $ce, $dbLayoutName, %options)
@@ -270,6 +414,8 @@ sub deleteCourseHelper {
 	}
 	
 	$dbh->disconnect;
+	
+	return 1;
 }
 
 =back

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.19 2004/09/10 20:24:32 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.20 2004/09/27 19:21:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -233,15 +233,45 @@ sub addCourse {
 	
 }
 
-=item renameCourse($webworkRoot, $oldCourseID, $newCourseID)
+=item renameCourse(%options)
 
-Rename the course named $oldCourseID to $newCourseID.
+%options must contain:
 
-The name course directory is set to $newCourseID.
+ courseID => $courseID,
+ ce => $ce,
+ dbOptions => $dbOptions,
+ newCourseID => $newCourseID,
+
+Rename the course named $courseID to $newCourseID.
+
+$ce is a WeBWorK::CourseEnvironment object that describes the existing course's
+environment.
+
+$dbOptions is a reference to a hash containing information required to create
+the course's new database and delete the course's old database.
+
+ if dbLayout == "sql":
+ 
+ 	host         => host to connect to
+ 	port         => port to connect to
+ 	username     => user to connect as (must have CREATE, DELETE, FILE, INSERT,
+ 	                SELECT, UPDATE privileges, WITH GRANT OPTION.)
+ 	password     => password to supply
+ 	old_database => the name of the database to delete
+ 	new_database => the name of the database to create
+ 	wwhost       => the host from which the webwork database users will be allowed
+ 	                to connect. (if host is set to localhost, this should be set to
+ 	                localhost too.)
+
+The name of the course's directory is changed to $newCourseID.
+
+If the course's database layout is C<sql_single>, new tables are created in the
+current database, course data is copied from the old tables to the new tables,
+and the old tables are deleted.
 
 If the course's database layout is C<sql>, a new database is created, course
-data is exported from the old database and imported into the new database, and
-the old database is deleted.
+data is copied from the old database to the new database, and the old database
+is deleted.
 
 If the course's database layout is C<gdbm>, the DBM files are simply renamed on
 disk.
@@ -253,9 +283,108 @@ Any errors encountered while renaming the course are returned.
 =cut
 
 sub renameCourse {
-	my ($webworkRoot, $oldCourseID, $newCourseID) = @_;
+	my (%options) = @_;
 	
-	return 0;
+	# renameCourseHelper needs:
+	#    $fromCourseID ($oldCourseID)
+	#    $fromCE ($oldCE)
+	#    $toCourseID ($newCourseID)
+	#    $toCE (construct from $oldCE)
+	#    $dbLayoutName ($oldCE->{dbLayoutName})
+	#    %options ($dbOptions)
+	
+	my $oldCourseID = $options{courseID};
+	my $oldCE = $options{ce};
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+	my $newCourseID = $options{newCourseID};
+	
+	# get the database layout out of the options hash
+	my $dbLayoutName = $oldCE->{dbLayoutName};
+	
+	die "I happen to know that renameCourse() will only succeed for sql_single courses. Bug sam to write support for gdbm and sql courses.\n"
+		unless $dbLayoutName eq "sql_single";
+	
+	# collect some data
+	my $coursesDir = $oldCE->{webworkDirs}->{courses};
+	my $oldCourseDir = "$coursesDir/$oldCourseID";
+	my $newCourseDir = "$coursesDir/$newCourseID";
+	
+	# fail if the target course already exists
+	if (-e $newCourseDir) {
+		croak "$newCourseID: course exists";
+	}
+	
+	# fail if the source course does not exist
+	unless (-e $oldCourseDir) {
+		croak "$oldCourseID: course not found";
+	}
+	
+	##### step 1: move course directory #####
+	
+	# move top-level course directory
+	my $mvCmd = $oldCE->{externalPrograms}->{mv};
+	debug("moving course dir: $mvCmd $oldCourseDir $newCourseDir\n");
+	my $mvResult = system $mvCmd, $oldCourseDir, $newCourseDir;
+	$mvResult and die "failed to move course directory with command: '$mvCmd $oldCourseDir $newCourseDir' (errno: $mvResult): $!\n";
+	
+	# get new course environment
+	my $newCE = $oldCE->new(
+		$oldCE->{webworkDirs}->{root},
+		$oldCE->{webworkURLs}->{root},
+		$oldCE->{pg}->{directories}->{root},
+		$newCourseID,
+	);
+	
+	# find the course dirs that still exist in their original locations
+	# (i.e. are not subdirs of $courseDir)
+	my %oldCourseDirs = %{ $oldCE->{courseDirs} };
+	my %newCourseDirs = %{ $newCE->{courseDirs} };
+	my @courseDirNames = sort { $oldCourseDirs{$a} cmp $oldCourseDirs{$b} } keys %oldCourseDirs;
+	foreach my $courseDirName (@courseDirNames) {
+		my $oldDir = $oldCourseDirs{$courseDirName};
+		my $newDir = $newCourseDirs{$courseDirName};
+		if (-e $oldDir) {
+			debug("oldDir $oldDir still exists. might move it...\n");
+			if (-e $newDir) {
+				warn "Can't move '$oldDir' to '$newDir', since the target already exists";
+			} else {
+				debug("Going to move $oldDir to $newDir...\n");
+				my $mvResult = system $mvCmd, $oldDir, $newDir;
+				$mvResult and die "failed to move directory with command: '$mvCmd $oldDir $newDir' (errno: $mvResult): $!\n";
+			}
+		} else {
+			debug("oldDir $oldDir was already moved.\n");
+		}
+	}
+	
+	##### step 2: create new database #####
+	
+	# munge DB options to move new_database => database
+	my %createDBOptions = %dbOptions;
+	if (exists $createDBOptions{new_database}) {
+		$createDBOptions{database} = $createDBOptions{new_database};
+		delete $createDBOptions{new_database};
+	}
+	
+	my $createHelperResult = addCourseHelper($oldCourseID, $newCE, $dbLayoutName, %dbOptions);
+	die "$oldCourseID: course database creation failed.\n" unless $createHelperResult;
+	
+	##### step 3: copy course data #####
+	
+	my $copyCourseDataResult = copyCourseDataHelper($oldCourseID, $oldCE, $newCourseID, $newCE, $dbLayoutName, %dbOptions);
+	die "$oldCourseID: failed to copy course data from $oldCourseID to $newCourseID.\n" unless $copyCourseDataResult;
+	
+	##### step 4: delete old database #####
+	
+	# munge DB options to move old_database => database
+	my %deleteDBOptions = %dbOptions;
+	if (exists $deleteDBOptions{old_database}) {
+		$deleteDBOptions{database} = $deleteDBOptions{old_database};
+		delete $deleteDBOptions{old_database};
+	}
+	
+	my $deleteHelperResult = deleteCourseHelper($oldCourseID, $newCE, $dbLayoutName, %dbOptions);
+	die "$oldCourseID: course database creation failed.\n" unless $deleteHelperResult;
 }
 
 =item deleteCourse(%options)
@@ -282,7 +411,7 @@ database for the course.
  	username => user to connect as (must have CREATE, DELETE, FILE, INSERT,
  	            SELECT, UPDATE privileges, WITH GRANT OPTION.)
  	password => password to supply
- 	database => the name of the database to create
+ 	database => the name of the database to delete
 
 Deletes the course named $courseID. The course directory is removed.
 
@@ -392,11 +521,9 @@ sub dbLayoutSQLSources {
 
 =head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
 
-The addCourseHelper(), renameCourseHelper(), and deleteCourseHelper() functions
-are used by addCourse(), renameCourse(), and deleteCourse() to perform
-database-layout specific operations, such as creating a database. They are
-called after the course directory structure has been created, but before the
-database is initialized.
+The addCourseHelper(), copyCourseDataHelper(), and deleteCourseHelper()
+functions are used to perform database-layout specific operations, such as
+creating a database.
 
 The implementations in this class do nothing, but if an appropriate function
 exists in a class with the name
@@ -411,18 +538,21 @@ Perform database-layout specific operations for adding a course.
 =cut
 
 sub addCourseHelper {
-	my $result = callHelperIfExists("addCourseHelper", @_);
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	my $result = callHelperIfExists("addCourseHelper", $dbLayoutName, @_);
 	return $result;
 }
 
-=item renameCourseHelper($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
+=item copyCourseDataHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
 
-Perform database-layout specific operations for renaming a course.
+Perform database-layout specific operations for copying a course's data from one
+database to another.
 
 =cut
 
-sub renameCourseHelper {
-	return callHelperIfExists("renameCourseHelper", @_);
+sub copyCourseDataHelper {
+	my ($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options) = @_;
+	return callHelperIfExists("copyCourseDataHelper", $dbLayoutName, @_);
 }
 
 =item deleteCourseHelper($courseID, $ce, $dbLayoutName, %options)
@@ -432,7 +562,8 @@ Perform database-layout specific operations for renaming a course.
 =cut
 
 sub deleteCourseHelper {
-	return callHelperIfExists("deleteCourseHelper", @_);
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	return callHelperIfExists("deleteCourseHelper", $dbLayoutName, @_);
 }
 
 =back
@@ -448,7 +579,7 @@ called directly.
 
 =over
 
-=item callHelperIfExists($helperName, $args)
+=item callHelperIfExists($helperName, $dbLayoutName, @args)
 
 Call a database-specific helper function, if a database-layout specific helper
 class exists and contains a function named "${helperName}Helper".
@@ -456,8 +587,7 @@ class exists and contains a function named "${helperName}Helper".
 =cut
 
 sub callHelperIfExists {
-	my $helperName = shift;
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	my ($helperName, $dbLayoutName, @args) = @_;
 	
 	my $result;
 	
@@ -476,7 +606,7 @@ sub callHelperIfExists {
 		my %syms = do { no strict 'refs'; %{$package."::"} };
 		if (exists $syms{$helperName}) {
 			my $func = do { no strict 'refs'; \&{$package."::".$helperName} };
-			$result = $func->(@_);
+			$result = $func->(@args);
 		} else {
 			#warn "No helper defined for operation '$helperName'.\n";
 			$result = 1;
