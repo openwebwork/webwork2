@@ -14,7 +14,7 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 
 use strict;
 use warnings;
-use Apache::DB;
+#use Apache::DB;
 use Date::Format;
 use Date::Parse;
 use Errno;
@@ -25,7 +25,6 @@ use constant MKDIR_ATTEMPTS => 10;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	runtime_use
-	backtrace
 	readFile
 	readDirectory
 	formatDateTime
@@ -51,21 +50,21 @@ sub runtime_use($) {
 	die $@ if $@;
 }
 
-sub backtrace {
-	my ($style) = @_;
-	$style = "warn" unless $style;
-	my @bt = DB->backtrace;
-	shift @bt; # Remove "backtrace" from the backtrace;
-	if ($style eq "die") {
-		die join "\n", @bt;
-	} elsif ($style eq "warn") {
-		warn join "\n", @bt;
-	} elsif ($style eq "print") {
-		print join "\n", @bt;
-	} elsif ($style eq "return") {
-		return @bt;
-	}
-}
+#sub backtrace {
+#	my ($style) = @_;
+#	$style = "warn" unless $style;
+#	my @bt = DB->backtrace;
+#	shift @bt; # Remove "backtrace" from the backtrace;
+#	if ($style eq "die") {
+#		die join "\n", @bt;
+#	} elsif ($style eq "warn") {
+#		warn join "\n", @bt;
+#	} elsif ($style eq "print") {
+#		print join "\n", @bt;
+#	} elsif ($style eq "return") {
+#		return @bt;
+#	}
+#}
 
 sub readFile($) {
 	my $fileName = shift;
