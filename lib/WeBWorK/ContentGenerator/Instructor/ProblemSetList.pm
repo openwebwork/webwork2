@@ -39,11 +39,12 @@ sub body {
 	push @sets, $db->getGlobalSet($_)
 		foreach ($db->listGlobalSets);
 	
-	# Count the number of users each set is assigned to
+	# Gather data from the database
+	my @users = $db->listUsers;
 	my %counts;
 	my %problems;
 	foreach my $set (@sets) {
-		my $problems{$set} = [$db->listGlobalProblems($set->set_id)];
+		$problems{$set} = [$db->listGlobalProblems($set->set_id)];
 		my $count = 0;
 		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
@@ -72,7 +73,6 @@ sub body {
 		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:"))
 	) . "\n";
 	
-	my @users = $db->listUsers;
 	foreach my $set (@sets) {
 		my @problems = @{$problems{$set->set_id}};
 		my $count = $counts{$set->set_id};
