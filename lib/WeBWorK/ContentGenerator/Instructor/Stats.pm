@@ -239,7 +239,7 @@ sub displaySets {
 	
 		print CGI::Tr(
 			CGI::td(CGI::a({-href=>$act_as_student_url},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td($totalRight), # score
+			CGI::td( sprintf("%0.2f",$totalRight) ), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
 			CGI::td("<pre>$string\n$twoString</pre>"), # problems
@@ -265,12 +265,19 @@ sub displayStudents {
 	my $ce = $self->{ce};
 	my $courseName = $ce->{courseName};
 	my $studentRecord = $db->getUser($studentName);
-	
+	my $root = $ce->{webworkURLs}->{root};
 	
 	my @setIDs    = sort $db->listUserSets($studentName);
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
+			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+
 	my $email    = $studentRecord->email_address;
-	print CGI::h3($fullName), CGI::a({-href=>"mailto:$email"},$email);
+	print CGI::h3($fullName ), 
+	CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
+	"Section: ", $studentRecord->section, CGI::br(),
+	"Recitation: ", $studentRecord->recitation,CGI::br(),
+	CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
 ###############################################################
 #  Print table
 ###############################################################
@@ -358,7 +365,7 @@ sub displayStudents {
 	
 		print CGI::Tr(
 			CGI::td($setName),
-			CGI::td($totalRight), # score
+			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
 			CGI::td("<pre>$string\n$twoString</pre>"), # problems
