@@ -352,7 +352,6 @@ sub defineProblemEnvir($$$$$$$) {
 		tempDir  => $courseEnv->{webworkDirs}->{tmp}, # global temp dir
 		dir	 => $envir{tempDirectory},
 		url	 => $envir{tempURL},
-		#basename => "$envir{studentLogin}.$envir{setNumber}.$envir{probNum}",
 		basename => "equation-$envir{psvn}.$envir{probNum}.$envir{problemSeed}",
 		latex	 => $envir{externalLaTeXPath},
 		dvipng   => $envir{externalDvipngPath},

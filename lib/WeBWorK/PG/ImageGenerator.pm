@@ -83,6 +83,16 @@ sub add {
 	my $url      = $self->{url};
 	my $basename = $self->{basename};
 	
+	# if the string came in with delimiters, chop them off and set the mode
+	# based on whether they were \[ .. \] or \( ... \). this means that if
+	# the string has delimiters, the mode *argument* is ignored.
+	if ($string =~ s/^\\\[(.*)\\\]$/$1/) {
+		$mode = "display";
+	} elsif ($string =~ s/^\\\((.*)\\\)$/$1/) {
+		$mode = "inline";
+	}
+	# otherwise, leave the string and the mode alone.
+	
 	my $imageNum  = @$strings + 1;
 	my $imageURL  = "$url/$basename.$imageNum.png";
 	my $imageTag  = "<img src=\"$imageURL\" align=\"middle\" alt=\"$string\">";
