@@ -22,6 +22,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
+
 ############################################################
 # 
 # user
@@ -316,22 +317,18 @@ sub siblings {
 	print CGI::strong("Problems"), CGI::br();
 	
 	my $effectiveUser = $self->{r}->param("effectiveUser");
-	my @problems;
-#	push @problems, $db->getMergedProblem($effectiveUser, $setName, $_)
-#		foreach ($db->listUserProblems($effectiveUser, $setName));
-    @problems = $db->listUserProblems($effectiveUser, $setName);  # this is much faster
-#	foreach my $problem (sort { $a->problem_id <=> $b->problem_id } @problems) {
-	foreach my $problem (sort { $a <=> $b } @problems) {
+	my @problemIDs = $db->listUserProblems($effectiveUser, $setName);
+	foreach my $problem (sort { $a <=> $b } @problemIDs) {
 		print CGI::a({-href=>"$root/$courseName/$setName/".$problem."/?"
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
-				"Problem ".$problem), CGI::br();
+			"Problem ".$problem), CGI::br();
 	}
 
-	'';
+	return "";
 }
 
 sub nav {
-    $WeBWorK::timer0->continue("begin nav subroutine") if $timer0_ON;
+	$WeBWorK::timer0->continue("begin nav subroutine") if $timer0_ON;
 	my $self = shift;
 	my $args = $_[-1];
 	my $setName = $self->{set}->set_id;
@@ -348,20 +345,24 @@ sub nav {
 	
 	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
 	
-	# FIXME: this could be faster
-	my $prevProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber-1);
-	my $nextProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber+1);
-	unshift @links, "Previous Problem" , ($prevProblem
-		? "$root/$courseName/$setName/".$prevProblem->problem_id
+	my @problemIDs = $db->listUserProblems($effectiveUser, $setName);
+	my ($prevID, $nextID);
+	foreach my $id (@problemIDs) {
+		$prevID = $id if $id < $problemNumber
+			and (not defined $prevID or $id > $prevID);
+		$nextID = $id if $id > $problemNumber
+			and (not defined $nextID or $id < $nextID);
+	}
+	unshift @links, "Previous Problem" , ($prevID
+		? "$root/$courseName/$setName/".$prevID
 		: "") , "navPrev";
-	push @links, "Next Problem" , ($nextProblem
-		? "$root/$courseName/$setName/".$nextProblem->problem_id
+	push @links, "Next Problem" , ($nextID
+		? "$root/$courseName/$setName/".$nextID
 		: "") , "navNext";
 	
 	my $result = $self->navMacro($args, $tail, @links);
 	$WeBWorK::timer0->continue("end nav subroutine") if $timer0_ON;
 	return $result;
-	
 }
 
 sub title {
@@ -458,10 +459,8 @@ sub body {
 	# logging student answers
 	my $pastAnswerLog = undef;
 	if (defined( $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
-	
-		$pastAnswerLog 	= 	$self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'};
-	
-		if ($submitAnswers and defined($pastAnswerLog) ) {
+		$pastAnswerLog = $self->{ce}->{webworkFiles}->{logs}->{'pastAnswerList'};
+		if ($submitAnswers and defined $pastAnswerLog) {
 			my $answerString = "";
 			my %answerHash = %{ $pg->{answers} };
 			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
@@ -473,14 +472,13 @@ sub body {
 					'|'.$problem->problem_id.'|'."\t".
 					time()."\t".
 					$answerString,
-					
 				);
-		
 		}
-	
-	 }
+	}
 	# end logging student answers
+	
 	$WeBWorK::timer0->continue("end answer processing") if $timer0_ON;
+	
 	##### output #####
 	
 	print CGI::start_div({class=>"problemHeader"});
