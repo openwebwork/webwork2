@@ -1,5 +1,6 @@
 package WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use base qw(WeBWorK::ContentGenerator::Instructor);
+use WeBWorK::Utils qw(readFile);
 
 =head1 NAME
 
@@ -85,12 +86,16 @@ sub body {
 # 	my $problemList = $r->param('problemList');
 	
 	# Initialize the textarea string if it is empty or hasn't been defined.
-	$problemList = "# List problems to be included in the set here???\r\n\r\n" unless defined($problemList) and $problemList =~/\S/;
+	$problemList = $self->gatherProblemList($setName) unless defined($problemList) and $problemList =~/\S/;
+	
 	my $problemEntry = $oldSetDirectory.'/'.$problemName.", 1, -1 \r\n";
 	# add the new problem entry if the address is complete. (still buggy -- how do insure that oldSetDirectory is not empty?
 	$problemList .= $problemEntry unless $problemEntry =~ m|^/|;  # don't print if oldSetDirectory name is empy (fix me -- more checks are needed?)  
 	# format the complete textArea string
-	$textAreaString = qq!<textarea name="problemList", cols="40", rows="$rowheight">$problemList</textarea>!;
+	$textAreaString = qq!<textarea name="problemList", cols="40", rows="$rowheight">! .
+	$problemList . 
+	
+	qq!</textarea>!;
 	
 	
 	#Determine the headline for the page 
@@ -178,8 +183,8 @@ sub body {
         CGI::hidden(-name=>'oldSetDirectory', -value=>$setDirectory),
 
 		CGI::end_form(),
-		"<p> the parameters passed are "  #fix me -- debugging code
-		. join("<BR>", %{$r->param()})  
+#		"<p> the parameters passed are "  #fix me -- debugging code
+#		. join("<BR>", %{$r->param()}) . $self->gatherProblemList($setName)."setName is $setName"; 
 	;
 
 }
@@ -197,6 +202,8 @@ sub gatherInfo {
 	my($junk, $setName, @components) = split "/", $remaining_path;
 	# Override the setName if it is defined in a form.
 	$setName = $r->param('setName') if defined($r->param('setName'));
+	# fix me?? -- this insures backward compatibility with the old file naming convention.
+	$setName = "set$setName" unless $setName =~/^set/;
 	
 	# Find the URL for the form
 	$path_info =~s|problemSetEditor.*$|problemSetEditor/|;   # remove the setName, if any, from the path
@@ -225,6 +232,29 @@ sub gatherInfo {
 	$answerDate		= "" unless defined($answerDate);	
 	
 	($setName,$formURL,$libraryName,$setDirectory,$oldSetDirectory,$problemName,$problemList,$openDate,$dueDate,$answerDate);
+}
+
+sub gatherProblemList {   #workaround for obtaining the definition of a problem set (awaiting implementation of db function)
+	my $self = shift;
+	my $setName = shift;
+	my $output = "";
+	if ( defined($setName) and $setName ne "" ) {
+		my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
+		my $fileName = "$templateDirectory/$setName.def";
+		my @output =  split("\n",WeBWorK::Utils::readFile($fileName) );
+		@output = grep  /\.pg/,   @output;     # only get the .pg files
+		@output = grep  !/Header/, @output;   # eliminate header files
+		$output = join("\n",@output);
+	} else {
+		$output = "No set name |$setName| is defined";
+	}
+	
+	
+	return  $output
+
+
+
+
 }
 sub fetchSetDirectories {
 
