@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.50 2004/05/14 18:26:11 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.51 2004/05/17 05:06:36 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -79,6 +79,32 @@ sub initialize {
 		}
 	} elsif (defined $r->param('scoreSelected')) {
 		# FIXME: this doesn't do anything!
+	} elsif (defined $r->param('publishSelected')) {
+		my @selectedSets = $r->param('selectedSet');
+		foreach my $selectedSet (@selectedSets) {
+			my $setRecord = $db->getGlobalSet($selectedSet);
+			if ($setRecord) {
+				unless ($setRecord->published eq "1") {
+					$setRecord->published("1");
+					$db->putGlobalSet($setRecord);
+				}
+			} else {
+				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Set $selectedSet was selected but no such set record exists!")));
+			}
+		}
+	} elsif (defined $r->param('unpublishSelected')) {
+		my @selectedSets = $r->param('selectedSet');
+		foreach my $selectedSet (@selectedSets) {
+			my $setRecord = $db->getGlobalSet($selectedSet);
+			if ($setRecord) {
+				unless ($setRecord->published eq "0") {
+					$setRecord->published("0");
+					$db->putGlobalSet($setRecord);
+				}
+			} else {
+				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Set $selectedSet was selected but no such set record exists!")));
+			}
+		}
 	} elsif (defined $r->param('makeNewSet')) {
 		my $newSetRecord = $db->{set}->{record}->new();
 		my $newSetName = $r->param('newSetName');
@@ -332,13 +358,17 @@ sub body {
 		$self->hidden_authen_fields,
 		$table,
 		CGI::br(),
-		
-		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),
+		CGI::submit({"name"=>"publishSelected",		"label"=>"Publish Selected"}),
+		CGI::submit({"name"=>"unpublishSelected",	"label"=>"Unpublished Selected"}),
+	CGI::br(),
+		"Publishing or Unpublishing several sets at once may take some time.",
+	CGI::br(), CGI::br(),
+		CGI::submit({"name"=>"scoreSelected",		"label"=>"Score Selected"}),
 		CGI::div( {class=>'ResultsWithError'},
 		    "There is NO undo when deleting sets. Use cautiously. All data for the set is lost.
 		    <br>If the set is re-assigned (rebuilt) all of the problem versions will be different.",
 		    CGI::br(),
-			CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),
+			CGI::submit({"name"=>"deleteSelected",	"label"=>"Delete Selected"}),
 			CGI::radio_group(-name=>"deleteSelectedSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow delete'}),
 
 		),
@@ -346,6 +376,7 @@ sub body {
 		CGI::br(),
 		
         # Empty set creation form
+	CGI::hr(),
 		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 		$self->hidden_authen_fields,
 		CGI::b("Create an Empty Set"),
