@@ -3,15 +3,15 @@
 # $Id$
 ################################################################################
 
-package WeBWorK::PG::EquationCache;
+package WeBWorK::EquationCache;
 
 =head1 NAME
 
-WeBWorK::PG::EquationCache - create and cache images of TeX equations.
+WeBWorK::EquationCache - create and cache images of TeX equations.
 
 =head1 SYNPOSIS
 
- my $cache = WeBWorK::PG::EquationCache->new(cacheDB => "/path/to/equationcache.db");
+ my $cache = WeBWorK::EquationCache->new(cacheDB => "/path/to/equationcache.db");
  my $imageName = $cache->lookup('\[3x^2\]');
 
 =head1 DESCRIPTION
@@ -43,7 +43,7 @@ use Fcntl qw(:DEFAULT :flock);
 
 =over
 
-=item new
+=item new(%options)
 
 Returns a new EquationCache object. C<%options> must contain the following
 entries:
