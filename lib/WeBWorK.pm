@@ -11,6 +11,8 @@ WeBWorK - Dispatch requests to the appropriate ContentGenerator.
 
 =cut
 
+BEGIN { $main::VERSION = "2.0"; }
+
 use strict;
 use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
@@ -44,13 +46,6 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Timing;
-
-#sub dispatch($) {
-#	print STDERR "Executing &WeBWorK::dispatch\n";
-#	return DECLINED;
-#}
-#1;
-#__END__
 
 sub dispatch($) {
 	my ($apache) = @_;
