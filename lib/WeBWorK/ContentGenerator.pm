@@ -61,6 +61,26 @@ sub hidden_authen_fields {
 	return $html;
 }
 
+#sub hidden_authen_fields($) {
+#	my $self = shift;
+#	return $self->hidden_fields("user","effectiveUser","key");
+#}
+
+sub hidden_fields($;@) {
+	my $self = shift;
+	my $r = $self->{r};
+	my @fields = @_;
+	@fields or @fields = $r->param;
+	my $courseEnvironment = $self->{courseEnvironment};
+	my $html = "";
+	
+	foreach $param (@fields) {
+		my $value = $r->param($param);
+		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
+	}
+	return $html;
+}
+
 ### Functions that subclasses /should/ override under most circumstances
 
 sub title {

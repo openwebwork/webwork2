@@ -65,6 +65,8 @@ sub new($$$$$$$$) {
 	$translator->initialize();
 	
 	# load PG.pl and dangerousMacros.pl using unrestricted_load
+	# i'd like to change this at some point to have the same sort of interface to global.conf
+	# that the module loading does -- have a list of macros to load unrestrictedly.
 	warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
 	my $pg_pl = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
 	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
@@ -238,6 +240,10 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp};
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
+	
+	# Other things... (where's your brain?!?!)
+	
+	$envir{PROBLEM_GRADER_TO_USE} = $courseEnv->{pg}->{options}->{grader};
 	
 	return \%envir;
 }

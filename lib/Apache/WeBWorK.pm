@@ -23,7 +23,7 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::ProblemSet;
-#use WeBWorK::ContentGenerator::Problem;
+use WeBWorK::ContentGenerator::Problem;
 
 # Sets up the common environment needed for every subsystem and then dispatches
 # the page request to the appropriate content generator.
@@ -109,7 +109,7 @@ sub handler() {
 			else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-#				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
+				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
 			}
 		}
 		

@@ -61,7 +61,7 @@ sub ref2string($;$) {
 	if ($refType and not $dontExpand->{$refType}) {
 		my $baseType = refBaseType($ref);
 		$result .= '<font size="1" color="grey">' . $refType;
-		$result .= " ($baseType)" if $refType ne $baseType;
+		$result .= " ($baseType)" if $baseType and $refType ne $baseType;
 		$result .= ":</font><br>";
 		$result .= '<table border="1" cellpadding="2">';
 		if ($baseType eq "HASH") {
@@ -100,7 +100,6 @@ sub ref2string($;$) {
 sub refBaseType($) {
 	my $ref = shift;
 	local $SIG{__DIE__} = 'IGNORE';
-	return "CODE"   if eval { $_ = \&$ref; 1 };
 	return "HASH"   if eval { $_ = %$ref; 1 };
 	return "ARRAY"  if eval { $_ = @$ref; 1 };
 	return "SCALAR" if eval { $_ = $$ref; 1 };
