@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.2 2004/01/04 07:20:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.3 2004/01/05 00:10:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -233,56 +233,3 @@ $dbLayouts{gdbm} = {
 		params => { %gdbmUserSpecificTableParams },
 	},
 };
-
-__END__
-
-Here's an idea for a dblayout improvement:
-
-$dbLayouts{layoutName} = {
-	recordOpts => { options passed to the record class for all tables },
-	schemaOpts => { options passed to the schema class for all tables },
-	driverOpts => { options passed to the driver class for all tables },
-	tables => {
-		table_name => {
-			record => "",
-			schema => "",
-			driver => "",
-			recordOpts => { options passed to the record class for this table },
-			schemaOpts => { options passed to the schema class for this table },
-			driverOpts => { options passed to the driver class for this table },
-		}
-	}
-};
-
-Code to create an SQL course database:
-
-CREATE DATABASE webwork_$courseName;
-USE webwork_$courseName;
-CREATE TABLE user ( user_id VARCHAR(255) NOT NULL PRIMARY KEY, first_name TEXT,
-	last_name TEXT, email_address TEXT, student_id TEXT, status TEXT,
-	section TEXT, recitation TEXT, comment TEXT );
-CREATE TABLE password ( user_id VARCHAR(255) NOT NULL PRIMARY KEY,
-	password TEXT );
-CREATE TABLE permission ( user_id VARCHAR(255) NOT NULL PRIMARY KEY,
-	permission INT );
-CREATE TABLE key_not_a_keyword ( user_id VARCHAR(255) NOT NULL PRIMARY KEY,
-	key_not_a_keyword TEXT, timestamp INT );
-CREATE TABLE set_not_a_keyword ( set_id VARCHAR(255) NOT NULL PRIMARY KEY,
-	set_header TEXT, problem_header TEXT, open_date INT, due_date INT,
-	answer_date INT );
-CREATE TABLE set_user ( user_id VARCHAR(255) NOT NULL,
-	set_id VARCHAR(255) NOT NULL, psvn INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-	set_header TEXT, problem_header TEXT, open_date INT, due_date INT,
-	answer_date INT );
-CREATE TABLE problem ( set_id VARCHAR(255) NOT NULL,
-	problem_id VARCHAR(255) NOT NULL, source_file TEXT, value INT,
-	max_attempts INT );
-CREATE TABLE problem_user ( user_id VARCHAR(255) NOT NULL,
-	set_id VARCHAR(255) NOT NULL, problem_id VARCHAR(255) NOT NULL,
-	source_file TEXT, value INT, max_attempts INT, problem_seed INT,
-	status FLOAT, attempted INT, last_answer TEXT, num_correct INT,
-	num_incorrect INT );
-GRANT select ON webwork_$courseName.* TO $usernameRO\@localhost
-	IDENTIFIED BY '$passwordRO';
-GRANT select, insert, update, delete ON webwork_$courseName.*
-	TO $usernameRW\@localhost IDENTIFIED BY '$passwordRW';
