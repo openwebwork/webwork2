@@ -29,7 +29,6 @@ sub FIELDS($) {qw(
 	open_date
 	due_date
 	answer_date
-	problem_order
 )}
 
 1;
