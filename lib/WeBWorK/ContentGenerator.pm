@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.96 2004/05/06 20:31:50 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.97 2004/05/07 18:21:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -298,10 +298,8 @@ Must be called before the message() template escape is invoked.
 
 sub addmessage {
 	my ($self, $message) = @_;
-	$self->{message} .= $message;
+	$self->{status_message} .= $message;
 }
-
-
 
 =back
 
@@ -719,7 +717,7 @@ Print any messages (error or non-error) resulting from the last form submission.
 This could be used to give Sucess and Failure messages after an action is performed by a module.
 
 The implementation in this package prints the value of the field
-$self->{message}, if it is present.
+$self->{status_message}, if it is present.
 
 =cut
 
@@ -727,7 +725,7 @@ sub message {
 	my ($self) = @_;
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
-	print $self->{message} if exists $self->{message};
+	print $self->{status_message} if exists $self->{status_message};
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
 	
 	return "";
@@ -882,7 +880,7 @@ sub if_submiterror {
 If the last form submission generated a message, $arg is returned. Otherwise, the
 inverse of $arg is returned.
 
-The implementation in this package checks for the field $self->{message} to
+The implementation in this package checks for the field $self->{status_message} to
 determine if a message is present.
 
 If a subclass uses some other method to classify submission results, this method could be
@@ -904,7 +902,7 @@ redefined to handle that variance:
 sub if_message {
 	my ($self, $arg) = @_;
 	
-	if (exists $self->{message}) {
+	if (exists $self->{status_message}) {
 		return $arg;
 	} else {
 		return !$arg;
