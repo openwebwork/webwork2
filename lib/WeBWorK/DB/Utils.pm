@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Utils.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -108,7 +108,8 @@ sub hash2record($@) {
 	my $record = $type->new();
 	for (my $i = 0; $i < @$map; $i++) {
 		my ($v1, $v2) = @{$map->[$i]};
-		$record->$v2($hash{$v1});
+		my $value = defined $hash{$v1} ? $hash{$v1} : ""; # promote undef to ""
+		$record->$v2($value);
 	}
 	return $record;
 }
