@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.12 2004/05/21 23:38:53 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.13 2004/05/22 00:38:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,21 +35,15 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 require WeBWorK::Utils::ListingDB;
 
 use constant MAX_SHOW => 20;
+use constant NO_LOCAL_SET_STRING => 'There are no local sets yet';
+use constant SELECT_SET_STRING => 'Select a Set for This Course';
+use constant SELECT_LOCAL_STRING => 'Select a Local Problem Collection';
 
 ## Flags for operations on files
 
 use constant ADDED => 1;
 use constant HIDDEN => (1 << 1);
 use constant SUCCESS => (1 << 2);
-
-## Maybe this should be in ContentGenerator.pm
-
-sub adderrmsg {
-  my $self = shift;
-  my $msg = shift;
-  $self->addmessage(CGI::div({class=>"ResultsWithError"}, $msg));
-}
-
 
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
@@ -168,7 +162,7 @@ sub browse_local_panel {
     $library_selected = "Found no directories containing problems";
     unshift @{$list_of_prob_dirs}, $library_selected;
   } else {
-    my $default_value = "Select a Local Problem Collection";
+    my $default_value = SELECT_LOCAL_STRING;
     if (not $library_selected or $library_selected eq $default_value) {
       unshift @{$list_of_prob_dirs},  $default_value;
       $library_selected = $default_value;
@@ -192,7 +186,7 @@ sub browse_mysets_panel {
   my $default_value = "Select a Problem Set";
 
   if(scalar(@$list_of_local_sets) == 0) {
-    $list_of_local_sets = ['There are no local sets yet'];
+    $list_of_local_sets = [NO_LOCAL_SET_STRING];
   } elsif (not $library_selected or $library_selected eq $default_value) { 
     unshift @{$list_of_local_sets},  $default_value; 
     $library_selected = $default_value; 
@@ -236,7 +230,7 @@ for the Problem Library to function.  It should be a link pointing to
 I tried to make the link for you, but that failed.  Check the permissions
 in your <code>templates</code> directory.
 HERE
-      $self->adderrmsg($msg);
+      $self->addbadmessage($msg);
     }
   }
 
@@ -329,23 +323,24 @@ sub make_top_row {
   print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
   if($have_local_sets ==0) {
-    $list_of_local_sets = ['There are no local sets yet'];
-  } elsif (not $set_selected or $set_selected eq "Select a Set for This Course") {
+    $list_of_local_sets = [NO_LOCAL_SET_STRING];
+  } elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
     if ($list_of_local_sets->[0] eq "Select a Problem Set") {
       shift @{$list_of_local_sets};
     }
-    unshift @{$list_of_local_sets}, "Select a Set for This Course";
-    $set_selected = "Select a Set for This Course";
+    unshift @{$list_of_local_sets}, SELECT_SET_STRING;
+    $set_selected = SELECT_SET_STRING;
   }
 
-  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Current Set: ",
+  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Adding Problems to ",
+  			CGI::b("Current Set: "),
 			CGI::popup_menu(-name=> 'local_sets', 
 					-values=>$list_of_local_sets, 
 					-default=> $set_selected),
 			CGI::submit(-name=>"edit_local", -value=>"Edit Current Set"),
 			CGI::br(), 
 			CGI::br(), 
-			CGI::submit(-name=>"new_local_set", -value=>"Create New Local Set:"),
+			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:"),
 			"  ",
 			CGI::textfield(-name=>"new_set_name", 
 				       -default=>"Name for new set here",
@@ -446,7 +441,7 @@ sub pre_header_initialize {
     my $checkset = $db->getGlobalSet($r->param('local_sets'));
     if (not defined($checkset)) {
       $self->{error} = 1;
-      $self->adderrmsg('You need to select a "Current Set" before you can edit it.');
+      $self->addbadmessage('You need to select a "Current Set" before you can edit it.');
     } else {
       my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
       my $url = $self->systemLink($page);
@@ -499,22 +494,22 @@ sub pre_header_initialize {
   } elsif ($r->param('rerandomize')) {
     $problem_seed++;
     $r->param('problem_seed', $problem_seed);
-    $self->adderrmsg('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
+    $self->addbadmessage('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
 
     ##### Clear the display
 
   } elsif ($r->param('cleardisplay')) {
     @pg_files = ();
     $use_previous_problems=0;
-    $self->adderrmsg('The display was already cleared.') if $none_shown;
+    $self->addbadmessage('The display was already cleared.') if $none_shown;
 
     ##### View problems selected from the local list
 
   } elsif ($r->param('view_local_set')) {
 
     my $set_to_display = $r->param('library_sets');
-    if (not defined($set_to_display) or $set_to_display eq "Select a Local Problem Collection" or $set_to_display eq "Found no directories containing problems") {
-      $self->adderrmsg('You need to select a set to view.');
+    if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
+      $self->addbadmessage('You need to select a set to view.');
     } else {
       $set_to_display = '.' if $set_to_display eq '  -- Top --  ';
       @pg_files = list_pg_files($ce->{courseDirs}->{templates},
@@ -529,8 +524,8 @@ sub pre_header_initialize {
     my $set_to_display = $r->param('library_sets');
     if (not defined($set_to_display) 
         or $set_to_display eq "Select a Problem Set"
-        or $set_to_display eq 'There are no local sets yet') {
-      $self->adderrmsg("You need to select a set from this course to view.");
+        or $set_to_display eq NO_LOCAL_SET_STRING) {
+      $self->addbadmessage("You need to select a set from this course to view.");
     } else {
       my @problemList = $db->listGlobalProblems($set_to_display);
       my $problem;
@@ -576,7 +571,7 @@ sub pre_header_initialize {
 
   } elsif ($r->param('new_local_set')) {
     if ($r->param('new_set_name') !~ /^[\w.-]*$/) {
-      $self->adderrmsg("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
+      $self->addbadmessage("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
     } else {
       my $newSetName = $r->param('new_set_name');
       $newSetName =~ s/^set//;
@@ -584,7 +579,7 @@ sub pre_header_initialize {
       $r->param('local_sets',$newSetName);
       my $newSetRecord   = $db->getGlobalSet($newSetName);
       if (defined($newSetRecord)) {
-	$self->adderrmsg("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
+	$self->addbadmessage("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
       } else {			# Do it!
 	$newSetRecord = $db->{set}->{record}->new();
 	$newSetRecord->set_id($newSetName);
@@ -608,21 +603,23 @@ sub pre_header_initialize {
 
     my @action_files = grep {$_->[1] > 0 } @{$self->{past_problems}};
     if(scalar(@action_files) == 0) {
-      $self->adderrmsg('Act on marked problems requested, but no problems were marked.');
+      $self->addbadmessage('Act on marked problems requested, but no problems were marked.');
     }
 
     if (scalar(@selected)>0) {	# if some are to be added, they need a place to go
       $localSet = $r->param('local_sets');
-      if (not defined($localSet)) {
-	$self->adderrmsg('You are trying to add problems to something, but you did not select a "Current Set" name as a target.');
+      if (not defined($localSet) or 
+          $localSet eq SELECT_SET_STRING or 
+	  $localSet eq NO_LOCAL_SET_STRING) {
+	$self->addbadmessage('You are trying to add problems to something, but you did not select a "Current Set" name as a target.');
       } else {
 	my $newSetRecord   = $db->getGlobalSet($localSet);
 	if (not defined($newSetRecord)) {
-	  $self->adderrmsg("You are trying to add problems to $localSet, but that set does not seem to exist!  I bet you used your \"Back\" button.");
+	  $self->addbadmessage("You are trying to add problems to $localSet, but that set does not seem to exist!  I bet you used your \"Back\" button.");
 	} else {
 	  my $addcount = add_selected($self, $db, $localSet);
 	  if($addcount > 0) {
-	    $self->addgoodmessage("Successfully added $addcount problem".(($addcount>1)?'s':'').
+	    $self->addgoodmessage("Added $addcount problem".(($addcount>1)?'s':'').
 	      " to $localSet.");
 	  }
 	}
