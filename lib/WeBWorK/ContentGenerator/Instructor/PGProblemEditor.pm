@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.43 2004/06/10 16:30:46 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.44 2004/06/11 15:47:01 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,9 +56,15 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
 	
 	my $submit_button = $r->param('submit');  # obtain submit command from form
 	my $file_type = $r->param("file_type") || '';
+
+	# Check permissions
+	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 	# Save problem to permanent or temporary file, then redirect for viewing
 	if (defined($submit_button) and 
@@ -150,9 +156,15 @@ sub pre_header_initialize {
 sub initialize  {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
 	
 	my $setName = $r->urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
+
+	# Check permissions
+	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 	# if we got to initialize(), then saveFileChanges was not called in pre_header_initialize().
 	# therefore we call it here unless there has been an error already:
@@ -184,6 +196,16 @@ sub body {
 	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+		unless $authz->hasPermissions($r->param("user"), "modify_student_data");
+
 	
 	# Gathering info
 	my $editFilePath = $self->{problemPath}; # path to the permanent file to be edited
@@ -216,7 +238,8 @@ sub body {
 	my $force_field = defined($r->param('sourceFilePath')) ?
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$r->param('sourceFilePath')) : '';
-	my @allSetNames = $db->listGlobalSets;
+
+	my @allSetNames = sort $db->listGlobalSets;
 	for (my $j=0; $j<scalar(@allSetNames); $j++) {
 		$allSetNames[$j] =~ s|^set||;
 		$allSetNames[$j] =~ s|\.def||;
@@ -239,11 +262,9 @@ sub body {
 		CGI::end_form();
 	}
 
-			    
+	my $target = "problem$edit_level";   
 	return CGI::p($header),
-		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
-		# THIS IS BECAUSE TARGET IS NOT A PARAMETER OF <FORM>!!!!!!!!
-		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="problem$edit_level">!, 
+		CGI::start_form({method=>"POST", name=>"editor", action=>"$uri", target=>$target, enctype=>"application/x-www-form-urlencoded"}),
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
@@ -486,11 +507,11 @@ sub saveFileChanges {
 	if (defined $submit_button and $submit_button eq 'Save as' and $r->param('save_to_new_file') !~ /\w/) {
 		# setting $self->{failure} stops any future redirects
 		$self->{failure} = "Please specify a file to save to.";
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Please specify a file to save to.")));
+		$self->addbadmessage(CGI::p("Please specify a file to save to."));
 	} elsif (defined $submit_button and $submit_button eq 'Save as' and defined $currentSourceFilePath and -e $currentSourceFilePath) {
 		# setting $self->{failure} stops any future redirects
 		$self->{failure} = "File $currentSourceFilePath exists.  File not saved.";
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File $currentSourceFilePath exists.  File not saved.")));
+		$self->addbadmessage(CGI::p("File $currentSourceFilePath exists.  File not saved."));
 	} else {
 		# make sure any missing directories are created
 		$currentSourceFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$currentSourceFilePath);
