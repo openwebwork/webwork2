@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.109 2004/06/24 20:54:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.110 2004/06/25 00:08:46 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,7 +62,7 @@ use constant SET_LIST      => "Hmwk&nbsp;Sets&nbsp;Editor";
 use constant SET_MAKER     => "Library&nbsp;Browser";
 use constant ASSIGNER      => "Set&nbsp;Assigner";
 use constant MAIL          => "Email";
-use constant SCORING       => "Scoring tools";
+use constant SCORING       => "Scoring&nbsp;Tools";
 use constant STATS         => "Statistics";
 use constant PROGRESS      =>"Student&nbsp;Progress";
 use constant FILE_TRANSFER => "File&nbsp;Transfer";
@@ -549,7 +549,10 @@ sub links {
 		
 		print CGI::hr();
 		print CGI::start_li();
-		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, space2nbsp($instr->name)));
+		print CGI::span({style=>"font-size:larger"},
+		                 $self->helpMacro('instructor_links'),
+		                 CGI::a({href=>$self->systemLink($instr)},  space2nbsp($instr->name))
+		);
 		print CGI::start_ul();
 		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, ADD_USERS)) if $authz->hasPermissions($user, "modify_student_data");
 		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, USER_LIST));
@@ -571,24 +574,24 @@ sub links {
 		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, SET_MAKER)) if $authz->hasPermissions($user, "modify_problem_sets");
 		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, ASSIGNER)) if $authz->hasPermissions($user, "assign_problem_sets");
 		
-		
-		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($stats)}, STATS);
-		if (defined $userID and $userID ne "") {
-			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
-			);
-		}
-		if (defined $setID and $setID ne "") {
-			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, space2nbsp($setID)))
-			);
-		}
-		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($stats)}, STATS));
+# 		print CGI::start_li();	
+# 		if (defined $userID and $userID ne "") {
+# 			print CGI::ul(
+# 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
+# 			);
+# 		}
+# 		if (defined $setID and $setID ne "") {
+# 			print CGI::ul(
+# 				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, space2nbsp($setID)))
+# 			);
+# 		}
+# 		print CGI::end_li();
 		
 	## Added Link for Student Progress	
+	    print CGI::li(CGI::a({href=>$self->systemLink($progress)}, PROGRESS));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($progress)}, PROGRESS);
+		
 		if (defined $userID and $userID ne "") {
 			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
