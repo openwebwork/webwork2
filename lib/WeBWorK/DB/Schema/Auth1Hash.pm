@@ -136,8 +136,7 @@ sub delete($$) {
 	my $valueName = $self->{table};
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
-	die "$userID: $valueName not found"
-		unless exists $hash->{$userID};
+	return unless exists $hash->{$userID};
 	delete $hash->{$userID};
 	$self->{driver}->disconnect();
 }

@@ -151,11 +151,14 @@ sub get($@) {
 		my $UserSet = $self->string2records($string);
 		$UserSet->psvn($PSVN);
 		return $UserSet;
-	} if ($self->{table} eq "problem_user") {
+	} elsif ($self->{table} eq "problem_user") {
 		my ($problemID) = $keyparts[2];
 		die "problemID not specified." unless defined $problemID;
 		my (undef, @UserProblems) = $self->string2records($string);
-		return grep { $_->problem_id() eq $problemID } @UserProblems;
+		# grep returns the number of matches in scalar context, so we have
+		# to put it in list context, and pluck out the first (and only)
+		# match, so that we can be called in scalar context.
+		return (grep { $_->problem_id() eq $problemID } @UserProblems)[0];
 	}
 }
 
