@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.140 2004/06/02 20:27:22 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.141 2004/06/04 21:40:07 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -254,7 +254,7 @@ sub pre_header_initialize {
 		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
 			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
 			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
-		checkAnswers       => canCheckAnswers($permissionLevel, $set->answer_date),
+		checkAnswers       => canCheckAnswers($permissionLevel, $set->due_date),
 	);
 	
 	# more complicated logic for showing check answer button:
@@ -1146,9 +1146,9 @@ sub canRecordAnswers($$$$$) {
 }
 
 sub canCheckAnswers($$) {
-	my ($permissionLevel, $answerDate) = @_;
+	my ($permissionLevel, $dueDate) = @_;
 	my $permHigh = $permissionLevel > 0;
-	my $timeOK = time >= $answerDate;
+	my $timeOK = time >= $dueDate;
 	my $recordAnswers = $permHigh || $timeOK;
 	return $recordAnswers;
 }
