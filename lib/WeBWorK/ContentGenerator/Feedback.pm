@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.23 2004/09/02 22:52:03 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.24 2004/09/29 21:38:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,6 +76,8 @@ sub body {
 	my $showSolutions      = $r->param("showSolutions");
 	my $from               = $r->param("from");
 	my $feedback           = $r->param("feedback");
+	my $courseID           = $r->urlpath->arg("courseID");
+	
 	
 	my ($user, $set, $problem);
 	$user = $db->getUser($userName) # checked
@@ -198,7 +200,7 @@ sub body {
 			# *** we might want to have a CE setting for
 			# "additional recipients"
 			smtp    => $ce->{mail}->{smtpServer},
-			subject => "WeBWorK feedback: ".$user->first_name." ".$user->last_name. 
+			subject => "WeBWorK feedback from $courseID: ".$user->first_name." ".$user->last_name. 
 			                (   ( defined($setName) && defined($problemNumber) ) ?
 			                				 " set$setName/prob$problemNumber" : ""
 			                ),
