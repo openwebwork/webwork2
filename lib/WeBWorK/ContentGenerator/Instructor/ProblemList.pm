@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.27 2004/05/30 02:33:25 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.28 2004/05/31 16:02:28 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -408,11 +408,9 @@ sub body {
 			my $problemID = $problemRecord->problem_id;
 			my $userProblemRecord;
 			my %problemOverrideArgs;
-
-			my @problem_html = renderProblems(r=> $r, 
-			                      user => $db->getUser($user),
-			                      displayMode=> $default_mode,
-			                      problem_list =>[$problemRecord->source_file]);
+			my @problem_html;
+			my $userSet =  $db->getUserSet($editForUser[0], $setName); # checked
+			die "user problem set $setName not found." unless $userSet;
 
 			if ($forOneUser) {
 				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
@@ -420,6 +418,14 @@ sub body {
 				foreach my $field (@{PROBLEM_FIELDS()}) {
 					$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
 				}
+				@problem_html = renderProblems(r=> $r, 
+				                      user => $db->getUser($editForUser[0]),
+				                      displayMode=> $default_mode,
+				                      problem_number=> $problem,
+				                      this_set=> $userSet,
+						      problem_seed=> $userProblemRecord->problem_seed,
+				                      problem_list =>[$problemRecord->source_file]);
+
 	#		} elsif ($forUsers) {
 	#			foreach my $field (@{PROBLEM_FIELDS()}) {
 	#				$problemOverrideArgs{$field} = ["", ""];
@@ -495,6 +501,7 @@ sub body {
 			my @problem_html = renderProblems(r=> $r, 
 			                      user => $db->getUser($user),
 			                      displayMode=> $default_mode,
+			                      problem_number=> $problem,
 			                      problem_list =>[$problemRecord->source_file]);
 
 
