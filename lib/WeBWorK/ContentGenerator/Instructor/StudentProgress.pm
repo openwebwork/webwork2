@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.41 2004/05/10 03:22:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.1 2004/05/22 21:22:18 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -91,16 +91,16 @@ sub siblings {
 	my $eUserID  = $r->param("effectiveUser");
 	my @setIDs   = sort  $db->listGlobalSets;
 	
-	my $stats     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress", 
+	my $progress     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress", 
 	                                        courseID => $courseID);
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::start_li();
-	print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
+	print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($progress)}, 'Student&nbsp;Progress'));
 	print CGI::start_ul();
 	
 	foreach my $setID (@setIDs) {
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats",
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",
 			courseID => $courseID, setID => $setID,statType => 'set',);
 		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, "Set $setID"));
 	}
@@ -215,23 +215,6 @@ sub index {
 	
 }
 ###################################################
-# Determines the percentage of students whose score is greater than a given value
-# The percentages are fixed at 75, 50, 25 and 5%
-sub determine_percentiles {
-	my $percent_brackets  = shift;
-	my @list_of_scores    = @_;
-	@list_of_scores       = sort {$a<=>$b} @list_of_scores;
-	my %percentiles          = ();
-	my $num_students      = $#list_of_scores;
-	foreach my $percentage (@{$percent_brackets}) {
-		$percentiles{$percentage} = @list_of_scores[int( (100-$percentage)*$num_students/100)];
-		$percentiles{$percentage} =0 unless defined($percentiles{$percentage});  #in case no students have tried this question
-	}
-	# for example
-	# $percentiles{75}  = @list_of_scores[int( 25*$num_students/100)]; 
-	# means that 75% of the students received this score ($percentiles{75}) or higher
-	%percentiles;
-}
 sub displaySets {
 	my $self             = shift;	
 	my $r                = $self->r;
@@ -396,129 +379,29 @@ sub displaySets {
 												||
 							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
 	
-	# sort the problem IDs
-	my @problemIDs   = sort {$a<=>$b} keys %correct_answers_for_problem;
-	# determine index quartiles
-    my @brackets1          = (90,80,70,60,50,40,30,20,10);  #% students having scores or indices above this cutoff value
-    my @brackets2          = (95, 75,50,25);       # % students having this many incorrect attempts or more  
-	my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
-    my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
-    my %attempts_percentiles_for_problem = ();
-    foreach my $probID (@problemIDs) {
-    	$attempts_percentiles_for_problem{$probID} =   {
-    		determine_percentiles([@brackets2, 0], @{$attempts_list_for_problem{$probID}})
-    	};    
-    }
-    
-#####################################################################################
-# Table showing the percentage of students with correct answers for each problems
-#####################################################################################
-
-print  
-
-	   CGI::p('The percentage of active students with correct answers for each problem'),
-		CGI::start_table({-border=>1}),
-		CGI::Tr(CGI::td(
-			['Problem #', @problemIDs]
-		)),
-		CGI::Tr(CGI::td(
-			[ '% correct',map {($number_of_students_attempting_problem{$_})
-			                      ? sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_students_attempting_problem{$_})
-			                      : '-'}			                   
-			                       @problemIDs 
-			]
-		)),
-		CGI::Tr(CGI::td(
-			[ 'avg attempts',map {($number_of_students_attempting_problem{$_})
-			                      ? sprintf("%0.0f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_}) 
-			                      : '-'}			                   
-			                       @problemIDs 
-			]
-		)),
-		CGI::end_table();
-
-#####################################################################################
-# table showing percentile statistics for scores and success indices
-#####################################################################################
-	print  
-
-	    	CGI::p(CGI::i('The percentage of students receiving at least these scores.<br/>
-	    	       The median score is in the 50% column. ')),
-			CGI::start_table({-border=>1}),
-				CGI::Tr(
-					CGI::td( ['% students',
-					          (map {  "&nbsp;".$_   } @brackets1) ,
-					          'top score ', 
-					         
-					         ]
-					)
-				),
-				CGI::Tr(
-					CGI::td( [
-						'Score',
-						(map { '&ge; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
-						sprintf("%0.0f",100),
-						]
-					)
-				),
-				CGI::Tr(
-					CGI::td( [
-						'Success Index',
-						(map { '&ge; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
-						sprintf("%0.0f",100),
-						]
-					)
-				)
-			;
-
-	print     CGI::end_table(),	
-
-		;
-
-#####################################################################################
-# table showing percentile statistics for scores and success indices
-#####################################################################################
-	print  
-
-	    	CGI::p(CGI::i('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts')),
-			CGI::start_table({-border=>1}),
-				CGI::Tr(
-					CGI::td( ['% students',
-					          (map {  "&nbsp;".(100-$_)  } @brackets2, 0) ,
-					        
-					         ]
-					)
-				);
-
-
-	foreach my $probID (@problemIDs) {
-	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseName, setID => $setName, problemID => $probID);
-		print	CGI::Tr(
-					CGI::td( [
-						CGI::a({href=>$self->systemLink($problemPage)},"Prob $probID"),
-						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2, 0),
-
-						]
-					)
-				);
-	
-	}
-	print CGI::end_table();
 #####################################################################################
 	# construct header
 	my $problem_header = '';
 	
-	foreach my $i (1..$max_num_problems) {
-		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
-	}
+
 	print
-		CGI::p("Details:",CGI::i('The success indicator for each student is calculated as'),CGI::br(),
-			'(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)',CGI::br(),
-			CGI::i('or 0 if there are no attempts.')
+		CGI::br(),
+		CGI::br(),
+		CGI::p('A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates 
+		a problem has been answered 100% correctly, and a number from 0 to 99 
+		indicates the percentage of partial credit earned. The number on the 
+		second line gives the number of incorrect attempts.  The success indicator,'
+		,CGI::i('Ind'),', for each student is calculated as',
+		CGI::br(),
+		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
+		'or 0 if there are no attempts.'
 		),
-		"Click heading to sort table: ",
-	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
+		CGI::br(),
+		"Click on student's name to see the student's version of the problem set;  
+		Click heading to sort table. ",
+		CGI::br(),
+		CGI::br(),
+		defined($sort_method_name) ?" sort method is $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
 			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
