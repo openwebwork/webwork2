@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.164 2004/09/10 22:40:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.165 2004/10/06 21:01:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1018,7 +1018,8 @@ sub body {
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $attemptsNoun = $attempts != 1 ? "times" : "time";
-	my $lastScore = sprintf("%.0f%%", $problem->status * 100); # Round to whole number
+	my $problem_status    = $problem->status || 0;
+	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
 	my ($attemptsLeft, $attemptsLeftNoun);
 	if ($problem->max_attempts == -1) {
 		# unlimited attempts
