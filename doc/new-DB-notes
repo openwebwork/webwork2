@@ -1,78 +1,43 @@
 --------------------------------------------------------------------------------
-Notes on the new schema
+Notes on the new database system
 --------------------------------------------------------------------------------
 
-CHANGES IN THE SCHEMA
----------------------
+CHANGES IN THE ARCHITECTURE
+---------------------------
+
+The architecture is now three-tier. For more information, consult the file doc/new-DB-architecture.
+
+CHANGES IN THE TABLE STRUCTURE
+------------------------------
 
 PSVNs have been added to the set_user table, eliminating the need for a separate PSVN table.
 
-set_user and problem_user tables have been added, containing student-specific data. In most cases, the override fields (marked `!' above) will be empty, and accesses using the current API will fall back on the global values. The dynamic fields (marked `~' above) will be populated as the student works through problems. problem_seed (in problem_user) and psvn(in set_user) are neither  dynamic or override fields -- they are set at assignment time.
+set_user and problem_user tables have been added, containing student-specific data. In most cases, the override fields (marked `!' above) will be empty. The dynamic fields (marked `~' above) will be populated as the student works through problems. problem_seed (in problem_user) and psvn(in set_user) are neither  dynamic or override fields -- they are set at assignment time.
 
-problem_order has been added to the set and set_user tables. It contains a definition of how the problems in each set will be ordered.
+a problem_order field has been added to the set and set_user tables. It contains a definition of how the problems in each set will be ordered.
 
-SCHEMA IMPLEMENTATION IN HASH-BASED DATABASES
----------------------------------------------
+TABLE STRUCTURE IMPLEMENTATION IN HASH-BASED DATABASES
+------------------------------------------------------
 
-To implement this schema in a hash-based database, each table will be stored in a separate database file. Each table has either one or two fields that make up a unique identifier for each record. In the case of a one field identifier, the value of that field will be used as the record's key in the hash. In the case of a two-field identifier, the string "FIELD1:FIELD2" will be used. Literal colons will be escaped as `\:', and literal backslashes as `\\'.
+The WW2Hash schema module will implement a new hash-based schema for use with WeBWorK 2.
 
-Rather than use a custom encoding scheme for the hash data, as is done in the 1.x implementation, a simple table-based scheme will be used, in which each field is separated by a colon (`:'), literal colons (and literal backslashes) will be dealt with as above. This sort of scheme is common in the UNIX world. For example, consider the UNIX password file.
+Each table will be stored in a separate database file. Each table has either one or two fields that make up a unique identifier for each record. In the case of a one field identifier, the value of that field will be used as the record's key in the hash. In the case of a two-field identifier, the string "FIELD1:FIELD2" will be used. Literal colons will be escaped as `\:', and literal backslashes as `\\'.
+
+Rather than use a custom encoding scheme for the hash data, as is done in the 1.x implementation, a simple table-based scheme will be used, in which each field is separated by a colon (`:'). Literal colons (and literal backslashes) will be dealt with as above. This sort of scheme is common in the UNIX world. For example, consider the UNIX password file.
 
 COMPATABILITY WITH 1.X DATABASES
 --------------------------------
 
-The WW.pm module will be able to differentiate between a 1.x database file and a set of 2.x database files by checking for files with specific names. If it encounters a 1.x file, it will use the 1.x implementations of the current API and throw an exception when new API functions are called.
+By specifying the WW1Hash schema module for the appropriate tables, 1.x databases can be handled.
 
-A function databaseVersion() will be available to ask WW.pm if it is using 1.x or 2.x database files.
-
-Conversion from the 1.x schema to the 2.x schema can be achieved by using the most popular value for each field in each user-specific record as the global value, and merging PSVNs from the separate PSVN table. Conversion from the 2.x schema to the 1.x schema is trivial, if somewhat lossy (i.e. problem_order).
+Conversion of 1.x databases to 2.x databases can be achieved by using the most popular value for each field in each user-specific record as the global value, and merging PSVNs from the separate PSVN table. Conversion from 2.x databases to 1.x databases is trivial, if somewhat lossy (i.e. problem_order).
 
 TREATMENT OF THE CURRENT API
 ----------------------------
 
-The current API consists of the following functions:
-
-getSets($userID)
-getSet($userID, $setID)
-setSet($set)
-deleteSet($userID, $setID)
-
-getProblems($userID, $setID)
-getProblem($userID, $setID, $problemNumber)
-setProblem($problem)
-deleteProblem($userID, $setID, $problemNumber)
-
-getPSVNs($userID)
-getPSVN($userID, $setID)
-setPSVN(userID, $setID)
-deletePSVN($userID, $setID) 
-
-When using 2.x database files, the current API will be implemented as follows:
-
-getSets and getProblems will use the user-specific tables to get sets/problems for a specific user.
-
-Reads using the current API will be implemented by selecting the proper record from the global table, and then applying additional fields from the user-specific table (i.e. problem_user or set_user).
-
-Problem.pm currently writes Problem objects to the database. Writes using the current API will be implemented as follows:
-	- fields which only exist in the user-specific table will be stored
-	  there
-	- fields which exist in both will be written to the user-specific table
-	  IF THE NEW VALUES DIFFER FROM THE CURRENT GLOBAL VALUES
-Writes which would create a new record ARE NOT ALLOWED using the old API!
-
-Deletes using the current API will be implemented by calling the global deleteGlobal{Set,Problem} functions. Note that delete{Set,Problem} is never called outside of the professor pages, so these functions could be safely removed.
-
-{get,set,delete}PSVN and getPSVNs will be REMOVED, as PSVN is now a field in set_user.
+The current API (implemented by Auth.pm, Classlist.pm, and WW.pm) will be removed. The code base is currently small enough that it will be easy to migrate existing code to the new API.
 
 NEW API FUNCTIONS
 -----------------
 
-There will be new getGlobalSets() and getGlobalProblems($setID) functions that use the global tables.
-
-There will be a getSetUsers($setID) function that returns the userIDs of all users for whom a given set is assigned.
-
-There will be new {get,set,delete}GlobalSet($setID) and {get,set,delete}GlobalProblem($setID, $problemID) functions to access and modify the global {set,problem} tables. Delete functions will remove all matching records from the user-specific table, and remove the single matching record from the global table. setGlobal{Set,Problem} functions may create records.
-
-There will be new assignSet($userID, $setID) function that creates a user-specific set_user record for a given user and set. A unique PSVN is generated. A similar assignProblem($userID, $setID, $problemID) function will create a user-specific problem_user record for the given problem number. A random seed will be generated. unAssign{Set,Problem} functions will also be created.
-
-There will be new {get,set}UserSet($userID, $setID) and {get,set}UserProblem($userID, $setID, $problemID) functions that allow access to user-specific records without first falling back on global values (as {get,set}{Set,Problem} do. setUser{Set,Problem} functions may not create records -- this is done with assign{Set,Problem}.
+The new API is outlined in the file doc/new-DB-API.

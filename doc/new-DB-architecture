@@ -84,7 +84,7 @@ $record   - an object representing a record in the table
 @keyparts - values for fields that make up the table's key
 
 @tables = tables()
-	returns list of tables supported. static.
+	returns list of tables supported.
 
 $handle = new($driver, $table)
 	creates a schema interface for $table, using the driver interface
@@ -115,7 +115,34 @@ $result = $handle->delete(@keyparts)
 Driver API
 --------------------------------------------------------------------------------
 
-@styles = styles()
-	returns the styles supported by the driver
+COMMON
+------
 
-$handle = new
+@styles = styles()
+	returns the styles supported by the driver.
+
+$handle = new($source)
+	creates a new interface to the data contained in $source. If $source is
+	malformed of can't be accessed, a false value is returned.
+
+$result = $handle->connect($mode)
+	connects to the data source with access mode $mode. returns a false
+	value if connecting fails.
+
+$result = $handle->disconnect()
+	disconnects from the data source. returns a false value if disconnecting
+	fails. this should never happen.
+
+STYLE: hash
+-----------
+
+$ref = $handle->hash()
+	returns a reference to the underlying tied hash. returns a false value
+	if the hash is not available (i.e. not connected).
+
+STYLE: dbi
+----------
+
+$dbh = $handle->dbh()
+	returns a DBI database handle. returns a false value if the handle is
+	unavailable (i.e. not connected).
