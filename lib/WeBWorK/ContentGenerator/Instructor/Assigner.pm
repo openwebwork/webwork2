@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.11 2004/01/21 00:31:51 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.12 2004/01/21 19:57:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -66,7 +66,9 @@ sub initialize {
 		
 		foreach my $selectedUser (@users) {
 			if (exists $selectedUsers{$selectedUser}) {
-				$self->assignSetToUser($selectedUser, $setRecord)
+				$WeBWorK::timer->continue("assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+				$self->assignSetToUser($selectedUser, $setRecord);
+				$WeBWorK::timer->continue("done assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
 			} else {
 				next if $selectedUser eq $globalUserID;
 				$db->deleteUserSet($selectedUser, $setID);
