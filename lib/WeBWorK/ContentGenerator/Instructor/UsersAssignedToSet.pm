@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.8 2004/04/07 02:17:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.9 2004/05/08 19:27:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,14 +32,14 @@ use WeBWorK::Utils qw(formatDateTime);
 sub initialize {
 	my ($self)     = @_;
 	my $r          = $self->r;
-    my $urlpath    = $r->urlpath;
+    	my $urlpath    = $r->urlpath;
 	my $authz      = $r->authz;
 	my $db         = $r->db;	
 	my $setID      = $urlpath->arg("setID");
 	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
-		$self->{submitError} = "You are not authorized to assign problem sets";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets")));
 		return;
 	}
 	
