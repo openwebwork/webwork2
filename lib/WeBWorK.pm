@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.56 2004/06/14 22:59:22 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.57 2004/06/17 20:10:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,26 +36,28 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
-my $timingON = 0;
-
 use strict;
 use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
+
+# load WeBWorK::Constants before anything else
+# this sets package variables in several packages
+use WeBWorK::Constants;
+
+# the rest of these are modules that are acutally used by this one
 use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
+use WeBWorK::Debug;
+use WeBWorK::Request;
 use WeBWorK::Timing;
 use WeBWorK::Upload;
-use WeBWorK::Utils qw(runtime_use);
-use WeBWorK::Request;
 use WeBWorK::URLPath;
+use WeBWorK::Utils qw(runtime_use);
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
-
-sub debug(@) { print STDERR "dispatch_new: ", join("", @_) };
-#sub debug(@) {  };
 
 sub dispatch($) {
 	my ($apache) = @_;
@@ -68,10 +70,6 @@ sub dispatch($) {
 	my $args = $r->args || "";
 	my $webwork_root = $r->dir_config("webwork_root");
 	my $pg_root = $r->dir_config("pg_root");
-	
-	#$r->send_http_header("text/html");
-	
-	#print CGI::start_pre();
 	
 	debug("Hi, I'm the new dispatcher!\n");
 	debug(("-" x 80) . "\n");
@@ -162,11 +160,11 @@ sub dispatch($) {
 	debug(("-" x 80) . "\n");
 	
 	# create a package-global timing object
-	if ($timingON) {
-		my $label = defined $displayArgs{courseID} ? $displayArgs{courseID} : "ROOT";
-		$WeBWorK::timer = WeBWorK::Timing->new($label);
-		$WeBWorK::timer->start;
-	}
+	# FIXME: this is used by other modules!
+	# FIXME: this is not thread-safe!
+	my $label = defined $displayArgs{courseID} ? $displayArgs{courseID} : "ROOT";
+	$WeBWorK::timer = WeBWorK::Timing->new($label);
+	$WeBWorK::timer->start;
 	
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
@@ -257,7 +255,7 @@ sub dispatch($) {
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
 	
-	$WeBWorK::timer -> save() if $timingON;
+	$WeBWorK::timer->save();
 	
 	return $result;
 	
