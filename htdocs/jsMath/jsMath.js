@@ -3576,6 +3576,7 @@ jsMath.Package(jsMath.Parser,{
     lt:                 ['Macro','<'],
     gt:                 ['Macro','>'],
     setlength:          ['Macro','',2],
+    boldsymbol:         ['Macro','{\\bf #1}',1],
 
     limits:       ['Limits',1],
     nolimits:     ['Limits',0],
