@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.6 2004/05/07 14:12:20 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.7 2004/05/07 22:26:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,9 +32,6 @@ use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
-# SKEL: If you need to do any processing before the HTTP header is sent, do it
-# in this method:
-# 
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -64,87 +61,6 @@ sub pre_header_initialize {
 	}
 }
 
-# SKEL: To emit your own HTTP header, uncomment this:
-# 
-#sub header {
-#	my ($self) = @_;
-#	
-#	# Generate your HTTP header here.
-#	
-#	# If you return something, it will be used as the HTTP status code for this
-#	# request. The Apache::Constants module might be useful for gerating status
-#	# codes. If you don't return anything, the status code "OK" will be used.
-#	return "";
-#}
-
-# SKEL: If you need to do any processing after the HTTP header is sent, but before
-# any template processing occurs, or you need to calculate values that will be
-# used in multiple methods, do it in this method:
-# 
-#sub initialize {
-#	my ($self) = @_;
-#	
-#	# Do your processing here! Don't print or return anything -- store data in
-#	# the self hash for later retrieveal.
-#}
-
-# SKEL: If you need to add tags to the document <HEAD>, uncomment this method:
-# 
-#sub head {
-#	my ($self) = @_;
-#	
-#	# You can print head tags here, like <META>, <SCRIPT>, etc.
-#	
-#	return "";
-#}
-
-# SKEL: To fill in the "info" box (to the right of the main body), use this
-# method:
-# 
-#sub info {
-#	my ($self) = @_;
-#	
-#	# Print HTML here.
-#	
-#	return "";
-#}
-
-# SKEL: To provide navigation links, use this method:
-# 
-#sub nav {
-#	my ($self, $args) = @_;
-#	
-#	# See the documentation of path() and pathMacro() in
-#	# WeBWorK::ContentGenerator for more information.
-#	
-#	return "";
-#}
-
-# SKEL: For a little box for display options, etc., use this method:
-# 
-#sub options {
-#	my ($self) = @_;
-#	
-#	# Print HTML here.
-#	
-#	return "";
-#}
-
-# SKEL: For a list of sibling objects, use this method:
-# 
-#sub siblings {
-#	my ($self, $args) = @_;
-#	
-#	# See the documentation of siblings() and siblingsMacro() in
-#	# WeBWorK::ContentGenerator for more information.
-#	# 
-#	# Refer to implementations in ProblemSet and Problem.
-#	
-#	return "";
-#}
-
-# SKEL: Okay, here's the body. Most of your stuff will go here:
-# 
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
