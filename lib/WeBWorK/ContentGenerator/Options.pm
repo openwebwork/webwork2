@@ -15,6 +15,7 @@ WeBWorK::ContentGenerator::Options - Change user options.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Utils qw(cryptPassword);
 
 sub initialize {
 	my $self = shift;
@@ -62,8 +63,12 @@ sub body {
 	if ($changeOptions) {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
+				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)};
+				my $cryptedPassword = cryptPassword($passwordRecord->password);
+				$passwordRecord->password($cryptedPassword);
+				
 				# possibly do some format checking?
-				eval { $self->{authdb}->setPassword($effectiveUser->user_id, $newP) };
+				eval { $db->putPassword($passwordRecord) };
 				if ($@) {
 					print CGI::p("Couldn't change your
 					password: $@");
