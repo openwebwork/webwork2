@@ -188,7 +188,10 @@ sub distGlobalValues($$$@) {
 	# figure out which fields (if any) were changed
 	my @changedFields;
 	foreach my $field ($OldGlobalRecord->FIELDS()) {
-		if ($OldGlobalRecord->$field() ne $NewGlobalRecord->$field()) {
+		#FIXME  these warnings may not be needed in production
+	    warn "Undefined field |$field| in old Global record" unless defined($OldGlobalRecord->$field());
+	    warn "Undefined field |$field| in new Global record" unless defined($NewGlobalRecord->$field());
+	    if (defined($OldGlobalRecord->$field()) and defined($NewGlobalRecord->$field()) and $OldGlobalRecord->$field() ne $NewGlobalRecord->$field()) {
 			push @changedFields, $field;
 		}
 	}
