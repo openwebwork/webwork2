@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.46 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,7 +77,7 @@ sub defineProblemEnvir {
 	$envir{outputMode}        = $envir{displayMode};	 
 	$envir{displayHintsQ}     = $options->{showHints};	 
 	$envir{displaySolutionsQ} = $options->{showSolutions};
-	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
+	$envir{texDisposition}    = "pdf"; # in webwork2, we use pdflatex
 	
 	# Problem Information
 	# ADDED: courseName, formatedDueDate

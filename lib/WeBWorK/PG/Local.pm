@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.11 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,7 @@ WeBWorK::PG::Translator object.
 
 WeBWorK::PG::Local encapsulates the PG translation process, making multiple
 calls to WeBWorK::PG::Translator. Much of the flexibility of the Translator is
-hidden, instead making choices that are appropriate for the webwork-modperl
+hidden, instead making choices that are appropriate for the webwork2
 system
 
 It implements the WeBWorK::PG interface and uses a local
