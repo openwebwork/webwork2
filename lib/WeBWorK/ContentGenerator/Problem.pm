@@ -56,7 +56,7 @@ sub pre_header_initialize {
 	my $effectiveUser        = $db->getUser($effectiveUserName);
 
 	# obtain the effective user set, or if that is not yet defined obtain global set
-	my $set                  = $db->getGlobalUserSet($effectiveUserName, $setName);
+	my $set                  = $db->getMergedSet($effectiveUserName, $setName);
 	unless (defined $set) {
 		my $userSetClass     = $courseEnv->{dbLayout}->{set_user}->{record};
 		$set                 = global2user($userSetClass, $db->getGlobalSet($setName));
@@ -65,7 +65,7 @@ sub pre_header_initialize {
 	my	$psvn                = $set->psvn();
 	
 	# obtain the effective user problem, or if that is not yet defined obtain global problem
-	my $problem              = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	my $problem              = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 	unless (defined $problem) {
 		my $userProblemClass = $courseEnv->{dbLayout}->{problem_user}->{record};
 		$problem             = global2user($userProblemClass, $db->getGlobalProblem($setName,$problemNumber));
@@ -287,7 +287,7 @@ sub siblings {
 	
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @problems;
-	push @problems, $db->getGlobalUserProblem($effectiveUser, $setName, $_)
+	push @problems, $db->getMergedProblem($effectiveUser, $setName, $_)
 		foreach ($db->listUserProblems($effectiveUser, $setName));
 	foreach my $problem (sort { $a->problem_id <=> $b->problem_id } @problems) {
 		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->problem_id."/?"
@@ -313,8 +313,8 @@ sub nav {
 	
 	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
 	
-	my $prevProblem = $db->getGlobalUserProblem($effectiveUser, $setName, $problemNumber-1);
-	my $nextProblem = $db->getGlobalUserProblem($effectiveUser, $setName, $problemNumber+1);
+	my $prevProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber-1);
+	my $nextProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber+1);
 	unshift @links, "Previous Problem" , ($prevProblem
 		? "$root/$courseName/$setName/".$prevProblem->problem_id
 		: "") , "navPrev";

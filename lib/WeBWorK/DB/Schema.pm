@@ -73,7 +73,7 @@ exists, an exception is thrown.
 
 Attempts to retrieve the record matching C<@keyparts> from the table. Returns
 an instance of the table's record class if there is a match. Returns undef if
-no record matches. All elements of keyparts must be defined.
+no record matches. All elements of C<@keyparts> must be defined.
 
 =item put($Record)
 
@@ -85,7 +85,7 @@ couldn't be contacted). If no such record exists, an exception is thrown.
 
 Attempts to delete the record in the table that matches C<@keyparts>. Returns
 true if the record was successfully deleted or did not exist, and false if
-deletion failed.
+deletion failed. Elements of C<@keyparts> may be undefined.
 
 =back
 

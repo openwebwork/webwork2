@@ -66,8 +66,9 @@ sub body {
 	);
 	
 	my @sets;
-	push @sets, $db->getGlobalUserSet($effectiveUser, $_)
-		foreach ($db->listUserSets($effectiveUser));
+	foreach my $setID ($db->listUserSets($effectiveUser)) {
+		push @sets, $db->getMergedSet($effectiveUser, $setID);
+	}
 	@sets = sort byname @sets if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {

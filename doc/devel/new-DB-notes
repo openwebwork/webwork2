@@ -28,6 +28,18 @@ RECORD CREATION DEPENDANCIES
      problem -> set
 problem_user -> set_user, problem
 
+RECORD DELETION DEPENDANCIES
+----------------------------
+
+    password -> 
+  permission -> 
+         key -> 
+        user -> password permission key set_user
+         set -> set_user problem
+    set_user -> problem_user
+     problem -> problem_user
+problem_user -> 
+
 TABLE STRUCTURE IMPLEMENTATION IN HASH-BASED DATABASES
 ------------------------------------------------------
 

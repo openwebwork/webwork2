@@ -27,7 +27,7 @@ sub initialize {
 	
 	my $user            = $db->getUser($userName);
 	my $effectiveUser   = $db->getUser($effectiveUserName);
-	my $set             = $db->getGlobalUserSet($effectiveUserName, $setName);
+	my $set             = $db->getMergedSet($effectiveUserName, $setName);
 	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
 	
 	$self->{userName}        = $userName;
@@ -79,7 +79,7 @@ sub siblings {
 	
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @sets;
-	push @sets, $db->getGlobalUserSet($effectiveUser, $_)
+	push @sets, $db->getMergedSet($effectiveUser, $_)
 		foreach ($db->listUserSets($effectiveUser));
 #	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
 #   FIXME only experience will tell us the best sorting procedure
@@ -111,7 +111,7 @@ sub info {
 	return "" unless $self->{isOpen};
 	
 	my $effectiveUser = $db->getUser($r->param("effectiveUser"));
-	my $set  = $db->getGlobalUserSet($effectiveUser->user_id, $setName);
+	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->problem_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
@@ -177,10 +177,10 @@ sub body {
 		CGI::th("Status"),
 	);
 	
-	my $set = $db->getGlobalUserSet($effectiveUser, $setName);
+	my $set = $db->getMergedSet($effectiveUser, $setName);
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
 	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
-		my $problem = $db->getGlobalUserProblem($effectiveUser, $setName, $problemNumber);
+		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber);
 		print $self->problemListRow($set, $problem);
 	}
 	

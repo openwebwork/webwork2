@@ -85,6 +85,7 @@ sub assignProblemToAllUsers {
 	my @users = $db->listSetUsers($setID);
 	
 	foreach my $user (@users) {
+		warn time, ": assignProblemToUser $user\n";
 		$self->assignProblemToUser($user, $globalProblem);
 	}
 }
