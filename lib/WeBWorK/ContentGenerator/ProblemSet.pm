@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.56.2.1 2004/09/03 20:50:12 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.57 2004/09/05 18:00:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -344,10 +344,11 @@ sub problemListRow($$$) {
 	my $remaining = $problem->max_attempts < 0
 		? "unlimited"
 		: $problem->max_attempts - $attempts;
+	my $rawStatus = $problem->status || 0;
 	my $status;
-	$status = eval{ sprintf("%.0f%%", $problem->status * 100)}; # round to whole number
-	$status = 'unknown(FIXME)' if $@;                           # use a blank if problem status was not defined or not numeric.
-	                                                            # FIXME  -- this may not cover all cases.
+	$status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
+	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
+	                                  # FIXME  -- this may not cover all cases.
 	
 	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	
