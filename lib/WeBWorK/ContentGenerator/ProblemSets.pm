@@ -67,12 +67,12 @@ sub body {
 	
 	my @setIDs = $db->listUserSets($effectiveUser);
 	
-	my @sets;
-	foreach my $setID (@setIDs) {
-		push @sets, $db->getMergedSet($effectiveUser, $setID);
-	}
+# 	my @sets;
+# 	foreach my $setID (@setIDs) {
+# 		push @sets, $db->getMergedSet($effectiveUser, $setID);
+# 	}
 	
-	
+	my @sets = $db->getMergedSets( map {[$effectiveUser, $_]} @setIDs );
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
