@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.20 2003-06-05 11:48:23 gage Exp $
+# $Id: global.conf.dist,v 1.21 2003-06-05 20:48:39 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -44,8 +44,6 @@
 	},
 	logs => {
 		timing         => "$webworkDirs{logs}/timing.log",
-		transaction    => "$courseDirs{logs}/transaction.log",
-		pastAnswerList => "$courseDirs{logs}/past_answers.log",
 	},
 );
 
@@ -81,8 +79,8 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 );
 
 # quick hack to fix transaction logging. blah.
-$webworkFiles{logs}->{transaction} 		= 	"$courseDirs{logs}/transaction.log";
-$webworkFiles{logs}->{pastAnswerList} 	= 	"$courseDirs{logs}/past_answers.log";
+$webworkFiles{logs}->{transaction}    = "$courseDirs{logs}/transaction.log";
+$webworkFiles{logs}->{pastAnswerList} = "$courseDirs{logs}/past_answers.log";
 
 my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %courseURLs = (
