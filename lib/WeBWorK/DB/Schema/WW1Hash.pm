@@ -258,18 +258,22 @@ sub get1 {
 	my ($self, @keyparts) = @_;
 	my $db = $self->{db};
 	my $table = $self->{table};
-	$table =~ m/^(.*)_user$/;
-	my $globalSchema = $db->{$1};
+	my ($globalTable) = $table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$globalTable};
 	
 	my $UserRecord = $self->get1NoFilter(@keyparts);
 	
 	# filter values that are identical to global values
 	if (defined $UserRecord) {
 		my $GlobalRecord = $globalSchema->get1(@keyparts[1..$#keyparts]);
-		foreach my $field ($GlobalRecord->NONKEYFIELDS) {
-			if ($UserRecord->$field eq $GlobalRecord->$field) {
-				$UserRecord->$field(undef);
+		if (defined $GlobalRecord) {
+			foreach my $field ($GlobalRecord->NONKEYFIELDS) {
+				if ($UserRecord->$field eq $GlobalRecord->$field) {
+					$UserRecord->$field(undef);
+				}
 			}
+		} else {
+			warn __PACKAGE__, ": keyparts=@keyparts: $table record exists, but $globalTable record does not. returning user record unmodified. this could cause problems later.";
 		}
 	}
 	
