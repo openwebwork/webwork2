@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.13 2004/06/08 01:10:27 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.14 2004/06/22 16:59:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,8 @@ use Carp;
 use DBI;
 use File::Path qw(rmtree);
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw(dequote runtime_use undefstr readDirectory);
+use WeBWorK::Debug;
+use WeBWorK::Utils qw(runtime_use undefstr readDirectory);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -167,7 +168,8 @@ sub addCourse {
 	
 	my $createHelper = CREATE_HELPERS->{$dbLayoutName};
 	if (defined $createHelper) {
-		$createHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
+		my $createHelperResult = $createHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
+		die "$courseID: course database creation failed.\n" unless $createHelperResult;
 	}
 	
 	##### step 3: populate course database #####
@@ -351,11 +353,8 @@ These functions are used by the methods and should not be called directly.
 
 =item addCourseSQL($courseID, $ce, $dbLayoutName, %options)
 
-=cut
-
-=for comment
-
-
+Creates the course database for an SQL course. Return value is boolean,
+indicates success or failure.
 
 =cut
 
@@ -366,38 +365,36 @@ sub addCourseSQL {
 	
 	my %sources;
 	
-	#warn "\n";
-	#warn "addCourseSQL: dbLayoutName=$dbLayoutName\n";
+	debug("dbLayoutName=$dbLayoutName");
 	
 	my %dbLayout = %{ $ce->{dbLayouts}->{$dbLayoutName} };
 	
 	my @tables = keys %dbLayout;
-	#warn "addCourseSQL: layout defines the following tables: @tables\n";
-	#warn "\n";
+	debug("layout defines the following tables: @tables");
 	
 	foreach my $table (@tables) {
 		my %table = %{ $dbLayout{$table} };
 		my %params = %{ $table{params} };
 		
 		my $source = $table{source};
-		#warn "addCourseSQL: $table: DBI source is $source\n";
+		debug("$table: DBI source is $source\n");
 		
 		my $tableOverride = $params{tableOverride};
-		#warn "addCourseSQL: $table: SQL table name is ", undefstr("not defined", $tableOverride), "\n";
+		debug("$table: SQL table name is ", undefstr("not defined", $tableOverride), "\n");
 		
 		my $recordClass = $table{record};
-		#warn "addCourseSQL: $table: record class is $recordClass\n";
+		debug("$table: record class is $recordClass\n");
 		
 		runtime_use($recordClass);
 		my @fields = $recordClass->FIELDS;
-		#warn "addCourseSQL: $table: WeBWorK field names: @fields\n";
+		debug("$table: WeBWorK field names: @fields\n");
 		
 		if (exists $params{fieldOverride}) {
 			my %fieldOverride = %{ $params{fieldOverride} };
 			foreach my $field (@fields) {
 				$field = $fieldOverride{$field} if exists $fieldOverride{$field};
 			}
-			#warn "addCourseSQL: $table: SQL field names: @fields\n";
+			debug("$table: SQL field names: @fields\n");
 		}
 		
 		# generate table creation statement
@@ -415,21 +412,21 @@ sub addCourseSQL {
 		my $fieldString = join(", ", @fieldList);
 		my $createStmt = "CREATE TABLE $tableName ( $fieldString );";
 
-		#warn "addCourseSQL: $table: CREATE statement is: $createStmt\n";
+		debug("$table: CREATE statement is: $createStmt\n");
 		
 		# generate GRANT statements
 		
 		my $grantStmtRO = "GRANT SELECT"
-				. " ON $options{database}.$tableName"
+				. " ON `$options{database}`.$tableName"
 				. " TO $params{usernameRO}\@$options{wwhost}"
 				. " IDENTIFIED BY '$params{passwordRO}';";
 		my $grantStmtRW = "GRANT SELECT, INSERT, UPDATE, DELETE"
-				. " ON $options{database}.$tableName"
+				. " ON `$options{database}`.$tableName"
 				. " TO $params{usernameRW}\@$options{wwhost}"
 				. " IDENTIFIED BY '$params{passwordRW}';";
 		
-		#warn "addCourseSQL: $table: GRANT RO statement is: $grantStmtRO\n";
-		#warn "addCourseSQL: $table: GRANT RW statement is: $grantStmtRW\n";
+		debug("$table: GRANT RO statement is: $grantStmtRO\n");
+		debug("$table: GRANT RW statement is: $grantStmtRW\n");
 		
 		# add to source hash
 		
@@ -450,27 +447,26 @@ sub addCourseSQL {
 	my $source;
 	if (keys %sources > 1) {
 		# more than one -- warn and select the most popular source
- 		#warn "addCourseSQL: database layout $dbLayoutName defines more than one SQL source.\n";
+ 		debug("database layout $dbLayoutName defines more than one SQL source.\n");
 		foreach my $curr (keys %sources) {
 			$source = $curr if not defined $source or @{ $sources{$curr} } > @{ $sources{$source} };
  		}
- 		#warn "addCourseSQL: only creating tables with source \"$source\".\n";
- 		#warn "addCourseSQL: others will have to be created manually.\n";
+ 		debug("only creating tables with source \"$source\".\n");
+ 		debug("others will have to be created manually.\n");
  	} else {
 		# there's only one
 		($source) = keys %sources;
 	}
 	my @stmts = (
-		"CREATE DATABASE $options{database};",
-		"USE $options{database};",
+		"CREATE DATABASE `$options{database}`;",
+		"USE $options{database};", # oddly, backquotes prohibited with USE statement...
 		@{ $sources{$source} }
 	);
 	
 	##### issue SQL statements #####
 	
 	my ($driver) = $source =~ m/^dbi:(\w+):/i;
-	execSQLStatements($driver, $ce->{externalPrograms}, \%options, @stmts)
-	
+	return execSQLStatements($driver, $ce->{externalPrograms}, \%options, @stmts)
 }
 
 =item renameCourseSQL($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
@@ -500,11 +496,11 @@ sub deleteCourseSQL {
 		}
 		$source;
 	};
+	
+	my $stmt = "DROP DATABASE `$options{database}`;";
+	
 	my ($driver) = $dbi_source =~ m/^dbi:(\w+):/i;
-	
-	my $stmt = "DROP DATABASE $options{database};";
-	
-	execSQLStatements($driver, $ce->{externalPrograms}, \%options, $stmt);
+	return execSQLStatements($driver, $ce->{externalPrograms}, \%options, $stmt);
 }
 
 =item renameCourseGDBM($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
@@ -531,11 +527,15 @@ using $driver and invoked with the options listed in $dbOptions.
 $options is a reference to a hash containing the pairs accepted in %dbOptions by
 addCourse(), above.
 
+Returns true on success, false on failure.
+
 =cut
 
 sub execSQLStatements {
 	my ($driver, $externalPrograms, $dbOptions, @statements) = @_;
 	my %options = %$dbOptions;
+	
+	my $exit_status;
 	
 	if (lc $driver eq "mysql") {
 		my @commandLine = ( $externalPrograms->{mysql} );
@@ -549,11 +549,12 @@ sub execSQLStatements {
 		
 		# exec sql statements
 		foreach my $stmt (@statements) {
-			#warn "execSQLStatements: exec: $stmt\n";
+			debug("exec: $stmt");
 			print $mysql "$stmt\n";
 		}
 		
 		close $mysql;
+		$exit_status = $?;
 	}
 	
 	# add code to deal with other RDBMSs here:
@@ -563,8 +564,19 @@ sub execSQLStatements {
 	#}
 	
 	else {
-		warn "execSQLStatements: driver \"$driver\" is not supported.\n";
+		die "execSQLStatements: driver \"$driver\" is not supported.\n";
 	}
+	
+	# "...the exit value of the subprocess is in the high byte, that is, $? >>
+	# 8; in the low byte, $? & 127 says which signal (if any) the process died
+	# from, while $? & 128 reports whether its demise produced a core dump."
+	#     -- Camel, 3rd ed
+	my $status = $exit_status >> 8;
+	#my $signal = $exit_status & 127;
+	#my $core = $exit_status & 128
+	
+	# we want to return true for success and false for failure
+	return not $status;
 }
 
 =item protectQString($string)
