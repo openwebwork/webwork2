@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.37 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.38 2004/01/05 00:48:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -252,8 +252,14 @@ sub body {
 		$self->hidden_authen_fields,
 		$table,
 		CGI::br(),
-		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),
+		
 		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),
+		CGI::div( {style=>'background-color:red'},
+		    "There is NO undo when deleting sets. Use cautiously. All data for the set is lost.
+		    <br>If the set is re-assigned (rebuilt) all of the problem versions will be different.",
+		    CGI::br(),
+			CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),
+		),
 		CGI::end_form(),
 		CGI::br(),
 		
@@ -269,6 +275,7 @@ sub body {
 		CGI::br(),
 		
         # Single set import form
+        CGI::hr(),
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
 		$self->hidden_authen_fields,
 		CGI::b("Import a Single Set"),
@@ -288,6 +295,7 @@ sub body {
 		CGI::br(),
 		
         # Multiple set import form
+        CGI::hr(),
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
 		$self->hidden_authen_fields,
 		CGI::b("Import Multiple Sets"),
