@@ -1198,7 +1198,7 @@ sub checkKeyfields($) {
 				unless $value =~ m/^\d*$/;
 		} else {
 			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_])"
-				unless $value =~ m/^\w*$/;
+				unless $value =~ m/^[\w-]*$/;
 		}
 	}
 }
