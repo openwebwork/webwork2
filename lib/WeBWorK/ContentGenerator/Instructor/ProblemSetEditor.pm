@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.54 2004/05/19 18:24:50 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.55 2004/05/24 20:36:25 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -354,9 +354,10 @@ sub body {
 	);
 
 	if (@editForUser) {
-		my $publishedColor = ($setRecord->published) ? "Published" : "Unpublished";
-		print CGI::p("This set is currently", CGI::font({class=>$publishedColor}, (($setRecord->published) ? "visable to students." : "hidden from students.")),
-		CGI::br(), "(You cannot hide or make visable a set for specific users.)");
+		my $publishedClass = ($setRecord->published) ? "Published" : "Unpublished";
+		my $publishedText = ($setRecord->published) ? "visable to students" : "hidden from students";
+		print CGI::p("This set is currently", CGI::font({class=>$publishedClass}, $publishedText),
+		CGI::br(), "(You cannot hide or make a set visable for specific users.)");
 	} else {
 		print CGI::checkbox({type=>"checkbox", name=>"published", label=>"Visable to students", value=>"1", checked=>(($setRecord->published) ? 1 : 0)}), CGI::br();
 
