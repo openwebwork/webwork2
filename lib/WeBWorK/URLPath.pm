@@ -34,6 +34,8 @@ sub debug {
 
 =head1 VIRTUAL HEIRARCHY
 
+PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
+
  root                                /
  
  set_list                            /$courseID/
