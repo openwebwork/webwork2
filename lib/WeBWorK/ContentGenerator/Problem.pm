@@ -546,7 +546,7 @@ sub body {
 				? CGI::submit(-name=>"submitAnswers",
 					-label=>"Submit Answers")
 				: ""),
-			($can{checkAnswers}
+			( ($can{checkAnswers} and not $can{recordAnswers})
 				? CGI::submit(-name=>"checkAnswers",
 					-label=>"Check Answers")
 				: ""),
