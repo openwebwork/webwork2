@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/sql.conf.dist,v 1.2 2003/12/09 01:12:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.1 2004/01/03 20:07:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,6 +56,12 @@ in the layout.
  passwordRO     the password for the read-only account
  passwordRW     the password for the read-write account
 
+Be default, the name of the read-only account is "webworkRead", and the name of
+the read-write account is "webworkWrite". There are no passwords by default. 
+It is not recommended that you use only passwords to secure database access.
+Most RDBMSs allow IP-based authorization as well. As the system administrator,
+IT IS YOUR RESPONSIBILITY TO SECURE DATABASE ACCESS.
+
 Don't confuse the accounts above with the accounts of the users of a course.
 These are system-wide accounts which allow WeBWorK to talk to the database
 server.
@@ -73,9 +79,9 @@ Other parameters that can be given are as follows:
 
 my %sqlParams = (
 	usernameRO => "webworkRead",
-	passwordRO => "zaqwsxcderfv",
+	passwordRO => "",
 	usernameRW => "webworkWrite",
-	passwordRW => "qwerfdsazxcv",
+	passwordRW => "",
 	debug      => 0,
 );
 
