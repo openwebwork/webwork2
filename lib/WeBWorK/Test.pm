@@ -1,5 +1,8 @@
 package WeBWorK::Test;
 
+use Apache::Request;
+use Apache::Constants qw(:common);
+
 sub new($$$$$) {
 	my $class = shift;
 	my ($r, $courseEnvironment, $user, $key) = @_;
@@ -14,7 +17,7 @@ sub new($$$$$) {
 	return $self;
 }
 
-sub go {
+sub go($) {
 	my $self = shift;
 	$self->{r}->content_type("text/html");
 	$self->{r}->send_http_header;
@@ -35,6 +38,8 @@ key = $key
 </body>
 </html>
 EOT
+
+	return OK;
 }
 
 1;
