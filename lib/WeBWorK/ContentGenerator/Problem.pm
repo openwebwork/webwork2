@@ -563,11 +563,11 @@ sub viewOptions($) {
 
 sub previewAnswer($$) {
 	my ($self, $answerResult) = @_;
-	my $ce          = $self->{courseEnvironment};
-	my $effectiveUser        = $self->{effectiveUser};
-	my $set         = $self->{set};
-	my $problem     = $self->{problem};
-	my $displayMode = $self->{displayMode};
+	my $ce            = $self->{courseEnvironment};
+	my $effectiveUser = $self->{effectiveUser};
+	my $set           = $self->{set};
+	my $problem       = $self->{problem};
+	my $displayMode   = $self->{displayMode};
 	
 	# note: right now, we have to do things completely differently when we are
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
