@@ -46,9 +46,10 @@ use constant DVIPNG_ARGS => join " ", qw(
 
 =item new
 
-Returns a new ImageGenerator object. <C%options> must contain the following entries:
+Returns a new ImageGenerator object. <C%options> must contain the following
+entries:
 
- tempDir  => directory for storing temporary files (non-web accessible)
+ tempDir  => directory in which to create temporary processing directory
  dir	  => directory for resulting files
  url	  => url to directory for resulting files
  basename => base name for image files
@@ -70,8 +71,9 @@ sub new {
 
 =item add($string, $mode)
 
-Adds the equation in C<$string> to the object. C<$mode> can be "display" or "inline". If
-not specified, "inline" is assumed. Returns the proper HTML tag for displaying the image.
+Adds the equation in C<$string> to the object. C<$mode> can be "display" or
+"inline". If not specified, "inline" is assumed. Returns the proper HTML tag
+for displaying the image.
 
 =cut
 
@@ -108,12 +110,13 @@ sub add {
 
 =item render(%options)
 
-Uses LaTeX and dvipng to render the equations stored in the object. If the key "mtime" in
-C<%options> is given, it will be interpreted as a unix date and compared with the
-modification date on any existing copy of the first image to be generated. It is
-recommended that the modification time of the source file from which the equations
-originate be used for this value. If the key "refresh" in C<%options> is true, images
-will be regenerated regardless of when they were last modified.
+Uses LaTeX and dvipng to render the equations stored in the object. If the key
+"mtime" in C<%options> is given, its value will be interpreted as a unix date
+and compared with the modification date on any existing copy of the first image
+to be generated. It is recommended that the modification time of the source
+file from which the equations originate be used for this value. If the key
+"refresh" in C<%options> is true, images will be regenerated regardless of when
+they were last modified. If neither option is supplied, "refresh" is assumed.
 
 =cut
 
