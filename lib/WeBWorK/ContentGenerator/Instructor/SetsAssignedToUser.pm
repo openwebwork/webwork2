@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.9 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.10 2004/04/04 04:00:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -195,6 +195,14 @@ sub body {
 	print CGI::end_form();
 	
 	return "";
+}
+
+sub title {  
+        my ($self) = @_;  
+        my $r = $self->{r};  
+        my $userID = $r->urlpath->arg("userID");  
+  
+        return "Assigned Sets for user $userID";  
 }
 
 1;
