@@ -524,7 +524,6 @@ sub getProblemTeX {
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
-	warn "BODY TEXT=\n", $pg->{body_text}, "\n\n";
 	return $pg->{body_text};
 }
 
