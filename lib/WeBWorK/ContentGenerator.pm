@@ -121,7 +121,7 @@ sub template {
 				} elsif ($function eq "else" and @ifstack > 1) {
 					$ifstack[-1] = not $ifstack[-1];
 				} elsif ($function eq "endif" and @ifstack > 1) {
-					pop $ifstack;
+					pop @ifstack;
 				} elsif ($ifstack[-1]) {
 					print $self->$function(@_, {@args});
 				}
@@ -129,7 +129,7 @@ sub template {
 		}
 		
 		if ($ifstack[-1]) {
-			print substr $line, (defined pos $line) ? pos $line : 0);
+			print substr $line, (defined pos $line) ? pos $line : 0;
 		}
 	}
 }
@@ -146,7 +146,7 @@ sub cook_args($) {
 	while ($raw_args =~ m/\G\s*(\w*)="((?:[^"\\]|\\.)*)"/g) {
 		my ($key, $value) = ($1, $2);
 		# ... then, rip out all the protecty backspaces
-		$value =~ s/\(.)/$1/g;
+		$value =~ s/\\(.)/$1/g;
 		push @args, $key => $value;
 	}
 	

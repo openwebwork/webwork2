@@ -135,3 +135,11 @@ sub verify($) {
 }
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu
+
+=cut
