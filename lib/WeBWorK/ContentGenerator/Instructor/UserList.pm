@@ -25,29 +25,22 @@ sub initialize {
 	}
 	
 	if (defined($r->param('save_classlist'))) {
-		warn "processing form.\n";
 		my @userList = $db->listUsers;
 		foreach my $user (@userList) {
-			warn "processing user $user\n";
 			my $userRecord = $db->getUser($user);
 			my $permissionLevelRecord = $db->getPermissionLevel($user);
 			foreach my $field ($userRecord->NONKEYFIELDS()) {
-				warn "processing user field $field\n";
 				my $paramName = "user.${user}.${field}";
 				if (defined($r->param($paramName))) {
-					warn "processing parameter $paramName\n";
 					$userRecord->$field($r->param($paramName));
 				}
 			}
 			foreach my $field ($permissionLevelRecord->NONKEYFIELDS()) {
-				warn "processing permission field $field\n";
 				my $paramName = "permission.${user}.${field}";
 				if (defined($r->param($paramName))) {
-					warn "processing parameter $paramName\n";
 					$permissionLevelRecord->$field($r->param($paramName));
 				}
 			}
-			warn "saving changes\n";
 			$db->putUser($userRecord);
 			$db->putPermissionLevel($permissionLevelRecord);
 		}
