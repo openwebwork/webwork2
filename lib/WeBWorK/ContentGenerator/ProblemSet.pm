@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.40 2004/03/04 17:40:04 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.41 2004/03/04 21:05:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -304,7 +304,15 @@ sub problemListRow($$$) {
 	my $problem = shift;
 	
 	my $name = $problem->problem_id;
-	my $interactiveURL = "$name/?" . $self->url_authen_args;
+	
+	### FIXME  -- better way to find the path?
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $interactiveURL = "$root/$courseName/$setName/$name/?" . $self->url_authen_args;
+	###
 	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $name");
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = $problem->max_attempts < 0
