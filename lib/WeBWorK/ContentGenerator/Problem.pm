@@ -769,9 +769,6 @@ sub attemptResults($$$$$$) {
 	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
 		tempDir  => $ce->{webworkDirs}->{tmp},
-		dir	 => $ce->{courseDirs}->{html_temp},
-		url	 => $ce->{courseURLs}->{html_temp},
-		basename => $basename,
 		latex	 => $ce->{externalPrograms}->{latex},
 		dvipng   => $ce->{externalPrograms}->{dvipng},
 		useCache => 1,

@@ -403,9 +403,6 @@ sub defineProblemEnvir {
 	# Object for generating equation images
 	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
 		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
-		dir	 => $envir{tempDirectory},
-		url	 => $envir{tempURL},
-		basename => $basename,
 		latex	 => $envir{externalLaTeXPath},
 		dvipng   => $envir{externalDvipngPath},
 		useCache => 1,
