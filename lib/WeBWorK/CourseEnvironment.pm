@@ -30,6 +30,9 @@ sub new {
 	$@ and die "Could not evaluate course environment file $courseEnvironmentFile: $@";
 
 	my $self = { %globalConf, %courseConf };
+	
+	# This comes in as a parameter to new(), not from any file.
+	$self->{courseName} = $courseName;
 	bless $self, $class;
 	return $self;
 }
