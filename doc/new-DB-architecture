@@ -158,7 +158,7 @@ password	user_id
 permission	user_id
 key		user_id
 user		     id
-set		     id
+set		             id
 set_user	user_id, set_id
-problem		     id, set_id
+problem		         set_id,         id
 problem_user	user_id, set_id, problem_id

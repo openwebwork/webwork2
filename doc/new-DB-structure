@@ -37,7 +37,7 @@ set
 	open_date
 	due_date
 	answer_date
-	problem_order
+	problem_order		(not implemented)
 set_user
 	user_id		*,=> user.id
 	set_id		*,=> set.id
@@ -47,7 +47,7 @@ set_user
 	open_date	!
 	due_date	!
 	answer_date	!
-	problem_order	!
+	problem_order	!	(not implemented)
 problem
 	id		*
 	set_id		*,=> set.id
