@@ -1,18 +1,18 @@
 {
 	field_name => {
-		type => /text|date|password|dropdown/,
+		type => /number|text|date|password|enumerable/,
 		size => /\d*/,
 		specificity => /global|user/,
 		access => /readonly|writeonly|readwrite/,
-		items => { # Only for dropdown
-			name => "value",
-			name => "value",
+		items => { # Only for enumerable
+			value => "label",
+			value => "label",
 		}
 	}
 }
 
 type	number, text, longtext, date
-name	
+label	
 value
 specificity	global	user
 	Indicates whether it is a global setting that is overridden for a user,
