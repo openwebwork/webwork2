@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.53 2004/07/20 23:21:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.54 2004/09/08 06:38:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -151,11 +151,10 @@ use WeBWorK::Utils qw(runtime_use);
 
 =over
 
-=item new($ce)
+=item new($dbLayout)
 
-The C<new> method creates a DB object and brings up the underlying
-schema/driver structure according to the C<%dbLayout> hash in C<$ce>, a
-WeBWorK::CourseEnvironment object.
+The C<new> method creates a DB object and brings up the underlying schema/driver
+structure according to the hash referenced by C<$dbLayout>.
 
 =back
 
@@ -344,7 +343,7 @@ sub hashDatabaseOK {
 		$self->{set_user}->{driver}->connect("ro")
 			or return 0, @results, "Failed to connect to set_user database.";
 		
-		# get PSVNs for global user (¾N)
+		# get PSVNs for global user (æN)
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
 		
@@ -358,7 +357,7 @@ sub hashDatabaseOK {
 			#warn "got setID '$setID'\n";
 		}
 		
-		# get PSVNs for each setID (¾N*M)
+		# get PSVNs for each setID (æN*M)
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
 		
