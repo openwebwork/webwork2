@@ -524,7 +524,7 @@ sub body {
 			# don't show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print $self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print "PREVIEW ONLY -- NOT RECORDED",CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
