@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/snippets/setHeader.pg,v 1.5 2004/03/04 04:43:44 gage Exp $
+# $CVSHeader: webwork-modperl/conf/snippets/setHeader.pg,v 1.7 2004/04/22 22:15:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,15 +22,34 @@ loadMacros(
 	
 );
 
+
+####################################################
+#
+# The item below printed out only when a hardcopy is made.
+#
+####################################################
+
 TEXT($BEGIN_ONE_COLUMN);
 
-TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>"",Latex2HTML=>""));
+TEXT(MODES(TeX =>EV3(<<'END_TEXT'),HTML=>""));
+
 \noindent {\large \bf $studentName}
 \hfill
-\noindent {\large \bf MTH 161  $sectionNumber   Fall 2003}
+\noindent {\large \bf \{protect_underbar($courseName)\}  
+$sectionNumber   Fall 2003}
 \par
 
-EOT
+END_TEXT
+
+##########################################################
+# 
+# Items printed both to the screen when a hardcopy is made.
+#
+# You can insert a url pointing to your course's home page 
+# a few lines below.  Remove the comment (#) symbol from the line
+# to make it active.
+#
+##########################################################
 
 BEGIN_TEXT
 
@@ -40,17 +59,22 @@ $PAR
 
 $PAR
 The 
-(* home page *)
+$BR
 \{ 
-#htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home page") 
+htmlLink(qq!http://webwork.math.rochester.edu!,
+"(* replace with url for the course home page *)") 
 \} 
+$BR
 for the course contains the syllabus, grading policy and other information.  
 $PAR
 END_TEXT
-
-##################
-# EDIT BELOW HERE
-##################
+###########################################################
+#
+# This is a good place to issue instructions or give comments
+# for this problem set.
+#
+# EDIT BELOW 'BEGIN_TEXT'
+###########################################################
 BEGIN_TEXT
 $HR
 $PAR
@@ -59,10 +83,18 @@ a model for creating files which introduce each problem set.
 $PAR
 $HR
 END_TEXT
-##################
-# EDIT ABOVE HERE
-##################
+###########################################################
+# EDIT ABOVE 'END_TEXT'
+###########################################################
+
+###########################################################
+#
+# The item below will be printed for both the screen version and the
+# hardcopy version.
+#
+###########################################################
 BEGIN_TEXT
+
 The primary purpose of WeBWorK is to let you know that you are getting the correct answer or to alert
 you if you are making some kind of mistake. Usually you can attempt a problem as many times as you want before
 the due date.  However, if you are having trouble figuring out your error, you should
@@ -82,7 +114,9 @@ You can use the Feedback button on each problem
 page to send e-mail to the professors. 
 
 
-$END_ONE_COLUMN
+
 END_TEXT
+
+TEXT($END_ONE_COLUMN);
 
 ENDDOCUMENT();        # This should be the last executable line in the problem.
