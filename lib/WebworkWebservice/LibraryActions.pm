@@ -36,14 +36,14 @@ our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
 our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
 #warn "library ce \n ", WebworkWebservice::pretty_print_rh($ce);
-warn "LibraryActions is ready";
+#warn "LibraryActions is ready";
 
 ##############################################
 #   Obtain basic information about local libraries
 ##############################################
  my %prob_libs	= %{$ce->{courseFiles}->{problibs} };
 
- warn pretty_print_rh(\%prob_libs);
+ #warn pretty_print_rh(\%prob_libs);
  # replace library names with full paths
  
  my $templateDir    = $ce->{courseDirs}->{templates};
@@ -110,7 +110,7 @@ sub listLib {
 		$out->{error} = "Could not find library:".$rh->{library_name}.":";
 		return($out);
 	}
-    warn "library directory path is $dirPath";
+    #warn "library directory path is $dirPath";
 	my @outListLib;
 	my $wanted = sub {
 		my $name = $File::Find::name;
@@ -125,7 +125,7 @@ sub listLib {
 	 
 	my $command = $rh->{command};
 	$command = 'all' unless defined($command);
-			$command eq 'all' &&    do {print "$dirPath\n\n";
+			$command eq 'all' &&    do {#print "$dirPath\n\n";
 										find($wanted, $dirPath);
 										@outListLib = sort @outListLib;
 										$out->{ra_out} = \@outListLib;
@@ -148,13 +148,14 @@ sub listLib {
 			};
 
 			$command eq 'listSet' && do {@outListLib=();
-			 							 my $dirPath2 = $dirPath . $rh->{set};
+										 my $separator = ($dirPath =~m|/$|) ?'' : '/';
+			 							 my $dirPath2 = $dirPath . $separator . $rh->{set};
 			 							 
 			 							 if ( -e $dirPath2) {
 											 find($wanted, $dirPath2);
 											 $out ->{text} = join("\n", sort @outListLib );
 										 } else {
-										   $out->{error} = "Can't open directory $dirPath2";
+										   $out->{error} = "Can't open directory  $dirPath2";
 										 }
 										 return($out);
 

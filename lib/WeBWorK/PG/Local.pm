@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.14 2004/06/26 20:44:54 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.15 2004/10/15 20:33:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -180,17 +180,39 @@ sub new_helper {
 	
 	# store the problem source
 	#warn "PG: storing the problem source\n";
-	my $sourceFile = $problem->source_file;
-	$sourceFile = $ce->{courseDirs}->{templates}."/".$sourceFile
-		unless ($sourceFile =~ /^\//);
-	eval { $translator->source_string(readFile($sourceFile)) };
-	if ($@) {
+	my $source ='';
+	my $sourceFilePath = '';
+	my $readErrors = undef;
+	if (ref($translationOptions->{r_source}) ) {
+		# the source for the problem is already given to us as a reference to a string
+		$source = ${$translationOptions->{r_source}};
+	} else {
+	    # the source isn't given to us so we need to read it 
+	    # from a file defined by the problem
+	    
+		# we  grab the sourceFilePath from the problem
+		$sourceFilePath = $problem->source_file;
+	    	
+	    # the path to the source file is usually given relative to the 
+	    # the templates directory. Unless the path starts with / assume
+	    # that it is relative to the templates directory
+	    
+	    $sourceFilePath = $ce->{courseDirs}->{templates}."/"
+	    	         .$sourceFilePath unless ($sourceFilePath =~ /^\//);
+	    #now grab the source
+		eval {$source = readFile($sourceFilePath) };
+		$readErrors = $@ if $@;
+	 }
+    # put the source into the translator object
+	eval { $translator->source_string( $source ) } unless $readErrors;
+	$readErrors .="\n  $@ " if $@;
+	if ($readErrors) {
 		# well, we couldn't get the problem source, for some reason.
 		return bless {
 			translator => $translator,
 			head_text  => "", 
 			body_text  => <<EOF,
-WeBWorK::Utils::readFile($sourceFile) says: 
+WeBWorK::Utils::readFile($sourceFilePath) says: 
 $@
 EOF
 			answers    => {},
