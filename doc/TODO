@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.28 2002-12-09 19:57:33 malsyned Exp $
+# $Id: TODO,v 1.29 2002-12-13 21:14:52 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -81,12 +81,11 @@ DONE	Options - email address and password
 
 >>>>> FOR DECEMBER PREVIEW RELEASE <<<<<
 
-	Feedback - need nice modular way of sending email
+DONE	Feedback - need nice modular way of sending email
 		customize reciever, make object dumps prettier, link to context
 DONE	Professor - redirect to the old system
---->	&send_mail_to should collect info and send it to IO.pm for processing
 	pretty die messages (from outside of the translator)
-	make sure students can't look at not-yet-open problem sets
+DONE	make sure students can't look at not-yet-open problem sets
 	make answer previews use $displayMode
 	make preview-on-submit optional
 	check TTH mode character encodings on mac

@@ -343,6 +343,7 @@ sub print_form_data {
 # 	style = text|image
 # 	image = URL of image
 # 	text  = text separator
+# loginstatus
 # links
 # siblings
 # nav
