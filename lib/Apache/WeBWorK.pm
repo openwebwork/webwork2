@@ -139,6 +139,8 @@ sub message($$) {
   <li>An error about an <tt>undefined value</tt> often means that you asked for
   an object (like a user, problem set, or problem) that does not exist, and the
   we (the programmers) were negligent in checking for that.</li>
+  <li>An error about <tt>permission denied</tt> might suggest that the web
+  server does not have permission to read or write a file or directory.</li>
  </ul>
  <h2>Error message</h2>
  <p><tt>$exception</tt></p>
