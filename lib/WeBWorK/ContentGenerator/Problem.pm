@@ -547,8 +547,22 @@ sub body {
 						-name    => "showCorrectAnswers",
 						-checked => $will{showCorrectAnswers},
 						-label   => "Show correct answers",
-					) . CGI::br()
-				: "" ),
+					) ." "
+				: "" ), 
+			($can{showHints} 
+				? CGI::checkbox(
+					-name    => "showHints",
+					-checked => $will{showHints},
+					-label   => "Show Hints",
+					) . " "
+				: " " ),
+			($can{showSolutions} 
+				? CGI::checkbox(
+					-name    => "showSolutions",
+					-checked => $will{showSolutions},
+					-label   => "Show Solutions",
+					) . " "
+				: " " ),CGI::br(),
 			CGI::submit(-name=>"previewAnswers",
 				-label=>"Preview Answers"),
 			($can{recordAnswers}
@@ -803,18 +817,7 @@ sub viewOptions($) {
 			-checked => $will{showOldAnswers},
 			-label   => "Saved answers",
 		), "&nbsp;&nbsp;".CGI::br();
-	$can{showHints} and $optionLine .= join "",
-		CGI::checkbox(
-			-name    => "showHints",
-			-checked => $will{showHints},
-			-label   => "Hints",
-		), "&nbsp;&nbsp;".CGI::br();
-	$can{showSolutions} and $optionLine .= join "",
-		CGI::checkbox(
-			-name    => "showSolutions",
-			-checked => $will{showSolutions},
-			-label   => "Solutions",
-		), "&nbsp;&nbsp;".CGI::br();
+
 	$optionLine and $optionLine .= join "", CGI::br();
 	
 	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
