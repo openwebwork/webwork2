@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.39 2004/03/18 21:08:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.40 2004/04/05 03:58:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,7 @@ use Date::Format;
 use Date::Parse;
 use Errno;
 use File::Path qw(rmtree);
+use Carp;
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -59,8 +60,8 @@ our @EXPORT_OK = qw(
 	undefstr
 );
 
-sub runtime_use($) {
-	return unless @_;
+sub runtime_use {
+	croak "runtime_use: no module specified" unless $_[0];
 	eval "package Main; require $_[0]; import $_[0]";
 	die $@ if $@;
 }
