@@ -408,6 +408,10 @@ sub defineProblemEnvir {
 		basename => $basename,
 		latex	 => $envir{externalLaTeXPath},
 		dvipng   => $envir{externalDvipngPath},
+		useCache => 1,
+		cacheDir => $ce->{webworkDirs}->{equationCache},
+		cacheURL => $ce->{webworkURLs}->{equationCache},
+		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
 	);
 	
 	# Other things...
