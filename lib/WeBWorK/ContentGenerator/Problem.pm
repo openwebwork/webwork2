@@ -12,13 +12,13 @@ use Apache::Constants qw(:common);
 ###############################################################################
 # Configuration
 ###############################################################################
-
-my $COURSE_SCRIPTS_DIRECTORY = '/home/malsyned/webwork/system/courseScripts/';
-my $MACRO_DIRECTORY 	= 	'/home/malsyned/webwork-modperl/courses/demoCourse/templates/macros/';
-my $TEMPLATE_DIRECTORY 	= 	'/home/malsyned/rochester_problib/';
-my $TEMP_URL   			=	'http://127.0.0.1/~gage/rochester_problibtmp/';
-##my $HTML_DIRECTORY 		= 	'/Users/gage/Sites/rochester_problib/'  #already obtained from courseEnvironment
-my $HTML_URL 			=	'http://127.0.0.1/~gage/rochester_problib/';
+my $USER_DIRECTORY = '/Users/gage';
+my $COURSE_SCRIPTS_DIRECTORY = "$USER_DIRECTORY/webwork/system/courseScripts/";
+my $MACRO_DIRECTORY 	= 	"$USER_DIRECTORY/webwork-modperl/courses/demoCourse/templates/macros/";
+my $TEMPLATE_DIRECTORY 	= 	"$USER_DIRECTORY/rochester_problib/";
+my $TEMP_URL   			=	"http://127.0.0.1/~gage/rochester_problibtmp/";
+##my $HTML_DIRECTORY 		= 	"/Users/gage/Sites/rochester_problib/"  #already obtained from courseEnvironment
+my $HTML_URL 			=	"http://127.0.0.1/~gage/rochester_problib/";
 my $TEMP_DIRECTORY = ""; # has to be here... for now
 
 ###############################################################################
