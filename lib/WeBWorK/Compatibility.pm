@@ -147,6 +147,7 @@ sub update_global_user {
 	# create the global records for these sets
 	###############################
 	foreach my $newSetName (@sets_to_assign) {
+	  $WeBWorK::timer->continue("Compatibility.pm: begin adding set $newSetName") if defined $WeBWorK::timer;
 	   warn "initializing set $newSetName";  # FIXME
 		my $newSetRecord = $db->{set}->{record}->new();
 		my $oldSetRecord = $assigned_sets{$newSetName};
@@ -174,6 +175,7 @@ sub update_global_user {
 			eval {$db->addGlobalProblem($problemRecord)};
 			push( @results, "problem adding ".$oldProblemRecord->source_file." to $newSetName: ".$@) if $@;
 		}
+	  $WeBWorK::timer->continue("Compatibility.pm: end adding set $newSetName") if defined $WeBWorK::timer;
 	}
 	
 
