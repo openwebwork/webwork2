@@ -19,7 +19,7 @@
 		border-width: 1px; 
 		margin: 0px 10pt; 
 		border-spacing: 1px;
-		float: left
+		
 	}
 	
 	table.attemptResults td,table.attemptResults th {
@@ -36,7 +36,9 @@
 	div.problem {
 		clear: both; 
 	}
-	
+	p.emphasis {
+		font-style:italic;
+	}
 	.edgebox {
 		background-color: #123567;
 		color: white;
