@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.35 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.36 2004/01/15 19:42:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,10 +63,10 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile readDirectory);
-
+use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
 use constant HIDE_USERS_THRESHHOLD => 20;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter edit delete import export)];
+use constant VIEW_FORMS => [qw(filter edit  import export add delete)];
 use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode sortField)];
 
 use constant SORT_SUBS => {
@@ -144,14 +144,48 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	}
 };
+sub pre_header_initialize {
+	my $self   = shift;
+	my $r      = $self->{r};
+	my $ce     = $self->{ce};
+	
+	# Handle redirects, if any.
+	##############################
+	# Redirect to the addUser page
+	##################################
+	
+	defined($r->param('action')) && $r->param('action') eq 'add' && do {
+		# fix url and redirect
+		my $root              = $ce->{webworkURLs}->{root};
+		my $courseName        = $ce->{courseName};
+		my $numberOfStudents  = $r->param('number_of_students');
+		warn "number of students not defined " unless defined $numberOfStudents;
 
+		my $uri="$root/$courseName/instructor/add_users?number_of_students=$numberOfStudents&".$self->url_authen_args;
+		#FIXME  does the display mode need to be defined?
+		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
+		# even that might not work with every browser since there are two effective User assignments.
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+	};
+}
+# FIXME  -- this should be moved up to instructor or contentgenerator
+sub header {
+	my $self = shift;
+	return REDIRECT if $self->{noContent};
+	my $r = $self->{r};
+	$r->content_type('text/html');
+	$r->send_http_header();
+	return OK;
+}
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
+	my $r      = $self->{r};
+	my $db     = $self->{db};
+	my $ce     = $self->{ce};
+	my $authz  = $self->{authz};
+	my $user   = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "modify_student_data")) {
 		$self->{submitError} = "You are not authorized to modify student data";
@@ -577,18 +611,21 @@ sub edit_handler {
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return join("",
+	    qq!\n<div style="background-color:red">!,
 		"Delete ",
 		CGI::popup_menu(
 			-name => "action.delete.scope",
-			-values => [qw(visible selected)],
-			-default => $actionParams{"action.delete.scope"}->[0] || "selected",
+			-values => [qw(none visible selected)],
+			-default => $actionParams{"action.delete.scope"}->[0] || "none",
 			-labels => {
-				visible => "visible users",
-				selected => "selected users"
+			    none     => "no users.",
+				visible  => "visible users.",
+				selected => "selected users."
 			},
 			-onchange => $onChange,
 		),
 		CGI::em(" Deletion destroys all user-related data and is not undoable!"),
+		"</div>\n",
 	);
 }
 
@@ -597,7 +634,7 @@ sub delete_handler {
 	my $db = $self->{db};
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 	
-	my @userIDsToDelete;
+	my @userIDsToDelete = ();
 	if ($scope eq "visible") {
 		@userIDsToDelete = @{ $self->{visibleUserIDs} };
 	} elsif ($scope eq "selected") {
@@ -622,7 +659,17 @@ sub delete_handler {
 	my $num = @userIDsToDelete;
 	return "deleted $num user" . ($num == 1 ? "" : "s");
 }
+sub add_form {
+	my ($self, $onChange, %actionParams) = @_;
 
+    return "Add ", CGI::input({name=>'number_of_students', value=>1,size => 3}), " student(s). ";
+}
+
+sub add_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	# This action is redirected to the addUser.pm module using ../instructor/add_user/...
+	return "Nothing done by add student handler";
+}
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return join(" ",
