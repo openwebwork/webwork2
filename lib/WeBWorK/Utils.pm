@@ -26,13 +26,23 @@ WeBWorK::Utils - useful utilities used by other WeBWorK modules.
 use strict;
 use warnings;
 #use Apache::DB;
-use Date::Format;
-use Date::Parse;
+use DateTime;
 use Errno;
 use File::Path qw(rmtree);
 use Carp;
 
 use constant MKDIR_ATTEMPTS => 10;
+
+# "standard" WeBWorK date/time format (for set definition files):
+#     %m/%d/%y at %I:%M%P
+# where:
+#     %m = month number, starting with 01
+#     %d = numeric day of the month, with leading zeros (eg 01..31)
+#     %y = year (2 digits)
+#     %I = hour, 12 hour clock, leading 0's)
+#     %M = minute, leading 0's
+#     %P = am or pm (Yes %p and %P are backwards :)
+use constant DATE_FORMAT => "%m/%d/%y at %I:%M%P";
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -248,33 +258,88 @@ sub removeTempDirectory($) {
 # Date/time processing
 ################################################################################
 
-sub formatDateTime($) {
-	my $dateTime = shift;
-	# "standard" WeBWorK date/time format (for set definition files):
-	# %m 	month number, starting with 01
-	# %d 	numeric day of the month, with leading zeros (eg 01..31)
-	# %y	year (2 digits)
-	# %I 	hour, 12 hour clock, leading 0's)
-	# %M 	minute, leading 0's
-	# %P 	am or pm (Yes %p and %P are backwards :)
-	#return time2str("%m/%d/%y %I:%M%P", $dateTime); 
-	return time2str("%m/%d/%y at %I:%M%P", $dateTime);
+=head2 Date/time processing
+
+=over
+
+=item $dateTime = parseDateTime($string, $display_tz)
+
+Parses $string as a datetime. If $display_tz is given, $string is assumed to be
+in that timezone. Otherwise, the server's timezone is used. The result,
+$dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
+
+=cut
+
+sub parseDateTime($;$) {
+	my ($string, $display_tz) = @_;
+	$display_tz ||= "local";
+	warn "parseDateTime('$string', '$display_tz')\n";
+	
+	# Method #1: using Date::Parse
+	use Date::Parse;
+	$string =~ s/\s*\bat\b\s*/ /; # Date::Parse can't handle the "at" in WeBWorK datetimes.
+	my $epoch = str2time($string);
+	#warn "\tMethod #1: str2time($string) = $epoch\n";
+	my $dt = DateTime->from_epoch(epoch => $epoch, time_zone => "local");
+	#warn "\tMethod #1: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	
+	# Method #2: using Date::Manip
+	#use Date::Manip;
+	#my $dm = ParseDateString($string);
+	#warn "\tMethod #2: ParseDateString($string) = $dm\n";
+	#use DateTime::Format::DateManip;
+	#my $dt = DateTime::Format::DateManip->parse_datetime($dm);
+	#warn "\tdMethod #2: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	
+	my $dt2 = $dt->clone->set_time_zone("floating")->set_time_zone($display_tz);
+	#warn "\t\$dt2 = ", $dt2->strftime(DATE_FORMAT." %Z"), "\n";
+	my $epoch2 = $dt2->epoch;
+	#warn "\t\$epoch2 (return value) = $epoch2\n";
+	
+	return $epoch2;
 }
 
-sub parseDateTime($) {
-	my $string = shift;
-	# need to bring our string from  "%m/%d/%y at %I:%M%P" to "%m/%d/%y %I:%M%P" format.
-	$string =~ s/\bat\b/ /;
-	return str2time($string);
+=item $string = formatDateTime($dateTime, $display_tz)
+
+Formats the UNIX datetime $dateTime in the standard WeBWorK datetime format.
+$dateTime is assumed to be in the server's time zone. If $display_tz is given,
+the datetime is converted from the server's timezone to the timezone specified.
+
+=cut
+
+sub formatDateTime($;$) {
+	my ($dateTime, $display_tz) = @_;
+	$display_tz ||= "local";
+	#warn "formatDateTime('$dateTime', '$display_tz')\n";
+	
+	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
+	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	return $dt->strftime(DATE_FORMAT);
 }
+
+=item $string = textDateTime($string_or_dateTime)
+
+Accepts a UNIX datetime or a formatted string, returns a formatted string.
+
+=cut
 
 sub textDateTime($) {
 	return ($_[0] =~ m/^\d*$/) ? formatDateTime($_[0]) : $_[0];
 }
 
+=item $dateTIme = intDateTime($string_or_dateTime)
+
+Accepts a UNIX datetime or a formatted string, returns a UNIX datetime.
+
+=cut
+
 sub intDateTime($) {
 	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
 }
+
+=back
+
+=cut
 
 ################################################################################
 # Logging
