@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.109 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,6 @@ use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2st
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
 
-my $timer0_ON=0;  # times pg translation phase
 
 ############################################################
 # 
@@ -278,7 +277,7 @@ sub pre_header_initialize {
 	
 	##### translation #####
 
-	$WeBWorK::timer0->continue("begin pg processing") if $timer0_ON;
+	$WeBWorK::timer->continue("begin pg processing") if defined($WeBWorK::timer);
 	my $pg = WeBWorK::PG->new(
 		$courseEnv,
 		$effectiveUser,
@@ -296,7 +295,7 @@ sub pre_header_initialize {
 		},
 	);
 	
-	$WeBWorK::timer0->continue("end pg processing") if $timer0_ON;
+	$WeBWorK::timer->continue("end pg processing") if defined($WeBWorK::timer);
 	##### fix hint/solution options #####
 	
 	$can{showHints}     &&= $pg->{flags}->{hintExists}  
@@ -383,7 +382,7 @@ sub siblings {
 }
 
 sub nav {
-	$WeBWorK::timer0->continue("begin nav subroutine") if $timer0_ON;
+	$WeBWorK::timer->continue("begin nav subroutine") if defined($WeBWorK::timer);
 	my $self = shift;
 	my $args = $_[-1];
 	my $setName = $self->{set}->set_id;
@@ -416,7 +415,7 @@ sub nav {
 		: "") , "navNext";
 	
 	my $result = $self->navMacro($args, $tail, @links);
-	$WeBWorK::timer0->continue("end nav subroutine") if $timer0_ON;
+	$WeBWorK::timer->continue("end nav subroutine") if defined($WeBWorK::timer);
 	return $result;
 }
 
@@ -470,7 +469,7 @@ sub body {
 	}
 	
 	##### answer processing #####
-	$WeBWorK::timer0->continue("begin answer processing") if $timer0_ON;
+	$WeBWorK::timer->continue("begin answer processing") if defined($WeBWorK::timer);
 	# if answers were submitted:
 	my $scoreRecordedMessage;
 	if ($submitAnswers) {
@@ -566,7 +565,7 @@ sub body {
 		}
 	}
 	
-	$WeBWorK::timer0->continue("end answer processing") if $timer0_ON;
+	$WeBWorK::timer->continue("end answer processing") if defined($WeBWorK::timer);
 	
 	##### output #####
 	
