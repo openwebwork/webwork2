@@ -39,7 +39,6 @@ sub body {
 	push @sets, $db->getGlobalSet($_)
 		foreach ($db->listGlobalSets);
 	
-	warn "counting started";
 	# Count the number of users each set is assigned to
 	my %counts;
 	foreach my $set (@sets) {
@@ -48,7 +47,6 @@ sub body {
 		my $count = 0;
 		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
-	warn "counting done";
 	
 	# Sort @sets based on the sort parameter
 	# Invalid sort types will just cause an unpredictable ordering, which is no big deal.
