@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.39 2004/05/27 03:48:04 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.40 2004/05/27 17:04:40 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -413,10 +413,12 @@ sub saveFileChanges {
 	 	# store new permanent file name in the $self->currentSourceFilePath for use in body 
 		$problemContents = $r->param('problemContents');
 		# Save the user in case they forgot to end the file with .pg
-		my $save_to_new_file = $r->param('save_to_new_file');
-		$save_to_new_file =~ s/\.pg$//; # remove it if it is there
-		$save_to_new_file .= '.pg'; # put it there
-		$r->param('save_to_new_file', $save_to_new_file);
+		if($self->{file_type} == 'problem') {
+			my $save_to_new_file = $r->param('save_to_new_file');
+			$save_to_new_file =~ s/\.pg$//; # remove it if it is there
+			$save_to_new_file .= '.pg'; # put it there
+			$r->param('save_to_new_file', $save_to_new_file);
+		}
 		$currentSourceFilePath = $ce->{courseDirs}->{templates} . '/' . $r->param('save_to_new_file'); 		
 		$self->{currentSourceFilePath} = $currentSourceFilePath;	
 		$self->{problemPath} = $currentSourceFilePath;
