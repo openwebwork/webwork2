@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.147 2004/06/26 16:12:16 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.148 2004/06/28 14:26:10 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -136,7 +136,7 @@ sub pre_header_initialize {
 			if(not defined $globalProblem) {
 				my $sourceFilePath = $r->param("sourceFilePath");
 				# These are problems from setmaker.  If declared invalid, they won't come up
-				#$self->{invalidProblem} = $self->{invalidSet} = 1 if defined $sourceFilePath;
+				$self->{invalidProblem} = $self->{invalidSet} = 1 unless defined $sourceFilePath;
 #				die "Problem $problemNumber in set $setName does not exist" unless defined $sourceFilePath;
 				$problem = fake_problem($db);
 				$problem->problem_id(1);
