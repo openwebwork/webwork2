@@ -223,7 +223,7 @@ sub info {
 						  ."&file_type=course_info"
 			;
 			my $editText      = "Edit message file";
-			$editText         = "Edit temporary message file" if $r->param("editMode") eq 'temporaryFile';
+			$editText         = "Edit temporary message file" if defined($r->param("editMode")) and $r->param("editMode") eq 'temporaryFile';
 			print CGI::br(), CGI::a({-href=>$editURL}, $editText);
 	    }
 	    
