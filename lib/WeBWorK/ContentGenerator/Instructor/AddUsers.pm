@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.11 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.12 2004/04/05 03:58:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding user
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Utils qw/cryptPassword/;
 
 sub initialize {
 	my ($self) = @_;
@@ -47,7 +48,8 @@ sub initialize {
 		my $numberOfStudents    = $r->param('number_of_students');
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
 		foreach my $i (1..$numberOfStudents) {
-		    my $new_user_id        =   $r->param("new_user_id_$i");
+		    my $new_user_id  = $r->param("new_user_id_$i");
+		    my $new_password = cryptPassword($r->param("student_id_$i"));
 		    next unless defined($new_user_id) and $new_user_id;
 			push @userIDs, $new_user_id;
 		    
@@ -57,6 +59,7 @@ sub initialize {
 			$newUser->user_id($new_user_id);
 			$newPermissionLevel->user_id($new_user_id);
 			$newPassword->user_id($new_user_id);
+			$newPassword->password($new_password);
 			$newUser->last_name($r->param("last_name_$i"));
 			$newUser->first_name($r->param("first_name_$i"));
 			$newUser->student_id($r->param("student_id_$i"));
