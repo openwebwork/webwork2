@@ -11,6 +11,27 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::DB::Record::Set;
+
+sub initialize {
+	my $self = shift;
+	my $r = $self->{r};
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $courseName = $ce->{courseName};
+	
+	if (defined($r->param('deleteSelected'))) {
+		foreach my $wannaDelete ($r->param('selectedSet')) {
+			$db->deleteGlobalSet($wannaDelete);
+		}
+	} elsif (defined($r->param('makeNewSet'))) {
+		my $newSetRecord = WeBWorK::DB::Record::Set->new();
+		my $newSetName = $r->param('newSetName');
+		$newSetRecord->set_id($newSetName);
+		$db->addGlobalSet($newSetRecord) unless $db->getGlobalSet($newSetName);
+	}
+
+}
 
 sub title {
 	my $self = shift;

@@ -121,6 +121,11 @@ sub initialize {
 				
 			}
 		}
+	} elsif (defined($r->param('makeNewSet'))) {
+		my $newSetRecord = WeBWorK::DB::Record::Set->new();
+		$newSetRecord->set_id($r->param('newSetName'));
+		warn "Adding new set: ", $newSetRecord->set_id;
+		$db->addGlobalSet($newSetRecord);
 	}
 }
 
@@ -287,6 +292,11 @@ sub body {
 	print hiddenUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
+	print CGI::end_form();
+	
+	print CGI::start_form({method=>"post", action=>"/webwork/$courseName/instructor/addProblem/$setName/"});
+	print CGI::input({type=>"submit", name=>"addProblem", value=>"Add Problem"});
+	print $self->hidden_authen_fields;
 	print CGI::end_form();
 	
 	return "";
