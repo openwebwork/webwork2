@@ -24,6 +24,7 @@ use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
 ############################################################
 # 
 # user
+# effectiveUser
 # key
 # 
 # displayMode
@@ -43,8 +44,8 @@ sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
 	my $courseEnv = $self->{courseEnvironment};
 	my $r = $self->{r};
-	my $authUserName = $r->param("user");
-	my $userName = $r->param("effectiveUser");
+	my $userName = $r->param('user');
+	my $effectiveUserName = $r->param('effectiveUser');
 	
 	##### database setup #####
 	
@@ -53,10 +54,11 @@ sub pre_header_initialize {
 	my $authdb = WeBWorK::DB::Auth->new($courseEnv);
 	
 	my $user            = $cldb->getUser($userName);
-	my $set             = $wwdb->getSet($userName, $setName);
-	my $problem         = $wwdb->getProblem($userName, $setName, $problemNumber);
-	my $psvn            = $wwdb->getPSVN($userName, $setName);
-	my $permissionLevel = $authdb->getPermissions($authUserName);
+	my $effectiveUser   = $cldb->getUser($effectiveUserName);
+	my $set             = $wwdb->getSet($effectiveUserName, $setName);
+	my $problem         = $wwdb->getProblem($effectiveUserName, $setName, $problemNumber);
+	my $psvn            = $wwdb->getPSVN($effectiveUserName, $setName);
+	my $permissionLevel = $authdb->getPermissions($userName);
 	
 	##### form processing #####
 	
@@ -118,7 +120,7 @@ sub pre_header_initialize {
 	
 	my $pg = WeBWorK::PG->new(
 		$courseEnv,
-		$user,
+		$effectiveUser,
 		$r->param('key'),
 		$set,
 		$problem,
@@ -146,6 +148,7 @@ sub pre_header_initialize {
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
+	$self->{effectiveUser}   = $effectiveUser;
 	$self->{set}             = $set;
 	$self->{problem}         = $problem;
 	$self->{permissionLevel} = $permissionLevel;
@@ -209,10 +212,10 @@ sub siblings {
 	print CGI::strong("Problems"), CGI::br();
 	
 	my $wwdb = $self->{wwdb};
-	my $user = $self->{userName};
+	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @problems;
-	push @problems, $wwdb->getProblem($user, $setName, $_)
-		foreach ($wwdb->getProblems($user, $setName));
+	push @problems, $wwdb->getProblem($effectiveUser, $setName, $_)
+		foreach ($wwdb->getProblems($effectiveUser, $setName));
 	foreach my $problem (sort { $a->id <=> $b->id } @problems) {
 		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->id."/?"
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
@@ -230,14 +233,14 @@ sub nav {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
-	my $wwdb = $self->{wwdb};
-	my $user = $self->{userName};
+	my $wwdb          = $self->{wwdb};
+	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my $tail = "&displayMode=".$self->{displayMode};
 	
 	my @links = ("Problem List" => "$root/$courseName/$setName");
 	
-	my $prevProblem = $wwdb->getProblem($user, $setName, $problemNumber-1);
-	my $nextProblem = $wwdb->getProblem($user, $setName, $problemNumber+1);
+	my $prevProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber-1);
+	my $nextProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber+1);
 	unshift @links, "Previous Problem" => $prevProblem
 		? "$root/$courseName/$setName/".$prevProblem->id
 		: "";
