@@ -1438,7 +1438,7 @@ sub readSetDef {
 		#####################################################################
 		# Check and format dates
 		#####################################################################
-		my ($time1, $time2, $time3) = map { $_ =~ s/\s*at\s*/ /; $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
 			warn "The open date: $openDate, due date: $dueDate, and answer date: $answerDate must be defined and in chronological order.";
