@@ -16,11 +16,10 @@ use strict;
 use warnings;
 use CGI qw();
 use File::Path qw(rmtree);
-use File::Temp qw(tempdir);
 use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
+use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 
 ############################################################
@@ -813,7 +812,7 @@ sub previewAnswer($$) {
 			. $answerResult->{ans_name} . ".png";
 
 		# figure out where to put things
-		my $wd = tempdir("webwork-dvipng-XXXXXXXX", DIR => $ce->{courseDirs}->{html_temp});
+		my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
 		my $latex = $ce->{externalPrograms}->{latex};
 		my $dvipng = $ce->{externalPrograms}->{dvipng};
 		my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
