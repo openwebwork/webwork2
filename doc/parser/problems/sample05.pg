@@ -21,7 +21,7 @@ TEXT(&beginproblem);
 
 ##############################################
 #
-#  Setup
+#  The setup
 #
 
 Context('Vector');

@@ -15,33 +15,41 @@ TEXT(beginproblem());
 
 ##########################################################
 #
-#  Use Numeric context
+#  The setup
 #
 
-Context('Interval');
+Context('Vector');
 
-$p1 = random(-5,2,1);
-$p2 = random($p1+1,$p1+7,1);
+$P1 = Point(1,random(-3,3,1),random(-3,3,1));
+$P2 = Point(random(-3,3,1),4,random(-3,3,1));
 
-$f = Formula("x^2 + ($p1+$p2) x + $p1*$p2")->reduce;
-$I = Formula("($p1,$p2)")->eval;
+$V = Vector($P2-$P1);
+
+Context()->flags->set(ijk=>0);
+Context()->constants->add(a=>1,b=>1,c=>1);
+
+$ABC = Formula("<a,b,c>");
 
 ##########################################################
 #
 #  The problem text
 #
 
+Context()->texStrings;
 BEGIN_TEXT
-The function \(f(x) = \{$f->TeX\}\) is negative for values of \(x\) in the interval
-\{ans_rule(20)\}.
+The vector from \($P1\) to \($P2\)  is \{ans_rule(20)\}.
+$PAR
+You can use either \($ABC\) or \(\{$ABC->ijk\}\) notation,$BR
+and can perform vector operations to produce your answer.
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #
 #  The answer
 #
 
-ANS($I->cmp);
+ANS($V->cmp(promotePoints=>1));  #  allow answers to be points or vectors
 
 ###########################################################
 

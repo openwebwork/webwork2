@@ -15,7 +15,7 @@ TEXT(beginproblem());
 
 ##########################################################
 #
-#  Use Vector context
+#  The setup
 #
 
 Context('Vector');
@@ -30,10 +30,14 @@ $M = ($P1+$P2)/2;
 #  The problem text
 #
 
+Context()->texStrings;
 BEGIN_TEXT
-The midpoint of the line segment from \(\{$P1->TeX\}\) to \(\{$P2->TeX\}\)
+
+The midpoint of the line segment from \($P1\) to \($P2\)
 is \{ans_rule(20)\}.
+
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #

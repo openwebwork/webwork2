@@ -17,7 +17,7 @@ TEXT(beginproblem());
 
 ###########################################################
 #
-#   Use  standard numeric mode
+#   Use standard numeric mode
 #
 Context('Numeric');
 $x = Formula('x');  # used to construct formulas below.

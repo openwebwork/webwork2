@@ -16,7 +16,7 @@ TEXT(beginproblem());
 
 ###########################################################
 #
-#   Use vector mode
+#   The setup
 #
 Context('Vector');
 
@@ -33,11 +33,14 @@ $V = $a*i + $b*j + $c*k;  # equivalently: $V = Vector($a,$b,$c);
 #
 #  The problem text
 #
+
+Context()->texStrings;
 BEGIN_TEXT
 
-The length of the vector \(\{$V->TeX\}\) is \{ans_rule(20)\}.
+The length of the vector \($V\) is \{ans_rule(20)\}.
 
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #
