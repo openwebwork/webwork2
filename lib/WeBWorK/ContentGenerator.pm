@@ -361,6 +361,8 @@ sub header {
 }
 
 # drunk code. rewrite.
+# also, this should be structured s.t. subclasses can add items to the links
+# area, i.e. "stacking"
 sub links {
 	my $self = shift;
 	my $ce = $self->{courseEnvironment};
@@ -371,23 +373,19 @@ sub links {
 	my $key = WeBWorK::DB::Auth->new($ce)->getKey($userName);
 	return "" unless defined $key;
 	
-	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
+	# URLs to parts of the system
+	my $probSets = "$root/$courseName/?"         . $self->url_authen_args();
 	my $prefs    = "$root/$courseName/options/?" . $self->url_authen_args();
-	my $prof = "$root/$courseName/prof/?" . $self->url_authen_args();
-	my $help     = $ce->{webworkURLs}->{docs} . "?" . $self->url_authen_args();
-	my $logout   = "$root/$courseName/logout/?" . $self->url_authen_args();
-	
-	my $profLine = ($permLevel > 0)
-		? CGI::a({-href=>$prof}, "Professor") . CGI::br()
-		: "";
-	#if ($permLevel > 0) {
-	#	$profLine = CGI::a({-href=>$prof}, "Professor") . CGI::br(),
-	#}
+	my $prof     = "$root/$courseName/prof/?"    . $self->url_authen_args();
+	my $help     = "$ce->{webworkURLs}->{docs}?" . $self->url_authen_args();
+	my $logout   = "$root/$courseName/logout/?"  . $self->url_authen_args();
 	
 	return
 		CGI::a({-href=>$probSets}, "Problem Sets"), CGI::br(),
 		CGI::a({-href=>$prefs}, "User Options"), CGI::br(),
-		$profLine,
+		($permLevel > 0
+			? CGI::a({-href=>$prof}, "Professor") . CGI::br()
+			: ""),
 		CGI::a({-href=>$help}, "Help"), CGI::br(),
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 	;

@@ -359,12 +359,33 @@ sub body {
 	print
 		CGI::startform("POST", $r->uri),
 		$self->hidden_authen_fields,
-		$self->viewOptions,
 		CGI::p(CGI::i($pg->{result}->{msg})),
 		CGI::p($pg->{body_text}),
 		CGI::p(
 			CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers"),
 			CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers"),
+		),
+		$self->viewOptions,
+		CGI::endform();
+	
+	# feedback form
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $feedbackURL = "$root/$courseName/feedback/";
+	print
+		CGI::startform("POST", $feedbackURL),
+		$self->hidden_authen_fields,
+		CGI::hidden("module",             __PACKAGE__),
+		CGI::hidden("set",                $set->id),
+		CGI::hidden("problem",            $problem->id),
+		CGI::hidden("displayMode",        $self->{displayMode}),
+		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),
+		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),
+		CGI::hidden("showHints",          $will{showHints}),
+		CGI::hidden("showSolutions",      $will{showSolutions}),
+		CGI::p({-align=>"right"},
+			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
 		),
 		CGI::endform();
 	

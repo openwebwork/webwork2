@@ -18,7 +18,6 @@ use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;
 use WeBWorK::DB::WW;
-use WeBWorK::Utils qw(formatDateTime dequoteHere);
 
 sub initialize {
 	my $self = shift;

@@ -17,6 +17,7 @@ use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
+use WeBWorK::ContentGenerator::Feedback;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Hardcopy;
@@ -53,13 +54,12 @@ sub handler() {
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
-	#warn "path_info=$path_info current_uri=$current_uri args=$args\n";
-	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
 	unless (substr($current_uri,-1) eq '/') {
 		$r->header_out(Location => "$current_uri/" . ($args ? "?$args" : ""));
 		return REDIRECT;
+		# *** any post data gets lost here -- fix that.
 	}
 	
 	# Create the @components array, which contains the path specified in the URL
@@ -72,6 +72,7 @@ sub handler() {
 	unless (defined $course) {
 		warn "No course specified.\n";
 		return DECLINED;
+		# *** we should either write a "Courses" module, or redirect to a static page.
 	}
 	
 	# Try to get the course environment.
@@ -115,14 +116,19 @@ sub handler() {
 		} elsif ($arg eq "hardcopy") {
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
+			# *** can i say go(shift || "") here?
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
-			# ***
+			# *** write a quick module that redirects to the old system's prof pages.
+			# *** also, we should find a way to prevent 
 		} elsif ($arg eq "options") {
 			return WeBWorK::ContentGenerator::Options->new($r, $course_env)->go;
+		} elsif ($arg eq "feedback") {
+			return WeBWorK::ContentGenerator::Feedback->new($r, $course_env)->go;
 		} elsif ($arg eq "logout") {
 			return WeBWorK::ContentGenerator::Logout->new($r, $course_env)->go;
 		} elsif ($arg eq "test") {
+			# *** we should change this name, or remove it altogether.
 			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
@@ -132,7 +138,7 @@ sub handler() {
 				# list the problems in the problem set
 				return WeBWorK::ContentGenerator::ProblemSet->new($r, $course_env)->go($problem_set);
 			} elsif ($ps_arg eq "hardcopy") {
-				###
+				# *** do we need this? hardcopy is not being called this way
 			}
 			else {
 				# We've got the name of a problem
@@ -142,7 +148,7 @@ sub handler() {
 		}
 		
 	}
-
+	
 	# If the dispatcher doesn't know any modules that want to handle
 	# the current path, it'll claim that the path does not exist by
 	# declining the request.

@@ -31,6 +31,7 @@ our @EXPORT_OK = qw(
 	encodeAnswers
 	ref2string
 	dequoteHere
+	wrapText
 );
 
 sub runtime_use($) {
@@ -201,20 +202,6 @@ sub refBaseType($) {
 	return "ARRAY"  if eval { $_ = @$ref; 1 };
 	return "SCALAR" if eval { $_ = $$ref; 1 };
 	return 0;
-}
-
-sub dequoteHere($) {
-	# from "1.11. Indenting Here Documents" in the Perl Cookbook
-	# by Tom Christiansen & Nathan Torkington
-	local $_ = shift;
-	my ($white, $leader); # common whitespace and common leading string
-	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
-		($white, $leader) = ($2, quotemeta($1));
-	} else {
-		($white, $leader) = (/^(\s+)/, '');
-	}
-	s/^\s*?$leader(?:$white)?//gm;
-	return $_;
 }
 
 1;
