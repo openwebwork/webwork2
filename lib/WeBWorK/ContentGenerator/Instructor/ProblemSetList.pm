@@ -78,6 +78,7 @@ sub body {
 	my $importURL = "$instructorBaseURL/problemSetImport/";
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
+	my @set_definition_files    = $self->read_dir($ce->{courseDirs}->{templates},'\\.def');
 	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	# Slurp each set record for this course in @sets
@@ -157,6 +158,9 @@ sub body {
 		. CGI::start_form({"method"=>"POST", "action"=>$importURL})."\n"
 		. $self->hidden_authen_fields."\n"
 		. CGI::submit({"name"=>"importSet", "label"=>"Import"})."\n"
+		.  CGI::popup_menu(-name=>'set_definition_file', 
+				                 -values=>\@set_definition_files, 
+		)
 		. CGI::end_form()."\n";
 	print $form;
 	
