@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.9 2004/03/23 01:09:26 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.10 2004/03/23 22:58:10 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
 
  root                                /
  
+ course_admin                        /admin/ -> logout, options, instructor_tools
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -92,11 +93,20 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/set_list/ ],
+		kids    => [ qw/course_admin set_list/ ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
 		display => 'WeBWorK::ContentGenerator::Home',
+	},
+	course_admin => {
+		name    => 'Course Administration',
+		parent  => 'root',
+		kids    => [ qw/logout options instructor_tools/ ],
+		match   => qr|^(admin)/|,
+		capture => [ qw/courseID/ ],
+		produce => 'admin/',
+		display => 'WeBWorK::ContentGenerator::CourseAdmin',
 	},
 	
 	################################################################################
@@ -741,7 +751,7 @@ sub getModuleType {
 		my $node = $pathTypes{$nodeID};
 		
 		# module name matches?
-		next NODE unless $node->{display} eq $module;
+		next NODE unless defined $node->{display} and $node->{display} eq $module;
 		
 		# collect all captures from here to root
 		my @captures;
@@ -792,6 +802,14 @@ sub buildPathFromType($) {
 
 Internal search function. See getPathType().
 
+Returns the nodeID of the node that consumed the final characters in $path, or
+the following failure conditions:
+
+Returns 0 if $nodeID doesn't match $path.
+
+Returns -1 if $nodeID matched $path, but no children of $nodeID consumed the
+remaining path. In this case, the stack is unwound immediately.
+
 =cut
 
 sub visitPathTypeNode($$$$);
@@ -809,8 +827,11 @@ sub visitPathTypeNode($$$$) {
 	my $match = $node{match};
 	my @capture_names = @{ $node{capture} };
 	
+	# attempt to match $path against $match.
 	debug("visitPathTypeNode", $indent, "trying to match $match: ");
 	if ($path =~ s/($match)//) {
+		# it matches! store captured strings in $argsRef and remove the matched
+		# characters from $path. waste a lot of lines on sanity checking... ;)
 		debug("", 0, "success!\n");
 		my @capture_values = $1 =~ m/$match/;
 		if (@capture_names) {
@@ -831,35 +852,48 @@ sub visitPathTypeNode($$$$) {
 				}
 				if (exists $argsRef->{$name}) {
 					my $old = $argsRef->{$name};
-					warn "encountered an existing argument again, old value: $old new value: $value -- replacing.";
+					warn "encountered argument $name again, old value: $old new value: $value -- replacing.";
 				}
 				debug("visitPathTypeNode", $indent, "setting argument $name => $value.\n");
 				$argsRef->{$name} = $value;
 			}
 		}
 	} else {
+		# it doesn't match. bail out now with return value 0
 		debug("", 0, "failed.\n");
 		return 0;
 	}
 	
+	##### if we're here we matched #####
+	
+	# if there's no more path left, then this node is the one! return $nodeID
 	if ($path eq "") {
 		debug("visitPathTypeNode", $indent, "no path left, type is $nodeID\n");
 		return $nodeID;
 	}
 	
+	# otherwise, we have to send the remaining path to the node's children
 	debug("visitPathTypeNode", $indent, "but path remains: $path\n");
 	my @kids = @{ $node{kids} };
 	if (@kids) {
 		foreach my $kid (@kids) {
 			debug("visitPathTypeNode", $indent, "trying child $kid:\n");
 			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent+1);
+			# we return in two situations:
+			# if $result is -1, then the kid matched but couldn't consume the rest of the path
+			# if $result is the ID of a node, then the kid matched and consumed the rest of the path
+			# these are all true values (assuming that "0" isn't a valid node ID), so we say:
 			return $result if $result;
 		}
 		debug("visitPathTypeNode", $indent, "no children claimed the remaining path: failed.\n");
 	} else {
 		debug("visitPathTypeNode", $indent, "no children to claim the remaining path: failed.\n");
 	}
-	return 0;
+	
+	# in both of the above cases, we matched but couldn't provide children that
+	# would consume the rest of the path. so we return -1, causing the whole
+	# stack to unwind. WHEEEEEEE!
+	return -1;
 }
 
 =back

@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.6 2004/02/14 00:53:17 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.7 2004/02/14 04:07:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -169,8 +169,8 @@ only be visible to this user when logging into WeBWorK 1.x.
 Use the following code to override these values in a course's F<course.conf>
 file:
 
- $dbLayouts{sql}->{set}->{params}->{globalUserID} = "some_user";
- $dbLayouts{sql}->{problem}->{params}->{globalUserID} = "some_user";
+ $dbLayouts{gdbm}->{set}->{params}->{globalUserID} = "some_user";
+ $dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "some_user";
 
 =cut
 
