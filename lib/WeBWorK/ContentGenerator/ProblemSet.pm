@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.44 2004/03/23 22:59:21 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.45 2004/04/20 20:17:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,8 +47,14 @@ sub initialize {
 	
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
-	die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
 	die "permisson level for user $userName  not found."  unless $permissionLevel;
+	
+	# We don't want to die if this set does not exist or isn't defined for this player
+	# we'll just return a page with nothing but an error on it.
+	#die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
+	$self->{invalidSet} = !(defined $set);
+	return if $self->{invalidSet};
+
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -65,7 +71,7 @@ sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 	my $urlpath = $r->urlpath;
-	
+
 	my $courseID = $urlpath->arg("courseID");
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
@@ -113,6 +119,7 @@ sub info {
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $r->urlpath->arg("setID");
+	$setID = "4";
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
 	
@@ -120,6 +127,7 @@ sub info {
 	my $set  = $db->getMergedSet($eUserID, $setID); # checked
 	
 	die "effective user $eUserID not found. One 'acts as' the effective user." unless $effectiveUser;
+	# FIXME: this was already caught in initialize()
 	die "set $setID for effectiveUser $eUserID not found." unless $set;
 	
 	my $psvn = $set->psvn();
@@ -186,18 +194,24 @@ sub body {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+
+	my $courseID = $urlpath->arg("courseID");
+	my $setName = $urlpath->arg("setID");
+	my $effectiveUser = $r->param('effectiveUser');
+
+	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
+	# FIXME: this was already caught in initialize()
+	# die "set $setName for user $effectiveUser not found" unless $set;
+
+	if ($self->{invalidSet}) {
+		return CGI::div({class=>"ResultsWithError"},
+			CGI::p("The selected problem set ($setName) is not a valid set for $effectiveUser."));
+	}
 	
 	unless ($self->{isOpen}) {
 		return CGI::div({class=>"ResultsWithError"},
 			CGI::p("This problem set is not available because it is not yet open."));
 	}
-	
-	my $courseID = $urlpath->arg("courseID");
-	my $setName = $urlpath->arg("setID");
-	my $effectiveUser = $r->param('effectiveUser');
-	
-	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
-	die "set $setName for user $effectiveUser not found" unless $set;
 	
 	#my $hardcopyURL =
 	#	$ce->{webworkURLs}->{root} . "/"
