@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.66 2004/04/07 01:17:40 gage Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.67 2004/07/01 21:24:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,6 +45,20 @@ use warnings;
 use HTML::Entities;
 use WeBWorK;
 
+#
+#  Produce a stack-frame traceback for the calls up through
+#  the ones in Apache::WeBWorK.
+#
+sub traceback {
+  my $frame = 2;
+  my $trace = '';
+  while (my ($pkg,$file,$line,$subname) = caller($frame++)) {
+    return $trace if $pkg eq 'Apache::WeBWorK';
+    $trace .= "---  in $subname called at line $line of $file\n";
+  }
+  return $trace;
+}
+
 sub handler($) {
 	my ($r) = @_;
 	
@@ -62,6 +76,13 @@ sub handler($) {
 		# the __DIE__ handler stores the call stack at the time of an error
 		local $SIG{__DIE__} = sub {
 			my ($error) = @_;
+			#
+			#  Add traceback unless it already has been added.  It looks like traps
+			#  are in effect from 5 or 6 places, and all of them end up here, with
+			#  the additional error messages already appended.
+			#
+			$error .= traceback()."--------------------------------------\n"
+			  unless $error =~ m/-------------\n/;
 			# Traces are still causing problems
 			#my $trace = join "\n", Apache::WeBWorK->backtrace();
 			#$r->notes("lastCallStack" => $trace);
