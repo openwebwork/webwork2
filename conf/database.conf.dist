@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.11 2004/06/08 20:03:10 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.12 2004/06/14 22:55:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -149,6 +149,90 @@ $dbLayouts{sql} = {
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => "dbi:mysql:webwork_$courseName",
 		params => { %sqlParams },
+	},
+};
+
+=head1 THE SQL_SINGLE DATABASE LAYOUT
+
+The C<sql_single> layout is similar to the C<sql> layout, excpet that it uses a
+single database for all courses. This is accomplised by prefixing each table
+name with the name of the course.
+
+=cut
+
+$dbLayouts{sql_single} = {
+	password => {
+		record => "WeBWorK::DB::Record::Password",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_password",
+		},
+	},
+	permission => {
+		record => "WeBWorK::DB::Record::PermissionLevel",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_permission",
+		},
+	},
+	key => {
+		record => "WeBWorK::DB::Record::Key",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_key",
+			fieldOverride => { key => "key_not_a_keyword" },
+		},
+	},
+	user => {
+		record => "WeBWorK::DB::Record::User",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_user",
+		},
+	},
+	set => {
+		record => "WeBWorK::DB::Record::Set",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_set"
+		},
+	},
+	set_user => {
+		record => "WeBWorK::DB::Record::UserSet",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_set_user"
+		},
+	},
+	problem => {
+		record => "WeBWorK::DB::Record::Problem",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_problem"
+		},
+	},
+	problem_user => {
+		record => "WeBWorK::DB::Record::UserProblem",
+		schema => "WeBWorK::DB::Schema::SQL",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => "dbi:mysql:webwork",
+		params => { %sqlParams,
+			tableOverride => "${courseName}_problem_user"
+		},
 	},
 };
 
