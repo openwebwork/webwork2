@@ -204,10 +204,6 @@ sub delete($@) {
 	$self->{driver}->disconnect();
 	croak "failed to DELETE: $DBI::errstr" unless defined $result;
 	
-	if ($result > 1) {
-		warn "danger! deleted more than one record!";
-	}
-	
 	return $result;
 }
 
