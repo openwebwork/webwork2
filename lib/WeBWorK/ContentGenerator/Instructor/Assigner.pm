@@ -15,6 +15,7 @@ sub initialize {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
 	my $authz = $self->{authz};
+	my $db = $self->{db};
 	my $user = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
@@ -22,8 +23,20 @@ sub initialize {
 		return;
 	}
 	
+	my @users = $db->listUsers;
+	my %selectedUsers = map {$_ => 1} $r->param('selected');
+	
 	if (defined $r->param('assignToAll')) {
 		$self->assignSetToAllUsers($setID);
+	} elsif (defined $r->param('assignToSelected')) {
+		my $setRecord = $db->getGlobalSet($setID);
+		foreach my $selectedUser (@users) {
+			if (exists $selectedUsers{$selectedUser}) {
+				$self->assignSetToUser($selectedUser, $setRecord)
+			} else {
+				$db->deleteUserSet($selectedUser, $setID);
+			}
+		}
 	}
 }
 
@@ -31,13 +44,43 @@ sub body {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
 	my $authz = $self->{authz};
+	my $db = $self->{db};
 	my $user = $r->param('user');
 	
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	
+	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::start_table({});
+	foreach my $user (@users) {
+		my $userRecord = $db->getUser($user);
+		my $userSetRecord = $db->getUserSet($user, $setID);
+		my $prettyName = $userRecord->last_name
+			. ", "
+			. $userRecord->first_name;
+		print CGI::Tr({}, 
+			CGI::td({}, [
+				CGI::checkbox({
+					type=>"checkbox",
+					name=>"selected",
+					checked=>(
+						defined $userSetRecord
+						? "on"
+						: ""
+					),
+					value=>$user,
+					label=>"",
+				}),
+				$user,
+				"($prettyName)",
+			])
+		);
+	}
+	print CGI::end_table();
 	print $self->hidden_authen_fields;
+	print CGI::submit({name=>"assignToSelected", value=>"Save"});
+	print CGI::br();
+	print CGI::br();
 	print CGI::submit({name=>"assignToAll", value=>"Assign to All Users"});
 	print CGI::end_form();
 	
