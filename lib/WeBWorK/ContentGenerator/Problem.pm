@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.115 2004/03/04 04:36:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.116 2004/03/04 21:05:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -66,14 +66,16 @@ sub templateName {
 
 sub pre_header_initialize {
 	my ($self) = @_;
-	my $r                    = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	my $setName = $urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
-	my $courseEnv            = $self->{ce};
-	my $db                   = $self->{db};
-	my $userName             = $r->param('user');
-	my $effectiveUserName    = $r->param('effectiveUser');
-	my $key                  = $r->param('key');
+	my $userName = $r->param('user');
+	my $effectiveUserName = $r->param('effectiveUser');
+	my $key = $r->param('key');
 	
 	my $user = $db->getUser($userName); # checked
 	die "record for user $userName (real user) does not exist."
@@ -168,15 +170,13 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode        = $r->param("displayMode") || $courseEnv->{pg}->{options}->{displayMode};
+	my $displayMode        = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
 	my $checkAnswers       = $r->param("checkAnswers");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
-
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-
 	
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
@@ -193,10 +193,10 @@ sub pre_header_initialize {
 	
 	# what does the user want to do?
 	my %want = (
-		showOldAnswers     => $r->param("showOldAnswers")     || $courseEnv->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param("showCorrectAnswers") || $courseEnv->{pg}->{options}->{showCorrectAnswers},
-		showHints          => $r->param("showHints")          || $courseEnv->{pg}->{options}->{showHints},
-		showSolutions      => $r->param("showSolutions")      || $courseEnv->{pg}->{options}->{showSolutions},
+		showOldAnswers     => $r->param("showOldAnswers")     || $ce->{pg}->{options}->{showOldAnswers},
+		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
+		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
+		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 	);
@@ -222,28 +222,46 @@ sub pre_header_initialize {
 			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
 		checkAnswers       => canCheckAnswers($permissionLevel, $set->answer_date),
 	);
-	#########################################################
+	
 	# more complicated logic for showing check answer button:
-	#########################################################
 	# checkAnswers button shows up after due date -- once a student can't record anymore
 	# checkAnswers button always shows up when an instructor or TA is acting
 	# as someone else (the $user and $effectiveUserName aren't the same).
-	$can{checkAnswers} =  ($can{checkAnswers}    &&   not $can{recordAnswers}           ) ||
-	                      ( defined($userName) and defined($effectiveUserName) and 
-	                        ($userName ne $effectiveUserName)
-	                       ); 
-	#########################################################
-	# more complicated logif for showing "submit answer" button
-	#########################################################                     
+	$can{checkAnswers} = (
+		# $can{recordAnswers} will be false if the due date has passed OR the
+		# student has used up all of her attempts
+		($can{checkAnswers} and not $can{recordAnswers})
+			or
+		(
+			# FIXME: this is not the right way to check for this.
+			# also, canCheckAnswers() will show this button if the permission
+			# level is positive,  which is always true when an instructor is
+			# acting as a student
+			defined($userName)
+				and
+			defined($effectiveUserName)
+				and
+			($userName ne $effectiveUserName)
+		)
+	);
+	
+	# more complicated logif for showing "submit answer" button:
 	# We hide the submit answer button if someone is acting as a student
 	# This prevents errors where you accidently submit the answer for a student
 	# Not sure whether this a feature or a bug
+	$can{recordAnswers} = (
+		$can{recordAnswers}
+			and not
+		(
+			# FIXME: this is not the right way to check for this.
+			defined($userName)
+				and
+			defined($effectiveUserName)
+				and
+			($userName ne $effectiveUserName)
+		)
+	);
 	
-	$can{recordAnswers} = ($can{recordAnswers} and not
-	                          (   defined($userName) and defined($effectiveUserName) and 
-	                              ($userName ne $effectiveUserName)
-	                          )
-	                      );
 	# final values for options
 	my %will;
 	foreach (keys %must) {
@@ -262,7 +280,7 @@ sub pre_header_initialize {
 
 	$WeBWorK::timer->continue("begin pg processing") if defined($WeBWorK::timer);
 	my $pg = WeBWorK::PG->new(
-		$courseEnv,
+		$ce,
 		$effectiveUser,
 		$key,
 		$set,
@@ -294,26 +312,26 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
-#sub if_warnings($$) {
-#	my ($self, $arg) = @_;
-#	return 0 unless $self->{isOpen};
-#	return $self->{pg}->{warnings} ne "";
-#}
-
 sub if_errors($$) {
 	my ($self, $arg) = @_;
-	return 0 unless $self->{isOpen};
-	return $self->{pg}->{flags}->{error_flag};
+	
+	if ($self->{isOpen}) {
+		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
+	} else {
+		return !$arg;
+	}
 }
 
 sub head {
-	my $self = shift;
+	my ($self) = @_;
+	
 	return "" unless $self->{isOpen};
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
 sub options {
-	my $self = shift;
+	my ($self) = @_;
+	
 	return join("",
 		CGI::start_form("POST", $self->{r}->uri),
 		$self->hidden_authen_fields,
@@ -325,103 +343,118 @@ sub options {
 	);
 }
 
-sub path {
-	my $self = shift;
-	my $args = $_[-1];
-	my $setName = $self->{set}->set_id;
-	my $problemNumber = $self->{problem}->problem_id;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		$setName => "$root/$courseName/$setName",
-		"Problem $problemNumber" => "",
-	);
-}
+#sub path {
+#	my $self = shift;
+#	my $args = $_[-1];
+#	my $setName = $self->{set}->set_id;
+#	my $problemNumber = $self->{problem}->problem_id;
+#	
+#	my $ce = $self->{ce};
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseName = $ce->{courseName};
+#	return $self->pathMacro($args,
+#		"Home" => "$root",
+#		$courseName => "$root/$courseName",
+#		$setName => "$root/$courseName/$setName",
+#		"Problem $problemNumber" => "",
+#	);
+#}
 
 sub siblings {
-	my $self = shift;
-	my $setName = $self->{set}->set_id;
-	my $problemNumber = $self->{problem}->problem_id;
+	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
 	
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	print CGI::strong("Problems"), CGI::br();
+	my $courseID = $urlpath->arg("courseID");
+	my $setID = $self->{set}->set_id;
+	my $eUserID = $r->param("effectiveUser");
+	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 	
-	my $effectiveUser = $self->{r}->param("effectiveUser");
-	my @problemIDs = $db->listUserProblems($effectiveUser, $setName);
-	foreach my $problem (sort { $a <=> $b } @problemIDs) {
-		print '&nbsp;&nbsp;'.CGI::a({-href=>"$root/$courseName/$setName/".$problem."/?"
-			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
-			"Problem ".$problem), CGI::br();
+	print CGI::start_ul({class=>"LinksMenu"});
+	print CGI::start_li();
+	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
+	print CGI::start_ul();
+	
+	foreach my $problemID (@problemIDs) {
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+			courseID => $courseID, setID => $setID, problemID => $problemID);
+		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, "Problem $problemID"));
 	}
-
+	
+	print CGI::end_ul();
+	print CGI::end_li();
+	print CGI::end_ul();
+	
 	return "";
 }
 
 sub nav {
-	$WeBWorK::timer->continue("begin nav subroutine") if defined($WeBWorK::timer);
-	my $self = shift;
-	my $args = $_[-1];
-	my $setName = $self->{set}->set_id;
-	my $problemNumber = $self->{problem}->problem_id;
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
 	
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
+	my $courseID = $urlpath->arg("courseID");
+	my $setID = $self->{set}->set_id;
+	my $problemID = $self->{problem}->problem_id;
+	my $eUserID = $r->param("effectiveUser");
 	
-	my $wwdb          = $self->{wwdb};
-	my $effectiveUser = $self->{r}->param("effectiveUser");
-	my $tail = "&displayMode=".$self->{displayMode};
-	
-	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
-	
-	my @problemIDs = $db->listUserProblems($effectiveUser, $setName);
 	my ($prevID, $nextID);
+	
+	my @problemIDs = $db->listUserProblems($eUserID, $setID);
 	foreach my $id (@problemIDs) {
-		$prevID = $id if $id < $problemNumber
+		$prevID = $id if $id < $problemID
 			and (not defined $prevID or $id > $prevID);
-		$nextID = $id if $id > $problemNumber
+		$nextID = $id if $id > $problemID
 			and (not defined $nextID or $id < $nextID);
 	}
-	unshift @links, "Previous Problem" , ($prevID
-		? "$root/$courseName/$setName/".$prevID
-		: "") , "navPrev";
-	push @links, "Next Problem" , ($nextID
-		? "$root/$courseName/$setName/".$nextID
-		: "") , "navNext";
 	
-	my $result = $self->navMacro($args, $tail, @links);
-	$WeBWorK::timer->continue("end nav subroutine") if defined($WeBWorK::timer);
-	return $result;
+	my @links;
+	
+	if ($prevID) {
+		my $prevPage = $urlpath->newFromModule(__PACKAGE__,
+			courseID => $courseID, setID => $setID, problemID => $prevID);
+		push @links, "Previous Problem", $r->location . $prevPage->path, "navPrev";
+	} else {
+		push @links, "Previous Problem", "", "navPrev";
+	}
+	
+	push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
+	
+	if ($nextID) {
+		my $nextPage = $urlpath->newFromModule(__PACKAGE__,
+			courseID => $courseID, setID => $setID, problemID => $nextID);
+		push @links, "Next Problem", $r->location . $nextPage->path, "navNext";
+	} else {
+		push @links, "Next Problem", "", "navNext";
+	}
+	
+	my $tail = "&displayMode=".$self->{displayMode};
+	return $self->navMacro($args, $tail, @links);
 }
 
 sub title {
-	my $self = shift;
-	my $setName = $self->{set}->set_id;
-	my $problemNumber = $self->{problem}->problem_id;
+	my ($self) = @_;
 	
-	return "$setName : Problem $problemNumber";
+	my $setID = $self->{set}->set_id;
+	my $problemID = $self->{problem}->problem_id;
+	
+	return "$setID : $problemID";
 }
 
 sub body {
 	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
 	
-	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."))
-		unless $self->{isOpen};
-	
+	unless ($self->{isOpen}) {
+		return CGI::div({class=>"ResultsWithError"},
+			CGI::p("This problem is not available because the problem set that contains it is not yet open."));
+	}
 	# unpack some useful variables
-	my $r               = $self->{r};
-	my $db              = $self->{db};
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $editMode        = $self->{editMode};
@@ -435,20 +468,32 @@ sub body {
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
 	
-	
+	#my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $urlpath->arg("courseID");
 	
 	#####create Editor link   #####
-	# print editor link if the user is an instructor AND the file is not in temporary editing mode
-	my $editorLinkMessage   =   '';
-	# and ( (not defined($self->{editMode}))  or $self->{editMode} eq 'savedFile')  # FIXME is this needed?
-	if ($self->{permissionLevel}>=10  ) {
-		$editorLinkMessage = CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".
-		$set->set_id.'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
+	## print editor link if the user is an instructor AND the file is not in temporary editing mode
+	#my $editorLinkMessage   =   '';
+	## and ( (not defined($self->{editMode}))  or $self->{editMode} eq 'savedFile')  # FIXME is this needed?
+	#if ($self->{permissionLevel}>=10  ) {
+	#	$editorLinkMessage = CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".
+	#	$set->set_id.'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
+	#}
+	
+	my $editorLink = "";
+	if ($self->{permissionLevel}>=10) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage);
+		$editorLink = CGI::a({href=>$editorURL}, "Edit this problem");
 	}
+	
 	##### translation errors? #####
 	
 	if ($pg->{flags}->{error_flag}) {
-		return $self->errorOutput($pg->{errors}, $pg->{body_text}.CGI::p($editorLinkMessage));
+		print $self->errorOutput($pg->{errors}, $pg->{body_text});
+		print $editorLink;
+		return "";
 	}
 	
 	##### answer processing #####
@@ -465,11 +510,11 @@ sub body {
 			my %answerHash = %{ $pg->{answers} };
 			$answersToStore{$_} = $self->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
 				foreach (keys %answerHash);
+			
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
 			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
-			
 			$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
 			
 			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
@@ -703,14 +748,18 @@ sub body {
 	
 	print  CGI::start_div({class=>"problemFooter"});
 	
-	# arguments for answer inspection button
-	my $prof_url = $ce->{webworkURLs}->{oldProf};
-	my $webworkURL = $ce->{webworkURLs}->{root};
-	my $cgi_url = $prof_url;
-	$cgi_url=~ s|/[^/]*$||;  # clip profLogin.pl
-	my $authen_args = $self->url_authen_args();
-	my $showPastAnswersURL = "$webworkURL/$courseName/instructor/show_answers/";
+	## arguments for answer inspection button
+	#my $prof_url = $ce->{webworkURLs}->{oldProf};
+	#my $webworkURL = $ce->{webworkURLs}->{root};
+	#my $cgi_url = $prof_url;
+	#$cgi_url=~ s|/[^/]*$||;  # clip profLogin.pl
+	#my $authen_args = $self->url_authen_args();
+	#my $showPastAnswersURL = "$webworkURL/$courseName/instructor/show_answers/";
 	
+	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers",
+		courseID => $courseName);
+	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
+		
 	# print answer inspection button
 	if ($self->{permissionLevel} > 0) {
 		print "\n",
@@ -726,12 +775,30 @@ sub body {
 			CGI::endform();
 	}
 	
-	#print CGI::end_div();
+	## arguments for feedback form
+	#my $feedbackURL = "$root/$courseName/feedback/";
 	#
-	#print CGI::start_div();
-	
-	# arguments for feedback form
-	my $feedbackURL = "$root/$courseName/feedback/";
+	##print feedback form
+	#print
+	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+	#	$self->hidden_authen_fields,"\n",
+	#	CGI::hidden("module",             __PACKAGE__),"\n",
+	#	CGI::hidden("set",                $set->set_id),"\n",
+	#	CGI::hidden("problem",            $problem->problem_id),"\n",
+	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+	#	CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
+	#	CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
+	#	CGI::hidden("showHints",          $will{showHints}),"\n",
+	#	CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
+	#	CGI::p({-align=>"left"},
+	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
+	#	),
+	#	CGI::endform(),"\n";
+		
+	# feedback form url
+	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
+		courseID => $courseName);
+	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
 	
 	#print feedback form
 	print
@@ -749,9 +816,9 @@ sub body {
 			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 		),
 		CGI::endform(),"\n";
-		
+	
 	# FIXME print editor link
-	print $editorLinkMessage;   #empty unless it is appropriate to have an editor link.
+	print $editorLink;   #empty unless it is appropriate to have an editor link.
 	
 	print CGI::end_div();
 	
@@ -782,7 +849,7 @@ sub body {
 
 ##### output utilities #####
 
-sub attemptResults($$$$$$) {
+sub attemptResults {
 	my $self = shift;
 	my $pg = shift;
 	my $showAttemptAnswers = shift;
@@ -790,7 +857,9 @@ sub attemptResults($$$$$$) {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	my $ce = $self->{ce};
+	
+	my $ce = $self->r->ce;
+	
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
@@ -835,11 +904,11 @@ sub attemptResults($$$$$$) {
 		
 		my $row;
 		#$row .= CGI::td($name);
-		$row .= $showAttemptAnswers ? CGI::td(nbsp($studentAnswer)) : "";
-		$row .= $showAttemptPreview ? CGI::td(nbsp($preview))       : "";
-		$row .= $showCorrectAnswers ? CGI::td(nbsp($correctAnswer)) : "";
-		$row .= $showAttemptResults ? CGI::td(nbsp($resultString))  : "";
-		$row .= $showMessages      ? CGI::td(nbsp($answerMessage)) : "";
+		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+		$row .= $showAttemptPreview ? CGI::td($self->nbsp($preview))       : "";
+		$row .= $showCorrectAnswers ? CGI::td($self->nbsp($correctAnswer)) : "";
+		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
+		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -865,24 +934,22 @@ sub attemptResults($$$$$$) {
 			 	 $summary .= "At least one of the above answers is NOT correct.";
 			 }
 	}
-	#FIXME  there must be a better way to force refresh.
-	#my $refresh_warning = 'Hold down shift and click "refresh" or "reload" to update answer preview images.';
-	#return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . 
-	#CGI::div({style=>'color:red; font-size:10pt'},$refresh_warning) . 
-	#($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
-	# ... this has been fixed by equation caching.
+	
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
-sub nbsp {
-	my $str = shift;
-	($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
-	                                    # tricky cases:   $str =0;
-	                                    #  $str is a complex number
-}
-sub viewOptions($) {
-	my $self = shift;
+
+#sub nbsp {
+#	my $str = shift;
+#	($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
+#	                                    # tricky cases:   $str =0;
+#	                                    #  $str is a complex number
+#}
+
+sub viewOptions {
+	my ($self) = @_;
+	
 	my $displayMode = $self->{displayMode};
 	my %must = %{ $self->{must} };
 	my %can  = %{ $self->{can}  };
@@ -917,9 +984,9 @@ sub viewOptions($) {
 	);
 }
 
-sub previewAnswer($$) {
+sub previewAnswer {
 	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->{ce};
+	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
 	my $problem       = $self->{problem};
@@ -949,38 +1016,9 @@ sub previewAnswer($$) {
 		}
 		return $result;
 	} elsif ($displayMode eq "images") {
-		## how are we going to name this?
-		#my $targetPathCommon = "/m2i/"
-		#	. $effectiveUser->user_id . "."
-		#	. $set->set_id . "."
-		#	. $problem->problem_id . "."
-		#	. $answerResult->{ans_name} . ".png";
-		#
-		## figure out where to put things
-		#my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
-		#my $latex = $ce->{externalPrograms}->{latex};
-		#my $dvipng = $ce->{externalPrograms}->{dvipng};
-		#my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
-		#		# should use surePathToTmpFile, but we have to
-		#		# isolate it from the problem enivronment first
-		#my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
-		#
-		## call dvipng to generate a preview
-		#dvipng($wd, $latex, $dvipng, $tex, $targetPath);
-		#rmtree($wd, 0, 0);
-		#if (-e $targetPath) {
-		#	return "<img src=\"$targetURL\" alt=\"$tex\" />";
-		#} else {
-		#	return "<b>[math2img failed]</b>";
-		#}
 		$imgGen->add($answerResult->{preview_latex_string});
-		
-	}
+ 	}
 }
-
-##### logging subroutine ####
-
-
 
 ##### permission queries #####
 
@@ -990,7 +1028,7 @@ sub previewAnswer($$) {
 
 # also, i should fix these so that they have a consistent calling
 # format -- perhaps:
-# 	canPERM($courseEnv, $user, $set, $problem, $permissionLevel)
+# 	canPERM($ce, $user, $set, $problem, $permissionLevel)
 
 sub canShowCorrectAnswers($$) {
 	my ($permissionLevel, $answerDate) = @_;
