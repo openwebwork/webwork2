@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.7 2004/04/05 19:33:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.8 2004/04/07 02:17:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,13 +55,19 @@ sub initialize {
 
 	if (defined $r->param('assignToAll')) {
 		$WeBWorK::timer->continue("assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all students."));
 		$self->assignSetToAllUsers($setID);
 		$WeBWorK::timer->continue("done assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
-	} elsif (defined $r->param('unassignFromAll')) {
+	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		%selectedUsers = ( $globalUserID => 1 );
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for all students have been unassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
+	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
+	} else {
+	   # no action taken
+	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
 	}
 	
 	if ($doAssignToSelected) {
@@ -109,7 +115,7 @@ sub body {
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	print CGI::p(
-		    CGI::submit({name=>"assignToAll", value => "Assign to All Users"})
+		    CGI::submit({name=>"assignToAll", value => "Assign to All Users"}), CGI::i("This action can take a long time if there are many students.")
 		  ),
 		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
 	           "There is NO undo for unassigning students. "),
@@ -184,12 +190,17 @@ sub body {
 	print $self->hidden_authen_fields;
 	print CGI::submit({name=>"assignToSelected", value=>"Save"});
 	print CGI::p( CGI::hr(),
-				  CGI::div({ style=>"background-color:red"}, "There is NO undo for this function.  
+				  CGI::div( {class=>'ResultsWithError'},
+						"There is NO undo for this function.  
 				        Do not use it unless you know what you are doing!  When you unassign
 				        a student using this button, or by unchecking their name, you destroy all
 				        of the data for problem set $setID for this student.",
-				        CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
+						CGI::br(),
+						CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
+						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
+		
 				  ),
+				  
 				  
 				  CGI::hr(),
 	);
