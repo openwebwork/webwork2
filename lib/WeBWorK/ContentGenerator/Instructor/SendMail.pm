@@ -40,6 +40,7 @@ sub initialize {
 	my $default_msg_file       =    'default.msg';  
 	my $old_default_msg_file   =    'old_default.msg';
 	
+
 	# store data
 	$self->{defaultFrom}            =   'FIXME from';
 	$self->{defaultReply}           =   'FIXME reply';	
@@ -47,7 +48,38 @@ sub initialize {
 	$self->{columns}                =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
-	$self->{merge_file}             =   (defined($r->param('merge_file'))) ? $r->param('merge_file') : 'None';
+	$self->{merge_file}             =   (defined($r->param('merge_file'  )))    ? $r->param('merge_file')   : 'None';
+	$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : 'Yourself';
+	
+	
+#############################################################################################
+#	gather database data
+#############################################################################################	
+	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
+	my @users = sort $db->listUsers;
+	my @user_records = ();
+	push(@user_records,$db->getUser($_)) foreach  (@users);
+	
+	# store data
+	$self->{ra_users}              =   \@users;
+	$self->{ra_user_records}       =   \@user_records;
+
+#############################################################################################
+#	gather list of recipients
+#############################################################################################	
+	my @send_to                    =   ();	
+	#FIXME  this (radio) is a lousy name
+	my $recipients                 = $r->param('radio');
+	if ($recipients eq 'all_students') {  #only active students #FIXME status check??
+		foreach my $ur (@user_records) {
+			push(@send_to,$ur->user_id) if $ur->status eq 'C' and not($ur->user_id =~ /practice/);
+		}
+	} elsif ($recipients eq 'studentID' ) {
+		@send_to                   = $r->param('classList');
+	} else {
+		warn "Don't understand recipient list |$recipients|";
+	}	
+	$self->{ra_send_to}               = \@send_to;
 #################################################################
 # Check the validity of the input file name
 #################################################################
@@ -73,9 +105,9 @@ sub initialize {
 			);
 		}
 	} else {
-		$input_file = $default_msg_file;
+		$input_file     = $default_msg_file;
 	}
-	$self->{input_file}=$input_file;
+	$self->{input_file} =$input_file;
 
 #################################################################
 # Determine the file name to save message into
@@ -144,10 +176,37 @@ sub initialize {
 	$self->{r_text}                 =    $r_text;
 
 
+
+###################################################################################
+#Determine the appropriate script action from the buttons
+###################################################################################
+#     first time actions
+#          open new file
+#          open default file 
+#     choose merge file actions
+#          chose merge button
+#     option actions
+#       'reset rows'
+
+#     save actions
+#		"save" button
+#		"save as" button
+#		"save as default" button
+#     preview actions
+#		'preview' button
+#     email actions
+#		'entire class'
+#		'selected studentIDs'
+#     error actions (various)
+
+
 #############################################################################################
 # if no form is submitted, gather data needed to produce the mail form and return
 #############################################################################################
-
+	my $to                =    $r->param('To');
+	my $script_action     = '';
+	
+	
 	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window'
 	   or $action eq 'Choose merge file' ){  
 #		warn "FIXME action is |$action| no further initialization required";
@@ -164,27 +223,7 @@ sub initialize {
 #############################################################################################
 
 	
-	my $to                =    $r->param('To');
-	
-	
-		
-	###################################################################################
-	#Determine the appropriate script action from the buttons
-	###################################################################################
-	#     save actions
-	#		"save" button
-	#		"save as" button
-	#		"save as default" button
-	#     preview actions
-	#		'preview' button
-	#     email actions
-	#		'entire class'
-	#		'selected studentIDs'
-	#     option actions
-	#       'reset rows'
-	#     error actions (various)
-	
-	my $script_action = '';
+
 	# user_errors
 	# save
 	# save as
@@ -230,8 +269,8 @@ sub initialize {
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" );
 		$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
 #		warn "FIXME saving to ${emailDirectory}/$output_file";
-	} elsif ($action eq 'preview') {
-	
+	} elsif ($action eq 'Preview') {
+		$self->{response}         = 'preview';
 	
 	} elsif ($action eq 'Send Email') {
 	
@@ -245,65 +284,14 @@ sub initialize {
 	#if Save button was clicked
 	if (( $r->param('action') eq 'Save') && defined($r->param('body')) && defined($r->param('savefilename'))) {
 
-# 		my $temp_body = $body;
-# 		$temp_body =~ s/\r\n/\n/g;
-# 		$temp_body = "From: " . $from . "\n" .
-# 				   "Reply-To: " . $replyTo . "\n" .
-# 				   "Subject: " . $subject . "\n" .
-# 				   "Message: \n" . $temp_body;
-# 
-# 		saveProblem($temp_body, $savefilename);
-# 		$messageFileName = $savefilename;
 
 	#if Save As button was clicked
 	} elsif (( $r->param('action') eq 'Save as:') && defined($r->param('body')) && defined($r->param('savefilename'))) {
 
-# 		$messageFileName = $savefilename;
-# 
-# 		if ($messageFileName =~ /^[~.]/ || $messageFileName =~ /\.\./) {
-# 			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory (you can't use ../blah/blah).  Please specify a different file or move the needed file to the email directory");
-# 		}
-# 
-# 
-# 		my $temp_body = $body;
-# 		$temp_body =~ s/\r\n/\n/g;
-# 		$temp_body = join("",
-# 				   "From: $from \nReply-To: $replyTo)\n" ,
-# 				   "Subject: $subject\n" ,
-# 				   "Message: \n    $temp_body");
-# 
-# 		saveNewProblem($temp_body, $messageFileName);
 
-	#if Save As Default button was clicked
 	} elsif (( $r->param('action') eq 'save_as_default') && defined($r->param('body'))) {
 
-# 		my $temp_body;
-# 		$temp_body = $r->param('body');
-# 		$temp_body =~ s/\r\n/\n/g;
-# 
-# 		#get default.msg and back it up in default.old.msg
-# 		open DEFAULT, "$emailDirectory/$default_msg_file";
-# 			$temp_body = <DEFAULT>;
-# 		close DEFAULT;
-# 
-# 		if ( -e "$emailDirectory/$old_default_msg_file") {
-# #				saveProblem($temp_body, $old_default_msg_file);
-# 		} else {
-# #				saveNewProblem($temp_body, $old_default_msg_file);
-# 		}
-# 
-# 		#save new default message as default.msg
-# 		$temp_body = $body;
-# 		$temp_body =~ s/\r\n/\n/g;
-# 		$temp_body = join("",
-# 				   "From: $from \nReply-To: $replyTo)\n" ,
-# 				   "Subject: $subject\n" ,
-# 				   "Message: \n    $temp_body");
-# 
-# #			saveProblem($temp_body, $default_msg_file);
-# 		$messageFileName = $default_msg_file;
 
-	#if Send Email button was clicked
 	} elsif ( $r->param('action') eq 'Send Email' ) {
 
 		my @studentID = ();
@@ -374,23 +362,23 @@ sub initialize {
 			$self->submission_error('You didn\'t select any recipients.  Make sure you select either all student in the course, individual students or a whole classlist.');
 		}
 
-		my $mergeFile = '';
-
-		#the radio button named 'merge' determines whether to take the selected mergefile
-		#or one that was typed in.  A error message is given if select one and use the other
-		$mergeFile = $scoringDirectory . $r->param('mergeFiles')
-			if ($r->param('merge') eq 'mergeFiles' && defined($r->param('mergeFiles')) && $r->param('mergeFiles') ne 'None');
-
-		$mergeFile = $templateDirectory . $r->param('mergeFile')
-			if ($r->param('merge') eq 'mergeFile' && defined($r->param('mergeFile')) && $r->param('mergeFile') !~ m|/$|); #does not end in a /
-
-		if ($mergeFile =~ /^[~.]/ || $mergeFile =~ /\.\./) {
-			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory.  Please specify a different file or move the needed file to the email directory");
-		}
-		if ($r->param('body') =~ /(\$COL\[.*?\])/ && !(-e $mergeFile)) {
-			$self->submission_error("In order to use the \$COL[] you must specify a merge file. The file you specified does not exist.  Also, make sure you selected the right checkbox.");
-		}
-
+# 		my $mergeFile = '';
+# 
+# 		#the radio button named 'merge' determines whether to take the selected mergefile
+# 		#or one that was typed in.  A error message is given if select one and use the other
+# 		$mergeFile = $scoringDirectory . $r->param('mergeFiles')
+# 			if ($r->param('merge') eq 'mergeFiles' && defined($r->param('mergeFiles')) && $r->param('mergeFiles') ne 'None');
+# 
+# 		$mergeFile = $templateDirectory . $r->param('mergeFile')
+# 			if ($r->param('merge') eq 'mergeFile' && defined($r->param('mergeFile')) && $r->param('mergeFile') !~ m|/$|); #does not end in a /
+# 
+# 		if ($mergeFile =~ /^[~.]/ || $mergeFile =~ /\.\./) {
+# 			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory.  Please specify a different file or move the needed file to the email directory");
+# 		}
+# 		if ($r->param('body') =~ /(\$COL\[.*?\])/ && !(-e $mergeFile)) {
+# 			$self->submission_error("In order to use the \$COL[] you must specify a merge file. The file you specified does not exist.  Also, make sure you selected the right checkbox.");
+# 		}
+# 
 
 		my %mergeAArray = ();
 # 			unless ($mergeFile eq '') {%mergeAArray = &delim2aa($mergeFile);}
@@ -471,42 +459,42 @@ sub initialize {
 
 }  #end initialize
 
-sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties) = @_;
-	my $size = $properties->{size};
-	my $type = $properties->{type};
-	my $access = $properties->{access};
-	my $items = $properties->{items};
-	my $synonyms = $properties->{synonyms};
-	
-	
-	if ($access eq "readonly") {
-		return $value;
-	}
-	if ($type eq "number" or $type eq "text") {
-		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
-	}
-	if ($type eq "enumerable") {
-		my $matched = undef; # Whether a synonym match has occurred
-
-		# Process synonyms for enumerable objects
-		foreach my $synonym (keys %$synonyms) {
-			if ($synonym ne "*" and $value =~ m/$synonym/) {
-				$value = $synonyms->{$synonym};
-				$matched = 1;
-			}
-		}
-		if (!$matched and exists $synonyms->{"*"}) {
-			$value = $synonyms->{"*"};
-		}
-		return CGI::popup_menu({
-			name => $fieldName, 
-			values => [keys %$items],
-			default => $value,
-			labels => $items,
-		});
-	}
-}
+# sub fieldEditHTML {
+# 	my ($self, $fieldName, $value, $properties) = @_;
+# 	my $size = $properties->{size};
+# 	my $type = $properties->{type};
+# 	my $access = $properties->{access};
+# 	my $items = $properties->{items};
+# 	my $synonyms = $properties->{synonyms};
+# 	
+# 	
+# 	if ($access eq "readonly") {
+# 		return $value;
+# 	}
+# 	if ($type eq "number" or $type eq "text") {
+# 		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
+# 	}
+# 	if ($type eq "enumerable") {
+# 		my $matched = undef; # Whether a synonym match has occurred
+# 
+# 		# Process synonyms for enumerable objects
+# 		foreach my $synonym (keys %$synonyms) {
+# 			if ($synonym ne "*" and $value =~ m/$synonym/) {
+# 				$value = $synonyms->{$synonym};
+# 				$matched = 1;
+# 			}
+# 		}
+# 		if (!$matched and exists $synonyms->{"*"}) {
+# 			$value = $synonyms->{"*"};
+# 		}
+# 		return CGI::popup_menu({
+# 			name => $fieldName, 
+# 			values => [keys %$items],
+# 			default => $value,
+# 			labels => $items,
+# 		});
+# 	}
+# }
 
 sub title {
 	my $self = shift;
@@ -529,6 +517,39 @@ sub path {
 }
 
 sub body {
+	my ($self, $setID)  = @_;
+	my $response        = (defined($self->{response}))? $self->{response} : '';
+	if ($response eq 'preview') {
+		$self->print_preview($setID);
+	} else {
+		$self->print_form($setID);
+	}
+
+}
+sub print_preview {
+	my ($self, $setID)  = @_;
+	#  get preview user
+	my $ur      = $self->{db}->getUser($self->{preview_user});
+	
+	#  get merge file
+	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+	my $delimiter       = ',';
+	my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+
+	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data);
+	
+	my $recipients  = join(" ",@{$self->{ra_send_to} });
+
+	return join("", '<pre>',$preview_header,$msg,"\n","\n",
+				   '</pre>', 
+				   CGI::p('Use browser back button to return from preview mode'),
+				   CGI::h3('Emails to be sent to the following:'), 
+				   $recipients, "\n",
+	               
+	);
+
+}
+sub print_form {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
 	my $authz = $self->{authz};
@@ -544,107 +565,17 @@ sub body {
 	my $permissionLevelTemplate = $db->newPermissionLevel;
 	
 	# This code will require changing if the permission and user tables ever have different keys.
-	my @users = $db->listUsers;
+	my @users                 = @{ $self->{ra_users} };
+	my $ra_user_records       = $self->{ra_user_records};
+	my %classlistLabels       = ();#  %$hr_classlistLabels;
+	foreach my $ur (@{ $ra_user_records }) {
+		$classlistLabels{$ur->user_id} = $ur->user_id.' '.$ur->last_name. ', '. $ur->first_name.' - '.$ur->section;
+	}
 
-	# This table can be consulted when display-ready forms of field names are needed.
-# 	my %prettyFieldNames = map {$_ => $_} ($userTemplate->FIELDS(), $permissionLevelTemplate->FIELDS());
-# 	@prettyFieldNames{qw(
-# 		user_id 
-# 		first_name 
-# 		last_name 
-# 		email_address 
-# 		student_id 
-# 		status 
-# 		section 
-# 		recitation 
-# 		comment 
-# 		permission
-# 	)} = (
-# 		"User ID", 
-# 		"First Name", 
-# 		"Last Name", 
-# 		"E-mail", 
-# 		"Student ID", 
-# 		"Status", 
-# 		"Section", 
-# 		"Recitation", 
-# 		"Comment", 
-# 		"Perm. Level"
-# 	);
 
-# 	my %fieldProperties = (
-# 		user_id => {
-# 			type => "text",
-# 			size => 8,
-# 			access => "readonly",
-# 		},
-# 		first_name => {
-# 			type => "text",
-# 			size => 10,
-# 			access => "readwrite",
-# 		},
-# 		last_name => {
-# 			type => "text",
-# 			size => 10,
-# 			access => "readwrite",
-# 		},
-# 		email_address => {
-# 			type => "text",
-# 			size => 20,
-# 			access => "readwrite",
-# 		},
-# 		student_id => {
-# 			type => "text",
-# 			size => 11,
-# 			access => "readwrite",
-# 		},
-# 		status => {
-# 			type => "enumerable",
-# 			size => 4,
-# 			access => "readwrite",
-# 			items => {
-# 				"C" => "Enrolled",
-# 				"D" => "Drop",
-# 				"A" => "Audit",
-# 			},
-# 			synonyms => {
-# 				qr/^[ce]/i => "C",
-# 				qr/^[dw]/i => "D",
-# 				qr/^a/i => "A",
-# 				"*" => "C",
-# 			}
-# 		},
-# 		section => {
-# 			type => "text",
-# 			size => 4,
-# 			access => "readwrite",
-# 		},
-# 		recitation => {
-# 			type => "text",
-# 			size => 4,
-# 			access => "readwrite",
-# 		},
-# 		comment => {
-# 			type => "text",
-# 			size => 20,
-# 			access => "readwrite",
-# 		},
-# 		permission => {
-# 			type => "number",
-# 			size => 2,
-# 			access => "readwrite",
-# 		}
-# 	);
-	
-	
-	
 ##############################################################################################################
 	
-#	my ($ar_sortedNames, $hr_classlistLabels) = getClasslistFilesAndLabels($course);
-#	my @sortedNames = @$ar_sortedNames;
-	my %classlistLabels = ();#  %$hr_classlistLabels;
-	unshift(@users, "Yourself");
-	$classlistLabels{None} = 'Yourself';
+
 	my $from            = $self->{from};
 	my $subject         = $self->{subject};
 	my $replyTo         = $self->{replyTo};
@@ -656,17 +587,28 @@ sub body {
 	my @sorted_messages = $self->get_message_file_names;
 	my @sorted_merge_files = $self->get_merge_file_names;
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
-	
-	
+	my $delimiter       = ',';
+	my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+	my @merge_keys      = keys %$rh_merge_data;
+	my $preview_user    = $self->{preview_user};
+	my $preview_record   = $db->getUser($preview_user); 
+
+#############################################################################################		
+
 	print CGI::start_form({method=>"post", action=>$r->uri()});
-#create list of sudents
-# show professors's name and email address
-# show replyTo field and From field
+	print $self->hidden_authen_fields();
+#############################################################################################
+#	begin upper table
+#############################################################################################	
+
     print CGI::start_table({-border=>'2', -cellpadding=>'4'});
 	print CGI::Tr({-align=>'left',-valign=>'VCENTER'},
+#############################################################################################
+#	first column
+#############################################################################################	
+
 			 CGI::td("Message file: $input_file","\n",CGI::br(),
 				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
-				 #CGI::textfield(-name=>'openfilename', -size => 20, -value=> "$input_file", -override=>1), "\n",CGI::br(),
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
 				                 -default=>$input_file
@@ -675,8 +617,11 @@ sub body {
 				 "Save file to: $output_file","\n",CGI::br(),
 				 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
 				 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>40, -override=>1),  
+				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>35, -override=>1),  
 			),
+#############################################################################################
+#	second column
+#############################################################################################	
 			CGI::td({-align=>'left'},
 				CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
 					-labels=>{all_students=>'All active students',studentID => 'Select recipients'},
@@ -688,24 +633,28 @@ sub body {
 							   -labels=>\%classlistLabels,
 							   -size  => 10,
 							   -multiple => 1,
-							   -default=>'Yourself'
+							   -default=>$user
 					),
 					
 				
 			),
+#############################################################################################
+#	third column
+#############################################################################################	
 			CGI::td({align=>'left'},
-				 CGI::submit(-name=>'action', -value=>'Choose merge file'),
+			     "Merge file is: $merge_file", CGI::br(),
+				 CGI::submit(-name=>'action', -value=>'Choose merge file'),CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
 				                 -default=>$merge_file,
-				 ), "\n",CGI::br(),
-				CGI::submit(-name=>'preview', -value=>'preview',-label=>'Preview')," email to ",
-				CGI::popup_menu(-name=>'classList',
+				 ), "\n",CGI::hr(),CGI::br(),
+				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview')," email to ",
+				CGI::popup_menu(-name=>'preview_user',
 							   -values=>\@users,
-							   -labels=>\%classlistLabels,
-							   -default=>'Yourself'
+							   #-labels=>\%classlistLabels,
+							   -default=>$preview_user,
 				),
-				CGI::br(),CGI::br(),
+				CGI::hr(),
 				CGI::submit(-name=>'action', -value=>'resize', -label=>'Resize message window'),CGI::br(),
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
@@ -718,27 +667,49 @@ sub body {
 							'$SID'=>'$SID - Student ID',
 							'$FN'=>'$FN - First name',
 							'$LN'=>'$LN - Last name',
-							'$SECTION'=>'$SECTION - Student\'s Section',
+							'$SECTION'=>'$SECTION',
 							'$RECITATION'=>'$RECITATION',
 							'$STATUS'=>'$STATUS - C, Audit, Drop, etc.',
 							'$EMAIL'=>'$EMAIL - Email address',
 							'$LOGIN'=>'$LOGIN - Login',
-							'$COL[3]'=>'$COL[3] - 3rd column in merge file',
+							'$COL[3]'=>'$COL[3] - 3rd col',
 							'$COL[-1]'=>'$COL[-1] - Last column'
 							}
 				), "\n",
 			),
 
 	); # end Tr
-	print CGI::end_table();	 
-#create a textbox with the subject and a textarea with the message
+	print CGI::end_table();	
+#############################################################################################
+#	end upper table
+#############################################################################################	
+ 
+# show merge file
+#         print  "<pre>",(map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  0..8),"</pre>";
+# 		print  CGI::popup_menu(
+# 						-name=>'dummyName2',
+# 						-values=>\@merge_keys,
+# 						-labels=>$rh_merge_data,
+# 						-multiple=>1,
+# 						-size    =>2,
+# 						
+# 				), "\n",CGI::br();
+#       warn "merge keys ", join( " ",@merge_keys);
+#############################################################################################
+#	merge file fragment and message text area field
+#############################################################################################	
 
+        my @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };
+		print CGI::pre("",data_format(0..($#tmp2)),"\n", data_format(@tmp2));
+#create a textbox with the subject and a textarea with the message
 #print actual body of message
 
 	print  "\n", CGI::p( $self->{message}) if defined($self->{message});  
     print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -columns=>$columns, -override=>1));
-    
-#create all necessary action buttons
+
+#############################################################################################
+#	action button table
+#############################################################################################	
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( 
 					 CGI::td( CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
@@ -752,8 +723,6 @@ sub body {
 			   
 ##############################################################################################################
 
-	print $self->hidden_authen_fields();
-#	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
 	print CGI::end_form();	
 	return "";
 }
@@ -843,4 +812,103 @@ sub get_merge_file_names {
 	unshift(@mergeFiles, 'None');
 	return @mergeFiles;
 }
+
+sub read_merge_file    {
+	my $self            = shift;
+	my $fileName        = shift;
+	my $delimiter       = shift;
+	$delimiter          = ',' unless defined($delimiter);
+	my $scoringDirectory= $self->{ce}->{courseDirs}->{scoring};
+	my $filePath        = "$scoringDirectory/$fileName";  
+        #       Takes a delimited file as a parameter and returns an
+        #       associative array with the first field as the key.
+        #       Blank lines are skipped. White space is removed
+    my(@dbArray,$key,%assocArray,$dbString);
+    local(*FILE);
+    open(FILE, "$filePath") or $self->submission_error("Can't open file $filePath");
+    my $index=0;
+	while (<FILE>){
+		unless ($_ =~ /\S/)  {next;}               ## skip blank lines
+		chomp;
+		@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
+		$key    =$dbArray[$index][0];
+		#@dbArray    =  map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @dbArray;
+		#$dbString   = join(" | ",@dbArray);
+		$assocArray{$key}=$dbArray[$index];
+		$index++;
+	}
+        close(FILE);
+        return \%assocArray;
+}
+sub getRecord {
+	my $self    = shift;
+	my $line    = shift;
+	my $delimiter   = shift;
+	$delimiter       = ',' unless defined($delimiter);
+
+        #       Takes a delimited line as a parameter and returns an
+        #       array.  Note that all white space is removed.  If the
+        #       last field is empty, the last element of the returned
+        #       array is also empty (unlike what the perl split command
+        #       would return).  E.G. @lineArray=&getRecord(\$delimitedLine).
+
+        my(@lineArray);
+        $line.=$delimiter;                              # add 'A' to end of line so that
+                                                        # last field is never empty
+        @lineArray = split(/\s*${delimiter}\s*/,$line);
+        $lineArray[0] =~s/^\s*//;                       # remove white space from first element
+        @lineArray;
+}
+
+sub process_message {
+	my $self          = shift;
+	my $ur            = shift;
+	my $rh_merge_data = shift;
+	my $text          = defined($self->{r_text}) ? ${ $self->{r_text} }:
+	                        'FIXME no text was produced by initialization!!';	  
+	#user macros that can be used in the email message
+	my $SID           = $ur->student_id;
+	my $FN            = $ur->first_name;
+	my $LN            = $ur->last_name;
+	my $SECTION       = $ur->section;
+	my $RECITATION    = $ur->recitation;
+	my $STATUS        = $ur->status;
+	my $EMAIL         = $ur->email_address;
+	my $LOGIN         = $ur->user_id;
+	# get record from merge file
+	# FIXME this is inefficient.  The info should be cached
+	my @COL            = @{$rh_merge_data->{$SID} };
+	
+	my $endCol = @COL;
+	# for safety, only evaluate special variables
+ 	my $tmp = $text;    
+ 	$tmp =~ s/(\$SID)/eval($1)/ge;
+ 	$tmp =~ s/(\$LN)/eval($1)/ge;
+ 	$tmp =~ s/(\$FN)/eval($1)/ge;
+ 	$tmp =~ s/(\$STATUS)/eval($1)/ge;
+ 	$tmp =~ s/(\$SECTION)/eval($1)/ge;
+ 	$tmp =~ s/(\$RECITATION)/eval($1)/ge;
+ 	$tmp =~ s/(\$EMAIL)/eval($1)/ge;
+ 	$tmp =~ s/(\$LOGIN)/eval($1)/ge;
+ 	$tmp =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
+ 	$tmp =~ s/(\$COL\[.*?\])/eval($1)/ge;
+
+	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"\n", data_format(@COL)).
+		                    CGI::h3( "This sample mail would be sent to $EMAIL");
+
+
+	my $msg = join("",
+	   "To: "             , $ur->email_address,"\n",
+       "From: "           , $self->{from} , "\n" ,
+       "Reply-To: "       , $self->{replyTo} , "\n" ,
+       "Subject:  "       , $self->{subject} , "\n" ,"\n" , 
+	   $tmp , "\n"
+	);
+
+	$msg =~ s/\r//g;
+	return $msg, $preview_header;
+}
+ sub data_format {
+ 	map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @_;
+ }
 1;
