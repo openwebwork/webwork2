@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.30 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.31 2004/04/04 04:00:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,7 +122,7 @@ sub body {
 	my $user        = $r->param('user');
 	
 	my $scoringPage       = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
-	my $scoringURL        = $self->systemLink($scoringPage);
+	my $scoringURL        = $self->systemLink($scoringPage, authen=>0);
 	
 	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", 
 	                                      courseID => $courseName

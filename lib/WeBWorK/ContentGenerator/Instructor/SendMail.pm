@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.19 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.20 2004/04/04 04:00:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -593,7 +593,7 @@ sub print_form {
         if ($@ and $merge_file ne 'None') {
 			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
         } else {
-			print CGI::pre("",data_format(0..($#tmp2)),"<br>\n", data_format(@tmp2));
+			print CGI::pre("",data_format(0..($#tmp2)),"<br>\n", data_format2(@tmp2));
 		}
 #create a textbox with the subject and a textarea with the message
 #print actual body of message
@@ -748,13 +748,16 @@ sub process_message {
  	
  	$msg =~ s/\r//g;
 
-	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"<br>\n", data_format(@COL)).
+	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"<br>\n", data_format2(@COL)).
 		                    CGI::h3( "This sample mail would be sent to $EMAIL");
 
 
 	return $msg, $preview_header;
 }
  sub data_format {
- 	map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @_;
+ 	    map {"COL[$_]".'&nbsp;'x(4-length($_));}  @_;
+ }
+  sub data_format2 {
+    map { $_ . '&nbsp;'x(9-length($_));}  @_;
  }
 1;
