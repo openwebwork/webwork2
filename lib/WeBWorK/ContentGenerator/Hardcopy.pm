@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.47.2.1 2004/08/18 22:32:23 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.48 2004/08/18 22:55:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -52,6 +52,7 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
 	my $singleSet       = $r->urlpath->arg("setID");
 	my @sets            = $r->param("hcSet");
@@ -77,12 +78,12 @@ sub pre_header_initialize {
 	die "user ", $r->param("effectiveUser"), " (effective user) not found."
 		unless $self->{effectiveUser};
 	
-	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
-	if ($PermissionLevel) {
-		$self->{permissionLevel} = $PermissionLevel->permission();
-	} else {
-		die "permission level for user ", $r->param("user"), " (real user) not found.";
-	}
+	#my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
+	#if ($PermissionLevel) {
+	#	$self->{permissionLevel} = $PermissionLevel->permission();
+	#} else {
+	#	die "permission level for user ", $r->param("user"), " (real user) not found.";
+	#}
 	
 	$self->{sets}            = \@sets;
 	$self->{users}           = \@users;
@@ -90,10 +91,9 @@ sub pre_header_initialize {
 	$self->{errors}          = [];
 	$self->{warnings}        = [];
 	
-	
-	# security checks
-	my $multiSet    = $self->{permissionLevel} > 0;
-	my $multiUser   = $self->{permissionLevel} > 0;
+	# is the user allowed to request multiple sets/users at a time?
+	my $multiSet = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiset");
+	my $multiUser = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser");
 	
 	if (@sets > 1 and not $multiSet) {
 		$self->{generationError} = ["SIMPLE", "You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again."];
@@ -240,14 +240,15 @@ sub displayForm($) {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
 	print CGI::start_p(), "Select the problem sets for which to generate hardcopy versions.";
-	if ($self->{permissionLevel} > 0) {
+	if ($authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser")) {
 		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
 	}
 	print CGI::end_p();
 	
-	my $download_texQ = $self->{permissionLevel} > 0;
+	my $download_texQ = $authz->hasPermissions($r->param("user"), "download_hardcopy_format_tex");
 	
 	#  ##########construct action URL #################
 	my $ce         = $r->ce;
@@ -279,14 +280,14 @@ sub displayForm($) {
 	);
 	print CGI::start_table({-width=>"100%"}), CGI::start_Tr({-valign=>"top"});
 	
-	my $multiSet          = $self->{permissionLevel} > 0;
-	my $multiUser         = $self->{permissionLevel} > 0;
-	my $preOpenSets       = $self->{permissionLevel} > 0;
+	my $multiSet          = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiset");
+	my $multiUser         = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser");
+	my $preOpenSets       = $authz->hasPermissions($r->param("user"), "view_unopened_sets");
+	my $unpublishedSets   = $authz->hasPermissions($r->param("user"), "view_unpublished_sets");
 	my $effectiveUserName = $self->{effectiveUser}->user_id;	
 	my @setNames     = $db->listUserSets($effectiveUserName);
 	my @sets         = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames ); # checked
-	@sets            = grep { defined $_ and 
-	                             ( $self->{permissionLevel} > 0 or ($_->published and $_->open_date < time) ) } @sets;
+	@sets            = grep { defined $_ and ($preOpenSets or $_->open_date < time) and ($unpublishedSets or $_->published) } @sets;
 	@sets            = sort { $a->set_id cmp $b->set_id } @sets;
 	@setNames        = map( {$_->set_id } @sets );  # get sorted version of setNames
 	my %setLabels    = map( {($_->set_id, "set ".$_->set_id )} @sets );
@@ -355,11 +356,12 @@ sub generateHardcopy($) {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+	my $authz = $r->authz;
 	
 	my @sets = @{$self->{sets}};
 	my @users = @{$self->{users}};
-	my $multiSet = $self->{permissionLevel} > 0;
-	my $multiUser = $self->{permissionLevel} > 0;
+	my $multiSet = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiset");
+	my $multiUser = $authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser");
 	# sanity checks
 	unless (@sets) {
 		die ["RETRY", "No sets were specified."];
@@ -682,6 +684,7 @@ sub getProblemTeX {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
 	# Should we provide a default user ? I think not FIXME
 	
@@ -697,7 +700,10 @@ sub getProblemTeX {
 	    );
 	    return "No set $setName for ".$effectiveUser->user_id;
 	}
-    unless (( $set->published and $set->open_date < time ) or $permissionLevel>0 )  {  # return error if set is invisible
+	
+	my $preOpenSets = $authz->hasPermissions($r->param("user"), "view_unopened_sets");
+	my $unpublishedSets = $authz->hasPermissions($r->param("user"), "view_unpublished_sets");
+    unless ( ($preOpenSets or $set->open_date < time) and ($unpublishedSets or $set->published) )  {  # return error if set is invisible
 		push(@{$self->{warnings}}, 
 			   setName => $setName, 
 			   problem => 0,
@@ -739,7 +745,7 @@ sub getProblemTeX {
 	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
 	my $showHints          = $r->param("showHints") || 0;
 	my $showSolutions      = $r->param("showSolutions") || 0;
-	unless ($permissionLevel > 0 or time > $set->answer_date) {
+	unless ($authz->hasPermissions($r->param("user"), "view_answers") or time > $set->answer_date) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}

@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.101 2004/09/02 22:51:57 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.102 2004/09/05 00:54:31 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -412,7 +412,6 @@ my $nobody    = undef;
 	assign_problem_sets            => $professor,
 	modify_problem_sets            => $professor,
 	modify_student_data            => $professor,
-	
 	modify_classlist_files         => $professor,
 	modify_set_def_files           => $professor,
 	modify_scoring_files           => $professor,
@@ -426,15 +425,12 @@ my $nobody    = undef;
 	show_correct_answers_before_answer_date         => $ta,
 	show_solutions_before_answer_date               => $ta,
 	avoid_recording_answers                         => $ta,
-	
 	check_answers_before_open_date                  => $ta,
 	check_answers_after_open_date_with_attempts     => $ta,
 	check_answers_after_open_date_without_attempts  => $student,
 	check_answers_after_due_date                    => $student,
 	check_answers_after_answer_date                 => $student,
-	
 	record_answers_when_acting_as_student           => $nobody,
-	
 	# "record_answers_when_acting_as_student" takes precedence
 	# over the following for professors acting as students:
 	record_answers_before_open_date                 => $nobody,
@@ -442,8 +438,13 @@ my $nobody    = undef;
 	record_answers_after_open_date_without_attempts => $nobody,
 	record_answers_after_due_date                   => $nobody,
 	record_answers_after_answer_date                => $nobody,
-
-	dont_log_past_answers				=> $professor,
+	dont_log_past_answers                           => $professor,
+	
+	##### Behavior of the Hardcopy Processor #####
+	
+	download_hardcopy_multiuser  => $ta,
+	download_hardcopy_multiset   => $ta,
+	download_hardcopy_format_tex => $ta,
 );
 
 ################################################################################
