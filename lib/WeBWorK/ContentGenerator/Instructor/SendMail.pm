@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.13 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -305,6 +305,10 @@ sub initialize {
 			#warn "FIXME sending email to $recipient";
 			my $ur      = $self->{db}->getUser($recipient); #checked
 			die "record for user $recipient not found" unless $ur;
+			unless ($ur->email_address) {
+				warn "user $recipient does not have an email address -- skipping";
+				next;
+			}
 			my ($msg, $preview_header);
 			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
 			warn "There were errors in processing user $ur, merge file $merge_file. $@" if $@;
@@ -316,11 +320,11 @@ sub initialize {
 				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
 			});
 			unless (ref $mailer) {
-				warn "Failed to create a mailer: $Mail::Sender::Error";
+				warn "Failed to create a mailer for user $recipient: $Mail::Sender::Error";
 				next;
 			}
 			unless (ref $mailer->Open()) {
-				warn "Failed to open the mailer: $Mail::Sender::Error";
+				warn "Failed to open the mailer for user $recipient: $Mail::Sender::Error";
 				next;
 			}
 			my $MAIL = $mailer->GetHandle() or warn "Couldn't get handle";
