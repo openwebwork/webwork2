@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.18 2004/02/03 00:49:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.19 2004/06/15 18:53:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,25 @@ use Carp qw(croak);
 use constant TABLES => qw(*);
 use constant STYLE  => "dbi";
 
+=head1 SUPPORTED PARAMS
+
+This schema pays attention to the following items in the C<params> entry.
+
+=over
+
+=item tableOverride
+
+Alternate name for this table, to satisfy SQL naming requirements.
+
+=item fieldOverride
+
+A reference to a hash mapping field names to alternate names, to satisfy SQL
+naming requirements.
+
+=back
+
+=cut
+
 ################################################################################
 # constructor for SQL-specific behavior
 ################################################################################
@@ -57,7 +76,7 @@ sub count {
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM $table ";
+	my $stmt = "SELECT COUNT(*) FROM `$table` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-count: $stmt\n");
 	
@@ -78,7 +97,7 @@ sub list($@) {
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT $keynames FROM $table ";
+	my $stmt = "SELECT $keynames FROM `$table` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-list: $stmt\n");
 	
@@ -98,7 +117,7 @@ sub exists($@) {
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM $table ";
+	my $stmt = "SELECT COUNT(*) FROM `$table` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-exists: $stmt\n");
 	
@@ -125,7 +144,7 @@ sub add($$) {
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
-	my $stmt = "INSERT INTO $table ($fieldnames) VALUES ($marks)";
+	my $stmt = "INSERT INTO `$table` ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
 	
 	$self->{driver}->connect("rw");
@@ -162,7 +181,7 @@ sub gets($@) {
 		croak "wrong number of keyparts for table $table (needs: @keynames)"
 			unless @keyparts == @keynames;
 		
-		my $stmt = "SELECT * FROM $table ";
+		my $stmt = "SELECT * FROM `$table` ";
 		$stmt .= $self->makeWhereClause(@keyparts);
 		$self->debug("SQL-gets: $stmt\n");
 		my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
@@ -203,7 +222,7 @@ sub getAll {
 	my @keynames = $self->sqlKeynames();
 	pop @keynames; # get rid of problem_id
 	
-	my $stmt = "SELECT * FROM $table ";
+	my $stmt = "SELECT * FROM `$table` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-getAll: $stmt\n");
 	
@@ -246,7 +265,7 @@ sub put($$) {
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
-	my $stmt = "UPDATE $table SET";
+	my $stmt = "UPDATE `$table` SET";
 	while (@fieldnames) {
 		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
@@ -278,7 +297,7 @@ sub delete($@) {
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "DELETE FROM $table ";
+	my $stmt = "DELETE FROM `$table` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-delete: $stmt\n");
 	
@@ -318,15 +337,13 @@ sub makeWhereClause($@) {
 sub sqlKeynames($) {
 	my ($self) = @_;
 	my @keynames = $self->{record}->KEYFIELDS();
-	return map { $self->{params}->{fieldOverride}->{$_} || $_ }
-		@keynames;
+	return map { "`$_`" } map { $self->{params}->{fieldOverride}->{$_} || $_ } @keynames;
 }
 
 sub sqlFieldnames($) {
 	my ($self) = @_;
 	my @keynames = $self->{record}->FIELDS();
-	return map { $self->{params}->{fieldOverride}->{$_} || $_ }
-		@keynames;
+	return map { "`$_`" } map { $self->{params}->{fieldOverride}->{$_} || $_ } @keynames;
 }
 
 sub debug($@) {
