@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.10 2004/06/22 17:13:46 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.11 2004/06/23 00:33:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,13 @@ $WeBWorK::Debug::Enabled = 0;
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 # 
 $WeBWorK::Debug::Logfile = "";
+
+# Prevent subroutines matching the following regular expression from logging.
+# 
+# For example, this pattern prevents the dispatch() function from logging:
+#     $WeBWorK::Debug::QuellSubroutineOutput = qr/^WeBWorK::dispatch$/;
+# 
+$WeBWorK::Debug::QuellSubroutineOutput = undef;
 
 ################################################################################
 # WeBWorK::Timing

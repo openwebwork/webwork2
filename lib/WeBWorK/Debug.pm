@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.9 2004/05/13 18:28:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Debug.pm,v 1.1 2004/06/23 00:37:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,6 +62,14 @@ If non-empty, debugging output will be sent to the file named rather than STDERR
 
 our $Logfile = "" unless defined $Logfile;
 
+=item $QuellSubroutineOutput
+
+Prevent subroutines matching the following regular expression from logging.
+
+=cut
+
+our $QuellSubroutineOutput;
+
 =back
 
 =cut
@@ -83,6 +91,8 @@ sub debug {
 	
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);
+		return if defined $QuellSubroutineOutput and $subroutine =~ m/$QuellSubroutineOutput/;
+		
 		my $finalMessage = "$subroutine: " . join("", @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
 		
