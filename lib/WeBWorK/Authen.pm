@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.22 2003/12/23 06:03:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.23 2003/12/24 00:59:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,6 +25,7 @@ WeBWorK::Authen - Check user identity, manage session keys.
 use strict;
 use warnings;
 use Apache::Cookie;
+use Apache::Util qw(unescape_uri_info);
 use Data::Dumper;
 
 sub new($$$) {
@@ -116,6 +117,21 @@ sub sendCookie {
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
+sub killCookie {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $cookie = Apache::Cookie->new($r,
+		-name => "WeBWorKAuthentication",
+		-value => "user=&key=",
+		-expires => "-1D",
+		-domain => $r->hostname,
+		-path => $ce->{webworkURLRoot},
+		-secure => 0,
+	);
+	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+}
+
 # verify will return 1 if the person is who they say the are. If the
 # verification failed because of of invalid authentication data, a note will be
 # written in the request explaining why it failed. If the request failed because
@@ -131,14 +147,21 @@ sub verify($) {
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	my $debugPracticeUser = $ce->{debugPracticeUser};
 	
-	my $user = $r->param('user');
-	my $passwd = $r->param('passwd');
-	my $key = $r->param('key');
 	my $force_passwd_authen = $r->param('force_passwd_authen');
 	my $login_practice_user = $r->param('login_practice_user');
 	my $send_cookie = $r->param("send_cookie");
+	
 	my $error;
 	my $failWithoutError = 0;
+	my $credentialSource = "params";
+	
+	my $user = $r->param('user');
+	my $passwd = $r->param('passwd');
+	my $key = $r->param('key');
+	
+	my ($cookieUser, $cookieKey) = $self->checkCookie;
+	$cookieUser ||= "";
+	$cookieKey ||= "";
 	
 	VERIFY: {
 		# This block is here so we can "last" out of it when we've
@@ -168,12 +191,12 @@ sub verify($) {
 			# check to see if a cookie was sent by the browser. if so, use the
 			# user and key from the cookie for authentication. note that the
 			# cookie is only used if no credentials are sent as parameters.
-			my ($cookieUser, $cookieKey) = $self->checkCookie;
 			if ($cookieUser and $cookieKey) {
 				$user = $cookieUser;
 				$key = $cookieKey;
 				$r->param("user", $user);
 				$r->param("key", $key);
+				$credentialSource = "cookie";
 			} else {
 				$failWithoutError = 1;
 				last VERIFY;
@@ -284,17 +307,50 @@ sub verify($) {
 	}
 	
 	if (defined $error) {
-		# authentication failed, in a bad way
+		# authentication failed, store the error message
 		$r->notes("authen_error",$error);
+		
+		# if we got a cookie, it probably has incorrect information in it. so
+		# we want to get rid of it
+		if ($cookieUser or $cookieKey) {
+			#warn "fail with error: killing cookie";
+			$self->killCookie;
+		}
+		
 		return 0;
 	} elsif ($failWithoutError) {
-		# authentication failed, but not in a bad way
+		# authentication failed, but we don't have any error message to report
+		
+		# if we got a cookie, it probably has incorrect information in it. so
+		# we want to get rid of it
+		if ($cookieUser or $cookieKey) {
+			#warn "fail without error: killing cookie";
+			$self->killCookie;
+		}
+		
 		return 0;
 	} else {
 		# autentication succeeded!
-		# send a cookie with the user and key that were accepted.
-		if ($send_cookie and not $login_practice_user) {
+		
+		# we send a cookie if any of these conditions are met:
+		# (a) a cookie was used for authentication
+		# (b) a cookie was sent but not used for authentication, and the
+		#     credentials used for authentication were the same as those in
+		#     the cookie
+		# (c) the user asked to have a cookie sent and is not a guest user.
+		my $usedCookie = ($credentialSource eq "cookie") || 0;
+		my $unusedCookieMatched = ($user eq $cookieUser and $key eq $cookieKey) || 0;
+		my $userRequestsCookie = ($send_cookie and not $login_practice_user) || 0;
+		#warn "usedCookie=$usedCookie\n";
+		#warn "unusedCookieMatched=$unusedCookieMatched\n";
+		#warn "userRequestsCookie=$userRequestsCookie\n";
+		if ($usedCookie or $unusedCookieMatched or $userRequestsCookie) {
+			#warn "succeed: sending cookie";
 			$self->sendCookie($r->param("user"), $r->param("key"));
+		} elsif ($cookieUser or $cookieKey) {
+			# otherwise, we don't want any bad cookies sticking around
+			#warn "succeed: killing cookie";
+			$self->killCookie;
 		}
 		return 1;
 	}
