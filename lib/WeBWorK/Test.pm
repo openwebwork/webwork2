@@ -10,6 +10,8 @@ sub new($$$$$) {
 		user			=> $user,
 		key			=> $key,
 	};
+	bless $self, $class;
+	return $self;
 }
 
 sub go {
