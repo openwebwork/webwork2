@@ -24,6 +24,7 @@ our @EXPORT_OK = qw(
 	string2hash
 	global2user
 	user2global
+	initializeUserProblem
 	findDefaults
 );
 

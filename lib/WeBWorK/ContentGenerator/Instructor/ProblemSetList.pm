@@ -49,7 +49,6 @@ sub title {
 }
 
 sub body {
-	warn "body\n";
 	my $self = shift;
 	my $r = $self->{r};
 	my $db = $self->{db};
