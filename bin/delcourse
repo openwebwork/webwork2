@@ -1,0 +1,173 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.11 2004/05/05 22:02:50 sh002i Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=head1 NAME
+
+delcourse - delete a course
+
+=head1 SYNOPSIS
+
+ delcourse [options] COURSEID
+
+=head1 DESCRIPTION
+
+Delete a course, including its database and course directory.
+
+=head1 OPTIONS
+
+=over
+
+If the course's database layout is , the following options are valid:
+
+=over
+
+=item B<--sql-host>=I<HOST>
+
+Specifies the hostname of the SQL server on the course database resides. If not
+specified, the default for your RDBMS will be used.
+
+=item B<--sql-port>=I<PORT>
+
+Specifies the port of the SQL server on the course database resides. If not
+specified, the default for your RDBMS will be used.
+
+=item B<--sql-user>=I<USER>
+
+Specifies the username to use when connecting to the SQL server to delete the
+course database. This user must have CREATE, DELETE, FILE, INSERT, SELECT, and
+UPDATE privileges, WITH GRANT OPTION.
+
+=item B<--sql-pass>=I<PASS>
+
+Specifies the password to use when connecting to the SQL server.
+
+=item B<--sql-db>=I<DBNAME>
+
+Specifies the name of the database to delete. (This is usually
+"webwork_COURSENAME", but can be overridden by changing the database layout in
+F<global.conf>.)
+
+=back
+
+=item I<COURSEID>
+
+The name of the course to delete.
+
+=back
+
+=cut
+
+BEGIN {
+	# hide arguments (there could be passwords there!)
+	$0 = "$0";
+}
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
+use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
+use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
+
+sub usage {
+	print STDERR "usage: $0 [options] COURSEID\n";
+	print STDERR "Options:\n";
+	print STDERR "  for \"sql\" database layout:\n";
+	print STDERR "    [--sql-host=HOST] [--sql-port=port]\n";
+	print STDERR "    --sql-user=USER --sql-pass=PASS\n";
+	print STDERR "    --sql-db=DBNAME\n";
+	exit;
+}
+
+sub usage_error {
+	print STDERR "$0: @_\n";
+	usage();
+}
+
+my $sql_host = "";
+my $sql_port = "";
+my $sql_user = "";
+my $sql_pass = "";
+my $sql_db = "";
+
+##### get command-line options #####
+
+GetOptions(
+	"sql-host=s" => \$sql_host,
+	"sql-port=s" => \$sql_port,
+	"sql-user=s" => \$sql_user,
+	"sql-pass=s" => \$sql_pass,
+	"sql-db=s" => \$sql_db,
+);
+my $courseID = shift;
+
+##### perform sanity checks #####
+
+usage_error("must specify COURSEID.") unless $courseID;
+
+# bring up a minimal course environment
+my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "FAKE_URL_ROOT",
+	"FAKE_PG_ROOT", $courseID);
+
+my $dbLayout = $ce->{dbLayoutName};
+
+if ($dbLayout eq "sql") {
+	usage_error("must specify --sql-user.")   unless $sql_user;
+	usage_error("must specify --sql-pass.")   unless $sql_pass;
+	usage_error("must specify --sql-db.")     unless $sql_db;
+}
+
+##### set up parameters to pass to deleteCourse() #####
+
+my %dbOptions;
+if ($dbLayout eq "sql") {
+	$dbOptions{host}     = $sql_host if $sql_host ne "";
+	$dbOptions{port}     = $sql_port if $sql_port ne "";
+	$dbOptions{username} = $sql_user;
+	$dbOptions{password} = $sql_pass;
+	$dbOptions{database} = $sql_db;
+}
+
+##### call deleteCourse(), handle errors #####
+
+eval {
+	deleteCourse(
+		courseID      => $courseID,
+		ce            => $ce,
+		dbOptions     => \%dbOptions,
+	);
+};
+
+if ($@) {
+	my $error = $@;
+	print STDERR "$error\n";
+	exit;
+}
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, hathaway at users.sourceforge.net.
+
+=cut
