@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,9 +42,10 @@ unless ($authz->hasPermissions($user, "PERMISSION")) {
 
 sub pre_header_initialize {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	
 	my $userID = $r->param("user");
 	
 	my ($type, $action) = ("", "");
@@ -80,8 +81,8 @@ sub pre_header_initialize {
 
 sub handleDelete {
 	my ($self, $type) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $r = $self->r;
+	my $ce = $r->ce;
 	
 	my (@fileList, $selectParam, $dir);
 	if ($type eq "classlist") {
@@ -101,6 +102,8 @@ sub handleDelete {
 		return;
 	}
 	
+	# FIXME: FOR THE LOVE OF GOD, ADD SECURITY CHECKS!!!!!!
+	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDelete } @fileList) {
 		$self->{submitError} = "File \"$fileToDelete\" not found in file list.";
@@ -113,8 +116,8 @@ sub handleDelete {
 
 sub handleDownload {
 	my ($self, $type) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $r = $self->r;
+	my $ce = $r->ce;
 	
 	my (@fileList, $selectParam, $dir);
 	if ($type eq "classlist") {
@@ -150,8 +153,8 @@ sub handleDownload {
 
 sub handleUpload {
 	my ($self, $type) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $r = $self->r;
+	my $ce = $r->ce;
 	
 	my (@fileList, $uploadParam, $uploadNameParam, $ext, $destDir);
 	if ($type eq "classlist") {
@@ -203,45 +206,10 @@ sub handleUpload {
 	$upload->disposeTo("$destDir/$fileName");
 }
 
-# override contentGenerator header routine for now
-# FIXME
-#sub header {
-#	my $self = shift;
-#	
-#	
-#	
-#	return OK;
-#}
-
-sub initialize {
-	my ($self) = @_;
-}
-
-sub path {
-	my $self = shift;
-	my $args = $_[-1];
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home"             => "$root/",
-		$courseName        => "$root/$courseName/",
-		"Instructor Tools" => "$root/$courseName/instructor/",
-		"File Transfer"    => "",
-	);
-}
-
-sub title {
-	my $self = shift;
-	
-	return "File Transfer";
-}
-
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $authz = $self->{authz};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $authz = $r->authz;
 	
 	my $userID = $r->param("user");
 	
