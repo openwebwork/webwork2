@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime);
+use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Timing;
 
 sub initialize {
@@ -103,7 +104,7 @@ sub scoreSet {
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
 	my %users;
-	foreach my $userID ($db->listSetUsers($setID)) {
+	foreach my $userID ($db->listUsers()) {
 		my $userRecord = $db->getUser($userID);
 		# The key is what we'd like to sort by.
 		$users{$userRecord->student_id} = $userRecord;
@@ -178,6 +179,13 @@ sub scoreSet {
 		$valueTotal += $globalProblem->value;
 		for (my $user = 0; $user < @userKeys; $user++) {
 			my $userProblem = $db->getMergedProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
+			unless (defined $userProblem) { # assume an empty problem record if the problem isn't assigned to this user
+				$userProblem = $db->newUserProblem;
+				$userProblem->status(0);
+				$userProblem->value(0);
+				$userProblem->num_correct(0);
+				$userProblem->num_incorrect(0);
+			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
 			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
 			unless ($format eq "totals") {
