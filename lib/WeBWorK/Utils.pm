@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.58 2004/10/11 19:36:30 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.59 2004/10/22 22:59:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -74,6 +74,7 @@ our @EXPORT_OK = qw(
 	cryptPassword
 	dequote
 	undefstr
+	fisher_yates_shuffle
 	sortByName
 );
 
@@ -721,6 +722,18 @@ sub dequote($) {
 
 sub undefstr($@) {
 	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
+}
+
+# shuffle an array in place
+# Perl Cookbook, Recipe 4.17. Randomizing an Array
+sub fisher_yates_shuffle {
+	my $array = shift;
+	my $i;
+	for ($i = @$array; --$i; ) {
+		my $j = int rand ($i+1);
+		next if $i == $j;
+		@$array[$i,$j] = @$array[$j,$i];
+	}
 }
 
 ################################################################################
