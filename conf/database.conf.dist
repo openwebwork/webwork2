@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.4 2004/01/05 00:11:07 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.5 2004/02/12 04:25:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -157,19 +157,20 @@ This layout uses the traditional WeBWorK 1.x database format, using the GDBM
 file format. Use this layout if you wish to share courses between WeBWorK 1.x
 and WeBWorK 2.
 
-The C<globalUserID> parameter given for the C<set> and C<problem> tables
-denotes the ID of the user that the GlobalTableEmulator will use to store data
-for the C<set> and C<problem> tables. This is set to "professor" by default,
-but should be overridden on a course-by-course basis to the ID of the professor
-who is most likely to be involved in creating new problem sets. Sets which have
-not been assigned will only be visible to this user when logging into WeBWorK
-1.x.
+The C<globalUserID> parameter given for the C<set> and C<problem> tables denotes
+the ID of the user that the GlobalTableEmulator will use to store data for the
+C<set> and C<problem> tables. This is set to "global_user" by default.
+
+If a course will be used under WeBWorK 1.x, this value should be overridden on a
+course-by-course basis to the ID of the professor who is most likely to be
+involved in creating new problem sets. Sets which have not been assigned will
+only be visible to this user when logging into WeBWorK 1.x.
 
 Use the following code to override these values in a course's F<course.conf>
 file:
 
- $dbLayout{set}->{params}->{globalUserID} = "some_user";
- $dbLayout{problem}->{params}->{globalUserID} = "some_user";
+ $dbLayouts{sql}->{set}->{params}->{globalUserID} = "some_user";
+ $dbLayouts{sql}->{problem}->{params}->{globalUserID} = "some_user";
 
 =cut
 
