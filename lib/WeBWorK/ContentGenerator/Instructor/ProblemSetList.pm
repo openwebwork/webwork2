@@ -920,12 +920,12 @@ sub create_handler {
 		$newSetRecord->due_date("0");
 		$newSetRecord->answer_date("0");
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
-		eval {$db->addGlobalSet($newSetRecord)};
+		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
-		eval {$db->addGlobalSet($newSetID)};
+		$db->addGlobalSet($newSetRecord);
 
 		# take all the problems from the old set and make them part of the new set
 		foreach ($db->getAllGlobalProblems($oldSetID)) { 
