@@ -88,7 +88,8 @@ sub body {
 	@sets = sort byname @sets if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
-		print $self->setListRow($set, ($permissionLevel > 0));
+		print $self->setListRow($set, ($permissionLevel > 0),
+			($permissionLevel > 0));
 	}
 	
 	print CGI::end_table();
@@ -114,7 +115,7 @@ sub body {
 }
 
 sub setListRow($$$) {
-	my ($self, $set, $multiSet) = @_;
+	my ($self, $set, $multiSet, $preOpenSets) = @_;
 	
 	my $name = $set->id;
 	
@@ -149,8 +150,8 @@ sub setListRow($$$) {
 	my $status;
 	if (time < $set->open_date) {
 		$status = "opens at $openDate";
-		$control = "";
-		$interactive = $name;
+		$control = "" unless $preOpenSets;
+		$interactive = $name unless $preOpenSets;
 		#$hardcopy = "";
 	} elsif (time < $set->due_date) {
 		$status = "open, due at $dueDate";

@@ -271,9 +271,8 @@ sub title {
 sub body {
 	my $self = shift;
 	
-	unless ($self->{isOpen}) {
-		return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."));
-	}
+	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."))
+		unless $self->{isOpen};
 	
 	# unpack some useful variables
 	my $r               = $self->{r};

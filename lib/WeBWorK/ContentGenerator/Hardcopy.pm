@@ -173,7 +173,8 @@ sub displayForm($) {
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
-	warn "showHints=", $r->param("showHints"), "\n";
+	print CGI::h3("Options");
+	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available to privileged users or after the answer date of the problem set.");
 	print CGI::p(
 		CGI::checkbox(
 			-name    => "showCorrectAnswers",
@@ -195,6 +196,7 @@ sub displayForm($) {
 	
 	my $multiSet = $self->{permissionLevel} > 0;
 	my $multiUser = $self->{permissionLevel} > 0;
+	my $preOpenSets = $self->{permissionLevel} > 0;
 	
 	# set selection menu
 	{
@@ -208,7 +210,7 @@ sub displayForm($) {
 		foreach my $set (@sets) {
 			my $checked = grep { $_ eq $set->id } @{$self->{sets}};
 			my $control;
-			if (time < $set->open_date) {
+			if (time < $set->open_date and not $preOpenSets) {
 				$control = "";
 			} else {
 				if ($multiSet) {
@@ -345,7 +347,26 @@ sub latex2pdf {
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex = $ce->{externalPrograms}->{pdflatex};
-	system "cd $wd && $pdflatex $texFile" and die "Failed to call pdflatex: $!\n";
+	my $pdflatexResult = system "cd $wd && $pdflatex $texFile";
+	if ($pdflatexResult) {
+		# something bad happened
+		my $textErrorMessage = "Call to $pdflatex failed: $!\n";
+		if (-e $logFile) {
+			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n";
+			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n";
+			my $logFileContents = eval { readFile($logFile) };
+			if ($@) {
+				$textErrorMessage .= "Additionally, the pdflatex log file could not be read, though it exists.\n";
+			} else {
+				$textErrorMessage .= "The contents of the TeX log are as follows:\n\n";
+				$textErrorMessage .= "$logFileContents\n\n";
+			}
+		} else {
+			$textErrorMessage .= "No log file was created, suggesting that pdflatex never ran. Check the WeBWorK\n";
+			$textErrorMessage .= "configuration to ensure that the path to pdflatex is correct.\n";
+		}
+		die $textErrorMessage;
+	}
 	
 	if (-e $pdfFile) {
 		# move resulting PDF file to appropriate location
@@ -450,11 +471,11 @@ sub getProblemTeX {
 		);
 	}
 	
-	# *** right here, figure out if we're allowed to get solutions and call PG->new accordingly.
+	# figure out if we're allowed to get solutions and call PG->new accordingly.
 	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
 	my $showHints          = $r->param("showHints") || 0;
 	my $showSolutions      = $r->param("showSolutions") || 0;
-	unless ($permissionLevel > 0 or time > $set->due_date) {
+	unless ($permissionLevel > 0 or time > $set->answer_date) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
@@ -469,9 +490,9 @@ sub getProblemTeX {
 		{}, # no form fields!
 		{ # translation options
 			displayMode     => "tex",
-			showHints       => 0,
-			showSolutions   => 0,
-			processAnswers  => 0,
+			showHints       => $showHints,
+			showSolutions   => $showSolutions,
+			processAnswers  => $showCorrectAnswers,
 		},
 	);
 	
@@ -493,10 +514,21 @@ sub getProblemTeX {
 		# if there was an error, body_text contains
 		# the error context, not TeX code
 		$pg->{body_text} = undef;
+	} else {
+		# append list of correct answers to body text
+		if ($showCorrectAnswers && $problemNumber != 0) {
+			my $correctTeX = "Correct Answers:\\par\\begin{itemize}\n";
+			foreach my $ansName (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}) {
+				my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
+				$correctAnswer =~ s/\^/\\\^\{\}/g;
+				$correctAnswer =~ s/\_/\\\_/g;
+				$correctTeX .= "\\item $correctAnswer\n";
+			}
+			$correctTeX .= "\\end{itemize} \\par\n";
+			$pg->{body_text} .= $correctTeX;
+		}
 	}
-	
-	# *** right here, append list of correct answers to body text
-	
+	warn "BODY TEXT=\n", $pg->{body_text}, "\n\n";
 	return $pg->{body_text};
 }
 
@@ -516,117 +548,3 @@ sub texInclude {
 }
 
 1;
-
-__END__
-
-sub body {
-	my $self = shift;
-	
-	STUFF: {
-		my $courseName = $self->{courseEnvironment}->{courseName};
-		my $effectiveUserName = $self->{r}->param("effectiveUser");
-		my @sets = @{$self->{sets}};
-
-		unless (@sets) {
-			print CGI::p("No problem sets were specified.");
-			last STUFF;
-		}
-
-		# determine where hardcopy is going to go
-		my $tempDir = $self->{courseEnvironment}->{courseDirs}->{html_temp}
-			. "/hardcopy";
-		my $tempURL = $self->{courseEnvironment}->{courseURLs}->{html_temp}
-			. "/hardcopy";
-
-		# make sure tempDir exists
-		unless (-e $tempDir) {
-			if (system "mkdir", "-p", $tempDir) {
-				print CGI::p("An error occured while trying to generate your PDF hardcopy:");
-				print CGI::blockquote(CGI::pre("Failed to mkdir $tempDir: $!\n"));
-			}
-		}
-
-		# determine name of PDF file
-		my $fileName;
-		if (@sets > 1) {
-			# multiset output
-			$fileName = "$courseName.$effectiveUserName.multiset.pdf"
-		} elsif (@sets == 1) {
-			# only one set
-			my $setName = $sets[0];
-			$fileName = "$courseName.$effectiveUserName.$setName.pdf";
-		} else {
-			$fileName = "$courseName.$effectiveUserName.pdf";
-		}
-
-		# determine full URL
-		my $fullURL = "$tempURL/$fileName";
-
-		# generate TeX from sets
-		my $tex = $self->getMultiSetTeX(@sets);
-		#print CGI::pre($tex);
-
-		# check for PG errors (fatal)
-		if (@{$self->{errors}}) {
-			my @errors = @{$self->{errors}};
-			print CGI::h2("Software Errors");
-			print CGI::p(<<EOF);
-WeBWorK has encountered one or more software errors while attempting to process these sets.
-It is likely that there are error(s) in the problem itself.
-If you are a student, contact your professor to have the error(s) corrected.
-If you are a professor, please consut the error output below for more informaiton.
-EOF
-			foreach my $error (@errors) {
-				print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
-				print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
-				print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
-			}
-
-			last STUFF;
-		}
-
-		# "try" to generate hardcopy
-		eval { $self->latex2pdf($tex, $tempDir, $fileName) };
-		if ($@) {
-			print CGI::p("An error occured while trying to generate your PDF hardcopy:");
-			print CGI::blockquote(CGI::pre($@));
-			last STUFF;
-		} else {
-			print CGI::p({-align=>"center"},
-				CGI::big(CGI::a({-href=>$fullURL}, "Download PDF Hardcopy"))
-			);
-		}
-
-		# check for PG warnings (non-fatal)
-		if (@{$self->{warnings}}) {
-			my @warnings = @{$self->{warnings}};
-			print CGI::h2("Software Warnings");
-			print CGI::p(<<EOF);
-WeBWorK has encountered warnings while attempting to process these sets.
-It is likely that this indicates an error or ambiguity in the problem(s) themselves.
-If you are a student, contact your professor to have the problem(s) corrected.
-If you are a professor, please consut the error output below for more informaiton.
-EOF
-			foreach my $warning (@warnings) {
-				print CGI::h3("Set: ", $warning->{set}, ", Problem: ", $warning->{problem});
-				print CGI::h4("Warning messages"), CGI::blockquote(CGI::pre($warning->{message}));
-			}
-		}
-	}
-	
-	# feedback form
-	my $ce = $self->{courseEnvironment};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $feedbackURL = "$root/$courseName/feedback/";
-	print
-		CGI::startform("POST", $feedbackURL),
-		$self->hidden_authen_fields,
-		CGI::hidden("module", __PACKAGE__),
-		CGI::p({-align=>"right"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
-		),
-		CGI::endform();
-	
-	return "";
-}
