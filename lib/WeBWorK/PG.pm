@@ -37,44 +37,16 @@ sub new($$$$$$$$) {
 				     # hints and the display mode to use
 	) = @_;
 	
-#	# get database information
-#	my $classlist = WeBWorK::DB::Classlist->new($courseEnv);
-#	my $wwdb = WeBWorK::DB::WW->new($courseEnv);
-#	my $user = $classlist->getUser($userName);
-#	my $set = $wwdb->getSet($userName, $setName);
-#	my $psvn = $wwdb->getPSVN($userName, $setName);
-#	
-#	my $problem;
-#	if ($problemNumber =~ /^\d+$/) {
-#		$problem = $wwdb->getProblem($userName, $setName, $problemNumber);
-#	} else {
-#		# This is the fun part: if $problemNumber is NON-NUMERIC, the
-#		# user wants to specify a PG file directly. We manufacture a
-#		# Problem object using fake data and the specified source file.
-#		# This is potentially dangerous since an untrusted user is
-#		# allowed to specifiy an arbitrary file to be evaluated as PG.
-#		# A user of PG.pm MUST MAKE SURE that if $problemNumber is
-#		# supplied by an untrusted source (i.e. the Apache request),
-#		# it is numberic. A simple
-#		# 
-#		# 	die unless $problemNumber =~ /^\d+$/;
-#		# 
-#		# should suffice.
-#		$problem = WeBWorK::Problem->new(
-#			id => 0,
-#			set_id => $set->id,
-#			login_id => $user->id,
-#			source_file => $problemNumber,
-#			# the rest of Problem's fields are not needed
-#		);
-#	}
+	# install a local warn handler to collect warnings
+	my $warnings = "";
+	local $SIG{__WARN__} = sub { $warnings .= shift };
 	
 	# create a Translator
-	warn "PG: creating a Translator\n";
+	#warn "PG: creating a Translator\n";
 	my $translator = WeBWorK::PG::Translator->new;
 	
 	# set the directory hash
-	warn "PG: setting the directory hash\n";
+	#warn "PG: setting the directory hash\n";
 	$translator->rh_directories({
 		courseScriptsDirectory => $courseEnv->{webworkDirs}->{macros},
 		macroDirectory         => $courseEnv->{courseDirs}->{macros},
@@ -83,7 +55,7 @@ sub new($$$$$$$$) {
 	});
 	
 	# evaluate modules and "extra packages"
-	warn "PG: evaluating modules and \"extra packages\"\n";
+	#warn "PG: evaluating modules and \"extra packages\"\n";
 	my @modules = @{ $courseEnv->{pg}->{modules} };
 	foreach my $module_packages_ref (@modules) {
 		my ($module, @extra_packages) = @$module_packages_ref;
@@ -94,7 +66,7 @@ sub new($$$$$$$$) {
 	}
 	
 	# set the environment (from defineProblemEnvir)
-	warn "PG: setting the environment (from defineProblemEnvir)\n";
+	#warn "PG: setting the environment (from defineProblemEnvir)\n";
 	my $envir = defineProblemEnvir(
 		$courseEnv,
 		$user,
@@ -108,13 +80,13 @@ sub new($$$$$$$$) {
 	$translator->environment($envir);
 	
 	# initialize the Translator
-	warn "PG: initializing the Translator\n";
+	#warn "PG: initializing the Translator\n";
 	$translator->initialize();
 	
 	# load PG.pl and dangerousMacros.pl using unrestricted_load
 	# i'd like to change this at some point to have the same sort of interface to global.conf
 	# that the module loading does -- have a list of macros to load unrestrictedly.
-	warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
+	#warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
 	my $pg_pl = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
 	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
 	my $err = $translator->unrestricted_load($pg_pl);
@@ -123,11 +95,11 @@ sub new($$$$$$$$) {
 	warn "Error while loading $dangerousMacros_pl: $err" if $err;
 	
 	# set the opcode mask (using default values)
-	warn "PG: setting the opcode mask (using default values)\n";
+	#warn "PG: setting the opcode mask (using default values)\n";
 	$translator->set_mask();
 	
 	# store the problem source
-	warn "PG: storing the problem source\n";
+	#warn "PG: storing the problem source\n";
 	my $sourceFile = $problem->source_file;
 	$sourceFile = $courseEnv->{courseDirs}->{templates}."/".$sourceFile
 		unless ($sourceFile =~ /^\//);
@@ -145,35 +117,35 @@ EOF
 			result     => {},
 			state      => {},
 			errors     => "Failed to read the problem source file.",
-			warnings   => undef,
+			warnings   => $warnings,
 			flags      => {error_flag => 1},
 		}, $class;
 	}
 	
 	# install a safety filter (&safetyFilter)
-	warn "PG: installing a safety filter\n";
+	#warn "PG: installing a safety filter\n";
 	$translator->rf_safety_filter(\&safetyFilter);
 	
 	# translate the PG source into text
-	warn "PG: translating the PG source into text\n";
+	#warn "PG: translating the PG source into text\n";
 	$translator->translate();
 	
 	# after we're done translating, we may have to clean up after the translator.
 	# for example, 'images' mode uses a tempdir for dvipng's temp files. We have
 	# to remove it.
 	if ($translationOptions->{displayMode} eq 'images' && $envir->{dvipngTempDir}) {
-		rmtree($envir->{dvipngTempDir}, 0, 1);
+		rmtree($envir->{dvipngTempDir}, 0, 0);
 	}
 	
 	my ($result, $state); # we'll need these on the other side of the if block!
 	if ($translationOptions->{processAnswers}) {
 		
 		# process student answers
-		warn "PG: processing student answers\n";
+		#warn "PG: processing student answers\n";
 		$translator->process_answers($formFields);
 
 		# retrieve the problem state and give it to the translator
-		warn "PG: retrieving the problem state and giving it to the translator\n";
+		#warn "PG: retrieving the problem state and giving it to the translator\n";
 		$translator->rh_problem_state({
 			recorded_score =>       $problem->status,
 			num_of_correct_ans =>   $problem->num_correct,
@@ -182,7 +154,7 @@ EOF
 
 		# determine an entry order -- the ANSWER_ENTRY_ORDER flag is built by
 		# the PG macro package (PG.pl)
-		warn "PG: determining an entry order\n";
+		#warn "PG: determining an entry order\n";
 		my @answerOrder =
 			$translator->rh_flags->{ANSWER_ENTRY_ORDER}
 				? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
@@ -192,7 +164,7 @@ EOF
 		# or fall back on the default from the course environment.
 		# (two magic strings are accepted, to avoid having to
 		# reference code when it would be difficult.)
-		warn "PG: installing a grader\n";
+		#warn "PG: installing a grader\n";
 		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
 			|| $courseEnv->{pg}->{options}->{grader};
 		$grader = $translator->rf_std_problem_grader
@@ -204,7 +176,7 @@ EOF
 		$translator->rf_problem_grader($grader);
 
 		# grade the problem
-		warn "PG: grading the problem\n";
+		#warn "PG: grading the problem\n";
 		($result, $state) = $translator->grade_problem(
 			answers_submitted  => $translationOptions->{processAnswers},
 			ANSWER_ENTRY_ORDER => \@answerOrder,
@@ -222,8 +194,8 @@ EOF
 		answers    => $translator->rh_evaluated_answers,
 		result     => $result,
 		state      => $state,
-		errors     => $translator->errors, # *** what is this doing?
-		warnings   => undef, # *** gotta catch warnings eventually...
+		errors     => $translator->errors,
+		warnings   => $warnings,
 		flags      => $translator->rh_flags,
 	}, $class;
 }
@@ -322,7 +294,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
 	$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
-		? tempdir("webwork-dvipng-XXXXXXXX", TMPDIR => 1)
+		? tempdir("webwork-dvipng-XXXXXXXX", DIR => $envir{tempDirectory})
 		: undef;
 	
 	# Default values for evaluating answers

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.11 2002-09-18 19:25:40 sh002i Exp $
+# $Id: TODO,v 1.12 2002-09-20 22:47:21 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -60,20 +60,20 @@ DONE	New interface to PG.pm
 DONE	display of screen set header in ProblemSet.pm (easy)
 DONE	add <!--#if can="blah" warning="1" error="1"-->
 DONE	fix alignment of displaymath images
-	time and transaction logging
-	branch mechanism (friday)
 DONE	print $pg->{header_text} in head of Problem.pm
-	make "enter" on the problem form trigger "submit answer", not "redisplay"
 DONE	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
 DONE	remove webwork-dvipng-xxxxx temp directories when finished with them
+DONE	handling of PG warnings (?!?!?!?!)
+	time and transaction logging
+	make "enter" on the problem form trigger "submit answer", not "redisplay"
 	have logout button invalidate key
-	handling of PG warnings (?!?!?!?!)
 	Pretty die messages (from outside of the translator)
 	Feedback (or link to old system)
 		- need nice modular way of sending email
 	Options
 		- email address and password
 		- or link to old system
+	branch mechanism (friday)
 
 
 --------------------------------------------------------------------------------

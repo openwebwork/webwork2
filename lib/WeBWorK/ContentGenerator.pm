@@ -115,16 +115,14 @@ sub template {
 				print $before;
 			}
 			
-			if ($self->can($function)) {
-				if ($function eq "if") {
-					push @ifstack, $self->$function(@_, [@args]);
-				} elsif ($function eq "else" and @ifstack > 1) {
-					$ifstack[-1] = not $ifstack[-1];
-				} elsif ($function eq "endif" and @ifstack > 1) {
-					pop @ifstack;
-				} elsif ($ifstack[-1]) {
-					print $self->$function(@_, {@args});
-				}
+			if ($function eq "if") {
+				push @ifstack, $self->$function(@_, [@args]);
+			} elsif ($function eq "else" and @ifstack > 1) {
+				$ifstack[-1] = not $ifstack[-1];
+			} elsif ($function eq "endif" and @ifstack > 1) {
+				pop @ifstack;
+			} elsif ($ifstack[-1]) {
+				print $self->$function(@_, {@args}) if $self->can($function);
 			}
 		}
 		
@@ -151,6 +149,37 @@ sub cook_args($) {
 	}
 	
 	return @args;
+}
+
+# This is different.  It probably shouldn't print anything (except in debugging cases)
+# and it should return a boolean, not a string.  &if is called in a nonstandard way
+# by &template, with $args as an arrayref instead of a hashref.  this is a hack!  yay!
+
+# OK, this is a pluggin architecture.  it iterates through attributes of the "if" tag,
+# and for each predicate $p, it calls &if_$p in an object-oriented way, continuing the
+# grand templating theme of an object-oriented pluggable architecture using ->can($).
+sub if {
+	my ($self, $args) = @_[0,-1];
+	# A single if "or"s it's components.  Nesting produces "and".
+	
+	my @args = @$args; # Hahahahaha, get it?!
+	
+	if (@args % 2 != 0) {
+		# flip out and kill people, but do not commit seppuku
+		print '<!--&if recieved an uneven number of arguments.  This shouldn\'t happen, but I\'ll let it slide.-->\n';
+	}
+	
+	while (@args > 1) {
+		my ($key, $value) = (shift @args, shift @args);
+		
+		# a non-existent &if_$key is the same as a false result, but we're ORing, so it's OK
+		my $sub = "if_$key"; # perl doesn't like it when you try to construct a string right in a method invocation
+		if ($self->can("if_$key") and $self->$sub("$value")) {
+			return 1;
+		}
+	}
+	
+	return 0;
 }
 
 ################################################################################
@@ -355,37 +384,6 @@ sub links {
 		CGI::a({-href=>$help}, "Help"), CGI::br(),
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 	;
-}
-
-# This is different.  It probably should print anything (except in debugging cases)
-# and it should return a boolean, not a string.  &if is called in a nonstandard way
-# by &template, with $args as an arrayref instead of a hashref.  this is a hack!  yay!
-
-# OK, this is a pluggin architecture.  it iterates through attributes of the "if" tag,
-# and for each predicate $p, it calls &if_$p in an object-oriented way, continuing the
-# grand templating theme of an object-oriented pluggable architecture using ->can($).
-sub if {
-	my ($self, $args) = @_[0,-1];
-	# A single if "or"s it's components.  Nesting produces "and".
-	
-	my @args = @$args; # Hahahahaha, get it?!
-	
-	if (@args % 2 != 0) {
-		# flip out and kill people, but do not commit seppuku
-		print '<!--&if recieved an uneven number of arguments.  This shouldn\'t happen, but I\'ll let it slide.-->\n';
-	}
-	
-	while (@args > 1) {
-		my ($key, $value) = (shift @args, shift @args);
-		
-		# a non-existent &if_$key is the same as a false result, but we're ORing, so it's OK
-		my $sub = "if_$key"; # perl doesn't like it when you try to construct a string right in a method invocation
-		if ($self->can("if_$key") and $self->$sub("$value")) {
-			return 1;
-		}
-	}
-	
-	return 0;
 }
 
 # &if_can will return 1 if the current object->can("do $_[1]")

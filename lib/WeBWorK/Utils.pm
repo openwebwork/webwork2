@@ -38,6 +38,7 @@ sub runtime_use($) {
 
 sub readFile($) {
 	my $fileName = shift;
+	local *INPUTFILE;
 	open INPUTFILE, "<", $fileName
 		or die "Failed to read $fileName: $!";
 	local $/ = undef;
@@ -48,7 +49,7 @@ sub readFile($) {
 
 sub formatDateTime($) {
 	my $dateTime = shift;
-	# "standard" WeBWorK date/time format:
+	# "standard" WeBWorK date/time format (for set definition files):
 	# %m 	month number, starting with 01
 	# %d 	numeric day of the month, with leading zeros (eg 01..31)
 	# %y	year (2 digits)
@@ -62,6 +63,18 @@ sub parseDateTime($) {
 	my $string = shift;
 	return str2time $string;
 }
+
+#sub writeLog($$$) {
+#	my ($ce, $facility, $message) = @_;
+#	die "There is no log file for $facility defined."
+#		unless $ce->{webworkFiles}->{logs}->{$facility};
+#	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
+#	local *LOG;
+#	open LOG, "<<", $logFile
+#		of die "failed to open $logFile for writing: $!";
+#	print LOG $message;
+#	close LOG;
+#}
 
 # -----
 

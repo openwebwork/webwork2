@@ -8,7 +8,11 @@
   <title>WeBWorK - <!--#title--></title>
   <!--#head-->
  </head>
+<!--#if warnings="1"-->
+ <body bgcolor="#ffcccc" text="black" link="blue" alink="red" vlink="purple">
+<!--#else-->
  <body>
+<!--#endif-->
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
    <tr valign="middle">
     <td align="center">
@@ -16,7 +20,7 @@
     </td>
     <td>
      <h1>WeBWorK <em>mod_perl</em></h1>
-     <!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "-->
+     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
     </td>
    </tr>
    <tr valign="top">
@@ -35,7 +39,7 @@
     </td>
     <td>
      <div align="center">
-      <!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
+      <!--#nav style="text" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
      </div>
      <h1><!--#title--></h1>
      <table width="100%" cellpadding="10" cellspacing="0" border="0">

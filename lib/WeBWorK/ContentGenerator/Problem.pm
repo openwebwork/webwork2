@@ -154,6 +154,16 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
+sub if_warnings($$) {
+	my ($self, $arg) = @_;
+	return $self->{pg}->{warnings} ne "";
+}
+
+sub if_errors($$) {
+	my ($self, $arg) = @_;
+	return $self->{pg}->{flags}->{error_flag};
+}
+
 sub header {
 	my $self = shift;
 	
@@ -338,6 +348,11 @@ sub body {
 		CGI::p(CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers")),
 		CGI::endform();
 	
+	# warning output
+	if ($pg->{warnings} ne "") {
+		print CGI::hr(), warningOutput($pg->{warnings});
+	}
+	
 	# debugging stuff
 	#print
 	#	hr(),
@@ -371,6 +386,23 @@ If you are a professor, please consut the error output below for more informaito
 EOF
 		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
 		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
+}
+
+# this is used by ProblemSet.pm too, so don't fuck it up
+sub warningOutput($) {
+	my $warnings = shift;
+	
+	return
+		CGI::h2("Software Warnings"),
+		CGI::p(<<EOF),
+WeBWorK has encountered warnings while attempting to process this problem.
+It is likely that this indicates an error or ambiguity in the problem itself.
+If you are a student, contact your professor to have the problem corrected.
+If you are a professor, please consut the error output below for more informaiton.
+EOF
+		CGI::h3("Warning messages"),
+		CGI::blockquote(CGI::pre($warnings)),
+	;
 }
 
 sub attemptResults($$$) {
