@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.6 2004/12/23 02:15:17 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.7 2005/01/08 16:42:10 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,18 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 use strict;
 use warnings;
 use CGI;
+
+#
+#  The list of file extensions and the directories they usually go in.
+#
+my %uploadDir = (
+  csv  => 'scoring',
+  lst  => 'templates',
+  pg   => 'templates/.*',
+  pl   => 'templates/macros',
+  def  => 'templates',
+  html => 'html/.*',
+);
 
 ##################################################
 #
@@ -257,9 +269,12 @@ EOF
 	print CGI::Tr([
 		CGI::td(),
 		CGI::td({colspan=>3},
-			CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>"Upload:",id=>"Upload"}),
-			CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
-					),
+		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>"Upload:",id=>"Upload"}),
+		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
+		  CGI::br(),
+		  CGI::small(join(' &nbsp; ',"Format:",
+		    CGI::radio_group('format',['Text','Binary','Automatic'],'Automatic'))),
+		),
 	]);
 
 	#
@@ -385,7 +400,7 @@ sub Save {
 		if (open(OUTFILE,">$file")) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage("Failed to save: $@")}
-				 else {$self->addgoodmessage("File saved")}
+			   else {$self->addgoodmessage("File saved")}
 		} else {$self->addbadmessage("Can't write to file: $!")}
 	} else {$data = ""; $self->addbadmessage("Error: no file data was submitted!")}
 
@@ -456,8 +471,8 @@ sub Copy {
 		my $newfile = $self->r->param('name');
 		if ($newfile = $self->verifyPath($newfile,$original)) {
 			if (copy($oldfile, $newfile)) {
-	$self->addgoodmessage("File successfully copied");
-	$self->Refresh; return;
+				$self->addgoodmessage("File successfully copied");
+				$self->Refresh; return;
 			} else {$self->addbadmessage("Can't copy file: $!")}
 		}
 	}
@@ -511,14 +526,14 @@ sub Delete {
 		#
 		foreach my $file (@files) {
 			if (defined checkPWD("$pwd/$file",1)) {
-	if (-d "$dir/$file") {
-		my $removed = eval {rmtree("$dir/$file",0,1)};
-		if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
-			else {$self->addbadmessage("Directory '$file' not removed: $!")}
-	} else {
-		if (unlink("$dir/$file")) {$self->addgoodmessage("File '$file' successfully removed")}
-			else {$self->addbadmessage("File '$file' not removed: $!")}
-	}
+				if (-d "$dir/$file") {
+					my $removed = eval {rmtree("$dir/$file",0,1)};
+					if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
+					else {$self->addbadmessage("Directory '$file' not removed: $!")}
+				} else {
+					if (unlink("$dir/$file")) {$self->addgoodmessage("File '$file' successfully removed")}
+					else {$self->addbadmessage("File '$file' not removed: $!")}
+				}
 			} else {$self->addbadmessage("Illegal file '$file' specified"); last}
 		}
 		$self->Refresh;
@@ -531,18 +546,18 @@ sub Delete {
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
-				CGI::b("Warning:")," You have requested that the following items be deleted\n",
-				CGI::ul(CGI::li(\@files)),
-				((grep { -d "$dir/$_" } @files)?
-		 CGI::p({style=>"width:500"},"Some of these files are directories. ",
-												"Only delete directories if you really know what you are doing. ",
-												"You can seriously damage your course if you delete the wrong thing."): ""),
-				CGI::p({style=>"color:red"},"There is no undo for deleting files or directories!"),
-				CGI::p("Really delete the items listed above?"),
-				CGI::div({style=>"float:left; padding-left:3ex"},
-		CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
-				CGI::div({style=>"float:right; padding-right:3ex"},
-		CGI::input({type=>"submit",name=>"action",value=>"Delete"})),
+			  CGI::b("Warning:")," You have requested that the following items be deleted\n",
+			  CGI::ul(CGI::li(\@files)),
+			    ((grep { -d "$dir/$_" } @files)?
+			  CGI::p({style=>"width:500"},"Some of these files are directories. ",
+				 "Only delete directories if you really know what you are doing. ",
+				 "You can seriously damage your course if you delete the wrong thing."): ""),
+			  CGI::p({style=>"color:red"},"There is no undo for deleting files or directories!"),
+			  CGI::p("Really delete the items listed above?"),
+			  CGI::div({style=>"float:left; padding-left:3ex"},
+			    CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
+			  CGI::div({style=>"float:right; padding-right:3ex"},
+			    CGI::input({type=>"submit",name=>"action",value=>"Delete"})),
 			),
 		);
 		print CGI::end_table();
@@ -563,9 +578,9 @@ sub NewFile {
 		my $name = $self->r->param('name');
 		if (my $file = $self->verifyName($name,"file")) {
 			if (open(NEWFILE,">$file")) {
-	close(NEWFILE);
-	$self->RefreshEdit("",$name);
-	return;
+				close(NEWFILE);
+				$self->RefreshEdit("",$name);
+				return;
 			} else {$self->addbadmessage("Can't create file: $!")}
 		}
 	}
@@ -584,8 +599,8 @@ sub NewFolder {
 		my $name = $self->r->param('name');
 		if (my $dir = $self->verifyName($name,"directory")) {
 			if (mkdir $dir, 0750) {
-	$self->{pwd} .= '/'.$name;
-	$self->Refresh; return;
+				$self->{pwd} .= '/'.$name;
+				$self->Refresh; return;
 			} else {$self->addbadmessage("Can't create directory: $!")}
 		}
 	}
@@ -634,9 +649,29 @@ sub Upload {
 		$upload->dispose;
 		return;
 	}
+	$self->checkFileLocation($name,$self->{pwd});
 
-	$upload->disposeTo("$dir/$name");
-	$self->addgoodmessage("File '$name' uploaded successfully");
+	my $type = $self->r->param('format') || 'automatic';
+	my $data;
+	
+	#
+	#  Check if we need to convert linebreaks
+	#
+	if ($type ne 'Binary') {
+		my $fh = $upload->fileHandle;
+		my @lines = <$fh>; $data = join('',@lines);
+		if ($type eq 'Automatic') {$type = isText($data) ? 'Text' : 'Binary'}
+	}
+	if ($type eq 'Text') {
+		$data =~ s/\r\n?/\n/g;
+		open(UPLOAD,">$dir/$name") || $self->addbadmessage("Can't create file '$name'");
+		print UPLOAD $data; close(UPLOAD);
+		$upload->dispose();
+	} else {
+		$upload->disposeTo("$dir/$name");
+	}
+
+	$self->addgoodmessage("$type file '$name' uploaded successfully");
 	$self->Refresh;
 }
 
@@ -653,15 +688,15 @@ sub Confirm {
 	print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 3em"});
 	print CGI::Tr(
 		CGI::td(
-				$message,
-				CGI::input({type=>"text",name=>"name",size=>50}),
-				CGI::p(),
-				CGI::div({style=>"float:right; padding-right:3ex"},
-		CGI::input({type=>"submit",name=>"action",value=>$button})), # this will be the default
-				CGI::div({style=>"float:left; padding-left:3ex"},
-		CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
-			),
-		);
+		  $message,
+		  CGI::input({type=>"text",name=>"name",size=>50}),
+		  CGI::p(),
+		  CGI::div({style=>"float:right; padding-right:3ex"},
+		    CGI::input({type=>"submit",name=>"action",value=>$button})), # this will be the default
+		  CGI::div({style=>"float:left; padding-left:3ex"},
+		  CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
+	       ),
+	     );
 	print CGI::end_table();
 	print CGI::hidden({name=>"confirmed",value=>1});
 	print CGI::script("window.document.FileManager.name.focus()");
@@ -751,7 +786,7 @@ sub checkPWD {
 	my $original = $pwd;
 	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
 	$pwd =~ s!^/!!;                  # remove leading /
-	$pwd =~ s![^-_./a-zA-Z0-9 ]!_!g; # no illegal characters
+	$pwd =~ s![^-_./A-Z0-9~ ]!_!gi;  # no illegal characters
 	return if $renameError && $original ne $pwd;
 
 	$pwd = '.' if $pwd eq '';
@@ -769,6 +804,20 @@ sub checkName {
 	$file = "newfile.txt" unless $file; # no blank names
 	$file =~ s/^\./_/;                  # no initial dot
 	return $file;
+}
+
+##################################################
+#
+# Check that a file is uploaded to the correct directory
+#
+sub checkFileLocation {
+  	my $self = shift;
+	my $extension = shift; $extension =~ s/.*\.//;
+	my $dir = shift;
+	return unless defined($uploadDir{$extension});
+	return if $dir =~ m/^$uploadDir{$extension}$/;
+	$dir = $uploadDir{$extension}; $dir =~ s!/.*!!;
+	$self->addbadmessage("Files with extension '.$extension' usually belong in '$dir'");
 }
 
 ##################################################
@@ -795,11 +844,11 @@ sub verifyName {
 	if ($name) {
 		unless ($name =~ m!/!) {
 			unless ($name =~ m!^\.!) {
-	unless ($name =~ m![^-_.a-zA-Z0-9 ]!) {
-		my $file = "$self->{courseRoot}/$self->{pwd}/$name";
-		return $file unless (-e $file);
-		$self->addbadmessage("A file with that name already exists");
-	} else {$self->addbadmessage("Your $object name contains illegal characters")}
+				unless ($name =~ m![^-_.a-zA-Z0-9 ]!) {
+					my $file = "$self->{courseRoot}/$self->{pwd}/$name";
+					return $file unless (-e $file);
+					$self->addbadmessage("A file with that name already exists");
+				} else {$self->addbadmessage("Your $object name contains illegal characters")}
 			} else {$self->addbadmessage("Your $object name may not begin with a dot")}
 		} else {$self->addbadmessage("Your $object name may not contain a path component")}
 	} else {$self->addbadmessage("You must specify a $object name")}
@@ -816,13 +865,13 @@ sub verifyPath {
 	if ($path) {
 		unless ($path =~ m![^-_.a-zA-Z0-9 /]!) {
 			unless ($path =~ m!^/!) {
-	$path = checkPWD($self->{pwd}.'/'.$path,1);
-	if ($path) {
-		$path = $self->{courseRoot}.'/'.$path;
-		$path .= '/'.$name if -d $path && $name;
-		return $path unless (-e $path);
-		$self->addbadmessage("A file with that name already exists");
-	} else {$self->addbadmessage("You have specified an illegal path")}
+				$path = checkPWD($self->{pwd}.'/'.$path,1);
+				if ($path) {
+					$path = $self->{courseRoot}.'/'.$path;
+					$path .= '/'.$name if -d $path && $name;
+					return $path unless (-e $path);
+					$self->addbadmessage("A file with that name already exists");
+				} else {$self->addbadmessage("You have specified an illegal path")}
 			} else {$self->addbadmessage("You can not specify an absolute path")}
 		} else {$self->addbadmessage("Your file name contains illegal characters")}
 	} else {$self->addbadmessage("You must specify a file name")}
@@ -834,12 +883,12 @@ sub verifyPath {
 # Make HTML symbols printable
 #
 sub showHTML {
-		my $string = shift;
-		return '' unless defined $string;
-		$string =~ s/&/\&amp;/g;
-		$string =~ s/</\&lt;/g;
-		$string =~ s/>/\&gt;/g;
-		$string;
+	my $string = shift;
+	return '' unless defined $string;
+	$string =~ s/&/\&amp;/g;
+	$string =~ s/</\&lt;/g;
+	$string =~ s/>/\&gt;/g;
+	$string;
 }
 
 ##################################################
