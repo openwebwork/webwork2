@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Debug.pm,v 1.1 2004/06/23 00:37:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Debug.pm,v 1.2 2004/06/23 19:19:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -95,7 +95,7 @@ sub debug {
 		
 		my $finalMessage = "$subroutine: " . join("", @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
-		
+		$finalMessage = "[" . time2str("%a %b %d %H:%M:%S %Y", time) . "] " .$finalMessage;
 		if ($WeBWorK::Debug::Logfile ne "") {
 			if (open my $fh, ">>", $Logfile) {
 				print $fh $finalMessage;
