@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.17 2004/09/21 20:05:16 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.18 2004/11/10 21:17:38 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -159,7 +159,7 @@ sub body {
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 	
 	if ($userID ne $globalUserID) {
-		print CGI::p(CGI::submit({name=>"assignToAll", value=>"Assign All Aets"}));
+		print CGI::p(CGI::submit({name=>"assignToAll", value=>"Assign All Sets"}));
 	}
 	
 	print CGI::div({-style=>"color:red"},
