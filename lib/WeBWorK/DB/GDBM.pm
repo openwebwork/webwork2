@@ -7,30 +7,30 @@ use constant MAX_TIE_ATTEMPTS => 30;
 use constant TIE_RETRY_DELAY  => 2;
 use constant CREATE_MODE => 0660;
 
-sub new($$$) {
+sub new($$) {
 	my $proto = shift;
 	my $class = ref($proto) || $proto;
 	my $self = {
 		hashRef    => {},
 		gdbm_file  => shift,
-		accessMode => shift,
 	};
 	bless $self, $class;
 	return $self;
 }
 
-sub connect($) {
+sub connect($$) {
 	my $self = shift;
+	my $accessMode = shift;
 	return if tied %$self->{hashRef}; # already tied!
-	my $mode = lc $self->{accessMode} eq "w" ? GDBM_WRCREAT() : GDBM_READER();
+	my $mode = lc $accessMode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
 		return if tie %{$self->{hashRef}}, "GDBM_File",
 			$self->{gdbm_file},
 			$mode,
-			$self->{accessMode};
+			$accessMode;
 		sleep TIE_RETRY_DELAY;
 	}
-	die "WeBWorK::Tie::GDBM::connect: unable to tie ", $self->{gdbm_file}, ": $!";
+	die "unable to tie ", $self->{gdbm_file}, ": $!";
 }
 
 sub hashRef($) {
