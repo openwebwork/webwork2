@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.4 2004/05/05 22:02:12 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.5 2004/05/07 04:28:54 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,7 +42,14 @@ sub pre_header_initialize {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
+	my $user        = $r->param('user');
 	
+	# check permissions
+	unless ($authz->hasPermissions($user, "create_and_delete_courses")) {
+		$self->addmessage( CGI::div({class=>'ResultsWithError'},"$user is not authorized to create or delete courses") );
+		return;
+	}
+
 	if (defined $r->param("download_exported_database")) {
 		my $courseID = $r->param("export_courseID");
 		my $random_chars = $r->param("download_exported_database");
@@ -145,6 +152,13 @@ sub body {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
+	
+	my $user        = $r->param('user');
+	
+	# check permissions
+	unless ($authz->hasPermissions($user, "create_and_delete_courses")) {
+		return "";
+	}
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
