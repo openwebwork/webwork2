@@ -248,9 +248,13 @@ sub navMacro {
 	while (@links) {
 		my $name = shift @links;
 		my $url = shift @links;
-		push @result, $url
-			? CGI::a({-href=>"$url?$auth$tail"}, $name)
-			: $name;
+		my $img = shift @links;
+		my $html = ($img && $args{style} eq "images") ? CGI::img({src=>($args{imageprefix}.$img.$args{imagesuffix}), border=>""}): $name;
+		unless($img && !$url) {
+			push @result, $url
+				? CGI::a({-href=>"$url?$auth$tail"}, $html)
+				: $html;
+		}
 	}
 	return join($args{separator}, @result), "\n";
 }
