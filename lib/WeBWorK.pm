@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.52 2004/03/15 20:17:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.53 2004/03/16 20:00:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -237,7 +237,7 @@ sub dispatch($) {
 	
 	debug("-------------------- call to ${displayModule}::go\n");
 	
-	debug("returning result: $result\n");
+	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
 	
 	return $result;
 }
