@@ -26,7 +26,7 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile formatDateTime sortByName);
+use WeBWorK::Utils qw(readFile sortByName);
 
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -204,9 +204,9 @@ sub setListRow {
 		courseID => $courseName, setID => $name);
 	my $interactiveURL = $self->systemLink($problemSetPage);
 	
-	my $openDate = formatDateTime($set->open_date);
-	my $dueDate = formatDateTime($set->due_date);
-	my $answerDate = formatDateTime($set->answer_date);
+	my $openDate = $self->formatDateTime($set->open_date);
+	my $dueDate = $self->formatDateTime($set->due_date);
+	my $answerDate = $self->formatDateTime($set->answer_date);
 	
 	my $control = "";
 	if ($multiSet) {

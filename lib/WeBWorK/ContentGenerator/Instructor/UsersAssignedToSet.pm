@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.11 2004/05/14 18:26:11 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.12 2004/06/17 14:35:05 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,6 @@ users to which sets are assigned.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
 	my ($self)     = @_;
@@ -156,7 +155,7 @@ sub body {
 			. ", "
 			. $userRecord->first_name;
 		my $dueDate    = $userSetRecord->due_date if ref($userSetRecord);
-		my $prettyDate = ($dueDate)?  '(' . formatDateTime($dueDate) . ') ' : '';
+		my $prettyDate = ($dueDate)?  '(' . $self->formatDateTime($dueDate) . ') ' : '';
 		print CGI::Tr({}, 
 			CGI::td({}, [
 				($user eq $globalUserID

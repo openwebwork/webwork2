@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.10 2004/09/05 01:03:13 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.11 2004/09/05 14:47:24 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,6 @@ WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers o
 use strict;
 use warnings;
 use CGI;
-use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
 	my $self       = shift;

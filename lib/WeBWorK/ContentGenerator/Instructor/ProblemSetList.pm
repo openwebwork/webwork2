@@ -80,7 +80,7 @@ Delete sets:
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime parseDateTime readFile listFilesRecursive cryptPassword sortByName);
+use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
@@ -1137,7 +1137,7 @@ sub saveEdit_handler {
 			my $param = "set.${setID}.${field}";
 			if (defined $tableParams->{$param}->[0]) {
 				if ($field =~ /_date/) {
-					$Set->$field(parseDateTime($tableParams->{$param}->[0]));
+					$Set->$field($self->parseDateTime($tableParams->{$param}->[0]));
 				} else {
 					$Set->$field($tableParams->{$param}->[0]);
 				}
@@ -1199,7 +1199,7 @@ sub menuLabels {
 	my %result;
 	foreach my $key (keys %hash) {
 		my $count = @{ $hash{$key} };
-		my $displayKey = formatDateTime($key) || "<none>";
+		my $displayKey = $self->formatDateTime($key) || "<none>";
 		$result{$key} = "$displayKey ($count sets)";
 	}
 	return %result;
@@ -1354,7 +1354,7 @@ sub readSetDef {
 		#####################################################################
 		# Check and format dates
 		#####################################################################
-		my ($time1, $time2, $time3) = map { $_ =~ s/\s*at\s*/ /; WeBWorK::Utils::parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map { $_ =~ s/\s*at\s*/ /; $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
 			warn "The open date: $openDate, due date: $dueDate, and answer date: $answerDate must be defined and in chronological order.";
@@ -1440,9 +1440,9 @@ SET:	foreach my $set (keys %filenames) {
 				$reason{$set} = "Existing file $filePath could not be backed up and was lost.";
 		}
 		
-		my $openDate     = formatDateTime($setRecord->open_date);
-		my $dueDate      = formatDateTime($setRecord->due_date);
-		my $answerDate   = formatDateTime($setRecord->answer_date);
+		my $openDate     = $self->formatDateTime($setRecord->open_date);
+		my $dueDate      = $self->formatDateTime($setRecord->due_date);
+		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 		my $setHeader    = $setRecord->set_header;
 		my @problemList = $db->listGlobalProblems($set);
 
@@ -1644,7 +1644,7 @@ sub recordEditHTML {
 		my $fieldValue = $Set->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
-		$fieldValue = formatDateTime($fieldValue) if $field =~ /_date/;
+		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /published/ and not $editMode;
 		push @tableCells, CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));

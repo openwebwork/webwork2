@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.2 2004/06/03 19:58:00 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.3 2004/06/14 20:58:17 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,6 @@ WeBWorK::ContentGenerator::Instructor::Preflight.pm  -- display past answers of 
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::HTML::OptionList qw/optionList/;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
@@ -308,7 +307,7 @@ sub body {
 				$fakeRecord{user_id} = "$1";
 				$fakeRecord{set_id} = "$2";
 				$fakeRecord{problem_id} = "$3";
-				$fakeRecord{date} = $4; #formatDateTime($4);
+				$fakeRecord{date} = $4; #$self->formatDateTime($4);
 				$fakeRecord{answers} = [ split "\t", "$5", -1 ] if $5; # the -1 stops split from dropping any trailing null fields
 				my @answers = map { $_ ? showHTML($_) : CGI::small(CGI::i("empty")) } @{ $fakeRecord{answers} }; 
 				shift @answers;	# first field is always empty

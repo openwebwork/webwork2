@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.61 2004/08/11 22:16:14 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.62 2004/09/10 02:35:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@ use warnings;
 use CGI qw();
 use File::Copy;
 use WeBWorK::DB::Record::Problem;
-use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash listFilesRecursive max);
+use WeBWorK::Utils qw(readFile list2hash listFilesRecursive max);
 
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
@@ -115,7 +115,7 @@ sub initialize {
 			foreach (@{SET_FIELDS()}) {
 				if (defined($r->param($_))) {
 					if (m/_date$/) {
-						$setRecord->$_(parseDateTime($r->param($_)));
+						$setRecord->$_($self->parseDateTime($r->param($_)));
 					} else {
 						$setRecord->$_($r->param($_)) unless ($_ eq 'set_header' and $r->param($_) eq "Use System Default");
 
@@ -166,7 +166,7 @@ sub initialize {
 				if (defined $r->param("${field}_override")) {
 					if (exists $overrides{$field}) {
 						if ($field =~ m/_date$/) {
-							$userSetRecord->$field(parseDateTime($r->param("${field}_override")));
+							$userSetRecord->$field($self->parseDateTime($r->param("${field}_override")));
 						} else {
 							$userSetRecord->$field($r->param("${field}_override"));
 						}
@@ -215,9 +215,9 @@ sub initialize {
 	    	       die "Can't rename $filePath to $filePath.bak ",
 	    	           "Check permissions for webserver on directories. $!";
 		}
-	    my $openDate     = formatDateTime($setRecord->open_date);
-	    my $dueDate      = formatDateTime($setRecord->due_date);
-	    my $answerDate   = formatDateTime($setRecord->answer_date);
+	    my $openDate     = $self->formatDateTime($setRecord->open_date);
+	    my $dueDate      = $self->formatDateTime($setRecord->due_date);
+	    my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 	    my $setHeader    = $setRecord->set_header;
 	    
 	    my @problemList = $db->listGlobalProblems($setName);
@@ -285,7 +285,7 @@ sub body {
 		$userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
 		die "set $setName not found for user $editForUser[0]." unless $userSetRecord;
 		foreach my $field (@{SET_FIELDS()}) {
-			$overrideArgs{$field} = [defined $userSetRecord->$field && $userSetRecord->$field ne "", ($field =~ /_date$/ ? formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
+			$overrideArgs{$field} = [defined $userSetRecord->$field && $userSetRecord->$field ne "", ($field =~ /_date$/ ? $self->formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
 		}
 	} else {
 		foreach my $field (@{SET_FIELDS()}) {
@@ -316,17 +316,17 @@ sub body {
 		CGI::Tr({}, [
 			setRowHTML( "Open Date:", 
 						"open_date", 
-						formatDateTime($setRecord->open_date),
+						$self->formatDateTime($setRecord->open_date),
 						undef,
 						@{$overrideArgs{open_date}})."\n",
 			setRowHTML( "Due Date:",
 						"due_date", 
-						formatDateTime($setRecord->due_date), 
+						$self->formatDateTime($setRecord->due_date), 
 						undef, 
 						@{$overrideArgs{due_date}})."\n",
 			setRowHTML( "Answer Date:",
 						"answer_date", 
-						formatDateTime($setRecord->answer_date), 
+						$self->formatDateTime($setRecord->answer_date), 
 						undef, 
 						@{$overrideArgs{answer_date}})."\n",
 #			setRowHTML( "Set Header:", "set_header", 
