@@ -587,7 +587,7 @@ sub getSetTeX {
 	
 	# get header and footer
 	my $set       = $db->getMergedSet($effectiveUserName, $setName);
-	my $setHeader = (ref($set)) ? $set->set_header : $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
+	my $setHeader = (ref($set) && $set->set_header) ? $set->set_header : $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
 	#my $setFooter = $wwdb->getMergedSet($effectiveUserName, $setName)->set_footer
 	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
@@ -643,7 +643,7 @@ sub getProblemTeX {
 	
 	# decide what to do about problem number
 	my $problem;
-	if ($problemNumber) {
+	if ($problemNumber) {  # problem number defined and not zero
 		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber);
 	} elsif ($pgFile) {
 		$problem = WeBWorK::DB::Record::UserProblem->new(
@@ -654,10 +654,10 @@ sub getProblemTeX {
 			# the rest of Problem's fields are not needed, i think
 		);
 	}
-	unless (ref($problem) )  {  # return error if no set is defined
+	unless (ref($problem) )  {  # return error if no problem is defined
 	    $problemNumber = 'undefined problem number' unless defined($problemNumber);
 	    $setName       = 'undefined set Name' unless defined($setName);
-	    my $msg        = "No problem $setName/problem $problemNumber assigned to ".
+	    my $msg        = "Problem $setName/problem $problemNumber not assigned to ".
 			              $effectiveUser->first_name.' '.
 	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )';
 		push(@{$self->{warnings}}, 
@@ -665,6 +665,7 @@ sub getProblemTeX {
 			   problem => $problemNumber,
 			   message => $msg,
 	    );
+	    $msg =~ s/_/\\_/;  # escape underbars to protect them from TeX FIXME--this could be more general??
 	    return $msg;
 	}
 	# figure out if we're allowed to get solutions and call PG->new accordingly.
