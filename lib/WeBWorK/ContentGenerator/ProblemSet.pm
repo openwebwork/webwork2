@@ -157,12 +157,25 @@ sub info {
 			processAnswers  => 0,
 		},
 	);
-	
+	# Add link for editor
+	#### link to edit setHeader 
+	my $editor_link			= '';
+	if (defined($set) and $set->set_header and 
+	    $self->{permissionLevel} >= $ce->{permissionLevels}->{modify_problem_sets} ) {  
+	    #FIXME ?  can't edit the default set header this way
+		$editor_link = CGI::p(
+		                    CGI::a({-href=>$ce->{webworkURLs}->{root}.'/'.$ce->{courseName}.
+								'/instructor/pgProblemEditor/'.
+								$set->set_id.'/0'. '?'.$self->url_authen_args},
+								'Edit set header: '.$set->set_header
+		          			)
+		);
+	}	
 	# handle translation errors
 	if ($pg->{flags}->{error_flag}) {
-		return $self->errorOutput($pg->{errors}, $pg->{body_text});
+		return $self->errorOutput($pg->{errors}, $pg->{body_text}.$editor_link);
 	} else {
-		return $pg->{body_text};
+		return $pg->{body_text}.$editor_link;
 	}
 }
 
