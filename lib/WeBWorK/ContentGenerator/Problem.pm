@@ -53,9 +53,30 @@ sub pre_header_initialize {
 	
 	my $user            = $db->getUser($userName);
 	my $effectiveUser   = $db->getUser($effectiveUserName);
+	# obtain the effective user set, or if that is not yet defined obtain global set
 	my $set             = $db->getGlobalUserSet($effectiveUserName, $setName);
+	$set                = $db->getGlobalSet($setName) unless defined($set);
+	# obtain the effective user problem, or if that is not yet defined obtain global problem
 	my $problem         = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
-	my $psvn            = $set->psvn();
+	$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
+	# FIXME  
+	# a better solution at this point would be to take set and problem, convert them to global_user type
+	# so that they have the right methods.
+	# Stuff the local copy of $set and $problem with default data where it won't have been defined 
+	# Make sure that nothing bad is stored back in the database. 
+	# It would be nice to store lastAnswer somewhere -- perhaps that could be done as a special case.
+	
+	# This supplies a psvn if $set doesn't have it.  Unfortunately the problem is called on to provide
+	# data in many places and it might not even have methods defined.
+	
+	# global sets will not have a defined psvn
+	my $psvn;
+	if ($set->can('psvn') ) {
+		$psvn           = $set->psvn();
+	} else {            # we are viewing an unassigned problem set, psvn's are irrelevant
+		$psvn           = '0000';
+	}
+	
 	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
 	
 	$self->{userName}        = $userName;
