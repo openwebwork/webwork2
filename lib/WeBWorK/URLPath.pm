@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.12 2004/05/03 20:56:06 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.13 2004/05/22 21:25:14 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -425,7 +425,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_progress => {
-		name    => 'StudentProgress',
+		name    => 'Student Progress',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_progress instructor_user_progress/ ],
 		match   => qr|^progress/|,
@@ -434,7 +434,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_set_progress => {
-		name    => 'StudentProgress',
+		name    => 'Student Progress',
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(set)/([^/]+)/|,
@@ -443,7 +443,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_user_progress => {
-		name    => 'StudentProgress',
+		name    => 'Student Progress',
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(student)/([^/]+)/|,
