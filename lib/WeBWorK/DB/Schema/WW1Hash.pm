@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.21 2003/12/12 20:23:27 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.23 2003/12/17 21:24:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -686,31 +686,32 @@ sub hash2IDs {
 sub hash2set {
 	my ($self, %hash) = @_;
 	return $self->{db}->{set_user}->{record}->new(
-		user_id        => $hash{stlg},
-		set_id         => $hash{stnm},
-		set_header     => $hash{shfn},
-		problem_header => $hash{phfn},
-		open_date      => $hash{opdt},
-		due_date       => $hash{dudt},
-		answer_date    => $hash{andt},
+		user_id        => defined $hash{stlg} ? $hash{stlg} : "",
+		set_id         => defined $hash{stnm} ? $hash{stnm} : "",
+		set_header     => defined $hash{shfn} ? $hash{shfn} : "",
+		problem_header => defined $hash{phfn} ? $hash{phfn} : "",
+		open_date      => defined $hash{opdt} ? $hash{opdt} : "",
+		due_date       => defined $hash{dudt} ? $hash{dudt} : "",
+		answer_date    => defined $hash{andt} ? $hash{andt} : "",
+		published      => defined $hash{publ} ? $hash{publ} : "",
 	);
 }
 
 sub hash2problem {
 	my ($self, $n, %hash) = @_;
 	return $self->{db}->{problem_user}->{record}->new(
-		user_id       => $hash{"stlg"},
-		set_id        => $hash{"stnm"},
+		user_id       => defined $hash{"stlg"}   ? $hash{"stlg"}   : "",
+		set_id        => defined $hash{"stlg"}   ? $hash{"stnm"}   : "",
 		problem_id    => $n,
-		source_file   => $hash{"pfn$n"},
-		value         => $hash{"pva$n"},
-		max_attempts  => $hash{"pmia$n"},
-		problem_seed  => $hash{"pse$n"},
-		status        => $hash{"pst$n"},
-		attempted     => $hash{"pat$n"},
-		last_answer   => $hash{"pan$n"},
-		num_correct   => $hash{"pca$n"},
-		num_incorrect => $hash{"pia$n"},
+		source_file   => defined $hash{"pfn$n"}  ? $hash{"pfn$n"}  : "",
+		value         => defined $hash{"pva$n"}  ? $hash{"pva$n"}  : "",
+		max_attempts  => defined $hash{"pmia$n"} ? $hash{"pmia$n"} : "",
+		problem_seed  => defined $hash{"pse$n"}  ? $hash{"pse$n"}  : "",
+		status        => defined $hash{"pst$n"}  ? $hash{"pst$n"}  : "",
+		attempted     => defined $hash{"pat$n"}  ? $hash{"pat$n"}  : "",
+		last_answer   => defined $hash{"pan$n"}  ? $hash{"pan$n"}  : "",
+		num_correct   => defined $hash{"pca$n"}  ? $hash{"pca$n"}  : "",
+		num_incorrect => defined $hash{"pia$n"}  ? $hash{"pia$n"}  : "",
 	);
 }
 
@@ -724,6 +725,7 @@ sub set2hash {
 		opdt => $Set->open_date,
 		dudt => $Set->due_date,
 		andt => $Set->answer_date,
+		publ => $Set->published,
 	);
 }
 
