@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.48 2004/05/22 22:14:07 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.49 2004/05/23 01:15:28 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,28 @@ use strict;
 use warnings;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
+
+use constant DISPLAY_MODES => {
+	# display name   # mode name
+	tex           => "TeX",
+	plainText     => "HTML",
+	formattedText => "HTML_tth",
+	images        => "HTML_dpng",
+	jsMath	      => "HTML_jsMath",
+};
+
+use constant DISPLAY_MODE_FAILOVER => {
+	TeX         => [],
+	HTML        => [],
+	HTML_tth    => [ "HTML", ],
+	HTML_dpng   => [ "HTML_tth", "HTML", ],
+	HTML_jsMath => [ "HTML_dpng", "HTML_tth", "HTML", ],
+	# legacy modes -- these are not supported, but some problems might try to
+	# set the display mode to one of these values manually and some macros may
+	# provide rendered versions for these modes but not the one we want.
+	Latex2HTML  => [ "TeX", "HTML", ],
+	HTML_img    => [ "HTML_dpng", "HTML_tth", "HTML", ],
+};
 
 sub new {
 	shift; # throw away invocant -- we don't need it
@@ -62,22 +84,23 @@ sub defineProblemEnvir {
 	# any changes are noted by "ADDED:" or "REMOVED:"
 	
 	# Vital state information
-	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img,
-	#        texDisposition
+	# ADDED: displayModeFailover, displayHintsQ, displaySolutionsQ,
+	#        refreshMath2img, texDisposition
 	
-	$envir{psvn}              = $set->psvn;
-	$envir{psvnNumber}        = $envir{psvn};
-	$envir{probNum}           = $problem->problem_id;
-	$envir{questionNumber}    = $envir{probNum};
-	$envir{fileName}          = $problem->source_file;	 
-	$envir{probFileName}      = $envir{fileName};		 
-	$envir{problemSeed}       = $problem->problem_seed;
-	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
-	$envir{languageMode}      = $envir{displayMode};	 
-	$envir{outputMode}        = $envir{displayMode};	 
-	$envir{displayHintsQ}     = $options->{showHints};	 
-	$envir{displaySolutionsQ} = $options->{showSolutions};
-	$envir{texDisposition}    = "pdf"; # in webwork2, we use pdflatex
+	$envir{psvn}                = $set->psvn;
+	$envir{psvnNumber}          = $envir{psvn};
+	$envir{probNum}             = $problem->problem_id;
+	$envir{questionNumber}      = $envir{probNum};
+	$envir{fileName}            = $problem->source_file;	 
+	$envir{probFileName}        = $envir{fileName};		 
+	$envir{problemSeed}         = $problem->problem_seed;
+	$envir{displayMode}         = translateDisplayModeNames($options->{displayMode});
+	$envir{languageMode}        = $envir{displayMode};	 
+	$envir{outputMode}          = $envir{displayMode};	 
+	$envir{displayModeFailover} = DISPLAY_MODE_FAILOVER();
+	$envir{displayHintsQ}       = $options->{showHints};	 
+	$envir{displaySolutionsQ}   = $options->{showSolutions};
+	$envir{texDisposition}      = "pdf"; # in webwork2, we use pdflatex
 	
 	# Problem Information
 	# ADDED: courseName, formatedDueDate
@@ -185,13 +208,7 @@ sub defineProblemEnvir {
 
 sub translateDisplayModeNames($) {
 	my $name = shift;
-	return {
-		tex           => "TeX",
-		plainText     => "HTML",
-		formattedText => "HTML_tth",
-		images        => "HTML_dpng", # "HTML_img",
-		jsMath	      => "HTML_jsMath",
-	}->{$name};
+	return DISPLAY_MODES()->{$name};
 }
 
 sub oldSafetyFilter {

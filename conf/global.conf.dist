@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.66 2004/05/23 01:38:16 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.67 2004/05/23 23:17:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -271,6 +271,20 @@ $practiceUserPrefix = "practice";
 ################################################################################
 
 %pg = (
+	# available display modes
+	displayModes => [ qw(plainText formattedText images jsMath) ],
+	# pg options
+	options => {
+		# default translation options
+		displayMode        => "images",
+		showOldAnswers     => 1,
+		showCorrectAnswers => 0,
+		showHints          => 0,
+		showSolutions      => 0,
+		catchWarnings      => 0, # there's a global warning catcher now
+		# default grader
+		grader => "avg_problem_grader",
+	},
 	# options for various renderers
 	renderers => {
 		"WeBWorK::PG::Remote" => {
@@ -286,17 +300,6 @@ $practiceUserPrefix = "practice";
 		root   => "$pgRoot",
 		lib    => "$pgRoot/lib",
 		macros => "$pgRoot/macros",
-	},
-	options => {
-		# default translation options
-		displayMode        => "images",
-		showOldAnswers     => 1,
-		showCorrectAnswers => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		catchWarnings      => 0, # there's a global warning catcher now
-		# default grader
-		grader => "avg_problem_grader",
 	},
 	# this will be customized in the course.conf file
 	specialPGEnvironmentVars => {
