@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.8 2004/05/07 23:13:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.9 2004/05/08 02:01:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -304,7 +304,11 @@ sub add_course_form {
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td(CGI::textfield("add_sql_database", $add_sql_database, 25)),
+				CGI::td(
+					CGI::textfield("add_sql_database", $add_sql_database, 25),
+					CGI::br(),
+					CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+				),
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
@@ -380,8 +384,8 @@ sub add_course_validate {
 		if (exists $ce->{dbLayouts}->{$add_dbLayout}) {
 			if ($add_dbLayout eq "sql") {
 				push @errors, "You must specify the SQL admin username." if $add_sql_username eq "";
-				push @errors, "You must specify the SQL admin password." if $add_sql_password eq "";
-				push @errors, "You must specify the SQL confirm_delete_course." if $add_sql_database eq "";
+				#push @errors, "You must specify the SQL admin password." if $add_sql_password eq "";
+				#push @errors, "You must specify the SQL database name." if $add_sql_database eq "";
 				push @errors, "You must specify the WeBWorK host." if $add_sql_wwhost eq "";
 			} elsif ($add_dbLayout eq "gdbm") {
 				push @errors, "You must specify the GDBM global user ID." if $add_gdbm_globalUserID eq "";
@@ -436,7 +440,7 @@ sub do_add_course {
 		$dbOptions{port}     = $add_sql_port if $add_sql_port ne "";
 		$dbOptions{username} = $add_sql_username;
 		$dbOptions{password} = $add_sql_password;
-		$dbOptions{database} = $add_sql_database;
+		$dbOptions{database} = $add_sql_database || "webwork_$add_courseID";
 		$dbOptions{wwhost}   = $add_sql_wwhost;
 	}
 	
