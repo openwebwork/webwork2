@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.15 2004/06/14 18:04:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.16 2004/12/18 22:20:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,7 +47,7 @@ sub initialize {
 		my $numberOfStudents    = $r->param('number_of_students');
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
 		foreach my $i (1..$numberOfStudents) {
-		    my $new_user_id  = $r->param("new_user_id_$i");
+		    my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
 		    my $new_password = cryptPassword($r->param("student_id_$i"));
 		    next unless defined($new_user_id) and $new_user_id;
 			push @userIDs, $new_user_id;
@@ -59,13 +59,13 @@ sub initialize {
 			$newPermissionLevel->user_id($new_user_id);
 			$newPassword->user_id($new_user_id);
 			$newPassword->password($new_password);
-			$newUser->last_name($r->param("last_name_$i"));
-			$newUser->first_name($r->param("first_name_$i"));
-			$newUser->student_id($r->param("student_id_$i"));
-			$newUser->email_address($r->param("email_address_$i"));
-			$newUser->section($r->param("section_$i"));
-			$newUser->recitation($r->param("recitation_$i"));
-			$newUser->comment($r->param("comment_$i"));
+			$newUser->last_name(trim_spaces($r->param("last_name_$i")));
+			$newUser->first_name(trim_spaces($r->param("first_name_$i")));
+			$newUser->student_id(trim_spaces($r->param("student_id_$i")));
+			$newUser->email_address(trim_spaces($r->param("email_address_$i")));
+			$newUser->section(trim_spaces($r->param("section_$i")));
+			$newUser->recitation(trim_spaces($r->param("recitation_$i")));
+			$newUser->comment(trim_spaces($r->param("comment_$i")));
 			$newUser->status('C');
 			$newPermissionLevel->permission(0);
 			#FIXME  handle errors if user exists already
@@ -204,6 +204,14 @@ sub addStudentForm {
 		#or check individual users and click "save" at the bottom.  </div>
 		#Soon ( real soon -- honest!!! :-)  ) you will also be able to assign sets to the students as they are entered from this page. }
 	);
+}
+
+
+## Utility function to trim whitespace off the start and end of its input
+sub trim_spaces {
+	my $in = shift;
+	$in =~ s/^\s*(.*?)\s*$/$1/;
+	return($in);
 }
 
 1;
