@@ -144,17 +144,17 @@ use constant  FIELD_PROPERTIES => {
 	},
 	open_date => {
 		type => "text",
-		size => 24,
+		size => 26,
 		access => "readwrite",
 	},
 	due_date => {
 		type => "text",
-		size => 24,
+		size => 26,
 		access => "readwrite",
 	},
 	answer_date => {
 		type => "text",
-		size => 24,
+		size => 26,
 		access => "readwrite",
 	},
 	published => {
