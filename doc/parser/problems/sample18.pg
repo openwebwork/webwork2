@@ -1,7 +1,7 @@
 ###########################################################
 #
-#  Example showing how to use the Parser's differentiation
-#  capabilities.
+#  Example showing how to use the Parser's function
+#  answer checker.
 #
 
 DOCUMENT();        # This should be the first executable line in the problem.
@@ -17,10 +17,9 @@ TEXT(beginproblem());
 
 ###########################################################
 #
-#   Use standard numeric mode
+#   The setup
 #
-Context('Numeric');
-$x = Formula('x');  # used to construct formulas below.
+Context('Vector')->variables->are(t=>'Real');
 
 #
 #   Define a function and its derivative and make them pretty
@@ -29,33 +28,34 @@ $a = random(1,8,1);
 $b = random(-8,8,1);
 $c = random(-8,8,1);
 
-$f = ($a*$x**2 + $b*$x + $c) -> reduce;
-$df = $f->D('x');
+$f = Formula("<t^2,$at+$b,$c-t>") -> reduce;
+$df = $f->D('t');
 
-$x = random(-8,8,1);
+$t = random(-5,5,1);
 
 ###########################################################
 #
 #  The problem text
 #
+
+Context()->texStrings;
 BEGIN_TEXT
 
-Suppose \(f(x) = \{$f->TeX\}\).
+Suppose \(f(t) = $f\).
 $PAR
-Then \(f'(x)=\) \{ans_rule(20)\},$BR
-and \(f'($x)=\) \{ans_rule(20)\}.
-$PAR
-(Same as previous problem, but using the formal differentiation package.
-Note that automatic differentiation does not always produce the simples form.)
+Then \(f'(t) =\) \{ans_rule(20)\},$BR
+and \(f'($t) =\) \{ans_rule(20)\}.
+
 
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #
 #  The answers
 #
-ANS(fun_cmp($df->string));
-ANS(num_cmp($df->eval(x=>$x)));
+ANS($df->cmp);
+ANS($df->eval(t=>$t)->cmp);
 $showPartialCorrectAnswers = 1;
 
 ###########################################################

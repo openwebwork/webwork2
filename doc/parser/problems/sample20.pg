@@ -1,7 +1,7 @@
 ###########################################################
 #
-#  Example showing how to use the Parser to make
-#  a formula that you can evaluate and print in TeX form.
+#  Example showing how to use the Parser's function
+#  answer checker.
 #
 
 DOCUMENT();        # This should be the first executable line in the problem.
@@ -18,16 +18,20 @@ TEXT(beginproblem());
 #
 #   The setup
 #
-Context('Vector');
+Context('Numeric')->variables->are(
+  x=>'Real',y=>'Real',
+  s=>'Real',t=>'Real'
+);
+$x = Formula('x'); $y = Formula('y');
 
-#
-#   Define a vector
-#
-$a = non_zero_random(-8,8,1);
-$b = non_zero_random(-8,8,1);
-$c = non_zero_random(-8,8,1);
+$a = random(1,5,1);
+$b = random(-5,5,1);
+$c = random(-5,5,1);
 
-$V = $a*i + $b*j + $c*k;  # equivalently: $V = Vector($a,$b,$c);
+$f = ($a*$x**2 + $b*$x*$y + $c*$y**2) -> reduce;
+
+$x = random(-5,5,1);
+$y = random(-5,5,1);
 
 ###########################################################
 #
@@ -37,17 +41,20 @@ $V = $a*i + $b*j + $c*k;  # equivalently: $V = Vector($a,$b,$c);
 Context()->texStrings;
 BEGIN_TEXT
 
-The length of the vector \($V\) is \{ans_rule(20)\}.
+Suppose \(f(x) = $f\).
+$PAR
+Then \(f($x,$y)\) = \{ans_rule(20)\},$BR
+and \(f(s+t,s-t)\) = \{ans_rule(30)\}.
 
 END_TEXT
 Context()->normalStrings;
 
 ###########################################################
 #
-#  The answer
+#  The answers
 #
-
-ANS(num_cmp(norm($V)->value));
+ANS($f->eval(x=>$x,y=>$y)->cmp);
+ANS($f->substitute(x=>'s+t',y=>'s-t')->cmp);
 $showPartialCorrectAnswers = 1;
 
 ###########################################################
