@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.21 2004/04/05 19:33:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.23 2004/04/05 20:52:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -157,12 +157,12 @@ sub initialize {
 	my $output_file      = 'FIXME no output file specified';	
 	if (defined($action) and $action eq 'Save as Default') {
 		$output_file  = $default_msg_file;
-	} elsif ( defined($action) and ($action =~/save/i) and defined($savefilename) ){
+	} elsif ( defined($action) and ($action =~/save/i) and defined($savefilename) and $savefilename ){
 		$output_file  = $savefilename;
 	} elsif ( defined($input_file) ) {
 		$output_file  = $input_file;
 	}
-#	warn "FIXME savefilename $savefilename  output file $output_file";
+
 	#################################################################
 	# Sanity check on save file name
 	#################################################################
@@ -188,15 +188,15 @@ sub initialize {
 # Determine input source
 #############################################################################################
 	my $input_source =  ( defined( $r->param('body') ) and $action ne 'Open' ) ? 'form' : 'file';
-#	warn "FIXME input source is $input_source from $input_file";
+
 #############################################################################################
 # Get inputs
 #############################################################################################
 	my($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
-#		warn "FIXME obtaining source from $emailDirectory/$input_file";
+
 		($from, $replyTo,$subject,$r_text) = $self->read_input_file("$emailDirectory/$input_file");
-#		warn "FIXME Done reading source";
+
 
 	} elsif ($input_source eq 'form') {
 		# read info from the form
@@ -251,7 +251,7 @@ sub initialize {
 	
 	if(not defined($action) or $action eq 'Open' or $action eq $REFRESH_RESIZE_BUTTON or $action eq 'Sort by'
 	   or $action eq 'Set merge file to:' ){  
-#		warn "FIXME action is |$action| no further initialization required";
+
 		return '';
 	}
 
@@ -301,8 +301,10 @@ sub initialize {
 	    # Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" );
-		$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
-#		warn "FIXME saving to ${emailDirectory}/$output_file";
+		unless ( $self->{submitError} or not -w "${emailDirectory}/$output_file" )  {  # if there are no errors report success
+			$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
+		}    
+
 	} elsif ($action eq 'Preview') {
 		$self->{response}         = 'preview';
 	

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.64 2004/03/04 21:02:27 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.65 2004/03/15 02:25:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,10 +139,22 @@ sub message($$) {
 	
 	return <<EOF;
 <div align="left">
- <h1>Software Error</h1>
- <p>An error has occured while trying to process your request. For help, please
- send mail to this site's webmaster $admin giving the following information
- about the error and the date and time that the error occured. Some hints:</p>
+ <hr>
+ <p>An error has occured while trying to process your request. </p>
+ 
+ <h3>Error message</h3>
+ <div style="color:blue; ">
+ <ul><tt>$exception</tt></ul>
+ </div>
+ <!--<h2>Call stack</h2>
+ <ul>$context</ul>-->
+ <hr>
+ <h3>Additonal warnings</h3>
+ <ul>$warnings</ul>
+<p>
+For help, please
+ send mail to this site's webmaster $admin giving as much information
+ as you can about the error and the date and time that the error occured. Some hints:</p>
  <ul>
   <li>An error about an <tt>undefined value</tt> often means that you asked for
   an object (like a user, problem set, or problem) that does not exist, and the
@@ -150,12 +162,6 @@ sub message($$) {
   <li>An error about <tt>permission denied</tt> might suggest that the web
   server does not have permission to read or write a file or directory.</li>
  </ul>
- <h2>Error message</h2>
- <p><tt>$exception</tt></p>
- <!--<h2>Call stack</h2>
- <ul>$context</ul>-->
- <h2>Warnings</h2>
- <ul>$warnings</ul>
  <h2>Request information</h2>
  <table border="1">
   <tr><td>Method</td><td>$method</td></tr>
