@@ -141,7 +141,7 @@ sub latex2pdf {
 	}
 	
 	# remove temporary directory
-	#rmtree($wd, 0, 1);
+	rmtree($wd, 0, 1);
 	
 	return -e $finalFile;
 }
