@@ -80,7 +80,7 @@ Delete sets:
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptPassword sortByName);
+use WeBWorK::Utils qw(formatDateTime parseDateTime readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
@@ -1495,23 +1495,6 @@ EOF
 
 }
 
-
-# search recursively through a directory looking for all filenames matching a given pattern
-sub recurseDirectory {
-
-	my ($self, $dir, $pattern) = @_;
-	
-	my @dirs = grep {$_ ne "." and $_ ne ".." and $_ ne "Library" and $_ ne "CVS" and -d "$dir/$_"} readDirectory($dir);
-
-	my @files = map { "$dir/$_" } $self->read_dir($dir, $pattern);
-
-	foreach (@dirs) {
-		push (@files, $self->recurseDirectory("$dir/$_", $pattern));
-	}
-
-	return @files;
-}
-
 ################################################################################
 # "display" methods
 ################################################################################
@@ -1718,8 +1701,18 @@ sub printTableHTML {
 	my %sortSubs = %{ SORT_SUBS() };
 
 	# FIXME: should this always presume to use the templates directory?
-	my @headers = $self->recurseDirectory($self->{ce}->{courseDirs}->{templates}, '(?i)header.*?\\.pg$');
-	map { s|^$self->{ce}->{courseDirs}->{templates}/?|| } @headers;
+	# (no, but that can wait until we have an abstract ProblemLibrary API -- sam)
+	my $templates_dir = $r->ce->{courseDirs}->{templates};
+	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
+	my $exempt_dirs = join("|", keys %probLibs);
+	my @headers = listFilesRecursive(
+		$templates_dir,
+		qr/header.*\.pg$/i, # match these files
+		qr/^(?:$exempt_dirs|CVS)$/, # prune these directories
+		0, # match against file name only
+		1, # prune against path relative to $templates_dir
+	);
+	
 	@headers = sort @headers;
 	my %headers = map { $_ => $_ } @headers;
 	$headers{""} = "Use System Default";
