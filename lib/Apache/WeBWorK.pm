@@ -26,6 +26,7 @@ use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Professor;
+use WeBWorK::ContentGenerator::Instructor;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -123,7 +124,12 @@ sub handler() {
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
 		} elsif ($arg eq "instructor") {
-			return WeBWorK::ContentGenerator::Instructor->new($r, $ce, $db)->go;
+			my $instructorArgument = shift @components;
+			if (!defined $instructorArgument) {
+				return WeBWorK::ContentGenerator::Instructor->new($r, $ce, $db)->go;
+			} else {
+			
+			}
 		} elsif ($arg eq "prof") {
 			return WeBWorK::ContentGenerator::Professor->new($r, $ce, $db)->go;
 		} elsif ($arg eq "options") {
