@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.47 2004/10/26 03:16:40 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.48 2004/12/18 16:11:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -334,7 +334,7 @@ sub displaySets {
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
 			my $probID = $problemRecord->problem_id;
-			$num_of_attempts = 0;
+			
 			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -384,7 +384,7 @@ sub displaySets {
 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
 				$correct_answers_for_problem{$probID}                += $status;
 			}
-				
+			
 		}
 		
 		
@@ -396,6 +396,7 @@ sub displaySets {
 		
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+		
 		my $temp_hash         = {         user_id        => $studentRecord->user_id,
 		                                  last_name      => $studentRecord->last_name,
 		                                  first_name     => $studentRecord->first_name,
@@ -531,55 +532,6 @@ print
 	
 	}
 	print CGI::end_table();
-#####################################################################################
-	# construct header
-# 	my $problem_header = '';
-# 	
-# 	foreach my $i (1..$max_num_problems) {
-# 		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
-# 	}
-# 	print
-# 		CGI::p("Details:",CGI::i('The success indicator for each student is calculated as'),CGI::br(),
-# 			'(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)',CGI::br(),
-# 			CGI::i('or 0 if there are no attempts.')
-# 		),
-# 		"Click heading to sort table: ",
-# 	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
-# 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
-# 		CGI::Tr(CGI::td(  {-align=>'left'},
-# 			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
-# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
-# 			 'Out'.CGI::br().'Of',
-# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
-# 			 'Problems'.CGI::br().$problem_header,
-# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
-# 			 'Recitation',
-# 			 'login_name',
-# 			 ])
-# 
-# 		);
-# 								
-# 	foreach my $rec (@augmentedUserRecords) {
-# 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
-# 		my $email    = $rec->{email_address}; 
-# 		my $twoString  = $rec->{twoString};                             
-# 		print CGI::Tr(
-# 			CGI::td(CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-# 			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
-# 			CGI::td($rec->{total}), # out of 
-# 			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
-# 			CGI::td($rec->{problemString}), # problems
-# 			CGI::td($self->nbsp($rec->{section})),
-# 			CGI::td($self->nbsp($rec->{recitation})),
-# 			CGI::td($rec->{user_id}),			
-# 			
-# 		);
-# 	}
-# 
-# 	print CGI::end_table();
-# 			
-			
-
 			
 	return "";
 }
