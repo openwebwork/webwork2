@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.29 2004/02/05 00:05:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.30 2004/03/15 20:17:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -273,10 +273,9 @@ sub verify($) {
 			$userRecord-> status('C');
 			#warn "Setting status for user $user to C.  It was previously undefined.";
 		}
-		unless ($userRecord->status eq 'C') {
+		if ($ce->siteDefaults{$userRecord->status} eq "Drop") {
 			$error  = "The user $user has been dropped from this course. ";
 			last VERIFY;
-			
 		}
 		########################################################
 		# it's a practice user.
@@ -327,15 +326,7 @@ sub verify($) {
 		
 		# -- here we know it's a regular user. --
 	
-		#########################################################
-		# Fail with error message if status is D or dropped
-		#########################################################
-		if ($db->getUser($user)->status eq 'D' or $db->getUser($user)->status eq 'DROPPED') {
-			$error  = "The user $user has been dropped from this course. Please contact
-			your instructor if this is an error.";
-			last VERIFY;
 		
-		}		
 		# a key was supplied.
 		if ($key) {
 			# we're not interested in a user's password if they're
