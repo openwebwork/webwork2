@@ -21,6 +21,32 @@ use base qw(Exporter);
 
 WeBWorK::Utils::SortRecords - utilities for sorting database records.
 
+=head1 SYNOPSIS
+
+ use WeBWorK::Utils::SortRecords qw/getSortsForClass/;
+ 
+ # get a list of sorts
+ my ($sortsRef, $sortLabelsRef) = getSortsForClass(ref $Users[0]);
+ my @sorts      = @$sortsRef;      # sort names
+ my %sortLabels = %$sortLabelsRef; # suitable for CGI's "-labels" parameter
+
+ use WeBWorK::Utils::SortRecords qw/sortRecords/;
+ 
+ # start with a list of records
+ my @Users = $db->getUsers($db->listUsers);
+ 
+ # sort the records using a preset
+ @SortedUsers = sortRecords({preset=>"lnfn"}, @Users);
+ 
+ # or provide a custom sort
+ @SortedUsers = sortRecords({fields=>[qw/section student_id/]}, @Users);
+
+=head1 DESCRIPTION
+
+This module provides record sorting functions, and a collection of preset sorts
+for the standard WeBWorK record classes. Sorts are specified by a list
+of field names. Sorts are performed lexicographically.
+
 =cut
 
 use strict;
@@ -42,6 +68,25 @@ use constant PRESET_SORTS => {
 	},
 };
 
+=head1 FUNCTIONS
+
+=over
+
+=item getSortsForClass($class)
+
+Given the name of a record class, returns the preset sorts available for that
+class.
+
+The return value consists of a two-element list. The first element is a
+reference to a list of sort names. The second element is a reference to a hash
+mapping sort names to string descriptions.
+
+Together, these two lists are suitable for passing to the C<-values> and
+C<-labels> parameters of several CGI module methods, i.e. popup_menu(),
+scrolling_list(), checkbox_group(), and radio_group().
+
+=cut
+
 sub getSortsForClass {
 	my ($class) = @_;
 	
@@ -55,6 +100,25 @@ sub getSortsForClass {
 	
 	return ( [@field_order, @preset_order], {%fields, %presets} );
 }
+
+=item sortRecords(\%options, @Records)
+
+Given a sort specification (or the name of a preset format) and a list of
+records, returns a list of the same records in order according to the sort.
+
+%options can consist of either:
+
+ preset => the name of a preset format listed by getFormatsForClass()
+
+or:
+
+ fields => a reference to a list of fields in the records' class
+
+If C<fields> is given, the records are sorted according to the specified fields.
+If multiple fields are specified, the second field is is consulted if two
+records are found to have identical first fields, and so on.
+
+=cut
 
 sub sortRecords {
 	my ($options, @Records) = @_;
@@ -105,5 +169,20 @@ sub sortRecords {
 		croak "sort type missing from options. specify one of: preset, fields";
 	}
 }
+
+=back
+
+=head1 BUGS
+
+No provision for case-insensitive, descending, or numeric sorting.
+
+No provision for programmatic sorts. While a one-time programmatic sort can be
+done easily without using this module, programmatic preset sorts would be
+useful, i.e. for intelligent sorting of set IDs.
+
+The fields being compared cannot contain nulls, because of the way packed keys
+are being generated.
+
+=cut
 
 1;
