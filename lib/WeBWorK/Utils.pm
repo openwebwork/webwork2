@@ -12,6 +12,8 @@ our @EXPORT_OK = qw(
 	readFile
 	formatDateTime
 	parseDateTime
+	dbDecode
+	dbEncode
 	ref2string
 	hash2string
 	array2string
@@ -48,6 +50,26 @@ sub formatDateTime($) {
 sub parseDateTime($) {
 	my $string = shift;
 	return str2time $string;
+}
+
+sub dbDecode($) {
+	my $string = shift;
+	return unless defined $string and $string;
+	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
+	$hash{$_} =~ s/\\(&|=)/$1/g foreach (keys %hash); # unescape & and =
+	return %hash;
+}
+
+sub dbEncode(@) {
+	my %hash = @_;
+	my $string;
+	foreach (keys %hash) {
+		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
+		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
+		$string .= "$_=$hash{$_}&";
+	}
+	chop $string; # remove final '&' from string for old code :p
+	return $string;
 }
 
 # -----
