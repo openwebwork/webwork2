@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.10 2004/05/21 23:41:49 jj Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.11 2004/06/08 20:03:10 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,7 +36,8 @@ consult the documentation for the WeBWorK::DB module.
 A database layout is selected from the list of possible layouts by adding a
 line like the one below to the F<global.conf> or F<course.conf> file.
 
- *dbLayout = $dbLayouts{layoutName};
+ $dbLayoutName = "layoutName";
+ *dbLayout = $dbLayouts{$dbLayoutName};
 
 =cut
 
