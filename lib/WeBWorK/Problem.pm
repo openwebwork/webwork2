@@ -24,4 +24,15 @@ struct map { $_ => '$' } our @FIELDS = qw(
 	num_incorrect
 );
 
+sub toString($) {
+	my $self = shift;
+	my $result;
+	foreach (@FIELDS) {
+		$result .= "$_ => ";
+		$result .= defined $self->$_() ? $self->$_() : "";
+		$result .= "\n";
+	}
+	return $result;
+}
+
 1;
