@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.24 2004/01/03 19:58:15 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.25 2004/07/04 14:04:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,33 +27,57 @@ use strict;
 use warnings;
 use Safe;
 use WeBWorK::Utils qw(readFile);
+use WeBWorK::Debug;
 use Opcode qw(empty_opset);
 
+# NEW SYNTAX
+# 
+# new($invocant, $seedVarsRef)
+#   $invocant       implicitly set by caller
+#   $seedVarsRef    reference to hash containing scalar variables with which to
+#                   seed the course environment
+# 
+# OLD SYNTAX
+# 
 # new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
-# $invocant             implicitly set by caller
-# $webworkRoot          directory that contains the WeBWorK distribution
-# $webworkURLRoot       URL that points to the WeBWorK system
-# $pgRoot               directory that contains the PG distribution
-# $courseName		name of the course being used
+#   $invocant          implicitly set by caller
+#   $webworkRoot       directory that contains the WeBWorK distribution
+#   $webworkURLRoot    URL that points to the WeBWorK system
+#   $pgRoot            directory that contains the PG distribution
+#   $courseName        name of the course being used
 sub new {
-	my $invocant = shift;
+	my ($invocant, @rest) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $webworkRoot = shift;
-	my $webworkURLRoot = shift;
-	my $pgRoot = shift;
-	my $courseName = shift || "";
+	
+	# contains scalar symbols/values with which to seed course environment
+	my %seedVars;
+	
+	# where do we get the seed variables?
+	if (ref $rest[0] eq "HASH") {
+		%seedVars = %{$rest[0]};
+	} else {
+		debug __PACKAGE__, ": deprecated four-argument form of new() used.\n";
+		#$seedVars{webworkRoot}    = $rest[0];
+		#$seedVars{webworkURLRoot} = $rest[1];
+		#$seedVars{pgRoot}         = $rest[2];
+		$seedVars{webwork_dir}    = $rest[0];
+		$seedVars{webwork_url}    = $rest[1];
+		$seedVars{pg_dir}         = $rest[2];
+		$seedVars{courseName}     = $rest[3];
+	}
+	
 	my $safe = Safe->new;
 	
-	# set up some defaults that the environment files will need
-	$safe->reval("\$webworkRoot = '$webworkRoot'");
-	$safe->reval("\$webworkURLRoot = '$webworkURLRoot'");
-	$safe->reval("\$pgRoot = '$pgRoot'");
-	$safe->reval("\$courseName = '$courseName'");
+	# seed course environment with initial values
+	while (my ($var, $val) = each %seedVars) {
+		$val = "" if not defined $val;
+		$safe->reval("\$$var = '$val';");
+	}
 	
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "].$webworkRoot.q[/$file";
+		my $fullPath = "].$seedVars{webwork_dir}.q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
@@ -80,7 +104,7 @@ sub new {
 	$safe->mask($maskBackup);
 
 	# determine location of globalEnvironmentFile
-	my $globalEnvironmentFile = "$webworkRoot/conf/global.conf";
+	my $globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
 	
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
@@ -137,13 +161,21 @@ __END__
 
 =head1 SYNOPSIS
 
-	use WeBWorK::CourseEnvironment;
-	$courseEnv = WeBWorK::CourseEnvironment->new($webworkRoot, $webworkURLRoot,
-			$pgRoot, $courseName);
-	
-	$timeout = $courseEnv->{sessionKeyTimeout};
-	$mode    = $courseEnv->{pg}->{options}->{displayMode};
-	# etc...
+ use WeBWorK::CourseEnvironment;
+ $ce = WeBWorK::CourseEnvironment->new({
+ 	webwork_url         => "/webwork2",
+ 	webwork_dir         => "/opt/webwork2",
+ 	pg_dir              => "/opt/pg",
+ 	webwork_htdocs_url  => "/webwork2_files",
+ 	webwork_htdocs_dir  => "/opt/webwork2/htdocs",
+ 	webwork_courses_url => "/webwork2_course_files",
+ 	webwork_courses_dir => "/opt/webwork2/courses",
+ 	courseName          => "name_of_course",
+ });
+ 
+ my $timeout = $courseEnv->{sessionKeyTimeout};
+ my $mode    = $courseEnv->{pg}->{options}->{displayMode};
+ # etc...
 
 =head1 DESCRIPTION
 
@@ -158,12 +190,21 @@ safe compartment into a hash. This hash becomes the course environment.
 
 =over
 
-=item new (ROOT, URLROOT, PGROOT, COURSE)
+=item new(HASHREF)
 
-The C<new> method finds the file F<conf/global.conf> relative to the given ROOT
-directory. After reading this file, it uses the C<$courseFiles{environment}>
-variable, if present, to locate the course environment file. If found, the file
-is read and added to the environment.
+HASHREF is a reference to a hash containing scalar variables with which to seed
+the course environment. It must contain at least a value for the key
+C<webworkRoot>.
+
+The C<new> method finds the file F<conf/global.conf> relative to the given
+C<webwork_dir> directory. After reading this file, it uses the
+C<$courseFiles{environment}> variable, if present, to locate the course
+environment file. If found, the file is read and added to the environment.
+
+=item new(ROOT URLROOT PGROOT COURSENAME)
+
+A deprecated form of the constructor in which four seed variables are given
+explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
 
 =back
 
@@ -173,7 +214,7 @@ There are no formal accessor methods. However, since the course environemnt is
 a hash of hashes and arrays, is exists as the self hash of an instance
 variable:
 
-	$courseEnvironment->{someKey}->{someOtherKey};
+	$ce->{someKey}->{someOtherKey};
 
 =head1 AUTHOR
 

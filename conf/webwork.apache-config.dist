@@ -1,0 +1,104 @@
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.14 2004/06/24 16:59:30 sh002i Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+# This file configures Apache to handle requests for WeBWorK. To install WeBWorK
+# support in your Apache configuration, add the following line to the end of
+# your Apache configuration file (usually apache.conf or httpd.conf):
+# 
+#     Include /path/to/webwork.apache-config
+# 
+# Customize the variables $webwork_url, $webwork_dir, $pg_dir, etc. below to
+# match your installation and preferences.
+
+################################################################################
+# WeBWorK configuration
+################################################################################
+
+<Perl>
+
+# The following variables are the main configuration variables for WeBWorK.
+# They are used in the Apache configuration below and to seed the WeBWorK
+# configuration file global.conf.
+
+my ($webwork_url, $webwork_dir, $pg_dir, $webwork_htdocs_url,
+$webwork_htdocs_dir, $webwork_courses_url, $webwork_courses_dir);
+
+BEGIN {
+	# Root directories of WeBWorK and PG.
+	$webwork_url         = "/webwork2";
+	$webwork_dir         = "/opt/webwork2";
+	$pg_dir              = "/opt/pg";
+	
+	# URL and path to htdocs directory.
+	$webwork_htdocs_url  = "/webwork2_files";
+	$webwork_htdocs_dir  = "$webwork_dir/htdocs";
+	
+	# URL and path to courses directory.
+	$webwork_courses_url = "/webwork2_course_files";
+	$webwork_courses_dir = "$webwork_dir/courses";
+}
+
+# Between the line below and the "EOF" line are the three configuration stanzas
+# that are used to link Apache with WeBWorK. You may add additional Apache
+# configuration directives there, but keep in mind that variable names are being
+# interpolated (i.e. $foo, @bar).
+
+$PerlConfig = <<EOF;
+
+# Define the location that is handled by the Apache::WeBWorK module, and tell
+# Perl where to find the libraries Apache::WeBWorK needs to run.
+# 
+<Location $webwork_url>
+	SetHandler perl-script
+	PerlHandler Apache::WeBWorK
+</Location>
+
+# Provide access to system-wide resources.
+# 
+Alias $webwork_htdocs_url $webwork_htdocs_dir
+<Directory $webwork_htdocs_dir>
+	Options None
+	AllowOverride None
+</Directory>
+
+# Provide access to course-specific resources.
+# 
+AliasMatch $webwork_courses_url/([^/]*)/(.*) $webwork_courses_dir/$1/html/$2
+<Directory $webwork_courses_dir/*/html>
+	Options FollowSymLinks
+	AllowOverride None
+</Directory>
+
+EOF
+
+# No user-serviceable parts below. ;-)
+
+# Add library directories to include path.
+use lib "$webwork_dir/lib";
+use lib "$pg_dir/lib";
+
+# Share configuration variables with WeBWorK.
+%WeBWorK::SeedCE = (
+	webwork_url         => $webwork_url,
+	webwork_dir         => $webwork_dir,
+	pg_dir              => $pg_dir,
+	webwork_htdocs_url  => $webwork_htdocs_url,
+	webwork_htdocs_dir  => $webwork_htdocs_dir,
+	webwork_courses_url => $webwork_courses_url,
+	webwork_courses_dir => $webwork_courses_dir,
+);
+
+</Perl>
