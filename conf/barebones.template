@@ -7,6 +7,33 @@
  <head>
   <title>WeBWorK - <!--#title--></title>
   <!--#head-->
+
+  <style type="text/css">
+   <!--
+	table.attemptResults {
+		border-style: outset; 
+		border-width: 1px; 
+		margin: 0px 10pt; 
+		border-spacing: 1px;
+		float: left
+	}
+	
+	table.attemptResults td,table.attemptResults th {
+		border-style: inset; 
+		border-width: 1px; 
+		text-align: center; 
+		width: 15ex
+	}
+	
+	div.problemHeader {
+   		float: left
+	}
+	
+	div.problem {
+		clear: both; 
+	}
+   //-->
+  </style>
  </head>
  <body>
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
