@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.10 2004/07/12 02:43:16 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.11 2004/07/12 16:09:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,8 +63,7 @@ checknopid() {
 
 checkconf() {
 	if [ $1.dist -nt $1 ]; then
-		echo "WARNING: "`basename $1.dist`" is newer than "\
-		`basename $1`": UPDATE "`basename $1`"!"
+		echo "WARNING: "`basename $1.dist`" is newer than "`basename $1`": UPDATE "`basename $1`"!"
 	fi
 }
 
