@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.9 2003-01-10 21:39:28 sh002i Exp $
+# $Id: global.conf.dist,v 1.10 2003-01-21 20:24:03 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -50,7 +50,7 @@
 
 %webworkURLs = (
 	root    => "$webworkURLRoot",
-	home    => "http://webwork3/",
+	home    => "http://host.yourdomaon.edu/webwork-info",
 	htdocs  => "/webwork_files",
 	docs    => "http://webhost.math.rochester.edu/webworkdocs/docs",
 	oldProf => "/webwork-old/profLogin.pl",
@@ -79,6 +79,9 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 	motd        => "$courseDirs{root}/motd.txt",
 );
 
+# quick hack to fix transaction logging. blah.
+$webworkFiles{logs}->{transaction} = "$courseDirs{logs}/transaction.log";
+
 my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %courseURLs = (
 	root      => "$courseURLRoot",
@@ -93,6 +96,22 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %mail = (
 	smtpServer => "mail.math.rochester.edu",
 	smtpSender => "webwork\@math.rochester.edu",
+	# allowedRecipients defines addresses that the PG system is allowed to
+	# send mail to. this prevents subtle PG exploits. This should be set
+	# in course.conf to the addresses of professors of each course. Sending
+	# mail from the PG system (i.e. questionaires, essay questions) will
+	# fail if this is not set somewhere (either here or in course.conf).
+	allowedRecipients => [
+		"yourname\@host.yourdomain.edu",
+	],
+	# if defined, feedbackRecipients overrides the list of recipients for
+	# feedback email. It's appropriate to set this in the course.conf for
+	# specific courses, but probably not in global.conf. if not defined,
+	# mail is sent to all professors and TAs for a given course
+	#feedbackRecipients => [
+	#	"prof1\@host.yourdomain.edu",
+	#	"prof2\@host.yourdomain.edu",
+	#],
 );
 
 %externalPrograms = (
