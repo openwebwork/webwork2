@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.14 2004/06/22 16:59:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.15 2004/06/23 19:20:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -306,7 +306,19 @@ sub deleteCourse {
 	die "the course environment supplied doesn't appear to describe the course $courseID. can't proceed."
 		unless $ce->{courseName} eq $courseID;
 	
-	##### step 1: delete course directory structure #####
+	##### step 1: delete course database (if necessary) #####
+	
+	my $dbLayoutName = $ce->{dbLayoutName};
+	my $deleteHelper = DELETE_HELPERS->{$dbLayoutName};
+	if (defined $deleteHelper) {
+		my $deleteHelperResult = $deleteHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
+		debug("deleteHelper returned '$deleteHelperResult'.");
+		unless ($deleteHelperResult) {
+			die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
+		}
+	}
+	
+	##### step 2: delete course directory structure #####
 	
 	# my $courseDir = $ce->{courseDirs}->{root};
 	# the tmp file might be in a different tree
@@ -314,14 +326,6 @@ sub deleteCourse {
 	foreach my $key (@courseDirs) {
 	    my $courseDir = $ce->{courseDirs}->{$key};
 		rmtree($courseDir, 0, 0) if -e $courseDir;
-	};
-		
-	##### step 2: delete course database (if necessary) #####
-	
-	my $dbLayoutName = $ce->{dbLayoutName};
-	my $deleteHelper = DELETE_HELPERS->{$dbLayoutName};
-	if (defined $deleteHelper) {
-		$deleteHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
 	}
 }
 
@@ -576,6 +580,7 @@ sub execSQLStatements {
 	#my $core = $exit_status & 128
 	
 	# we want to return true for success and false for failure
+	debug("SQL console returned exit status $status.\n");
 	return not $status;
 }
 
