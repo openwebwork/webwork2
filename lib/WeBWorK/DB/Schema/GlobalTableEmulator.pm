@@ -144,7 +144,7 @@ sub get1($@) {
 	my $userSchema = $db->{"${table}_user"};
 	my $globalUserID = $self->{params}->{globalUserID};
 	
-	my $UserRecord = $userSchema->get1($globalUserID, @keyparts);
+	my $UserRecord = $userSchema->get1NoFilter($globalUserID, @keyparts);
 	return unless $UserRecord; # maybe it didn't exist?
 	return user2global($self->{record}, $UserRecord);
 }
@@ -161,7 +161,9 @@ sub put($$) {
 	my @keyparts = map { $Record->$_() } $Record->KEYFIELDS();
 	
 	# retrieve the current global values for this record
-	my $CurrentUserRecord = $userSchema->get($globalUserID, @keyparts);
+	$userSchema->{driver}->connect("ro");
+	my $CurrentUserRecord = $userSchema->get1NoFilter($globalUserID, @keyparts);
+	$userSchema->{driver}->disconnect;
 	my $CurrentGlobalRecord = user2global($self->{record}, $CurrentUserRecord);
 	
 	# convert new global record to a user record for user $globalUserID
@@ -235,7 +237,9 @@ sub distGlobalValues($$$@) {
 	# impose the new values for each user
 	my $anyChanged = 0;
 	foreach my $userID (@userIDs) {
-		my $UserRecord = $userSchema->get($userID, @keyparts);
+		$userSchema->{driver}->connect("ro");
+		my $UserRecord = $userSchema->get1NoFilter($userID, @keyparts);
+		$userSchema->{driver}->disconnect;
 		next unless defined $UserRecord;
 		my $changed = 0;
 		foreach my $field (@changedFields) {

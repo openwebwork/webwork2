@@ -29,7 +29,7 @@ use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
 # table access functions
 ################################################################################
 
-sub list($@) {
+sub list {
 	my ($self, @keyparts) = @_;
 	my ($matchUserID, $matchSetID) = @keyparts[0 .. 1];
 	
@@ -91,7 +91,7 @@ sub list($@) {
 	return @result;
 }
 
-sub exists($@) {
+sub exists {
 	my ($self, @keyparts) = @_;
 	my ($userID, $setID) = @keyparts[0 .. 1];
 	
@@ -143,7 +143,7 @@ sub exists($@) {
 	return $result;
 }
 
-sub add($$) {
+sub add {
 	my ($self, $Record) = @_;
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
@@ -200,7 +200,7 @@ sub add($$) {
 	return $result;
 }
 
-sub get($@) {
+sub get {
 	my ($self, @keyparts) = @_;
 # 	
 # 	my ($userID, $setID) = @keyparts[0 .. 1];
@@ -237,14 +237,15 @@ sub get($@) {
 	return ($self->gets(\@keyparts))[0];
 }
 
-sub gets($@) {
+sub gets {
 	my ($self, @keypartsRefList) = @_;
 	
 	my @records;
 	$self->{driver}->connect("ro");
 	foreach my $keypartsRef (@keypartsRefList) {
 		my @keyparts = @$keypartsRef;
-		push @records, $self->get1(@keyparts);
+		my $UserSet = $self->get1(@keyparts);
+		push @records, $UserSet;
 	}
 	$self->{driver}->disconnect();
 	
@@ -253,7 +254,31 @@ sub gets($@) {
 
 # helper used by gets
 # assumes that the database is already connected
-sub get1($@) {
+sub get1 {
+	my ($self, @keyparts) = @_;
+	my $db = $self->{db};
+	my $table = $self->{table};
+	$table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$1};
+	
+	my $UserRecord = $self->get1NoFilter(@keyparts);
+	
+	# filter values that are identical to global values
+	if (defined $UserRecord) {
+		my $GlobalRecord = $globalSchema->get1(@keyparts[1..$#keyparts]);
+		foreach my $field ($GlobalRecord->NONKEYFIELDS) {
+			if ($UserRecord->$field eq $GlobalRecord->$field) {
+				$UserRecord->$field(undef);
+			}
+		}
+	}
+	
+	return $UserRecord;
+}
+
+# helper used by get1
+# also used by GlobalTableEmulator when it needs "real" records
+sub get1NoFilter {
 	my ($self, @keyparts) = @_;
 	
 	my ($userID, $setID) = @keyparts[0 .. 1];

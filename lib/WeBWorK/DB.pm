@@ -995,7 +995,8 @@ sub getUserSet($$$) {
 	croak "getUserSet: argument 2 must contain a set_id"
 		unless defined $setID;
 	
-	return $self->{set_user}->get($userID, $setID);
+	#return $self->{set_user}->get($userID, $setID);
+	return ( $self->getUserSets([$userID, $setID]) )[0];
 }
 
 =item getUserSets(@userSetIDs)
@@ -1261,7 +1262,8 @@ sub getUserProblem($$$$) {
 	croak "getUserProblem: argument 3 must contain a problem_id"
 		unless defined $problemID;
 	
-	return $self->{problem_user}->get($userID, $setID, $problemID);
+	#return $self->{problem_user}->get($userID, $setID, $problemID);
+	return ( $self->getUserProblems([$userID, $setID, $problemID]) )[0];
 }
 
 =item getUserProblems(@userProblemIDs)
