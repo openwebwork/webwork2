@@ -41,7 +41,7 @@ sub body {
 		CGI::p(
 			CGI::b("NOTE: ") . 
 			"The Instructor Tools in this preview release of WeBWorK
-			2.0 are not stable or complete.  If you reliable and
+			2.0 are not stable or complete.  If you need reliable and
 			stable course editing features, than at this time you
 			will need to use the Professor tools from WeBWorK 1.8
 			or earlier.  Use the links below to go to the Professor
