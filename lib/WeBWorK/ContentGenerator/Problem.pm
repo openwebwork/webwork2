@@ -394,10 +394,10 @@ sub body {
 		# print this if user submitted answers OR requested correct answers
 		print $self->attemptResults($pg, $submitAnswers,
 			$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 0);
+			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
-		print $self->attemptResults($pg, 1, 0, 1, 1, 0);
+		print $self->attemptResults($pg, 1, 0, 1, 1, 1);
 			# show attempt answers
 			# don't show correct answers
 			# show attempt results (correctness)
@@ -720,6 +720,12 @@ sub previewAnswer($$) {
 			return "<b>[math2img failed]</b>";
 		}
 	}
+}
+
+sub info {
+
+return "Identifying information goes here";
+
 }
 ##### logging subroutine ####
 
