@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.25 2004/05/05 01:53:51 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.26 2004/05/07 18:49:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -748,7 +748,8 @@ sub process_message {
  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
  	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
- 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
+ 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge if defined($COL[0]);  # prevents extraneous error messages.   
+ 	
  	
  	$msg =~ s/\r//g;
 
