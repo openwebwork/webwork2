@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.31 2004/03/06 17:36:29 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.1 2004/03/06 18:50:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,11 +73,130 @@ sub body {
 
 	$self->displayStudentStats($self->{studentName});
 
-	
+	print $self->scoring_info();
 
 	return '';
 
 }
+
+
+############################################
+# Borrowed from SendMail.pm and Instructor.pm
+############################################
+sub getRecord {
+	my $self    = shift;
+	my $line    = shift;
+	my $delimiter   = shift;
+	$delimiter       = ',' unless defined($delimiter);
+
+        #       Takes a delimited line as a parameter and returns an
+        #       array.  Note that all white space is removed.  If the
+        #       last field is empty, the last element of the returned
+        #       array is also empty (unlike what the perl split command
+        #       would return).  E.G. @lineArray=&getRecord(\$delimitedLine).
+
+        my(@lineArray);
+        $line.=$delimiter;                              # add 'A' to end of line so that
+                                                        # last field is never empty
+        @lineArray = split(/\s*${delimiter}\s*/,$line);
+        $lineArray[0] =~s/^\s*//;                       # remove white space from first element
+        @lineArray;
+}
+
+sub read_scoring_file    { # used in SendMail and Grades?....?
+	my $self            = shift;
+	my $fileName        = shift;
+	my $delimiter       = shift;
+	$delimiter          = ',' unless defined($delimiter);
+	my $scoringDirectory= $self->{ce}->{courseDirs}->{scoring};
+	my $filePath        = "$scoringDirectory/$fileName";  
+        #       Takes a delimited file as a parameter and returns an
+        #       associative array with the first field as the key.
+        #       Blank lines are skipped. White space is removed
+    my(@dbArray,$key,$dbString);
+    my %assocArray = ();
+    local(*FILE);
+    if ($fileName eq 'None') {
+    	# do nothing
+    } elsif ( open(FILE, "$filePath")  )   {
+		my $index=0;
+		while (<FILE>){
+			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
+			chomp;
+			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
+			$key    =$dbArray[$index][0];
+			$assocArray{$key}=$dbArray[$index];
+			$index++;
+		}
+		close(FILE);
+     } else {
+     	warn "Couldn't read file $filePath";
+     }
+     return \%assocArray;
+}
+sub submission_error {
+	my $self = shift;
+    my $msg = join( " ", @_);
+	$self->{submitError} .= CGI::br().$msg; 
+    return;
+}
+sub scoring_info {
+	my $self              = shift;
+	my $userName          = $self->{r}->param('effectiveUser') || $self->{r}->param('user');
+    my $ur                = $self->{db}->getUser($userName);
+	my $emailDirectory    = $self->{ce}->{courseDirs}->{email};
+	my $filePath          = "$emailDirectory/report_grades.msg";
+	my $merge_file         = "report_grades_data.csv";
+	my $delimiter            = ',';
+	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+	my $text;
+	my $header = '';
+	local(*FILE);
+	if (-e "$filePath" and -r "$filePath") {
+		open FILE, "$filePath" || return("Can't open $filePath"); 
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
+			$header .= <FILE>; 
+		}
+	} else {
+		return("There is no additional grade information. <br> The message file $filePath cannot be found.")
+	}
+	$text = join( '', <FILE>);
+	close(FILE);
+	
+	my $SID           = $ur->student_id;
+	my $FN            = $ur->first_name;
+	my $LN            = $ur->last_name;
+	my $SECTION       = $ur->section;
+	my $RECITATION    = $ur->recitation;
+	my $STATUS        = $ur->status;
+	my $EMAIL         = $ur->email_address;
+	my $LOGIN         = $ur->user_id;
+	my @COL           = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
+	my $endCol        = @COL;
+	# for safety, only evaluate special variables
+	my $msg = $text; 
+	$msg =~ s/(\$PAR)/<p>/ge;
+	$msg =~ s/(\$BR)/<br>/ge;
+	
+ 	$msg =~ s/(\$SID)/eval($1)/ge;
+ 	$msg =~ s/(\$LN)/eval($1)/ge;
+ 	$msg =~ s/(\$FN)/eval($1)/ge;
+ 	$msg =~ s/(\$STATUS)/eval($1)/ge;
+ 	$msg =~ s/(\$SECTION)/eval($1)/ge;
+ 	$msg =~ s/(\$RECITATION)/eval($1)/ge;
+ 	$msg =~ s/(\$EMAIL)/eval($1)/ge;
+ 	$msg =~ s/(\$LOGIN)/eval($1)/ge;
+ 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
+ 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
+ 	
+ 	$msg =~ s/\r//g;
+	return CGI::div(
+		{style =>"background-color:#DDDDDD"}, "More scoring information goes here in \$emailDirectory/report_grades.msg. It
+		is merged with the file \$scoringDirectory/report_grades_data.csv. <p>
+		<pre>$msg</pre>"
+	);
+}
+##############################################################################
 # sub index {
 # 	my $self          = shift;
 # 	my $ce            = $self->{ce};
