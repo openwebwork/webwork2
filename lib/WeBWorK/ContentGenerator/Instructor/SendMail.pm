@@ -10,6 +10,7 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 use strict;
 use warnings;
 use CGI qw();
+use HTML::Entities;
 
 sub initialize {
 	my ($self) = @_;
@@ -33,82 +34,112 @@ sub initialize {
 	my $action            =    $r->param('action'); 
 	my $openfilename      =	   $r->param('openfilename');
 	my $savefilename      =	   $r->param('savefilename');
-	#FIXME  get these values
-	my $default_msg       =    'default.msg';  
-	my $old_default_msg   =    'old_default.msg';
-	my $defaultFrom       =    'FIXME from';
-	my $defaultReply      =    'FIXME reply';
-#############################################################################################
-# Get directory file name
-#############################################################################################
-
-	#make sure message file was submitted and exists
-		my $messageFileName;
-		if (defined($openfilename) && -e "${emailDirectory}$openfilename") {
-			if ( -R "${emailDirectory}$openfilename") {
-				$messageFileName = $openfilename;
-			} else {
-				warn "The file ${emailDirectory}$openfilename is not readable by the webserver. 
-				 Check that it's permissions are set correctly.";
-			}
-		} else {
-			$messageFileName = $default_msg;
-		}
-		
-		$self->{messageFileName}=$messageFileName;
-		
-		# make sure that the file path is legal (lies below inside the email directory
-		if (defined($savefilename) && ($savefilename =~ /^[~.]/ or $savefilename =~ /\.\./ ) ){
-				$self->fatal_error("For security reasons, you cannot save a message",
-				 "in any directory higher than the email directory.",
-				 "Please specify a   file name to save under.");
-		}
-
-#############################################################################################
-# if no form is submitted gather data from default message file and return
-#############################################################################################
-
-	unless (defined($action) ){  
-		#############################################################################################
-		#get message from given messageFileName
-		#############################################################################################
-		my ($text, @text);
-		my $header = '';
-		my ($subject, $from, $replyTo);
-		if (-e "$emailDirectory/$messageFileName") {
-			open FILE, "$emailDirectory/$messageFileName" || $self->fatal_error("Can't open $emailDirectory/$messageFileName");
-			while ($header !~ s/Message:\s*$//m) { 
-				$header .= <FILE>; 
-			}
-			$text = join( '', <FILE>);
-			$text .= "from $emailDirectory/$messageFileName";
-			$header =~ /^From:\s(.*)$/m;
-			$from = $1 or $from = $defaultFrom; #given email address or default feedback address
-			$header =~ /^Reply-To:\s(.*)$/m;
-			$replyTo = $1 or $replyTo = $defaultReply;
-			$header =~ /^Subject:\s(.*)$/m;
-			$subject = $1;
 	
+	
+	#FIXME  get these values from global course environment (see subroutines as well)
+	my $default_msg_file       =    'default.msg';  
+	my $old_default_msg_file   =    'old_default.msg';
+	
+	# store data
+	$self->{defaultFrom}            =   'FIXME from';
+	$self->{defaultReply}           =   'FIXME reply';	
+	$self->{rows}                   =   (defined($r->param('rows'))) ? $r->param('rows') : $ce->{mail}->{editor_window_rows};
+	$self->{columns}                =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
+	$self->{default_msg_file}	    =   $default_msg_file;
+	$self->{old_default_msg_file}   =   $old_default_msg_file;
+#################################################################
+# Check the validity of the input file name
+#################################################################
+	my $input_file = '';
+	#make sure an input message file was submitted and exists
+	#else use the default message		
+	if ( defined($openfilename) ) {
+		if ( -e "${emailDirectory}/$openfilename") {
+			if ( -R "${emailDirectory}/$openfilename") {
+				$input_file = $openfilename;
+			} else {
+				warn join("",
+					"The file ${emailDirectory}/$openfilename is not readable by the webserver.",CGI::br(),
+					"Check that it's permissions are set correctly.",
+				);
+			}
 		} else {
-			$from = $defaultFrom;
-			$replyTo = $defaultReply;
-			$text =  "FIXME file $emailDirectory/$messageFileName doesn't exist";
-			$subject = "FIXME default subject";
+			$input_file = $default_msg_file;
+			warn join("",
+				  "The file ${emailDirectory}/$openfilename cannot be found.",CGI::br(),
+				  "Check whether it exists and whether the directory $emailDirectory can be read by the webserver.",CGI::br(),
+				  "Using contents of the default message $default_msg_file instead.",
+			);
 		}
-		#############################################################################################
-		# store info for body subroutine
-		#############################################################################################
-		$self->{openfilename }=    $openfilename;
-		$self->{savefilename }=    $savefilename;
-		$self->{from}         =    $from;
-		$self->{replyTo}      =    $replyTo;
-		$self->{subject}      =    $subject;
-		$self->{r_text}       =    \$text;
-		$self->{rows}         =   (defined($r->param('rows'))) ? $r->param('rows') : $ce->{mail}->{editor_window_rows};
-		$self->{columns}      =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
-		$self->{default_msg}	   = $default_msg;
-		$self->{old_default_msg}   = $old_default_msg;
+	} else {
+		$input_file = $default_msg_file;
+	}
+	$self->{input_file}=$input_file;
 
+#################################################################
+# Determine the file name to save message into
+#################################################################
+	my $output_file      = '';	
+	if (defined($action) and $action eq 'Save as Default') {
+		$output_file  = $default_msg_file;
+	} elsif ( defined($savefilename) ){
+		$output_file  = $savefilename;
+	} elsif ( defined($input_file) ) {
+		$output_file  = $input_file;
+	}
+	
+	#################################################################
+	# Sanity check on save file name
+	#################################################################
+
+	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
+		$self->submission_error("For security reasons, you cannot specify a merge file from a directory 
+		higher than the email directory (you can't use ../blah/blah).  
+		Please specify a different file or move the needed file to the email directory");
+	}
+	
+	$self->{output_file} = $output_file;
+    # FIXME $output_file can be blank if there was no savefilename
+
+#############################################################################################
+# Determine input source
+#############################################################################################
+	my $input_source =  ( defined( $r->param('body') ) and $action ne 'Open' ) ? 'form' : 'file';
+#	warn "FIXME input source is $input_source from $input_file";
+#############################################################################################
+# Get inputs
+#############################################################################################
+	my($from, $replyTo, $r_text, $subject);
+	if ($input_source eq 'file') {
+
+		($from, $replyTo,$subject,$r_text) = $self->read_input_file("$emailDirectory/$input_file");
+
+	} elsif ($input_source eq 'form') {
+		# read info from the form
+		# bail if there is no message body
+		
+		$from              =    $r->param('from');
+		$replyTo           =    $r->param('replyTo');
+		$subject           =    $r->param('subject');
+		my $body              =    $r->param('body');
+		# Sanity check: body must contain non-white space
+		$self->submission_error('You didn\'t enter any message.') unless ($r->param('body') =~ /\S/);
+		$r_text               =    \$body;
+
+	}
+	# store data
+	$self->{from}                   =    $from;
+	$self->{replyTo}                =    $replyTo;
+	$self->{subject}                =    $subject;
+	$self->{r_text}                 =    $r_text;
+
+
+#############################################################################################
+# if no form is submitted, gather data needed to produce the mail form and return
+#############################################################################################
+
+	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window' ){  
+#		warn "FIXME action is |$action| no further initialization required";
 		return '';
 	}
 
@@ -117,19 +148,31 @@ sub initialize {
 	
 
 #############################################################################################
-# If form is submitted deal  with filled out forms 
+# If form is submitted deal with filled out forms 
 # and various actions resulting from different buttons
 #############################################################################################
 
-	my $from              =    $r->param('from');
+	
 	my $to                =    $r->param('To');
-	my $replyTo           =    $r->param('replyTo');
-	my $subject           =    $r->param('subject');
-	my $body              =    $r->param('body');
+	
+	
 		
-
-
-	# script action
+	###################################################################################
+	#Determine the appropriate script action from the buttons
+	###################################################################################
+	#     save actions
+	#		"save" button
+	#		"save as" button
+	#		"save as default" button
+	#     preview actions
+	#		'preview' button
+	#     email actions
+	#		'entire class'
+	#		'selected studentIDs'
+	#     option actions
+	#       'reset rows'
+	#     error actions (various)
+	
 	my $script_action = '';
 	# user_errors
 	# save
@@ -138,68 +181,112 @@ sub initialize {
 	# send mail
 	# set defaults
 
+	if ($action eq 'Save' or $action eq 'Save as:' or $action eq 'Save as Default') {
+	
+#		warn "FIXME Saving files  action = $action  outputFileName=$output_file";
 		
+		#################################################################
+		# construct message body
+		#################################################################
+		my $temp_body = ${ $r_text };
+		$temp_body =~ s/\r\n/\n/g;
+		$temp_body = join("",
+				   "From: $from \nReply-To: $replyTo\n" ,
+				   "Subject: $subject\n" ,
+				   "Message: \n    $temp_body");
+#		warn "FIXME from $from | subject $subject |reply $replyTo|msg $temp_body";
+		#################################################################
+		# overwrite protection
+		#################################################################
+		if ($action eq 'Save as:' and -e "$emailDirectory/$output_file") {
+			$self->submission_error("The file $emailDirectory/$output_file already exists and cannot be overwritten");
+			return;	
+		}
+ 
+		#################################################################
+	    # Back up existing file?
+	    #################################################################
+	    if ($action eq 'Save as Default') {
+	    	warn "FIXME backup existing default file";
+	    }
+	    #################################################################
+	    # Save the message
+		#################################################################
+		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" );
+		$self->{message}         = "Message saved to file ${emailDirectory}/$output_file";
+#		warn "FIXME saving to ${emailDirectory}/$output_file";
+	} elsif ($action eq 'preview') {
+	
+	
+	} elsif ($action eq 'Send Email') {
+	
+	
+	
+	
+	} else {
+		warn "Don't recognize button $action";
+	}
 
 	#if Save button was clicked
 	if (( $r->param('action') eq 'Save') && defined($r->param('body')) && defined($r->param('savefilename'))) {
 
-		my $temp_body = $body;
-		$temp_body =~ s/\r\n/\n/g;
-		$temp_body = "From: " . $from . "\n" .
-				   "Reply-To: " . $replyTo . "\n" .
-				   "Subject: " . $subject . "\n" .
-				   "Message: \n" . $temp_body;
-
-		saveProblem($temp_body, $savefilename);
-		$messageFileName = $savefilename;
+# 		my $temp_body = $body;
+# 		$temp_body =~ s/\r\n/\n/g;
+# 		$temp_body = "From: " . $from . "\n" .
+# 				   "Reply-To: " . $replyTo . "\n" .
+# 				   "Subject: " . $subject . "\n" .
+# 				   "Message: \n" . $temp_body;
+# 
+# 		saveProblem($temp_body, $savefilename);
+# 		$messageFileName = $savefilename;
 
 	#if Save As button was clicked
-	} elsif (( $r->param('action') eq 'Save as') && defined($r->param('body')) && defined($r->param('savefilename'))) {
+	} elsif (( $r->param('action') eq 'Save as:') && defined($r->param('body')) && defined($r->param('savefilename'))) {
 
-		$messageFileName = $savefilename;
-
-		if ($messageFileName =~ /^[~.]/ || $messageFileName =~ /\.\./) {
-			$self->fatal_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory (you can't use ../blah/blah).  Please specify a different file or move the needed file to the email directory");
-		}
-
-
-		my $temp_body = $body;
-		$temp_body =~ s/\r\n/\n/g;
-		$temp_body = join("",
-				   "From: $from \nReply-To: $replyTo)\n" ,
-				   "Subject: $subject\n" ,
-				   "Message: \n    $temp_body");
-
-		saveNewProblem($temp_body, $messageFileName);
+# 		$messageFileName = $savefilename;
+# 
+# 		if ($messageFileName =~ /^[~.]/ || $messageFileName =~ /\.\./) {
+# 			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory (you can't use ../blah/blah).  Please specify a different file or move the needed file to the email directory");
+# 		}
+# 
+# 
+# 		my $temp_body = $body;
+# 		$temp_body =~ s/\r\n/\n/g;
+# 		$temp_body = join("",
+# 				   "From: $from \nReply-To: $replyTo)\n" ,
+# 				   "Subject: $subject\n" ,
+# 				   "Message: \n    $temp_body");
+# 
+# 		saveNewProblem($temp_body, $messageFileName);
 
 	#if Save As Default button was clicked
-	} elsif (( $r->param('action') eq 'Save as Default') && defined($r->param('body'))) {
+	} elsif (( $r->param('action') eq 'save_as_default') && defined($r->param('body'))) {
 
-		my $temp_body;
-		$temp_body = $r->param('body');
-		$temp_body =~ s/\r\n/\n/g;
-
-		#get default.msg and back it up in default.old.msg
-		open DEFAULT, "$emailDirectory/$default_msg";
-			$temp_body = <DEFAULT>;
-		close DEFAULT;
-
-		if ( -e "$emailDirectory/$old_default_msg") {
-#				saveProblem($temp_body, $old_default_msg);
-		} else {
-#				saveNewProblem($temp_body, $old_default_msg);
-		}
-
-		#save new default message as default.msg
-		$temp_body = $body;
-		$temp_body =~ s/\r\n/\n/g;
-		$temp_body = join("",
-				   "From: $from \nReply-To: $replyTo)\n" ,
-				   "Subject: $subject\n" ,
-				   "Message: \n    $temp_body");
-
-#			saveProblem($temp_body, $default_msg);
-		$messageFileName = $default_msg;
+# 		my $temp_body;
+# 		$temp_body = $r->param('body');
+# 		$temp_body =~ s/\r\n/\n/g;
+# 
+# 		#get default.msg and back it up in default.old.msg
+# 		open DEFAULT, "$emailDirectory/$default_msg_file";
+# 			$temp_body = <DEFAULT>;
+# 		close DEFAULT;
+# 
+# 		if ( -e "$emailDirectory/$old_default_msg_file") {
+# #				saveProblem($temp_body, $old_default_msg_file);
+# 		} else {
+# #				saveNewProblem($temp_body, $old_default_msg_file);
+# 		}
+# 
+# 		#save new default message as default.msg
+# 		$temp_body = $body;
+# 		$temp_body =~ s/\r\n/\n/g;
+# 		$temp_body = join("",
+# 				   "From: $from \nReply-To: $replyTo)\n" ,
+# 				   "Subject: $subject\n" ,
+# 				   "Message: \n    $temp_body");
+# 
+# #			saveProblem($temp_body, $default_msg_file);
+# 		$messageFileName = $default_msg_file;
 
 	#if Send Email button was clicked
 	} elsif ( $r->param('action') eq 'Send Email' ) {
@@ -269,7 +356,7 @@ sub initialize {
 # 					$login{$studentID} 		= $login_name;
 # 				}
 		} else {
-			$self->fatal_error('You didn\'t select any recipients.  Make sure you select either all student in the course, individual students or a whole classlist.');
+			$self->submission_error('You didn\'t select any recipients.  Make sure you select either all student in the course, individual students or a whole classlist.');
 		}
 
 		my $mergeFile = '';
@@ -283,17 +370,17 @@ sub initialize {
 			if ($r->param('merge') eq 'mergeFile' && defined($r->param('mergeFile')) && $r->param('mergeFile') !~ m|/$|); #does not end in a /
 
 		if ($mergeFile =~ /^[~.]/ || $mergeFile =~ /\.\./) {
-			$self->fatal_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory.  Please specify a different file or move the needed file to the email directory");
+			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory.  Please specify a different file or move the needed file to the email directory");
 		}
 		if ($r->param('body') =~ /(\$COL\[.*?\])/ && !(-e $mergeFile)) {
-			$self->fatal_error("In order to use the \$COL[] you must specify a merge file. The file you specified does not exist.  Also, make sure you selected the right checkbox.");
+			$self->submission_error("In order to use the \$COL[] you must specify a merge file. The file you specified does not exist.  Also, make sure you selected the right checkbox.");
 		}
 
 
 		my %mergeAArray = ();
 # 			unless ($mergeFile eq '') {%mergeAArray = &delim2aa($mergeFile);}
 # 			
-		$self->fatal_error('You didn\'t enter any message.') if ($r->param('body') eq '');
+
 # 			
 # 			foreach  my $studentID (@studentID) {
 # 				@COL =();
@@ -548,8 +635,9 @@ sub body {
 	my $replyTo         = $self->{replyTo};
 	my $columns         = $self->{columns};
 	my $rows            = $self->{rows};
-	my $text            = defined($self->{r_text}) ? ${ $self->{r_text} }: 'FIXME';
-	my $messageFileName = $self->{messageFileName};
+	my $text            = defined($self->{r_text}) ? ${ $self->{r_text} }: 'FIXME no text was produced by initialization!!';
+	my $input_file      = $self->{input_file};
+	my $output_file     = $self->{output_file};
 	
     CGI::popup_menu(-name=>'classList',
 						   -values=>\@users,
@@ -563,82 +651,87 @@ sub body {
 # show professors's name and email address
 # show replyTo field and From field
     print CGI::start_table({-border=>'2', -cellpadding=>'4'});
-    print CGI::Tr({-align=>'left',-valign=>'VCENTER'},
-		 CGI::td("\n", CGI::p( CGI::b('From:     '), CGI::br(), CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),      ),
-				 "\n", CGI::p( CGI::b('Reply-To: '), CGI::br(), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), ),
-				 "\n", CGI::p( CGI::b('Subject:  '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>2,-columns=>30, -override=>1),  ),
-		),
-		CGI::td({-align=>'left'},
-			CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-			    -labels=>{all_students=>'All active students',studentID => 'Select recipients'},
-			    -default=>'studentID',
-			    -linebreak=>1),
-			    CGI::br(),
-				CGI::popup_menu(-name=>'classList',
-						   -values=>\@users,
-						   -labels=>\%classlistLabels,
-						   -size  => 10,
-						   -multiple => 1,
-						   -default=>'Yourself'
-				),
+	print CGI::Tr({-align=>'left',-valign=>'VCENTER'},
+			 CGI::td("Input file: $input_file","\n",CGI::br(),
+				 CGI::submit(-name=>'action', -value=>'open',-label=>'Open'), "\n",
+				 CGI::textfield(-name=>'openfilename', -size => 20, -value=> "$input_file", -override=>1), "\n",CGI::br(),
+				 "Output file: $output_file","\n",CGI::br(),
+				 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
+				 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>40, -override=>1),  
+			),
+			CGI::td({-align=>'left'},
+				CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
+					-labels=>{all_students=>'All active students',studentID => 'Select recipients'},
+					-default=>'studentID',
+					-linebreak=>1),
+					CGI::br(),
+					CGI::popup_menu(-name=>'classList',
+							   -values=>\@users,
+							   -labels=>\%classlistLabels,
+							   -size  => 10,
+							   -multiple => 1,
+							   -default=>'Yourself'
+					),
+					
 				
-			
-		),
-		CGI::td({align=>'left'},
-			CGI::submit(-name=>'preview', -value=>'Preview')," email to ",
-		 	CGI::popup_menu(-name=>'classList',
-						   -values=>\@users,
-						   -labels=>\%classlistLabels,
-						   -default=>'Yourself'
-	        ),
-	        CGI::br(),CGI::br(),
-		 	CGI::submit(-name=>'action', -value=>'Revert to original and Resize message window'),CGI::br(),
-		 	" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-		 	" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
-		 	CGI::br(),
-		    "If you resize the message window,",CGI::br(),"you will lose all unsaved changes.",
-		    CGI::br(),CGI::br(),
-		#show available macros
-			CGI::popup_menu(
-					-name=>'dummyName',
-					-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[3]', '$COL[-1]'],
-					-labels=>{''=>'list of insertable macros',
-						'$SID'=>'$SID - Student ID',
-						'$FN'=>'$FN - First name',
-						'$LN'=>'$LN - Last name',
-						'$SECTION'=>'$SECTION - Student\'s Section',
-						'$RECITATION'=>'$RECITATION',
-						'$STATUS'=>'$STATUS - C, Audit, Drop, etc.',
-						'$EMAIL'=>'$EMAIL - Email address',
-						'$LOGIN'=>'$LOGIN - Login',
-						'$COL[3]'=>'$COL[3] - 3rd column in merge file',
-						'$COL[-1]'=>'$COL[-1] - Last column'
-						}
-			), "\n",
-		),
+			),
+			CGI::td({align=>'left'},
+				CGI::submit(-name=>'preview', -value=>'preview',-label=>'Preview')," email to ",
+				CGI::popup_menu(-name=>'classList',
+							   -values=>\@users,
+							   -labels=>\%classlistLabels,
+							   -default=>'Yourself'
+				),
+				CGI::br(),CGI::br(),
+				CGI::submit(-name=>'action', -value=>'resize', -label=>'Resize message window'),CGI::br(),
+				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
+				CGI::br(),CGI::br(),
+			#show available macros
+				CGI::popup_menu(
+						-name=>'dummyName',
+						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[3]', '$COL[-1]'],
+						-labels=>{''=>'list of insertable macros',
+							'$SID'=>'$SID - Student ID',
+							'$FN'=>'$FN - First name',
+							'$LN'=>'$LN - Last name',
+							'$SECTION'=>'$SECTION - Student\'s Section',
+							'$RECITATION'=>'$RECITATION',
+							'$STATUS'=>'$STATUS - C, Audit, Drop, etc.',
+							'$EMAIL'=>'$EMAIL - Email address',
+							'$LOGIN'=>'$LOGIN - Login',
+							'$COL[3]'=>'$COL[3] - 3rd column in merge file',
+							'$COL[-1]'=>'$COL[-1] - Last column'
+							}
+				), "\n",
+			),
 
-	);
+	); # end Tr
 	print CGI::end_table();	 
 #create a textbox with the subject and a textarea with the message
 
 #print actual body of message
 
-		  
+	print  "\n", CGI::p( $self->{message}) if defined($self->{message});  
     print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -columns=>$columns, -override=>1));
+    
 #create all necessary action buttons
-	print CGI::p(CGI::submit(-name=>'action', -value=>'Open'), "\n",  
-			 CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$messageFileName", -override=>1), ' ',
-			 CGI::submit(-name=>'action', -value=>'Save'), " \n",
-			 CGI::submit(-name=>'action', -value=>'Save as'), " \n",
-			 CGI::submit(-name=>'action', -value=>'Save as Default'), 
-			 CGI::submit(-name=>'action', -value=>'Send Email'), "\n", CGI::br(),
-			 'For "Save As" choose a new filename.', 
-		 );
+	print    CGI::table( { -border=>2,-cellpadding=>4},
+				 CGI::Tr( 
+					 CGI::td( CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
+					 CGI::td(CGI::submit(-name=>'action', -value=>'Save')," to $output_file"), " \n",
+					 CGI::td(CGI::submit(-name=>'action', -value=>'Save as:'),
+					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
+					 ), "\n",
+					 CGI::td(CGI::submit(-name=>'action', -value=>'Save as Default')),
+				) 
+	);
 			   
 ##############################################################################################################
 
 	print $self->hidden_authen_fields();
-	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
+#	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
 	print CGI::end_form();	
 	return "";
 }
@@ -646,7 +739,7 @@ sub body {
 ##############################################################################
 # Utility methods
 ##############################################################################
-sub fatal_error {
+sub submission_error {
 	my $self = shift;
     my $msg = join " ", @_;
 # 	$cgi->start_html('-title' => 'User error'),
@@ -659,12 +752,57 @@ sub fatal_error {
 # 	"&lt;", $cgi->a({href=>"mailto:$Global::webmaster"}, $Global::webmaster), "&gt; ",
 # 	"if you believe this message is in error.",
 # 	$cgi->end_html;
-	$self->{submitError}= CGI::b(HTML::Entities::encode($msg)).
-		qq{"Please hit the &quot;<B>Back</B>&quot; button on your browser to 
+	$self->{submitError}= CGI::b(HTML::Entities::encode($msg)).CGI::br().
+		qq{Please hit the &quot;<B>Back</B>&quot; button on your browser to 
 		try again, or notify your web master
 		if you believe this message is in error.
 		};
     return;
 }
 
+sub saveProblem {     
+    my $self      = shift;
+	my ($body, $probFileName)= @_;
+	local(*PROBLEM);
+	open (PROBLEM, ">$probFileName") ||
+		$self->submission_error("Could not open $probFileName for writing.
+		Check that the  permissions for this problem are 660 (-rw-rw----)");
+	print PROBLEM $body;
+	close PROBLEM;
+	chmod 0660, "$probFileName" ||
+	             $self->submission_error("
+	                    CAN'T CHANGE PERMISSIONS ON FILE $probFileName");
+}
+
+sub read_input_file {
+	my $self         = shift;
+	my $filePath     = shift;
+	my ($text, @text);
+	my $header = '';
+	my ($subject, $from, $replyTo);
+	local(*FILE);
+	if (-e "$filePath") {
+		open FILE, "$filePath" || $self->submission_error("Can't open $filePath");
+		while ($header !~ s/Message:\s*$//m) { 
+			$header .= <FILE>; 
+		}
+		$text = join( '', <FILE>);
+		$text =~ s/^\s*//; # remove initial white space if any.
+		$header         =~ /^From:\s(.*)$/m;
+		$from           = $1 or $from = $self->{defaultFrom}; 
+		
+		$header         =~ /^Reply-To:\s(.*)$/m;
+		$replyTo        = $1 or $replyTo = $self->{defaultReply};
+		
+		$header         =~ /^Subject:\s(.*)$/m;
+		$subject        = $1;
+
+	} else {
+		$from           = $self->{defaultFrom};
+		$replyTo        = $self->{defaultReply};
+		$text           =  "FIXME file $filePath doesn't exist";
+		$subject        = "FIXME default subject";
+	}
+	return ($from, $replyTo, $subject, \$text);
+}
 1;
