@@ -1,0 +1,316 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/wwdb,v 1.12 2004/09/23 16:53:25 sh002i Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=head1 NAME
+
+ww_db_v2_to_v3 - convert a WWDBv2 database to a WWDBv3 database.
+
+=head1 SYNOPSIS
+
+ ww_db_v2_to_v3 course ...
+
+=head1 DESCRIPTION
+
+Copies course data from legacy WWDBv2 database(s) to a WWDBv3 database. This may
+take a long time.
+
+You must disallow login to the WeBWorK system while the transfer is taking
+place. To disable logins for all courses, set the permission level necessary for
+C<login> to $nobody in F<global.conf>. (It is usually set to $student.)
+
+=head1 OPTIONS
+
+=over
+
+=item -c
+
+If an error occurs while copying a course's data, continue copying with the next
+course.
+
+=item -r
+
+Update role table in WWDBv3 database from permission level information in
+F<global.conf>.
+
+=item -s
+
+Update status table in WWDBv3 database from the status information in
+F<global.conf>.
+
+=item -u
+
+When importing a user that already exists in the WWDBv3 database, replace the
+existing information (including the password) with the information in the user
+record being imported.
+
+If this option is not specified, existing users are not updated.
+
+=item -v
+
+Verbose operation.
+
+=item course ...
+
+Data from these courses will be copied.
+
+=back
+
+=head1 BEHAVIOR
+
+=head2 ROLES
+
+=over
+
+=item *
+
+Roles are created by observing the %permissionLevels hash in F<global.conf>, and
+collecting the privileges granted at each permission level into sets. Each set
+of privileges becomes a WWDBv3 role record.
+
+=item *
+
+When a role with the same set of permissions already exists in the WWDBv3
+database, a new one is not created.
+
+=back
+
+=head2 USERS
+
+=over
+
+=item *
+
+WWDBv2 user IDs are converted to login IDs. WWDBv2 set IDs are converted to set
+names. WWDBv2 problem IDs are used to determine the C<problem_order> in the
+problem's abstract set.
+
+=item *
+
+Users with the same user ID in different courses are assumed to be the same
+user.
+
+=back
+
+=cut
+
+use strict;
+use warnings;
+use Data::Dumper;
+use Getopt::Std;
+
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
+use WeBWorK::DBv3;
+
+our ($opt_c, $opt_r, $opt_s, $opt_u, $opt_v);
+getopts("crsuv");
+
+sub debug { print STDERR @_ if $opt_v }
+sub usage { print STDERR "usage: $0 [-uv] course ...\n"; exit 1 }
+
+main(@ARGV);
+
+sub main {
+	my (@courseIDs) = @_;
+	
+	usage() unless @courseIDs;
+	
+	my $ce = WeBWorK::CourseEnvironment->new({webwork_dir => $ENV{WEBWORK_ROOT}});
+	
+	WeBWorK::DBv3::init($ce->{wwdbv3_settings});
+	
+	my %level_to_role_id = set_up_roles($ce->{permissionLevels});
+	warn Dumper(\%level_to_role_id);
+	
+	my %statuses = update_statuses($ce->{siteDefaults}{status});
+	
+	foreach my $courseID (@courseIDs) {
+		eval { copy_course_data($courseID) };
+		if ($@) {
+			warn "An error occured while copying data from course '$courseID':\n\n$@\n\n";
+			if ($opt_c) {
+				warn "Continuing with the next course...\n";
+			} else {
+				warn "Exiting.\n";
+				exit 2;
+			}
+		}
+	}
+}
+
+################################################################################
+
+sub set_up_roles {
+	my ($permissionLevels) = @_;
+	my %permissionLevels = %$permissionLevels;
+	
+	my %level_to_role_id;
+	
+	# get all the levels mentioned in %permissionLevels, along with which
+	# privileges are available at that level
+	my %levels;
+	foreach my $privilege (keys %permissionLevels) {
+		my $level = $permissionLevels{$privilege};
+		if (defined $level) {
+			push @{ $levels{$level} }, $privilege;
+		}
+	}
+	
+	my @level_names = sort { $a <=> $b } keys %levels;
+	
+	# copy up the privileges at each level to the next-higher level
+ 	# also sort each level
+	foreach my $i (0 .. $#level_names-1) {
+		my $this_level = $level_names[$i];
+		my $next_level = $level_names[$i+1];
+		push @{ $levels{$next_level} }, @{ $levels{$this_level} };
+	}
+	
+	# sort the privileges in each level
+	debug("I found the following permission levels:\n");
+	foreach my $level (keys %levels) {
+		my @sorted = sort @{ $levels{$level} };
+		$levels{$level} = [ @sorted ];
+		debug("\t$level => @sorted\n");
+	}
+	
+	# keep track of role names so we know if we need to rename any of our new ones
+	my %role_names;
+	
+	# look at existing roles to see if we can avoid adding some new ones
+	my $i = retrieve_all WeBWorK::DBv3::Role;
+	while (my $Role = $i->next) {
+		$role_names{$Role->name} = 1;
+		my @role_privs = sort $Role->priv_list;
+		
+		foreach my $level (keys %levels) {
+			if (listeq($levels{$level}, \@role_privs)) {
+				debug("Permission level '$level' is already represented as role '",
+					$Role->name, "' -- skipping.\n");
+				delete $levels{$level};
+				$level_to_role_id{$level} = $Role->id;
+			}
+		}
+	}
+	
+	if ($opt_r) {
+		debug("Updating role table (as per -r switch).\n");
+		foreach my $level (keys %levels) {
+			my $name = "Legacy permission level $level";
+			if (exists $role_names{$name}) {
+				my $i = 2;
+				while (1) {
+					my $try_name = "$name (#$i)";
+					if (not exists $role_names{$try_name}) {
+						$name = $try_name;
+						last;
+					}
+				}
+			}
+			
+			my @privs = @{ $levels{$level} };
+			
+			my $Role = create WeBWorK::DBv3::Role({name => $name });
+			$Role->priv_list(@privs);
+			$Role->update;
+			debug("Added role '", $Role->name, "' with privileges '@privs'.\n");
+			$level_to_role_id{$level} = $Role->id;
+		}
+	} else {
+		debug("Not updating role table (as per lack of -r switch).\n");
+		debug("I might run into users with permission levels that don't map to roles later.\n");
+	}
+	
+	return %level_to_role_id;
+}
+
+sub set_up_statuses {
+	my ($statuses) = @_;
+}
+
+################################################################################
+
+sub copy_course_data {
+	my ($courseID) = @_;
+	
+	debug("Processing course '$courseID'...\n");
+	
+	my $course_ce = WeBWorK::CourseEnvironment->new({
+		webwork_dir => $ENV{WEBWORK_ROOT},
+		courseName => $courseID,
+	});
+	
+	my $course_db = WeBWorK::DB->new($course_ce->{dbLayout});
+	
+	# First we see if this course already exists. If it does, there's a problem
+	# and we throw an exception.
+	if (WeBWorK::DBv3::Course->search(name => $courseID)) {
+		die "Course '$courseID' exists";
+	} else {
+		debug("Course '$courseID' doesn't exist in v3 DB -- adding.\n");
+		my $Course = WeBWorK::DBv3::Course->create({name => $courseID});
+	}
+	
+	# Then, deal with users.
+	my @userIDs = $course_db->listUsers;
+	my %Users; @Users{@userIDs} = $course_db->getUsers(@userIDs);
+	
+	foreach my $userID (keys %Users) {
+		my $User = $Users{$userID};
+		unless (defined $User) {
+			debug("User record for user ID '$userID' not found -- skipping.\n");
+			next;
+		}
+		
+		my $v3User = WeBWorK::DBv3::User->search(login_id => $userID);
+		if ($v3User) {
+			debug("User with login_id '$userID' exists in v3 database -- ");
+			if ($opt_u) {
+				debug("updating.\n");
+				$v3User->first_name($User->first_name) if $User->first_name ne "";
+				$v3User->last_name($User->first_name) if $User->last_name ne "";
+				$v3User->email_address($User->email_address) if $User->email_address ne "";
+				$v3User->student_id($User->student_id) if $User->student_id ne "";
+				$v3User->update;
+			} else {
+				debug("skipping.\n");
+			}
+		} else {
+			debug("User with login_id '$userID' does not exists in v3 database -- adding.\n");
+			WeBWorK::DBv3::User->create({
+				
+			});
+		}
+	}
+}
+
+################################################################################
+
+sub listeq {
+	my ($a, $b) = @_;
+	return "" unless @$a == @$b;
+	for (my $i = 0; $i < @$a; $i++) {
+		return "" unless $a->[$i] eq $b->[$i];
+	}
+	return 1;
+}
