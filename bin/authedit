@@ -1,0 +1,62 @@
+#!/usr/local/bin/perl
+
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id: authedit,v 1.1 2002-06-07 21:43:07 sh002i Exp $
+################################################################################
+
+use strict;
+use warnings;
+use Getopt::Std;
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB::Auth;
+
+
+# -c	course
+# -u	user
+
+# list
+# add
+# modify
+# delete
+
+# -p	password
+# -m	permission
+# -k	key
+
+our($opt_c, $opt_u);
+getopt('c:u:');
+my $task = shift @ARGV;
+our($opt_p, $opt_m, $opt_k);
+getopt('p:m:k:');
+
+my $courseEnv = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, $opt_c);
+my $db = WeBWorK::DB::Auth->new($courseEnv);
+
+if ($task eq 'list') {
+	foreach ($db->getUsers) {
+		print "$_:\t";
+		print $db->getPassword($_), "\t";
+		print $db->getPermissions($_), "\t";
+		print $db->getKey($_), "\n";
+	}
+} elsif ($task eq 'add') {
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
