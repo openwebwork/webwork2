@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.23 2003-06-06 23:52:13 malsyned Exp $
+# $Id: global.conf.dist,v 1.24 2003-06-09 21:10:03 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -24,7 +24,7 @@
 	bin     => "$webworkRoot/bin",
 	conf    => "$webworkRoot/conf",
 	courses => "$webworkRoot/courses",
-	lib     => "$webworkRoot/lib",
+	lib     => "$pgRoot/lib",
 	logs    => "$webworkRoot/logs",
 	macros  => "$pgRoot/macros",
 	tmp     => "$webworkRoot/tmp",
@@ -227,7 +227,7 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 
 # If you are using the GlobalTableEmulator, you need these to be set to
 # a user that will exist.  Professors will probably want to override this
-# in their course's course.conf
+# in their course's course.conf, using their own user name instead of "professor".
 $dbLayout{set}->{params}->{globalUserID} = "professor";
 $dbLayout{problem}->{params}->{globalUserID} = "professor";
 
