@@ -98,6 +98,8 @@ plot_functions($Gy,
 );
 $Ytrace = Image($Gy,@imageoptions);
 
+Context()->texStrings;
+
 #
 #  Make the table of images
 #
@@ -124,6 +126,8 @@ If \(f(x,y) = \{$f->TeX\}\) then
 \(a\) = \{ans_rule(6)\} and \(b\) = \{ans_rule(6)\}.
 
 END_TEXT
+
+Context()->normalStrings;
 
 ##################################################
 
