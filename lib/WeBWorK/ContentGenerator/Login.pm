@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.18 2004/01/16 01:14:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.19 2004/01/19 04:23:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -118,14 +118,36 @@ sub body {
 
 sub info {
 	my $self = shift;
-	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
+	my $r    = $self->{r};
+	my $ce   = $self->{ce};
+	my $db   = $self->{db};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
 
-	if (defined $courseEnvironment->{courseFiles}->{login_info}
-		and $courseEnvironment->{courseFiles}->{login_info}) {
-		my $login_info = eval { WeBWorK::Utils::readFile($courseEnvironment->{courseFiles}->{login_info}) };
+
+	if (defined $ce->{courseFiles}->{login_info}
+		and $ce->{courseFiles}->{login_info}) {
+		my $login_info_path  = $ce->{courseDirs}->{templates}
+		                     .'/'. $ce->{courseFiles}->{login_info};
+		$login_info_path    .= '.'.$r->param("editFileSuffix") 
+		        if defined($r->param("editMode") ) and $r->param("editMode") eq 'temporaryFile'  and defined($r->param("editFileSuffix"));
+
+		my $login_info = eval { WeBWorK::Utils::readFile($login_info_path) };
 		$@ or print $login_info;
-
+		
+# 		my $user            = $r->param("user");
+# 		my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
+# 		$permissionLevel    = 0 unless defined $permissionLevel;
+# 		if ($permissionLevel) {
+# 			my $editURL = "$root/$courseName/instructor/pgProblemEditor/?"
+# 						  .$self->url_authen_args
+# 						  ."&file_type=other&edit_file_path="
+# 						  .$ce->{courseFiles}->{course_info}
+# 			;
+# 			my $editText      = "Edit file";
+# 			$editText         = "Edit temporary file" if $r->param("editMode") eq 'temporaryFile';
+# 			print CGI::br(), CGI::a({-href=>$editURL}, $editText);
+# 	    }
 	}
 	'';
 }
