@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.130 2004/05/20 21:25:20 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.131 2004/05/22 19:01:37 jjholt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -710,7 +710,7 @@ sub body {
 	print CGI::end_div();
 	
 	print CGI::start_div({class=>"problem"});
-	
+
 	# main form
 	print
 		CGI::startform("POST", $r->uri),
@@ -813,7 +813,6 @@ sub body {
 			
 	# end of main form
 	print CGI::endform();
-	
 	
 	print  CGI::start_div({class=>"problemFooter"});
 	
@@ -1039,13 +1038,14 @@ sub viewOptions {
 			"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br(),
 		CGI::radio_group(
 			-name    => "displayMode",
-			-values  => ['plainText', 'formattedText', 'images'],
+			-values  => ['plainText', 'formattedText', 'images', 'jsMath'],
 			-default => $displayMode,
 			-linebreak=>'true',
 			-labels  => {
 				plainText     => "plain",
 				formattedText => "formatted",
 				images        => "images",
+				jsMath	      => "jsMath",
 			}
 		), CGI::br(),CGI::hr(),
 		$optionLine,
