@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwdb,v 1.8 2004/04/27 03:37:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwdb,v 1.9 2004/04/29 23:33:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,10 +70,11 @@ BEGIN {
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils::DBImportExport qw/dbExport dbImport/;
+use WeBWorK::Utils::DBImportExport qw/listTables dbExport dbImport/;
 
 sub usage {
 	print STDERR "usage: $0 [-f] course { import | export } file [table ...]\n";
+	print STDERR "tables: ", join(" ", listTables()), "\n";
 	exit 1;
 }
 
