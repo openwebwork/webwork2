@@ -180,11 +180,11 @@ sub dispatch($) {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
 
-				#$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
-				#$WeBWorK::timer0->start;
+				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
+				$WeBWorK::timer0->start;
 				my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
-				#$WeBWorK::timer0->stop;
-				#$WeBWorK::timer0->save;
+				$WeBWorK::timer0->stop;
+				$WeBWorK::timer0->save;
 				return $result;
 
 
