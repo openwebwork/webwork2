@@ -213,6 +213,7 @@ sub attemptResults {
 	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("Result")   : "";
 	$header .= $showMessages       ? CGI::th("Messages") : "";
+	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
 	foreach my $name (@answerNames) {
@@ -224,9 +225,11 @@ sub attemptResults {
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
-		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
+		$numCorrect += $answerScore >= 1;
+		my $resultString = $answerScore >= 1 ? "correct" :
+		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
+                                                       "incorrect";
+		$fully = 'completely ' if $answerScore >0 and $answerScore < 1;
 		
 		# get rid of the goofy prefix on the answer names (supposedly, the format
 		# of the answer names is changeable. this only fixes it for "AnSwEr"
@@ -255,13 +258,13 @@ sub attemptResults {
 			if ($numCorrect == scalar @answerNames) {
 				$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
 			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT correct.");
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT ${fully}correct.");
 			 }
 	} else {
 			if ($numCorrect == scalar @answerNames) {
 				$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
 			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT correct.");
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT ${fully}correct.");
 			 }
 	}
 	
