@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.15 2004/03/01 06:33:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.16 2004/03/03 20:16:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,26 +28,26 @@ use warnings;
 use CGI qw();
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
-sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		"Instructor Tools" => "$root/$courseName/instructor",
-		"Set Assigner"     => ""
-	);
-}
+#sub path {
+#	my $self          = shift;
+#	my $args          = $_[-1];
+#	
+#	my $ce = $self->{ce};
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseName = $ce->{courseName};
+#	
+#	return $self->pathMacro($args,
+#		"Home"             => "$root",
+#		$courseName        => "$root/$courseName",
+#		"Instructor Tools" => "$root/$courseName/instructor",
+#		"Set Assigner"     => ""
+#	);
+#}
 
-sub title {
-	my ($self) = @_;
-	return "Set Assigner"
-}
+#sub title {
+#	my ($self) = @_;
+#	return "Set Assigner"
+#}
 
 sub body {
 	my ($self) = @_;
