@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.1 2004/01/03 20:07:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.2 2004/01/04 07:20:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -174,11 +174,11 @@ file:
 =cut
 
 my %gdbmGlobalTableParams = (
-	globalUserID => "professor";
+	globalUserID => "professor",
 );
 
 my %gdbmUserSpecificTableParams = (
-	psvnLength => 5;
+	psvnLength => 5,
 );
 
 $dbLayouts{gdbm} = {
