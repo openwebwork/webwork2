@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.88 2004/07/12 02:30:21 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.89 2004/07/12 16:20:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -369,27 +369,55 @@ $problemLibrary{passwordSQL} = "";
 my $student   = 0;
 my $ta        = 5;
 my $professor = 10;
+my $nobody    = undef;
 
 %permissionLevels = (
 	report_bugs                    => $student,
+	
 	view_multiple_sets             => $ta,
 	view_unopened_sets             => $ta,
 	view_unpublished_sets          => $ta,
 	view_answers                   => $ta,
+	
 	become_student                 => $professor,
 	access_instructor_tools        => $ta,
-	create_and_delete_problem_sets => $professor,
-	modify_problem_sets            => $professor,
-	assign_problem_sets            => $professor,
-	modify_student_data            => $professor,
 	score_sets                     => $professor,
 	send_mail                      => $professor,
+	
+	create_and_delete_problem_sets => $professor,
+	assign_problem_sets            => $professor,
+	modify_problem_sets            => $professor,
+	modify_student_data            => $professor,
+	
 	modify_classlist_files         => $professor,
 	modify_set_def_files           => $professor,
 	modify_scoring_files           => $professor,
 	modify_problem_template_files  => $professor,
+	
 	create_and_delete_courses      => $professor,
 	fix_course_databases           => $professor,
+	
+	##### Behavior of the interactive problem processor #####
+	
+	show_correct_answers_before_answer_date         => $ta,
+	show_solutions_before_answer_date               => $ta,
+	avoid_recording_answers                         => $ta,
+	
+	check_answers_before_open_date                  => $ta,
+	check_answers_after_open_date_with_attempts     => $ta,
+	check_answers_after_open_date_without_attempts  => $student,
+	check_answers_after_due_date                    => $student,
+	check_answers_after_answer_date                 => $student,
+	
+	record_answers_when_acting_as_student           => $nobody,
+	
+	# "record_answers_when_acting_as_student" takes precedence
+	# over the following for professors acting as students:
+	record_answers_before_open_date                 => $nobody,
+	record_answers_after_open_date_with_attempts    => $student,
+	record_answers_after_open_date_without_attempts => $nobody,
+	record_answers_after_due_date                   => $nobody,
+	record_answers_after_answer_date                => $nobody,
 );
 
 ################################################################################

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.152 2004/07/06 16:12:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.153 2004/07/06 21:23:58 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,35 +37,329 @@ use WeBWorK::Timing;
 
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
-############################################################
-# 
-# user
-# effectiveUser
-# key
-# 
-# editMode
-#	sourceFilePath - path to file to be editted
-#	problemSeed - problem seed for editted problem
-#
-# displayMode - type of display (ie formatted, images, asciimath, etc)
-#
-# showOldAnswers
-# showCorrectAnswers
-# showHints
-# showSolutions
-# 
-# AnSwEr# - answer blanks in problem
-# 
-# redisplay - name of the "Redisplay Problem" button
-# submitAnswers - name of "Submit Answers" button
-# checkAnswers - name of the "Check Answers" button
-# previewAnswers - name of the "Preview Answers" button
-#
-# success - success message (from PGProblemEditor)
-# failure - failure message (from PGProblemEditor)
-# 
-############################################################
+################################################################################
+# CGI param interface to this module (up-to-date as of v1.153)
+################################################################################
 
+# Standard params:
+# 
+#     user - user ID of real user
+#     key - session key
+#     effectiveUser - user ID of effective user
+# 
+# Integration with PGProblemEditor:
+# 
+#     editMode - if set, indicates alternate problem source location.
+#                can be "temporaryFile" or "savedFile".
+# 
+#     sourceFilePath - path to file to be edited
+#     problemSeed - force problem seed to value
+#     success - success message to display
+#     failure - failure message to display
+# 
+# Rendering options:
+# 
+#     displayMode - name of display mode to use
+#     
+#     showOldAnswers - request that last entered answer be shown (if allowed)
+#     showCorrectAnswers - request that correct answers be shown (if allowed)
+#     showHints - request that hints be shown (if allowed)
+#     showSolutions - request that solutions be shown (if allowed)
+# 
+# Problem interaction:
+# 
+#     AnSwEr# - answer blanks in problem
+#     
+#     redisplay - name of the "Redisplay Problem" button
+#     submitAnswers - name of "Submit Answers" button
+#     checkAnswers - name of the "Check Answers" button
+#     previewAnswers - name of the "Preview Answers" button
+
+################################################################################
+# "can" methods
+################################################################################
+
+# Subroutines to determine if a user "can" perform an action. Each subroutine is
+# called with the following arguments:
+# 
+#     ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem)
+
+sub can_showOldAnswers {
+	#my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	
+	return 1;
+}
+
+sub can_showCorrectAnswers {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	
+	return
+		after($Set->answer_date)
+			||
+		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
+		;
+}
+
+sub can_showHints {
+	#my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	
+	return 1;
+}
+
+sub can_showSolutions {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	
+	return
+		after($Set->answer_date)
+			||
+		$authz->hasPermissions($User->user_id, "show_solutions_before_answer_date")
+		;
+}
+
+sub can_recordAnswers {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	if ($User->user_id ne $EffectiveUser->user_id) {
+		return $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
+	}
+	if (before($Set->open_date)) {
+		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
+	} elsif (between($Set->open_date, $Set->due_date)) {
+		my $max_attempts = $Problem->max_attempts;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + 1;
+		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_with_attempts");
+		} else {
+			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
+		}
+	} elsif (between($Set->due_date, $Set->close_date)) {
+		return $authz->hasPermissions($User->user_id, "record_answers_after_due_date");
+	} elsif (after($Set->close_date)) {
+		return $authz->hasPermissions($User->user_id, "record_answers_after_answer_date");
+	}
+}
+
+sub can_checkAnswers {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	
+	if (before($Set->open_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
+	} elsif (between($Set->open_date, $Set->due_date)) {
+		my $max_attempts = $Problem->max_attempts;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + 1;
+		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
+		} else {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
+		}
+	} elsif (between($Set->due_date, $Set->close_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
+	} elsif (after($Set->close_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
+	}
+}
+
+# Helper functions for calculating times
+sub before  { return time < $_[0] }
+sub after   { return time > $_[0] }
+sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
+
+################################################################################
+# output utilities
+################################################################################
+
+sub attemptResults {
+	my $self = shift;
+	my $pg = shift;
+	my $showAttemptAnswers = shift;
+	my $showCorrectAnswers = shift;
+	my $showAttemptResults = $showAttemptAnswers && shift;
+	my $showSummary = shift;
+	my $showAttemptPreview = shift || 0;
+	
+	my $ce = $self->r->ce;
+	
+	my $problemResult = $pg->{result}; # the overall result of the problem
+	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
+	
+	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+	
+	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
+	
+	# to make grabbing these options easier, we'll pull them out now...
+	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+	
+	my $imgGen = WeBWorK::PG::ImageGenerator->new(
+		tempDir         => $ce->{webworkDirs}->{tmp},
+		latex	        => $ce->{externalPrograms}->{latex},
+		dvipng          => $ce->{externalPrograms}->{dvipng},
+		useCache        => 1,
+		cacheDir        => $ce->{webworkDirs}->{equationCache},
+		cacheURL        => $ce->{webworkURLs}->{equationCache},
+		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+		dvipng_align    => $imagesModeOptions{dvipng_align},
+		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+	);
+	
+	my $header;
+	#$header .= CGI::th("Part");
+	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
+	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
+	$header .= $showAttemptResults ? CGI::th("Result")   : "";
+	$header .= $showMessages       ? CGI::th("Messages") : "";
+	my @tableRows = ( $header );
+	my $numCorrect = 0;
+	foreach my $name (@answerNames) {
+		my $answerResult  = $pg->{answers}->{$name};
+		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+		my $preview       = ($showAttemptPreview
+		                    	? $self->previewAnswer($answerResult, $imgGen)
+		                    	: "");
+		my $correctAnswer = $answerResult->{correct_ans};
+		my $answerScore   = $answerResult->{score};
+		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
+		$numCorrect += $answerScore > 0;
+		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
+		
+		# get rid of the goofy prefix on the answer names (supposedly, the format
+		# of the answer names is changeable. this only fixes it for "AnSwEr"
+		#$name =~ s/^AnSwEr//;
+		
+		my $row;
+		#$row .= CGI::td($name);
+		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+		$row .= $showAttemptPreview ? CGI::td($self->nbsp($preview))       : "";
+		$row .= $showCorrectAnswers ? CGI::td($self->nbsp($correctAnswer)) : "";
+		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
+		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
+		push @tableRows, $row;
+	}
+	
+	# render equation images
+	$imgGen->render(refresh => 1);
+	
+#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
+	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
+#   FIXME  -- I left the old code in in case we have to back out.
+#	my $summary = "On this attempt, you answered $numCorrect out of "
+#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
+	my $summary = ""; 
+	if (scalar @answerNames == 1) {
+			if ($numCorrect == scalar @answerNames) {
+				$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
+			 } else {
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT correct.");
+			 }
+	} else {
+			if ($numCorrect == scalar @answerNames) {
+				$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
+			 } else {
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT correct.");
+			 }
+	}
+	
+	return
+		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
+		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+}
+
+sub viewOptions {
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+
+	# don't show options if we don't have anything to show
+	return if $self->{invalidSet} or $self->{invalidProblem};
+	return unless $self->{isOpen};
+	
+	my $displayMode = $self->{displayMode};
+	my %must = %{ $self->{must} };
+	my %can  = %{ $self->{can}  };
+	my %will = %{ $self->{will} };
+	
+	my $optionLine;
+	$can{showOldAnswers} and $optionLine .= join "",
+		"Show: &nbsp;".CGI::br(),
+		CGI::checkbox(
+			-name    => "showOldAnswers",
+			-checked => $will{showOldAnswers},
+			-label   => "Saved answers",
+		), "&nbsp;&nbsp;".CGI::br();
+
+	$optionLine and $optionLine .= join "", CGI::br();
+	
+	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	my @active_modes = grep { exists $display_modes{$_} }
+			@{$ce->{pg}->{displayModes}};
+	my $modeLine = (scalar(@active_modes) > 1) ?
+		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
+		CGI::radio_group(
+			-name    => "displayMode",
+			-values  => \@active_modes,
+			-default => $displayMode,
+			-linebreak=>'true',
+			-labels  => {
+				plainText     => "plain",
+				formattedText => "formatted",
+				images        => "images",
+				jsMath	      => "jsMath",
+				asciimath     => "asciimath",
+			},
+		). CGI::br().CGI::hr() : '';
+	
+	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
+		$modeLine,
+		$optionLine,
+		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
+	);
+}
+
+sub previewAnswer {
+	my ($self, $answerResult, $imgGen) = @_;
+	my $ce            = $self->r->ce;
+	my $effectiveUser = $self->{effectiveUser};
+	my $set           = $self->{set};
+	my $problem       = $self->{problem};
+	my $displayMode   = $self->{displayMode};
+	
+	# note: right now, we have to do things completely differently when we are
+	# rendering math from INSIDE the translator and from OUTSIDE the translator.
+	# so we'll just deal with each case explicitly here. there's some code
+	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	
+	my $tex = $answerResult->{preview_latex_string};
+	
+	return "" unless defined $tex and $tex ne "";
+	
+	if ($displayMode eq "plainText") {
+		return $tex;
+	} elsif ($displayMode eq "formattedText") {
+		my $tthCommand = $ce->{externalPrograms}->{tth}
+			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+			. "\\(".$tex."\\)\n"
+			. "END_OF_INPUT\n";
+		
+		# call tth
+		my $result = `$tthCommand`;
+		if ($?) {
+			return "<b>[tth failed: $? $@]</b>";
+		} else {
+			return $result;
+		}
+	} elsif ($displayMode eq "images") {
+		$imgGen->add($tex);
+	} elsif ($displayMode eq "jsMath") {
+		return '<DIV CLASS="math">'.$tex.'</DIV>' ;
+	}
+}
+
+################################################################################
+# Template escape implementations
+################################################################################
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -234,7 +528,7 @@ sub pre_header_initialize {
 	##### permissions #####
 	
 	# are we allowed to view this problem?
-	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($userName, "view_unopened_sets");
+	$self->{isOpen} = after($set->open_date) || $authz->hasPermissions($userName, "view_unopened_sets");
 	return unless $self->{isOpen};
 	
 	# what does the user want to do?
@@ -253,60 +547,71 @@ sub pre_header_initialize {
 		showCorrectAnswers => 0,
 		showHints          => 0,
 		showSolutions      => 0,
-		recordAnswers      => mustRecordAnswers($permissionLevel),
+		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 	);
 	
 	# does the user have permission to use certain options?
+	my @args = ($user, $PermissionLevel, $effectiveUser, $set, $problem);
 	my %can = (
-		showOldAnswers     => 1,
-		showCorrectAnswers => canShowCorrectAnswers($permissionLevel, $set->answer_date),
-		showHints          => 1,
-		showSolutions      => canShowSolutions($permissionLevel, $set->answer_date),
-		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
-			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
-			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
-		checkAnswers       => canCheckAnswers($permissionLevel, $set->due_date),
+		showOldAnswers     => $self->can_showOldAnswers(@args),
+		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
+		showHints          => $self->can_showHints(@args),
+		showSolutions      => $self->can_showSolutions(@args),
+		recordAnswers      => $self->can_recordAnswers(@args),
+		checkAnswers       => $self->can_checkAnswers(@args),
 	);
 	
-	# more complicated logic for showing check answer button:
-	# checkAnswers button shows up after due date -- once a student can't record anymore
-	# checkAnswers button always shows up when an instructor or TA is acting
-	# as someone else (the $user and $effectiveUserName aren't the same).
-	$can{checkAnswers} = (
-		# $can{recordAnswers} will be false if the due date has passed OR the
-		# student has used up all of her attempts
-		($can{checkAnswers} and not $can{recordAnswers})
-			or
-		(
-			# FIXME: this is not the right way to check for this.
-			# also, canCheckAnswers() will show this button if the permission
-			# level is positive,  which is always true when an instructor is
-			# acting as a student
-			defined($userName)
-				and
-			defined($effectiveUserName)
-				and
-			($userName ne $effectiveUserName)
-		)
-	);
-	
-	# more complicated logic for showing "submit answer" button:
-	# We hide the submit answer button if someone is acting as a student
-	# This prevents errors where you accidently submit the answer for a student
-	# Not sure whether this a feature or a bug
-	$can{recordAnswers} = (
-		$can{recordAnswers}
-			and not
-		(
-			# FIXME: this is not the right way to check for this.
-			defined($userName)
-				and
-			defined($effectiveUserName)
-				and
-			($userName ne $effectiveUserName)
-		)
-	);
+#	# does the user have permission to use certain options?
+#	my %can = (
+#		showOldAnswers     => 1,
+#		showCorrectAnswers => canShowCorrectAnswers($permissionLevel, $set->answer_date),
+#		showHints          => 1,
+#		showSolutions      => canShowSolutions($permissionLevel, $set->answer_date),
+#		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
+#			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
+#			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
+#		checkAnswers       => canCheckAnswers($permissionLevel, $set->due_date),
+#	);
+#	
+#	# more complicated logic for showing check answer button:
+#	# checkAnswers button shows up after due date -- once a student can't record anymore
+#	# checkAnswers button always shows up when an instructor or TA is acting
+#	# as someone else (the $user and $effectiveUserName aren't the same).
+#	$can{checkAnswers} = (
+#		# $can{recordAnswers} will be false if the due date has passed OR the
+#		# student has used up all of her attempts
+#		($can{checkAnswers} and not $can{recordAnswers})
+#			or
+#		(
+#			# FIXME: this is not the right way to check for this.
+#			# also, canCheckAnswers() will show this button if the permission
+#			# level is positive,  which is always true when an instructor is
+#			# acting as a student
+#			defined($userName)
+#				and
+#			defined($effectiveUserName)
+#				and
+#			($userName ne $effectiveUserName)
+#		)
+#	);
+#	
+#	# more complicated logic for showing "submit answer" button:
+#	# We hide the submit answer button if someone is acting as a student
+#	# This prevents errors where you accidently submit the answer for a student
+#	# Not sure whether this a feature or a bug
+#	$can{recordAnswers} = (
+#		$can{recordAnswers}
+#			and not
+#		(
+#			# FIXME: this is not the right way to check for this.
+#			defined($userName)
+#				and
+#			defined($effectiveUserName)
+#				and
+#			($userName ne $effectiveUserName)
+#		)
+#	);
 	
 	# final values for options
 	my %will;
@@ -343,6 +648,7 @@ sub pre_header_initialize {
 	);
 	
 	$WeBWorK::timer->continue("end pg processing") if defined($WeBWorK::timer);
+	
 	##### fix hint/solution options #####
 	
 	$can{showHints}     &&= $pg->{flags}->{hintExists}  
@@ -525,6 +831,9 @@ sub body {
 	
 	my $courseName = $urlpath->arg("courseID");
 	
+	# FIXME: move editor link to top, next to problem number.
+	# format as "[edit]" like we're doing with course info file, etc.
+	# add edit link for set as well.
 	my $editorLink = "";
 	# if we are here without a real problem set, carry that through
 	my $forced_field = [];
@@ -608,14 +917,14 @@ sub body {
 					$pureProblem->num_incorrect
 				);
 			} else {
-				if (time < $set->open_date or time > $set->due_date) {
+				if (before($set->open_date) or after($set->due_date)) {
 					$scoreRecordedMessage = "Your score was not recorded because this problem set is closed.";
 				} else {
 					$scoreRecordedMessage = "Your score was not recorded.";
 				}
 			}
 		} else {
-			$scoreRecordedMessage = "Your score was not recorded because this problem has not been built for you.";
+			$scoreRecordedMessage = "Your score was not recorded because this problem has not been assigned to you.";
 		}
 	}
 	
@@ -667,7 +976,7 @@ sub body {
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers}>= 0 and $submitAnswers) ) {
+	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 		# print this if user submitted answers OR requested correct answers
 		
 		print $self->attemptResults($pg, 1,
@@ -692,49 +1001,55 @@ sub body {
 	
 	print CGI::end_div();
 	
-	print CGI::start_div({class=>"problem"});
-
 	# main form
-	print
-		CGI::startform("POST", $r->uri),
-		$self->hidden_authen_fields,
-		CGI::p($pg->{body_text}),
-		CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", CGI::i($pg->{result}->{msg})),
-		CGI::p(
-			($can{showCorrectAnswers} 
-				? CGI::checkbox(
-						-name    => "showCorrectAnswers",
-						-checked => $will{showCorrectAnswers},
-						-label   => "Show correct answers",
-					) ." "
-				: "" ), 
-			($can{showHints} 
-				? '<div style="color:red">'. CGI::checkbox(
-					-name    => "showHints",
-					-checked => $will{showHints},
-					-label   => "Show Hints",
-					) . "</div> "
-				: " " ),
-			($can{showSolutions} 
-				? CGI::checkbox(
-					-name    => "showSolutions",
-					-checked => $will{showSolutions},
-					-label   => "Show Solutions",
-					) . " "
-				: " " ),CGI::br(),
-			CGI::submit(-name=>"previewAnswers",
-				-label=>"Preview Answers"),
-			($can{recordAnswers}
-				? CGI::submit(-name=>"submitAnswers",
-					-label=>"Submit Answers")
-				: ""),
-			( $can{checkAnswers}
-				? CGI::submit(-name=>"checkAnswers",
-					-label=>"Check Answers")
-				: ""),
-		);
+	print CGI::startform("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	
+	print CGI::start_div({class=>"problem"});
+	print CGI::p($pg->{body_text});
+	print CGI::p(CGI::b("Note: "), CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
 	print CGI::end_div();
-
+	
+	print CGI::start_p();
+	
+	if ($can{showCorrectAnswers}) {
+		print CGI::checkbox(
+			-name    => "showCorrectAnswers",
+			-checked => $will{showCorrectAnswers},
+			-label   => "Show correct answers",
+		);
+	}
+	if ($can{showHints}) {
+		print CGI::div({style=>"color:red"},
+			CGI::checkbox(
+				-name    => "showHints",
+				-checked => $will{showHints},
+				-label   => "Show Hints",
+			)
+		);
+	}
+	if ($can{showSolutions}) {
+		print CGI::checkbox(
+			-name    => "showSolutions",
+			-checked => $will{showSolutions},
+			-label   => "Show Solutions",
+		);
+	}
+	
+	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+		print CGI::br();
+	}
+		
+	print CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers");
+	if ($can{checkAnswers}) {
+		print CGI::submit(-name=>"checkAnswers", -label=>"Check Answers");
+	}
+	if ($can{recordAnswers}) {
+			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers");
+	}
+	
+	print CGI::end_p();
+	
 	print CGI::start_div({class=>"scoreSummary"});
 	
 	# score summary
@@ -753,7 +1068,7 @@ sub body {
 	
 	my $setClosed = 0;
 	my $setClosedMessage;
-	if (time < $set->open_date or time > $set->due_date) {
+	if (before($set->open_date) or after($set->due_date)) {
 		$setClosed = 1;
 		$setClosedMessage = "This problem set is closed.";
 		if ($authz->hasPermissions($user, "view_answers")) {
@@ -878,244 +1193,4 @@ sub body {
 	return "";
 }
 
-##### output utilities #####
-
-sub attemptResults {
-	my $self = shift;
-	my $pg = shift;
-	my $showAttemptAnswers = shift;
-	my $showCorrectAnswers = shift;
-	my $showAttemptResults = $showAttemptAnswers && shift;
-	my $showSummary = shift;
-	my $showAttemptPreview = shift || 0;
-	
-	my $ce = $self->r->ce;
-	
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
-	
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
-	
-	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
-	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $ce->{webworkDirs}->{tmp},
-		latex	        => $ce->{externalPrograms}->{latex},
-		dvipng          => $ce->{externalPrograms}->{dvipng},
-		useCache        => 1,
-		cacheDir        => $ce->{webworkDirs}->{equationCache},
-		cacheURL        => $ce->{webworkURLs}->{equationCache},
-		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
-		dvipng_align    => $imagesModeOptions{dvipng_align},
-		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
-	
-	my $header;
-	#$header .= CGI::th("Part");
-	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
-	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
-	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
-	$header .= $showAttemptResults ? CGI::th("Result")   : "";
-	$header .= $showMessages       ? CGI::th("Messages") : "";
-	my @tableRows = ( $header );
-	my $numCorrect = 0;
-	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-		my $correctAnswer = $answerResult->{correct_ans};
-		my $answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
-		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
-		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		#$name =~ s/^AnSwEr//;
-		
-		my $row;
-		#$row .= CGI::td($name);
-		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		$row .= $showAttemptPreview ? CGI::td($self->nbsp($preview))       : "";
-		$row .= $showCorrectAnswers ? CGI::td($self->nbsp($correctAnswer)) : "";
-		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
-		push @tableRows, $row;
-	}
-	
-	# render equation images
-	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
-	my $summary = ""; 
-	if (scalar @answerNames == 1) {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT correct.");
-			 }
-	} else {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT correct.");
-			 }
-	}
-	
-	return
-		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
-}
-
-#sub nbsp {
-#	my $str = shift;
-#	($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
-#	                                    # tricky cases:   $str =0;
-#	                                    #  $str is a complex number
-#}
-
-sub viewOptions {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
-
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %must = %{ $self->{must} };
-	my %can  = %{ $self->{can}  };
-	my %will = %{ $self->{will} };
-	
-	my $optionLine;
-	$can{showOldAnswers} and $optionLine .= join "",
-		"Show: &nbsp;".CGI::br(),
-		CGI::checkbox(
-			-name    => "showOldAnswers",
-			-checked => $will{showOldAnswers},
-			-label   => "Saved answers",
-		), "&nbsp;&nbsp;".CGI::br();
-
-	$optionLine and $optionLine .= join "", CGI::br();
-	
-	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	my @active_modes = grep { exists $display_modes{$_} }
-			@{$ce->{pg}->{displayModes}};
-	my $modeLine = (scalar(@active_modes)>1) ?
-		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
-		CGI::radio_group(
-			-name    => "displayMode",
-			-values  => \@active_modes,
-			-default => $displayMode,
-			-linebreak=>'true',
-			-labels  => {
-				plainText     => "plain",
-				formattedText => "formatted",
-				images        => "images",
-				jsMath	      => "jsMath",
-				asciimath     => "asciimath",
-			},
-		). CGI::br().CGI::hr() : '';
-	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-		$modeLine,
-		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
-	);
-}
-
-sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $effectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
-	
-	my $tex = $answerResult->{preview_latex_string};
-	
-	return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. "\\(".$tex."\\)\n"
-			. "END_OF_INPUT\n";
-		
-		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		}
-		return $result;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
- 	} elsif ($displayMode eq "jsMath") {
- 	
- 	  return '<DIV CLASS="math">'.$tex.'</DIV>' ;
- 	
- 	
- 	
- 	
- 	}
-}
-
-##### permission queries #####
-
-# this stuff should be abstracted out into the permissions system
-# however, the permission system only knows about things in the
-# course environment and the username. hmmm...
-
-# also, i should fix these so that they have a consistent calling
-# format -- perhaps:
-# 	canPERM($ce, $user, $set, $problem, $permissionLevel)
-
-sub canShowCorrectAnswers($$) {
-	my ($permissionLevel, $answerDate) = @_;
-	return $permissionLevel > 0 || time > $answerDate;
-}
-
-sub canShowSolutions($$) {
-	my ($permissionLevel, $answerDate) = @_;
-	return canShowCorrectAnswers($permissionLevel, $answerDate);
-}
-
-sub canRecordAnswers($$$$$) {
-	my ($permissionLevel, $openDate, $dueDate, $maxAttempts, $attempts) = @_;
-	my $permHigh = $permissionLevel > 0;
-	my $timeOK = time >= $openDate && time <= $dueDate;
-	my $attemptsOK = $maxAttempts == -1 || $attempts <= $maxAttempts;
-	my $recordAnswers = $permHigh || ($timeOK && $attemptsOK);
-	return $recordAnswers;
-}
-
-sub canCheckAnswers($$) {
-	my ($permissionLevel, $dueDate) = @_;
-	my $permHigh = $permissionLevel > 0;
-	my $timeOK = time >= $dueDate;
-	my $recordAnswers = $permHigh || $timeOK;
-	return $recordAnswers;
-}
-
-sub mustRecordAnswers($) {
-	my ($permissionLevel) = @_;
-	return $permissionLevel == 0;
-}
 1;

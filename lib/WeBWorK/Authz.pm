@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authz.pm,v 1.13 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.14 2004/03/15 20:17:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,16 +43,18 @@ sub hasPermissions {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	
-	my $permissionLevels = $ce->{permissionLevels};
-	
 	my $Permission = $db->getPermissionLevel($user); # checked
 	return 0 unless defined $Permission;
 	my $permissionLevel = $Permission->permission();
-	if (defined $permissionLevels->{$activity}
-	    and $permissionLevel >= $permissionLevels->{$activity}) {
-		return 1;
+	
+	if (exists $permissionLevels->{$activity}) {
+		if (defined $permissionLevels->{$activity}) {
+			return $permissionLevel >= $permissionLevels->{$activity};
+		} else {
+			return 0;
+		}
 	} else {
-		return 0;
+		die "Activity '$activity' not found in %permissionLevels. Can't continue.\n";
 	}
 }
 
