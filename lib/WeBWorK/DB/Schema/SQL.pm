@@ -186,7 +186,8 @@ sub gets($@) {
 
 =item getAll($userID, $setID)
 
-Returns all problems in a given set. Only supported for the problem_user table.
+Returns all problems in a given set. Only supported for the problem and
+problem_user tables.
 
 =cut
 
@@ -195,7 +196,7 @@ sub getAll {
 	my $table = $self->{table};
 	
 	croak "getAll: only supported for the problem_user table"
-		unless $table eq "problem_user";
+		unless $table eq "problem" or $table eq "problem_user";
 	
 	my @keynames = $self->sqlKeynames();
 	pop @keynames; # get rid of problem_id
