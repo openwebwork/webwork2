@@ -140,7 +140,7 @@ sub setListRow($$$) {
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-		$status = "open, due at $dueDate";
+		$status = "open, due $dueDate";
 	} elsif (time < $set->answer_date) {
 		$status = "closed, answers at $answerDate";
 	} else {

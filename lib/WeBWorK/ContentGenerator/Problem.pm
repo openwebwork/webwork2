@@ -542,6 +542,13 @@ sub body {
 		CGI::p($pg->{body_text}),
 		CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", CGI::i($pg->{result}->{msg})),
 		CGI::p(
+			($can{showCorrectAnswers} 
+				? CGI::checkbox(
+						-name    => "showCorrectAnswers",
+						-checked => $will{showCorrectAnswers},
+						-label   => "Show correct answers",
+					) . CGI::br()
+				: "" ),
 			($can{recordAnswers}
 				? CGI::submit(-name=>"submitAnswers",
 					-label=>"Submit Answers")
@@ -795,12 +802,6 @@ sub viewOptions($) {
 			-name    => "showOldAnswers",
 			-checked => $will{showOldAnswers},
 			-label   => "Saved answers",
-		), "&nbsp;&nbsp;".CGI::br();
-	$can{showCorrectAnswers} and $optionLine .= join "",
-		CGI::checkbox(
-			-name    => "showCorrectAnswers",
-			-checked => $will{showCorrectAnswers},
-			-label   => "Correct answers",
 		), "&nbsp;&nbsp;".CGI::br();
 	$can{showHints} and $optionLine .= join "",
 		CGI::checkbox(
