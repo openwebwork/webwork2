@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.20 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,14 +33,6 @@ sub new($$$) {
 	bless $self, $class;
 	return $self;
 }
-
-# um, this isn't used. move it to Utils?
-#sub generatePassword($$$) {
-#	my ($self, $userID, $clearPassword) = @_;
-#	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
-#	my $cryptPassword = crypt($clearPassword, $salt);
-#	return WeBWorK::DB::Record::Password->new(user_id=>$userID, password=>$password);
-#}
 
 sub checkPassword($$$) {
 	my ($self, $userID, $possibleClearPassword) = @_;
@@ -96,12 +88,12 @@ sub unexpiredKeyExists($$) {
 	}
 }
 
-# verify will return 1 if the person is who they say the are.
-# If the verification failed because of of invalid authentication data,
-# a note will be written in the request explaining why it failed.
-# If the request failed because no authentication data was provided, however,
-# no note will be written, as this is expected to happen whenever someone
-# types in a URL manually, and is not considered an error condition.
+# verify will return 1 if the person is who they say the are. If the
+# verification failed because of of invalid authentication data, a note will be
+# written in the request explaining why it failed. If the request failed because
+# no authentication data was provided, however, no note will be written, as this
+# is expected to happen whenever someone types in a URL manually, and is not
+# considered an error condition.
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
@@ -233,10 +225,15 @@ sub verify($) {
 	}
 	
 	if (defined $error) {
+		# authentication failed, in a bad way
 		$r->notes("authen_error",$error);
 		return 0;
+	} elsif ($failWithoutError) {
+		# authentication failed, but not in a bad way
+		return 0;
 	} else {
-		return not $failWithoutError;
+		# autentication succeeded!
+		return 1;
 	}
 	
 	# Whatever you do, don't delete this!
@@ -249,6 +246,7 @@ __END__
 
 =head1 AUTHOR
 
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu, and Sam Hathaway, sh002i (at) math.rochester.edu.
+Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu, and Sam
+Hathaway, sh002i (at) math.rochester.edu.
 
 =cut
