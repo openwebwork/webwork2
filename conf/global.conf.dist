@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.45 2004/01/03 20:07:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.46 2004/01/05 01:06:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,12 +97,12 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 
 %courseFiles = (
 	environment => "$courseDirs{root}/course.conf",
-	motd        => "$courseDirs{root}/motd.txt",
+	motd        => "$courseDirs{templates}/motd.txt",
 	logs => {
 		answer_log  => "$courseDirs{logs}/answer_log",
 	},	
-	course_info => "$courseDirs{root}/course_info.txt",
-	login_info  => "$courseDirs{root}/login_info.txt",
+	course_info => "$courseDirs{templates}/course_info.txt",
+	login_info  => "$courseDirs{templates}/login_info.txt",
 );
 
 # quick hack to fix transaction logging. blah.
