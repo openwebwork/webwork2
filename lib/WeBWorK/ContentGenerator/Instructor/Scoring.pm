@@ -50,7 +50,7 @@ sub scoreSet {
 	my $columnsPerProblem = $format eq "full" ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
 	my %users;
-	foreach my $userID ($db->listUsers) {
+	foreach my $userID ($db->listSetUsers($setID)) {
 		my $userRecord = $db->getUser($userID);
 		# The key is what we'd like to sort by.
 		$users{$userRecord->student_id} = $userRecord;
