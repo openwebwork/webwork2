@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.27 2004/09/02 21:21:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.28 2004/09/29 16:19:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -184,7 +184,7 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		#print "<!-- äí£¢î™½ÀÛüÕÍÑù­Æøá©Á¼³ê÷ÃÉžÇßµ -->\n";
+		#print "<!-- ”Ì£¢Óô‡¿¤¸¹Õ‹˜‚¯·©¡º„Í—ˆŠû«þµ -->\n";
 		#print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
 		$self->do_export_database;
 	} else {
@@ -626,7 +626,9 @@ sub do_add_course {
 	
 	if ($add_initial_email ne "") {
 		$courseOptions{allowedRecipients} = [ $add_initial_email ];
-		$courseOptions{feedbackRecipients} = [ $add_initial_email ];
+		# don't set feedbackRecipients -- this just gets in the way of the more
+		# intelligent "receive_recipients" method.
+		#$courseOptions{feedbackRecipients} = [ $add_initial_email ];
 	}
 	
 	if ($add_dbLayout eq "gdbm") {
