@@ -19,6 +19,7 @@ use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Hardcopy;
+use WeBWorK::ContentGenerator::Options;
 use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
@@ -112,8 +113,8 @@ sub handler() {
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
 			# ***
-		} elsif ($arg eq "prefs") {
-			# ***
+		} elsif ($arg eq "options") {
+			return WeBWorK::ContentGenerator::Options->new($r, $course_env)->go;
 		} elsif ($arg eq "test") {
 			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.

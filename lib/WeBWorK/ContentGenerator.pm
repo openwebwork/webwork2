@@ -371,7 +371,7 @@ sub links {
 	return "" unless defined $permLevel;
 	
 	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
-	my $prefs    = "$root/$courseName/prefs/?" . $self->url_authen_args();
+	my $prefs    = "$root/$courseName/options/?" . $self->url_authen_args();
 	my $prof = "$root/$courseName/prof/?" . $self->url_authen_args();
 	my $profLine;
 	if ($permLevel > 0) {
