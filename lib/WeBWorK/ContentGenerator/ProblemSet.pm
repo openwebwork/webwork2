@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.48 2004/05/13 16:02:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.49 2004/05/13 18:38:19 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,7 +58,7 @@ sub initialize {
 	$set->published("1") unless defined($set->published) && $set->published eq "0";
 	$db->putGlobalSet($globalSet);
 
-	my $published = ($set->published) ? "Published" : "Unpublished";
+	my $published = ($set->published) ? "visable to students." : "hidden from students.";
 	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$published}, $published))) if $permissionLevel->permission > 0;
 	
 	# A set is valid if it is defined and if it is either published or the user is privileged.
