@@ -42,6 +42,7 @@ our @EXPORT_OK = qw(
 	makeTempDirectory
 	removeTempDirectory
 	pretty_print_rh
+	cryptPassword
 );
 
 sub runtime_use($) {
@@ -296,6 +297,13 @@ sub pretty_print_rh {
 	foreach my $key (sort keys %{$rh})  {
 		warn "  $key => ",$rh->{$key},"\n";
 	}
+}
+
+sub cryptPassword {
+	my ($clearPassword) = @_;
+	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+	my $cryptPassword = crypt($clearPassword, $salt);
+	return $cryptPassword;
 }
 
 1;
