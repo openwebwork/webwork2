@@ -114,7 +114,7 @@ sub array2string {
 sub readFile {
 	my $fileName = shift;
 	open INPUTFILE, "<", $fileName
-		;#or die "Couldn't open environment file $fileName: $!";
+		or return; #die "Couldn't open environment file $fileName: $!";
 	my $result = join "\n", <INPUTFILE>;
 	close INPUTFILE;
 	return $result;
