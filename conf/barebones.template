@@ -44,7 +44,7 @@
      
      <div>
       <small>
-            <a href="http://webwork3.math.rochester.edu/bugzilla" target = "_bugzilla"> Report bugs</a>
+            <a href="http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl" target = "_bugzilla"> Report bugs</a>
             </hr />
        <!--#links-->
       </small>
