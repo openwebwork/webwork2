@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/ww_db_v2_to_v3,v 1.1 2004/11/25 05:50:51 sh002i Exp $
+# $CVSHeader: webwork2/bin/ww_db_v2_to_v3,v 1.4 2004/12/09 16:30:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -296,7 +296,7 @@ sub set_up_roles {
 	my $i = retrieve_all WeBWorK::DBv3::Role;
 	while (my $Role = $i->next) {
 		$role_names{$Role->name} = 1;
-		my @role_privs = sort $Role->priv_list;
+		my @role_privs = sort $Role->privs_list;
 		
 		foreach my $level (keys %levels) {
 			if (listeq($levels{$level}, \@role_privs)) {
@@ -325,8 +325,8 @@ sub set_up_roles {
 			
 			my @privs = @{ $levels{$level} };
 			
-			my $Role = create WeBWorK::DBv3::Role({name => $name });
-			$Role->priv_list(@privs);
+			my $Role = create WeBWorK::DBv3::Role({name => $name});
+			$Role->privs_list(@privs);
 			$Role->update;
 			debug("Added role '", $Role->name, "' (ID $Role) with privileges '@privs'.\n");
 			$level_to_role_id{$level} = $Role->id;
@@ -400,18 +400,15 @@ sub copy_course_data {
 	
 	my $course_db = WeBWorK::DB->new($course_ce->{dbLayout});
 	
-	# First we see if this course already exists. If it does, there's a problem
-	# and we throw an exception.
-	if (search WeBWorK::DBv3::Course(name => $courseID)) {
-		die "Course '$courseID' exists in v3 DB";
-	}
-	
-	debug("Course '$courseID' doesn't exist in v3 DB -- adding.\n");
-	my $v3Course = create WeBWorK::DBv3::Course({name => $courseID});
+	debug("Adding course '$courseID' to v3 DB.\n");
+	my $v3Course = eval { create WeBWorK::DBv3::Course({name => $courseID}) };
+	$@ =~ /Duplicate entry/ and die "Course '$courseID' exists in v3 DB.\n";
+	$@ and die $@;
 	
 	copy_users($course_db, $v3Course, $abbrev_to_status_id, $level_to_role_id);
 	
-	copy_abstract_data($course_db, $v3Course);
+	# { $globalSetID => [ $v3AbsSet->id, { $globalProblemID => $vAbsProb->id, ... }, ... }
+	my %global_set_id_to_abstract_set_data = copy_abstract_data($course_db, $v3Course);
 }
 
 ################################################################################
@@ -588,6 +585,8 @@ sub find_role {
 sub copy_abstract_data {
 	my ($course_db, $v3Course) = @_;
 	
+	my %global_set_id_to_abstract_set_data;
+	
 	my @globalSetIDs = $course_db->listGlobalSets;
 	my %GlobalSets; @GlobalSets{@globalSetIDs} = $course_db->getGlobalSets(@globalSetIDs);
 	
@@ -627,6 +626,9 @@ sub copy_abstract_data {
 		});
 		debug(" added abstract_set ID '$v3AbsSet'.\n");
 		
+		
+		my %problem_mapping;
+		
 		my @globalProblemIDs = sort { $a <=> $b } $course_db->listGlobalProblems($globalSetID);
 		warn "globalProblemIDs=@globalProblemIDs\n";
 		my %GlobalProblems; @GlobalProblems{@globalProblemIDs}
@@ -665,6 +667,8 @@ sub copy_abstract_data {
 			debug(" added abstract_problem ID '$v3AbsProb'.\n");
 			
 			push @problem_order, $v3AbsProb->id;
+			
+			$problem_mapping{$globalProblemID} = $v3AbsProb->id;
 		}
 		
 		# update problem order
@@ -672,20 +676,28 @@ sub copy_abstract_data {
 		$v3AbsSet->problem_order_list(@problem_order);
 		$v3AbsSet->update;
 		debug(" done.\n");
+		
+		$global_set_id_to_abstract_set_data{$globalSetID} = [ $v3AbsSet->id, \%problem_mapping ];
+	}
+	
+	return %global_set_id_to_abstract_set_data;
+}
+
+################################################################################
+
+sub copy_assignment_data {
+	my ($course_db, $v3Course, $global_set_id_to_abstract_set_data) = @_;
+	
+	my $participant_iter = WeBWorK::DBv3::Participant->search(course => $v3Course);
+	
+	while (my $Participant = $participant_iter->next) {
+		my @userSetIDs = $course_db->listUserSets($Participant->user->login_id);
+		$v3AbsSet->
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+sub copy_single_assignment {
+	my ($course_db, $v3Course, $v3Participant, $v3AbsSet, $global_set_id_to_abstract_set_data) = @_;
+	
+	
+}
