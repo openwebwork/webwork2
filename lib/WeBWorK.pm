@@ -31,6 +31,7 @@ use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
 use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
+use WeBWorK::ContentGenerator::GatewayQuiz;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
@@ -146,6 +147,9 @@ sub dispatch($) {
 			return WeBWorK::ContentGenerator::Logout->new($r, $ce, $db)->go;
 		} elsif ($arg eq "test") {
 			return WeBWorK::ContentGenerator::Test->new($r, $ce, $db)->go;
+		} elsif ($arg eq "quiz" ) {
+			# Gateway quiz capability -- very similar to problem set (initially)
+			return WeBWorK::ContentGenerator::GatewayQuiz->new($r, $ce, $db)->go(@components);
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
 			my $ps_arg = shift @components;
