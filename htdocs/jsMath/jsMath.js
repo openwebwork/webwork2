@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.5c-ww
+ *  Version: 1.5d-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -282,7 +282,7 @@ var jsMath = {
     var wh1 = this.BBoxFor('<SPAN STYLE="font-family: cmr10, serif">'+this.TeX.cmr10[124].c+'</SPAN>');
     var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX.cmr10[124].c+'</SPAN>');
     if (wh1.w > 2*wh2.w && wh1.h != 0) return;
-    this.NoFontMessage();
+    if (NoFontMessage) {NoFontMessage()} else {this.NoFontMessage()}
     if (navigator.platform == 'Win32') {
       document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
     } else if (navigator.platform == 'MacPPC') {
