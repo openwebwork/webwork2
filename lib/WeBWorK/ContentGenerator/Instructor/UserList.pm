@@ -246,8 +246,9 @@ sub body {
 	foreach my $currentUser ( @users) {
 		push (@userRecords, $db->getUser($currentUser) );
 	}
-	@userRecords = sort {lc($a->last_name) cmp lc($b->last_name) } @userRecords;
-	@userRecords = sort {lc($a->section) cmp lc($b->section)} @userRecords;
+	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) || 
+	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
+	#@userRecords = sort {$a->section cmp $b->section} @userRecords;
 	# process user records
 	foreach my $userRecord (@userRecords) {
 		my $currentUser = $userRecord->user_id;
