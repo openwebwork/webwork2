@@ -11,6 +11,7 @@ use strict;
 use warnings;
 use CGI qw();
 use HTML::Entities;
+use Mail::Sender;
 
 sub initialize {
 	my ($self) = @_;
@@ -273,228 +274,57 @@ sub initialize {
 		$self->{response}         = 'preview';
 	
 	} elsif ($action eq 'Send Email') {
-	
-	
+		$self->{response}         = 'send_email';
+
+		my @recipients            = @{$self->{ra_send_to}};
+		warn "No recipients selected " unless @recipients;
+		#  get merge file
+		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+		my $delimiter       = ',';
+		my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+		warn "No data for merge file $merge_file" unless ref($rh_merge_data);
+		
+		foreach my $recipient (@recipients) {
+			#warn "FIXME sending email to $recipient";
+			my $ur      = $self->{db}->getUser($recipient);
+			my ($msg, $preview_header);
+			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
+			warn "There were errors in processing user $ur, merge file $merge_file. $@" if $@;
+			my $mailer = Mail::Sender->new({
+				from    =>   $from,
+				to      =>   $ur->email_address,
+				smtp    =>   $ce->{mail}->{smtpServer},
+				subject =>   $subject,
+				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
+			});
+			unless (ref $mailer) {
+				warn "Failed to create a mailer: $Mail::Sender::Error";
+				next;
+			}
+			unless (ref $mailer->Open()) {
+				warn "Failed to open the mailer: $Mail::Sender::Error";
+				next;
+			}
+			my $MAIL = $mailer->GetHandle() or warn "Couldn't get handle";
+			$msg = 'Hi ' . $msg;
+			print $MAIL  $msg || warn "Couldn't print to $MAIL";
+			close $MAIL || warn "Couldn't close $MAIL";
+		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
+			 
+		} 
+		
+			
+#&success;
 	
 	
 	} else {
-		warn "Don't recognize button $action";
+		warn "Didn't recognize button $action";
 	}
-
-	#if Save button was clicked
-	if (( $r->param('action') eq 'Save') && defined($r->param('body')) && defined($r->param('savefilename'))) {
-
-
-	#if Save As button was clicked
-	} elsif (( $r->param('action') eq 'Save as:') && defined($r->param('body')) && defined($r->param('savefilename'))) {
-
-
-	} elsif (( $r->param('action') eq 'save_as_default') && defined($r->param('body'))) {
-
-
-	} elsif ( $r->param('action') eq 'Send Email' ) {
-
-		my @studentID = ();
-
-		if ($r->param('To') eq 'classList' && defined($r->param('classList')) && $r->param('classList') ne 'None') {
-# 				my $classlist = $r->param('classList');
-# 				my $classListFile = "$templateDirectory$classlist";
-# 				my @classList = ();
-# 				#FIXME checkClasslistFile($Global::noOfFieldsInClasslist,$classListFile);
-# 				open(FILE, "$classListFile") || die "can't open $classListFile";
-# 				@classList=<FILE>;
-# 				close(FILE);
-# 
-# 				foreach (@classList)   {                        ## read through classlist and send e-mail
-#                                                        ## message to all active students
-#     				unless ($_ =~ /\S/)  {next;}                    ## skip blank lines
-#     				chomp;
-#     				my @classListRecord=&getRecord($_);
-#     				my ($studentID, $lastName, $firstName, $status, $comment,  $section, $recitation, $email_address, $login_name)
-#        				  = @classListRecord;
-#     				unless (&dropStatus($status)) {
-#     					push (@studentID, $studentID);
-#     					$fn{$studentID} = $firstName;
-# 						$ln{$studentID} = $lastName;
-# 						$section{$studentID} = $section;
-# 						$recitation{$studentID} = $recitation;
-# 						$status{$studentID} = $status;
-# 						$email{$studentID} = $email_address;
-# 						$login{$studentID} = $login_name;
-#     				}
-# 				}
-		} 	elsif ($r->param('To') eq 'studentID' && defined($r->param('studentID'))) {
-			@studentID = $r->param('studentID');
-			my ($studentID, $login_name);
-# 
-# 				foreach $studentID (@studentID) {
-# 					$login_name = $studentID_LoginName_Hash{$studentID};
-# 					&attachCLRecord($login_name);
-# 					$fn{$studentID}			= CL_getStudentFirstName($login_name);
-# 					$ln{$studentID}			= CL_getStudentLastName($login_name);
-# 					$section{$studentID}	= CL_getClassSection($login_name);
-# 					$recitation{$studentID}	= CL_getClassRecitation($login_name);
-# 					$status{$studentID} 	= CL_getStudentStatus($login_name);
-# 					$email{$studentID}		= CL_getStudentEmailAddress($login_name);
-# 					$login{$studentID} 		= $login_name;
-# 				}
-
-		} elsif ($r->param('To') eq 'all_students') {
-			@studentID = ();
-			my ($studentID, $login_name, $status);
-
-# 				foreach $login_name (@availableStudents) {
-# 					&attachCLRecord($login_name);
-# 					$status 		= CL_getStudentStatus($login_name);
-# 					next if &dropStatus($status);
-# 					$studentID		= CL_getStudentID($login_name);
-# 					push(@studentID,$studentID);
-# 
-# 					$fn{$studentID}			= CL_getStudentFirstName($login_name);
-# 					$ln{$studentID}			= CL_getStudentLastName($login_name);
-# 					$section{$studentID}	= CL_getClassSection($login_name);
-# 					$recitation{$studentID}	= CL_getClassRecitation($login_name);
-# 					$status{$studentID} 	= CL_getStudentStatus($login_name);
-# 					$email{$studentID}		= CL_getStudentEmailAddress($login_name);
-# 					$login{$studentID} 		= $login_name;
-# 				}
-		} else {
-			$self->submission_error('You didn\'t select any recipients.  Make sure you select either all student in the course, individual students or a whole classlist.');
-		}
-
-# 		my $mergeFile = '';
-# 
-# 		#the radio button named 'merge' determines whether to take the selected mergefile
-# 		#or one that was typed in.  A error message is given if select one and use the other
-# 		$mergeFile = $scoringDirectory . $r->param('mergeFiles')
-# 			if ($r->param('merge') eq 'mergeFiles' && defined($r->param('mergeFiles')) && $r->param('mergeFiles') ne 'None');
-# 
-# 		$mergeFile = $templateDirectory . $r->param('mergeFile')
-# 			if ($r->param('merge') eq 'mergeFile' && defined($r->param('mergeFile')) && $r->param('mergeFile') !~ m|/$|); #does not end in a /
-# 
-# 		if ($mergeFile =~ /^[~.]/ || $mergeFile =~ /\.\./) {
-# 			$self->submission_error("For security reasons, you cannot specify a merge file from a directory higher than the email directory.  Please specify a different file or move the needed file to the email directory");
-# 		}
-# 		if ($r->param('body') =~ /(\$COL\[.*?\])/ && !(-e $mergeFile)) {
-# 			$self->submission_error("In order to use the \$COL[] you must specify a merge file. The file you specified does not exist.  Also, make sure you selected the right checkbox.");
-# 		}
-# 
-
-		my %mergeAArray = ();
-# 			unless ($mergeFile eq '') {%mergeAArray = &delim2aa($mergeFile);}
-# 			
-
-# 			
-# 			foreach  my $studentID (@studentID) {
-# 				@COL =();
-# 				$SID = $studentID;
-# 				$LN = defined $ln{$studentID} ? $ln{$studentID} :'';
-# 				$FN = defined $fn{$studentID} ? $fn{$studentID} :'';
-# 				$SECTION = defined $section{$studentID} ? $section{$studentID} :'';
-# 				$RECITATION = defined $recitation{$studentID} ? $recitation{$studentID} :'';
-# 				$EMAIL = defined $email{$studentID} ? $email{$studentID} :'';
-# 				$STATUS =defined $status{$studentID} ?  $status{$studentID} :'';
-# 				$LOGIN = $login{$studentID};
-# 				
-# 				next if ($LOGIN =~ /^$practiceUser/); ## skip practice users
-# 				
-# 				if ($timeout_attempts >= $max_timeout_attempts) {  	## have attemped to connect to smtp server
-# 																	## the max allowed times.  Now just collect
-# 																	## data on emails not sent and exit
-# 					++$emails_not_sent;
-# 					&log_error(\@exceeded_max_timeout,$FN,$LN,$EMAIL);
-# 					next;
-# 				}				
-# 					
-# 				unless ((defined $mergeAArray{$studentID}) or ($mergeFile eq '')) {
-# 					if ($cgi->param('no_record')) {
-# 						++$emails_not_sent;
-# 						&log_error(\@no_record,$FN,$LN,$EMAIL);
-# 						next;
-# 					}
-# 				}
-
-# 				my ($dbString, @dbArray);
-# 				if (defined $mergeAArray{$SID}) {
-# 					$dbString = $mergeAArray{$SID};	## get sid record from merge file
-# 					@dbArray = &getRecord($dbString);
-# 					unshift(@dbArray,$SID);
-# 					unshift(@dbArray,"");			## note COL[1] is the first column
-# 					@COL= @dbArray;				## put merge fields in COL array
-# 					$endCol = @COL;				## \endCol-1 gives last field, etc
-# 				}
-# 				my $smtp;
-# 				if ($smtp = Net::SMTP->new($Global::smtpServer, Timeout => $timeout_sec)) {} else {
-# #					&internal_error("Couldn't contact SMTP server.");						
-# 					++$emails_not_sent;
-# 					&log_error(\@timeout_problem,$FN,$LN,$EMAIL);
-# 					++$timeout_attempts;
-# 					next;
-# 				}
-# 					
-# 				$smtp->mail($smtpSender);
-# 
-# 				if ( $smtp->recipient($EMAIL)) {  # this one's okay, keep going
-# 					if ( $smtp->data("To: $EMAIL\n" . output() ) ) {
-# 						++$emails_sent;
-# 					} else {	
-# 						++$emails_not_sent;
-# 						&log_error(\@unknown_problem,$FN,$LN,$EMAIL);
-# 						next;
-# 					}
-# #					&internal_error("Unknown problem sending message data to SMTP server.");
-# 				} else {			# we have a problem with this address
-# 					$smtp->reset;
-# 					#&internal_error("SMTP server doesn't like this address: <$EMAIL>.");
-# 					++$emails_not_sent;
-# 					&log_error(\@bad_email_addresses,$FN,$LN,$EMAIL);
-# 				}
-# 				$smtp->quit;
-# 			}
-# 			&success;
- 		}
-
 
 
 
 }  #end initialize
 
-# sub fieldEditHTML {
-# 	my ($self, $fieldName, $value, $properties) = @_;
-# 	my $size = $properties->{size};
-# 	my $type = $properties->{type};
-# 	my $access = $properties->{access};
-# 	my $items = $properties->{items};
-# 	my $synonyms = $properties->{synonyms};
-# 	
-# 	
-# 	if ($access eq "readonly") {
-# 		return $value;
-# 	}
-# 	if ($type eq "number" or $type eq "text") {
-# 		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
-# 	}
-# 	if ($type eq "enumerable") {
-# 		my $matched = undef; # Whether a synonym match has occurred
-# 
-# 		# Process synonyms for enumerable objects
-# 		foreach my $synonym (keys %$synonyms) {
-# 			if ($synonym ne "*" and $value =~ m/$synonym/) {
-# 				$value = $synonyms->{$synonym};
-# 				$matched = 1;
-# 			}
-# 		}
-# 		if (!$matched and exists $synonyms->{"*"}) {
-# 			$value = $synonyms->{"*"};
-# 		}
-# 		return CGI::popup_menu({
-# 			name => $fieldName, 
-# 			values => [keys %$items],
-# 			default => $value,
-# 			labels => $items,
-# 		});
-# 	}
-# }
 
 sub title {
 	my $self = shift;
@@ -521,7 +351,8 @@ sub body {
 	my $response        = (defined($self->{response}))? $self->{response} : '';
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
-	} else {
+	} elsif (($response eq 'send_email')){
+		$self->{message} .= CGI::h3("Email sent to "). join(" ", @{$self->{ra_send_to}});
 		$self->print_form($setID);
 	}
 
@@ -539,8 +370,18 @@ sub print_preview {
 	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data);
 	
 	my $recipients  = join(" ",@{$self->{ra_send_to} });
+	my $errorMessage =  defined($self->{submitError}) ?  CGI::h3($self->{submitError} ) : '' ; 
+	$msg = join("",
+	   $errorMessage,
+	   $preview_header,
+	   "To: "             , $ur->email_address,"\n",
+       "From: "           , $self->{from} , "\n" ,
+       "Reply-To: "       , $self->{replyTo} , "\n" ,
+       "Subject:  "       , $self->{subject} , "\n" ,"\n" , 
+	   $msg , "\n"
+	);
 
-	return join("", '<pre>',$preview_header,$msg,"\n","\n",
+	return join("", '<pre>',$msg,"\n","\n",
 				   '</pre>', 
 				   CGI::p('Use browser back button to return from preview mode'),
 				   CGI::h3('Emails to be sent to the following:'), 
@@ -698,9 +539,13 @@ sub print_form {
 #############################################################################################
 #	merge file fragment and message text area field
 #############################################################################################	
-
-        my @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };
-		print CGI::pre("",data_format(0..($#tmp2)),"\n", data_format(@tmp2));
+		my @tmp2;
+        eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };};
+        if ($@) {
+        	print CGI::p( "Couldn't get merge data for $preview_user", CGI::br(), $@) ;
+        } else {
+			print CGI::pre("",data_format(0..($#tmp2)),"\n", data_format(@tmp2));
+		}
 #create a textbox with the subject and a textarea with the message
 #print actual body of message
 
@@ -877,35 +722,29 @@ sub process_message {
 	my $LOGIN         = $ur->user_id;
 	# get record from merge file
 	# FIXME this is inefficient.  The info should be cached
-	my @COL            = @{$rh_merge_data->{$SID} };
+	my @COL            = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
+	$self->submission_error( "No merge data for $SID $FN $LN $LOGIN") unless defined($rh_merge_data->{$SID});
 	
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
- 	my $tmp = $text;    
- 	$tmp =~ s/(\$SID)/eval($1)/ge;
- 	$tmp =~ s/(\$LN)/eval($1)/ge;
- 	$tmp =~ s/(\$FN)/eval($1)/ge;
- 	$tmp =~ s/(\$STATUS)/eval($1)/ge;
- 	$tmp =~ s/(\$SECTION)/eval($1)/ge;
- 	$tmp =~ s/(\$RECITATION)/eval($1)/ge;
- 	$tmp =~ s/(\$EMAIL)/eval($1)/ge;
- 	$tmp =~ s/(\$LOGIN)/eval($1)/ge;
- 	$tmp =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
- 	$tmp =~ s/(\$COL\[.*?\])/eval($1)/ge;
+ 	my $msg = $text;    
+ 	$msg =~ s/(\$SID)/eval($1)/ge;
+ 	$msg =~ s/(\$LN)/eval($1)/ge;
+ 	$msg =~ s/(\$FN)/eval($1)/ge;
+ 	$msg =~ s/(\$STATUS)/eval($1)/ge;
+ 	$msg =~ s/(\$SECTION)/eval($1)/ge;
+ 	$msg =~ s/(\$RECITATION)/eval($1)/ge;
+ 	$msg =~ s/(\$EMAIL)/eval($1)/ge;
+ 	$msg =~ s/(\$LOGIN)/eval($1)/ge;
+ 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
+ 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
+ 	
+ 	$msg =~ s/\r//g;
 
 	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"\n", data_format(@COL)).
 		                    CGI::h3( "This sample mail would be sent to $EMAIL");
 
 
-	my $msg = join("",
-	   "To: "             , $ur->email_address,"\n",
-       "From: "           , $self->{from} , "\n" ,
-       "Reply-To: "       , $self->{replyTo} , "\n" ,
-       "Subject:  "       , $self->{subject} , "\n" ,"\n" , 
-	   $tmp , "\n"
-	);
-
-	$msg =~ s/\r//g;
 	return $msg, $preview_header;
 }
  sub data_format {
