@@ -26,12 +26,11 @@
        <!--#links-->
       </small>
      </div>
-      <!-- Nesting ifs produces the AND effect -->
-      <!--#if can="links"-->
-       <!--#if can="siblings"-->
-        <hr />
-       <!--#endif-->
-      <!--#endif-->
+<!--#if can="links"-->
+<!--#if can="siblings"-->
+     <hr />
+<!--#endif-->
+<!--#endif-->
      <div>
       <small>
        <!--#siblings-->
