@@ -536,7 +536,8 @@ sub print_form {
 		my @tmp2;
         eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };};
         if ($@) {
-        	print CGI::p( "Couldn't get merge data for $preview_user", CGI::br(), $@) ;
+#        	print CGI::p( "Couldn't get merge data for $preview_user", CGI::br(), $@) ;
+			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
         } else {
 			print CGI::pre("",data_format(0..($#tmp2)),"\n", data_format(@tmp2));
 		}
