@@ -131,50 +131,43 @@ sub displaySets {
 	#FIXME
 	my $setName = shift;
 	
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
+	my $r          = $self->{r};
+	my $db         = $self->{db};
+	my $ce         = $self->{ce};
+	my $authz      = $self->{authz};
+	my $user       = $r->param('user');
 	my $courseName = $ce->{courseName};
-	my $setRecord = $db->getGlobalSet($setName);
-	my $root = $ce->{webworkURLs}->{root};
+	my $setRecord  = $db->getGlobalSet($setName);
+	my $root       = $ce->{webworkURLs}->{root};
+	my $url        = $r->uri; 
+	my $sort_method_name = $r->param('sort');  
 	my @studentList   = $db->listUsers;
 
+	my $sort_method = sub {
+		my ($a,$b) = @_;
+		return 0 unless defined($sort_method_name);
+		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
+		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
+		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
+		if ($sort_method_name =~/p(\d+)/) {
+			return $b->{problemData}->{$1} <=> $a->{problemData}->{$1};  # sort by number of attempts.
+		}
 
+	};
+	#FIXME  need to be able to sort by index and score as well.
 ###############################################################
 #  Print table
 ###############################################################
 	my @problems = sort {$a <=> $b } $db->listUserProblems($user, $setName);
-	# construct header
-	my $problem_header = '';
-	my $i=1;
-	foreach (@problems) {
-		$problem_header .= &threeSpaceFill($i++);
-	}
-	print
-		CGI::start_table({-border=>5}),
-		CGI::Tr(
-			CGI::th({ -align=>'center',},'Name'),
-			CGI::th({ -align=>'center', },'Score'),
-			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
-			CGI::th({ -align=>'center', },'Ind'),
-			CGI::th({ -align=>'center', },'<pre>Problems',CGI::br(),$problem_header,'</pre>'),
-			CGI::th({ -align=>'center', },'Section'),
-			CGI::th({ -align=>'center', },'Recitation'),
-			CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		);
+
 	# FIXME I'm assuming the problems are all the same
 
 	my $num_of_problems  = @problems;
 	# get user records
-	my @userRecords  = ();
-	foreach my $currentUser ( @studentList) {
-		push (@userRecords, $db->getUser($currentUser) );
-	}
-	@userRecords = sort { lc($a->last_name) cmp lc($b->last_name ) } @userRecords;
- 
+	my @userRecords  = $db->getUsers(@studentList);
+
+
+ 	my @augmentedUserRecords    = ();
 	foreach my $studentRecord (@userRecords)   {
 		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
@@ -187,8 +180,11 @@ sub displaySets {
 	    my $totalRight = 0;
 	    my $total      = 0;
 		my $num_of_attempts = 0;
+		my %h_problemData  = ();
+		my $probNum         = 0;
 		foreach my $prob (@problems) {
-			my $problemRecord      = $db->getUserProblem($student, $setName, $prob);
+			my $problemRecord   = $db->getUserProblem($student, $setName, $prob);
+			$probNum++;
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
 				# warn "Can't find record for problem $prob in set $setName for $student";
@@ -214,7 +210,9 @@ sub displaySets {
 				$longStatus 	= 'X  ';
 			}
 
-			my $incorrect     = $problemRecord->num_incorrect;
+			my $incorrect     = $problemRecord->num_incorrect || 0; 
+			# It's possible that $incorrect is an empty or blank string instead of 0  the || clause fixes this and prevents 
+			# warning messages in the comparison below.
 			$incorrect        = ($incorrect < 99) ? $incorrect: 99;  # take min
 			$string          .=  $longStatus;
 			$twoString       .= threeSpaceFill($incorrect);
@@ -225,10 +223,11 @@ sub displaySets {
 			my $num_correct   = $problemRecord->num_incorrect || 0;
 			my $num_incorrect = $problemRecord->num_correct   || 0;
 			$num_of_attempts += $num_correct + $num_incorrect;
+			$h_problemData{$probNum} = $incorrect;
 		}
 		# FIXME   we can do this more effficiently  get the list first
 		
-		my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+		
 		my $act_as_student_url = "$root/$courseName/$setName?user=".$r->param("user").
 			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
 		my $email    = $studentRecord->email_address;
@@ -236,20 +235,67 @@ sub displaySets {
 		
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+		my $temp_hash         = {    user_id     => $studentRecord->user_id,
+		                                  last_name      => $studentRecord->last_name,
+		                                  first_name     => $studentRecord->first_name,
+		                                  score          => $totalRight,
+		                                  total          => $total,
+		                                  index          => $successIndicator,
+		                                  section        => $studentRecord->section,
+		                                  recitation     => $studentRecord->recitation,
+		                                  problemString  => "<pre>$string\n$twoString</pre>",
+		                                  act_as_student => $act_as_student_url,
+		                                  email_address  => $studentRecord->email_address,
+		                                  problemData    => {%h_problemData},
+		}; 
+		push( @augmentedUserRecords, $temp_hash );
+		                                
+	}	
 	
+	@augmentedUserRecords = sort {           &$sort_method($a,$b)
+												||
+							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
+							
+		# construct header
+	my $problem_header = '';
+	my $i=0;
+	foreach (@problems) {
+	    $i++;
+		$problem_header .= CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=p$i"},threeSpaceFill($i) );
+	}
+	print
+	    defined($sort_method_name) ?"sort method is $sort_method_name":"",
+		CGI::start_table({-border=>5}),
+		CGI::Tr(CGI::th(  {-align=>'center'},
+			[CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=name"},'Name'),
+			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=score"},'Score'),
+			 'Out'.CGI::br().'Of',
+			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=index"},'Ind'),
+			 '<pre>Problems'.CGI::br().$problem_header.'</pre>',
+			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=section"},'Section'),
+			 'Recitation',
+			 'login_name',
+			 ])
+
+		);
+								
+	foreach my $rec (@augmentedUserRecords) {
+		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
+		my $email    = $rec->{email_address}; 
+		my $twoString  = $rec->{twoString};                             
 		print CGI::Tr(
-			CGI::td(CGI::a({-href=>$act_as_student_url},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td( sprintf("%0.2f",$totalRight) ), # score
-			CGI::td($total), # out of 
-			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
-			CGI::td("<pre>$string\n$twoString</pre>"), # problems
-			CGI::td($studentRecord->section),
-			CGI::td($studentRecord->recitation),
-			CGI::td($studentRecord->user_id),			
+			CGI::td(CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
+			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
+			CGI::td($rec->{total}), # out of 
+			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
+			CGI::td($rec->{problemString}), # problems
+			CGI::td($rec->{section}),
+			CGI::td($rec->{recitation}),
+			CGI::td($rec->{user_id}),			
 			
 		);
-	
 	}
+
 	print CGI::end_table();
 			
 			
