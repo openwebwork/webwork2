@@ -301,7 +301,7 @@ sub print_form_data {
 # 	style = text|image
 # 	image = URL of image
 # 	text  = text separator
-# quicklinks
+# links
 # siblings
 # nav
 # 	style       = text|image
@@ -318,7 +318,7 @@ sub header {
 	$r->send_http_header();
 }
 
-sub quicklinks {
+sub links {
 	my $self = shift;
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
