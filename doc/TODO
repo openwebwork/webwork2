@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.14 2002-10-25 20:56:47 sh002i Exp $
+# $Id: TODO,v 1.15 2002-10-28 21:26:34 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -73,16 +73,50 @@ DONE	make static images work
 DONE	make GD-generated images work
 DONE	make HTML links work
 --->	make images in PDFs work
+	remove dependancies on Global:: from IO functions
 	handle PG errors (and warnings) in Hardcopy
 	fix TTH mode character encodings (check on mac and windows)
 	have logout button invalidate key
 	Pretty die messages (from outside of the translator)
 	Feedback - need nice modular way of sending email
 	Options - email address and password
+	grep for "***" in source, address all issues
 
 --------------------------------------------------------------------------------
 
 change notes
+
+--------------------------------------------------------------------------------
+
+IO functions (dependancies on other IO functions are not listed)
+
+all variables in the global namespace should be replaced with items in the
+%envir hash. all functions that access the envir hash need to be evaluated
+from within the safe compartment (i.e. &unrestricted_eval'd).
+
+includePGtext
+	$envir{probFileName}
+send_mail_to
+	$REMOTE_HOST
+	$REMOTE_ADDR
+	$Global::smtpServer
+	$Global::webmaster
+	&Global::wwerror
+read_whole_problem_file
+read_whole_file
+convertPath				stub
+getDirDelim				stub
+getCourseTempDirectory
+	$envir{tempDirectory}
+surePathToTmpFile
+	#$Global::tmp_directory_permission
+	#$Global::numericalGroupID
+	&Global::wwerror
+fileFromPath
+directoryFromPath
+createFile
+createDirectory
+getImageDimmensions
 
 --------------------------------------------------------------------------------
 

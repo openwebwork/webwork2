@@ -105,7 +105,6 @@ sub makeHardcopy {
 		$fileName = "$courseName.$userName.pdf";
 	}
 	my $tex = $self->getMultiSetTeX(@sets);
-	#print CGI::pre($tex);
 	$self->latex2pdf($tex, $tempDir, $fileName) or return;
 	
 	return "$tempURL/$fileName";
