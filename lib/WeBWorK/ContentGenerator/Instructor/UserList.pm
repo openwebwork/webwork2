@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.58 2004/10/10 21:45:43 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.59 2004/10/20 23:29:50 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1183,7 +1183,7 @@ sub recordEditHTML {
 		push @tableCells, ($Key and WeBWorK::Authen::checkKey($self, $User->user_id, $Key->key)) ? CGI::b("active") : CGI::em("inactive");
 	}
 	
-	# User ID
+	# User ID (edit mode) or Assigned Sets (otherwise)
 	if ($editMode) {
 		# straight user ID
 		push @tableCells, CGI::div({class=>$statusClass}, $User->user_id);
@@ -1250,7 +1250,10 @@ sub printTableHTML {
 	};
 	
 	# prepend selection checkbox? only if we're NOT editing!
-	unshift @tableHeadings, "Select", "Act As", "Login Status" unless $editMode;
+	if(not $editMode) {
+		shift @tableHeadings; # Remove user id
+		unshift @tableHeadings, "Select", "Act As", "Login Status", "Assigned Sets";
+        }
 	
 	# print the table
 	if ($editMode) {
