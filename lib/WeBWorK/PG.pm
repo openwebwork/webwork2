@@ -357,7 +357,7 @@ sub safetyFilter {
 	# replace ^ with **    (for exponentiation)
 	# $answer =~ s/\^/**/g;
 	# Return if forbidden characters are found
-	unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)]+$/ )  {
+	unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\[\]\(\)\,\|]+$/ )  {
 		$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
 		$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";
 		return ($answer,$errorno);
