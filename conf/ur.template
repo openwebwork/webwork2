@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+ <head>
+  <title>WeBWorK - <!--#title--></title>
+  <!--#head-->
+
+  <style type="text/css">
+   <!--
+	body  {
+		margin: 0px;
+	}
+
+	table.attemptResults {
+		border-style: outset; 
+		border-width: 1px; 
+		margin: 0px 10pt; 
+		border-spacing: 1px;
+		float: left
+	}
+	
+	table.attemptResults td,table.attemptResults th {
+		border-style: inset; 
+		border-width: 1px; 
+		text-align: center; 
+		width: 15ex
+	}
+	
+	div.problemHeader {
+   		float: left
+	}
+	
+	div.problem {
+		clear: both; 
+	}
+	
+	.edgebox {
+		background-color: #123567;
+		color: white;
+	}
+	
+	.edgebox a:link,a:visited {
+		color: #FF9933;
+	}
+	
+   //-->
+  </style>
+ </head>
+ <body>
+  <table width="100%" cellpadding="10" cellspacing="0" border="0">
+   <tr valign="top">
+    <td align="left" rowspan="2" class="edgebox">
+     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" /><br />
+     <hr />
+     <div>
+      <small>
+       <!--#links-->
+      </small>
+     </div>
+<!--#if can="links"-->
+<!--#if can="siblings"-->
+     <hr />
+<!--#endif-->
+<!--#endif-->
+     <div>
+      <small>
+       <!--#siblings-->
+      </small>
+     </div>
+
+    </td>
+    <!--#if can="path"-->
+    <td valign="bottom" class="edgebox">
+     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
+    </td>
+    <!--#endif-->
+    <!--#if loggedin="1"-->
+     <td valign="bottom" align="right" class="edgebox">
+     <!--#loginstatus-->
+    </td>
+    <!--#endif-->
+   </tr>
+   <tr valign="top">
+<!--#if warnings="1"-->
+    <td 
+    <!--#if loggedin="1"-->
+    colspan="2" 
+    <!--#endif-->
+    bgcolor="#ffcccc">
+<!--#else-->
+    <td 
+    <!--#if loggedin="1"-->
+    colspan="2"
+    <!--#endif-->
+    bgcolor="#ffffff">
+<!--#endif-->
+     <div align="left">
+      <!--#nav style="images" imageprefix="/webwork_files/images/nav" imagesuffix=".gif" separator="  "-->
+     </div>
+     <table width="100%" cellpadding="10" cellspacing="0" border="0">
+      <tr valign="top">
+       <td>
+        <h1 style="font-size: 14pt"><!--#title--></h1>
+        <!--#body-->
+       </td>
+       <td>
+        <!--#info-->
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+ </body>
+</html>
