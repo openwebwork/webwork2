@@ -410,7 +410,7 @@ Instantiate the selected subclass of content generator and call its C<&go> metho
 		$WeBWorK::timer->stop if $timingON == 1;
 		$WeBWorK::timer->save if $timingON == 1;
 	} else {
-		return NOT_FOUND;
+		$result = NOT_FOUND;
 	}
 
 =item Return the result of calling the content generator
