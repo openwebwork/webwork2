@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.20 2004/06/23 23:10:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.21 2004/06/24 17:43:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,7 +58,7 @@ sub pre_header_initialize {
 		my $tempdir = $ce->{webworkDirs}->{tmp};
 		my $export_file = "$tempdir/db_export_$random_chars";
 		
-		$self->reply_with_file("text/xml", $export_file, "${courseID}_database.xml", 0);
+		$self->reply_with_file("application/xml", $export_file, "${courseID}_database.xml", 0);
 	}
 }
 
