@@ -1035,6 +1035,7 @@ sub process_answers{
 	} else {
 		%h_student_answers = @in;          # receiving a hash of answers
 	}
+	
 	my $rh_correct_answers = $self->rh_correct_answers();
 	my @answer_entry_order = ( defined($self->{PG_FLAGS_REF}->{ANSWER_ENTRY_ORDER}) ) ?
 	                      @{$self->{PG_FLAGS_REF}->{ANSWER_ENTRY_ORDER}} : keys %{$rh_correct_answers};
@@ -1042,7 +1043,14 @@ sub process_answers{
  	# apply each instructors answer to the corresponding student answer
 
  	foreach my $ans_name ( @answer_entry_order ) {
-		my ($ans, $errors) = $self->filter_answer( $h_student_answers{$ans_name} );
+ 	    my $raw_ans     = $h_student_answers{$ans_name};
+ 	    $raw_ans        = '' unless defined($raw_ans);
+ 	    if ( $raw_ans   =~ /\0/ ) {     # this case may occur when a formField has multiple values separated by nulls
+	                                    # we want to convert this kind of answer stringto a reference to an array.
+	   		my @ans_array = split(/\0/,$raw_ans);
+	   		$raw_ans = \@ans_array;   	
+	    }
+		my ($ans, $errors) = $self->filter_answer($raw_ans);
 		no strict;
 		# evaluate the answers inside the safe compartment.
 		local($rf_fun,$temp_ans) = (undef,undef);
@@ -1289,6 +1297,8 @@ sub filter_answer {
 								  # if it is passed as a single string (separated by \0 characters) as 
 								  # some early versions of CGI behave, then 
 								  # it is unclear what will happen when the answer is filtered.
+								  # The calling subroutine (process_answers) is supposed to insure that the 
+								  # answer string is not a null separated string
 		foreach my $item (@{$ans}) {
 			my ($filtered_ans, $error) = &{ $self->{rf_safety_filter} } ($item);
 			push(@filtered_answers, $filtered_ans);
@@ -1313,7 +1323,7 @@ sub safetyFilter {
 	    my $submittedAnswer = $answer;
 		$answer = '' unless defined $answer;
 		my ($errorno);
-		$answer =~ tr/\000-\037/ /;
+		$answer =~ tr/\000-\037/ /;  # attention.  This removes nulls (\0)
    #### Return if answer field is empty ########
 		unless ($answer =~ /\S/) {
 #			$errorno = "<BR>No answer was submitted.";
