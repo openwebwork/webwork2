@@ -1,3 +1,8 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 # Apache::WeBWorK - The WeBWorK dispatcher module
 # Place something like the following in your Apache configuration to load the
 # WeBWorK module and install it as a handler for the WeBWorK system
