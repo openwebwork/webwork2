@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.19 2004/09/10 20:24:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,7 @@ our @EXPORT_OK = qw(
 	addCourse
 	renameCourse
 	deleteCourse
+	dbLayoutSQLSources
 );
 
 =head1 FUNCTIONS
@@ -322,6 +323,65 @@ sub deleteCourse {
 	    my $courseDir = $ce->{courseDirs}->{$key};
 		rmtree($courseDir, 0, 0) if -e $courseDir;
 	}
+}
+
+=item dbLayoutSQLSources($dbLayout)
+
+Retrun a hash of database sources for the sql and sql_single database layouts.
+Each element of the hash takes this form:
+
+ dbi_source => {
+     tables => [ 'table1', 'table2', ... ],
+     username => 'username',
+     password => 'password',
+ }
+
+In the common case, there will only be one source returned.
+
+=cut
+
+sub dbLayoutSQLSources {
+	my ($dbLayout) = @_;
+	
+	my %dbLayout = %$dbLayout;
+	my @tables = keys %dbLayout;
+	
+	my %sources;
+	
+	foreach my $table (@tables) {
+		my %table = %{ $dbLayout{$table} };
+		my %params = %{ $table{params} };
+		
+		my $source = $table{source};
+		my $username = $params{usernameRW};
+		my $password = $params{passwordRW};
+		
+		push @{$sources{$source}{tables}}, $table;
+		
+		if (defined $sources{$source}{username}) {
+			if ($sources{$source}{username} ne $username) {
+				warn "conflicting usernames for source '$source':",
+					" '$sources{$source}{username}', '$username'\n";
+			} else {
+				# it's all good
+			}
+		} else {
+			$sources{$source}{username} = $username;
+		}
+		
+		if (defined $sources{$source}{password}) {
+			if ($sources{$source}{password} ne $password) {
+				warn "conflicting passwords for source '$source':",
+					" '$sources{$source}{password}', '$password'\n";
+			} else {
+				# it's all good
+			}
+		} else {
+			$sources{$source}{password} = $password;
+		}
+	}
+	
+	return %sources;
 }
 
 =back
