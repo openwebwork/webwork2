@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.72 2004/06/06 02:48:45 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.73 2004/06/14 22:55:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,7 +22,7 @@
 # use the "my" keyword. The following variables are available to this file:
 #
 #         $webworkRoot    directory that contains the WeBWorK distribution
-#         $webworkURL     base URL handled by Apache::WeBWorK
+#         $webworkURLRoot base URL handled by Apache::WeBWorK
 #         $pgRoot         directory that contains the PG distribution
 #         $courseName     name of the course being used
 
