@@ -29,7 +29,7 @@ use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
 
-my $REFRESH_RESIZE_BUTTON = "Reorder, Resize and Update";  # handle submit value idiocy
+my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
 sub initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
@@ -305,7 +305,7 @@ sub initialize {
 			$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
 		}    
 
-	} elsif ($action eq 'Preview') {
+	} elsif ($action eq 'Preview message') {
 		$self->{response}         = 'preview';
 	
 	} elsif ($action eq 'Send Email') {
@@ -440,7 +440,7 @@ sub print_form {
 	my $sendMailPage    = $urlpath->newFromModule($urlpath->module,courseID=>$courseName);
 	my $sendMailURL     = $self->systemLink($sendMailPage, authen => 0);
 
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+    	return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	my $userTemplate = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
@@ -541,18 +541,23 @@ sub print_form {
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
 				                 -default=>$merge_file,
-				 ), "\n",CGI::hr(),CGI::br(),
-				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview')," email to ",
+				 ), "\n",CGI::hr(),
+				CGI::b("Viewing email for: "), "$preview_user",CGI::br(),
+				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),'&nbsp;',
 				CGI::popup_menu(-name=>'preview_user',
 							   -values=>\@users,
 							   #-labels=>\%classlistLabels,
 							   -default=>$preview_user,
 				),
+				CGI::br(),
+				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
+				
+				CGI::br(),
+				
 				CGI::hr(),
-				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),CGI::br(),
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
-				CGI::br(),CGI::br(),
+				CGI::br(),CGI::i('Press any action button to update display'),CGI::br(),
 			#show available macros
 				CGI::popup_menu(
 						-name=>'dummyName',
