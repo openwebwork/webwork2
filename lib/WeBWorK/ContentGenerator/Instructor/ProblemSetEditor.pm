@@ -15,6 +15,8 @@ use CGI qw();
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
 
+use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header)];
+
 sub getSetName {
 	my ($self, $pathSetName) = @_;
 	if (ref $pathSetName eq "HASH") {
@@ -37,7 +39,7 @@ sub initialize {
 
 	if (defined($r->param('submit_set_changes'))) {
 		my $changed = 0;
-		foreach (qw(open_date due_date answer_date)) {
+		foreach (@{SET_FIELDS()}) {
 			if (defined($r->param($_))) {
 				if (m/_date$/) {
 					$setRecord->$_(parseDateTime($r->param($_)));
@@ -66,6 +68,45 @@ sub initialize {
 	}
 }
 
+# One wrinkle here: if $override is undefined, do the global thing, otherwise, it's truth value determines the checkbox.
+sub setRowHTML {
+	my ($description, $fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
+	
+	my $attributeHash = {type=>"text", name=>$fieldName, value=>$fieldValue};
+	$attributeHash->{size} = $size if defined $size;
+	
+	my $html = CGI::td({}, [$description, CGI::input($attributeHash)]);
+	
+	if (defined $override) {
+		$attributeHash->{name}="${fieldName}_override";
+		$attributeHash->{value}=($override ? $overrideValue : "" );
+	
+		$html .= CGI::td({}, [
+			CGI::checkbox({
+				type=>"checkbox", 
+				name=>"override", 
+				label=>"",
+				value=>$fieldName,
+				checked=>($override ? 1 : 0)
+			}),
+			"override with:",
+			CGI::input($attributeHash)
+		]);
+	}
+	
+	return $html;
+			
+}
+
+sub problemElementHTML {
+	my ($fieldName, $fieldValue, $size) = @_;
+	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
+	$attributeHash->{size} = $size if defined $size;
+	
+	
+	return CGI::input($attributeHash);
+}
+
 sub body {
 	my ($self, @components) = @_;
 	my $r = $self->{r};
@@ -73,53 +114,32 @@ sub body {
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
+	# some useful booleans
 	my $forUser = scalar(@editForUser);
+	my $forOneUser = $forUser == 1;
+	
+	my $userSetRecord;
+	my %overrideArgs;
+	if ($forOneUser) {
+		$userSetRecord = $db->getUserSet($editForUser[0], $setName);
+		foreach my $field (@{SET_FIELDS()}) {
+			$overrideArgs{$field} = [defined $userSetRecord->$field, $userSetRecord->$field];
+		}
+	} else {
+		foreach my $field (@{SET_FIELDS()}) {
+			$overrideArgs{$field} = [undef, undef];
+		}
+	}
 	
 	print CGI::h2({}, "Set Data");	
 	print CGI::start_form({method=>"post", action=>$r->uri});
 	print CGI::table({},
 		CGI::Tr({}, [
-			CGI::td({}, [
-				"Open Date:", 
-				CGI::input({
-					type=>"text", 
-					name=>"open_date", 
-					value=>formatDateTime($setRecord->open_date)
-				})
-			]),
-			CGI::td({}, [
-				"Due Date:",
-				CGI::input({
-					type=>"text", 
-					name=>"due_date", 
-					value=>formatDateTime($setRecord->due_date)
-				})
-			]),
-			CGI::td({}, [
-				"Answer Date:",
-				CGI::input({
-					type=>"text", 
-					name=>"answer_date", 
-					value=>formatDateTime($setRecord->answer_date)
-				})
-			]),
-			CGI::td({}, [
-				"Set Header:",
-				CGI::input({
-					type=>"text", 
-					name=>"set_header", 
-					value=>$setRecord->set_header
-				})
-			]),
-			CGI::td({}, [
-				"Problem Header:",
-				CGI::input({
-					type=>"text", 
-					name=>"problem_header", 
-					value=>$setRecord->problem_header
-				})
-			])
-			
+			setRowHTML("Open Date:", "open_date", formatDateTime($setRecord->open_date), undef, @{$overrideArgs{open_date}}),
+			setRowHTML("Due Date:", "due_date", formatDateTime($setRecord->due_date), undef, @{$overrideArgs{due_date}}),
+			setRowHTML("Answer Date:", "answer_date", formatDateTime($setRecord->answer_date), undef, @{$overrideArgs{answer_date}}),
+			setRowHTML("Set Header:", "set_header", $setRecord->set_header, undef, @{$overrideArgs{set_header}}),
+			setRowHTML("Problem Header:", "problem_header", $setRecord->problem_header, undef, @{$overrideArgs{problem_header}})
 		])
 	);
 	
@@ -141,24 +161,9 @@ sub body {
 		print CGI::Tr({}, 
 			CGI::td({}, [
 				$problemID,
-			CGI::input({
-					size=>"7",
-					type=>"text",
-					name=>"problem_${problemID}_max_attempts",
-					value=>$problemRecord->max_attempts
-				}),				CGI::input({
-					size=>"7",
-					type=>"text",
-					name=>"problem_${problemID}_value",
-					value=>$problemRecord->value
-				}),
-					CGI::input({
-					size=>"40", 
-					type=>"text", 
-					name=>"problem_${problemID}_source_file", 
-					value=>$problemRecord->source_file
-				}),
-
+				problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7"),
+				problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7"),
+				problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40")
 			])
 
 		)
