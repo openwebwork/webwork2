@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.14 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.15 2004/01/17 16:38:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,44 +26,17 @@ WeBWorK::ContentGenerator::Options - Change user options.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(cryptPassword);
-
-sub initialize {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	
-	$self->{effectiveUser} = $db->getUser($r->param('effectiveUser')); # checked
-	die "record not found for user ", $r->param('effectiveUser'), " (effective user)."
-		unless defined $self->{effectiveUser};
-}
-
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		"User Options" => "",
-	);
-}
-
-sub title {
-	my $self = shift;
-	
-	return "User Options for " . $self->{effectiveUser}->first_name
-		. " " . $self->{effectiveUser}->last_name;
-}
+use WeBWorK::Utils qw(cryptPassword dequote);
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $effectiveUser = $self->{effectiveUser};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	
+	my $effectiveUserID = $r->param('effectiveUser');
+	my $effectiveUser = $db->getUser($effectiveUserID); # checked
+	die "record not found for user $effectiveUserID (effective user)."
+		unless defined $effectiveUser;
 	
 	my $changeOptions = $r->param("changeOptions");
 	my $newP = $r->param("newPassword");
@@ -84,25 +57,26 @@ sub body {
 				# possibly do some format checking?
 				eval { $db->putPassword($passwordRecord) };
 				if ($@) {
-					print CGI::div({style=>'color:red'},
-					                CGI::p("Couldn't change your password: $@")
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Couldn't change your password: $@"),
 					);
 				} else {
-					print CGI::div({style=>'color:green'},
-					               CGI::p("Your password has been changed.")
+					print CGI::div({class=>"ResultsWithoutError"},
+						CGI::p("Your password has been changed."),
 					);
 				}
 			} else {
-				print print CGI::div({style=>'color:red'},
-					CGI::p("The passwords you entered in the
-					New Password and Confirm Password fields don't
-					match. Please retype your new password and try
-					again.")
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p(dequote <<"					EOT"),
+						The passwords you entered in the New Password and
+						Confirm Password fields don't match. Please retype your
+						new password and try again.
+					EOT
 				);
 			}
 		}
 	}
-	print CGI::table(
+	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::td("New Password"),
 			CGI::td(CGI::password_field("newPassword")),
@@ -121,16 +95,17 @@ sub body {
 			eval { $db->putUser($effectiveUser) };
 			if ($@) {
 				$effectiveUser->email_address($oldA);
-				print CGI::p("Couldn't change your
-				email address: $@");
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("Couldn't change your email address: $@"),
+				);
 			} else {
-				print CGI::p("Your email address has
-				been changed.");
-				$newA = "";
+				print CGI::div({class=>"ResultsWithoutError"},
+					CGI::p("Your email address has been changed."),
+				);
 			}
 		}
 	}
-	print CGI::table(
+	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::td("Current Address"),
 			CGI::td($effectiveUser->email_address),
