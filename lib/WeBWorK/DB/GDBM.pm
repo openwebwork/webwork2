@@ -5,7 +5,7 @@ use GDBM_File;
 # these should probably be in a constants file somewhere...
 use constant MAX_TIE_ATTEMPTS => 30;
 use constant TIE_RETRY_DELAY  => 2;
-use constant CREATE_MODE => 0660;
+use constant TIE_PERMISSION => 0660;
 
 sub new($$) {
 	my $proto = shift;
@@ -20,14 +20,15 @@ sub new($$) {
 
 sub connect($$) {
 	my $self = shift;
-	my $accessMode = shift;
+	my $symbolicFlags = shift; # "ro" or "rw"
 	return if tied %$self->{hashRef}; # already tied!
-	my $mode = lc $accessMode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
+	my $flags = lc $symbolicFlags eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
-		return if tie %{$self->{hashRef}}, "GDBM_File",
-			$self->{gdbm_file},
-			$mode,
-			$accessMode;
+		return if tie %{$self->{hashRef}},
+			"GDBM_File",        # class
+			$self->{gdbm_file}, # file name
+			$flags,             # I/O flags
+			TIE_PERMISSION;     # access mode
 		sleep TIE_RETRY_DELAY;
 	}
 	die "unable to tie ", $self->{gdbm_file}, ": $!";
