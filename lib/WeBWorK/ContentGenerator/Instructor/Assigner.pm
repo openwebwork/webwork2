@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.22 2004/05/24 01:51:13 mschmitt Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.23 2004/06/14 19:51:09 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,7 +56,7 @@ sub body {
 
 	
 	print CGI::p("Select one or more sets and one or more users below to assign"
-		. "each selected set to all selected users.");
+		. " each selected set to all selected users.");
 	
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
