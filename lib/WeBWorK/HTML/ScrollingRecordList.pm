@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.1 2004/03/01 06:35:00 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.2 2004/03/04 21:05:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,6 +39,16 @@ sub scrollingRecordList {
 	my ($options, @Records) = @_;
 	
 	my %options = %$options;
+	# %options must contain:
+	#  name - name of scrolling list -- use $r->param("$name")
+	#  request - the WeBWorK::Request object for the current request
+	# may contain:
+	#  default_sort - name of sort to use by default
+	#  default_format - name of format to use by default
+	#  default_filter - listref, names of filters to apply by default (unimpl.)
+	#  allowed_filters - hashref, mapping field name to list of allowed values (unimpl.)
+	#  size - number of rows shown in scrolling list
+	#  multiple - are multiple selections allowed?
 	
 	croak "name not found in options" unless exists $options{name};
 	croak "request not found in options" unless exists $options{request};
