@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/EquationDisplay.pm,v 1.1 2004/02/03 01:22:00 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/EquationDisplay.pm,v 1.2 2004/03/04 21:05:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -16,7 +16,7 @@
 
 package WeBWorK::ContentGenerator::EquationDisplay;
 use base qw(WeBWorK::ContentGenerator);
-use WeBWorK::PG::ImageGenerator;
+
 =head1 NAME
 
 
@@ -24,44 +24,28 @@ WeBWorK::ContentGenerator::EquationDisplay -- create .png version of TeX equatio
 
 =cut
 
-# *** feedback should be exempt from authentication, so that people can send
-# feedback from the login page!
-
 use strict;
 use warnings;
-use Data::Dumper;
 use CGI qw();
-use Mail::Sender;
-use Text::Wrap qw(wrap);
+use WeBWorK::PG::ImageGenerator;
 
-# request paramaters used
-# 
-# user
-# key
-# module
-# set (if from ProblemSet or Problem)
-# problem (if from Problem)
-# displayMode (if from Problem)
-# showOldAnswers (if from Problem)
-# showCorrectAnswers (if from Problem)
-# showHints (if from Problem)
-# showSolutions (if from Problem)
+sub display_equation {
+	my ($self, $str) = @_;
+	
+	my $imageTag = $self->{image_gen}->add($str, 'inline');
+	$self->{image_gen}->render();
+	return $imageTag;
+}
 
-# state data sent
-# 
-# user object for current user
-# permission level of current user
-# current session key
-# which ContentGenerator module called Feedback?
-# set object for current set (if from ProblemSet or Problem)
-# problem object for current problem (if from Problem)
-# display options (if from Problem)
+################################################################################
+# template escape handlers
+################################################################################
+
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $envir = $ce->{envir};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
 	$self->{image_gen} = WeBWorK::PG::ImageGenerator->new(
 		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
 		latex	 => $ce->{externalPrograms}->{latex},
@@ -71,43 +55,33 @@ sub initialize {
 		cacheURL => $ce->{webworkURLs}->{equationCache},
 		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
 	);
+	
 	my $equationStr = $r->param('eq');
 	$self->{equationStr} = $equationStr if defined $equationStr;
-	$self->{typesetStr} = $self->display_equation($equationStr) if $equationStr;
-
-
-}
-sub display_equation {
-	my $self = shift;
-	my $str = shift;
-	my $imageTag = $self->{image_gen}->add($str,'inline');
-	$self->{image_gen}->render();
-	return $imageTag;
-}
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		"Feedback" => "",
-	);
+	$self->{typesetStr}  = $self->display_equation($equationStr) if $equationStr;
 }
 
-sub title {
-	return "Equation";
-}
+#sub path {
+#	my ($self, $args) = @_;
+#	
+#	my $ce = $self->{ce};
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseName = $ce->{courseName};
+#	return $self->pathMacro($args,
+#		"Home" => "$root",
+#		$courseName => "$root/$courseName",
+#		"Feedback" => "",
+#	);
+#}
+#
+#sub title {
+#	return "Equation";
+#}
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my ($self) = @_;
+	my $r = $self->r;
 	
-
 	#######################################
 	# Initial data for the textarea field where the equation is entered
 	#######################################
@@ -129,9 +103,11 @@ sub body {
 	my $port     = $r->get_server_port;
 	$hostName    .= ":$port";
 	$typesetStr =~ s|src="|src="http://$hostName|;
+	
 	my $typeset2Str = $typesetStr;
 	$typeset2Str =~ s/</&lt;/g;
 	$typeset2Str =~ s/>/&gt;/g;
+	
 	my $sourceHref = $typesetStr;
 	$sourceHref =~ /"([^"]*)"/;
 	$sourceHref = $1;
@@ -139,29 +115,18 @@ sub body {
 	#######################################
 	# Print the page
 	#######################################
-	return join( "", "Copy the location of this image (or drag and drop) into your editing area:",
-	                 CGI::br(),
-	                 $typeset2Str,
-	                 CGI::br(),
-	                 $typesetStr,
-	                 CGI::start_form(-method=>'POST',-action=>$r->uri),
-	                 $self->hidden_authen_fields,
-					 CGI::textarea( "eq",$initial_str,5,40),
-					 CGI::submit('typeset','typeset'),
-	
-					 CGI::end_form(),
-	)
-}
-
-
-
-sub hidden_state_fields($) {
-	my $self = shift;
-	my $r = $self->{r};
-	
-	print CGI::hidden("$_", $r->param("$_"))
-		foreach (qw(module set problem displayMode showOldAnswers
-		            showCorrectAnswers showHints showSolutions));
+	return join( "",
+		"Copy the location of this image (or drag and drop) into your editing area:",
+		CGI::br(),
+		$typeset2Str,
+		CGI::br(),
+		$typesetStr,
+		CGI::start_form(-method=>'POST', -action=>$r->uri),
+		$self->hidden_authen_fields,
+		CGI::textarea( "eq", $initial_str, 5, 40),
+		CGI::submit('typeset', 'typeset'),
+		CGI::end_form(),
+	);
 }
 
 1;
