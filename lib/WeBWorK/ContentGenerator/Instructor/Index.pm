@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.30 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.31 2004/03/23 01:55:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -256,26 +256,28 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit("sets_assigned_to_user", "View/edit assigned sets for selected user"),
-				CGI::submit("users_assigned_to_set", "View/edit assigned users for selected set"),
+				CGI::submit("sets_assigned_to_user", "View/edit")." all sets for one <b>user</b>",
+				CGI::submit("users_assigned_to_set", "View/edit")." all users for one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("edit_users", "Edit selected users"),
-				CGI::submit("edit_sets", "Edit selected set"),
+				CGI::submit("edit_users", "Edit"). " selected <b>users</b>",
+				CGI::submit("edit_sets", "Edit"). " one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("user_stats", "View stats for selected user"),
-				CGI::submit("set_stats", "View stats for selected set"),
+				CGI::submit("user_stats", "View stats"). " for one <b>user</b>",
+				CGI::submit("set_stats", "View stats"). " for one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("user_options", "Change selected user's password"),
-				CGI::submit("score_sets", "Score selected sets"),
+				CGI::submit("user_options", "Change password")." for one <b>user</b>",
+				CGI::submit("score_sets", "Score"). " selected <b>sets</b>",
 			]),
-			CGI::td({colspan=>2},
-				CGI::submit("act_as_user", "Act as selected user (optionally viewing selected set)"),
+		]),
+		CGI::Tr({class=>"ButtonRowCenter"}, [
+			CGI::td({colspan=>2,style=>'text-align:center'},
+				CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)",
 			),
-			CGI::td({colspan=>2},
-				CGI::submit("edit_set_for_user", "Edit properties of selected set for selected user"),
+			CGI::td({colspan=>2,style=>'text-align:center'},
+				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>",
 			),
 		]),
 	);
