@@ -11,7 +11,7 @@ use base qw(WeBWorK::ContentGenerator);
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
-my $timer0_ON=0;  # times pg translation phase
+my $timer0_ON=1;  # times pg translation phase
 use strict;
 use warnings;
 use CGI qw();
