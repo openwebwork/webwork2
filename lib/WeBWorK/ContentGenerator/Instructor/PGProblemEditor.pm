@@ -50,9 +50,13 @@ sub go {
 		$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
 		$viewURL		   .=	$self->url_authen_args;
 		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
-		$viewURL		   .=	"&editMode=temporaryFile";
+		if ($submit_button eq 'Save') {
+			$viewURL		   .=	"&editMode=savedFile";
+		} else {		
+			$viewURL		   .=	"&editMode=temporaryFile";
+		}
 		$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
-		$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
+		#$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
 #		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 		$r->header_out(Location => $viewURL );
 		return REDIRECT;
