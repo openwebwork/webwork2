@@ -37,11 +37,14 @@ BEGIN_TEXT
 $BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedDueDate. $EBOLD
 
 $PAR
-(This is early Monday morning, so it needs to be done SUNDAY night!)
-Remember to get this done early! 
+
 $PAR
-The \{ htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home page") \} 
-for the course contains the syllabus, grading policy, and other information.  
+The 
+(* home page *)
+\{ 
+#htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home page") 
+\} 
+for the course contains the syllabus, grading policy and other information.  
 $PAR
 END_TEXT
 
