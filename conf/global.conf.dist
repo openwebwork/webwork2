@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.84 2004/07/04 02:08:28 dpvc Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.85 2004/07/06 21:53:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -434,6 +434,7 @@ my $professor = 10;
 	modify_classlist_files         => $professor,
 	modify_set_def_files           => $professor,
 	modify_scoring_files           => $professor,
+	modify_problem_template_files  => $professor,
 	create_and_delete_courses      => $professor,
 	fix_course_databases           => $professor,
 );
