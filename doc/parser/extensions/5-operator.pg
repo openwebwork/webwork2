@@ -63,6 +63,7 @@ Context()->operators->add(
 #  The problem text
 #
 BEGIN_TEXT
+$BEGIN_ONE_COLUMN
 
 In this problem, we have added a new operator to the Parser: ${BTT} a
 = b${ETT}, for equality.
@@ -80,6 +81,7 @@ $PAR
     'Formula("x + y = 0, 3x-y = 4")', # you CAN get a list of equalities
   )\}
 
+$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################

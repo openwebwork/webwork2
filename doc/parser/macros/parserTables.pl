@@ -9,7 +9,7 @@ $BTT = MODES(TeX=>'{\tt ', Latex2HTML => $bHTML.'<TT>'.$eHTML, HTML => '<TT>');
 $ETT = MODES(TeX=>'}', Latex2HTML => $bHTML.'</TT>'.$eHTML, HTML => '</TT>');
 
 $BC = MODES(
-  TeX=>'{\tt ',
+  TeX=>'{\small\it ',
   Latex2HTML => $bHTML.'<SMALL><I>'.$eHTML,
   HTML => '<SMALL><I>'
 );
@@ -21,6 +21,8 @@ $EC = MODES(
 
 $LT = MODES(TeX => "<", Latex2HTML => "<", HTML => '&lt;');
 $GT = MODES(TeX => ">", Latex2HTML => ">", HTML => '&gt;');
+
+$TEX = MODES(TeX => '{\TeX}', HTML => 'TeX', HTML_dpng => '\(\bf\TeX\)');
 
 @rowOptions = (
   indent => 0,
@@ -42,13 +44,23 @@ sub ParserRow {
       $s = Formula($s)->string;
     }
     $s =~ s/</$LT/g; $s =~ s/>/$GT/g;
-    $s .= ' '.$BC.'('.$ss->class.' object)'.$EC if ref($ss) && \&{$ss->class};
+    if (ref($ss) && \&{$ss->class}) {
+      if ($ss->class eq 'Formula') {
+	$s .= ' '.$BC.'(Formula returning '.$ss->showType.')'.$EC;
+      } else {
+	$s .= ' '.$BC.'('.$ss->class.' object)'.$EC;
+      }
+    }
   } else {
     $s = $BC. (Context()->{error}{message} || $err) . $EC;
     $t = '';
   }
   $f =~ s/</$LT/g; $f =~ s/>/$GT/g;
-  my $row = Row([$BTT.$f.$ETT,$BTT.$s.$BTT,$t],@rowOptions);
+  if ($displayMode eq 'TeX') {
+    $f =~ s/\^/\\char`\\^/g; $s =~ s/\^/\\char`\\^/g;
+    $f =~ s/#/\\#/g; $s =~ s/#/\\#/g;
+  }
+  my $row = Row([$BTT.$f.$ETT,$BTT.$s.$ETT,$t],@rowOptions);
   $row =~ s/\$/\${DOLLAR}/g;
   return $row;
 }
@@ -58,7 +70,7 @@ sub ParserTable {
     BeginTable(border=>1, padding=>20).
       Row([$BBOLD."Perl Code".$EBOLD,
            $BBOLD."Result".$EBOLD,
-           $BBOLD.'\(\bf\TeX\) version'.$EBOLD],@rowOptions);
+           $BBOLD.$TEX.' version'.$EBOLD],@rowOptions);
   foreach my $f (@_) {$table .= ParserRow($f)}
   $table .= EndTable();
   return $table;
