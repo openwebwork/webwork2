@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.26 2004/05/28 23:16:27 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.27 2004/05/30 02:33:25 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -504,51 +504,43 @@ sub body {
 
 			print CGI::Tr({}, 
 				CGI::td({}, [
-#print "popup for $problemID out of " . scalar(@problemList) .
-problem_number_popup($problemID, $maxProblemNumber) .
-#					"$problemID " . 
-         '&nbsp;'.
-# (($problemID>1) ? CGI::image_button(-src=>($ce->{webworkURLs}->{htdocs}."/images/up.gif"),
-# -name=>"move.up.$problemID") : '').'&nbsp;'.
-# (($problemID< scalar(@problemList)) ? CGI::image_button(-src=>($ce->{webworkURLs}->{htdocs}."/images/down.gif"),
-# -name=>"move.down.$problemID") : '').
-#          '&nbsp;&nbsp;'.
-	CGI::a({href=>$self->systemLink( 
-         $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
-         args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
-         )
-        )}, "Edit it" ) .
-         '&nbsp;'.
-	CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
-         args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
-         ),
-         params =>{effectiveUser => $editForUserName}  )}, "Try it") . 
+			          problem_number_popup($problemID, $maxProblemNumber) .
+			          '&nbsp;'.
+			          CGI::a({href=>$self->systemLink( 
+			            $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
+			              args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+			            )
+			          )}, "Edit it" ) .
+			          '&nbsp;'.
+			        CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
+			          args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+			           ),
+			          params =>{effectiveUser => $editForUserName}  )}, "Try it") . 
 
-       	     CGI::br() .
-CGI::start_table().
-CGI::Tr({}, CGI::td({-align=>"right"}, "Delete?"),
-            CGI::td({-align=>"left"}, CGI::input({type=>"checkbox", 
-                      name=>"deleteProblem", value=>$problemID}))).
-CGI::Tr({}, CGI::td({-align=>"right"}, 'Max&nbsp;Attempts:'),
-            CGI::td({-align=>"left"}, CGI::input({type=>"text", 
-                      name=>"problem.${problemID}.max_attempts",
-                      value=>
-(($problemRecord->max_attempts<0)? "unlim": $problemRecord->max_attempts), size=>"4"}))).
-CGI::Tr({}, CGI::td({-align=>"right"}, 'Weight:'),
-            CGI::td({-align=>"left"}, CGI::input({type=>"text", 
-                      name=>"problem.${problemID}.value",
-                      value=>$problemRecord->value, size=>"4"}))).
-CGI::end_table()
-,
+			        CGI::br() .
+			        CGI::start_table().
+			        CGI::Tr({}, CGI::td({-align=>"right"}, "Delete?"),
+			          CGI::td({-align=>"left"}, CGI::input({type=>"checkbox", 
+			            name=>"deleteProblem", value=>$problemID}))).
+			          CGI::Tr({}, CGI::td({-align=>"right"}, 'Max&nbsp;Attempts:'),
+			            CGI::td({-align=>"left"}, CGI::input({type=>"text", 
+			              name=>"problem.${problemID}.max_attempts",
+			              value=>
+			                (($problemRecord->max_attempts<0)? "unlim": $problemRecord->max_attempts), size=>"4"}))).
+			            CGI::Tr({}, CGI::td({-align=>"right"}, 'Weight:'),
+			              CGI::td({-align=>"left"}, CGI::input({type=>"text", 
+			                name=>"problem.${problemID}.value",
+			                value=>$problemRecord->value, size=>"4"}))).
+			        CGI::end_table(),
 
-	problemElementHTML("problem.${problemID}.source_file", 
-            $problemRecord->source_file, "50", 
-            @{$problemOverrideArgs{source_file}}) .
+			        problemElementHTML("problem.${problemID}.source_file", 
+			          $problemRecord->source_file, "50", 
+			          @{$problemOverrideArgs{source_file}}) .
 
-  CGI::br(). CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
-  . ($have_this_one ? CGI::div({class=>"ResultsWithError", 
-				style=>"font-weight: bold"}, $have_this_one) 
-     : '') ,
+			        CGI::br().
+			        CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
+			          . ($have_this_one ? CGI::div({class=>"ResultsWithError", 
+			            style=>"font-weight: bold"}, $have_this_one) : '') ,
 				]) # end of table entry
 			) # end of table row
 		} # end of loop over problems
