@@ -471,6 +471,22 @@ sub body {
 	print CGI::end_div();
 #	print CGI::hr(), CGI::start_div({class=>"viewOptions"});
 #	print		$self->viewOptions(),CGI::end_div(),
+#   save state for viewOptions
+	print  CGI::hidden(-name    => "showOldAnswers",
+			            -value   => $will{showOldAnswers},
+		  ),
+		  CGI::hidden(-name    => "showCorrectAnswers",
+			           -value   => $will{showCorrectAnswers},
+		  ),
+		  CGI::hidden(-name    => "showHints",
+			           -value   => $will{showHints},
+		  ),
+		  CGI::hidden(-name    => "showSolutions",
+			          -value   => $will{showSolutions},
+	      ),
+		  CGI::hidden(-name    => "displayMode",
+			          -value => $self->{displayMode}
+		  );
     print		CGI::endform();
 		
 	print  CGI::start_div({class=>"problemFooter"});
@@ -667,7 +683,7 @@ sub viewOptions($) {
 			}
 		), CGI::br(),CGI::hr(),
 		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Redisplay"),
+		CGI::submit(-name=>"redisplay", -label=>"Save Options"),
 	);
 }
 
