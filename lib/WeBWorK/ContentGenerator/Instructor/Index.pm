@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.29 2004/02/03 00:53:31 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.30 2004/03/04 21:05:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,613 +19,278 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::Index - Menu interface to the Instructor pages
+WeBWorK::ContentGenerator::Instructor::Index - Menu interface to the Instructor
+pages
 
 =cut
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common REDIRECT DONE);
+use Apache::Constants qw(:response);
 use CGI qw();
+use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+
+use constant E_NO_USERS     => "Please do not select any users.";
+use constant E_NO_SETS      => "Please do not select any sets.";
+use constant E_MAX_ONE_USER => "Please select at most one user.";
+use constant E_MAX_ONE_SET  => "Please select at most one set.";
+use constant E_ONE_USER     => "Please select exactly one user.";
+use constant E_ONE_SET      => "Please select exactly one set.";
+use constant E_MIN_ONE_USER => "Please select at least one user.";
+use constant E_MIN_ONE_SET  => "Please select at least one set.";
+
 sub pre_header_initialize {
 	my ($self) = @_;
-	my $r                    = $self->{r};
-	my $ce                   = $self->{ce};
-	my $db                   = $self->{db};
-	my $authz                = $self->{authz};
-	my $userName             = $r->param('user');
-	my $effectiveUserName    = $r->param('effectiveUser');
-	my $key                  = $r->param('key');
-	my $user                 = $db->getUser($userName); #checked 
-	die "user $user (real user) not found."  unless $user;
-	my $effectiveUser        = $db->getUser($effectiveUserName); #checked
-	die "effective user $effectiveUser  not found. One 'acts as' the effective user."  unless $effectiveUser;
-	my $PermissionLevelRecord      = $db->getPermissionLevel($userName); #checked
-	die "permisson level for user $userName  not found."  unless $PermissionLevelRecord;
-	my $permissionLevel = $PermissionLevelRecord->permission();
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
 	
-	
-	
-	unless ($authz->hasPermissions($userName, "modify_student_data")) {
+	unless ($authz->hasPermissions($r->param("user"), "modify_student_data")) {
 		$self->{submitError} = "You are not authorized to modify student data";
 		return;
 	}
-	my @submit_actions = qw(student-dates act-as-student edit-set-dates reset-password assign-passwords 
-	                        set-stats drop-students edit-students-sets edit-sets student-stats edit-class-data
-	                        add-students send-email score-sets);
-	foreach my $act (@submit_actions) {
-		$self->{current_action } .=  "The action &lt;$act&gt; &quot;". $r->param($act) . "&quot; was requested" 
-		if defined($r->param($act));
-	}
-	$self->{selected_sets}   = "Set(s) chosen: "      . join(" ", $r->param("setList"));
-	$self->{selected_users}  = "Student(s) chosen: "  .join(" ", $r->param("classList")) ;
-#   Redirect actions
-    defined($r->param('student-dates')) && do {
-    #FIXME  will only do one student and one set at a time
-    # it would be good to be able to do many sets for many student
-    # this would require a separate module
-     	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $student     = shift @userList;
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-	defined($r->param('act-as-student')) && do {
-		# fix url and redirect
-		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $effectiveUser   = shift @userList;
-		my @setList         = $r->param("setList");
-		my $setName         =  shift @setList;
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my $uri             = "$root/$courseName/";
-		$uri               .= "$setName/" if defined $setName;
-		$uri            .= "?effectiveUser=$effectiveUser&".$self->url_authen_args;
-		#FIXME  does the display mode need to be defined?
-		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
-		# even that might not work with every browser since there are two effective User assignments.
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-	};
-	defined($r->param('edit-set-dates')) && do {
-	#FIXME  this should be replaced by redirecting to a module where you can edit
-	# dates for several sets at once
-     	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('reset-password')) && do {
-    # FIXME this should allow me to assign studentID to a number of students
-    # requires a new module
-		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $effectiveUser   = shift @userList;
-		my @setList         = $r->param("setList");
-		my $setName         =  shift @setList;
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
-		#FIXME  does the display mode need to be defined?
-		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
-		# even that might not work with every browser since there are two effective User assignments.
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-#     defined($r->param('assign-passwords')) && do {
-#   		my @userList        = $r->param("classList");
-# 		# can only become the first user listed.
-# 		my $effectiveUser   = shift @userList;
-# 		my @setList         = $r->param("setList");
-# 		my $setName         =  shift @setList;
-# 		my $root            = $ce->{webworkURLs}->{root};
-# 		my $courseName      = $ce->{courseName};
-# 
-# 		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
-# 		#FIXME  does the display mode need to be defined?
-# 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
-# 		# even that might not work with every browser since there are two effective User assignments.
-# 		$r->header_out(Location => $uri);
-# 		$self->{noContent} =  1;  # forces redirect
-# 		return;
-#     };
-    defined($r->param('set-stats')) && do {
-     	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/stats/set/$setName?".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-#     defined($r->param('drop-students')) && do {
-#     #FIXME  this operation should be made faster
-#     	my $root            = $ce->{webworkURLs}->{root};
-# 		my $courseName      = $ce->{courseName};
-# 		my @setList        = $r->param("setList");
-# 		# can only become the first user listed.
-# 		my $setName         = shift @setList;
-# 		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
-# 		$r->header_out(Location => $uri);
-# 		$self->{noContent} =  1;  # forces redirect
-# 		return;
-#     };
-    defined($r->param('assign-student-sets')) && do {
-      	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @userList        = $r->param("classList");
-		# can act on the first user listed.
-		my $student         = shift @userList;
-		my @setList         = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/users/$student/sets//?editForUser=$student&".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('edit-students-sets')) && do {
-      	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $student     = shift @userList;
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('edit-sets')) && do {
-    	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @setList        = $r->param("setList");
-		# can only become the first user listed.
-		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('student-stats')) && do {
-    	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $studentName     = shift @userList;
-		my $uri="$root/$courseName/instructor/stats/student/$studentName?".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('edit-class-data')) && do {
-    	my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-		#my @setList        = $r->param("setList");
-		## can only become the first user listed.
-		#my $setName         = shift @setList;
-		# ...not sure what those are about
-		# get list of users selected
-		my @userIDs = $r->param("classList");
-		my $uri="$root/$courseName/instructor/users/?";
-		$uri .= join("&", map { "visible_users=$_" } @userIDs);
-		$uri .= "&editMode=1",
-		$uri .= "&" . $self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
-    defined($r->param('add-students')) && do {
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-        my $num_of_students = $r->param('number_of_students');
-		my $uri="$root/$courseName/instructor/add_users/?number_of_students=$num_of_students&".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-	};
-	defined($r->param('send-email')) && do {
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/instructor/send_mail/?".$self->url_authen_args;
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-	};
-	defined($r->param('score-sets')) && do {
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/instructor/scoring/?scoreSelected=Score%20Selected&".$self->url_authen_args;
-		my @selectedSets    = $r->param('setList');
-		$uri .= "&selectedSet=$_" foreach (@selectedSets);
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-	};	
-
-}
-# override contentGenerator header routine for now
-# FIXME
-sub header {
-	my $self = shift;
-	return REDIRECT if $self->{noContent};
-	my $r = $self->{r};
-	$r->content_type('text/html');
-	$r->send_http_header();
-	return OK;
-}
-sub initialize {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-
-	unless ($authz->hasPermissions($user, "modify_student_data")) {
-		$self->{submitError} = "You are not authorized to modify student data";
-		return;
-	}
-
-#############################################################################################
-#	gather database data
-#############################################################################################	
-	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
-# Obtaining the list of users
-    $WeBWorK::timer->continue("Begin listing users") if defined $WeBWorK::timer;
-	my @userNames =  $db->listUsers; # checked
-	$WeBWorK::timer->continue("End listing users") if defined $WeBWorK::timer;
-	$WeBWorK::timer->continue("Begin obtaining users") if defined $WeBWorK::timer;
-	my @user_records = $db->getUsers(@userNames); # checked
-	$WeBWorK::timer->continue("End obtaining users: ".@user_records) if defined $WeBWorK::timer;
-
-	# store data
-	$self->{ra_users}              =   \@userNames;
-	$self->{ra_user_records}       =   \@user_records;
-
-# Obtaining list of sets:
-	$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
-	my @setNames =  $db->listGlobalSets();
-	$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
-	my @set_records = ();
-	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
-	@set_records = $db->getGlobalSets( @setNames);
-	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
-
 	
-
-	# store data
-	$self->{ra_sets}              =   \@setNames;
-	$self->{ra_set_records}       =   \@set_records;
-
-}
-sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
+	my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param("user");
+	my $eUserID = $r->param("effectiveUser");
 	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		"Instructor Tools" => "",
-	);
-}
-
-sub title {
-	my $self = shift;
-	return "Instructor Tools";
+	my @selectedUserIDs = $r->param("selected_users");
+	my @selectedSetIDs = $r->param("selected_sets");
+	
+	my $nusers = @selectedUserIDs;
+	my $nsets = @selectedSetIDs;
+	
+	my $firstUserID = $nusers ? $selectedUserIDs[0] : "";
+	my $firstSetID = $nsets ? $selectedSetIDs[0] : "";
+	
+	# these will be used to construct a new URL
+	my $module;
+	my %args = ( courseID => $courseID );
+	my %params;
+	
+	my $pfx = "WeBWorK::ContentGenerator";
+	my $ipfx = "WeBWorK::ContentGenerator::Instructor";
+	
+	my @error;
+	
+	# depending on which button was pushed, fill values in for URL construction
+	
+	defined param $r "sets_assigned_to_user" and do {
+		if ($nusers == 1) {
+			$module = "${ipfx}::SetsAssignedToUser";
+			$args{userID} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER;
+		}
+	};
+	
+	defined param $r "users_assigned_to_set" and do {
+		if ($nsets == 1) {
+			$module = "${ipfx}::UsersAssignedToSet";
+			$args{setID} = $firstSetID;
+		} else {
+			push @error, E_ONE_SET;
+		}
+	};
+	
+	defined param $r "edit_users" and do {
+		if ($nusers >= 1) {
+			$module = "${ipfx}::UserList";
+			$params{visible_users} = \@selectedUserIDs;
+			$params{editMode} = 1;
+		} else {
+			push @error, E_MIN_ONE_USER;
+		}
+	};
+	
+	defined param $r "edit_sets" and do {
+		if ($nsets == 1) {
+			$module = "${ipfx}::ProblemSetEditor";
+			$args{setID} = $firstSetID;
+		} else {
+			push @error, E_ONE_SET;
+			
+		}
+	};
+	
+	defined param $r "user_stats" and do {
+		if ($nusers == 1) {
+			$module = "${ipfx}::Stats";
+			$args{statType} = "student"; # FIXME: fix URLPath -- i shouldn't have to type this!
+			$args{userID} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER;
+		}
+	};
+	
+	defined param $r "set_stats" and do {
+		if ($nsets == 1) {
+			$module = "${ipfx}::Stats";
+			$args{statType} = "set"; # FIXME: fix URLPath -- i shouldn't have to type this!
+			$args{setID} = $firstSetID;
+		} else {
+			push @error, E_ONE_SET;
+		}
+	};
+	
+	defined param $r "user_options" and do {
+		if ($nusers == 1) {
+			$module = "${pfx}::Options";
+			$params{effectiveUser} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER;
+		}
+	};
+	
+	defined param $r "score_sets" and do {
+		if ($nsets >= 1) {
+			$module = "${ipfx}::Scoring";
+			$params{selectedSet} = \@selectedSetIDs;
+			$params{scoreSelected} = 1;
+		} else {
+			push @error, E_MIN_ONE_SET;
+		}
+	};
+	
+	defined param $r "act_as_user" and do {
+		if ($nusers == 1 and $nsets <= 1) {
+			if ($nsets) {
+				$module = "${pfx}::ProblemSet";
+				$args{setID} = $firstSetID;
+			} else {
+				$module = "${pfx}::ProblemSets";
+			}
+			$params{effectiveUser} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER unless $nusers == 1;
+			push @error, E_MAX_ONE_SET unless $nsets <= 1;
+		}
+	};
+	
+	defined param $r "edit_set_for_user" and do {
+		if ($nusers == 1 and $nsets == 1) {
+			$module = "${ipfx}::ProblemSetEditor";
+			$args{setID} = $firstSetID;
+			$params{editForUser} = $firstUserID;
+		} else {
+			push @error, E_ONE_USER unless $nusers == 1;
+			push @error, E_ONE_SET unless $nsets == 1;
+			
+		}
+	};
+	
+	# handle errors, redirect to target page
+	
+	if (@error) {
+		$self->{error} = \@error;
+	} elsif ($module) {
+		my $page = $urlpath->newFromModule($module, %args);
+		my $url = $self->systemLink($page, params => \%params);
+		$self->reply_with_redirect($url);
+	}
 }
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $authz = $self->{authz};
-	my $courseName = $ce->{courseName};
-	my $authen_args = $self->url_authen_args();
-	my $user = $r->param('user');
-	my $prof_url = $ce->{webworkURLs}->{oldProf};
-	my $full_url = "$prof_url?course=$courseName&$authen_args";
-	my $userEditorURL = "users/?" . $self->url_args;
-	my $problemSetEditorURL = "sets/?" . $self->url_args;
-	my $statsURL = "stats/?" . $self->url_args;
-	my $emailURL = "send_mail/?" . $self->url_args;
-	my $scoringURL = "scoring/?" . $self->url_args;
-	my $filexferURL = "files/?" . $self->url_args;
-	my $actionURL = $r->uri;
+	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $authz = $r->authz;
 	
-	return CGI::em('You are not authorized to access the Instructor tools.') 
-	     unless $authz->hasPermissions($user, 'access_instructor_tools');
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
+	print CGI::p("Use the interface below to quickly access commonly-used
+	instructor tools, or select a tool from the list to the left.");
 	
+	print CGI::p("Select user(s) and/or set(s) below and click the action button
+	of your choice.");
 	
-	print join("",
-		CGI::p({align=>'center',style=>'font-weight:bold'},'Select student and/or set, then click on action.'),
-		CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::start_table({-border=>2,-cellpadding=>5}),	
-		CGI::Tr({ -align=>'center', style=>'background-color:#99FFFF'},
-			CGI::td({colspan=>1},
-					CGI::input({type=>'submit',value=>'Add',name=>'add-students'}),
-					CGI::input({name=>'number_of_students', value=>1,size => 3}), 
-					" student(s). "
-			),
-			CGI::td({colspan=>1},
-					CGI::input({type=>'submit',value=>'Send email...',name=>'send-email'}),
-			),
-			CGI::td({colspan=>2},
-				CGI::a({href=>$userEditorURL}, "Class List"),' | ',
-				CGI::a({href=>$problemSetEditorURL}, "Set List"),' | ',
-				CGI::a({-href=>$filexferURL}, "File Transfer"),					
-			
-			),
+	if ($self->{error}) {
+		my @errors = @{ $self->{error} };
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:"),
+			CGI::ul(CGI::li(\@errors)),
+		);
+	}
+	
+	my @userIDs = $db->listUsers;
+	my @Users = $db->getUsers(@userIDs);
+	
+	my @globalSetIDs = $db->listGlobalSets;
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	
+	my @selected_users = $r->param("selected_users");
+	my @selected_sets = $r->param("selected_sets");
+	
+	my $scrolling_user_list = scrollingRecordList({
+			name => "selected_users",
+			request => $r,
+			default_sort => "lnfn",
+			default_format => "lnfn_uid",
+			size => 10,
+			multiple => 1,
+		}, @Users);
+	
+	my $scrolling_set_list = scrollingRecordList({
+		name => "selected_sets",
+		request => $r,
+		default_sort => "set_id",
+		default_format => "set_id",
+		size => 10,
+		multiple => 1,
+	}, @GlobalSets);
+	
+	print CGI::start_form({method=>"get", action=>$r->uri()});
+	print $self->hidden_authen_fields();
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th("Users"),
+			CGI::th("Sets"),
 		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>1},[
-					
-					CGI::input({type=>'submit',value=>'Reset password',name=>'reset-password'}),
-#					CGI::input({type=>'submit',value=>'Assign passwords...',name=>'assign-passwords'}), 
-                    CGI::input({type=>'submit',value=>'Act as student...',name=>'act-as-student'}),
-
-				],			
-			),
-			CGI::td({colspan=>2},
-				
-				CGI::input({type=>'submit',value=>' Edit set data  --- assign set to students  ',name=>'edit-sets'}),
-			),		
+		CGI::Tr(
+			CGI::td({style=>"width:50%"}, $scrolling_user_list),
+			CGI::td({style=>"width:50%"}, $scrolling_set_list),
 		),
-
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>1},[
-					CGI::input({type=>'submit',value=>'View  student stats...',name=>'student-stats'}),
-					CGI::input({type=>'submit',value=>'Edit  student(s) class data...',name=>'edit-class-data'}),					
-				]
-			),
-			CGI::td({colspan=>1},[
-					CGI::input({type=>'submit',value=>' View selected set stats... ',name=>'set-stats'}),
-					CGI::input({type=>'submit',value=>' Score selected sets... ',name=>'score-sets'}),
-				],
-			),
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>2},[
-					CGI::input({type=>'submit',value=>' Assign sets to selected student ',name=>'assign-student-sets'}),
-					CGI::input({type=>'submit',value=>' Over-ride selected student/set data... ',name=>'edit-students-sets'}),					
-				]
-			),
-		),
-		CGI::Tr({ -align=>'left'},
-		   	CGI::td({colspan=>2,style=>'font-size:smaller'},
-					CGI::input({type=>'submit',value=>'Sort',name=>'sort_students'}),
-					CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
-							-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
-							-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
-							-linebreak=>0
-						),
-			),
-			CGI::td({colspan=>2,style=>'color:red'},'Select student and/or set below, then click on actions above.'
-			),
-
-		),
-# 		CGI::Tr({ -align=>'center'},
-# 			CGI::td({colspan=>4},'Select student and/or set below, then click on action above.',
-# 			),
-# 		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>2},[
-					$self->popup_user_form,
-					$self->popup_set_form,
-				]
-			)
-		
-		),
-# 		CGI::Tr({ -align=>'center'},
-# 			CGI::td({colspan=>1},[
-# 					
-# 					CGI::input({type=>'submit',value=>'Edit student(s)/set(s) dates',name=>'student-dates'}),
-# 					'&nbsp;',
-# 				]
-# 			),
-# 			CGI::td({colspan=>2}, 
-# 				
-# 				
-# 				
-# 			)
-# 		
-# 		),
-
-# 		CGI::Tr({ -align=>'center'},
-# 			CGI::td({colspan=>2},[
-# 					CGI::input({type=>'submit',value=>'Drop student(s)',name=>'drop-students'}),
-# 					'&nbsp;'
-# 					]
-# 			),
-# 			
-# 		
-# 		),
-
-		CGI::end_table(),
-		CGI::end_form(),
-	);
-	print join("",CGI::hr(),
-		CGI::start_table({-border=>2,-cellpadding=>20}),
-		CGI::Tr({-align=>'center'},
+		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::a({href=>$userEditorURL}, "User List"),
-				CGI::a({href=>$problemSetEditorURL}, "Set List"),
-				CGI::a({-href=>$emailURL}, "Mail Merge"), 
-				CGI::a({-href=>$scoringURL}, "Scoring"),
-				CGI::a({-href=>$statsURL}, "Statistics"),
-				CGI::a({-href=>$filexferURL}, "File Transfer"),
+				CGI::submit("sets_assigned_to_user", "View/edit assigned sets for selected user"),
+				CGI::submit("users_assigned_to_set", "View/edit assigned users for selected set"),
 			]),
-			"\n",
-		),
-		
-		CGI::Tr({ -align=>'left'},
-			CGI::td({-colspan=>6},
-				CGI::a({-href=>$full_url}, 'WeBWorK 1.x Instructor Tools'),
-				" (" . CGI::a({-href=>$full_url, -target=>'_new'}, 'open in a new window') . ")",
+			CGI::td([
+				CGI::submit("edit_users", "Edit selected users"),
+				CGI::submit("edit_sets", "Edit selected set"),
+			]),
+			CGI::td([
+				CGI::submit("user_stats", "View stats for selected user"),
+				CGI::submit("set_stats", "View stats for selected set"),
+			]),
+			CGI::td([
+				CGI::submit("user_options", "Change selected user's password"),
+				CGI::submit("score_sets", "Score selected sets"),
+			]),
+			CGI::td({colspan=>2},
+				CGI::submit("act_as_user", "Act as selected user (optionally viewing selected set)"),
 			),
-			"\n",
+			CGI::td({colspan=>2},
+				CGI::submit("edit_set_for_user", "Edit properties of selected set for selected user"),
 			),
-			CGI::end_table(),
+		]),
 	);
+	
+	print CGI::end_form();
+	
 	return "";
-
 }
-sub addStudentForm {
-	my $self = shift;
-	my $r = $self->{r};
-	
-	# Add a student form
-	join( "",
-		CGI::p("Add new students"),	
-		CGI::start_form({method=>"post", action=>$r->uri()}),
-		$self->hidden_authen_fields(),
-		CGI::start_table({border=>'1', cellpadding=>'2'}),
-		CGI::Tr({},
-			CGI::th({},
-				['Last Name', 'First Name', 'Student ID', 'Login Name', 'Email Address', 'Section','Recitation', 'Comment']
-			)
-		),
-		CGI::Tr({},
-			CGI::td({},
-				[ CGI::input({name=>'last_name'}),
-				  CGI::input({name=>'first_name'}),
-				  CGI::input({name=>'student_id',size=>'16'}),
-				  CGI::input({name=>'new_user_id',size=>'10'}),
-				  CGI::input({name=>'email_address'}),
-				  CGI::input({name=>'section',size=>'10'}),
-				  CGI::input({name=>'recitation',size=>'10'}),
-				  CGI::input({name=>'comment'}),
-				
-				
-				]
-			)
-		),
-		CGI::end_table(),
-		CGI::submit({name=>"addStudent", value=>"Add Student"}),
-		CGI::end_form(),
-	);
 
-
-
-
-
-
-}
-sub popup_user_form {
-	my $self          = shift;
-	my $r             = $self->{r};
-	my $authz         = $self->{authz};
-	my $user          = $r->param('user');
-	my $db            = $self->{db};
-	my $ce            = $self->{ce};
-	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $ce->{courseName};
-	my $sortMethod    = $r->param('sort_by') || '';
-
- #     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
-	
-	# This code will require changing if the permission and user tables ever have different keys.
-    my @users                 = ();
-	my $ra_user_records       = $self->{ra_user_records};
-	my %classlistLabels       = ();#  %$hr_classlistLabels;
-	
-	##########################################################
-	my @user_records  = @{$ra_user_records};
-	if ( $r->param("sort_by") ) {
-		my $sort_method = $r->param("sort_by");
-		if ($sort_method eq 'section') {
-			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'recitation') {
-			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'alphabetical') {
-			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'id' )          {
-		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
-		}
-	} else {
-		@user_records   = sort { $a->user_id cmp $b->user_id } @user_records;
-	}
-
-	foreach my $ur (@{user_records}) {
-		#$classlistLabels{$ur->user_id} = $ur->last_name. ', '. $ur->first_name.'   -   '.$ur->section.' '.$ur->user_id;
-		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
-		push(@users, $ur->user_id);
-	}
-	return 			CGI::popup_menu(-name=>'classList',
-							   -values=>\@users,
-							   -labels=>\%classlistLabels,
-							   -size  => 10,
-							   -multiple => 1,
-							   #-default=>$user
-					),
-
-
-}
-sub popup_set_form {
-	my $self  = shift;
-	my $r     = $self->{r};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-
- #     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
-
-	# This code will require changing if the permission and user tables ever have different keys.
-    my @setNames              = ();
-	my $ra_set_records        = $self->{ra_set_records};
-	my %setLabels             = ();#  %$hr_classlistLabels;
-	my @set_records           =  sort {$a->set_id cmp $b->set_id } @{$ra_set_records};
-	foreach my $sr (@set_records) {
- 		$setLabels{$sr->set_id} = $sr->set_id;
- 		push(@setNames, $sr->set_id);  # reorder sets
-	}
- 	return 			CGI::popup_menu(-name=>'setList',
- 							   -values=>\@setNames,
- 							   -labels=>\%setLabels,
- 							   -size  => 10,
- 							   -multiple => 1,
- 							   #-default=>$user
- 					),
-
-
-}
 1;
 
 __END__
 
 =head1 AUTHOR
 
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu
+Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu.
 
 =cut
