@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+ <head>
+  <title>WeBWorK - <!--#title--></title>
+  <!--#head-->
+  
+  <style type="text/css">
+   <!--
+	table.attemptResults {
+		border-style: solid; 
+		border-width: 1px; 
+		background-color: #cccccc; 
+		margin: 0px 10pt; 
+		border-spacing: 0px;
+		float: left
+	}
+	
+	table.attemptResults tr {
+		margin: 100px;
+	}
+	
+	table.attemptResults td,table.attemptResults th {
+		border-style: solid; 
+		border-width: 1px; 
+		text-align: center; 
+		width: 15ex
+	}
+	
+	div.problemHeader {
+   		float: left
+	}
+	
+	div.problem {
+		clear: both; 
+		border-width: 1px 0px 0px; 
+		//border-style: solid
+	}
+   //-->
+  </style>
+ </head>
+ <body <!--#if warnings="1"-->bgcolor="#ffcccc"<!--#else-->bgcolor="#efefef"<!--#endif-->>
+  <table border="0" width="100%">
+   <tr>
+    <td align="left">
+     <!--#links-->
+    </td>
+    <td align="center">
+     <!--#nav style="images" imageprefix="/webwork_files/images/nav" imagesuffix=".gif" separator=" "-->
+    </td>
+    <td align="right">
+     <h1>WeBWorK <em>2.0</em></h1>
+    </td>
+    <td width="70">
+     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" />
+    </td>
+   </tr>
+  </table>
+  
+  <h1 style="font-size: 14pt"><!--#title--></h1>
+  
+  <table width="100%" cellpadding="10" cellspacing="0" border="0">
+   <tr valign="top">
+    <td>
+     <!--#body-->
+    </td>
+    <td>
+     <!--#info-->
+    </td>
+   </tr>
+  </table>
+    
+  <hr />
+    
+  <table border="0" width="100%">
+   <tr>
+    <td align="left" valign="bottom"><!--#links--></td>
+    <td align="right" valign="bottom"><!--#loginstatus--></td>
+   </tr>
+  </table>
+ </body>
+</html>
