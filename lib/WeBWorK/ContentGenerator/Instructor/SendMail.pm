@@ -71,14 +71,14 @@ sub initialize {
 	my @send_to                    =   ();	
 	#FIXME  this (radio) is a lousy name
 	my $recipients                 = $r->param('radio');
-	if ($recipients eq 'all_students') {  #only active students #FIXME status check??
+	if (defined($recipients) and $recipients eq 'all_students') {  #only active students #FIXME status check??
 		foreach my $ur (@user_records) {
 			push(@send_to,$ur->user_id) if $ur->status eq 'C' and not($ur->user_id =~ /practice/);
 		}
-	} elsif ($recipients eq 'studentID' ) {
+	} elsif (defined($recipients) and $recipients eq 'studentID' ) {
 		@send_to                   = $r->param('classList');
 	} else {
-		warn "Don't understand recipient list |$recipients|";
+		# no recipients have been defined -- probably the first time on the page
 	}	
 	$self->{ra_send_to}               = \@send_to;
 #################################################################
@@ -209,7 +209,7 @@ sub initialize {
 	
 	
 	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window'
-	   or $action eq 'Choose merge file' ){  
+	   or $action eq 'Set merge file to:' ){  
 #		warn "FIXME action is |$action| no further initialization required";
 		return '';
 	}
@@ -354,6 +354,8 @@ sub body {
 	} elsif (($response eq 'send_email')){
 		$self->{message} .= CGI::h3("Email sent to "). join(" ", @{$self->{ra_send_to}});
 		$self->print_form($setID);
+	} else {
+		$self->print_form($setID);
 	}
 
 }
@@ -484,7 +486,7 @@ sub print_form {
 #############################################################################################	
 			CGI::td({align=>'left'},
 			     "Merge file is: $merge_file", CGI::br(),
-				 CGI::submit(-name=>'action', -value=>'Choose merge file'),CGI::br(),
+				 CGI::submit(-name=>'action', -value=>'Set merge file to:'),CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
 				                 -default=>$merge_file,
@@ -668,22 +670,29 @@ sub read_merge_file    {
         #       Takes a delimited file as a parameter and returns an
         #       associative array with the first field as the key.
         #       Blank lines are skipped. White space is removed
-    my(@dbArray,$key,%assocArray,$dbString);
+    my(@dbArray,$key,$dbString);
+    my %assocArray = ();
+    return
     local(*FILE);
-    open(FILE, "$filePath") or $self->submission_error("Can't open file $filePath");
-    my $index=0;
-	while (<FILE>){
-		unless ($_ =~ /\S/)  {next;}               ## skip blank lines
-		chomp;
-		@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
-		$key    =$dbArray[$index][0];
-		#@dbArray    =  map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @dbArray;
-		#$dbString   = join(" | ",@dbArray);
-		$assocArray{$key}=$dbArray[$index];
-		$index++;
-	}
-        close(FILE);
-        return \%assocArray;
+    if ($fileName eq 'None') {
+    	# do nothing
+    }elsif ( open(FILE, "$filePath")  )   {
+		my $index=0;
+		while (<FILE>){
+			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
+			chomp;
+			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
+			$key    =$dbArray[$index][0];
+			#@dbArray    =  map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @dbArray;
+			#$dbString   = join(" | ",@dbArray);
+			$assocArray{$key}=$dbArray[$index];
+			$index++;
+		}
+		close(FILE);
+     } else {
+     	warn "Couldn't read file $filePath";
+     }
+     return \%assocArray;
 }
 sub getRecord {
 	my $self    = shift;
