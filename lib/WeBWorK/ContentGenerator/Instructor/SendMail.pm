@@ -827,17 +827,21 @@ sub process_message {
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
  	my $msg = $text;    
- 	$msg =~ s/(\$SID)/eval($1)/ge;
- 	$msg =~ s/(\$LN)/eval($1)/ge;
- 	$msg =~ s/(\$FN)/eval($1)/ge;
- 	$msg =~ s/(\$STATUS)/eval($1)/ge;
- 	$msg =~ s/(\$SECTION)/eval($1)/ge;
- 	$msg =~ s/(\$RECITATION)/eval($1)/ge;
- 	$msg =~ s/(\$EMAIL)/eval($1)/ge;
- 	$msg =~ s/(\$LOGIN)/eval($1)/ge;
-# 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;  ## Perl handles negative indexes correctly, so there is no need to do this
-	$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge if defined($COL[1]);  # prevents extraneous error messages.   
-
+ 	$msg =~ s/\$SID/$SID/ge;
+ 	$msg =~ s/\$LN/$LN/ge;
+ 	$msg =~ s/\$FN/$FN/ge;
+ 	$msg =~ s/\$STATUS/$STATUS/ge;
+ 	$msg =~ s/\$SECTION/$SECTION/ge;
+ 	$msg =~ s/\$RECITATION/$RECITATION/ge;
+ 	$msg =~ s/\$EMAIL/$EMAIL/ge;
+ 	$msg =~ s/\$LOGIN/$LOGIN/ge;
+	if (defined($COL[1])) {		# prevents extraneous error messages.  
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge
+	}
+	else {						# prevents extraneous $COL's in email message 
+		$msg =~ s/\$COL\[(\-?\d+)\]//g
+	}			
+			 
  	$msg =~ s/\r//g;
 	
 	my @preview_COL = @COL;
