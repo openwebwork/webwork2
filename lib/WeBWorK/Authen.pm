@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.34 2004/10/09 03:03:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.35 2004/10/11 23:40:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -273,7 +273,7 @@ sub verify($) {
 		        defined($ce->{siteDefaults}->{status}->{$userRecord->status})
 		        ) {
 			$userRecord-> status('C');
-			#FIXME -- still need to save this value to the database.
+			# need to save this value to the database.
 			$db->putUser($userRecord);
 			warn "Setting status for user $user to C.  It was previously undefined or miss defined.";
 		}
