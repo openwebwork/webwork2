@@ -74,6 +74,15 @@ sub pre_header_initialize {
 	my $checkAnswers       = $r->param("checkAnswers");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
+	# fields which may be defined when using Problem Editor
+	my $override_seed		   = ($permissionLevel>=10) ? $r->param('seed') : undef;
+	my $override_problem_source = ($permissionLevel>=10) ? $r->param('sourceFilePath') : undef;
+	my $editMode = undef;
+	my $submit_button = $r->param('submit_button');
+	if ( defined($submit_button ) ) {
+		$editMode = "temporaryFile" if $submit_button eq 'Refresh';
+		$editMode = 'savedFile'     if $submit_button eq 'Save';
+	}
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
@@ -84,6 +93,10 @@ sub pre_header_initialize {
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 	
+	$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
+									 			$override_problem_source :
+												$problem->source_file;
+	$self->{edit_mode}					=	$editMode;
 	##### permissions #####
 	
 	# are we allowed to view this problem?
@@ -148,6 +161,8 @@ sub pre_header_initialize {
 		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
+			override_seed	=> $override_seed, 
+			override_problem_source	=>$override_problem_source,
 			showHints       => $will{showHints},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
@@ -260,7 +275,17 @@ sub nav {
 sub title {
 	my $self = shift;
 	my $setName = $self->{set}->set_id;
-	my $problemNumber = $self->{problem}->problem_id;
+	
+	my $file_action;
+	my $edit_mode = $self->{edit_mode};
+	if ( not defined($edit_mode) ) {
+		$file_action = '';
+	} elsif (  $edit_mode eq 'temporaryFile') {
+		$file_action 	.=	 'Editing temporary file : '. CGI::br() . $self->{current_problem_source};
+	} elsif ( $edit_mode eq 'savedFile' ){
+		$file_action 	.=	 'Problem saved to : '. CGI::br()  . $self->{current_problem_source};
+	}
+	my $problemNumber = $self->{problem}->problem_id . " : " . $file_action;
 	
 	return "$setName : Problem $problemNumber";
 }
@@ -497,7 +522,8 @@ sub body {
 	
 	}
 	# FIXME print editor link
-	if ($self->{permissionLevel}>=10 ) {
+	# print editor link if the user is an instructor AND the file is not in temporary editing mode
+	if ($self->{permissionLevel}>=10 and ( (not defined($self->{edit_mode}))  or $self->{edit_mode} eq 'savedFile') ) {
 		print CGI::a({-href=>"/webwork/$courseName/instructor/pgProblemEditor/".$set->set_id.
 		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
 	}
