@@ -91,12 +91,12 @@ sub initialize {}
 
 sub logo {
 	my $self = shift;
-	return $self->{courseEnvironment}->{urls}->{logo};
+	return $self->{courseEnvironment}->{webworkUrls}->{logo};
 }
 
 sub htdocs_base {
 	my $self = shift;
-	return $self->{courseEnvironment}->{urls}->{base};
+	return $self->{courseEnvironment}->{webworkUrls}->{base};
 }
 
 sub test_args {
@@ -110,6 +110,8 @@ sub test_args {
 
 # Used by &go to parse the argument fields of the template escapes
 sub cook_args($) {
+	# There are a bunch of commented-out lines that I am using to remind myself
+	# That I want to write a better regex sometime.
 	my ($raw_args) = @_;
 	my $args = {};
 	#my $quotable_string = qr/(?:".*?(?<![^\\](?:\\\\)*\\)"|\W*)/;
