@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.48 2004/12/18 16:11:16 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.49 2005/02/05 01:34:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -431,12 +431,15 @@ sub displaySets {
 	my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
     my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
     my %attempts_percentiles_for_problem = ();
+    my %problemPage                      = (); # link to the problem page
     foreach my $probID (@problemIDs) {
     	$attempts_percentiles_for_problem{$probID} =   {
     		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
-    	};    
+    	}; 
+    	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+			courseID => $courseName, setID => $setName, problemID => $probID);
     }
-    
+ 
 #####################################################################################
 # Table showing the percentage of students with correct answers for each problems
 #####################################################################################
@@ -446,7 +449,9 @@ print
 	   CGI::p('The percentage of active students with correct answers for each problem'),
 		CGI::start_table({-border=>1}),
 		CGI::Tr(CGI::td(
-			['Problem #', @problemIDs]
+			['Problem #', 
+			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
+			]
 		)),
 		CGI::Tr(CGI::td(
 			[ '% correct',map {($number_of_students_attempting_problem{$_})
@@ -519,11 +524,9 @@ print
 
 
 	foreach my $probID (@problemIDs) {
-	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseName, setID => $setName, problemID => $probID);
 		print	CGI::Tr(
 					CGI::td( [
-						CGI::a({href=>$self->systemLink($problemPage)},"Prob $probID"),
+						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },"Prob $probID"),
 						( prevent_repeats reverse map { sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2),
 
 						]
