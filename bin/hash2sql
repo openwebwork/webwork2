@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/bin/hash2sql,v 1.3 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,10 +42,10 @@ sub main(@) {
 	}
 	
 	my $hashCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $hashCourse);
-	my $hashDB = WeBWorK::DB->new($hashCE);
+	my $hashDB = WeBWorK::DB->new($hashCE->{dbLayout});
 	
 	my $sqlCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $sqlCourse);
-	my $sqlDB = WeBWorK::DB->new($sqlCE);
+	my $sqlDB = WeBWorK::DB->new($sqlCE->{dbLayout});
 	
 	# get names of global record classes
 	my $globalSetClass = $sqlCE->{dbLayout}->{set}->{record};

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.43 2003/12/17 20:21:15 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.44 2003/12/18 23:15:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,7 +22,7 @@ WeBWorK::DB - interface with the WeBWorK databases.
 
 =head1 SYNOPSIS
 
- my $db = WeBWorK::DB->new($courseEnvironment);
+ my $db = WeBWorK::DB->new($dbLayout);
  
  my @userIDs = $db->listUsers();
  my $Sam = $db->{user}->{record}->new();
@@ -44,8 +44,8 @@ WeBWorK::DB - interface with the WeBWorK databases.
 WeBWorK::DB provides a consistent interface to a number of database backends.
 Access and modification functions are provided for each logical table used by
 the webwork system. The particular backend ("schema" and "driver"), record
-class, data source, and additional parameters are specified by the C<%dbLayout>
-hash in the course environment.
+class, data source, and additional parameters are specified by the hash
+referenced by C<$dbLayout>, usually taken from the course environment.
 
 =head1 ARCHITECTURE
 
@@ -159,10 +159,10 @@ WeBWorK::CourseEnvironment object.
 
 =back
 
-=head2 C<%dbLayout> Format
+=head2 C<$dbLayout> Format
 
-The C<%dbLayout> hash consists of items keyed by table names. The value of each
-item is a reference to a hash containing the following items:
+C<$dbLayout> is a hash reference consisting of items keyed by table names. The
+value of each item is a reference to a hash containing the following items:
 
 =over
 
@@ -191,7 +191,7 @@ schema in question.
 
 =back
 
-For each table defined in C<%dbLayout>, C<new> loads the record, schema, and
+For each table defined in C<$dbLayout>, C<new> loads the record, schema, and
 driver modules. It the schema module's C<tables> method lists the current table
 (or contains the string "*") and the output of the schema and driver modules'
 C<style> methods match, the table is installed. Otherwise, an exception is
@@ -200,13 +200,13 @@ thrown.
 =cut
 
 sub new($$) {
-	my ($invocant, $ce) = @_;
+	my ($invocant, $dbLayout) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
 	bless $self, $class; # bless this here so we can pass it to the schema
 	
 	# load the modules required to handle each table, and create driver
-	my %dbLayout = %{$ce->{dbLayout}};
+	my %dbLayout = %$dbLayout;
 	foreach my $table (keys %dbLayout) {
 		my $layout = $dbLayout{$table};
 		my $record = $layout->{record};
@@ -878,10 +878,18 @@ FIXME: write this
 
 =cut
 
+=item newGlobalSet()
+
+=cut
+
 sub newGlobalSet {
 	my ($self, @prototype) = @_;
 	return $self->{set}->{record}->new(@prototype);
 }
+
+=item listGlobalSets()
+
+=cut
 
 sub listGlobalSets {
 	my ($self) = @_;
@@ -892,6 +900,10 @@ sub listGlobalSets {
 	return map { $_->[0] }
 		$self->{set}->list(undef);
 }
+
+=item addGlobalSet($GlobalSet)
+
+=cut
 
 sub addGlobalSet {
 	my ($self, $GlobalSet) = @_;
@@ -908,6 +920,10 @@ sub addGlobalSet {
 	
 	return $self->{set}->add($GlobalSet);
 }
+
+=item addGlobalSet($setID)
+
+=cut
 
 sub getGlobalSet {
 	my ($self, $setID) = @_;
@@ -941,6 +957,10 @@ sub getGlobalSets {
 	return $self->{set}->gets(map { [$_] } @setIDs);
 }
 
+=item addGlobalSet($GlobalSet)
+
+=cut
+
 sub putGlobalSet {
 	my ($self, $GlobalSet) = @_;
 	
@@ -956,6 +976,10 @@ sub putGlobalSet {
 	
 	return $self->{set}->put($GlobalSet);
 }
+
+=item addGlobalSet($setID)
+
+=cut
 
 sub deleteGlobalSet {
 	my ($self, $setID) = @_;

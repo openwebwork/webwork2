@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.44 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,21 +172,13 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # Database options
 ################################################################################
 
-# Several database layouts are defined in separate environment files. Select the
-# one which should be used by all courses by default, and include it. This can
-# be overridden by including a difference environment file in the course.conf of
-# a particular course.
+# Several database are defined in the file conf/database.conf and stored in the
+# hash %dbLayouts.
+include "conf/database.conf";
 
-# Include sql.conf to specify a database layout for use with an SQL server.
-#include "conf/sql.conf";
-
-# Include gdbm.conf to specify a database layout for WeBWorK 1.x compatible GDBM
-# databases. Use this layout if you wish to share courses between WeBWorK 1.x
-# and WeBWorK 2.
-include "conf/gdbm.conf";
-
-# Please read the documentation in the file that you chose to include, as there
-# are layout-specific options that must be configured.
+# Select the default database layout. This can be overridden in the course.conf
+# file of a particular course.
+*dbLayout = $dbLayouts{sql};
 
 ################################################################################
 # Authorization system
