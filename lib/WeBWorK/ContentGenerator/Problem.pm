@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.132 2004/05/22 22:14:07 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.133 2004/05/23 01:17:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1017,6 +1017,7 @@ sub attemptResults {
 
 sub viewOptions {
 	my ($self) = @_;
+	my $ce = $self->r->ce;
 	
 	my $displayMode = $self->{displayMode};
 	my %must = %{ $self->{must} };
@@ -1034,19 +1035,21 @@ sub viewOptions {
 
 	$optionLine and $optionLine .= join "", CGI::br();
 	
+	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	my @active_modes = grep { exists $display_modes{$_} }
+			@{$ce->{pg}->{displayModes}};
+	
 	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
 			"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br(),
 		CGI::radio_group(
 			-name    => "displayMode",
-			-values  => ['plainText', 'formattedText', 'images', 'jsMath'],
+			-values  => \@active_modes,
 			-default => $displayMode,
 			-linebreak=>'true',
 			-labels  => {
 				plainText     => "plain",
 				formattedText => "formatted",
-				images        => "images",
-				jsMath	      => "jsMath",
-			}
+			},
 		), CGI::br(),CGI::hr(),
 		$optionLine,
 		CGI::submit(-name=>"redisplay", -label=>"Save Options"),
