@@ -23,12 +23,13 @@ sub title {
 
 sub body {
 	my $self = shift;
-	my $userEditorURL = "userEditor/?" . $self->url_args;
-	my $problemSetEditorURL = "problemSetEditor/?" . $self->url_args;
+	my $userEditorURL = "userList/?" . $self->url_args;
+	my $problemSetEditorURL = "problemSetList/?" . $self->url_args;
+	my $courseName = $self->{ce}->{courseName};
 
 	return CGI::p("\n".
-		CGI::a({href=>$userEditorURL}, "User Editor"). CGI::br(). "\n".
-		CGI::a({href=>$problemSetEditorURL}, "Problem Set Editor").CGI::br()."\n"
+		CGI::a({href=>$userEditorURL}, "Users"). " - View and edit data and settings for users of $courseName" . CGI::br(). "\n".
+		CGI::a({href=>$problemSetEditorURL}, "Problem Sets"). " - View and edit settings for problem sets in $courseName".CGI::br()."\n"
 	)
 }
 

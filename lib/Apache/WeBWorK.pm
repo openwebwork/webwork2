@@ -27,6 +27,8 @@ use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Professor;
 use WeBWorK::ContentGenerator::Instructor::Index;
+use WeBWorK::ContentGenerator::Instructor::UserList;
+use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -127,8 +129,10 @@ sub handler() {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
 				return WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
-			} else {
-			
+			} elsif ($instructorArgument eq "userList") {
+				return WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go;
+			} elsif ($instructorArgument eq "problemSetList") {
+				return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
 			}
 		} elsif ($arg eq "prof") {
 			return WeBWorK::ContentGenerator::Professor->new($r, $ce, $db)->go;
