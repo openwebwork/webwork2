@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.23 2004/05/04 20:19:07 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.24 2004/05/11 21:38:15 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -128,8 +128,13 @@ sub handle_problem_numbers {
 
   my @setUsers = $db->listSetUsers($setName);
   my (@problist, $user);
+  my $globalUserID = $db->{set}->{params}->{globalUserID} || '';
 
   for $user (@setUsers) {
+    # if this is gdbm, the global user has been taken care of above.
+    # we can't do it again.  This relies on the global user not having
+    # a blank name.
+    next if($globalUserID eq $user);
     for $j (keys %newProblemNumbers) {
       $problist[$j] = $db->getUserProblem($user, $setName, $j);
       die " problem $j for set $setName and effective user $user not found" 
