@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.50 2004/09/11 06:15:12 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.51 2004/09/13 17:42:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 #use Apache::DB;
 use DateTime;
 use Date::Parse;
+use Date::Format;
 #use Date::Manip;
 #use DateTime::Format::DateManip;
 use Errno;
