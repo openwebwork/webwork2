@@ -618,9 +618,10 @@ sub displayStudentStats {
 sub threeSpaceFill {
     my $num = shift @_ || 0;
     
-    if ($num < 10) {return "$num".'  ';}
-    elsif ($num < 100) {return "$num".' ';}
-    else {return "$num";}
+    if (length($num)==1) {return "$num".'  ';}
+    elsif (length($num)==1) {return "$num".' ';}
+    elsif (length($num)==2) {return "$num";}
+    else {return "###";}
 }
 sub round_score{
 	return shift;
