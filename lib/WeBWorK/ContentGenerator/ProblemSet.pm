@@ -248,7 +248,7 @@ sub body {
 		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::hidden("module",             __PACKAGE__),"\n",
-		CGI::hidden("set",                $set->{set}->set_id),"\n",
+		CGI::hidden("set",                $self->{set}->set_id),"\n",
 		CGI::hidden("problem",            ""),"\n",
 		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
 		CGI::hidden("showOldAnswers",     ''),"\n",
