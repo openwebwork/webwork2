@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.87 2004/03/15 23:03:46 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.88 2004/03/17 08:15:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,7 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common);
+use Apache::Constants qw(:response);
 use Carp;
 use CGI::Pretty qw(*ul *li);
 use URI::Escape;
@@ -108,10 +108,17 @@ subclasses which need to send different header information. For some reason, the
 return value of header() will be used as the result of this function, if it is
 defined.
 
+FIXME: figure out what the deal is with the return value of header(). If we sent
+a header, it's too late to set the status by returning. If we didn't, header()
+didn't perform its function!
+
 =item 3
 
 At this point, go() will terminate if the request is a HEAD request or if the
 field $self->{noContent} contains a true value.
+
+FIXME: I don't think we'll need noContent after reply_with_redirect() is
+adopted by all modules.
 
 =item 4
 
@@ -141,10 +148,22 @@ sub go {
 	
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
 	
+	# send a file instead of a normal reply (reply_with_file() sets this field)
+	defined $self->{reply_with_file} and do {
+		return $self->do_reply_with_file($self->{reply_with_file});
+	};
+	
+	# send a Location: header instead of a normal reply (reply_with_redirect() sets this field)
+	defined $self->{reply_with_redirect} and do {
+		return $self->do_reply_with_redirect($self->{reply_with_redirect});
+	};
+	
 	my $headerReturn = $self->header(@_);
 	$returnValue = $headerReturn if defined $headerReturn;
+	# FIXME: we won't need noContent after reply_with_redirect() is adopted
 	return $returnValue if $r->header_only or $self->{noContent};
 	
+	# FIXME: when $self->{sendFile} is no longer being set, remove this:
 	# if the sendFile flag is set, send the file and exit;
 	if ($self->{sendFile}) {
 		return $self->sendFile;
@@ -177,6 +196,7 @@ future.
 
 =cut
 
+# FIXME: when $self->{sendFile} is no longer being set, remove this method
 sub sendFile {
 	my ($self) = @_;
 	
@@ -206,6 +226,86 @@ sub r {
 	my ($self) = @_;
 	
 	return $self->{r};
+}
+
+=item reply_with_file($type, $source, $name)
+
+Enables file sending mode, causing go() to send the file specified by $source to
+the client after calling pre_header_initialize(). The content type sent is
+$type, and the suggested client-side file name is $name.
+
+=cut
+
+sub reply_with_file {
+	my ($self, $type, $source, $name) = @_;
+	
+	$self->{reply_with_file} = {
+		type => $type,
+		source => $source,
+		name => $name,
+	};
+}
+
+=item do_reply_with_file($fileHash)
+
+Handler for reply_with_file(), used by go(). DO NOT CALL THIS METHOD DIRECTLY.
+
+=cut
+
+sub do_reply_with_file {
+	my ($self, $fileHash) = @_;
+	my $r = $self->r;
+	
+	my $type = $self->{sendFile}->{type};
+	my $source = $fileHash->{source};
+	my $name = $self->{sendFile}->{name};
+	
+	# if there was a problem, we return here and let go() worry about sending the reply
+	return NOT_FOUND unless -e $source;
+	return FORBIDDEN unless -r $source;
+	
+	# open the file now, so we can send the proper error status is we fail
+	open my $fh, "<", $source or return SERVER_ERROR;
+	
+	# send our custom HTTP header
+	$r->status(OK);
+	$r->content_type($type);
+	$r->header_out("Content-Disposition" => "attachment; filename=\"$name\"");
+	$r->send_http_header;
+	
+	# send the file
+	$r->send_fd($fh);
+	
+	# close the file and go home
+	close $fh;
+}
+
+=item reply_with_redirect($url)
+
+Enables redirect mode, causing go() to redirect to the given URL after calling
+pre_header_initialize().
+
+=cut
+
+sub reply_with_redirect {
+	my ($self, $url) = @_;
+	
+	$self->{reply_with_redirect} = $url;
+}
+
+=item do_reply_with_redirect($url)
+
+Handler for reply_with_redirect(), used by go(). DO NOT CALL THIS METHOD DIRECTLY.
+
+=cut
+
+sub do_reply_with_redirect {
+	my ($self, $url) = @_;
+	my $r = $self->r;
+	
+	$r->status(REDIRECT);
+	$r->header_out(Location => $url);
+	$r->send_http_header();
 }
 
 =back
@@ -255,6 +355,8 @@ See sendFile() above for more information on the sendFile mechanism.
 sub header {
 	my $self = shift;
 	my $r = $self->r;
+	
+	# FIXME: when $self->{sendFile} is no longer being set, remove sendFile handler
 	
 	if ($self->{sendFile}) {
 		my $contentType = $self->{sendFile}->{type};
@@ -481,9 +583,7 @@ sub loginstatus {
 		my $eUserID = $r->param("effectiveUser");
 		
 		my $stopActingURL = $self->systemLink($urlpath, # current path
-			values => {
-				effectiveUser => $userID,
-			},
+			params => { effectiveUser => $userID },
 		);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
 		
@@ -1055,23 +1155,25 @@ object from which the base path will be taken. %options can consist of:
 
 =item params
 
-A reference to a list containing names of parameters to add to the C<values>
-hash below. The values are taken from the current request.
+Can be either a reference to an array or a reference to a hash.
 
-=item values
+If it is a reference to a hash, it maps parmaeter names to values. These
+parameters will be included in the generated link. If a value is an arrayref,
+the values of the array referenced will be used. If a value is undefined, the
+value from the current request will be used.
 
-A reference to a hash associating request parameters with replacement values.
-Each parameter listed here is added to the URL.
+If C<params> is an arrayref, it is interpreted as a list of parameter names.
+These parameters will be included in the generated link, using the values from
+the current request.
 
-FIXME: this should be changed so that params is a hash, and a value is taken
-from the current request if the value given is undef. The get rid of values. FIX
-THIS SOON before too much code relies on it!
+Unless C<authen> is false (see below), the authentication parameters (C<user>,
+C<effectiveUser>, and C<key>) are included with their default values.
 
 =item authen
 
-If true, authentication parameters (C<user>, C<effectiveUser>, and <key>) will
-be included in the list of C<params>. Since this is usually what you want, if
-this option is not given a true value is assumed.
+If set to a false value, the authentication parameters (C<user>,
+C<effectiveUser>, and C<key>) are included in the the generated link unless
+explicitly listed in C<params>.
 
 =back
 
@@ -1082,31 +1184,51 @@ sub systemLink {
 	my ($self, $urlpath, %options) = @_;
 	my $r = $self->r;
 	
-	my @params = ();
+	my %params = ();
 	if (exists $options{params}) {
-		croak "option 'params' is not an arrayref" unless ref $options{params} eq "ARRAY";
-		@params = @{ $options{params} };
-	}
-	
-	my %values = ();
-	if (exists $options{values}) {
-		croak "option 'values' is not an hashref" unless ref $options{values} eq "HASH";
-		%values = %{ $options{values} };
+		if (ref $options{params} eq "HASH") {
+			%params = %{ $options{params} };
+		} elsif (ref $options{params} eq "ARRAY") {
+			my @names = @{ $options{params} };
+			@params{@names} = ();
+		} else {
+			croak "option 'params' is not a hashref or an arrayref";
+		}
 	}
 	
 	my $authen = exists $options{authen} ? $options{authen} : 1;
-	push @params, qw/user effectiveUser key/ if $authen;
-	
-	foreach my $param (@params) {
-		next if exists $values{$param};
-		$values{$param} = $r->param($param);
+	if ($authen) {
+		$params{user}          = undef unless exists $params{user};
+		$params{effectiveUser} = undef unless exists $params{effectiveUser};
+		$params{key}           = undef unless exists $params{key};
 	}
 	
 	my $url = $r->location . $urlpath->path;
+	my $first = 1;
 	
-	if (keys %values) {
-		$url .= "?";
-		$url .= join("&", map { "$_=$values{$_}" } keys %values);
+	foreach my $name (keys %params) {
+		my $value = $params{$name};
+		
+		my @values;
+		if (defined $value) {
+			if (ref $value eq "ARRAY") {
+				@values = @$value;
+			} else {
+				@values = $value;
+			}
+		} elsif (defined $r->param($name)) {
+			@values = $r->param($name);
+		}
+		
+		if (@values) {
+			if ($first) {
+				$url .= "?";
+				$first = 0;
+			} else {
+				$url .= "&";
+			}
+			$url .= join "&", map { "$name=$_" } @values;
+		}
 	}
 	
 	return $url;
