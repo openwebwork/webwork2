@@ -103,7 +103,6 @@ sub pre_header_initialize {
 	my %will;
 	foreach (keys %must) {
 		$will{$_} = $can{$_} && ($want{$_} || $must{$_});
-		#warn "$_: can? $can{$_} want? $want{$_} must? $must{$_} will? $will{$_}\n";
 	}
 	
 	##### sticky answers #####
@@ -129,10 +128,14 @@ sub pre_header_initialize {
 			showHints       => $will{showHints},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
-			# try leaving processAnswers on all the time?
-			processAnswers  => 1, #$submitAnswers ? 1 : 0,
+			processAnswers  => 1,
 		},
 	);
+	
+	##### fix hint/solution options #####
+	
+	$can{showHints}     &&= $pg->{flags}->{hintExists};
+	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
 	##### store fields #####
 	
@@ -395,19 +398,19 @@ sub body {
 	}
 	
 	# debugging stuff
-	#print
-	#	CGI::hr(),
-	#	CGI::h2("debugging information"),
-	#	CGI::h3("form fields"),
-	#	ref2string($self->{formFields}),
-	#	CGI::h3("user object"),
-	#	ref2string($self->{user}),
-	#	CGI::h3("set object"),
-	#	ref2string($set),
-	#	CGI::h3("problem object"),
-	#	ref2string($problem),
-	#	CGI::h3("PG object"),
-	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	print
+		CGI::hr(),
+		CGI::h2("debugging information"),
+		CGI::h3("form fields"),
+		ref2string($self->{formFields}),
+		CGI::h3("user object"),
+		ref2string($self->{user}),
+		CGI::h3("set object"),
+		ref2string($set),
+		CGI::h3("problem object"),
+		ref2string($problem),
+		CGI::h3("PG object"),
+		ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	
 	return "";
 }

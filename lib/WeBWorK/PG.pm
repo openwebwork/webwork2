@@ -251,8 +251,8 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
 	$envir{languageMode}      = $envir{displayMode};	 
 	$envir{outputMode}        = $envir{displayMode};	 
-	$envir{displayHintsQ}     = $options->{hints};	 
-	$envir{displaySolutionsQ} = $options->{solutions};
+	$envir{displayHintsQ}     = $options->{showHints};	 
+	$envir{displaySolutionsQ} = $options->{showSolutions};
 	$envir{refreshMath2img}   = $options->{refreshMath2img};
 	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
 	

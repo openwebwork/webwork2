@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.30 2003-01-06 19:17:27 sh002i Exp $
+# $Id: TODO,v 1.31 2003-01-06 19:34:35 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -94,7 +94,7 @@ DONE	make preview-on-submit optional
 	effectiveUser for at least Problem.pm
 	calling logout requires valid key -- doesn't make sense.
 DONE	sort problems by due date
-	disable "show hint/solution" when there's no hint/solution
+DONE	disable "show hint/solution" when there's no hint/solution
 	results table
 		part(or blank)/entered/preview/result/messages
 		don't show messages unless there are some
