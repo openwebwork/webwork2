@@ -660,11 +660,6 @@ __PACKAGE__->has_explicit_order(abstract_problems => "problem_order");
 sub assign_to_participant {
 	my ($self, $Participant) = @_;
 	
-	my $already_assigned = count_search_where WeBWorK::DBv3::SetAssignment(
-		abstract_set => $self,
-		participant => $Participant,
-	);
-	
 	my $SetAssignment = eval {
 		create WeBWorK::DBv3::SetAssignment({
 			abstract_set => $self,
@@ -675,27 +670,34 @@ sub assign_to_participant {
 		"' is already assigned to participant '", $Participant->user->name, "'.\n";
 	$@ and die $@;
 	
-	my @problem_order = $self->problem_order_list;
+	# order in which to assign abstract problems to participant
+	my @problem_assignment_order = $self->problem_order_list;
 	
+	# if it's time to reorder, we do that now
 	if ($self->reorder_time eq "assignment") {
-		my @new_problem_order = @problem_order;
 		
+		# randomize?
 		if ($self->reorder_type eq "none") {
 			# leave order alone
 		} elsif ($self->reorder_type eq "random") {
 			# randomize
-			fisher_yates_shuffle(\@new_problem_order);
+			fisher_yates_shuffle(\@problem_assignment_order);
 		}
 		
+		# take a subset?
 		if (defined $self->reorder_subset_size) {
 			my $range = $self->reorder_subset_size;
-			if ($range < @new_problem_order) {
-				@new_problem_order = @new_problem_order[0 .. $range-1];
+			if ($range < @problem_assignment_order) {
+				@problem_assignment_order = @problem_assignment_order[0 .. $range-1];
 			}
 		}
+	}
+	
+	# order of assigned problems
+	my @assigned_problem_order;
+	
+	foreach my $abs_prob_id (@problem_assignment_order) {
 		
-		# set problem order for assignment
-		$SetAssignment->problem_order_list(@new_problem_order);
 	}
 }
 
