@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.20 2004/01/25 15:53:07 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.21 2004/01/25 18:16:27 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,30 +26,59 @@ WeBWorK::ContentGenerator::Login - display a login form.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Utils qw(readFile dequote);
 
-sub title {
-	my  $self   = shift;
-	my  $r      = $self->{r};
-	my  $ce     = $self->{ce};
-	my  $courseName  = $ce->{courseName};
-	return "Login to $courseName";
+# This content generator is NOT logged in.
+sub if_loggedin {
+	my ($self, $arg) = @_;
+	
+	return !$arg;
 }
 
-sub links {
-	return "";
+sub info {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
+	my $login_info = $ce->{courseFiles}->{login_info};
+	
+	if (defined $login_info and $login_info) {
+		my $login_info_path = $ce->{courseDirs}->{templates} . "/$login_info";
+		
+		# deal with previewing a temporary file
+		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
+				and defined $r->param("editFileSuffix")) {
+			$login_info_path .= $r->param("editFileSuffix");
+		}
+		
+		if (-f $login_info_path) {
+			my $text = eval { readFile($login_info_path) };
+			if ($@) {
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("$@"),
+				);
+			} else {
+				print CGI::p(CGI::b("Login Info")), $text;
+			}
+		}
+		
+		return "";
+	}
 }
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $course_env = $self->{ce};
-	my $db = $self->{db};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
 	# get some stuff together
 	my $user = $r->param("user") || "";
 	my $key = $r->param("key");
 	my $passwd = $r->param("passwd") || "";
-	my $course = $course_env->{"courseName"};
-	my $practiceUserPrefix = $course_env->{practiceUserPrefix};
+	my $course = $urlpath->arg("courseID");
+	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	
 	# don't fill in the user ID for practice users
 	# (they should use the "Guest Login" button)
@@ -60,102 +89,62 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	if ($r->notes("authen_error")) {
-		print CGI::p(CGI::font({-color => 'red'},
-			CGI::b($r->notes("authen_error"))));
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p($r->notes("authen_error"))
+		);
 	}
 	
 	print CGI::p("Please enter your username and password for ",CGI::b($course)," below:");
-	print CGI::p(
-		"If you check \"Remember Me\", your session key will be stored in a"
-		. " browser cookie for later use. This feature is not safe for public"
-		. " workstations, untrusted machines, and machines over which you do"
-		. " not have direct control."
-	);
+	print CGI::p(dequote <<"	EOT");
+		If you check ${\( CGI::b("Remember Me") )} your login information will
+		be remembered by the browser you are using, allowing you to visit
+		WeBWorK pages without typing your user name and password (until your
+		session expires). This feature is not safe for public workstations,
+		untrusted machines, and machines over which you do not have direct
+		control.
+	EOT
 	
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
 	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
 	
-	print
-		CGI::table({-border => 0}, 
-		  CGI::Tr([
-		    CGI::td([
-		      "Username:",
-		      CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
-		    ]),
-		    CGI::td([
-		      "Password:",
-		      CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
-		    ]),
-		    CGI::td([
-		      "",
-			  CGI::checkbox(
-			    -name=>"send_cookie",
-				-label=>"Remember Me",
-			  ),
-		    ]),
-		 ])
-		)
-	;
+	print CGI::table({class=>"FormLayout"}, 
+	  CGI::Tr([
+		CGI::td([
+		  "Username:",
+		  CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
+		]),
+		CGI::td([
+		  "Password:",
+		  CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
+		]),
+		CGI::td([
+		  "",
+		  CGI::checkbox(
+			-name=>"send_cookie",
+			-label=>"Remember Me",
+		  ),
+		]),
+	 ])
+	);
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
 	print CGI::endform();
 	
+	# form for guest login
 	if (grep m/^$practiceUserPrefix/, $db->listUsers) {
-	    print CGI::startform({-method=>"POST", -action=>$r->uri});
-	    print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
-		print CGI::p(
-			"This course supports guest logins. Click " . CGI::b("Guest Login")
-			. " to log into this course as a guest.",
-			CGI::br(),
-			CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"}),
-		);
+		print CGI::startform({-method=>"POST", -action=>$r->uri});
+		print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
+		print CGI::p(dequote <<"		EOT");
+			This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
+			to log into this course as a guest.
+		EOT
+		print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
 	    print CGI::endform();
 	}
-	return "";
-}
-
-sub info {
-	my $self = shift;
-	my $r    = $self->{r};
-	my $ce   = $self->{ce};
-	my $db   = $self->{db};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-
-
-	if (defined $ce->{courseFiles}->{login_info}
-		and $ce->{courseFiles}->{login_info}) {
-		my $login_info_path  = $ce->{courseDirs}->{templates}
-		                     .'/'. $ce->{courseFiles}->{login_info};
-		$login_info_path    .= '.'.$r->param("editFileSuffix") 
-		        if defined($r->param("editMode") ) and $r->param("editMode") eq 'temporaryFile'  and defined($r->param("editFileSuffix"));
-
-		my $login_info = eval { WeBWorK::Utils::readFile($login_info_path) };
-		$@ or print $login_info;
-		
-# 		my $user            = $r->param("user");
-# 		my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
-# 		$permissionLevel    = 0 unless defined $permissionLevel;
-# 		if ($permissionLevel) {
-# 			my $editURL = "$root/$courseName/instructor/pgProblemEditor/?"
-# 						  .$self->url_authen_args
-# 						  ."&file_type=other&edit_file_path="
-# 						  .$ce->{courseFiles}->{course_info}
-# 			;
-# 			my $editText      = "Edit file";
-# 			$editText         = "Edit temporary file" if $r->param("editMode") eq 'temporaryFile';
-# 			print CGI::br(), CGI::a({-href=>$editURL}, $editText);
-# 	    }
-	}
-	'';
-}
-# This content generator is NOT logged in.
-sub if_loggedin($$) {
-	my ($self, $arg) = (@_);
 	
-	return !$arg;
+	return "";
 }
 
 1;
