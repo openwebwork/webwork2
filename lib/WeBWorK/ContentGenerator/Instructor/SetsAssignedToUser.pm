@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.4 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.5 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -165,7 +165,7 @@ sub body {
 	
 	foreach my $Set (@Sets) {
 		my $setID = $Set->set_id;
-		my $prettyName = formatDateTime($Set->open_date);
+		my $prettyName = formatDateTime($Set->due_date);
 		
 		# this is true if $Set is assigned to the selected user
 		my $currentlyAssigned = defined $db->getUserSet($userID, $setID); # checked
