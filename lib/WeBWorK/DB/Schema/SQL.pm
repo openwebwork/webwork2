@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.23 2004/09/29 23:38:40 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.24 2004/10/22 22:59:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -368,7 +368,11 @@ sub makeWhereClause($@) {
 		next unless defined $part;
 		
 		$where .= " AND" unless $first;
-		$where .= " BINARY $name=?";
+#		$where .= " BINARY $name=?";
+		$where .= " $name=?";   ## Make lookups case insensitive.  Otherwise
+								## indices seem not to be used which slows things
+								## down drastically.  See  
+								## openwebwork-devel@lists.sourceforge.net discussion
 		push @used_keyparts, $part;
 		
 		$first = 0;
