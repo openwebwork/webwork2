@@ -11,6 +11,41 @@ Apache::WeBWorK - The WeBWorK dispatcher module.
 
 =cut
 
+# CGI::Carp makes pretty log and browser error messages. It should be loaded as
+# soon as possible.
+use CGI::Carp qw(fatalsToBrowser);
+BEGIN {
+	# CGI::Carp needs a little patch to make it work with the "vanilla"
+	# mod_perl API (as opposed to Apache::Registry). _longmess is supposed
+	# to filter out evals that are always there, as a result of being run
+	# under mod_perl. Under the "vanilla" API, the first stack frame is
+	# "eval {...} called at /dev/null line 0". This needs to be removed.
+	# 
+	# [later:]
+	# 
+	# Ok, so apparently, when a die happens during compilation, the first
+	# stack frame is the following:
+	# 
+	# 	eval 'require Apache::WeBWorK
+	# 	;' called at /path/to/lib/Apache/WeBWorK.pm line 0
+	# 
+	# So we'll try to handle that too.
+	sub CGI::Carp::_longmess {
+		my $message = Carp::longmess();
+		my $mod_perl = exists $ENV{MOD_PERL};
+		$message =~ s,eval[^\n]+Apache/Registry\.pm.*,,s if $mod_perl;
+		
+		# for a runtime call stack
+		$message =~ s,eval[^\n]+/dev/null line 0.*,,s if $mod_perl;
+		
+		# for a compile-time call stack
+		my $pkg = __PACKAGE__;
+		$message =~ s/eval 'require $pkg\n.*//s if $mod_perl;
+		
+		return $message;
+	}
+}
+
 use strict;
 use warnings;
 use Apache::Constants qw(:common REDIRECT);
@@ -35,22 +70,26 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
-# This module should be installed as a Handler for the location selected for
-# WeBWorK on your webserver. Here is an example of a stanza that can be added
-# to your httpd.conf file to achieve this:
-#
-# <IfModule mod_perl.c>
-#   PerlFreshRestart On
-#   <Location /webwork>
-#     SetHandler perl-script
-#     PerlHandler Apache::WeBWorK
-#     PerlSetVar webwork_root /path/to/webwork-modperl
-#     <Perl>
-#       use lib '/path/to/webwork-modperl/lib';
-#       use lib '/path/to/webwork-modperl/pglib';
-#     </Perl>
-#   </Location>
-# </IfModule>
+=head1 CONFIGURATION
+
+This module should be installed as a Handler for the location selected for
+WeBWorK on your webserver. Here is an example of a stanza that can be added to
+your httpd.conf file to achieve this:
+
+ <IfModule mod_perl.c>
+ 	PerlFreshRestart On
+ 	<Location /webwork>
+ 		SetHandler perl-script
+ 		PerlHandler Apache::WeBWorK
+ 		PerlSetVar webwork_root /path/to/webwork-modperl
+ 		<Perl>
+ 			use lib '/path/to/webwork-modperl/lib';
+ 			use lib '/path/to/webwork-modperl/pglib';
+ 		</Perl>
+ 	</Location>
+ </IfModule>
+
+=cut
 
 sub handler() {
 	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data, and sift through it for the key.  So use Apache::Request
