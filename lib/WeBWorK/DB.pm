@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.50 2004/06/16 17:13:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.51 2004/06/16 18:26:59 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -314,28 +314,109 @@ sub hashDatabaseOK {
 	
 	##### are all sets assigned to the user with ID globalUserID? #####
 	
-	my @userSetIDs = $self->{set_user}->list(undef, undef);
+	# FIXME: this is way too slow!
+	#my @userSetIDs = $self->{set_user}->list(undef, undef);
 	
-	my %userSetStatus;
-	foreach my $userSetID (@userSetIDs) {
-		my ($userID, $setID) = @$userSetID;
-		$userSetStatus{$setID}->{$userID} = 1;
+	# Timing Data
+	# 
+	# old method:
+	# TIMING 36119 1 1087502726.923311 (0.139117) mth143: WeBWorK::DB::hashDatabaseOK: about to get orphaned UserSets
+	# TIMING 36119 1 1087502768.074221 (41.290027) mth143: WeBWorK::DB::hashDatabaseOK: done getting orphaned UserSets
+	#
+	# new method:
+	# TIMING 36134 0 1087502854.579133 (0.141437) mth143: WeBWorK::DB::hashDatabaseOK: about to get orphaned UserSets
+	# TIMING 36134 0 1087502856.852504 (2.414808) mth143: WeBWorK::DB::hashDatabaseOK: done getting orphaned UserSets
+	# 
+	# yay!
+	
+	$WeBWorK::timer->continue(__PACKAGE__ . "::hashDatabaseOK: about to get orphaned UserSets") if defined $WeBWorK::timer;
+	
+	# ... so instead, we're going to do things manually
+	
+	# key: setID, value: hash of userIDs of users to whom this set is assigned
+	my %orphanUserSets;
+	
+	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash") {
+		# we can only do this with WW1Hash
+		#warn "the fast way!\n";
+		
+		# connect
+		$self->{set_user}->{driver}->connect("ro")
+			or return 0, @results, "Failed to connect to set_user database.";
+		
+		# get PSVNs for global user (²N)
+		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
+		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
+		
+		# get setIDs for PSVNs (M)
+		my @globalUserSetIDs;
+		foreach my $PSVN (@globalUserPSVNs) {
+			#warn "getting setID for PSVN '$PSVN'...\n";
+			my $string = $self->{set_user}->fetchString($PSVN);
+			my (undef, $setID) = $self->{set_user}->string2IDs($string); # discard userID, problemIDs
+			push @globalUserSetIDs, $setID;
+			#warn "got setID '$setID'\n";
+		}
+		
+		# get PSVNs for each setID (²N*M)
+		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
+		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
+		
+		# get all PSVNs (N*M)
+		my @allPSVNs = $self->{set_user}->getAllPSVNs;
+		#warn "found ", scalar @allPSVNs, " PSVNs total.\n";
+		
+		# eliminate PSVNs of sets that are assigned to the global user
+		my %allPSVNs;
+		@allPSVNs{@allPSVNs} = ();
+		
+		foreach my $PSVN (@okPSVNs) {
+			delete $allPSVNs{$PSVN};
+		}
+		
+		# get setIDs for orphan PSVNs
+		foreach my $PSVN (keys %allPSVNs) {
+			#warn "getting userID and setID for PSVN '$PSVN'...\n";
+			my $string = $self->{set_user}->fetchString($PSVN);
+			my ($userID, $setID) = $self->{set_user}->string2IDs($string);
+			$orphanUserSets{$setID}->{$userID} = 1;
+			#warn "got setID '$setID' for userID '$userID'\n";
+		}
+		
+		# disconnect
+		$self->{set_user}->{driver}->disconnect;
+	} else {
+		# otherwise, do it the slow way (maybe it's not slow with some other schema?)
+		#warn "oddly enough, set_user isn't using WW1Hash, so we have to use the slow list() method";
+		my @userSetIDs = $self->{set_user}->list(undef, undef);
+		
+		foreach my $userSetID (@userSetIDs) {
+			my ($userID, $setID) = @$userSetID;
+			$orphanUserSets{$setID}->{$userID} = 1;
+		}
+		
+		foreach my $setID (keys %orphanUserSets) {
+			delete $orphanUserSets{$setID}
+				if exists $orphanUserSets{$setID}->{$globalUserID};
+		}
 	}
 	
-	foreach my $setID (keys %userSetStatus) {
-		delete $userSetStatus{$setID}
-			if exists $userSetStatus{$setID}->{$globalUserID};
-	}
+	$WeBWorK::timer->continue(__PACKAGE__ . "::hashDatabaseOK: done getting orphaned UserSets") if defined $WeBWorK::timer;
 	
-	if (keys %userSetStatus) {
+	if (keys %orphanUserSets) {
 		if ($fix) {
-			foreach my $setID (keys %userSetStatus) {
-				my $userID = ( keys %{$userSetStatus{$setID}} )[0];
+			foreach my $setID (keys %orphanUserSets) {
+				my $userID = ( keys %{$orphanUserSets{$setID}} )[0];
 				
 				# grab the first UserSet of this set (connect and disconnect required for get1*)
-				$self->{set_user}->{driver}->connect("ro");
+				$self->{set_user}->{driver}->connect("ro")
+					or return 0, @results, "Failed to connect to set_user database.";
 				my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
 				$self->{set_user}->{driver}->disconnect();
+				unless ($RawUserSet) {
+					#warn "failed to fetch UserSet '$setID' for user '$userID'!\n";
+					next;
+				}
 				
 				# change user ID to globalUserID and add to database
 				$RawUserSet->user_id($globalUserID);
@@ -346,7 +427,7 @@ sub hashDatabaseOK {
 				#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
 			}
 		} else {
-			foreach my $setID (keys %userSetStatus) {
+			foreach my $setID (keys %orphanUserSets) {
 				#warn "hashDatabaseOK($fix): set '$setID' not assigned to global user '$globalUserID' -- bad!\n";
 				push @results, "Set '$setID' not assigned to global user '$globalUserID'.";
 			}
