@@ -148,6 +148,9 @@ sub add($$) {
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
 	my $db = $self->{db};
+	my $table = $self->{table};
+	$table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$1};
 	
 	return 0 unless $self->{driver}->connect("rw");
 	
@@ -156,7 +159,7 @@ sub add($$) {
 	my $result;
 	if ($self->{table} eq "set_user") {
 		$self->{driver}->disconnect();
-		my $globalSet = $db->getGlobalSet($setID);
+		my $globalSet = $globalSchema->get($setID);
 		$self->{driver}->connect("rw");
 		$self->copyOverrides($globalSet, $Record);
 		if (defined $PSVN) {
@@ -170,7 +173,7 @@ sub add($$) {
 	} elsif ($self->{table} eq "problem_user") {
 		my $problemID = $Record->problem_id();
 		$self->{driver}->disconnect();
-		my $globalProblem = $db->getGlobalProblem($setID, $problemID);
+		my $globalProblem = $globalSchema->get($setID, $problemID);
 		$self->{driver}->connect("rw");
 		$self->copyOverrides($globalProblem, $Record);
 		unless (defined $PSVN) {
@@ -252,6 +255,9 @@ sub put($$) {
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
 	my $db = $self->{db};
+	my $table = $self->{table};
+	$table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$1};
 	
 	return 0 unless $self->{driver}->connect("rw");
 	
@@ -271,14 +277,14 @@ sub put($$) {
 			$self->{driver}->disconnect();
 			# This call makes database connections, so we
 			# have to release our control on it.
-			my $globalSet = $db->getGlobalSet($setID);
+			my $globalSet = $globalSchema->get($setID);
 			$self->{driver}->connect("rw");
 	 		$self->copyOverrides($globalSet, $Record);
 			$string = $self->records2string($Record, @Problems);
 		} elsif ($self->{table} eq "problem_user") {
 			my $problemID = $Record->problem_id();
 			$self->{driver}->disconnect();
-			my $globalProblem = $db->getGlobalProblem($setID, $problemID);
+			my $globalProblem = $globalSchema->get($setID, $problemID);
 			$self->{driver}->connect("rw");
 			$self->copyOverrides($globalProblem, $Record);
 			my $found = 0;
