@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.19 2003-06-04 23:47:33 malsyned Exp $
+# $Id: global.conf.dist,v 1.20 2003-06-05 11:48:23 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -30,8 +30,8 @@
 );
 
 %webworkFiles = (
-	environment => "$webworkDirs{conf}/global.conf",
-	hardcopySnippets => {
+	environment        => "$webworkDirs{conf}/global.conf",
+	hardcopySnippets   => {
 		preamble       => "$webworkDirs{conf}/hardcopyPreamble.tex",
 		setHeader      => "$webworkDirs{conf}/hardcopySetHeader.pg",
 		problemDivider => "$webworkDirs{conf}/hardcopyProblemDivider.tex",
@@ -43,14 +43,16 @@
 		setHeader => "$webworkDirs{conf}/screenSetHeader.pg",
 	},
 	logs => {
-		timing      => "$webworkDirs{logs}/timing.log",
+		timing         => "$webworkDirs{logs}/timing.log",
+		transaction    => "$courseDirs{logs}/transaction.log",
+		pastAnswerList => "$courseDirs{logs}/past_answers.log",
 	},
 );
 
 %webworkURLs = (
 	root    => "$webworkURLRoot",
-	home    => "http://host.yourdomaon.edu/webwork-info",
-	htdocs  => "/webwork_files",
+	home    => "/webwork2_files/index.html",
+	htdocs  => "/webwork2_files",
 	docs    => "http://webhost.math.rochester.edu/webworkdocs/docs",
 	oldProf => "/webwork-old/profLogin.pl",
 );
@@ -79,7 +81,8 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 );
 
 # quick hack to fix transaction logging. blah.
-$webworkFiles{logs}->{transaction} = "$courseDirs{logs}/transaction.log";
+$webworkFiles{logs}->{transaction} 		= 	"$courseDirs{logs}/transaction.log";
+$webworkFiles{logs}->{pastAnswerList} 	= 	"$courseDirs{logs}/past_answers.log";
 
 my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %courseURLs = (
@@ -140,7 +143,14 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 ################################################################################
 # Database and session 
 ################################################################################
+# temporary values needed for using both GDBM  databases. 
+# Use  auser name for which all problems have been built, and none have
+# been specifically reassigned.
+#FIXME   !!!! what hack!!!!!!
 
+	$dbLayout{set}->{params}->{globalUserID} = "practice1";
+	$dbLayout{problem}->{params}->{globalUserID} = "practice1";
+	
 # dbInfo records some data for the "old" WW/Classlist/Auth.pm database system
 # {auth,wwdb,cldb}_type = database type: GDBM currently implemented
 # {auth_passwd,auth_perm,auth_keys,wwdb,cldb}_file = path to database file
@@ -190,7 +200,7 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	},
 	set => {
 		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::Null",
+		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
 		driver => "WeBWorK::DB::Driver::Null",
 		source => undef,
 	},
@@ -203,7 +213,7 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	},
 	problem => {
 		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::Null",
+		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
 		driver => "WeBWorK::DB::Driver::Null",
 		source => undef,
 	},
@@ -220,6 +230,8 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # certain actions.  In the current system, >=10 will allow a professor
 # to perform the action, >=5 will allow a TA to, and >=0 will allow a
 # student to perform an action (almost never what you want).
+my $ta = 5;
+my $professor = 10;
 %permissionLevels = (
 	"become_student" => 10,
 	"access_instructor_tools" => $ta,
