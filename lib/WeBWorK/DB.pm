@@ -271,8 +271,8 @@ sub deleteUserSet($$$) {
 sub listGlobalProblems($$) {
 	my ($self, $setID) = @_;
 	return map { $_->[1] }
-		grep { $_->[0] eq $setID }
-			$self->{problem}->list(undef, undef);
+		#grep { $_->[0] eq $setID }
+			$self->{problem}->list($setID, undef);
 }
 
 sub addGlobalProblem($$) {

@@ -74,6 +74,7 @@ sub list($@) {
 	my $userSchema = $db->{"${table}_user"};
 	
 	my @userRecordIDs = $userSchema->list(undef, @keyparts);
+	
 	my @recordIDs;
 	if ($self->{table} eq "set") {
 		my %setIDs;
