@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.37 2004/05/24 01:34:51 mschmitt Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.38 2004/06/14 20:30:30 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -216,9 +216,8 @@ sub body {
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
 	print CGI::p("Use the interface below to quickly access commonly-used
-	instructor tools, or select a tool from the list to the left.");
-	
-	print CGI::p("Select user(s) and/or set(s) below and click the action button
+	instructor tools, or select a tool from the list to the left.", CGI::br(),
+	"Select user(s) and/or set(s) below and click the action button
 	of your choice.");
 	
 	my @userIDs = $db->listUsers;
@@ -312,6 +311,11 @@ sub body {
 			),
 			CGI::td({colspan=>2,style=>'text-align:center'},
 				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>",
+			),
+			CGI::td({colspan=>2,style=>'text-align:center'},
+				CGI::a({href=>"http://webwork3.math.rochester.edu:11002/webwork2/mth143b/instructor/add_users?".$self->url_authen_args},
+				"Add users",
+				),
 			),
 		]),
 	);
