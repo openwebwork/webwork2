@@ -18,7 +18,7 @@ FIXME: add this
 
 use strict;
 use warnings;
-use WeBWorK::PG::EquationCache;
+use WeBWorK::EquationCache;
 use WeBWorK::Utils qw(readDirectory makeTempDirectory removeTempDirectory);
 
 use constant PREAMBLE => <<'EOF';
@@ -82,7 +82,7 @@ sub new {
 		$self->{dir} = $self->{cacheDir};
 		$self->{url} = $self->{cacheURL};
 		$self->{basename} = "";
-		$self->{equationCache} = WeBWorK::PG::EquationCache->new(cacheDB => $self->{cacheDB});
+		$self->{equationCache} = WeBWorK::EquationCache->new(cacheDB => $self->{cacheDB});
 	}
 	
 	bless $self, $class;
