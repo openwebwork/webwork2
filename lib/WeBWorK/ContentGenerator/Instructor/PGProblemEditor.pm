@@ -30,6 +30,7 @@ use CGI qw();
 use WeBWorK::Utils qw(readFile);
 use Apache::Constants qw(:common REDIRECT);
 use HTML::Entities;
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ###########################################################
 # This editor will edit problem files or set header files or files, such as course_info
@@ -83,8 +84,8 @@ sub pre_header_initialize {
 		# problems redirect to Problem.pm
 		$self->{file_type} eq 'problem' and do {
 			my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-				                   courseID => $courseName, setID => $setName, problemID => $problemNumber);
-			$viewURL        = $self->systemLink($problemPage,
+				courseID => $courseName, setID => $setName, problemID => $problemNumber);
+			$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode     => $displayMode,
 					problemSeed     => $problemSeed,
@@ -92,9 +93,9 @@ sub pre_header_initialize {
 					sourceFilePath  => $self->{currentSourceFilePath},
 					submiterror     => $self->{submiterror},  
 				}
-			); 
+			);
 		};
-
+		
 		# set headers redirect to ProblemSet.pm
 		$self->{file_type} eq 'set_header' and do {
 			my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
@@ -103,7 +104,7 @@ sub pre_header_initialize {
 				params => {
 					displayMode => $displayMode,
 					problemSeed => $problemSeed,
-					editMode    => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
+					editMode => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
 				}
 			);
 		};
@@ -172,11 +173,16 @@ sub body {
 	my $displayMode = $self->{displayMode};
 	my $problemSeed = $self->{problemSeed};	
 	my $uri = $r->uri;
+	
+	my $force_field = defined($r->param('sourceFilePath')) ?
+		CGI::hidden(-name=>'sourceFilePath',
+		            -default=>$r->param('sourceFilePath')) : '';
 	return CGI::p($header),
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
 		# THIS IS BECAUSE TARGET IS NOT A PARAMETER OF <FORM>!!!!!!!!
 		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="_problem">!, 
 		$self->hidden_authen_fields,
+		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div(
 			'Seed: ',
@@ -273,9 +279,16 @@ sub saveFileChanges {
 				# if that doesn't work (the problem is not yet assigned), get the global record
 				$problem_record = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record); # checked
 				
-				# bail if no problem is found
-				die "Cannot find a problem record for set $setName / problem $problemNumber" 
-					unless defined($problem_record);
+
+				if(not defined($problem_record)) {
+				  my $forcedSourceFile = $r->param('sourceFilePath');
+									# bail if no problem is found and we aren't faking it
+					die "Cannot find a problem record for set $setName / problem $problemNumber" unless defined($forcedSourceFile);
+				  $problem_record = fake_problem($db);
+				  $problem_record->problem_id($problemNumber);
+				  $problem_record->source_file($forcedSourceFile);
+				}
+
 				
 				$editFilePath .= '/' . $problem_record->source_file;
 			}
@@ -416,7 +429,6 @@ sub saveFileChanges {
 		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
 		warn "The file $currentSourceFilePath does not have write permissions. \n"
 		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
-		
 	} else {	
 		# unlink the temporary file if there are no errors and the save button has been pushed
 		unlink("$editFilePath.$editFileSuffix")
@@ -430,6 +442,5 @@ sub saveFileChanges {
 	$self->{r_problemContents}        =   \$problemContents;
 	$self->{editFileSuffix}           =   $editFileSuffix;
 }
-
 
 1;
