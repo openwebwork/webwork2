@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.8 2004/02/14 04:07:36 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.9 2004/03/10 16:00:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -321,15 +321,15 @@ print $fh <<EOF;
 # set somewhere, mail from the PG system (i.e. questionaires, essay questions)
 # will fail.
 # 
-# Example: \$mail->{allowedRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu' ];
+# Example: \$mail{allowedRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu' ];
 # 
 EOF
 
 if (defined $ce->{mail}->{allowedRecipients}) {
 	my $value = join ", ", map { "'$_'" } @{ $ce->{mail}->{allowedRecipients} };
-	print $fh "#\$mail->{allowedRecipients} = [ $value ];\n";
+	print $fh "#\$mail{allowedRecipients} = [ $value ];\n";
 } else {
-	print $fh "#\$mail->{allowedRecipients} = [  ];\n";
+	print $fh "#\$mail{allowedRecipients} = [  ];\n";
 }
 
 print $fh <<EOF;
@@ -337,15 +337,15 @@ print $fh <<EOF;
 # Feedback recipients - list of email addresses to send feedback to. If not
 # defined, mail is sent to all professors and TAs.
 # 
-# Example: \$mail->{allowedRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu', 'feedback-list\@lists.webwork.rochester.edu' ];
+# Example: \$mail{feedbackRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu', 'feedback-list\@lists.webwork.rochester.edu' ];
 # 
 EOF
 
 if (defined $ce->{mail}->{feedbackRecipients}) {
 	my $value = join ", ", map { "'$_'" } @{ $ce->{mail}->{feedbackRecipients} };
-	print $fh "#\$mail->{feedbackRecipients} = [ $value ];\n";
+	print $fh "#\$mail{feedbackRecipients} = [ $value ];\n";
 } else {
-	print $fh "#\$mail->{allowedRecipients} = [  ];\n";
+	print $fh "#\$mail{feedbackRecipients} = [  ];\n";
 }
 
 print $fh <<EOF;
@@ -354,16 +354,16 @@ print $fh <<EOF;
 # users who should get PG source file names in their rendered problems. This is
 # usually set to the list of professors and TAs in the course.
 # 
-# Example: \$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ 'gage', 'apizer', 'voloshin' ];
+# Example: \$pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ 'gage', 'apizer', 'voloshin' ];
 # 
 EOF
 
 if (defined $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}) {
 	my $value = join ", ", map { "'$_'" }
 		@{ $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR} };
-	print $fh "#\$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ $value ];\n";
+	print $fh "#\$pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ $value ];\n";
 } else {
-	print $fh "#\$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [  ];\n";
+	print $fh "#\$pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [  ];\n";
 }
 
 close $fh;
