@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.36 2004/05/24 01:27:48 mschmitt Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.37 2004/05/24 01:34:51 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,15 +47,13 @@ sub pre_header_initialize {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
-	unless ($authz->hasPermissions($r->param("user"), "modify_student_data")) {
-		$self->addmessage("You are not authorized to modify student data");
-		return;
-	}
-	
+
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
+
+	# Check permissions
+	return unless ($authz->hasPermissions($userID, "access_instructor_tools"));
 	
 	my @selectedUserIDs = $r->param("selected_users");
 	my @selectedSetIDs = $r->param("selected_sets");
@@ -181,14 +179,24 @@ sub pre_header_initialize {
 			
 		}
 	};
+
+	push @error, "You are not allowed to act as a student." 
+		if (defined param $r "act_as_user" and not $authz->hasPermissions($userID, "become_student"));
+	push @error, "You are not allowed to modify problem sets." 
+		if ((defined param $r "edit_sets" or defined param $r "edit_set_for_user") and not $authz->hasPermissions($userID, "modify_problem_sets"));
+	push @error, "You are not allowed to assign problem sets."
+		if ((defined param $r "sets_assigned_to_user" or defined param $r "users_assigned_to_set") and not $authz->hasPermissions($userID, "assign_problem_sets"));
+	push @error, "You are not allowed to modify student data."
+		if ((defined param $r "edit_users" or defined param $r "user_options") and not $authz->hasPermissions($userID, "modify_student_data"));
+	push @error, "You are not allowed to score sets."
+		if (defined param $r "score_sets" and not $authz->hasPermissions($userID, "score_sets"));
 	
 	# handle errors, redirect to target page
-	
 	if (@error) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"},
-			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:"),
+		$self->addbadmessage(
+			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:") .
 			CGI::ul(CGI::li(\@error)),
-		));
+		);
 
 	} elsif ($module) {
 		my $page = $urlpath->newFromModule($module, %args);
@@ -204,7 +212,7 @@ sub body {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	
-	return CGI::em("You are not authorized to access the Instructor tools.")
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
 	print CGI::p("Use the interface below to quickly access commonly-used
