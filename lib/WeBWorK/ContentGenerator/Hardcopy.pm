@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.46 2004/07/07 14:37:31 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.47.2.1 2004/08/18 22:32:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -285,7 +285,8 @@ sub displayForm($) {
 	my $effectiveUserName = $self->{effectiveUser}->user_id;	
 	my @setNames     = $db->listUserSets($effectiveUserName);
 	my @sets         = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames ); # checked
-	@sets = grep { defined $_ } @sets;
+	@sets            = grep { defined $_ and 
+	                             ( $self->{permissionLevel} > 0 or ($_->published and $_->open_date < time) ) } @sets;
 	@sets            = sort { $a->set_id cmp $b->set_id } @sets;
 	@setNames        = map( {$_->set_id } @sets );  # get sorted version of setNames
 	my %setLabels    = map( {($_->set_id, "set ".$_->set_id )} @sets );
@@ -696,7 +697,15 @@ sub getProblemTeX {
 	    );
 	    return "No set $setName for ".$effectiveUser->user_id;
 	}
-
+    unless (( $set->published and $set->open_date < time ) or $permissionLevel>0 )  {  # return error if set is invisible
+		push(@{$self->{warnings}}, 
+			   setName => $setName, 
+			   problem => 0,
+			   message => "The set $setName is hidden for ".$effectiveUser->first_name.' '.
+	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )'
+	    );
+	    return "The set $setName is not yet ready for ".$effectiveUser->user_id;
+	}
 	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
