@@ -28,7 +28,7 @@ use warnings;
 use CGI::Pretty qw();
 use Data::Dumper;
 use WeBWorK::Utils qw(cryptPassword);
-use WeBWorK::Utils::CourseManagement qw(addCourse);
+use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
 
 # SKEL: If you need to do any processing before the HTTP header is sent, do it
 # in this method:
@@ -129,147 +129,166 @@ sub body {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	print CGI::h2("Create a new course");
+	print CGI::p({style=>"text-align: center"},
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
+		#" | ",
+		#CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
+		" | ",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
+	);
 	
-	my $add_step_max = 4; # the step that actually creates the course
+	print CGI::hr();
 	
-	my $add_step = $r->param("add_step") || 0;
+	my $subDisplay = $r->param("subDisplay");
+	if (defined $subDisplay) {
 	
-	my $new_courseID          = $r->param("new_courseID");
-	my $new_dbLayout          = $r->param("new_dbLayout");
-	my $new_skipDBCreation    = $r->param("new_skipDBCreation");
-	my $new_sql_host          = $r->param("new_sql_host");
-	my $new_sql_port          = $r->param("new_sql_port");
-	my $new_sql_username      = $r->param("new_sql_username");
-	my $new_sql_password      = $r->param("new_sql_password");
-	my $new_sql_database      = $r->param("new_sql_database");
-	my $new_sql_wwhost        = $r->param("new_sql_wwhost");
-	my $new_gdbm_globalUserID = $r->param("new_gdbm_globalUserID");
-	my $new_initial_userID    = $r->param("new_initial_userID");
-	my $new_initial_password  = $r->param("new_initial_password");
-	
-	# "back up" if certain fields aren't filled in
-	
-	if ($add_step > 0) {
-		$add_step = 0 if $new_courseID eq "" or $new_dbLayout eq "";
-	}
-	
-	if ($add_step > 1 and not $new_skipDBCreation) {
-		if ($new_dbLayout eq "sql") {
-			$add_step = 1 if $new_sql_username eq "" or $new_sql_password eq ""
-					or $new_sql_database eq "" or $new_sql_wwhost eq "";
-		} elsif ($new_dbLayout eq "gdbm") {
-			$add_step = 1 if $new_gdbm_globalUserID eq "";
-		}
-	}
-	
-	if ($add_step > 2) {
-		$add_step = 2 if $new_initial_userID ne "" and $new_initial_password eq "";
-	}
-	
-	my $ce2;
-	if ($new_courseID) {
-		$ce2 = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			"FAKE_PG_ROOT", # heh, there's no way to get the PG root out... damn.
-			$new_courseID,
-		);
-	}
-	
-	if ($add_step >= 0 and $add_step < $add_step_max) {
-		print CGI::start_form("POST", $r->uri);
-		print $self->hidden_authen_fields;
-		print CGI::hidden("add_step", 1);
-		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "Course Name:"),
-				CGI::td(
-					CGI::textfield(
-						-name  => "new_courseID",
-						-value => defined $new_courseID ? $new_courseID : "",
-						-size  => 50,
-					),
-				),
-			),
-			CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "Database Layout:"),
-				CGI::td(
-					CGI::popup_menu(
-						-name    => "new_dbLayout", 
-						-values  => [ sort keys %{ $ce->{dbLayouts} } ],
-						-default => defined $new_dbLayout ? $new_dbLayout : "",
-					),
-				),
-			),
-			CGI::Tr({class=>"ButtonRow"},
-				CGI::td({colspan=>2},
-					CGI::submit(
-						-name => "create_course",
-						-value => ($add_step > 0 ? "Change" : "Continue"),
-					),
-				),
-			),
-		);
-		print CGI::end_form();
-	}
-	
-	if ($add_step >= 1 and $add_step < $add_step_max) {
-		print CGI::hr();
-		
-		print CGI::start_form("POST", $r->uri);
-		print $self->hidden_authen_fields;
-		print CGI::hidden("add_step", 2);
-		
-		print CGI::hidden("new_courseID", $new_courseID);
-		print CGI::hidden("new_dbLayout", $new_dbLayout);
-		print CGI::hidden("new_skipDBCreation", $new_skipDBCreation);
-		
-		# there are specific things we're doing per database layout:
-		if ($new_dbLayout eq "sql") {
-			{
-				# find the most common SQL source (stolen from CourseManagement.pm)
-				my %sources;
-				foreach my $table (keys %{ $ce2->{dbLayouts}->{sql} }) {
-					$sources{$ce2->{dbLayouts}->{sql}->{$table}->{source}}++;
-				}
-				my $source;
-				if (keys %sources > 1) {
-					foreach my $curr (keys %sources) {
-						$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
-					}
+		if ($subDisplay eq "add_course") {
+			if (defined $r->param("add_course")) {
+				my @errors = $self->add_course_validate;
+				if (@errors) {
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Please correct the following errors and try again:"),
+						CGI::ul(CGI::li(\@errors)),
+					);
+					$self->add_course_form;
 				} else {
-					($source) = keys %sources;
+					$self->do_add_course;
 				}
-				
-				print CGI::p(
-					CGI::checkbox(
-						-name    => "new_skipDBCreation",
-						-checked => $new_skipDBCreation,
-						-value   => "1",
-						-label   => "Skip database creation",
-					),
-					CGI::br(),
-					"If this is selected, you need not fill in the SQL settings below. However, you must create the database manually before creating this course.",
-				);
-				
-				# print instructions
-				print CGI::p("The SQL settings you enter below must match the settings in this DBI source specification:");
-				print CGI::p({style=>"text-align:center"}, CGI::tt($source));
-				if (keys %sources > 1) {
-					print CGI::p("Note that there is more than one DBI source in this database layout. Only tables using the most common source (above) will be created.");
-				}
+			} else {
+				$self->add_course_form;
 			}
-			
+		}
+		
+		elsif ($subDisplay eq "delete_course") {
+			if (defined $r->param("delete_course")) {
+				# validate or confirm
+				my @errors = $self->delete_course_validate;
+				if (@errors) {
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Please correct the following errors and try again:"),
+						CGI::ul(CGI::li(\@errors)),
+					);
+					$self->delete_course_form;
+				} else {
+					$self->delete_course_confirm;
+				}
+			} elsif (defined $r->param("confirm_delete_course")) {
+				# validate and delete
+				my @errors = $self->delete_course_validate;
+				if (@errors) {
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Please correct the following errors and try again:"),
+						CGI::ul(CGI::li(\@errors)),
+					);
+					$self->delete_course_form;
+				} else {
+					$self->do_delete_course;
+				}
+			} else {
+				# form only
+				$self->delete_course_form;
+			}
+		}
+		
+	}
+	
+	return "";
+}
+
+sub add_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $add_courseID          = $r->param("add_courseID") || "";
+	my $add_dbLayout          = $r->param("add_dbLayout") || "";
+	my $add_sql_host          = $r->param("add_sql_host") || "";
+	my $add_sql_port          = $r->param("add_sql_port") || "";
+	my $add_sql_username      = $r->param("add_sql_username") || "";
+	my $add_sql_password      = $r->param("add_sql_password") || "";
+	my $add_sql_database      = $r->param("add_sql_database") || "";
+	my $add_sql_wwhost        = $r->param("add_sql_wwhost") || "";
+	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
+	my $add_initial_userID    = $r->param("add_initial_userID") || "";
+	my $add_initial_password  = $r->param("add_initial_password") || "";
+	
+	my @dbLayouts = sort keys %{ $ce->{dbLayouts} };
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		"COURSENAME",
+	);
+	
+	my $dbi_source = do {
+		# find the most common SQL source (stolen from CourseManagement.pm)
+		my %sources;
+		foreach my $table (keys %{ $ce2->{dbLayouts}->{sql} }) {
+			$sources{$ce2->{dbLayouts}->{sql}->{$table}->{source}}++;
+		}
+		my $source;
+		if (keys %sources > 1) {
+			foreach my $curr (keys %sources) {
+				$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
+			}
+		} else {
+			($source) = keys %sources;
+		}
+		$source;
+	};
+	
+	print CGI::h2("Add Course");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Specify a name for the new course.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(CGI::textfield("add_courseID", $add_courseID, 25)),
+		),
+	);
+	
+	print CGI::p("Select a database layout below. Some database layouts require additional information.");
+	
+	#print CGI::start_Tr();
+	#print CGI::th({class=>"LeftHeader"}, "Database Layout:");
+	#print CGI::start_td();
+	
+	foreach my $dbLayout (@dbLayouts) {
+		print CGI::start_table({class=>"FormLayout"});
+		
+		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
+		print CGI::Tr(
+			CGI::td({style=>"text-align: right"},
+				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
+				. ($add_dbLayout eq $dbLayout ? " checked" : "") . ' />',
+			),
+			CGI::td($dbLayout),
+		);
+		
+		print CGI::start_Tr();
+		print CGI::td(); # for indentation :(
+		print CGI::start_td();
+		
+		if ($dbLayout eq "sql") {
+			print CGI::p(
+				"The SQL settings you enter below must match the settings in the DBI source",
+				" specification ", CGI::tt($dbi_source), ". Replace ", CGI::tt("COURSENAME"),
+				" with the course name you entered above."
+			);
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
 				CGI::td(
-					CGI::textfield(
-						-name  => "new_sql_host",
-						-value => defined $new_sql_host ? $new_sql_host : "",
-						-size  => 50,
-					),
+					CGI::textfield("add_sql_host", $add_sql_host, 25),
 					CGI::br(),
 					CGI::small("Leave blank to use the default host."),
 				),
@@ -277,218 +296,463 @@ sub body {
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
 				CGI::td(
-					CGI::textfield(
-						-name  => "new_sql_port",
-						-value => defined $new_sql_port ? $new_sql_port : "",
-						-size  => 50,
-					),
+					CGI::textfield("add_sql_port", $add_sql_port, 25),
 					CGI::br(),
 					CGI::small("Leave blank to use the default port."),
 				),
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-				CGI::td(
-					CGI::textfield(
-						-name  => "new_sql_username",
-						-value => defined $new_sql_username ? $new_sql_username : "",
-						-size  => 50,
-					),
-				),
+				CGI::td(CGI::textfield("add_sql_username", $add_sql_username, 25)),
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-				CGI::td(
-					CGI::password_field(
-						-name  => "new_sql_password",
-						-value => defined $new_sql_password ? $new_sql_password : "",
-						-size  => 50,
-					),
-				),
+				CGI::td(CGI::password_field("add_sql_password", $add_sql_password, 25)),
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td(
-					CGI::textfield(
-						-name  => "new_sql_database",
-						-value => defined $new_sql_database ? $new_sql_database : "",
-						-size  => 50,
-					),
-				),
+				CGI::td(CGI::textfield("add_sql_database", $add_sql_database, 25)),
 			);
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
 				CGI::td(
-					CGI::textfield(
-						-name  => "new_sql_wwhost",
-						-value => defined $new_sql_wwhost ? $new_sql_wwhost : "localhost",
-						-size  => 50,
-					),
+					CGI::textfield("add_sql_wwhost", $add_sql_wwhost || "localhost", 25),
 					CGI::br(),
 					CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
 				),
 			);
-		} elsif ($new_dbLayout eq "gdbm") {
+			print CGI::end_table();
+		} elsif ($dbLayout eq "gdbm") {
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "GDBM Global User ID:"),
-				CGI::td(
-					CGI::textfield(
-						-name  => "new_gdbm_globalUserID",
-						-value => defined $new_gdbm_globalUserID ? $new_gdbm_globalUserID : "global_user",
-						-size  => 50,
-					),
-				),
+				CGI::td(CGI::textfield("add_gdbm_globalUserID", $add_gdbm_globalUserID || "professor", 25)),
 			);
+			print CGI::end_table();
 		}
 		
-		
-		print CGI::Tr({class=>"ButtonRow"},
-			CGI::td({colspan=>2},
-				CGI::submit(
-					-name => "add_course",
-					-value => ($add_step > 1 ? "Change" : "Continue"),
-				),
-			),
-		);
+		print CGI::end_td();
+		print CGI::end_Tr();
 		print CGI::end_table();
-		print CGI::end_form();
 	}
 	
-	if ($add_step >= 2 and $add_step < $add_step_max) {
-		print CGI::hr();
-		
-		print CGI::start_form("POST", $r->uri);
-		print $self->hidden_authen_fields;
-		print CGI::hidden("add_step", 4);
-		
-		print CGI::hidden("new_courseID",          $new_courseID);
-		print CGI::hidden("new_dbLayout",          $new_dbLayout);
-		print CGI::hidden("new_skipDBCreation",    $new_skipDBCreation);
-		print CGI::hidden("new_sql_host",          $new_sql_host);
-		print CGI::hidden("new_sql_port",          $new_sql_port);
-		print CGI::hidden("new_sql_username",      $new_sql_username);
-		print CGI::hidden("new_sql_password",      $new_sql_password);
-		print CGI::hidden("new_sql_database",      $new_sql_database);
-		print CGI::hidden("new_sql_wwhost",        $new_sql_wwhost);
-		print CGI::hidden("new_gdbm_globalUserID", $new_gdbm_globalUserID);
-		
-		print CGI::start_table({class=>"FormLayout"});
-		print CGI::Tr(
+	
+	print CGI::p("To add an initial user to the new course, enter a user ID and password below. If you do not do so, you will not be able to log into the course.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Professor User ID:"),
-			CGI::td(
-				CGI::textfield(
-					-name  => "new_initial_userID",
-					-value => defined $new_initial_userID ? $new_initial_userID : "professor",
-					-size  => 50,
-				),
-				CGI::br(),
-				CGI::small("Leave blank to skip user creation."),
-			),
-		);
-		print CGI::Tr(
+			CGI::td(CGI::textfield("add_initial_userID", $add_initial_userID || "professor", 25)),
+		),
+		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Professor Password:"),
-			CGI::td(
-				CGI::password_field(
-					-name  => "new_initial_password",
-					-value => defined $new_initial_password ? $new_initial_password : "",
-					-size  => 50,
-				),
-			),
-		);
-		print CGI::Tr({class=>"ButtonRow"},
-			CGI::td({colspan=>2},
-				CGI::submit(
-					-name => "add_course",
-					-value => ($add_step > 1 ? "Change" : "Continue"),
-				),
-			),
-		);
-		print CGI::end_table();
-		print CGI::end_form();
+			CGI::td(CGI::password_field("add_initial_password", $add_initial_password, 25)),
+		),
+	);
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("add_course", "Add Course"));
+	
+	print CGI::end_form();
+}
+
+sub add_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $add_courseID          = $r->param("add_courseID") || "";
+	my $add_dbLayout          = $r->param("add_dbLayout") || "";
+	my $add_sql_host          = $r->param("add_sql_host") || "";
+	my $add_sql_port          = $r->param("add_sql_port") || "";
+	my $add_sql_username      = $r->param("add_sql_username") || "";
+	my $add_sql_password      = $r->param("add_sql_password") || "";
+	my $add_sql_database      = $r->param("add_sql_database") || "";
+	my $add_sql_wwhost        = $r->param("add_sql_wwhost") || "";
+	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
+	my $add_initial_userID    = $r->param("add_initial_userID") || "";
+	my $add_initial_password  = $r->param("add_initial_password") || "";
+	
+	my @errors;
+	
+	if ($add_courseID eq "") {
+		push @errors, "You must specify a course name.";
 	}
 	
-	if ($add_step >= 3 and $add_step < $add_step_max) {
-		print CGI::hr();
+	if ($add_dbLayout eq "") {
+		push @errors, "You must select a database layout.";
+	} else {
+		if (exists $ce->{dbLayouts}->{$add_dbLayout}) {
+			if ($add_dbLayout eq "sql") {
+				push @errors, "You must specify the SQL admin username." if $add_sql_username eq "";
+				push @errors, "You must specify the SQL admin password." if $add_sql_password eq "";
+				push @errors, "You must specify the SQL confirm_delete_course." if $add_sql_database eq "";
+				push @errors, "You must specify the WeBWorK host." if $add_sql_wwhost eq "";
+			} elsif ($add_dbLayout eq "gdbm") {
+				push @errors, "You must specify the GDBM global user ID." if $add_gdbm_globalUserID eq "";
+			}
+		} else {
+			push @errors, "The database layout $add_dbLayout doesn't exist.";
+		}
+	}
+	
+	if ($add_initial_userID ne "") {
+		push @errors, "You must specify a professor password." if $add_initial_password eq "";
+	}
+	
+	return @errors;
+}
+
+sub do_add_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $add_courseID          = $r->param("add_courseID") || "";
+	my $add_dbLayout          = $r->param("add_dbLayout") || "";
+	my $add_sql_host          = $r->param("add_sql_host") || "";
+	my $add_sql_port          = $r->param("add_sql_port") || "";
+	my $add_sql_username      = $r->param("add_sql_username") || "";
+	my $add_sql_password      = $r->param("add_sql_password") || "";
+	my $add_sql_database      = $r->param("add_sql_database") || "";
+	my $add_sql_wwhost        = $r->param("add_sql_wwhost") || "";
+	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
+	my $add_initial_userID    = $r->param("add_initial_userID") || "";
+	my $add_initial_password  = $r->param("add_initial_password") || "";
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$add_courseID,
+	);
+	
+	my %dbOptions;
+	if ($add_dbLayout eq "sql") {
+		$dbOptions{host}     = $add_sql_host if $add_sql_host ne "";
+		$dbOptions{port}     = $add_sql_port if $add_sql_port ne "";
+		$dbOptions{username} = $add_sql_username;
+		$dbOptions{password} = $add_sql_password;
+		$dbOptions{database} = $add_sql_database;
+		$dbOptions{wwhost}   = $add_sql_wwhost;
+	}
+	
+	my @users;
+	if ($add_initial_userID ne "") {
+		 my $User = $db->newUser(
+			user_id => $add_initial_userID,
+			status => "C",
+		 );
+		 my $Password = $db->newPassword(
+			user_id => $add_initial_userID,
+			password => cryptPassword($add_initial_password),
+		 );
+		 my $PermissionLevel = $db->newPermissionLevel(
+			user_id => $add_initial_userID,
+			permission => "10",
+		 );
+		 push @users, [ $User, $Password, $PermissionLevel ];
+	}
+	
+	eval {
+		addCourse(
+			courseID => $add_courseID,
+			ce => $ce2,
+			courseOptions => { dbLayoutName => $add_dbLayout },
+			dbOptions => \%dbOptions,
+			users => \@users,
+		);
+	};
+	
+	if ($@) {
+		my $error = $@;
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while creating the course $add_courseID:"),
+			CGI::tt(CGI::escapeHTML($error)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Successfully created the course $add_courseID"),
+		);
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+			courseID => $add_courseID);
+		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
+		print CGI::div({style=>"text-align: center"},
+			CGI::a({href=>$newCourseURL}, "Log into $add_courseID"),
+		);
+	}
+}
+
+################################################################################
+
+sub delete_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
+	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
+	my $delete_sql_username = $r->param("delete_sql_username") || "";
+	my $delete_sql_password = $r->param("delete_sql_password") || "";
+	my $delete_sql_database = $r->param("delete_sql_database")    || "";
+	
+	my @courseIDs = listCourses($ce);
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	print CGI::h2("Delete Course");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select a course to delete.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "delete_courseID",
+					-values => \@courseIDs,
+					-default => $delete_courseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+	);
+	
+	print CGI::p(
+		"If the course's database layout (indicated in parentheses above) is "
+		. CGI::b("sql") . ", supply the SQL connections information requested below."
+	);
+	
+	print CGI::start_table({class=>"FormLayout"});
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+		CGI::td(
+			CGI::textfield("delete_sql_host", $delete_sql_host, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default host."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+		CGI::td(
+			CGI::textfield("delete_sql_port", $delete_sql_port, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default port."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+		CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+		CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+		CGI::td(CGI::textfield("delete_sql_database", $delete_sql_database, 25)),
+	);
+	print CGI::end_table();
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("delete_course", "Delete Course"));
+	
+	print CGI::end_form();
+}
+
+sub delete_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
+	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
+	my $delete_sql_username = $r->param("delete_sql_username") || "";
+	my $delete_sql_password = $r->param("delete_sql_password") || "";
+	my $delete_sql_database = $r->param("delete_sql_database") || "";
+	
+	my @courseIDs = listCourses($ce);
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	my @errors;
+	
+	if ($delete_courseID eq "") {
+		push @errors, "You must specify a course name.";
+	} elsif ($delete_courseID eq $urlpath->arg("courseID")) {
+		push @errors, "You cannot delete the course you are currently using.";
+	}
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$delete_courseID,
+	);
+	
+	if ($ce2->{dbLayoutName} eq "sql") {
+		push @errors, "You must specify the SQL admin username." if $delete_sql_username eq "";
+		push @errors, "You must specify the SQL admin password." if $delete_sql_password eq "";
+		push @errors, "You must specify the SQL database name." if $delete_sql_database eq "";
+	}
+	
+	return @errors;
+}
+
+sub delete_course_confirm {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	print CGI::h2("Delete Course");
+	
+	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
+	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
+	my $delete_sql_database = $r->param("delete_sql_database") || "";
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$delete_courseID,
+	);
+	
+	if ($ce2->{dbLayoutName} eq "sql") {
+		print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
+		. "? All course files and data and the following database will be destroyed."
+		. " There is no undo available.");
+		
+		print CGI::table({class=>"FormLayout"},
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+				CGI::td($delete_sql_host || "system default"),
+			),
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+				CGI::td($delete_sql_port || "system default"),
+			),
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+				CGI::td($delete_sql_database),
+			),
+		);
+	} else {
+		print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
+			. "? All course files and data will be destroyed. There is no undo available.");
+	}
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	print $self->hidden_fields(qw/delete_courseID delete_sql_host delete_sql_port delete_sql_username delete_sql_password delete_sql_database/);
+	
+	print CGI::p({style=>"text-align: center"},
+		CGI::submit("decline_delete_course", "Don't delete"),
+		"&nbsp;",
+		CGI::submit("confirm_delete_course", "Delete"),
+	);
+	
+	print CGI::end_form();
+}
+
+sub do_delete_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $delete_courseID     = $r->param("delete_courseID")     || "";
+	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
+	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
+	my $delete_sql_username = $r->param("delete_sql_username") || "";
+	my $delete_sql_password = $r->param("delete_sql_password") || "";
+	my $delete_sql_database = $r->param("delete_sql_database") || "";
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$delete_courseID,
+	);
+	
+	my %dbOptions;
+	if ($ce2->{dbLayoutName} eq "sql") {
+		$dbOptions{host}     = $delete_sql_host if $delete_sql_host ne "";
+		$dbOptions{port}     = $delete_sql_port if $delete_sql_port ne "";
+		$dbOptions{username} = $delete_sql_username;
+		$dbOptions{password} = $delete_sql_password;
+		$dbOptions{database} = $delete_sql_database;
+	}
+	
+	eval {
+		deleteCourse(
+			courseID => $delete_courseID,
+			ce => $ce2,
+			dbOptions => \%dbOptions,
+		);
+	};
+	
+	if ($@) {
+		my $error = $@;
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while deleting the course $delete_courseID:"),
+			CGI::tt(CGI::escapeHTML($error)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Possibly deleted the course $delete_courseID. (We need better error checking in deleteCourse().)"),
+		);
 		
 		print CGI::start_form("POST", $r->uri);
 		print $self->hidden_authen_fields;
-		print CGI::hidden("add_step", 4);
+		print $self->hidden_fields("subDisplay");
 		
-		print CGI::hidden("new_courseID",          $new_courseID);
-		print CGI::hidden("new_dbLayout",          $new_dbLayout);
-		print CGI::hidden("new_skipDBCreation",    $new_skipDBCreation);
-		print CGI::hidden("new_sql_host",          $new_sql_host);
-		print CGI::hidden("new_sql_port",          $new_sql_port);
-		print CGI::hidden("new_sql_username",      $new_sql_username);
-		print CGI::hidden("new_sql_password",      $new_sql_password);
-		print CGI::hidden("new_sql_database",      $new_sql_database);
-		print CGI::hidden("new_sql_wwhost",        $new_sql_wwhost);
-		print CGI::hidden("new_gdbm_globalUserID", $new_gdbm_globalUserID);
-		print CGI::hidden("new_initial_userID",    $new_initial_userID);
-		print CGI::hidden("new_initial_password",  $new_initial_password);
+		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_delete_course", "OK"),);
 		
-		print CGI::p("Ready to create the new course. Click ", CGI::b("Create"), "below to do so:");
-		print CGI::submit(
-			-name => "create_course",
-			-value => "Create",
-		);
+		print CGI::end_form();
 	}
-	
-	if ($add_step == $add_step_max) {
-		# we're creating the course
-		
-		my %dbOptions;
-		if ($new_dbLayout eq "sql") {
-			$dbOptions{host}     = $new_sql_host if $new_sql_host ne "";
-			$dbOptions{port}     = $new_sql_port if $new_sql_port ne "";
-			$dbOptions{username} = $new_sql_username;
-			$dbOptions{password} = $new_sql_password;
-			$dbOptions{database} = $new_sql_database;
-			$dbOptions{wwhost}   = $new_sql_wwhost;
-		}
-		
-		my @users;
-		if ($new_initial_userID ne "") {
-			 my $User = $db->newUser(
-			 	user_id => $new_initial_userID,
-			 	status => "C",
-			 );
-			 my $Password = $db->newPassword(
-			 	user_id => $new_initial_userID,
-			 	password => cryptPassword($new_initial_password),
-			 );
-			 my $PermissionLevel = $db->newPermissionLevel(
-			 	user_id => $new_initial_userID,
-			 	permission => "10",
-			 );
-			 push @users, [ $User, $Password, $PermissionLevel ];
-		}
-		
-		eval {
-			addCourse(
-				courseID => $new_courseID,
-				ce => $ce2,
-				courseOptions => { dbLayoutName => $new_dbLayout },
-				dbOptions => \%dbOptions,
-				users => \@users,
-			)
-		};
-		
-		if ($@) {
-			my $error = $@;
-			print CGI::div({class=>"ResultsWithError"},
-				CGI::p("An error occured while creating the course $new_courseID:"),
-				CGI::tt(CGI::escapeHTML($error)),
-			);
-		} else {
-			print CGI::div({class=>"ResultsWithoutError"},
-				CGI::p("Successfully created the course $new_courseID"),
-			);
-		}
-	}
-	
-	return "";	
 }
 
 1;
