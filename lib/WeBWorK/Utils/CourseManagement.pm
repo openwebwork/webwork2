@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.6 2004/05/13 20:12:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.8 2004/05/13 21:14:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -364,7 +364,7 @@ sub addCourseSQL {
 		foreach my $field (@fields) {
 			# a stupid hack to make PSVNs numeric and auto-increment
 			if ($field eq "psvn") {
-				push @fieldList, "$field INT AUTO_INCREMENT";
+				push @fieldList, "$field INT NOT NULL PRIMARY KEY AUTO_INCREMENT";
 			} else {
 				push @fieldList, "$field TEXT";
 			}
