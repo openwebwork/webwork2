@@ -268,9 +268,10 @@ sub FieldHTML {
 	my $choose = ($properties{type} eq "choose") && ($properties{override} ne "none");
 	
 	my $globalValue = $globalRecord->{$field};
-	$globalValue = $globalValue ? ($labels{$globalValue || ""} || $globalValue) : "";
+	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
+	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
 	my $userValue = $userRecord->{$field};
-	$userValue = $userValue ? ($labels{$userValue || ""} || $userValue) : "";
+	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : "";
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue) if $globalValue;
