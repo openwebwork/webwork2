@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.45 2004/03/17 08:17:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.46 2004/03/23 01:10:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -209,13 +209,13 @@ sub setListRow {
 	
 	my $status;
 	if (time < $set->open_date) {
-		$status = "opens at $openDate";
+		$status = "will open on $openDate";
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-		$status = "open, due $dueDate";
+		$status = "now open, due $dueDate";
 	} elsif (time < $set->answer_date) {
-		$status = "closed, answers at $answerDate";
+		$status = "closed, answers on $answerDate";
 	} else {
 		$status = "closed, answers available";
 	}
