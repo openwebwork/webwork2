@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.24 2004/08/28 02:09:16 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.25 2004/08/28 14:10:13 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,42 +49,76 @@ use constant SUCCESS => (1 << 2);
 
 ##  for additional problib buttons
 my %problib;  ## filled in in global.conf
-my %ignoredir = ('.' => 1, '..' => 1, 'Library' => 1);
+my %ignoredir = (
+  '.' => 1, '..' => 1, 'Library' => 1,
+  'headers' => 1, 'macros' => 1, 'email' => 1,
+);
 
+##
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
-## item is 1 or 0 depending on whether or not the current
-## directory has any pg files.  The second is a list of directories
-## which contain pg files.
+## item is the number of pg files in the directory.  The second is a
+## list of directories which contain pg files.
+##
+## If a directory contains only one pg file and at least one other
+## file, the directory is considered to be part of the parent
+## directory (it is probably in a separate directory only because
+## it has auxiliarly files that want to be kept together with the
+## pg file).
+##
+## If a directory has a file named "=library-ignore", it is never
+## included in the directory menu.  If a directory contains a file
+## called "=library-combine-up", then its pg are included with those
+## in the parent directory (and the directory does not appear in the
+## menu).  If it has a file called "=library-no-combine" then it is
+## always listed as a separate directory even if it contains only one
+## pg file.
+##
+
 sub get_library_sets {
-  my $amtop = shift;
-  my $topdir =  shift;
-  my @lis = readDirectory($topdir);
-  my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg/) and -f "$topdir/$_"} @lis;
-  my $havepg = scalar(@pgs)>0 ? 1 : 0;
-  my @mdirs = grep {!defined($ignoredir{$_}) and -d "$topdir/$_"} @lis;
-  if ($amtop) {@mdirs = grep {!defined($problib{$_})} @mdirs}
-  my ($adir, @results, @thisresult);
-  for $adir (@mdirs) {
-    @results = get_library_sets(0, "$topdir/$adir");
-    my $isadirok = shift @results;
-    @thisresult = (@thisresult, @results);
-    if ($isadirok) {
-      @thisresult = ("$topdir/$adir", @thisresult);
-    }
+  my $top = shift; my $dir =  shift;
+  my @lis = readDirectory($dir); my @pgdirs;
+  return (0) if grep /^=library-ignore$/, @lis;
+
+  my $pgcount = scalar(grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis);
+  my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
+			       !m/(\.(tmp|bak)|~)$/ && -f "$dir/$_" } @lis);
+
+  my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
+  if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+  foreach my $subdir (@dirs) {
+    my @results = get_library_sets(0, "$dir/$subdir");
+    $pgcount += shift @results; push(@pgdirs,@results);
   }
-  return(($havepg, @thisresult));
+
+  return ($pgcount, @pgdirs) if $top || $pgcount == 0 || grep /^=library-combine-up$/, @lis;
+  return (0,@pgdirs,$dir) if $pgcount > 1 || $others == 0 || grep /^=library-no-combine$/, @lis;
+  return ($pgcount, @pgdirs);
 }
 
-## List all the pg files in the requested directory
-sub list_pg_files {
-  my $templatedir = shift;
-  my $topdir = shift;
+sub get_library_pgs {
+  my $top = shift; my $base = shift; my $dir =  shift;
+  my @lis = readDirectory("$base/$dir");
+  return () if grep /^=library-ignore$/, @lis;
+  return () if !$top && grep /^=library-no-combine$/, @lis;
 
-  my @lis = readDirectory("$templatedir/$topdir");
-  my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg/) and -f "$templatedir/$topdir/$_"} @lis;
-  @pgs = map { "$topdir/$_" } @pgs;
-  return(@pgs);
+  my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
+  my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
+			       !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
+
+  my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
+  if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+  foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir))}
+
+  return () unless $top || (scalar(@pgs) == 1 && $others) || grep /^=library-combine-up$/, @lis;
+  return (map {"$dir/$_"} @pgs);
+}
+
+sub list_pg_files {
+  my ($templates,$dir) = @_;
+  my $top = ($dir eq '.')? 1 : 2;
+  my @pgs = get_library_pgs($top,$templates,$dir);
+  return sortByName(undef,@pgs);
 }
 
 ## go through past page getting a list of identifiers for the problems
@@ -139,14 +173,14 @@ sub get_problem_directories {
   my $lib = shift;
   my $source = $ce->{courseDirs}{templates};
   my $main = MY_PROBLEMS; my $isTop = 1;
-  if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 0}
+  if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 2}
   my @all_problem_directories = get_library_sets($isTop, $source);
   my $includetop = shift @all_problem_directories;
   my $j;
   for ($j=0; $j<scalar(@all_problem_directories); $j++) {
     $all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
   }
-  @all_problem_directories = sort @all_problem_directories;
+  @all_problem_directories = sortByName(undef, @all_problem_directories);
   unshift @all_problem_directories, $main if($includetop);
   return (\@all_problem_directories);
 }
