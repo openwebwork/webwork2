@@ -353,13 +353,6 @@ sub body {
 		$setClosedMessage,
 	);
 	
-	# BY THE WAY..........
-	# we have to figure out some way to tell the student if their NEW answer,
-	# on THIS attempt, has been recorded. however, this is decided in part by
-	# the grader, so is there any way for us to know? we can rule out several
-	# cases where the answer is NOT being recorded, because of things decided
-	# in &canRecordAnswers...
-	
 	print CGI::hr();
 	
 	# main form
@@ -381,19 +374,19 @@ sub body {
 	}
 	
 	# debugging stuff
-	print
-		CGI::hr(),
-		CGI::h2("debugging information"),
-		CGI::h3("form fields"),
-		ref2string($self->{formFields}),
-		CGI::h3("user object"),
-		ref2string($self->{user}),
-		CGI::h3("set object"),
-		ref2string($set),
-		CGI::h3("problem object"),
-		ref2string($problem),
-		CGI::h3("PG object"),
-		ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	#print
+	#	CGI::hr(),
+	#	CGI::h2("debugging information"),
+	#	CGI::h3("form fields"),
+	#	ref2string($self->{formFields}),
+	#	CGI::h3("user object"),
+	#	ref2string($self->{user}),
+	#	CGI::h3("set object"),
+	#	ref2string($set),
+	#	CGI::h3("problem object"),
+	#	ref2string($problem),
+	#	CGI::h3("PG object"),
+	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	
 	return "";
 }
