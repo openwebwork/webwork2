@@ -657,14 +657,15 @@ sub getProblemTeX {
 	unless (ref($problem) )  {  # return error if no set is defined
 	    $problemNumber = 'undefined problem number' unless defined($problemNumber);
 	    $setName       = 'undefined set Name' unless defined($setName);
+	    my $msg        = "No problem $setName/problem $problemNumber assigned to ".
+			              $effectiveUser->first_name.' '.
+	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )';
 		push(@{$self->{warnings}}, 
 			   setName => $setName, 
 			   problem => $problemNumber,
-			   message => "No problem $setName/$problemNumber exists for ".
-			              $effectiveUser->first_name.' '.
-	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )'
+			   message => $msg,
 	    );
-	    return "No problem $setName/$problemNumber for ".$effectiveUser->user_id;
+	    return $msg;
 	}
 	# figure out if we're allowed to get solutions and call PG->new accordingly.
 	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
