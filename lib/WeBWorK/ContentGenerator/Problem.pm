@@ -610,7 +610,7 @@ sub body {
 	# FIXME print editor link
 	# print editor link if the user is an instructor AND the file is not in temporary editing mode
 	if ($self->{permissionLevel}>=10 and ( (not defined($self->{edit_mode}))  or $self->{edit_mode} eq 'savedFile') ) {
-		print CGI::a({-href=>"/webwork/$courseName/instructor/pgProblemEditor/".$set->set_id.
+		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$set->set_id.
 		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
 	}
 	
