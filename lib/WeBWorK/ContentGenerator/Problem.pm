@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.157 2004/07/19 22:17:46 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.158 2004/08/17 18:51:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -119,8 +119,9 @@ sub can_showSolutions {
 }
 
 sub can_recordAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+	my $thisAttempt = $submitAnswers ? 1 : 0;
 	if ($User->user_id ne $EffectiveUser->user_id) {
 		return $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
 	}
@@ -128,7 +129,7 @@ sub can_recordAnswers {
 		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
 		my $max_attempts = $Problem->max_attempts;
-		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + 1;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_with_attempts");
 		} else {
@@ -142,14 +143,15 @@ sub can_recordAnswers {
 }
 
 sub can_checkAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+	my $thisAttempt = $submitAnswers ? 1 : 0;
 	
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
 		my $max_attempts = $Problem->max_attempts;
-		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + 1;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		} else {
@@ -539,6 +541,7 @@ sub pre_header_initialize {
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
+		getSubmitButton    => 1,
 	);
 	
 	# are certain options enforced?
@@ -549,6 +552,7 @@ sub pre_header_initialize {
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
+		getSubmitButton    => 0,
 	);
 	
 	# does the user have permission to use certain options?
@@ -558,8 +562,9 @@ sub pre_header_initialize {
 		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
 		showHints          => $self->can_showHints(@args),
 		showSolutions      => $self->can_showSolutions(@args),
-		recordAnswers      => $self->can_recordAnswers(@args),
-		checkAnswers       => $self->can_checkAnswers(@args),
+		recordAnswers      => $self->can_recordAnswers(@args, 0),
+		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
 	);
 	
 #	# does the user have permission to use certain options?
@@ -1046,7 +1051,7 @@ sub body {
 	if ($can{checkAnswers}) {
 		print CGI::submit(-name=>"checkAnswers", -label=>"Check Answers");
 	}
-	if ($can{recordAnswers}) {
+	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
 			# if acting as a student, make it clear that answer submissions will
 			# apply to the student's records, not the professor's.
