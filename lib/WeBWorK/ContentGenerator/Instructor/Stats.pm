@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.37 2004/05/08 02:20:59 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.38 2004/05/08 15:49:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,32 +62,6 @@ sub initialize {
  	
 }
 
-# sub path {
-# 	my $self       = shift;
-# 	my $args       = $_[-1];
-# 	my $ce         = $self->{ce};
-# 	my $root       = $ce->{webworkURLs}->{root};
-# 	my $courseName = $ce->{courseName};
-# 	
-# 	return $self->pathMacro($args,
-# 		"Home"             => "$root",
-# 		$courseName        => "$root/$courseName",
-# 		'Instructor Tools' => "$root/$courseName/instructor",
-# 		'Statistics'       =>
-# 			($self->{type}
-# 				? "$root/$courseName/instructor/stats/"
-# 				: ""
-# 			),
-# 		($self->{type} eq 'set'
-# 			? ("set ".$self->{setName}  => '')
-# 			: ()
-# 		),
-# 		($self->{type} eq 'student'
-# 			? ("user ".$self->{studentName} => '')
-# 			: ()
-# 		),
-# 	);
-# }
 
 sub title { 
 	my ($self) = @_;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.31 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.32 2004/04/05 19:33:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,6 +55,8 @@ sub initialize {
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
 		
+	    $self->addmessage(CGI::div({class=>'ResultsWithError'},"You must select one or more sets for scoring")) unless @selected;
+		
 		# pre-fetch users
 		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
 		my @Users = $db->getUsers($db->listUsers);
@@ -70,11 +72,12 @@ sub initialize {
 		
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
 		my (@everything, @normal,@full,@info,@totalsColumn);
-		@info                      = $self->scoreSet($selected[0], "info", undef, @userInfo);
-		@totals                    =@info;
-		my $showIndex              = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
+		@info             = $self->scoreSet($selected[0], "info", undef, @userInfo) if defined($selected[0]);
+		@totals           = @info;
+		my $showIndex     = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
      
 		foreach my $setID (@selected) {
+		    next unless defined $setID;
 			if ($scoringType eq 'everything') {
 				@everything = $self->scoreSet($setID, "everything", $showIndex, @userInfo);
 				@normal = $self->everything2normal(@everything);
@@ -156,7 +159,9 @@ sub body {
 	
 	if ($authz->hasPermissions($user, "score_sets")) {
 		my @selected = $r->param('selectedSet');
-		print CGI::p("All of these files will also be made available for mail merge");
+		if (@selected) {
+			print CGI::p("All of these files will also be made available for mail merge");
+		} 
 		foreach my $setID (@selected) {
 	
 			my @validFiles;
@@ -212,6 +217,7 @@ sub scoreSet {
 	$format = "normal" unless defined $format;
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
+	
 	my $setRecord = $db->getGlobalSet($setID); #checked
 	die "global set $setID not found. " unless $setRecord;
 	#my %users;
