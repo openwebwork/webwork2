@@ -114,6 +114,10 @@ or:
 
  fields => a reference to a list of fields in the records' class
 
+If C<preset> is given, and its value does not match any known preset but I<is>
+the name of a field in the record class, the records will be sorted by that
+field.
+
 If C<fields> is given, the records are sorted according to the specified fields.
 If multiple fields are specified, the second field is is consulted if two
 records are found to have identical first fields, and so on.

@@ -155,6 +155,10 @@ or:
  field_order   => a reference to a list of fields in the records' class
  format_string => an sprintf format string corresponding to the fields listed above
 
+If C<preset> is given, and its value does not match any known preset but I<is>
+the name of a field in the record class, the format is assumed to consist of
+that single field.
+
 The return value is suitable for passing to the C<-labels> parameter of several
 CGI module methods, i.e. popup_menu(), scrolling_list(), checkbox_group(), and
 radio_group().
@@ -181,6 +185,10 @@ sub formatRecords {
 			# an explicit preset exists
 			# replace the contents of %options with the values from the preset
 			%options = %{ PRESET_FORMATS->{$class}->{$preset} };
+		} elsif (exists $class_fields{$preset}) {
+			# it's the name of a field in the current class, in which case we treat it as
+			# a "fields" sort with a single field
+			%options = ( field_order => [ $preset ] );
 		} else {
 			croak "preset \"$preset\" not found for class \"$class\"";
 		}
