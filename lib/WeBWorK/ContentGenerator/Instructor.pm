@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.42 2004/07/08 14:53:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.43 2004/07/08 18:42:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use CGI qw();
 use File::Find;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
+use WeBWorK::Utils;
 
 =head1 METHODS
 
@@ -453,15 +454,16 @@ sub read_scoring_file    { # used in SendMail and ....?
         #       Blank lines are skipped. White space is removed
     my(@dbArray,$key,$dbString);
     my %assocArray = ();
-    local(*FILE);
+    my $file_string;
     if ($fileName eq 'None') {
     	# do nothing
-    } elsif ( open(FILE, "$filePath")  )   {
+    } elsif ( $file_string = WeBWorK::Utils::readFile($filePath)  ) {
+        my @file_lines = split "\n",$file_string;
 		my $index=0;
-		while (<FILE>){
-			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
-			chomp;
-			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
+		foreach my $line (@file_lines){
+			unless ($line =~ /\S/)  {next;}               ## skip blank lines
+			chomp($line);
+			@{$dbArray[$index]} =$self->getRecord($line,$delimiter);
 			$key    =$dbArray[$index][0];
 			$assocArray{$key}=$dbArray[$index];
 			$index++;
