@@ -22,7 +22,7 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
 
-sub go {
+sub pre_header_initialize {
 	my ($self, $singleSet) = @_;
 	
 	my $r               = $self->{r};
@@ -88,17 +88,23 @@ sub go {
 				
 			} else {
 			    # information for redirect
- 				$r->header_out(Location => $pdfFileURL );
- 				return REDIRECT;
-
-				
+			    	$self->{pdfFileURL} = $pdfFileURL;
 			}
 		}
 	}
+}
+
+sub header {
+	my ($self) = @_;
+	my $r = $self->{r};
 	
+	if (exists $self->{pdfFileURL}) {
+ 		$r->header_out(Location => $self->{pdfFileURL} );
+		$self->{noContent} = 1;
+ 		return REDIRECT;
+	}
 	$r->content_type("text/html");
 	$r->send_http_header();
-	$self->template($ce->{templates}->{system}, $singleSet);
 }
 
 # -----
