@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.55 2004/09/13 19:35:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,7 +224,8 @@ sub setListRow {
 		);
 	}
 	
-	my $interactive = CGI::a({-href=>$interactiveURL}, "set $name");
+	$name =~ s/_/&nbsp;/g;
+	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
 	
 	my $status;
 	if (time < $set->open_date) {
