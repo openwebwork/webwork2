@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.126 2004/11/19 18:30:16 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.127 2004/12/17 16:53:01 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1498,7 +1498,8 @@ sub systemLink {
 		} elsif (defined $r->param($name)) {
 			@values = $r->param($name);
 		}
-		
+		#FIXME  -- evntually we'd like to catch where this happens
+		croak "internal error --  user has been multiply defined!" if $name eq 'user' and @values >1;
 		if (@values) {
 			if ($first) {
 				$url .= "?";
