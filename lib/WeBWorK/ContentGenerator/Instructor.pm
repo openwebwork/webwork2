@@ -117,7 +117,7 @@ sub assignSetToAllUsers {
 
 sub links {
  	my $self 		= shift;
-#  	these links are being placed in ContentGenerator.pm
+#  	FIXME these links are being placed in ContentGenerator.pm
 #  	
 #  	my $pathString 	= "";
 #  	
