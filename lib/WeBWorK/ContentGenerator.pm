@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.111 2004/07/10 21:45:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.112 2004/07/10 21:53:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1446,7 +1446,7 @@ sub errorOutput($$$) {
 WeBWorK has encountered a software error while attempting to process this
 problem. It is likely that there is an error in the problem itself. If you are
 a student, contact your professor to have the error corrected. If you are a
-professor, please consut the error output below for more informaiton.
+professor, please consult the error output below for more information.
 EOF
 		# FIXME: this message shouldn't refer the the "problem" since it is for general error reporting
 		CGI::h3("Error messages"), CGI::p(CGI::tt($error)),
@@ -1468,7 +1468,7 @@ sub warningOutput($$) {
 WeBWorK has encountered warnings while attempting to process this problem. It
 is likely that this indicates an error or ambiguity in the problem itself. If
 you are a student, contact your professor to have the problem corrected. If you
-are a professor, please consut the warning output below for more informaiton.
+are a professor, please consult the warning output below for more information.
 EOF
 		# FIXME: this message shouldn't refer the the "problem" since it is for general warning reporting
 		CGI::h3("Warning messages"),
