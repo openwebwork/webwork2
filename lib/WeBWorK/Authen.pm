@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.28 2004/01/18 03:39:06 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.29 2004/02/05 00:05:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,27 +29,34 @@ use Date::Format;
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 
-sub new($$$) {
-	my $invocant = shift;
+sub new {
+	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
-	($self->{r}, $self->{ce}, $self->{db}) = @_;
+	my $self = {
+		r => $r,
+	};
 	bless $self, $class;
 	return $self;
 }
 
 sub checkPassword($$$) {
 	my ($self, $userID, $possibleClearPassword) = @_;
-	my $Password = $self->{db}->getPassword($userID); # checked
+	my $db = $self->{r}->db;
+	
+	my $Password = $db->getPassword($userID); # checked
 	return 0 unless defined $Password;
+	
 	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
 	return $possibleCryptPassword eq $Password->password();
 }
 
 sub generateKey($$) {
 	my ($self, $userID) = @_;
-	my @chars = @{ $self->{ce}->{sessionKeyChars} };
-	my $length = $self->{ce}->{sessionKeyLength};
+	my $ce = $self->{r}->ce;
+	
+	my @chars = @{ $ce->{sessionKeyChars} };
+	my $length = $ce->{sessionKeyLength};
+	
 	srand;
 	my $key = join ("", @chars[map rand(@chars), 1 .. $length]);
 	return WeBWorK::DB::Record::Key->new(user_id=>$userID, key=>$key, timestamp=>time);
@@ -57,13 +64,16 @@ sub generateKey($$) {
 
 sub checkKey($$$) {
 	my ($self, $userID, $possibleKey) = @_;
-	my $Key = $self->{db}->getKey($userID); # checked
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
+	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
 		if ($possibleKey eq $Key->key()) {
 			# unexpired and matches -- update timestamp
 			$Key->timestamp(time);
-			$self->{db}->putKey($Key);
+			$db->putKey($Key);
 			return 1;
 		} else {
 			# unexpired but doesn't match -- leave timestamp alone
@@ -73,21 +83,24 @@ sub checkKey($$$) {
 		}
 	} else {
 		# expired -- delete key
-		$self->{db}->deleteKey($userID);
+		$db->deleteKey($userID);
 		return 0;
 	}
 }
 
 sub unexpiredKeyExists($$) {
 	my ($self, $userID) = @_;
-	my $Key = $self->{db}->getKey($userID); # checked
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
+	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
 		# unexpired, but leave timestamp alone
 		return 1;
 	} else {
 		# expired -- delete key
-		$self->{db}->deleteKey($userID);
+		$db->deleteKey($userID);
 		return 0;
 	}
 }
@@ -95,8 +108,10 @@ sub unexpiredKeyExists($$) {
 sub fetchCookie {
 	my ($self, $user, $key) = @_;
 	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $courseID = $ce->{courseName};
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	
+	my $courseID = $urlpath->arg("courseID");
 	
 	my %cookies = Apache::Cookie->fetch;
 	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
@@ -121,8 +136,9 @@ sub fetchCookie {
 sub sendCookie {
 	my ($self, $userID, $key) = @_;
 	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $courseID = $ce->{courseName};
+	my $ce = $r->ce;
+	
+	my $courseID = $r->urlpath->arg("courseID");
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
 	my $cookie = Apache::Cookie->new($r,
@@ -142,8 +158,9 @@ sub sendCookie {
 sub killCookie {
 	my ($self) = @_;
 	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $courseID = $ce->{courseName};
+	my $ce = $r->ce;
+	
+	my $courseID = $r->urlpath->arg("courseID");
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
 	my $cookie = Apache::Cookie->new($r,
@@ -169,8 +186,8 @@ sub killCookie {
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	my $debugPracticeUser = $ce->{debugPracticeUser};

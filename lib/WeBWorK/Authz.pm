@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authz.pm,v 1.13 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,12 +25,12 @@ WeBWorK::Authz - check user permissions.
 use strict;
 use warnings;
 
-# WeBWorK::Authz->new($r, $ce, $db)
-sub new($$$$) {
-	my $invocant = shift;
+sub new {
+	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $self = {};
-	($self->{r}, $self->{ce}, $self->{db}) = @_;
+	my $self = {
+		r => $r,
+	};
 	bless $self, $class;
 	return $self;
 }
@@ -40,10 +40,12 @@ sub new($$$$) {
 sub hasPermissions {
 	my ($self, $user, $activity) = @_;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
-	my $permissionLevels = $courseEnvironment->{permissionLevels};
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
-	my $Permission = $self->{db}->getPermissionLevel($user); # checked
+	my $permissionLevels = $ce->{permissionLevels};
+	
+	my $Permission = $db->getPermissionLevel($user); # checked
 	return 0 unless defined $Permission;
 	my $permissionLevel = $Permission->permission();
 	if (defined $permissionLevels->{$activity}
