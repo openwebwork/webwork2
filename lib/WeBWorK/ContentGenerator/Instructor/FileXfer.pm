@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.3 2004/03/23 01:15:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,17 +29,6 @@ use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
 use CGI qw();
 
-=for comment
-
-Use this to check for permissions:
-
-unless ($authz->hasPermissions($user, "PERMISSION")) {
-	$self->{submitError} = "You are not authorized to PERMISSION";
-	return;
-}
-
-=cut
-
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -49,12 +38,15 @@ sub pre_header_initialize {
 	my $userID = $r->param("user");
 	
 	my ($type, $action) = ("", "");
-	if (defined $r->param("deleteDef"))         { $type = "def";       $action = "delete";   }
-	if (defined $r->param("downloadDef"))       { $type = "def";       $action = "download"; }
-	if (defined $r->param("uploadDef"))         { $type = "def";       $action = "upload";   }
-	if (defined $r->param("deleteClasslist"))   { $type = "classlist"; $action = "delete";   }
-	if (defined $r->param("downloadClasslist")) { $type = "classlist"; $action = "download"; }
-	if (defined $r->param("uploadClasslist"))   { $type = "classlist"; $action = "upload";   }
+	if (defined $r->param("deleteDef"))           { $type = "def";         $action = "delete";   }
+	if (defined $r->param("downloadDef"))         { $type = "def";         $action = "download"; }
+	if (defined $r->param("uploadDef"))           { $type = "def";         $action = "upload";   }
+	if (defined $r->param("deleteClasslist"))     { $type = "classlist";   $action = "delete";   }
+	if (defined $r->param("downloadClasslist"))   { $type = "classlist";   $action = "download"; }
+	if (defined $r->param("uploadClasslist"))     { $type = "classlist";   $action = "upload";   }
+	if (defined $r->param("deleteScoringFile"))   { $type = "scoringFile"; $action = "delete";   }
+	if (defined $r->param("downloadScoringFile")) { $type = "scoringFile"; $action = "download"; }
+	if (defined $r->param("uploadScoringFile"))   { $type = "scoringFile"; $action = "upload";   }
 	
 	# make sure we have permission to do what we want to do
 	if ($type eq "def") {
@@ -65,6 +57,11 @@ sub pre_header_initialize {
 	} elsif ($type eq "classlist") {
 		unless ($authz->hasPermissions($userID, "modify_classlist_files")) {
 			$self->{submitError} = "You are not authorized to modify the list of classlist files.";
+			return;
+		}
+	} elsif ($type eq "scoringFile") {
+		unless ($authz->hasPermissions($userID, "modify_scoring_files")) {
+			$self->{submitError} = "You are not authorized to modify the list of scoring files.";
 			return;
 		}
 	}
@@ -93,6 +90,12 @@ sub handleDelete {
 		@fileList = $self->getDefList;
 		$selectParam = "def";
 		$dir = $ce->{courseDirs}->{templates};
+	} elsif ($type eq "scoringFile") {
+		@fileList = $self->getScoringFileList;
+		$selectParam = "scoringFile";
+		$dir = $ce->{courseDirs}->{scoring};
+	} else {
+		die "handleDelete() doesn't know what to do with file type $type!";
 	}
 	
 	# get file name
@@ -103,12 +106,17 @@ sub handleDelete {
 	}
 	
 	# FIXME: FOR THE LOVE OF GOD, ADD SECURITY CHECKS!!!!!!
+	# (actually I think it's not such a big deal, since we're checking the
+	# tainted input against a finite set of files that we know are okay to
+	# delete)
 	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDelete } @fileList) {
 		$self->{submitError} = "File \"$fileToDelete\" not found in file list.";
 		return;
 	}
+	
+	# (at this point we know the filename isn't dangerous)
 	
 	# delete it
 	unlink "$dir/$fileToDelete";
@@ -128,6 +136,12 @@ sub handleDownload {
 		@fileList = $self->getDefList;
 		$selectParam = "def";
 		$dir = $ce->{courseDirs}->{templates};
+	} elsif ($type eq "scoringFile") {
+		@fileList = $self->getScoringFileList;
+		$selectParam = "scoringFile";
+		$dir = $ce->{courseDirs}->{scoring};
+	} else {
+		die "handleDownload() doesn't know what to do with file type $type!";
 	}
 	
 	# get file name
@@ -169,6 +183,12 @@ sub handleUpload {
 		$uploadNameParam = "newDefName";
 		$ext = ".def";
 		$destDir = $ce->{courseDirs}->{templates};
+	} elsif ($type eq "scoringFile") {
+		@fileList = $self->getScoringFileList;
+		$uploadParam = "newScoringFile";
+		$uploadNameParam = "newScoringFileName";
+		$ext = ".csv";
+		$destDir = $ce->{courseDirs}->{scoring};
 	}
 	
 	# get upload ID and hash
@@ -220,8 +240,9 @@ sub body {
 	# otherwise, get them from the filesystem
 	#my $classlistsRef = $self->{classlists} || [ $self->getCSVList ];
 	#my $setDefsRef    = $self->{setDefs}    || [ $self->getDefList ];
-	my $classlistsRef = [ $self->getCSVList ];
-	my $setDefsRef    = [ $self->getDefList ];
+	my $classlistsRef     = [ $self->getCSVList         ];
+	my $setDefsRef        = [ $self->getDefList         ];
+	my $scoringFileRef    = [ $self->getScoringFileList ];
 	
 	print CGI::p(<<EOT);
 Use the tools below to modify course files. Set definition files and classlist
@@ -277,7 +298,33 @@ EOT
 				CGI::submit("uploadClasslist", "Upload Classlist File"),
 				CGI::endform(),
 			),
-		)
+		),
+		CGI::Tr({-valign=>"top"},
+			CGI::td({},
+				CGI::p("Scoring Files"),
+				CGI::startform("POST", $r->uri, "multipart/form-data"),
+				$self->hidden_authen_fields,
+				CGI::scrolling_list(
+					-name => "scoringFile",
+					-values => $scoringFileRef,
+					-size => 8,
+					-multiple => 0,
+				), CGI::br(),
+				CGI::submit("deleteScoringFile", "Delete"),
+				CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
+				CGI::br(),
+				CGI::submit("downloadScoringFile", "Download"),
+				CGI::br(),
+				CGI::p("Upload New Scoring File:"),
+				CGI::filefield(
+					-name => "newScoringFile",
+					-size => 30,
+				), CGI::br(),
+				"Use name:", CGI::textfield("newScoringFileName", "", 30), CGI::br(),
+				CGI::submit("uploadScoringFile", "Upload Scoring File"),
+				CGI::endform(),
+			),
+		),
 	);
 	
 	return "";
