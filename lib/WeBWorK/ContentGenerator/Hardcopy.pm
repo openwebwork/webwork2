@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.51 2004/09/16 17:10:02 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.52 2004/10/12 02:30:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -57,7 +57,7 @@ If true, don't delete temporary files.
 
 =cut
 
-our $PreserveTempFiles = 0  unless defined $PreserveTempFiles;
+our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
 
 =back
 
@@ -69,7 +69,7 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
-	my $User  = $r->param("user");
+	my $userID  = $r->param("user");
 	
 	my $singleSet       = $r->urlpath->arg("setID");
 	my @sets            = $r->param("hcSet");
@@ -87,8 +87,11 @@ sub pre_header_initialize {
 		unshift @users, $r->param("effectiveUser");
 	}
 	
-	$self->{user}            = $db->getUser($User); # checked
-	die "user ", $User, " (real user) not found."
+	# this should never happen, but apparently it did once (see bug #714), so we check for it
+	die "Parameter 'user' not defined. Can't continue." unless defined $userID;
+	
+	$self->{user}            = $db->getUser($userID); # checked
+	die "user ", $userID, " (real user) not found."
 		unless $self->{user};
 	
 	$self->{effectiveUser}   = $db->getUser($r->param("effectiveUser")); # checked
@@ -109,8 +112,8 @@ sub pre_header_initialize {
 	$self->{warnings}        = [];
 	
 	# is the user allowed to request multiple sets/users at a time?
-	my $multiSet = $authz->hasPermissions($User, "download_hardcopy_multiset");
-	my $multiUser = $authz->hasPermissions($User, "download_hardcopy_multiuser");
+	my $multiSet = $authz->hasPermissions($userID, "download_hardcopy_multiset");
+	my $multiUser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	
 	if (@sets > 1 and not $multiSet) {
 		$self->{generationError} = ["SIMPLE", "You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again."];
@@ -258,21 +261,21 @@ sub displayForm($) {
 	my $r      = $self->r;
 	my $db     = $r->db;
 	my $authz  = $r->authz;
-	my $User   =  $r->param("user");
+	my $userID   =  $r->param("user");
 	my $ss= '';
 	my $aa= ' a ';
-	if ($authz->hasPermissions($User, "download_hardcopy_multiuser")) {
+	if ($authz->hasPermissions($userID, "download_hardcopy_multiuser")) {
 		$ss= 's';
 		$aa= ' ';
 	}	
 	
 	print CGI::start_p(), "Select the problem set$ss for which to generate${aa}hardcopy version$ss.";
-	if ($authz->hasPermissions($User, "download_hardcopy_multiuser")) {
+	if ($authz->hasPermissions($userID, "download_hardcopy_multiuser")) {
 		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
 	}
 	print CGI::end_p();
 	
-	my $download_texQ = $authz->hasPermissions($User, "download_hardcopy_format_tex");
+	my $download_texQ = $authz->hasPermissions($userID, "download_hardcopy_format_tex");
 	
 	#  ##########construct action URL #################
 	my $ce         = $r->ce;
@@ -282,7 +285,7 @@ sub displayForm($) {
 	#  ################################################
 
 	my $phrase_for_privileged_users = '';
-	$phrase_for_privileged_users ='to privileged users or' if $authz->hasPermissions($User, "download_hardcopy_multiuser");
+	$phrase_for_privileged_users ='to privileged users or' if $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	
 	print CGI::start_form(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields();
@@ -307,10 +310,10 @@ sub displayForm($) {
 	);
 	print CGI::start_table({-width=>"100%"}), CGI::start_Tr({-valign=>"top"});
 	
-	my $multiSet          = $authz->hasPermissions($User, "download_hardcopy_multiset");
-	my $multiUser         = $authz->hasPermissions($User, "download_hardcopy_multiuser");
-	my $preOpenSets       = $authz->hasPermissions($User, "view_unopened_sets");
-	my $unpublishedSets   = $authz->hasPermissions($User, "view_unpublished_sets");
+	my $multiSet          = $authz->hasPermissions($userID, "download_hardcopy_multiset");
+	my $multiUser         = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
+	my $preOpenSets       = $authz->hasPermissions($userID, "view_unopened_sets");
+	my $unpublishedSets   = $authz->hasPermissions($userID, "view_unpublished_sets");
 	my $effectiveUserName = $self->{effectiveUser}->user_id;	
 	my @setNames          = $db->listUserSets($effectiveUserName);
 	my @sets              = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames ); # checked
@@ -384,11 +387,11 @@ sub generateHardcopy($) {
 	my $r      = $self->r;
 	my $ce     = $r->ce;
 	my $authz  = $r->authz;
-	my $User   = $r->param("user");
+	my $userID   = $r->param("user");
 	my @sets = @{$self->{sets}};
 	my @users = @{$self->{users}};
-	my $multiSet = $authz->hasPermissions($User, "download_hardcopy_multiset");
-	my $multiUser = $authz->hasPermissions($User, "download_hardcopy_multiuser");
+	my $multiSet = $authz->hasPermissions($userID, "download_hardcopy_multiset");
+	my $multiUser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	# sanity checks
 	unless (@sets) {
 		die ["RETRY", "No sets were specified."];
@@ -720,7 +723,7 @@ sub getProblemTeX {
 	my $ce     = $r->ce;
 	my $db     = $r->db;
 	my $authz  = $r->authz;
-	my $User   = $r->param("user");
+	my $userID   = $r->param("user");
 	# Should we provide a default user ? I think not FIXME
 	
 	# $effectiveUser = $self->{effectiveUser} unless defined($effectiveUser);
@@ -736,8 +739,8 @@ sub getProblemTeX {
 	    return "No set $setName for ".$effectiveUser->user_id;
 	}
 	
-	my $preOpenSets = $authz->hasPermissions($User, "view_unopened_sets");
-	my $unpublishedSets = $authz->hasPermissions($User, "view_unpublished_sets");
+	my $preOpenSets = $authz->hasPermissions($userID, "view_unopened_sets");
+	my $unpublishedSets = $authz->hasPermissions($userID, "view_unpublished_sets");
     unless ( ($preOpenSets or $set->open_date < time) and ($unpublishedSets or $set->published) )  {  # return error if set is invisible
 		push(@{$self->{warnings}}, 
 			   setName => $setName, 
@@ -780,7 +783,7 @@ sub getProblemTeX {
 	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
 	my $showHints          = $r->param("showHints") || 0;
 	my $showSolutions      = $r->param("showSolutions") || 0;
-	unless ($authz->hasPermissions($User, "view_answers") or time > $set->answer_date) {
+	unless ($authz->hasPermissions($userID, "view_answers") or time > $set->answer_date) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
