@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.45 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.46 2004/04/03 16:24:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,7 +170,8 @@ sub body {
 	my $effectiveUserName = $r->param('effectiveUser');
 	
 	my $problemSetListPage  = $urlpath->newFromModule($urlpath->module, courseID => $courseName) ;
-	my $problemSetListURL   = $self->systemLink($problemSetListPage);
+	my $problemSetListURL   = $self->systemLink($problemSetListPage, authen=>0);
+	
 	#my $instructorBaseURL = "$root/$courseName/instructor";
 	#my $importURL = "$instructorBaseURL/problemSetImport/";
 	my $instructorPage      = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", 
@@ -214,7 +215,7 @@ sub body {
 						CGI::p("Depending on the number of sets, this operation may take many minutes.  Even if your browser times out
 						the updating process will continue until it is done. Time for coffee? :-)"
 						),
-						CGI::start_form({"method"=>"POST", "action"=>$self->systemLink($problemSetListPage)}),
+						CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 						$self->hidden_authen_fields,
 						CGI::submit({-name=>'update_global_user', -value=>"Update Global User" }),
 						CGI::end_form(),
@@ -277,7 +278,11 @@ sub body {
 		my $count         = $counts{$set->set_id};
 		my $totalUsers    = scalar(@users);   #FIXME -- probably shouldn't count those who have dropped.
 		my $userCountMessage = $self->userCountMessage($count, scalar(@users));
-	    my $problemListPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemList",
+	     my $setEditorPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemSetEditor",
+	                                               courseID => $courseName,
+	                                               setID    => $set->set_id,
+        );
+        my $problemListPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemList",
 	                                               courseID => $courseName,
 	                                               setID    => $set->set_id,
         );
@@ -297,7 +302,7 @@ sub body {
 					"label"=>"",
 					"checked"=>"0"
 				}),
-				'&nbsp;&nbsp;'.$set->set_id . '&nbsp;'.CGI::a({href=>$self->systemLink($problemListPage)}, 'Edit'),
+				'&nbsp;&nbsp;'.$set->set_id . '&nbsp;'.CGI::a({href=>$self->systemLink($setEditorPage)}, 'Edit'),
 				formatDateTime($set->open_date),
 				formatDateTime($set->due_date),
 				formatDateTime($set->answer_date),
