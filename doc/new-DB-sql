@@ -54,7 +54,7 @@ CREATE TABLE set_user (
 
 CREATE TABLE problem (
 	set_id VARCHAR(255) NOT NULL,
-	problem_id VARCHAR(255) NOT NULL PRIMARY KEY,
+	problem_id VARCHAR(255) NOT NULL,
 	source_file TEXT,
 	value INT,
 	max_attempts INT
