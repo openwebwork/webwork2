@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.21 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.22 2003/12/17 21:45:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,6 +62,8 @@ sub initialize {
 			next unless $User;
 			my $userID = $User->user_id;
 			my $studentID = $User->student_id;
+			# FIXME: if two users have the same student ID, the second one will
+			# clobber the first one. this is bad!
 			$usersByStudentID{$studentID} = $User;
 			$studentIDsByUserID{$userID} = $studentID;
 		}
