@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.77 2004/02/16 03:37:02 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.78 2004/03/04 21:03:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -579,6 +579,7 @@ sub links {
 	# URLs to parts of the system
 	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
 	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
+	my $grades      = "$root/$courseName/grades/?"    . $self->url_authen_args();
 	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
 	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
 	
@@ -591,8 +592,9 @@ sub links {
 		CGI::div( {style=>'font-size:larger'},CGI::a({-href=>$probSets}, "Problem&nbsp;Sets")
 		), 
 		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
+		CGI::a({-href=>$grades}, "Grades"), CGI::br(),
 		CGI::a({-href=>$help,-target=>'_help_'}, "Help"), CGI::br(),
-		#CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 		($permLevel > 0
 			? $self->instructor_links(@components) : ""
 		),

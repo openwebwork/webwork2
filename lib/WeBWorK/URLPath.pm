@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.49 2004/02/21 10:15:58 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.2 2004/03/05 04:16:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,7 @@ use warnings;
  gateway_quiz                        /$courseID/quiz_mode/$setID/
  hardcopy                            /$courseID/hardcopy/
  hardcopy_preselect_set              /$courseID/hardcopy/$setID/
+ grades                              /$courseID/grades/
  logout                              /$courseID/logout/
  options                             /$courseID/options/
  
@@ -95,7 +96,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz hardcopy logout
+		kids    => [ qw/equation_display grades feedback gateway_quiz hardcopy logout
 			options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -150,6 +151,15 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
+	},
+	grades => {
+		name    => 'Student Grades',
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^grades/|,
+		capture => [ qw// ],
+		produce => 'grades/',
+		display => 'WeBWorK::ContentGenerator::Grades',
 	},
 	logout => {
 		name    => 'Logout',
