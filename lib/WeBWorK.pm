@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.67 2004/11/02 19:58:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.68 2004/11/02 20:47:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -223,19 +223,19 @@ sub dispatch($) {
 			debug("hashDatabaseOK() returned $dbOK -- leaving displayModule as-is\n");
 		}
 		
+		debug("Create an authz object (Authen needs it to check login permission)...\n");
+		$authz = new WeBWorK::Authz($r, $ce, $db);
+		debug("(here's the authz object: $authz)\n");
+		$r->authz($authz);
+		
 		debug("...and now we can authenticate the remote user...\n");
 		my $authen = new WeBWorK::Authen($r);
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
-			debug("Hi, ", $r->param("user"), ", glad you made it.\n");
-			
-			debug("Authentication succeeded, so it makes sense to create an authz object...\n");
-			$authz = new WeBWorK::Authz($r, $ce, $db);
-			debug("(here's the authz object: $authz)\n");
-			$r->authz($authz);
+			my $userID = $r->param("user");
+			debug("Hi, $userID, glad you made it.\n");
 			
 			debug("Now we deal with the effective user:\n");
-			my $userID = $r->param("user");
 			my $eUserID = $r->param("effectiveUser") || $userID;
 			debug("userID=$userID eUserID=$eUserID\n");
 			my $su_authorized = $authz->hasPermissions($userID, "become_student", $eUserID);
