@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.25 2004/08/18 01:41:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.26 2004/08/31 01:15:53 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -184,7 +184,7 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		print "<!-- Áª£¢°¤¦¥»¼Ï·«¨ ´¬ö¿¹Œ§¶Ä©úÆûÂ½ÅÃº÷µ -->\n";
+		print "<!-- ƒ‰£¢ŠþŸ÷€ÆÒØ†¬Ë¸©ÙÍ–®·’¡ýÐÛµ -->\n";
 		print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
 		$self->do_export_database;
 	} else {
@@ -797,52 +797,52 @@ sub delete_course_form {
 		. CGI::b("sql") . ", supply the SQL connections information requested below."
 	);
 	
-			print CGI::start_table({class=>"FormLayout"});
-			print CGI::Tr(CGI::td({colspan=>2}, 
-					"Enter the user ID and password for an SQL account with sufficient permissions to delete an existing database."
-				)
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-				CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-				CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
-			);
-			
-			#print CGI::Tr(CGI::td({colspan=>2},
-			#		"The optionial SQL settings you enter below must match the settings in the DBI source"
-			#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
-			#		. " with the course name you entered above."
-			#	)
-			#);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-				CGI::td(
-					CGI::textfield("delete_sql_host", $delete_sql_host, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the default host."),
-				),
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-				CGI::td(
-					CGI::textfield("delete_sql_port", $delete_sql_port, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the default port."),
-				),
-			);
-		
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td(
-					CGI::textfield("delete_sql_database", $delete_sql_database, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
-				),
-			);
-			print CGI::end_table();
+	print CGI::start_table({class=>"FormLayout"});
+	print CGI::Tr(CGI::td({colspan=>2}, 
+			"Enter the user ID and password for an SQL account with sufficient permissions to delete an existing database."
+		)
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+		CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+		CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
+	);
+	
+	#print CGI::Tr(CGI::td({colspan=>2},
+	#		"The optionial SQL settings you enter below must match the settings in the DBI source"
+	#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
+	#		. " with the course name you entered above."
+	#	)
+	#);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+		CGI::td(
+			CGI::textfield("delete_sql_host", $delete_sql_host, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default host."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+		CGI::td(
+			CGI::textfield("delete_sql_port", $delete_sql_port, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default port."),
+		),
+	);
+
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+		CGI::td(
+			CGI::textfield("delete_sql_database", $delete_sql_database, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+		),
+	);
+	print CGI::end_table();
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit("delete_course", "Delete Course"));
 	
