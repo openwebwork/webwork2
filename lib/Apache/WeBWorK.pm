@@ -15,7 +15,8 @@ use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Test;
-#use WeBWorK::Authen;
+use WeBWorK::Authen;
+use WeBWorK::Login;
 
 # registering discontent: wanted to call this dispatch, but mod_perl gave me lip
 sub handler() {
@@ -39,27 +40,17 @@ sub handler() {
 		return DECLINED;
 	}
 	
-#	if (!WeBWorK::Authen->new($r, $course_env)->authen) {
-#		return WeBWorK::Login->new($r, $course_env)->go();
-#	} else {
+	# WeBWorK::Authen::verify erases the passwd field and sets the key field
+	# if login is successful.
+	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
+		return WeBWorK::Login->new($r, $course_env)->go();
+	} else {
 		if (1) {
 			return WeBWorK::Test->new($r, $course_env)->go();
 		}
-#	}
-	
-	
-	
-	$r->print(<<END);
-COURSE = $course<br>
-WEBWORK_ROOT = $webwork_root<br>
-URI = <em>$current_uri</em><br>
-Path information = <em>$path_info</em><br>
-Translated path = <em>$path_translated</em>
-</body>
-</html>
-END
+	}
 
-	return OK;
+	return DECLINED;
 }
 
 1;

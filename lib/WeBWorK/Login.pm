@@ -16,7 +16,7 @@ sub go($) {
 	my $user = $r->param("user");
 	my $key = $r->param("key");
 	my $passwd = $r->param("passwd");
-	my $course = $course_env->get("courseName");
+	my $course = $course_env->{"courseName"};
 	
 	
 	$r->content_type("text/html");
