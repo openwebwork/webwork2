@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.47 2004/05/04 15:16:58 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.48 2004/05/07 20:09:01 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -103,16 +103,14 @@ sub initialize {
 	my %overrides = list2hash $r->param('override');
 	
 	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		$self->{submitError} = "You are not authorized to modify problem sets";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify problem sets")));
 		return;
 	}
-
 	
 	###################################################
 	# The set form was submitted with the save button pressed
 	# Save changes to the set
 	###################################################
-		$self->{error_message} = undef;
 		
 		if (defined($r->param('submit_set_changes'))) {
 		foreach (@{SET_FIELDS()}) {
@@ -137,14 +135,14 @@ sub initialize {
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		###################################################
-
 		if ($setRecord->open_date > $setRecord->due_date)  {
-			$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date');
+			$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date'));
+			return;
 		}
 		if ($setRecord->due_date > $setRecord->answer_date) {
-			$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date');
+			$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date'));
+			return;
 		}
-		return if defined($self->{error_message});
 		###################################################
 		# End date check section.
 		###################################################
@@ -175,12 +173,13 @@ sub initialize {
 			my $active_due_date    = $userSetRecord->due_date    ? $userSetRecord->due_date    : $setRecord->due_date;
 			my $active_answer_date = $userSetRecord->answer_date ? $userSetRecord->answer_date : $setRecord->answer_date;
 			if ( $active_open_date >$active_due_date ) {
-				$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Due date override must come after open date');
+				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date override must come after open date'));
+				return;
 			}
 			if ( $active_due_date > $active_answer_date ) {
-				$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Answer date override must come after due date');
+				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date override must come after due date'));
+				return;
 			}
-			return if defined($self->{error_message});
 			###################################################
 			# End date check section.
 			###################################################
@@ -237,11 +236,7 @@ EOF
 
 
 	    $self->saveProblem($fileContents, $filePath);
-	    $self->{message} .= "Set definition saved to $filePath";
-
-	
-	
-	
+	    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Set definition saved to $filePath")));
 	
 	}
 }
@@ -280,7 +275,6 @@ sub body {
 			$overrideArgs{$field} = [undef, undef];
 		}
 	}
-	print $self->{error_message} if defined($self->{error_message}) and $self->{error_message};
 	print CGI::h2({}, "Set Data"), "\n";
 	if (@editForUser) {
 		print CGI::p("Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
@@ -337,7 +331,7 @@ sub body {
 	      ' as ',
 	      CGI::input({type=>'text',name=>'export_file_name',value=>"set$setName.def",size=>32});
 	      
-	print CGI::br(), $self->{message}  if defined $self->{message};
+	print CGI::br();
 
 	
 
