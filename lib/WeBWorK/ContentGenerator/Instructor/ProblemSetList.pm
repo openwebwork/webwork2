@@ -35,18 +35,17 @@ sub body {
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
 	# Slurp each set record for this course in @sets
-	my @sets;
-	push @sets, $db->getGlobalSet($_)
-		foreach ($db->listGlobalSets);
-	
 	# Gather data from the database
 	my @users = $db->listUsers;
+	my @sets;
 	my %counts;
 	my %problemCounts;
-	foreach my $set (@sets) {
-		$problemCounts{$set} = scalar($db->listGlobalProblems($set->set_id));
+	foreach my $set_id ($db->listGlobalSets) {
+		my $set = $db->getGlobalSet($set_id);
+		push @sets, $set;
+		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
 		my $count = 0;
-		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
+		$counts{$set_id} = $db->listSetUsers($set_id);
 	}
 	
 	# Sort @sets based on the sort parameter
@@ -102,7 +101,7 @@ sub body {
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
-			. CGI::td({}, $problemCounts{$set})
+			. CGI::td({}, $problemCounts{$set->set_id})
 			. CGI::td({}, $userCountMessage)
 		) . "\n"
 	}
