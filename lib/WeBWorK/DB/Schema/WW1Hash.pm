@@ -252,6 +252,21 @@ sub gets {
 	return @records;
 }
 
+sub getsNoFilter {
+	my ($self, @keypartsRefList) = @_;
+	
+	my @records;
+	$self->{driver}->connect("ro");
+	foreach my $keypartsRef (@keypartsRefList) {
+		my @keyparts = @$keypartsRef;
+		my $UserSet = $self->get1NoFilter(@keyparts);
+		push @records, $UserSet;
+	}
+	$self->{driver}->disconnect();
+	
+	return @records;
+}
+
 # helper used by gets
 # assumes that the database is already connected
 sub get1 {
