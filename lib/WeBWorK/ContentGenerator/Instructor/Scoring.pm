@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.32 2004/04/05 19:33:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.33 2004/05/08 20:31:28 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,7 +42,7 @@ sub initialize {
 	my $user       = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "score_sets")) {
-		$self->{submitError} = "You aren't authorized to score problem sets";
+		$self->addmessage(CGI::div({class=>'ResultsWithError'}, CGI::p("You aren't authorized to score problem sets")));
 		return;
 	}
 
@@ -55,7 +55,7 @@ sub initialize {
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
 		
-	    $self->addmessage(CGI::div({class=>'ResultsWithError'},"You must select one or more sets for scoring")) unless @selected;
+	    	$self->addmessage(CGI::div({class=>'ResultsWithError'},"You must select one or more sets for scoring")) unless @selected;
 		
 		# pre-fetch users
 		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
