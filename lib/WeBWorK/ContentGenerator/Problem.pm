@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.141 2004/06/04 21:40:07 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.142 2004/06/04 23:21:48 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,7 +170,7 @@ sub pre_header_initialize {
 		}
 
 		my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-		my $publishedText = ($set->published) ? "visable to students." : "hidden from students.";
+		my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
 	} else {
 	
