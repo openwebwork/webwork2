@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+ <head>
+  <title>WeBWorK Test Template</title>
+ </head>
+ <body>
+  <h1>#path</h1>	<div><!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "--></div>
+  <h1>#quicklinks</h1>	<div><!--#quicklinks--></div>
+  <h1>#siblings</h1>	<div><!--#siblings--></div>
+  <h1>#nav</h1>		<div><!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "--></div>
+  <h1>#title</h1>	<div><!--#title--></div>
+  <h1>#body</h1>	<div><!--#body--></div>
+ </body>
+</html>
