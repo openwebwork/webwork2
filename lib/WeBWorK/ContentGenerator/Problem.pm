@@ -923,15 +923,15 @@ sub attemptResults {
 	my $summary = ""; 
 	if (scalar @answerNames == 1) {
 			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({'class="ResultsWithoutError"'},"The above answer is correct.");
+				$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
 			 } else {
-			 	 $summary .= CGI::div({'class="ResultsWithError"'},"The above answer is NOT correct.");
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT correct.");
 			 }
 	} else {
 			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({'class="ResultsWithoutError"'},"All of the above answers are correct.");
+				$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
 			 } else {
-			 	 $summary .= CGI::div({'class="ResultsWithError"'},"At least one of the above answers is NOT correct.");
+			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT correct.");
 			 }
 	}
 	
