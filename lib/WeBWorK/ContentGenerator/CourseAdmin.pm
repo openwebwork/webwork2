@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.16 2004/06/06 00:20:14 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.17 2004/06/13 01:29:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -245,7 +245,8 @@ sub add_course_form {
 		$source;
 	};
 	
-	my @existingCourses = listCourses($ce);
+	my @existingCourses =  listCourses($ce);
+	@existingCourses    = sort @existingCourses;
 	
 	print CGI::h2("Add Course");
 	
@@ -568,9 +569,15 @@ sub do_add_course {
 	my @users;
 	if ($add_initial_userID ne "") {
 		my $User = $db->newUser(
-			user_id => $add_initial_userID,
-			status => "C",
+			user_id    => $add_initial_userID,
+			last_name  => $add_contact_last_name,
+			first_name => $add_contact_first_name,
+			student_id => $add_initial_userID,
+			status     => "C",
 		);
+# 		$User->last_name(   $add_contact_last_name  );
+# 		$User->first_name(  $add_contact_first_name );
+# 		$User->student_id(  $add_initial_userID     );
 		my $Password = $db->newPassword(
 			user_id => $add_initial_userID,
 			password => cryptPassword($add_initial_password),
@@ -584,6 +591,9 @@ sub do_add_course {
 	if ($add_admin_userID ne "") {
 		my $User = $db->newUser(
 			user_id => $add_admin_userID,
+			last_name  => " Administrator",
+			first_name => "Sir",
+			student_id => $add_admin_userID,
 			status => "C",
 		);
 		my $Password = $db->newPassword(
@@ -652,6 +662,7 @@ sub do_add_course {
 			CGI::a({href=>$newCourseURL}, "Log into $add_courseID"),
 		);
 	}
+
 	
 }
 
