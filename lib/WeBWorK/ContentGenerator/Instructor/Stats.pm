@@ -165,8 +165,9 @@ sub displaySets {
 
 	my $num_of_problems  = @problems;
 	# get user records
+	$WeBWorK::timer->continue("Begin obtaining user records for set $setName") if defined($WeBWorK::timer);
 	my @userRecords  = $db->getUsers(@studentList);
-
+	$WeBWorK::timer->continue("End obtaining user records for set $setName") if defined($WeBWorK::timer);
 
  	my @augmentedUserRecords    = ();
 	foreach my $studentRecord (@userRecords)   {
@@ -183,8 +184,15 @@ sub displaySets {
 		my $num_of_attempts = 0;
 		my %h_problemData  = ();
 		my $probNum         = 0;
-		foreach my $prob (@problems) {
-			my $problemRecord   = $db->getUserProblem($student, $setName, $prob);
+		my @triplets = map {[$student, $setName, $_ ]} @problems;
+		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
+		my @problemRecords = $db->getUserProblems( @triplets );
+		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
+
+		foreach my $problemRecord (@problemRecords) {
+			my $prob = $problemRecord->problem_id;
+		#foreach my $prob (@problems) {
+			#my $problemRecord   = $db->getUserProblem($student, $setName, $prob);
 			$probNum++;
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -334,7 +342,7 @@ sub displayStudents {
 	# FIXME what does this mean?
 	
 	my @rows;
-	my $max_problems;
+	my $max_problems=0;
 	
 	foreach my $setName (@setIDs)   {
 	    my $status = 0;
@@ -349,8 +357,13 @@ sub displayStudents {
 		my $num_of_problems  = @problems;
 		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
 		# construct header
-		foreach my $prob (@problems) {
-			my $problemRecord   = $db->getUserProblem($studentName, $setName, $prob);
+		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
+		my @problemRecords = $db->getUserProblems( map {[$studentName, $setName,$_]}  @problems);
+		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
+		foreach my $problemRecord (@problemRecords) {
+			my $prob = $problemRecord->problem_id;
+		#foreach my $prob (@problems) {
+			#my $problemRecord   = $db->getUserProblem($studentName, $setName, $prob);
 			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -389,6 +402,7 @@ sub displayStudents {
 			my $num_incorrect = $problemRecord->num_correct   || 0;
 			$num_of_attempts += $num_correct + $num_incorrect;
 		}
+		
 		# FIXME   we can do this more effficiently  get the list first
 		
 

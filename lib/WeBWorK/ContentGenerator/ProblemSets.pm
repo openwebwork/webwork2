@@ -67,14 +67,15 @@ sub body {
 	
 	my @setIDs = $db->listUserSets($effectiveUser);
 	
-# 	my @sets;
-# 	foreach my $setID (@setIDs) {
-# 		push @sets, $db->getMergedSet($effectiveUser, $setID);
-# 	}
-	
+
+	$WeBWorK::timer->continue("Begin collecting merged sets") if defined($WeBWorK::timer);
 	my @sets = $db->getMergedSets( map {[$effectiveUser, $_]} @setIDs );
+	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
+	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
+	$WeBWorK::timer->continue("End preparing merged sets") if defined($WeBWorK::timer);
+	
 	foreach my $set (@sets) {
 		print $self->setListRow($set, ($permissionLevel > 0),
 			($permissionLevel > 0));
