@@ -83,18 +83,30 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "24",
 		override  => "any",
+		labels    => {
+				0 => "None Specified",
+				"" => "None Specified",
+		},
 	},
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
 		size      => "24",
 		override  => "any",
+		labels    => {
+				0 => "None Specified",
+				"" => "None Specified",
+		},
 	},
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
 		size      => "24",
 		override  => "any",
+		labels    => {
+				0 => "None Specified",
+				"" => "None Specified",
+		},
 	},
 	published => {
 		name      => "Visible to Students",
@@ -506,7 +518,7 @@ sub initialize {
 					if (defined $override && $override eq $field) {
 
 						my $param = $r->param("set.$setID.$field");
-						$param = $properties{$field}->{default} unless defined $param && $param ne "";
+						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 						$param = $undoLabels{$field}->{$param} || $param;
 						if ($field =~ /_date/) {
 							$param = $self->parseDateTime($param);
@@ -524,7 +536,7 @@ sub initialize {
 				next unless canChange($forUsers, $field);
 
 				my $param = $r->param("set.$setID.$field");
-				$param = $properties{$field}->{default} unless defined $param && $param ne "";
+				$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 				$param = $undoLabels{$field}->{$param} || $param;
 				if ($field =~ /_date/) {
 					$param = $self->parseDateTime($param);
@@ -564,7 +576,7 @@ sub initialize {
 						if (defined $override && $override eq $field) {
 
 							my $param = $r->param("problem.$problemID.$field");
-							$param = $properties{$field}->{default} unless defined $param && $param ne "";
+							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 							$param = $undoLabels{$field}->{$param} || $param;
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
@@ -579,7 +591,7 @@ sub initialize {
 						next unless canChange($forUsers, $field);
 
 						my $param = $r->param("problem.$problemID.$field");
-						$param = $properties{$field}->{default} unless defined $param && $param ne "";
+						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 						$param = $undoLabels{$field}->{$param} || $param;
 						$changed ||= changed($record->$field, $param);
 						$record->$field($param);
@@ -598,7 +610,7 @@ sub initialize {
 					next unless canChange($forUsers, $field);
 
 					my $param = $r->param("problem.$problemID.$field");
-					$param = $properties{$field}->{default} unless defined $param && $param ne "";
+					$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 					$param = $undoLabels{$field}->{$param} || $param;
 					$changed ||= changed($problemRecord->$field, $param);
 					$problemRecord->$field($param);
@@ -632,7 +644,7 @@ sub initialize {
 							next unless $useful{$field};
 	
 							my $param = $r->param("problem.$problemID.$field");
-							$param = $properties{$field}->{default} unless defined $param && $param ne "";
+							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 							$param = $undoLabels{$field}->{$param} || $param;
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
@@ -1014,7 +1026,7 @@ sub body {
 			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
-			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID });
+			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
 
 			my @fields = @{ PROBLEM_FIELDS() };
