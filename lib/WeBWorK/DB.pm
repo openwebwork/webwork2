@@ -46,7 +46,7 @@ from the adjacent layers.
 The top layer of the architecture is the DB module. It provides the methods
 listed below, and uses schema modules (via tables) to implement those methods.
 
-               / list* exists* add* get* put* delete* \               <- api
+            / new* list* exists* add* get* put* delete* \             <- api
  +------------------------------------------------------------------+
  |                                DB                                |
  +------------------------------------------------------------------+
@@ -237,6 +237,17 @@ sub new($$) {
 
 =over
 
+=item newPassword()
+
+Returns a new, empty password object.
+
+=cut 
+
+sub newPassword {
+	my ($self) = @_;
+	return $self->{password}->{record}->new;
+}
+
 =item listPasswords()
 
 Returns a list of user IDs representing the records in the password table.
@@ -353,6 +364,17 @@ sub deletePassword($$) {
 
 =over
 
+=item newPermissionLevel()
+
+Returns a new, empty permission level object.
+
+=cut 
+
+sub newPermissionLevel {
+	my ($self) = @_;
+	return $self->{permission}->{record}->new;
+}
+
 =item listPermissionLevels()
 
 Returns a list of user IDs representing the records in the permission table.
@@ -465,6 +487,17 @@ sub deletePermissionLevel($$) {
 
 =over
 
+=item newKey()
+
+Returns a new, empty key object.
+
+=cut 
+
+sub newKey {
+	my ($self) = @_;
+	return $self->{key}->{record}->new;
+}
+
 =item listKeys()
 
 Returns a list of user IDs representing the records in the key table.
@@ -575,6 +608,17 @@ sub deleteKey($$) {
 =head2 User Methods
 
 =over
+
+=item newUser()
+
+Returns a new, empty user object.
+
+=cut 
+
+sub newUser {
+	my ($self) = @_;
+	return $self->{user}->{record}->new;
+}
 
 =item listUsers()
 
@@ -688,6 +732,11 @@ sub deleteUser($$) {
 # set functions
 ################################################################################
 
+sub newGlobalSet {
+	my ($self) = @_;
+	return $self->{set}->{record}->new;
+}
+
 sub listGlobalSets($) {
 	my ($self) = @_;
 	
@@ -759,6 +808,11 @@ sub deleteGlobalSet($$) {
 ################################################################################
 # set_user functions
 ################################################################################
+
+sub newUserSet {
+	my ($self) = @_;
+	return $self->{set_user}->{record}->new;
+}
 
 sub listSetUsers($$) {
 	my ($self, $setID) = @_;
@@ -855,6 +909,11 @@ sub deleteUserSet($$$) {
 # problem functions
 ################################################################################
 
+sub newGlobalProblem {
+	my ($self) = @_;
+	return $self->{problem}->{record}->new;
+}
+
 sub listGlobalProblems($$) {
 	my ($self, $setID) = @_;
 	
@@ -933,6 +992,11 @@ sub deleteGlobalProblem($$$) {
 ################################################################################
 # problem_user functions
 ################################################################################
+
+sub newUserProblem {
+	my ($self) = @_;
+	return $self->{problem_user}->{record}->new;
+}
 
 sub listProblemUsers($$$) {
 	my ($self, $setID, $problemID) = @_;
