@@ -86,6 +86,7 @@ sub decodeAnswers($) {
 	return unless defined $string and $string;
 	my @array = split m/##/, $string;
 	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
+	push @array, "" if @array%2;
 	return @array; # it's actually a hash ;)
 }
 
