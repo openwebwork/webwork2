@@ -190,7 +190,7 @@ sub dispatch($) {
 
 				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
 				$WeBWorK::timer0->start;
-				my $pid = fork();
+#				my $pid = fork();
 #				if ($pid) {
 #					wait;
 #				} else {
@@ -202,7 +202,7 @@ sub dispatch($) {
 #					#  We REALLY REALLY want this grandchild to exit. But not the child.  How to do this
 #					# cleanly???? FIXME
 #				}
-				$WeBWorK::timer0->continue("Parent done waiting (teenagers!!! -- sigh)");
+				$WeBWorK::timer0->continue("Problem done)");
 				$WeBWorK::timer0->stop;
 				$WeBWorK::timer0->save;
 				return $result;
