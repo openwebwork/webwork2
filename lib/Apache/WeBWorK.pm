@@ -23,7 +23,7 @@ your httpd.conf file to achieve this:
  		PerlSetVar webwork_root /path/to/webwork-modperl
  		<Perl>
  			use lib '/path/to/webwork-modperl/lib';
- 			use lib '/path/to/webwork-modperl/pglib';
+ 			use lib '/path/to/pg/lib';
  		</Perl>
  	</Location>
  </IfModule>
