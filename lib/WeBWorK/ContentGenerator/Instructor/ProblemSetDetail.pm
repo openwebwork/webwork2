@@ -1199,8 +1199,6 @@ sub body {
 			]));
 		}
 
-  		my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
-        my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
           
 # print final lines
 		print CGI::end_table();
@@ -1211,7 +1209,6 @@ sub body {
 		  CGI::br();
 		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
 		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
-		print CGI::p( CGI::a({href=>$editNewProblemLink},'Create'). 'a new blank problem');
 		print CGI::p(<<HERE);
 Any time problem numbers are intentionally changed, the problems will
 always be renumbered consecutively, starting from one.  When deleting
@@ -1225,6 +1222,11 @@ HERE
 	} else {
 		print CGI::p(CGI::b("This set doesn't contain any problems yet."));
 	}
+	# always allow one to add a new problem.
+	my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
+    my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
+
+	print CGI::p( CGI::a({href=>$editNewProblemLink},'Create'). 'a new blank problem');
 
 	print CGI::end_form();
 	
