@@ -14,6 +14,7 @@ WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API.
 use strict;
 use warnings;
 use File::Path qw(rmtree);
+use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry makeTempDirectory);
 
@@ -138,11 +139,27 @@ EOF
 	#warn "PG: translating the PG source into text\n";
 	$translator->translate();
 	
-	# after we're done translating, we may have to clean up after the translator.
-	# for example, 'images' mode uses a tempdir for dvipng's temp files. We have
-	# to remove it.
-	if ($translationOptions->{displayMode} eq 'images' && $envir->{dvipngTempDir}) {
+	# after we're done translating, we may have to clean up after the
+	# translator:
+	
+	# for example, HTML_img mode uses a tempdir for dvipng's temp files.\
+	# We have to remove it.
+	if ($envir->{dvipngTempDir}) {
 		rmtree($envir->{dvipngTempDir}, 0, 0);
+	}
+	
+	# HTML_dpng, on the other hand, uses an ImageGenerator. We have to
+	# render the queued equations.
+	if ($envir->{imagegen}) {
+		my $sourceFile = $courseEnv->{courseDirs}->{templates} . "/" . $problem->source_file;
+		my %mtimeOption = -e $sourceFile
+			? (mtime => (stat $sourceFile)[9])
+			: ();
+		
+		$envir->{imagegen}->render(
+			refresh => $translationOptions->{refreshMath2img},
+			%mtimeOption,
+		);
 	}
 	
 	my ($result, $state); # we'll need these on the other side of the if block!
@@ -227,6 +244,8 @@ sub defineProblemEnvir($$$$$$$) {
 	
 	my %envir;
 	
+	# ----------------------------------------------------------------------
+	
 	# PG environment variables
 	# from docs/pglanguage/pgreference/environmentvariables as of 06/25/2002
 	# any changes are noted by "ADDED:" or "REMOVED:"
@@ -247,7 +266,8 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{outputMode}        = $envir{displayMode};	 
 	$envir{displayHintsQ}     = $options->{showHints};	 
 	$envir{displaySolutionsQ} = $options->{showSolutions};
-	$envir{refreshMath2img}   = $options->{refreshMath2img};
+	# FIXME: this is HTML_img specific
+	#$envir{refreshMath2img}   = $options->{refreshMath2img};
 	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
 	
 	# Problem Information
@@ -309,9 +329,10 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp}."/";
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs}."/";
-	$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
-		? makeTempDirectory($envir{tempDirectory}, "webwork-dvipng")
-		: undef;
+	# FIXME: this is HTML_img mode-specific
+	#$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
+	#	? makeTempDirectory($envir{tempDirectory}, "webwork-dvipng")
+	#	: undef;
 	
 	# Information for sending mail
 	
@@ -324,10 +345,22 @@ sub defineProblemEnvir($$$$$$$) {
 	my $ansEvalDefaults = $courseEnv->{pg}->{ansEvalDefaults};
 	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
 	
-	# Other things...
-	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX};	#used by quizzes
-	$envir{PROBLEM_GRADER_TO_USE}    = $courseEnv->{pg}->{options}->{grader};
+	# ----------------------------------------------------------------------
 	
+	# Object for generating equation images
+	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
+		tempDir  => $courseEnv->{webworkDirs}->{tmp}, # global temp dir
+		dir	 => $envir{tempDirectory},
+		url	 => $envir{tempURL},
+		#basename => "$envir{studentLogin}.$envir{setNumber}.$envir{probNum}",
+		basename => "equation-$envir{psvn}.$envir{probNum}.$envir{problemSeed}",
+		latex	 => $envir{externalLaTeXPath},
+		dvipng   => $envir{externalDvipngPath},
+	);
+	
+	# Other things...
+	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
+	$envir{PROBLEM_GRADER_TO_USE}    = $courseEnv->{pg}->{options}->{grader};
 	$envir{PRINT_FILE_NAMES_FOR}     = $courseEnv->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
 	
 	# variables for interpreting capa problems.
@@ -345,7 +378,7 @@ sub translateDisplayModeNames($) {
 		tex           => "TeX",
 		plainText     => "HTML",
 		formattedText => "HTML_tth",
-		images        => "HTML_img"
+		images        => "HTML_dpng", # "HTML_img",
 	}->{$name};
 }
 
@@ -482,7 +515,8 @@ boolean, render solutions
 =item refreshMath2img
 
 boolean, force images created by math2img (in "images" mode) to be recreated,
-even if the PG source has not been updated.
+even if the PG source has not been updated. FIXME: change the name of this
+option to "refreshEquations" and update the docs accordingly.
 
 =item processAnswers
 

@@ -7,30 +7,38 @@ package WeBWorK::PG::ImageGenerator;
 
 =head1 NAME
 
-WeBWorK::PG::ImageGenerator - create an object for holding bits of math
-for LaTeX, and then to process them later.
+WeBWorK::PG::ImageGenerator - create an object for holding bits of math for
+LaTeX, and then to process them all at once.
 
 =head1 SYNPOSIS
 
- my $imgen = new ImageGenerator; #create a image generator
- 
- $imgen->initialize(\%envir); # provide basic data in preparation of image collection
- 
- $imgen->add(string); # add a new LaTeX string to be processed.
-                      # Should be in math mode with \( or \[
-                      # It returns the html tag
-
- $imgen->getCount(); # Returns the number of images which have been added
- $imgen->tmpurl();   # Returns the beginning of the html path
- 
- $imgen->render(); # Generates the images.  By default, we reuse old
-                   # images when reasonable, unless passed a flag
-                   # refresh=>'yes' (or 1)
+FIXME: add this
 
 =cut
 
 use strict;
 use warnings;
+use WeBWorK::Utils qw(readDirectory makeTempDirectory removeTempDirectory);
+
+use constant PREAMBLE => <<'EOF';
+\documentclass[12pt]{article}
+\nonstopmode
+\usepackage{amsmath,amsfonts,amssymb}
+\def\gt{>}
+\def\lt{<}
+\usepackage[active,textmath,displaymath]{preview}
+\begin{document}
+EOF
+use constant POSTAMBLE => <<'EOF';
+\end{document}
+EOF
+use constant DVIPNG_ARGS => join " ", qw(
+-x4000.5
+-bgTransparent
+-Q6
+-mode toshiba
+-D180
+);
 
 =head1 METHODS
 
@@ -38,33 +46,162 @@ use warnings;
 
 =item new
 
-	Creates the ImageGenerator object.
+Returns a new ImageGenerator object. <C%options> must contain the following entries:
 
-=back
+ tempDir  => directory for storing temporary files (non-web accessible)
+ dir	  => directory for resulting files
+ url	  => url to directory for resulting files
+ basename => base name for image files
+ latex    => path to latex binary
+ dvipng   => path to dvipng binary
 
 =cut
 
 sub new {
-	my $class = shift;
+	my ($invocant, %options) = @_;
+	my $class = ref $invocant || $invocant;
 	my $self = {
-		latexlines => [],
-		count => 0,
-		tmppath => "",
-		tmpURLstart=>"",
-		filenamestart=> ""
+		strings => [],
+		%options,
 	};
 	
 	bless $self, $class;
 }
 
-sub initialize {
-	my $self = shift;
-	my $envir = shift; # pointer to problem envirment hash
+=item add($string, $mode)
+
+Adds the equation in C<$string> to the object. C<$mode> can be "display" or "inline". If
+not specified, "inline" is assumed. Returns the proper HTML tag for displaying the image.
+
+=cut
+
+sub add {
+	my ($self, $string, $mode) = @_;
 	
-	my $problemnum = $envir->{'probNum'};
-	my $studname = $envir->{'studentLogin'};
-	my $psvn = $envir->{'psvn'};
-	my $setname = $envir->{'setNumber'};
+	my $strings  = $self->{strings};
+	my $dir      = $self->{dir};
+	my $url      = $self->{url};
+	my $basename = $self->{basename};
+	
+	my $imageNum  = @$strings + 1;
+	my $imageURL  = "$url/$basename.$imageNum.png";
+	my $imageTag  = "<img src=\"$imageURL\" align=\"middle\" alt=\"$string\">";
+	
+	if ($mode eq "display") {
+		push @$strings, '\(\displaystyle{' . $string . '}\)';
+		return " <div align=\"center\">$imageTag</div> ";
+	} else {
+		push @$strings, '\(' . $string . '\)';
+		return " $imageTag ";
+	}
+}
+
+=item render(%options)
+
+Uses LaTeX and dvipng to render the equations stored in the object. If the key "mtime" in
+C<%options> is given, it will be interpreted as a unix date and compared with the
+modification date on any existing copy of the first image to be generated. It is
+recommended that the modification time of the source file from which the equations
+originate be used for this value. If the key "refresh" in C<%options> is true, images
+will be regenerated regardless of when they were last modified.
+
+=cut
+
+sub render {
+	my ($self, %options) = @_;
+	
+	my $tempDir  = $self->{tempDir};
+	my $dir      = $self->{dir};
+	my $basename = $self->{basename};
+	my $latex    = $self->{latex};
+	my $dvipng   = $self->{dvipng};
+	my $strings  = $self->{strings};
+	
+	my $mtime   = $options{mtime};
+	my $refresh = not defined $mtime || $options{refresh};
+		# must refresh if no mtime is given
+	
+	return unless @$strings; # Don't run latex if there are no images to generate
+	
+	unless ($refresh) {
+		my $firstImage = "$dir/$basename.1.png";
+		if (-e $firstImage) {
+			# return if first image newer than $mtime
+			return if (stat $firstImage)[9] >= $mtime;
+		}
+	}
+	
+	# create temporary directory in which to do TeX processing
+	my $wd = makeTempDirectory($tempDir, "ImageGenerator");
+	
+	# store equations in a tex file
+	my $texFile = "$wd/equation.tex";
+	open my $tex, ">", $texFile
+		or die "failed to open file $texFile for writing: $!";
+	print $tex PREAMBLE;
+	print $tex "$_\n" foreach @$strings;
+	print $tex POSTAMBLE;
+	close $tex;
+	
+	# call LaTeX
+	my $latexCommand  = "cd $wd && $latex equation > latex.out 2> latex.err";
+	my $latexStatus = system $latexCommand;
+	warn "$latexCommand returned non-zero status $latexStatus: $!"
+		if $latexStatus;
+	warn "$latexCommand failed to generate a DVI file"
+		unless -e "$wd/equation.dvi";
+	
+	# call dvipng
+	my $dvipngCommand = "cd $wd && $dvipng " . DVIPNG_ARGS . " equation > dvipng.out 2> dvipng.err";
+	my $dvipngStatus = system $dvipngCommand;
+	#warn "$dvipngCommand returned non-zero status $dvipngStatus: $!"
+	#	if $dvipngStatus;
+	
+	# move/rename images
+	foreach my $image (readDirectory($wd)) {
+		# only work on equation#.png files
+		next unless $image =~ m/^equation(\d+)\.png$/;
+		
+		# get image number from above match
+		my $imageNum = $1;
+		
+		# move/rename image
+		my $mvCommand = "cd $wd && /bin/mv $wd/$image $dir/$basename.$imageNum.png";
+		my $mvStatus = system $mvCommand;
+		warn "$mvCommand returned non-zero status $mvStatus: $!"
+			if $mvStatus;
+	}
+	
+	# remove temporary directory (and its contents)
+	removeTempDirectory($wd);
+}
+
+1;
+
+__END__
+
+################################################################################
+# OLD VERSIONS OF SUBROUTINES
+################################################################################
+
+
+sub getCount {
+	my $self = shift;
+	return $self->{count};
+}
+
+sub tmpurl {
+	my $self = shift;
+	return "$self->{tmpURLstart}/$self->{filenamestart}";
+}
+
+sub initialize {
+	my ($self, $envir) = @_;
+	
+	my $problemnum  = $envir->{'probNum'};
+	my $studname    = $envir->{'studentLogin'};
+	my $psvn        = $envir->{'psvn'};
+	my $setname     = $envir->{'setNumber'};
 	my $tmpURLstart = $envir->{'tempURL'};
 	
 	my $path=main::surePathToTmpFile(main::convertPath("png/$setname/$psvn/foo"));
@@ -101,16 +238,6 @@ sub add {
 	
 	push @{$self->{latexlines}}, $newstr;
 	return $tag;
-}
-
-sub getCount {
-	my $self = shift;
-	return($self->{count});
-}
-
-sub tmpurl {
-	my $self = shift;
-	return("$self->{tmpURLstart}/$self->{filenamestart}");
 }
 
 sub render {

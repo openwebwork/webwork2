@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.31 2003-06-11 20:40:56 sh002i Exp $
+# $Id: global.conf.dist,v 1.32 2003-06-13 02:30:44 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -126,7 +126,8 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	tth      => "/usr/local/bin/tth",
 	pdflatex => "/usr/local/bin/pdflatex",
 	latex    => "/usr/local/bin/latex",
-	dvipng   => "/usr/local/bin/dvipng -mode ljfivemp -D600 -Q6 -x1000.5 -bgTransparent",
+	#dvipng   => "/usr/local/bin/dvipng -mode ljfivemp -D600 -Q6 -x1000.5 -bgTransparent",
+	dvipng   => "/usr/local/bin/dvipng",
 	gif2eps  => "$webworkDirs{bin}/gif2eps",
 	png2eps  => "$webworkDirs{bin}/png2eps",
 	gif2png  => "$webworkDirs{bin}/gif2png",
