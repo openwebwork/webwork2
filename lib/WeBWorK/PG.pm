@@ -13,6 +13,7 @@ WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API.
 
 use strict;
 use warnings;
+use File::Temp qw(tempdir);
 use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
@@ -128,7 +129,24 @@ sub new($$$$$$$$) {
 	my $sourceFile = $problem->source_file;
 	$sourceFile = $courseEnv->{courseDirs}->{templates}."/".$sourceFile
 		unless ($sourceFile =~ /^\//);
-	$translator->source_string(readFile($sourceFile));
+	eval { $translator->source_string(readFile($sourceFile)) };
+	if ($@) {
+		# well, we couldn't get the problem source, for some reason.
+		return bless {
+			translator => $translator,
+			head_text  => "",
+			body_text  => <<EOF,
+WeBWorK::Utils::readFile($sourceFile) says:
+$@
+EOF
+			answers    => {},
+			result     => {},
+			state      => {},
+			errors     => "Failed to read the problem source file.",
+			warnings   => undef,
+			flags      => {error_flag => 1},
+		}, $class;
+	}
 	
 	# install a safety filter (&safetyFilter)
 	warn "PG: installing a safety filter\n";
@@ -270,12 +288,17 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{inputs_ref} = $formFields;
 	
 	# External Programs
+	# ADDED: externalLaTeXPath, externalDvipngPath, externalMath2imgPath
 	
 	$envir{externalTTHPath}      = $courseEnv->{externalPrograms}->{tth};
+	$envir{externalLaTeXPath}    = $courseEnv->{externalPrograms}->{latex};
+	$envir{externalDvipngPath}   = $courseEnv->{externalPrograms}->{dvipng};
 	$envir{externalMath2imgPath} = $courseEnv->{externalPrograms}->{math2img};
 	
 	# Directories and URLs
 	# REMOVED: courseName
+	# ADDED: dvipngTempDir
+	
 	
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
@@ -289,6 +312,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp};
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
+	$envir{dvipngTempDir}          = tempdir("webwork-dvipng-XXXXXXXX", TMPDIR => 1);
 	
 	# Default values for evaluating answers
 	
@@ -409,7 +433,9 @@ a WeBWorK::Set object
 
 =item PROBLEM
 
-a WeBWorK::Problem object
+a WeBWorK::Problem object. The contents of the source_file field can specify a
+PG file either by absolute path or path relative to the "templates" directory.
+I<The caller should remove taint from this value before passing!>
 
 =item PSVN
 

@@ -19,9 +19,6 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
 
-# TODO:
-# 7. make warnings work
-
 ############################################################
 # 
 # user
@@ -191,6 +188,8 @@ sub siblings {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	
+	print CGI::strong("Problems"), CGI::br();
+	
 	my $wwdb = $self->{wwdb};
 	my $user = $self->{r}->param("user");
 	my @problems;
@@ -253,8 +252,7 @@ sub body {
 	##### translation errors? #####
 	
 	if ($pg->{flags}->{error_flag}) {
-		print translationError($pg->{errors}, $pg->{body_text});
-		return "";
+		return translationError($pg->{errors}, $pg->{body_text});
 	}
 	
 	##### answer processing #####
@@ -360,6 +358,7 @@ sub body {
 
 ##### output utilities #####
 
+# this is used by ProblemSet.pm too, so don't fuck it up
 sub translationError($$) {
 	my ($error, $details) = @_;
 	return

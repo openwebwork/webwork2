@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.8 2002-08-23 18:30:03 sh002i Exp $
+# $Id: TODO,v 1.9 2002-08-29 19:56:23 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -40,6 +40,37 @@ DONE	New interface to PG.pm
 	DONE	- fix code (heh heh)
 		- fix hardcopySetHeader
 	
+	Integration of dvipng method of image generation
+	N/A	- choice between writing to a temporary TeX file from within
+		  dangerousMacros, or queueing the equations up in RAM and
+		  passing them out to the caller (via PG_flags?) who will then
+		  call &latex2png
+	DONE	- write tempfile from dangerousMacros
+			- PRO: gets it out of RAM
+			- PRO: no dependancies between equations
+			- CON: have to coordinate between latex2png and
+			       dangerous macros for tempfile locations
+	FORGET	- queue equations in RAM
+			- PRO: all file access and external calls happen
+			       outside of the safe compartment.
+			- PRO: latex2png gets to decide where to put files
+			- CON: stuff sits in RAM
+			- CON: uses a package array to queue equations :p
+	
+DONE	display of screen set header in ProblemSet.pm (easy)
+	make "enter" on the problem form trigger "submit answer", not "redisplay"
+	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
+	have logout button invalidate key
+DONE	add <!--#if can="blah" warning="1" error="1"-->
+	handling of PG warnings (?!?!?!?!)
+	time and transaction logging
+	Options
+		- email address and password
+		- or link to old system
+	Feedback (or link to old system)
+		- need nice modular way of sending email
+	Pretty die messages (from outside of the translator)
+	
 	Calling LaTeX/dvipng and PDFLaTeX in a nice way
 		- create LaTeX.pm (?)
 		- &latex2pdf
@@ -56,33 +87,3 @@ DONE	New interface to PG.pm
 			- move resulting images to tmp/dvipng/whatever.png
 			- remove tempdir
 	
-	Integration of dvipng method of image generation
-		- who the fuck knows...
-		- choice between writing to a temporary TeX file from within
-		  dangerousMacros, or queueing the equations up in RAM and
-		  passing them out to the caller (via PG_flags?) who will then
-		  call &latex2png
-		- write tempfile from dangerousMacros
-			- PRO: gets it out of RAM
-			- PRO: no dependancies between equations
-			- CON: have to coordinate between latex2png and
-			       dangerous macros for tempfile locations
-		- queue equations in RAM
-			- PRO: all file access and external calls happen
-			       outside of the safe compartment.
-			- PRO: latex2png gets to decide where to put files
-			- CON: stuff sits in RAM
-			- CON: uses a package array to queue equations :p
-	
-DONE	display of screen set header in ProblemSet.pm (easy)
-	make "enter" on the problem form trigger "submit answer", not "redisplay"
-	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
-	have logout button invalidate key
-	add <!--#if can="blah" warning="1" error="1"-->
-	handling of PG warnings (?!?!?!?!)
-	Options
-		- email address and password
-		- or link to old system
-	Feedback (or link to old system)
-		- need nice modular way of sending email
-	Pretty die messages

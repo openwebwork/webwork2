@@ -18,6 +18,9 @@ use base qw(WeBWorK::ContentGenerator);
 use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;
+use WeBWorK::ContentGenerator::Problem;
+use WeBWorK::DB::WW;
+use WeBWorK::DB::Classlist;
 
 sub initialize {
 	my $self = shift;
@@ -26,14 +29,13 @@ sub initialize {
 	# Open a database connection that we can use for the rest of
 	# the content generation.
 	
-	my $wwdb = new WeBWorK::DB::WW $courseEnvironment;
-	$self->{wwdb} = $wwdb;
+	$self->{wwdb} = WeBWorK::DB::WW->new($courseEnvironment);
+	$self->{cldb} = WeBWorK::DB::Classlist->new($courseEnvironment);
 }
 
 sub path {
 	my ($self, $setName, $args) = @_;
 	$setName =~ s/^set//;
-	
 	
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
@@ -52,7 +54,9 @@ sub siblings {
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-
+	
+	print CGI::strong("Problem Sets"), CGI::br();
+	
 	my $wwdb = $self->{wwdb};
 	my $user = $self->{r}->param("user");
 	my @sets;
@@ -74,6 +78,59 @@ sub title {
 	return $setName;
 }
 
+sub info {
+	# NOTE: info doesn't 
+	my ($self, $setName) = @_;
+	$setName =~ s/^set//;
+	
+	my $r = $self->{r};
+	my $ce = $self->{courseEnvironment};
+	
+	my $wwdb = $self->{wwdb};
+	my $cldb = $self->{cldb};
+	my $user = $cldb->getUser($r->param("user"));
+	my $set  = $wwdb->getSet($user->id, $setName);
+	my $psvn = $wwdb->getPSVN($user->id, $setName);
+	
+	my $screenSetHeader = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $displayMode     = $ce->{pg}->{options}->{displayMode};
+	
+	return "" unless defined $screenSetHeader and $screenSetHeader;
+	
+	# decide what to do about problem number
+	my $problem = WeBWorK::Problem->new(
+		id => 0,
+		set_id => $set->id,
+		login_id => $user->id,
+		source_file => $screenSetHeader,
+		# the rest of Problem's fields are not needed, i think
+	);
+	
+	my $pg = WeBWorK::PG->new(
+		$ce,
+		$user,
+		$r->param('key'),
+		$set,
+		$problem,
+		$psvn,
+		{}, # no form fields!
+		{ # translation options
+			displayMode     => $displayMode,
+			showHints       => 0,
+			showSolutions   => 0,
+			processAnswers  => 0,
+		},
+	);
+	
+	# handle translation errors
+	if ($pg->{flags}->{error_flag}) {
+		return WeBWorK::ContentGenerator::Problem::translationError(
+			$pg->{errors}, $pg->{body_text});
+	} else {
+		return $pg->{body_text};
+	}
+}
+
 sub body {
 	my ($self, $setName) = @_;
 	$setName =~ s/^set//;
@@ -82,9 +139,12 @@ sub body {
 	my $user = $r->param('user');
 	my $wwdb = $self->{wwdb};
 	
-	# *** *** *** ***
-	# somewhere in here, we have to print the problem set header!
-	# *** *** *** ***
+	my $hardcopyURL =
+		$courseEnvironment->{webworkURLs}->{root} . "/"
+		. $courseEnvironment->{courseName} . "/"
+		. "hardcopy/set$setName/?" . $self->url_authen_args;
+	print CGI::p(CGI::a({-href=>$hardcopyURL}, "Download a hardcopy"),
+		"of this problem set.");
 	
 	print CGI::start_table();
 	print CGI::Tr(
@@ -120,7 +180,7 @@ sub problemListRow($$$) {
 		: $problem->max_attempts - $attempts;
 	my $status = $problem->status * 100 . "%";
 	
-	return CGI::Tr(CGI::td([
+	return CGI::Tr(CGI::td({-nowrap=>1}, [
 		$interactive,
 		$attempts,
 		$remaining,

@@ -28,7 +28,6 @@
      <hr />
      <div>
       <small>
-       <strong>Siblings</strong><br />
        <!--#siblings-->
       </small>
      </div>
@@ -38,7 +37,16 @@
       <!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
      </div>
      <h1><!--#title--></h1>
-     <!--#body-->
+     <table width="100%" cellpadding="10" cellspacing="0" border="0">
+      <tr valign="top">
+       <td>
+        <!--#body-->
+       </td>
+       <td>
+        <!--#info-->
+       </td>
+      </tr>
+     </table>
     </td>
    </tr>
   </table>

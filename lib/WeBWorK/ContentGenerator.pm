@@ -16,6 +16,7 @@ use warnings;
 use Apache::Constants qw(:common);
 use CGI qw();
 use URI::Escape;
+use WeBWorK::DB::Auth;
 use WeBWorK::Utils qw(readFile);
 #use CGI::Carp qw(fatalsToBrowser);
 
@@ -328,19 +329,30 @@ sub header {
 	$r->send_http_header();
 }
 
+# drunk code. rewrite.
 sub links {
 	my $self = shift;
 	my $ce = $self->{courseEnvironment};
-	my $root = $ce->{webworkURLs}->{root};
+	my $userName = $self->{r}->param("user");
 	my $courseName = $ce->{courseName};
+	my $root = $ce->{webworkURLs}->{root};
+	my $permLevel = WeBWorK::DB::Auth->new($ce)->getPermissions($userName);
+	
 	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
-#	my $prefs    = "$root/prefs/?" . $self->url_authen_args();
-#	my $help     = $ce->{webworkURLs}->{docs} . "?" . $self->url_authen_args();
-	my $logout   = "$root/$courseName/";
+	my $prefs    = "$root/$courseName/prefs/?" . $self->url_authen_args();
+	my $prof = "$root/$courseName/prof/?" . $self->url_authen_args();
+	my $profLine;
+	if ($permLevel > 0) {
+		$profLine = CGI::a({-href=>$prof}, "Professor") . CGI::br(),
+	}
+	my $help     = $ce->{webworkURLs}->{docs} . "?" . $self->url_authen_args();
+	my $logout   = "$root/$courseName/?user=$userName";
+	
 	return
 		CGI::a({-href=>$probSets}, "Problem Sets"), CGI::br(),
-#		CGI::a({-href=>$prefs}, "User Options"), CGI::br(),
-#		CGI::a({-href=>$help}, "Help"), CGI::br(),
+		CGI::a({-href=>$prefs}, "User Options"), CGI::br(),
+		$profLine,
+		CGI::a({-href=>$help}, "Help"), CGI::br(),
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 	;
 }
