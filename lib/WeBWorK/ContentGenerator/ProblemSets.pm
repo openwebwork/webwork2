@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.56 2004/10/26 00:14:32 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.57 2004/11/18 16:00:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,8 +61,12 @@ sub info {
 		} else {
 			print CGI::p(CGI::b("Course Info"));
 		}
-		
-		if (-f $course_info_path) {
+		unless (-e $course_info_path) {       # FIXME 
+			`echo "" >$course_info_path`;     # we seem to need to have this file 
+			                                  # around to prevent
+			                                  # spurious errors when editing it.
+		}
+		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
 				print CGI::div({class=>"ResultsWithError"},
@@ -83,6 +87,26 @@ sub help {   # non-standard help, since the file path includes the course name
 	$name = lc('course home') unless defined($name);
 	$name =~ s/\s/_/g;
 	$self->helpMacro($name);
+}
+sub initialize {
+
+
+
+# get result and send to message
+	my ($self) = @_;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $user               = $r->param("user");
+	my $effectiveUser      = $r->param("effectiveUser");
+	if ($authz->hasPermissions($user, "access_instructor_tools")) {
+		# get result and send to message
+		my $status_message = $r->param("status_message");
+		$self->addmessage(CGI::p("$status_message")) if $status_message;
+	
+
+	}
 }
 sub body {
 	my ($self) = @_;
