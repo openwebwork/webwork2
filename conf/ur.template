@@ -86,7 +86,7 @@ width="66" /><br />
     </td>
     <!--#if can="path"-->
     <td valign="bottom" class="edgebox">
-     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
+     <!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
     </td>
     <!--#endif-->
     <!--#if loggedin="1"-->
@@ -110,7 +110,7 @@ width="66" /><br />
     bgcolor="#ffffff">
 <!--#endif-->
      <div align="left">
-      <!--#nav style="images" imageprefix="/webwork_files/images/nav" imagesuffix=".gif" separator="  "-->
+      <!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
      </div>
      <table width="100%" cellpadding="10" cellspacing="0" border="0">
       <tr valign="top">

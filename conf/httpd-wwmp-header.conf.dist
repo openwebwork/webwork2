@@ -1,6 +1,7 @@
 # This is the configuration that is common to every developer's apache
 # process.  httpd-wwmp-sample.conf expects to find this file in
 # /usr/local/etc/apache, but that can be customized for your shop.
+# You should also at least change the ServerName parameter.
 
 ### Section 1: Global Environment
 ServerType standalone

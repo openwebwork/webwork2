@@ -23,7 +23,7 @@ ErrorLog !WEBWORK_ROOT!/logs/httpd-error.log
 #ScoreBoardFile /var/run/httpd.scoreboard
 
 PerlFreshRestart On
-<Location /webwork>
+<Location /webwork2>
     SetHandler perl-script
     PerlHandler Apache::WeBWorK
 
@@ -51,7 +51,7 @@ MaxRequestsPerChild 100
 DocumentRoot "!WEBWORK_ROOT!/htdocs"
 
 # This alias, however, is important.
-Alias /webwork_files/ !WEBWORK_ROOT!/htdocs/
+Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
 
 # This should match the DocumentRoot
 <Directory "!WEBWORK_ROOT!/htdocs">

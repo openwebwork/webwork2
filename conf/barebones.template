@@ -39,7 +39,7 @@
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
    <tr valign="top">
     <td align="left" rowspan="2">
-     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" /><br />
+     <img src="/webwork2_files/images/webwork_square.gif" height="64" width="66" /><br />
      <hr />
      
      <div>
@@ -63,7 +63,7 @@
     </td>
     <!--#if can="path"-->
     <td valign="bottom" style="border-right: none">
-     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
+     <!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
     </td>
     <!--#endif-->
     <!--#if loggedin="1"-->
