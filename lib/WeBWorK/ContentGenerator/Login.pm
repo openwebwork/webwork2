@@ -29,6 +29,10 @@ sub title {
 	return "Login";
 }
 
+sub links {
+	return "";
+}
+
 sub body {
 	my $self = shift;
 	my $r = $self->{r};

@@ -135,7 +135,7 @@ sub locked($) {
 	return unless $self->{classlist_db}->connect("ro");
 	my $result = $self->{classlist_db}->hashRef->{">>lock_status"};
 	$self->{classlist_db}->disconnect;
-	return defined $result and $result eq "locked";
+	return (defined $result and $result eq "locked");
 }
 
 # -----

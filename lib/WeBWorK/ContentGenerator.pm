@@ -368,17 +368,21 @@ sub links {
 	my $courseName = $ce->{courseName};
 	my $root = $ce->{webworkURLs}->{root};
 	my $permLevel = WeBWorK::DB::Auth->new($ce)->getPermissions($userName);
-	return "" unless defined $permLevel;
+	my $key = WeBWorK::DB::Auth->new($ce)->getKey($userName);
+	return "" unless defined $key;
 	
 	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
 	my $prefs    = "$root/$courseName/options/?" . $self->url_authen_args();
 	my $prof = "$root/$courseName/prof/?" . $self->url_authen_args();
-	my $profLine;
-	if ($permLevel > 0) {
-		$profLine = CGI::a({-href=>$prof}, "Professor") . CGI::br(),
-	}
 	my $help     = $ce->{webworkURLs}->{docs} . "?" . $self->url_authen_args();
-	my $logout   = "$root/$courseName/?user=$userName";
+	my $logout   = "$root/$courseName/logout/?" . $self->url_authen_args();
+	
+	my $profLine = ($permLevel > 0)
+		? CGI::a({-href=>$prof}, "Professor") . CGI::br()
+		: "";
+	#if ($permLevel > 0) {
+	#	$profLine = CGI::a({-href=>$prof}, "Professor") . CGI::br(),
+	#}
 	
 	return
 		CGI::a({-href=>$probSets}, "Problem Sets"), CGI::br(),

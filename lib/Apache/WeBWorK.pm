@@ -18,6 +18,7 @@ use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::ContentGenerator::Login;
+use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Hardcopy;
 use WeBWorK::ContentGenerator::Options;
 use WeBWorK::ContentGenerator::Problem;
@@ -115,6 +116,8 @@ sub handler() {
 			# ***
 		} elsif ($arg eq "options") {
 			return WeBWorK::ContentGenerator::Options->new($r, $course_env)->go;
+		} elsif ($arg eq "logout") {
+			return WeBWorK::ContentGenerator::Logout->new($r, $course_env)->go;
 		} elsif ($arg eq "test") {
 			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.
