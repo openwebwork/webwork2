@@ -327,7 +327,15 @@ sub defineProblemEnvir($$$$$$$) {
 	
 	# Other things...
 	
-	$envir{PROBLEM_GRADER_TO_USE} = $courseEnv->{pg}->{options}->{grader};
+	$envir{PROBLEM_GRADER_TO_USE}    = $courseEnv->{pg}->{options}->{grader};
+	
+	$envir{PRINT_FILE_NAMES_FOR}     = $courseEnv->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
+	
+	# variables for interpreting capa problems.
+	$envir{CAPA_Tools}               = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
+	$envir{CAPA_MCTools}             = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
+	$envir{CAPA_Graphics_URL}        = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
+	$envir{CAPA_GraphicsDirectory}   = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
 	
 	return \%envir;
 }
