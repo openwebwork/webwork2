@@ -17,7 +17,23 @@ sub title {
 }
 
 sub body {
+	my $self = shift;
+	my $ce = $self->{ce};
+	my $r = $self->{r};
+	my $courseName = $ce->{courseName};
+	my $user = $r->param('user');
+	my $key  = $r->param('key');
+	my $effectiveUserName = $r->param('effectiveUser');
+	
+	return <<EOF;
+
+Problem sets listed here <br>
+
+Here is an example of a problem set definition file 
+<a href="/webwork/$courseName/instructor/problemSetEditor/?user=$user&amp;effectiveUser=$effectiveUserName&amp;key=$key">editor</a>
+
+
+EOF
 
 }
-
 1;
