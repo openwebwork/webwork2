@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.123 2004/10/21 01:16:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.124 2004/11/03 19:54:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,6 +49,7 @@ use CGI::Pretty qw(*ul *li escapeHTML);
 use Date::Format;
 use URI::Escape;
 use WeBWorK::Template qw(template);
+use WeBWorK::PG;
 
 ###############################################################################
 
@@ -490,13 +491,26 @@ sub links {
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets)}, sp2nbsp("Homework Sets"))));
+		CGI::a({href=>$self->systemLink($sets,
+		                                params=>{  displayMode => $self->{displayMode}, 
+									               showOldAnswers => $self->{will}->{showOldAnswers}
+									    }
+									    )}, sp2nbsp("Homework Sets")))
+	);
 	
 	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
-		print CGI::li(CGI::a({href=>$self->systemLink($options)}, sp2nbsp($options->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($options,
+		                                              params=>{  displayMode => $self->{displayMode}, 
+									                             showOldAnswers => $self->{will}->{showOldAnswers}
+									                  }
+									                  )}, sp2nbsp($options->name)));
 	}
 	
-	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  sp2nbsp($grades->name)));
+	print CGI::li(CGI::a({href=>$self->systemLink($grades,
+	                                              params=>{  displayMode => $self->{displayMode}, 
+															 showOldAnswers => $self->{will}->{showOldAnswers}
+												  }
+												  )},  sp2nbsp($grades->name)));
 	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  sp2nbsp($logout->name)));
 	
 	if ($authz->hasPermissions($user, "access_instructor_tools")) {
@@ -534,7 +548,7 @@ sub links {
 		
 		
 		my $fileMgr = $urlpath->newFromModule("${ipfx}FileManager", %args);
-		my $fileXfer = $urlpath->newFromModule("${ipfx}FileXfer", %args);
+		#my $fileXfer = $urlpath->newFromModule("${ipfx}FileXfer", %args);
 		
 		print CGI::hr();
 		print CGI::start_li();
@@ -582,7 +596,7 @@ sub links {
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
 		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
 		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr)}, sp2nbsp($fileMgr->name)));
-		print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
+		#print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
 		print CGI::li( $self->helpMacro('instructor_links'));
 		print CGI::end_ul();
 
@@ -668,6 +682,101 @@ Not defined in this package.
 
 Print an auxiliary options form, related to the content displayed in the
 C<body>.
+
+=cut
+
+sub options {
+	my ($self) = @_;
+	
+	return "" if $self->{invalidProblem};
+	my $sourceFilePathfield = '';
+        if($self->r->param("sourceFilePath")) {
+		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
+                                                   -value => $self->r->param("sourceFilePath"));
+	}
+	
+	my $r  = $self->{r};
+	my $ce = $self->{ce};
+	# insure that certain defaults are defined
+	$self->{must}          = {} unless defined $self->{must};
+	$self->{can}           = {} unless defined $self->{can};
+	$self->{will}          = {} unless defined $self->{will};
+	
+	# displayMode
+	my $displayMode        = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	$self->{displayMode}   = $displayMode unless defined $self->{displayMode};
+	
+	# showOldAnswers
+	my $want_to_showOldAnswers = defined($r->param("showOldAnswers")) ? 
+	        $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers};
+	$self->{can}->{showOldAnswers} = 1;
+	$self->{will}->{showOldAnswers} = $self->{can}->{showOldAnswers} && $want_to_showOldAnswers;
+	
+	return join("",
+		CGI::start_form("POST", $self->{r}->uri),
+		$self->hidden_authen_fields,
+		$sourceFilePathfield,
+		CGI::hr(), 
+		CGI::start_div({class=>"viewOptions"}),
+		$self->viewOptions(),
+		CGI::end_div(),
+		CGI::end_form()
+	);
+}
+
+sub viewOptions {
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+
+	# don't show options if we don't have anything to show
+	return if $self->{invalidSet} or $self->{invalidProblem};
+	#return unless $self->{isOpen};
+	
+	my $displayMode = $self->{displayMode};
+	my %must = %{ $self->{must} };
+	my %can  = %{ $self->{can}  };
+	my %will = %{ $self->{will} };
+	
+	my $optionLine;
+	$can{showOldAnswers} and $optionLine .= join "",
+		"Show&nbsp;saved&nbsp;answers?".CGI::br(),
+		CGI::radio_group(
+			-name    => "showOldAnswers",
+			-values  => [1,0],
+			-default => $will{showOldAnswers},
+			-labels   => {
+							0 => 'No',
+							1 => 'Yes',	
+			},
+		), .CGI::br();
+
+	$optionLine and $optionLine .= join "", CGI::br();
+	
+	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	my @active_modes = grep { exists $display_modes{$_} }
+			@{$ce->{pg}->{displayModes}};
+	my $modeLine = (scalar(@active_modes) > 1) ?
+		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
+		CGI::radio_group(
+			-name    => "displayMode",
+			-values  => \@active_modes,
+			-default => $displayMode,
+			-linebreak=>'true',
+			-labels  => {
+				plainText     => "plain",
+				formattedText => "formatted",
+				images        => "images",
+				jsMath	      => "jsMath",
+				asciimath     => "asciimath",
+			},
+		). CGI::br().CGI::hr() : '';
+	
+	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
+		$modeLine,
+		$optionLine,
+		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
+	);
+}
 
 =item path($args)
 
@@ -1264,6 +1373,19 @@ sub url_authen_args {
 	my ($self) = @_;
 	
 	return $self->url_args("user", "effectiveUser", "key");
+}
+
+=item url_display_args()
+
+Use url_args to return a URL query string for request fields used in
+authentication.
+
+=cut
+
+sub url_display_args {
+	my ($self) = @_;
+	
+	return $self->url_args("displayMode", "showOldAnswer");
 }
 
 =item print_form_data($begin, $middle, $end, $omit)
