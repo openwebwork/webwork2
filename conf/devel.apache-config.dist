@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/devel.apache-config.dist,v 1.3 2004/07/12 16:20:16 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/devel.apache-config.dist,v 1.4 2004/10/14 15:59:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,8 +26,8 @@
 # central location.
 # 
 # The second part is the stock webwork.apache-config file that is used for
-# normal installations. Customize this file, setting $webwork_dir appropriatly
-# for your development server.
+# normal installations. Customize this file, setting the $webwork_url,
+# $webwork_dir, $pg_dir, etc. appropriatly for your development server.
 # 
 # The third part is this file. It contains the user-specific directives that are
 # specific to each developer's server.

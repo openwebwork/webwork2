@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.3 2004/07/15 21:22:42 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/webwork.apache-config.dist,v 1.4 2004/07/16 00:59:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,10 @@
 <Perl>
 
 # Set this variable to the path to your WeBWorK installation.
-my $webwork_dir = "/opt/webwork2";
+my $webwork_dir = "/home/gage/webwork/webwork-modperl";
+
+$ENV{WEBWORK_ROOT} = $webwork_dir; #allows the XMLRPC modules to find
+                                   # the webwork root directory
 
 # This code reads global.conf and extracts the remaining configuration
 # variables. There is no need to modify it.
@@ -40,6 +43,10 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
 my $webwork_courses_url = $ce->{webwork_courses_url};
 my $webwork_courses_dir = $ce->{webwork_courses_dir};
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
+
+eval "use WebworkWebservice";die $@ if $@;        #FIXME, is there another way to initialize this?
+# allows Webservice access to WeBWorK
+
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
 # Between the line below and the "EOF" line are the three configuration stanzas
@@ -85,6 +92,15 @@ AliasMatch $webwork_courses_url/([^/]*)/(.*) $webwork_courses_dir/\$1/html/\$2
 	AllowOverride None
 </Directory>
 
+ ########## XMLRPC installation ##########
+<Location /mod_xmlrpc>
+               SetHandler perl-script
+               PerlHandler Apache::XMLRPC::Lite
+               PerlSetVar dispatch_to "WebworkXMLRPC"
+               PerlSetVar options "compress_threshold => 10000"
+               Order Allow,Deny
+               Allow from All
+</Location>
 EOF
 
 </Perl>
