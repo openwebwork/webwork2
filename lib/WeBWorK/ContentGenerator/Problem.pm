@@ -692,7 +692,7 @@ sub attemptResults($$$$$$) {
 	}
 	
 	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = int ($problemResult->{score} * 100) . "\%";
+	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
 	my $summary = "On this attempt, you answered $numCorrect out of "
 		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . ($showSummary ? CGI::p($summary) : "");
