@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb,v 1.12 2004/09/23 16:53:25 sh002i Exp $
+# $CVSHeader: webwork2/bin/ww_db_v2_to_v3,v 1.1 2004/11/25 05:50:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,6 +77,10 @@ Data from these courses will be copied.
 
 =item *
 
+Roles created with the -r switch are created as system-wide roles.
+
+=item *
+
 Roles are created by observing the %permissionLevels hash in F<global.conf>, and
 collecting the privileges granted at each permission level into sets. Each set
 of privileges becomes a WWDBv3 role record.
@@ -85,6 +89,44 @@ of privileges becomes a WWDBv3 role record.
 
 When a role with the same set of permissions already exists in the WWDBv3
 database, a new one is not created.
+
+=back
+
+=head2 STATUSES
+
+=over
+
+=item *
+
+Statuses created with the -s switch are created as system-wide statuses.
+
+=item *
+
+Statuses are created by observing the %{$siteDefaults{status}} hash in
+F<global.conf>, and 
+
+=item *
+
+A status named "Enrolled" is imported into the database with the
+C<allow_course_access>, C<include_in_assignment>, C<include_in_stats>, and
+C<include_in_scoring> flags set.
+
+=item *
+
+A status named "Audit" is imported into the database with the
+C<allow_course_access>, C<include_in_assignment>, and C<include_in_stats>, flags
+set, and the C<include_in_scoring> flag unset.
+
+=item *
+
+A status named "Drop" is imported into the database with the
+C<allow_course_access>, C<include_in_assignment>, C<include_in_stats>, and
+C<include_in_scoring> flags unset.
+
+=item *
+
+Statuses with other names are imported into the database with the same flags set
+as the "Enrolled" flag.
 
 =back
 
@@ -122,11 +164,18 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::DBv3;
 
+# map statuses from course environment to sets of status privileges
+use constant STATUS_MAP => {
+	Enrolled => { allow_course_access => 1, include_in_assignment => 1, include_in_stats => 1, include_in_scoring => 1 },
+	Audit    => { allow_course_access => 1, include_in_assignment => 1, include_in_stats => 1, include_in_scoring => 0 },
+	Drop     => { allow_course_access => 0, include_in_assignment => 0, include_in_stats => 0, include_in_scoring => 0 },
+};
+
 our ($opt_c, $opt_r, $opt_s, $opt_u, $opt_v);
 getopts("crsuv");
 
 sub debug { print STDERR @_ if $opt_v }
-sub usage { print STDERR "usage: $0 [-uv] course ...\n"; exit 1 }
+sub usage { print STDERR "usage: $0 [-crsuv] course ...\n"; exit 1 }
 
 main(@ARGV);
 
@@ -142,7 +191,8 @@ sub main {
 	my %level_to_role_id = set_up_roles($ce->{permissionLevels});
 	warn Dumper(\%level_to_role_id);
 	
-	my %statuses = update_statuses($ce->{siteDefaults}{status});
+	my %abbrev_to_status_id = set_up_statuses($ce->{siteDefaults}{status});
+	warn Dumper(\%abbrev_to_status_id);
 	
 	foreach my $courseID (@courseIDs) {
 		eval { copy_course_data($courseID) };
@@ -166,20 +216,13 @@ sub set_up_roles {
 	
 	my %level_to_role_id;
 	
-	# get all the levels mentioned in %permissionLevels, along with which
-	# privileges are available at that level
-	my %levels;
-	foreach my $privilege (keys %permissionLevels) {
-		my $level = $permissionLevels{$privilege};
-		if (defined $level) {
-			push @{ $levels{$level} }, $privilege;
-		}
-	}
-	
-	my @level_names = sort { $a <=> $b } keys %levels;
+	# reverse the permission levels hash, resulting in a hash mapping
+	# permissions levels to arrayrefs containing privileges
+	my %levels = reverse_hash(%permissionLevels);
 	
 	# copy up the privileges at each level to the next-higher level
  	# also sort each level
+	my @level_names = sort { $a <=> $b } keys %levels;
 	foreach my $i (0 .. $#level_names-1) {
 		my $this_level = $level_names[$i];
 		my $next_level = $level_names[$i+1];
@@ -206,7 +249,7 @@ sub set_up_roles {
 		foreach my $level (keys %levels) {
 			if (listeq($levels{$level}, \@role_privs)) {
 				debug("Permission level '$level' is already represented as role '",
-					$Role->name, "' -- skipping.\n");
+					$Role->name, "' (ID $Role) -- skipping.\n");
 				delete $levels{$level};
 				$level_to_role_id{$level} = $Role->id;
 			}
@@ -233,7 +276,7 @@ sub set_up_roles {
 			my $Role = create WeBWorK::DBv3::Role({name => $name });
 			$Role->priv_list(@privs);
 			$Role->update;
-			debug("Added role '", $Role->name, "' with privileges '@privs'.\n");
+			debug("Added role '", $Role->name, "' (ID $Role) with privileges '@privs'.\n");
 			$level_to_role_id{$level} = $Role->id;
 		}
 	} else {
@@ -245,7 +288,67 @@ sub set_up_roles {
 }
 
 sub set_up_statuses {
-	my ($statuses) = @_;
+	my ($abbrevs) = @_;
+	my %abbrevs = %$abbrevs;
+	
+	my %abbrev_to_status_id;
+	
+	# reverse the statuses hash, resulting in a hash mapping statuses to
+	# arrayrefs containing abbreviations
+	my %statuses = reverse_hash(%abbrevs);
+	
+	# look at existing statuses to see if we can avoid adding some new ones
+	my $i = retrieve_all WeBWorK::DBv3::Status;
+	while (my $Status = $i->next) {
+		if (exists $statuses{$Status->name}) {
+			debug("Status '", $Status->name, "' (ID $Status) already exists in the database -- skipping.\n");
+			# add entries mapping abbreviations to the ID of this status
+			foreach my $abbrev (@{$statuses{$Status->name}}) {
+				$abbrev_to_status_id{$abbrev} = $Status->id;
+			}
+			
+			delete $statuses{$Status->name};
+		}
+	}
+	
+	if ($opt_s) {
+		debug("Updating status table (as per -s switch).\n");
+		foreach my $status (keys %statuses) {
+			my %flags;
+			%flags = %{ STATUS_MAP->{$status} } if exists STATUS_MAP->{$status};
+			my $Status = create WeBWorK::DBv3::Status({name => $status, %flags});
+			
+			my @flags = grep { $flags{$_} } keys %flags;
+			debug("Added status '", $Status->name, "' (ID $Status) with flags '@flags'.\n");
+			
+			# add entries mapping abbreviations to the ID of this status
+			foreach my $abbrev (@{$statuses{$status}}) {
+				$abbrev_to_status_id{$abbrev} = $Status->id;
+			}
+		}
+	} else {
+		debug("Not updating status table (as per lack of -s switch).\n");
+		debug("I might run into users with status abbreviations that don't map to statuses later.\n");
+	}
+	
+	return %abbrev_to_status_id;
+}
+
+sub reverse_hash {
+	my (%hash) = @_;
+	
+	my %reverse_hash;
+	foreach my $key (keys %hash) {
+		my $value = $hash{$key};
+		if (defined $value and not ref $value) {
+			push @{ $reverse_hash{$value} }, $key;
+		#} else {
+		#	my $val_string = defined $value ? $value : "UNDEF";
+		#	warn "pair ( $key => $val_string ) skipped.\n";
+		}
+	}
+	
+	return %reverse_hash;
 }
 
 ################################################################################
@@ -265,7 +368,7 @@ sub copy_course_data {
 	# First we see if this course already exists. If it does, there's a problem
 	# and we throw an exception.
 	if (WeBWorK::DBv3::Course->search(name => $courseID)) {
-		die "Course '$courseID' exists";
+		die "Course '$courseID' exists in v3 DB";
 	} else {
 		debug("Course '$courseID' doesn't exist in v3 DB -- adding.\n");
 		my $Course = WeBWorK::DBv3::Course->create({name => $courseID});
