@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/webwork.apache-config.dist,v 1.1 2004/07/12 02:30:21 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.2 2004/07/12 04:16:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,41 +20,44 @@
 # 
 #     Include /path/to/webwork.apache-config
 # 
-# Customize the variables $webwork_url, $webwork_dir, $pg_dir, etc. below to
-# match your installation and preferences.
-
-################################################################################
-# WeBWorK configuration
-################################################################################
+# Customize the variable $webwork_dir below to match the location of your
+# WeBWorK installation.
 
 <Perl>
 
-# The following variables are the main configuration variables for WeBWorK.
-# They are used in the Apache configuration below and to seed the WeBWorK
-# configuration file global.conf.
+# Set this variable to the path to your WeBWorK installation.
+my $webwork_dir = "/home/sh002i/work/webwork2";
 
-my ($webwork_url, $webwork_dir, $pg_dir, $webwork_htdocs_url,
-$webwork_htdocs_dir, $webwork_courses_url, $webwork_courses_dir);
-
-BEGIN {
-	# Root directories of WeBWorK and PG.
-	$webwork_url         = "/webwork2";
-	$webwork_dir         = "/opt/webwork2";
-	$pg_dir              = "/opt/pg";
-	
-	# URL and path to htdocs directory.
-	$webwork_htdocs_url  = "/webwork2_files";
-	$webwork_htdocs_dir  = "$webwork_dir/htdocs";
-	
-	# URL and path to courses directory.
-	$webwork_courses_url = "/webwork2_course_files";
-	$webwork_courses_dir = "$webwork_dir/courses";
-}
+# This code reads global.conf and extracts the remaining configuration
+# variables. There is no need to modify it.
+eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
+my $webwork_url = $ce->{webwork_url};
+my $pg_dir = $ce->{pg_dir};
+my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
+my $webwork_courses_url = $ce->{webwork_courses_url};
+my $webwork_courses_dir = $ce->{webwork_courses_dir};
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
 # Between the line below and the "EOF" line are the three configuration stanzas
-# that are used to link Apache with WeBWorK. You may add additional Apache
-# configuration directives there, but keep in mind that variable names are being
-# interpolated (i.e. $foo, @bar).
+# that are used to link Apache with WeBWorK. The following variables may be
+# included in directives below:
+# 
+#     $webwork_url            The base URL handled by Apache::WeBWorK.
+#     $webwork_dir            The path to the base webwork2 directory.
+#     $pg_dir                 The path to the base pg directory.
+#     
+#     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
+#     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
+#     
+#     $webwork_courses_url    The base URL of the WeBWorK courses directory.
+#     $webwork_courses_dir    The path to the WeBWorK courses directory.
+# 
+# You may add additional Apache configuration directives, but keep in mind that
+# variable names are being interpolated (i.e. $foo, @bar).
 
 $PerlConfig = <<EOF;
 
@@ -83,22 +86,5 @@ AliasMatch $webwork_courses_url/([^/]*)/(.*) $webwork_courses_dir/\$1/html/\$2
 </Directory>
 
 EOF
-
-# No user-serviceable parts below. ;-)
-
-# Add library directories to include path.
-use lib "$webwork_dir/lib";
-use lib "$pg_dir/lib";
-
-# Share configuration variables with WeBWorK.
-%WeBWorK::SeedCE = (
-	webwork_url         => $webwork_url,
-	webwork_dir         => $webwork_dir,
-	pg_dir              => $pg_dir,
-	webwork_htdocs_url  => $webwork_htdocs_url,
-	webwork_htdocs_dir  => $webwork_htdocs_dir,
-	webwork_courses_url => $webwork_courses_url,
-	webwork_courses_dir => $webwork_courses_dir,
-);
 
 </Perl>
