@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.33 2004/01/21 20:53:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.34 2004/01/23 21:03:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -160,20 +160,27 @@ sub assignSetToAllUsers {
 	my $db = $self->{db};
 	
 	my @userIDs = $db->listUsers;
+	$WeBWorK::timer->continue("$setID: getting problem list") if defined $WeBWorK::timer;
 	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
 	
 	foreach my $userID (@userIDs) {
 		my $UserSet = $db->newUserSet;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
+		$WeBWorK::timer->continue("$setID: adding UserSet for $userID") if defined $WeBWorK::timer;
 		eval { $db->addUserSet($UserSet) };
 		if ($@) {
 			next if $@ =~ m/user set exists/;
 			die $@;
 		}
+		$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+		
+		$WeBWorK::timer->continue("$setID: adding UserProblems for $userID") if defined $WeBWorK::timer;
 		foreach my $GlobalProblem (@GlobalProblems) {
 			$self->assignProblemToUser($userID, $GlobalProblem);
 		}
+		$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
 	}
 }
 
