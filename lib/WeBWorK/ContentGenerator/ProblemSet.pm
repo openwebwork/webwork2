@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.54 2004/06/08 17:07:25 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.55 2004/06/25 00:09:18 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -100,7 +100,11 @@ sub siblings {
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
 	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
-	
+	# do not show unpublished siblings unless user is allowed to view unpublished sets
+	unless ($authz->hasPermissions($user, "view_unpublished_sets") ) {
+		@setIDs    = grep {my $visible = $db->getGlobalSet( $_)->published; (defined($visible))? $visible : 1} 
+	                     @setIDs;
+	}
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::start_li();
 	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
@@ -111,7 +115,7 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
-		print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $setID));
+		print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $setID)) ;
 	}
 	$WeBWorK::timer->continue("End printing sets from listUserSets()") if defined $WeBWorK::timer;
 
