@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.35 2003/12/12 02:24:29 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.36 2004/01/16 00:43:06 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,19 +51,32 @@ sub title {
 }
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
-	my $db = $self->{db};
-	my $user = $r->param("user");
-	my $effectiveUser = $r->param("effectiveUser");
-	my $sort = $r->param("sort") || "status";
+	my $self            = shift;
+	my $r               = $self->{r};
+	my $ce              = $self->{ce};
+	my $db              = $self->{db};
+	my $user            = $r->param("user");
+	my $effectiveUser   = $r->param("effectiveUser");
+	my $sort            = $r->param("sort") || "status";
 	my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
-	$permissionLevel =0 unless defined $permissionLevel;
+	$permissionLevel    = 0 unless defined $permissionLevel;
+	my $root            = $ce->{webworkURLs}->{root};
+	my $courseName      = $ce->{courseName};
 	
-	if (defined $courseEnvironment->{courseFiles}->{motd}
-		and $courseEnvironment->{courseFiles}->{motd}) {
-		my $motd = eval { readFile($courseEnvironment->{courseFiles}->{motd}) };
+	###################################################
+	# Print link to instructor page for instructors
+	###################################################
+	if ($permissionLevel >= 10 ) {
+
+		my $instructorLink = "$root/$courseName/instructor/?" . $self->url_authen_args();
+		print CGI::p({-align=>'center'},CGI::a({-href=>$instructorLink},'Link to Instructor Tools'));
+	}
+	###################################################
+	# Print message of the day motd
+	###################################################
+	if (defined $ce->{courseFiles}->{motd}
+		and $ce->{courseFiles}->{motd}) {
+		my $motd = eval { readFile($ce->{courseFiles}->{motd}) };
 		$@ or print $motd;
 	}
 	
@@ -105,9 +118,6 @@ sub body {
 	print CGI::endform();
 	
 	# feedback form
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";
 	
 	
@@ -185,11 +195,11 @@ sub setListRow($$$) {
 sub info {
 	my $self = shift;
 	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
+	my $ce = $self->{ce};
 
-	if (defined $courseEnvironment->{courseFiles}->{course_info}
-		and $courseEnvironment->{courseFiles}->{course_info}) {
-		my $course_info = eval { readFile($courseEnvironment->{courseFiles}->{course_info}) };
+	if (defined $ce->{courseFiles}->{course_info}
+		and $ce->{courseFiles}->{course_info}) {
+		my $course_info = eval { readFile($ce->{courseFiles}->{course_info}) };
 		$@ or print $course_info;
 	}
 	'';
