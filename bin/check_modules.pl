@@ -11,6 +11,7 @@ my @modulesList = qw(
 	Data::UUID
 	Date::Format
 	Date::Parse
+	DateTime
 	DBI
 	Digest::MD5
 	Errno
