@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.14 2004/05/11 20:19:38 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.15 2004/06/14 18:04:33 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -114,10 +114,10 @@ sub body {
 	
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify student data.")
-		unless $authz->hasPermissions($r->param("user"), "modify_student_data");
+		unless $authz->hasPermissions($user, "modify_student_data");
 
 	
 	return join("", 
