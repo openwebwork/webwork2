@@ -16,7 +16,7 @@ ServerAdmin !WEBWORK_USER!@localhost
 
 LockFile !WEBWORK_ROOT!/logs/httpd.lock
 PidFile !WEBWORK_ROOT!/logs/httpd.pid
-ErrorLog !WEBWORK_ROOT!/logs/httpd-error.log
+ErrorLog !WEBWORK_ROOT!/logs/error.log
 
 # On systems that use it, ScoreBoardFile must be different for different
 # invocations of Apache.  webwork-dev doens't appear to be one of those
