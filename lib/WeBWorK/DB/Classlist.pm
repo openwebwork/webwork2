@@ -7,6 +7,7 @@ package WeBWorK::DB::Classlist;
 
 use strict;
 use warnings;
+use WeBWorK::Utils qw(dbDecode dbEncode);
 use WeBWorK::User;
 
 # there should be a `use' line for each database type
@@ -62,7 +63,7 @@ sub getUser($$) {
 	my $result = $self->{classlist_db}->hashRef->{$userID};
 	$self->{classlist_db}->disconnect;
 	return unless defined $result;
-	return hash2user($userID, decode($result));
+	return hash2user($userID, dbDecode($result));
 }
 
 # setUser($user) - if a user with the same user ID as $user exists, that user
@@ -78,7 +79,7 @@ sub setUser($$) {
 	}
 	die "Can't add/modify user ", $user->id, ": classlist database locked" if $self->locked;
 	return unless $self->{classlist_db}->connect("rw");
-	$self->{classlist_db}->hashRef->{$user->id} = encode(user2hash($user));
+	$self->{classlist_db}->hashRef->{$user->id} = dbEncode(user2hash($user));
 	$self->{classlist_db}->disconnect;
 	return 1;
 }
@@ -129,28 +130,6 @@ sub locked($) {
 	my $result = $self->{classlist_db}->hashRef->{">>lock_status"};
 	$self->{classlist_db}->disconnect;
 	return defined $result and $result eq "locked";
-}
-
-# -----
-
-sub decode($) {
-	my $string = shift;
-	return unless defined $string and $string;
-	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
-	$hash{$_} =~ s/\\(.)/$1/g foreach (keys %hash); # unescape anything
-	return %hash;
-}
-
-sub encode(@) {
-	my %hash = @_;
-	my $string;
-	foreach (keys %hash) {
-		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
-		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
-		$string .= "$_=$hash{$_}&";
-	}
-	chop $string; # remove final '&' from string for old code :p
-	return $string;
 }
 
 # -----

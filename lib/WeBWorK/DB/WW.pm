@@ -8,6 +8,7 @@ package WeBWorK::DB::WW;
 use strict;
 use warnings;
 use Carp;
+use WeBWorK::Utils qw(dbDecode dbEncode);
 use WeBWorK::Set;
 use WeBWorK::Problem;
 
@@ -53,12 +54,12 @@ sub fullyQualifiedPackageName($) {
 #	delete $self->{webwork_db}->hashRef->{$PSVN};
 #	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 #	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
-#	my %sets = decode($setsForUser);  # sets built for user $userID
-#	my %users = decode($usersForSet); # users for which set $setID has been built
+#	my %sets = dbDecode($setsForUser);  # sets built for user $userID
+#	my %users = dbDecode($usersForSet); # users for which set $setID has been built
 #	delete $sets{$setID};
 #	delete $users{$userID};
-#	$setsForUser = encode(%sets);
-#	$usersForSet = encode(%users);
+#	$setsForUser = dbEncode(%sets);
+#	$usersForSet = dbEncode(%users);
 #	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
 #	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
 #	$self->{webwork_db}->disconnect;
@@ -76,7 +77,7 @@ sub getSets($$) {
 	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 	$self->{webwork_db}->disconnect;
 	return unless defined $result;
-	my %record = decode($result);
+	my %record = dbDecode($result);
 	return keys %record;
 }
 
@@ -250,7 +251,7 @@ sub getPSVNs($$) {
 	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 	$self->{webwork_db}->disconnect;
 	return unless defined $setsForUser;
-	my %sets = decode($setsForUser);
+	my %sets = dbDecode($setsForUser);
 	return values %sets;
 }
 
@@ -277,8 +278,8 @@ sub getPSVN($$$) {
 	#   been built for this user.
 	return unless defined $setsForUser and defined $usersForSet;
 	return unless $setsForUser and $usersForSet;
-	my %sets = decode($setsForUser);
-	my %users = decode($usersForSet);
+	my %sets = dbDecode($setsForUser);
+	my %users = dbDecode($usersForSet);
 	# more sanity checks: the following should never happen.
 	# if they do, run screaming for the hills.
 	if (defined $sets{$setID} and not defined $users{$userID}) {
@@ -319,14 +320,14 @@ sub setPSVN($$$) {
 		# get current PSVN indexes
 		my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 		my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
-		my %sets = decode($setsForUser);  # sets built for user $userID
-		my %users = decode($usersForSet); # users for which set $setID has been built
+		my %sets = dbDecode($setsForUser);  # sets built for user $userID
+		my %users = dbDecode($usersForSet); # users for which set $setID has been built
 		# insert new PSVN into each hash
 		$sets{$setID} = $PSVN;
 		$users{$userID} = $PSVN;
 		# re-encode the hashes
-		$setsForUser = encode(%sets);
-		$usersForSet = encode(%users);
+		$setsForUser = dbEncode(%sets);
+		$usersForSet = dbEncode(%users);
 		# store 'em in the database
 		$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
 		$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
@@ -347,12 +348,12 @@ sub deletePSVN($$) {
 	$self->{webwork_db}->connect("rw"); # open "rw" to lock
 	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
-	my %sets = decode($setsForUser);  # sets built for user $userID
-	my %users = decode($usersForSet); # users for which set $setID has been built
+	my %sets = dbDecode($setsForUser);  # sets built for user $userID
+	my %users = dbDecode($usersForSet); # users for which set $setID has been built
 	delete $sets{$setID};
 	delete $users{$userID};
-	$setsForUser = encode(%sets);
-	$usersForSet = encode(%users);
+	$setsForUser = dbEncode(%sets);
+	$usersForSet = dbEncode(%users);
 	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
 	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
 	$self->{webwork_db}->disconnect;
@@ -369,7 +370,7 @@ sub fetchRecord($$) {
 	return unless $self->{webwork_db}->connect("ro");
 	my $result = $self->{webwork_db}->hashRef->{$PSVN};
 	$self->{webwork_db}->disconnect;
-	return decode($result);
+	return dbDecode($result);
 }
 
 # storeRecord($PSVN, %record) - store the given record with the PSVN as a key
@@ -380,38 +381,9 @@ sub storeRecord($$%) {
 	my $PSVN = shift;
 	my %record = @_;
 	$self->{webwork_db}->connect("rw");
-	$self->{webwork_db}->hashRef->{$PSVN} = encode(%record);
+	$self->{webwork_db}->hashRef->{$PSVN} = dbEncode(%record);
 	$self->{webwork_db}->disconnect;
 	return 1;
-}
-
-# -----
-
-# decode($string) - decodes a quasi-URL-encoded hash from a hash-based
-#                   webwork database. unescapes \& and \= in VALUES ONLY.
-# $string - string to decode
-sub decode($) {
-	my $string = shift;
-	return unless defined $string and $string;
-	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
-	$hash{$_} =~ s/\\(.)/$1/g foreach (keys %hash); # unescape anything
-	return %hash;
-}
-
-# encode(%hash) - encodes a hash as a quasi-URL-encoded string for insertion
-#                 into a hash-based webwork database. Escapes & and = in
-#                 VALUES ONLY.
-# %hash - hash to encode
-sub encode(%) {
-	my %hash = @_;
-	my $string;
-	foreach (keys %hash) {
-		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
-		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
-		$string .= "$_=$hash{$_}&";
-	}
-	chop $string if $string; # remove final '&' from string for old code :p
-	return $string;
 }
 
 # -----
