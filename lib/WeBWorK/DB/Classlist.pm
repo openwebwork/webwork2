@@ -135,6 +135,7 @@ sub locked($) {
 
 sub decode($) {
 	my $string = shift;
+	return unless defined $string and $string;
 	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
 	$hash{$_} =~ s/\\(.)/$1/ foreach (keys %hash); # unescape anything
 	return %hash;

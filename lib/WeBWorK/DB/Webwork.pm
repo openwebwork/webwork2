@@ -10,6 +10,9 @@ use warnings;
 use WeBWorK::Set;
 use WeBWorK::Problem;
 
+use constant LOGIN_PREFIX => "login<>";
+use constant SET_PREFIX => "set<>";
+
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
 
@@ -41,7 +44,15 @@ sub fullyQualifiedPackageName($) {
 # getSets($userID) - returns a list of sets in the current database for the
 #                    specified user
 # $userID - the user ID (a.k.a. login name) of the user to get sets for
-
+sub getSets($$) {
+	my $self = shift;
+	my $userID = shift;
+	return unless $self->{webwork_db}->connect("ro");
+	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	$self->{webwork_db}->disconnect;
+	return unless defined $result;
+	return keys decode $result;
+}
 
 # -----
 
@@ -49,16 +60,44 @@ sub fullyQualifiedPackageName($) {
 #                           from the specified set.
 # $userID - the user ID (a.k.a. login name) of the set to retrieve
 # $setID - the ID (a.k.a. name) of the set to retrieve
+sub getSet($$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $PSVN = getPSVN($userID, $setID);
+	return unless $PSVN;
+	return hash2set($self->fetchRcord($PSVN));
+}
 
 # setSet($set) - if a set with the same ID for the specified user
 #                exists, it is replaced. If not, a new set is added.
 #                returns true on success, undef on failure.
 # $set - a WeBWorK::Set object containing the set data
+sub setSet($$) {
+	my $self = shift;
+	my $set = shift;
+	my $PSVN = getPSVN($set->login_id, $set->id);
+	my %record = (
+		$PSVN ? $self->fetchRecord($PSVN) : (),
+		set2hash($set),
+	);
+	return $self->storeRecord($PSVN, %record);
+}
 
 # deleteSet($userID, $setID) - removes the set with the specified userID and
 #                              setID. Returns true on success, undef on failure.
 # $userID - the user ID (a.k.a. login name) of the set to delete
 # $setID - the ID (a.k.a. name) of the set to delete
+sub deleteSet($$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $PSVN = getPSVN($userID, $setID);
+	$self->{classlist_db}->connect("rw");
+	delete $self->{classlist_db}->hashRef->{$userID};
+	$self->{classlist_db}->disconnect;
+	return 1;
+}
 
 # -----
 
@@ -74,10 +113,22 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
-# getProblems($userID, $setID) - returns a list of problems in the specified
-#                                set for the specified user.
+# getProblems($userID, $setID) - returns a list of problem IDs in the
+#                                specified set for the specified user.
 # $userID - the user ID of the user to get problems for
 # $setID - the set ID to get problems from
+sub getProblems($$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my %record = $self->fetchRecord($PSVN);
+	my @result;
+	my $i = 1;
+	while (exists %record{"pse".$i}) {
+		push @result, $i++;
+	}
+	return @result;
+}
 
 # -----
 
@@ -87,11 +138,32 @@ sub fullyQualifiedPackageName($) {
 # $userID - the user for which to retrieve the problem
 # $setID - the set from which to retrieve the problem
 # $problemNumber - the number of the problem to retrieve
+sub getProblem($$$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $problemNumber = shift;
+	my $PSVN = getPSVN($userID, $setID);
+	return unless $PSVN;
+	return hash2problem($problemNumber, fetchRecord($PSVN));
+}
 
 # setProblem($problem) - if a problem with the same ID for the specified user
 #                        exists, it is replaced. If not, a new problem is added.
 #                        returns true on success, undef on failure.
 # $problem - a WeBWorK::Problem object containing the object data
+sub setProblem($$) {
+	my $self = shift;
+	my $problem = shift;
+	my $set = getSet(
+	my $PSVN = getPSVN($problem->login_id, $problem->set_id);
+	my %record = (
+		$PSVN ? $self->fetchRecord($PSVN) : (),
+		set2hash($set),
+	);
+	return $self->storeRecord($PSVN, %record);
+
+}
 
 # deleteProblem($userID, $setID, $problemNumber) - removes a problem with the
 #                                                  specified parameters.
@@ -127,11 +199,38 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
+# fetchRecord($PSVN) - retrieve the record associated with the given PSVN
+# $PSVN - problem set version number
+sub fetchRecord($$) {
+	my $self = shift;
+	my $PSVN = shift;
+	return unless $self->{webwork_db}->connect("ro");
+	my $result = $self->{webwork_db}->hashRef->{$PSVN};
+	$self->{webwork_db}->disconnect;
+	return decode $result;
+}
+
+# storeRecord($PSVN, %record) - store the given record with the PSVN as a key
+# $PSVN - problem set version number
+# %record - the record to insert
+sub storeRecord($$%) {
+	my $self = shift;
+	my $PSVN = shift;
+	my %record = @_;
+	$self->{webwork_db}->connect("rw");
+	$self->{webwork_db}->hashRef->{$PSVN} = encode %record;
+	$self->{webwork_db}->disconnect;
+	return 1;
+}
+
+# -----
+
 # decode($string) - decodes a quasi-URL-encoded hash from a hash-based
 #                   webwork database. unescapes \& and \= in VALUES ONLY.
 # $string - string to decode
 sub decode($) {
 	my $string = shift;
+	return unless defined $string and $string;
 	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
 	$hash{$_} =~ s/\\(.)/$1/ foreach (keys %hash); # unescape anything
 	return %hash;
