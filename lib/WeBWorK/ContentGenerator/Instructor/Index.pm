@@ -86,8 +86,9 @@ sub pre_header_initialize {
 		my $setName         =  shift @setList;
 		my $root            = $ce->{webworkURLs}->{root};
 		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/$setName/?effectiveUser=$effectiveUser&".$self->url_authen_args;
+		my $uri             = "$root/$courseName/";
+		$uri               .= "$setName/" if defined $setName;
+		$uri            .= "?effectiveUser=$effectiveUser&".$self->url_authen_args;
 		#FIXME  does the display mode need to be defined?
 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
 		# even that might not work with every browser since there are two effective User assignments.
