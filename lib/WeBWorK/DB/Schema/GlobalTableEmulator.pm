@@ -156,6 +156,7 @@ sub add($$) {
 }
 
 sub get($@) {
+	warn "\@_=@_\n";
 	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
@@ -164,7 +165,9 @@ sub get($@) {
 	my $globalUserID = $self->{params}->{globalUserID};
 	
 	if ($globalUserID) {
+		warn "gonna try to get a user record for ($globalUserID @keyparts)...\n";
 		my $UserRecord = $userSchema->get($globalUserID, @keyparts);
+		warn "UserRecord=$UserRecord\n";
 		return user2global($self->{record}, $UserRecord);
 	} else {
 		warn "WARNING: using slow, slow consensus";
@@ -204,8 +207,6 @@ sub put($$) {
 		my $NewDefaults = global2user($userSchema->{record}, $Record);
 		$NewDefaults->user_id($globalUserID);
 		
-		my $OldDefaults = $self->get($globalUserID, @keyparts);
-		
 		# add new or store updated "global" record
 		if ($userSchema->exists($globalUserID, @keyparts)) {
 			$result = $userSchema->put($NewDefaults);
@@ -215,6 +216,7 @@ sub put($$) {
 		
 		my @userIDs = map { $_->[0] } $userSchema->list(undef, @keyparts);
 		
+		my $OldDefaults = user2global($self->{record}, $userSchema->get($globalUserID, @keyparts));
 		$self->distGlobalValues($OldDefaults, $Record, @userIDs);
 	} else {
 		warn "WARNING: using slow, slow consensus";
