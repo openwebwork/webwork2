@@ -1289,7 +1289,7 @@ sub getUserProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
-	return $self->{problem_user}->get(@userProblemIDs);
+	return $self->{problem_user}->gets(@userProblemIDs);
 }
 
 sub putUserProblem($$) {
@@ -1369,7 +1369,7 @@ sub getMergedSet {
 	#}
 	#return $UserSet;
 	
-	return $self->getMergedSets([$userID, $setID]);
+	return ( $self->getMergedSets([$userID, $setID]) )[0];
 }
 
 =item geMegedSets(@userSetIDs)
@@ -1461,7 +1461,7 @@ sub getMergedProblem {
 	#}
 	#return $UserProblem;
 	
-	return $self->getMergedProblems([$userID, $setID, $problemID]);
+	return ( $self->getMergedProblems([$userID, $setID, $problemID]) )[0];
 }
 
 =item getMergedProblems(@userProblemIDs)
