@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.62 2004/07/03 17:13:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.63 2004/07/12 02:30:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,6 +73,7 @@ sub dispatch($) {
 	#my $webwork_root = $r->dir_config("webwork_root");
 	#my $pg_root = $r->dir_config("pg_root");
 	
+	debug("\n\n===> Begin " . __PACKAGE__ . "::dispatch() <===\n\n");
 	debug("Hi, I'm the new dispatcher!\n");
 	debug(("-" x 80) . "\n");
 	
