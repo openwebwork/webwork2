@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.40 2003/12/09 01:12:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.41 2004/01/03 20:07:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,7 +41,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
-my $timingON = 0;
+my $timingON = 1;
 
 use strict;
 use warnings;
@@ -303,6 +303,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::AddUsers";
 				@arguments = ();
 			}
+			elsif ($instructorArgument eq "assigner") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Assigner";
+				@arguments = ();
+			}
 			elsif ($instructorArgument eq "scoring") {
 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Scoring";
 				@arguments = ();
@@ -348,7 +352,7 @@ The dispatcher implements a virtual heirarchy that looks like this:
 							@arguments = ($setID);
 						}
 						elsif ($setArg eq "users") {
-							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Assigner";
+							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet";
 							@arguments = ($setID);
 						}
 					}
