@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.31 2003-01-06 19:34:35 sh002i Exp $
+# $Id: TODO,v 1.32 2003-01-06 19:41:43 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -95,7 +95,7 @@ DONE	make preview-on-submit optional
 	calling logout requires valid key -- doesn't make sense.
 DONE	sort problems by due date
 DONE	disable "show hint/solution" when there's no hint/solution
-	results table
+DONE	results table
 		part(or blank)/entered/preview/result/messages
 		don't show messages unless there are some
 	make displayMode sticky (for nav and siblings)

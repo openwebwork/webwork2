@@ -459,12 +459,14 @@ sub attemptResults($$$$$) {
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
-	my $header = CGI::th("answer");
-	$header .= $showAttemptAnswers ? CGI::th("attempt")  : "";
+	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+	
+	my $header = CGI::th("part");
+	$header .= $showAttemptAnswers ? CGI::th("entered")  : "";
 	$header .= $showAttemptPreview ? CGI::th("preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("result")   : "";
-	$header .= $showAttemptAnswers ? CGI::th("messages") : "";
+	$header .= $showMessages       ? CGI::th("messages") : "";
 	my @tableRows = ( $header );
 	my $numCorrect;
 	foreach my $name (@answerNames) {
@@ -475,7 +477,7 @@ sub attemptResults($$$$$) {
 					: "");
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
-		my $answerMessage = $showAttemptAnswers ? $answerResult->{ans_message} : "";
+		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		
 		$numCorrect += $answerScore > 0;
 		my $resultString = $answerScore ? "correct" : "incorrect";
