@@ -20,35 +20,69 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Timing;
 
 sub initialize {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
+	my ($self)     = @_;
+	my $r          = $self->{r};
+	my $ce         = $self->{ce};
+	my $db         = $self->{db};
+	my $authz      = $self->{authz};
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
+	my $user       = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "score_sets")) {
 		$self->{submitError} = "You aren't authorized to score problem sets";
 		return;
 	}
 
+	
+
+	
+	
 	if (defined $r->param('scoreSelected')) {
-		my @selected = $r->param('selectedSet');
-		my @totals = ();
+		my @selected               = $r->param('selectedSet');
+		my @totals                 = ();
+		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
+		
+		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
+		my (@everything, @normal,@full,@info,@totalsColumn);
+		@info                      = $self->scoreSet($selected[0], "info");
+		@totals                    =@info;
+		my $showIndex              = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
+     
 		foreach my $setID (@selected) {
-			my @everything = $self->scoreSet($setID, "everything");
-			my @normal = $self->everything2normal(@everything);
-			my @full = $self->everything2full(@everything);
-			my @info = $self->everything2info(@everything);
-			my @totalsColumn = $self->everything2totals(@everything);
-			@totals = @info unless @totals;
-			$self->appendColumns(\@totals, \@totalsColumn);
-			$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
-			$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);
+			if ($scoringType eq 'everything') {
+				@everything = $self->scoreSet($setID, "everything",$showIndex);
+				@normal = $self->everything2normal(@everything);
+				@full = $self->everything2full(@everything);
+				@info = $self->everything2info(@everything);
+				@totalsColumn = $self->everything2totals(@everything);
+				$self->appendColumns(\@totals, \@totalsColumn);
+				$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
+				$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);				
+			} else {
+				@totalsColumn  = $self->scoreSet($setID, "totals",$showIndex);
+				$self->appendColumns(\@totals, \@totalsColumn);
+			}	
 		}
 		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
-	}
+	}   
+	
+	# Obtaining list of sets:
+	$WeBWorK::timer2->continue("Begin listing sets") if defined $WeBWorK::timer2;
+	my @setNames =  $db->listGlobalSets();
+	$WeBWorK::timer2->continue("End listing sets") if defined $WeBWorK::timer2;
+	my @set_records = ();
+	$WeBWorK::timer2->continue("Begin obtaining sets") if defined $WeBWorK::timer2;
+	@set_records = $db->getGlobalSets( @setNames);
+	$WeBWorK::timer2->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer2;
+	
+	
+	# store data
+	$self->{ra_sets}              =   \@setNames;
+	$self->{ra_set_records}       =   \@set_records;
+	
+	
+	
 }
 
 sub title {
@@ -63,6 +97,35 @@ sub body {
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $courseName = $ce->{courseName};
 	my $user = $r->param('user');
+	my $actionURL= $r->uri;
+	
+	
+	print join("",
+			CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
+			$self->hidden_authen_fields,"\n",
+			CGI::hidden({-name=>'scoreSelected', -value=>1}),
+			$self->popup_set_form,
+			CGI::br(),
+			CGI::checkbox({ -name=>'includeIndex',
+							-value=>1,
+							-label=>'IncludeIndex',
+							-checked=>1,
+						   },
+						   'Include Index'
+			),
+			CGI::br(),
+			CGI::checkbox({ -name=>'recordSingleSetScores',
+							-value=>1,
+							-label=>'Record Scores for Single Sets',
+							-checked=>0,
+						  },
+						 'Record Scores for Single Sets'
+			),
+			CGI::br(),
+			CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
+			
+	);
+
 	
 	if ($authz->hasPermissions($user, "score_sets")) {
 		my @selected = $r->param('selectedSet');
@@ -81,10 +144,8 @@ sub body {
 		}
 		print CGI::h2("Totals");
 		print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
-		#print CGI::hr();
-		#print CGI::a({href=>"../scoring/?scoreSelected=1&selectedSet=1&selectedSet=2&selectedSet=3&selectedSet=4&".$self->url_authen_args},"Score sets 1 -- 4");
-		#my @setNames = $self->{db}->listGlobalSets();
-		#print "sets: ", join(" ", @setNames);
+		print CGI::hr();
+		print CGI::pre(WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
 	}
 	
 	return "";
@@ -99,10 +160,16 @@ sub body {
 #   info: student info columns only
 #   totals: total column only
 sub scoreSet {
-	my ($self, $setID, $format) = @_;
+	my ($self, $setID, $format, $showIndex) = @_;
 	my $db = $self->{db};
 	my @scoringData;
-	
+	my $scoringItems   = {    info             => 0,
+		                      successIndex     => 0,
+		                      setTotals        => 0,
+		                      problemScores    => 0,
+		                      problemAttempts  => 0, 
+		                      header           => 0,
+	};
 	$format = "normal" unless defined $format;
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
@@ -115,26 +182,72 @@ sub scoreSet {
 	}
 	my @problemIDs = $db->listGlobalProblems($setID);
 
+	# determine what information will be returned
+	if ($format eq 'normal') {
+		$scoringItems  = {    info             => 1,
+		                      successIndex     => $showIndex,
+		                      setTotals        => 1,
+		                      problemScores    => 1,
+		                      problemAttempts  => 0, 
+		                      header           => 1,
+		};
+	} elsif ($format eq 'full') {
+		$scoringItems  = {    info             => 1,
+		                      successIndex     => $showIndex,
+		                      setTotals        => 0,
+		                      problemScores    => 1,
+		                      problemAttempts  => 1, 
+		                      header           => 1,
+		};
+	} elsif ($format eq 'everything') {
+		$scoringItems  = {    info             => 1,
+		                      successIndex     => $showIndex,
+		                      setTotals        => 1,
+		                      problemScores    => 1,
+		                      problemAttempts  => 1, 
+		                      header           => 1,
+		};
+	} elsif ($format eq 'totals') {
+		$scoringItems  = {    info             => 0,
+		                      successIndex     => $showIndex,
+		                      setTotals        => 1,
+		                      problemScores    => 0,
+		                      problemAttempts  => 0, 
+		                      header           => 0,
+		};
+	} elsif ($format eq 'info') {
+		$scoringItems  = {    info             => 0,
+		                      successIndex     => 0,
+		                      setTotals        => 0,
+		                      problemScores    => 0,
+		                      problemAttempts  => 0, 
+		                      header           => 1,
+		};
+	} else {
+		warn "unrecognized format";
+	}
+	
 	# Initialize a two-dimensional array of the proper size
 	for (my $i = 0; $i < keys(%users) + 7; $i++) { # 7 is how many descriptive fields there are in each column
 		push @scoringData, [];
-	}
-	
-	unless ($format eq "totals") {
-		$scoringData[0][0] = "NO OF FIELDS";
-		$scoringData[1][0] = "SET NAME";
-		$scoringData[2][0] = "PROB NUMBER";
-		$scoringData[3][0] = "DUE DATE";
-		$scoringData[4][0] = "DUE TIME";
-		$scoringData[5][0] = "PROB VALUE";
 	}
 	
 	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
 	my @userKeys = sort keys %users;
 	
+	if ($scoringItems->{header}) {
+		$scoringData[0][0] = "NO OF FIELDS";
+		$scoringData[1][0] = "SET NAME";
+		$scoringData[2][0] = "PROB NUMBER";
+		$scoringData[3][0] = "DUE DATE";
+		$scoringData[4][0] = "DUE TIME";
+		$scoringData[5][0] = "PROB VALUE";
+
+	
+	
 	# Write identifying information about the users
-	unless ($format eq "totals") {
+
 		for (my $field=0; $field < @userInfoFields; $field++) {
 			if ($field > 0) {
 				for (my $i = 0; $i < 6; $i++) {
@@ -155,10 +268,13 @@ sub scoreSet {
 	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
+	my %userSuccessIndex = ();
+	my %numberOfAttempts = ();
+	my $num_of_problems  = @problemIDs;
 	for (my $problem = 0; $problem < @problemIDs; $problem++) {
 		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]);
 		my $column = 5 + $problem * $columnsPerProblem;
-		unless ($format eq "totals") {
+		if ($scoringItems->{header}) {
 			$scoringData[0][$column] = "";
 			$scoringData[1][$column] = $setRecord->set_id;
 			$scoringData[2][$column] = $globalProblem->problem_id;
@@ -166,7 +282,7 @@ sub scoreSet {
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
 			$scoringData[6][$column] = "STATUS";
-			if ($format eq "full" or $format eq "everything") { # Fill in with blanks, or maybe the problem number
+			if ($scoringItems->{header} and $scoringItems->{problemAttempts}) { # Fill in with blanks, or maybe the problem number
 				for (my $row = 0; $row < 6; $row++) {
 					for (my $col = $column+1; $col <= $column + 2; $col++) {
 						if ($row == 2) {
@@ -191,29 +307,45 @@ sub scoreSet {
 				$userProblem->num_incorrect(0);
 			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
-			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
-			unless ($format eq "totals") {
+			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;				
+			if ($scoringItems->{successIndex})   {
+				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});
+				my $num_correct     = $userProblem->num_correct;
+				my $num_incorrect   = $userProblem->num_incorrect;
+				$num_correct        = ( defined($num_correct) and $num_correct) ? $num_correct : 0;
+				$num_incorrect      = ( defined($num_incorrect) and $num_incorrect) ? $num_incorrect : 0;
+				$numberOfAttempts{$user} += $num_correct + $num_incorrect;	 
+			}
+			if ($scoringItems->{problemScores}) {
 				$scoringData[7 + $user][$column] = $userProblem->status;
-				if ($format eq "full" or $format eq "everything") {
+				if ($scoringItems->{problemAttempts}) {
 					$scoringData[7 + $user][$column + 1] = $userProblem->num_correct;
 					$scoringData[7 + $user][$column + 2] = $userProblem->num_incorrect;
 				}
 			}
 		}
 	}
-	
+	if ($scoringItems->{successIndex}) {
+		for (my $user = 0; $user < @userKeys; $user++) {
+			my $avg_num_attempts = ($num_of_problems) ? $numberOfAttempts{$user}/$num_of_problems : 0;
+			$userSuccessIndex{$user} = ($avg_num_attempts) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0 ;						
+		}
+	}
 	# write the status totals
-	unless ($format eq "full") { # Ironic, isn't it?
+	if ($scoringItems->{setTotals}) { # Ironic, isn't it?
 		my $totalsColumn = $format eq "totals" ? 0 : 5 + @problemIDs * $columnsPerProblem;
 		$scoringData[0][$totalsColumn] = "";
 		$scoringData[1][$totalsColumn] = $setRecord->set_id;
+		$scoringData[1][$totalsColumn+1] = $setRecord->set_id if $scoringItems->{successIndex};
 		$scoringData[2][$totalsColumn] = "";
 		$scoringData[3][$totalsColumn] = "";
 		$scoringData[4][$totalsColumn] = "";
 		$scoringData[5][$totalsColumn] = $valueTotal;
 		$scoringData[6][$totalsColumn] = "total";
+		$scoringData[6][$totalsColumn+1] = "index" if $scoringItems->{successIndex};
 		for (my $user = 0; $user < @userKeys; $user++) {
 			$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
+			$scoringData[7+$user][$totalsColumn+1] = $userSuccessIndex{$user} if $scoringItems->{successIndex};
 		}
 	}
 	
@@ -407,4 +539,35 @@ sub maxLength {
 	return $max;
 }
 
+sub popup_set_form {
+	my $self  = shift;
+	my $r     = $self->{r};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+
+ #     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	# This code will require changing if the permission and user tables ever have different keys.
+    my @setNames              = ();
+	my $ra_set_records        = $self->{ra_set_records};
+	my %setLabels             = ();#  %$hr_classlistLabels;
+	my @set_records           =  sort {$a->set_id cmp $b->set_id } @{$ra_set_records};
+	foreach my $sr (@set_records) {
+ 		$setLabels{$sr->set_id} = $sr->set_id;
+ 		push(@setNames, $sr->set_id);  # reorder sets
+	}
+ 	return 			CGI::popup_menu(-name=>'selectedSet',
+ 							   -values=>\@setNames,
+ 							   -labels=>\%setLabels,
+ 							   -size  => 10,
+ 							   -multiple => 1,
+ 							   #-default=>$user
+ 					),
+
+
+}
 1;
