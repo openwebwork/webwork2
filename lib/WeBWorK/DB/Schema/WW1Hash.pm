@@ -234,7 +234,7 @@ sub get($@) {
 # 		my $UserProblem = $self->string2problem($string, $problemID);
 # 		return $UserProblem;
 # 	}
-	return $self->gets(\@keyparts);
+	return ($self->gets(\@keyparts))[0];
 }
 
 sub gets($@) {

@@ -86,7 +86,8 @@ sub get {
 #			$self->{table} => $value,
 #		);
 #	}
-	return $self->gets($userID);
+	my @results = 
+	return ($self->gets($userID))[0];
 }
 
 sub gets {

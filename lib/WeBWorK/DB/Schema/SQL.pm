@@ -138,7 +138,7 @@ sub get($@) {
 #	}
 #	
 #	return $Record;
-	return $self->gets(\@keyparts);
+	return ($self->gets(\@keyparts))[0];
 }
 
 sub gets($@) {

@@ -114,7 +114,7 @@ sub get($@) {
 #	my $UserRecord = $userSchema->get($globalUserID, @keyparts);
 #	return unless $UserRecord; # maybe it didn't exist?
 #	return user2global($self->{record}, $UserRecord);
-	return $self->gets(\@keyparts);
+	return ($self->gets(\@keyparts))[0];
 }
 
 sub gets($@) {

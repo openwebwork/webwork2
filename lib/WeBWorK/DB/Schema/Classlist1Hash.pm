@@ -67,7 +67,7 @@ sub get {
 #	my $record = hash2record($self->{record}, string2hash($string));
 #	$record->user_id($userID);
 #	return $record;
-	return $self->gets($userID);
+	return ($self->gets($userID))[0];
 }
 
 sub gets {

@@ -22,12 +22,12 @@ use constant STYLE  => "null";
 # table access functions
 ################################################################################
 
-sub list   { return ();    }
-sub exists { return 1;     }
-sub add    { return 0;     }
-sub get    { return undef; }
-sub gets   { return undef; }
-sub put    { return 0;     }
-sub delete { return 1;     }
+sub list   { return ();      }
+sub exists { return 1;       }
+sub add    { return 0;       }
+sub get    { return undef;   }
+sub gets   { return (undef); }
+sub put    { return 0;       }
+sub delete { return 1;       }
 
 1;
