@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.25 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.26 2003/12/26 15:00:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -202,7 +202,7 @@ sub body {
 			print CGI::h2("Totals");
 			print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
 			print CGI::hr();
-			print CGI::pre(WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
+			print CGI::pre({style=>'font-size:smaller'},WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
 		}
 	}
 	
