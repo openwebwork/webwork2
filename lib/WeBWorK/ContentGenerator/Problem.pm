@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.155 2004/07/12 23:38:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.156 2004/07/15 00:13:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -163,8 +163,8 @@ sub can_checkAnswers {
 }
 
 # Helper functions for calculating times
-sub before  { return time < $_[0] }
-sub after   { return time > $_[0] }
+sub before  { return time <= $_[0] }
+sub after   { return time >= $_[0] }
 sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
 
 ################################################################################
