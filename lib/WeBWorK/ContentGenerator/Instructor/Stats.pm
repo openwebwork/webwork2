@@ -350,7 +350,7 @@ sub displayStudents {
 		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
 		# construct header
 		foreach my $prob (@problems) {
-			my $problemRecord      = $db->getUserProblem($studentName, $setName, $prob);
+			my $problemRecord   = $db->getUserProblem($studentName, $setName, $prob);
 			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
