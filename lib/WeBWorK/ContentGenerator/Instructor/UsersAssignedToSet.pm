@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.10 2004/05/11 21:03:09 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.11 2004/05/14 18:26:11 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,10 +38,9 @@ sub initialize {
 	my $setID      = $urlpath->arg("setID");
 	my $user       = $r->param('user');
 	
-	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets")));
-		return;
-	}
+	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");	
+	return unless $authz->hasPermissions($user, "assign_problem_sets");
 	
 	my @users = $db->listUsers;
 	my %selectedUsers = map {$_ => 1} $r->param('selected');
@@ -107,9 +106,12 @@ sub body {
 	my $courseName     = $urlpath->arg("courseID");
 	my $setID          = $urlpath->arg("setID");
 	my $user           = $r->param('user');
-	
-	return CGI::em("You are not authorized to access the Instructor tools.")
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
+		
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets."))
+		unless $authz->hasPermissions($user, "assign_problem_sets");	
 	
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
