@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.34 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.35 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -463,7 +463,7 @@ sub filter_form {
 			CGI::popup_menu(
 				-name => "action.filter.scope",
 				-values => [qw(all none selected match_ids match_section match_recitation)],
-				-default => $actionParams{"action.filter.scope"}->[0] || "selected",
+				-default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
 				-labels => {
 					all => "all users",
 					none => "no users",
