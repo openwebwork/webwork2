@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.35 2004/05/18 05:19:33 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.36 2004/05/20 21:47:05 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -235,7 +235,7 @@ sub body {
 			CGI::submit(-value=>'Save',   -name=>'submit'),
 			CGI::submit(-value=>'Revert', -name=>'submit'),
 			CGI::submit(-value=>'Save as',-name=>'submit'),
-			CGI::textfield(-name=>'save_to_new_file', -value=>""),
+			CGI::textfield(-name=>'save_to_new_file', -size=>40 -value=>""),
 		),
 		CGI::end_form(),
 }
