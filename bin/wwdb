@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwdb,v 1.10 2004/05/07 19:05:45 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwdb,v 1.11 2004/07/10 16:05:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -85,7 +85,11 @@ my ($course, $command, $file, @tables) = @ARGV;
 
 usage() unless $course and $command and $file;
 
-my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $course);
+my $ce = WeBWorK::CourseEnvironment->new({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName => $course,
+});
+
 my $db = WeBWorK::DB->new($ce->{dbLayout});
 
 my @errors;
