@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.3 2004/05/05 22:02:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.4 2004/05/07 21:49:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -387,7 +387,7 @@ sub addCourseSQL {
 		# more than one -- warn and select the most popular source
  		warn "addCourseSQL: database layout $dbLayoutName defines more than one SQL source.\n";
 		foreach my $curr (keys %sources) {
-			$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
+			$source = $curr if not defined $source or @{ $sources{$curr} } > @{ $sources{$source} };
  		}
  		warn "addCourseSQL: only creating tables with source \"$source\".\n";
  		warn "addCourseSQL: others will have to be created manually.\n";
