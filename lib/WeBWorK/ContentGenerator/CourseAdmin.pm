@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.21 2004/06/24 17:43:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.22 2004/06/24 20:54:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,18 +47,136 @@ sub pre_header_initialize {
 		$self->addmessage( CGI::div({class=>'ResultsWithError'},"$user is not authorized to create or delete courses") );
 		return;
 	}
+	
+	## if the user is asking for the downloaded database...
+	#if (defined $r->param("download_exported_database")) {
+	#	my $courseID = $r->param("export_courseID");
+	#	my $random_chars = $r->param("download_exported_database");
+	#	
+	#	die "courseID not specified" unless defined $courseID;
+	#	die "invalid file specification" unless $random_chars =~ m/^\w+$/;
+	#	
+	#	my $tempdir = $ce->{webworkDirs}->{tmp};
+	#	my $export_file = "$tempdir/db_export_$random_chars";
+	#	
+	#	$self->reply_with_file("application/xml", $export_file, "${courseID}_database.xml", 0);
+	#	
+	#	return "";
+	#}
+	#
+	## otherwise...
+	
+	my @errors;
+	my $method_to_call;
+	
+	my $subDisplay = $r->param("subDisplay");
+	if (defined $subDisplay) {
+	
+		if ($subDisplay eq "add_course") {
+			if (defined $r->param("add_course")) {
+				@errors = $self->add_course_validate;
+				if (@errors) {
+					$method_to_call = "add_course_form";
+				} else {
+					$method_to_call = "do_add_course";
+				}
+			} else {
+				$method_to_call = "add_course_form";
+			}
+		}
+		
+		elsif ($subDisplay eq "delete_course") {
+			if (defined $r->param("delete_course")) {
+				# validate or confirm
+				@errors = $self->delete_course_validate;
+				if (@errors) {
+					$method_to_call = "delete_course_form";
+				} else {
+					$method_to_call = "delete_course_confirm";
+				}
+			} elsif (defined $r->param("confirm_delete_course")) {
+				# validate and delete
+				@errors = $self->delete_course_validate;
+				if (@errors) {
+					$method_to_call = "delete_course_form";
+				} else {
+					$method_to_call = "do_delete_course";
+				}
+			} else {
+				# form only
+				$method_to_call = "delete_course_form";
+			}
+		}
+		
+		elsif ($subDisplay eq "export_database") {
+			if (defined $r->param("export_database")) {
+				@errors = $self->export_database_validate;
+				if (@errors) {
+					$method_to_call = "export_database_form";
+				} else {
+					# we have to do something special here, since we're sending
+					# the database as we export it. $method_to_call still gets
+					# set here, but it gets caught by header() and content()
+					# below instead of by body().
+					$method_to_call = "do_export_database";
+				}
+			} else {
+				$method_to_call = "export_database_form";
+			}
+		}
+		
+		elsif ($subDisplay eq "import_database") {
+			if (defined $r->param("import_database")) {
+				@errors = $self->import_database_validate;
+				if (@errors) {
+					$method_to_call = "import_database_form";
+				} else {
+					$method_to_call = "do_import_database";
+				}
+			} else {
+				$method_to_call = "import_database_form";
+			}
+		}
+		
+		else {
+			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
+		}
+		
+	}
+	
+	$self->{errors} = \@errors;
+	$self->{method_to_call} = $method_to_call;
+}
 
-	if (defined $r->param("download_exported_database")) {
+sub header {
+	my ($self) = @_;
+	my $method_to_call = $self->{method_to_call};
+	if (defined $method_to_call and $method_to_call eq "do_export_database") {
+		my $r = $self->r;
 		my $courseID = $r->param("export_courseID");
-		my $random_chars = $r->param("download_exported_database");
-		
-		die "courseID not specified" unless defined $courseID;
-		die "invalid file specification" unless $random_chars =~ m/^\w+$/;
-		
-		my $tempdir = $ce->{webworkDirs}->{tmp};
-		my $export_file = "$tempdir/db_export_$random_chars";
-		
-		$self->reply_with_file("application/xml", $export_file, "${courseID}_database.xml", 0);
+		$r->content_type("application/octet-stream");
+		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
+		$r->send_http_header;
+	} else {
+		$self->SUPER::header;
+	}
+}
+
+# sends:
+# HTTP/1.1 200 OK
+# Date: Fri, 09 Jul 2004 19:05:55 GMT
+# Server: Apache/1.3.27 (Unix) mod_perl/1.27
+# Content-Disposition: attachment; filename="mth143_database.xml"
+# Connection: close
+# Content-Type: application/octet-stream
+
+sub content {
+	my ($self) = @_;
+	my $method_to_call = $self->{method_to_call};
+	if (defined $method_to_call and $method_to_call eq "do_export_database") {
+		$self->do_export_database;
+	} else {
+		$self->SUPER::content;
 	}
 }
 
@@ -70,7 +188,7 @@ sub body {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $user        = $r->param('user');
+	my $user = $r->param('user');
 	
 	# check permissions
 	unless ($authz->hasPermissions($user, "create_and_delete_courses")) {
@@ -79,8 +197,6 @@ sub body {
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
-		#" | ",
-		#CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
 		" | ",
@@ -91,96 +207,18 @@ sub body {
 	
 	print CGI::hr();
 	
-	my $subDisplay = $r->param("subDisplay");
-	if (defined $subDisplay) {
+	my @errors = @{$self->{errors}};
+	my $method_to_call = $self->{method_to_call};
 	
-		if ($subDisplay eq "add_course") {
-			if (defined $r->param("add_course")) {
-				my @errors = $self->add_course_validate;
-				if (@errors) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Please correct the following errors and try again:"),
-						CGI::ul(CGI::li(\@errors)),
-					);
-					$self->add_course_form;
-				} else {
-					$self->do_add_course;
-				}
-			} else {
-				$self->add_course_form;
-			}
-		}
-		
-		elsif ($subDisplay eq "delete_course") {
-			if (defined $r->param("delete_course")) {
-				# validate or confirm
-				my @errors = $self->delete_course_validate;
-				if (@errors) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Please correct the following errors and try again:"),
-						CGI::ul(CGI::li(\@errors)),
-					);
-					$self->delete_course_form;
-				} else {
-					$self->delete_course_confirm;
-				}
-			} elsif (defined $r->param("confirm_delete_course")) {
-				# validate and delete
-				my @errors = $self->delete_course_validate;
-				if (@errors) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Please correct the following errors and try again:"),
-						CGI::ul(CGI::li(\@errors)),
-					);
-					$self->delete_course_form;
-				} else {
-					$self->do_delete_course;
-				}
-			} else {
-				# form only
-				$self->delete_course_form;
-			}
-		}
-		
-		elsif ($subDisplay eq "export_database") {
-			if (defined $r->param("export_database")) {
-				my @errors = $self->export_database_validate;
-				if (@errors) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Please correct the following errors and try again:"),
-						CGI::ul(CGI::li(\@errors)),
-					);
-					$self->export_database_form;
-				} else {
-					$self->do_export_database;
-				}
-			} else {
-				$self->export_database_form;
-			}
-		}
-		
-		elsif ($subDisplay eq "import_database") {
-			if (defined $r->param("import_database")) {
-				my @errors = $self->import_database_validate;
-				if (@errors) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Please correct the following errors and try again:"),
-						CGI::ul(CGI::li(\@errors)),
-					);
-					$self->import_database_form;
-				} else {
-					$self->do_import_database;
-				}
-			} else {
-				$self->import_database_form;
-			}
-		}
-		
-		else {
-			print CGI::div({class=>"ResultsWithError"}, 
-				"Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.");
-		}
-		
+	if (@errors) {
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("Please correct the following errors and try again:"),
+			CGI::ul(CGI::li(\@errors)),
+		);
+	}
+	
+	if (defined $method_to_call and $method_to_call ne "") {
+		$self->$method_to_call;
 	}
 	
 	return "";
@@ -963,7 +1001,7 @@ sub export_database_form {
 	
 	print CGI::h2("Export Database");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form("GET", $r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -1045,35 +1083,36 @@ sub do_export_database {
 	
 	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
 	
-	my ($fh, $export_file) = tempfile("db_export_XXXXXX", DIR => $ce->{webworkDirs}->{tmp});
-	my ($random_chars) = $export_file =~ m/db_export_(\w+)$/;
+	#my ($fh, $export_file) = tempfile("db_export_XXXXXX", DIR => $ce->{webworkDirs}->{tmp});
+	#my ($random_chars) = $export_file =~ m/db_export_(\w+)$/;
 	
 	my @errors;
 	
 	eval {
 		@errors = dbExport(
 			db => $db2,
-			xml => $fh,
+			#xml => $fh,
+			xml => *STDOUT,
 			tables => \@export_tables,
 		);
 	};
 	
-	push @errors, "Fatal exception: $@" if $@;
-	
-	if (@errors) {
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p("An error occured while exporting the database of course $export_courseID:"),
-			CGI::ul(CGI::li(\@errors)),
-		);
-	} else {
-		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("Export succeeded."),
-		);
-		
-		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$self->systemLink($urlpath, params=>{download_exported_database=>$random_chars, export_courseID=>undef})}, "Download Exported Database"),
-		);
-	}
+	#push @errors, "Fatal exception: $@" if $@;
+	#
+	#if (@errors) {
+	#	print CGI::div({class=>"ResultsWithError"},
+	#		CGI::p("An error occured while exporting the database of course $export_courseID:"),
+	#		CGI::ul(CGI::li(\@errors)),
+	#	);
+	#} else {
+	#	print CGI::div({class=>"ResultsWithoutError"},
+	#		CGI::p("Export succeeded."),
+	#	);
+	#	
+	#	print CGI::div({style=>"text-align: center"},
+	#		CGI::a({href=>$self->systemLink($urlpath, params=>{download_exported_database=>$random_chars, export_courseID=>undef})}, "Download Exported Database"),
+	#	);
+	#}
 }
 
 ################################################################################

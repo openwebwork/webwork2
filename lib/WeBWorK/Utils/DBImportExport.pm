@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.2 2004/04/29 23:33:36 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.3 2004/05/07 20:01:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,16 +46,17 @@ our @TABLE_ORDER = qw/user password permission key set problem set_user problem_
 
 # each subroutine should take a WeBWorK::DB object and return all records of a
 # given type. these are tricky!
-our %EXPORT_SUBS = (
-	user         => sub { $_[0]->getUsers($_[0]->listUsers) },
-	password     => sub { $_[0]->getPasswords($_[0]->listPasswords) },
-	permission   => sub { $_[0]->getPermissionLevels($_[0]->listPermissionLevels) },
-	key          => sub { $_[0]->getKeys($_[0]->listKeys) },
-	set          => sub { $_[0]->getGlobalSets($_[0]->listGlobalSets) },
-	problem      => sub { map { $_[0]->getAllGlobalProblems($_) } $_[0]->listGlobalSets },
-	set_user     => sub { $_[0]->getUserSets( map { my $u=$_; map { [$u, $_] } $_[0]->listUserSets($u) } $_[0]->listUsers ) },
-	problem_user => sub { map { my $u=$_; map { $_[0]->getAllUserProblems($u, $_) } $_[0]->listUserSets($u) } $_[0]->listUsers },
-);
+#our %EXPORT_SUBS = (
+#	user         => sub { $_[0]->getUsers($_[0]->listUsers) },
+#	password     => sub { $_[0]->getPasswords($_[0]->listPasswords) },
+#	permission   => sub { $_[0]->getPermissionLevels($_[0]->listPermissionLevels) },
+#	key          => sub { $_[0]->getKeys($_[0]->listKeys) },
+#	set          => sub { $_[0]->getGlobalSets($_[0]->listGlobalSets) },
+#	problem      => sub { map { $_[0]->getAllGlobalProblems($_) } $_[0]->listGlobalSets },
+#	set_user     => sub { $_[0]->getUserSets( map { my $u=$_; map { [$u, $_] } $_[0]->listUserSets($u) } $_[0]->listUsers ) },
+#	problem_user => sub { map { my $u=$_; map { $_[0]->getAllUserProblems($u, $_) } $_[0]->listUserSets($u) } $_[0]->listUsers },
+#);
+# The above isn't used any more because it was waaay toooo sloowwww...
 
 # each subroutine should take a WeBWorK::DB object and return a new, empty
 # record object for a table.
@@ -153,26 +154,180 @@ sub dbExport {
 	@tables{@tables} = ();
 	
 	my $writer = new XML::Writer(OUTPUT => $options{xml}, NEWLINES => 0, DATA_MODE => 1);
-	
 	$writer->startTag("webwork", version => $DB_VERSION);
-	foreach my $table (@TABLE_ORDER) {
-		next unless exists $tables{$table}; # skip unrequested tables
-		$writer->startTag($table."s"); # plural
-		
-		my @Records = $EXPORT_SUBS{$table}->($options{db});
-		foreach my $Record (@Records) {
-			next unless $Record; # skip undefined records
-			$writer->startTag($table);
+	
+	#foreach my $table (@TABLE_ORDER) {
+	#	next unless exists $tables{$table}; # skip unrequested tables
+	#	$writer->startTag($table."s"); # plural
+	#	
+	#	my @Records = $EXPORT_SUBS{$table}->($options{db});
+	#	foreach my $Record (@Records) {
+	#		next unless $Record; # skip undefined records
+	#		$writer->startTag($table);
+	#		foreach my $field ($Record->FIELDS) {
+	#			$writer->dataElement($field, $Record->$field);
+	#		}
+	#		$writer->endTag;
+	#	}
+	#	$writer->endTag;
+	#	delete $tables{$table}; # finished with that table
+	#}
+	
+	my $db = $options{db};
+	
+	if (exists $tables{user}) {
+		$writer->startTag("users");
+		my @recordIDs = $db->listUsers;
+		foreach my $recordID (@recordIDs) {
+			my $Record = $db->getUser($recordID);
+			next unless $Record;
+			$writer->startTag("user");
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
 			}
-			$writer->endTag;
+			$writer->endTag; # user
 		}
-		$writer->endTag;
-		delete$tables{$table}; # finished with that table
+		$writer->endTag; # users
+		delete $tables{user}; # finished with that table
 	}
-	$writer->endTag;
 	
+	if (exists $tables{password}) {
+		$writer->startTag("passwords");
+		my @recordIDs = $db->listPasswords;
+		foreach my $recordID (@recordIDs) {
+			my $Record = $db->getPassword($recordID);
+			next unless $Record;
+			$writer->startTag("password");
+			foreach my $field ($Record->FIELDS) {
+				$writer->dataElement($field, $Record->$field);
+			}
+			$writer->endTag; # password
+		}
+		$writer->endTag; # passwords
+		delete $tables{password}; # finished with that table
+	}
+	
+	if (exists $tables{permission}) {
+		$writer->startTag("permissions");
+		my @recordIDs = $db->listPermissionLevels;
+		foreach my $recordID (@recordIDs) {
+			my $Record = $db->getPermissionLevel($recordID);
+			next unless $Record;
+			$writer->startTag("permission");
+			foreach my $field ($Record->FIELDS) {
+				$writer->dataElement($field, $Record->$field);
+			}
+			$writer->endTag; # permission
+		}
+		$writer->endTag; # permissions
+		delete $tables{permission}; # finished with that table
+	}
+	
+	if (exists $tables{key}) {
+		$writer->startTag("keys");
+		my @recordIDs = $db->listKeys;
+		foreach my $recordID (@recordIDs) {
+			my $Record = $db->getKey($recordID);
+			next unless $Record;
+			$writer->startTag("key");
+			foreach my $field ($Record->FIELDS) {
+				$writer->dataElement($field, $Record->$field);
+			}
+			$writer->endTag; # key
+		}
+		$writer->endTag; # keys
+		delete $tables{key}; # finished with that table
+	}
+	
+	if (exists $tables{set}) {
+		$writer->startTag("sets");
+		my @recordIDs = $db->listGlobalSets;
+		foreach my $recordID (@recordIDs) {
+			my $Record = $db->getGlobalSet($recordID);
+			next unless $Record;
+			$writer->startTag("set");
+			foreach my $field ($Record->FIELDS) {
+				$writer->dataElement($field, $Record->$field);
+			}
+			$writer->endTag; # set
+		}
+		$writer->endTag; # sets
+		delete $tables{set}; # finished with that table
+	}
+	
+	if (exists $tables{problem}) {
+		$writer->startTag("problems");
+		my @setIDs = $db->listGlobalSets;
+		foreach my $setID (@setIDs) {
+			# BEGIN old
+			#my @problemIDs = $db->listGlobalProblems($setID);
+			#foreach my $problemID (@problemIDs) {
+			#	my $Record = $db->getGlobalProblem($setID, $problemID);
+			# END old
+			# BEGIN new
+			my @Problems = $db->getAllGlobalProblems($setID);
+			foreach my $Record (@Problems) {
+			# END new
+				next unless $Record;
+				$writer->startTag("problem");
+				foreach my $field ($Record->FIELDS) {
+					$writer->dataElement($field, $Record->$field);
+				}
+				$writer->endTag; # problem
+			}
+		}
+		$writer->endTag; # problems
+		delete $tables{problem}; # finished with that table
+	}
+	
+	if (exists $tables{set_user}) {
+		$writer->startTag("set_users");
+		my @userIDs = $db->listUsers;
+		foreach my $userID (@userIDs) {
+			my @setIDs = $db->listUserSets($userID);
+			foreach my $setID (@setIDs) {
+				my $Record = $db->getUserSet($userID, $setID);
+				next unless $Record;
+				$writer->startTag("set_user");
+				foreach my $field ($Record->FIELDS) {
+					$writer->dataElement($field, $Record->$field);
+				}
+				$writer->endTag; # set_user
+			}
+		}
+		$writer->endTag; # set_users
+		delete $tables{set_user}; # finished with that table
+	}
+	
+	if (exists $tables{problem_user}) {
+		$writer->startTag("problem_users");
+		my @userIDs = $db->listUsers;
+		foreach my $userID (@userIDs) {
+			my @setIDs = $db->listUserSets($userID);
+			foreach my $setID (@setIDs) {
+				# BEGIN old
+				#my @problemIDs = $db->listUserProblems($userID, $setID);
+				#foreach my $problemID (@problemIDs) {
+				#	my $Record = $db->getUserProblem($userID, $setID, $problemID);
+				# END old
+				# BEGIN new
+				my @Problems = $db->getAllUserProblems($userID, $setID);
+				foreach my $Record (@Problems) {
+				# END new
+					next unless $Record;
+					$writer->startTag("problem_user");
+					foreach my $field ($Record->FIELDS) {
+						$writer->dataElement($field, $Record->$field);
+					}
+					$writer->endTag; # problem_user
+				}
+			}
+		}
+		$writer->endTag; # problem_users
+		delete $tables{problem_user}; # finished with that table
+	}
+	
+	$writer->endTag; # webwork
 	$writer->end;
 	
 	foreach my $table (keys %tables) {
