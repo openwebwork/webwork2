@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.26 2003/12/26 15:00:02 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.27 2004/01/31 14:46:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -302,8 +302,8 @@ sub scoreSet {
 		push @scoringData, [];
 	}
 	
-	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
-	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
+	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION", "LOGIN");
+	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation", "user_id");
 	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
