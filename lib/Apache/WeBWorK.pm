@@ -25,6 +25,7 @@ use WeBWorK::ContentGenerator::Options;
 use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
+use WeBWorK::ContentGenerator::Professor;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 
@@ -119,8 +120,7 @@ sub handler() {
 			# *** can i say go(shift || "") here?
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
-			# *** write a quick module that redirects to the old system's prof pages.
-			# *** also, we should find a way to prevent 
+			return WeBWorK::ContentGenerator::Professor->new($r, $course_env)->go;
 		} elsif ($arg eq "options") {
 			return WeBWorK::ContentGenerator::Options->new($r, $course_env)->go;
 		} elsif ($arg eq "feedback") {

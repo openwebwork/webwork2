@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.25 2002-12-04 19:07:10 sh002i Exp $
+# $Id: TODO,v 1.26 2002-12-06 17:50:22 malsyned Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -90,6 +90,7 @@ DONE	Feedback - need nice modular way of sending email
 	make preview-on-submit optional
 	check TTH mode character encodings on mac
 	grep for "***" in source, address all issues (hah!)
+	Increase border size on images by a couple pixels
 
 >>>>> FOR JANUARY PREVIEW RELEASE <<<<<
 
