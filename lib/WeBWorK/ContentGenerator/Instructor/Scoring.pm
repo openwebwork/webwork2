@@ -18,14 +18,14 @@ use CGI qw();
 use WeBWorK::Utils qw(readFile);
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
-# column of data:
+# row of data:
 # (["c1r1", "c1r2", "c1r3"], ["c2r1", "c2r2", "c2r3"])
 sub readCSV {
-	my ($self, $filename) = @_;
+	my ($self, $fileName) = @_;
 	my @result = ();
-	my @columns = split m/\n/, readFile($fileName);
-	foreach my $column (@columns) {
-		push @result, [split m/\s*,\s*/, $column];
+	my @rows = split m/\n/, readFile($fileName);
+	foreach my $row (@rows) {
+		push @result, [split m/\s*,\s*/, $row];
 	}
 	return @result;
 }
@@ -34,10 +34,10 @@ sub readCSV {
 sub writeCSV {
 	my ($self, $filename, @csv) = @_;
 	open my $fh, ">", $filename;
-	foreach my $column (@csv) {
-		my $maxLength = $self->maxLength($column);
-		print (join ",", map {$self->pad($_, $maxLength)} $@column);
-		print "\n";
+	foreach my $row (@csv) {
+		my $maxLength = $self->maxLength($row) + 1;
+		print $fh (join ",", map {$self->pad($_, $maxLength)} @$row);
+		print $fh "\n";
 	}
 	close $fh;
 }
@@ -47,11 +47,11 @@ sub writeCSV {
 # these routines, which are more versatile and compatable with other programs which
 # deal with CSV files.
 sub readStandardCSV {
-	my ($self, $filename) = @_;
+	my ($self, $fileName) = @_;
 	my @result = ();
-	my @colunms = split m/\n/, readFile($fileName);
-	foreach my $column (@columns) {
-		push @result, [$self->splitQuote($column)];
+	my @rows = split m/\n/, readFile($fileName);
+	foreach my $row (@rows) {
+		push @result, [$self->splitQuote($row)];
 	}
 	return @result;
 }
@@ -59,8 +59,8 @@ sub readStandardCSV {
 sub writeStandardCSV {
 	my ($self, $filename, @csv) = @_;
 	open my $fh, ">", $filename;
-	foreach my $column (@csv) {
-		print (join ",", map {$self->quote} $@column);
+	foreach my $row (@csv) {
+		print (join ",", map {$self->quote} @$row);
 		print "\n";
 	}
 	close $fh;
@@ -85,7 +85,7 @@ sub splitQuoted {
 	my ($self, $string) = @_;
 	my ($leadingSpace, $preText, $quoted, $postText, $trailingSpace, $result);
 	my @result = ();
-	my $continue = 1
+	my $continue = 1;
 	while ($continue) {
 		$string =~ m/\G(\s*)/;
 		$leadingSpace = $1;
@@ -95,7 +95,7 @@ sub splitQuoted {
 			$quoted = $1;
 		}
 		$string =~ m/\G([^,]*?)(\s*)(,?)/;
-		$postText, $trailingSpace, $continue = ($1, $2, $3);
+		($postText, $trailingSpace, $continue) = ($1, $2, $3);
 		if (defined $quoted and (not defined $preText and not defined $postText)) {
 				$quoted = s/""/"/;
 				$result = $quoted;
@@ -134,3 +134,5 @@ sub maxLength {
 	}
 	return $max;
 }
+
+1;
