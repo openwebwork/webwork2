@@ -9,7 +9,7 @@ The order of key fields in this list is the order that arguments should be passe
 *  indicates a key
 => indicates a relation
 !  indicates an override field
-~  indicates a "dynamic" field
+~  indicates a "dynamic" field (modified by the problem processor)
 
 password
 	user_id		*,=> user.id

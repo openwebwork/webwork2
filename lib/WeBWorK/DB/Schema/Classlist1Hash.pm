@@ -8,13 +8,12 @@ package WeBWorK::DB::Schema::Classlist1Hash;
 =head1 NAME
 
 WeBWorK::DB::Schema::Classlist1Hash - support access to the user table with a
-1.x-structured hash-style backend.
+WWDBv1 hash-style backend.
 
 =cut
 
 use strict;
 use warnings;
-use WeBWorK::DB::Record::User;
 use WeBWorK::DB::Utils qw(record2hash hash2record hash2string string2hash);
 
 use constant TABLES => qw(user);
@@ -37,7 +36,7 @@ sub style() {
 ################################################################################
 
 sub new($$$) {
-	my ($proto, $driver, $table) = @_;
+	my ($proto, $driver, $table, $record, $params) = @_;
 	my $class = ref($proto) || $proto;
 	die "$table: unsupported table"
 		unless grep { $_ eq $table } $proto->tables();
@@ -46,6 +45,8 @@ sub new($$$) {
 	my $self = {
 		driver => $driver,
 		table  => $table,
+		record => $record,
+		params => $params,
 	};
 	bless $self, $class;
 	return $self;
@@ -56,11 +57,15 @@ sub new($$$) {
 ################################################################################
 
 sub list($) {
-	my ($self) = @_;
+	my ($self, @keyparts) = @_;
+	my ($matchUserID) = @keyparts;
 	$self->{driver}->connect("ro");
-	my @keys = grep !/^>>/, keys %{ $self->{driver}->hash() };
+	my @keys = grep { not m/^>>/ } keys %{ $self->{driver}->hash() };
 	$self->{driver}->disconnect();
-	return @keys;
+	if (defined $matchUserID) {
+		@keys = grep { $_ eq $matchUserID } @keys;
+	}
+	return map { [$_] } @keys;
 }
 
 sub exists($$) {
@@ -85,8 +90,8 @@ sub get($$) {
 	$self->{driver}->connect("ro");
 	my $string = $self->{driver}->hash()->{$userID};
 	$self->{driver}->disconnect();
-	return undef unless $string;
-	my $record = hash2record("WeBWorK::DB::Record::User", string2hash($string));
+	return undef unless defined $string;
+	my $record = hash2record($self->{record}, string2hash($string));
 	$record->id($userID);
 	return $record;
 }

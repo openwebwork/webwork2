@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.16 2003-03-21 23:30:10 sh002i Exp $
+# $Id: global.conf.dist,v 1.17 2003-04-17 21:01:14 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -161,6 +161,7 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # schema = perl module to use for access to the table
 # driver = perl module to use for access to the data source
 # source = location of data source (i.e. path, url, DBI spec)
+# params = extra information needed by the schema (optional)
 # note: schema and driver must have the same interface.
 %dbLayout = (
 	password => {
@@ -189,27 +190,29 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	},
 	set => {
 		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		schema => "WeBWorK::DB::Schema::Null",
+		driver => "WeBWorK::DB::Driver::Null",
+		source => undef,
 	},
 	set_user => {
 		record => "WeBWorK::DB::Record::UserSet",
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
 		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		params => { psvnLength => 5 },
 	},
 	problem => {
 		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		schema => "WeBWorK::DB::Schema::Null",
+		driver => "WeBWorK::DB::Driver::Null",
+		source => undef,
 	},
 	problem_user => {
 		record => "WeBWorK::DB::Record::UserProblem",
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
 		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		params => { psvnLength => 5 },
 	},
 );
 

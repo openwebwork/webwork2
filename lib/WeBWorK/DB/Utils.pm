@@ -28,16 +28,46 @@ our @EXPORT_OK = qw(
 #  not in the Record classes, since they are for legacy support
 ################################################################################
 
+# RECORDHASH defines the correspondance between WWDBv1 hash keys and WWDBv2
+# record fields.
+
 use constant RECORDHASH => {
-	"WeBWorK::DB::Record::User" =>	[
-		["stfn", "first_name"   ],
-		["stln", "last_name"    ],
-		["stea", "email_address"],
-		["stid", "student_id"   ],
-		["stst", "status"       ],
-		["clsn", "section"      ],
-		["clrc", "recitation"   ],
-		["comt", "comment"      ],
+	"WeBWorK::DB::Record::User" => [
+		['stfn', "first_name"   ],
+		['stln', "last_name"    ],
+		['stea', "email_address"],
+		['stid', "student_id"   ],
+		['stst', "status"       ],
+		['clsn', "section"      ],
+		['clrc', "recitation"   ],
+		['comt', "comment"      ],
+	],
+	"WeBWorK::DB::Record::UserSet" => [
+		['stlg', "user_id"       ],
+		['stnm', "set_id"        ],
+		['shfn', "set_header"    ],
+		['phfn', "problem_header"],
+		['opdt', "open_date"     ],
+		['dudt', "due_date"      ],
+		['andt', "answer_date"   ],
+	],
+	# a hash destined to be converted into a UserProblem must be converted
+	# so that the hash keys, rather than containing the problem number,
+	# contain the character '#'. Also, a new hash key '#' must be added
+	# which contains the problem number.
+	"WeBWorK::DB::Record::UserProblem" => [
+		['stlg',  "user_id"      ],
+		['stnm',  "set_id"       ],
+		['#',     "problem_id"   ],
+		['pfn#',  "source_file"  ],
+		['pva#',  "value"        ],
+		['pmia#', "max_attempts" ],
+		['pse#',  "problem_seed" ],
+		['pst#',  "status"       ],
+		['pat#',  "attempted"    ],
+		['pan#',  "last_answer"  ],
+		['pca#',  "num_correct"  ],
+		['pia#',  "num_incorrect"],
 	],
 	# *** add tables for the rest of the record types
 };
@@ -73,6 +103,7 @@ sub hash2record($@) {
 sub hash2string(@) {
 	my %hash = @_;
 	my $string;
+	return "" unless keys %hash;
 	foreach (keys %hash) {
 		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
 		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
@@ -94,6 +125,6 @@ sub string2hash($) {
 # WWDBv1 answers <-> WWDBv1 string
 ################################################################################
 
-# *** where did this go?
+# *** where did this go? oh well, get it out of WeBWorK::Utils.
 
 1;

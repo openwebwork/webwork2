@@ -10,7 +10,7 @@ TOP LAYER: DB
 The top layer of the architecture is the DB module. It provides the methods
 listed in doc/new-DB-API, and uses schema modules (via tables) to implement those methods.
 
-              / list* exists* new* get* put* delete* \               <- api
+              / list* exists* add* get* put* delete* \               <- api
 +------------------------------------------------------------------+
 |                                DB                                |
 +------------------------------------------------------------------+
@@ -36,13 +36,13 @@ Both WeBWorK 1.x and 2.x courses use:
 
 WeBWorK 1.x courses also use:
 
- / set_user problem_user \    / * \ 
-+-------------------------+  +-----+
-|         WW1Hash         |  |  0  |
-+-------------------------+  +-----+
-          \ hash /                  
+ / set_user problem_user \    / *  \ 
++-------------------------+  +------+
+|         WW1Hash         |  | Null |
++-------------------------+  +------+
+          \ hash /            \null/ 
 
-The null schema "0" provides the set and problem tables.
+The null schema provides the set and problem tables.
 
 WeBWorK 2.x courses also use:
 
@@ -89,14 +89,17 @@ $record   - an object representing a record in the table
 $style = style()
 	returns the required driver style.
 
-$handle = new($driver, $table, $record)
+$handle = new($driver, $table, $record, $params)
 	creates a schema interface for $table, using the driver interface
 	provided by $driver and using the record class named in $record. dies
 	if the $driver does not support the driver style needed by the schema.
+	$params contains extra information needed by the schema.
 
-@keys = $handle->list()
-	returns a list containing the key of each record in the table. the
-	elements of @keys are \@keyparts.
+@keys = $handle->list(@keyparts)
+	returns a list containing the key of each record in the table that
+	matches the values in @keyparts. (i.e. [$userID, undef] will return all
+	of the records with the specified user_id.) the elements of @keys are
+	\@keyparts. if no matching records exist, an empty list is returned.
 
 $result = $handle->exists(@keyparts)
 	returns whether a record matching @keyparts exists in the table.
@@ -114,8 +117,9 @@ $result = $handle->put($record)
 	$record. dies if no such record exists.
 
 $result = $handle->delete(@keyparts)
-	attempts to delete the record matching @keyparts from the table. dies
-	if no such record exists.
+	attempts to delete the record matching @keyparts from the table. returns
+	true if the record was successfully deleted, or false if it did not
+	exist.
 
 --------------------------------------------------------------------------------
 Driver API
@@ -143,3 +147,18 @@ STYLE: hash
 $ref = $handle->hash()
 	returns a reference to the underlying tied hash. dies if the hash is
 	not available (i.e. not connected).
+
+--------------------------------------------------------------------------------
+@keyparts key order
+--------------------------------------------------------------------------------
+
+table		keyparts
+-----		--------
+password	user_id
+permission	user_id
+key		user_id
+user		     id
+set		     id
+set_user	user_id, set_id
+problem		     id, set_id
+problem_user	user_id, set_id, problem_id

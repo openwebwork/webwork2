@@ -14,6 +14,7 @@ WeBWorK::DB::Driver::GDBM - hash style interface to GDBM databases.
 use strict;
 use warnings;
 use GDBM_File;
+use Carp;
 
 use constant STYLE => "hash";
 
@@ -81,7 +82,7 @@ sub disconnect($) {
 
 sub hash($) {
 	my ($self) = @_;
-	die "hash not tied"
+	croak "hash not tied"
 		unless tied %{$self->{hash}};
 	return $self->{hash};
 }

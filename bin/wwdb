@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: wwdb,v 1.1 2003-03-21 23:30:09 sh002i Exp $
+# $Id: wwdb,v 1.2 2003-04-17 21:01:13 sh002i Exp $
 ################################################################################
 
 =head1 NAME
@@ -13,10 +13,11 @@ wwdb - command-line interface to the WeBWorK databases (WWDBv2).
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use WeBWorK::ContentGenerator; # for cook_args
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-#use WeBWorK::DB::Record::User;
 
 # Command line syntax
 # 
@@ -29,17 +30,29 @@ use WeBWorK::DB;
 # 
 # You'll have to protect arguments like this from your shell by enclosing them
 # in single quotes.
+# 
+# The special string \undef represents an undefined value. You'll have to
+# protect this from your shell as well. Use \\undef or '\undef'.
 
 sub main(@) {
 	my ($course, $command, @arguments) = @_;
 	
+	unless ($course and $command) {
+		die "usage: $0 course command [arguments ...]\n";
+	}
+	
 	my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", $course);
 	my $db = WeBWorK::DB->new($ce);
+	
+	if ($command eq "dumpDB") {
+		print $db->$command("set_user");
+		exit;
+	}
 	
 	die "$command: unsupported command.\n"
 		unless $db->can($command);
 	
-	my ($verb, $noun) = $command =~ m/^(list|new|get|put|delete)(.*?)s?$/;
+	my ($verb, $noun) = $command =~ m/^(list|add|get|put|delete)(.*?)s?$/;
 	
 	my $type = "WeBWorK::DB::Record::";
 	if ($noun =~ m/^Global(User)?(Set|Problem)$/) {
@@ -49,7 +62,9 @@ sub main(@) {
 	}
 	
 	foreach (@arguments) {
-		if (m/^{(.*)}$/) {
+		if (m/^\\undef$/) {
+			$_ = undef;
+		} elsif (m/^{(.*)}$/) {
 			$_ = string2record($type, $1);
 		}
 	}
@@ -58,18 +73,18 @@ sub main(@) {
 	
 	if ($verb eq "list") {
 		print join("\n", @result), "\n";
-	} elsif ($verb eq "new") {
-		# ignore result
+	} elsif ($verb eq "add") {
+		print "result: $result[0]\n";
 	} elsif ($verb eq "get") {
 		if (defined $result[0]) {
 			print "{", record2string($result[0]), "}\n";
 		} else {
-			print "$arguments[0]: record not found\n";
+			print join("/", @arguments), ": record not found\n";
 		}
 	} elsif ($verb eq "put") {
-		# ignore result
+		print "result: $result[0]\n";
 	} elsif ($verb eq "delete") {
-		# ignore result
+		print "result: $result[0]\n";
 	}
 }
 

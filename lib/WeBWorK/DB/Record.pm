@@ -13,6 +13,7 @@ WeBWorK::DB::Record - common functionality for Record classes.
 
 use strict;
 use warnings;
+use Carp;
 
 sub new($@) {
 	my ($invocant, %fields) = @_;
@@ -36,7 +37,7 @@ sub AUTOLOAD($;@) {
 		$self->{$function} = $args[0] if @args;
 		return $self->{$function};
 	} else {
-		die "Undefined subroutine $package\::$function called";
+		croak "Undefined subroutine $package\::$function called";
 	}
 }
 

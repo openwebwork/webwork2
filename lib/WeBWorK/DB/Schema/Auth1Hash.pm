@@ -8,14 +8,12 @@ package WeBWorK::DB::Schema::Auth1Hash;
 =head1 NAME
 
 WeBWorK::DB::Schema::Auth1Hash - support access to the password, permission,
-and key tables with a 1.x-structured hash-style backend.
+and key tables with a WWDBv1 hash-style backend.
 
 =cut
 
 use strict;
 use warnings;
-use WeBWorK::DB::Record::User;
-use WeBWorK::DB::Utils qw(record2hash hash2record hash2string string2hash);
 
 use constant TABLES => qw(password permission key);
 use constant STYLE  => "hash";
@@ -37,7 +35,7 @@ sub style() {
 ################################################################################
 
 sub new($$$$) {
-	my ($proto, $driver, $table, $record) = @_;
+	my ($proto, $driver, $table, $record, $params) = @_;
 	my $class = ref($proto) || $proto;
 	die "$table: unsupported table"
 		unless grep { $_ eq $table } $proto->tables();
@@ -47,6 +45,7 @@ sub new($$$$) {
 		driver => $driver,
 		table  => $table,
 		record => $record,
+		params => $params,
 	};
 	bless $self, $class;
 	return $self;
@@ -58,12 +57,16 @@ sub new($$$$) {
 #  field to know what data its dealing with.
 ################################################################################
 
-sub list($) {
-	my ($self) = @_;
+sub list($@) {
+	my ($self, @keyparts) = @_;
+	my ($matchUserID) = @keyparts;
 	$self->{driver}->connect("ro");
 	my @keys = keys %{ $self->{driver}->hash() };
 	$self->{driver}->disconnect();
-	return @keys;
+	if (defined $matchUserID) {
+		@keys = grep { $_ eq $matchUserID } @keys;
+	}
+	return map { [$_] } @keys;
 }
 
 sub exists($$) {
@@ -95,7 +98,7 @@ sub get($$) {
 	$self->{driver}->connect("ro");
 	my $value = $self->{driver}->hash()->{$userID};
 	$self->{driver}->disconnect();
-	return undef unless $value;
+	return undef unless defined $value;
 	if ($self->{table} eq "key") {
 		# key's value contains two fields
 		my ($key, $timestamp) = $value =~ m/^(\S+)\s+(.*)$/;

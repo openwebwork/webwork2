@@ -30,7 +30,7 @@ sub new($$) {
 	# load the modules required to handle each table, and create driver
 	foreach my $table (TABLES) {
 		unless (defined $ce->{dbLayout}->{$table}) {
-			#warn "ignoring table $table: layout not specified in dbLayout";
+			#warn "ignoring table $table: layout not specified in dbLayout"; # ***
 			next;
 		}
 		
@@ -39,12 +39,12 @@ sub new($$) {
 		my $schema = $layout->{schema};
 		my $driver = $layout->{driver};
 		my $source = $layout->{source};
-		#warn "table=$table record=$record schema=$schema driver=$driver source=$source\n";
+		my $params = $layout->{params};
 		
 		runtime_use($record);
 		runtime_use($schema);
 		runtime_use($driver);
-		$self->{$table} = $schema->new($driver->new($source), $table, $record);
+		$self->{$table} = $schema->new($driver->new($source), $table, $record, $params);
 	}
 	
 	bless $self, $class;
@@ -57,12 +57,13 @@ sub new($$) {
 
 sub listPasswords($) {
 	my ($self) = @_;
-	return $self->{password}->list();
+	return map { $_->[0] }
+		$self->{password}->list(undef);
 }
 
-sub newPassword($$) {
+sub addPassword($$) {
 	my ($self, $Password) = @_;
-	die "newPassword failed: user ", $Password->user_id, " does not exist.\n"
+	die "addPassword failed: user ", $Password->user_id, " does not exist.\n"
 		unless $self->{user}->exists($Password->user_id);
 	return $self->{password}->add($Password);
 }
@@ -88,12 +89,13 @@ sub deletePassword($$) {
 
 sub listPermissionLevels($) {
 	my ($self) = @_;
-	return $self->{permission}->list();
+	return map { $_->[0] }
+		$self->{permission}->list(undef);
 }
 
-sub newPermissionLevel($$) {
+sub addPermissionLevel($$) {
 	my ($self, $PermissionLevel) = @_;
-	die "newPermissionLevel failed: user ", $PermissionLevel->user_id, " does not exist.\n"
+	die "addPermissionLevel failed: user ", $PermissionLevel->user_id, " does not exist.\n"
 		unless $self->{user}->exists($PermissionLevel->user_id);
 	return $self->{permission}->add($PermissionLevel);
 }
@@ -119,12 +121,13 @@ sub deletePermissionLevel($$) {
 
 sub listKeys($) {
 	my ($self) = @_;
-	return $self->{key}->list();
+	return map { $_->[0] }
+		$self->{key}->list(undef);
 }
 
-sub newKey($$) {
+sub addKey($$) {
 	my ($self, $Key) = @_;
-	die "newKey failed: user ", $Key->user_id, " does not exist.\n"
+	die "addKey failed: user ", $Key->user_id, " does not exist.\n"
 		unless $self->{user}->exists($Key->user_id);
 	return $self->{key}->add($Key);
 }
@@ -150,10 +153,11 @@ sub deleteKey($$) {
 
 sub listUsers($) {
 	my ($self) = @_;
-	return $self->{user}->list();
+	return map { $_->[0] }
+		$self->{user}->list(undef);
 }
 
-sub newUser($$) {
+sub addUser($$) {
 	my ($self, $User) = @_;
 	return $self->{user}->add($User);
 }
@@ -184,10 +188,11 @@ sub deleteUser($$) {
 
 sub listGlobalSets($) {
 	my ($self) = @_;
-	return $self->{set}->list();
+	return map { $_->[0] }
+		$self->{set}->list(undef);
 }
 
-sub newGlobalSet($$) {
+sub addGlobalSet($$) {
 	my ($self, $GlobalSet) = @_;
 	return $self->{set}->add($GlobalSet);
 }
@@ -217,16 +222,15 @@ sub deleteGlobalSet($$) {
 
 sub listUserSets($) {
 	my ($self, $userID) = @_;
-	return map { $_->[1] }
-		grep { $_->[0] eq $userID }
-			$self->{set_user}->list();
+	return map { $_->[1] } # extract set_id
+		$self->{set_user}->list($userID, undef);
 }
 
-sub newUserSet($$) {
+sub addUserSet($$) {
 	my ($self, $UserSet) = @_;
-	die "newUserSet failed: user ", $UserSet->user_id, " does not exist.\n"
+	die "addUserSet failed: user ", $UserSet->user_id, " does not exist.\n"
 		unless $self->{user}->exists($UserSet->user_id);
-	die "newUserSet failed: set ", $UserSet->set_id, " does not exist.\n"
+	die "addUserSet failed: set ", $UserSet->set_id, " does not exist.\n"
 		unless $self->{set}->exists($UserSet->set_id);
 	return $self->{set_user}->add($UserSet);
 }
@@ -256,12 +260,12 @@ sub listGlobalProblems($$) {
 	my ($self, $setID) = @_;
 	return map { $_->[1] }
 		grep { $_->[0] eq $setID }
-			$self->{problem}->list();
+			$self->{problem}->list(undef, undef);
 }
 
-sub newGlobalProblem($$) {
+sub addGlobalProblem($$) {
 	my ($self, $GlobalProblem) = @_;
-	die "newGlobalProblem failed: set ", $GlobalProblem->set_id, " does not exist.\n"
+	die "addGlobalProblem failed: set ", $GlobalProblem->set_id, " does not exist.\n"
 		unless $self->{set}->exists($GlobalProblem->set_id);
 	return $self->{problem}->add($GlobalProblem);
 }
@@ -290,16 +294,15 @@ sub deleteGlobalProblem($$$) {
 sub listUserProblems($$$) {
 	my ($self, $userID, $setID) = @_;
 	return map { $_->[2] }
-		grep { $_->[0] eq $userID and $_->[1] eq $setID }
-			$self->{problem_user}->list();
+		$self->{problem_user}->list($userID, $setID, undef);
 }
 
-sub newUserProblem($$) {
+sub addUserProblem($$) {
 	my ($self, $UserProblem) = @_;
-	die "newUserProblem failed: user set ", $UserProblem->set_id, " does not exist.\n"
-		unless $self->{set_user}->exists($UserProblem->set_id);
-	die "newUserProblem failed: problem ", $UserProblem->problem_id, " does not exist.\n"
-		unless $self->{problem}->exists($UserProblem->set_id);
+	die "addUserProblem failed: user set ", $UserProblem->set_id, " does not exist.\n"
+		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
+	die "addUserProblem failed: problem ", $UserProblem->problem_id, " does not exist.\n"
+		unless $self->{problem}->exists($UserProblem->user_id, $UserProblem->set_id);
 	return $self->{problem_user}->add($UserProblem);
 }
 
@@ -334,6 +337,15 @@ sub getGlobalUserSet($$$) {
 sub getGlobalUserProblem($$$$) {
 	my ($self, $userID, $setID, $problemID) = @_;
 	# ***
+}
+
+################################################################################
+# debugging
+################################################################################
+
+sub dumpDB($$) {
+	my ($self, $table) = @_;
+	return $self->{$table}->dumpDB();
 }
 
 1;
