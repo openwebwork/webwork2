@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.28 2004/01/31 04:28:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.29 2004/02/03 00:53:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@ use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
 use CGI qw();
 sub pre_header_initialize {
-	my ($self, $setName, $problemNumber) = @_;
+	my ($self) = @_;
 	my $r                    = $self->{r};
 	my $ce                   = $self->{ce};
 	my $db                   = $self->{db};

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.39 2004/03/04 04:36:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.40 2004/03/04 17:40:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,9 +30,10 @@ use CGI qw();
 use WeBWorK::PG;
 
 sub initialize {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	my $courseEnvironment = $self->{ce};
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $db = $self->{db};
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
@@ -59,8 +60,10 @@ sub initialize {
 }
 
 sub path {
-	my ($self, $setName, $args) = @_;
+	my ($self, $args) = @_;
 	
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
@@ -72,8 +75,10 @@ sub path {
 }
 
 sub nav {
-	my ($self, $setName, $args) = @_;
+	my ($self, $args) = @_;
 	
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
@@ -85,9 +90,10 @@ sub nav {
 	
 
 sub siblings {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 #	$WeBWorK::timer0->continue('begin  siblings');
-	my $ce = $self->{ce};
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");my $ce = $self->{ce};
 	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
@@ -143,15 +149,18 @@ sub siblings {
 }
 
 sub title {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	return $setName;
 }
 
 sub info {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
 	my $db = $self->{db};
 	
@@ -215,8 +224,9 @@ sub info {
 }
 
 sub body {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $courseEnvironment = $self->{ce};
 	my $db = $self->{db};
 	my $effectiveUser = $r->param('effectiveUser');

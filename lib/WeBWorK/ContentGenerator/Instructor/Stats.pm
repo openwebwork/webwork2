@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.18 2004/02/02 23:11:13 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.20 2004/02/16 03:16:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,22 +34,24 @@ use WeBWorK::DB::Record::Set;
 sub initialize {
 	my $self     = shift; 
 	# FIXME  are there args here?
-	my $type       = shift || '';
 	my @components = @_;
 	my $r = $self->{r};
+	my $type       = $r->urlpath->arg("statType") || '';
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $authz = $self->{authz};
  	my $user = $r->param('user');
- 	my $setName = $_[0];
+ 	#my $setName = $_[0];
  	
  	
  	$self->{type}  = $type;
  	if ($type eq 'student') {
- 		$self->{studentName } = $components[0] || $user;
+ 		my $studentName = $r->urlpath->arg("userID") || $user;
+ 		$self->{studentName } = $studentName;
  		
  	} elsif ($type eq 'set') {
- 		$self->{setName}     = $components[0]  || 0 ;
+ 		my $setName = $r->urlpath->arg("setID") || 0;
+ 		$self->{setName}     = $setName;
  		my $setRecord  = $db->getGlobalSet($setName); # checked
 		die "global set $setName  not found." unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
@@ -87,7 +89,7 @@ sub path {
 }
 
 sub title { 
-	my ($self, @components) = @_;
+	my ($self) = @_;
 	my $type                = $self->{type};
 	my $string              = "Statistics for ".$self->{ce}->{courseName}." ";
 	if ($type eq 'student') {

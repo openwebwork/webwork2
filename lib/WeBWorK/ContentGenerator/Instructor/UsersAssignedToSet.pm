@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.1 2004/01/23 16:49:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.3 2004/01/28 04:04:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,8 +30,9 @@ use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
-	my ($self, $setID) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
+	my $setID = $r->urlpath->arg("setID");
 	my $authz = $self->{authz};
 	my $db = $self->{db};
 	my $user = $r->param('user');
@@ -89,13 +90,13 @@ sub getSetName {
 
 sub path {
 	my $self          = shift;
-    my @components    = @_;
 	my $args          = $_[-1];
 	
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	my $set_id    = $self->getSetName($components[0]);
+	my $r = $self->{r};
+	my $set_id    = $r->urlpath->arg("setID");
 	return $self->pathMacro($args,
 		"Home"             => "$root",
 		$courseName        => "$root/$courseName",
@@ -107,14 +108,16 @@ sub path {
 }
 
 sub title {
-	my ($self, @components) = @_;
-	my $setID = $self->getSetName(@components);
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $setID = $r->urlpath->arg("setID");
 	return "Assigned Users for set $setID"
 }
 
 sub body {
-	my ($self, $setID) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
+	my $setID = $r->urlpath->arg("setID");
 	my $authz = $self->{authz};
 	my $db = $self->{db};
 	my $ce = $self->{ce};

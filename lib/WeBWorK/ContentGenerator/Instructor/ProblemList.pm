@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.15 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.16 2003/12/18 03:02:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -86,8 +86,9 @@ sub directoryListHTML {
 }
 
 sub initialize {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $authz = $self->{authz};
@@ -215,13 +216,16 @@ sub path {
 }
 
 sub title {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	return "Problems in ".$self->{ce}->{courseName}." : ".$setName;
 }
 
 sub body {
-	my ($self, $setName) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $authz = $self->{authz};
