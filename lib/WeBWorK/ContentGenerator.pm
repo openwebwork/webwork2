@@ -42,12 +42,11 @@ use CGI qw(*ul *li);
 use URI::Escape;
 use WeBWorK::Authz;
 use WeBWorK::DB;
+use WeBWorK::Template qw(template);
 use WeBWorK::Utils qw(readFile);
 
-################################################################################
 # This is a very unruly file, so I'm going to use very large comments to divide
 # it into logical sections.
-################################################################################
 
 =head1 CONSTRUCTOR
 
@@ -68,7 +67,7 @@ sub new {
 		ce => $r->ce(),       # these three are here for
 		db => $r->db(),       # backward-compatability
 		authz => $r->authz(), # with unconverted CGs
-		noContent => undef,
+		noContent => undef, # this should get clobbered at some point
 	};
 	bless $self, $class;
 	return $self;
@@ -127,9 +126,9 @@ instead and no template processing occurs.
 
 sub go {
 	my $self = shift;
-	
 	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $ce = $r->ce;
+	
 	my $returnValue = OK;
 	
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
@@ -159,7 +158,7 @@ sub go {
 			$templateName = "system";
 		}
 		$templateName = "system" unless exists $ce->{templates}->{$templateName};
-		$self->template($ce->{templates}->{$templateName}, @_);
+		template($ce->{templates}->{$templateName}, $self);
 	}
 	
 	return $returnValue;
@@ -185,139 +184,6 @@ sub sendFile {
 	close $fh;
 	
 	return OK;
-}
-
-=back
-
-=cut
-
-=head1 TEMPLATE PROCESSING
-
-=over
-
-=item template($templateFile)
-
-=cut
-
-# template(STRING, @otherArguments) - parse a template, looking for escapes of
-# the form <!--#NAME ARG1="FOO" ARG2="BAR"--> and calling a member function NAME
-# (if available) for each NAME. The escapes are called like:
-# 
-# 	$self->NAME(@otherArguments, \%escapeArguments)
-# 
-# where @otherArguments originates in the dispatcher and %escapeArguments is
-# parsed out of the escape itself (i.e. ARG1 => FOO, ARG2 => BAR)
-# 
-sub template {
-	my ($self, $templateFile) = (shift, shift);
-	my $r = $self->{r};
-	my $courseEnvironment = $self->{ce};
-	my @ifstack = (1); # Start off in printing mode
-		# say $ifstack[-1] to get the result of the last <#!--if-->
-	
-	# so even though the variable $/ APPEARS to contain a newline,
-	# <TEMPLATE> is slurping the whole file into the first element of
-	# @template ONLY AFTER THE TRANSLATOR RUNS. WTF!!!
-	#
-	#open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
-	#my @template = <TEMPLATE>;
-	#close TEMPLATE;
-	#
-	# Let's try something else instead:
-	my @template = split /\n/, readFile($templateFile);
-	
-	foreach my $line (@template) {
-		# This is incremental regex processing.
-		# the /c is so that pos($line) doesn't die when the regex fails.
-		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
-			my ($before, $function, $raw_args) = ($1, $2, $3);
-			my @args = ($raw_args =~ /\S/) ? cook_args($raw_args) : ();
-			
-			if ($ifstack[-1]) {
-				print $before;
-			}
-			
-			if ($function eq "if") {
-				# a predicate can only be true if everything else on the ifstack is already true, for ANDing
-				push @ifstack, ($self->$function(@_, [@args]) && $ifstack[-1]);
-			} elsif ($function eq "else" and @ifstack > 1) {
-				$ifstack[-1] = not $ifstack[-1];
-			} elsif ($function eq "endif" and @ifstack > 1) {
-				pop @ifstack;
-			} elsif ($ifstack[-1]) {
-				if ($self->can($function)) {
-					my @result = $self->$function(@_, {@args});
-					if (@result) {
-						print @result;
-					} else {
-						warn "Template escape $function returned an empty list.";
-					}
-				}
-			}
-		}
-		
-		if ($ifstack[-1]) {
-			print substr($line, (defined pos $line) ? pos $line : 0), "\n";
-		}
-	}
-}
-
-=item cook_args($string)
-
-=cut
-
-# cook_args(STRING) - parses a string of the form ARG1="FOO" ARG2="BAR". Returns
-# a list which pairs into key/values and fits nicely in {}s.
-# 
-sub cook_args($) { # ... also used by bin/wwdb, so watch out
-	my ($raw_args) = @_;
-	my @args = ();
-	
-	# Boy I love m//g in scalar context!  Go read the camel book, heathen.
-	# First, get the whole token with the quotes on both ends...
-	while ($raw_args =~ m/\G\s*(\w*)="((?:[^"\\]|\\.)*)"/g) {
-		my ($key, $value) = ($1, $2);
-		# ... then, rip out all the protecty backspaces
-		$value =~ s/\\(.)/$1/g;
-		push @args, $key => $value;
-	}
-	
-	return @args;
-}
-
-=item if($args)
-
-=cut
-
-# This is different.  It probably shouldn't print anything (except in debugging cases)
-# and it should return a boolean, not a string.  &if is called in a nonstandard way
-# by &template, with $args as an arrayref instead of a hashref.  this is a hack!  yay!
-
-# OK, this is a pluggin architecture.  it iterates through attributes of the "if" tag,
-# and for each predicate $p, it calls &if_$p in an object-oriented way, continuing the
-# grand templating theme of an object-oriented pluggable architecture using ->can($).
-sub if {
-	my ($self, $args) = @_[0,-1];
-	# A single if "or"s it's components.  Nesting produces "and".
-	
-	my @args = @$args; # Hahahahaha, get it?!
-	
-	if (@args % 2 != 0) {
-		# flip out and kill people, but do not commit seppuku
-		print '<!--&if recieved an uneven number of arguments.  This shouldn\'t happen, but I\'ll let it slide.-->\n';
-	}
-	
-	while (@args > 1) {
-		my ($key, $value) = (shift @args, shift @args);
-		
-		# a non-existent &if_$key is the same as a false result, but we're ORing, so it's OK
-		my $sub = "if_$key"; # perl doesn't like it when you try to construct a string right in a method invocation
-		if ($self->can("if_$key") and $self->$sub("$value")) {
-			return 1;
-		}
-	}
-	
-	return 0;
 }
 
 =back
@@ -373,7 +239,8 @@ sub pathMacro {
 			push @result, $name;
 		}
 	}
-	return join($sep, @result) . "\n";
+	
+	return join($sep, @result), "\n";
 }
 
 =item siblingsMacro(@siblings)
@@ -393,7 +260,7 @@ sub siblingsMacro {
 			? CGI::a({-href=>"$url?$auth"}, $name)
 			: $name;
 	}
-	return join($sep, @result), "\n";
+	return join($sep, @result) . "\n";
 }
 
 =item navMacro($args, $tail)
@@ -752,11 +619,11 @@ sub links {
 		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
 		$iResult .= CGI::start_li();
 		$iResult .= CGI::a({href=>$self->systemLink($setList)}, $setList->name);
-		if ($setID ne "") {
+		if (defined $setID and $setID ne "") {
 			$iResult .= CGI::start_ul();
 			$iResult .= CGI::start_li();
 			$iResult .= CGI::a({href=>$self->systemLink($setDetail)}, $setID);
-			if ($problemID ne "") {
+			if (defined $problemID and $problemID ne "") {
 				$iResult .= CGI::ul(
 					CGI::li(CGI::a({href=>$self->systemLink($problemEditor)}, $problemID))
 				);
@@ -769,12 +636,12 @@ sub links {
 		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
 		$iResult .= CGI::start_li();
 		$iResult .= CGI::a({href=>$self->systemLink($stats)}, $stats->name);
-		if ($userID ne "") {
+		if (defined $userID and $userID ne "") {
 			$iResult .= CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
 			);
 		}
-		if ($setID ne "") {
+		if (defined $setID and $setID ne "") {
 			$iResult .= CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, $setID))
 			);
@@ -790,7 +657,7 @@ sub links {
 	my $grades  = $urlpath->newFromModule("${pfx}Grades", %args);
 	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
 	
-	return CGI::ul({class=>"LinkMenu"},
+	return CGI::ul({class=>"LinksMenu"},
 		CGI::li(CGI::span({style=>"font-size:larger"},
 			CGI::a({href=>$self->systemLink($sets)}, "Problem Sets"))),
 		CGI::li(CGI::a({href=>$self->systemLink($options)}, $options->name)),
@@ -800,116 +667,116 @@ sub links {
 	);
 }
 
-# FIXME: drunk code. rewrite.
-# also, this should be structured s.t. subclasses can add items to the links
-# area, i.e. "stacking"
-sub links_crap {
-	my $self = shift;
-	my @components = @_;
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $userName = $self->{r}->param("user");
-	my $courseName = $ce->{courseName};
-	my $root = $ce->{webworkURLs}->{root};
-	
-	#my $Key = $db->getKey($userName); # checked
-	#my $key = (defiend $key
-	#	? $Key->key()
-	#	: "");
-	#
-	#return "" unless defined $key;
-	# This has been replaced by using "#if loggedin" in ur.template.
-	
-	# URLs to parts of the system
-	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
-	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
-	my $grades      = "$root/$courseName/grades/?"    . $self->url_authen_args();
-	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
-	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
-	
-	my $PermissionLevel = $db->getPermissionLevel($userName); # checked
-	my $permLevel = (defined $PermissionLevel
-		? $PermissionLevel->permission()
-		: 0);
-	
-	return join("",
-		CGI::div( {style=>'font-size:larger'},CGI::a({-href=>$probSets}, "Problem&nbsp;Sets")
-		), 
-		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
-		CGI::a({-href=>$grades}, "Grades"), CGI::br(),
-		CGI::a({-href=>$help,-target=>'_help_'}, "Help"), CGI::br(),
-		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
-		($permLevel > 0
-			? $self->instructor_links(@components) : ""
-		),
-	);
-}
-
-sub instructor_links {
-	my $self       = shift;
-	my @components = @_; 
-	my $args       = pop(@components);  # get hash of option arguments
-	my $courseName = $self->{ce}->{courseName};
-	my $root       = $self->{ce}->{webworkURLs}->{root};
-	my $userName = $self->{r}->param("effectiveUser");
-	$userName    = $self->{r}->param("user") unless defined $userName;
-	my ($set, $prob) = @components;
-	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
-	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
-	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
-	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
-	my $scoring    = "$root/$courseName/instructor/scoring/?" . $self->url_authen_args();
-	my $statsRoot  = "$root/$courseName/instructor/stats";     
-	my $stats      = $statsRoot. '/?'.$self->url_authen_args();
-	my $fileXfer   = "$root/$courseName/instructor/files/?" . $self->url_authen_args();
-
-	
-	#  Add direct links to sets e.g.  3:4 for set3 problem 4
-	my $setURL = (defined $set)
-		? "$root/$courseName/instructor/sets/$set/?" . $self->url_authen_args()
-		: '';
-	my $probURL = (defined $set && defined $prob)
-		? "$root/$courseName/instructor/pgProblemEditor/$set/$prob?" . $self->url_authen_args()
-		: '';
-	
-	my ($setLink, $problemLink) = ("", "");
-	if ($setURL) {
-		$setLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
-			. CGI::a({-href=>$setURL}, "Set&nbsp;$set")
-			. CGI::br();
-		if ($probURL) {
-			$problemLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
-				. CGI::a({-href=>$probURL}, "Problem&nbsp;$prob")
-				. CGI::br();
-		}
-	}
-	
-	#my $setProb = ($setURL)
-	#	? CGI::a({-href=>$setURL}, $set)
-	#	: '';
-	#$setProb .= ':' . CGI::a({-href=>$probURL},$prob) if $setProb && $probURL;
-	
-	return join("",
-		 CGI::hr(),
-		 CGI::div( {style=>'font-size:larger'},
-		 	CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") 
-		 ), 
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
-		 $setLink,
-		 $problemLink,
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$email}, "Mail&nbsp;Merge"), CGI::br(),
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Scoring"), CGI::br(),
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$stats}, "Statistics"), CGI::br(),
-		 (defined($set))
-		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
-			: '',
-		 (defined($userName))
-		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
-			: '',
-		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$fileXfer}, "File&nbsp;Transfer"), CGI::br(),
-	);
-}
+## FIXME: drunk code. rewrite.
+## also, this should be structured s.t. subclasses can add items to the links
+## area, i.e. "stacking"
+#sub links {
+#	my $self = shift;
+#	my @components = @_;
+#	my $ce = $self->{ce};
+#	my $db = $self->{db};
+#	my $userName = $self->{r}->param("user");
+#	my $courseName = $ce->{courseName};
+#	my $root = $ce->{webworkURLs}->{root};
+#	
+#	#my $Key = $db->getKey($userName); # checked
+#	#my $key = (defiend $key
+#	#	? $Key->key()
+#	#	: "");
+#	#
+#	#return "" unless defined $key;
+#	# This has been replaced by using "#if loggedin" in ur.template.
+#	
+#	# URLs to parts of the system
+#	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
+#	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
+#	my $grades      = "$root/$courseName/grades/?"    . $self->url_authen_args();
+#	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
+#	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
+#	
+#	my $PermissionLevel = $db->getPermissionLevel($userName); # checked
+#	my $permLevel = (defined $PermissionLevel
+#		? $PermissionLevel->permission()
+#		: 0);
+#	
+#	return join("",
+#		CGI::div( {style=>'font-size:larger'},CGI::a({-href=>$probSets}, "Problem&nbsp;Sets")
+#		), 
+#		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
+#		CGI::a({-href=>$grades}, "Grades"), CGI::br(),
+#		CGI::a({-href=>$help,-target=>'_help_'}, "Help"), CGI::br(),
+#		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+#		($permLevel > 0
+#			? $self->instructor_links(@components) : ""
+#		),
+#	);
+#}
+#
+#sub instructor_links {
+#	my $self       = shift;
+#	my @components = @_; 
+#	my $args       = pop(@components);  # get hash of option arguments
+#	my $courseName = $self->{ce}->{courseName};
+#	my $root       = $self->{ce}->{webworkURLs}->{root};
+#	my $userName = $self->{r}->param("effectiveUser");
+#	$userName    = $self->{r}->param("user") unless defined $userName;
+#	my ($set, $prob) = @components;
+#	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
+#	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
+#	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
+#	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
+#	my $scoring    = "$root/$courseName/instructor/scoring/?" . $self->url_authen_args();
+#	my $statsRoot  = "$root/$courseName/instructor/stats";     
+#	my $stats      = $statsRoot. '/?'.$self->url_authen_args();
+#	my $fileXfer   = "$root/$courseName/instructor/files/?" . $self->url_authen_args();
+#
+#	
+#	#  Add direct links to sets e.g.  3:4 for set3 problem 4
+#	my $setURL = (defined $set)
+#		? "$root/$courseName/instructor/sets/$set/?" . $self->url_authen_args()
+#		: '';
+#	my $probURL = (defined $set && defined $prob)
+#		? "$root/$courseName/instructor/pgProblemEditor/$set/$prob?" . $self->url_authen_args()
+#		: '';
+#	
+#	my ($setLink, $problemLink) = ("", "");
+#	if ($setURL) {
+#		$setLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
+#			. CGI::a({-href=>$setURL}, "Set&nbsp;$set")
+#			. CGI::br();
+#		if ($probURL) {
+#			$problemLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
+#				. CGI::a({-href=>$probURL}, "Problem&nbsp;$prob")
+#				. CGI::br();
+#		}
+#	}
+#	
+#	#my $setProb = ($setURL)
+#	#	? CGI::a({-href=>$setURL}, $set)
+#	#	: '';
+#	#$setProb .= ':' . CGI::a({-href=>$probURL},$prob) if $setProb && $probURL;
+#	
+#	return join("",
+#		 CGI::hr(),
+#		 CGI::div( {style=>'font-size:larger'},
+#		 	CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") 
+#		 ), 
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
+#		 $setLink,
+#		 $problemLink,
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$email}, "Mail&nbsp;Merge"), CGI::br(),
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Scoring"), CGI::br(),
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$stats}, "Statistics"), CGI::br(),
+#		 (defined($set))
+#		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
+#			: '',
+#		 (defined($userName))
+#		 	? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
+#			: '',
+#		 '&nbsp;&nbsp;&nbsp;',CGI::a({-href=>$fileXfer}, "File&nbsp;Transfer"), CGI::br(),
+#	);
+#}
 
 =item loginstatus
 
@@ -920,37 +787,64 @@ WeBWorK::ContentGenerator by default.
 =cut
 
 sub loginstatus {
-	my $self = shift;
+	my ($self) = @_;
 	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $urlpath = $r->urlpath;
 	
-	my $user = $r->param("user");
-	my $eUser = $r->param("effectiveUser");
 	my $key = $r->param("key");
 	
-	return "" unless $key;
-	
-	my $exitURL = $r->uri() . "?user=$user&key=$key";
-	
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseID = $ce->{courseName};
-	my $logout = "$root/$courseID/logout/?" . $self->url_authen_args();
-	
-	print CGI::small("User:", "$user");
-	
-	if ($user ne $eUser) {
-		print CGI::br(), CGI::font({-color=>'red'},
-				CGI::small("Acting as:", "$eUser")
-			),
-			CGI::br(), CGI::a({-href=>$exitURL},
-				CGI::small("Stop Acting")
-			);
+	if ($key) {
+		my $courseID = $urlpath->arg("courseID");
+		my $userID = $r->param("user");
+		my $eUserID = $r->param("effectiveUser");
+		
+		my $stopActingURL = $self->systemLink($urlpath, effectiveUserID => $userID);
+		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
+		
+		print "Logged in as $userID. ";
+		print CGI::a({href=>$logoutURL}, "Log Out");
+		
+		if ($eUserID ne $userID) {
+			print " | Acting as $eUserID. ";
+			print CGI::a({href=>$stopActingURL}, "Stop Acting");
+		}
 	}
-	
-	print CGI::br(), CGI::a({-href=>$logout}, CGI::small("Log Out"));
 	
 	return "";
 }
+
+#sub loginstatus_crap {
+#	my $self = shift;
+#	my $r = $self->{r};
+#	my $ce = $self->{ce};
+#	
+#	my $user = $r->param("user");
+#	my $eUser = $r->param("effectiveUser");
+#	my $key = $r->param("key");
+#	
+#	return "" unless $key;
+#	
+#	my $exitURL = $r->uri() . "?user=$user&key=$key";
+#	
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseID = $ce->{courseName};
+#	my $logout = "$root/$courseID/logout/?" . $self->url_authen_args();
+#	
+#	print CGI::small("User:", "$user");
+#	
+#	if ($user ne $eUser) {
+#		print CGI::br(), CGI::font({-color=>'red'},
+#				CGI::small("Acting as:", "$eUser")
+#			),
+#			CGI::br(), CGI::a({-href=>$exitURL},
+#				CGI::small("Stop Acting")
+#			);
+#	}
+#	
+#	print CGI::br(), CGI::a({-href=>$logout}, CGI::small("Log Out"));
+#	
+#	return "";
+#}
 
 =item nav
 
@@ -1100,6 +994,8 @@ sub if_submiterror($$) {
 }
 
 =item if_warnings
+
+=cut
 
 sub if_warnings($$) {
 	my ($self, $arg) = @_;
