@@ -150,7 +150,10 @@ sub pre_header_initialize {
 	my $courseName = $urlpath->arg("courseID");
 
 
-	if (defined $r->param("action") and $r->param("action") eq "score") {
+	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	
+	if (defined $r->param("action") and $r->param("action") eq "score" and $authz->hasPermissions($user, "score_sets")) {
 		my $scope = $r->param("action.score.scope");
 		my @setsToScore = ();
 	
@@ -177,17 +180,6 @@ sub pre_header_initialize {
 
 }
 
-
-sub initialize {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $ce     = $r->ce;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-	
-}
-
 sub body {
 	my ($self)       = @_;
 	my $r            = $self->r;
@@ -204,7 +196,7 @@ sub body {
 	# templates for getting field names
 	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 	
-	return CGI::em("You are not authorized to access the Instructor tools.")
+	return CGI::div({class => "ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	# This table can be consulted when display-ready forms of field names are needed.
@@ -614,9 +606,8 @@ sub edit_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 	
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		return CGI::em("You are not authorized to modify problem sets");
-	}
+	return CGI::em("You are not authorized to modify problem sets.") 
+		unless ($authz->hasPermissions($user, "modify_problem_sets"));
 	
 	return join("",
 		"Edit ",
@@ -641,9 +632,8 @@ sub edit_handler {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		return CGI::em("You are not authorized to modify problem sets");
-	}
+	return CGI::em("You are not authorized to modify problem sets.") 
+		unless ($authz->hasPermissions($user, "modify_problem_sets"));
 	
 	my $result;
 	
@@ -670,9 +660,8 @@ sub publish_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		return CGI::em("You are not authorized to modify problem sets");
-	}
+	return CGI::em("You are not authorized to modify problem sets.") 
+		unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 	return join ("",
 		"Make ",
@@ -710,10 +699,8 @@ sub publish_handler {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		return CGI::em("You are not authorized to modify problem sets");
-	}
+	return CGI::em("You are not authorized to modify problem sets.") 
+		unless ($authz->hasPermissions($user, "modify_problem_sets"));
 	
 	my $result = "";
 	
@@ -753,10 +740,8 @@ sub score_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "score_sets")) {
-		return CGI::em("You are not authorized to score sets");
-	}
-
+	return CGI::em("You are not authorized to score sets.") 
+		unless ($authz->hasPermissions($user, "score_sets"));
 	
 	return join ("",
 		"Score ",
@@ -786,10 +771,8 @@ sub score_handler {
 	my $user   = $r->param('user');
 	my $courseName = $urlpath->arg("courseID");
 
-	unless ($authz->hasPermissions($user, "score_sets")) {
-		return CGI::em({class=>"ResultsWithError"}, "You are not authorized to score sets");
-	}
-
+	return CGI::em("You are not authorized to score sets.") 
+		unless ($authz->hasPermissions($user, "score_sets"));
 
 	my $scope = $actionParams->{"action.score.scope"}->[0];	
 	my @setsToScore;
@@ -825,10 +808,9 @@ sub delete_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to delete problem sets");
-	}
-		
+	return CGI::em("You are not authorized to delete problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
+
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
 			"Delete ",
@@ -856,9 +838,8 @@ sub delete_handler {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to delete problem sets");
-	}
+	return CGI::em("You are not authorized to delete problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 
@@ -895,9 +876,8 @@ sub create_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to create problem sets");
-	}
+	return CGI::em("You are not authorized to create problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
 	return "Create a new set named: ", 
 		CGI::textfield(
@@ -916,9 +896,8 @@ sub create_handler {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to create problem sets");
-	}
+	return CGI::em("You are not authorized to create problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
 	my $newSetRecord = $db->newGlobalSet;
 	my $newSetName = $actionParams->{"action.create.name"}->[0];
@@ -945,9 +924,8 @@ sub import_form {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to create problem sets");
-	}
+	return CGI::em("You are not authorized to create problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1012,9 +990,8 @@ sub import_handler {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		return CGI::em("You are not authorized to create problem sets");
-	}
+	return CGI::em("You are not authorized to create problem sets.") 
+		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
