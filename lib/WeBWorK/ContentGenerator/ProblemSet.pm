@@ -97,7 +97,6 @@ sub siblings {
 	@sorted_sets = (@open_sets,@closed_sets);
 	
 	foreach my $set (@sorted_sets) { 
-	    print STDERR "set ".$set->set_id." due date ",$set->due_date,"\n"; 
 		if (time >= $set->open_date) {
 			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
 				. $self->url_authen_args}, $set->set_id), CGI::br();
