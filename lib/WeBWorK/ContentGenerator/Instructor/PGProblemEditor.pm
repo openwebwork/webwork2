@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.41 2004/05/27 22:28:21 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.42 2004/06/07 00:23:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::ProblemSetEditor - Edit a set definition list
+WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
 
 =cut
 
@@ -471,14 +471,25 @@ sub saveFileChanges {
 	my $openTempFileErrors = $@ if $@;
 	
 	if ($openTempFileErrors) {
-		$self->{failure} = "Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly. See log for details.";
-		#diagnose errors:
-		# FIXME: these error messages tend to be redundand
-		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Unable to write to $currentSourceFilePath: $openTempFileErrors")));
-		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("The file $currentSourceFilePath exists. \n "))) if -e $currentSourceFilePath; #FIXME 
-		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("The file $currentSourceFilePath cannot be found. \n "))) unless -e $currentSourceFilePath;
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly.")))
-		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
+	
+		$currentSourceFilePath =~ m|^(/.*?/)[^/]+$|;
+		my $currentDirectory = $1;
+	
+		my $errorMessage;
+		# check why we failed to give better error messages
+		if ( not -w $ce->{courseDirs}->{templates} ) {
+			$errorMessage = "Write permissions have not been enabled in the templates directory.  No changes can be made.";
+		} elsif ( not -w $currentDirectory ) {
+			$errorMessage = "Write permissions have not been enabled in $currentDirectory.  Changes must be saved to a different directory for viewing.";
+		} elsif ( -e $currentSourceFilePath and not -w $currentSourceFilePath ) {
+			$errorMessage = "Write permissions have not been enabled for $currentSourceFilePath.  Changes must be saved to another file for viewing.";
+		} else {
+			$errorMessage = "Unable to write to $currentSourceFilePath: $openTempFileErrors";
+		}
+
+		$self->{failure} = $errorMessage;
+		$self->addbadmessage(CGI::p($errorMessage));
+		
 	} else {
 		$self->{success} = "Problem saved to: $currentSourceFilePath";
 		# unlink the temporary file if there are no errors and the save button has been pushed
