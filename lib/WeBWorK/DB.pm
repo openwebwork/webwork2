@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.45 2004/01/03 20:07:03 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.46 2004/04/27 03:37:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1683,6 +1683,9 @@ sub getMergedProblems {
 		my $GlobalProblem = $GlobalProblems[$i];
 		next unless defined $UserProblem and defined $GlobalProblem;
 		foreach my $field (@commonFields) {
+			# FIXME: WW1Hash upgrades undefined fileds to "" when creating record objects
+			# Shouldn't we be testing for emptiness rather than definedness?
+			# I think the spec says that if a field is EMPTY the global value is used.
 			next if defined $UserProblem->$field;
 			$UserProblem->$field($GlobalProblem->$field);
 		}
