@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.1ww
+ *  Version: 1.2ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -31,13 +31,10 @@
  *****************************************************************************/
 
 /*
- *  Modification for Webwork
- *    (tried to add these to a separate file, but the way that
- *     some browsers process additional <SCRIPT SRC=""> calls
- *     made this not work well, so had to modify things here.)
+ *  Prevent running everything again if this file is loaded twice
  */
-
 if (window.jsMath) {
+
   /*
    *  We've been loaded a second time, so we want to do asynchronous
    *  processing instead.
@@ -79,6 +76,7 @@ if (window.jsMath) {
     }
 
   }
+
 } else {
 
 //
@@ -197,9 +195,9 @@ var jsMath = {
     '.cmex10':         'font-family: cmex10',
     '.arial':          'font-family: Arial unicode MS',
 
-    '.normal':         'font-family: serif; font-style: normal; font-size: 120%',
-    '.math':           'font-family: serif; font-style: normal',
-    '.typeset':        'font-family: serif; font-style: normal; font-size: 120%',
+    '.normal':         'font-family: serif; font-style: normal; font-size: 115%',
+    '.math':           'font-family: serif; font-style: normal; color: grey33; font-size: 75%',
+    '.typeset':        'font-family: serif; font-style: normal; font-size: 115%',
     '.mathlink':       'text-decoration: none',
     '.mathHD':         'border-width: 0; width: 1px; margin-right: -1px',
   
@@ -255,17 +253,16 @@ var jsMath = {
   },
   
   /*
-   *  Check for the availability of TeX fonts.  We do this by looking at the
-   *  depth of a character in the cmex10 font (since an image rests on the baseline
-   *  of the font, we can determine the depth by subtracting the height of such
-   *  an image plus a character in cmex10 from the height of just the character).
-   *  The cmex10 font has depth considerably greater than its height (the
-   *  whole font has the depth of the character with greatest depth), which is
-   *  not the case for most fonts, so if we can access cmex10, d should be much
-   *  bigger than the height.  Otherwise, if we don't have cmex10, we'll get
-   *  a character in another font with normal depth.  In this case, we insert
-   *  a message pointing the user to the jsMath site, and load one of the
-   *  fallback definitions.
+   *  Check for the availability of TeX fonts.  We do this by looking at
+   *  the width and height of a character in the cmex10 font.  The cmex10
+   *  font has depth considerably greater than most characters' widths (the
+   *  whole font has the depth of the character with greatest depth).  This
+   *  is not the case for most fonts, so if we can access cmex10, the
+   *  height of a character should be much bigger than the width.
+   *  Otherwise, if we don't have cmex10, we'll get a character in another
+   *  font with normal height and width.  In this case, we insert a message
+   *  pointing the user to the jsMath site, and load one of the fallback
+   *  definitions.
    *  
    *  ### still need a jsMath-fallback-unix.js file ###
    */
@@ -492,6 +489,7 @@ var jsMath = {
       for (var i = 0; i < this.TeX.fam.length; i++)
         {if (this.TeX.fam[i] != '') {this.TeX[this.TeX.fam[i]].dh = .1}}
       this.TeX.axis_height += .05;
+//    this.allowAbsoluteDelim = ! this.oldSafari;
     }
 
     //
@@ -2534,7 +2532,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     var rule = jsMath.Box.Rule(box.w,t); rule.y = box.h+r; box.x = -box.w;
     var Cr = jsMath.Typeset.UpStyle(jsMath.Typeset.UpStyle(style));
     var root = jsMath.Box.Set(mitem.root,Cr);
-    if (mitem.root) {root.y = .6*(box.h-box.d+3*t+r); surd.x = -10/18}
+    if (mitem.root) {root.y = .6*(box.h-box.d+3*t+r); surd.x = -(2/3)*surd.w}
     mitem.nuc = jsMath.Box.SetList([root,surd,rule,box],style);
     mitem.type = 'ord';
     jsMath.mList.prototype.Atomize.SupSub(style,mitem);
@@ -3436,7 +3434,6 @@ jsMath.Package(jsMath.Parser,{
     tan:          ['NamedOp',0],
     tanh:         ['NamedOp',0],
 
-    sqrt:           ['HandleAtom','radical'],
     vcenter:        ['HandleAtom','vcenter'],
     overline:       ['HandleAtom','overline'],
     underline:      ['HandleAtom','underline'],
@@ -3466,6 +3463,7 @@ jsMath.Package(jsMath.Parser,{
 
     frac:            'Frac',
     root:            'Root',
+    sqrt:            'Sqrt',
 
     //  TeX substitution macros
     hbar:               ['Macro','\\hbarchar\\kern-.5em h'],
@@ -3502,14 +3500,18 @@ jsMath.Package(jsMath.Parser,{
     mathrm:             ['Macro','{\\rm #1}',1],
     mathbf:             ['Macro','{\\bf #1}',1],
     mathit:             ['Macro','{\\it #1}',1],
+    mathbb:             ['Macro','{\\bf #1}',1],
 
+    // for WeBWorK
     lt:			['Macro','<'],
     gt:			['Macro','>'],
+    setlength:          ['Macro','',2],
 
     limits:       ['Limits',1],
     nolimits:     ['Limits',0],
 
     ',':          ['Spacer',1/6],
+    ':':          ['Spacer',1/6],
     '>':          ['Spacer',2/9],
     ';':          ['Spacer',5/18],
     '!':          ['Spacer',-1/6],
@@ -3555,6 +3557,7 @@ jsMath.Package(jsMath.Parser,{
     
     hbox:       'HBox',
     text:       'HBox',
+    mbox:       'HBox',
 
     strut:      'Strut',
     mathstrut:  ['Macro','\\vphantom{(}'],
@@ -3586,6 +3589,10 @@ jsMath.Package(jsMath.Parser,{
     cases:      ['Matrix','\\{','.',['l','l']],
     cr:         'HandleRow',
     '\\':       'HandleRow',
+    
+    //  LaTeX
+    begin:      'Begin',
+    end:        'End',
 
     //  Extensions to TeX
     color:      'Color',
@@ -3597,6 +3604,14 @@ jsMath.Package(jsMath.Parser,{
     //  debugging and test routines
     'char':     'Char',
     test:       'Test'
+  },
+  
+  /*
+   *  LaTeX environments
+   */
+  environments: {
+    array:      'Array',
+    cases:      ['Array','\\{','.','ll']
   },
 
   /*
@@ -3733,6 +3748,28 @@ jsMath.Package(jsMath.Parser,{
   },
   
   /*
+   *  Get an optional LaTeX argument in brackets
+   */
+  GetBrackets: function (name) {
+    var c = this.GetNext(); if (c != '[') return '';
+    var start = ++this.i; var pcount = 0;
+    while (this.i < this.string.length) {
+      var c = this.string.charAt(this.i++);
+      if (c == '{') {pcount++}
+      else if (c == '}') {
+        if (pcount == 0)
+          {this.Error("Extra close brace while looking for ']'"); return}
+        pcount --;
+      } else if (c == this.cmd) {
+        this.i++;
+      } else if (c == ']') {
+        if (pcount == 0) {return this.string.slice(start,this.i-1)}
+      }
+    }
+    this.Error("Couldn't find closing ']' for argument to "+this.cmd+name);
+  },
+  
+  /*
    *  Get everything up to the given control sequence name (token)
    */
   GetUpto: function (name,token) {
@@ -3771,6 +3808,18 @@ jsMath.Package(jsMath.Parser,{
     return this.Process(arg);
   },
 
+  /*
+   *  Get everything up to \end{env}
+   */
+  GetEnd: function (env) {
+    var body = ''; var name = '';
+    while (name != env) {
+      body += this.GetUpto('begin{'+env+'}','end'); if (this.error) return;
+      name = this.GetArgument(this.cmd+'end'); if (this.error) return;
+    }
+    return body;
+  },
+  
 
   /***************************************************************************/
 
@@ -3889,6 +3938,17 @@ jsMath.Package(jsMath.Parser,{
   },
   
   /*
+   *  Implements \sqrt[n]{...}
+   */
+  Sqrt: function (name) {
+    var n = this.GetBrackets(this.cmd+name); if (this.error) return;
+    var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
+    box = jsMath.mItem.Atom('radical',arg);
+    if (this.n != '') {box.root = this.Process(n); if (this.error) return}
+    this.mlist.Add(box);
+  },
+
+  /*
    *  Implements \root...\of{...}
    */
   Root: function (name) {
@@ -3989,6 +4049,53 @@ jsMath.Package(jsMath.Parser,{
       {this.table[this.table.length] = this.row}
     this.row = [];
   },
+  
+  /*
+   *  LaTeX array environment
+   */
+  Array: function (name,data) {
+    var columns = data[2];
+    if (!columns) {
+      columns = this.GetArgument(this.cmd+'begin{'+name+'}');
+      if (this.error) return;
+    }
+    columns = columns.replace(/[^clr]/g,'');
+    columns = columns.split('');
+    var arg = this.GetEnd(name); if (this.error) return;
+    var parse = new jsMath.Parser(arg);
+    parse.matrix = name; parse.row = []; parse.table = [];
+    parse.Parse(); if (parse.error) {this.Error(parse); return}
+    parse.HandleRow(name,1);  // be sure the last row is recorded
+    var box = jsMath.Box.Layout(parse.table,columns);
+    // Add parentheses, if needed
+    if (data[0] && data[1]) {
+      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[1]],'T');
+      box = jsMath.Box.SetList([left,box,right]);
+    }
+    this.mlist.Add(jsMath.mItem.Atom((data[0]? 'inner': 'ord'),box));
+    
+  },
+  
+  /*
+   *  LaTeX \begin{env}
+   */
+  Begin: function (name) {
+    var env = this.GetArgument(this.cmd+name); if (this.error) return;
+    if (env.match(/[^a-z*]/i)) {this.Error('Invalid environment name "'+env+'"'); return}
+    if (!this.environments[env]) {this.Error('Unknown environment "'+env+'"'); return}
+    var cmd = this.environments[env];
+    if (typeof(cmd) == "string") {cmd = [cmd]}
+    this[cmd[0]](env,cmd.slice(1));
+  },
+  
+  /*
+   *  LaTeX \end{env}
+   */
+  End: function (name) {
+    var env = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.Error(this.cmd+name+'{'+env+'} without matching '+this.cmd+'begin');
+  },
 
   /*
    *  Debugging routine to test stretchable delimiters
@@ -4006,7 +4113,6 @@ jsMath.Package(jsMath.Parser,{
     this.mlist.Add(jsMath.mItem.Typeset(jsMath.Box.Leaders(W,this.leaders[leader])));
     return;
   },
-
   
   /*
    *  Add a fixed amount of horizontal space
@@ -4245,7 +4351,7 @@ jsMath.Package(jsMath.Parser,{
     if (this.macros[cmd]) {
       var macro = this.macros[cmd];
       if (typeof(macro) == "string") {macro = [macro]}
-      var args = macro.slice(1); if (args.length == 1) {args = args[0]}
+//    var args = macro.slice(1); if (args.length == 1) {args = args[0]}
       this[macro[0]](cmd,macro.slice(1)); return;
     }
     if (this.mathchardef[cmd]) {
@@ -4560,13 +4666,10 @@ jsMath.Add(jsMath,{
    *  This can take a long time, so the user could cancel the
    *  page before it is complete; use it with caution, and only
    *  when there is a relatively small amount of math on the page.
-   *
-   *  Process backwards to avoid elements disappearing on us (don't
-   *  know why they do).
    */
   ProcessBeforeShowing: function () {
     if (!jsMath.initialized) {jsMath.Init()}
-    element = jsMath.GetMathElements();
+    var element = jsMath.GetMathElements();
     for (var i = 0; i < element.length; i++)
       {jsMath.ProcessElement(element[i])}
     jsMath.ProcessComplete();
@@ -4683,4 +4786,5 @@ jsMath.InitStyles();
 document.write('<SCRIPT>jsMath.CheckFonts()</SCRIPT>');
 
 }
+
 }
