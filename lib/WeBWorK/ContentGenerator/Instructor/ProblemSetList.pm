@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.43 2004/02/14 00:55:17 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.44 2004/03/05 05:01:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,11 +33,12 @@ use WeBWorK::Compatibility;
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts continuation)];
 
 sub header {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $courseName = $ce->{courseName};
-	my $root = $ce->{webworkURLs}->{root};
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $ce         = $r->ce;
+	my $courseName = $urlpath->arg("courseID");
+	my $root       = $ce->{webworkURLs}->{root};
 	
 	if (defined $r->param('scoreSelected')) {
 		$r->header_out(Location => "$root/$courseName/instructor/scoring?".$self->url_args);
@@ -49,13 +50,14 @@ sub header {
 }
 
 sub initialize {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseName = $urlpath->arg("courseID");
+	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
 		$self->{submitError} = "You aren't authorized to create or delete problems";
@@ -147,37 +149,22 @@ sub initialize {
 	} 
 }
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		'Instructor Tools' => "$root/$courseName/instructor",
-		'Set List'         => '' # $root/$courseName/instructor/sets
-	);
-}
 
-sub title {
-	my $self = shift;
-	return "Set List";
-}
+
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
-	my $key  = $r->param('key');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $root       = $ce->{webworkURLs}->{root};
+	my $courseName = $urlpath->arg("courseID");
+	my $user       = $r->param('user');
+	my $key        = $r->param('key');
 	my $effectiveUserName = $r->param('effectiveUser');
-	my $URL = $r->uri;
+	my $URL        = $r->uri;
 	my $instructorBaseURL = "$root/$courseName/instructor";
 	my $importURL = "$instructorBaseURL/problemSetImport/";
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.3 2004/01/28 04:04:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.4 2004/03/04 21:05:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,12 +30,13 @@ use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setID = $r->urlpath->arg("setID");
-	my $authz = $self->{authz};
-	my $db = $self->{db};
-	my $user = $r->param('user');
+	my ($self)     = @_;
+	my $r          = $self->r;
+    my $urlpath    = $r->urlpath;
+	my $authz      = $r->authz;
+	my $db         = $r->db;	
+	my $setID      = $urlpath->arg("setID");
+	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
 		$self->{submitError} = "You are not authorized to assign problem sets";
@@ -88,42 +89,18 @@ sub getSetName {
 	return $pathSetName;
 }
 
-sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $r = $self->{r};
-	my $set_id    = $r->urlpath->arg("setID");
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		"Instructor Tools" => "$root/$courseName/instructor",
-		Sets               => "$root/$courseName/instructor/sets/",
-		$set_id            => "$root/$courseName/instructor/sets/$set_id",
-		"Assigned Users"   => ""
-	);
-}
-
-sub title {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setID = $r->urlpath->arg("setID");
-	return "Assigned Users for set $setID"
-}
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setID = $r->urlpath->arg("setID");
-	my $authz = $self->{authz};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $webworkRoot = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
+	my ($self)         = @_;
+	my $r              = $self->r;
+	my $urlpath        = $r->urlpath;
+	my $db             = $r->db;
+	my $ce             = $r->ce;
+	my $authz          = $r->authz;
+	my $webworkRoot    = $ce->{webworkURLs}->{root};
+	my $courseName     = $urlpath->arg("courseID");
+	my $setID          = $urlpath->arg("setID");
+	my $user           = $r->param('user');
 	
 	return CGI::em("You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");

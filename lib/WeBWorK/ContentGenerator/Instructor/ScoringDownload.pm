@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,8 +29,8 @@ use Apache::Constants qw(:common);
 
 sub header {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $file = $r->param('getFile');
 	if (-f "$scoringDir/$file") {
@@ -45,12 +45,12 @@ sub header {
 }
 
 sub content {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $user = $r->param('user');
+	my $user       = $r->param('user');
 	
 	if (!$authz->hasPermissions($user, "score_sets")) {
 		print "You do not have permission to access scoring data";

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.42 2004/02/06 17:37:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.43 2004/02/12 21:38:24 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -145,10 +145,11 @@ use constant  FIELD_PROPERTIES => {
 	}
 };
 sub pre_header_initialize {
-	my $self   = shift;
-	my $r      = $self->{r};
-	my $ce     = $self->{ce};
-	
+	my $self          = shift;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $ce            = $r->ce;
+	my $courseName    = $urlpath->arg("courseID");
 	# Handle redirects, if any.
 	##############################
 	# Redirect to the addUser page
@@ -157,7 +158,7 @@ sub pre_header_initialize {
 	defined($r->param('action')) && $r->param('action') eq 'add' && do {
 		# fix url and redirect
 		my $root              = $ce->{webworkURLs}->{root};
-		my $courseName        = $ce->{courseName};
+		
 		my $numberOfStudents  = $r->param('number_of_students');
 		warn "number of students not defined " unless defined $numberOfStudents;
 
@@ -174,7 +175,7 @@ sub pre_header_initialize {
 sub header {
 	my $self = shift;
 	return REDIRECT if $self->{noContent};
-	my $r = $self->{r};
+	my $r    = $self->r;
 	$r->content_type('text/html');
 	$r->send_http_header();
 	return OK;
@@ -190,10 +191,10 @@ sub nbsp {
 
 sub initialize {
 	my ($self) = @_;
-	my $r      = $self->{r};
-	my $db     = $self->{db};
-	my $ce     = $self->{ce};
-	my $authz  = $self->{authz};
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
+	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "modify_student_data")) {
@@ -216,36 +217,21 @@ sub initialize {
 	#}
 }
 
-sub title {
-	my $self = shift;
-	return "User List";
-}
 
-sub path {
-	my $self = shift;
-	my $args = $_[-1];
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	
-	return $self->pathMacro($args,
-		"Home"              => "$root",
-		$courseName         => "$root/$courseName",
-		"Instructor Tools"  => "$root/$courseName/instructor",
-		"Users"             => "", # "$root/$courseName/instructor/users",
-	);
-}
 
 sub body {
-	my ($self, $setID) = @_;
-	my $r = $self->{r};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
+	my ($self)       = @_;
+	my $r            = $self->r;
+	my $urlpath      = $r->urlpath;
+	my $db           = $r->db;
+	my $ce           = $r->ce;
+	my $authz        = $r->authz;	
+	my $courseName   = $urlpath->arg("courseID");
+	my $setID        = $urlpath->arg("setID");       
+	my $user         = $r->param('user');
 	
+	my $root = $ce->{webworkURLs}->{root};
+
 	# templates for getting field names
 	my $userTemplate            = $self->{userTemplate}            = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
@@ -644,7 +630,8 @@ sub delete_form {
 
 sub delete_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $db = $self->{db};
+	my $r         = $self->r;
+	my $db        = $r->db;
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 	
 	my @userIDsToDelete = ();
@@ -832,7 +819,7 @@ sub cancelEdit_form {
 
 sub cancelEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = $self->{r};
+	my $r      = $self->r;
 	
 	#$self->{selectedUserIDs} = $self->{visibleUserIDs};
 		# only do the above if we arrived here via "edit selected users"
@@ -855,8 +842,8 @@ sub saveEdit_form {
 
 sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
+	my $r           = $self->r;
+	my $db          = $r->db;
 	
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
@@ -931,9 +918,10 @@ sub menuLabels {
 
 sub importUsersFromCSV {
 	my ($self, $fileName, $createNew, $replaceExisting, @replaceList) = @_;
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $dir = $ce->{courseDirs}->{templates};
+	my $r     = $self->r;
+	my $ce    = $r->ce;
+	my $db    = $r->db;
+	my $dir   = $ce->{courseDirs}->{templates};
 	
 	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
 	die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
@@ -1007,9 +995,10 @@ sub importUsersFromCSV {
 
 sub exportUsersToCSV {
 	my ($self, $fileName, @userIDsToExport) = @_;
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $dir = $ce->{courseDirs}->{templates};
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $dir     = $ce->{courseDirs}->{templates};
 		
 	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
 	
@@ -1083,10 +1072,11 @@ sub fieldEditHTML {
 
 sub recordEditHTML {
 	my ($self, $User, $PermissionLevel, %options) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
+	my $r           = $self->r;
+	my $urlpath     = $r->urlpath;
+	my $ce          = $r->ce;
+	my $root        = $ce->{webworkURLs}->{root};
+	my $courseName  = $urlpath->arg("courseID");
 	
 	my $editMode = $options{editMode};
 	my $userSelected = $options{userSelected};
@@ -1159,16 +1149,16 @@ sub recordEditHTML {
 
 sub printTableHTML {
 	my ($self, $UsersRef, $PermissionLevelsRef, $fieldNamesRef, %options) = @_;
-	my $r = $self->{r};
-	my $userTemplate = $self->{userTemplate};
+	my $r                       = $self->r;
+	my $userTemplate            = $self->{userTemplate};
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
-	my @Users = @$UsersRef;
-	my @PermissionLevels = @$PermissionLevelsRef;
-	my %fieldNames = %$fieldNamesRef;
+	my @Users                   = @$UsersRef;
+	my @PermissionLevels        = @$PermissionLevelsRef;
+	my %fieldNames              = %$fieldNamesRef;
 	
-	my $editMode = $options{editMode};
-	my %selectedUserIDs = map { $_ => 1 } @{ $options{selectedUserIDs} };
-	my $currentSort = $options{currentSort};
+	my $editMode                = $options{editMode};
+	my %selectedUserIDs         = map { $_ => 1 } @{ $options{selectedUserIDs} };
+	my $currentSort             = $options{currentSort};
 	
 	# names of headings:
 	my @realFieldNames = (

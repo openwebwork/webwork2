@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.17 2004/01/21 01:16:15 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.18 2004/02/03 00:53:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,11 +32,11 @@ use Mail::Sender;
 my $REFRESH_RESIZE_BUTTON = "Reorder, Resize and Update";  # handle submit value idiocy
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "send_mail")) {
 		$self->{submitError} = "You are not authorized to send mail to students.";
@@ -364,28 +364,14 @@ sub initialize {
 }  #end initialize
 
 
-sub title {
-	my $self = shift;
-	return 'Mail Merge';
-}
 
-sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		'Instructor Tools' => "$root/$courseName/instructor",
-		"Mail Merge"       => '', # "$root/$courseName/instructor/send_mail",
-	);
-}
+
 
 sub body {
-	my ($self, $setID)  = @_;
+	my ($self)          = @_;
+	my $r               = $self->r;
+	my $urlpath         = $r->urlpath;
+	my $setID           = $urlpath->arg("setID");    
 	my $response        = (defined($self->{response}))? $self->{response} : '';
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
@@ -398,9 +384,13 @@ sub body {
 
 }
 sub print_preview {
-	my ($self, $setID)  = @_;
+	my ($self)          = @_;
+	my $r               = $self->r;
+	my $urlpath         = $r->urlpath;
+	my $setID           = $urlpath->arg("setID");    
+
 	#  get preview user
-	my $ur      = $self->{db}->getUser($self->{preview_user}); #checked
+	my $ur      = $r->db->getUser($self->{preview_user}); #checked
 	die "record for preview user ".$self->{preview_user}. " not found." unless $ur;
 	
 	#  get merge file
@@ -432,14 +422,18 @@ sub print_preview {
 
 }
 sub print_form {
-	my ($self, $setID) = @_;
-	my $r = $self->{r};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my ($self)          = @_;
+	my $r               = $self->r;
+	my $urlpath         = $r->urlpath;
+	my $authz           = $r->authz;	
+	my $db              = $r->db;
+	my $ce              = $r->ce;
+	my $courseName      = $urlpath->arg("courseID");
+	my $setID           = $urlpath->arg("setID");    
+	my $user            = $r->param('user');
+
 	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
+	
 
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
