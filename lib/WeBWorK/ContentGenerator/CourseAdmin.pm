@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.22 2004/06/24 20:54:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.23 2004/07/10 16:06:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -163,6 +163,7 @@ sub header {
 }
 
 # sends:
+# 
 # HTTP/1.1 200 OK
 # Date: Fri, 09 Jul 2004 19:05:55 GMT
 # Server: Apache/1.3.27 (Unix) mod_perl/1.27
@@ -174,6 +175,8 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
+		print "<!-- Áª£¢°¤¦¥»¼Ï·«¨ ´¬ö¿¹Œ§¶Ä©úÆûÂ½ÅÃº÷µ -->\n";
+		print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
 		$self->do_export_database;
 	} else {
 		$self->SUPER::content;
