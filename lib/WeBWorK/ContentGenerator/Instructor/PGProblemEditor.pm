@@ -270,7 +270,7 @@ sub body {
 	
 	
 
-	my $header = "Problem Editor:  $problemPath";
+	my $header = "Editing problem:  $problemPath";
 
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
@@ -312,6 +312,7 @@ sub body {
 		$self->hidden_authen_fields,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div(
+		'Seed: ',
 		CGI::textfield(-name=>'problemSeed',-value=>$problemSeed),
 		'Mode: ',
 		CGI::popup_menu(-name=>'displayMode', -'values'=>$mode_list,
