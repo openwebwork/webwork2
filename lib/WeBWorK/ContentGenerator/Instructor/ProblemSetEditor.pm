@@ -13,7 +13,7 @@ use CGI qw();
 
 
 our $rowheight = 20;  #controls the length of the popup menus.  
-our $libraryDirectory;
+our $libraryName;  #library directory name
 sub title {
 	my $self = shift;
 	return "Instructor Tools - Problem Set Editor for ".$self->{ce}->{courseName};
@@ -29,24 +29,41 @@ sub body {
 	my $user = $r->param('user');
 	my $key = $db->getKey($user)->key();
 	
+	
+	################
+	# Gathering info
+	# What is needed
+	#     $setName  -- formerly the name of the set definition file
+	#     $formURL -- the action URL for the form 
+	#     $libraryName  -- the name of the available library 
+	#     $setDirectory  -- the current library directory 
+	#     $oldSetDirectory -- the previous library directory
+	#     $problemName    -- the name of the library problem (in the previous library directory)
+	#     $problemList    -- the contents of the textarea form
+	#     answer dates
+	my ($setName,$formURL,
+		$libraryName,$setDirectory,$oldSetDirectory,
+		$problemName,$problemList,
+		$openDate,$dueDate,$answerDate) = $self->gatherInfo();
+	
 	#########################################################################
 	# Determine a name for this set
 	#########################################################################
 	# Determine the set number, if there is one. Otherwise make setName = "new set".
 	# fix me
-	my ($path_info,@components) = $self->gatherInfo();
-	my $setName = $components[0];  # get GET  address for set name
+#	my ($path_info,@components) = $self->gatherInfo();
+#	my $setName = $components[0];  # get GET  address for set name
 
 	# Override the setName if it is defined in a form.
-	$setName = $r->param('setName') if defined($r->param('setName'));
-	$path_info =~s|problemSetEditor.*$|problemSetEditor/|;   # remove the setName, if any, from the path
-	my $formPath = "/webwork$path_info";   # . $setName$self->url_authen_args();
+#	$setName = $r->param('setName') if defined($r->param('setName'));
+	
 	
 	#########################################################################
 	# determine the library set directory 
 	#########################################################################
-	my $setDirectory = $r->param('setDirectory');
-	my $oldSetDirectory = $r->param('oldSetDirectory');
+# 	$libraryName = $self->{ce}->{courseDirs}->{templates};
+# 	my $setDirectory = $r->param('setDirectory');
+#	my $oldSetDirectory = $r->param('oldSetDirectory');
 	
 	#fix me
 	# A user can select a new set AND a problem (in the old set) but the problem won't be in the new set!
@@ -64,26 +81,26 @@ sub body {
 	
 	my $textAreaString;
 	#fix me  -- this does not handle multiple problem selections correctly.
-	my $problem_name = $r->param('pgProblem');
-	my $problem_list = $r->param('problem_list');
+# 	my $problemName = $r->param('pgProblem');
+# 	my $problemList = $r->param('problemList');
 	
 	# Initialize the textarea string if it is empty or hasn't been defined.
-	$problem_list = "# List problems to be included in the set here???\r\n\r\n" unless defined($problem_list) and $problem_list =~/\S/;
-	my $problemEntry = $oldSetDirectory.'/'.$r->param('pgProblem').", 1 \r\n";
+	$problemList = "# List problems to be included in the set here???\r\n\r\n" unless defined($problemList) and $problemList =~/\S/;
+	my $problemEntry = $oldSetDirectory.'/'.$problemName.", 1, -1 \r\n";
 	# add the new problem entry if the address is complete. (still buggy -- how do insure that oldSetDirectory is not empty?
-	$problem_list .= $problemEntry if defined($r->param('pgProblem') and defined($oldSetDirectory) and ($oldSetDirectory =~/\S/));  
+	$problemList .= $problemEntry unless $problemEntry =~ m|^/|;  # don't print if oldSetDirectory name is empy (fix me -- more checks are needed?)  
 	# format the complete textArea string
-	$textAreaString = qq!<textarea name="problem_list", cols="40", rows="$rowheight">$problem_list</textarea>!;
+	$textAreaString = qq!<textarea name="problemList", cols="40", rows="$rowheight">$problemList</textarea>!;
 	
 	
 	#Determine the headline for the page 
  
-	$libraryDirectory = $self->{ce}->{courseDirs}->{templates};
+	
 	#fix me   Debugging code
-# 	my $header = "Choose problems from $libraryDirectory directory" .
+# 	my $header = "Choose problems from $libraryName directory" .
 # 		"<p>This form is not yet operational. 
 # 		<p>SetDirectory is $setDirectory.  
-# 		<p>formPath is $formPath 
+# 		<p>formURL is $formURL 
 # 		<p>path_info  is $path_info";
 	my $header = '';
 
@@ -106,11 +123,11 @@ sub body {
 
 	
 	my $viewProblemLink;
-	if ( (defined($oldSetDirectory) and defined($problem_name)) ) {
+	if ( (defined($oldSetDirectory) and defined($problemName)) ) {
 		$viewProblemLink = qq!View : <a href=! .
-	           qq!"http://webhost.math.rochester.edu/webworkdocs/ww/pgView/$oldSetDirectory/$problem_name"! .
+	           qq!"http://webhost.math.rochester.edu/webworkdocs/ww/pgView/$oldSetDirectory/$problemName"! .
 	           qq! target = "_probwindow">! .
-	           qq!$oldSetDirectory/$problem_name</a>!;
+	           qq!$oldSetDirectory/$problemName</a>!;
 	} else {
 		$viewProblemLink = '';
 	
@@ -121,7 +138,7 @@ sub body {
 	           
 	return CGI::p($header),
 		#CGI::start_form(-action=>"/webwork/mth143/instructor/problemSetEditor/"),
-		CGI::start_form(-action=>$formPath),
+		CGI::start_form(-action=>$formURL),
 		CGI::table( {-border=>2},
 			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
 				CGI::th('Editing set : '),
@@ -150,9 +167,9 @@ sub body {
             ),
           
             CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-  		 		CGI::td(CGI::textfield(-name=>'open_date', -size=>'20') ),
-            	CGI::td(CGI::textfield(-name=>'due_date', -size=>'20') ),
-            	CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20') ),             
+  		 		CGI::td(CGI::textfield(-name=>'open_date', -size=>'20',	-value=>$openDate) ),
+            	CGI::td(CGI::textfield(-name=>'due_date', -size=>'20',	-value=>$dueDate) ),
+            	CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20',-value=>$answerDate) ),             
             ),
             qq!<tr align="center" valign="top"><td colspan="3">View entire set (pdf format) -- not yet implemented</td></tr>!,
         ),
@@ -169,17 +186,45 @@ sub body {
 
 sub gatherInfo {
 	#fix me.  This is very much hacked together.  In particular can we pass the key inside the post?
-	my $self	=	shift;
-	my $ce 		= 	$self->{ce};
-	my $r		=	$self->{r};
-	my $path_info = $r->path_info || "";
-	my $remaining_path = $path_info;
-	$remaining_path =~ s/^.*problemSetEditor//;
-	# $remaining_path =~ s/\?.*$//;    #remove the trailing lines?? perhaps not needed.
-
-	my($junk, @components) = split "/", $remaining_path;
+	my $self			=	shift;
+	my $ce 				= 	$self->{ce};
+	my $r				=	$self->{r};
+	my $path_info 		= $r->path_info || "";
 	
-	($path_info,@components);
+	## Determine the set name
+	my $remaining_path 	= $path_info;
+	$remaining_path =~ s/^.*problemSetEditor//;
+	my($junk, $setName, @components) = split "/", $remaining_path;
+	# Override the setName if it is defined in a form.
+	$setName = $r->param('setName') if defined($r->param('setName'));
+	
+	# Find the URL for the form
+	$path_info =~s|problemSetEditor.*$|problemSetEditor/|;   # remove the setName, if any, from the path
+	my $formURL = "/webwork$path_info";   # . $setName$self->url_authen_args();
+	
+	#########################################################################
+	# determine the library name and set directory 
+	#########################################################################
+	$libraryName = $ce->{courseDirs}->{templates};
+	my $setDirectory = $r->param('setDirectory');
+	my $oldSetDirectory = $r->param('oldSetDirectory');
+	
+	# Determine the problem name
+	#fix me  -- this does not handle multiple problem selections correctly.
+	my $problemName = $r->param('pgProblem');
+	# Determine the text area string (contents of set definition "file")
+	my $problemList = $r->param('problemList');
+	
+	# get answer dates
+	
+	my $openDate 	= $r->param('open_date');
+	$openDate		= "" unless defined($openDate);	
+	my $dueDate 	= $r->param('due_date');
+	$dueDate		= "" unless defined($dueDate);	
+	my $answerDate 	= $r->param('answer_date');
+	$answerDate		= "" unless defined($answerDate);	
+	
+	($setName,$formURL,$libraryName,$setDirectory,$oldSetDirectory,$problemName,$problemList,$openDate,$dueDate,$answerDate);
 }
 sub fetchSetDirectories {
 
@@ -201,13 +246,7 @@ sub fetchSetDirectories {
 	my @setDefFiles = grep /^set[^\.]*$/, @allFiles;
 	my @sortedNames = sort @setDefFiles;
 
-	## print list of files
-	my  $fileName;
-
-	my ($ind,$label,$date,@stat);
-
-
-	return "$libraryDirectory/" . CGI::br(). CGI::popup_menu(-name=>'setDirectory', -size=>$rowheight,
+	return "$libraryName/" . CGI::br(). CGI::popup_menu(-name=>'setDirectory', -size=>$rowheight,
 	 -values=>\@sortedNames, -default=>$defaultChoice ) .CGI::br() ;
 }
 
@@ -236,14 +275,8 @@ sub fetchPGproblems {
 	my @pgFiles = grep /\.pg$/, @allFiles;
 	my @sortedNames = sort @pgFiles;
 
-	## print list of files
-	my  $fileName;
-
-	my ($ind,$label,$date,@stat);
-	my %labels;
-
 	return "$setDirectory ". CGI::br() . 
-	CGI::popup_menu(-name=>'pgProblem', -size=>$rowheight, -multiple=>undef, -values=>\@sortedNames, -labels=>\%labels ) . 
+	CGI::popup_menu(-name=>'pgProblem', -size=>$rowheight, -multiple=>undef, -values=>\@sortedNames,  ) . 
 	CGI::br() ;
 }
 1;
