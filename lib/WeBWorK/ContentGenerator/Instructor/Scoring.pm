@@ -81,8 +81,8 @@ sub body {
 		}
 		print CGI::h2("Totals");
 		print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
-		print CGI::hr();
-		print CGI::a({href=>"../scoring/?scoreSelected=1&selectedSet=1&selectedSet=2&selectedSet=3&selectedSet=4&".$self->url_authen_args},"Score sets 1 -- 4");
+		#print CGI::hr();
+		#print CGI::a({href=>"../scoring/?scoreSelected=1&selectedSet=1&selectedSet=2&selectedSet=3&selectedSet=4&".$self->url_authen_args},"Score sets 1 -- 4");
 		#my @setNames = $self->{db}->listGlobalSets();
 		#print "sets: ", join(" ", @setNames);
 	}

@@ -34,7 +34,7 @@ sub pre_header_initialize {
 	}
 	my @submit_actions = qw(student-dates act-as-student edit-set-dates reset-password assign-passwords 
 	                        set-stats drop-students edit-students-sets edit-sets student-stats edit-class-data
-	                        add-students send-email);
+	                        add-students send-email score-sets);
 	foreach my $act (@submit_actions) {
 		$self->{current_action } .=  "The action &lt;$act&gt; &quot;". $r->param($act) . "&quot; was requested" 
 		if defined($r->param($act));
@@ -55,7 +55,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -87,7 +86,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -135,7 +133,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/stats/set/$setName?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -148,7 +145,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -163,7 +159,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/sets/$setName/?editForUser=$student&".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -175,7 +170,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/sets/$setName/?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -187,7 +181,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $studentName     = shift @userList;
 		my $uri="$root/$courseName/instructor/stats/student/$studentName?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -199,7 +192,6 @@ sub pre_header_initialize {
 		# can only become the first user listed.
 		my $setName         = shift @setList;
 		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
-		warn "redirect to $uri";
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -222,17 +214,17 @@ sub pre_header_initialize {
 		$self->{noContent} =  1;  # forces redirect
 		return;
 	};
-	
-	
-		
-# 		unless (substr($current_uri,-1) eq '/') {
-# 		$r->header_out(Location => "$current_uri/" . ($args ? "?$args" : ""));
-# 		return REDIRECT;
-# 		# *** any post data gets lost here -- fix that.
-# 		# (actually, it's not a problem, since all URLs generated
-# 		# from within the system have trailing slashes, and we don't  
-# 		# need POST data from outside the system anyway!)
-# 	}
+	defined($r->param('score-sets')) && do {
+		my $root            = $ce->{webworkURLs}->{root};
+		my $courseName      = $ce->{courseName};
+
+		my $uri="$root/$courseName/instructor/scoring/?scoreSelected=Score%20Selected&".$self->url_authen_args;
+		my @selectedSets    = $r->param('setList');
+		$uri .= "&selectedSet=$_" foreach (@selectedSets);
+		$r->header_out(Location => $uri);
+		$self->{noContent} =  1;  # forces redirect
+		return;
+	};	
 
 }
 # override contentGenerator header routine for now
@@ -363,7 +355,7 @@ sub body {
 					CGI::input({type=>'submit',value=>'View student statistics...',name=>'student-stats'}),
 					CGI::input({type=>'submit',value=>'Edit class data for students...',name=>'edit-class-data'}),
 					CGI::input({type=>'submit',value=>'Edit set(s) data...',name=>'edit-sets'}),
-					'&nbsp;'
+					CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
 				]
 			),
 		),
@@ -385,7 +377,8 @@ sub body {
 				]
 			),
 			CGI::td({colspan=>2}, 
-				CGI::input({type=>'submit',value=>'Edit student(s) data for set(s)...',name=>'edit-students-sets'}),
+				CGI::input({type=>'submit',value=>'Edit student(s) data for selected set(s)...',name=>'edit-students-sets'}),
+				
 				
 			)
 		
