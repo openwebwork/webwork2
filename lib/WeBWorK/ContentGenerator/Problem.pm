@@ -35,6 +35,7 @@ use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2st
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
 
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ############################################################
 # 
@@ -98,7 +99,7 @@ sub pre_header_initialize {
 	
 	my $editMode = $r->param("editMode");
 	
-	if ($permissionLevel > 0 and defined $editMode) {
+	if ($permissionLevel > 0) {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
 		# editor to 
@@ -109,10 +110,12 @@ sub pre_header_initialize {
 			my $userSetClass = $db->{set_user}->{record};
 			my $globalSet = $db->getGlobalSet($setName); # checked
 			# if the global set doesn't exist either, bail!
-			die "Set $setName does not exist"
-				unless defined $set;
-			$set = global2user($userSetClass, $globalSet);
-			$set->psvn(0);
+			if(not defined $globalSet) {
+				$set = fake_set($db);
+			} else {
+				$set = global2user($userSetClass, $globalSet);
+				$set->psvn(0);
+			}
 		}
 		
 		# if that is not yet defined obtain the global problem,
@@ -121,16 +124,24 @@ sub pre_header_initialize {
 			my $userProblemClass = $db->{problem_user}->{record};
 			my $globalProblem = $db->getGlobalProblem($setName, $problemNumber); # checked
 			# if the global problem doesn't exist either, bail!
-			die "Problem $problemNumber in set $setName does not exist"
-				unless defined $problem;
-			$problem = global2user($userProblemClass, $globalProblem);
-			$problem->user_id($effectiveUserName);
-			$problem->problem_seed(0);
-			$problem->status(0);
-			$problem->attempted(0);
-			$problem->last_answer("");
-			$problem->num_correct(0);
-			$problem->num_incorrect(0);
+			if(not defined $globalProblem) {
+				my $sourceFilePath = $r->param("sourceFilePath");
+				die "Problem $problemNumber in set $setName does not exist"
+					unless defined $sourceFilePath;
+				$problem = fake_problem($db);
+				$problem->problem_id(1);
+				$problem->source_file($sourceFilePath);
+				$problem->user_id($effectiveUserName);
+			} else {
+				$problem = global2user($userProblemClass, $globalProblem);
+				$problem->user_id($effectiveUserName);
+				$problem->problem_seed(0);
+				$problem->status(0);
+				$problem->attempted(0);
+				$problem->last_answer("");
+				$problem->num_correct(0);
+				$problem->num_incorrect(0);
+			}
 		}
 		
 		# now we're sure we have valid UserSet and UserProblem objects
@@ -141,7 +152,8 @@ sub pre_header_initialize {
 		# if the caller is asking to override the source file, and
 		# editMode calls for a temporary file, do so
 		my $sourceFilePath = $r->param("sourceFilePath");
-		if (defined $sourceFilePath and $editMode eq "temporaryFile") {
+		if (defined $sourceFilePath and 
+		    (not defined $editMode or $editMode eq "temporaryFile")) {
 			$problem->source_file($sourceFilePath);
 		}
 		
@@ -423,9 +435,9 @@ sub nav {
 				and (not defined $nextID or $id < $nextID);
 		}
 	}
-
+	
 	my @links;
-
+	
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $prevID);
@@ -433,9 +445,9 @@ sub nav {
 	} else {
 		push @links, "Previous Problem", "", "navPrev";
 	}
-
+	
 	push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
-
+	
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $nextID);
@@ -443,7 +455,7 @@ sub nav {
 	} else {
 		push @links, "Next Problem", "", "navNext";
 	}
-
+	
 	my $tail = "&displayMode=".$self->{displayMode};
 	return $self->navMacro($args, $tail, @links);
 }
@@ -509,10 +521,14 @@ sub body {
 	#}
 	
 	my $editorLink = "";
+	# if we are here without a real problem set, carry that through
+	my $forced_field = [];
+	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
+		($set->set_id eq 'Undefined_Set');
 	if ($self->{permissionLevel}>=10) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::a({href=>$editorURL}, "Edit this problem");
 	}
 	
