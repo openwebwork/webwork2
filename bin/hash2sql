@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: hash2sql,v 1.1 2003-05-28 01:18:11 sh002i Exp $
+# $Id: hash2sql,v 1.2 2003-06-19 19:23:50 sh002i Exp $
 ################################################################################
 
 =head1 NAME
@@ -31,10 +31,10 @@ sub main(@) {
 		die "usage: $0 hashCourse sqlCourse\n";
 	}
 	
-	my $hashCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", $hashCourse);
+	my $hashCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $hashCourse);
 	my $hashDB = WeBWorK::DB->new($hashCE);
 	
-	my $sqlCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", $sqlCourse);
+	my $sqlCE = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $sqlCourse);
 	my $sqlDB = WeBWorK::DB->new($sqlCE);
 	
 	# get names of global record classes
