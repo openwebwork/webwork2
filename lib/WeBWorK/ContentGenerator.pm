@@ -115,6 +115,10 @@ sub template {
 				print $before;
 			}
 			
+			warn '$function undefined' if !defined $function;
+			warn '@ifstack undefined' if !defined @ifstack;
+			warn '@args undefined' if !defined @args;
+						
 			if ($function eq "if") {
 				push @ifstack, $self->$function(@_, [@args]);
 			} elsif ($function eq "else" and @ifstack > 1) {
