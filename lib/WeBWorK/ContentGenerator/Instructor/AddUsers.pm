@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.8 2004/01/23 23:01:49 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.9 2004/01/25 19:46:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,12 +30,13 @@ use CGI qw();
 
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
+	my $r = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	
 	my $user = $r->param('user');
-
+	
 	unless ($authz->hasPermissions($user, "modify_student_data")) {
 		$self->{submitError} = "You are not authorized to modify student data";
 		return;
@@ -98,33 +99,14 @@ sub initialize {
 	}
 }
 
-sub path {
-	my $self = shift;
-	my $args = $_[-1];
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		"Instructor Tools" => "$root/$courseName/instructor",
-		"Add Users"        => "", # "$root/$courseName/instructor/add_users/",
-	);
-}
-
-sub title {
-	my $self = shift;
-	return "Add students";
-}
-
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $authz = $self->{authz};
-	my $courseName = $ce->{courseName};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $authz = $r->authz;
+	
+	my $courseName = $r->urlpath->arg("courseID");
 	my $authen_args = $self->url_authen_args();
 	my $user = $r->param('user');
 	
@@ -151,9 +133,9 @@ sub body {
 
 sub addStudentForm {
 	my $self                  = shift;
-	my $r                     = $self->{r};
-	my $db                    = $self->{db};
-	my $ce                    = $self->{ce};
+	my $r                     = $self->r;
+	my $db                    = $r->db;
+	my $ce                    = $r->ce;
 	my $numberOfStudents      = $r->param("number_of_students") || 5;
 	
 
