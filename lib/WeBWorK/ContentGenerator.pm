@@ -512,6 +512,7 @@ sub instructor_links {
 	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
 	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
 	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
+	my $scoring    = "$root/$courseName/instructor/scoring/?" . $self->url_authen_args();
 	my $statsRoot  = "$root/$courseName/instructor/stats";     
 	my $stats      = $statsRoot. '/?'.$self->url_authen_args();
 
@@ -530,6 +531,7 @@ sub instructor_links {
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Edit&nbsp;Sets") ,':', $setProb, CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "Edit&nbsp;Class") , CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email") , CGI::br(),
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Score&nbsp;Sets") , CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'),CGI::br(),
 			  	 (defined($set)) ?
 			  	 	'&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "set:$set").CGI::br() 
