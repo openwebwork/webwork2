@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.21 2004/05/02 19:55:15 jj Exp $
+# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.22 2004/05/06 18:41:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -85,7 +85,8 @@ p.emphasis { font-style:italic; }
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
-table.FormLayout tr.ButtonRow { text-align: center; }
+table.FormLayout tr.ButtonRow { text-align: left; }
+table.FormLayout tr.ButtonRowCenter { text-align: center; }
 
 /* background colors for success and failure messages */
 /* currently only used by Assigner, but may be used elsewhere. */
