@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.7 2004/03/15 22:29:54 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.8 2004/03/17 08:15:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -74,7 +74,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
  instructor_answer_log               /$courseID/instructor/show_answers/
+ 
  instructor_statistics               /$courseID/instructor/stats/
+ instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
+ instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
@@ -223,8 +226,8 @@ our %pathTypes = (
 	},
 	instructor_sets_assigned_to_user => {
 		name    => 'Sets Assigned to User',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
+		parent  => 'instructor_user_detail',
+		kids    => [ qw// ],
 		match   => qr|^sets/|,
 		capture => [ qw// ],
 		produce => 'sets/',
