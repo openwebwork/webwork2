@@ -280,6 +280,9 @@ given when the conditions of the constraint are not met.
 # catch the DBI uniqneness violation errors and munge them in some way to get a
 # useful error message out. Is there some way to do that? Would it me MySQL
 # specific?
+# 
+# <NULL> and <NULL> - OK
+# <NULL, foo> and <NULL, foo> - not OK
 
 sub has_unique_columns {
 	my ($class, $name, @columns) = @_;
