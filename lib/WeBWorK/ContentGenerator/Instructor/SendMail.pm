@@ -364,7 +364,6 @@ sub initialize {
 	}
 
 
-
 }  #end initialize
 
 
@@ -377,10 +376,11 @@ sub body {
 	my $urlpath         = $r->urlpath;
 	my $setID           = $urlpath->arg("setID");    
 	my $response        = (defined($self->{response}))? $self->{response} : '';
+
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif (($response eq 'send_email')){
-		$self->{message} .= CGI::h3("Email sent to "). join(" ", @{$self->{ra_send_to}});
+		$self->{message} .= CGI::i("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.");
 		$self->print_form($setID);
 	} else {
 		$self->print_form($setID);
@@ -405,7 +405,8 @@ sub print_preview {
 	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data);
 	
 	my $recipients  = join(" ",@{$self->{ra_send_to} });
-	my $errorMessage =  defined($self->{submitError}) ?  CGI::h3($self->{submitError} ) : '' ; 
+	my $errorMessage =  defined($self->{submitError}) ?  CGI::div({class=>'ResultsWithError'},$self->{submitError} ) : '' ; 
+	$self->addmessage($errorMessage) if $errorMessage;
 	$msg = join("",
 	   $errorMessage,
 	   $preview_header,
@@ -738,7 +739,7 @@ sub process_message {
 	# FIXME this is inefficient.  The info should be cached
 	my @COL            = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
 	if ($merge_file ne 'None' && not defined($rh_merge_data->{$SID})  ) {
-		$self->submission_error( "No merge data for $SID $FN $LN $LOGIN");
+		$self->submission_error( "No merge data for student id:$SID; name:$FN $LN; login:$LOGIN");
 	}
 	
 	my $endCol = @COL;
