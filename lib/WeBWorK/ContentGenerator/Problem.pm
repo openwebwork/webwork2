@@ -21,7 +21,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
-
+use WeBWorK::Timing;
 ############################################################
 # 
 # user
@@ -294,18 +294,24 @@ sub siblings {
 	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	
+	my $timer0 = WeBWorK::Timing->new("time siblings");
+	$timer0->start;
 	print CGI::strong("Problems"), CGI::br();
 	
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @problems;
-	push @problems, $db->getMergedProblem($effectiveUser, $setName, $_)
-		foreach ($db->listUserProblems($effectiveUser, $setName));
-	foreach my $problem (sort { $a->problem_id <=> $b->problem_id } @problems) {
-		print CGI::a({-href=>"$root/$courseName/$setName/".$problem->problem_id."/?"
+#	push @problems, $db->getMergedProblem($effectiveUser, $setName, $_)
+#		foreach ($db->listUserProblems($effectiveUser, $setName));
+    @problems = $db->listUserProblems($effectiveUser, $setName);  # this is much faster
+#	foreach my $problem (sort { $a->problem_id <=> $b->problem_id } @problems) {
+	foreach my $problem (sort { $a <=> $b } @problems) {
+		print CGI::a({-href=>"$root/$courseName/$setName/".$problem."/?"
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
-				"Problem ".$problem->problem_id), CGI::br();
+				"Problem ".$problem), CGI::br();
 	}
+	$timer0->stop;
+	$timer0->save;
+	'';
 }
 
 sub nav {
