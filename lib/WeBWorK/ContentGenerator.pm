@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.78 2004/03/04 21:03:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.79 2004/03/06 18:50:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,6 +20,19 @@ package WeBWorK::ContentGenerator;
 
 WeBWorK::ContentGenerator - base class for modules that generate page content.
 
+=head1 SYNOPSIS
+
+ # start with a WeBWorK::Request object: $r
+ 
+ use WeBWorK::ContentGenerator::SomeSubclass;
+ 
+ my $cg = WeBWorK::ContentGenerator::SomeSubclass->new($r);
+ my $result = $cg->go();
+
+=head1 DESCRIPTION
+
+FIXME: write this
+
 =cut
 
 use strict;
@@ -36,38 +49,17 @@ use WeBWorK::Utils qw(readFile);
 # it into logical sections.
 ################################################################################
 
-## new(Apache::Request, WeBWorK::CourseEnvironment, WeBWorK::DB) - create a new    
-## instance of a content generator. Usually only called by the dispatcher, although
-## one might be able to use it for things like "sub-requests". Uh... uh... I have  
-## to think about that one. The dispatcher uses this idiom:                        
-## 
-## 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce, $db)->go(@whatever);
-## 
-## and throws away the result ;)
-##
-#sub new {
-#	my ($invocant, $r, $ce, $db) = @_;
-#	my $class = ref($invocant) || $invocant;
-#	my $self = {
-#		r  => $r,
-#		ce => $ce,
-#		db => $db,
-#		authz => WeBWorK::Authz->new($r, $ce, $db),
-#		noContent => undef,
-#	};
-#	bless $self, $class;
-#	return $self;
-#}
+=head1 CONSTRUCTOR
 
-# new(WeBWorK::Request) - create a new instance of a content generator. Usually
-# only called by the dispatcher, although one might be able to use it for things
-# like "sub-requests". Uh... uh... I have to think about that one. The dispatcher
-# uses this idiom:
-# 
-# 	WeBWorK::ContentGenerator::WHATEVER->new($r)->go();
-# 
-# and throws away the result ;)
-#
+=over
+
+=item new($r)
+
+Create a new instance of a content generator. Supply a WeBWorK::Request object
+$r.
+
+=cut
+
 sub new {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
@@ -82,32 +74,57 @@ sub new {
 	return $self;
 }
 
+=back
+
+=cut
+
 ################################################################################
 # Invocation and template processing
 ################################################################################
 
-# go(@otherArguments) - render a page, using methods from the particular
-# subclass of ContentGenerator. @otherArguments is passed to each method, so
-# that the dispatcher can pass CG-specific data. The order of calls looks like
-# this:
-# 
-# 	* &pre_header_initialize - give subclasses a chance to do initialization
-# 	  necessary for generating the HTTP header.
-# 	* &header - this class provides a standard HTTP header with Content-Type
-# 	  text/html. Subclasses are welcome to overload this for things like
-# 	  an image-creation content generator or a PDF generator.
-#	  In addition, if &header returns a value, that will be the value
-#         returned by the entire PerlHandler.
-# 	* &initialize - let subclasses do post-header initialization.
-# 	* any "template escapes" defined in the system template and supported by
-# 	  the subclass.
-#         (if &content exists on a content generator, it is called
-#         and no template processing occurs.)
-#
-# If &pre_header_initialize or &header sets $self->{noContent} to a true value,
-# &initialize will not be run and the content or template processing code
-# will not be executed.  This is probably only desirable if a redirect has been
-# issued.
+=head1 INVOCATION
+
+=over
+
+=item go()
+
+Render a page, using methods from the particular subclass of ContentGenerator.
+go() will call the following methods when invoked:
+
+=over
+
+=item pre_header_initialize()
+
+Give the subclass a chance to do initialization necessary before generating the
+HTTP header.
+
+=item header()
+
+This method provides a standard HTTP header with Content-Type text/html.
+Subclasses are welcome to override this for things like an image-creation
+content generator or a PDF generator. In addition, if header() returns a value,
+that will be the value returned by go().
+
+=item initialize()
+
+Let the subclass do post-header initialization.
+
+If pre_header_initialize() or header() sets $self->{noContent} to a true value,
+initialize() will not be run and the content or template processing code
+will not be executed.  This is probably only desirable if a redirect has been
+issued.
+
+=item template()
+
+The layout template is processed. See template() below.
+
+If the subclass implements a method named content(), it is called
+instead and no template processing occurs.
+
+=back
+
+=cut
+
 sub go {
 	my $self = shift;
 	
@@ -148,6 +165,10 @@ sub go {
 	return $returnValue;
 }
 
+=item sendFile()
+
+=cut
+
 sub sendFile {
 	my ($self) = @_;
 	
@@ -165,6 +186,18 @@ sub sendFile {
 	
 	return OK;
 }
+
+=back
+
+=cut
+
+=head1 TEMPLATE PROCESSING
+
+=over
+
+=item template($templateFile)
+
+=cut
 
 # template(STRING, @otherArguments) - parse a template, looking for escapes of
 # the form <!--#NAME ARG1="FOO" ARG2="BAR"--> and calling a member function NAME
@@ -229,6 +262,10 @@ sub template {
 	}
 }
 
+=item cook_args($string)
+
+=cut
+
 # cook_args(STRING) - parses a string of the form ARG1="FOO" ARG2="BAR". Returns
 # a list which pairs into key/values and fits nicely in {}s.
 # 
@@ -247,6 +284,10 @@ sub cook_args($) { # ... also used by bin/wwdb, so watch out
 	
 	return @args;
 }
+
+=item if($args)
+
+=cut
 
 # This is different.  It probably shouldn't print anything (except in debugging cases)
 # and it should return a boolean, not a string.  &if is called in a nonstandard way
@@ -279,25 +320,42 @@ sub if {
 	return 0;
 }
 
+=back
+
+=cut
+
 ################################################################################
 # Macros used by content generators to render common idioms
 ################################################################################
 
-# pathMacro(HASHREF, LIST) - helper macro for <!--#path--> escape: the hash
-# reference contains the "style", "image", and "text" arguments to the escape.
-# The LIST consists of ordered key-value pairs of the form:
-# 
-# 	"Page Name" => URL
-# 
-# If the page should not have a link associated with it, the URL should be left
-# empty. Authentication data is added to the URL so you don't have to. A fully-
-# formed path line is returned, suitable for returning by a function
-# implementing the #path escape.
-# 
+# FIXME: some of these should be moved to WeBWorK::HTML:: modules!
+
+=head1 HTML MACROS
+
+Macros used by content generators to render common idioms
+
+=over
+
+=item pathMacro($args, @path)
+
+Helper macro for <!--#path--> escape: $args is a hash reference containing the
+"style", "image", "text", and "textonly" arguments to the escape. @path consists
+of ordered key-value pairs of the form:
+
+ "Page Name" => URL
+
+If the page should not have a link associated with it, the URL should be left
+empty. Authentication data is added to the URL so you don't have to. A fully-
+formed path line is returned, suitable for returning by a function implementing
+the #path escape.
+
+=cut
+
 sub pathMacro {
 	my $self = shift;
 	my %args = %{ shift() };
 	my @path = @_;
+	$args{style} = "text" if $args{textonly};
 	my $sep;
 	if ($args{style} eq "image") {
 		$sep = CGI::img({-src=>$args{image}, -alt=>$args{text}});
@@ -309,12 +367,18 @@ sub pathMacro {
 	while (@path) {
 		my $name = shift @path;
 		my $url = shift @path;
-		push @result, $url
-			? CGI::a({-href=>"$url?$auth"}, $name)
-			: $name;
+		if ($url and not $args{textonly}) {
+			push @result, CGI::a({-href=>"$url?$auth"}, $name);
+		} else {
+			push @result, $name;
+		}
 	}
 	return join($sep, @result) . "\n";
 }
+
+=item siblingsMacro(@siblings)
+
+=cut
 
 sub siblingsMacro {
 	my $self = shift;
@@ -331,6 +395,10 @@ sub siblingsMacro {
 	}
 	return join($sep, @result), "\n";
 }
+
+=item navMacro($args, $tail)
+
+=cut
 
 sub navMacro {
 	my $self = shift;
@@ -361,9 +429,13 @@ sub navMacro {
 	return join($args{separator}, @result) . "\n";
 }
 
-# hidden_fields(LIST) - return hidden <INPUT> tags for each field mentioned in
-# LIST (or all fields if list is empty), taking data from the current request.
-# 
+=item hidden_fields(@fields)
+
+Return hidden <INPUT> tags for each field mentioned in @fields (or all fields if
+list is empty), taking data from the current request.
+
+=cut
+
 sub hidden_fields($;@) {
 	my $self = shift;
 	my $r = $self->{r};
@@ -379,18 +451,26 @@ sub hidden_fields($;@) {
 	return $html;
 }
 
-# hidden_authen_fields() - use hidden_fields to return hidden <INPUT> tags for
-# request fields used in authentication.
-# 
+=item hidden_authen_fields()
+
+Use hidden_fields to return hidden <INPUT> tags for request fields used in
+authentication.
+
+=cut
+
 sub hidden_authen_fields($) {
 	my $self = shift;
 	return $self->hidden_fields("user","effectiveUser","key");
 }
 
-# url_args(LIST) - return a URL query string (without the leading `?')
-# containing values for each field mentioned in LIST, or all fields if list is
-# empty. Data is taken from the current request.
-# 
+=item url_args(@fields)
+
+Return a URL query string (without the leading `?') containing values for each
+field mentioned in @fields, or all fields if list is empty. Data is taken from
+the current request.
+
+=cut
+
 sub url_args($;@) {
 	my $self = shift;
 	my $r = $self->{r};
@@ -409,16 +489,26 @@ sub url_args($;@) {
 	return join("&", @pairs);
 }
 
-# url_authen_args() - use url_args to return a URL query string for request
-# fields used in authentication.
-# 
+=item url_authen_args()
+
+Use url_args to return a URL query string for request fields used in
+authentication.
+
+=cut
+
 sub url_authen_args($) {
 	my $self = shift;
 	my $r = $self->{r};
 	return $self->url_args("user","effectiveUser","key");
 }
 
-# returns non-breaking space for empty strings
+=item nbsp($string)
+
+If string is the empty string, the HTML entity C< &nbsp; > is returned.
+Otherwise the string is returned.
+
+=cut
+
 sub nbsp {
 	my $self = shift;
 	my $str  = shift;
@@ -426,11 +516,16 @@ sub nbsp {
 	                                    # tricky cases:   $str =0;
 	                                    #  $str is a complex number
 }
-# print_form_data(BEGIN, MIDDLE, END, OMIT) - return a string containing request
-# fields not matched by OMIT, placing BEGIN before each field name, MIDDLE
-# between each field and its value, and END after each value. Values are taken
-# from the current request. OMIT is a quoted reguar expression.
-# 
+
+=item print_form_data($begin, $middle, $end, $omit)
+
+Return a string containing request fields not matched by $omit, placing $begin
+before each field name, $middle between each field and its value, and $end after
+each value. Values are taken from the current request. $omit is a quoted reguar
+expression.
+
+=cut
+
 sub print_form_data {
 	my ($self, $begin, $middle, $end, $qr_omit) = @_;
 	my $return_string = "";
@@ -450,6 +545,10 @@ sub print_form_data {
 	return $return_string;
 }
 
+=item errorOutput($error, $details)
+
+=cut
+
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	return
@@ -463,6 +562,10 @@ EOF
 		CGI::h3("Error messages"), CGI::p(CGI::tt($error)),
 		CGI::h3("Error context"), CGI::p(CGI::tt($details));
 }
+
+=item warningOutput($warnings)
+
+=cut
 
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
@@ -482,28 +585,26 @@ EOF
 	;
 }
 
+=back
+
+=cut
+
 ################################################################################
 # Generic versions of template escapes
 ################################################################################
 
-# Reminder: here are the template functions currently defined:
-# FIXME: this list is out of date!!!!!!!!
-# 
-# head
-# path
-# 	style = text|image
-# 	image = URL of image
-# 	text  = text separator
-# loginstatus
-# links
-# siblings
-# nav
-# 	style       = text|image
-# 	imageprefix = prefix to image URL
-# 	imagesuffix = suffix to image URL
-# 	separator   = HTML to place in between links
-# title
-# body
+=head1 THE HEADER METHOD
+
+=over
+
+=item header()
+
+The C<header> method is defined in WeBWorK::ContentGenerator to generate a
+default C<Content-type> of text/html and send the HTTP header.
+
+=back
+
+=cut
 
 sub header {
 	my $self = shift;
@@ -523,38 +624,32 @@ sub header {
 	return OK;
 }
 
-sub loginstatus {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	
-	my $user = $r->param("user");
-	my $eUser = $r->param("effectiveUser");
-	my $key = $r->param("key");
-	
-	return "" unless $key;
-	
-	my $exitURL = $r->uri() . "?user=$user&key=$key";
-	
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseID = $ce->{courseName};
-	my $logout = "$root/$courseID/logout/?" . $self->url_authen_args();
-	
-	print CGI::small("User:", "$user");
-	
-	if ($user ne $eUser) {
-		print CGI::br(), CGI::font({-color=>'red'},
-				CGI::small("Acting as:", "$eUser")
-			),
-			CGI::br(), CGI::a({-href=>$exitURL},
-				CGI::small("Stop Acting")
-			);
-	}
-	
-	print CGI::br(), CGI::a({-href=>$logout}, CGI::small("Log Out"));
-	
-	return "";
-}
+=head1 TEMPLATE ESCAPE METHODS
+
+Template escape methods are invoked when a
+C< <!--#escape argument="value" ... -> > construct is encountered in the
+template. The methods can be defined here in ContentGenerator, or in a
+particular subclass. Arguments are passed to the method as a reference to a
+hash.
+
+The following template escapes are currently defined:
+
+=over
+
+=item head
+
+Any tags that should appear in the HEAD of the document. Not defined by default.
+
+=item info
+
+Auxiliary information related to the C<body>. Not defined by default.
+
+=item links
+
+Links that should appear on every page. Defined in WeBWorK::ContentGenerator by
+default.
+
+=cut
 
 # FIXME: drunk code. rewrite.
 # also, this should be structured s.t. subclasses can add items to the links
@@ -600,6 +695,7 @@ sub links {
 		),
 	);
 }
+
 sub instructor_links {
 	my $self       = shift;
 	my @components = @_; 
@@ -666,34 +762,99 @@ sub instructor_links {
 	);
 }
 
-# &if_can will return 1 if the current object->can("do $_[1]")
-sub if_can ($$) {
-	my ($self, $arg) = (@_);
+=item loginstatus
+
+A notification message announcing the current real user and effective user, a
+link to stop acting as the effective user, and a logout link. Defined in
+WeBWorK::ContentGenerator by default.
+
+=cut
+
+sub loginstatus {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
 	
-	if ($self->can("$arg")) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-# Every content generator is logged in unless it says otherwise.
-sub if_loggedin($$) {
-	my ($self, $arg) = (@_);
+	my $user = $r->param("user");
+	my $eUser = $r->param("effectiveUser");
+	my $key = $r->param("key");
 	
-	return $arg;
-}
-
-# Handling of errors in submissions
-
-sub if_submiterror($$) {
-	my ($self, $arg) = @_;
-	if (exists $self->{submitError}) {
-		return $arg;
-	} else {
-		return !$arg;
+	return "" unless $key;
+	
+	my $exitURL = $r->uri() . "?user=$user&key=$key";
+	
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseID = $ce->{courseName};
+	my $logout = "$root/$courseID/logout/?" . $self->url_authen_args();
+	
+	print CGI::small("User:", "$user");
+	
+	if ($user ne $eUser) {
+		print CGI::br(), CGI::font({-color=>'red'},
+				CGI::small("Acting as:", "$eUser")
+			),
+			CGI::br(), CGI::a({-href=>$exitURL},
+				CGI::small("Stop Acting")
+			);
 	}
+	
+	print CGI::br(), CGI::a({-href=>$logout}, CGI::small("Log Out"));
+	
+	return "";
 }
+
+=item nav
+
+Links to the previous, next, and parent objects. Not defined by default.
+
+ style       => text|image
+ imageprefix => prefix to prepend to base image URL
+ imagesuffix => suffix to append to base image URL
+ separator   => HTML to place in between links
+
+=item options
+
+A place for an options form, like the problem display options. Not defined by
+default.
+
+=item path
+
+"Breadcrubs" from the current page to the root of the virtual hierarchy. Defined
+in WeBWorK::ContentGenerator to pull information from the WeBWorK::URLPath.
+
+ style    => type of separator: text|image
+ image    => URL of separator image
+ text     => text of texual separator (also used for image alt text)
+ textonly => suppress links
+
+=cut
+
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->{r};
+	
+	my @path;
+	
+	my $urlpath = $r->urlpath;
+	do {
+		unshift @path, $urlpath->name, $r->location . $urlpath->path;
+	} while ($urlpath = $urlpath->parent);
+	
+	$path[$#path] = ""; # we don't want the last path element to be a link
+	
+	return $self->pathMacro($args, @path);
+}
+
+=item siblings
+
+Links to siblings of the current object. Not defined by default.
+
+=item submiterror
+
+Any error messages resulting from the last form submission. Defined in
+WeBWorK::ContentGenerator by default.
+
+=cut
 
 sub submiterror {
 	my ($self) = @_;
@@ -704,12 +865,25 @@ sub submiterror {
 	}
 }
 
-# General warning handling
+=item title
 
-sub if_warnings($$) {
-	my ($self, $arg) = @_;
-	return $self->{r}->notes("warnings") ? $arg : !$arg;
+The title of the current page. Defined in WeBWorK::ContentGenerator to pull
+information from the WeBWorK::URLPath.
+
+=cut
+
+sub title {
+	my ($self, $args) = @_;
+	my $r = $self->{r};
+	
+	return $r->urlpath->name;
 }
+
+=item warnings
+
+Any warnings. Not defined by default.
+
+=cut
 
 sub warnings {
 	my ($self) = @_;
@@ -720,6 +894,72 @@ sub warnings {
 		return "";
 	}
 }
+
+=back
+
+=head CONDITIONAL PREDICATES
+
+Conditional predicate methods are invoked when the
+C< <!--#if predicate="value"--> > construct is encountered in the template. If a
+method named C<if_predicate> is defined in here or in a particular subclass, it
+is invoked.
+
+The following predicates are currently defined:
+
+=over
+
+=item if_can
+
+will return 1 if the current object->can("do $_[1]")
+
+=cut
+
+sub if_can ($$) {
+	my ($self, $arg) = (@_);
+	
+	if ($self->can("$arg")) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+=item if_loggedin
+
+Every content generator is logged in unless it overrides this method to say
+otherwise.
+
+=cut
+
+sub if_loggedin($$) {
+	my ($self, $arg) = (@_);
+	
+	return $arg;
+}
+
+=item if_submiterror
+
+=cut
+
+sub if_submiterror($$) {
+	my ($self, $arg) = @_;
+	if (exists $self->{submitError}) {
+		return $arg;
+	} else {
+		return !$arg;
+	}
+}
+
+=item if_warnings
+
+sub if_warnings($$) {
+	my ($self, $arg) = @_;
+	return $self->{r}->notes("warnings") ? $arg : !$arg;
+}
+
+=back
+
+=cut
 
 1;
 
