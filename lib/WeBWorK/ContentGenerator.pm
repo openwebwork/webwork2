@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.97 2004/05/07 18:21:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.98 2004/05/07 18:47:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -299,6 +299,19 @@ Must be called before the message() template escape is invoked.
 sub addmessage {
 	my ($self, $message) = @_;
 	$self->{status_message} .= $message;
+}
+
+=item addgoodmessage($message)
+
+Adds a success message to the list of messages to be printed by the
+message() template escape handler.
+
+=cut
+
+
+sub addgoodmessage {
+	my ($self, $message) = @_;
+	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $message));
 }
 
 =back

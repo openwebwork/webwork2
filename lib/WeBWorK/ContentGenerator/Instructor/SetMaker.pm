@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.7 2004/05/07 21:04:07 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.11 2004/05/15 19:13:43 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,12 +48,6 @@ sub adderrmsg {
   my $self = shift;
   my $msg = shift;
   $self->addmessage(CGI::div({class=>"ResultsWithError"}, $msg));
-}
-
-sub addgoodmsg {
-  my $self = shift;
-  my $msg = shift;
-  $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $msg));
 }
 
 
@@ -225,7 +219,7 @@ sub browse_library_panel {
   my $r = $self->r;
   my $ce = $r->ce;
 
-  my $libraryRoot = $r->{ce}->{webworkDirs}->{libraryRoot};
+  my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
 
   unless($libraryRoot) {
     print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 

@@ -37,9 +37,9 @@ use vars @EXPORT_OK;
 
 sub getDB {
   my $ce = shift;
-  my $dbinfo = $ce->{dbLayouts}->{sql}->{problem_library_classify};
-  my $dbh = DBI->connect_cached($dbinfo->{source}, 
-        $dbinfo->{params}->{usernameRO}, $dbinfo->{params}->{passwordRO});
+  my $dbinfo = $ce->{problemLibrary};
+  my $dbh = DBI->connect_cached("dbi:mysql:$dbinfo->{sourceSQL}", 
+        $dbinfo->{userSQL}, $dbinfo->{passwordSQL});
   die "Cannot connect to problem library database" unless $dbh;
   return($dbh);
 }
