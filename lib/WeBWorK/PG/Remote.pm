@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Remote.pm,v 1.3 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ renderer via SOAP.
 use strict;
 use warnings;
 use SOAP::Lite;
-use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry);
+use WeBWorK::Utils qw(readFile);
 
 sub new {
 	my $invocant = shift;

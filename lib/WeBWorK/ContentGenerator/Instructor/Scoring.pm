@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.34 2004/05/11 16:11:49 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.35 2004/06/14 22:18:16 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,7 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile formatDateTime);
+use WeBWorK::Utils qw(readFile);
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Timing;
 
@@ -337,7 +337,7 @@ sub scoreSet {
 	$WeBWorK::timer->continue("done pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
 	
 	# Write the problem data
-	my $dueDateString = formatDateTime($setRecord->due_date);
+	my $dueDateString = $self->formatDateTime($setRecord->due_date);
 	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
