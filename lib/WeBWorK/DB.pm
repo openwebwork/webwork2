@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.54 2004/09/08 06:38:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.55 2004/09/23 18:45:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -343,7 +343,8 @@ sub hashDatabaseOK {
 		$self->{set_user}->{driver}->connect("ro")
 			or return 0, @results, "Failed to connect to set_user database.";
 		
-		# get PSVNs for global user (ÊN)
+		# get PSVNs for global user (†N)
+		# this reads from "login<>global_user"
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
 		
@@ -357,11 +358,13 @@ sub hashDatabaseOK {
 			#warn "got setID '$setID'\n";
 		}
 		
-		# get PSVNs for each setID (ÊN*M)
+		# get PSVNs for each setID (†N*M)
+		# this reads from "set<>$_"
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
 		
 		# get all PSVNs (N*M)
+		# uses: grep { m/^\d+$/ } keys %{ $self->{driver}->hash() }
 		my @allPSVNs = $self->{set_user}->getAllPSVNs;
 		#warn "found ", scalar @allPSVNs, " PSVNs total.\n";
 		
@@ -372,6 +375,8 @@ sub hashDatabaseOK {
 		foreach my $PSVN (@okPSVNs) {
 			delete $allPSVNs{$PSVN};
 		}
+		
+		#warn "the orphan PSVNs are: ", join(", ", keys %allPSVNs), "\n";
 		
 		# get setIDs for orphan PSVNs
 		foreach my $PSVN (keys %allPSVNs) {
@@ -403,39 +408,44 @@ sub hashDatabaseOK {
 	$WeBWorK::timer->continue(__PACKAGE__ . "::hashDatabaseOK: done getting orphaned UserSets") if defined $WeBWorK::timer;
 	
 	if (keys %orphanUserSets) {
-		if ($fix) {
-			foreach my $setID (keys %orphanUserSets) {
-				my $userID = ( keys %{$orphanUserSets{$setID}} )[0];
-				
-				# grab the first UserSet of this set (connect and disconnect required for get1*)
-				$self->{set_user}->{driver}->connect("ro")
-					or return 0, @results, "Failed to connect to set_user database.";
-				my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
-				my @RawUserProblems = $self->{problem_user}->getAllNoFilter($userID, $setID);
-				$self->{set_user}->{driver}->disconnect();
-				unless ($RawUserSet) {
-					#warn "failed to fetch UserSet '$setID' for user '$userID'!\n";
-					next;
+		foreach my $setID (keys %orphanUserSets) {
+			# detect "false positives" -- sets that are assigned to the global user
+			# but for some reason don't appear in any set index.
+			if ($self->{set_user}->exists($globalUserID, $setID)) {
+				my @userIDs = keys %{$orphanUserSets{$setID}};
+				warn "Set ID '$setID' for users '@userIDs' do not appear in any set index. Index re-build recommended.\n";
+				push @results, "Set ID '$setID' for users '@userIDs' do not appear in any set index. Index re-build recommended.\n";
+			} else {
+				if ($fix) {
+					my ($userID) = keys %{$orphanUserSets{$setID}};
+					
+					# grab the first UserSet of this set (connect and disconnect required for get1*)
+					$self->{set_user}->{driver}->connect("ro")
+						or return 0, @results, "Failed to connect to set_user database.";
+					my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
+					my @RawUserProblems = $self->{problem_user}->getAllNoFilter($userID, $setID);
+					$self->{set_user}->{driver}->disconnect();
+					unless ($RawUserSet) {
+						warn "failed to fetch UserSet '$setID' for user '$userID'!\n";
+						next;
+					}
+					
+					# change user ID to globalUserID and add to database
+					$RawUserSet->user_id($globalUserID);
+					$self->{set_user}->add($RawUserSet);
+					foreach my $RawUserProblem (@RawUserProblems) {
+						$RawUserProblem->user_id($globalUserID);
+						$self->{problem_user}->add($RawUserProblem);
+						#warn "hashDatabaseOK($fix): assigned problem '", $RawUserProblem->problem_id, "' from set '$setID' to global user '$globalUserID' -- good.\n";
+					}
+					
+					#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
+					push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
+				} else {
+					#warn "hashDatabaseOK($fix): set '$setID' not assigned to global user '$globalUserID' -- bad!\n";
+					push @results, "Set '$setID' not assigned to global user '$globalUserID'.";
 				}
-				
-				# change user ID to globalUserID and add to database
-				$RawUserSet->user_id($globalUserID);
-				$self->{set_user}->add($RawUserSet);
-				foreach my $RawUserProblem (@RawUserProblems) {
-					$RawUserProblem->user_id($globalUserID);
-					$self->{problem_user}->add($RawUserProblem);
-					#warn "hashDatabaseOK($fix): assigned problem '", $RawUserProblem->problem_id, "' from set '$setID' to global user '$globalUserID' -- good.\n";
-				}
-				
-				#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
-				push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
 			}
-		} else {
-			foreach my $setID (keys %orphanUserSets) {
-				#warn "hashDatabaseOK($fix): set '$setID' not assigned to global user '$globalUserID' -- bad!\n";
-				push @results, "Set '$setID' not assigned to global user '$globalUserID'.";
-			}
-			$errorsExist = 1;
 		}
 	} else {
 		#warn "hashDatabaseOK($fix): all sets assigned to global user '$globalUserID' -- good.\n";
