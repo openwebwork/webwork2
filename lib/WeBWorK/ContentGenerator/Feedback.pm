@@ -89,11 +89,11 @@ sub body {
 		? $db->getUser($userName)
 		: undef);
 	my $set = (defined $setName && $setName ne ""
-		? $db->getGlobalUserSet($userName, $setName)
+		? $db->getMergedSet($userName, $setName)
 		: undef);
 	my $problem = (defined $setName && $setName ne ""
 	               && defined $problemNumber && $problemNumber ne ""
-		? $db->getGlobalUserProblem($userName, $setName, $problemNumber)
+		? $db->getMergedProblem($userName, $setName, $problemNumber)
 		: undef);
 	
 		# get some network settings
