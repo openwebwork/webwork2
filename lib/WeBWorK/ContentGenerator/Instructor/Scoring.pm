@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.22 2003/12/17 21:45:17 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.23 2003/12/17 23:14:13 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -57,19 +57,16 @@ sub initialize {
 		# pre-fetch users
 		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
 		my @Users = $db->getUsers($db->listUsers);
-		my (%usersByStudentID, %studentIDsByUserID);
+		my %Users;
 		foreach my $User (@Users) {
 			next unless $User;
-			my $userID = $User->user_id;
-			my $studentID = $User->student_id;
-			# FIXME: if two users have the same student ID, the second one will
-			# clobber the first one. this is bad!
-			$usersByStudentID{$studentID} = $User;
-			$studentIDsByUserID{$userID} = $studentID;
+			$Users{$User->user_id} = $User;
 		}
-		my @userInfo = (\%usersByStudentID, \%studentIDsByUserID);
+		my @sortedUserIDs = sort { $Users{$a}->student_id cmp $Users{$b}->student_id }
+			keys %Users;
+		my @userInfo = (\%Users, \@sortedUserIDs);
 		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
-	
+		
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
 		my (@everything, @normal,@full,@info,@totalsColumn);
 		@info                      = $self->scoreSet($selected[0], "info", undef, @userInfo);
@@ -204,7 +201,7 @@ sub body {
 #   info: student info columns only
 #   totals: total column only
 sub scoreSet {
-	my ($self, $setID, $format, $showIndex, $usersRef, $userStudentIDRef) = @_;
+	my ($self, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) = @_;
 	my $db = $self->{db};
 	my @scoringData;
 	my $scoringItems   = {    info             => 0,
@@ -232,8 +229,9 @@ sub scoreSet {
 	#	$userStudentID{$userID} = $userRecord->student_id;
 	#}
 	#$WeBWorK::timer->continue("End getting users for set $setID") if defined($WeBWorK::timer);	
-	my %users = %$usersRef;
-	my %userStudentID = %$userStudentIDRef;
+	
+	my %Users = %$UsersRef; # user objects hashed on user ID
+	my @sortedUserIDs = @$sortedUserIDsRef; # user IDs sorted by student ID
 	
 	my @problemIDs = $db->listGlobalProblems($setID);
 
@@ -283,13 +281,13 @@ sub scoreSet {
 	}
 	
 	# Initialize a two-dimensional array of the proper size
-	for (my $i = 0; $i < keys(%users) + 7; $i++) { # 7 is how many descriptive fields there are in each column
+	for (my $i = 0; $i < @sortedUserIDs + 7; $i++) { # 7 is how many descriptive fields there are in each column
 		push @scoringData, [];
 	}
 	
 	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
-	my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
+	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
 		$scoringData[0][0] = "NO OF FIELDS";
@@ -310,9 +308,9 @@ sub scoreSet {
 				}
 			}
 			$scoringData[6][$field] = $userInfoColumnHeadings[$field];
-			for (my $user = 0; $user < @userKeys; $user++) {
+			for (my $user = 0; $user < @sortedUserIDs; $user++) {
 				my $fieldName = $userInfoFields[$field];
-				$scoringData[7 + $user][$field] = $users{$userKeys[$user]}->$fieldName;
+				$scoringData[$user + 7][$field] = $Users{$sortedUserIDs[$user]}->$fieldName;
 			}
 		}
 	}
@@ -327,7 +325,7 @@ sub scoreSet {
 	# pre-fetch user problems
 	$WeBWorK::timer->continue("pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
 	my %UserProblems; # $UserProblems{$userID}{$problemID}
-	foreach my $userID (keys %userStudentID) {
+	foreach my $userID (@sortedUserIDs) {
 		my %CurrUserProblems = map { $_->problem_id => $_ }
 			$db->getAllUserProblems($userID, $setID);
 		$UserProblems{$userID} = \%CurrUserProblems;
@@ -383,9 +381,10 @@ sub scoreSet {
  		#}
  		#$WeBWorK::timer->continue("End getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
 		
-		for (my $user = 0; $user < @userKeys; $user++) {
+		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			#my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
-			my $userProblem = $UserProblems{$users{$userKeys[$user]}->user_id}{$problemIDs[$problem]};
+			#my $userProblem = $UserProblems{$sers{$userKeys[$user]}->user_id}{$problemIDs[$problem]};
+			my $userProblem = $UserProblems{$sortedUserIDs[$user]}{$problemIDs[$problem]};
 			unless (defined $userProblem) { # assume an empty problem record if the problem isn't assigned to this user
 				$userProblem = $db->newUserProblem;
 				$userProblem->status(0);
@@ -414,7 +413,7 @@ sub scoreSet {
 		}
 	}
 	if ($scoringItems->{successIndex}) {
-		for (my $user = 0; $user < @userKeys; $user++) {
+		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			my $avg_num_attempts = ($num_of_problems) ? $numberOfAttempts{$user}/$num_of_problems : 0;
 			$userSuccessIndex{$user} = ($avg_num_attempts) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0;						
 		}
@@ -431,7 +430,7 @@ sub scoreSet {
 		$scoringData[5][$totalsColumn]    = $valueTotal;
 		$scoringData[6][$totalsColumn]    = "total";
 		$scoringData[6][$totalsColumn+1]  = "index" if $scoringItems->{successIndex};
-		for (my $user = 0; $user < @userKeys; $user++) {
+		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
 			$scoringData[7+$user][$totalsColumn+1] = $userSuccessIndex{$user} if $scoringItems->{successIndex};
 		}
