@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.32 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,7 +19,8 @@ use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor - Abstract superclass for the Instructor pages
+WeBWorK::ContentGenerator::Instructor - Abstract superclass for the Instructor
+tools, providing useful utility functions.
 
 =cut
 
@@ -27,6 +28,303 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::DB::Utils qw(global2user initializeUserProblem);
+
+=head1 METHODS
+
+=cut
+
+################################################################################
+# template escapes
+################################################################################
+
+# FIXME: remove this method, it does nothing.
+#sub links {
+# 	my $self = shift;
+#	return $self->SUPER::links();
+#}
+
+################################################################################
+# Primary assignment methods
+################################################################################
+
+=head2 Primary assignment methods
+
+=over
+
+=item assignSetToUser($userID, $GlobalSet)
+
+Assigns the given set and all problems contained therein to the given user.
+Silently fails if the set is already assigned to the user.
+
+=cut
+
+sub assignSetToUser {
+	my ($self, $userID, $GlobalSet) = @_;
+	my $setID = $GlobalSet->set_id;
+	my $db = $self->{db};
+	
+	my $UserSet = $db->newUserSet;
+	$UserSet->user_id($userID);
+	$UserSet->set_id($setID);
+	
+	eval { $db->addUserSet($UserSet) };
+	if ($@) {
+		return if $@ =~ m/user set exists/;
+		die $@;
+	}
+	
+	# FIXME: this can be optimized with getAllGlobalProblems
+	#foreach my $problemID ($db->listGlobalProblems($setID)) {
+	#	my $GlobalProblem = $db->getGlobalProblem($setID, $problemID); # checked
+		#if (not defined $GlobalProblem) {
+		#	warn "GlobalProblem not found for set $setID problem $problemID, skipping";
+		#	next;
+		#}
+	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+	foreach my $GlobalProblem (@GlobalProblems) {
+		$self->assignProblemToUser($userID, $GlobalProblem);
+	}
+}
+
+=item unassignSetFromUser($userID, $setID, $problemID)
+
+Unassigns the given set and all problems therein from the given user.
+
+=cut
+
+sub unassignSetFromUser {
+	my ($self, $userID, $setID) = @_;
+	my $db = $self->{db};
+	
+	$db->deleteUserSet($userID, $setID);
+}
+
+=item assignProblemToUser($userID, $GlobalProblem)
+
+Assigns the given problem to the given user. Silently fails if the problem is
+already assigned to the user.
+
+=cut
+
+sub assignProblemToUser {
+	my ($self, $userID, $GlobalProblem) = @_;
+	my $db = $self->{db};
+	
+	my $UserProblem = $db->newUserProblem;
+	$UserProblem->user_id($userID);
+	$UserProblem->set_id($GlobalProblem->set_id);
+	$UserProblem->problem_id($GlobalProblem->problem_id);
+	initializeUserProblem($UserProblem);
+	
+	eval { $db->addUserProblem($UserProblem) };
+	if ($@) {
+		return if $@ =~ m/user problem exists/;
+		die $@;
+	}
+}
+
+=item unassignProblemFromUser($userID, $setID, $problemID)
+
+Unassigns the given problem from the given user.
+
+=cut
+
+sub unassignProblemFromUser {
+	my ($self, $userID, $setID, $problemID) = @_;
+	my $db = $self->{db};
+	
+	$db->deleteUserProblem($userID, $setID, $problemID);
+}
+
+=back
+
+=cut
+
+################################################################################
+# Secondary set assignment methods
+################################################################################
+
+=head2 Secondary assignment methods
+
+=over
+
+=item assignSetToAllUsers($setID)
+
+Assigns the set specified and all problems contained therein to all users in
+the course. This is more efficient than repeatedly calling assignSetToUser().
+
+=cut
+
+sub assignSetToAllUsers {
+	my ($self, $setID) = @_;
+	my $db = $self->{db};
+	
+	my @userIDs = $db->listUsers;
+	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+	
+	foreach my $userID (@userIDs) {
+		my $UserSet = $db->newUserSet;
+		$UserSet->user_id($userID);
+		$UserSet->set_id($setID);
+		eval { $db->addUserSet($UserSet) };
+		if ($@) {
+			next if $@ =~ m/user set exists/;
+			die $@;
+		}
+		foreach my $GlobalProblem (@GlobalProblems) {
+			$self->assignProblemToUser($userID, $GlobalProblem);
+		}
+	}
+}
+
+=item unassignSetFromAllUsers($setID)
+
+Unassigns the specified sets and all problems contained therein from all users.
+
+=cut
+
+sub unassignSetFromAllUsers {
+	my ($self, $setID) = @_;
+	my $db = $self->{db};
+	
+	my @userIDs = $db->listSetUsers($setID);
+	
+	foreach my $userID (@userIDs) {
+		$self->unassignSetFromUser($userID, $setID);
+	}
+}
+
+=item assignAllSetsToUser($userID)
+
+Assigns all sets in the course and all problems contained therein to the
+specified user. This is more efficient than repeatedly calling
+assignSetToUser().
+
+=cut
+
+sub assignAllSetsToUser {
+	my ($self, $userID) = @_;
+	my $db = $self->{db};
+	
+	# assign only sets that are not already assigned
+	#my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
+	#my @globalSetIDs = grep { not exists $userSetIDs{$_} } $db->listGlobalSets;
+	#my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	# FIXME: i don't think we need to do the above, since asignSetToUser fails
+	# silently if a UserSet already exists. instead we do this:
+	my @globalSetIDs = $db->listGlobalSets;
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	
+	my $i = 0;
+	foreach my $GlobalSet (@GlobalSets) {
+		if (not defined $GlobalSet) {
+			warn "record not found for global set $globalSetIDs[$i]";
+		} else {
+			$self->assignSetToUser($userID, $GlobalSet);
+		}
+		$i++;
+	}
+}
+
+=item unassignAllSetsFromUser($userID)
+
+Unassigns all sets and all problems contained therein from the specified user.
+
+=cut
+
+sub unassignAllSetsFromUser {
+	my ($self, $userID) = @_;
+	my $db = $self->{db};
+	
+	my @setIDs = $db->listUserSets($userID);
+	
+	foreach my $setID (@setIDs) {
+		$self->unassignSetFromUser($userID, $setID);
+	}
+}
+
+=back
+
+=cut
+
+################################################################################
+# Utility assignment methods
+################################################################################
+
+=head2 Utility assignment methods
+
+=over
+
+=item assignSetsToUsers($setIDsRef, $userIDsRef)
+
+Assign each of the given sets to each of the given users.
+
+=cut
+
+sub assignSetsToUsers {
+	my ($self, $setIDsRef, $userIDsRef) = @_;
+	my $db = $self->{db};
+	
+	my @setIDs = $setIDsRef;
+	my @userIDs = $userIDsRef;
+	my @GlobalSets = $db->getGlobalSets(@setIDs);
+	
+	foreach my $GlobalSet (@GlobalSets) {
+		foreach my $userID (@userIDs) {
+			$self->assignSetToUser($userID, $GlobalSet);
+		}
+	}
+}
+
+=item unassignSetsFromUsers($setIDsRef, $userIDsRef)
+
+Unassign each of the given sets from each of the given users.
+
+=cut
+
+sub unassignSetsFromUsers {
+	my ($self, $setIDsRef, $userIDsRef) = @_;
+	my @setIDs = $setIDsRef;
+	my @userIDs = $userIDsRef;
+	
+	foreach my $setID (@setIDs) {
+		foreach my $userID (@userIDs) {
+			$self->unassignSetFromUser($userID, $setID);
+		}
+	}
+}
+
+=item assignProblemToAllSetUsers($GlobalProblem)
+
+Assigns the problem specified to all users to whom the problem's set is
+assigned.
+
+=cut
+
+sub assignProblemToAllSetUsers {
+	my ($self, $GlobalProblem) = @_;
+	my $db = $self->{db};
+	my $setID = $GlobalProblem->set_id;
+	my @userIDs = $db->listSetUsers($setID);
+	
+	foreach my $userID (@userIDs) {
+		$self->assignProblemToUser($userID, $GlobalProblem);
+	}
+}
+
+=back
+
+=cut
+
+################################################################################
+# Utility methods
+################################################################################
+
+=head2 Utility methods
+
+=over
+
+=cut
 
 sub hiddenEditForUserFields {
 	my ($self, @editForUser) = @_;
@@ -55,115 +353,6 @@ sub userCountMessage {
 	}
 	
 	return $message;
-}
-
-### Utility functions for assigning sets to users.
-# These silently fail if the problem or set exists for the user.
-
-sub assignProblemToUser {
-	my ($self, $user, $globalProblem) = @_;
-	my $db = $self->{db};
-	my $userProblem = $db->{problem_user}->{record}->new;
-
-	# Set up the key
-	$userProblem->user_id($user);
-	$userProblem->set_id($globalProblem->set_id);
-	$userProblem->problem_id($globalProblem->problem_id);
-	
-	initializeUserProblem($userProblem);
-	eval {$db->addUserProblem($userProblem)};
-	warn $@ if $@ and not $@ =~ m/user problem exists/;
-}
-
-sub assignSetToUser {
-	my ($self, $userID, $globalSet) = @_;
-	my $db = $self->{db};
-	my $userSet = $db->{set_user}->{record}->new;
-	my $setID = $globalSet->set_id;
-
-	$userSet->user_id($userID);
-	$userSet->set_id($setID);
-	eval {$db->addUserSet($userSet)};
-	warn $@ if $@ and not $@ =~ m/user set exists/;
-	
-	foreach my $problemID ($db->listGlobalProblems($setID)) {
-		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
-		if (not defined $problemRecord) {
-			warn "no record found for problem $problemID -- skipping.";
-			next;
-		}
-		$self->assignProblemToUser($userID, $problemRecord);
-	}
-}
-
-# When a new problem is added to a set, all students to whom the set 
-# it belongs to is assigned should have it assigned to them.
-# Note that this does NOT assign to all users of a course, just all users
-# of a set.
-sub assignProblemToAllSetUsers {
-	my ($self, $globalProblem) = @_;
-	my $db = $self->{db};
-	my $setID = $globalProblem->set_id;
-	my @users = $db->listSetUsers($setID);
-	
-	foreach my $user (@users) {
-		$self->assignProblemToUser($user, $globalProblem);
-	}
-}
-
-# READ THIS: Unlike the above function, "All" here refers to all of the
-# users of a course.
-# This function caches database data as a speed optimization.
-sub assignSetToAllUsers {
-	my ($self, $setID) = @_;
-	my $db = $self->{db};
-	my @users = $db->listUsers;
-	my @problemRecords = map { $db->getGlobalProblem($setID, $_) } # checked
-		$db->listGlobalProblems($setID);
-	@problemRecords = grep { defined $_ } @problemRecords;
-	
-	foreach my $user (@users) {
-		# FIXME: Create a UserSet record for the user!!!!
-		my $userSet = $db->{set_user}->{record}->new;
-		$userSet->user_id($user);
-		$userSet->set_id($setID);
-		eval {$db->addUserSet($userSet)};
-		foreach my $problemRecord (@problemRecords) {
-			$self->assignProblemToUser($user, $problemRecord);
-		}
-	}
-}
-
-sub assignAllSetsToUser {
-	my ($self, $userID) = @_;
-	my $db = $self->{db};
-	
-	# assign only sets that are not already assigned
-	my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
-	my @globalSetIDs = grep { not exists $userSetIDs{$_} } $db->listGlobalSets;
-	
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
-	
-	my $i = 0;
-	foreach my $GlobalSet (@GlobalSets) {
-		if (not defined $GlobalSet) {
-			warn "record not found for global set $globalSetIDs[$i]";
-		} else {
-			$self->assignSetToUser($userID, $GlobalSet);
-		}
-		$i++;
-	}
-}
-
-sub unassignAllSetsFromUser {
-	my ($self, $userID) = @_;
-	my $db = $self->{db};
-	
-	my @userSetIDs = $db->listUserSets($userID);
-	
-	foreach my $userSetID (@userSetIDs) {
-		$db->deleteUserSet($userID, $userSetID);
-	}
 }
 
 sub read_dir {  # read a directory
@@ -206,9 +395,19 @@ sub read_scoring_file    { # used in SendMail and ....?
      return \%assocArray;
 }
 
+=back
+
+=cut
+
 ################################################################################
-# routines for listing various types of files
+# Methods for listing various types of files
 ################################################################################
+
+=head2 Methods for listing various types of files
+
+=over
+
+=cut
 
 # list classlist files
 sub getCSVList {
@@ -225,13 +424,8 @@ sub getDefList {
 	return $self->read_dir($dir, qr/.*\.def/);
 }
 
-################################################################################
-# template escapes
-################################################################################
+=back
 
-sub links {
- 	my $self = shift;
-	return $self->SUPER::links();
-}
+=cut
 
 1;
