@@ -50,7 +50,7 @@ sub dispatch($) {
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
-	my $urlRoot = $current_uri =~ m/^(.*)$path_info/;
+	my ($urlRoot) = $current_uri =~ m/^(.*)$path_info/;
 	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
