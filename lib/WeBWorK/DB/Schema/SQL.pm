@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.14 2003/12/09 02:42:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.15 2003/12/13 01:30:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,7 +65,7 @@ sub count {
 	my @result = $self->{driver}->dbi()->selectrow_array($stmt);
 	$self->{driver}->disconnect();
 	
-	return @result[0];
+	return $result[0];
 }
 
 sub list($@) {
