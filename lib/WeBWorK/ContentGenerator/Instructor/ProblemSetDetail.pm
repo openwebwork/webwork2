@@ -1124,7 +1124,8 @@ sub body {
 			
 			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-
+            
+            
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
 			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
@@ -1191,6 +1192,10 @@ sub body {
 			]));
 		}
 
+  		my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
+        my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
+          
+# print final lines
 		print CGI::end_table();
 		print CGI::checkbox({
 				  label=> "Force problems to be numbered consecutively from one",
@@ -1199,6 +1204,7 @@ sub body {
 		  CGI::br();
 		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
 		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
+		print CGI::p( CGI::a({href=>$editNewProblemLink},'Create'). 'a new blank problem');
 		print CGI::p(<<HERE);
 Any time problem numbers are intentionally changed, the problems will
 always be renumbered consecutively, starting from one.  When deleting
