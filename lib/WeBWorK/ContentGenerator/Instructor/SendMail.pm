@@ -10,7 +10,7 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 use strict;
 use warnings;
 use CGI qw();
-use HTML::Entities;
+#use HTML::Entities;
 use Mail::Sender;
 
 sub initialize {
