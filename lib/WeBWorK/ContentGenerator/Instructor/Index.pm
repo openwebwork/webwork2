@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.45 2004/10/09 03:07:23 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.46 2004/10/14 16:56:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -259,7 +259,7 @@ sub pre_header_initialize {
 	push @error, "You are not allowed to act as a student." 
 		if (defined param $r "act_as_user" and not $authz->hasPermissions($userID, "become_student"));
 	push @error, "You are not allowed to modify problem sets." 
-		if ((defined param $r "edit_sets" or defined param $r "edit_set_for_user") and not $authz->hasPermissions($userID, "modify_problem_sets"));
+		if ((defined param $r "edit_sets" or defined param $r "edit_set_for_users") and not $authz->hasPermissions($userID, "modify_problem_sets"));
 	push @error, "You are not allowed to assign problem sets."
 		if ((defined param $r "sets_assigned_to_user" or defined param $r "users_assigned_to_set") and not $authz->hasPermissions($userID, "assign_problem_sets"));
 	push @error, "You are not allowed to modify student data."
@@ -396,7 +396,7 @@ sub body {
 						CGI::td({-height=>2}),
 						CGI::td(CGI::submit("assign_users", "Assign")." selected <b>users</b> to selected <b>sets</b>"),
 						CGI::td(CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)"),
-						CGI::td(CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>"),
+						CGI::td(CGI::submit("edit_set_for_users", "Edit"). " one <b>set</b> for  <b>users</b>"),
 						CGI::td({-height=>4}),
 						CGI::td(CGI::submit("email_users", "Email"). " your students"),
 						CGI::td(CGI::submit("transfer_files", "Transfer"). " course files"),
