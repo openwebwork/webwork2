@@ -164,6 +164,8 @@ sub body {
 		my $prettyName = $userRecord->last_name
 			. ", "
 			. $userRecord->first_name;
+		my $dueDate    = $userSetRecord->due_date if ref($userSetRecord);
+		my $prettyDate = ($dueDate)?  '(' . formatDateTime($dueDate) . ') ' : '';
 		print CGI::Tr({}, 
 			CGI::td({}, [
 				($user eq $globalUserID
@@ -184,7 +186,7 @@ sub body {
 				"($prettyName)", " ", $userRecord->section, " ",
 				(
 					defined $userSetRecord
-					? '('.formatDateTime($userSetRecord->due_date).') '.CGI::a(
+					? $prettyDate . CGI::a(
 						{href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/sets/$setID/?editForUser=$user&".$self->url_authen_args()},
 						"Edit data for $user"
 					)
