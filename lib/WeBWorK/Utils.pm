@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.55 2004/10/04 18:28:16 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.56 2004/10/07 23:08:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -300,7 +300,7 @@ sub unformatDateAndTime {
 	$string =~ s|PM| PM|i;	## OK if forget to enter spaces or use wrong case
 	$string =~ s|,| at |;	## start translating old form of date/time to new form
 
-	my($date,$at,$time,$AMPM,$TZ) = split(/\s+/,$string);
+	my($date,$time,$AMPM,$TZ) = split(/\s+/,$string);
 	unless ($time =~ /:/) {
 		{  ##bare block for 'case" structure
 			$time =~ /(\d\d)(\d\d)/;
@@ -325,7 +325,7 @@ sub unformatDateAndTime {
 	$hour = $1;
 	if ($hour < 1 or $hour > 12) {
 		die "Incorrect date/time format \"$orgString\". Hour must be in the range [1,12]. 
-		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE (e.g.  \"03/29/2004 at 06:00am EST\")\n";
+		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE (e.g.  \"03/29/2004 at 06:00am EST\")\n"
 	}
 	if ($min < 0 or $min > 59) {
 		die "Incorrect date/time format $orgString. Minute must be in the range [0-59]. Correct format is MM/DD/YYYY at HH:MM AMPM ZONE\n";
