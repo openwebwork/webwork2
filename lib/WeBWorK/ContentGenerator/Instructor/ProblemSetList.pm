@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.42 2004/02/12 04:26:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.43 2004/02/14 00:55:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 use Apache::Constants qw(REDIRECT);
 use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Compatibility;
 
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts continuation)];
 
@@ -60,8 +61,13 @@ sub initialize {
 		$self->{submitError} = "You aren't authorized to create or delete problems";
 		return;
 	}
-	
-	if (defined($r->param('deleteSelected'))) {
+	if (defined($r->param('update_global_user'))  ){
+		my $global_user_message = WeBWorK::Compatibility::update_global_user($self);
+		$self->{global_user_message} = $global_user_message;
+	}
+	if (defined($r->param('deleteSelected')) and defined($r->param('deleteSelectedSafety') ) 
+	    and $r->param('deleteSelectedSafety') == 1) {
+	    
 		foreach my $wannaDelete ($r->param('selectedSet')) {
 			$db->deleteGlobalSet($wannaDelete);
 		}
@@ -178,14 +184,56 @@ sub body {
 	
 	my @set_definition_files    = $self->read_dir($ce->{courseDirs}->{templates},'\\.def');
 	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
-
+	
+	###############################################################################
 	# Slurp each set record for this course in @sets
 	# Gather data from the database
+	###############################################################################
 	my @users = $db->listUsers;
+		###############################################################################
+		# for compatibility  check to make sure that the global user has been defined.
+		###############################################################################
+		my $globalUser           =  $ce->{dbLayout}->{set}->{params}->{globalUserID};
+		my $database_type        = $ce->{dbLayoutName};
+		my $global_user_alert    = "";
+		my $global_user_message  = "";
+		$global_user_message     = $self->{global_user_message} if defined($self->{global_user_message});
+		if (defined($globalUser) and $globalUser and $database_type eq 'gdbm') {  # if a name for the global user has been defined in database.conf
+			my $flag = 0;
+			foreach $user (@users) {
+				$flag = 1 if $user eq $globalUser;
+			}
+			
+			if ($flag == 0 ) {   # no global user has been added to this course
+			    $global_user_alert = join("", 
+			    	CGI::div({class=>'ResultsWithError'}, 
+						CGI::p("This is the first time that this course
+							has been used with WeBWorK 2.0 and no 'Global User' has been defined.  In WeBWorK 2.0
+							a set and it's problems can exist without being assigned to any real student or instructor --
+							instead it is assigned to this fictional 'Global User' whose id is $globalUser.  
+							Press this button to initialize the global user files so that you can view sets built in 
+							WW1.9 in 2.0. You should only need to do this once -- the first time you use WW2.0 on a pre-existing course."
+						),
+						CGI::p("Depending on the number of sets, this operation may take many minutes.  Even if your browser times out
+						the updating process will continue until it is done. Time for coffee? :-)"
+						),
+						CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+						$self->hidden_authen_fields,
+						CGI::submit({-name=>'update_global_user', -value=>"Update Global User" }),
+						CGI::end_form(),
+			    	),
+			    );
+				#$global_user_message = WeBWorK::Compatibility::update_global_user($self);
+			}
+		}
+		###############################################################################
+		# end compatibility check
+		###############################################################################
 	my @set_IDs = $db->listGlobalSets;
 	my @sets  = $db->getGlobalSets(@set_IDs); #checked
 	my %counts;
 	my %problemCounts;
+	
 	
 	$WeBWorK::timer->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer;
 	foreach my $set_id (@set_IDs) {
@@ -218,10 +266,10 @@ sub body {
 	
 	my $table = CGI::Tr({}, 
 		CGI::th("Sel.")
-		. CGI::th("Edit ", CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=set_id"}, "set"), " dates")
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=open_date"},    "Open Date"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=due_date"},     "Due Date"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=answer_date"},  "Answer Date"))
+		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=set_id"}, "Sort by name"),)
+		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=open_date"},    "Sort by Open Date"))
+		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=due_date"},     "Sort by Due Date"))
+		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=answer_date"},  "Sort by Answer Date"))
 		. CGI::th("Edit problems")                                  # CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_probs"}"Num. Problems"),
 		. CGI::th("Assign users")                                   #, CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:") )
 	) . "\n";
@@ -240,7 +288,7 @@ sub body {
 					"checked"=>"0"
 				})
 			)
-			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/?".$self->url_authen_args}, $set->set_id))
+			. CGI::td({}, '&nbsp;&nbsp;',$set->set_id, CGI::a({href=>$r->uri.$set->set_id."/?".$self->url_authen_args}, ' Edit'))
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
@@ -260,6 +308,8 @@ sub body {
 	}
 
 	print join("\n",
+	    $global_user_alert,
+	    $global_user_message,
     	# Set table form (for deleting checked sets)
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
 		$self->hidden_authen_fields,
@@ -267,11 +317,13 @@ sub body {
 		CGI::br(),
 		
 		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),
-		CGI::div( {style=>'background-color:red'},
+		CGI::div( {class=>'ResultsWithError'},
 		    "There is NO undo when deleting sets. Use cautiously. All data for the set is lost.
 		    <br>If the set is re-assigned (rebuilt) all of the problem versions will be different.",
 		    CGI::br(),
 			CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),
+			CGI::radio_group(-name=>"deleteSelectedSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow delete'}),
+
 		),
 		CGI::end_form(),
 		CGI::br(),
