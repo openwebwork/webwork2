@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.13 2004/01/21 20:53:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.1 2004/01/23 16:49:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ users to which sets are assigned.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
 	my ($self, $setID) = @_;
@@ -183,9 +184,9 @@ sub body {
 				"($prettyName)", " ", $userRecord->section, " ",
 				(
 					defined $userSetRecord
-					? CGI::a(
+					? '('.formatDateTime($userSetRecord->due_date).') '.CGI::a(
 						{href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/sets/$setID/?editForUser=$user&".$self->url_authen_args()},
-						"Edit user-specific set data for $user"
+						"Edit data for $user"
 					)
 					: ()
 				),
