@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.4 2004/05/06 23:20:49 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,15 +42,19 @@ use constant MAX_SHOW => 20;
 ## directory has any pg files.  The second is a list of directories
 ## which contain pg files.
 sub get_library_sets {
+  my $amtop = shift;
   my $topdir =  shift;
   my @lis = readDirectory($topdir);
   my @pgs = grep { m/\.pg$/ and (not m/Header\.pg/) and -f "$topdir/$_"} @lis;
   my $havepg = scalar(@pgs)>0 ? 1 : 0;
   my @mdirs = grep {$_ ne "." and $_ ne ".." and $_ ne "Library"
 		      and -d "$topdir/$_"} @lis;
+  if($amtop) { # we don't want the library
+     @mdirs = grep {$_ ne "Library"} @mdirs;
+  }
   my ($adir, @results, @thisresult);
   for $adir (@mdirs) {
-    @results = get_library_sets("$topdir/$adir");
+    @results = get_library_sets(0, "$topdir/$adir");
     my $isadirok = shift @results;
     @thisresult = (@thisresult, @results);
     if ($isadirok) {
@@ -69,14 +73,6 @@ sub list_pg_files {
   my @pgs = grep { m/\.pg$/ and (not m/Header\.pg/) and -f "$templatedir/$topdir/$_"} @lis;
   @pgs = map { "$topdir/$_" } @pgs;
   return(@pgs);
-}
-
-## Maybe I should use this instead, returns a list
-sub get_global_set_defs {
-  my $db = shift;
-
-  my @globalSetIDs = $db->listGlobalSets;
-  return(@globalSetIDs);
 }
 
 ## go through past page getting a list of identifiers for the problems
@@ -127,13 +123,14 @@ sub add_selected {
 
 sub getalllibsets {
   my $ce = shift;
-  my @all_library_sets = get_library_sets($ce->{courseDirs}->{templates});
-  shift @all_library_sets;
+  my @all_library_sets = get_library_sets(1, $ce->{courseDirs}->{templates});
+  my $includetop = shift @all_library_sets;
   my $j;
   for ($j=0; $j<scalar(@all_library_sets); $j++) {
     $all_library_sets[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
   }
   @all_library_sets = sort @all_library_sets;
+  unshift @all_library_sets, '  -- Top --  ' if($includetop);
   return (\@all_library_sets);
 }
 
@@ -173,7 +170,9 @@ sub browse_mysets_panel {
 
   my $libstr = CGI::br() . CGI::em($self->{libmsg}) if($self->{libmsg});
 
-  if (not $library_selected or $library_selected eq $default_value) { 
+  if(scalar(@$list_of_local_sets) == 0) {
+    $list_of_local_sets = ['There are no local sets yet'];
+  } elsif (not $library_selected or $library_selected eq $default_value) { 
     unshift @{$list_of_local_sets},  $default_value; 
     $library_selected = $default_value; 
   } 
@@ -269,6 +268,7 @@ sub make_top_row {
   my %data = @_;
 
   my $list_of_local_sets = $data{all_set_defs};
+  my $have_local_sets = scalar(@$list_of_local_sets);
   my $browse_which = $data{browse_which};
   my $library_selected = $r->param('library_sets');
   my $set_selected = $r->param('local_sets');
@@ -292,16 +292,18 @@ sub make_top_row {
   print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
   if ($browse_which eq 'browse_local') {
-    browse_local_panel($self, $library_selected);
+    $self->browse_local_panel($library_selected);
   } elsif ($browse_which eq 'browse_mysets') {
-    browse_mysets_panel($self, $library_selected, $list_of_local_sets);
+    $self->browse_mysets_panel($library_selected, $list_of_local_sets);
   } else {
-    browse_library_panel($self);
+    $self->browse_library_panel();
   }
 
   print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
-  if (not $set_selected or $set_selected eq "Select a Set for This Course") {
+  if($have_local_sets ==0) {
+    $list_of_local_sets = ['There are no local sets yet'];
+  } elsif (not $set_selected or $set_selected eq "Select a Set for This Course") {
     if ($list_of_local_sets->[0] eq "Select a Problem Set") {
       shift @{$list_of_local_sets};
     }
@@ -345,18 +347,23 @@ sub make_data_row {
   my $pg = shift;
   my $cnt = shift;
 
+  $sourceFileName =~ s|^./||; # clean up top ugliness
+
   my $urlpath = $self->r->urlpath;
   my $problem_output = $pg->{flags}->{error_flag} ?
     CGI::em("This problem produced an error") 
     : CGI::div({class=>"RenderSolo"}, $pg->{body_text});
 
 
-  my $edit_link =  CGI::a({href=>$self->systemLink( 
+  my $edit_link =  '';
+  if($self->{r}->param('browse_which') ne 'browse_library') {
+    $edit_link = CGI::a({href=>$self->systemLink( 
 						   $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
 								 args=>{courseID =>$urlpath->arg("courseID"),
 									setID=>"Undefined_Set", problemID=>"1" }
 								), params=>{sourceFilePath => "$sourceFileName"}
 						  )}, "Edit it" );
+  }
 
   my $try_link = CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
 								args=>{courseID =>$urlpath->arg("courseID"),
@@ -370,10 +377,10 @@ sub make_data_row {
 
   print CGI::Tr({-align=>"left"}, CGI::td(
 
-					  CGI::div({-style=>"background-color: #DDDDDD"},"File name: $sourceFileName ", 
-						   #$edit_link, " ", 
-						$try_link
-						  ),
+					  CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
+CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
+CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_link)
+						  ), CGI::br(),
 
 
 
@@ -472,6 +479,7 @@ sub body {
     if (not defined($set_to_display) or $set_to_display eq "Select a Local Problem Collection") {
       $self->{libmsg} = "You need to select a set to view.";
     } else {
+      $set_to_display = '.' if $set_to_display eq '  -- Top --  ';
       @pg_files = list_pg_files($ce->{courseDirs}->{templates},
 				"$set_to_display");
       $use_previous_problems=0;
@@ -482,7 +490,9 @@ sub body {
   } elsif ($r->param('view_mysets_set')) {
 
     my $set_to_display = $r->param('library_sets');
-    if (not defined($set_to_display) or $set_to_display eq "Select a Problem Set") {
+    if (not defined($set_to_display) 
+        or $set_to_display eq "Select a Problem Set"
+        or $set_to_display eq 'There are no local sets yet') {
       $self->{libmsg} = "You need to select a set from this course to view.";
     } else {
       my @problemList = $db->listGlobalProblems($set_to_display);
@@ -607,7 +617,7 @@ sub body {
 
   ############# List of local sets
 
-  my @all_set_defs = get_global_set_defs($db);
+  my @all_set_defs = $db->listGlobalSets;
   for ($j=0; $j<scalar(@all_set_defs); $j++) {
     $all_set_defs[$j] =~ s|^set||;
     $all_set_defs[$j] =~ s|\.def||;
@@ -629,7 +639,7 @@ sub body {
     $self->hidden_authen_fields,
       '<div align="center">',
 	CGI::start_table({-border=>2});
-  make_top_row($self, 'all_set_defs'=>\@all_set_defs, 
+  $self->make_top_row('all_set_defs'=>\@all_set_defs, 
 	       'browse_which'=> $browse_which);
   print CGI::hidden(-name=>'browse_which', -default=>[$browse_which]),
     CGI::hidden(-name=>'problem_seed', -default=>[$problem_seed]);
@@ -645,7 +655,7 @@ sub body {
   my $jj;
   for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
     $pg_files[$jj] =~ s|^$ce->{courseDirs}->{templates}/?||;
-    make_data_row($self, $pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1);
+    $self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1);
   }
 
   ########## Finish things off
