@@ -26,7 +26,8 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and s
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readDirectory list2hash max);
+use WeBWorK::HTML::ComboBox qw/comboBox/;
+use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
 use WeBWorK::DB::Record::Set;
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
@@ -318,7 +319,7 @@ sub handle_problem_numbers {
 	my %newProblemNumbers = %$newProblemNumbersref;
 	my $maxNum = shift;
 	my $db = shift;
-	my $setName = shift;
+	my $setID = shift;
 	my $force = shift || 0;
 	my @sortme=();
 	my ($j, $val);
@@ -333,8 +334,8 @@ sub handle_problem_numbers {
 			$val = 1000 * $newProblemNumbers{$j};
 		}
 		push @sortme, [$j, $val];
-		$newProblemNumbers{$j} = $db->getGlobalProblem($setName, $j);
-		die "global $j for set $setName not found." unless $newProblemNumbers{$j};
+		$newProblemNumbers{$j} = $db->getGlobalProblem($setID, $j);
+		die "global $j for set $setID not found." unless $newProblemNumbers{$j};
 	}
 
 	return "" unless $force;
@@ -361,7 +362,7 @@ sub handle_problem_numbers {
 		}
 	}
 
-	my @setUsers = $db->listSetUsers($setName);
+	my @setUsers = $db->listSetUsers($setID);
 	my (@problist, $user);
 	my $globalUserID = $db->{set}->{params}->{globalUserID} || '';
 
@@ -371,8 +372,8 @@ sub handle_problem_numbers {
 		# a blank name.
 		next if $globalUserID eq $user;
 		for $j (keys %newProblemNumbers) {
-			$problist[$j] = $db->getUserProblem($user, $setName, $j);
-			die " problem $j for set $setName and effective user $user not found" 
+			$problist[$j] = $db->getUserProblem($user, $setID, $j);
+			die " problem $j for set $setID and effective user $user not found" 
 				unless $problist[$j];
 		}
 		# ok, now we have all problem data for $user
@@ -392,7 +393,7 @@ sub handle_problem_numbers {
 
 	foreach ($j = scalar @sortme; $j < $maxNum; $j++) {
 		if (defined $newProblemNumbers{$j + 1}) {
-			$db->deleteGlobalProblem($setName, $j+1);
+			$db->deleteGlobalProblem($setID, $j+1);
 		}
 	}
 
@@ -406,13 +407,13 @@ sub handle_problem_numbers {
 sub moveme {
 	my $index = shift;
 	my $db = shift;
-	my $setName = shift;
-	my (@problemList) = @_;
+	my $setID = shift;
+	my (@problemIDList) = @_;
 	my ($prob1, $prob2, $prob);
 
-	foreach $prob (@problemList) {
-		my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
-		die "global $prob for set $setName not found." unless $problemRecord;
+	foreach my $problemID (@problemIDList) {
+		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
+		die "global $problemID for set $setID not found." unless $problemRecord;
 		if ($problemRecord->problem_id == $index) {
 			$prob1 = $problemRecord;
 		} elsif ($problemRecord->problem_id == $index + 1) {
@@ -428,15 +429,15 @@ sub moveme {
 	$db->putGlobalProblem($prob1);
 	$db->putGlobalProblem($prob2);
 
-	my @setUsers = $db->listSetUsers($setName);
+	my @setUsers = $db->listSetUsers($setID);
 
 	my $user;
 	foreach $user (@setUsers) {
-		$prob1 = $db->getUserProblem($user, $setName, $index); #checked
-		die " problem $index for set $setName and effective user $user not found"
+		$prob1 = $db->getUserProblem($user, $setID, $index); #checked
+		die " problem $index for set $setID and effective user $user not found"
 			unless $prob1;
-		$prob2 = $db->getUserProblem($user, $setName, $index+1); #checked
-		die " problem $index for set $setName and effective user $user not found"
+		$prob2 = $db->getUserProblem($user, $setID, $index+1); #checked
+		die " problem $index for set $setID and effective user $user not found"
 			unless $prob2;
     		$prob1->problem_id($index+1);
 		$prob2->problem_id($index);
@@ -469,7 +470,6 @@ sub initialize {
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 
-	my @problemList = $db->listGlobalProblems($setID);
 	my %properties = %{ FIELD_PROPERTIES() };
 
 	# takes a hash of hashes and inverts it
@@ -478,6 +478,15 @@ sub initialize {
 		%{ $undoLabels{$key} } = map { $properties{$key}->{labels}->{$_} => $_ } keys %{ $properties{$key}->{labels} };
 	}
 
+	# Unfortunately not everyone uses Javascript enabled browsers so
+	# we must fudge the information coming from the ComboBoxes
+	# Since the textfield and menu both have the same name, we get an array of two elements
+	# We then reset the param to the first if its not-empty or the second (empty or not).
+	foreach ( @{ HEADER_ORDER() } ) {
+		my @values = $r->param("set.$setID.$_");
+		my $value = $values[0] || $values[1];	
+		$r->param("set.$setID.$_", $value);
+	}
 
 	if (defined $r->param('submit_changes')) {
 	
@@ -531,8 +540,8 @@ sub initialize {
 		#####################################################################
 
 		my @problemIDs = $db->listGlobalProblems($setID);
-		my @problemList = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
-		foreach my $problemRecord (@problemList) {
+		my @problemRecords = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
+		foreach my $problemRecord (@problemRecords) {
 			my $problemID = $problemRecord->problem_id;
 			die "Global problem $problemID for set $setID not found." unless $problemRecord;
 			
@@ -671,7 +680,7 @@ sub initialize {
 	
 	my %newProblemNumbers = ();
 	my $maxProblemNumber = -1;
-	for my $jj (@problemList) {
+	for my $jj ($db->listGlobalProblems($setID)) {
 		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
 		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
 	}
@@ -718,7 +727,7 @@ sub canChange ($$) {
 	return 0 if $howManyCan eq "none";
 	return 1 if $howManyCan eq "any";	
 	return 1 if $howManyCan eq "one" && $forOneUser;
-	return 0 if $howManyCan eq "all" && $forUsers;
+	return 1 if $howManyCan eq "all" && !$forUsers;
 	return 0;	# FIXME: maybe it should default to 1?
 }
 
@@ -734,10 +743,10 @@ sub body {
 	my $authz       = $r->authz;
 	my $userID      = $r->param('user');
 	my $urlpath     = $r->urlpath;
-	my $courseName  = $urlpath->arg("courseID");
-	my $setName     = $urlpath->arg("setID");
-	my $setRecord   = $db->getGlobalSet($setName); 
-		die "Global set $setName not found." unless $setRecord;
+	my $courseID  = $urlpath->arg("courseID");
+	my $setID     = $urlpath->arg("setID");
+	my $setRecord   = $db->getGlobalSet($setID); 
+		die "Global set $setID not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 
 	# some useful booleans
@@ -757,28 +766,30 @@ sub body {
 		unless $authz->hasPermissions($r->param("user"), "modify_problem_sets");
 
 
+
+
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets() if $forOneUser;
-	my $setUserCount     = $db->countSetUsers($setName);
+	my $setUserCount     = $db->countSetUsers($setID);
 	my $userSetCount     = $db->countUserSets($editForUser[0]) if $forOneUser;
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
-                  courseID => $courseName, setID => $setName));
+                  courseID => $courseID, setID => $setID));
 	my $editSetsAssignedToUserURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
-                  courseID => $courseName, userID => $editForUser[0])) if $forOneUser;
+                  courseID => $courseID, userID => $editForUser[0])) if $forOneUser;
 
 
-	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseName, setID => $setName);
+	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $setID);
 	my $setDetailURL   = $self->systemLink($setDetailPage,authen=>0);
 
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
 	my $setCountMessage = CGI::a({href=>$editSetsAssignedToUserURL}, $self->setCountMessage($userSetCount, $setCount)) if $forOneUser;
 
-	$userCountMessage = "The set $setName is assigned to " . $userCountMessage . ".";
+	$userCountMessage = "The set $setID is assigned to " . $userCountMessage . ".";
 	$setCountMessage  = "The user $editForUser[0] has been assigned " . $setCountMessage . "." if $forOneUser;
 
 	if ($forUsers) {
@@ -800,6 +811,30 @@ sub body {
 	my $default_header_mode = $r->param('header.displaymode') || 'None';
 	my $default_problem_mode = $r->param('problem.displaymode') || 'None';
 
+	#####################################################################
+	# Browse available header/problem files
+	#####################################################################
+	
+	my $templates = $r->ce->{courseDirs}->{templates};
+	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
+	my $skip = join("|", keys %probLibs);
+
+	my @headerFileList = listFilesRecursive(
+		$templates,
+		qr/header.*\.pg$/i, 		# match these files
+		qr/^(?:$skip|CVS)$/, 	# prune these directories
+		0, 				# match against file name only
+		1, 				# prune against path relative to $templates
+	);
+
+	# this just takes too much time to search
+#	my @problemFileList = listFilesRecursive(
+#		$templates,
+#		qr/\.pg$/i,			# problem files don't say problem
+#		qr/^(?:$skip|CVS)$/, 	# prune these directories
+#		0, 				# match against file name only
+#		1, 				# prune against path relative to $templates
+#	);
 
 	# Display a useful warning message
 	if ($forUsers) {
@@ -825,7 +860,7 @@ sub body {
 	]));
 
 	print CGI::Tr({}, CGI::td({}, [
-		$self->FieldTable($userToShow, $setName),
+		$self->FieldTable($userToShow, $setID),
 	]));
 	print CGI::end_table();	
 
@@ -857,7 +892,7 @@ sub body {
 							user => $db->getUser($userToShow),
 							displayMode=> $default_header_mode,
 							problem_number=> 0,
-							this_set => $db->getMergedSet($userToShow, $setName),
+							this_set => $db->getMergedSet($userToShow, $setID),
 							problem_list => [$setRecord->{$header}],
 			);
 			$header_html{$header} = $temp[0];
@@ -865,10 +900,10 @@ sub body {
 		
 		foreach my $header (@headers) {
 	
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseName, setID => $setName, problemID => 0 });
+			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $header, make_local_copy => 1 });
 		
-			my $viewHeaderPage = $urlpath->new(type => $headerModules{$header}, args => { courseID => $courseName, setID => $setName });
+			my $viewHeaderPage = $urlpath->new(type => $headerModules{$header}, args => { courseID => $courseID, setID => $setID });
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 			
 			print CGI::Tr({}, CGI::td({}, [
@@ -879,7 +914,18 @@ sub body {
 					CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "defaultHeader", value => $header, label => "Use Default"}))) .
 				CGI::end_table(),
 #				"",
-				CGI::input({ name => "set.$setName.$header", value => $setRecord->{$header}, size => 50}) .
+#				CGI::input({ name => "set.$setID.$header", value => $setRecord->{$header}, size => 50}) .
+#				join ("\n", $self->FieldHTML($userToShow, $setID, $problemID, "source_file")) .
+#			        	CGI::br() . CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text}),
+
+				comboBox({
+					name => "set.$setID.$header",
+					request => $r,
+					default => $setRecord->{$header},
+					multiple => 0,
+					values => ["", @headerFileList],
+					labels => { "" => "Use Default Header File" },
+				}) .
 			        CGI::div({class=> "RenderSolo"}, $header_html{$header}->{body_text}),
 			]));
 		}
@@ -897,8 +943,8 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemList = $db->listGlobalProblems($setName);
-	if (scalar @problemList) {
+	my @problemIDList = $db->listGlobalProblems($setID);
+	if (scalar @problemIDList) {
 
 		my $maxProblemNumber = $self->{maxProblemNumber};
 
@@ -911,20 +957,20 @@ sub body {
 			CGI::input({type => "submit", name => "refresh", value => "Refresh"}),
 		]));
 		
-		foreach my $problem (@problemList) {
+		foreach my $problemID (@problemIDList) {
 		
 			my $problemRecord;
 			if ($forOneUser) {
-				$problemRecord = $db->getMergedProblem($editForUser[0], $setName, $problem);
+				$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
 			} else {
-				$problemRecord = $db->getGlobalProblem($setName, $problem);
+				$problemRecord = $db->getGlobalProblem($setID, $problemID);
 			}
 			
-			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseName, setID => $setName, problemID => $problem });
-			my $editProblemLink = $self->systemLink($editProblemPage, params => { file_type => $problem, make_local_copy => 0 });
+			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
-			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseName, setID => $setName });
+			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID });
 			my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
 
 			my @fields = @{ PROBLEM_FIELDS() };
@@ -933,22 +979,31 @@ sub body {
 			my @problem_html = renderProblems(	r=> $r, 
 								user => $db->getUser($userToShow),
 								displayMode=> $default_problem_mode,
-								problem_number=> $problem,
-								this_set => $db->getMergedSet($userToShow, $setName),
+								problem_number=> $problemID,
+								this_set => $db->getMergedSet($userToShow, $setID),
 								problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
 								problem_list => [$problemRecord->source_file],
 			);
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 1}) .
-					CGI::Tr({}, CGI::td({}, problem_number_popup($problem, $maxProblemNumber))) .
+					CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editProblemLink}, "Edit it"))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewProblemLink}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")))) .
-					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problem, label => "Delete it?"})))) .
-#					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problem}))) .
+					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => "Delete it?"})))) .
+#					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 				CGI::end_table(),
-				$self->FieldTable($userToShow, $setName, $problem),
-				join ("\n", $self->FieldHTML($userToShow, $setName, $problem, "source_file")) .
+				$self->FieldTable($userToShow, $setID, $problemID),
+# A comprehensive list of problems is just TOO big to be handled well
+#				comboBox({
+#					name => "set.$setID.$problemID",
+#					request => $r,
+#					default => $problemRecord->{problem_id},
+#					multiple => 0,
+#					values => \@problemFileList,
+#				}) .
+				
+				join ("\n", $self->FieldHTML($userToShow, $setID, $problemID, "source_file")) .
 			        	CGI::br() . CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text}),
 			]));
 		}
