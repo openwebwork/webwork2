@@ -145,6 +145,7 @@ sub encode(@) {
 	my %hash = @_;
 	my $string;
 	foreach (keys %hash) {
+		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
 		$hash{$_} =~ s/(=|&)/\\$1/; # escape & and =
 		$string .= "$_=$hash{$_}&";
 	}
