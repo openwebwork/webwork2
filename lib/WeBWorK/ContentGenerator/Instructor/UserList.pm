@@ -59,6 +59,29 @@ sub initialize {
 	}
 }
 
+sub fieldEditHTML {
+	my ($self, $fieldName, $value, $properties) = @_;
+	my $size = $properties->{size};
+	my $type = $properties->{type};
+	my $access = $properties->{access};
+	my $items = $properties->{items};
+	
+	if ($access eq "readonly") {
+		return $value;
+	}
+	if ($type eq "number" or $type eq "text") {
+		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
+	}
+	if ($type eq "enumerable") {
+		return CGI::popup_menu({
+			name => $fieldName, 
+			values => [keys %$items],
+			default => $value,
+			labels => $items,
+		});
+	}
+}
+
 sub body {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
@@ -100,6 +123,63 @@ sub body {
 		"Perm. Level"
 	);
 
+	my %fieldProperties = (
+		user_id => {
+			type => "text",
+			size => 8,
+			access => "readonly",
+		},
+		first_name => {
+			type => "text",
+			size => 10,
+			access => "readwrite",
+		},
+		last_name => {
+			type => "text",
+			size => 10,
+			access => "readwrite",
+		},
+		email_address => {
+			type => "text",
+			size => 20,
+			access => "readwrite",
+		},
+		student_id => {
+			type => "text",
+			size => 11,
+			access => "readwrite",
+		},
+		status => {
+			type => "enumerable",
+			size => 4,
+			access => "readwrite",
+			items => {
+				"C" => "Enrolled",
+				"D" => "Drop",
+			}
+		},
+		section => {
+			type => "text",
+			size => 4,
+			access => "readwrite",
+		},
+		recitation => {
+			type => "text",
+			size => 4,
+			access => "readwrite",
+		},
+		comment => {
+			type => "text",
+			size => 20,
+			access => "readwrite",
+		},
+		permission => {
+			type => "number",
+			size => 2,
+			access => "readwrite",
+		}
+	);
+	
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 	print CGI::start_table({});
 	
@@ -123,8 +203,14 @@ sub body {
 		print CGI::Tr({},
 			CGI::td({}, [
 				(map {$userRecord->$_} $userRecord->KEYFIELDS),
-				(map {CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})} $userRecord->NONKEYFIELDS()), 
-				(map {CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})} $permissionLevel->NONKEYFIELDS()),
+				(map {
+#					CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})
+					$self->fieldEditHTML("user.".$userRecord->user_id().".".$_, $userRecord->$_, $fieldProperties{$_});
+				} $userRecord->NONKEYFIELDS()), 
+				(map {
+#					CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})
+					$self->fieldEditHTML("permission.".$permissionLevel->user_id().".".$_, $permissionLevel->$_, $fieldProperties{$_});
+				} $permissionLevel->NONKEYFIELDS()),
 			])
 		);
 	}
