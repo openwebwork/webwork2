@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.6 2004/06/30 20:47:29 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.7 2004/10/04 20:56:00 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -161,17 +161,33 @@ sub scoring_info {
 	my $msg = $text; 
 	$msg =~ s/(\$PAR)/<p>/ge;
 	$msg =~ s/(\$BR)/<br>/ge;
+   
+ 	$msg =~ s/\$SID/$SID/ge;
+ 	$msg =~ s/\$LN/$LN/ge;
+ 	$msg =~ s/\$FN/$FN/ge;
+ 	$msg =~ s/\$STATUS/$STATUS/ge;
+ 	$msg =~ s/\$SECTION/$SECTION/ge;
+ 	$msg =~ s/\$RECITATION/$RECITATION/ge;
+ 	$msg =~ s/\$EMAIL/$EMAIL/ge;
+ 	$msg =~ s/\$LOGIN/$LOGIN/ge;
+	if (defined($COL[1])) {		# prevents extraneous error messages.  
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge
+	}
+	else {						# prevents extraneous $COL's in email message 
+		$msg =~ s/\$COL\[(\-?\d+)\]//g
+	}
 	
- 	$msg =~ s/(\$SID)/eval($1)/ge;
- 	$msg =~ s/(\$LN)/eval($1)/ge;
- 	$msg =~ s/(\$FN)/eval($1)/ge;
- 	$msg =~ s/(\$STATUS)/eval($1)/ge;
- 	$msg =~ s/(\$SECTION)/eval($1)/ge;
- 	$msg =~ s/(\$RECITATION)/eval($1)/ge;
- 	$msg =~ s/(\$EMAIL)/eval($1)/ge;
- 	$msg =~ s/(\$LOGIN)/eval($1)/ge;
- 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
- 	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
+# 	old version 
+#  	$msg =~ s/(\$SID)/eval($1)/ge;
+#  	$msg =~ s/(\$LN)/eval($1)/ge;
+#  	$msg =~ s/(\$FN)/eval($1)/ge;
+#  	$msg =~ s/(\$STATUS)/eval($1)/ge;
+#  	$msg =~ s/(\$SECTION)/eval($1)/ge;
+#  	$msg =~ s/(\$RECITATION)/eval($1)/ge;
+#  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
+#  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
+#  	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
+#  	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
  	
  	$msg =~ s/\r//g;
 	return CGI::div(
