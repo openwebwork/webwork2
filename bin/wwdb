@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: wwdb,v 1.2 2003-04-17 21:01:13 sh002i Exp $
+# $Id: wwdb,v 1.3 2003-05-30 00:27:02 sh002i Exp $
 ################################################################################
 
 =head1 NAME
@@ -100,9 +100,13 @@ sub record2string($) {
 	my $string;
 	foreach my $key ($record->FIELDS()) {
 		my $value = $record->$key();
-		$value = "" unless defined $value;
-		$value =~ s/"/\\"/g;
-		$string .= "$key=\"$value\" ";
+		if (defined $value) {
+			$value =~ s/"/\\"/g;
+			$value = "\"$value\"";
+		} else {
+			$value = "NULL";
+		}
+		$string .= "$key=$value ";
 	}
 	chop $string;
 	return $string;
