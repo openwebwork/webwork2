@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.6 2004/01/16 00:42:38 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.7 2004/01/23 21:04:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,8 +47,8 @@ sub initialize {
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
 		foreach my $i (1..$numberOfStudents) {
 		    my $new_user_id        =   $r->param("new_user_id_$i");
-			push @userIDs, $new_user_id;
 		    next unless defined($new_user_id) and $new_user_id;
+			push @userIDs, $new_user_id;
 		    
 			my $newUser            = $db->newUser;
 			my $newPermissionLevel = $db->newPermissionLevel;
