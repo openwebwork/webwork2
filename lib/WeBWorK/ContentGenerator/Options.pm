@@ -55,7 +55,6 @@ sub body {
 	my $newP = $r->param("newPassword");
 	my $confirmP = $r->param("confirmPassword");
 	my $newA = $r->param("newAddress");
-	my $confirmA = $r->param("confirmAddress");
 		
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -92,26 +91,19 @@ sub body {
 	);
 	print CGI::h2("Change Email Address");
 	if ($changeOptions) {
-		if ($newA or $confirmA) {
-			if ($newA eq $confirmA) {
-				# possibly do some format checking?
-				my $oldA = $effectiveUser->email_address;
-				$effectiveUser->email_address($newA);
-				eval { $db->putUser($effectiveUser) };
-				if ($@) {
-					$effectiveUser->email_address($oldA);
-					print CGI::p("Couldn't change your
-					email address: $@");
-				} else {
-					print CGI::p("Your email address has
-					been changed.");
-					$newA = $confirmA = "";
-				}
+		if ($newA) {
+			# possibly do some format checking?
+			my $oldA = $effectiveUser->email_address;
+			$effectiveUser->email_address($newA);
+			eval { $db->putUser($effectiveUser) };
+			if ($@) {
+				$effectiveUser->email_address($oldA);
+				print CGI::p("Couldn't change your
+				email address: $@");
 			} else {
-				print CGI::p("The addresses you entered in the
-				New Address and Confirm Address fields don't
-				match. Please retype your new address and try
-				again.");
+				print CGI::p("Your email address has
+				been changed.");
+				$newA = "";
 			}
 		}
 	}
@@ -123,10 +115,6 @@ sub body {
 		CGI::Tr(
 			CGI::td("New Address"),
 			CGI::td(CGI::textfield("newAddress", $newA)),
-		),
-		CGI::Tr(
-			CGI::td("Confirm Address"),
-			CGI::td(CGI::textfield("confirmAddress", $confirmA)),
 		),
 	);
 	print CGI::br();

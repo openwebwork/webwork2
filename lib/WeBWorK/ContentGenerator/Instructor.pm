@@ -68,7 +68,7 @@ sub assignSetToUser {
 	$userSet->set_id($setID);
 	eval {$db->addUserSet($userSet)};
 	
-	foreach my $problemID ($db->listGlobalProblems) {
+	foreach my $problemID ($db->listGlobalProblems($setID)) {
 		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
 		$self->assignProblemToUser($user, $problemRecord);
 	}
@@ -82,7 +82,7 @@ sub assignProblemToAllUsers {
 	my ($self, $globalProblem) = @_;
 	my $db = $self->{db};
 	my $setID = $globalProblem->set_id;
-	my @users = $db->listSetUsers;
+	my @users = $db->listSetUsers($setID);
 	
 	foreach my $user (@users) {
 		$self->assignProblemToUser($user, $globalProblem);

@@ -16,10 +16,12 @@ use strict;
 use warnings;
 use Date::Format;
 use Date::Parse;
+use DB; # DeBug, not DataBase
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	runtime_use
+	backtrace
 	readFile
 	formatDateTime
 	parseDateTime
@@ -41,6 +43,22 @@ sub runtime_use($) {
 	return unless @_;
 	eval "package Main; require $_[0]; import $_[0]";
 	die $@ if $@;
+}
+
+sub backtrace {
+	my ($style) = @_;
+	$style = "warn" unless $style;
+	my @bt = DB->backtrace;
+	shift @bt; # Remove "backtrace" from the backtrace;
+	if ($style eq "die") {
+		die join "\n", @bt;
+	} elsif ($style eq "warn") {
+		warn join "\n", @bt;
+	} elsif ($style eq "print") {
+		print join "\n", @bt;
+	} elsif ($style eq "return") {
+		return @bt;
+	}
 }
 
 sub readFile($) {
