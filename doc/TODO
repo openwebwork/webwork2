@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.34 2003-01-09 19:03:53 sh002i Exp $
+# $Id: TODO,v 1.35 2003-01-10 17:28:20 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -93,7 +93,7 @@ DONE	effectiveUser for at least Problem.pm
 	add a "check answers" button if the user has the apropriate permissions
 DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
 	calling logout requires valid key -- doesn't make sense.
-	hardcopy - allow hardcopy with correct answers
+	hardcopy - allow hardcopy with correct answers (BRANCH)
 DONE	sort problems by due date
 DONE	disable "show hint/solution" when there's no hint/solution
 DONE	results table

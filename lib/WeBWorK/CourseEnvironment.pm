@@ -26,7 +26,7 @@ sub new {
 	my $class = ref($invocant) || $invocant;
 	my $webworkRoot = shift;
 	my $webworkURLRoot = shift;
-	my $courseName = shift;
+	my $courseName = shift || "";
 	my $safe = Safe->new;
 	
 	# set up some defaults that the environment files will need

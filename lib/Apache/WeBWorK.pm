@@ -72,19 +72,19 @@ sub handler() {
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
 	
-	# If no course was specified, redirect to the URL specified by the constant WEBWORK_HOME
-	# (this is typically just "/".)
-	unless (defined $course) {
-		$r->header_out(Location => WEBWORK_HOME);
-		return REDIRECT;
-	}
-	
 	# Try to get the course environment.
 	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $course);};
 	if ($@) { # If there was an error getting the requested course
 		# TODO: display an error page.  For now, 404 it.
 		warn $@;
 		return DECLINED;
+	}
+	
+	# If no course was specified, redirect to the URL specified by the constant WEBWORK_HOME
+	# (this is typically just "/".)
+	unless (defined $course) {
+		$r->header_out(Location => $course_env->{webworkURLs}->{home});
+		return REDIRECT;
 	}
 	
 	# Freak out if the requested course doesn't exist.  For now, this is just a
