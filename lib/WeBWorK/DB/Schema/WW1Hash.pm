@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.20 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.21 2003/12/12 20:23:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -401,6 +401,11 @@ sub getAll {
 	my @UnsortedUserProblems = $self->getAllNoFilter(@keyparts);
 	my @UnsortedGlobalProblems = $globalSchema->getAll(@keyparts[1 .. $#keyparts]);
 	
+	# FIXME FIXME FIXME: Danger! This code assumes that problem IDs are NUMERIC!
+	# I don't want to fix it right now, since there is currently no way to
+	# specify a non-numeric problem ID. However, it should be fixed at some
+	# point!
+
 	my (@UserProblems, @GlobalProblems);
 	foreach my $UserProblem (@UnsortedUserProblems) {
 		@UserProblems[$UserProblem->problem_id] = $UserProblem;
@@ -426,7 +431,7 @@ sub getAll {
 		}
 	}
 	
-	return @UserProblems;
+	return @UnsortedUserProblems;
 }
 
 =item getAllNoFilter($userID, $setID)
