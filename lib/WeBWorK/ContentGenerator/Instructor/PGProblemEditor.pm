@@ -251,7 +251,7 @@ sub body {
 	#########################################################################
 
 	
-	warn "Errors in the problem ".$self->{editErrors} if $self->{editErrors};
+	warn "Errors in the problem ".CGI::br().$self->{editErrors} if $self->{editErrors};
 
 			   
 	return CGI::p($header),
