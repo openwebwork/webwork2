@@ -21,6 +21,7 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
+use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 
 ############################################################
 # 
@@ -51,18 +52,24 @@ sub pre_header_initialize {
 	my $userName = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
 	
-	my $user            = $db->getUser($userName);
-	my $effectiveUser   = $db->getUser($effectiveUserName);
+	my $user                 = $db->getUser($userName);
+	my $effectiveUser        = $db->getUser($effectiveUserName);
 	# obtain the effective user set, or if that is not yet defined obtain global set
-	my $set             = $db->getGlobalUserSet($effectiveUserName, $setName);
+	my $set                  = $db->getGlobalUserSet($effectiveUserName, $setName);
 	#$set                = $db->getGlobalSet($setName) unless defined($set);
 	unless (defined $set) {
-		$userSetClass = $courseEnv->{dbLayout}->{set_user}->{record};
-		$set = global2user($userSetClass, $db->getGlobalSet($setName))
+		my $userSetClass = $courseEnv->{dbLayout}->{set_user}->{record};
+		$set                 = global2user($userSetClass, $db->getGlobalSet($setName));
+		$set->psvn('000');
 	}
 	# obtain the effective user problem, or if that is not yet defined obtain global problem
-	my $problem         = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
-	$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
+	my $problem              = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	unless (defined $set) {
+		my $userProblemClass = $courseEnv->{dbLayout}->{problem_user}->{record};
+		$problem             = global2user($userProblemClass, $db->getGlobalSet($setName));
+		$problem->max_attempts(-1);
+	}
+	#$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
 	# FIXME  
 	# a better solution at this point would be to take set and problem, convert them to global_user type
 	# so that they have the right methods.
