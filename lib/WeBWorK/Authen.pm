@@ -158,7 +158,7 @@ sub verify($) {
 			if ($debugPracticeUser and $user eq $debugPracticeUser) {
 				# clobber any existing session, valid or not.
 				my $Key = $self->generateKey($user);
-				$db->deleteKey($user);
+				eval { $db->deleteKey($user) };
 				$db->addKey($Key);
 				$r->param("key", $Key->key());
 				last VERIFY;
@@ -204,7 +204,7 @@ sub verify($) {
 				# valid password, so create a new session. (we don't want
 				# to reuse an old one, duh.)
 				my $Key = $self->generateKey($user);
-				$db->deleteKey($user);
+				eval { $db->deleteKey($user) };
 				$db->addKey($Key);
 				$r->param("key", $Key->key());
 				# also delete the password
