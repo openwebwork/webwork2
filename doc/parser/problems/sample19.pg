@@ -58,6 +58,8 @@ ANS(List($I)->cmp(
   list_type  => 'a list of intervals',  # override these names to avoid
   entry_type => "an interval",          # 'formula returning ...' messages
 ));
+Context()->variables->remove('x'); # error if 'x' is used in answer
+
 $showPartialCorrectAnswers = 1;
 
 ###########################################################

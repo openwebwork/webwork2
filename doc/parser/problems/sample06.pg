@@ -47,7 +47,7 @@ Context()->normalStrings;
 #  The answer
 #
 
-ANS(num_cmp(norm($V)->value));
+ANS(num_cmp(norm($V)->value));  # easier:  ANS($V->cmp)
 $showPartialCorrectAnswers = 1;
 
 ###########################################################

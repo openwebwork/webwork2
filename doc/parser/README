@@ -55,25 +55,59 @@ EXAMPLE FILES:
 The 'problems' directory contains several examples that show how to use 
 Parser within your problem files.
 
-    sample1.pg
+    sample01.pg
         Uses the parser to make a string into a formula that you can
         evaluate and print in TeX form
 
-    sample2.pg
+    sample02.pg
         Shows how to create formulas using perl's usual mathematical
         expressions rather than character strings.
 
-    sample3.pg
+    sample03.pg
         Shows how to use the parser's differentiation abilities.
 
-    sample4.pg and sample5.pg
+    sample04.pg and sample05.pg
         Use the parser in conjunction with the graphics macros to generate 
         function graphs on the fly.  These also show how to create a 
         perl function to evaluate an expression.
 
-    sample6.pg
+    sample06.pg
         Shows some simple use of vectors in a problem.
 
+    sample07.pg
+        Example if using the build-in Real object and its answer
+        checker
+
+   sample08.pg
+        Uses complex numbers and the built-in checker
+
+   sample09.pg and sample10.pg
+        Demonstrates points and vectors and their answer checkers
+
+   sample11.pg and sample12.pg
+        Shows the answer checkers for intervals and unions.
+
+   sample13.pg, sample14.pg, sample15.pg
+        Demonstrate various list checkers, including a check for the
+        word 'NONE', which is a predefined string.
+
+   sample16.pg, sample17.pg, sample18.pg
+        These show the multi-variable function checker in use (for
+        functions of the form R->R, R^2->R and R->R^3).
+
+   sample19.pg
+        Uses the function checker to implement a "constant" that can
+        be used in formulas.
+
+   sample20.pg
+        Shows how to use the parser's substitution abilities.
+
+   sample21.pg
+        Checks for a list of points.
+
+   sample22.pg
+        Shows how to provide named constants that the student can
+	use in his answer.
 
 The 'examples' directory contains samples that show how to extend the 
 parser to include your own functions, operators, and so on.  There are also 
