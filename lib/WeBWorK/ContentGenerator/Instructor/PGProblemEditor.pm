@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.44 2004/06/11 15:47:01 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.45 2004/06/14 20:54:17 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -181,6 +181,34 @@ sub initialize  {
 	}
 }
 
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath = $r->urlpath;
+	my $courseName  = $urlpath->arg("courseID");
+	my $setName = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
+
+	# we need to build a path to the problem being edited by hand, since it is not the same as the urlpath
+	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
+	my @path = ( 'WeBWork', $r->location,
+	          "$courseName", $r->location."/$courseName",
+	          "$setName",    $r->location."/$courseName/$setName",
+	          "$problemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	          "Editor", ""
+	);
+# 	do {
+# 		unshift @path, $urlpath->name, $r->location . $urlpath->path;
+# 	} while ($urlpath = $urlpath->parent);
+# 	
+# 	$path[$#path] = ""; # we don't want the last path element to be a link
+	
+	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
+	print $self->pathMacro($args, @path);
+	#print "<!-- END " . __PACKAGE__ . "::path -->\n";
+	
+	return "";
+}
 sub title {
 	my $self = shift;
 	my $r = $self->r;
