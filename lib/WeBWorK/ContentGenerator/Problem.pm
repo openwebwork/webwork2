@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.116 2004/03/04 21:05:54 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.117 2004/03/19 21:56:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -765,9 +765,9 @@ sub body {
 		print "\n",
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
 			$self->hidden_authen_fields,"\n",
-			CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'problemNumber', -value=>$problem->problem_id), "\n",
-			CGI::hidden(-name => 'setName',  -value=>$problem->set_id), "\n",
+			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
+			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
+			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
 			CGI::p( {-align=>"left"},
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
