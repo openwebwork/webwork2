@@ -127,30 +127,32 @@ sub getKey($$) {
 	my $result = $self->{keys_db}->hashRef->{$user};
 	$self->{keys_db}->disconnect;
 	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
-	return ($key, $timestamp);
+	if (time <= $timestamp+$self->{key_timeout}) {
+		return $key;
+	} else {
+		$self->deleteKey($user);
+		return 0;
+	}
 }
 
-sub setKey($$$$) {
+sub setKey($$$) {
 	my $self = shift;
 	my $user = shift;
 	my $key = shift;
-	my $timestamp = shift;
-	my $key_string = "$key $timestamp";
 	$self->{keys_db}->connect("rw");
-	$self->{keys_db}->hashRef->{$user} = $key_string;
+	$self->{keys_db}->hashRef->{$user} = "$key " . time;
 	$self->{keys_db}->disconnect;
 }
 
-sub verifyKey($$$$$) {
+sub verifyKey($$$) {
 	my $self = shift;
 	my $user = shift;
 	my $key = shift;
-	my $timestamp = shift;
-	my ($real_key, $real_timestamp) = $self->getKey($user);
-	return unless defined $real_key and defined $real_timestamp;
-	if ($key eq $real_key and $timestamp <= $real_timestamp+$self->{key_timeout}) {
+	my $real_key = $self->getKey($user);
+	return unless defined $real_key;
+	if ($key eq $real_key) {
 		# update timestamp
-		$self->setKey($user, $key, $timestamp);
+		$self->setKey($user, $real_key);
 		return 1;
 	} else {
 		return 0;
