@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.41 2004/06/17 16:52:24 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.42 2004/06/17 17:40:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,7 +106,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_sets" and do {
 		if ($nsets == 1) {
-			$module = "${ipfx}::ProblemSetEditor";
+			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
@@ -168,13 +168,13 @@ sub pre_header_initialize {
 		}
 	};
 	
-	defined param $r "edit_set_for_user" and do {
+	defined param $r "edit_set_for_users" and do {
 		if ($nusers == 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetEditor";
+			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
 			$params{editForUser} = $firstUserID;
 		} else {
-			push @error, E_ONE_USER unless $nusers == 1;
+			push @error, E_MIN_ONE_USER unless $nusers >= 1;
 			push @error, E_ONE_SET unless $nsets == 1;
 			
 		}
@@ -316,7 +316,7 @@ sub body {
 				CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)",
 			),
 			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>",
+				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for selected <b>users</b>",
 			),
 			CGI::td({colspan=>2,style=>'text-align:center'},
 				CGI::submit("add_users", "Add"). " new users.",
