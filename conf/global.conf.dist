@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.69 2004/05/24 02:01:25 dpvc Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.70 2004/05/24 18:25:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -301,13 +301,14 @@ $practiceUserPrefix = "practice";
 		lib    => "$pgRoot/lib",
 		macros => "$pgRoot/macros",
 	},
-	# this will be customized in the course.conf file
+	# this can be customized in the course.conf file
 	specialPGEnvironmentVars => {
 		PRINT_FILE_NAMES_FOR   => [ qw(professor) ],
 		CAPA_Tools             => "$courseDirs{macros}/CAPA_Tools/", 
 		CAPA_MCTools           => "$courseDirs{macros}/CAPA_MCTools/",  
 		CAPA_Graphics_URL      => "$courseURLs{html}/CAPA_Graphics/",   
 		CAPA_GraphicsDirectory => "$courseDirs{html}/CAPA_Graphics/", 
+		onTheFlyImageSize  => 400,
 	},
 	# modules lists module names and the packages each contains
 	modules => [
