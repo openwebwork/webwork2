@@ -1,6 +1,9 @@
 package WeBWorK::ContentGenerator::Problem;
 our @ISA = qw(WeBWorK::ContentGenerator);
-use lib '/Users/gage/webwork/xmlrpc/daemon';
+
+use strict;
+use warnings;
+use lib '/home/malsyned/xmlrpc/daemon';
 use lib '/Users/gage/webwork-modperl/lib';
 use PGtranslator5;
 use WeBWorK::ContentGenerator;
@@ -10,12 +13,13 @@ use Apache::Constants qw(:common);
 # Configuration
 ###############################################################################
 
-my $COURSE_SCRIPTS_DIRECTORY = '/Users/gage/webwork/system/courseScripts/';
-my $MACRO_DIRECTORY 	= 	'/Users/gage/webwork/courseData/templates/macro/';
-my $TEMPLATE_DIRECTORY 	= 	'/Users/gage/webwork/rochester_problib/';
+my $COURSE_SCRIPTS_DIRECTORY = '/home/malsyned/webwork/system/courseScripts/';
+my $MACRO_DIRECTORY 	= 	'/home/malsyned/webwork-modperl/courses/demoCourse/templates/macros/';
+my $TEMPLATE_DIRECTORY 	= 	'/home/malsyned/rochester_problib/';
 my $TEMP_URL   			=	'http://127.0.0.1/~gage/rochester_problibtmp/';
 ##my $HTML_DIRECTORY 		= 	'/Users/gage/Sites/rochester_problib/'  #already obtained from courseEnvironment
 my $HTML_URL 			=	'http://127.0.0.1/~gage/rochester_problib/';
+my $TEMP_DIRECTORY = ""; # has to be here... for now
 
 ###############################################################################
 # End configuration
@@ -43,7 +47,7 @@ sub title {
 #  These should be available from the problemEnvironment(it might be ok to assume that PG and dangerousMacros
 #  live in the courseScripts (system level macros) directory.
 
-print STDERR "Begin intitalization\n";
+#print STDERR "Begin intitalization\n";
 my $dummy_envir = {	courseScriptsDirectory 	=> 	$COURSE_SCRIPTS_DIRECTORY,
 					displayMode 			=>	'HTML_tth',
 					macroDirectory			=> 	$MACRO_DIRECTORY,
@@ -63,7 +67,7 @@ my @EXTRA_PACKAGES				= ( 	"AlgParserWithImplicitExpand", "Expr",
 										"ExprWithImplicitExpand", "AnswerEvaluator", 
 
 );
-$INITIAL_MACRO_PACKAGES 		=  <<END_OF_TEXT;
+my $INITIAL_MACRO_PACKAGES 		=  <<END_OF_TEXT;
 		DOCUMENT();
 		loadMacros(
 				"PGbasicmacros.pl",
@@ -99,15 +103,17 @@ sub body {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param('user');
 	
+	my $rh = {}; # this needs to be set to a hash containing CGI params
 	
-	my $SOURCE1 = readFile('set0/prob1c.pg');
+	
+	my $SOURCE1 = readFile("$problem_set/$problem.pg");
 	print STDERR "SOURCEFILE: \n$SOURCE1\n\n";
 	
 	###########################################################################
 	#  The pg problem class should have a method for installing it's problemEnvironment
 	###########################################################################
 	
-	$problemEnvir_rh = defineProblemEnvir($self);
+	my $problemEnvir_rh = defineProblemEnvir($self);
 	
 
 	##################################################################################
@@ -217,7 +223,7 @@ sub body {
 	#print problem output
 	print "Problem goes here<p>\n";
 	print "Problem output <br>\n";
-	print "################################################################################<br<br>";
+	print "################################################################################<br><br>";
 	print ${$pt->r_text()};
 	print "<br><br>################################################################################<br>";
 	print "<p>End of problem output<br>";
@@ -293,7 +299,7 @@ sub body {
 					WARNINGS	   				=> $WARNINGS,          #encode_base64($WARNINGS ),
 					problem_result 				=> $rh_problem_result,
 					problem_state				=> $rh_problem_state,
-					PG_flag						=> \%PG_flag
+					PG_flag						=> \%PG_FLAGS
 			   };
 	##########################################################################################
 	# Debugging printout of environment tables
@@ -550,7 +556,7 @@ BEGIN {
 	}
 	
 	$SIG{'FPE'}  = \&PG_floating_point_exception_handler;
-
+#!/usr/bin/perl  -w
 	sub PG_warnings_handler {
 		my @input = @_;
 		my $msg_string = longmess(@_);
