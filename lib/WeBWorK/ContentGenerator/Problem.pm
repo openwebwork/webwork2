@@ -687,7 +687,7 @@ sub previewAnswer($$) {
 
 		# call dvipng to generate a preview
 		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
-		rmtree($envir->{dvipngTempDir}, 0, 0);
+		rmtree($wd, 0, 0);
 		if (-e $targetPath) {
 			return "<img src=\"$targetURL\" alt=\"$tex\" />";
 		} else {
