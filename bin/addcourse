@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.3 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,8 @@ directory of the new course.
 =item I<COURSEID>
 
 The name of the course to create.
+
+=back
 
 =cut
 
