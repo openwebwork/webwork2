@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.26 2004/07/07 14:37:32 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.28 2004/09/08 01:07:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -760,6 +760,20 @@ sub problem2hash {
 #  API, but we need to be able to update them to remain compatible with WWDBv1.
 ################################################################################
 
+# list user IDs for which PSVN indices exist
+sub listPSVNUserIndices {
+	my ($self) = @_;
+	my $login_prefix = LOGIN_PREFIX;
+	return map { /^$login_prefix(.*)$/ ? $1 : () } keys %{ $self->{driver}->hash() };
+}
+
+# list set IDs for which PSVN indices exist
+sub listPSVNSetIndices {
+	my ($self) = @_;
+	my $set_prefix = SET_PREFIX;
+	return map { /^$set_prefix(.*)$/ ? $1 : () } keys %{ $self->{driver}->hash() };
+}
+
 # retrieves a list of existing PSVNs from the user PSVN index
 sub getPSVNsForUser {
 	my ($self, $userID) = @_;
@@ -898,3 +912,93 @@ sub deleteString {
 }
 
 1;
+
+__END__
+
+	##### make sure all PSVNs appear in exactly one user index and set index #####
+	
+	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash") {
+		
+		my (%PSVNUsers, %PSVNSets);
+		
+		$self->{set_user}->{driver}->connect("ro")
+			or die "hashDatabaseOK($fix): failed to connect to set_user database for reading.\n";
+		
+		my @userIDs = $self->{set_user}->listPSVNUserIndices;
+		foreach my $userID (@userIDs) {
+			my @PSVNs = $self->{set_user}->getPSVNsForUser($userIDs);
+			foreach my $PSVN (@PSVNs) {
+				push @{$PSVNUsers{$PSVN}}, $userID;
+			}
+		}
+		
+		my @setIDs = $self->{set_user}->listPSVNSetIndices;
+		foreach my $setID (@setIDs) {
+			my @PSVNs = $self->{set_user}->getPSVNsForUser($setIDs);
+			foreach my $PSVN (@PSVNs) {
+				push @{$PSVNSets{$PSVN}}, $setID;
+			}
+		}
+		
+		my @PSVNs = $self->{set_user}->getAllPSVNs;
+		
+		if ($fix) {
+			$self->{set_user}->{driver}->disconnect;
+			$self->{set_user}->{driver}->connect("rw")
+				or die "hashDatabaseOK($fix): failed to connect to set_user database for writing.\n";
+		}
+		
+		foreach my $PSVN (@PSVNs) {
+			my $inUserIndex = exists $PSVNUsers{$PSVN};
+			my $inSetIndex = exists $PSVNSets{$PSVN};
+			
+			if ($inUserIndex) {
+				my @usersForPSVN = @{$PSVNUsers{$PSVN}};
+				warn "hashDatabaseOK($fix): PSVN '$PSVN' listed in user indices: @usersForPSVN.\n";
+				
+				if (@usersForPSVN > 1) {
+					warn "hashDatabaseOK($fix): PSVN '$PSVN' listed in multiple user indices.\n";
+					my $string = $self->{set_user}->fetchString($PSVN);
+					my ($userID, $setID) = $self->{set_user}->string2IDs($string); # discard problemIDs
+					warn "hashDatabaseOK($fix): PSVN '$PSVN' identifies set '$setID' for user '$userID'.\n";
+					if ($fix) {
+						
+					} else {
+						my $error = "PSVN '$PSVN' listed in multiple user indices: @usersForPSVN. Belongs in index: $userID.";
+						warn "hashDatabaseOK($fix): $error\n";
+						$errorsExist = 1;
+						push @results, $error;
+					}
+				}
+			} else {
+				if ($fix) {
+					# add PSVN to appropriate user index
+				} else {
+					my $error = "PSVN '$PSVN' not found in any user index.";
+					warn "hashDatabaseOK($fix): $error\n";
+					$errorsExist = 1;
+					push @results, $error;
+				}
+			}
+			
+			if ($inSetIndex) {
+				my @setsForPSVN = @{$PSVNSets{$PSVN}};
+				warn "hashDatabaseOK($fix): PSVN '$PSVN' listed in set indices: @setsForPSVN.\n";
+			} else {
+				if ($fix) {
+					# add PSVN to appropriate set index
+				} else {
+					my $error = "PSVN '$PSVN' not found in any set index.";
+					warn "hashDatabaseOK($fix): $error\n";
+					$errorsExist = 1;
+					push @results, $error;
+				}
+			}
+		}
+		
+		$self->{set_user}->{driver}->disconnect;
+		
+	} else {
+		#warn "hashDatabaseOK($fix): set_user table doesn't use WW1Hash -- can't continue checking.\n";
+		return 1;
+	}
