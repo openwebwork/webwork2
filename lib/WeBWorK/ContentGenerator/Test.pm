@@ -6,53 +6,24 @@ package WeBWorK::ContentGenerator::Test;
 # since it's generally where I dump new functionality before I put it in any
 # end-user modules.
 
-use Apache::Request;
-use Apache::Constants qw(:common);
-use WeBWorK::ContentGenerator;
-use WeBWorK::Utils qw(hash2string);
-
-#use CGI::Carp qw(fatalsToBrowser);
-
-our @ISA = qw(WeBWorK::ContentGenerator);
+use strict;
+use warnings;
+use base 'WeBWorK::ContentGenerator';
+use CGI qw();
+use WeBWorK::Utils qw(ref2string);
+use WeBWorK::Form;
 
 sub title {
-	return "Welcome to Hell.";
+	return "Welcome to Hell";
 }
 
-sub body() {
+sub body {
 	my $self = shift;
-	my $r = $self->{r};
-	my $course_env = $self->{courseEnvironment};
-	# get some stuff together
-	my $user = $r->param("user");
-	my $key = $r->param("key");
-	my $uri = $r->uri;
-
-	print "<h1>There you go.</h1>","<p>You're now accessing $uri.</p>";
-
-	print $self->print_form_data(""," = ","<br>\n");
-
-	print '<br><form method="POST" action="',$r->uri,'">';
-	print $self->print_form_data('<input type="hidden" name="','" value = "',"\">\n");
-	print '<input type="file" name="filefield">';
-	print '<input type="submit" value="file upload test"></form>';
-	
-	print '<br><form method="POST" action="',$r->uri,'">';
-	print $self->print_form_data('<input type="hidden" name="','" value = "',"\">\n");
-	print '<input type="submit" value="repost"></form>';
-	
-	print '<form method="POST" action="',$r->uri,'">';
-	print $self->print_form_data('<input type="hidden" name="','" value = "',"\">\n",qr/^key$/);
-	print "<input type=\"hidden\" name=\"key\" value=\"invalidkeyhahaha\">";
-	print '<input type="submit" value="invalidate key"></form>';
-
-	print "<hr><pre>";
-	
-	print hash2string($course_env);
-
-	print "</pre>";
-
-	"";
+	my $formFields = WeBWorK::Form->new_from_paramable($self->{r});
+	my $courseEnvironment = $self->{courseEnvironment};
+	return
+		CGI->h2("Form Fields"), ref2string($formFields),
+		CGI->h2("Course Environment"), ref2string($courseEnvironment);
 }
 
 1;
