@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.16 2004/06/23 23:11:03 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.17 2004/06/24 17:44:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,32 +30,31 @@ use DBI;
 use File::Path qw(rmtree);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(runtime_use undefstr readDirectory);
+use WeBWorK::Utils qw(runtime_use readDirectory);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
+	listCourses
 	addCourse
 	renameCourse
 	deleteCourse
-	listCourses
 );
-
-use constant CREATE_HELPERS => {
-	sql => \&addCourseSQL,
-};
-
-use constant RENAME_HELPERS => {
-	sql => \&renameCourseSQL,
-	gdbm => \&renameCourseGDBM,
-};
-
-use constant DELETE_HELPERS => {
-	sql => \&deleteCourseSQL,
-};
 
 =head1 FUNCTIONS
 
 =over
+
+=item listCourses($ce)
+
+Lists the courses defined. 
+
+=cut
+
+sub listCourses {
+	my ($ce) = @_;
+	my $coursesDir = $ce->{webworkDirs}->{courses};
+	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+}
 
 =item addCourse(%options)
 
@@ -166,11 +165,8 @@ sub addCourse {
 	
 	##### step 2: create course database (if necessary) #####
 	
-	my $createHelper = CREATE_HELPERS->{$dbLayoutName};
-	if (defined $createHelper) {
-		my $createHelperResult = $createHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
-		die "$courseID: course database creation failed.\n" unless $createHelperResult;
-	}
+	my $createHelperResult = addCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+	die "$courseID: course database creation failed.\n" unless $createHelperResult;
 	
 	##### step 3: populate course database #####
 	
@@ -256,7 +252,7 @@ Any errors encountered while renaming the course are returned.
 sub renameCourse {
 	my ($webworkRoot, $oldCourseID, $newCourseID) = @_;
 	
-	
+	return 0;
 }
 
 =item deleteCourse(%options)
@@ -309,13 +305,10 @@ sub deleteCourse {
 	##### step 1: delete course database (if necessary) #####
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
-	my $deleteHelper = DELETE_HELPERS->{$dbLayoutName};
-	if (defined $deleteHelper) {
-		my $deleteHelperResult = $deleteHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
-		debug("deleteHelper returned '$deleteHelperResult'.");
-		unless ($deleteHelperResult) {
-			die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
-		}
+	my $deleteHelperResult = deleteCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+	debug("deleteHelper returned '$deleteHelperResult'.");
+	unless ($deleteHelperResult) {
+		die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
 	}
 	
 	##### step 2: delete course directory structure #####
@@ -329,20 +322,6 @@ sub deleteCourse {
 	}
 }
 
-=item listCourses($ce)
-
-Lists the courses defined. 
-
-=cut
-
-sub listCourses {
-	my ($ce) = @_;
-	
-	my $coursesDir = $ce->{webworkDirs}->{courses};
-	
-	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
-}
-
 =back
 
 =cut
@@ -351,165 +330,48 @@ sub listCourses {
 
 =head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
 
-These functions are used by the methods and should not be called directly.
+The addCourseHelper(), renameCourseHelper(), and deleteCourseHelper() functions
+are used by addCourse(), renameCourse(), and deleteCourse() to perform
+database-layout specific operations, such as creating a database. They are
+called after the course directory structure has been created, but before the
+database is initialized.
+
+The implementations in this class do nothing, but if an appropriate function
+exists in a class with the name
+WeBWorK::Utils::CourseManagement::I<$dbLayoutName>, it will be used instead.
 
 =over
 
-=item addCourseSQL($courseID, $ce, $dbLayoutName, %options)
+=item addCourseHelper($courseID, $ce, $dbLayoutName, %options)
 
-Creates the course database for an SQL course. Return value is boolean,
-indicates success or failure.
+Perform database-layout specific operations for adding a course.
 
 =cut
 
-sub addCourseSQL {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	
-	##### parse dbLayout to generate sql statements #####
-	
-	my %sources;
-	
-	debug("dbLayoutName=$dbLayoutName");
-	
-	my %dbLayout = %{ $ce->{dbLayouts}->{$dbLayoutName} };
-	
-	my @tables = keys %dbLayout;
-	debug("layout defines the following tables: @tables");
-	
-	foreach my $table (@tables) {
-		my %table = %{ $dbLayout{$table} };
-		my %params = %{ $table{params} };
-		
-		my $source = $table{source};
-		debug("$table: DBI source is $source\n");
-		
-		my $tableOverride = $params{tableOverride};
-		debug("$table: SQL table name is ", undefstr("not defined", $tableOverride), "\n");
-		
-		my $recordClass = $table{record};
-		debug("$table: record class is $recordClass\n");
-		
-		runtime_use($recordClass);
-		my @fields = $recordClass->FIELDS;
-		debug("$table: WeBWorK field names: @fields\n");
-		
-		if (exists $params{fieldOverride}) {
-			my %fieldOverride = %{ $params{fieldOverride} };
-			foreach my $field (@fields) {
-				$field = $fieldOverride{$field} if exists $fieldOverride{$field};
-			}
-			debug("$table: SQL field names: @fields\n");
-		}
-		
-		# generate table creation statement
-		
-		my $tableName = $tableOverride || $table;
-		my @fieldList;
-		foreach my $field (@fields) {
-			# a stupid hack to make PSVNs numeric and auto-increment
-			if ($field eq "psvn") {
-				push @fieldList, "$field INT NOT NULL PRIMARY KEY AUTO_INCREMENT";
-			} else {
-				push @fieldList, "$field TEXT";
-			}
-		}
-		my $fieldString = join(", ", @fieldList);
-		my $createStmt = "CREATE TABLE $tableName ( $fieldString );";
-
-		debug("$table: CREATE statement is: $createStmt\n");
-		
-		# generate GRANT statements
-		
-		my $grantStmtRO = "GRANT SELECT"
-				. " ON `$options{database}`.$tableName"
-				. " TO $params{usernameRO}\@$options{wwhost}"
-				. " IDENTIFIED BY '$params{passwordRO}';";
-		my $grantStmtRW = "GRANT SELECT, INSERT, UPDATE, DELETE"
-				. " ON `$options{database}`.$tableName"
-				. " TO $params{usernameRW}\@$options{wwhost}"
-				. " IDENTIFIED BY '$params{passwordRW}';";
-		
-		debug("$table: GRANT RO statement is: $grantStmtRO\n");
-		debug("$table: GRANT RW statement is: $grantStmtRW\n");
-		
-		# add to source hash
-		
-		if (exists $sources{$source}) {
-			push @{ $sources{$source} }, $createStmt, $grantStmtRO, $grantStmtRW;
-		} else {
-			$sources{$source} = [ $createStmt, $grantStmtRO, $grantStmtRW ];
-		}
-		
-		#warn "\n";
-	}
-	
-	##### handle multiple sources #####
-	
-	# if more than one source is listed, we only want to create the tables that
-	# have the most popular source
-	
-	my $source;
-	if (keys %sources > 1) {
-		# more than one -- warn and select the most popular source
- 		debug("database layout $dbLayoutName defines more than one SQL source.\n");
-		foreach my $curr (keys %sources) {
-			$source = $curr if not defined $source or @{ $sources{$curr} } > @{ $sources{$source} };
- 		}
- 		debug("only creating tables with source \"$source\".\n");
- 		debug("others will have to be created manually.\n");
- 	} else {
-		# there's only one
-		($source) = keys %sources;
-	}
-	my @stmts = (
-		"CREATE DATABASE `$options{database}`;",
-		"USE $options{database};", # oddly, backquotes prohibited with USE statement...
-		@{ $sources{$source} }
-	);
-	
-	##### issue SQL statements #####
-	
-	my ($driver) = $source =~ m/^dbi:(\w+):/i;
-	return execSQLStatements($driver, $ce->{externalPrograms}, \%options, @stmts)
+sub addCourseHelper {
+	my $result = callHelperIfExists("addCourseHelper", @_);
+	return $result;
 }
 
-=item renameCourseSQL($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
+=item renameCourseHelper($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
+
+Perform database-layout specific operations for renaming a course.
 
 =cut
 
-=item deleteCourseSQL($courseID, $ce, $dbLayoutName, %options)
-
-=cut
-
-sub deleteCourseSQL {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	
-	# get the most popular DBI source, so we know what driver to use
-	my $dbi_source = do {
-		my %sources;
-		foreach my $table (keys %{ $ce->{dbLayouts}->{$dbLayoutName} }) {
-			$sources{$ce->{dbLayouts}->{$dbLayoutName}->{$table}->{source}}++;
-		}
-		my $source;
-		if (keys %sources > 1) {
-			foreach my $curr (keys %sources) {
-				$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
-			}
-		} else {
-			($source) = keys %sources;
-		}
-		$source;
-	};
-	
-	my $stmt = "DROP DATABASE `$options{database}`;";
-	
-	my ($driver) = $dbi_source =~ m/^dbi:(\w+):/i;
-	return execSQLStatements($driver, $ce->{externalPrograms}, \%options, $stmt);
+sub renameCourseHelper {
+	return callHelperIfExists("renameCourseHelper", @_);
 }
 
-=item renameCourseGDBM($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
+=item deleteCourseHelper($courseID, $ce, $dbLayoutName, %options)
+
+Perform database-layout specific operations for renaming a course.
 
 =cut
+
+sub deleteCourseHelper {
+	return callHelperIfExists("deleteCourseHelper", @_);
+}
 
 =back
 
@@ -519,69 +381,47 @@ sub deleteCourseSQL {
 
 =head1 UTILITIES
 
-These functions are used by the methods and should not be called directly.
+These functions are used by this class's public functions and should not be
+called directly.
 
 =over
 
-=item execSQLStatements($driver, $externalPrograms, $dbOptions, @statements)
+=item callHelperIfExists($helperName, $args)
 
-Execute the listed SQL statements. The appropriate SQL console is determined
-using $driver and invoked with the options listed in $dbOptions.
-
-$options is a reference to a hash containing the pairs accepted in %dbOptions by
-addCourse(), above.
-
-Returns true on success, false on failure.
+Call a database-specific helper function, if a database-layout specific helper
+class exists and contains a function named "${helperName}Helper".
 
 =cut
 
-sub execSQLStatements {
-	my ($driver, $externalPrograms, $dbOptions, @statements) = @_;
-	my %options = %$dbOptions;
+sub callHelperIfExists {
+	my $helperName = shift;
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	
-	my $exit_status;
+	my $result;
 	
-	if (lc $driver eq "mysql") {
-		my @commandLine = ( $externalPrograms->{mysql} );
-		push @commandLine, "--host=$options{host}" if exists $options{host};
-		push @commandLine, "--port=$options{port}" if exists $options{port};
-		push @commandLine, "--user=$options{username}" if exists $options{username};
-		push @commandLine, "--password=$options{password}" if exists $options{password};
-		
-		open my $mysql, "|@commandLine"
-				or die "execSQLStatements: failed to execute \"@commandLine\": $!\n";
-		
-		# exec sql statements
-		foreach my $stmt (@statements) {
-			debug("exec: $stmt");
-			print $mysql "$stmt\n";
+	my $package = __PACKAGE__ . "::$dbLayoutName";
+	
+	eval { runtime_use $package };
+	if ($@) {
+		if ($@ =~ /^Can't locate/) {
+			#warn "No database-layout specific library for layout '$dbLayoutName'.\n";
+			$result = 1;
+		} else {
+			warn "Failed to load database-layout specific library: $@\n";
+			$result = 0;
 		}
-		
-		close $mysql;
-		$exit_status = $?;
+	} else {
+		my %syms = do { no strict 'refs'; %{$package."::"} };
+		if (exists $syms{$helperName}) {
+			my $func = do { no strict 'refs'; \&{$package."::".$helperName} };
+			$result = $func->(@_);
+		} else {
+			#warn "No helper defined for operation '$helperName'.\n";
+			$result = 1;
+		}
 	}
 	
-	# add code to deal with other RDBMSs here:
-	# 
-	#elsif (lc $driver eq "foobar") {
-	#	# do something else
-	#}
-	
-	else {
-		die "execSQLStatements: driver \"$driver\" is not supported.\n";
-	}
-	
-	# "...the exit value of the subprocess is in the high byte, that is, $? >>
-	# 8; in the low byte, $? & 127 says which signal (if any) the process died
-	# from, while $? & 128 reports whether its demise produced a core dump."
-	#     -- Camel, 3rd ed
-	my $status = $exit_status >> 8;
-	#my $signal = $exit_status & 127;
-	#my $core = $exit_status & 128
-	
-	# we want to return true for success and false for failure
-	debug("SQL console returned exit status $status.\n");
-	return not $status;
+	return $result;
 }
 
 =item protectQString($string)
