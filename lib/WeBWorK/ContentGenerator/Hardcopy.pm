@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.41 2003/12/18 02:35:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.42 2004/03/04 21:05:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,8 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	
 	my $r               = $self->{r};
-	my $singleSet = $r->urlpath->args("setID");
+	#my $singleSet = $r->urlpath->args("setID");
+	my $singleSet;  #FIXME trace down how sets are being passed to hardcopy.
 	my $ce              = $self->{ce};
 	my $db              = $self->{db};
 	my @sets            = $r->param("hcSet");
@@ -51,7 +52,7 @@ sub pre_header_initialize {
 		$singleSet =~ s/^set//;
 		unshift @sets, $singleSet unless grep { $_ eq $singleSet } @sets;
 	}
-	
+	#die "single set is $singleSet and sets is ", join("|",@sets);
 	# default user is the effectiveUser
 	unless (@users) {
 		unshift @users, $r->param("effectiveUser");
