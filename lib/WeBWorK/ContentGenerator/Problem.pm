@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.129 2004/05/14 22:03:54 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.130 2004/05/20 21:25:20 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -558,10 +558,11 @@ sub body {
 	$WeBWorK::timer->continue("begin answer processing") if defined($WeBWorK::timer);
 	# if answers were submitted:
 	my $scoreRecordedMessage;
+	my $pureProblem;
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
 		# this will be undefined if the problem has not been assigned to this user
-		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
+		$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
@@ -630,7 +631,7 @@ sub body {
 	# logging student answers
 
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
-	if ( defined($answer_log )) {
+	if ( defined($answer_log ) and defined($pureProblem)) {
 		if ($submitAnswers ) {
 			my $answerString = "";
 			my %answerHash = %{ $pg->{answers} };
