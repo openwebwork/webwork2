@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.20 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.21 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,15 +54,29 @@ sub initialize {
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
 		
+		# pre-fetch users
+		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
+		my @Users = $db->getUsers($db->listUsers);
+		my (%usersByStudentID, %studentIDsByUserID);
+		foreach my $User (@Users) {
+			next unless $User;
+			my $userID = $User->user_id;
+			my $studentID = $User->student_id;
+			$usersByStudentID{$studentID} = $User;
+			$studentIDsByUserID{$userID} = $studentID;
+		}
+		my @userInfo = (\%usersByStudentID, \%studentIDsByUserID);
+		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
+	
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
 		my (@everything, @normal,@full,@info,@totalsColumn);
-		@info                      = $self->scoreSet($selected[0], "info");
+		@info                      = $self->scoreSet($selected[0], "info", undef, @userInfo);
 		@totals                    =@info;
 		my $showIndex              = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
      
 		foreach my $setID (@selected) {
 			if ($scoringType eq 'everything') {
-				@everything = $self->scoreSet($setID, "everything",$showIndex);
+				@everything = $self->scoreSet($setID, "everything", $showIndex, @userInfo);
 				@normal = $self->everything2normal(@everything);
 				@full = $self->everything2full(@everything);
 				@info = $self->everything2info(@everything);
@@ -71,7 +85,7 @@ sub initialize {
 				$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
 				$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);				
 			} else {
-				@totalsColumn  = $self->scoreSet($setID, "totals",$showIndex);
+				@totalsColumn  = $self->scoreSet($setID, "totals", $showIndex, @userInfo);
 				$self->appendColumns(\@totals, \@totalsColumn);
 			}	
 		}
@@ -79,17 +93,17 @@ sub initialize {
 	}   
 	
 	# Obtaining list of sets:
-	$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
+	#$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
 	my @setNames =  $db->listGlobalSets();
-	$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
+	#$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
 	my @set_records = ();
-	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
+	#$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
 	@set_records = $db->getGlobalSets( @setNames); 
-	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
+	#$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
 	
 	
 	# store data
-	$self->{ra_sets}              =   \@setNames;
+	$self->{ra_sets}              =   \@setNames; # ra_sets IS NEVER USED AGAIN!!!!!
 	$self->{ra_set_records}       =   \@set_records;
 	
 	
@@ -142,21 +156,38 @@ sub body {
 		my @selected = $r->param('selectedSet');
 		print CGI::p("All of these files will also be made available for mail merge");
 		foreach my $setID (@selected) {
-			print CGI::h2("$setID");
+			#print CGI::h2("$setID");
+			#foreach my $type ("scr", "ful") {
+			#	my $filename = "s$setID$type.csv";
+			#	my $path = "$scoringDir/$filename";
+			#	if (-f $path) {
+			#		print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
+			#		print CGI::br();
+			#	}
+			#}
+			#print CGI::hr();
+			
+			my @validFiles;
 			foreach my $type ("scr", "ful") {
 				my $filename = "s$setID$type.csv";
 				my $path = "$scoringDir/$filename";
-				if (-f $path) {
+				push @validFiles, $filename if -f $path;
+			}
+			if (@validFiles) {
+				print CGI::h2("$setID");
+				foreach my $filename (@validFiles) {
 					print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
 					print CGI::br();
 				}
+				print CGI::hr();
 			}
-			print CGI::hr();
 		}
-		print CGI::h2("Totals");
-		print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
-		print CGI::hr();
-		print CGI::pre(WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
+		if (-f "$scoringDir/${courseName}_totals.csv") {
+			print CGI::h2("Totals");
+			print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
+			print CGI::hr();
+			print CGI::pre(WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
+		}
 	}
 	
 	return "";
@@ -171,7 +202,7 @@ sub body {
 #   info: student info columns only
 #   totals: total column only
 sub scoreSet {
-	my ($self, $setID, $format, $showIndex) = @_;
+	my ($self, $setID, $format, $showIndex, $usersRef, $userStudentIDRef) = @_;
 	my $db = $self->{db};
 	my @scoringData;
 	my $scoringItems   = {    info             => 0,
@@ -186,17 +217,21 @@ sub scoreSet {
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID); #checked
 	die "global set $setID not found. " unless $setRecord;
-	my %users;
-	my %userStudentID=();
-	$WeBWorK::timer->continue("Begin getting users for set $setID") if defined($WeBWorK::timer);
-	foreach my $userID ($db->listUsers()) {
-		my $userRecord = $db->getUser($userID); # checked
-		die "user record for $userID not found" unless $userID;
-		# The key is what we'd like to sort by.
-		$users{$userRecord->student_id} = $userRecord;
-		$userStudentID{$userID} = $userRecord->student_id;
-	}
-	$WeBWorK::timer->continue("End getting users for set $setID") if defined($WeBWorK::timer);
+	#my %users;
+	#my %userStudentID=();
+	#$WeBWorK::timer->continue("Begin getting users for set $setID") if defined($WeBWorK::timer);
+	#foreach my $userID ($db->listUsers()) {
+	#	my $userRecord = $db->getUser($userID); # checked
+	#	die "user record for $userID not found" unless $userID;
+	#	# FIXME: if two users have the same student ID, the second one will
+	#	# clobber the first one. this is bad!
+	#	# The key is what we'd like to sort by.
+	#	$users{$userRecord->student_id} = $userRecord;
+	#	$userStudentID{$userID} = $userRecord->student_id;
+	#}
+	#$WeBWorK::timer->continue("End getting users for set $setID") if defined($WeBWorK::timer);	
+	my %users = %$usersRef;
+	my %userStudentID = %$userStudentIDRef;
 	
 	my @problemIDs = $db->listGlobalProblems($setID);
 
@@ -252,7 +287,7 @@ sub scoreSet {
 	
 	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
-	my @userKeys = sort keys %users;
+	my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
 		$scoringData[0][0] = "NO OF FIELDS";
@@ -281,6 +316,22 @@ sub scoreSet {
 	}
 	return @scoringData if $format eq "info";
 	
+	# pre-fetch global problems
+	$WeBWorK::timer->continue("pre-fetching global problems for set $setID") if defined($WeBWorK::timer);
+	my %GlobalProblems = map { $_->problem_id => $_ }
+		$db->getAllGlobalProblems($setID);
+	$WeBWorK::timer->continue("done pre-fetching global problems for set $setID") if defined($WeBWorK::timer);
+	
+	# pre-fetch user problems
+	$WeBWorK::timer->continue("pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
+	my %UserProblems; # $UserProblems{$userID}{$problemID}
+	foreach my $userID (keys %userStudentID) {
+		my %CurrUserProblems = map { $_->problem_id => $_ }
+			$db->getAllUserProblems($userID, $setID);
+		$UserProblems{$userID} = \%CurrUserProblems;
+	}
+	$WeBWorK::timer->continue("done pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
+	
 	# Write the problem data
 	my $dueDateString = formatDateTime($setRecord->due_date);
 	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
@@ -290,8 +341,11 @@ sub scoreSet {
 	my %numberOfAttempts = ();
 	my $num_of_problems  = @problemIDs;
 	for (my $problem = 0; $problem < @problemIDs; $problem++) {
-		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]); #checked
+		
+		#my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]); #checked
+		my $globalProblem = $GlobalProblems{$problemIDs[$problem]};
 		die "global problem $problemIDs[$problem] not found for set $setID" unless $globalProblem;
+		
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
 			$scoringData[0][$column] = "";
@@ -317,17 +371,19 @@ sub scoreSet {
 		}
 		$valueTotal += $globalProblem->value;
 		
- 		my @userLoginIDs = $db->listUsers();
- 		$WeBWorK::timer->continue("Begin getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
- 		#my @userProblems = $db->getMergedProblems( map { [ $_, $setID, $problemIDs[$problem] ] } @userLoginIDs );
- 		my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs ); # checked
- 		my %userProblems;
- 		foreach my $item (@userProblems) {
- 			$userProblems{$item->user_id} = $item if ref $item;
- 		}
- 		$WeBWorK::timer->continue("End getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
+ 		#my @userLoginIDs = $db->listUsers();
+		#$WeBWorK::timer->continue("Begin getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
+ 		##my @userProblems = $db->getMergedProblems( map { [ $_, $setID, $problemIDs[$problem] ] } @userLoginIDs );
+ 		#my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs ); # checked
+ 		#my %userProblems;
+ 		#foreach my $item (@userProblems) {
+ 		#	$userProblems{$item->user_id} = $item if ref $item;
+ 		#}
+ 		#$WeBWorK::timer->continue("End getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
+		
 		for (my $user = 0; $user < @userKeys; $user++) {
-			my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
+			#my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
+			my $userProblem = $UserProblems{$users{$userKeys[$user]}->user_id}{$problemIDs[$problem]};
 			unless (defined $userProblem) { # assume an empty problem record if the problem isn't assigned to this user
 				$userProblem = $db->newUserProblem;
 				$userProblem->status(0);
