@@ -127,7 +127,7 @@ sub renderProblems {
   my $db = $r->db; 
   my $ce = $r->ce; 
   my $key = $r->param('key'); 
-  my $set = fake_set($db); 
+  my $set = $args{'this_set'} || fake_set($db); 
   my $problem_seed = $args{'problem_seed'} || $r->param('problem_seed') || 0;
   my $displayMode = $args{displayMode} ||
     $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
