@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.50 2004/03/04 21:00:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.51 2004/03/15 02:25:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -109,7 +109,7 @@ sub dispatch($) {
 	debug("Now we need to look at the path a little to figure out where we are\n");
 	
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
-	my $urlPath = newFromPath WeBWorK::URLPath $path;
+	my $urlPath = WeBWorK::URLPath->newFromPath($path);
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
 	
 	unless ($urlPath) {
@@ -140,6 +140,9 @@ sub dispatch($) {
 	debug("(We could also figure out who our children are, but we'd need to supply additional arguments.)\n");
 	debug(("-" x 80) . "\n");
 	
+	debug("The URLPath looks good, we'll add it to the request.\n");
+	$r->urlpath($urlPath);
+	
 	debug("Now we want to look at the parameters we got.\n");
 	
 	debug("The raw params:\n");
@@ -161,6 +164,7 @@ sub dispatch($) {
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
 	debug("Here's the course environment: $ce\n");
+	$r->ce($ce);
 	
 	my @uploads = $r->upload;
 	foreach my $u (@uploads) {
@@ -185,16 +189,18 @@ sub dispatch($) {
 		debug("...we can create a database object...\n");
 		$db = new WeBWorK::DB($ce->{dbLayout});
 		debug("(here's the DB handle: $db)\n");
+		$r->db($db);
 		
 		debug("...and we can authenticate the remote user...\n");
-		my $authen = new WeBWorK::Authen $r, $ce, $db;
+		my $authen = new WeBWorK::Authen($r);
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
 			debug("Hi, ", $r->param("user"), ", glad you made it.\n");
 			
 			debug("Authentication succeeded, so it makes sense to create an authz object...\n");
-			$authz = new WeBWorK::Authz $r, $ce, $db;
+			$authz = new WeBWorK::Authz($r, $ce, $db);
 			debug("(here's the authz object: $authz)\n");
+			$r->authz($authz);
 			
 			debug("Now we deal with the effective user:\n");
 			my $userID = $r->param("user");
@@ -214,12 +220,6 @@ sub dispatch($) {
 			debug("set displayModule to $displayModule\n");
 		}
 	}
-	
-	debug("Now we add \$ce, \$db, \$authz, and \$urlPath to the WeBWorK::Request object.\n");
-	$r->ce($ce);
-	$r->db($db);
-	$r->authz($authz);
-	$r->urlpath($urlPath);
 	
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
