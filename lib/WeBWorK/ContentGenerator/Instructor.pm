@@ -36,7 +36,7 @@ use CGI qw();
 		$pathString .="<hr>";
 		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
 		$pathString .=  '&nbsp;&nbsp;'.CGI::a({-href=>$addStudent}, "Add&nbsp;Student") . CGI::br();
-		$pathString .= CGI::a({-href=>$problemSetList}, "ProbSet&nbsp;editor") . CGI::br();
+		$pathString .= CGI::a({-href=>$problemSetList}, "ProbSet&nbsp;list") . CGI::br();
 	}
 	return $self->SUPER::links() . $pathString;
 }
