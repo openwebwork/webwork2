@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.59 2004/06/23 20:45:01 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.61 2004/07/01 23:35:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -167,7 +167,8 @@ sub dispatch($) {
 	$WeBWorK::timer->start;
 	
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
+	my $ce = eval { new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID}) };
+	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
 	
@@ -189,8 +190,13 @@ sub dispatch($) {
 	
 	my ($db, $authz);
 	
-	if ($displayArgs{courseID} and not $ce->{'!'}) {
+	if ($displayArgs{courseID}) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
+		
+		unless (-e $ce->{courseDirs}->{root}) {
+			die "Course '$displayArgs{courseID}' not found: $!";
+		}
+		
 		debug("...we can create a database object...\n");
 		$db = new WeBWorK::DB($ce->{dbLayout});
 		debug("(here's the DB handle: $db)\n");
@@ -237,14 +243,14 @@ sub dispatch($) {
 		}
 	}
 	
-	# if a course ID was given in the URL and resulted in an error (as stored in $!)
-	# it probably means that the course does not exist or was misspelled
-	if ($displayArgs{courseID} and $ce->{'!'}) {
-		debug("Something was wrong with the courseID: \n");
-		debug("\t\t" . $ce->{'!'} . "\n");
-		debug("Time to bail!\n");
-		die "An error occured while accessing '$displayArgs{courseID}': '", $ce->{'!'}, "'.\n";
-	}
+	## if a course ID was given in the URL and resulted in an error (as stored in $!)
+	## it probably means that the course does not exist or was misspelled
+	#if ($displayArgs{courseID} and $ce->{'!'}) {
+	#	debug("Something was wrong with the courseID: \n");
+	#	debug("\t\t" . $ce->{'!'} . "\n");
+	#	debug("Time to bail!\n");
+	#	die "An error occured while accessing '$displayArgs{courseID}': '", $ce->{'!'}, "'.\n";
+	#}
 	
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
