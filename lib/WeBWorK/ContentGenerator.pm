@@ -441,17 +441,17 @@ sub links {
 	return "" unless defined $key;
 	
 	# URLs to parts of the system
-	my $probSets = "$root/$courseName/?"         . $self->url_authen_args();
-	my $prefs    = "$root/$courseName/options/?" . $self->url_authen_args();
-	my $prof     = "$root/$courseName/prof/?"    . $self->url_authen_args();
-	my $help     = "$ce->{webworkURLs}->{docs}?" . $self->url_authen_args();
-	my $logout   = "$root/$courseName/logout/?"  . $self->url_authen_args();
+	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
+	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
+	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
+	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
+	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
 	
 	return
 		CGI::a({-href=>$probSets}, "Problem Sets"). CGI::br().
 		CGI::a({-href=>$prefs}, "User Options"). CGI::br().
 		($permLevel > 0
-			? CGI::a({-href=>$prof}, "Professor") . CGI::br()
+			? CGI::a({-href=>$instructor}, "Instructor") . CGI::br()
 			: "").
 		CGI::a({-href=>$help}, "Help"). CGI::br().
 		CGI::a({-href=>$logout}, "Log Out"). CGI::br()

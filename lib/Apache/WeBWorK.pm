@@ -25,7 +25,6 @@ use WeBWorK::ContentGenerator::Options;
 use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
-use WeBWorK::ContentGenerator::Professor;
 use WeBWorK::ContentGenerator::Instructor::Index;
 use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
@@ -134,8 +133,6 @@ sub handler() {
 			} elsif ($instructorArgument eq "problemSetList") {
 				return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
 			}
-		} elsif ($arg eq "prof") {
-			return WeBWorK::ContentGenerator::Professor->new($r, $ce, $db)->go;
 		} elsif ($arg eq "options") {
 			return WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
 		} elsif ($arg eq "feedback") {

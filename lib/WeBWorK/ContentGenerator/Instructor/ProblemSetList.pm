@@ -11,4 +11,13 @@ use strict;
 use warnings;
 use CGI qw();
 
+sub title {
+	my $self = shift;
+	return "Instructor Tools - Problem Set List for ".$self->{ce}->{courseName};
+}
+
+sub body {
+
+}
+
 1;
