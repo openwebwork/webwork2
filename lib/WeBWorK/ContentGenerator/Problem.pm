@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.136 2004/05/24 20:19:08 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.137 2004/05/24 20:41:10 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1038,9 +1038,8 @@ sub viewOptions {
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} }
 			@{$ce->{pg}->{displayModes}};
-	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-			"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br(),
+	my $modeLine = (scalar(@active_modes)>1) ?
+		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
 		CGI::radio_group(
 			-name    => "displayMode",
 			-values  => \@active_modes,
@@ -1053,7 +1052,10 @@ sub viewOptions {
 				jsMath	      => "jsMath",
 				asciimath     => "asciimath",
 			},
-		), CGI::br(),CGI::hr(),
+		). CGI::br().CGI::hr() : '';
+	
+	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
+		$modeLine,
 		$optionLine,
 		CGI::submit(-name=>"redisplay", -label=>"Save Options"),
 	);
