@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.4 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.5 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,10 +106,10 @@ sub body {
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my @users = $db->listUsers;
-	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath ) });
 	 
 	print CGI::p(
-		    CGI::submit({name=>"assignToAll", value=>"Assign to All Users"})
+		    CGI::submit({name=>"assignToAll", value => "Assign to All Users"})
 		  ),
 		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
 	           "There is NO undo for unassigning students. "),
@@ -167,7 +167,12 @@ sub body {
 				(
 					defined $userSetRecord
 					? $prettyDate . CGI::a(
-						{href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/sets/$setID/?editForUser=$user&".$self->url_authen_args()},
+						{href=>$self->systemLink($urlpath->new(type =>'instructor_problem_list',
+						                                       args =>{courseID => $courseName,
+						                                               setID    => $setID
+						                                       }),
+						                         params =>{editForUser=> $user}
+						)},
 						"Edit data for $user"
 					)
 					: ()

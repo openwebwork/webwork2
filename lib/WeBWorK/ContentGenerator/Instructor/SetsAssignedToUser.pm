@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.8 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.9 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -111,7 +111,11 @@ sub body {
 	my $userID      = $urlpath->arg("userID");
 	
 	my $user        = $r->param('user');
-	
+	my $setsAssignedToUserPage    = $urlpath->newFromModule($urlpath->module,
+	                                                        courseID =>  $courseName,
+	                                                        userID=>$userID
+	);
+	my $setsAssignedToUserURL     = $self->systemLink($setsAssignedToUserPage,authen=>0);
 	# check authorization
 	return CGI::em("You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -127,7 +131,7 @@ sub body {
 		|| lc($a->set_id) cmp lc($b->set_id)
 	} @Sets;
 	
-	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::start_form({method=>"post", action=>$setsAssignedToUserURL});
 	print $self->hidden_authen_fields;
 	
 	# get the global user, if there is one
@@ -157,10 +161,14 @@ sub body {
 		}
 		
 		# URL to edit user-specific set data
-		my $url = $ce->{webworkURLs}->{root}
-			. "/$courseName/instructor/sets/$setID/?editForUser=$userID&"
-			. $self->url_authen_args();
-		
+# 		my $url = $ce->{webworkURLs}->{root}
+# 			. "/$courseName/instructor/sets/$setID/?editForUser=$userID&"
+# 			. $self->url_authen_args();
+        my $setListPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemSetEditor",
+                                                   courseID => $courseName,
+                                                   setID    => $setID
+        );
+		my $url = $self->systemLink($setListPage,params =>{editForUser => $userID});
 		print CGI::Tr({}, 
 			CGI::td({}, [
 				($userID eq $globalUserID
