@@ -32,7 +32,7 @@ filter sort edit publish import create delete
 
 Filter what sets are shown:
 	- none, all, selected
-	- matching set_id, visable to students, hidden from students
+	- matching set_id, visible to students, hidden from students
 
 Sort sets by:
 	- set name

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.55 2004/05/24 20:36:25 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.56 2004/06/02 20:28:23 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -355,9 +355,9 @@ sub body {
 
 	if (@editForUser) {
 		my $publishedClass = ($setRecord->published) ? "Published" : "Unpublished";
-		my $publishedText = ($setRecord->published) ? "visable to students" : "hidden from students";
+		my $publishedText = ($setRecord->published) ? "visible to students" : "hidden from students";
 		print CGI::p("This set is currently", CGI::font({class=>$publishedClass}, $publishedText),
-		CGI::br(), "(You cannot hide or make a set visable for specific users.)");
+		CGI::br(), "(You cannot hide or make a set visible for specific users.)");
 	} else {
 		print CGI::checkbox({type=>"checkbox", name=>"published", label=>"Visable to students", value=>"1", checked=>(($setRecord->published) ? 1 : 0)}), CGI::br();
 
