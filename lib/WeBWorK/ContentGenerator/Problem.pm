@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.127 2004/05/13 16:02:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.128 2004/05/13 18:38:19 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,14 +97,6 @@ sub pre_header_initialize {
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
 
-	# FIXME: This is a temporary fix to fill in the database
-	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
-	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
-	my $globalSet = $db->getGlobalSet($setName);
-	$globalSet->published("1") unless $globalSet->published eq "0";
-	$db->putGlobalSet($globalSet);
-
-	
 	my $editMode = $r->param("editMode");
 	
 	if ($permissionLevel > 0) {
@@ -123,6 +115,12 @@ sub pre_header_initialize {
 			} else {
 				$set = global2user($userSetClass, $globalSet);
 				$set->psvn(0);
+
+				# FIXME: This is a temporary fix to fill in the database
+				#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
+				#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
+				$globalSet->published("1") unless $globalSet->published eq "0";
+				$db->putGlobalSet($globalSet);
 			}
 		}
 		
