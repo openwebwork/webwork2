@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.127 2004/12/17 16:53:01 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.128 2004/12/27 17:20:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1607,7 +1607,7 @@ sub warningOutput($$) {
 	
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
-		$warning = escapeHTML($warning);
+		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators
 		$warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
