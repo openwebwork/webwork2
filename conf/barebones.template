@@ -18,9 +18,11 @@
      <h1>WeBWorK <em>mod_perl</em></h1>
      <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
     </td>
-    <td valign="bottom">
+    <!--#if loggedin="1"-->
+     <td valign="bottom">
      <!--#loginstatus-->
     </td>
+    <!--#endif-->
    </tr>
    <tr valign="top">
     <td>
@@ -41,9 +43,17 @@
      </div>
     </td>
 <!--#if warnings="1"-->
-    <td colspan="2" bgcolor="#ffcccc">
+    <td 
+    <!--#if loggedin="1"-->
+    colspan="2" 
+    <!--#endif-->
+    bgcolor="#ffcccc">
 <!--#else-->
-    <td colspan="2">
+    <td 
+    <!--#if loggedin="1"-->
+    colspan="2"
+    <!--#endif-->
+    >
 <!--#endif-->
      <div align="center">
       <!--#nav style="text" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->

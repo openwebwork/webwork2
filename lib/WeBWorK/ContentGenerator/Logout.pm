@@ -50,4 +50,11 @@ sub body {
 	return "";
 }
 
+# This content generator is NOT logged in.
+sub if_loggedin($$) {
+	my ($self, $arg) = (@_);
+	
+	return !$arg;
+}
+
 1;

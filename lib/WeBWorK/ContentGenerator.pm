@@ -116,7 +116,8 @@ sub template {
 			}
 			
 			if ($function eq "if") {
-				push @ifstack, $self->$function(@_, [@args]);
+				# a predicate can only be true if everything else on the ifstack is already true, for ANDing
+				push @ifstack, ($self->$function(@_, [@args]) && $ifstack[-1]);
 			} elsif ($function eq "else" and @ifstack > 1) {
 				$ifstack[-1] = not $ifstack[-1];
 			} elsif ($function eq "endif" and @ifstack > 1) {
@@ -452,6 +453,13 @@ sub if_can ($$) {
 	} else {
 		return 0;
 	}
+}
+
+# Every content generator is logged in unless it says otherwise.
+sub if_loggedin($$) {
+	my ($self, $arg) = (@_);
+	
+	return $arg;
 }
 
 1;
