@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.64 2004/08/18 01:40:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.65 2004/10/15 20:35:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -287,7 +287,7 @@ sub dispatch($) {
 	
 	my $localStopTime = time;
 	my $timeDiff = $localStopTime - $localStartTime;
-	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("diff = %.6f", $timeDiff)." ".$ce->{dbLayoutName},"" );
+	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("runTime = %.1f sec", $timeDiff)." ".$ce->{dbLayoutName},"" );
 	return $result;
 	
 }
