@@ -153,17 +153,25 @@ sub body {
 	# Slurp each set record for this course in @sets
 	# Gather data from the database
 	my @users = $db->listUsers;
-	my @sets;
+	my @set_IDs = $db->listGlobalSets;
+	my @sets  = $db->getGlobalSets(@set_IDs);
 	my %counts;
 	my %problemCounts;
-	foreach my $set_id ($db->listGlobalSets) {
-		my $set = $db->getGlobalSet($set_id);
-		push @sets, $set;
-		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
-		my $count = 0;
-		$counts{$set_id} = $db->listSetUsers($set_id);
-	}
 	
+	$WeBWorK::timer2->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer2;
+	foreach my $set_id (@set_IDs) {
+		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
+	#	$counts{$set_id} = $db->listSetUsers($set_id);
+	}
+	$WeBWorK::timer2->continue("End obtaining problem on sets") if defined $WeBWorK::timer2;
+	
+	$WeBWorK::timer2->continue("Begin obtaining assigned user info on sets") if defined $WeBWorK::timer2;
+	foreach my $set_id (@set_IDs) {
+	#	$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
+		$counts{$set_id} = $db->listSetUsers($set_id);
+	}	
+	$WeBWorK::timer2->continue("End obtaining assigned user info on sets") if defined $WeBWorK::timer2;
+
 	# Sort @sets based on the sort parameter
 	# Invalid sort types will just cause an unpredictable ordering, which is no big deal.
 	@sets = sort {
