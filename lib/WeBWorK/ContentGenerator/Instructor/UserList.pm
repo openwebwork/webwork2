@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.54 2004/06/13 01:30:23 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.55 2004/06/21 19:51:49 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -932,15 +932,15 @@ sub saveEdit_handler {
 # sorts
 ################################################################################
 
-sub byUserID       { $a->user_id       cmp $b->user_id       }
-sub byFirstName    {  (defined($a->first_name ) && defined($b->first_name) ) ?  $a->first_name   cmp $b->first_name  : 0;  }
-sub byLastName     {  (defined($a->last_name )  && defined($b->last_name)  ) ?  $a->last_name    cmp $b->last_name   : 0;  }
-sub byEmailAddress { $a->email_address cmp $b->email_address }
-sub byStudentID    { $a->student_id    cmp $b->student_id    }
-sub byStatus       { $a->status        cmp $b->status        }
-sub bySection      { $a->section       cmp $b->section       }
-sub byRecitation   { $a->recitation    cmp $b->recitation    }
-sub byComment      { $a->comment       cmp $b->comment       }
+sub byUserID       { lc $a->user_id       cmp lc $b->user_id       }
+sub byFirstName    { (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0 }
+sub byLastName     { (defined $a->last_name  && defined $b->last_name ) ? lc $a->last_name  cmp lc $b->last_name  : 0 }
+sub byEmailAddress { lc $a->email_address cmp lc $b->email_address }
+sub byStudentID    { lc $a->student_id    cmp lc $b->student_id    }
+sub byStatus       { lc $a->status        cmp lc $b->status        }
+sub bySection      { lc $a->section       cmp lc $b->section       }
+sub byRecitation   { lc $a->recitation    cmp lc $b->recitation    }
+sub byComment      { lc $a->comment       cmp lc $b->comment       }
 
 sub byLnFnUid { &byLastName || &byFirstName || &byUserID }
 

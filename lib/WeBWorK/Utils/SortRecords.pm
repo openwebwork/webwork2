@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/SortRecords.pm,v 1.3 2004/03/01 06:33:45 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/SortRecords.pm,v 1.4 2004/04/13 14:36:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -159,7 +159,7 @@ sub sortRecords {
 		foreach my $field (@fields) {
 			croak "field \"$field\" is not a field in class \"$class\"" unless exists $class_fields{$field};
 		}
-		my $pack_key = sub { join "\0", map { $_[0]->$_ } @fields };
+		my $pack_key = sub { join "\0", map { lc $_[0]->$_ } @fields };
 		
 		# use the Orcish Maneuver to pack_key only once per record
 		keys my %or_cache = @Records; # set number of hash buckets
