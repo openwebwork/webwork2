@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.14 2003/12/18 02:18:37 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.15 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
 
+my $REFRESH_RESIZE_BUTTON = "Refresh and Resize";  # handle submit value idiocy
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->{r};
@@ -73,14 +74,30 @@ sub initialize {
 #	gather database data
 #############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
-	my @users = sort $db->listUsers;
+	my @users =  sort $db->listUsers;
 	my @user_records = ();
 	foreach my $userName (@users) {
 		my $userRecord = $db->getUser($userName); # checked
 		die "record for user $userName not found" unless $userRecord;
 		push(@user_records, $userRecord);
 	}
+	###########################
+	# Sort the users for presentation in the select list
+	###########################
+	if (defined $r->param("sort_by") ) {
+		my $sort_method = $r->param("sort_by");
+		if ($sort_method eq 'section') {
+			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} elsif ($sort_method eq 'recitation') {
+			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} elsif ($sort_method eq 'alphabetical') {
+			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} 
+	}
 	
+
+	# replace the user names by a sorted version.
+	@users                         =  map {$_->user_id} @user_records;
 	# store data
 	$self->{ra_users}              =   \@users;
 	$self->{ra_user_records}       =   \@user_records;
@@ -228,7 +245,7 @@ sub initialize {
 	my $script_action     = '';
 	
 	
-	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window'
+	if(not defined($action) or $action eq 'Open' or $action eq $REFRESH_RESIZE_BUTTON
 	   or $action eq 'Set merge file to:' ){  
 #		warn "FIXME action is |$action| no further initialization required";
 		return '';
@@ -430,7 +447,7 @@ sub print_form {
 	my $ra_user_records       = $self->{ra_user_records};
 	my %classlistLabels       = ();#  %$hr_classlistLabels;
 	foreach my $ur (@{ $ra_user_records }) {
-		$classlistLabels{$ur->user_id} = $ur->user_id.' '.$ur->last_name. ', '. $ur->first_name.' - '.$ur->section;
+		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
 	}
 
 
@@ -465,12 +482,12 @@ sub print_form {
 #############################################################################################	
 
     print CGI::start_table({-border=>'2', -cellpadding=>'4'});
-	print CGI::Tr({-align=>'left',-valign=>'VCENTER'},
+	print CGI::Tr({-align=>'left',-valign=>'top'},
 #############################################################################################
 #	first column
 #############################################################################################	
 
-			 CGI::td("Message file: $input_file","\n",CGI::br(),
+			 CGI::td(CGI::strong("Message file: $input_file"),"\n",CGI::br(),
 				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
@@ -485,27 +502,43 @@ sub print_form {
 #############################################################################################
 #	second column
 #############################################################################################	
-			CGI::td({-align=>'left'},
-				CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-					-labels=>{all_students=>'All active students',studentID => 'Select recipients'},
-					-default=>'studentID',
-					-linebreak=>1),
-					CGI::br(),
-					CGI::popup_menu(-name=>'classList',
-							   -values=>\@users,
-							   -labels=>\%classlistLabels,
-							   -size  => 10,
-							   -multiple => 1,
-							   -default=>$user
-					),
-					
+			CGI::td({-align=>'center'},
+			    CGI::start_table({-border=>'0', -cellpadding=>'1',-width=>"100%"}),
+			  		CGI::Tr(
+			    		CGI::td({valign => 'top'},
+			    		    CGI::strong("Send to:"),CGI::br(),
+							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
+								-labels=>{all_students=>'All',studentID => 'Selected'},
+								-default=>'studentID',
+								-linebreak=>1
+							),
+						),
+						CGI::td({valign => 'top'},
+						    CGI::strong("Sort by:"), 
+							CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
+								-labels=>{id=>'Id',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
+								-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
+								-linebreak=>1
+							),
+
+						),
+					),	
+				CGI::end_table(),
+				CGI::popup_menu(-name=>'classList',
+						   -values=>\@users,
+						   -labels=>\%classlistLabels,
+						   -size  => 10,
+						   -multiple => 1,
+						   -default=>$user
+				),
+			),	
 				
-			),
+
 #############################################################################################
 #	third column
 #############################################################################################	
 			CGI::td({align=>'left'},
-			     "Merge file is: $merge_file", CGI::br(),
+			     "<b>Merge file:</b> $merge_file", CGI::br(),
 				 CGI::submit(-name=>'action', -value=>'Set merge file to:'),CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
@@ -518,7 +551,7 @@ sub print_form {
 							   -default=>$preview_user,
 				),
 				CGI::hr(),
-				CGI::submit(-name=>'action', -value=>'resize', -label=>'Resize message window'),CGI::br(),
+				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),CGI::br(),
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),CGI::br(),
