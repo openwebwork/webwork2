@@ -18,13 +18,21 @@ sub new($$) {
 	return $self;
 }
 
+# connect($self, $symbolicFlags)
+# $self			implicitly set by caller
+# $symbolicFlags	"ro" = read-only, "rw" = read-write
+# returns:
+#	-1 = already tied
+#	 0 = file doesn't exist when being opened for reading
+#	>0 = success! (number of attempts to tie)
 sub connect($$) {
 	my $self = shift;
 	my $symbolicFlags = shift; # "ro" or "rw"
-	return if tied %$self->{hashRef}; # already tied!
+	return -1 if tied %$self->{hashRef}; # already tied!
 	my $flags = lc $symbolicFlags eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
+	return 0 if lc $symbolicFlags eq "ro" and not -e $self->{gdbm_file};
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
-		return if tie %{$self->{hashRef}},
+		return 1 if tie %{$self->{hashRef}},
 			"GDBM_File",        # class
 			$self->{gdbm_file}, # file name
 			$flags,             # I/O flags
@@ -43,7 +51,7 @@ sub hashRef($) {
 sub disconnect($) {
 	my $self = shift;
 	return unless tied %{$self->{hashRef}}; # not tied!
-	return 1 if untie %{$self->{hashRef}}; 
+	return untie %{$self->{hashRef}}; 
 }
 
 1;
