@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.37 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.38 2003/12/12 02:24:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -220,7 +220,10 @@ sub body {
 	my $courseEnvironment = $self->{ce};
 	my $db = $self->{db};
 	my $effectiveUser = $r->param('effectiveUser');
+	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
+	die "set $setName for user $effectiveUser not found" unless $set;
 	
+	print "$setName is due: ",WeBWorK::Utils::formatDateTime($set->due_date);
 	return CGI::p(CGI::font({-color=>"red"}, "This problem set is not available because it is not yet open."))
 		unless ($self->{isOpen});
 	
@@ -239,8 +242,7 @@ sub body {
 		CGI::th("Status"),
 	);
 	
-	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
-	die "set $setName for user $effectiveUser not found" unless $set;
+
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
 	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
 		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
