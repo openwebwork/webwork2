@@ -275,7 +275,8 @@ sub pre_header_initialize {
 	$WeBWorK::timer0->continue("end pg processing") if $timer0_ON;
 	##### fix hint/solution options #####
 	
-	$can{showHints}     &&= $pg->{flags}->{hintExists};
+	$can{showHints}     &&= $pg->{flags}->{hintExists}  
+	                    &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
 	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
 	##### store fields #####
@@ -590,11 +591,11 @@ sub body {
 					) ." "
 				: "" ), 
 			($can{showHints} 
-				? CGI::checkbox(
+				? '<div style="color:red">'. CGI::checkbox(
 					-name    => "showHints",
 					-checked => $will{showHints},
 					-label   => "Show Hints",
-					) . " "
+					) . "</div> "
 				: " " ),
 			($can{showSolutions} 
 				? CGI::checkbox(
