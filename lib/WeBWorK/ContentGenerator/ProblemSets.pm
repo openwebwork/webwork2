@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.38 2004/01/21 19:55:54 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.39 2004/01/25 15:53:07 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,8 +210,8 @@ sub info {
 		my $course_info_path  = $ce->{courseDirs}->{templates}
 		                     .'/'. $ce->{courseFiles}->{course_info};
 		my $editFileSuffix			=	$user.'.tmp';  #FIXME -- this could be moved to Instructor.pm
-		$course_info_path    .= ".$editFileSuffix" if $r->param("editMode") eq 'temporaryFile';
-		warn "course info $course_info_path";
+		$course_info_path    .= ".$editFileSuffix" if defined($r->param("editMode")) and $r->param("editMode") eq 'temporaryFile';
+		
 		my $course_info = eval { readFile($course_info_path) };
 		$@ or print $course_info;
 		my $user            = $r->param("user");
