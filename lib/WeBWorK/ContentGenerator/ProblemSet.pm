@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.57 2004/09/05 18:00:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.58 2004/10/04 17:54:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -124,7 +124,11 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
-		print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $setID)) ;
+		print CGI::li(CGI::a({href=>$self->systemLink($setPage),
+		                            params=>{  displayMode => $self->{displayMode}, 
+									    showOldAnswers => $self->{will}->{showOldAnswers}
+									}}, $setID)
+	    ) ;
 	}
 	$WeBWorK::timer->continue("End printing sets from listUserSets()") if defined $WeBWorK::timer;
 
@@ -336,7 +340,11 @@ sub problemListRow($$$) {
 	
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseID, setID => $setID, problemID => $problemID)
+			courseID => $courseID, setID => $setID, problemID => $problemID
+		),
+		params=>{  displayMode => $self->{displayMode}, 
+			       showOldAnswers => $self->{will}->{showOldAnswers}
+		}
 	);
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $problemID");
