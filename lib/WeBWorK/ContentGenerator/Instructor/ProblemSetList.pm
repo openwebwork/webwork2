@@ -61,6 +61,11 @@ Import sets:
 		- any users
 		- no users
 
+Score sets:
+	- all
+	- visible
+	- selected
+
 Create a set with a given name
 
 Delete sets:
@@ -77,7 +82,7 @@ use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptP
 use constant HIDE_SETS_THRESHOLD => 20;
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter sort edit publish import create delete)];
+use constant VIEW_FORMS => [qw(filter sort edit publish import score create delete)];
 
 use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header problem_header) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header problem_header) ];
@@ -133,6 +138,45 @@ use constant  FIELD_PROPERTIES => {
 	},	
 };
 
+sub pre_header_initialize {
+	my ($self) = @_;
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
+	my $authz  = $r->authz;
+	my $urlpath = $r->urlpath;
+	my $user   = $r->param('user');
+	my $courseName = $urlpath->arg("courseID");
+
+
+	if (defined $r->param("action") and $r->param("action") eq "score") {
+		my $scope = $r->param("action.score.scope");
+		my @setsToScore = ();
+	
+		if ($scope eq "none") { 
+			return "No sets selected for scoring.";
+		} elsif ($scope eq "all") {
+			@setsToScore = @{ $r->param("allSetIDs") };
+		} elsif ($scope eq "visible") {
+			@setsToScore = @{ $r->param("visibleSetIDs") };
+		} elsif ($scope eq "selected") {
+			@setsToScore = $r->param("selected_sets");
+		}
+
+		my $uri = $self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', courseID=>$courseName),
+						params=>{
+							scoreSelected=>"ScoreSelected",
+							selectedSet=>\@setsToScore,
+#							recordSingleSetScores=>''
+						}
+		);
+
+		$self->reply_with_redirect($uri);
+	}
+
+}
+
+
 sub initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
@@ -140,11 +184,6 @@ sub initialize {
 	my $ce     = $r->ce;
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
-
-	unless ($authz->hasPermissions($user, "modify_student_data")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data")));
-		return;
-	}
 	
 }
 
@@ -570,6 +609,14 @@ sub sort_handler {
 
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+	
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		return CGI::em("You are not authorized to modify problem sets");
+	}
+	
 	return join("",
 		"Edit ",
 		CGI::popup_menu(
@@ -588,6 +635,14 @@ sub edit_form {
 
 sub edit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		return CGI::em("You are not authorized to modify problem sets");
+	}
 	
 	my $result;
 	
@@ -609,6 +664,14 @@ sub edit_handler {
 
 sub publish_form {
 	my ($self, $onChange, %actionParams) = @_;
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		return CGI::em("You are not authorized to modify problem sets");
+	}
 
 	return join ("",
 		"Make ",
@@ -640,9 +703,16 @@ sub publish_form {
 
 sub publish_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
-	my $r = $self->r;
-	my $db = $r->db;
+
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		return CGI::em("You are not authorized to modify problem sets");
+	}
 	
 	my $result = "";
 	
@@ -675,33 +745,122 @@ sub publish_handler {
 	
 }
 
-
-sub delete_form {
+sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return join("",
-	    qq!\n<div class="ResultsWithError">!,
-		"Delete ",
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "score_sets")) {
+		return CGI::em("You are not authorized to score sets");
+	}
+
+	
+	return join ("",
+		"Score ",
 		CGI::popup_menu(
-			-name => "action.delete.scope",
-			-values => [qw(none visible selected)],
-			-default => $actionParams{"action.delete.scope"}->[0] || "none",
+			-name => "action.score.scope",
+			-values => [qw(none all selected)],
+			-default => $actionParams{"action.score.scope"}->[0] || "none",
 			-labels => {
 				none => "no sets.",
-				#visble => "visible sets.",
+				all => "all sets.",
 				selected => "selected sets.",
 			},
 			-onchange => $onChange,
 		),
-		CGI::em(" Deletion destroys all set-related data and is not undoable!"),
-		"</div>\n",
+	);
+	
+
+
+}
+
+sub score_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+
+	my $r      = $self->r;
+	my $urlpath = $r->urlpath;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+	my $courseName = $urlpath->arg("courseID");
+
+	unless ($authz->hasPermissions($user, "score_sets")) {
+		return CGI::em({class=>"ResultsWithError"}, "You are not authorized to score sets");
+	}
+
+
+	my $scope = $actionParams->{"action.score.scope"}->[0];	
+	my @setsToScore;
+	
+	if ($scope eq "none") { 
+		@setsToScore = ();
+		return "No sets selected for scoring.";
+	} elsif ($scope eq "all") {
+		@setsToScore = @{ $self->{allSetIDs} };
+	} elsif ($scope eq "visible") {
+		@setsToScore = @{ $self->{visibleSetIDs} };
+	} elsif ($scope eq "selected") {
+		@setsToScore = @{ $genericParams->{selected_sets} };
+	}
+
+	my $uri = $self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', courseID=>$courseName),
+					params=>{
+						scoreSelected=>"Score Selected",
+						selectedSet=>\@setsToScore,
+#						recordSingleSetScores=>''
+					}
+	);
+	
+	
+	return $uri;
+}
+
+
+sub delete_form {
+	my ($self, $onChange, %actionParams) = @_;
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to delete problem sets");
+	}
+		
+	return join("",
+		CGI::div({class=>"ResultsWithError"}, 
+			"Delete ",
+			CGI::popup_menu(
+				-name => "action.delete.scope",
+				-values => [qw(none selected)],
+				-default => $actionParams{"action.delete.scope"}->[0] || "none",
+				-labels => {
+					none => "no sets.",
+					#visble => "visible sets.",
+					selected => "selected sets.",
+				},
+				-onchange => $onChange,
+			),
+			CGI::em(" Deletion destroys all set-related data and is not undoable!"),
+		)
 	);
 }
 
 sub delete_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r         = $self->r;
-	my $db        = $r->db;
+
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to delete problem sets");
+	}
+
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
+
 	
 	my @setIDsToDelete = ();
 
@@ -730,6 +889,14 @@ sub delete_handler {
 
 sub create_form {
 	my ($self, $onChange, %actionParams) = @_;
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to create problem sets");
+	}
 	
 	return "Create a new set named: ", 
 		CGI::textfield(
@@ -742,8 +909,15 @@ sub create_form {
 
 sub create_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
-	my $db = $self->{r}->{db};
+
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to create problem sets");
+	}
 	
 	my $newSetRecord = $db->newGlobalSet;
 	my $newSetName = $actionParams->{"action.create.name"}->[0];
@@ -765,6 +939,14 @@ sub create_handler {
 
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to create problem sets");
+	}
 	
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -804,23 +986,35 @@ sub import_form {
 			-width => "50",
 			-onchange => $onChange,
 		),
-		"assigning this set to ",
-		CGI::popup_menu(
-			-name => "action.import.assign",
-			-value => [qw(all none)],
-			-default => $actionParams{"action.import.assign"}->[0] || "none",
-			-labels => {
-				all => "all current users.",
-				none => "no users.",
-			},
-			-onchange => $onChange,
-		),
+		($authz->hasPermissions($user, "assign_problem_sets")) 
+			?
+			"assigning this set to " .
+			CGI::popup_menu(
+				-name => "action.import.assign",
+				-value => [qw(all none)],
+				-default => $actionParams{"action.import.assign"}->[0] || "none",
+				-labels => {
+					all => "all current users.",
+					none => "no users.",
+				},
+				-onchange => $onChange,
+			)
+			:
+			""	#user does not have permissions to assign problem sets
 	);
 }
 
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
+
+	my $r      = $self->r;
+	my $authz  = $r->authz;
+	my $user   = $r->param('user');
+
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		return CGI::em("You are not authorized to create problem sets");
+	}
+
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
 	$newSetName = "" if $newSetName =~ /\(/;
