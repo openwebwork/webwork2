@@ -122,17 +122,17 @@ sub add_selected {
 
 ############# List of sets of problems in templates directory
 
-sub getalllibsets {
+sub get_problem_directories {
   my $ce = shift;
-  my @all_library_sets = get_library_sets(1, $ce->{courseDirs}->{templates});
-  my $includetop = shift @all_library_sets;
+  my @all_problem_directories = get_library_sets(1, $ce->{courseDirs}->{templates});
+  my $includetop = shift @all_problem_directories;
   my $j;
-  for ($j=0; $j<scalar(@all_library_sets); $j++) {
-    $all_library_sets[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
+  for ($j=0; $j<scalar(@all_problem_directories); $j++) {
+    $all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
   }
-  @all_library_sets = sort @all_library_sets;
-  unshift @all_library_sets, '  -- Top --  ' if($includetop);
-  return (\@all_library_sets);
+  @all_problem_directories = sort @all_problem_directories;
+  unshift @all_problem_directories, '  -- Top --  ' if($includetop);
+  return (\@all_problem_directories);
 }
 
 ### The browsing panel has three versions
@@ -141,24 +141,24 @@ sub browse_local_panel {
   my $self = shift;
   my $library_selected = shift;
 
-  my $list_of_sets= getalllibsets($self->r->ce);
-  my $libstr = "";
-  my $default_value = "Select a Local Problem Collection";
-  $libstr = CGI::br() . CGI::em($self->{libmsg}) if($self->{libmsg});
-
-  if (not $library_selected or $library_selected eq $default_value) {
-    unshift @{$list_of_sets},  $default_value;
-    $library_selected = $default_value;
+  my $list_of_prob_dirs= get_problem_directories($self->r->ce);
+  if(scalar(@$list_of_prob_dirs) == 0) {
+    $library_selected = "Found no directories containing problems";
+    unshift @{$list_of_prob_dirs}, $library_selected;
+  } else {
+    my $default_value = "Select a Local Problem Collection";
+    if (not $library_selected or $library_selected eq $default_value) {
+      unshift @{$list_of_prob_dirs},  $default_value;
+      $library_selected = $default_value;
+    }
   }
-
   
   print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Local Problems: ",
 			CGI::popup_menu(-name=> 'library_sets', 
-					-values=>$list_of_sets, 
+					-values=>$list_of_prob_dirs, 
 					-default=> $library_selected),
 			CGI::br(), 
 			CGI::submit(-name=>"view_local_set", -value=>"View Problems"),
-			$libstr 
 		       ));
 }
 
@@ -168,8 +168,6 @@ sub browse_mysets_panel {
   my $library_selected = shift;
   my $list_of_local_sets = shift;
   my $default_value = "Select a Problem Set";
-
-  my $libstr = CGI::br() . CGI::em($self->{libmsg}) if($self->{libmsg});
 
   if(scalar(@$list_of_local_sets) == 0) {
     $list_of_local_sets = ['There are no local sets yet'];
@@ -184,7 +182,6 @@ sub browse_mysets_panel {
 					-default=> $library_selected),
 			CGI::br(), 
 			CGI::submit(-name=>"view_mysets_set", -value=>"View This Set"),
-			$libstr 
 		       ));
 }
 
@@ -210,20 +207,19 @@ sub browse_library_panel {
   # Test if the Library directory exists.  If not, try to make it
   unless(-d "$ce->{courseDirs}->{templates}/Library") {
     unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
-    $self->{libmsg} .= <<"HERE";
+      my $msg =  <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
 for the Problem Library to function.  It should be a link pointing to
 <code>$libraryRoot</code>, which you set in <code>conf/global.conf</code>.
 I tried to make the link for you, but that failed.  Check the permissions
 in your <code>templates</code> directory.
 HERE
+      $self->addmessage(CGI::div({class=>"ResultsWithError"}, $msg));
     }
   }
 
   my $default_chap = "All Chapters";
   my $default_sect = "All Sections";
-
-  my $libstr = CGI::br() . CGI::em($self->{libmsg}) if($self->{libmsg});
 
   my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
   unshift @chaps, $default_chap;
@@ -272,7 +268,6 @@ HERE
 # 								      -override=>1, -size=>60))),
 			CGI::Tr(CGI::td({-colspan=>3},CGI::submit(-name=>"lib_view", -value=>"View Problems"))),
 			CGI::end_table(),
-			$libstr 
 		       ));
 }
 
@@ -287,14 +282,10 @@ sub make_top_row {
   my $library_selected = $r->param('library_sets');
   my $set_selected = $r->param('local_sets');
 
-  my $list_of_sets;
   my ($dis1, $dis2, $dis3) = ("","","");
   $dis1 =  '-disabled' if($browse_which eq 'browse_library');  
   $dis2 =  '-disabled' if($browse_which eq 'browse_local');
   $dis3 =  '-disabled' if($browse_which eq 'browse_mysets');
-
-  my $locstr = "";
-  $locstr = CGI::br() . CGI::em($self->{localmsg}) if($self->{localmsg});
 
   my $these_widths = "width: 27ex";
   print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
@@ -338,7 +329,6 @@ sub make_top_row {
 				       -default=>"Name for new set here",
 				       -override=>1, -size=>30),
 			CGI::br(),
-			$locstr
 		       ));
 
   print CGI::Tr(CGI::td({-bgcolor=>"black"}));
@@ -408,38 +398,46 @@ CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_lin
 					 ));
 }
 
-sub title {
-  return "Problem Set Maker";
-}
 
-sub body {
+sub pre_header_initialize {
   my ($self) = @_;
-
   my $r = $self->r;
-  my $ce = $r->ce;		# course environment
-  my $db = $r->db;		# database
-  my $j;			# garden variety counter
+  ## For all cases, lets set some things
+  $self->{error}=0;
+  my $ce = $r->ce;
+  my $db = $r->db;
+
 
   my $userName = $r->param('user');
-
-  my $user = $db->getUser($userName); # checked
-  die "record for user $userName (real user) does not exist."
+  my $user = $db->getUser($userName); # checked 
+  die "record for user $userName (real user) does not exist." 
     unless defined $user;
-
-  ### Check that this is a professor
   my $authz = $r->authz;
   unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-    print "User $userName returned " . 
-      $authz->hasPermissions($user, "modify_problem_sets") . 
-	" for permission";
-    return(CGI::em("You are not authorized to access the Instructor tools."));
+    return(""); # Error message already produced in the body
   }
 
+  ## Now one action we have to deal with here
+  if ($r->param('edit_local')) {
+    my $urlpath = $r->urlpath;
+    my $db = $r->db;
+    my $checkset = $db->getGlobalSet($r->param('local_sets'));
+    if (not defined($checkset)) {
+      $self->{error} = 1;
+      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 'You need to select a "Current Set" before you can edit it.'));
+    } else {
+      my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+      my $url = $self->systemLink($page);
+      $self->reply_with_redirect($url);
+    }
+  }
+
+  ## Next, lots of set up so that errors can be reported with message()
 
   ############# List of problems we have already printed
 
   my @past_problems = get_past_problem_files($r);
-  my (@pg_files, @pg_html);
+  my @pg_files=();
   my $use_previous_problems = 1;
   my $first_shown = $r->param('first_shown') || 0;
   my $last_shown = $r->param('last_shown');
@@ -447,7 +445,7 @@ sub body {
     $last_shown = -1;
   }
   my @all_past_list = ();	# these are include requested, but not shown
-  $j = 0;
+  my $j = 0;
   while (defined($r->param("all_past_list$j"))) {
     push @all_past_list, $r->param("all_past_list$j");
     $j++;
@@ -455,8 +453,7 @@ sub body {
 
   ############# Default of which problem selector to display
 
-  my $browse_which = 'browse_local';
-  $browse_which = $r->param('browse_which') if defined($r->param('browse_which'));
+  my $browse_which = $r->param('browse_which') || 'browse_local';
 
   my $problem_seed = $r->param('problem_seed') || 0;
   $r->param('problem_seed', $problem_seed); # if it wasn't defined before
@@ -491,8 +488,9 @@ sub body {
   } elsif ($r->param('view_local_set')) {
 
     my $set_to_display = $r->param('library_sets');
-    if (not defined($set_to_display) or $set_to_display eq "Select a Local Problem Collection") {
-      $self->{libmsg} = "You need to select a set to view.";
+    if (not defined($set_to_display) or $set_to_display eq "Select a Local Problem Collection" or $set_to_display eq "Found no directories containing problems") {
+      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
+				 'You need to select a set to view.'));
     } else {
       $set_to_display = '.' if $set_to_display eq '  -- Top --  ';
       @pg_files = list_pg_files($ce->{courseDirs}->{templates},
@@ -508,7 +506,8 @@ sub body {
     if (not defined($set_to_display) 
         or $set_to_display eq "Select a Problem Set"
         or $set_to_display eq 'There are no local sets yet') {
-      $self->{libmsg} = "You need to select a set from this course to view.";
+      $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
+		   "You need to select a set from this course to view."));
     } else {
       my @problemList = $db->listGlobalProblems($set_to_display);
       my $problem;
@@ -546,15 +545,16 @@ sub body {
     ##### Edit the current local problem set
 
   } elsif ($r->param('edit_local')) { ## Jump to set edit page
-    # This is handled in pre_header_initialize -- it redirects
-    # If there is an error, so no redirect, we want to be ready
-    # and do something here
+
+    ; # already handled
+
 
     ##### Make a new local problem set
 
   } elsif ($r->param('new_local_set')) {
     if ($r->param('new_set_name') !~ /^[\w.-]*$/) {
-      $self->{localmsg} = "The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .";
+      $self->addmessage(CGI::div({class=>"ResultsWithError"},
+        "The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and ."));
     } else {
       my $newSetName = $r->param('new_set_name');
       $newSetName =~ s/^set//;
@@ -562,7 +562,7 @@ sub body {
       $r->param('local_sets',$newSetName);
       my $newSetRecord   = $db->getGlobalSet($newSetName);
       if (defined($newSetRecord)) {
-	$self->{localmsg} = "The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.";
+	$self->addmessage(CGI::div({class=>"ResultsWithError"}, "The set name $newSetName is already in use.  Pick a different name if you would like to start a new set."));
       } else {			# Do it!
 	$newSetRecord = $db->{set}->{record}->new();
 	$newSetRecord->set_id($newSetName);
@@ -587,11 +587,13 @@ sub body {
     if (scalar(@selected)>0) {	# if some are to be added, they need a place to go
       $localSet = $r->param('local_sets');
       if (not defined($localSet)) {
-	$self->{localmsg} = "Trying to add problems to something, you did not select a current set name as a target.";
+	$self->addmessage(CGI::div({class=>"ResultsWithError"}, 
+	'You are trying to add problems to something, but you did not select a "Current Set" name as a target.'));
       } else {
 	my $newSetRecord   = $db->getGlobalSet($localSet);
 	if (not defined($newSetRecord)) {
-	  $self->{localmsg} = "You need to select a local problem set to add the problems to.";
+	  $self->addmessage(CGI::div({class=>"ResultsWithError"}, 
+           'You are trying to add problems to something, but you did not select a "Current Set" name as a target.'));
 	} else {
 	  add_selected($self, $db, $localSet, @selected);
 	}
@@ -646,8 +648,55 @@ sub body {
     $last_shown = scalar(@pg_files)<MAX_SHOW ? scalar(@pg_files) : MAX_SHOW;
     $last_shown--;		# to make it an array index
   }
+  ############# Now store data in self for retreival by body
+  $self->{first_shown} = $first_shown;
+  $self->{last_shown} = $last_shown;
+  $self->{browse_which} = $browse_which;
+  $self->{problem_seed} = $problem_seed;
+  $self->{pg_files} = \@pg_files;
+  $self->{all_set_defs} = \@all_set_defs;
 
-  @pg_html=($last_shown>=$first_shown) ?
+}
+
+
+sub title {
+  return "Problem Set Maker";
+}
+
+sub body {
+  my ($self) = @_;
+
+  my $r = $self->r;
+  my $ce = $r->ce;		# course environment
+  my $db = $r->db;		# database
+  my $j;			# garden variety counter
+
+  my $userName = $r->param('user');
+
+  my $user = $db->getUser($userName); # checked
+  die "record for user $userName (real user) does not exist."
+    unless defined $user;
+
+  ### Check that this is a professor
+  my $authz = $r->authz;
+  unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
+    print "User $userName returned " . 
+      $authz->hasPermissions($user, "modify_problem_sets") . 
+	" for permission";
+    return(CGI::div({class=>'ResultsWithError'},
+	  CGI::em("You are not authorized to access the Instructor tools.")));
+  }
+
+  ##########  Extract information computed in pre_header_initialize
+
+  my $first_shown = $self->{first_shown};
+  my $last_shown = $self->{last_shown};  
+  my $browse_which = $self->{browse_which};
+  my $problem_seed = $self->{problem_seed};
+  my @pg_files = @{$self->{pg_files}};
+  my @all_set_defs = @{$self->{all_set_defs}};
+
+  my @pg_html=($last_shown>=$first_shown) ?
     renderProblems($r,$user, @pg_files[$first_shown..$last_shown]) : ();
 
   ##########  Top part
@@ -698,34 +747,6 @@ sub body {
 }
 
 ############################################## End of Body
-
-sub pre_header_initialize {
-  my ($self) = @_;
-  my $r = $self->r;
-  ## For all cases, lets set some things
-  $self->{error}=0;
-  $self->{libmsg}="";
-  $self->{localmsg}="";
-
-
-  ### Maybe FIXME: this needs to check permissions before doing anything
-
-  ## Now one action we have to deal with here
-  if ($r->param('edit_local')) {
-    my $urlpath = $r->urlpath;
-    my $db = $r->db;
-    my $checkset = $db->getGlobalSet($r->param('local_sets'));
-    if (not defined($checkset)) {
-      $self->{error} = 1;
-      $self->{localmsg} = "You need to select a local set before you can edit it.";
-      return();
-    }
-    my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
-    my $url = $self->systemLink($page);
-    $self->reply_with_redirect($url);
-  }
-}
-
 
 # SKEL: To emit your own HTTP header, uncomment this:
 # 
