@@ -48,11 +48,11 @@ $prec = Context()->operators->get(',')->{precedence} + .25;
 Context()->operators->add(
   '=' => {
      class => 'Equality',
-     precedence => $prec,             #  just below addition
-     associativity => 'left',     #  computed left to right
-     type => 'bin',               #  binary operator
+     precedence => $prec,      #  just above comma
+     associativity => 'left',  #  computed left to right
+     type => 'bin',            #  binary operator
      string => '=',            #  output string for it
-     perl => '==',            # perl string
+     perl => '==',             #  perl string
   }
 );
 
@@ -67,8 +67,8 @@ loadMacros("parserTables.pl");
 #
 BEGIN_TEXT
 
-In this problem, we have added a new operator to the Parser: ${BTT} a = b${ETT}, 
-which returns \(n\choose r\).
+In this problem, we have added a new operator to the Parser: ${BTT} a
+= b${ETT}, for equality.
 $PAR
 
 \{ParserTable(

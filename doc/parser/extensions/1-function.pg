@@ -61,7 +61,7 @@ BEGIN_TEXT
 In this problem, we have added a new function to the Parser: ${BTT}log2(x)${ETT}.
 (Edit the code to see how this is done.)
 $PAR
-Assuming that ${BTT}${DOLLAR}x = Formula('x')${ETT}, they can be used as follows:
+Assuming that ${BTT}${DOLLAR}x = Formula('x')${ETT}, it can be used as follows:
 $PAR
 
 \{ParserTable(

@@ -27,7 +27,7 @@ Context('Vector');
 #
 sub vector_cmp {
   my $v = shift;
-  die "vector_cmp requires a vector" unless defined $v;
+  die "vector_cmp requires a vector argument" unless defined $v;
   my $v = Vector($v);  # covert to vector if it isn't already
   my $ans = new AnswerEvaluator;
   $ans->ans_hash(type => "vector",correct_ans => $v->string, vector=>$v);
@@ -41,8 +41,9 @@ sub vector_cmp_check {
   my $student = $ans->{student_ans};
   #
   #  Make student answer safe to eval by doubling \ and quoting '
+  #  (remember, ~~ equals \)
   #
-  $student =~ s/~~~~/~~~~~~~~/g; $student =~ s/'/~~~~'/g; # remember that ~~ means \
+  $student =~ s/~~~~/~~~~~~~~/g; $student =~ s/'/~~~~'/g;
   my ($fV,$err) = PG_restricted_eval('$f = Formula(~~''.$student.'~~'); [$f,$f->eval]');
   if (defined $fV) {
     my ($f,$V) = @{$fV}; # extract the formula and is value
@@ -61,7 +62,7 @@ sub vector_cmp_check {
     }
   } else {
     #
-    #  Student answer evaluation Failed.
+    #  Student answer evaluation failed.
     #  Report the error, with formatting, if possible.
     #
     my $context = Context();
