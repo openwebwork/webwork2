@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.156 2004/07/15 00:13:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.157 2004/07/19 22:17:46 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -940,7 +940,8 @@ sub body {
 			# The fact that it is not defined is probably due to an error in some answer evaluator.
 			# But I think it is useful to suppress this error message in the log.
 			foreach (sort keys %answerHash) {
-				my $student_ans = $answerHash{$_}->{original_student_ans} ||'';
+				my $orig_ans = $answerHash{$_}->{original_student_ans};
+				my $student_ans = defined $orig_ans ? $orig_ans : '';
 				$answerString  .= $student_ans."\t"	 
 			}
 			$answerString = '' unless defined($answerString); # insure string is defined.
