@@ -207,8 +207,9 @@ sub FieldTable {
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
 		$output .= CGI::Tr(
-			CGI::th({colspan=>"3"}, "User Value"),
-			CGI::th({}, "Global Value"),
+		    CGI::th({colspan=>"2"}, "&nbsp;"),
+			CGI::th({colspan=>"1"}, "Individual set dates"),
+			CGI::th({}, "Class set dates"),
 		);
 	}
 	
