@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.56 2004/10/07 01:39:45 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.57 2004/10/22 22:59:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -233,10 +233,6 @@ sub new($$) {
 	return $self;
 }
 
-=back
-
-=cut
-
 =head1 METHODS
 
 =cut
@@ -347,7 +343,7 @@ sub hashDatabaseOK {
 		$self->{set_user}->{driver}->connect("ro")
 			or return 0, @results, "Failed to connect to set_user database.";
 		
-		# get PSVNs for global user (ÝN)
+		# get PSVNs for global user (ðN)
 		# this reads from "login<>global_user"
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
@@ -362,7 +358,7 @@ sub hashDatabaseOK {
 			#warn "got setID '$setID'\n";
 		}
 		
-		# get PSVNs for each setID (ÝN*M)
+		# get PSVNs for each setID (ðN*M)
 		# this reads from "set<>$_"
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
