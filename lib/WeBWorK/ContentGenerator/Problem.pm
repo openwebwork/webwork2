@@ -82,16 +82,16 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
 # 
-#     ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem)
+#     ($self, $User, $EffectiveUser, $Set, $Problem)
 
 sub can_showOldAnswers {
-	#my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	
 	return 1;
 }
 
 sub can_showCorrectAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
 	
 	return
@@ -102,13 +102,13 @@ sub can_showCorrectAnswers {
 }
 
 sub can_showHints {
-	#my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	
 	return 1;
 }
 
 sub can_showSolutions {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
 	
 	return
@@ -119,7 +119,7 @@ sub can_showSolutions {
 }
 
 sub can_recordAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 	if ($User->user_id ne $EffectiveUser->user_id) {
@@ -143,7 +143,7 @@ sub can_recordAnswers {
 }
 
 sub can_checkAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 	
@@ -388,11 +388,6 @@ sub pre_header_initialize {
 	die "record for user $effectiveUserName (effective user) does not exist."
 		unless defined $effectiveUser;
 	
-	my $PermissionLevel = $db->getPermissionLevel($userName); # checked
-	die "permission level record for user $userName does not exist (but the user does? odd...)"
-		unless defined $PermissionLevel;
-	my $permissionLevel = $PermissionLevel->permission;
-	
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
 
@@ -501,7 +496,6 @@ sub pre_header_initialize {
 	$self->{effectiveUserName} = $effectiveUserName;
 	$self->{user}              = $user;
 	$self->{effectiveUser}     = $effectiveUser;
-	$self->{permissionLevel}   = $permissionLevel;
 	$self->{set}               = $set;
 	$self->{problem}           = $problem;
 	$self->{editMode}          = $editMode;
@@ -562,7 +556,7 @@ sub pre_header_initialize {
 	);
 	
 	# does the user have permission to use certain options?
-	my @args = ($user, $PermissionLevel, $effectiveUser, $set, $problem);
+	my @args = ($user, $effectiveUser, $set, $problem);
 	my %can = (
 		showOldAnswers     => $self->can_showOldAnswers(@args),
 		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
@@ -572,57 +566,6 @@ sub pre_header_initialize {
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
 	);
-	
-#	# does the user have permission to use certain options?
-#	my %can = (
-#		showOldAnswers     => 1,
-#		showCorrectAnswers => canShowCorrectAnswers($permissionLevel, $set->answer_date),
-#		showHints          => 1,
-#		showSolutions      => canShowSolutions($permissionLevel, $set->answer_date),
-#		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
-#			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
-#			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
-#		checkAnswers       => canCheckAnswers($permissionLevel, $set->due_date),
-#	);
-#	
-#	# more complicated logic for showing check answer button:
-#	# checkAnswers button shows up after due date -- once a student can't record anymore
-#	# checkAnswers button always shows up when an instructor or TA is acting
-#	# as someone else (the $user and $effectiveUserName aren't the same).
-#	$can{checkAnswers} = (
-#		# $can{recordAnswers} will be false if the due date has passed OR the
-#		# student has used up all of her attempts
-#		($can{checkAnswers} and not $can{recordAnswers})
-#			or
-#		(
-#			# FIXME: this is not the right way to check for this.
-#			# also, canCheckAnswers() will show this button if the permission
-#			# level is positive,  which is always true when an instructor is
-#			# acting as a student
-#			defined($userName)
-#				and
-#			defined($effectiveUserName)
-#				and
-#			($userName ne $effectiveUserName)
-#		)
-#	);
-#	
-#	# more complicated logic for showing "submit answer" button:
-#	# We hide the submit answer button if someone is acting as a student
-#	# This prevents errors where you accidently submit the answer for a student
-#	# Not sure whether this a feature or a bug
-#	$can{recordAnswers} = (
-#		$can{recordAnswers}
-#			and not
-#		(
-#			# FIXME: this is not the right way to check for this.
-#			defined($userName)
-#				and
-#			defined($effectiveUserName)
-#				and
-#			($userName ne $effectiveUserName)
-#		)
-#	);
 	
 	# final values for options
 	my %will;
@@ -831,7 +774,6 @@ sub body {
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $editMode        = $self->{editMode};
-	my $permissionLevel = $self->{permissionLevel};
 	my $submitAnswers   = $self->{submitAnswers};
 	my $checkAnswers    = $self->{checkAnswers};
 	my $previewAnswers  = $self->{previewAnswers};
