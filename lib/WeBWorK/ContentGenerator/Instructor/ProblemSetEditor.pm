@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.60 2004/07/07 14:37:31 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.61 2004/08/11 22:16:14 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@ use warnings;
 use CGI qw();
 use File::Copy;
 use WeBWorK::DB::Record::Problem;
-use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirectory max);
+use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash listFilesRecursive max);
 
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
@@ -76,25 +76,6 @@ sub setRowHTML {
 	return $html;
 			
 }
-
-
-# FIXME: this or something similar could get pulled up to Instructor.pm
-sub recurseDirectory {
-
-	my ($self, $dir, $pattern) = @_;
-	
-	my @dirs = grep {$_ ne "." and $_ ne ".." and $_ ne "Library" and $_ ne "CVS" and -d "$dir/$_"} readDirectory($dir);
-
-	my @files = map { "$dir/$_" } $self->read_dir($dir, $pattern);
-
-	foreach (@dirs) {
-		push (@files, $self->recurseDirectory("$dir/$_", $pattern));
-	}
-
-	return @files;
-}
-
-
 
 # Initialize does all of the form processing.  It's extensive, and could probably be cleaned up and
 # consolidated with a little abstraction.
@@ -316,8 +297,17 @@ sub body {
 		print CGI::p("Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
 	}
 
-	my @headers = $self->recurseDirectory($self->{ce}->{courseDirs}->{templates}, '(?i)header.*?\\.pg$');
-	map { s|^$self->{ce}->{courseDirs}->{templates}/?|| } @headers;
+	my $templates_dir = $r->ce->{courseDirs}->{templates};
+	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
+	my $exempt_dirs = join("|", keys %probLibs);
+	my @headers = listFilesRecursive(
+		$templates_dir,
+		qr/header.*\.pg$/i, # match these files
+		qr/^(?:$exempt_dirs|CVS)$/, # prune these directories
+		0, # match against file name only
+		1, # prune against path relative to $templates_dir
+	);
+	
 	@headers = sort @headers;
 	unshift (@headers, "Use System Default");
 	
