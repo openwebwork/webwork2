@@ -1,7 +1,43 @@
-# This mixin is modeled after Tatsuhiko Miyagawa's Class::Trigger mixin. It is
-# simpler and less reusable.
-
 package WeBWorK::DBv3::NormalizerMixin;
+
+=head1 NAME
+
+WeBWorK::DBv3NormalizerMixin - Mixin to add/call inhertiable normalizers.
+
+=head1 SYNOPSIS
+
+ package My::DB;
+ use base "Class::DBI";
+ use WeBWorK::DBv3::NormalizerMixin;
+ 
+ # overload Class::DBI's empty normalize_column_values method to use call_normalizer().
+ sub normalize_column_values {
+ 	my ($self, $column_values) = @_;
+ 	
+ 	my @errors;
+ 	
+ 	foreach my $column (keys %$column_values) {
+ 		#warn "callig normalizers for column '$column'.\n";
+ 		eval { $self->call_normalizer($column_values, $column) };
+ 		push @errors, $column => $@ if $@;
+ 	}
+ 	
+ 	return unless @errors;
+ 	$self->_croak(
+ 		"normalize_column_values error: " . join(" ", @errors),
+ 		method => "normalize_column_values",
+ 		data => { @errors },
+ 	);
+ }
+ 
+ package My::DB::SomeTable;
+ 
+ # ... other Class::DBI stuff here ...
+ 
+ # add normalizers for various fields
+ __PACKAGE__->add_normalizer(field => \&normalizer_sub);
+
+=cut
 
 use strict;
 use warnings;
@@ -99,5 +135,19 @@ sub __deep_dereference {
 }
 
 ################################################################################
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, sh002i (at) math.rochester.edu.
+
+Based on Class::Trigger, which says:
+
+ Original idea by Tony Bowden <tony@kasei.com> in Class::DBI.
+ 
+ Code by Tatsuhiko Miyagawa <miyagawa@bulknews.net>.
+ 
+ Patches by Tim Buce <Tim.Bunce@pobox.com>.
+
+=cut
 
 1;
