@@ -111,7 +111,7 @@ sub body {
 				. $ce->{webworkURLs}->{root}
 				. "/" . $ce->{courseName}
 				. ($set 
-					? "/".$problem->set_id . ($problem ? "/".$problem->problem_id : "")
+					? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
 					: "")
 				. "/?" 
 				. ($problem 
@@ -185,7 +185,7 @@ sub body {
 				. $ce->{webworkURLs}->{root}
 				. "/" . $ce->{courseName}
 				. ($set 
-					? "/".$problem->set_id . ($problem ? "/".$problem->problem_id : "")
+					? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
 					: "")
 				. "/" . "?effectiveUser=$userName"
 				. ($problem 
