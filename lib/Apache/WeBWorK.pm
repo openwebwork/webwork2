@@ -26,7 +26,7 @@ use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Professor;
-use WeBWorK::ContentGenerator::Instructor;
+use WeBWorK::ContentGenerator::Instructor::Index;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -126,7 +126,7 @@ sub handler() {
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
-				return WeBWorK::ContentGenerator::Instructor->new($r, $ce, $db)->go;
+				return WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
 			} else {
 			
 			}
