@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.137 2004/05/24 20:41:10 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.138 2004/05/28 14:55:01 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -366,10 +366,16 @@ sub options {
 	my ($self) = @_;
 	
 	return "" if $self->{invalidProblem};
+	my $sourceFilePathfield = '';
+        if($self->r->param("sourceFilePath")) {
+		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
+                                                   -value => $self->r->param("sourceFilePath"));
+	}
 	
 	return join("",
 		CGI::start_form("POST", $self->{r}->uri),
 		$self->hidden_authen_fields,
+		$sourceFilePathfield,
 		CGI::hr(), 
 		CGI::start_div({class=>"viewOptions"}),
 		$self->viewOptions(),
