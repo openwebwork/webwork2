@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.16 2004/01/17 19:30:22 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.17 2004/01/21 01:16:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -74,7 +74,7 @@ sub initialize {
 #	gather database data
 #############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
-	my @users =  sort $db->listUsers;
+	my @users =  $db->listUsers;
 	my @user_records = ();
 	foreach my $userName (@users) {
 		my $userRecord = $db->getUser($userName); # checked
@@ -92,7 +92,11 @@ sub initialize {
 			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
 		} elsif ($sort_method eq 'alphabetical') {
 			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} 
+		} elsif ($sort_method eq 'id' )          {
+		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
+		}
+	} else {
+		@user_records = sort { $a->user_id cmp $b->user_id }  @user_records;
 	}
 	
 
@@ -245,7 +249,7 @@ sub initialize {
 	my $script_action     = '';
 	
 	
-	if(not defined($action) or $action eq 'Open' or $action eq $REFRESH_RESIZE_BUTTON
+	if(not defined($action) or $action eq 'Open' or $action eq $REFRESH_RESIZE_BUTTON or $action eq 'Sort by'
 	   or $action eq 'Set merge file to:' ){  
 #		warn "FIXME action is |$action| no further initialization required";
 		return '';
@@ -502,28 +506,23 @@ sub print_form {
 #############################################################################################
 #	second column
 #############################################################################################	
-			CGI::td({-align=>'center'},
-			    CGI::start_table({-border=>'0', -cellpadding=>'1',-width=>"100%"}),
-			  		CGI::Tr(
-			    		CGI::td({valign => 'top'},
-			    		    CGI::strong("Send to:"),CGI::br(),
+			CGI::td({-align=>'left',style=>'font-size:smaller'},
+			   
+			    		    CGI::strong("Send to:"),
 							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
 								-labels=>{all_students=>'All',studentID => 'Selected'},
 								-default=>'studentID',
-								-linebreak=>1
-							),
-						),
-						CGI::td({valign => 'top'},
-						    CGI::strong("Sort by:"), 
+								-linebreak=>0
+							), CGI::br(),CGI::br(),
+						
+						    CGI::input({type=>'submit',value=>'Sort by',name=>'action'}),, 
 							CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
-								-labels=>{id=>'Id',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
+								-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
 								-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
-								-linebreak=>1
+								-linebreak=>0
 							),
 
-						),
-					),	
-				CGI::end_table(),
+						CGI::br(),CGI::br(),
 				CGI::popup_menu(-name=>'classList',
 						   -values=>\@users,
 						   -labels=>\%classlistLabels,
