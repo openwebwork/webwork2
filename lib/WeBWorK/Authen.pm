@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.23 2003/12/24 00:59:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.24 2003/12/25 04:17:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -339,7 +339,9 @@ sub verify($) {
 		#     the cookie
 		# (c) the user asked to have a cookie sent and is not a guest user.
 		my $usedCookie = ($credentialSource eq "cookie") || 0;
-		my $unusedCookieMatched = ($user eq $cookieUser and $key eq $cookieKey) || 0;
+
+		my $unusedCookieMatched = (defined($key) and defined($cookieUser) and defined($cookieKey) and 
+		                            $user eq $cookieUser and $key eq $cookieKey) || 0;
 		my $userRequestsCookie = ($send_cookie and not $login_practice_user) || 0;
 		#warn "usedCookie=$usedCookie\n";
 		#warn "unusedCookieMatched=$unusedCookieMatched\n";
