@@ -335,6 +335,30 @@ sub body {
 			);
 		}
 	}
+	# logging student answers
+	my $pastAnswerLog = undef;
+	if (defined( $self->{courseEnvironment}->{webworkFiles}->{logs}->{'pastAnswerList'} )) {
+	
+		$pastAnswerLog 	= 	$self->{courseEnvironment}->{webworkFiles}->{logs}->{'pastAnswerList'};
+	
+		if ($submitAnswers and defined($pastAnswerLog) ) {
+			my $answerString = "";
+			my %answerHash = %{ $pg->{answers} };
+			$answerString = $answerString . $answerHash{$_}->{original_student_ans}."\t"
+				foreach (sort keys  %answerHash);
+			writeLog($self->{courseEnvironment}, "pastAnswerList",
+					'|'.$problem->login_id.
+					'|'.$problem->set_id.
+					'|'.$problem->id.'|'."\t".
+					time()."\t".
+					$answerString,
+					
+				);
+		
+		}
+	
+	 }
+	# end logging student answers
 	
 	##### output #####
 	print CGI::start_div({class=>"problemHeader"});
@@ -382,6 +406,9 @@ sub body {
 			CGI::submit(-name=>"previewAnswers",
 				-label=>"Preview Answers"),
 		);
+	print CGI::end_div();
+	
+	print CGI::start_div({class=>"scoreSummary"});
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $attemptsNoun = $attempts != 1 ? "times" : "time";
@@ -414,33 +441,61 @@ sub body {
 			: "",
 		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
-	
+	print CGI::end_div();
+	print CGI::hr(), CGI::start_div({class=>"viewOptions"});
 	print
-		$self->viewOptions(),
+		$self->viewOptions(),CGI::end_div(),
 		CGI::endform();
 		
-	print CGI::end_div();
+	print  CGI::start_div({class=>"problemFooter"});
 	# feedback form
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";
+	
+	# arguments for answer inspection button
+	my $prof_url = $ce->{webworkURLs}->{oldProf};
+	my $cgi_url = $prof_url;
+	$cgi_url=~ s|/[^/]*$||;  # clip profLogin.pl
+	my $authen_args = $self->url_authen_args();
+	my $showPastAnswersURL = "$cgi_url/showPastAnswers.pl";
+	
+	#print feedback form
 	print
-		CGI::startform("POST", $feedbackURL),
-		$self->hidden_authen_fields,
-		CGI::hidden("module",             __PACKAGE__),
-		CGI::hidden("set",                $set->id),
-		CGI::hidden("problem",            $problem->id),
-		CGI::hidden("displayMode",        $self->{displayMode}),
-		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),
-		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),
-		CGI::hidden("showHints",          $will{showHints}),
-		CGI::hidden("showSolutions",      $will{showSolutions}),
+		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::hidden("module",             __PACKAGE__),"\n",
+		CGI::hidden("set",                $set->id),"\n",
+		CGI::hidden("problem",            $problem->id),"\n",
+		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
+		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
+		CGI::hidden("showHints",          $will{showHints}),"\n",
+		CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
 		CGI::p({-align=>"right"},
 			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
 		),
-		CGI::endform();
+		CGI::endform(),"\n";
+	# print answer inspection button
+	if ($self->{permissionLevel} >0)      {
+    	
+
+		print "\n",
+			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
+				$self->hidden_authen_fields,"\n",
+				CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
+				CGI::hidden(-name => 'probNum', -value=>$problem->id), "\n",
+				CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
+				CGI::hidden(-name => 'User',    -value=>$problem->login_id), "\n",
+				CGI::submit(-name => 'action',  -value=>'Show Past Answers'), "\n",
+				CGI::endform();
 	
+	
+	
+	}
+	print CGI::end_div();
+	# end answer inspection button
 	# warning output
 	if ($pg->{warnings} ne "") {
 		print CGI::hr(), $self->warningOutput($pg->{warnings});
@@ -632,6 +687,9 @@ sub previewAnswer($$) {
 		}
 	}
 }
+##### logging subroutine ####
+
+
 
 ##### permission queries #####
 
