@@ -64,6 +64,7 @@ sub body {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
 				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)};
+				warn "Can't get password for user |$effectiveUser| $@" if $@ or not defined($passwordRecord);
 				my $cryptedPassword = cryptPassword($newP);
 				$passwordRecord->password($cryptedPassword);
 				
