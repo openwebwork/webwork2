@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.37 2004/01/18 00:11:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.38 2004/01/21 19:55:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -188,15 +188,48 @@ sub setListRow($$$) {
 	]));
 }
 sub info {
-	my $self = shift;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-
+	my $self       = shift;
+	my $r          = $self->{r};
+	my $ce         = $self->{ce};
+	my $db         = $self->{db};
+	my $user       = $r->param("user");
+	my $root       = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	###########################################################
+	# The course information and problems are located in the course templates directory.
+	# Course information has the name  defined by courseFiles->{course_info}
+	# 
+	# Only files under the template directory ( or linked to this location) can be edited.
+	#
+	# editMode = temporaryFile    (view the temp file defined by course_info.txt.user_name.tmp
+	#                              instead of the file course_info.txt)
+	# The editFileSuffix is "user_name.tmp" by default.  It's definition should be moved to Instructor.pm #FIXME                              
+	###########################################################
 	if (defined $ce->{courseFiles}->{course_info}
-		and $ce->{courseFiles}->{course_info}) {
-		my $course_info = eval { readFile($ce->{courseFiles}->{course_info}) };
+		and $ce->{courseFiles}->{course_info})     {
+		my $course_info_path  = $ce->{courseDirs}->{templates}
+		                     .'/'. $ce->{courseFiles}->{course_info};
+		my $editFileSuffix			=	$user.'.tmp';  #FIXME -- this could be moved to Instructor.pm
+		$course_info_path    .= ".$editFileSuffix" if $r->param("editMode") eq 'temporaryFile';
+		warn "course info $course_info_path";
+		my $course_info = eval { readFile($course_info_path) };
 		$@ or print $course_info;
+		my $user            = $r->param("user");
+		my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
+		$permissionLevel    = 0 unless defined $permissionLevel;
+ 	    if ($permissionLevel>=10) {
+			my $editURL = "$root/$courseName/instructor/pgProblemEditor/?"
+						  .$self->url_authen_args
+						  ."&file_type=course_info"
+			;
+			my $editText      = "Edit message file";
+			$editText         = "Edit temporary message file" if $r->param("editMode") eq 'temporaryFile';
+			print CGI::br(), CGI::a({-href=>$editURL}, $editText);
+	    }
+	    
 	}
+	
+	
 	'';
 }
 sub byname { $a->set_id cmp $b->set_id; }
