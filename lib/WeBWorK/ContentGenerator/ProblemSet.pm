@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.53 2004/06/03 19:38:45 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.54 2004/06/08 17:07:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,7 @@ sub initialize {
 	my $r = $self->r;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+	my $authz = $r->authz;
 	
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
@@ -44,14 +45,12 @@ sub initialize {
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
-	my $permissionLevel = $db->getPermissionLevel($userName); # checked
 	
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
-	die "permisson level for user $userName  not found."  unless $permissionLevel;
 	
 	# A set is valid if it is defined and if it is either published or the user is privileged.
-	$self->{invalidSet} = !(defined $set && ($set->published || $permissionLevel->permission > 0));
+	$self->{invalidSet} = !(defined $set && ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
 	return if $self->{invalidSet};
 
 	# FIXME: This is a temporary fix to fill in the database
@@ -64,17 +63,16 @@ sub initialize {
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $permissionLevel->permission > 0;
+	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $authz->hasPermissions($userName, "view_unpublished_sets");
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
 	$self->{effectiveUser}   = $effectiveUser;
 	$self->{set}             = $set;
-	$self->{permissionLevel} = $permissionLevel->permission;
 	
 	##### permissions #####
 	
-	$self->{isOpen} = time >= $set->open_date || $permissionLevel->permission > 0;
+	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($userName, "view_unopened_sets");
 }
 
 sub nav {
@@ -94,9 +92,12 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
+	
 	my $courseID = $urlpath->arg("courseID");
+	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
 	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
 	
@@ -120,7 +121,7 @@ sub siblings {
 	#my @sets = $db->getMergedSets(@userSetIDs);
 	#foreach my $set (@sets) {
 	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", courseID => $courseID, setID => $set->set_id);
-	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $self->{permissionLevel} > 0));
+	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $authz->hasPermissions($user, "view_unpublished_sets"));
 	#}
 	#$WeBWorK::timer->continue("Begin printing sets from getMergedSets()") if defined $WeBWorK::timer;
 	
@@ -136,6 +137,7 @@ sub info {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	return "" unless $self->{isOpen};
@@ -190,7 +192,7 @@ sub info {
 		},
 	);
 	
-	if (defined($set) and $set->set_header and $self->{permissionLevel} >= $ce->{permissionLevels}->{modify_problem_sets}) {  
+	if (defined($set) and $set->set_header and $authz->hasPermissions($userID, "modify_problem_sets")) {  
 		#FIXME ?  can't edit the default set header this way
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseID, setID => $set->set_id, problemID => 0);

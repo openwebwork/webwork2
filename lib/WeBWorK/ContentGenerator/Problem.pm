@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.143 2004/06/08 17:07:25 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.144 2004/06/18 14:11:28 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,12 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # effectiveUser
 # key
 # 
-# displayMode
+# editMode
+#	sourceFilePath - path to file to be editted
+#	problemSeed - problem seed for editted problem
+#
+# displayMode - type of display (ie formatted, images, asciimath, etc)
+#
 # showOldAnswers
 # showCorrectAnswers
 # showHints
@@ -55,15 +60,12 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # submitAnswers - name of "Submit Answers" button
 # checkAnswers - name of the "Check Answers" button
 # previewAnswers - name of the "Preview Answers" button
-# 
-# FIXME: this table is heinously out of date
 #
+# success - success message (from PGProblemEditor)
+# failure - failure message (from PGProblemEditor)
+# 
 ############################################################
 
-# FIXME: what is this?
-sub templateName {
-	"problem";
-}
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -133,8 +135,8 @@ sub pre_header_initialize {
 			# if the global problem doesn't exist either, bail!
 			if(not defined $globalProblem) {
 				my $sourceFilePath = $r->param("sourceFilePath");
-				die "Problem $problemNumber in set $setName does not exist"
-					unless defined $sourceFilePath;
+				$self->{invalidProblem} = $self->{invalidSet} = 1 if defined $sourceFilePath;
+#				die "Problem $problemNumber in set $setName does not exist" unless defined $sourceFilePath;
 				$problem = fake_problem($db);
 				$problem->problem_id(1);
 				$problem->source_file($sourceFilePath);
@@ -164,6 +166,10 @@ sub pre_header_initialize {
 			$problem->source_file($sourceFilePath);
 		}
 		
+		# if the problem does not have a source file or no source file has been passed in 
+		# then this is really an invalid problem (probably from a bad URL)
+		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
+		
 		# if the caller is asking to override the problem seed, do so
 		my $problemSeed = $r->param("problemSeed");
 		if (defined $problemSeed) {
@@ -178,13 +184,16 @@ sub pre_header_initialize {
 		# students can't view problems not assigned to them
 
 		# A set is valid if it exists and if it is either published or the user is privileged.
-		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0 || !($set->published || $authz->hasPermissions($userName, "access_instructor_tools"));
-		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0 || !($set->published || $authz->hasPermissions($userName, "access_instructor_tools"));
-		
-		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value;;
+		$self->{invalidSet} = ((grep /^$setName/, $db->listUserSets($effectiveUserName)) == 0)
+					|| not defined $set
+					|| !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
+		$self->{invalidProblem} = ((grep /^$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0)
+					|| not defined $problem
+					|| !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
 
+		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value and not $self->{invalidProblem};
 	}
-	
+
 	$self->{userName}          = $userName;
 	$self->{effectiveUserName} = $effectiveUserName;
 	$self->{user}              = $user;
@@ -215,8 +224,8 @@ sub pre_header_initialize {
 	# get result and send to message
 	my $success	       = $r->param("sucess");
 	my $failure	       = $r->param("failure");
-	$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p($failure))) if $failure;
-	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p($success))) if $success;
+	$self->addbadmessage(CGI::p($failure)) if $failure;
+	$self->addgoodmessage(CGI::p($success)) if $success;
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
@@ -224,7 +233,7 @@ sub pre_header_initialize {
 	##### permissions #####
 	
 	# are we allowed to view this problem?
-	$self->{isOpen} = time >= $set->open_date || $permissionLevel > 0;
+	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($user, "view_unopened_sets");
 	return unless $self->{isOpen};
 	
 	# what does the user want to do?
@@ -281,7 +290,7 @@ sub pre_header_initialize {
 		)
 	);
 	
-	# more complicated logif for showing "submit answer" button:
+	# more complicated logic for showing "submit answer" button:
 	# We hide the submit answer button if someone is acting as a student
 	# This prevents errors where you accidently submit the answer for a student
 	# Not sure whether this a feature or a bug
@@ -387,23 +396,6 @@ sub options {
 	);
 }
 
-#sub path {
-#	my $self = shift;
-#	my $args = $_[-1];
-#	my $setName = $self->{set}->set_id;
-#	my $problemNumber = $self->{problem}->problem_id;
-#	
-#	my $ce = $self->{ce};
-#	my $root = $ce->{webworkURLs}->{root};
-#	my $courseName = $ce->{courseName};
-#	return $self->pathMacro($args,
-#		"Home" => "$root",
-#		$courseName => "$root/$courseName",
-#		$setName => "$root/$courseName/$setName",
-#		"Problem $problemNumber" => "",
-#	);
-#}
-
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -490,9 +482,6 @@ sub title {
 	my $setID = $self->r->urlpath->arg("setID");
 	my $problemID = $self->r->urlpath->arg("problemID");
 	
-	#my $setID = $self->{set}->set_id;
-	#my $problemID = $self->{problem}->problem_id;
-	
 	return "$setID : $problemID";
 }
 
@@ -533,24 +522,14 @@ sub body {
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
 	
-	#my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $urlpath->arg("courseID");
-	
-	#####create Editor link   #####
-	## print editor link if the user is an instructor AND the file is not in temporary editing mode
-	#my $editorLinkMessage   =   '';
-	## and ( (not defined($self->{editMode}))  or $self->{editMode} eq 'savedFile')  # FIXME is this needed?
-	#if ($self->{permissionLevel}>=10  ) {
-	#	$editorLinkMessage = CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".
-	#	$set->set_id.'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
-	#}
 	
 	my $editorLink = "";
 	# if we are here without a real problem set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($self->{permissionLevel}>=10) {
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
@@ -686,7 +665,7 @@ sub body {
 	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
-	# do I need to check $wills{howCorrectAnswers} to make preflight work??
+	# do I need to check $will{showCorrectAnswers} to make preflight work??
 	if (($pg->{flags}->{showPartialCorrectAnswers}>= 0 and $submitAnswers) ) {
 		# print this if user submitted answers OR requested correct answers
 		
@@ -776,7 +755,7 @@ sub body {
 	if (time < $set->open_date or time > $set->due_date) {
 		$setClosed = 1;
 		$setClosedMessage = "This problem set is closed.";
-		if ($permissionLevel > 0) {
+		if ($authz->hasPermissions($user, "view_answers")) {
 			$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
 		} else {
 			$setClosedMessage .= " Additional attempts will not be recorded.";
@@ -837,7 +816,7 @@ sub body {
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		
 	# print answer inspection button
-	if ($self->{permissionLevel} > 0) {
+	if ($authz->hasPermissions($user, "view_answers")) {
 		print "\n",
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
 			$self->hidden_authen_fields,"\n",
@@ -851,26 +830,6 @@ sub body {
 			CGI::endform();
 	}
 	
-	## arguments for feedback form
-	#my $feedbackURL = "$root/$courseName/feedback/";
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $set->set_id),"\n",
-	#	CGI::hidden("problem",            $problem->problem_id),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
-	#	CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
-	#	CGI::hidden("showHints",          $will{showHints}),"\n",
-	#	CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::endform(),"\n";
-		
 	# feedback form url
 	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
 		courseID => $courseName);
@@ -897,11 +856,6 @@ sub body {
 	print $editorLink;   #empty unless it is appropriate to have an editor link.
 	
 	print CGI::end_div();
-	
-	# warning output
-	#if ($pg->{warnings} ne "") {
-	#	print CGI::hr(), $self->warningOutput($pg->{warnings});
-	#}
 	
 	# debugging stuff
 	if (0) {
@@ -1026,6 +980,10 @@ sub attemptResults {
 sub viewOptions {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
+
+	# don't show options if we don't have anything to show
+	return if $self->{invalidSet} or $self->{invalidProblem};
+	return unless $self->{isOpen};
 	
 	my $displayMode = $self->{displayMode};
 	my %must = %{ $self->{must} };
