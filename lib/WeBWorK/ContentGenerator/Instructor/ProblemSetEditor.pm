@@ -84,7 +84,11 @@ sub initialize {
 		return;
 	}
 
-	# The set form was submitted
+	
+	###################################################
+	# The set form was submitted with the save button pressed
+	# Save changes to the set
+	###################################################
 	if (defined($r->param('submit_set_changes'))) {
 		foreach (@{SET_FIELDS()}) {
 			if (defined($r->param($_))) {
@@ -116,6 +120,59 @@ sub initialize {
 			}
 		}
 	} 
+	
+	###################################################
+	# The set form was submitted with the export button pressed
+	# Export the set structure to a set definition file
+	###################################################
+	
+	if (  defined($r->param('export_set'))  ) {
+		my $fileName = $r->param('export_file_name');
+		die "Please specify a file name for saving the set definition" unless $fileName;
+		$fileName    .= '.def' unless $fileName =~ /\.def$/;
+		my $filePath  = $ce->{courseDirs}->{templates}.'/'.$fileName;
+		# back up existing file
+		rename($filePath,"$filePath.bak") or 
+	    	       die "Can't rename $filePath to $filePath.bak ",
+	    	           "Check permissions for webserver on directories. $!";
+	    my $openDate     = formatDateTime($setRecord->open_date);
+	    my $dueDate      = formatDateTime($setRecord->due_date);
+	    my $answerDate   = formatDateTime($setRecord->answer_date);
+	    my $setHeader    = $setRecord->set_header;
+	    
+	    my @problemList = $db->listGlobalProblems($setName);
+	    my $problemList  = '';
+	    foreach my $prob (sort {$a <=> $b} @problemList) {
+	    	my $problemRecord = $db->getGlobalProblem($setName, $prob);
+	    	my $source_file   = $problemRecord->source_file();
+			my $value         = $problemRecord->value();
+			my $max_attempts  = $problemRecord->max_attempts();
+	    	$problemList     .= "$source_file, $value, $max_attempts \n";	    
+	    }
+	    my $fileContents = <<EOF;
+
+openDate          = $openDate
+dueDate           = $dueDate
+answerDate        = $answerDate
+paperHeaderFile   = $setHeader
+screenHeaderFile  = $setHeader
+problemList       = 
+
+$problemList
+
+
+
+EOF
+
+
+	    $self->saveProblem($fileContents, $filePath);
+	    $self->{message} .= "Set definition saved to $filePath";
+
+	
+	
+	
+	
+	}
 }
 
 sub path {
@@ -203,16 +260,26 @@ sub body {
 		])
 	);
 	
-	print $self->hiddenEditForUserFields(@editForUser);
-	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"});
-	print '&nbsp;';
+	print $self->hiddenEditForUserFields(@editForUser),
+	      $self->hidden_authen_fields,
+	      CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"}),
+	      '&nbsp;';
 	
-	#### link to edit setHeader 
+		#### link to edit setHeader 
 	if (defined($setRecord) and $setRecord->set_header) {
 		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setRecord->set_id.'/0'.
 	             '?'.$self->url_authen_args},'Edit set header: '.$setRecord->set_header);
 	}
+	
+	print CGI::br(),
+	      CGI::submit({ name=>"export_set", label=>"Export Set"} ),
+	      ' as ',
+	      CGI::input({type=>'text',name=>'export_file_name',value=>"set$setName.def",size=>10});
+	      
+	print CGI::br(), $self->{message}  if defined $self->{message};
+
+	
+
 	print CGI::end_form();
 	
 	my $problemCount = $db->listGlobalProblems($setName);
@@ -228,5 +295,20 @@ sub body {
 	
 	return "";
 }
-
+###########################################################################
+# utility
+###########################################################################
+sub saveProblem {     
+    my $self      = shift;
+	my ($body, $probFileName)= @_;
+	local(*PROBLEM);
+	open (PROBLEM, ">$probFileName") ||
+		$self->submission_error("Could not open $probFileName for writing.
+		Check that the  permissions for this problem are 660 (-rw-rw----)");
+	print PROBLEM $body;
+	close PROBLEM;
+	chmod 0660, "$probFileName" ||
+	             $self->submission_error("
+	                    CAN'T CHANGE PERMISSIONS ON FILE $probFileName");
+}
 1;
