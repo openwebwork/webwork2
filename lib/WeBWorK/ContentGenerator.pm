@@ -456,7 +456,8 @@ sub links {
 	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
 	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
 	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
-	my $users      = "$root/$courseName/instructor/users?" . $self->url_authen_args();
+	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
+	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
 	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
 	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
 	
@@ -467,11 +468,13 @@ sub links {
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 		($permLevel > 0
 			? join("",
-				CGI::hr(),
-				CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
-			  	'&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") , CGI::br(),
-			  	'&nbsp;&nbsp;',CGI::a({-href=>$users}, "Class&nbsp;List") , CGI::br(),)
-			: ""
+				 CGI::hr(),
+				 CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") , CGI::br(),
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "Class&nbsp;List") , CGI::br(),
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email") , CGI::br(),
+			  	 
+			  ) : ""
 		),
 	);
 }
