@@ -184,6 +184,7 @@ sub initialize {
 				
 			}
 		}
+	}
 }
 
 
@@ -239,7 +240,8 @@ sub body {
 	print CGI::start_form({method=>"POST", action=>$r->uri});
 	print CGI::start_table({border=>1, cellpadding=>4});
 	print CGI::Tr({}, CGI::th({}, [
-		"Delete?", "Problem",
+		($forUsers ? () : ("Delete?")), 
+		"Problem",
 		($forUsers ? ("Status", "Problem Seed") : ()),
 		"Source File", "Max. Attempts", "Weight",
 		($forUsers ? ("Number Correct", "Number Incorrect") : ())
@@ -267,7 +269,7 @@ sub body {
 		
 		print CGI::Tr({}, 
 			CGI::td({}, [
-				CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}),
+				($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
 				CGI::a({href=>"/webwork/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
 				($forUsers ? (
 					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
@@ -290,11 +292,12 @@ sub body {
 	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
 	print CGI::end_form();
 	
-	print CGI::start_form({method=>"post", action=>"/webwork/$courseName/instructor/addProblem/$setName/"});
-	print CGI::input({type=>"submit", name=>"addProblem", value=>"Add Problem"});
-	print $self->hidden_authen_fields;
-	print CGI::end_form();
-	
+	unless ($forUsers) {
+		print CGI::start_form({method=>"post", action=>$r->uri});
+		print CGI::input({type=>"submit", name=>"addProblem", value=>"Add Problem"});
+		print $self->hidden_authen_fields;
+		print CGI::end_form();
+	}
 	return "";
 }
 
