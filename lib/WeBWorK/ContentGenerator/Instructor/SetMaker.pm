@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.4 2004/05/06 23:20:49 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.7 2004/05/07 21:04:07 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -559,6 +559,7 @@ sub body {
       my $newSetName = $r->param('new_set_name');
       $newSetName =~ s/^set//;
       $newSetName =~ s/\.def$//;
+      $r->param('local_sets',$newSetName);
       my $newSetRecord   = $db->getGlobalSet($newSetName);
       if (defined($newSetRecord)) {
 	$self->{localmsg} = "The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.";
