@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FilterRecords.pm,v 1.4 2004/04/13 14:36:40 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FilterRecords.pm,v 1.1 2004/05/23 23:20:31 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,7 +94,7 @@ sub getFiltersForClass {
 	my (%sections, %recitations);
 	my (@names,%labels);
 	push @names, "all";
-	$labels{all} = "Include all possible records";
+	$labels{all} = "Display all possible records";
 	
 	if (ref $Records[0] eq "WeBWorK::DB::Record::User"){
 		foreach my $user (@Records){
@@ -104,11 +104,20 @@ sub getFiltersForClass {
 	
 		foreach my $sec (keys %sections){
 			push @names, "section:$sec";
-			$labels{"section:$sec"} = "Include section $sec";
+			if ($sec ne ""){
+				$labels{"section:$sec"} = "Display section $sec";
+			}
+			else {
+				$labels{"section:$sec"} = "Display section <none>";
+			}
 		}
 		foreach my $rec (keys %recitations){
 			push @names, "recitation:$rec";
-			$labels{"recitation:$rec"} = "Include recitation $rec";
+			if ($rec ne ""){
+				$labels{"recitation:$rec"} = "Display recitation $rec";
+			}
+			else { $labels{"recitation:$rec"} = "Display recitation <none>";
+			}
 		}
 	}
 	return ( \@names, \%labels );
@@ -155,10 +164,10 @@ sub filterRecords {
 	foreach my $record (@Records){
 	foreach my $fil (@filtersToUse){
 		my ($name, $value) = split(/:/, $fil);
-		warn "filter = $fil";
-		warn "name = $name";
-		warn "value = $value";
-		warn "section = $record->section";
+		#warn "filter = $fil";
+		#warn "name = $name";
+		#warn "value = $value";
+		#warn "section = $record->section";
 #		my @data = split(/::/, $record);
 		if ($record->$name eq $value){push @GoodRecords, $record;}
 	}
