@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.105 2004/09/27 17:16:14 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.106 2004/09/29 21:38:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -375,8 +375,14 @@ $siteDefaults{status} = {
 	enrolled => "Enrolled",
 };
 
-# Set the default timezone of courses on this server. This must be a value valid
-# for the TZ environment variable. See also tzset(3).
+# Set the default timezone of courses on this server. To get a list of valid
+# timezones, run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
+# 
+# To get a list of valid timezone "links" (deprecated names), run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
 # 
 # If left blank, the system timezone will be used. This is usually what you
 # want. You might want to set this if your server is NOT in the same timezone as
