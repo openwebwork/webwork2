@@ -261,17 +261,25 @@ sub initialize {
 #############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 # Obtaining the list of users
+    $WeBWorK::timer2->continue("Begin listing users") if defined $WeBWorK::timer2;
 	my @userNames =  $db->listUsers;
+	$WeBWorK::timer2->continue("End listing users") if defined $WeBWorK::timer2;
+	$WeBWorK::timer2->continue("Begin obtaining users") if defined $WeBWorK::timer2;
 	my @user_records = $db->getUsers(@userNames);
+	$WeBWorK::timer2->continue("End obtaining users: ".@user_records) if defined $WeBWorK::timer2;
 
 	# store data
 	$self->{ra_users}              =   \@userNames;
 	$self->{ra_user_records}       =   \@user_records;
 
 # Obtaining list of sets:
+	$WeBWorK::timer2->continue("Begin listing sets") if defined $WeBWorK::timer2;
 	my @setNames =  $db->listGlobalSets();
+	$WeBWorK::timer2->continue("End listing sets") if defined $WeBWorK::timer2;
 	my @set_records = ();
+	$WeBWorK::timer2->continue("Begin obtaining sets") if defined $WeBWorK::timer2;
 	@set_records = $db->getMergedSets(map {[$user,$_]} @setNames);
+	$WeBWorK::timer2->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer2;
 # 	foreach my $name (@setNames) {
 # 	    my $set_record;
 # 		$set_record = $db->getMergedSet($user,$name,) ;

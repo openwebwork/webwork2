@@ -245,7 +245,12 @@ The dispatcher logic currently looks like this:
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
+				$WeBWorK::timer2 = WeBWorK::Timing->new("Instructor index $course:");
+				$WeBWorK::timer2->start;
 				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
+				$WeBWorK::timer2->continue("Listing instructor page is done");
+				$WeBWorK::timer2->stop;
+				$WeBWorK::timer2->save;
 			} elsif ($instructorArgument eq "scoring") {
 				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go; #FIXME!!!!
 			} elsif ($instructorArgument eq "add_users") {
