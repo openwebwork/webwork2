@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.49 2004/05/13 16:02:55 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.50 2004/05/14 18:26:11 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -409,7 +409,7 @@ sub readSetDef {
 	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
 	my $filePath      = "$templateDir/$fileName";
     my $setNumber = '';
-    if ($fileName =~ m|^set(\w+)\.def$|) {
+    if ($fileName =~ m|^set([\w-]+)\.def$|) {
     	$setNumber = $1;
     } else {
         warn qq{The setDefinition file name must begin with   <CODE>set</CODE>},
