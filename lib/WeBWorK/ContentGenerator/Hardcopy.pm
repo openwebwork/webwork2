@@ -23,11 +23,12 @@ use WeBWorK::Utils qw(readFile makeTempDirectory);
 sub go {
 	my ($self, $singleSet) = @_;
 	
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my @sets = $r->param("hcSet");
-	my @users = $r->param("hcUser");
+	my $r               = $self->{r};
+	my $ce              = $self->{ce};
+	my $db              = $self->{db};
+	my @sets            = $r->param("hcSet");
+	my @users           = $r->param("hcUser");
+	my $hardcopy_format = $r->param('hardcopy_format');
 	
 	# add singleSet to the list of sets
 	if (length $singleSet > 0) {
@@ -43,10 +44,11 @@ sub go {
 	$self->{user}            = $db->getUser($r->param("user"));
 	$self->{permissionLevel} = $db->getPermissionLevel($r->param("user"))->permission();
 	$self->{effectiveUser}   = $db->getUser($r->param("effectiveUser"));
-	$self->{sets}  = \@sets;
-	$self->{users} = \@users;
-	$self->{errors}   = [];
-	$self->{warnings} = [];
+	$self->{sets}            = \@sets;
+	$self->{users}           = \@users;
+	$self->{hardcopy_format} = $hardcopy_format;
+	$self->{errors}          = [];
+	$self->{warnings}        = [];
 	
 	# security checks
 	my $multiSet = $self->{permissionLevel} > 0;
@@ -64,17 +66,19 @@ sub go {
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
 			my ($tempDir, $fileName,$errors) = eval { $self->generateHardcopy() };
-			
-			if ($@) {
-				$self->{generationError} = $@;
+			$self->{generationError} = $@ if defined $@;
+			if ( defined($self->{generationError})  ) {
+				
 				# In this case no correct pdf file was generated.
-				# there is not much more that can be done
 				# throw the error up higher.
 				# The error is reported in body.
 				# the tempDir was removed in generateHardcopy
-				
+			} elsif ( $self->{hardcopy_format} eq 'tex')   {
+				# Only tex output was asked for, proceed to have the tex output handled by the subroutine
+				# "body".
 				
 			} else {
+			    
 				my $filePath = "$tempDir/$fileName";
 				# FIXME this is taking up server time
 				# why not move the file to the tempDir and let the browser pick it up on redirect?
@@ -101,6 +105,7 @@ sub go {
 				}
 
 				return;
+				
 			}
 		}
 	}
@@ -156,6 +161,13 @@ sub body {
 		# generation error, because otherwise the module will send
 		# the PDF instead. DAMN!
 		$self->multiWarningOutput(@{$self->{warnings}});
+	}
+	if ($self->{hardcopy_format} eq 'tex') {
+	
+		my $r_tex_content = $self->{r_tex_content};
+		return $$r_tex_content;
+	
+	
 	}
 	$self->displayForm();
 }
@@ -302,6 +314,14 @@ sub displayForm($) {
 	}
 	
 	print CGI::end_Tr(), CGI::end_table();
+	print CGI::p( {-align => "center"},
+			CGI::radio_group(
+						-name=>"hardcopy_format",
+						-values=>['pdf', 'tex'],
+						-default=>'pdf',
+						-labels=>{'tex'=>'TeX','pdf'=>'PDF'}
+			),
+	);
 	print CGI::p({-align=>"center"},
 		CGI::submit(-name=>"generateHardcopy", -label=>"Generate Hardcopy"));
 	print CGI::end_form();
@@ -361,15 +381,29 @@ sub generateHardcopy($) {
 	#}
 	# ???????
 	
-	# "try" to generate pdf
-	my $errors = '';
-	eval { $self->latex2pdf($tex, $tempDir, $fileName) };
-	if ($@) {
-	    $errors = $@;
-	    #$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
-	    # clean up temp directory
-	    rmtree($tempDir);
-		die ["FAIL", "Failed to generate PDF from tex", $errors]; #throw error to subroutine body	
+	# "try" to generate pdf or return TeX file
+	if ($self->{hardcopy_format} eq 'pdf' ) {
+		my $errors = '';
+		eval { $self->latex2pdf($tex, $tempDir, $fileName) };
+		if ($@) {
+			$errors = $@;
+			#$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
+			# clean up temp directory
+			rmtree($tempDir);
+			die ["FAIL", "Failed to generate PDF from tex", $errors]; #throw error to subroutine body	
+		}
+	} elsif ($self->{hardcopy_format} eq 'tex')    {
+	    $tex = protect_HTML($tex);
+	    #$tex =~ s/\n/\<br\>\n/g;
+	    $tex = join('', ("<pre>\n",$tex,"\n</pre>\n"));
+		$self->{r_tex_content} = \$tex;
+		
+	
+	} else {
+	
+	
+		die["FAIL", "Hard copy format |".$self->{hardcopy_format}. "| not recognized."];
+	
 	}
 	
 	return $tempDir, $fileName;
