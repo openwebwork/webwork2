@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/Password.pm,v 1.4 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,6 +37,11 @@ sub NONKEYFIELDS {qw(
 sub FIELDS {qw(
 	user_id
 	password
+)}
+
+sub SQL_TYPE {qw(
+	BLOB
+	TEXT
 )}
 
 1;
