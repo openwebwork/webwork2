@@ -1,0 +1,7 @@
+Minimal commands to make this client work:
+
+./xmlrpc_client4.pl renderProblem  input.txt >foo.txt
+
+You may need to adjust some hardwired parameters in xmlrpc_client4. :-)
+
+The
