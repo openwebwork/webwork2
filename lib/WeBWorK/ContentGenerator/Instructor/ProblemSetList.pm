@@ -238,11 +238,11 @@ sub body {
 		open_date
 		due_date
 		answer_date
-		published		
+		published	
 	)} = (
 		"Select",
 		"Edit<br> Problems",
-		"Edit<br> Assigned Sets",
+		"Edit<br> Assigned Users",
 		"Set Definition Filename",
 		"Edit<br> Set Data", 
 		"Set Header", 
