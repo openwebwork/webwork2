@@ -39,9 +39,6 @@
  <body <!--#if warnings="1"-->bgcolor="#ffcccc"<!--#else-->bgcolor="#efefef"<!--#endif-->>
   <table border="0" width="100%">
    <tr>
-    <td align="left">
-     <!--#links-->
-    </td>
     <td align="center">
      <!--#nav style="images" imagesuffix=".gif" separator=" "-->
     </td>
@@ -49,11 +46,11 @@
      <h1>WeBWorK <em>2.0</em></h1>
     </td>
     <td width="70">
-     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" />
+     <img src="/webwork2_files/images/webwork_square.gif" height="64" width="66" />
     </td>
    </tr>
   </table>
-  
+  <hr>
   <h1 style="font-size: 14pt"><!--#title--></h1>
   
   <table width="100%" cellpadding="10" cellspacing="0" border="0">
@@ -71,6 +68,7 @@
     
   <table border="0" width="100%">
    <tr>
+    <h4>Links</h4>
     <td align="left" valign="bottom"><!--#links--></td>
     <td align="right" valign="bottom"><!--#loginstatus--></td>
    </tr>
