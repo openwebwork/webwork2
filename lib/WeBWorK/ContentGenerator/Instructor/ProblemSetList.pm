@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.44 2004/03/05 05:01:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.45 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,10 +38,14 @@ sub header {
 	my $urlpath    = $r->urlpath;
 	my $ce         = $r->ce;
 	my $courseName = $urlpath->arg("courseID");
-	my $root       = $ce->{webworkURLs}->{root};
-	
+	my $scoringPage  = $urlpath -> newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring',
+	                                              courseID => $courseName
+	);
 	if (defined $r->param('scoreSelected')) {
-		$r->header_out(Location => "$root/$courseName/instructor/scoring?".$self->url_args);
+	    my $scoringPageURL = $self->systemLink($scoringPage,
+	                     params=>['scoreSelected','selectedSet','recordSingleSetScores' ]
+	    );
+		$r->header_out(Location => $scoringPageURL);
 		$self->{noContent} = 1;
 		return REDIRECT;
 	}
@@ -164,13 +168,19 @@ sub body {
 	my $user       = $r->param('user');
 	my $key        = $r->param('key');
 	my $effectiveUserName = $r->param('effectiveUser');
-	my $URL        = $r->uri;
-	my $instructorBaseURL = "$root/$courseName/instructor";
-	my $importURL = "$instructorBaseURL/problemSetImport/";
+	
+	my $problemSetListPage  = $urlpath->newFromModule($urlpath->module, courseID => $courseName) ;
+	my $problemSetListURL   = $self->systemLink($problemSetListPage);
+	#my $instructorBaseURL = "$root/$courseName/instructor";
+	#my $importURL = "$instructorBaseURL/problemSetImport/";
+	my $instructorPage      = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", 
+	                                                   courseID => $courseName
+	);
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
 	my @set_definition_files    = $self->read_dir($ce->{courseDirs}->{templates},'\\.def');
-	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em("You are not authorized to access the instructor tools") 
+	                      unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	###############################################################################
 	# Slurp each set record for this course in @sets
@@ -204,7 +214,7 @@ sub body {
 						CGI::p("Depending on the number of sets, this operation may take many minutes.  Even if your browser times out
 						the updating process will continue until it is done. Time for coffee? :-)"
 						),
-						CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+						CGI::start_form({"method"=>"POST", "action"=>$self->systemLink($problemSetListPage)}),
 						$self->hidden_authen_fields,
 						CGI::submit({-name=>'update_global_user', -value=>"Update Global User" }),
 						CGI::end_form(),
@@ -252,35 +262,48 @@ sub body {
 	} @sets;
 	
 	my $table = CGI::Tr({}, 
-		CGI::th("Sel.")
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=set_id"}, "Sort by name"),)
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=open_date"},    "Sort by Open Date"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=due_date"},     "Sort by Due Date"))
-		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=answer_date"},  "Sort by Answer Date"))
-		. CGI::th("Edit problems")                                  # CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_probs"}"Num. Problems"),
-		. CGI::th("Assign users")                                   #, CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:") )
-	) . "\n";
-	
+		CGI::th([
+			 "Sel.",
+			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'set_id'      })}, "Sort by name"        ),
+			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'open_date'   })}, "Sort by Open Date"   ),
+			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'due_date'    })}, "Sort by Due Date"    ),
+			 CGI::a({"href"=>$self->systemLink($problemSetListPage,params=>{sort=>'answer_date' })}, "Sort by Answer Date" ),
+			 "Edit problems",                                  
+			 "Assign users" , 
+		 ])
+	);
+
 	foreach my $set (@sets) {
 		my $count         = $counts{$set->set_id};
 		my $totalUsers    = scalar(@users);   #FIXME -- probably shouldn't count those who have dropped.
 		my $userCountMessage = $self->userCountMessage($count, scalar(@users));
-	
+	    my $problemListPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemList",
+	                                               courseID => $courseName,
+	                                               setID    => $set->set_id,
+        );
+        my $usersAssignedToSetPage  = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
+	                                               courseID => $courseName,
+	                                               setID    => $set->set_id,
+        );
+        my $problemSetEditorPage   = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor',
+        	                                       courseID => $courseName,
+	                                               setID    => $set->set_id,
+        );
 		$table .= CGI::Tr({}, 
-			CGI::td({}, 
+			CGI::td([ 
 				CGI::checkbox({
 					"name"=>"selectedSet",
 					"value"=>$set->set_id,
 					"label"=>"",
 					"checked"=>"0"
-				})
-			)
-			. CGI::td({}, '&nbsp;&nbsp;',$set->set_id, CGI::a({href=>$r->uri.$set->set_id."/?".$self->url_authen_args}, ' Edit'))
-			. CGI::td({}, formatDateTime($set->open_date))
-			. CGI::td({}, formatDateTime($set->due_date))
-			. CGI::td({}, formatDateTime($set->answer_date))
-			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/problems/?".$self->url_authen_args}, $problemCounts{$set->set_id}))
-			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/?".$self->url_authen_args}, "$count/$totalUsers")   )   #$userCountMessage))
+				}),
+				'&nbsp;&nbsp;'.$set->set_id . '&nbsp;'.CGI::a({href=>$self->systemLink($problemListPage)}, 'Edit'),
+				formatDateTime($set->open_date),
+				formatDateTime($set->due_date),
+				formatDateTime($set->answer_date),
+				CGI::a({href=>$self->systemLink($problemListPage       )}, $problemCounts{$set->set_id}),
+				CGI::a({href=>$self->systemLink($usersAssignedToSetPage)}, "$count/$totalUsers")   , 
+			])
 		) . "\n"
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
@@ -298,7 +321,7 @@ sub body {
 	    $global_user_alert,
 	    $global_user_message,
     	# Set table form (for deleting checked sets)
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 		$self->hidden_authen_fields,
 		$table,
 		CGI::br(),
@@ -316,7 +339,7 @@ sub body {
 		CGI::br(),
 		
         # Empty set creation form
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 		$self->hidden_authen_fields,
 		CGI::b("Create an Empty Set"),
         CGI::br(),
@@ -328,7 +351,7 @@ sub body {
 		
         # Single set import form
         CGI::hr(),
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 		$self->hidden_authen_fields,
 		CGI::b("Import a Single Set"),
         CGI::br(),
@@ -348,7 +371,7 @@ sub body {
 		
         # Multiple set import form
         CGI::hr(),
-		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),
+		CGI::start_form({"method"=>"POST", "action"=>$problemSetListURL}),
 		$self->hidden_authen_fields,
 		CGI::b("Import Multiple Sets"),
         CGI::br(),

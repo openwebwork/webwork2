@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.18 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.19 2004/03/28 04:46:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -197,7 +197,17 @@ sub initialize {
 	}
 
 }
-
+sub title {
+	my ($self)    = @_;
+	my $r         = $self->r;
+	my $setName   = $r->urlpath->arg("setID");
+	
+	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
+	print $r->urlpath->name. " for set $setName ";
+	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	
+	return "";
+}
 
 sub body {
 	my ($self)      = @_;
@@ -212,6 +222,9 @@ sub body {
 	my $setRecord   = $db->getGlobalSet($setName); 
 	die "Global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
+	
+	my $problemListPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseName, setID => $setName);
+	my $problemListURL   = $self->systemLink($problemListPage);
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
@@ -220,7 +233,7 @@ sub body {
 	
 	my $userCount        = $db->listUsers();
 	my $setUserCount     = $db->countSetUsers($setName);
-	my $userCountMessage = "This set is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
+	my $userCountMessage = "The set $setName is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
 
 	if (@editForUser) {
 		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
@@ -230,10 +243,10 @@ sub body {
 	
 	## Problems Form ##
 	my @problemList = $db->listGlobalProblems($setName);
-	print CGI::a({name=>"problems"});
-	print CGI::h2({}, "Problems");
+ 	print CGI::a({name=>"problems"});
+# 	print CGI::h2({}, "Problems");
 	if (scalar(@problemList)) {
-		print CGI::start_form({method=>"POST", action=>$r->uri.'#problems'});
+		print CGI::start_form({method=>"POST", action=>$problemListURL.'#problems'});
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			($forUsers ? () : ("Delete?")), 
@@ -303,7 +316,7 @@ sub body {
 		unshift @path, $libraryRoot;
 		print CGI::a({name=>"addProblem"});
 		print CGI::h3({}, "Add Problem(s)");
-		print CGI::start_form({method=>"post", action=>$r->uri.'#addProblem'});
+		print CGI::start_form({method=>"post", action=>$problemListURL.'#addProblem'});
 		print CGI::input({type=>"hidden", name=>"fileBrowsing", value=>"Yes"});
 		print CGI::start_table();
 		my $columns = "";
