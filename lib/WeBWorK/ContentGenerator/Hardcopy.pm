@@ -63,30 +63,38 @@ sub go {
 	
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
-			my ($tempDir, $fileName) = eval { $self->generateHardcopy() };
+			my ($tempDir, $fileName,$errors) = eval { $self->generateHardcopy() };
 			if ($@) {
 				$self->{generationError} = $@;
-				
+				# In this case no pdf file was generated, so there is not much more that can be done
+				# throw the error up higher.
 				# FIXME: this leaves the temp dir around.
 				# perhaps: rmtree($tempdir) here?
+				
+				
 			} else {
 				my $filePath = "$tempDir/$fileName";
-
-				$r->content_type("application/x-pdf");
-				# as per RFC2183:
-				$r->header_out("Content-Disposition", "attachment; filename=$fileName");
-				$r->send_http_header();
-
-				local *INPUTFILE;
-				open INPUTFILE, "<", $filePath
-					or die "Failed to read $filePath: $!";
-				my $buf;
-				while (read INPUTFILE, $buf, 16384) {
-					print $buf;
+				# FIXME this is taking up server time
+				# why not move the file to the tempDir and let the browser pick it up on redirect?
+				if ($errors eq '') {
+					$r->content_type("application/x-pdf");
+					# as per RFC2183:
+					$r->header_out("Content-Disposition", "attachment; filename=$fileName");
+					$r->send_http_header();
+	
+					local *INPUTFILE;
+					open INPUTFILE, "<", $filePath
+						or die "Failed to read $filePath: $!";
+					my $buf;
+					while (read INPUTFILE, $buf, 16384) {
+						print $buf;
+					}
+					close INPUTFILE;
+	
+					rmtree($tempDir);
+				} else {
+				
 				}
-				close INPUTFILE;
-
-				rmtree($tempDir);
 
 				return;
 			}
@@ -130,6 +138,10 @@ sub body {
 				print $self->errorOutput(@rest);
 				return "";
 			} elsif ($disposition eq "RETRY") {
+				print $self->errorOutput(@rest);
+			} elsif ($disposition eq "ERROR_REPORT") {
+			    print "There were errors while producing the pdf file. You can download the ".
+			           CGI::a({-href =>$self->{finalFile}} , "output that was produced.");
 				print $self->errorOutput(@rest);
 			} else { # a "simple" error
 				print CGI::p(CGI::font({-color=>"red"}, @rest));
@@ -350,12 +362,15 @@ sub generateHardcopy($) {
 	# ???????
 	
 	# "try" to generate pdf
+	my $errors = '';
 	eval { $self->latex2pdf($tex, $tempDir, $fileName) };
 	if ($@) {
-		die ["FAIL", "Failed to generate PDF from tex", $@];
+	    $errors = $@;
+	    #$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
+		die ["FAIL", "Failed to generate PDF from tex", $errors]; #throw error to subroutine body	
 	}
 	
-	return $tempDir, $fileName;
+	return $tempDir, $fileName, $errors;
 }
 
 # -----
@@ -366,6 +381,14 @@ sub latex2pdf {
 	my ($self, $tex, $tempDir, $fileName) = @_;
 	my $finalFile = "$tempDir/$fileName";
 	my $ce = $self->{ce};
+	
+	# Location for hardcopy file to be downloaded
+	# FIXME  this should use surePathToTmpFile
+	my $hardcopyTempDirectory = $ce->{courseDirs}->{html_temp}."/hardcopy";
+	warn " tmpDirectory $hardcopyTempDirectory";
+	mkdir ($hardcopyTempDirectory)  or die "Unable to make $hardcopyTempDirectory" unless -e $hardcopyTempDirectory;
+	my $hardcopyFilePath     = "$hardcopyTempDirectory/$fileName";
+	my $hardcopyFileURL  = $ce->{courseURLs}->{html_temp}."/hardcopy/$fileName";
 	
 	## create a temporary directory for tex to shit in
 	#my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
@@ -378,39 +401,51 @@ sub latex2pdf {
 	
 	# write the tex file
 	local *TEX;
-	open TEX, ">", $texFile or die "Failed to open $texFile: $!\n";
+	open TEX, ">", $texFile or die "Failed to open $texFile: $!\n".CGI::br();
 	print TEX $tex;
 	close TEX;
 	
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex = $ce->{externalPrograms}->{pdflatex};
-	my $pdflatexResult = system "cd $wd && $pdflatex $texFile";
+	my $pdflatexResult = system "cd $wd && $pdflatex $texFile";	
+	
+	# Even with errors there may be a valid pdfFile.  Move it to where we can get it.
+	if (-e $pdfFile) {
+		# move resulting PDF file to appropriate location
+# 		system "/bin/mv", $pdfFile, $finalFile
+# 			and die "Failed to mv: $pdfFile to $finalFile<br>\n  Quite likely this means that there ".
+# 			        "is not sufficient write permission for some directory.<br>$!<br>\n";
+       # moving to course tmp/hardcopy directory
+	    system "/bin/mv", $pdfFile, $hardcopyFilePath  
+			and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
+			        "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
+	}
+	# Alert the world that the tex file did not process perfectly.
 	if ($pdflatexResult) {
 		# something bad happened
-		my $textErrorMessage = "Call to $pdflatex failed: $!\n";
+		my $textErrorMessage = "Call to $pdflatex failed: $!\n".CGI::br();
+		if (-e $hardcopyFilePath ) {
+			$textErrorMessage.= "Some pdf output was produced and is available ". CGI::a({-href=>$hardcopyFileURL},"here.").CGI::hr();
+		}
 		if (-e $logFile) {
-			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n";
-			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n";
-			my $logFileContents = eval { readFile($logFile) };
+			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n".CGI::br();
+			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n".CGI::br();
+			my $logFileContents = eval { readTexErrorLog($logFile) };
 			if ($@) {
-				$textErrorMessage .= "Additionally, the pdflatex log file could not be read, though it exists.\n";
+				$textErrorMessage .= "Additionally, the pdflatex log file could not be read, though it exists.\n".CGI::br();
 			} else {
-				$textErrorMessage .= "The contents of the TeX log are as follows:\n\n";
-				$textErrorMessage .= "$logFileContents\n\n";
+				$textErrorMessage .= "The essential contents of the TeX log are as follows:\n".CGI::hr().CGI::br();
+				$textErrorMessage .= "$logFileContents\n".CGI::br().CGI::br();
 			}
 		} else {
-			$textErrorMessage .= "No log file was created, suggesting that pdflatex never ran. Check the WeBWorK\n";
-			$textErrorMessage .= "configuration to ensure that the path to pdflatex is correct.\n";
+			$textErrorMessage .= "No log file was created, suggesting that pdflatex never ran. Check the WeBWorK\n".CGI::br();
+			$textErrorMessage .= "configuration to ensure that the path to pdflatex is correct.\n".CGI::br();
 		}
 		die $textErrorMessage;
 	}
 	
-	if (-e $pdfFile) {
-		# move resulting PDF file to appropriate location
-		system "/bin/mv", $pdfFile, $finalFile
-			and die "Failed to mv: $!\n";
-	}
+
 	
 	## remove temporary directory
 	##FIXME  rmtree is commented out only for debugging purposes.
@@ -422,7 +457,30 @@ sub latex2pdf {
 }
 
 # -----
-
+# FIXME move to Utils? probably not
+sub readTexErrorLog {
+	my $filePath = shift;
+	my $print_error_switch = 0;
+	my $line='';
+	my @message=();
+	#local($/ ) = "\n";
+    open(LOGFILE,"<$filePath") or die "Can't read $filePath";
+    while (<LOGFILE>) {
+	    $line = $_;
+	    $print_error_switch = 1  if $line =~ /^!/;  # after a fatal error start printing messages
+		push(@message, protect_HTML($line)) if $print_error_switch;
+    }
+    close($filePath);
+    join("<br>\n",@message);
+}
+sub protect_HTML {
+	my $line = shift;
+	chomp($line);
+	$line =~s/\&/&amp;/g;
+	$line =~s/</&lt;/g;
+	$line =~s/>/&gt;/g;
+	$line;
+}
 sub texBlockComment(@) { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)."\n\n"; }
 
 sub getMultiSetTeX {
