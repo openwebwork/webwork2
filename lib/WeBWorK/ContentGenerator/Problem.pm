@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.114 2004/02/04 13:22:56 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.115 2004/03/04 04:36:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,8 +65,10 @@ sub templateName {
 }
 
 sub pre_header_initialize {
-	my ($self, $setName, $problemNumber) = @_;
+	my ($self) = @_;
 	my $r                    = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
 	my $courseEnv            = $self->{ce};
 	my $db                   = $self->{db};
 	my $userName             = $r->param('user');

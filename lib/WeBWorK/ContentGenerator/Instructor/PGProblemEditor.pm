@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.22 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.24 2004/01/25 18:20:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,8 +67,10 @@ sub header {  #FIXME  this should be moved up to ContentGenerator
 
 sub pre_header_initialize {
 	my $self 			= shift;
-	my ($setName, $problemNumber) = @_;
+	#my ($setName, $problemNumber) = @_;
 	my $r 				= 	$self->{r};
+	my $setName = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
 	my $ce				=	$self->{ce};
 	my $submit_button 	= $r->param('submit');  # obtain submit command from form
 
@@ -138,8 +140,10 @@ sub pre_header_initialize {
 
 sub initialize  {
     my $self      = shift;
-	my ($setName, $problemNumber) = @_;
-	$self -> saveFileChanges(@_);
+	my $r 				= 	$self->{r};
+	my $setName = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
+	$self -> saveFileChanges($setName, $problemNumber);
 
 
 
@@ -356,8 +360,8 @@ sub path {
 	my $set_id        = '';
 	my $problem_id    = '';
 	unless (defined( $r->param("file_type") and $r->param("file_type") eq 'course_info' ) ){
-		$set_id        = shift;
-		$problem_id    = shift;
+		$set_id        = $r->urlpath->arg("setID");
+		$problem_id    = $r->urlpath->arg("problemID");
 	}
 	#FIXME           this is a bad way to pass the args, since it's position changes if the set/problem info 
 	# isn't there

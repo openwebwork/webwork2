@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.40 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.41 2003/12/18 02:35:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,9 +35,10 @@ use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
 
 sub pre_header_initialize {
-	my ($self, $singleSet) = @_;
+	my ($self) = @_;
 	
 	my $r               = $self->{r};
+	my $singleSet = $r->urlpath->args("setID");
 	my $ce              = $self->{ce};
 	my $db              = $self->{db};
 	my @sets            = $r->param("hcSet");
@@ -135,7 +136,7 @@ sub header {
 # -----
 
 sub path {
-	my ($self, undef, $args) = @_;
+	my ($self, $args) = @_;
 	
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};

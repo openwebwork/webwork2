@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.39 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.40 2003/12/26 01:29:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,13 +78,14 @@ sub setRowHTML {
 # Initialize does all of the form processing.  It's extensive, and could probably be cleaned up and
 # consolidated with a little abstraction.
 sub initialize {
-	my ($self, @components) = @_;
+	my ($self) = @_;
 	my $r           = $self->{r};
 	my $db          = $self->{db};
 	my $ce          = $self->{ce};
 	my $authz       = $self->{authz};
 	my $user        = $r->param('user');
-	my $setName     = $self->getSetName(@components);
+	#my $setName     = $self->getSetName(@components);
+	my $setName = $r->urlpath->arg("setID");
 	my $setRecord   = $db->getGlobalSet($setName); #checked
 	die "global set $setName not found." unless $setRecord;
 
@@ -249,18 +250,21 @@ sub path {
 
 sub title {
 	my ($self, @components) = @_;
-	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
+	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
+	return "Problem Set Editor - ".$self->{ce}->{courseName}." : $setName";
 }
 
 sub body {
 	my ($self, @components) = @_;
 	my $r = $self->{r};
+	my $setName = $r->urlpath->arg("setID");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
-	my $setName = $self->getSetName(@components);
+	#my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);  # checked
 	die "global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');

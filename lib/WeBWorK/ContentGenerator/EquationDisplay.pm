@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.18 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/EquationDisplay.pm,v 1.1 2004/02/03 01:22:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -57,7 +57,7 @@ use Text::Wrap qw(wrap);
 # problem object for current problem (if from Problem)
 # display options (if from Problem)
 sub initialize {
-	my ($self,@components) = @_;
+	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
 	my $db = $self->{db};
