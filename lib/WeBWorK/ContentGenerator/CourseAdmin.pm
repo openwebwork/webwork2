@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.7 2004/05/07 22:26:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.8 2004/05/07 23:13:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -504,6 +504,7 @@ sub delete_course_form {
 	my $delete_sql_database = $r->param("delete_sql_database")    || "";
 	
 	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort @courseIDs;
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
@@ -758,6 +759,7 @@ sub export_database_form {
 	@export_tables = @tables unless @export_tables;
 	
 	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort @courseIDs;
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
@@ -905,6 +907,8 @@ sub import_database_form {
 	@import_tables = @tables unless @import_tables;
 	
 	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort @courseIDs;
+
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
