@@ -3,6 +3,7 @@
 
 
 BEGIN {
+    $main::VERSION = "2.1";
     my $webwork_directory = $ENV{WEBWORK_ROOT};
 	
 	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
@@ -22,12 +23,12 @@ BEGIN {
 	$WebworkWebservice::HOST_NAME     = Apache->server->server_hostname;
 	$WebworkWebservice::HOST_PORT     = Apache->server->port;
 	#$WebworkWebservice::HOST_PATH    = Apache->server->path();
-	$WebworkWebservice::WebworkWebservice      = 'geometry';
-	$WebworkWebservice::COURSENAME    = 'daemon_course'; # default course
+	$WebworkWebservice::PASSWORD      = 'geometry';
+	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
 
 }
 use Apache;
-
+use WeBWorK::PG::Local;
     
 #use lib '/home/gage/webwork/webwork-modperl/lib';
 #use lib '/home/gage/webwork/pg/lib';
@@ -37,13 +38,16 @@ use Apache;
 #$Webservice::HOST_PATH .= ":$Webservice::HOST_PORT" 
 #                 unless ($Webservice::HOST_PORT == 80 );
 
-warn "webwork_directory = $WebworkWebservice::WW_DIRECTORY\n\t";
-warn "pg_directory = $WebworkWebservice::PG_DIRECTORY\n\t";
-warn "seedCE  = $WebworkWebservice::SeedCE\n\t";
-warn "host name  = $WebworkWebservice::HOST_NAME\n\t";
-#warn "host port  = $Webservice::HOST_PORT\n\t";
-#warn "host path  = $Webservice::HOST_PATH\n\t";
-warn " password  $WebworkWebservice::WebworkWebservice\n\t";
+# warn "webwork_directory = $WebworkWebservice::WW_DIRECTORY\n\t";
+# warn "pg_directory = $WebworkWebservice::PG_DIRECTORY\n\t";
+# warn "seedCE  = $WebworkWebservice::SeedCE\n\t";
+# warn "host name  = $WebworkWebservice::HOST_NAME\n\t";
+
+#FIXME  port is not being set!
+# warn "host port  = $Webservice::HOST_PORT\n\t";  
+
+# #warn "host path  = $Webservice::HOST_PATH\n\t";
+# warn " password  $WebworkWebservice::PASSWORD\n\t";
 
 use strict;
 ###############################################################################
@@ -122,7 +126,11 @@ sub readFile {
     my $in   = shift;
   	return( WebworkWebservice::LibraryActions::readFile($in) );
 }
-
+sub tex2pdf {
+    my $self = shift;
+    my $in   = shift;
+  	return( WebworkWebservice::MathTranslators::tex2pdf($in) );
+}
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
 # test responses
@@ -147,7 +155,7 @@ sub echo_self {
 }
 
 sub echo { 
-    return join("|",("begin ", @_, " end") );
+    return join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
 }
 
 sub pretty_print_rh {
@@ -177,7 +185,7 @@ package WWd;
 ############utilities
 
 sub echo { 
-    return "WWd package ".join("|",("begin ", @_, " end") );
+    return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
 }
 
 sub listLib {
