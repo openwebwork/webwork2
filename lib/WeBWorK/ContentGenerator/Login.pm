@@ -64,6 +64,9 @@ sub body {
 	;
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
+	print CGI::p(), "Many courses allow guest logins.", CGI::p(),
+	  "Use practice1, practice2, practice3, etc.",CGI::br(),
+	  "No password is required";
 	print CGI::endform();
 	
 	return "";
