@@ -19,6 +19,7 @@ use CGI qw();
 use File::Path qw(rmtree);
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
+use Apache::Constants qw(:common REDIRECT);
 
 sub go {
 	my ($self, $singleSet) = @_;
@@ -30,6 +31,7 @@ sub go {
 	my @users           = $r->param("hcUser");
 	my $hardcopy_format = $r->param('hardcopy_format') ? $r->param('hardcopy_format') : '';
 	
+
 	# add singleSet to the list of sets
 	if (length $singleSet > 0) {
 		$singleSet =~ s/^set//;
@@ -66,9 +68,14 @@ sub go {
 	
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
-			my ($tempDir, $fileName,$errors) = eval { $self->generateHardcopy() };
-			$self->{generationError} = $@ if defined $@;
-			if ( defined($self->{generationError})  ) {
+#			my ($tempDir, $fileName) = eval { $self->generateHardcopy() };
+			my ($pdfFileURL) = eval { $self->generateHardcopy() };
+			
+			$self->{generationError} = $@ if $@;
+# 			warn "pdfFileURL is $pdfFileURL";
+# 			warn "generation error is ".$self->{generationError};
+# 			warn "hardcopy_format is ".$self->{hardcopy_format};
+			if ( $self->{generationError}  ) {
 				
 				# In this case no correct pdf file was generated.
 				# throw the error up higher.
@@ -79,33 +86,48 @@ sub go {
 				# "body".
 				
 			} else {
-			    
-				my $filePath = "$tempDir/$fileName";
-				# FIXME this is taking up server time
-				# why not move the file to the tempDir and let the browser pick it up on redirect?
-				# my $hardcopyFilePath     =  $self->{hardcopyFilePath};
-				# my $hardcopyFileURL      =  $self->{hardcopyFileURL};
-				if ($errors eq '') {
-					$r->content_type("application/x-pdf");
-					# as per RFC2183:
-					$r->header_out("Content-Disposition", "attachment; filename=$fileName");
-					$r->send_http_header();
-	
-					local *INPUTFILE;
-					open INPUTFILE, "<", $filePath
-						or die "Failed to read $filePath: $!";
-					my $buf;
-					while (read INPUTFILE, $buf, 16384) {
-						print $buf;
-					}
-					close INPUTFILE;
-	
-					rmtree($tempDir);
-				} else {
-				
-				}
+			    # information for redirect
+ 				$r->header_out(Location => $pdfFileURL );
+ 				return REDIRECT;
+# 				my $hardcopyFilePath = $self->{hardcopyFilePath};
+#			    warn "uri is ". $r->uri;
+# 				my $hostname 		= 	$r->hostname();
+# 				my $port     		= 	$r->get_server_port();
+# 				my $uri		 		= 	$r->uri;
+# 				my $courseName		=	$self->{ce}->{courseName};
+# 				my $viewURL  		= 	"http://$hostname:$port";
+# 				$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
+# 				$viewURL		   .=	$self->url_authen_args;
+# 				$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
+# 				$viewURL		   .=	"&editMode=temporaryFile";
+# 				$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
+# 				$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
+# 				$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 
-				return;
+# 				my $filePath = "$tempDir/$fileName"; 
+# 				# FIXME this is taking up server time
+# 				# why not move the file to the tempDir and let the browser pick it up on redirect?
+# 				# my $hardcopyFilePath     =  $self->{hardcopyFilePath};
+# 				# my $hardcopyFileURL      =  $self->{hardcopyFileURL};
+# 
+# 					$r->content_type("application/x-pdf");
+# 					# as per RFC2183:
+# 					$r->header_out("Content-Disposition", "attachment; filename=$fileName");
+# 					$r->send_http_header();
+# 	
+# 					local *INPUTFILE;
+# 					open INPUTFILE, "<", $filePath
+# 						or die "Failed to read $filePath: $!";
+# 					my $buf;
+# 					while (read INPUTFILE, $buf, 16384) {
+# 						print $buf;
+# 					}
+# 					close INPUTFILE;
+# 	
+# 					rmtree($tempDir);
+# 
+# 
+# 				return;
 				
 			}
 		}
@@ -317,7 +339,7 @@ sub displayForm($) {
 	}
 	
 	print CGI::end_Tr(), CGI::end_table();
-	if ($download_texQ) {  # choice of pdf or tex output 
+	if ($download_texQ) {  # provide choice of pdf or tex output 
 		print CGI::p( {-align => "center"},
 				CGI::radio_group(
 							-name=>"hardcopy_format",
@@ -389,15 +411,21 @@ sub generateHardcopy($) {
 	# ???????
 	
 	# "try" to generate pdf or return TeX file
+	my $pdfFileURL = undef;
 	if ($self->{hardcopy_format} eq 'pdf' ) {
 		my $errors = '';
-		eval { $self->latex2pdf($tex, $tempDir, $fileName) };
+		$pdfFileURL = eval { $self->latex2pdf($tex, $tempDir, $fileName) };
 		if ($@) {
 			$errors = $@;
 			#$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
 			# clean up temp directory
-			rmtree($tempDir);
+			# FIXME this clean up done in latex2pdf?  rmtree($tempDir);
 			die ["FAIL", "Failed to generate PDF from tex", $errors]; #throw error to subroutine body	
+		} else {
+		    # pass the relative temp file path back up to go subroutine 
+		    # to have an appropriate redirect generated.
+		
+		
 		}
 	} elsif ($self->{hardcopy_format} eq 'tex')    {
 	    $tex = protect_HTML($tex);
@@ -412,8 +440,9 @@ sub generateHardcopy($) {
 		die["FAIL", "Hard copy format |".$self->{hardcopy_format}. "| not recognized."];
 	
 	}
-	
-	return $tempDir, $fileName;
+	#return $tempDir, $fileName;
+	# return $pdfFilePath;
+	return $pdfFileURL;
 }
 
 # -----
@@ -433,8 +462,8 @@ sub latex2pdf {
 	my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$fileName";
 	$self->{hardcopyFilePath}   =  $hardcopyFilePath;
 	$self->{hardcopyFileURL}    =  $hardcopyFileURL;
+	
 	## create a temporary directory for tex to shit in
-	#my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
 	# - we're using the existing temp dir. now
 	
 	my $wd = $tempDir;
@@ -455,25 +484,17 @@ sub latex2pdf {
 	
 	# Even with errors there may be a valid pdfFile.  Move it to where we can get it.
 	if (-e $pdfFile) {
-		# move resulting PDF file to appropriate location
-		# FIXME don't fix everything at once :-)
-		system "/bin/mv", $pdfFile, $finalFile
-			and die "Failed to mv: $pdfFile to $finalFile<br>\n  Quite likely this means that there ".
-			        "is not sufficient write permission for some directory.<br>$!<br>\n";
+
        # moving to course tmp/hardcopy directory
-# 	    system "/bin/mv", $pdfFile, $hardcopyFilePath  
-# 			and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
-# 			        "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
+	    system "/bin/mv", $pdfFile, $hardcopyFilePath  
+			and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
+			        "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
 	}
 	# Alert the world that the tex file did not process perfectly.
 	if ($pdflatexResult) {
 		# something bad happened
 		my $textErrorMessage = "Call to $pdflatex failed: $!\n".CGI::br();
 		
-		# move what output there is to someplace where it can be read
-		system "/bin/mv", $finalFile, $hardcopyFilePath  
-			    and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
-			            "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
 		if (-e $hardcopyFilePath ) {
 			 # FIXME  Misuse of html tags!!!
 			$textErrorMessage.= "<h4>Some pdf output was produced and is available ". CGI::a({-href=>$hardcopyFileURL},"here.</h4>").CGI::hr();
@@ -501,12 +522,12 @@ sub latex2pdf {
 
 	
 	## remove temporary directory
-	##FIXME  rmtree is commented out only for debugging purposes.
-	##print STDERR "tex temp directory at $wd";
-	#rmtree($wd, 0, 0);
-	# - not creating the temp dir here anymore
+	rmtree($wd, 0, 0);
+
 	
-	-e $finalFile or die "Failed to create $finalFile for no apparent reason.\n";
+	-e $hardcopyFilePath or die "Failed to create $finalFile for no apparent reason.\n";
+	# return hardcopyFilePath;
+	return $hardcopyFileURL;
 }
 
 # -----
