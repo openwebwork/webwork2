@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.151 2004/07/03 17:29:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.152 2004/07/06 16:12:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -234,7 +234,7 @@ sub pre_header_initialize {
 	##### permissions #####
 	
 	# are we allowed to view this problem?
-	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($user, "view_unopened_sets");
+	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($userName, "view_unopened_sets");
 	return unless $self->{isOpen};
 	
 	# what does the user want to do?
