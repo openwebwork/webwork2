@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.25 2004/06/17 20:10:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.26 2004/07/07 14:37:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use Carp;
 use WeBWorK::DB::Utils qw(hash2string string2hash);
 use WeBWorK::Timing;
+use WeBWorK::Utils qw(undefstr);
 
 use constant TABLES => qw(set_user problem_user);
 use constant STYLE  => "hash";
@@ -699,6 +700,13 @@ sub hash2set {
 
 sub hash2problem {
 	my ($self, $n, %hash) = @_;
+	
+	# make sure this problem number exists in the hash before returning. If it
+	# doesn't, return undef. We check "pfn$n" since the path to the problem file
+	# is the essence of the problem, and if this doesn't exist, the problem
+	# might as well not exist.
+	return unless exists $hash{"pfn$n"};
+	
 	return $self->{db}->{problem_user}->{record}->new(
 		user_id       => defined $hash{"stlg"}   ? $hash{"stlg"}   : "",
 		set_id        => defined $hash{"stlg"}   ? $hash{"stnm"}   : "",
