@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.19 2004/01/19 04:23:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.20 2004/01/25 15:53:07 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -82,7 +82,7 @@ sub body {
 		  CGI::Tr([
 		    CGI::td([
 		      "Username:",
-		      CGI::input({-type=>"textfield", -name=>"user", -value=>"$user"}),
+		      CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
 		    ]),
 		    CGI::td([
 		      "Password:",
