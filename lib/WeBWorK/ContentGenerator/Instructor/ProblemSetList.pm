@@ -41,8 +41,9 @@ sub body {
 	
 	# Count the number of users each set is assigned to
 	my %counts;
+	my %problems;
 	foreach my $set (@sets) {
-		my @problems = $db->listGlobalProblems($set->set_id);
+		my $problems{$set} = [$db->listGlobalProblems($set->set_id)];
 		my $count = 0;
 		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
@@ -55,7 +56,7 @@ sub body {
 		}elsif ($sort =~ /_date$/) {
 			return $a->$sort <=> $b->$sort;
 		} elsif ($sort eq "num_probs") {
-			return scalar($db->listGlobalProblems($a->set_id)) <=> scalar($db->listGlobalProblems($b->set_id));
+			return scalar(@{$problems{$a->set_id}}) <=> scalar(@{$problems{$b->set_id}});
 		} elsif ($sort eq "num_students") {
 			return $counts{$a->set_id} <=> $counts{$b->set_id};
 		}
@@ -73,7 +74,7 @@ sub body {
 	
 	my @users = $db->listUsers;
 	foreach my $set (@sets) {
-		my @problems = $db->listGlobalProblems($set->set_id);
+		my @problems = @{$problems{$set->set_id}};
 		my $count = $counts{$set->set_id};
 		
 		my $userCountMessage;
