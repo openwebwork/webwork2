@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.41 2004/01/20 18:56:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.42 2004/02/12 04:26:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -249,6 +249,15 @@ sub body {
 		) . "\n"
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
+	
+	my $slownessWarning = "";
+	if ($ce->{dbLayoutName} eq "sql") {
+		$slownessWarning = "In this version of WeBWorK, assigning sets is very slow. Your browser"
+		. " may time out if you import many sets or have many users to whom to assign them. If this"
+		. " happens, click your browser's reload button. This issue will be resolved in a later"
+		. " version of WeBWorK. (Hopefully the next version!)"
+		. CGI::br();
+	}
 
 	print join("\n",
     	# Set table form (for deleting checked sets)
@@ -312,6 +321,7 @@ sub body {
 		CGI::br(),
 		CGI::checkbox(-name=>"assignNewSet", -label=>"Assign imported sets to all users"),
 		CGI::br(),
+		$slownessWarning,
 		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),
 		CGI::end_form(),
 	);
