@@ -213,22 +213,35 @@ sub verify($) {
 			$error = "You must specify a username.";
 			last VERIFY;
 		}
-		
+		########################################################
+		# Make sure user is in the database
+		########################################################
+
+		my $userRecord    =   $db->getUser($user);
+		unless (defined $userRecord) { # checked
+			$error = "There is no account for $user in this course.";
+			last VERIFY;
+		}
+		########################################################
+		# Make sure the user's status is defined.
+		########################################################
+		unless (defined $userRecord->status) {
+			$userRecord-> status('C');
+			warn "Setting status for user $user to C.  It was previously undefined.";
+		}
+		unless ($userRecord->status eq 'C') {
+			$error  = "The user $user has been dropped from this course. ";
+			last VERIFY;
+			
+		}
+		########################################################
 		# it's a practice user.
+		########################################################
 		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
 			# we're not interested in a practice user's password
 			$r->param("passwd", "");
-			
-			# it's a practice user that doesn't exist.
-			unless (defined $db->getUser($user)) { # checked
-				$error = "That practice account does not exist.";
-				last VERIFY;
-			}
-			unless ($db->getUser($user)->status eq 'C') {
-				$error  = "The user $user has been dropped from this course. ";
-				last VERIFY;
-			
-			}
+	
+
 			# we've got a key.
 			if ($key) {
 				if ($self->checkKey($user, $key)) {
@@ -269,7 +282,16 @@ sub verify($) {
 		}
 		
 		# -- here we know it's a regular user. --
+	
+		#########################################################
+		# Fail with error message if status is D or dropped
+		#########################################################
+		if ($db->getUser($user)->status eq 'D' or $db->getUser($user)->status eq 'DROPPED') {
+			$error  = "The user $user has been dropped from this course. Please contact
+			your instructor if this is an error.";
+			last VERIFY;
 		
+		}		
 		# a key was supplied.
 		if ($key) {
 			# we're not interested in a user's password if they're
@@ -286,27 +308,7 @@ sub verify($) {
 				last VERIFY;
 			}
 		}
-		########################################################
-		# Make sure user status is correct
-		########################################################
-		my $userRecord = $db->getUser($user);
-		my $userStatus = $userRecord -> status;
-		########################################################
-		# for backward compatibility handle the case where status is not defined
-		########################################################
-		unless (defined $userStatus) {
-			$userRecord-> status('C');
-			warn "Setting status for user $user to C.  It was previously undefined.";
-		}
-		#########################################################
-		# Fail with error message if status is D or dropped
-		#########################################################
-		if ($db->getUser($user)->status eq 'D' or $db->getUser($user)->status eq 'DROPPED') {
-			$error  = "The user $user has been dropped from this course. Please contact
-			your instructor if this is an error.";
-			last VERIFY;
-		
-		}
+
 		#########################################################
 		# a password was supplied.
 		#########################################################
