@@ -27,13 +27,15 @@ use strict;
 use warnings;
 use Carp;
 use DBI;
-use WeBWorK::Utils qw(dequote runtime_use undefstr);
+use File::Path qw(rmtree);
+use WeBWorK::Utils qw(dequote runtime_use undefstr readDirectory);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	addCourse
 	renameCourse
 	deleteCourse
+	listCourses
 );
 
 use constant CREATE_HELPERS => {
@@ -114,7 +116,7 @@ sub addCourse {
 	my $courseID = $options{courseID};
 	my $ce = $options{ce};
 	my %courseOptions = %{ $options{courseOptions} };
-	#my %dbOptions = %{ $options{dbOptions} };
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
 	my @users = exists $options{users} ? @{ $options{users} } : ();
 	
 	# get the database layout out of the options hash
@@ -149,12 +151,9 @@ sub addCourse {
 	
 	##### step 2: create course database (if necessary) #####
 	
-	if (defined $options{dbOptions}) {
-		my %dbOptions = %{ $options{dbOptions} };
-		my $createHelper = CREATE_HELPERS->{$dbLayoutName};
-		if (defined $createHelper) {
-			$createHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
-		}
+	my $createHelper = CREATE_HELPERS->{$dbLayoutName};
+	if (defined $createHelper) {
+		$createHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
 	}
 	
 	##### step 3: populate course database #####
@@ -207,7 +206,31 @@ sub renameCourse {
 	
 }
 
-=item deleteCourse($webworkRoot, $courseID)
+=item deleteCourse(%options)
+
+Options must contain:
+
+ courseID => $courseID,
+ ce => $ce,
+ dbOptions => $dbOptions,
+
+$ce is a WeBWorK::CourseEnvironment object that describes the course's
+environment. It is your responsability to pass a course environment object that
+describes the course to be deleted. Do not pass the course environment object
+associated with the request, unless you are deleting the course you're currently
+using.
+
+$dbOptions is a reference to a hash containing information required to create a
+database for the course.
+
+ if dbLayout == "sql":
+ 
+ 	host     => host to connect to
+ 	port     => port to connect to
+ 	username => user to connect as (must have CREATE, DELETE, FILE, INSERT,
+ 	            SELECT, UPDATE privileges, WITH GRANT OPTION.)
+ 	password => password to supply
+ 	database => the name of the database to create
 
 Deletes the course named $courseID. The course directory is removed.
 
@@ -218,6 +241,45 @@ If the course's database layout is something else, no databases are removed.
 Any errors encountered while deleting the course are returned.
 
 =cut
+
+sub deleteCourse {
+	my (%options) = @_;
+	
+	my $courseID = $options{courseID};
+	my $ce = $options{ce};
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+	
+	# make sure the user isn't brain damaged
+	die "the course environment supplied doesn't appear to describe the course $courseID. can't proceed."
+		unless $ce->{courseName} eq $courseID;
+	
+	##### step 1: delete course directory structure #####
+	
+	my $courseDir = $ce->{courseDirs}->{root};
+	rmtree($courseDir, 0, 0);
+		
+	##### step 2: delete course database (if necessary) #####
+	
+	my $dbLayoutName = $ce->{dbLayoutName};
+	my $deleteHelper = DELETE_HELPERS->{$dbLayoutName};
+	if (defined $deleteHelper) {
+		$deleteHelper->($courseID, $ce, $dbLayoutName, %dbOptions);
+	}
+}
+
+=item listCourses($ce)
+
+Lists the courses defined. 
+
+=cut
+
+sub listCourses {
+	my ($ce) = @_;
+	
+	my $coursesDir = $ce->{webworkDirs}->{courses};
+	
+	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+}
 
 =back
 
@@ -248,38 +310,38 @@ sub addCourseSQL {
 	
 	my %sources;
 	
-	warn "\n";
-	warn "addCourseSQL: dbLayoutName=$dbLayoutName\n";
+	#warn "\n";
+	#warn "addCourseSQL: dbLayoutName=$dbLayoutName\n";
 	
 	my %dbLayout = %{ $ce->{dbLayouts}->{$dbLayoutName} };
 	
 	my @tables = keys %dbLayout;
-	warn "addCourseSQL: layout defines the following tables: @tables\n";
-	warn "\n";
+	#warn "addCourseSQL: layout defines the following tables: @tables\n";
+	#warn "\n";
 	
 	foreach my $table (@tables) {
 		my %table = %{ $dbLayout{$table} };
 		my %params = %{ $table{params} };
 		
 		my $source = $table{source};
-		warn "addCourseSQL: $table: DBI source is $source\n";
+		#warn "addCourseSQL: $table: DBI source is $source\n";
 		
 		my $tableOverride = $params{tableOverride};
-		warn "addCourseSQL: $table: SQL table name is ", undefstr("not defined", $tableOverride), "\n";
+		#warn "addCourseSQL: $table: SQL table name is ", undefstr("not defined", $tableOverride), "\n";
 		
 		my $recordClass = $table{record};
-		warn "addCourseSQL: $table: record class is $recordClass\n";
+		#warn "addCourseSQL: $table: record class is $recordClass\n";
 		
 		runtime_use($recordClass);
 		my @fields = $recordClass->FIELDS;
-		warn "addCourseSQL: $table: WeBWorK field names: @fields\n";
+		#warn "addCourseSQL: $table: WeBWorK field names: @fields\n";
 		
 		if (exists $params{fieldOverride}) {
 			my %fieldOverride = %{ $params{fieldOverride} };
 			foreach my $field (@fields) {
 				$field = $fieldOverride{$field} if exists $fieldOverride{$field};
 			}
-			warn "addCourseSQL: $table: SQL field names: @fields\n";
+			#warn "addCourseSQL: $table: SQL field names: @fields\n";
 		}
 		
 		# generate table creation statement
@@ -288,7 +350,7 @@ sub addCourseSQL {
 		my $fieldList = join(", ", map("$_ TEXT", @fields));
 		my $createStmt = "CREATE TABLE $tableName ( $fieldList );";
 
-		warn "addCourseSQL: $table: CREATE statement is: $createStmt\n";
+		#warn "addCourseSQL: $table: CREATE statement is: $createStmt\n";
 		
 		# generate GRANT statements
 		
@@ -301,8 +363,8 @@ sub addCourseSQL {
 				. " TO $params{usernameRW}\@$options{wwhost}"
 				. " IDENTIFIED BY '$params{passwordRW}';";
 		
-		warn "addCourseSQL: $table: GRANT RO statement is: $grantStmtRO\n";
-		warn "addCourseSQL: $table: GRANT RW statement is: $grantStmtRW\n";
+		#warn "addCourseSQL: $table: GRANT RO statement is: $grantStmtRO\n";
+		#warn "addCourseSQL: $table: GRANT RW statement is: $grantStmtRW\n";
 		
 		# add to source hash
 		
@@ -312,7 +374,7 @@ sub addCourseSQL {
 			$sources{$source} = [ $createStmt, $grantStmtRO, $grantStmtRW ];
 		}
 		
-		warn "\n";
+		#warn "\n";
 	}
 	
 	##### handle multiple sources #####
@@ -322,7 +384,7 @@ sub addCourseSQL {
 	
 	my $source;
 	if (keys %sources > 1) {
-		# more than one, warn and take the concensus
+		# more than one -- warn and select the most popular source
  		warn "addCourseSQL: database layout $dbLayoutName defines more than one SQL source.\n";
 		foreach my $curr (keys %sources) {
 			$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
@@ -333,44 +395,17 @@ sub addCourseSQL {
 		# there's only one
 		($source) = keys %sources;
 	}
-	my @stmts = @{ $sources{$source} };
+	my @stmts = (
+		"CREATE DATABASE $options{database};",
+		"USE $options{database};",
+		@{ $sources{$source} }
+	);
 	
 	##### issue SQL statements #####
 	
 	my ($driver) = $source =~ m/^dbi:(\w+):/i;
+	execSQLStatements($driver, $ce->{externalPrograms}, \%options, @stmts)
 	
-	if (lc $driver eq "mysql") {
-		
-		# add database creation statements (largely RDBMS dependant)
-		unshift @stmts,
-				"CREATE DATABASE $options{database};",
-				"USE $options{database};";
-		
-		my @commandLine = ( $ce->{externalPrograms}->{mysql} );
-		push @commandLine, "--host=$options{host}" if exists $options{host};
-		push @commandLine, "--port=$options{port}" if exists $options{port};
-		push @commandLine, "--user=$options{username}" if exists $options{username};
-		push @commandLine, "--password=$options{password}" if exists $options{password};
-		
-		open my $mysql, "|@commandLine"
-				or die "failed to execute \"@commandLine\": $!\n";
-		
-		# exec sql statements
-		foreach my $stmt (@stmts) {
-			#print "addCourseSQL: exec: $stmt\n";
-			print $mysql "$stmt\n";
-		}
-		
-		close $mysql;
-	}
-	# add code to deal with other RDBMSs here:
-	# 
-	#elsif (lc $driver eq "foobar") {
-	#	# do something else
-	#}
-	else {
-		warn "addCourseSQL: failed to create database -- driver \"$driver\" is not supported.\n";
-	}
 }
 
 =item renameCourseSQL($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
@@ -380,6 +415,32 @@ sub addCourseSQL {
 =item deleteCourseSQL($courseID, $ce, $dbLayoutName, %options)
 
 =cut
+
+sub deleteCourseSQL {
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	
+	# get the most popular DBI source, so we know what driver to use
+	my $dbi_source = do {
+		my %sources;
+		foreach my $table (keys %{ $ce->{dbLayouts}->{$dbLayoutName} }) {
+			$sources{$ce->{dbLayouts}->{$dbLayoutName}->{$table}->{source}}++;
+		}
+		my $source;
+		if (keys %sources > 1) {
+			foreach my $curr (keys %sources) {
+				$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
+			}
+		} else {
+			($source) = keys %sources;
+		}
+		$source;
+	};
+	my ($driver) = $dbi_source =~ m/^dbi:(\w+):/i;
+	
+	my $stmt = "DROP DATABASE $options{database};";
+	
+	execSQLStatements($driver, $ce->{externalPrograms}, \%options, $stmt);
+}
 
 =item renameCourseGDBM($oldCourseID, $newCourseID, $ce, $dbLayoutName, %options)
 
@@ -397,12 +458,59 @@ These functions are used by the methods and should not be called directly.
 
 =over
 
+=item execSQLStatements($driver, $externalPrograms, $dbOptions, @statements)
+
+Execute the listed SQL statements. The appropriate SQL console is determined
+using $driver and invoked with the options listed in $dbOptions.
+
+$options is a reference to a hash containing the pairs accepted in %dbOptions by
+addCourse(), above.
+
+=cut
+
+sub execSQLStatements {
+	my ($driver, $externalPrograms, $dbOptions, @statements) = @_;
+	my %options = %$dbOptions;
+	
+	if (lc $driver eq "mysql") {
+		my @commandLine = ( $externalPrograms->{mysql} );
+		push @commandLine, "--host=$options{host}" if exists $options{host};
+		push @commandLine, "--port=$options{port}" if exists $options{port};
+		push @commandLine, "--user=$options{username}" if exists $options{username};
+		push @commandLine, "--password=$options{password}" if exists $options{password};
+		
+		open my $mysql, "|@commandLine"
+				or die "execSQLStatements: failed to execute \"@commandLine\": $!\n";
+		
+		# exec sql statements
+		foreach my $stmt (@statements) {
+			warn "execSQLStatements: exec: $stmt\n";
+			print $mysql "$stmt\n";
+		}
+		
+		close $mysql;
+	}
+	
+	# add code to deal with other RDBMSs here:
+	# 
+	#elsif (lc $driver eq "foobar") {
+	#	# do something else
+	#}
+	
+	else {
+		warn "execSQLStatements: driver \"$driver\" is not supported.\n";
+	}
+}
+
+=item mostPopularSource(%dbLayout) {
+	
+}
+
 =item writeCourseConf($fh, $ce, %options)
 
 Writes a course.conf file to $fh, a file handle, using defaults from the course
 environment object $ce and overrides from %options. %options can contain any of
-the pairs accepted as %courseOptions by addCourse(), above.
-
+the pairs accepted in %courseOptions by addCourse(), above.
 
 =cut
 
@@ -485,7 +593,7 @@ EOF
 			quotemeta($ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}), '";', "\n";
 	print $fh "# \t", '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "',
 			quotemeta($ce->{dbLayouts}->{gdbm}->{problem}->{params}->{globalUserID}), '";', "\n";
-	print $fh, "\n";
+	print $fh "\n";
 	
 	if (defined $options{globalUserID} or defined $options{globalUserID}) {
 		if (defined $options{globalUserID}) {
@@ -496,7 +604,7 @@ EOF
 			print $fh '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "',
 					quotemeta($options{globalUserID}), '";', "\n";
 		}
-		print "\n";
+		print $fh "\n";
 	} else {
 		print $fh "\n\n\n";
 	}
