@@ -9,12 +9,31 @@ package WeBWorK::DB;
 
 WeBWorK::DB - interface with the WeBWorK databases.
 
+=head1 SYNOPSIS
+
+ my $db = WeBWorK::DB->new($courseEnvironment);
+ 
+ my @userIDs = $db->listUsers();
+ my $Sam = $db->{user}->{record}->new();
+ 
+ $Sam->user_id("sammy");
+ $Sam->first_name("Sam");
+ $Sam->last_name("Hathaway");
+ # etc.
+ 
+ $db->addUser($User);
+ my $Dennis = $db->getUser("dennis");
+ $Dennis->status("C");
+ $db->putUser->($Dennis);
+ 
+ $db->deleteUser("sammy");
+
 =head1 DESCRIPTION
 
 WeBWorK::DB provides a consistent interface to a number of database backends.
 Access and modification functions are provided for each logical table used by
 the webwork system. The particular backend ("schema" and "driver"), record
-class, data source, and additional parameters are specified by the %dbLayout
+class, data source, and additional parameters are specified by the C<%dbLayout>
 hash in the course environment.
 
 =head1 ARCHITECTURE
@@ -38,7 +57,7 @@ listed below, and uses schema modules (via tables) to implement those methods.
 The middle layer of the architecture is provided by one or more schema modules.
 They are called "schema" modules because they control the structure of the data
 for a table. This includes odd things like the way multiple tables are encoded
-in a single hash in the WWHash schema, and the encoding scheme used.
+in a single hash in the WW1Hash schema, and the encoding scheme used.
 
 The schema modules provide an API that matches the requirements of the DB
 layer, on a per-table basis. Each schema module has a style that determines
@@ -78,10 +97,10 @@ WeBWorK 2.x courses also use:
 
 Driver modules implement a style for a schema. They provide physical access to
 a data source containing the data for a table. The style of a driver determines
-what methods it provides. All drivers provide connect(MODE) and disconnect()
-methods. A hash style driver provides a hash() method which returns the tied
-hash. A dbi style driver provides a handle() method which returns the DBI
-handle.
+what methods it provides. All drivers provide C<connect(MODE)> and
+C<disconnect()> methods. A hash style driver provides a C<hash()> method which
+returns the tied hash. A dbi style driver provides a C<handle()> method which
+returns the DBI handle.
 
 =head3 Examples
 
@@ -94,6 +113,15 @@ handle.
  +-------+  +--------+
  |  SQL  |  |  LDAP  |
  +-------+  +--------+
+
+=head2 Record Types
+
+In C<%dblayout>, each table is assigned a record class, used for passing
+complete records to and from the database. The default record classes are
+subclasses of the WeBWorK::DB::Record class, and are named as follows: User,
+Password, PermissionLevel, Key, Set, UserSet, Problem, UserProblem. In the
+following documentation, a reference the the record class for a table means the
+record class currently defined for that table in C<%dbLayout>.
 
 =cut
 
@@ -109,12 +137,16 @@ use constant TABLES => qw(password permission key user set set_user problem prob
 ################################################################################
 
 =head1 CONSTRUCTOR
-=over
-=item new (ENVIRONMENT)
 
-The C<new> method creates a DB object and brings up the underlying schema/driver
-structure according to the C<%dbLayout> hash in the ENVIRONMENT. Environment is
-a C<WeBWorK::CourseEnvironment> object.
+=over
+
+=item new($ce)
+
+The C<new> method creates a DB object and brings up the underlying
+schema/driver structure according to the C<%dbLayout> hash in $ce, a
+WeBWorK::CourseEnvironment object.
+
+=back
 
 =cut
 
@@ -153,9 +185,23 @@ sub new($$) {
 	return $self;
 }
 
+=head1 METHODS
+
+=cut
+
 ################################################################################
 # password functions
 ################################################################################
+
+=head2 Password Methods
+
+=over
+
+=item listPasswords()
+
+Returns a list of user IDs representing the records in the password table.
+
+=cut
 
 sub listPasswords($) {
 	my ($self) = @_;
@@ -163,27 +209,67 @@ sub listPasswords($) {
 		$self->{password}->list(undef);
 }
 
+=item addPassword($Password)
+
+$Password is a record object. The password will be added to the password table
+if a password with the same user ID does not already exist. If one does exist,
+an exception is thrown. To add a password, a user with a matching user ID must
+exist in the user table.
+
+=cut
+
 sub addPassword($$) {
 	my ($self, $Password) = @_;
-	die "addPassword failed: user ", $Password->user_id, " does not exist.\n"
+	die __PACKAGE__, ": addPassword($Password) failed: user not found.\n"
 		unless $self->{user}->exists($Password->user_id);
 	return $self->{password}->add($Password);
 }
 
+=item getPassword($userID)
+
+If a record with a matching user ID exists, a record object containting that
+record's data will be returned. If no such record exists, an undefined value
+will be returned.
+
+=cut
+
 sub getPassword($$) {
 	my ($self, $userID) = @_;
+	die __PACKAGE__, ": getPassword() failed: you must specify a userID.\n"
+		unless $userID;
 	return $self->{password}->get($userID);
 }
+
+=item putPassword($Password)
+
+$Password is a record object. If a password record with the same user ID exists
+in the password table, the data in the record is replaced with the data in
+$Password. If a matching password record does not exist, an exception is
+thrown.
+
+=cut
 
 sub putPassword($$) {
 	my ($self, $Password) = @_;
 	return $self->{password}->put($Password);
 }
 
+=item deletePassword($userID)
+
+If a password record with a user ID matching $userID exists in the password
+table, it is removed and the method returns a true value. If one does exist,
+a false value is returned.
+
+=cut
+
 sub deletePassword($$) {
 	my ($self, $userID) = @_;
 	return $self->{password}->delete($userID);
 }
+
+=back
+
+=cut
 
 ################################################################################
 # permission functions
@@ -485,5 +571,9 @@ sub dumpDB($$) {
 	my ($self, $table) = @_;
 	return $self->{$table}->dumpDB();
 }
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, sh002i (at) math.rochester.edu.
 
 1;
