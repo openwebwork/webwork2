@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.13 2004/05/06 22:44:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.14 2004/05/11 20:19:38 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,10 +38,9 @@ sub initialize {
 	
 	my $user = $r->param('user');
 	
-	unless ($authz->hasPermissions($user, "modify_student_data")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data")));
-		return;
-	}
+	# Check permissions
+	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($user, "modify_student_data"));
 	
 	if (defined($r->param('addStudents'))) {
 		my @userIDs;
@@ -113,14 +112,13 @@ sub body {
 	my $authen_args = $self->url_authen_args();
 	my $user = $r->param('user');
 	
-	################### debug code
-	#my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission(); #checked
-	#my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
-	#return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
-    ################### debug code
-    
-	return CGI::em('You are not authorized to access the Instructor tools.')
-		unless $authz->hasPermissions($user, 'access_instructor_tools');
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify student data.")
+		unless $authz->hasPermissions($r->param("user"), "modify_student_data");
+
 	
 	return join("", 
 	
