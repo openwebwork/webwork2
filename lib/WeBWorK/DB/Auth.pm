@@ -1,29 +1,37 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::DB::Auth;
 
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
 
-# params: class, course environment
+# new($invocant, $courseEnv)
+# $invocant	implicitly set by caller
+# $courseEnv	an instance of CourseEnvironment
 sub new($$) {
-	my $proto = shift;
-	my $class = ref($proto) || $proto;
+	my $invocant = shift;
+	my $class = ref($invocant) || $invocant;
 	my $courseEnv = shift;
-	my $dbModule = fullyQualifiedPackageName($courseEnv->{auth_db_type});
+	my $dbModule = fullyQualifiedPackageName($courseEnv->{dbInfo}->{auth_type});
 	my $self = {
-		password_file => $courseEnv->{something},
-		permissions_file => $courseEnv->{something},
-		keys_file => $courseEnv->{something},
+		password_file    => $courseEnv->{dbInfo}->{auth_passwd_file},
+		permissions_file => $courseEnv->{dbInfo}->{auth_perm_file},
+		keys_file        => $courseEnv->{dbInfo}->{auth_keys_file},
+		key_timeout      => $courseEnv->{sessionKeyTimeout},
 	};
-	$self->{password_db} = $self->{dbModule}->new($self->{password_file});
-	$self->{permissions_db} = $self->{dbModule}->new($self->{permissions_file});
-	$self->{keys_db} = $self->{dbModule}->new($self->{keys_file});
+	$self->{password_db}    = $dbModule->new($self->{password_file});
+	$self->{permissions_db} = $dbModule->new($self->{permissions_file});
+	$self->{keys_db}        = $dbModule->new($self->{keys_file});
 	bless $self, $class;
 	return $self;
 }
 
 sub fullyQualifiedPackageName($) {
 	my $n = shift;
-	my $package = "__PACKAGE__";
+	my $package = __PACKAGE__;
 	$package =~ s/([^:]*)$/$n/;
 	return $package;
 }
@@ -58,8 +66,7 @@ sub getPassword($$) {
 sub setPassword($$$) {
 	my $self = shift;
 	my $user = shift;
-	my $password = shift;
-	$password = crypt $password, join "", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]
+	my $password = crypt shift, join "", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64];
 	$self->{password_db}->connect("rw");
 	$self->{password_db}->hashRef()->{$user} = $password;
 	$self->{password_db}->disconnect();
@@ -69,10 +76,9 @@ sub verifyPassword($$$) {
 	my $self = shift;
 	my $user = shift;
 	my $password = shift;
-	$self->{password_db}->connect("ro");
-	my $result = $self->{password_db}->hashRef()->{$user} eq $password;
-	$self->{password_db}->disconnect();
-	return $result;
+	my $real_password = $self->getPassword($user);
+	$password = crypt $password, $real_password;
+	return $password eq $real_password;
 }
 
 sub deletePassword($$) {
@@ -91,8 +97,8 @@ sub getKey($$) {
 	$self->{keys_db}->connect("ro");
 	my $result = $self->{keys_db}->hashRef()->{$user};
 	$self->{keys_db}->disconnect();
-	my ($key, $timestamp) = split /\s+/, $result;
-	return $key, $timestamp;
+	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
+	return defined $result ? split /\s+/, $result : undef;
 }
 
 sub setKey($$$$) {
@@ -106,16 +112,19 @@ sub setKey($$$$) {
 	$self->{keys_db}->disconnect();
 }
 
-sub verifyKey($$$) {
+sub verifyKey($$$$$) {
 	my $self = shift;
 	my $user = shift;
 	my $key = shift;
-	$self->{keys_db}->connect("ro");
-	my $result = $self->{keys_db}->hashRef()->{$user};
-	$self->{keys_db}->disconnect();
-	my ($real_key, $timestamp) = split /\s+/, $result;
-	return $key eq $real_key;
-	# DANGER DANGER! this function no longer updates timestamp!
+	my $timestamp = shift;
+	
+	my ($real_key, $real_timestamp) = $self->getKey($user);
+	if ($key eq $real_key and $timestamp <= $real_timestamp+$self->{key_timeout}) {
+		$self->setKey($user, $key, $timestamp);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub deleteKey($$) {
@@ -142,7 +151,7 @@ sub setPermissions($$$) {
 	my $user = shift;
 	my $permissions = shift;
 	$self->{permissions_db}->connect("rw");
-	$self->{permissions_db}->hashRef()->{$user} = $key;
+	$self->{permissions_db}->hashRef()->{$user} = $permissions;
 	$self->{permissions_db}->disconnect();
 }
 
@@ -162,9 +171,9 @@ sub change_user_in_password_file($$$) {
 	my $new_user = shift;
 	$self->{password_db}->connect("rw");
 	my $pwhash = $self->{password_db}->hashRef(); # make things easier
-	if (exists $pwhash->{user}) {
-		$pwhash->{new_user} = $pwhash->{user};
-		delete $pwhash->{user};
+	if (exists $pwhash->{$user}) {
+		$pwhash->{$new_user} = $pwhash->{$user};
+		delete $pwhash->{$user};
 	}
 	$self->{password_db}->disconnect();
 }
@@ -175,25 +184,11 @@ sub change_user_in_permissions_file($$$) {
 	my $new_user = shift;
 	$self->{permissions_db}->connect("rw");
 	my $permhash = $self->{permissions_db}->hashRef(); # make things easier
-	if (exists $permhash->{user}) {
-		$permhash->{new_user} = $permhash->{user};
-		delete $permhash->{user};
+	if (exists $permhash->{$user}) {
+		$permhash->{$new_user} = $permhash->{$user};
+		delete $permhash->{$user};
 	}
-	$self->disconnect{permissions_db}->();
+	$self->{permissions_db}->disconnect();
 }
 
-=pod
-sub create_db {
-    my ($fileName, $permissions) =@_;
-    my %pwhash;
-    my $pw_obj;
-    &Global::tie_hash('PW_FH',\$pw_obj,\%pwhash, $fileName,'W',$permissions);
-    &Global::untie_hash('PW_FH',\$pw_obj,\%pwhash, $fileName);
-
-    chmod($permissions, $fileName) or
-                             wwerror($0, "Can't do chmod($permissions, $fileName)");
-    chown(-1,$Global::numericalGroupID,$fileName)  or
-                             wwerror($0, "Can't do chown(-1,$Global::numericalGroupID,$fileName)");
-
-}
-=cut
+1;
