@@ -272,7 +272,7 @@ exist in the user table.
 
 =cut
 
-sub addPassword($$) {
+sub addPassword {
 	my ($self, $Password) = @_;
 	
 	croak "addPassword: requires 1 argument"
@@ -297,7 +297,7 @@ will be returned.
 
 =cut
 
-sub getPassword($$) {
+sub getPassword {
 	my ($self, $userID) = @_;
 	
 	croak "getPassword: requires 1 argument"
@@ -306,6 +306,27 @@ sub getPassword($$) {
 		unless defined $userID;
 	
 	return $self->{password}->get($userID);
+}
+
+=item getPasswords(@uesrIDs)
+
+Return a list of password records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined.
+
+=cut
+
+sub getPasswords {
+	my ($self, @userIDs) = @_;
+	
+	croak "getPasswords: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userIDs) {
+		croak "getPasswords: element $i of argument list must contain a user_id"
+			unless defined $userIDs[$i];
+	}
+	
+	return map { $self->getPassword($_) } @userIDs;
 }
 
 =item putPassword($Password)
@@ -435,6 +456,27 @@ sub getPermissionLevel($$) {
 	return $self->{permission}->get($userID);
 }
 
+=item getPermissionLevels(@uesrIDs)
+
+Return a list of permission level records associated with the user IDs given. If
+there is no record associated with a given user ID, that element of the list
+will be undefined.
+
+=cut
+
+sub getPermissionLevels {
+	my ($self, @userIDs) = @_;
+	
+	croak "getPermissionLevels: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userIDs) {
+		croak "getPermissionLevels: element $i of argument list must contain a user_id"
+			unless defined $userIDs[$i];
+	}
+	
+	return map { $self->getPermissionLevel($_) } @userIDs;
+}
+
 =item putPermissionLevel($PermissionLevel)
 
 $PermissionLevel is a record object. If a permission level record with the same
@@ -558,6 +600,27 @@ sub getKey($$) {
 	return $self->{key}->get($userID);
 }
 
+=item getKeys(@uesrIDs)
+
+Return a list of key records associated with the user IDs given. If there is no
+record associated with a given user ID, that element of the list will be
+undefined.
+
+=cut
+
+sub getKeys {
+	my ($self, @userIDs) = @_;
+	
+	croak "getKeys: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userIDs) {
+		croak "getKeys: element $i of argument list must contain a user_id"
+			unless defined $userIDs[$i];
+	}
+	
+	return map { $self->getKey($_) } @userIDs;
+}
+
 =item putKey($Key)
 
 $Key is a record object. If a key record with the same user ID exists in the
@@ -677,6 +740,27 @@ sub getUser($$) {
 	return $self->{user}->get($userID);
 }
 
+=item getUsers(@uesrIDs)
+
+Return a list of user records associated with the user IDs given. If there is no
+record associated with a given user ID, that element of the list will be
+undefined.
+
+=cut
+
+sub getUsers {
+	my ($self, @userIDs) = @_;
+	
+	croak "getUsers: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userIDs) {
+		croak "getUsers: element $i of argument list must contain a user_id"
+			unless defined $userIDs[$i];
+	}
+	
+	return map { $self->getUser($_) } @userIDs;
+}
+
 =item putUser($User)
 
 $User is a record object. If a user record with the same user ID exists in the
@@ -770,6 +854,27 @@ sub getGlobalSet($$) {
 		unless defined $setID;
 	
 	return $self->{set}->get($setID);
+}
+
+=item getGlobalSets(@setIDs)
+
+Return a list of global set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined.
+
+=cut
+
+sub getGlobalSets {
+	my ($self, @setIDs) = @_;
+	
+	croak "getGlobalSets: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#setIDs) {
+		croak "getGlobalSets: element $i of argument list must contain a set_id"
+			unless defined $setIDs[$i];
+	}
+	
+	return map { $self->getGlobalSet($_) } @setIDs;
 }
 
 sub putGlobalSet($$) {
@@ -869,6 +974,32 @@ sub getUserSet($$$) {
 	return $self->{set_user}->get($userID, $setID);
 }
 
+=item getUserSets(@userSetIDs)
+
+Return a list of user set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined. @userProblemIDs consists of references to arrays in which the first
+element is the user_id and the second element is the set_id.
+
+=cut
+
+sub getUserSets {
+	my ($self, @userSetIDs) = @_;
+	
+	croak "getUserSets: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userSetIDs) {
+		croak "getUserSets: element $i of argument list must contain a <user_id, set_id> pair"
+			unless defined $userSetIDs[$i]
+			       and ref $userSetIDs[$i] eq "ARRAY"
+			       and @{$userSetIDs[$i]} == 2
+			       and defined $userSetIDs[$i]->[0]
+			       and defined $userSetIDs[$i]->[1];
+	}
+	
+	return map { $self->getUserSet(@{$_}) } @userSetIDs;
+}
+
 sub putUserSet($$) {
 	my ($self, $UserSet) = @_;
 	
@@ -953,6 +1084,32 @@ sub getGlobalProblem($$$) {
 		unless defined $problemID;
 	
 	return $self->{problem}->get($setID, $problemID);
+}
+
+=item getGlobalProblems(@problemIDs)
+
+Return a list of global set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined. @problemIDs consists of references to arrays in which the first
+element is the set_id, and the second element is the problem_id.
+
+=cut
+
+sub getGlobalProblems {
+	my ($self, @problemIDs) = @_;
+	
+	croak "getGlobalProblems: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#problemIDs) {
+		croak "getUserSets: element $i of argument list must contain a <set_id, problem_id> pair"
+			unless defined $problemIDs[$i]
+			       and ref $problemIDs[$i] eq "ARRAY"
+			       and @{$problemIDs[$i]} == 2
+			       and defined $problemIDs[$i]->[0]
+			       and defined $problemIDs[$i]->[1];
+	}
+	
+	return map { $self->getGlobalProblem(@{$_}) } @problemIDs;
 }
 
 sub putGlobalProblem($$) {
@@ -1059,6 +1216,34 @@ sub getUserProblem($$$$) {
 	return $self->{problem_user}->get($userID, $setID, $problemID);
 }
 
+=item getUserProblems(@userProblemIDs)
+
+Return a list of user set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined. @userProblemIDs consists of references to arrays in which the first
+element is the user_id, the second element is the set_id, and the third element
+is the problem_id.
+
+=cut
+
+sub getUserProblems {
+	my ($self, @userProblemIDs) = @_;
+	
+	croak "getUserProblems: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userProblemIDs) {
+		croak "getUserProblems: element $i of argument list must contain a <user_id, set_id, problem_id> triple"
+			unless defined $userProblemIDs[$i]
+			       and ref $userProblemIDs[$i] eq "ARRAY"
+			       and @{$userProblemIDs[$i]} == 3
+			       and defined $userProblemIDs[$i]->[0]
+			       and defined $userProblemIDs[$i]->[1]
+			       and defined $userProblemIDs[$i]->[2];
+	}
+	
+	return map { $self->getUserProblem(@{$_}) } @userProblemIDs;
+}
+
 sub putUserProblem($$) {
 	my ($self, $UserProblem) = @_;
 	
@@ -1132,6 +1317,32 @@ sub getMergedSet {
 	return $UserSet;
 }
 
+=item geMegedSets(@userSetIDs)
+
+Return a list of merged set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined. @userProblemIDs consists of references to arrays in which the first
+element is the user_id and the second element is the set_id.
+
+=cut
+
+sub geMegedSets {
+	my ($self, @userSetIDs) = @_;
+	
+	croak "geMegedSets: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userSetIDs) {
+		croak "geMegedSets: element $i of argument list must contain a <user_id, set_id> pair"
+			unless defined $userSetIDs[$i]
+			       and ref $userSetIDs[$i] eq "ARRAY"
+			       and @{$userSetIDs[$i]} == 2
+			       and defined $userSetIDs[$i]->[0]
+			       and defined $userSetIDs[$i]->[1];
+	}
+	
+	return map { $self->getMergedSet(@{$_}) } @userSetIDs;
+}
+
 ################################################################################
 # problem+problem_user functions
 ################################################################################
@@ -1171,6 +1382,34 @@ sub getMergedProblem {
 	#$timer->continue("merged records");
 	#$timer->stop;
 	return $UserProblem;
+}
+
+=item getMergedProblems(@userProblemIDs)
+
+Return a list of merged set records associated with the user IDs given. If there
+is no record associated with a given user ID, that element of the list will be
+undefined. @userProblemIDs consists of references to arrays in which the first
+element is the user_id, the second element is the set_id, and the third element
+is the problem_id.
+
+=cut
+
+sub getMergedProblems {
+	my ($self, @userProblemIDs) = @_;
+	
+	croak "getMergedProblems: requires 1 or more argument"
+		unless @_ >= 2;
+	foreach my $i (0 .. $#userProblemIDs) {
+		croak "getMergedProblems: element $i of argument list must contain a <user_id, set_id, problem_id> triple"
+			unless defined $userProblemIDs[$i]
+			       and ref $userProblemIDs[$i] eq "ARRAY"
+			       and @{$userProblemIDs[$i]} == 3
+			       and defined $userProblemIDs[$i]->[0]
+			       and defined $userProblemIDs[$i]->[1]
+			       and defined $userProblemIDs[$i]->[2];
+	}
+	
+	return map { $self->getMergedProblem(@{$_}) } @userProblemIDs;
 }
 
 ################################################################################
