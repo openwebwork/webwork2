@@ -559,9 +559,9 @@ jsMath.Add(jsMath.TeX,{
     // 60 - 6F
     {c: '&#x2210;', h: 0, d: 1, n: 97, tclass: 'bigop1a'},
     {c: '&#x2210;', h: 0.1, d: 1.5, tclass: 'bigop2a'},
-    {c: '&#x2040;', h: 0.722, w: .58, n: 99, tclass: 'wide1'},
-    {c: '&#x2040;', h: 0.85, w: 1.0, n: 100, tclass: 'wide2'},
-    {c: '&#x2040;', h: 0.99, w: 1.7, tclass: 'wide3'},
+    {c: '&#xFE3F;', h: 0.722, w: .65, n: 99, tclass: 'wide1'},
+    {c: '&#xFE3F;', h: 0.85, w: 1.1, n: 100, tclass: 'wide2'},
+    {c: '&#xFE3F;', h: 0.99, w: 1.65, tclass: 'wide3'},
     {c: '~', h: 0.722, w: .5, n: 102, tclass: 'wide1a'},
     {c: '~', h: 0.8, w: .8, n: 103, tclass: 'wide2a'},
     {c: '~', h: 0.99, w: 1.3, tclass: 'wide3a'},
@@ -581,13 +581,13 @@ jsMath.Add(jsMath.TeX,{
     {c: '<SPAN STYLE="font-size: 490%; position:relative; top:.8em; margin-right:-.03em">&#x221A;</SPAN>', h: 0.1, d: 3.75, n: 117, tclass: 'root'},
     {c: '<SPAN STYLE="font-size: 580%; position:relative; top:.775em; margin-right:-.04em">&#x221A;</SPAN>', h: .12, d: 4.5, n: 118, tclass: 'root'},
     {c: '<SPAN STYLE="font-size: 750%; position:relative; top:.775em;margin-right:-.04em">&#x221A;</SPAN>', h: .14, d: 5.7, tclass: 'root'},
-    {c: '<SPAN STYLE="margin-right:.125em">||</SPAN>', h:.8, d:0, delim: {top: 126, bot: 127, rep: 119}, tclass: 'normal'},
+    {c: '<SPAN STYLE="margin-left:.02em">|</SPAN><SPAN STYLE="margin-left:.08em; margin-right:.125em">|</SPAN>', h:.8, d:0, delim: {top: 126, bot: 127, rep: 119}, tclass: 'normal'},
     {c: '&#x2191;', h:.7, d:0, delim: {top: 120, rep: 63}, tclass: 'arrow1a'},
     {c: '&#x2193;', h:.65, d:0, delim: {bot: 121, rep: 63}, tclass: 'arrow1a'},
-    {c: '<SPAN STYLE="margin-left:-.1em"></SPAN><SPAN STYLE="position:relative; top:.6em; margin-right:-.3em">&#x25DC;</SPAN>', h: 0.05, tclass: 'symbol'},
-    {c: '<SPAN STYLE="margin-left:-.3em"></SPAN><SPAN STYLE="position:relative; top:.6em; margin-right:-.1em">&#x25DD;</SPAN>', h: 0.05, tclass: 'symbol'},
-    {c: '<SPAN STYLE="margin-left:-.1em"></SPAN><SPAN STYLE="position:relative; top:.2em; margin-right:-.3em">&#x25DF;</SPAN>', h: 0.05, tclass: 'symbol'},
-    {c: '<SPAN STYLE="margin-left:-.3em"></SPAN><SPAN STYLE="position:relative; top:.2em; margin-right:-.1em">&#x25DE;</SPAN>', h: 0.05, tclass: 'symbol'},
+    {c: '<SPAN STYLE="margin-left:-.1em"></SPAN><SPAN STYLE="position:relative; top:.55em; margin-right:-.3em">&#x25DC;</SPAN>', h: 0.05, tclass: 'symbol'},
+    {c: '<SPAN STYLE="margin-left:-.3em"></SPAN><SPAN STYLE="position:relative; top:.55em; margin-right:-.1em">&#x25DD;</SPAN>', h: 0.05, tclass: 'symbol'},
+    {c: '<SPAN STYLE="margin-left:-.1em"></SPAN><SPAN STYLE="position:relative; top:.15em; margin-right:-.3em">&#x25DF;</SPAN>', h: 0.05, tclass: 'symbol'},
+    {c: '<SPAN STYLE="margin-left:-.3em"></SPAN><SPAN STYLE="position:relative; top:.15em; margin-right:-.1em">&#x25DE;</SPAN>', h: 0.05, tclass: 'symbol'},
     {c: '&#x21D1;', h: .7, d:0, delim: {top: 126, rep: 119}, tclass: 'arrow1a'},
     {c: '&#x21D3;', h: .7, d:0, delim: {bot: 127, rep: 119}, tclass: 'arrow1a'}
   ],
@@ -874,7 +874,7 @@ jsMath.Add(jsMath.TeX,{
 
 /*
  *  We need to replace the jsMath.Box.TeX function in order to use the
- *  different font metrics in thie tables above, and to handle the
+ *  different font metrics in the tables above, and to handle the
  *  scaling better.
  */
 
@@ -943,14 +943,14 @@ jsMath.UpdateStyles({
     '.bigop2a':        'font-family: Arial unicode MS; font-size: 185%; position: relative; top: .75em',
     '.bigop2b':        'font-family: Arial unicode MS; font-size: 275%; position: relative; top: .55em',
     '.bigop2c':        'font-family: Arial unicode MS; font-size: 185%; position: relative; top: 1em; margin-right:-.1em',
-    '.wide1':          'font-family: Arial unicode MS; font-size: 75%; position: relative; top:-.1em',
-    '.wide2':          'font-family: Arial unicode MS; font-size: 133%; position: relative; top:.25em',
-    '.wide3':          'font-family: Arial unicode MS; font-size: 200%; position: relative; top:.35em',
+    '.wide1':          'font-size: 67%; position: relative; top:-.5em;',
+    '.wide2':          'font-size: 110%; position: relative; top:-.2em;',
+    '.wide3':          'font-size: 175%;',
     '.wide1a':         'font-family: Times New Roman; font-size: 75%; position: relative; top:-.5em',
     '.wide2a':         'font-family: Times New Roman; font-size: 133%; position: relative; top:-.2em',
     '.wide3a':         'font-family: Times New Roman; font-size: 200%; position: relative; top:-.1em',
     '.root':           'font-family: Arial unicode MS; margin-right:-.075em',
-    '.accent':         'font-family: Arial unicode MS; position:relative; top:.05em; left:.22em'
+    '.accent':         'font-family: Arial unicode MS; position:relative; top:.05em; left:.15em'
 });
 
 //
@@ -959,29 +959,41 @@ jsMath.UpdateStyles({
 if (jsMath.hidden.ATTRIBUTE_NODE) {
   jsMath.UpdateTeXfonts({
     cmex10: {
-      '48': {c: '(', d:0},
-      '49': {c: ')', d:0},
-      '50': {c: '[', d:0},
-      '51': {c: ']', d:0},
-      '52': {c: '[', d:0},
-      '53': {c: ']', d:0},
-      '54': {c: '<SPAN STYLE="margin:.075em">|</SPAN>', d:0},
-      '55': {c: '<SPAN STYLE="margin:.075em">|</SPAN>', d:0},
-      '56': {c: '{', d:0},
-      '57': {c: '}', d:0},
-      '58': {c: '{', d:0},
-      '59': {c: '}', d:0},
-      '60': {c: '{', d:0},
-      '61': {c: '}', d:0},
-      '62': {c: '<SPAN STYLE="margin:.075em">|</SPAN>', d:0},
-      '64': {c: '(', d:0},
-      '65': {c: ')', d:0},
-      '66': {c: '<SPAN STYLE="margin:.075em">|</SPAN>', d:0},
-      '67': {c: '<SPAN STYLE="margin:.075em">|</SPAN>', d:0}
+      '48': {c: '&#xF8EB;'},
+      '49': {c: '&#xF8F6;'},
+      '50': {c: '&#xF8EE;'},
+      '51': {c: '&#xF8F9;'},
+      '52': {c: '&#xF8F0;'},
+      '53': {c: '&#xF8FB;'},
+      '54': {c: '&#xF8EF;'},
+      '55': {c: '&#xF8FA;'},
+      '56': {c: '&#xF8F1;'},
+      '57': {c: '&#xF8FC;'},
+      '58': {c: '&#xF8F3;'},
+      '59': {c: '&#xF8FE;'},
+      '60': {c: '&#xF8F2;'},
+      '61': {c: '&#xF8FD;'},
+      '62': {c: '&#xF8F4;'},
+      '64': {c: '&#xF8ED;'},
+      '65': {c: '&#xF8F8;'},
+      '66': {c: '&#xF8EC;'},
+      '67': {c: '&#xF8F7;'}
     }
   });
   jsMath.UpdateStyles({
-    '.delimx': 'font-family: serif'
+      '.accent':  'font-family: Arial unicode MS; position:relative; top:.05em; left:.05em'
+  });
+}
+
+//
+// adjust for MSIE
+//
+if (jsMath.browser == "MSIE") {
+  jsMath.UpdateTeXfonts({
+    cmex10: {
+      '63': {c: '<SPAN STYLE="position:relative; left:.125em; margin-right:.125em">|</SPAN>'},
+      '119': {c: '<SPAN STYLE="position:relative; left:.02em; margin-right=.08em">|</SPAN><SPAN STYLE="margin-right:.125em">|</SPAN>'}
+    }
   });
 }
 
@@ -1000,7 +1012,6 @@ jsMath.InitTeXfonts();
 jsMath.Macro('not','\\mathrel{\\rlap{\\kern 3mu/}}');
 jsMath.Macro('bowtie','\\mathrel\\triangleright\\kern-6mu\\mathrel\\triangleleft');
 
-jsMath.Box.DelimExtend = jsMath.Box.DelimExtendRelative;
 jsMath.absoluteHeightVaries = 1;
 
 jsMath.defaultH = 0.8;
