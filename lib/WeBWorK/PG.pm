@@ -44,9 +44,8 @@ sub new($$$$$$$$) {
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
-	if ($courseEnv->{pg}->{options}->{catchWarnings}) {
-		local $SIG{__WARN__} = sub { $warnings .= shift };
-	}
+	local $SIG{__WARN__} = sub { $warnings .= shift }
+		if $courseEnv->{pg}->{options}->{catchWarnings};
 	
 	# create a Translator
 	#warn "PG: creating a Translator\n";
