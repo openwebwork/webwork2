@@ -1,15 +1,23 @@
+################################################################################
+# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
+# $Id$
+################################################################################
+
 package WeBWorK::ContentGenerator::Instructor::UserList;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::UserList - Entry point for User-specific data editing
+WeBWorK::ContentGenerator::Instructor::UserList - Entry point for User-specific
+data editing
 
 =cut
 
 use strict;
 use warnings;
 use CGI qw();
+
+use constant HIDE_USERS_THRESHHOLD => 20;
 
 sub initialize {
 	my ($self) = @_;
@@ -70,13 +78,14 @@ sub fieldEditHTML {
 	my $items = $properties->{items};
 	my $synonyms = $properties->{synonyms};
 	
-	
 	if ($access eq "readonly") {
 		return $value;
 	}
+	
 	if ($type eq "number" or $type eq "text") {
 		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
 	}
+	
 	if ($type eq "enumerable") {
 		my $matched = undef; # Whether a synonym match has occurred
 
@@ -87,9 +96,11 @@ sub fieldEditHTML {
 				$matched = 1;
 			}
 		}
+		
 		if (!$matched and exists $synonyms->{"*"}) {
 			$value = $synonyms->{"*"};
 		}
+		
 		return CGI::popup_menu({
 			name => $fieldName, 
 			values => [keys %$items],
@@ -99,23 +110,37 @@ sub fieldEditHTML {
 	}
 }
 
+# generate labels for section/recitation popup menus
+sub menuLabels {
+	my ($self, $hashRef) = @_;
+	my %hash = %$hashRef;
+	
+	my %result;
+	foreach my $key (keys %hash) {
+		my $count = @{ $hash{$key} };
+		my $displayKey = $key || "<none>";
+		$result{$key} = "$displayKey ($count users)";
+	}
+	return %result;
+}
+
 sub title {
 	my $self = shift;
-	return $self->{ce}->{courseName}. ' class list';
+	return "User List";
 }
 
 sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
+	my $self = shift;
+	my $args = $_[-1];
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
+	
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		"class:$courseName"      => ''
+		"Home"              => "$root",
+		$courseName         => "$root/$courseName",
+		"Instructor Tools"  => "$root/$courseName/instructor",
+		"User List"         => "",
 	);
 }
 
@@ -129,16 +154,16 @@ sub body {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	my $userTemplate = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
 	
-	# This code will require changing if the permission and user tables ever have different keys.
-	my @users = $db->listUsers;
-
 	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map {$_ => $_} ($userTemplate->FIELDS(), $permissionLevelTemplate->FIELDS());
+	my %prettyFieldNames = map { $_ => $_ } (
+		$userTemplate->FIELDS(), $permissionLevelTemplate->FIELDS());
+	
 	@prettyFieldNames{qw(
 		user_id 
 		first_name 
@@ -162,7 +187,7 @@ sub body {
 		"Comment", 
 		"Perm. Level"
 	);
-
+	
 	my %fieldProperties = (
 		user_id => {
 			type => "text",
@@ -227,66 +252,155 @@ sub body {
 		}
 	);
 	
+	my @userIDs = $db->listUsers;
+	my @userRecords = $db->getUsers(@userIDs);
+	
+	my (%sections, %recitations);
+	foreach my $user (@userRecords) {
+		push @{$sections{$user->section}}, $user;
+		push @{$recitations{$user->recitation}}, $user;
+	}
+	
+	my $filter_type = $r->param("filter_type")
+		|| (@userIDs > HIDE_USERS_THRESHHOLD ? "none" : "all");
+	my $filter_user_id = $filter_type eq "filter_user_id"
+		? $r->param("filter_user_id") || ""
+		: "";
+	my $filter_section = $filter_type eq "filter_section"
+		? $r->param("filter_section") || ""
+		: "";
+	my $filter_recitation = $filter_type eq "filter_recitation"
+		? $r->param("filter_recitation") || ""
+		: "";
+	
+	if ($filter_type eq "none") {
+		@userRecords = ();
+	} elsif ($filter_type eq "filter_user_id") {
+		@userRecords = ();
+		if ($filter_user_id ne "") {
+			my $userRecord = $db->getUser($filter_user_id);
+			@userRecords = ($userRecord) if $userRecord;
+		}
+	} elsif ($filter_type eq "filter_section") {
+		@userRecords = ();
+		@userRecords = @{$sections{$filter_section}}
+			if exists $sections{$filter_section};
+	} elsif ($filter_type eq "filter_recitation") {
+		@userRecords = ();
+		@userRecords = @{$recitations{$filter_recitation}}
+			if exists $recitations{$filter_recitation};
+	}
+	
+	@userRecords = sort {
+		(lc $a->section cmp lc $b->section)
+			|| (lc $a->last_name cmp lc $b->last_name)
+			|| (lc $a->first_name cmp lc $b->first_name)
+			|| (lc $a->user_id cmp lc $b->user_id)
+	} @userRecords;
+	
 	print CGI::start_form({method=>"post", action=>$r->uri()});
+	print $self->hidden_authen_fields();
+	
+	# filter options
+	my %labels = (
+		none => "No users",
+		filter_user_id => "User with ID " . CGI::input({
+			type=>"text",
+			name=>"filter_user_id",
+			value=>$filter_user_id,
+			size=>"20"
+		}),
+		filter_section => "Users in section " . CGI::popup_menu(
+			-name=>"filter_section",
+			-values=>[ keys %sections ],
+			-labels=>{ $self->menuLabels(\%sections) },
+			-default=>$filter_section,
+		),
+		filter_recitation => "Users in recitation " . CGI::popup_menu(
+			-name=>"filter_recitation",
+			-values=>[ sort keys %recitations ],
+			-labels=>{ $self->menuLabels(\%recitations) },
+			-default=>$filter_recitation,
+		),
+		all => "All " . scalar @userIDs . " users",
+	);
+	my $cgi = new CGI;
+	$cgi->autoEscape(0);
+	print "Show:", CGI::br();
+	print $cgi->radio_group(
+		-name=>"filter_type",
+		-values=>[ qw(none filter_user_id filter_section filter_recitation all) ],
+		-default=>$filter_type,
+		-linebreak=>"true",
+		-labels=>\%labels,
+	);
+	print CGI::submit({name=>"filter", value=>"Filter"});
+	
 	print CGI::start_table({});
 	
 	# Table headings, prettied-up
-	print CGI::Tr({},
-		CGI::th({}, [
-			"Delete?",
-			map {$prettyFieldNames{$_}} (
-				$userTemplate->KEYFIELDS(),
-				$userTemplate->NONKEYFIELDS(),
-				$permissionLevelTemplate->NONKEYFIELDS(),
-			)
-		])
+	my @tableHeadings = (
+		"Delete",
+		map {$prettyFieldNames{$_}} (
+			$userTemplate->KEYFIELDS(),
+			$userTemplate->NONKEYFIELDS(),
+			$permissionLevelTemplate->NONKEYFIELDS(),
+		),
 	);
-	# get user records
-	my @userRecords  = ();
-	foreach my $currentUser ( @users) {
-		push (@userRecords, $db->getUser($currentUser) );
-	}
-	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) || 
-	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
-	#@userRecords = sort {$a->section cmp $b->section} @userRecords;
+	
+	# now print them
+	print CGI::Tr({},
+		CGI::th({}, \@tableHeadings)
+	);
+	
 	# process user records
 	foreach my $userRecord (@userRecords) {
 		my $currentUser = $userRecord->user_id;
 		my $permissionLevel = $db->getPermissionLevel($currentUser);
 		unless (defined $permissionLevel) {
-			warn "No permissionLevel record for user $currentUser" ;
+			warn "No permissionLevel record for user $currentUser -- added";
 			my $newPermissionLevel = $db->newPermissionLevel;
 			$newPermissionLevel->user_id($currentUser);
 			$newPermissionLevel->permission(0);
 			$db->addPermissionLevel($newPermissionLevel);
+			$permissionLevel = $newPermissionLevel;
  			# permission set to minimum level
-			next;  
 		}
 		
 		# A concise way of printing a row containing a cell for each field, editable unless it's a key
 		print CGI::Tr({},
 			CGI::td({}, [
 				CGI::input({type=>"checkbox", name=>"deleteUser", value=>$currentUser}),
-				(
-					map {
-						my $changeEUserURL = "$root/$courseName?user=".$r->param("user")."&effectiveUser=".$userRecord->user_id()."&key=".$r->param("key");
-						CGI::a({href=>$changeEUserURL}, $userRecord->$_)
-					} $userRecord->KEYFIELDS
-				),
 				(map {
-#					CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})
-					$self->fieldEditHTML("user.".$userRecord->user_id().".".$_, $userRecord->$_, $fieldProperties{$_});
+					my $changeEUserURL = "$root/$courseName?"
+						. "user=" . $r->param("user")
+						. "&effectiveUser=" . $userRecord->user_id
+						. "&key=" . $r->param("key");
+					CGI::a({href=>$changeEUserURL}, $userRecord->$_)
+				} $userRecord->KEYFIELDS),
+				(map {
+					$self->fieldEditHTML(
+						"user." . $userRecord->user_id . "." .$_,
+						$userRecord->$_, $fieldProperties{$_});
 				} $userRecord->NONKEYFIELDS()), 
 				(map {
-#					CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})
-					$self->fieldEditHTML("permission.".$permissionLevel->user_id().".".$_, $permissionLevel->$_, $fieldProperties{$_});
+					$self->fieldEditHTML(
+						"permission." . $permissionLevel->user_id . "." . $_,
+						$permissionLevel->$_, $fieldProperties{$_});
 				} $permissionLevel->NONKEYFIELDS()),
 			])
 		);
 	}
 	
+	unless (@userRecords) {
+		print CGI::Tr({},
+			CGI::td({-colspan=>scalar(@tableHeadings), -align=>"center"},
+				"No users match the filter criteria above."
+			),
+		);
+	}
+	
 	print CGI::end_table();
-	print $self->hidden_authen_fields();
 	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
 	print CGI::end_form();
 	
