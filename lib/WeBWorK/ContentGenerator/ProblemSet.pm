@@ -16,6 +16,7 @@ problem set.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::PG;
 
 sub initialize {
 	my ($self, $setName) = @_;
