@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.39 2004/05/08 20:31:28 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.40 2004/05/09 01:10:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ problem set.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readDirectory list2hash max);
+use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::DB::Record::Set;
 use WeBWorK::ContentGenerator::Grades;
 # The table format has been borrowed from the Grades.pm module
@@ -74,6 +74,37 @@ sub title {
 		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". WeBWorK::Utils::formatDateTime($self->{set_due_date});
 	}
 	return $string;
+}
+sub siblings {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	
+	my $courseID = $urlpath->arg("courseID");
+	my $eUserID  = $r->param("effectiveUser");
+	my @setIDs   = sort  $db->listGlobalSets;
+	
+	my $stats     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats", 
+	                                        courseID => $courseID);
+	
+	print CGI::start_ul({class=>"LinksMenu"});
+	print CGI::start_li();
+	print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
+	print CGI::start_ul();
+	
+	foreach my $setID (@setIDs) {
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats",
+			courseID => $courseID, setID => $setID,statType => 'set',);
+		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, "Set $setID"));
+	}
+	
+	print CGI::end_ul();
+	print CGI::end_li();
+	print CGI::end_ul();
+	
+	return "";
 }
 sub body {
 	my $self       = shift;
