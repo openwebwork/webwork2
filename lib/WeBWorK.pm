@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.44 2004/02/06 17:27:07 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.45 2004/02/12 04:26:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -289,7 +289,7 @@ The dispatcher implements a virtual heirarchy that looks like this:
 		#elsif ($arg eq "test") {
 		#	$contentGenerator = "WeBWorK::ContentGenerator::Test";
 		#	@arguments = ();
-		}
+		#}
 		elsif ($arg eq "quiz_mode" ) {
 			$contentGenerator = "WeBWorK::ContentGenerator::GatewayQuiz";
 			@arguments = @components;
