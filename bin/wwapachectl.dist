@@ -11,17 +11,35 @@ usage() {
 	echo "$0 { start | stop | restart | graceful | configtest }"
 }
 
+checkpid() {
+	if [ ! -e $PID ]; then
+		echo "$PID: not found. (Perhaps the server is not running?)"
+		exit
+	fi
+}
+
+checknopid() {
+	if [ -e $PID ]; then
+		echo "$PID: exists. (Perhaps the server is already running?)"
+		exit
+	fi
+}
+
 case $1 in
 	start)
+		checknopid
 		"${HTTPD}" -f "${CONFIG}"
 		;;
 	stop)
+		checkpid
 		kill -TERM `cat "${PID}"`
 		;;
 	restart)
+		checkpid
 		kill -HUP `cat "${PID}"`
 		;;
 	graceful)
+		checkpid
 		kill -USR1 `cat "${PID}"`
 		;;
 	configtest)
