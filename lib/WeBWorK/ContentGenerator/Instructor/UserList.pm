@@ -457,7 +457,7 @@ sub filter_form {
 				-labels => {
 					all => "all users",
 					none => "no users",
-					selected => "selected users",
+					selected => "users selected below",
 					match_ids => "users with matching user IDs:",
 					match_section => "users in selected section",
 					match_recitation => "users in selected recitation",
