@@ -3,7 +3,9 @@
 # $Id$
 ################################################################################
 
+
 package WeBWorK::PG::Translator;
+
 
 use strict;
 use warnings;
@@ -26,7 +28,7 @@ WeBWorK::PG::Translator - Evaluate PG code and evaluate answers safely
 
 =head1 SYNPOSIS
 
-    my $pt = new PGtranslator;      # create a translator;
+    my $pt = new WeBWorK::PG::Translator;      # create a translator;
     $pt->environment(\%envir);      # provide the environment variable for the problem
     $pt->initialize();              # initialize the translator
     $pt-> set_mask();               # set the operation mask for the translator safe compartment
@@ -287,28 +289,23 @@ my %shared_subroutine_hash = (
 );
 
 sub initialize {
-	my $self = shift;
-	my $safe_cmpt = $self->{safe};
-	#print "initializing safeCompartment",$safe_cmpt -> root(), "\n";
-	
-	$safe_cmpt -> share(keys %shared_subroutine_hash);
-	
-# begin experiment?
-	no strict;
-	local %envir = %{ $self->{envir} };
+    my $self = shift;
+    my $safe_cmpt = $self->{safe};
+    #print "initializing safeCompartment",$safe_cmpt -> root(), "\n";
+
+    $safe_cmpt -> share(keys %shared_subroutine_hash);
+    no strict;
+    local(%envir) = %{ $self ->{envir} };
 	$safe_cmpt -> share('%envir');
 	#local($rf_answer_eval) = sub { $self->PG_answer_eval(@_); };
 	#local($rf_restricted_eval) = sub { $self->PG_restricted_eval(@_); };
 	#$safe_cmpt -> share('$rf_answer_eval');
 	#$safe_cmpt -> share('$rf_restricted_eval');
 	use strict;
-# end experiment
     
 	# ra_included_modules is now populated independantly of @class_modules:
 	#$self->{ra_included_modules} = [@class_modules];
 	
-#	push @{$self->{ra_included_modules}}, "\%PGrandom::";
-#	warn "included_modules = ", join(" ", @{ $self->{ra_included_modules} }), "\n";
 	$safe_cmpt -> share_from('main', $self->{ra_included_modules} );
 		# the above line will get changed when we fix the PG modules thing. heh heh.
 }
@@ -875,7 +872,7 @@ sub rh_problem_state {
 }
 
 
-=head3 g
+=head3 process_answers
 
 
 	$obj->process_answers()
@@ -923,9 +920,12 @@ sub process_answers{
 			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
 		} elsif (ref($rf_fun) eq 'AnswerEvaluator')   {
 			$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans)');
-	  	    	warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
- 	 	    	warn "Evaluation error: Answer $ans_name:<BR>\n", $rh_ans_evaluation_result->error_flag(), " :: ",$rh_ans_evaluation_result->error_message(),"<BR>\n" 
-			if defined($rh_ans_evaluation_result)  and defined($rh_ans_evaluation_result->error_flag());
+			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
+			warn "Evaluation error: Answer $ans_name:<BR>\n", 
+				$rh_ans_evaluation_result->error_flag(), " :: ",
+				$rh_ans_evaluation_result->error_message(),"<BR>\n" 
+					if defined($rh_ans_evaluation_result)  
+						and defined($rh_ans_evaluation_result->error_flag());
 		} else {
 			warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n Unrecognized evaluator type |", ref($rf_fun), "|";
 		}	
