@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.25 2004/08/10 15:52:05 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.26 2004/12/18 22:35:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,7 @@ sub body {
 	my @Users = $db->getUsers(@userIDs);
 ## Mark's Edits for filtering
 	my @myUsers;
-	my $user = $r->param("user");
+
 	
 	my (@viewable_sections, @viewable_recitations);
 	
