@@ -85,7 +85,7 @@ use constant  FIELD_PROPERTIES => {
 		size      => "26",
 		override  => "any",
 		labels    => {
-				0 => "None Specified",
+				#0 => "None Specified",
 				"" => "None Specified",
 		},
 	},
@@ -95,7 +95,7 @@ use constant  FIELD_PROPERTIES => {
 		size      => "26",
 		override  => "any",
 		labels    => {
-				0 => "None Specified",
+				#0 => "None Specified",
 				"" => "None Specified",
 		},
 	},
@@ -105,7 +105,7 @@ use constant  FIELD_PROPERTIES => {
 		size      => "26",
 		override  => "any",
 		labels    => {
-				0 => "None Specified",
+				#0 => "None Specified",
 				"" => "None Specified",
 		},
 	},
@@ -208,8 +208,8 @@ sub FieldTable {
 	if ($forUsers) {
 		$output .= CGI::Tr(
 		    CGI::th({colspan=>"2"}, "&nbsp;"),
-			CGI::th({colspan=>"1"}, "Individual set dates"),
-			CGI::th({}, "Class set dates"),
+			CGI::th({colspan=>"1"}, "User Values"),
+			CGI::th({}, "Class values"),
 		);
 	}
 	
@@ -274,8 +274,8 @@ sub FieldHTML {
 	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : "";
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue) if $globalValue;
-		$userValue = $self->formatDateTime($userValue) if $userValue;
+		$globalValue = $self->formatDateTime($globalValue) if defined $globalValue && $globalValue ne $labels{""};
+		$userValue = $self->formatDateTime($userValue) if defined $userValue && $userValue ne $labels{""};
 	}
 
 	# check to make sure that a given value can be overridden
@@ -319,7 +319,7 @@ sub FieldHTML {
 				name => "$recordType.$recordID.$field.override",
 				label => "",
 				value => $field,
-				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne "" ? 1 : 0),
+				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || "") ? 1 : 0),
 		}) : "",
 		$properties{name},
 		$inputType,
@@ -518,15 +518,15 @@ sub initialize {
 	my ($open_date, $due_date, $answer_date);
 	my $error = 0;
 	if (defined $r->param('submit_changes')) {
+		my @names = ("open_date", "due_date", "answer_date");
+		
+		my %dates = map { $_ => $r->param("set.$setID.$_") } @names;
+		%dates = map { 
+			my $unlabel = $undoLabels{$_}->{$dates{$_}}; 
+			$_ => defined $unlabel ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
+		} @names;
 
-		my $od_param = $r->param("set.$setID.open_date");
-		my $dd_param = $r->param("set.$setID.due_date");
-		my $ad_param = $r->param("set.$setID.answer_date");
-		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
-
-		$open_date = $od_param ? $self->parseDateTime($od_param) : $setRecord->open_date;
-		$due_date = $dd_param ? $self->parseDateTime($dd_param) : $setRecord->due_date;
-		$answer_date = $ad_param ? $self->parseDateTime($ad_param) : $setRecord->answer_date;
+		($open_date, $due_date, $answer_date) = map { $dates{$_} } @names;
 
 		if ($answer_date < $due_date || $answer_date < $open_date) {		
 			$self->addbadmessage("Answers cannot be made available until on or after the due date!");
@@ -557,20 +557,23 @@ sub initialize {
 			foreach my $record (@userRecords) {
 				foreach my $field ( @{ SET_FIELDS() } ) {
 					next unless canChange($forUsers, $field);
-
 					my $override = $r->param("set.$setID.$field.override");
+
 					if (defined $override && $override eq $field) {
 
 						my $param = $r->param("set.$setID.$field");
 						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-						$param = $undoLabels{$field}->{$param} || $param;
+						my $unlabel = $undoLabels{$field}->{$param};
+						$param = $unlabel if defined $unlabel;
+#						$param = $undoLabels{$field}->{$param} || $param;
 						if ($field =~ /_date/) {
-							$param = $self->parseDateTime($param);
+							$param = $self->parseDateTime($param) unless defined $unlabel;
 						}
 						$record->$field($param);
 					} else {
 						$record->$field(undef);					
 					}
+				
 				}
 				$db->putUserSet($record);
 			}
@@ -580,9 +583,10 @@ sub initialize {
 
 				my $param = $r->param("set.$setID.$field");
 				$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-				$param = $undoLabels{$field}->{$param} || $param;
+				my $unlabel = $undoLabels{$field}->{$param};
+				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/) {
-					$param = $self->parseDateTime($param);
+					$param = $self->parseDateTime($param) unless defined $unlabel;
 				}
 				$setRecord->$field($param);
 			}
@@ -619,7 +623,8 @@ sub initialize {
 
 							my $param = $r->param("problem.$problemID.$field");
 							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-							$param = $undoLabels{$field}->{$param} || $param;
+							my $unlabel = $undoLabels{$field}->{$param};
+							$param = $unlabel if defined $unlabel;
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
 						} else {
@@ -634,7 +639,8 @@ sub initialize {
 
 						my $param = $r->param("problem.$problemID.$field");
 						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-						$param = $undoLabels{$field}->{$param} || $param;
+						my $unlabel = $undoLabels{$field}->{$param};
+						$param = $unlabel if defined $unlabel;
 						$changed ||= changed($record->$field, $param);
 						$record->$field($param);
 					}
@@ -652,7 +658,8 @@ sub initialize {
 
 					my $param = $r->param("problem.$problemID.$field");
 					$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-					$param = $undoLabels{$field}->{$param} || $param;
+					my $unlabel = $undoLabels{$field}->{$param};
+					$param = $unlabel if defined $unlabel;
 					$changed ||= changed($problemRecord->$field, $param);
 					$problemRecord->$field($param);
 				}
@@ -684,7 +691,8 @@ sub initialize {
 
 							my $param = $r->param("problem.$problemID.$field");
 							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-							$param = $undoLabels{$field}->{$param} || $param;
+							my $unlabel = $undoLabels{$field}->{$param};
+							$param = $unlabel if defined $unlabel;
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
 						}
@@ -709,7 +717,6 @@ sub initialize {
 			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
 			my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
 			foreach my $record (@userProblemRecords) {
-$self->addbadmessage($record->user_id);
 				if (defined $record && ($record->status eq "" || $record->status < 1)) {
 					$record->status(1);
 					$record->attempted(1);
