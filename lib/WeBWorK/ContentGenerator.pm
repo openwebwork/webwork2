@@ -505,14 +505,15 @@ sub instructor_links {
 	my $args       = pop(@components);  # get hash of option arguments
 	my $courseName = $self->{ce}->{courseName};
 	my $root       = $self->{ce}->{webworkURLs}->{root};
+	my $userName = $self->{r}->param("user");
 	my ($set, $prob) = @components;
 	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
 	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
 	my $users      = "$root/$courseName/instructor/users/?" . $self->url_authen_args();
 	my $email      = "$root/$courseName/instructor/send_mail/?" . $self->url_authen_args();
-	
-	my $stats      = "$root/$courseName/instructor/stats/".((defined($set)) ? "$set/?":'?') 
-	                 . $self->url_authen_args();
+	my $statsRoot  = "$root/$courseName/instructor/stats";     
+	my $stats      = $statsRoot. '/?'.$self->url_authen_args();
+
 	
 	#  Add direct links to sets e.g.  3:4 for set3 problem 4
 	my $setURL     = (defined($set)) ? "$root/$courseName/instructor/sets/$set/?" .
@@ -528,8 +529,14 @@ sub instructor_links {
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") ,':', $setProb, CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "Class&nbsp;List") , CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'.((defined($set)) ? ":$set":'')),
-			  	  CGI::br(),  #FIXME (have index for stats page someday
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'),CGI::br(),
+			  	 (defined($set)) ?
+			  	 	'&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "set:$set").CGI::br() 
+			  	 	: '',
+			  	 (defined($userName)) ?
+			  	 	'&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
+			  	 	: '',
+			  	  
 			  	 
 	)
 

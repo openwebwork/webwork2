@@ -371,7 +371,8 @@ sub displayStudents {
 # Utility function NOT a method
 #################################
 sub threeSpaceFill {
-    my $num = shift @_;
+    my $num = shift @_ || 0;
+    
     if ($num < 10) {return "$num".'  ';}
     elsif ($num < 100) {return "$num".' ';}
     else {return "$num";}
