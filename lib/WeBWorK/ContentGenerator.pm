@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.105 2004/06/16 01:59:14 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.106 2004/06/21 19:07:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -501,8 +501,10 @@ sub links {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
+	my $user = $r->param('user');
 	
 	# we're linking to other places in the same course, so grab the courseID from the current path
 	my $courseID = $urlpath->arg("courseID");
@@ -522,7 +524,7 @@ sub links {
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
 	# only users with appropriate permissions can report bugs
-	print CGI::p(CGI::a({style=>"font-size:larger", href=>REPORT_BUGS_URL}, "Report bugs")),CGI::hr() if $permLevel>= $ce->{permissionLevels}->{report_bugs};
+	print CGI::p(CGI::a({style=>"font-size:larger", href=>REPORT_BUGS_URL}, "Report bugs")),CGI::hr() if $authz->hasPermissions($user, "report_bugs");
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
@@ -530,7 +532,6 @@ sub links {
 	print CGI::li(CGI::a({href=>$self->systemLink($options)}, OPTIONS));
 	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  GRADES));
 	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  LOG_OUT));
-	
 	
 	if ($permLevel > 0) {
 		my $ipfx = "${pfx}Instructor::";
