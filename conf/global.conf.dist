@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.95 2004/07/16 14:27:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.96 2004/08/04 20:54:35 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -84,10 +84,10 @@ $mail{allowedRecipients}     = [
 # email. It's appropriate to set this in the course.conf for specific courses,
 # but probably not in global.conf. if not defined, mail is sent to all
 # professors and TAs for a given course
-$mail{feedbackRecipients}    = [
+# $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',
 	#'prof2@yourserver.yourdomain.edu',
-];
+# ];
 	
 # feedbackVerbosity:
 #  0: send only the feedback comment and context link
