@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.16 2004/03/03 20:16:35 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.17 2004/03/06 21:49:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -109,22 +109,20 @@ sub body {
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 	print $self->hidden_authen_fields();
 	
-	print CGI::div({class=>"FormLayout"},
-		CGI::table(
-			CGI::Tr(
-				CGI::th("Users"),
-				CGI::th("Sets"),
-			),
-			CGI::Tr(
-				CGI::td($scrolling_user_list),
-				CGI::td($scrolling_set_list),
-			),
-			CGI::Tr(
-				CGI::td({colspan=>2, align=>"center"},
-					CGI::submit(
-						-name => "assign",
-						-value => "Assign selected sets to selected users",
-					),
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th("Users"),
+			CGI::th("Sets"),
+		),
+		CGI::Tr(
+			CGI::td($scrolling_user_list),
+			CGI::td($scrolling_set_list),
+		),
+		CGI::Tr(
+			CGI::td({colspan=>2, align=>"center"},
+				CGI::submit(
+					-name => "assign",
+					-value => "Assign selected sets to selected users",
 				),
 			),
 		),
