@@ -14,9 +14,8 @@ WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API.
 use strict;
 use warnings;
 use File::Path qw(rmtree);
-use File::Temp qw(tempdir);
 use WeBWorK::PG::Translator;
-use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry);
+use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry makeTempDirectory);
 
 sub new($$$$$$$$) {
 	my $invocant = shift;
@@ -311,7 +310,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs}."/";
 	$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
-		? tempdir("webwork-dvipng-XXXXXXXX", DIR => $envir{tempDirectory})
+		? makeTempDirectory($envir{tempDirectory}, "webwork-dvipng")
 		: undef;
 	
 	# Information for sending mail
