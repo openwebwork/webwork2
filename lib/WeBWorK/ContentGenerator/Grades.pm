@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.5 2004/05/22 21:23:51 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.6 2004/06/30 20:47:29 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -245,8 +245,21 @@ sub displayStudentStats {
 				# FIXME check the legitimate reasons why a student record might not be defined
 				next;
 			}
-	    	$status             = $problemRecord->status || 0;
-	        $attempted          = $problemRecord->attempted;
+		    	$status           = $problemRecord->status || 0;
+		        $attempted        = $problemRecord->attempted;
+			my $num_correct   = $problemRecord->num_incorrect || 0;
+			my $num_incorrect = $problemRecord->num_correct   || 0;
+			$num_of_attempts += $num_correct + $num_incorrect;
+
+			# This is a fail safe mechanism that makes sure that
+			# the problem is marked as attempted if the status has
+			# been set or if the problem has been attempted
+			if (!$attempted && ($status || $num_of_attempts)) {
+				$attempted = 1;
+				$problemRecord->attempted('1');
+				$db->putUserProblem($problemRecord);
+			}
+			
 			if (!$attempted){
 				$longStatus     = '.  ';
 			}
@@ -271,9 +284,6 @@ sub displayStudentStats {
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
 			$totalRight      += round_score($status*$probValue) if $valid_status;
-			my $num_correct   = $problemRecord->num_incorrect || 0;
-			my $num_incorrect = $problemRecord->num_correct   || 0;
-			$num_of_attempts += $num_correct + $num_incorrect;
 		}
 		
 		
