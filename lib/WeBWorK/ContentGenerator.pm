@@ -16,9 +16,9 @@ use warnings;
 use Apache::Constants qw(:common);
 use CGI qw();
 use URI::Escape;
+use WeBWorK::Authz;
 use WeBWorK::DB;
 use WeBWorK::Utils qw(readFile);
-use WeBWorK::Authz;
 
 ################################################################################
 # This is a very unruly file, so I'm going to use very large comments to divide
@@ -67,6 +67,7 @@ sub new($$$$) {
 # 
 sub go {
 	my $self = shift;
+	
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{ce};
 	
@@ -76,7 +77,7 @@ sub go {
 	
 	$self->initialize(@_) if $self->can("initialize");
 	$self->template($courseEnvironment->{templates}->{system}, @_);
-
+	
 	return OK;
 }
 
