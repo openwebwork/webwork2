@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/Key.pm,v 1.5 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,6 +39,12 @@ sub FIELDS {qw(
 	user_id
 	key
 	timestamp
+)}
+
+sub SQL_TYPES {qw(
+	BLOB
+	TEXT
+	TEXT
 )}
 
 1;
