@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.83 2004/03/10 02:51:57 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.84 2004/03/11 03:07:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,7 +44,7 @@ miscellaneous utilities are provided.
 use strict;
 use warnings;
 use Apache::Constants qw(:common);
-use CGI qw(*ul *li);
+use CGI::Pretty qw(*ul *li);
 use URI::Escape;
 use WeBWorK::Template qw(template);
 
@@ -372,10 +372,21 @@ sub links {
 	my %args = ( courseID => $courseID );
 	my $pfx = "WeBWorK::ContentGenerator::";
 	
+	my $sets    = $urlpath->newFromModule("${pfx}ProblemSets", %args);
+	my $options = $urlpath->newFromModule("${pfx}Options", %args);
+	my $grades  = $urlpath->newFromModule("${pfx}Grades", %args);
+	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
+	
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
+	print CGI::start_ul({class=>"LinksMenu"});
+	print CGI::li(CGI::span({style=>"font-size:larger"},
+		CGI::a({href=>$self->systemLink($sets)}, "Problem Sets")));
+	print CGI::li(CGI::a({href=>$self->systemLink($options)}, $options->name));
+	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  $grades->name));
+	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  $logout->name));
+	
 	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
 	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
-	
-	my $iResult = "";
 	
 	if ($permLevel > 0) {
 		my $ipfx = "${pfx}Instructor::";
@@ -402,58 +413,49 @@ sub links {
 		
 		my $files = $urlpath->newFromModule("${ipfx}FileXfer", %args);
 		
-		$iResult .= CGI::start_li();
-		$iResult .= CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
-		$iResult .= CGI::start_ul();
-		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
-		$iResult .= CGI::start_li();
-		$iResult .= CGI::a({href=>$self->systemLink($setList)}, $setList->name);
+		print CGI::start_li();
+		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
+		print CGI::start_ul();
+		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
+		print CGI::start_li();
+		print CGI::a({href=>$self->systemLink($setList)}, $setList->name);
 		if (defined $setID and $setID ne "") {
-			$iResult .= CGI::start_ul();
-			$iResult .= CGI::start_li();
-			$iResult .= CGI::a({href=>$self->systemLink($setDetail)}, $setID);
+			print CGI::start_ul();
+			print CGI::start_li();
+			print CGI::a({href=>$self->systemLink($setDetail)}, $setID);
 			if (defined $problemID and $problemID ne "") {
-				$iResult .= CGI::ul(
+				print CGI::ul(
 					CGI::li(CGI::a({href=>$self->systemLink($problemEditor)}, $problemID))
 				);
 			}
-			$iResult .= CGI::end_li();
-			$iResult .= CGI::end_ul();
+			print CGI::end_li();
+			print CGI::end_ul();
 		}
-		$iResult .= CGI::end_li();
-		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
-		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
-		$iResult .= CGI::start_li();
-		$iResult .= CGI::a({href=>$self->systemLink($stats)}, $stats->name);
+		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
+		print CGI::start_li();
+		print CGI::a({href=>$self->systemLink($stats)}, $stats->name);
 		if (defined $userID and $userID ne "") {
-			$iResult .= CGI::ul(
+			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
 			);
 		}
 		if (defined $setID and $setID ne "") {
-			$iResult .= CGI::ul(
+			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, $setID))
 			);
 		}
-		$iResult .= CGI::end_li();
-		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($files)}, $files->name));
-		$iResult .= CGI::end_ul();
-		$iResult .= CGI::end_li();
+		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($files)}, $files->name));
+		print CGI::end_ul();
+		print CGI::end_li();
 	}
 	
-	my $sets    = $urlpath->newFromModule("${pfx}ProblemSets", %args);
-	my $options = $urlpath->newFromModule("${pfx}Options", %args);
-	my $grades  = $urlpath->newFromModule("${pfx}Grades", %args);
-	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
+	print CGI::end_ul();
+	print "<!-- end " . __PACKAGE__ . "::links -->\n";
 	
-	return CGI::ul({class=>"LinksMenu"},
-		CGI::li(CGI::span({style=>"font-size:larger"},
-			CGI::a({href=>$self->systemLink($sets)}, "Problem Sets"))),
-		CGI::li(CGI::a({href=>$self->systemLink($options)}, $options->name)),
-		CGI::li(CGI::a({href=>$self->systemLink($grades)},  $grades->name)),
-		CGI::li(CGI::a({href=>$self->systemLink($logout)},  $logout->name)),
-		$iResult,
-	);
+	return "";
 }
 
 =item loginstatus()
@@ -480,6 +482,8 @@ sub loginstatus {
 		my $stopActingURL = $self->systemLink($urlpath, effectiveUserID => $userID);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
 		
+		print "\n<!-- BEGIN " . __PACKAGE__ . "::loginstatus -->\n";
+		
 		print "Logged in as $userID. ";
 		print CGI::a({href=>$logoutURL}, "Log Out");
 		
@@ -487,6 +491,8 @@ sub loginstatus {
 			print " | Acting as $eUserID. ";
 			print CGI::a({href=>$stopActingURL}, "Stop Acting");
 		}
+		
+		print "<!-- END " . __PACKAGE__ . "::loginstatus -->\n";
 	}
 	
 	return "";
@@ -556,7 +562,11 @@ sub path {
 	
 	$path[$#path] = ""; # we don't want the last path element to be a link
 	
-	return $self->pathMacro($args, @path);
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
+	print $self->pathMacro($args, @path);
+	print "<!-- END " . __PACKAGE__ . "::path -->\n";
+	
+	return "";
 }
 
 =item siblings()
@@ -582,11 +592,12 @@ $self->{submitError}, if it is present.
 
 sub submiterror {
 	my ($self) = @_;
-	if (exists $self->{submitError}) {
-		return $self->{submitError};
-	} else {
-		return "";
-	}
+	
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::submiterror -->\n";
+	print $self->{submitError} if exists $self->{submitError};
+	print "<!-- END " . __PACKAGE__ . "::submiterror -->\n";
+	
+	return "";
 }
 
 =item title()
@@ -604,7 +615,12 @@ sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 	
-	return $r->urlpath->name;
+	
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
+	print $r->urlpath->name;
+	print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	
+	return "";
 }
 
 =item warnings()
@@ -621,11 +637,12 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-	if ($r->notes("warnings")) {
-		return $self->warningOutput($r->notes("warnings"));
-	} else {
-		return "";
-	}
+	
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
+	print $self->warningOutput($r->notes("warnings")) if $r->notes("warnings");
+	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
+	
+	return "";
 }
 
 =back
