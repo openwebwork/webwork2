@@ -13,26 +13,21 @@
 	body  {
 		margin: 0px;
 	}
-
 	table.attemptResults {
 		border-style: outset; 
 		border-width: 1px; 
 		margin: 0px 10pt; 
 		border-spacing: 1px;
-		
 	}
-	
 	table.attemptResults td,table.attemptResults th {
 		border-style: inset; 
 		border-width: 1px; 
 		text-align: center; 
 		width: 15ex
 	}
-	
 	div.problemHeader {
    		float: left
 	}
-	
 	div.problem {
 		clear: both; 
 	}
@@ -43,11 +38,9 @@
 		background-color: #123567;
 		color: white;
 	}
-	
 	.edgebox a:link,a:visited {
 		color: #FF9933;
 	}
-	
    //-->
   </style>
  </head>
@@ -60,9 +53,13 @@ width="66" /><br />
      <hr />
      <div>
       <small>
-         <a href="http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl" target = "_bugzilla"> Report bugs</a>
-         <hr />
-     
+       <a href="http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl" target = "_bugzilla"> Report bugs</a>
+      </small>
+     </div>
+<!--#if loggedin="1"-->
+     <hr />
+     <div>
+      <small>
        <!--#links-->
       </small>
      </div>
@@ -77,14 +74,13 @@ width="66" /><br />
       </small>
      </div>
 <!--#if can="options"-->
-	<div>
-	 <small>
-	  <!--#options-->
-	 </small>
-	</div>
-<!--#endif-->   
-
-
+	 <div>
+	  <small>
+	   <!--#options-->
+	  </small>
+<!--#endif-->
+	 </div>
+<!--#endif-->
     </td>
     <!--#if can="path"-->
     <td valign="bottom" class="edgebox">
