@@ -49,7 +49,7 @@ sub disconnect($$) {
 	my $self = shift;
 	my $db = shift;
 	return unless defined $self->{$db."_db"};
-	$self->{$db."_db"}->disconnect();
+	$self->{$db."_db"}->disconnect;
 }
 
 # -----
@@ -57,9 +57,9 @@ sub disconnect($$) {
 sub getPassword($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{password_db}->connect("ro");
-	my $result = $self->{password_db}->hashRef()->{$user};
-	$self->{password_db}->disconnect();
+	return unless $self->{password_db}->connect("rw");
+	my $result = $self->{password_db}->hashRef->{$user};
+	$self->{password_db}->disconnect;
 	return $result;
 }
 
@@ -68,8 +68,8 @@ sub setPassword($$$) {
 	my $user = shift;
 	my $password = crypt shift, join "", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64];
 	$self->{password_db}->connect("rw");
-	$self->{password_db}->hashRef()->{$user} = $password;
-	$self->{password_db}->disconnect();
+	$self->{password_db}->hashRef->{$user} = $password;
+	$self->{password_db}->disconnect;
 }
 
 sub verifyPassword($$$) {
@@ -85,8 +85,8 @@ sub deletePassword($$) {
 	my $self = shift;
 	my $user = shift;
 	$self->{password_db}->connect("rw");
-	delete $self->{password_db}->hashRef()->{$user};
-	$self->{password_db}->disconnect();
+	delete $self->{password_db}->hashRef->{$user};
+	$self->{password_db}->disconnect;
 }
 
 # -----
@@ -94,9 +94,9 @@ sub deletePassword($$) {
 sub getKey($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{keys_db}->connect("ro");
-	my $result = $self->{keys_db}->hashRef()->{$user};
-	$self->{keys_db}->disconnect();
+	return unless $self->{keys_db}->connect("rw");
+	my $result = $self->{keys_db}->hashRef->{$user};
+	$self->{keys_db}->disconnect;
 	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
 	return defined $result ? split /\s+/, $result : undef;
 }
@@ -108,8 +108,8 @@ sub setKey($$$$) {
 	my $timestamp = shift;
 	my $key_string = "$key $timestamp";
 	$self->{keys_db}->connect("rw");
-	$self->{keys_db}->hashRef()->{$user} = $key_string;
-	$self->{keys_db}->disconnect();
+	$self->{keys_db}->hashRef->{$user} = $key_string;
+	$self->{keys_db}->disconnect;
 }
 
 sub verifyKey($$$$$) {
@@ -131,8 +131,8 @@ sub deleteKey($$) {
 	my $self = shift;
 	my $user = shift;
 	$self->{keys_db}->connect("rw");
-	delete $self->{keys_db}->hashRef()->{$user};
-	$self->{keys_db}->disconnect();
+	delete $self->{keys_db}->hashRef->{$user};
+	$self->{keys_db}->disconnect;
 }
 
 # -----
@@ -140,9 +140,9 @@ sub deleteKey($$) {
 sub getPermissions($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{permissions_db}->connect("ro");
-	my $result = $self->{permissions_db}->hashRef()->{$user};
-	$self->{permissions_db}->disconnect();
+	return unless $self->{permissions_db}->connect("rw");
+	my $result = $self->{permissions_db}->hashRef->{$user};
+	$self->{permissions_db}->disconnect;
 	return $result;
 }
 
@@ -151,16 +151,16 @@ sub setPermissions($$$) {
 	my $user = shift;
 	my $permissions = shift;
 	$self->{permissions_db}->connect("rw");
-	$self->{permissions_db}->hashRef()->{$user} = $permissions;
-	$self->{permissions_db}->disconnect();
+	$self->{permissions_db}->hashRef->{$user} = $permissions;
+	$self->{permissions_db}->disconnect;
 }
 
 sub deletePermissions($$) {
 	my $self = shift;
 	my $user = shift;
 	$self->{permissions_db}->connect("rw");
-	delete $self->{permissions_db}->hashRef()->{$user};
-	$self->{permissions_db}->disconnect();
+	delete $self->{permissions_db}->hashRef->{$user};
+	$self->{permissions_db}->disconnect;
 }
 
 # ----- ghetto for stupid functions -----
@@ -170,12 +170,12 @@ sub change_user_in_password_file($$$) {
 	my $user = shift;
 	my $new_user = shift;
 	$self->{password_db}->connect("rw");
-	my $pwhash = $self->{password_db}->hashRef(); # make things easier
+	my $pwhash = $self->{password_db}->hashRef; # make things easier
 	if (exists $pwhash->{$user}) {
 		$pwhash->{$new_user} = $pwhash->{$user};
 		delete $pwhash->{$user};
 	}
-	$self->{password_db}->disconnect();
+	$self->{password_db}->disconnect;
 }
 
 sub change_user_in_permissions_file($$$) {
@@ -183,12 +183,12 @@ sub change_user_in_permissions_file($$$) {
 	my $user = shift;
 	my $new_user = shift;
 	$self->{permissions_db}->connect("rw");
-	my $permhash = $self->{permissions_db}->hashRef(); # make things easier
+	my $permhash = $self->{permissions_db}->hashRef; # make things easier
 	if (exists $permhash->{$user}) {
 		$permhash->{$new_user} = $permhash->{$user};
 		delete $permhash->{$user};
 	}
-	$self->{permissions_db}->disconnect();
+	$self->{permissions_db}->disconnect;
 }
 
 1;
