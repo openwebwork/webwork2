@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.22 2004/03/17 08:16:35 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.23 2004/07/08 21:38:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,12 +106,16 @@ sub body {
 	
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 
-	# write out the form data posted to the requested URI
-	#print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
 	
 	# preserve the form data posted to the requested URI
 	my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
-	print $self->hidden_fields(@fields_to_print);
+	
+	#FIXME:  This next line can be removed in time.  MEG 1/27/2005
+	warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
+	
+	# Important note. If hidden_fields is passed an empty array it prints ALL parameters as hidden fields.
+	# That is not what we want in this case, so we don't print at all if @fields_to_print is empty.
+	print $self->hidden_fields(@fields_to_print) if @fields_to_print > 0;
 	
 	print CGI::table({class=>"FormLayout"}, 
 	  CGI::Tr([
