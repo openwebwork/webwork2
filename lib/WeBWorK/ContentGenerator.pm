@@ -491,7 +491,7 @@ sub instructor_links {
 	join("",
 				 CGI::hr(),
 				 CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") ," ", $setProb, CGI::br(),
+			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") ,':', $setProb, CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "Class&nbsp;List") , CGI::br(),
 			  	 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email") , CGI::br(),
 			  	 
