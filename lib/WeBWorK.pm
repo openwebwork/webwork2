@@ -79,16 +79,11 @@ sub dispatch($) {
 	my $pg_root = $r->dir_config('pg_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
 	
-	my $ceTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch get ce");
-	$ceTimer->start;
-	
 	# Try to get the course environment.
 	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $pg_root, $course);};
 	if ($@) { # If there was an error getting the requested course
 		die "Failed to read course environment for $course: $@";
 	}
-	
-	$ceTimer->stop;
 	
 	# If no course was specified, redirect to the home URL
 	unless (defined $course) {
@@ -103,19 +98,14 @@ sub dispatch($) {
 		die "Course directory for $course ($courseDir) not found. Perhaps the course does not exist?";
 	}
 	
-	my $dbTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch init db");
-	$dbTimer->start;
-	
 	# Bring up a connection to the database (for Authen/Authz, and eventually
 	# to be passed to content generators, when we clean this file up).
 	my $db = WeBWorK::DB->new($ce);
 	
-	$dbTimer->stop;
-	
 	### Begin dispatching ###
 	
-	my $dispatchTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch begin dispatching");
-	$dispatchTimer->start;
+	#my $dispatchTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch");
+	#$dispatchTimer->start;
 	
 	my $result;
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
@@ -138,12 +128,12 @@ sub dispatch($) {
 		} elsif ($arg eq "hardcopy") {
 			
 			my $hardcopyArgument = shift @components;
-			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
-			$WeBWorK::timer1->start;
+			#$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
+			#$WeBWorK::timer1->start;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
 			my $result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
-			$WeBWorK::timer1 ->stop;
-			$WeBWorK::timer1 ->save;
+			#$WeBWorK::timer1 ->stop;
+			#$WeBWorK::timer1 ->save;
 			return $result;
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
@@ -190,11 +180,11 @@ sub dispatch($) {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
 
-				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
-				$WeBWorK::timer0->start;
+				#$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
+				#$WeBWorK::timer0->start;
 				my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
-				$WeBWorK::timer0->stop;
-				$WeBWorK::timer0->save;
+				#$WeBWorK::timer0->stop;
+				#$WeBWorK::timer0->save;
 				return $result;
 
 
@@ -202,7 +192,7 @@ sub dispatch($) {
 		}
 	}
 	
-	$dispatchTimer->stop;
+	#$dispatchTimer->stop;
 	
 	return $result;
 }
