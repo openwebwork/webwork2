@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.6 2003/12/09 01:12:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.7 2004/01/05 01:02:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,6 +18,9 @@
 # Set the following values to correspond to your local configuration
 HTTPD=/usr/local/sbin/httpd
 WEBWORKROOT=/home/yourname/webwork2
+
+# If you're sharing files with systems being run by other users, uncomment this
+#umask 2
 
 CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
 PID=$WEBWORKROOT/logs/httpd.pid
