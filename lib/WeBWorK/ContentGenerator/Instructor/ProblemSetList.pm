@@ -83,7 +83,7 @@ use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter sort edit publish import score create delete)];
+use constant VIEW_FORMS => [qw(filter sort edit publish import score create export delete)];
 
 use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header problem_header) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header problem_header) ];
@@ -286,14 +286,7 @@ sub body {
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
 		print CGI::div({class=>"Message"}, CGI::p("Results of last action performed: ", $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))), CGI::hr();
-#		print CGI::p(
-#		    '<div style="color:green">',
-#			"Result of last action performed: ",
-#			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)),
-#			'</div>',
-#			CGI::hr()
-			
-#		);
+
 	}
 		
 	########## retrieve possibly changed values for member fields
@@ -1013,7 +1006,7 @@ sub import_handler {
 
 sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return CGI::i("Exporting multiple sets would probably require a different form if you want to specify their names");
+	#return CGI::i("Exporting multiple sets would probably require a different form if you want to specify their names");
 	return join("",
 		"Export ",
 		CGI::popup_menu(
@@ -1027,23 +1020,23 @@ sub export_form {
 			},
 			-onchange => $onChange,
 		),
-		" to ",
-		CGI::popup_menu(
-			-name=>"action.export.target",
-			-values => [ "new", $self->getDefList() ],
-			-labels => { new => "a new file named:" },
-			-default => $actionParams{"action.export.target"}->[0] || "",
-			-onchange => $onChange,
-		),
-		#CGI::br(),
-		#"new file to create: ",
-		CGI::textfield(
-			-name => "action.export.new",
-			-value => $actionParams{"action.export.new"}->[0] || "",,
-			-width => "50",
-			-onchange => $onChange,
-		),
-		CGI::tt(".def"),
+# 		" to ",
+# 		CGI::popup_menu(
+# 			-name=>"action.export.target",
+# 			-values => [ "new", $self->getDefList() ],
+# 			-labels => { new => "a new file named:" },
+# 			-default => $actionParams{"action.export.target"}->[0] || "",
+# 			-onchange => $onChange,
+# 		),
+# 		#CGI::br(),
+# 		#"new file to create: ",
+# 		CGI::textfield(
+# 			-name => "action.export.new",
+# 			-value => $actionParams{"action.export.new"}->[0] || "",,
+# 			-width => "50",
+# 			-onchange => $onChange,
+# 		),
+# 		CGI::tt(".def"),
 	);
 }
 
@@ -1052,17 +1045,17 @@ sub export_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	
 	my $scope = $actionParams->{"action.export.scope"}->[0];
-	my $target = $actionParams->{"action.export.target"}->[0];
-	my $new = $actionParams->{"action.export.new"}->[0];
+# 	my $target = $actionParams->{"action.export.target"}->[0];
+# 	my $new = $actionParams->{"action.export.new"}->[0];
+# 	
+# 	my $fileName;
+# 	if ($target eq "new") {
+# 		$fileName = $new;
+# 	} else {
+# 		$fileName = $target;
+# 	}
 	
-	my $fileName;
-	if ($target eq "new") {
-		$fileName = $new;
-	} else {
-		$fileName = $target;
-	}
-	
-	$fileName .= ".def" unless $fileName =~ m/\.def$/;
+#	$fileName .= ".def" unless $fileName =~ m/\.def$/;
 	
 	my @setIDsToExport;
 	if ($scope eq "all") {
@@ -1072,14 +1065,70 @@ sub export_handler {
 	} elsif ($scope eq "selected") {
 		@setIDsToExport = @{ $self->{selectedSetIDs} };
 	}
-
+	my @setIDsExported = ();
 	foreach my $set (@setIDsToExport) {
-		$self->exportSetsToDef($fileName);
+		if ($self->exportSetsToDef($set) ) {
+			push @setIDsExported, $set;   # success
+		}
 	}
 	
-	return scalar @setIDsToExport . " sets exported";
+	return scalar @setIDsExported . " sets exported";
 }
 
+sub exportSetsToDef {
+    #FIXME  -- this needs refining.
+	my $self     = shift;
+	my $fileName = shift;
+	my $setName  = $fileName;
+	my $ce       = $self->r->ce;
+	my $db       = $self->r->db;
+	
+	$fileName .= ".def" unless $fileName =~ m/\.def$/;
+    $fileName  = "set".$fileName unless $fileName =~ m/^set/;
+	my $setRecord   = $db->getGlobalSet($setName);
+		my $filePath  = $ce->{courseDirs}->{templates}.'/'.$fileName;
+		# back up existing file
+		if(-e $filePath) {
+		    rename($filePath,"$filePath.bak") or 
+	    	       die "Can't rename $filePath to $filePath.bak ",
+	    	           "Check permissions for webserver on directories. $!";
+	        $self->addgoodmessage(CGI::p("Earlier set def file backed up to $filePath.bak"));
+		}
+	    my $openDate     = formatDateTime($setRecord->open_date);
+	    my $dueDate      = formatDateTime($setRecord->due_date);
+	    my $answerDate   = formatDateTime($setRecord->answer_date);
+	    my $setHeader    = $setRecord->set_header;
+	    
+	    my @problemList = $db->listGlobalProblems($setName);
+	    my $problemList  = '';
+	    foreach my $prob (sort {$a <=> $b} @problemList) {
+	    	my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
+	    	die "global problem $prob for set $setName not found" unless defined($problemRecord);
+	    	my $source_file   = $problemRecord->source_file();
+			my $value         = $problemRecord->value();
+			my $max_attempts  = $problemRecord->max_attempts();
+	    	$problemList     .= "$source_file, $value, $max_attempts \n";	    
+	    }
+	    my $fileContents = <<EOF;
+
+openDate          = $openDate
+dueDate           = $dueDate
+answerDate        = $answerDate
+paperHeaderFile   = $setHeader
+screenHeaderFile  = $setHeader
+problemList       = 
+
+$problemList
+
+
+
+EOF
+
+
+	    $self->saveProblem($fileContents, $filePath);
+	    $self->addgoodmessage(CGI::p("Set definition saved to $filePath"));
+	return 1;
+}
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return "Abandon changes";
@@ -1640,6 +1689,19 @@ sub printTableHTML {
                       CGI::i("No sets shown.  Choose one of the options above to list the sets in the course.")
 	) unless @Sets;
 }
-
+###########################################################################
+# utility
+###########################################################################
+sub saveProblem {     
+    my $self      = shift;
+	my ($body, $probFileName)= @_;
+	local(*PROBLEM);
+	open (PROBLEM, ">$probFileName") ||
+		$self->addbadmessage(CGI::p("Could not open $probFileName for writing. Check that the  permissions for this problem are 660 (-rw-rw----)"));
+	print PROBLEM $body;
+	close PROBLEM;
+	chmod 0660, "$probFileName" ||
+		$self->addbadmessage(CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName"));
+}
 1;
 
