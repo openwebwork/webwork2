@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.40 2004/05/09 01:10:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.41 2004/05/10 03:22:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -221,6 +221,23 @@ sub determine_percentiles {
 	# means that 75% of the students received this score ($percentiles{75}) or higher
 	%percentiles;
 }
+sub prevent_repeats {    # replace a string such as 0 0 0 86 86 100 100 100 by    0 - - 86 - 100 - -
+	my @inarray   = @_;
+	my @outarray = ();
+	my $saved_item = shift @inarray;
+	push @outarray, $saved_item;
+	while (@inarray )   {
+		my $current_item = shift @inarray;
+		if ( $current_item == $saved_item ) {
+			push @outarray, '&nbsp;-';
+		} else {
+			push @outarray, $current_item;
+			$saved_item = $current_item;
+		}
+	}
+	@outarray;
+}
+		
 sub displaySets {
 	my $self             = shift;	
 	my $r                = $self->r;
@@ -389,13 +406,13 @@ sub displaySets {
 	my @problemIDs   = sort {$a<=>$b} keys %correct_answers_for_problem;
 	# determine index quartiles
     my @brackets1          = (90,80,70,60,50,40,30,20,10);  #% students having scores or indices above this cutoff value
-    my @brackets2          = (95, 75,50,25);       # % students having this many incorrect attempts or more  
+    my @brackets2          = (95, 75,50,25,5,1);       # % students having this many incorrect attempts or more  
 	my %index_percentiles = determine_percentiles(\@brackets1, @index_list);
     my %score_percentiles = determine_percentiles(\@brackets1, @score_list);
     my %attempts_percentiles_for_problem = ();
     foreach my $probID (@problemIDs) {
     	$attempts_percentiles_for_problem{$probID} =   {
-    		determine_percentiles([@brackets2, 0], @{$attempts_list_for_problem{$probID}})
+    		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
     	};    
     }
     
@@ -445,7 +462,7 @@ print
 				CGI::Tr(
 					CGI::td( [
 						'Score',
-						(map { '&ge; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
+						(prevent_repeats map { sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -453,7 +470,7 @@ print
 				CGI::Tr(
 					CGI::td( [
 						'Success Index',
-						(map { '&ge; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
+						(prevent_repeats  map { sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -473,7 +490,7 @@ print
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
-					          (map {  "&nbsp;".(100-$_)  } @brackets2, 0) ,
+					          (map {  "&nbsp;".($_)  } @brackets2) ,
 					        
 					         ]
 					)
@@ -486,7 +503,7 @@ print
 		print	CGI::Tr(
 					CGI::td( [
 						CGI::a({href=>$self->systemLink($problemPage)},"Prob $probID"),
-						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2, 0),
+						( prevent_repeats reverse map { sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2),
 
 						]
 					)
