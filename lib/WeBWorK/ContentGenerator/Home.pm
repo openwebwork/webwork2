@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.3 2004/04/09 20:18:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.4 2004/05/07 13:47:59 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,7 +41,20 @@ sub body {
 	
 	my @courseIDs = listCourses($r->ce);
 	
+	my $haveAdminCourse = 0;
+	foreach my $courseID (@courseIDs) {
+		if ($courseID eq "admin") {
+			$haveAdminCourse = 1;
+			last;
+		}
+	}
+	
 	print CGI::p("Welcome to WeBWorK!");
+	
+	if ($haveAdminCourse) {
+		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => "admin");
+		print CGI::p(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, "Course Administration"));
+	}
 	
 	print CGI::h2("Courses");
 	
