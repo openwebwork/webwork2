@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.142 2004/06/04 23:21:48 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.143 2004/06/08 17:07:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,6 +70,7 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	my $setName = $urlpath->arg("setID");
@@ -99,7 +100,7 @@ sub pre_header_initialize {
 
 	my $editMode = $r->param("editMode");
 	
-	if ($permissionLevel > 0) {
+	if ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
 		# editor to 
@@ -174,12 +175,13 @@ sub pre_header_initialize {
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
 	} else {
 	
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("This problem will not count towards your grade."))) unless $problem->value;;
 		# students can't view problems not assigned to them
 
 		# A set is valid if it exists and if it is either published or the user is privileged.
-		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0 || !($set->published || $permissionLevel->permission > 0); # this is redundant because of the above if
-		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0 || !($set->published || $permissionLevel->permission > 0);;
+		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0 || !($set->published || $authz->hasPermissions($userName, "access_instructor_tools"));
+		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0 || !($set->published || $authz->hasPermissions($userName, "access_instructor_tools"));
+		
+		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value;;
 
 	}
 	
@@ -499,7 +501,9 @@ sub body {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
+	my $user = $r->param('user');
 
 	if ($self->{invalidSet}) {
 		return CGI::div({class=>"ResultsWithError"},
@@ -671,22 +675,14 @@ sub body {
 	print CGI::start_div({class=>"problemHeader"});
 	
 	# custom message for editor
-	if ($permissionLevel >= 10 and defined $editMode) {
+	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
 			print CGI::p(CGI::i("Editing temporary file: ", $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
-			# FIXME: this is all done automatically if submitError exists.
-			#if ( defined($r->param('submiterror')) and $r->param('submiterror') ) {
-			    # FIXME  The following line doesn't work because the submiterror hook has already been called.
-			    # The actions below should take place during the initialization phase.
-			#	$self->{submiterror} .= $r->param('submiterror');
-			#	print CGI::p(CGI::div({class=>'ResultsWithError'},$self->{submiterror}));
-			#} else {
-			#	print CGI::p(CGI::div({ class=>'ResultsWithoutError'}, "Problem saved to: ", $problem->source_file));
-			#}
+			# taken care of in the initialization phase
 		}
 	}
-	#FIXME  we need error messages here if the problem was really not saved.
+
 	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
@@ -1156,13 +1152,5 @@ sub canCheckAnswers($$) {
 sub mustRecordAnswers($) {
 	my ($permissionLevel) = @_;
 	return $permissionLevel == 0;
-}
-
-
-# FIXME: does this even get used?
-sub submiterror  {
-	my $self = shift;
-	my $submiterror = (defined($self->{submiterror}) ) ? $self->{submiterror} : '';
-	$submiterror;
 }
 1;
