@@ -99,7 +99,7 @@ sub template {
 	#close TEMPLATE;
 	#
 	# Let's try something else instead:
-	
+	local $/="\n";
 	my @template = split /\n/, readFile($templateFile);
 	
 	foreach my $line (@template) {
@@ -117,7 +117,7 @@ sub template {
 			}
 		}
 		
-		print substr $line, (defined(pos($line)) ? pos($line) : 0);
+		print substr $line, (defined pos $line) ? pos $line : 0);
 	}
 }
 
@@ -125,19 +125,16 @@ sub template {
 # a reference to a hash containing the parsed arguments.
 # 
 sub cook_args($) {
-	# There are a bunch of commented-out lines that I am using to remind myself
-	# That I want to write a better regex sometime.
 	my ($raw_args) = @_;
 	my $args = {};
-	#my $quotable_string = qr/(?:".*?(?<![^\\](?:\\\\)*\\)"|\W*)/;
-	#my $quotable_string = qr/(?:".*?(?<!\\)"|\W*)/;
-	#my $test_string = '"hel \" lo" hello';
 	
-	#warn $test_string =~ m/($quotable_string)/ ? $1 : "false";
-	
-	while ($raw_args =~ m/\G\s*(\w*)="(.*?)"/g) {
-	#while ($raw_args =~ m/\G\s*($quotable_string)=($quotable_string)/g) {
-		$args->{$1} = $2;
+	# Boy I love m//g in scalar context!  Go read the camel book, heathen.
+	# First, get the whole token with the quotes on both ends...
+	while ($raw_args =~ m/\G\s*(\w*)="((?:[^"\\]|\\.)*)"/g) {
+		my ($key, $value) = ($1, $2);
+		# ... then, rip out all the protecty backspaces
+		$value =~ s/\(.)/$1/g;
+		$args->{$key} = $value;
 	}
 	
 	return $args;
@@ -344,3 +341,12 @@ sub body {
 }
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu
+and Sam Hathaway, sh002i (at) math.rochester.edu.
+
+=cut
