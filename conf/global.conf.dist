@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.55 2004/04/05 03:58:21 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.56 2004/04/09 20:18:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -322,5 +322,6 @@ $practiceUserPrefix = "practice";
 		numZeroLevelDefault           => 1E-14,
 		numZeroLevelTolDefault        => 1E-12,
 		useBaseTenLog                 => 0,
+		defaultDisplayMatrixStyle     => "[s]",
 	},
 );
