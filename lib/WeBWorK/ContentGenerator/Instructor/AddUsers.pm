@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.3 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.5 2004/01/15 22:45:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,9 +172,12 @@ sub addStudentForm {
 		CGI::end_table(),
 		CGI::submit({name=>"addStudents", value=>"Add Students"}),
 		CGI::end_form(),
-		qq! <div style="color:red"> After entering new students you will still need to assign sets to them.  This is done from the "set list" page. <br> 
+		qq{ <div style="color:red"> After entering new students you will still 
+		need to assign sets to them.  This is done from the "set list" page. <br> 
 		Click on the entry "xx users" in 
-		the "assigned to" column at the far right. <br> Then click either "assign to all"  or check individual users and click "save" at the bottom.  </div>!
+		the "assigned to" column at the far right. <br> Then click either "assign to all"  
+		or check individual users and click "save" at the bottom.  </div>
+		Soon ( real soon -- honest!!! :-)  ) you will also be able to assign sets to the students as they are entered from this page. }
 	);
 }
 

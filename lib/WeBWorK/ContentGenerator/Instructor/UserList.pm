@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.36 2004/01/15 19:42:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.37 2004/01/15 22:45:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -326,8 +326,12 @@ sub body {
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
 		print CGI::p(
+		    '<div style="color:green">',
 			"Result of last action performed: ",
-			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))
+			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)),
+			'</div>',
+			CGI::hr()
+			
 		);
 	}
 		
@@ -576,7 +580,7 @@ sub edit_form {
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all visible selected)],
-			-default => $actionParams{"action.edit.scope"}->[0] || "visible",
+			-default => $actionParams{"action.edit.scope"}->[0] || "selected",
 			-labels => {
 				all => "all users",
 				visible => "visible users",
@@ -1187,6 +1191,7 @@ sub printTableHTML {
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
 	
+
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
 		my $PermissionLevel = $PermissionLevels[$i];
@@ -1198,6 +1203,15 @@ sub printTableHTML {
 	}
 	
 	print CGI::end_table();
+    #########################################
+	# if there are no users shown print message
+	# 
+	##########################################
+	
+	print CGI::p(
+	              CGI::i("No students shown.  Choose one of the options above to 
+	              list the students in the course.")
+	) unless @Users;
 }
 
 1;
