@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.21 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.22 2004/04/05 19:33:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,11 +23,21 @@ WeBWorK::ContentGenerator::Instructor::ProblemList - List and edit problems in a
 
 =cut
 
+# This file is currently in an intermediate form, at best.  The look
+# for global editting has changed significantly.  The look for dealing
+# with a single student is pretty much the same as before, except for
+# rendering the problems.
+
+# For now, this leaves the code in a clumsy state, with the two versions
+# given in their entirety different clauses of an if-then-else.
+
 use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readDirectory list2hash max);
 use WeBWorK::DB::Record::Set;
+use WeBWorK::Utils::Tasks qw(renderProblems);
+
 
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
@@ -60,30 +70,143 @@ sub problemElementHTML {
 	return $html;
 }
 
-# pay no attention to the argument list.  Here's what you pass:
-# directoryListHTML($level, $selected, $libraryRoot, @path)
-sub directoryListHTML {
-	my ($level, $selected, @path) = @_;
-	$selected = [$selected] unless ref $selected eq "ARRAY";
-	my $dirName = join "/", @path[0..$level];
-	my $pathInLibrary = join "/", @path[1..$level];
-	my @contents = sort grep {m/\.pg$/ or -d "$dirName/$_" and not m/^\.{1,2}$/} readDirectory($dirName);
-	my %contentsPretty = map {$pathInLibrary . "/" . $_ => (-d "$dirName/$_" ? "$_/" : $_)} @contents;
-	@contents = map {"$pathInLibrary/$_"} @contents; # Make the full path the actual values, so weird user behavior doesn't hurt.
-	@$selected = map {"$pathInLibrary/$_"} @$selected;
-	
-	my $html = ($level eq "0" ? "problem library" : $path[$level]) . CGI::br();
-	$html .= CGI::scrolling_list({
-		name=>"directory_level_$level",
-		values=>\@contents,
-		labels=>\%contentsPretty,
-		default=>$selected,
-		multiple=>'true',
-		size=>"20",
-	});
-	$html .= CGI::br()
-		. CGI::input({type=>"submit", name=>"open_add_$level", value=>"Open/Add"});	
+sub problem_number_popup {
+  my $num = shift;
+  my $total = shift;
+  return (CGI::popup_menu(-name=> "problem_num_$num",
+			     -values=>[1..$total],
+			     -default=>$num));
 }
+
+sub handle_problem_numbers {
+  my $newProblemNumbersref = shift;
+  my %newProblemNumbers = %$newProblemNumbersref;
+  my $maxNum = shift;
+  my $db = shift;
+  my $setName = shift;
+  my $force = shift || 0;
+  my @sortme=();
+  my ($j, $val);
+
+  for $j (keys %newProblemNumbers) {
+    # what happens our first time on this page
+    return("") if (not defined($newProblemNumbers{"$j"}));
+    if($newProblemNumbers{"$j"} != $j) {
+      $force = 1;
+      $val = 1000*$newProblemNumbers{$j}-$j;
+    } else {
+      $val = 1000*$newProblemNumbers{$j};
+    }
+    push @sortme, [$j, $val];
+    $newProblemNumbers{$j} = $db->getGlobalProblem($setName, $j);
+    die "global $j for set $setName not found." unless $newProblemNumbers{$j};
+  }
+
+  return("") unless $force;
+
+  @sortme = sort {$a->[1] <=> $b->[1]} @sortme;
+  # now, for global and each user with this set, loop through problem list
+  #   get all of the problem records
+  # assign new problem numbers
+  # loop - if number is new, put the problem record
+#print "Sorted to get ". join(', ', map {$_->[0] } @sortme) ."<p>\n";
+
+
+  # Now, three stages.  First global values
+
+  for($j=0; $j<scalar(@sortme); $j++) {
+    if($sortme[$j]->[0] == $j+1) {
+      ;
+    } elsif (not defined $newProblemNumbers{($j+1)}) {
+      $newProblemNumbers{$sortme[$j]->[0]}->problem_id($j+1);
+      $db->addGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+    } else {
+      $newProblemNumbers{$sortme[$j]->[0]}->problem_id($j+1);
+      $db->putGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+    }
+  }
+
+  my @setUsers = $db->listSetUsers($setName);
+  my (@problist, $user);
+
+  for $user (@setUsers) {
+    for $j (keys %newProblemNumbers) {
+      $problist[$j] = $db->getUserProblem($user, $setName, $j);
+      die " problem $j for set $setName and effective user $user not found" 
+	unless $problist[$j];
+    }
+    # ok, now we have all problem data for $user
+    for($j=0; $j<scalar(@sortme); $j++) { 
+      if($sortme[$j]->[0] == $j+1) { 
+      } elsif (not defined $newProblemNumbers{($j+1)}) { 
+	$problist[$sortme[$j]->[0]]->problem_id($j+1); 
+	$db->addUserProblem($problist[$sortme[$j]->[0]]); 
+      } else { 
+	$problist[$sortme[$j]->[0]]->problem_id($j+1); 
+	$db->putUserProblem($problist[$sortme[$j]->[0]]); 
+      } 
+    } 
+  }
+
+
+  for($j=scalar(@sortme); $j<$maxNum; $j++) {
+    if(defined $newProblemNumbers{($j+1)}) {
+      $db->deleteGlobalProblem($setName, $j+1);
+    }
+  }
+
+  return join(', ', map {$_->[0]} @sortme);
+}
+
+# swap index given with next bigger index
+# leftover from when we had up/down buttons
+# maybe we will bring them back
+
+sub moveme {
+  my $index = shift;
+  my $db = shift;
+  my $setName = shift;
+  my (@problemList) = @_;
+  my ($prob1, $prob2, $prob);
+
+  for $prob (@problemList) {
+    my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
+    die "global $prob for set $setName not found." unless $problemRecord;
+    if($problemRecord->problem_id == $index) {
+      $prob1 = $problemRecord;
+    } elsif($problemRecord->problem_id == ($index+1)) {
+      $prob2 = $problemRecord;
+    }
+  }
+  if(not defined($prob1) or not defined($prob2)) {
+    die "cannot find problem $index or ".($index+1);
+  }
+
+  $prob1->problem_id($index+1);
+  $prob2->problem_id($index);
+  $db->putGlobalProblem($prob1);
+  $db->putGlobalProblem($prob2);
+
+
+  my @setUsers = $db->listSetUsers($setName);
+
+  my $user;
+  for $user (@setUsers) {
+    $prob1 = $db->getUserProblem($user, $setName, $index); #checked
+    die " problem $index for set $setName and effective user $user not found"
+      unless $prob1;
+    $prob2 = $db->getUserProblem($user, $setName, $index+1); #checked
+    die " problem $index for set $setName and effective user $user not found"
+      unless $prob2;
+    $prob1->problem_id($index+1);
+    $prob2->problem_id($index);
+    $db->putUserProblem($prob1);
+    $db->putUserProblem($prob2);
+  }
+
+
+}
+
 
 sub initialize {
 	my ($self)    = @_;
@@ -110,93 +233,73 @@ sub initialize {
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
 
-	# the Problem form was submitted
+	my @problemList = $db->listGlobalProblems($setName);	# the Problem form was submitted
 	if (defined($r->param('submit_problem_changes'))) {
-		my @problemList = $db->listGlobalProblems($setName);
-		foreach my $problem (@problemList) {
-			my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
-			die "global $problem for set $setName not found." unless $problemRecord;
-			foreach my $field (@{PROBLEM_FIELDS()}) {
-				my $paramName = "problem.${problem}.${field}";
-				if (defined($r->param($paramName))) {
-					$problemRecord->$field($r->param($paramName));
-				}
-			}
-			$db->putGlobalProblem($problemRecord);
-
-			if ($forOneUser) {
-				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
-				die " problem $problem for set $setName and effective user $editForUser[0] not found" unless $userProblemRecord;
-				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
-					my $paramName = "problem.${problem}.${field}";
-					if (defined($r->param($paramName))) {
-						$userProblemRecord->$field($r->param($paramName));
-					}
-				}
-				foreach my $field (@{PROBLEM_FIELDS()}) {
-					my $paramName = "problem.${problem}.${field}";
-					if (defined($r->param("${paramName}.override"))) {
-						if (exists $overrides{$paramName}) {
-							$userProblemRecord->$field($r->param("${paramName}.override"));
-						} else {
-							$userProblemRecord->$field(undef);
-						}
-						
-					}
-				}
-				$db->putUserProblem($userProblemRecord);
-				
-			}
+	  foreach my $problem (@problemList) {
+	    my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+	    die "global $problem for set $setName not found." unless $problemRecord;
+	    
+	    foreach my $field (@{PROBLEM_FIELDS()}) {
+	      my $paramName = "problem.${problem}.${field}";
+	      if (defined($r->param($paramName))) {
+		my $pvalue = $r->param($paramName);
+		if($field eq "max_attempts") {
+		  $pvalue =~ s/[^-\d]//g;
+		  if($pvalue eq "") {$pvalue = -1;}
 		}
-		foreach my $problem ($r->param('deleteProblem')) {
-			$db->deleteGlobalProblem($setName, $problem);
+		$problemRecord->$field($pvalue);
+	      }
+	    }
+	    $db->putGlobalProblem($problemRecord);
+	    
+	    if ($forOneUser) {
+	      my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
+	      die " problem $problem for set $setName and effective user $editForUser[0] not found" unless $userProblemRecord;
+	      foreach my $field (@{PROBLEM_USER_FIELDS()}) {
+		my $paramName = "problem.${problem}.${field}";
+		if (defined($r->param($paramName))) {
+		  $userProblemRecord->$field($r->param($paramName));
 		}
-	# The file list field was submitted
-	} elsif (defined $r->param('fileBrowsing')) {
-		my $libraryRoot   = $ce->{courseDirs}->{templates};
-		my $count         = 0;
-		my $done          = 0;
-		my @path          = ();
-		my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
+	      }
+	      foreach my $field (@{PROBLEM_FIELDS()}) {
+		my $paramName = "problem.${problem}.${field}";
+		if (defined($r->param("${paramName}.override"))) {
+		  if (exists $overrides{$paramName}) {
+		    $userProblemRecord->$field($r->param("${paramName}.override"));
+		  } else {
+		    $userProblemRecord->$field(undef);
+		  }
 		
-		while (defined $r->param("directory_level_$count") and not $done) {
-			if (defined $r->param("open_add_$count")) {
-				$done = 1;
-				my @selected = $r->param("directory_level_$count");
-				my $dirFound = 0;
-				foreach my $selected (@selected) {
-					if (-d "$libraryRoot/$selected") {
-						@path = split "/", $selected;
-						shift @path if $path[0] eq ""; # remove the null element from the begining
-						$dirFound = 1;
-						last;
-					}
-				}
-				# Otherwise, create a new global problem for each of the files selected
-				unless ($dirFound) {
-					foreach my $selected (@selected) {
-						my $file = $selected;
-						@path = split "/", $selected;
-						pop @path; # Remove the file name from the path
-						shift @path if $path[0] eq ""; # remove the null element from the begining
-						my $problemRecord = $db->newGlobalProblem();
-						$problemRecord->problem_id($freeProblemID++);
-						$problemRecord->set_id($setName);
-						$problemRecord->source_file($file);
-						$problemRecord->value("1");
-						$problemRecord->max_attempts("-1");
-						$db->addGlobalProblem($problemRecord);
-						$self->assignProblemToAllSetUsers($problemRecord);
-					}
-
-				}
-			}
-			$count++;
 		}
-		$self->{path} = [@path];
+	      }
+	      $db->putUserProblem($userProblemRecord);
+	
+	    }
+	  }
+	  foreach my $problem ($r->param('deleteProblem')) {
+	    $db->deleteGlobalProblem($setName, $problem);
+	  }
+	
+	} else {
+	  # Look for up and down buttons
+	  my $index = 2;
+	  while($index<=scalar(@problemList)) {
+	    if(defined $r->param("move.up.$index.x")) {
+	      moveme($index-1, $db, $setName, @problemList);
+	    }
+	    $index++;
+	  }
+	  $index=1;
+	  while($index< scalar(@problemList)) {
+	    if(defined $r->param("move.down.$index.x")) {
+	      moveme($index, $db, $setName, @problemList);
+	    }
+	    $index++;
+	  }
 	}
 
 }
+
 sub title {
 	my ($self)    = @_;
 	my $r         = $self->r;
@@ -234,19 +337,44 @@ sub body {
 	
 	my $userCount        = $db->listUsers();
 	my $setUserCount     = $db->countSetUsers($setName);
-	my $userCountMessage = "The set $setName is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
+	my $editUsersAssignedToSetURL = $self->systemLink(
+	      $urlpath->newFromModule(
+                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
+                  courseID => $courseName, setID => $setName));
+
+	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL},
+		$self->userCountMessage($setUserCount, $userCount));
+	$userCountMessage = "The set $setName is assigned to " .
+	  $userCountMessage . ".";
 
 	if (@editForUser) {
 		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
 	} else {
 		print CGI::p($userCountMessage);
 	}
-	
+
 	## Problems Form ##
 	my @problemList = $db->listGlobalProblems($setName);
  	print CGI::a({name=>"problems"});
 # 	print CGI::h2({}, "Problems");
+	
+	my %newProblemNumbers = ();
+	my $maxProblemNumber = -1;
+	for my $jj (@problemList) {
+	  $newProblemNumbers{$jj} = $r->param('problem_num_'.$jj);
+	  $maxProblemNumber = $jj if($jj>$maxProblemNumber);
+	}
+
+	my $forceRenumber = $r->param('force_renumber') || 0;
+#print "<p> old order: ".join(', ', @problemList);
+#print "<p> new order: ". handle_problem_numbers(\%newProblemNumbers, $maxProblemNumber, $db, $setName, $forceRenumber);
+	handle_problem_numbers(\%newProblemNumbers, $maxProblemNumber, $db, $setName, $forceRenumber);
+
+	@problemList = $db->listGlobalProblems($setName); #reload them
+
 	if (scalar(@problemList)) {
+	  if($forUsers) {
+############### Order things differently.  This is for one user
 		print CGI::start_form({method=>"POST", action=>$problemListURL.'#problems'});
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
@@ -262,6 +390,8 @@ sub body {
 			my $problemID = $problemRecord->problem_id;
 			my $userProblemRecord;
 			my %problemOverrideArgs;
+
+			my @problem_html = renderProblems($r, $db->getUser($user), $problemRecord->source_file);
 
 			if ($forOneUser) {
 				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
@@ -298,7 +428,10 @@ sub body {
 						problemElementHTML("problem.${problemID}.status", $userProblemRecord->status, "7"),
 						problemElementHTML("problem.${problemID}.problem_seed", $userProblemRecord->problem_seed, "7"),
 					) : ()),
-					problemElementHTML("problem.${problemID}.source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
+					problemElementHTML("problem.${problemID}.source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}) .
+
+					CGI::br(). CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
+,
 					problemElementHTML("problem.${problemID}.max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
 					problemElementHTML("problem.${problemID}.value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
 					($forUsers ? (
@@ -314,29 +447,114 @@ sub body {
 		print $self->hidden_authen_fields;
 		print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problem Changes"});
 		print CGI::end_form();
+	      } else {
+################################ Second go for global version
+################################ forUsers will be false
+
+		print CGI::start_form({method=>"POST", action=>$problemListURL.'#problems'});
+		print CGI::start_table({border=>1, cellpadding=>4});
+		print CGI::Tr({}, CGI::th({}, [
+			"Data",
+			"Problem"
+		]));
+		my (%shown_yet) = ();
+		foreach my $problem (sort {$a <=> $b} @problemList) {
+			my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+			die "global problem $problem in set $setName not found." unless $problemRecord;
+			my $problemID = $problemRecord->problem_id;
+			my $userProblemRecord;
+			my %problemOverrideArgs;
+			my $have_this_one = '';
+			if(defined($shown_yet{$problemRecord->source_file})) {
+			  $have_this_one = "This problem uses the same source file as number " . $shown_yet{$problemRecord->source_file} . ".";
+			} else {
+			  $shown_yet{$problemRecord->source_file} = $problemID;
+			}
+
+			my @problem_html = renderProblems($r, $db->getUser($user), $problemRecord->source_file);
+
+
+			foreach my $field (@{PROBLEM_FIELDS()}) {
+			  $problemOverrideArgs{$field} = [undef, undef];
+			}
+
+			print CGI::Tr({}, 
+				CGI::td({}, [
+#print "popup for $problemID out of " . scalar(@problemList) .
+problem_number_popup($problemID, $maxProblemNumber) .
+#					"$problemID " . 
+         '&nbsp;'.
+# (($problemID>1) ? CGI::image_button(-src=>($ce->{webworkURLs}->{htdocs}."/images/up.gif"),
+# -name=>"move.up.$problemID") : '').'&nbsp;'.
+# (($problemID< scalar(@problemList)) ? CGI::image_button(-src=>($ce->{webworkURLs}->{htdocs}."/images/down.gif"),
+# -name=>"move.down.$problemID") : '').
+#          '&nbsp;&nbsp;'.
+	CGI::a({href=>$self->systemLink( 
+         $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
+         args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+         )
+        )}, "Edit it" ) .
+         '&nbsp;'.
+	CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
+         args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+         ),
+         params =>{effectiveUser => $editForUserName}  )}, "Try it") . 
+
+       	     CGI::br() .
+CGI::start_table().
+CGI::Tr({}, CGI::td({-align=>"right"}, "Delete?"),
+            CGI::td({-align=>"left"}, CGI::input({type=>"checkbox", 
+                      name=>"deleteProblem", value=>$problemID}))).
+CGI::Tr({}, CGI::td({-align=>"right"}, 'Max&nbsp;Attempts:'),
+            CGI::td({-align=>"left"}, CGI::input({type=>"text", 
+                      name=>"problem.${problemID}.max_attempts",
+                      value=>
+(($problemRecord->max_attempts<0)? "unlim": $problemRecord->max_attempts), size=>"4"}))).
+CGI::Tr({}, CGI::td({-align=>"right"}, 'Weight:'),
+            CGI::td({-align=>"left"}, CGI::input({type=>"text", 
+                      name=>"problem.${problemID}.value",
+                      value=>$problemRecord->value, size=>"4"}))).
+CGI::end_table()
+,
+
+	problemElementHTML("problem.${problemID}.source_file", 
+            $problemRecord->source_file, "50", 
+            @{$problemOverrideArgs{source_file}}) .
+
+  CGI::br(). CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
+  . ($have_this_one ? CGI::div({class=>"ResultsWithError", 
+				style=>"font-weight: bold"}, $have_this_one) 
+     : '') ,
+				]) # end of table entry
+			) # end of table row
+		} # end of loop over problems
+		print CGI::end_table();
+		print $self->hiddenEditForUserFields(@editForUser);
+		print $self->hidden_authen_fields;
+		print CGI::checkbox({
+				  label=> "Force problems to be numbered consecutively from one",
+				  name=>"force_renumber", value=>"1"}),
+
+		  CGI::br();
+		print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problem Changes"});
+		print CGI::p(<<HERE);
+Any time problem numbers are intentionally changed, the problems will
+always be renumbered consecutively, starting from one.  When deleting
+problems, gaps will be left in the numbering unless the box above is
+checked.
+HERE
+                print CGI::p("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.") if ($setRecord->open_date>time());
+		print CGI::p("When changing problem numbers, we will move 
+ the problem to be ", CGI::em("before"), " the chosen number.");
+
+		print CGI::end_form();
+
+	      }
+
 	} else {
 		print CGI::p("This set doesn't contain any problems yet.");
 	}
-	
-	unless ($forUsers) {
-		my $libraryRoot     = $ce->{courseDirs}->{templates};
-		my @path            = defined $self->{path} ? @{$self->{path}} : ();
-		unshift @path, $libraryRoot;
-		print CGI::a({name=>"addProblem"});
-		print CGI::h3({}, "Add Problem(s)");
-		print CGI::start_form({method=>"post", action=>$problemListURL.'#addProblem'});
-		print CGI::input({type=>"hidden", name=>"fileBrowsing", value=>"Yes"});
-		print CGI::start_table();
-		my $columns = "";
-		for (my $counter = 0; $counter < scalar(@path); $counter++) {
-			$columns .= CGI::td(directoryListHTML ($counter, (exists $path[$counter+1] ? $path[$counter+1] : []), @path));
-		}
-		print CGI::Tr($columns);
-		print CGI::end_table();
-		print $self->hidden_authen_fields;
-		print CGI::end_form();
-	}
-	
+
 	return "";
 }
 
