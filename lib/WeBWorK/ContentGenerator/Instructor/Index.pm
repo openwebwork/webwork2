@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.26 2004/01/21 00:17:23 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.28 2004/01/31 04:28:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -423,7 +423,7 @@ sub body {
 		   	CGI::td({colspan=>2,style=>'font-size:smaller'},
 					CGI::input({type=>'submit',value=>'Sort',name=>'sort_students'}),
 					CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
-							-labels=>{id=>'Id',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
+							-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
 							-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
 							-linebreak=>0
 						),
@@ -567,14 +567,16 @@ sub popup_user_form {
 			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
 		} elsif ($sort_method eq 'alphabetical') {
 			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} 
+		} elsif ($sort_method eq 'id' )          {
+		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
+		}
 	} else {
-		@user_records   = sort { ( lc($a->section) cmp lc($b->section) ) || 
-	                     ( lc($a->last_name) cmp lc($b->last_name ))  } @user_records;
+		@user_records   = sort { $a->user_id cmp $b->user_id } @user_records;
 	}
 
 	foreach my $ur (@{user_records}) {
-		$classlistLabels{$ur->user_id} = $ur->last_name. ', '. $ur->first_name.'   -   '.$ur->section.' '.$ur->user_id;
+		#$classlistLabels{$ur->user_id} = $ur->last_name. ', '. $ur->first_name.'   -   '.$ur->section.' '.$ur->user_id;
+		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
 		push(@users, $ur->user_id);
 	}
 	return 			CGI::popup_menu(-name=>'classList',
