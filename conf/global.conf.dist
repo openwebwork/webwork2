@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.112 2004/11/03 22:00:10 dpvc Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.113 2004/11/19 19:13:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -407,17 +407,18 @@ $siteDefaults{timezone} = "";
 ################################################################################
 
 # This lets you specify a minimum permission level needed to perform certain
-# actions.  In the current system, >=10 will allow a professor to perform the
-# action, >=5 will allow a TA to, and >=0 will allow a student to perform an
-# action (almost never what you want).
+# actions. For each pair in the hash below, in order to perform the action
+# described by the key, the user must have a permission level greater than or
+# equal to the value.
 
+my $guest     = -1;
 my $student   = 0;
 my $ta        = 5;
 my $professor = 10;
 my $nobody    = undef;
 
 %permissionLevels = (
-	login                          => $student,
+	login                          => $guest,
 	report_bugs                    => $student,
 	submit_feedback                => $student,
 	change_password                => $student,
@@ -453,9 +454,9 @@ my $nobody    = undef;
 	avoid_recording_answers                         => $ta,
 	check_answers_before_open_date                  => $ta,
 	check_answers_after_open_date_with_attempts     => $ta,
-	check_answers_after_open_date_without_attempts  => $student,
-	check_answers_after_due_date                    => $student,
-	check_answers_after_answer_date                 => $student,
+	check_answers_after_open_date_without_attempts  => $guest,
+	check_answers_after_due_date                    => $guest,
+	check_answers_after_answer_date                 => $guest,
 	record_answers_when_acting_as_student           => $nobody,
 	# "record_answers_when_acting_as_student" takes precedence
 	# over the following for professors acting as students:
