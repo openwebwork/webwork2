@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.50 2004/05/13 16:02:55 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.51 2004/05/13 20:42:35 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -311,6 +311,7 @@ sub body {
 	my @headers = $self->recurseDirectory($self->{ce}->{courseDirs}->{templates}, '(?i)header.*?\\.pg$');
 	map { s|^$self->{ce}->{courseDirs}->{templates}/?|| } @headers;
 	@headers = sort @headers;
+	unshift (@headers, "Use System Default");
 	
 	print CGI::start_form({method=>"post", action=>$r->uri}), "\n";
 	print CGI::table({},
@@ -340,10 +341,12 @@ sub body {
 # 						$setRecord->problem_header, 
 # 						undef, 
 # 						@{$overrideArgs{problem_header}})."\n",
-			CGI::td({}, ["Set Header:" , ($forOneUser) ? $setRecord->set_header 
-									: CGI::popup_menu(-name=>'set_header', 
-												-values=>\@headers, 
-												-default=>$setRecord->set_header)]) . "\n",
+			CGI::td({}, [	"Set Header:" , 
+					($forOneUser) 
+						? $setRecord->set_header || "None selected."
+						: CGI::popup_menu(-name=>'set_header', -values=>\@headers, -default=>0) .
+							"(currently: " . ($setRecord->set_header || "None selected.") . ")" . "\n",
+				])
 		])
 	);
 
