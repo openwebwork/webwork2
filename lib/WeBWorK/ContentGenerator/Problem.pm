@@ -55,7 +55,11 @@ sub pre_header_initialize {
 	my $effectiveUser   = $db->getUser($effectiveUserName);
 	# obtain the effective user set, or if that is not yet defined obtain global set
 	my $set             = $db->getGlobalUserSet($effectiveUserName, $setName);
-	$set                = $db->getGlobalSet($setName) unless defined($set);
+	#$set                = $db->getGlobalSet($setName) unless defined($set);
+	unless (defined $set) {
+		$userSetClass = $courseEnv->{dbLayout}->{set_user}->{record};
+		$set = global2user($userSetClass, $db->getGlobalSet($setName))
+	}
 	# obtain the effective user problem, or if that is not yet defined obtain global problem
 	my $problem         = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
 	$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
