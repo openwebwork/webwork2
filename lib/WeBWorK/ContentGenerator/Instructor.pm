@@ -40,6 +40,56 @@ sub userCountMessage {
 	return $message;
 }
 
+sub assignProblemToUser {
+	my ($self, $user, $globalProblem) = @_;
+	my $db = $self->{db};
+	my $userProblem = db->{problem_user}->{record}->new;
+	# Set up the key
+	$userProblem->user_id($user);
+	$userProblem->set_id($globalProblem->set_id);
+	$userProblem->problem_id($globalProblem->problem_id);
+	
+	# Initialize user-only fields
+	$userProblem->status(0.0);
+	$userProblem->attempted(0);
+	$userProblem->num_correct(0);
+	$userProblem->num_incorrect(0);
+	$userProblem->attempted(0);
+	$userProblem->problem_seed(int(rand(5000)));
+	
+	$db->addUserProblem($userProblem);
+}
+
+sub assignSetToUser {
+	my ($self, $user, $globalSet) = @_;
+	my $db = $self->{db};
+	my $userSet = db->{set_user}->{record}->new;
+	my $setID = $globalSet->set_id;
+
+	$userSet->user_id($user);
+	$userSet->set_id($setId);
+	$db->addUserSet($userSet);
+	
+	foreach my $problemID ($db->listGlobalProblems) {
+		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
+		$self->assignProblemToUser($user, $problemRecord);
+	}
+}
+
+# When a new problem is added to a set, all students to whom the set 
+# it belongs to is assigned should have it assigned to them.
+# Note that this does NOT assign to all users of a course, just all users
+# of a set.
+sub assignProblemToAllUsers {
+	my ($self, $globalProblem) = @_;
+	my $db = $self->{db};
+	my $setID = $globalProblem->set_id;
+	my @users = $db->listSetUsers($setID);
+	
+	foreach my $user (@users) {
+		$self->assignProblemToUser($user, $globalProblem);
+	}
+}
 
 ## Template Escapes ##
 
