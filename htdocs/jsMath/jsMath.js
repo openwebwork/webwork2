@@ -30,6 +30,37 @@
  *  
  *****************************************************************************/
 
+/*
+ *  Modification for Webwork
+ *    (tried to add these to a separate file, but the way that
+ *     some browsers process additional <SCRIPT SRC=""> calls
+ *     made this not work well, so had to modify things here.)
+ */
+
+if (window.jsMath) {
+  /*
+   *  We've been loaded a second time, so we want to do asynchronous
+   *  processing instead.  First, make ProcessBeforeShowing() do nothing,
+   *  and save a copy of the original ProcessComplete().   Now,
+   *  make ProcessComplete() do the old version then check if there
+   *  are more items to be processed, and if so, do them.
+   *  Finally, start a Process() after a little bit.
+   *  (New math may show up while this is occuring, which is why we
+   *  need to keep looking.  Fragile, but OK for now).
+   */
+  if (!jsMath.WW_patched) {
+    jsMath.WW_patched = 1;
+    jsMath.ProcessBeforeShowing = function () {};
+    jsMath.OldProcessComplete = jsMath.ProcessComplete;
+    jsMath.ProcessComplete = function () {
+      jsMath.OldProcessComplete();
+      jsMath.element = jsMath.GetMathElements();
+      if (jsMath.element.length > 0) {jsMath.Process()}
+    }
+    setTimeout('jsMath.Process()',100);
+  }
+} else {
+
 //
 // debugging routine
 // 
@@ -146,9 +177,9 @@ var jsMath = {
     '.cmex10':         'font-family: cmex10',
     '.arial':          'font-family: Arial unicode MS',
 
-    '.normal':         'font-family: serif; font-style: normal',
+    '.normal':         'font-family: serif; font-style: normal; font-size: 120%',
     '.math':           'font-family: serif; font-style: normal',
-    '.typeset':        'font-family: serif; font-style: normal',
+    '.typeset':        'font-family: serif; font-style: normal; font-size: 120%',
     '.mathlink':       'text-decoration: none',
     '.mathHD':         'border-width: 0; width: 1px; margin-right: -1px',
   
@@ -3455,6 +3486,9 @@ jsMath.Package(jsMath.Parser,{
     mathbf:             ['Macro','{\\bf #1}',1],
     mathit:             ['Macro','{\\it #1}',1],
 
+    lt:			['Macro','<'],
+    gt:			['Macro','>'],
+
     limits:       ['Limits',1],
     nolimits:     ['Limits',0],
 
@@ -4509,17 +4543,20 @@ jsMath.Add(jsMath,{
    *  This can take a long time, so the user could cancel the
    *  page before it is complete; use it with caution, and only
    *  when there is a relatively small amount of math on the page.
+   *
+   *  Process backwards to avoid elements disappearing on us (don't
+   *  know why they do).
    */
   ProcessBeforeShowing: function () {
     if (!jsMath.initialized) {jsMath.Init()}
-    jsMath.GetMathElements();
-    for (var i = 0; i < this.element.length; i++)
-      {jsMath.ProcessElement(this.element[i])}
-    this.RemoveWarning();
+    element = jsMath.GetMathElements();
+    for (var i = 0; i < element.length; i++)
+      {jsMath.ProcessElement(element[i])}
+    jsMath.ProcessComplete();
   },
   
   /*
-   *  Asynchronously process a math element
+   *  Process a math element
    */
   ProcessElement: function (element) {
     window.status = 'Processing Math...';
@@ -4536,8 +4573,7 @@ jsMath.Add(jsMath,{
    */
   ProcessElements: function (k) {
     if (k >= this.element.length) {
-      this.element = [];
-      this.RemoveWarning();
+      this.ProcessComplete();
     } else {
       this.ProcessElement(this.element[k])
       setTimeout('jsMath.ProcessElements('+(k+1)+')',jsMath.delay);
@@ -4552,44 +4588,54 @@ jsMath.Add(jsMath,{
    */
   Process: function () {
     if (!jsMath.initialized) {jsMath.Init()}
-    this.GetMathElements();
+    this.element = this.GetMathElements();
     window.status = 'Processing Math...';
     setTimeout('jsMath.ProcessElements(0)',jsMath.delay);
   },
   
-  element: [],  // the list of math elements onthe page
+  element: [],  // the list of math elements on the page
 
   /*
    *  Look up all the math elements on the page and
    *  put them in a list sorted from top to bottom of the page
    */
   GetMathElements: function () {
+    var element = [];
     var math = document.getElementsByTagName('DIV');
     for (var k = 0; k < math.length; k++) {
       if (math[k].className == 'math') {
-        if (jsMath.renameOK) {math[k].setAttribute('NAME','jsMath')}
-          else {this.element[this.element.length] = math[k]}
+        if (jsMath.renameOK) {math[k].setAttribute('NAME','_jsMath_')}
+          else {element[element.length] = math[k]}
       }
     }
     math = document.getElementsByTagName('SPAN');
     for (var k = 0; k < math.length; k++) {
       if (math[k].className == 'math') {
-        if (jsMath.renameOK) {math[k].setAttribute('NAME','jsMath')}
-          else {this.element[this.element.length] = math[k]}
+        if (jsMath.renameOK) {math[k].setAttribute('NAME','_jsMath_')}
+          else {element[element.length] = math[k]}
       }
     }
     // this gets the SPAN and DIV elements interleaved in order
     if (jsMath.renameOK) {
-      this.element = document.getElementsByName('jsMath')
+      element = document.getElementsByName('_jsMath_')
     } else if (jsMath.hidden.sourceIndex) {
-      this.element.sort(function (a,b) {return a.sourceIndex - b.sourceIndex});
+      element.sort(function (a,b) {return a.sourceIndex - b.sourceIndex});
     }
+    return element;
   },
 
   /*
    *  Remove the window message about processing math
+   *  and clean up any marked <SPAN> or <DIV> tags
    */
-  RemoveWarning: function () {
+  ProcessComplete: function () {
+    if (jsMath.renameOK) {
+      var element = document.getElementsByName('_jsMath_');
+      for (var i = element.length-1; i >= 0; i--) {
+        element[i].removeAttribute('NAME');
+      }
+    }
+    jsMath.element = [];
     window.status = 'Done';
   }
 
@@ -4602,7 +4648,7 @@ jsMath.Add(jsMath,{
  */
 document.write('<DIV CLASS="normal" ID="jsMath.Hidden" ');
 document.write('STYLE="visibility: hidden; position:absolute; top: 0; left: 0;"></DIV>');
-jsMath.hidden = window.document.getElementById("jsMath.Hidden");
+jsMath.hidden = document.getElementById("jsMath.Hidden");
 
 /*
  *  Initialize everything
@@ -4614,4 +4660,5 @@ jsMath.InitStyles();
 //make sure browser-specific loads are done before this
 document.write('<SCRIPT>jsMath.CheckFonts()</SCRIPT>');
 
+}
 }
