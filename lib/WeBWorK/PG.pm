@@ -337,6 +337,7 @@ sub defineProblemEnvir($$$$$$$) {
 	# Other things...
 	
 	$envir{PROBLEM_GRADER_TO_USE} = $courseEnv->{pg}->{options}->{grader};
+	$envir{ALLOW_MAIL_TO} = $courseEnv->{email}->{allowedRecipients};
 	
 	return \%envir;
 }
