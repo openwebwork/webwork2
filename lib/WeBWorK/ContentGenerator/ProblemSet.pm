@@ -73,7 +73,7 @@ sub nav {
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	my @links = ("Problem Sets" => "$root/$courseName");
+	my @links = ("Problem Sets" , "$root/$courseName", "Up");
 	my $tail = "";
 	
 	return $self->navMacro($args, $tail, @links);
