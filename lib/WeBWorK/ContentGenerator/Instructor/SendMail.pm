@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.15 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.16 2004/01/17 19:30:22 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
 
-my $REFRESH_RESIZE_BUTTON = "Refresh and Resize";  # handle submit value idiocy
+my $REFRESH_RESIZE_BUTTON = "Reorder, Resize and Update";  # handle submit value idiocy
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->{r};
@@ -164,8 +164,8 @@ sub initialize {
 	#################################################################
 
 	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
-		$self->submission_error("For security reasons, you cannot specify a merge file from a directory", 
-								"higher than the email directory (you can't use ../blah/blah). ", 
+		$self->submission_error("For security reasons, you cannot specify a message file from a directory", 
+								"higher than the email directory (you can't use ../blah/blah for example). ", 
 								"Please specify a different file or move the needed file to the email directory",
 		);
 	}
@@ -596,8 +596,7 @@ sub print_form {
 #############################################################################################	
 		my @tmp2;
         eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };}; # checked
-        if ($@) {
-#        	print CGI::p( "Couldn't get merge data for $preview_user", CGI::br(), $@) ;
+        if ($@ and $merge_file ne 'None') {
 			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
         } else {
 			print CGI::pre("",data_format(0..($#tmp2)),"\n", data_format(@tmp2));
@@ -634,11 +633,7 @@ sub print_form {
 sub submission_error {
 	my $self = shift;
     my $msg = join( " ", @_);
-	$self->{submitError} .= CGI::br().$msg; #CGI::b(HTML::Entities::encode($msg));
-# 		qq{Please hit the &quot;<B>Back</B>&quot; button on your browser to 
-# 		try again, or notify your web master
-# 		if you believe this message is in error.
-# 		};
+	$self->{submitError} .= CGI::br().$msg; 
     return;
 }
 
@@ -695,7 +690,7 @@ sub get_message_file_names {
 }
 sub get_merge_file_names   {
 	my $self         = shift;
-	return 'None', $self->read_dir($self->{ce}->{courseDirs}->{scoring}, '\\.csv$');
+	return 'None', $self->read_dir($self->{ce}->{courseDirs}->{scoring}, '\\.csv$'); #FIXME ? check that only readable files are listed.
 }
 
 
@@ -724,7 +719,8 @@ sub process_message {
 	my $ur            = shift;
 	my $rh_merge_data = shift;
 	my $text          = defined($self->{r_text}) ? ${ $self->{r_text} }:
-	                        'FIXME no text was produced by initialization!!';	  
+	                        'FIXME no text was produced by initialization!!';	
+	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';  
 	#user macros that can be used in the email message
 	my $SID           = $ur->student_id;
 	my $FN            = $ur->first_name;
@@ -734,10 +730,13 @@ sub process_message {
 	my $STATUS        = $ur->status;
 	my $EMAIL         = $ur->email_address;
 	my $LOGIN         = $ur->user_id;
+	
 	# get record from merge file
 	# FIXME this is inefficient.  The info should be cached
 	my @COL            = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
-	$self->submission_error( "No merge data for $SID $FN $LN $LOGIN") unless defined($rh_merge_data->{$SID});
+	if ($merge_file ne 'None' && not defined($rh_merge_data->{$SID})  ) {
+		$self->submission_error( "No merge data for $SID $FN $LN $LOGIN");
+	}
 	
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
