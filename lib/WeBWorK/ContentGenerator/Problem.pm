@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.165 2004/10/06 21:01:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.166 2004/10/09 03:06:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -289,11 +289,15 @@ sub viewOptions {
 	
 	my $optionLine;
 	$can{showOldAnswers} and $optionLine .= join "",
-		"Show: &nbsp;".CGI::br(),
-		CGI::checkbox(
+		"Save&nbsp;answers?".CGI::br(),
+		CGI::radio_group(
 			-name    => "showOldAnswers",
-			-checked => $will{showOldAnswers},
-			-label   => "Saved answers",
+			-values  => [1,0],
+			-default => $will{showOldAnswers},
+			-labels   => {
+							0 => 'No',
+							1 => 'Yes',	
+			},
 		), "&nbsp;&nbsp;".CGI::br();
 
 	$optionLine and $optionLine .= join "", CGI::br();
@@ -535,8 +539,12 @@ sub pre_header_initialize {
 	return unless $self->{isOpen};
 	
 	# what does the user want to do?
+	#FIXME  There is a problem with checkboxes -- if they are not checked they are invisible.  Hence if the default mode in $ce is 1
+	# there is no way to override this.  Probably this is ok for the last three options, but it was definitely not ok for showing
+	# saved answers which is normally on, but you want to be able to turn it off!  This section should be moved to ContentGenerator
+	# so that you can set these options anywhere.  We also need mechanisms for making them sticky.
 	my %want = (
-		showOldAnswers     => $r->param("showOldAnswers")     || $ce->{pg}->{options}->{showOldAnswers},
+		showOldAnswers     => defined($r->param("showOldAnswers")) ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
@@ -680,7 +688,11 @@ sub siblings {
 	foreach my $problemID (@problemIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a({href=>$self->systemLink($problemPage, params=>{displayMode => $self->{displayMode}})}, "Problem $problemID"));
+		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
+													params=>{  displayMode => $self->{displayMode}, 
+																showOldAnswers => $self->{will}->{showOldAnswers}
+															})},  "Problem $problemID")
+	   );
 	}
 	
 	print CGI::end_ul();
@@ -733,7 +745,7 @@ sub nav {
 		push @links, "Next Problem", "", "navNext";
 	}
 	
-	my $tail = "&displayMode=".$self->{displayMode};
+	my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
 }
 
