@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.41 2003-09-23 21:19:29 sh002i Exp $
+# $Id: global.conf.dist,v 1.42 2003-10-01 03:35:02 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -228,20 +228,12 @@ $practiceUserPrefix = "practice";
 	# options for various renderers
 	renderers => {
 		"WeBWorK::PG::Remote" => {
-			uri => "http://localhost:8089/RPC2"
+			proxy => "http://localhost:21000/RenderD"
 		}
 	},
 	# currently selected renderer
 	renderer => "WeBWorK::PG::Local",
-	# directories used by PG
-	# options for various renderers
-	renderers => {
-		"WeBWorK::PG::Remote" => {
-			uri => "http://localhost:8089/RPC2"
-		}
-	},
-	# currently selected renderer
-	renderer => "WeBWorK::PG::Local",
+	#renderer => "WeBWorK::PG::Remote",
 	# directories used by PG
 	directories => {
 		# directories used only by PG
