@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.6 2004/06/24 18:07:13 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.7 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -185,7 +185,7 @@ sub index {
 ## Edit to filter out students you aren't allowed to see
 #
 	my @myUsers;
-	my @studentRecords = $db->getUsers;
+#	my @studentRecords = $db->getUsers;  #this is never used
 	my $user = $r->param("user");
 	
 	my (@viewable_sections, @viewable_recitations);
@@ -225,9 +225,12 @@ sub index {
 	                                                      statType => 'student',
 	                                                      userID   => $student
 	    );
+	    my $studentRecord = $db->getUser($student);
+	    my $first_name = $studentRecord->first_name;
+	    my $last_name = $studentRecord->last_name;
 		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
 		                                                     prams=>{effectiveUser => $student}
-		                                                     )},"  $student" ),;	
+		                                                     )},"  $first_name $last_name ($student)" ),;	
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
