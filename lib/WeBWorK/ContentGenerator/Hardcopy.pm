@@ -64,18 +64,22 @@ sub go {
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
 			my ($tempDir, $fileName,$errors) = eval { $self->generateHardcopy() };
+			warn "tempDir $tempDir fileName $fileName ";
 			if ($@) {
 				$self->{generationError} = $@;
-				# In this case no pdf file was generated, so there is not much more that can be done
+				# In this case no correct pdf file was generated.
+				# there is not much more that can be done
 				# throw the error up higher.
-				# FIXME: this leaves the temp dir around.
-				# perhaps: rmtree($tempdir) here?
+				# The error is reported in body.
+				# the tempDir was removed in generateHardcopy
 				
 				
 			} else {
 				my $filePath = "$tempDir/$fileName";
 				# FIXME this is taking up server time
 				# why not move the file to the tempDir and let the browser pick it up on redirect?
+				# my $hardcopyFilePath     =  $self->{hardcopyFilePath};
+				# my $hardcopyFileURL      =  $self->{hardcopyFileURL};
 				if ($errors eq '') {
 					$r->content_type("application/x-pdf");
 					# as per RFC2183:
@@ -138,10 +142,6 @@ sub body {
 				print $self->errorOutput(@rest);
 				return "";
 			} elsif ($disposition eq "RETRY") {
-				print $self->errorOutput(@rest);
-			} elsif ($disposition eq "ERROR_REPORT") {
-			    print "There were errors while producing the pdf file. You can download the ".
-			           CGI::a({-href =>$self->{finalFile}} , "output that was produced.");
 				print $self->errorOutput(@rest);
 			} else { # a "simple" error
 				print CGI::p(CGI::font({-color=>"red"}, @rest));
@@ -367,10 +367,12 @@ sub generateHardcopy($) {
 	if ($@) {
 	    $errors = $@;
 	    #$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
+	    # clean up temp directory
+	    rmtree($tempDir);
 		die ["FAIL", "Failed to generate PDF from tex", $errors]; #throw error to subroutine body	
 	}
 	
-	return $tempDir, $fileName, $errors;
+	return $tempDir, $fileName;
 }
 
 # -----
@@ -385,11 +387,11 @@ sub latex2pdf {
 	# Location for hardcopy file to be downloaded
 	# FIXME  this should use surePathToTmpFile
 	my $hardcopyTempDirectory = $ce->{courseDirs}->{html_temp}."/hardcopy";
-	warn " tmpDirectory $hardcopyTempDirectory";
 	mkdir ($hardcopyTempDirectory)  or die "Unable to make $hardcopyTempDirectory" unless -e $hardcopyTempDirectory;
-	my $hardcopyFilePath     = "$hardcopyTempDirectory/$fileName";
-	my $hardcopyFileURL  = $ce->{courseURLs}->{html_temp}."/hardcopy/$fileName";
-	
+	my $hardcopyFilePath        =  "$hardcopyTempDirectory/$fileName";
+	my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$fileName";
+	$self->{hardcopyFilePath}   =  $hardcopyFilePath;
+	$self->{hardcopyFileURL}    =  $hardcopyFileURL;
 	## create a temporary directory for tex to shit in
 	#my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
 	# - we're using the existing temp dir. now
@@ -413,21 +415,29 @@ sub latex2pdf {
 	# Even with errors there may be a valid pdfFile.  Move it to where we can get it.
 	if (-e $pdfFile) {
 		# move resulting PDF file to appropriate location
-# 		system "/bin/mv", $pdfFile, $finalFile
-# 			and die "Failed to mv: $pdfFile to $finalFile<br>\n  Quite likely this means that there ".
-# 			        "is not sufficient write permission for some directory.<br>$!<br>\n";
+		# FIXME don't fix everything at once :-)
+		system "/bin/mv", $pdfFile, $finalFile
+			and die "Failed to mv: $pdfFile to $finalFile<br>\n  Quite likely this means that there ".
+			        "is not sufficient write permission for some directory.<br>$!<br>\n";
        # moving to course tmp/hardcopy directory
-	    system "/bin/mv", $pdfFile, $hardcopyFilePath  
-			and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
-			        "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
+# 	    system "/bin/mv", $pdfFile, $hardcopyFilePath  
+# 			and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
+# 			        "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
 	}
 	# Alert the world that the tex file did not process perfectly.
 	if ($pdflatexResult) {
 		# something bad happened
 		my $textErrorMessage = "Call to $pdflatex failed: $!\n".CGI::br();
+		
+		# move what output there is to someplace where it can be read
+		system "/bin/mv", $finalFile, $hardcopyFilePath  
+			    and die "Failed to mv: $pdfFile to  $hardcopyFilePath<br> Quite likely this means that there ".
+			            "is not sufficient write permission for some directory.<br>$!\n".CGI::br(); 
 		if (-e $hardcopyFilePath ) {
-			$textErrorMessage.= "Some pdf output was produced and is available ". CGI::a({-href=>$hardcopyFileURL},"here.").CGI::hr();
+			 # FIXME  Misuse of html tags!!!
+			$textErrorMessage.= "<h4>Some pdf output was produced and is available ". CGI::a({-href=>$hardcopyFileURL},"here.</h4>").CGI::hr();
 		}
+		# report logfile
 		if (-e $logFile) {
 			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n".CGI::br();
 			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n".CGI::br();
