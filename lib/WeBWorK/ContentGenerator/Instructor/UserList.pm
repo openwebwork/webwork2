@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.56 2004/09/29 16:19:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.57 2004/10/10 20:34:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1013,6 +1013,15 @@ sub importUsersFromCSV {
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => 0);
 		my $Password = $db->newPassword(user_id => $user_id, password => cryptPassword($record{student_id}));
 		
+		# use password and permission from record if there
+		if (exists $record{permission}) {
+			$PermissionLevel->permission($record{permission});
+		}
+		
+		if (exists $record{password}) {
+			$Password->password($record{password});
+		}
+		
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
@@ -1038,8 +1047,23 @@ sub exportUsersToCSV {
 		
 	die "illegal character in input: '/'" if $fileName =~ m|/|;
 	
-	# assemble list of hashrefs representing records to export
-	my @records = map { {$_->toHash} } $db->getUsers(@userIDsToExport);
+	my @records;
+	
+	my @Users = $db->getUsers(@userIDsToExport);
+	my @Passwords = $db->getPasswords(@userIDsToExport);
+	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
+	foreach my $i (0 .. $#userIDsToExport) {
+		my $User = $Users[$i];
+		my $Password = $Passwords[$i];
+		my $PermissionLevel = $PermissionLevels[$i];
+		next unless defined $User;
+		my %record = (
+			defined $PermissionLevel ? $PermissionLevel->toHash : (),
+			defined $Password ? $Password->toHash : (),
+			$User->toHash,
+		);
+		push @records, \%record;
+	}
 	
 	write_classlist("$dir/$fileName", @records);
 }
