@@ -253,13 +253,13 @@ The dispatcher implements a virtual heirarchy that looks like this:
 
 =cut
 
-		my $arg = shift @components || "";
-		if (not $arg) { # We want the list of problem sets
+		my $arg = shift @components;
+		if (not defined $arg) { # We want the list of problem sets
 			$contentGenerator = "WeBWorK::ContentGenerator::ProblemSets";
 			@arguments = ();
 		}
 		elsif ($arg eq "hardcopy") {
-			my $setID = shift @components || "";
+			my $setID = shift @components;
 			$contentGenerator = "WeBWorK::ContentGenerator::Hardcopy";
 			@arguments = ($setID);
 		}
@@ -284,9 +284,9 @@ The dispatcher implements a virtual heirarchy that looks like this:
 			@arguments = @components;
 		}
 		elsif ($arg eq "instructor") {
-			my $instructorArgument = shift @components || "";
+			my $instructorArgument = shift @components;
 			
-			if (not $instructorArgument) {
+			if (not defined $instructorArgument) {
 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Index";
 				@arguments = ();
 			}
@@ -307,10 +307,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 				@arguments = ();
 			}
 			elsif ($instructorArgument eq "users") {
-				my $userID = shift @components || "";
+				my $userID = shift @components;
 				
-				if ($userID) {
-					my $userArg = shift @components || "";
+				if (defined $userID) {
+					my $userArg = shift @components;
 					if (defined $userArg) {
 						if ($userArg eq "sets") {
 							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser";
@@ -328,12 +328,12 @@ The dispatcher implements a virtual heirarchy that looks like this:
 				}
 			}
 			elsif ($instructorArgument eq "sets") {
-				my $setID = shift @components || "";
+				my $setID = shift @components;
 				
-				if ($setID) {
-					my $setArg = shift @components || "";
+				if (defined $setID) {
+					my $setArg = shift @components;
 					
-					if ($setArg) {
+					if (defined $setArg) {
 						if ($setArg eq "problems") {
 							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ProblemList";
 							@arguments = ($setID);
