@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.15 2004/01/17 16:38:40 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Options.pm,v 1.16 2004/03/17 08:17:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,69 +32,104 @@ sub body {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
-	my $effectiveUserID = $r->param('effectiveUser');
-	my $effectiveUser = $db->getUser($effectiveUserID); # checked
-	die "record not found for user $effectiveUserID (effective user)."
-		unless defined $effectiveUser;
+	my $userID = $r->param("user");
+	my $User = $db->getUser($userID);
+	die "record not found for user '$userID'." unless defined $User;
+	
+	my $eUserID = $r->param('effectiveUser');
+	my $EUser = $db->getUser($eUserID); # checked
+	die "record not found for effective user '$eUserID'." unless defined $EUser;
 	
 	my $changeOptions = $r->param("changeOptions");
+	my $currP = $r->param("currPassword");
 	my $newP = $r->param("newPassword");
 	my $confirmP = $r->param("confirmPassword");
 	my $newA = $r->param("newAddress");
 		
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
+	
 	print CGI::h2("Change Password");
-	if ($changeOptions) {
-		if ($newP or $confirmP) {
-			if ($newP eq $confirmP) {
-				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)}; # checked
-				warn "Can't get password for user |$effectiveUser| $@" if $@ or not defined($passwordRecord);
-				my $cryptedPassword = cryptPassword($newP);
-				$passwordRecord->password($cryptedPassword);
-				
-				# possibly do some format checking?
-				eval { $db->putPassword($passwordRecord) };
-				if ($@) {
-					print CGI::div({class=>"ResultsWithError"},
-						CGI::p("Couldn't change your password: $@"),
-					);
+	
+	my $user_name = $User->first_name . " " . $User->last_name;
+	my $e_user_name = $EUser->first_name . " " . $EUser->last_name;
+	
+	if ($changeOptions and ($currP or $newP or $confirmP)) {
+		
+		my $Password = eval {$db->getPassword($User->user_id)}; # checked
+		warn "Can't get password record for user '$userID': $@" if $@ or not defined $Password;
+		
+		my $EPassword = eval {$db->getPassword($EUser->user_id)}; # checked
+		warn "Can't get password record for effective user '$eUserID': $@" if $@ or not defined $EPassword;
+		
+		if (crypt($currP, $Password->password) eq $Password->password) {
+			if ($newP or $confirmP) {
+				if ($newP eq $confirmP) {
+					$EPassword->password(cryptPassword($newP));
+					eval { $db->putPassword($EPassword) };
+					if ($@) {
+						print CGI::div({class=>"ResultsWithError"},
+							CGI::p("Couldn't change $e_user_name\'s password: $@"),
+						);
+					} else {
+						print CGI::div({class=>"ResultsWithoutError"},
+							CGI::p("$e_user_name\'s password has been changed."),
+						);
+					}
 				} else {
-					print CGI::div({class=>"ResultsWithoutError"},
-						CGI::p("Your password has been changed."),
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p(
+							"The passwords you entered in the ",
+							CGI::b("$e_user_name\'s New Password"), " and ",
+							CGI::b("Confirm $e_user_name\'s New Password"), " fields
+							don't match. Please retype your new password and try
+							again."
+						),
 					);
 				}
 			} else {
 				print CGI::div({class=>"ResultsWithError"},
-					CGI::p(dequote <<"					EOT"),
-						The passwords you entered in the New Password and
-						Confirm Password fields don't match. Please retype your
-						new password and try again.
-					EOT
+					CGI::p("$e_user_name\'s new password cannot be blank."),
 				);
 			}
+		} else {
+			print CGI::div({class=>"ResultsWithError"},
+				CGI::p(
+					"The password you entered in the ", CGI::b("$user_name\'s
+					Current Password"), " field does not match your current
+					password. Please retype your current password and try
+					again."
+				),
+			);
 		}
 	}
+	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
-			CGI::td("New Password"),
+			CGI::td("$user_name\'s Current Password"),
+			CGI::td(CGI::password_field("currPassword")),
+		),
+		CGI::Tr(
+			CGI::td("$e_user_name\'s New Password"),
 			CGI::td(CGI::password_field("newPassword")),
 		),
 		CGI::Tr(
-			CGI::td("Confirm Password"),
+			CGI::td("Confirm $e_user_name\'s New Password"),
 			CGI::td(CGI::password_field("confirmPassword")),
 		),
 	);
+	
 	print CGI::h2("Change Email Address");
+	
 	if ($changeOptions) {
 		if ($newA) {
-			# possibly do some format checking?
-			my $oldA = $effectiveUser->email_address;
-			$effectiveUser->email_address($newA);
-			eval { $db->putUser($effectiveUser) };
+			my $oldA = $EUser->email_address;
+			$EUser->email_address($newA);
+			eval { $db->putUser($EUser) };
 			if ($@) {
-				$effectiveUser->email_address($oldA);
+				$EUser->email_address($oldA);
 				print CGI::div({class=>"ResultsWithError"},
 					CGI::p("Couldn't change your email address: $@"),
 				);
@@ -105,16 +140,18 @@ sub body {
 			}
 		}
 	}
+	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
-			CGI::td("Current Address"),
-			CGI::td($effectiveUser->email_address),
+			CGI::td("$e_user_name's Current Address"),
+			CGI::td($EUser->email_address),
 		),
 		CGI::Tr(
-			CGI::td("New Address"),
+			CGI::td("$e_user_name's New Address"),
 			CGI::td(CGI::textfield("newAddress", $newA)),
 		),
 	);
+	
 	print CGI::br();
 	print CGI::submit("changeOptions", "Change User Options");
 	print CGI::end_form();
