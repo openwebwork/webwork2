@@ -188,7 +188,6 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{outputMode}        = $envir{displayMode};	 
 	$envir{displayHintsQ}     = $options->{hints};	 
 	$envir{displaySolutionsQ} = $options->{solutions};
-	$envir{externalTTHPath}   = $courseEnv->{externalPrograms}->{tth};
 	
 	# Problem Information
 	# ADDED: courseName
@@ -221,10 +220,9 @@ sub defineProblemEnvir($$$$$$$) {
 	
 	$envir{inputs_ref}          = $formFields;
 	
-	# Default values for evaluating answers
-	
-	my $ansEvalDefaults = $courseEnv->{pg}->{ansEvalDefaults};
-	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
+	# External Programs
+	$envir{externalTTHPath}      = $courseEnv->{externalPrograms}->{tth};
+	$envir{externalMath2imgPath} = $courseEnv->{externalPrograms}->{math2img};
 	
 	# Directories and URLs
 	# REMOVED: courseName
@@ -242,7 +240,12 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
 	
-	# Other things... (where's your brain?!?!)
+	# Default values for evaluating answers
+	
+	my $ansEvalDefaults = $courseEnv->{pg}->{ansEvalDefaults};
+	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
+	
+	# Other things...
 	
 	$envir{PROBLEM_GRADER_TO_USE} = $courseEnv->{pg}->{options}->{grader};
 	
@@ -254,7 +257,7 @@ sub translateDisplayModeNames($) {
 	return {
 		plainText     => "HTML",
 		formattedText => "HTML_tth",
-		images        => "Latex2HTML"
+		images        => "HTML_img"
 	}->{$name};
 }
 
