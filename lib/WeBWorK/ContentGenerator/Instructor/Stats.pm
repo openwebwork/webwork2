@@ -275,7 +275,7 @@ sub displaySets {
 			# It's possible that $incorrect is an empty or blank string instead of 0  the || clause fixes this and prevents 
 			# warning messages in the comparison below.
 			$string          .=  $longStatus;
-			$twoString       .= ($incorrect < 99) ? threeSpaceFill($incorrect) :threeSpaceFill('##') ;
+			$twoString       .= threeSpaceFill($incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
 			$total           += $probValue;
@@ -557,7 +557,7 @@ sub displayStudentStats {
 
 			my $incorrect     = $problemRecord->num_incorrect;
 			$string          .=  $longStatus;
-			$twoString       .= ($incorrect < 99) ? threeSpaceFill($incorrect) :threeSpaceFill('##') ;
+			$twoString       .= threeSpaceFill($incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
 			$total           += $probValue;
