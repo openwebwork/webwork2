@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
-use CGI qw(-compile :html :form);
+use CGI qw();
 
 sub title {
 	my ($self, $problem_set) = @_;
@@ -22,10 +22,10 @@ sub body {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param('user');
 	
-	print startform({-method=>"POST", -action=>$r->uri."prob2/"});
+	print CGI->startform({-method=>"POST", -action=>$r->uri."prob2/"});
 	print $self->hidden_authen_fields;
-	print input({-type=>"submit", -value=>"Do Problem 2"});
-	print endform;
+	print CGI->input({-type=>"submit", -value=>"Do Problem 2"});
+	print CGI->endform();
 	"";
 }
 

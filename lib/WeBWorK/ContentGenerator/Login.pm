@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
-use CGI qw(-comple :html :form);
+use CGI qw();
 
 our @ISA = qw(WeBWorK::ContentGenerator);
 
@@ -34,32 +34,32 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	if ($r->notes("authen_error")) {
-		print font({-color => 'red'}, b($r->notes("authen_error"))),br;
+		print CGI->font({-color => 'red'}, CGI->b($r->notes("authen_error"))),CGI->br();
 	}
 	
-	print p("Please enter your username and password for ",b($course)," below:");
-	print startform({-method=>"POST", -action=>$r->uri});
+	print p("Please enter your username and password for ",CGI->b($course)," below:");
+	print CGI->startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
 	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key)$/);
 	
 	print
-		table({-border => 0}, 
-		  Tr([
-		    td([
+		CGI->table({-border => 0}, 
+		  CGI->Tr([
+		    CGI->td([
 		      "Username:",
-		      input({-type=>"textfield", -name=>"user", -value=>"$user"}),br,
+		      CGI->input({-type=>"textfield", -name=>"user", -value=>"$user"}),CGI->br(),
 		    ]),
-		    td([
+		    CGI->td([
 		      "Password:",
-		      input({-type=>"password", -name=>"passwd", -value=>"$passwd"}) . i("(Will not be echoed)"),
+		      CGI->input({-type=>"password", -name=>"passwd", -value=>"$passwd"}) . CGI->i("(Will not be echoed)"),
 		    ]),
 		 ])
 		)
 	;
 	
-	print input({-type=>"submit", -value=>"Continue"});
-	print endform;
+	print CGI->input({-type=>"submit", -value=>"Continue"});
+	print CGI->endform();
 	
 	return "";
 }

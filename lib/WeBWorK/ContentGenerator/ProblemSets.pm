@@ -6,7 +6,7 @@ use warnings;
 use WeBWorK::ContentGenerator;
 use WeBWorK::DB::WW;
 use Apache::Constants qw(:common);
-use CGI qw(-compile :html :form);
+use CGI qw();
 
 sub initialize {
 	my $self = shift;
@@ -36,19 +36,19 @@ sub body {
 	my $wwdb = $self->{wwdb};
 	
 	if (!defined $wwdb->getSets($user)) {
-		print "undefined".br;
+		print "undefined".CGI->br();
 	}
 	
 	my @setNames = $wwdb->getSets($user);
 	
-	print "Set Names<br>\n";
-	print join(br."\n", @setNames);
-	print p;
+	print "Set Names", CGI->br(), "\n";
+	print join(CGI->br()."\n", @setNames);
+	print CGI->p();
 	
-	print startform({-method=>"POST", -action=>$r->uri."set0/"});
+	print CGI->startform({-method=>"POST", -action=>$r->uri."set0/"});
 	print $self->hidden_authen_fields;
-	print input({-type=>"submit", -value=>"Do Set 0"});
-	print endform;
+	print CGI->input({-type=>"submit", -value=>"Do Set 0"});
+	print CGI->endform();
 	"";
 }
 
