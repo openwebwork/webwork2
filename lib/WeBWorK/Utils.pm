@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.48 2004/09/10 02:32:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.50 2004/09/11 06:15:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,9 @@ use strict;
 use warnings;
 #use Apache::DB;
 use DateTime;
+use Date::Parse;
+#use Date::Manip;
+#use DateTime::Format::DateManip;
 use Errno;
 use File::Path qw(rmtree);
 use Carp;
@@ -273,21 +276,19 @@ $dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
 sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
 	$display_tz ||= "local";
-	warn "parseDateTime('$string', '$display_tz')\n";
+	#warn "parseDateTime('$string', '$display_tz')\n";
 	
-	# Method #1: using Date::Parse
-	use Date::Parse;
+	# Method #1: using Date::Parse (uncomment "use Date::Parse" above)
 	$string =~ s/\s*\bat\b\s*/ /; # Date::Parse can't handle the "at" in WeBWorK datetimes.
 	my $epoch = str2time($string);
 	#warn "\tMethod #1: str2time($string) = $epoch\n";
 	my $dt = DateTime->from_epoch(epoch => $epoch, time_zone => "local");
 	#warn "\tMethod #1: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
 	
-	# Method #2: using Date::Manip
-	#use Date::Manip;
+	# Method #2: using Date::Manip (uncomment "use Date::Manip" and "use
+	# DateTime::Format::DateManip" above)
 	#my $dm = ParseDateString($string);
 	#warn "\tMethod #2: ParseDateString($string) = $dm\n";
-	#use DateTime::Format::DateManip;
 	#my $dt = DateTime::Format::DateManip->parse_datetime($dm);
 	#warn "\tdMethod #2: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
 	
