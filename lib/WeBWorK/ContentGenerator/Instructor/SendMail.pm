@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.23 2004/04/05 20:52:54 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.24 2004/04/07 01:17:58 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -703,10 +703,10 @@ sub getRecord {
         #       would return).  E.G. @lineArray=&getRecord(\$delimitedLine).
 
         my(@lineArray);
-        $line.=$delimiter;                              # add 'A' to end of line so that
-                                                        # last field is never empty
-        @lineArray = split(/\s*${delimiter}\s*/,$line);
+        $line.="${delimiter}___";                       # add final field which must be non-empty
+        @lineArray = split(/\s*${delimiter}\s*/,$line); # split line into fields
         $lineArray[0] =~s/^\s*//;                       # remove white space from first element
+        pop @lineArray;                                 # remove the last artificial field
         @lineArray;
 }
 
