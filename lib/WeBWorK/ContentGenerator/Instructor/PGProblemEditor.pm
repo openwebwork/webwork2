@@ -58,9 +58,12 @@ sub pre_header_initialize {
 	my $urlpath = $r->urlpath;
 	
 	my $submit_button = $r->param('submit');  # obtain submit command from form
+	my $file_type = $r->param("file_type") || '';
 
 	# Save problem to permanent or temporary file, then redirect for viewing
-	if (defined($submit_button) and ($submit_button eq 'Save' or $submit_button eq 'Refresh')) {
+	if (defined($submit_button) and 
+	  ($submit_button eq 'Save' or $submit_button eq 'Refresh'
+	  or ($submit_button eq 'Save as' and $file_type eq 'problem'))) {
 		my $setName = $r->urlpath->arg("setID");
 		my $problemNumber = $r->urlpath->arg("problemID");
 		
@@ -81,20 +84,31 @@ sub pre_header_initialize {
 		
 		my $viewURL = '';
 		
-		# problems redirect to Problem.pm
-		$self->{file_type} eq 'problem' and do {
-			my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-				courseID => $courseName, setID => $setName, problemID => $problemNumber);
-			$viewURL = $self->systemLink($problemPage,
-				params => {
-					displayMode     => $displayMode,
-					problemSeed     => $problemSeed,
-					editMode        => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
-					sourceFilePath  => $self->{currentSourceFilePath},
-					submiterror     => $self->{submiterror},  
-				}
-			);
-		};
+		if($self->{file_type} eq 'problem') {
+			if($submit_button eq 'Save as') { # redirect to myself
+				my $sourceFile = $self->{problemPath};
+				# strip off template directory prefix
+				my $edit_level = $r->param("edit_level") || 0;
+				$edit_level++;
+				$sourceFile =~ s|^$ce->{courseDirs}->{templates}/||;
+				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+					courseID => $courseName, setID => 'Undefined_Set', problemID => $problemNumber);
+				$viewURL = $self->systemLink($problemPage,
+params=>{sourceFilePath => $sourceFile, edit_level=>$edit_level});
+			} else { # other problems redirect to Problem.pm
+				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+					courseID => $courseName, setID => $setName, problemID => $problemNumber);
+				$viewURL = $self->systemLink($problemPage,
+					params => {
+						displayMode     => $displayMode,
+						problemSeed     => $problemSeed,
+						editMode        => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
+						sourceFilePath  => $self->{currentSourceFilePath},
+						submiterror     => $self->{submiterror},  
+					}
+				);
+			} 
+		}
 		
 		# set headers redirect to ProblemSet.pm
 		$self->{file_type} eq 'set_header' and do {
@@ -183,6 +197,7 @@ sub body {
 	my $displayMode = $self->{displayMode};
 	my $problemSeed = $self->{problemSeed};	
 	my $uri = $r->uri;
+	my $edit_level = $r->param('edit_level') || 0;
 	
 	my $force_field = defined($r->param('sourceFilePath')) ?
 		CGI::hidden(-name=>'sourceFilePath',
@@ -190,7 +205,7 @@ sub body {
 	return CGI::p($header),
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
 		# THIS IS BECAUSE TARGET IS NOT A PARAMETER OF <FORM>!!!!!!!!
-		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="_problem">!, 
+		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="problem$edit_level">!, 
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
