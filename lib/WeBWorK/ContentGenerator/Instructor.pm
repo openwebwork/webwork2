@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.32 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.33 2004/01/21 20:53:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -265,12 +265,14 @@ sub assignSetsToUsers {
 	my ($self, $setIDsRef, $userIDsRef) = @_;
 	my $db = $self->{db};
 	
-	my @setIDs = $setIDsRef;
-	my @userIDs = $userIDsRef;
+	my @setIDs = @$setIDsRef;
+	my @userIDs = @$userIDsRef;
 	my @GlobalSets = $db->getGlobalSets(@setIDs);
 	
 	foreach my $GlobalSet (@GlobalSets) {
 		foreach my $userID (@userIDs) {
+			warn "assignSetsToUsers: assignSetToUser($userID, GlobalSet(",
+				$GlobalSet->set_id, "))\n";
 			$self->assignSetToUser($userID, $GlobalSet);
 		}
 	}
