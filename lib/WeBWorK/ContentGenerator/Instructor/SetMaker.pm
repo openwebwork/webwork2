@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.27 2004/09/21 19:55:48 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.28 2004/10/08 19:58:18 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -489,7 +489,7 @@ sub make_data_row {
 						courseID =>$urlpath->arg("courseID"),
 						setID=>"Undefined_Set",
 						problemID=>"1"),
-						  params =>{effectiveUser => $self->r->param('user'), 
+						  params =>{effectiveUser => scalar($self->r->param('user')), 
 							    editMode => "SetMaker", 
 						            problemSeed=> $problem_seed,
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
