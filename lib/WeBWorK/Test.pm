@@ -3,16 +3,10 @@ package WeBWorK::Test;
 use Apache::Request;
 use Apache::Constants qw(:common);
 
-sub new($$$$$) {
+sub new($$$) {
 	my $class = shift;
-	my ($r, $courseEnvironment, $user, $key) = @_;
-	
-	my $self = {
-		r			=> $r,
-		courseEnvironment	=> $courseEnvironment,
-		user			=> $user,
-		key			=> $key,
-	};
+	my $self = {};
+	($self->{r}, $self->{courseEnvironment}) = @_;
 	bless $self, $class;
 	return $self;
 }
@@ -23,8 +17,8 @@ sub go($) {
 	$self->{r}->send_http_header;
 
 	# get some stuff together
-	my $user = $self->{user};
-	my $key = $self->{key};
+	my $user = $self->{r}->param("user");
+	my $key = $self->{r}->param("key");
 
 print<<EOT;
 <html>
