@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.51 2004/05/13 20:42:35 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.52 2004/05/18 18:22:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -137,7 +137,7 @@ sub initialize {
 					if (m/_date$/) {
 						$setRecord->$_(parseDateTime($r->param($_)));
 					} else {
-						$setRecord->$_($r->param($_));
+						$setRecord->$_($r->param($_)) unless ($_ eq 'set_header' and $r->param($_) eq "Use System Default");
 						if($_ eq 'set_header') {
 						# be nice and copy the default file here if it doesn't exist yet
 						# empty set headers lead to trouble
