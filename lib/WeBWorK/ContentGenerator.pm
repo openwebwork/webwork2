@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.95 2004/05/06 20:21:48 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.96 2004/05/06 20:31:50 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,11 +122,6 @@ adopted by all modules.
 
 =item 4
 
-If the field $self->{sendFile} is defined, the method sendFile() is called to
-send the specified file to the client, and go() terminates. See below.
-
-=item 5
-
 go() then attempts to call the method initialize(). This method may be
 implemented in subclasses which must do processing after the HTTP header is sent
 but before any content is sent.
@@ -163,56 +158,11 @@ sub go {
 	# FIXME: we won't need noContent after reply_with_redirect() is adopted
 	return $returnValue if $r->header_only or $self->{noContent};
 	
-	# FIXME: when $self->{sendFile} is no longer being set, remove this:
-	# if the sendFile flag is set, send the file and exit;
-	if ($self->{sendFile}) {
-		return $self->sendFile;
-	}
-	
 	$self->initialize() if $self->can("initialize");
 	
 	$self->content();
 	
 	return $returnValue;
-}
-
-=item sendFile()
-
-Sends the file specified in $self->{sendFile} to the client. $self->{sendFile}
-should be a reference to a hash containing the following fields:
-
- source => full path to the file to send
- type   => the content type of the file
- name   => the name that the client should give to the file upon download
-
-This method is called internally by go() if the field $self->{sendFile} is
-present.
-
-This mechanism relies on the header() method to send appropriate C<Content-Type>
-and C<Content-Disposition> headers.
-
-This mechanism is fragile and will probably be replaced by something else in the
-future.
-
-=cut
-
-# FIXME: when $self->{sendFile} is no longer being set, remove this method
-sub sendFile {
-	my ($self) = @_;
-	
-	my $file = $self->{sendFile}->{source};
-	
-	return NOT_FOUND unless -e $file;
-	return FORBIDDEN unless -r $file;
-	
-	open my $fh, "<", $file
-		or return SERVER_ERROR;
-	while (<$fh>) {
-		print $_;
-	}
-	close $fh;
-	
-	return OK;
 }
 
 =item r()
@@ -226,27 +176,6 @@ sub r {
 	my ($self) = @_;
 	
 	return $self->{r};
-}
-
-=item reply_with_file($type, $source, $name, $delete_after)
-
-Enables file sending mode, causing go() to send the file specified by $source to
-the client after calling pre_header_initialize(). The content type sent is
-$type, and the suggested client-side file name is $name. If $delete_after is
-true, $source is deleted after it is sent.
-
-=cut
-
-sub reply_with_file {
-	my ($self, $type, $source, $name, $delete_after) = @_;
-	$delete_after ||= "";
-	
-	$self->{reply_with_file} = {
-		type => $type,
-		source => $source,
-		name => $name,
-		delete_after => $delete_after,
-	};
 }
 
 =item do_reply_with_file($fileHash)
@@ -288,19 +217,6 @@ sub do_reply_with_file {
 	}
 }
 
-=item reply_with_redirect($url)
-
-Enables redirect mode, causing go() to redirect to the given URL after calling
-pre_header_initialize().
-
-=cut
-
-sub reply_with_redirect {
-	my ($self, $url) = @_;
-	
-	$self->{reply_with_redirect} = $url;
-}
-
 =item do_reply_with_redirect($url)
 
 Handler for reply_with_redirect(), used by go(). DO NOT CALL THIS METHOD DIRECTLY.
@@ -315,6 +231,77 @@ sub do_reply_with_redirect {
 	$r->header_out(Location => $url);
 	$r->send_http_header();
 }
+
+=back
+
+=cut
+
+################################################################################
+
+=head1 DATA MODIFIERS
+
+Modifiers allow the caller to register a piece of data for later retrieval in a
+standard way.
+
+=over
+
+=item reply_with_file($type, $source, $name, $delete_after)
+
+Enables file sending mode, causing go() to send the file specified by $source to
+the client after calling pre_header_initialize(). The content type sent is
+$type, and the suggested client-side file name is $name. If $delete_after is
+true, $source is deleted after it is sent.
+
+Must be called before the HTTP header is sent. Usually called from
+pre_header_initialize().
+
+=cut
+
+sub reply_with_file {
+	my ($self, $type, $source, $name, $delete_after) = @_;
+	$delete_after ||= "";
+	
+	$self->{reply_with_file} = {
+		type => $type,
+		source => $source,
+		name => $name,
+		delete_after => $delete_after,
+	};
+}
+
+=item reply_with_redirect($url)
+
+Enables redirect mode, causing go() to redirect to the given URL after calling
+pre_header_initialize().
+
+Must be called before the HTTP header is sent. Usually called from
+pre_header_initialize().
+
+=cut
+
+sub reply_with_redirect {
+	my ($self, $url) = @_;
+	
+	$self->{reply_with_redirect} = $url;
+}
+
+=item addmessage($message)
+
+Adds a message to the list of messages to be printed by the message() template
+escape handler.
+
+Must be called before the message() template escape is invoked.
+
+=cut
+
+# FIXME: we should probably 
+
+sub addmessage {
+	my ($self, $message) = @_;
+	$self->{message} .= $message;
+}
+
+
 
 =back
 
@@ -345,18 +332,8 @@ the HTTP header is sent.
 
 Defined in this package.
 
-Generates and sends a default HTTP header. If the field $self->{sendFile} is
-present, sends the following headers (where TYPE is $self->{sendFile}->{type}
-and NAME is $self->{sendFile}->{name}):
-
- Content-Type: TYPE
- Content-Disposition: attachment; filename=NAME
-
-If $self->{sendFile} is not present, sends the following headers:
-
- Content-Type: text/html
-
-See sendFile() above for more information on the sendFile mechanism.
+Generates and sends a default HTTP header, specifying the "text/html" content
+type.
 
 =cut
 
@@ -364,18 +341,7 @@ sub header {
 	my $self = shift;
 	my $r = $self->r;
 	
-	# FIXME: when $self->{sendFile} is no longer being set, remove sendFile handler
-	
-	if ($self->{sendFile}) {
-		my $contentType = $self->{sendFile}->{type};
-		my $fileName = $self->{sendFile}->{name};
-		$r->content_type($contentType);
-		$r->header_out("Content-Disposition" => "attachment; filename=\"$fileName\"");
-	} else {
-		$r->content_type("text/html");
-		
-	}
-	
+	$r->content_type("text/html");
 	$r->send_http_header();
 	return OK;
 }
@@ -766,28 +732,6 @@ sub message {
 	
 	return "";
 }
-
-=item addmessage($message)
-
-Defined in this package.
-
-Concatenates a new message to any previous ones.
-This is preferred over any direct access to $self->{message} to avoid overwriting any
-previously submitted messages
-
-The implementation in this package concatenates the given message to the end of the
-current value of the field $self->{message} or sets $self->{message} if it is empty
-
-=cut
-
-sub addmessage {
-	my ($self, $message) = @_;
-	
-	$self->{message} .= $message;
-	
-	return "";
-}
-
 
 =item title()
 
