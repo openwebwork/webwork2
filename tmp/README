@@ -1,0 +1,4 @@
+$CVSHeader: webwork-modperl/logs/README,v 1.1 2004/06/30 01:26:02 sh002i Exp $
+
+This directory is used for temporary files that need not be web
+accessible.
