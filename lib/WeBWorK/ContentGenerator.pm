@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.100 2004/05/22 01:50:35 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.101 2004/05/22 21:24:42 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -481,10 +481,10 @@ sub links {
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets)}, "Problem Sets")));
-	print CGI::li(CGI::a({href=>$self->systemLink($options)}, $options->name));
-	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  $grades->name));
-	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  $logout->name));
+		CGI::a({href=>$self->systemLink($sets)}, 'Problem&nbsp;Sets')));
+	print CGI::li(CGI::a({href=>$self->systemLink($options)}, space2nbsp($options->name)));
+	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  space2nbsp($grades->name)));
+	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  space2nbsp($logout->name)));
 	
 	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
 	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
@@ -527,12 +527,12 @@ sub links {
 		
 		print CGI::hr();
 		print CGI::start_li();
-		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
+		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, space2nbsp($instr->name)));
 		print CGI::start_ul();
-		print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, $addUsers->name));
-		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
+		print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, space2nbsp($addUsers->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, space2nbsp($userList->name)));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($setList)}, $setList->name);
+		print CGI::a({href=>$self->systemLink($setList)}, space2nbsp($setList->name));
 		if (defined $setID and $setID ne "") {
 			print CGI::start_ul();
 			print CGI::start_li();
@@ -546,12 +546,12 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
-		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, $maker->name));
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, $assigner->name));
-		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
+		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, space2nbsp($maker->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, space2nbsp($assigner->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, space2nbsp($mail->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, space2nbsp($scoring->name)));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($stats)}, $stats->name);
+		print CGI::a({href=>$self->systemLink($stats)}, space2nbsp($stats->name));
 		if (defined $userID and $userID ne "") {
 			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
@@ -559,14 +559,14 @@ sub links {
 		}
 		if (defined $setID and $setID ne "") {
 			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, $setID))
+				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, space2nbsp($setID)))
 			);
 		}
 		print CGI::end_li();
 		
 	## Added Link for Student Progress	
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($progress)}, $progress->name);
+		print CGI::a({href=>$self->systemLink($progress)}, space2nbsp($progress->name));
 		if (defined $userID and $userID ne "") {
 			print CGI::ul(
 				CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
@@ -574,12 +574,12 @@ sub links {
 		}
 		if (defined $setID and $setID ne "") {
 			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, $setID))
+				CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, space2nbsp($setID)))
 			);
 		}
 		print CGI::end_li();
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($files)}, $files->name));
+		print CGI::li(CGI::a({href=>$self->systemLink($files)}, space2nbsp($files->name)));
 		print CGI::end_ul();
 		print CGI::end_li();
 	}
@@ -1353,6 +1353,18 @@ sub nbsp {
 	my $self = shift;
 	my $str  = shift;
 	(defined $str && $str =~/\S/) ? $str : '&nbsp;';
+}
+
+=item space2nbsp($string)
+
+Replace spaces in the string with html non-breaking spaces.
+
+=cut
+
+sub space2nbsp {
+	my $str = shift;
+	$str =~ s/\s/&nbsp;/g;
+	return($str);
 }
 
 =item errorOutput($error, $details)
