@@ -29,7 +29,9 @@ sub body {
 	my $user = $r->param('user');
 	my $key = $db->getKey($user)->key();
 	
+	#########################################################################
 	# Determine a name for this set
+	#########################################################################
 	# Determine the set number, if there is one. Otherwise make setName = "new set".
 	# fix me
 	my ($path_info,@components) = $self->gatherInfo();
@@ -40,8 +42,9 @@ sub body {
 	$path_info =~s|problemSetEditor.*$|problemSetEditor/|;   # remove the setName, if any, from the path
 	my $formPath = "/webwork$path_info";   # . $setName$self->url_authen_args();
 	
-	
-	# determine the set directory
+	#########################################################################
+	# determine the library set directory 
+	#########################################################################
 	my $setDirectory = $r->param('setDirectory');
 	my $oldSetDirectory = $r->param('oldSetDirectory');
 	
@@ -55,19 +58,26 @@ sub body {
 	
 	
 	# Determine  values for strings
+	#########################################################################
+	#text area region, adding problems to the list
+	#########################################################################
 	
-	#text area region, initialize the text area region if it does not exist.
 	my $textAreaString;
 	#fix me  -- this does not handle multiple problem selections correctly.
 	my $problem_name = $r->param('pgProblem');
 	my $problem_list = $r->param('problem_list');
-	$problem_list = "# List problems to be included in the set here\r\n\r\n" unless defined($problem_list);
-
-	$problem_list .= $oldSetDirectory.'/'.$r->param('pgProblem').", 1 \r\n" if defined($r->param('pgProblem'));  
+	
+	# Initialize the textarea string if it is empty or hasn't been defined.
+	$problem_list = "# List problems to be included in the set here???\r\n\r\n" unless defined($problem_list) and $problem_list =~/\S/;
+	my $problemEntry = $oldSetDirectory.'/'.$r->param('pgProblem').", 1 \r\n";
+	# add the new problem entry if the address is complete. (still buggy -- how do insure that oldSetDirectory is not empty?
+	$problem_list .= $problemEntry if defined($r->param('pgProblem') and defined($oldSetDirectory) and ($oldSetDirectory =~/\S/));  
+	# format the complete textArea string
 	$textAreaString = qq!<textarea name="problem_list", cols="40", rows="$rowheight">$problem_list</textarea>!;
 	
 	
-	#Determine the headline for the page   
+	#Determine the headline for the page 
+ 
 	$libraryDirectory = $self->{ce}->{courseDirs}->{templates};
 	#fix me   Debugging code
 # 	my $header = "Choose problems from $libraryDirectory directory" .
@@ -78,21 +88,21 @@ sub body {
 	my $header = '';
 
 	
-		
-	# Define the popup strings used.
+	#########################################################################	
+	# Define the popup strings used for selecting the library set directory, and the problem from that directory
 	#fix me
 	# he problem of multiple selections needs to be handled properly.
-	
+	#########################################################################
 	my $popUpSetDirectoryString = $self->fetchSetDirectories($setDirectory);  #pass default choice as current directory
 	my $popUpPGProblemString = $self->fetchPGproblems($setDirectory);
 	
 	
-	
+	#########################################################################
 	# Define a link to view the problem
 	#fix me:
 	# Currently this link used the webwork problem library, which might be out of 
 	# sync with the local library
-	
+	#########################################################################
 
 	
 	my $viewProblemLink;
@@ -105,6 +115,9 @@ sub body {
 		$viewProblemLink = '';
 	
 	}
+	#########################################################################
+	# Format the page
+	#########################################################################
 	           
 	return CGI::p($header),
 		#CGI::start_form(-action=>"/webwork/mth143/instructor/problemSetEditor/"),
