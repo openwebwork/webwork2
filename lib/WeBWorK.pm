@@ -30,6 +30,7 @@ use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
 use WeBWorK::ContentGenerator::Instructor::Scoring;
+use WeBWorK::ContentGenerator::Instructor::Stats;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -166,6 +167,8 @@ sub dispatch($) {
 				$result = WeBWorK::ContentGenerator::Instructor::SendMail->new($r, $ce, $db)->go(@components);
 			} elsif ($instructorArgument eq "show_answers") {
 				$result = WeBWorK::ContentGenerator::Instructor::ShowAnswers->new($r, $ce, $db)->go(@components);
+			} elsif ($instructorArgument eq "stats") {
+				$result = WeBWorK::ContentGenerator::Instructor::Stats->new($r, $ce, $db)->go(@components);
 			}
 		} elsif ($arg eq "options") {
 			$result = WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
