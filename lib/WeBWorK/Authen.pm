@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.35 2004/10/11 23:40:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.36 2004/11/11 15:40:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -188,6 +188,7 @@ sub verify($) {
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	my $debugPracticeUser = $ce->{debugPracticeUser};
@@ -257,18 +258,16 @@ sub verify($) {
 			$error = "You must specify a username.";
 			last VERIFY;
 		}
-		########################################################
+		
 		# Make sure user is in the database
-		########################################################
-
-		my $userRecord    =   $db->getUser($user);
-		unless (defined $userRecord) { # checked
+		my $userRecord = $db->getUser($user); # checked
+		unless (defined $userRecord) {
+			# FIXME too much information!
 			$error = "There is no account for $user in this course.";
 			last VERIFY;
 		}
-		########################################################
-		# Make sure the user's status is defined.
-		########################################################
+		
+		# fix invalid status values (FIXME this should be in DB!)
 		unless (defined $userRecord->status and 
 		        defined($ce->{siteDefaults}->{status}->{$userRecord->status})
 		        ) {
@@ -277,13 +276,22 @@ sub verify($) {
 			$db->putUser($userRecord);
 			warn "Setting status for user $user to C.  It was previously undefined or miss defined.";
 		}
+		
+		# make sure the user hasn't been dropped from the course
 		if ($ce->{siteDefaults}->{status}->{$userRecord->status} eq "Drop") {
-			$error  = "The user $user has been dropped from this course. ";
+			# FIXME too much information!
+			$error = "The user $user has been dropped from this course.";
 			last VERIFY;
 		}
-		########################################################
+		
+		# make sure the user is allowed to login
+		unless ($authz->hasPermissions($user, "login")) {
+			# FIXME too much information?
+			$error = "The user $user is not allowed to log in.";
+			last VERIFY;
+		}
+		
 		# it's a practice user.
-		########################################################
 		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
 			# we're not interested in a practice user's password
 			$r->param("passwd", "");
