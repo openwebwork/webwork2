@@ -63,7 +63,6 @@ sub body {
 	if ($changeOptions) {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
-				warn $newP;
 				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)};
 				my $cryptedPassword = cryptPassword($newP);
 				$passwordRecord->password($cryptedPassword);
