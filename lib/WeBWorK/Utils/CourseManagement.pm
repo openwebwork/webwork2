@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.17 2004/06/24 17:44:16 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -183,14 +183,16 @@ sub addCourse {
 		}
 	}
 	
-	my @professors; # user ID of any user whose permission level == 10
+	# apparently never used:
+	#my @professors; # user ID of any user whose permission level == 10
 	
 	foreach my $userTriple (@users) {
 		my ($User, $Password, $PermissionLevel) = @$userTriple;
 		
-		if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
-			push @professors, $PermissionLevel->user_id;
-		}
+		# apparently never used:
+		#if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
+		#	push @professors, $PermissionLevel->user_id;
+		#}
 		
 		eval { $db->addUser($User)                       }; warn $@ if $@;
 		eval { $db->addPassword($Password)               }; warn $@ if $@;
