@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.90 2004/03/23 01:48:07 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.91 2004/04/04 17:08:45 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1269,7 +1269,7 @@ Otherwise $string is returned.
 sub nbsp {
 	my $self = shift;
 	my $str  = shift;
-	($str =~/\S/) ? $str : '&nbsp;';
+	(defined $str && $str =~/\S/) ? $str : '&nbsp;';
 }
 
 =item errorOutput($error, $details)
