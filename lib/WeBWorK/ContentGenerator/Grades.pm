@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.8 2004/10/09 03:05:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.9 2004/10/26 03:13:00 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -156,6 +156,8 @@ sub scoring_info {
 	my $EMAIL         = $ur->email_address;
 	my $LOGIN         = $ur->user_id;
 	my @COL           = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
+	unshift(@COL,"");			## this makes COL[1] the first column
+
 	my $endCol        = @COL;
 	# for safety, only evaluate special variables
 	my $msg = $text; 
