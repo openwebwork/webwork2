@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.42 2004/01/23 16:49:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.43 2004/01/25 19:56:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,7 +75,8 @@ sub dispatch($) {
 	# It's for figuring out the basepath. I may change this up if I find a
 	# better way to do it.
 	my $path_info = $r->path_info || "";
-	$path_info =~ s!/+!/!g; # strip multiple forward slashes
+	#$path_info =~ s|/+|/|g; # strip multiple forward slashes
+	#$r->path_info($path_info); # store that back into the request object
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
@@ -102,7 +103,7 @@ POST requests include a "/" at the end of the URI.
 	}
 	
 	# Create the @components array, which contains the path specified in the URL
-	my($junk, @components) = split "/", $path_info;
+	my($junk, @components) = split /\/+/, $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $pg_root = $r->dir_config('pg_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
