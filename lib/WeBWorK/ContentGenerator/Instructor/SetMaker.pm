@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.29 2004/10/11 13:32:01 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.32 2004/10/21 01:22:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -434,7 +434,7 @@ sub make_top_row {
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
 		-onclick=>$myjs
 		),
-		"	 ",
+		"  ",
 		CGI::textfield(-name=>"new_set_name", 
 					   -default=>"Name for new set here",
 					   -override=>1, -size=>30),
@@ -706,7 +706,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('new_local_set')) {
 		if ($r->param('new_set_name') !~ /^[\w.-]*$/) {
-			$self->addbadmessage("The name ".$r->param('new_set_name')." is not a valid set name.	 Use only letters, digits, -, _, and .");
+			$self->addbadmessage("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
 		} else {
 			my $newSetName = $r->param('new_set_name');
 			$newSetName =~ s/^set//;
@@ -714,7 +714,7 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
-	$self->addbadmessage("The set name $newSetName is already in use.	 Pick a different name if you would like to start a new set.");
+	$self->addbadmessage("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 	$newSetRecord = $db->{set}->{record}->new();
 	$newSetRecord->set_id($newSetName);
@@ -756,9 +756,9 @@ sub pre_header_initialize {
 		$localSet eq NO_LOCAL_SET_STRING) {
 	$self->addbadmessage('You are trying to add problems to something, but you did not select a "Target Set" name as a target.');
 			} else {
-	my $newSetRecord	 = $db->getGlobalSet($localSet);
+	my $newSetRecord  = $db->getGlobalSet($localSet);
 	if (not defined($newSetRecord)) {
-		$self->addbadmessage("You are trying to add problems to $localSet, but that set does not seem to exist!	 I bet you used your \"Back\" button.");
+		$self->addbadmessage("You are trying to add problems to $localSet, but that set does not seem to exist!  I bet you used your \"Back\" button.");
 	} else {
 		my $addcount = add_selected($self, $db, $localSet);
 		if($addcount > 0) {
@@ -862,7 +862,7 @@ sub body {
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown};	 
+	my $last_shown = $self->{last_shown};
 	my $browse_which = $self->{browse_which};
 	my $problem_seed = $self->{problem_seed};
 	my @pg_files = @{$self->{pg_files}};
