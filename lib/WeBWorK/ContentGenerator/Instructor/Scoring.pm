@@ -17,6 +17,22 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime);
 
+sub initialize {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	
+	my $scoringDir = $ce->{courseDirs}->{scoring};
+	if (defined $r->param('scoreSelected')) {
+		my @selected = $r->param('selectedSet');
+		foreach my $setID (@selected) {
+			my @scoringData = $self->scoreSet($setID);
+			$self->writeCSV("$scoringDir/s${setID}scr.csv", @scoringData);
+		}
+	}
+}
+	
+
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
 # will have to be rewritten some.
 # $format can be any of "normal", "full", "info", or "totals".  An undefined value defaults to "normal"
@@ -29,6 +45,7 @@ sub scoreSet {
 	my $db = $self->{db};
 	my @scoringData;
 	
+	$format = "normal" unless defined $format;
 	$format = "normal" unless $format eq "full" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = $format eq "full" ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
@@ -108,8 +125,7 @@ sub scoreSet {
 		}
 		$valueTotal += $globalProblem->value;
 		for (my $user = 0; $user < @userKeys; $user++) {
-			# getting the UserProblem is quicker, and we only need user-only data, anyway
-			my $userProblem = $db->getUserProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
+			my $userProblem = $db->getMergedProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
 			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
 			unless ($format eq "totals") {
