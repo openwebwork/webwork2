@@ -319,6 +319,11 @@ sub defineProblemEnvir($$$$$$$) {
 		? tempdir("webwork-dvipng-XXXXXXXX", DIR => $envir{tempDirectory})
 		: undef;
 	
+	# Information for sending mail
+	
+	$envir{mailSmtpServer} = $courseEnv->{mail}->{smtpServer};
+	$envir{mailSmtpSender} = $courseEnv->{mail}->{smtpSender};
+	
 	# Default values for evaluating answers
 	
 	my $ansEvalDefaults = $courseEnv->{pg}->{ansEvalDefaults};
@@ -355,7 +360,7 @@ sub safetyFilter {
 	}
 	# replace ^ with **    (for exponentiation)
 	# $answer =~ s/\^/**/g;
-	# Return if  forbidden characters are found
+	# Return if forbidden characters are found
 	unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)]+$/ )  {
 		$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
 		$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";

@@ -27,8 +27,13 @@ our @EXPORT = (
 	'createFile',
 	'createDirectory',
 	'getImageDimmensions',
+	'dvipng',
 );
 
+# The above symbols are exported into the caller's namespace. This is usually
+# done so that they can be shared with a problem's safe compartment via
+# WeBWorK::PG::Translator. To do this, add the symbol's name to the
+# %shared_subroutine_hash hash in lib/WeBWorK/PG/Translator.pm.
 
 =head1 Private functions (not methods) used by PGtranslator for file IO.
 
@@ -199,6 +204,78 @@ sub getImageDimmensions($) {
 	my $image = GD::Image->new($imageName);
 	my ($width, $height) = $image->getBounds();
 	return ($height, $width);
+}
+
+=head2 dvipng
+
+dvipng(wd, latex, dvpng, tex, targetPath)
+
+	$wd,        # working directory, for latex and dvipng garbage
+		    # (must already exist!)
+	$latex,     # path to latex binary
+	$dvipng,    # path to dvipng binary
+	$tex,       # tex string representing equation
+	$targetPath # location of resulting image file
+
+Uses LaTeX and dvipng to convert a LaTeX math expression into a PNG image.
+
+=cut
+
+sub dvipng($$$$$) {
+	my (
+		$wd,        # working directory, for latex and dvipng garbage
+		            # (must already exist!)
+		$latex,     # path to latex binary
+		$dvipng,    # path to dvipng binary
+		$tex,       # tex string representing equation
+		$targetPath # location of resulting image file
+	) = @_;
+	
+	my $texFile  = "$wd/equation.tex";
+	my $dviFile  = "$wd/equation.dvi";
+	my $dviFile2 = "$wd/equationequation.dvi";
+	my $dviCall  = "equation";
+	my $pngFile  = "$wd/equation1.png";
+	
+	die "dvipng working directory $wd doesn't exist -- caller should have created it for us!\n"
+		unless -e $wd;
+	
+	# write the tex file
+	local *TEX;
+	open TEX, ">", $texFile;
+	print TEX <<'EOF';
+% BEGIN HEADER
+\batchmode
+\documentclass[12pt]{article}
+\usepackage{amsmath,amsfonts,amssymb}
+\def\gt{>}
+\def\lt{<}
+\usepackage[active,textmath,displaymath]{preview}
+\begin{document}
+% END HEADER
+EOF
+	print TEX "\\( \\displaystyle{$tex} \\)\n";
+	print TEX <<'EOF';
+% BEGIN FOOTER
+\end{document}
+% END FOOTER
+EOF
+	close TEX;
+	
+	# call latex
+	system "cd $wd && $latex $texFile";
+	
+	return 0 unless -e $dviFile;
+	
+	# change the name of the DVI file to get around dvipng's crackheadedness
+	system "/bin/mv", $dviFile, $dviFile2;
+	
+	# call dvipng
+	system "cd $wd && $dvipng $dviCall" and die "dvipng:dvipng failed: $!";
+	
+	return 0 unless -e $pngFile;
+	
+	system "/bin/mv", $pngFile, $targetPath and die "Failed to mv: $!\n";
 }
 
 1;

@@ -295,6 +295,7 @@ my %shared_subroutine_hash = (
 	'&directoryFromPath'       => 'IO',
 	'&createFile'              => 'IO',
 	'&getImageDimmensions'     => 'IO',
+	'&dvipng'                  => 'IO',
 );
 
 sub initialize {

@@ -15,8 +15,10 @@ use strict;
 use warnings;
 use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
+use File::Temp qw(tempdir);
 use WeBWorK::Form;
 use WeBWorK::PG;
+use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
 
 ############################################################
@@ -61,6 +63,7 @@ sub pre_header_initialize {
 	my $displayMode        = $r->param("displayMode")        || $courseEnv->{pg}->{options}->{displayMode};
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
+	my $previewAnswers     = $r->param("previewAnswers");
 	
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -142,10 +145,11 @@ sub pre_header_initialize {
 	$self->{problem}         = $problem;
 	$self->{permissionLevel} = $permissionLevel;
 	
-	$self->{displayMode}   = $displayMode;
-	$self->{redisplay}     = $redisplay;
-	$self->{submitAnswers} = $submitAnswers;
-	$self->{formFields}    = $formFields;
+	$self->{displayMode}    = $displayMode;
+	$self->{redisplay}      = $redisplay;
+	$self->{submitAnswers}  = $submitAnswers;
+	$self->{previewAnswers} = $previewAnswers;
+	$self->{formFields}     = $formFields;
 	
 	$self->{want} = \%want;
 	$self->{must} = \%must;
@@ -255,6 +259,7 @@ sub body {
 	my $problem         = $self->{problem};
 	my $permissionLevel = $self->{permissionLevel};
 	my $submitAnswers   = $self->{submitAnswers};
+	my $previewAnswers  = $self->{previewAnswers};
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
 	
@@ -308,8 +313,13 @@ sub body {
 	# attempt summary
 	if ($submitAnswers or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
-		print attemptResults($pg, $submitAnswers, $will{showCorrectAnswers},
+		print $self->attemptResults($pg, $submitAnswers, $will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers});
+	} elsif ($previewAnswers) {
+		# print this if user previewed answers
+		print $self->attemptResults($pg, 1, 0, 0);
+			# don't show correctness
+			# don't show correct answers
 	}
 	
 	# score summary
@@ -359,7 +369,10 @@ sub body {
 		$self->viewOptions,
 		CGI::p(CGI::i($pg->{result}->{msg})),
 		CGI::p($pg->{body_text}),
-		CGI::p(CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers")),
+		CGI::p(
+			CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers"),
+			CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers"),
+		),
 		CGI::endform();
 	
 	# warning output
@@ -368,19 +381,19 @@ sub body {
 	}
 	
 	# debugging stuff
-	#print
-	#	hr(),
-	#	h2("debugging information"),
-	#	h3("form fields"),
-	#	ref2string($formFields),
-	#	h3("user object"),
-	#	ref2string($user),
-	#	h3("set object"),
-	#	ref2string($set),
-	#	h3("problem object"),
-	#	ref2string($problem),
-	#	h3("PG object"),
-	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	print
+		CGI::hr(),
+		CGI::h2("debugging information"),
+		CGI::h3("form fields"),
+		ref2string($self->{formFields}),
+		CGI::h3("user object"),
+		ref2string($self->{user}),
+		CGI::h3("set object"),
+		ref2string($set),
+		CGI::h3("problem object"),
+		ref2string($problem),
+		CGI::h3("PG object"),
+		ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	
 	return "";
 }
@@ -419,7 +432,8 @@ EOF
 	;
 }
 
-sub attemptResults($$$) {
+sub attemptResults($$$$$) {
+	my $self = shift;
 	my $pg = shift;
 	my $showAttemptAnswers = shift;
 	my $showCorrectAnswers = shift;
@@ -429,6 +443,7 @@ sub attemptResults($$$) {
 	
 	my $header = CGI::th("answer");
 	$header .= $showAttemptAnswers ? CGI::th("attempt")  : "";
+	$header .= $showAttemptAnswers ? CGI::th("preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("result")   : "";
 	$header .= $showAttemptAnswers ? CGI::th("messages") : "";
@@ -437,6 +452,7 @@ sub attemptResults($$$) {
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+		my $preview       = $self->previewAnswer($answerResult);
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showAttemptAnswers ? $answerResult->{ans_message} : "";
@@ -450,6 +466,7 @@ sub attemptResults($$$) {
 		
 		my $row = CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td($studentAnswer) : "";
+		$row .= $showAttemptAnswers ? CGI::td($preview)       : "";
 		$row .= $showCorrectAnswers ? CGI::td($correctAnswer) : "";
 		$row .= $showAttemptResults ? CGI::td($resultString)  : "";
 		$row .= $answerMessage      ? CGI::td($answerMessage) : "";
@@ -513,6 +530,39 @@ sub viewOptions($) {
 		$optionLine,
 		CGI::submit(-name=>"redisplay", -label=>"Redisplay Problem"),
 	);
+}
+
+sub previewAnswer($$) {
+	my ($self, $answerResult) = @_;
+	my $ce      = $self->{courseEnvironment};
+	my $user    = $self->{user};
+	my $set     = $self->{set};
+	my $problem = $self->{problem};
+	
+	# how are we going to name this?
+	my $targetPathCommon = "/png/"
+		. $user->id . "."
+		. $set->id . "."
+		. $problem->id . "."
+		. $answerResult->{ans_name} . ".png";
+	
+	# figure out where to put things
+	my $wd = tempdir("webwork-dvipng-XXXXXXXX", DIR => $ce->{courseDirs}->{html_temp});
+	my $latex = $ce->{externalPrograms}->{latex};
+	my $dvipng = $ce->{externalPrograms}->{dvipng};
+	my $tex = $answerResult->{preview_latex_string};
+	my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
+			# should use surePathToTmpFile, but we have to
+			# isolate it from the problem enivronment first
+	my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
+	
+	# call dvipng to generate a preview
+	dvipng($wd, $latex, $dvipng, $tex, $targetPath);
+	if (-e $targetPath) {
+		return "<img src=\"$targetURL\" alt=\"$tex\" />";
+	} else {
+		return "<b>[math2img failed]</b>";
+	}
 }
 
 ##### permission queries #####

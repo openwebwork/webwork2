@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.18 2002-11-01 22:57:24 sh002i Exp $
+# $Id: TODO,v 1.19 2002-11-08 22:14:16 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
 
-OK	write template file from what we drew on the board
-OK	normalize files:
+DONE	write template file from what we drew on the board
+DONE	normalize files:
 		- (c) header on all files
 		- standard order of preamble lines:
 			1. (c) header
@@ -23,9 +23,9 @@ OK	normalize files:
 		- use "use base" rather than "our @ISA"
 		- no warnings or errors!
 		- (later on) POD documentation for all files
-OK	fix templating code in ContentGenerator, add new escape functions
-OK	implement the new template
-OK	finish ProblemSets and ProblemSet
+DONE	fix templating code in ContentGenerator, add new escape functions
+DONE	implement the new template
+DONE	finish ProblemSets and ProblemSet
 	
 --------------------------------------------------------------------------------
 
@@ -73,14 +73,14 @@ DONE	make static images work
 DONE	make GD-generated images work
 DONE	make HTML links work
 DONE	make images in PDFs work
-	remove dependancies on Global:: from IO functions (send_mail_to)
+DONE	remove dependancies on Global:: from send_mail_to
+--->	preview button in Problem
 	handle PG errors (and warnings) in Hardcopy
-	check TTH mode character encodings on mac and windows
-	have logout button invalidate key
-	preview button in Problem
-	Pretty die messages (from outside of the translator)
 	Feedback - need nice modular way of sending email
 	Options - email address and password
+	have logout button invalidate key
+	Pretty die messages (from outside of the translator)
+	check TTH mode character encodings on mac and windows
 	grep for "***" in source, address all issues
 
 --------------------------------------------------------------------------------
@@ -100,8 +100,8 @@ includePGtext
 send_mail_to
 	$REMOTE_HOST
 	$REMOTE_ADDR
-	$Global::smtpServer
-	$Global::webmaster
+	#$Global::smtpServer
+	#$Global::webmaster
 	(&Global::wwerror)
 read_whole_problem_file
 read_whole_file
