@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.47 2004/09/08 01:42:05 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.48 2004/09/10 02:32:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,9 @@ our @EXPORT_OK = qw(
 	readFile
 	readDirectory
 	listFilesRecursive
+	surePathToFile
+	makeTempDirectory
+	removeTempDirectory
 	formatDateTime
 	parseDateTime
 	textDateTime
@@ -48,29 +51,28 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeTimingLogEntry
 	list2hash
-	max
-	dbDecode
-	dbEncode
+	ref2string
 	decodeAnswers
 	encodeAnswers
-	ref2string
-	sortByName
-	makeTempDirectory
-	removeTempDirectory
+	max
 	pretty_print_rh
-	surePathToFile
 	cryptPassword
 	dequote
 	undefstr
+	sortByName
 );
 
-sub runtime_use {
+################################################################################
+# Lowlevel thingies
+################################################################################
+
+sub runtime_use($) {
 	croak "runtime_use: no module specified" unless $_[0];
 	eval "package Main; require $_[0]; import $_[0]";
 	die $@ if $@;
 }
 
-#sub backtrace {
+#sub backtrace($) {
 #	my ($style) = @_;
 #	$style = "warn" unless $style;
 #	my @bt = DB->backtrace;
@@ -85,6 +87,10 @@ sub runtime_use {
 #		return @bt;
 #	}
 #}
+
+################################################################################
+# Filesystem interaction
+################################################################################
 
 # Convert Windows and Mac (classic) line endings to UNIX line endings in a string.
 # Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
@@ -176,69 +182,9 @@ sub listFilesRecursiveHelper($$$$$$) {
 	return @matches;
 }
 
-sub formatDateTime($) {
-	my $dateTime = shift;
-	# "standard" WeBWorK date/time format (for set definition files):
-	# %m 	month number, starting with 01
-	# %d 	numeric day of the month, with leading zeros (eg 01..31)
-	# %y	year (2 digits)
-	# %I 	hour, 12 hour clock, leading 0's)
-	# %M 	minute, leading 0's
-	# %P 	am or pm (Yes %p and %P are backwards :)
-	#return time2str("%m/%d/%y %I:%M%P", $dateTime); 
-	return time2str("%m/%d/%y at %I:%M%P", $dateTime);
-}
-
-sub parseDateTime($) {
-	my $string = shift;
-	# need to bring our string from  "%m/%d/%y at %I:%M%P" to "%m/%d/%y %I:%M%P" format.
-	$string =~ s/\bat\b/ /;
-	return str2time($string);
-}
-
-sub textDateTime($) {
-	return ($_[0] =~ m/^\d*$/) ? formatDateTime($_[0]) : $_[0];
-}
-
-sub intDateTime($) {
-	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
-}
-
-sub writeLog($$@) {
-	my ($ce, $facility, @message) = @_;
-	unless ($ce->{webworkFiles}->{logs}->{$facility}) {
-		warn "There is no log file for the $facility facility defined.\n";
-		return;
-	}
-	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
-	local *LOG;
-	if (open LOG, ">>", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
-		close LOG;
-	} else {
-		warn "failed to open $logFile for writing: $!";
-	}
-}
-
-sub writeCourseLog($$@) {
-	my ($ce, $facility, @message) = @_;
-	unless ($ce->{courseFiles}->{logs}->{$facility}) {
-		warn "There is no course log file for the $facility facility defined.\n";
-		return;
-	}
-	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
-	local *LOG;
-	if (open LOG, ">>", $logFile) {
-		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
-		close LOG;
-	} else {
-		warn "failed to open $logFile for writing: $!";
-	}
-}
-
-# A very useful macro for making sure that all of the directories to a file have been constructed.
-
-sub surePathToFile {
+# A very useful macro for making sure that all of the directories to a file have
+# been constructed.
+sub surePathToFile($$) {
 	# constructs intermediate 
 	# the input path must be the path relative to this starting directory
 	my $start_directory = shift;
@@ -277,6 +223,95 @@ sub surePathToFile {
 	return $path;
 }
 
+sub makeTempDirectory($$) {
+	my ($parent, $basename) = @_;
+	# Loop until we're able to create a directory, or it fails for some
+	# reason other than there already being something there.
+	my $triesRemaining = MKDIR_ATTEMPTS;
+	my ($fullPath, $success);
+	do {
+		my $suffix = join "", map { ('A'..'Z','a'..'z','0'..'9')[int rand 62] } 1 .. 8;
+		$fullPath = "$parent/$basename.$suffix";
+		$success = mkdir $fullPath;
+	} until ($success or not $!{EEXIST});
+	die "Failed to create directory $fullPath: $!"
+		unless $success;
+	return $fullPath;
+}
+
+sub removeTempDirectory($) {
+	my ($dir) = @_;
+	rmtree($dir, 0, 0);
+}
+
+################################################################################
+# Date/time processing
+################################################################################
+
+sub formatDateTime($) {
+	my $dateTime = shift;
+	# "standard" WeBWorK date/time format (for set definition files):
+	# %m 	month number, starting with 01
+	# %d 	numeric day of the month, with leading zeros (eg 01..31)
+	# %y	year (2 digits)
+	# %I 	hour, 12 hour clock, leading 0's)
+	# %M 	minute, leading 0's
+	# %P 	am or pm (Yes %p and %P are backwards :)
+	#return time2str("%m/%d/%y %I:%M%P", $dateTime); 
+	return time2str("%m/%d/%y at %I:%M%P", $dateTime);
+}
+
+sub parseDateTime($) {
+	my $string = shift;
+	# need to bring our string from  "%m/%d/%y at %I:%M%P" to "%m/%d/%y %I:%M%P" format.
+	$string =~ s/\bat\b/ /;
+	return str2time($string);
+}
+
+sub textDateTime($) {
+	return ($_[0] =~ m/^\d*$/) ? formatDateTime($_[0]) : $_[0];
+}
+
+sub intDateTime($) {
+	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
+}
+
+################################################################################
+# Logging
+################################################################################
+
+sub writeLog($$@) {
+	my ($ce, $facility, @message) = @_;
+	unless ($ce->{webworkFiles}->{logs}->{$facility}) {
+		warn "There is no log file for the $facility facility defined.\n";
+		return;
+	}
+	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
+	local *LOG;
+	if (open LOG, ">>", $logFile) {
+		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close LOG;
+	} else {
+		warn "failed to open $logFile for writing: $!";
+	}
+}
+
+sub writeCourseLog($$@) {
+	my ($ce, $facility, @message) = @_;
+	unless ($ce->{courseFiles}->{logs}->{$facility}) {
+		warn "There is no course log file for the $facility facility defined.\n";
+		return;
+	}
+	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
+	local *LOG;
+	if (open LOG, ">>", $logFile) {
+		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close LOG;
+	} else {
+		warn "failed to open $logFile for writing: $!";
+	}
+}
+
 # $ce - a WeBWork::CourseEnvironment object
 # $function - fully qualified function name
 # $details - any information, do not use the characters '[' or ']'
@@ -290,51 +325,18 @@ sub writeTimingLogEntry($$$$) {
 	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
 }
 
-sub list2hash {
+################################################################################
+# Data munging
+################################################################################
+
+sub list2hash(@) {
 	map {$_ => "0"} @_;
 }
 
-sub max {
-	my $soFar;
-	foreach my $item (@_) {
-		$soFar = $item unless defined $soFar;
-		if ($item > $soFar) {
-			$soFar = $item;
-		}
-	}
-	return defined $soFar ? $soFar : 0;
-}
-
-sub decodeAnswers($) {
-	my $string = shift;
-	return unless defined $string and $string;
-	my @array = split m/##/, $string;
-	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
-	push @array, "" if @array%2;
-	return @array; # it's actually a hash ;)
-}
-
-sub encodeAnswers(\%\@) {
-	my %hash = %{ shift() };
-	my @order = @{ shift() };
-	my $string = "";
-	foreach my $name (@order) {
-		my $value = defined $hash{$name} ? $hash{$name} : "";
-		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
-		$value =~ s/#/\\#\\/g; # and it's not my fault!
-		if ($value =~ m/\\$/) {
-			# if the value ends with a backslash, string2hash will
-			# interpret that as a normal escape sequence (not part
-			# of the weird pound escape sequence) if the next
-			# character is &. So we have to protect against this.
-			# will adding a spcae at the end of the last answer
-			# hurt anything? i don't think so...
-			$value .= " ";
-		}
-		$string .= "$name##$value##"; # this is also not my fault
-	}
-	$string =~ s/##$//; # remove last pair of hashs
-	return $string;
+sub refBaseType($) {
+	my $ref = shift;
+	$ref =~ m/(\w+)\(/; # this might not be robust...
+	return $1;
 }
 
 sub ref2string($;$);
@@ -389,18 +391,89 @@ sub ref2string($;$) {
 	}	
 }
 
-sub refBaseType($) {
-	my $ref = shift;
-	$ref =~ m/(\w+)\(/; # this might not be robust...
-	return $1;
+sub decodeAnswers($) {
+	my $string = shift;
+	return unless defined $string and $string;
+	my @array = split m/##/, $string;
+	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
+	push @array, "" if @array%2;
+	return @array; # it's actually a hash ;)
 }
+
+sub encodeAnswers(\%\@) {
+	my %hash = %{ shift() };
+	my @order = @{ shift() };
+	my $string = "";
+	foreach my $name (@order) {
+		my $value = defined $hash{$name} ? $hash{$name} : "";
+		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
+		$value =~ s/#/\\#\\/g; # and it's not my fault!
+		if ($value =~ m/\\$/) {
+			# if the value ends with a backslash, string2hash will
+			# interpret that as a normal escape sequence (not part
+			# of the weird pound escape sequence) if the next
+			# character is &. So we have to protect against this.
+			# will adding a spcae at the end of the last answer
+			# hurt anything? i don't think so...
+			$value .= " ";
+		}
+		$string .= "$name##$value##"; # this is also not my fault
+	}
+	$string =~ s/##$//; # remove last pair of hashs
+	return $string;
+}
+
+sub max(@) {
+	my $soFar;
+	foreach my $item (@_) {
+		$soFar = $item unless defined $soFar;
+		if ($item > $soFar) {
+			$soFar = $item;
+		}
+	}
+	return defined $soFar ? $soFar : 0;
+}
+
+sub pretty_print_rh($) {
+	my $rh = shift;
+	foreach my $key (sort keys %{$rh})  {
+		warn "  $key => ",$rh->{$key},"\n";
+	}
+}
+
+sub cryptPassword($) {
+	my ($clearPassword) = @_;
+	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+	my $cryptPassword = crypt($clearPassword, $salt);
+	return $cryptPassword;
+}
+
+# from the Perl Cookbook, first edition, page 25:
+sub dequote($) {
+	local $_ = shift;
+	my ($white, $leader); # common whitespace and common leading string
+	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
+		($white, $leader) = ($2, quotemeta($1));
+	} else {
+		($white, $leader) = (/^(\s+)/, '');
+	}
+	s/^\s*?$leader(?:$white)?//gm;
+	return $_;
+}
+
+sub undefstr($@) {
+	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
+}
+
+################################################################################
+# Sorting
+################################################################################
 
 # p. 101, Camel, 3rd ed.
 # The <=> and cmp operators return -1 if the left operand is less than the
 # right operand, 0 if they are equal, and +1 if the left operand is greater
 # than the right operand.
-
-sub sortByName {
+sub sortByName($@) {
 	my ($field, @items) = @_;
 	return sort {
 		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $a->$field : $a;
@@ -427,58 +500,6 @@ sub sortByName {
 		return +1 if @aParts; # a has more sections, should go second
 		return -1 if @bParts; # a had fewer sections, should go first
 	} @items;
-}
-
-sub makeTempDirectory($$) {
-	my ($parent, $basename) = @_;
-	# Loop until we're able to create a directory, or it fails for some
-	# reason other than there already being something there.
-	my $triesRemaining = MKDIR_ATTEMPTS;
-	my ($fullPath, $success);
-	do {
-		my $suffix = join "", map { ('A'..'Z','a'..'z','0'..'9')[int rand 62] } 1 .. 8;
-		$fullPath = "$parent/$basename.$suffix";
-		$success = mkdir $fullPath;
-	} until ($success or not $!{EEXIST});
-	die "Failed to create directory $fullPath: $!"
-		unless $success;
-	return $fullPath;
-}
-
-sub removeTempDirectory($) {
-	my ($dir) = @_;
-	rmtree($dir, 0, 0);
-}
-
-sub pretty_print_rh {
-	my $rh = shift;
-	foreach my $key (sort keys %{$rh})  {
-		warn "  $key => ",$rh->{$key},"\n";
-	}
-}
-
-sub cryptPassword {
-	my ($clearPassword) = @_;
-	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
-	my $cryptPassword = crypt($clearPassword, $salt);
-	return $cryptPassword;
-}
-
-# from the Perl Cookbook, first edition, page 25:
-sub dequote($) {
-	local $_ = shift;
-	my ($white, $leader); # common whitespace and common leading string
-	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
-		($white, $leader) = ($2, quotemeta($1));
-	} else {
-		($white, $leader) = (/^(\s+)/, '');
-	}
-	s/^\s*?$leader(?:$white)?//gm;
-	return $_;
-}
-
-sub undefstr($@) {
-	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
 }
 
 1;
