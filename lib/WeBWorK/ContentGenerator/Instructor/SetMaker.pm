@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.11 2004/05/15 19:13:43 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.12 2004/05/21 23:38:53 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -622,7 +622,7 @@ sub pre_header_initialize {
 	} else {
 	  my $addcount = add_selected($self, $db, $localSet);
 	  if($addcount > 0) {
-	    $self->addgoodmsg("Successfully added $addcount problem".(($addcount>1)?'s':'').
+	    $self->addgoodmessage("Successfully added $addcount problem".(($addcount>1)?'s':'').
 	      " to $localSet.");
 	  }
 	}
