@@ -56,7 +56,7 @@ sub assignProblemToUser {
 	
 	initializeUserProblem($userProblem);
 	eval {$db->addUserProblem($userProblem)};
-	warn $@ if $@;
+	warn $@ if $@ and not $@ =~ m/user problem exists/;
 }
 
 sub assignSetToUser {
@@ -68,6 +68,7 @@ sub assignSetToUser {
 	$userSet->user_id($user);
 	$userSet->set_id($setID);
 	eval {$db->addUserSet($userSet)};
+	warn $@ if $@ and not $@ =~ m/user set exists/;
 	
 	foreach my $problemID ($db->listGlobalProblems($setID)) {
 		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
