@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/SortRecords.pm,v 1.3 2004/03/01 06:33:45 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.2 2004/04/09 20:18:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,8 +94,8 @@ database for the course.
  	password => password to supply
  	database => the name of the database to create
  	wwhost   => the host from which the webwork database users will be allowed
- 	            to connect. (if server is set to localhost, this should be set
- 	            to localhost too.)
+ 	            to connect. (if host is set to localhost, this should be set to
+ 	            localhost too.)
 
 These values must match the information given in the selected dbLayout. If
 $dbOptions is undefined, addCourse() assumes that the database has already been
