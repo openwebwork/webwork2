@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.4b-ww
+ *  Version: 1.5b-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -278,18 +278,19 @@ var jsMath = {
    */
   CheckFonts: function () {
     var wh = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>');
-    if (wh.w*3 > wh.h || wh.h == 0) {
-      this.NoFontMessage();
-      if (navigator.platform == 'Win32') {
-        document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
-      } else if (navigator.platform == 'MacPPC') {
-        document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-mac.js"></SCRIPT>');
-      } else {
-        // default to unix?  Is there a better way to tell if unix?
-        document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-unix.js"></SCRIPT>');
-      }
-      document.writeln('<SCRIPT>jsMath.AddMessage()</SCRIPT>');
+    if (wh.w*3 < wh.h && wh.h != 0) return;
+    wh = this.BBoxFor('<SPAN STYLE="font-family: cmr10">'+this.TeX.cmr10[124].c+'</SPAN>');
+    if (wh.w*2 > wh.h && wh.h != 0) return;
+    this.NoFontMessage();
+    if (navigator.platform == 'Win32') {
+      document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
+    } else if (navigator.platform == 'MacPPC') {
+      document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-mac.js"></SCRIPT>');
+    } else {
+      // default to unix?  Is there a better way to tell if unix?
+      document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-unix.js"></SCRIPT>');
     }
+    document.writeln('<SCRIPT>jsMath.AddMessage()</SCRIPT>');
   },
 
   /*
@@ -467,34 +468,32 @@ var jsMath = {
     //
     if (navigator.userAgent.search(" Opera ") >= 0) {
       this.isOpera = 1;
-      if (navigator.platform == 'MacPPC') {
-        this.UpdateTeXfonts({
-          cmr10:  {
-            '10': {c: '&Omega;', tclass: 'normal'},
-            '20': {c: '&#x2C7;', tclass: 'normal'}
-          },
-          cmmi10: {
-            '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
-            '20': {c: '&kappa;', tclass: 'normal'}
-          },
-          cmsy10: {
-            '10': {c: '&otimes;', tclass: 'normal'},
-            '20': {c: '&#x2264;', tclass: 'normal'}
-          },
-          cmex10: {
-            '10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'},
-            '20': {c: '<SPAN STYLE="font-size: 82%">"</SPAN>'}
-          },
-          cmti10: {
-            '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
-            '20': {c: '<I>&#x2C7;</I>', tclass: 'normal'}
-          },
-          cmbx10: {
-            '10': {c: '<B>&Omega;</B>', tclass: 'normal'},
-            '20': {c: '<B>&#x2C7;</B>', tclass: 'normal'}
-          }
-        });
-      }
+      this.UpdateTeXfonts({
+        cmr10:  {
+          '10': {c: '&Omega;', tclass: 'normal'},
+          '20': {c: '&#x2C7;', tclass: 'normal'}
+        },
+        cmmi10: {
+          '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
+          '20': {c: '&kappa;', tclass: 'normal'}
+        },
+        cmsy10: {
+          '10': {c: '&otimes;', tclass: 'normal'},
+          '20': {c: '&#x2264;', tclass: 'normal'}
+        },
+        cmex10: {
+          '10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'},
+          '20': {c: '<SPAN STYLE="font-size: 82%">"</SPAN>'}
+        },
+        cmti10: {
+          '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
+          '20': {c: '<I>&#x2C7;</I>', tclass: 'normal'}
+        },
+        cmbx10: {
+          '10': {c: '<B>&Omega;</B>', tclass: 'normal'},
+          '20': {c: '<B>&#x2C7;</B>', tclass: 'normal'}
+        }
+      });
       this.allowAbsolute = 0;
       jsMath.delay = 10;
     }
@@ -1946,8 +1945,9 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  Layout: function (size,table,align) {
+  Layout: function (size,table,align,cspacing) {
     if (align == null) {align = []}
+    if (cspacing == null) {cspacing = []}
     
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
@@ -1987,20 +1987,22 @@ jsMath.Add(jsMath.Box,{
         if (i == table.length-1) {y -= D[i]}
         else {y -= Math.max(HD,D[i]+H[i+1]) + scale/10}
       }
+      if (cspacing[j] == null) cspacing[j] = scale;
       if (mlist.length > 0) {
         box = jsMath.Box.SetList(mlist,'T',size);
         html += jsMath.HTML.Place(box.html,cW,0);
-        cW = W[j] - box.w + scale;
-      } else {cW += scale}
+        cW = W[j] - box.w + cspacing[j];
+      } else {cW += cspacing[j]}
     }
     
     // get the full width and height
-    w = -scale; for (i = 0; i < W.length; i++) {w += W[i] + scale}
+    w = -cspacing[W.length-1];
+    for (i = 0; i < W.length; i++) {w += W[i] + cspacing[i]}
     h = jsMath.TeX.axis_height-y/2;
     
     // adjust the final row width, and vcenter the table
     //   (add 1/6em at each side for the \,)
-    html += jsMath.HTML.Spacer(cW-scale + scale/6);
+    html += jsMath.HTML.Spacer(cW-cspacing[W.length-1] + scale/6);
     html = jsMath.HTML.Place(html,scale/6,h);
     box = new jsMath.Box('html',html,w+scale/3,h,-y-h);
     box.bh = bh; box.bd = bd;
@@ -2355,7 +2357,7 @@ jsMath.Package(jsMath.mList,{
   /*
    *  For a list that has boundary delimiters as its first and last
    *  entries, we replace the boundary atoms by open and close
-   *  atoms whose nuclei are the specified delimiters perperly sized
+   *  atoms whose nuclei are the specified delimiters properly sized
    *  for the contents of the list.  (Rule 19)
    */
   AddDelimiters: function(style,size) {
@@ -3017,6 +3019,7 @@ jsMath.Package(jsMath.Typeset,{
             else {mitem.w = mitem.w[0]/18}
           }
           this.dx += mitem.w-0; // mitem.w is sometimes a string?
+          mitem = prev; // hide this from TeX
           break;
           
         case 'html':
@@ -3694,7 +3697,8 @@ jsMath.Package(jsMath.Parser,{
    */
   environments: {
     array:      'Array',
-    cases:      ['Array','\\{','.','ll']
+    cases:      ['Array','\\{','.','ll'],
+    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18]]
   },
 
   /*
@@ -3875,6 +3879,12 @@ jsMath.Package(jsMath.Parser,{
           {this.Error("Extra close brace while looking for "+this.cmd+token); return}
         pcount --;
       } else if (c == this.cmd) {
+        // really need separate counter for begin/end
+        // and it should really be a stack (new pcount for each begin)
+        if (this.string.slice(this.i,this.i+5) == "begin") {pcount++; this.i+=4}
+        else if (this.string.slice(this.i,this.i+3) == "end") {
+          if (pcount > 0) {pcount--; this.i += 2}
+        }
         if (pcount == 0)  {
           if (this.string.slice(this.i,this.i+token.length) == token) {
             c = this.string.charAt(this.i+token.length);
@@ -4149,7 +4159,7 @@ jsMath.Package(jsMath.Parser,{
    *  LaTeX array environment
    */
   Array: function (name,delim) {
-    var columns = delim[2];
+    var columns = delim[2]; var cspacing = delim[3];
     if (!columns) {
       columns = this.GetArgument(this.cmd+'begin{'+name+'}');
       if (this.error) return;
@@ -4162,7 +4172,7 @@ jsMath.Package(jsMath.Parser,{
     parse.matrix = name; parse.row = []; parse.table = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,columns);
+    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
       var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
@@ -4237,7 +4247,8 @@ jsMath.Package(jsMath.Parser,{
    *  Implement \fbox{...}
    */
   FBox: function (name) {
-    var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
+    var text = this.GetArgument(this.cmd+name); if (this.error) return;
+    var arg = jsMath.Box.InternalMath(text,this.mlist.data.size);
     var f = 0.25 * jsMath.sizes[this.mlist.data.size]/100;
     var box = jsMath.Box.Set(arg,this.mlist.data.style,this.mlist.data.size,1).Remeasured();
     var frame = jsMath.HTML.Frame(-f,-box.d-f,box.w+2*f,box.h+box.d+2*f);
