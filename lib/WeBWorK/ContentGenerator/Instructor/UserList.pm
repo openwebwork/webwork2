@@ -45,7 +45,7 @@ Export users:
 	- to:
 		- existing file on server (overwrite): [ list of files ]
 		- new file on server (create): [ filename ]
-		- client
+		- client [no]
 
 =cut
 
@@ -855,13 +855,6 @@ sub menuLabels {
 		$result{$key} = "$displayKey ($count users)";
 	}
 	return %result;
-}
-
-sub getCSVList {
-	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } readDirectory($dir);
 }
 
 sub importUsersFromCSV {
