@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.38 2004/12/18 22:11:21 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.39 2005/02/04 20:03:59 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -460,7 +460,7 @@ sub scoreSet {
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			$scoringData[7+$user][$totalsColumn] = sprintf("%4.1f",$userStatusTotals{$user});
-			$scoringData[7+$user][$totalsColumn+1] = sprintf("%4.1f",$userSuccessIndex{$user}) if $scoringItems->{successIndex};
+			$scoringData[7+$user][$totalsColumn+1] = sprintf("%4.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
 		}
 	}
 	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
