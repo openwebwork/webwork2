@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.14 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.15 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -286,7 +286,11 @@ sub body {
 			print CGI::Tr({}, 
 				CGI::td({}, [
 					($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
-					CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
+					"$problemID "
+						. CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, "view")
+						. " "
+						. CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, "edit")
+						,
 					($forUsers ? (
 						problemElementHTML("problem.${problemID}.status", $userProblemRecord->status, "7"),
 						problemElementHTML("problem.${problemID}.problem_seed", $userProblemRecord->problem_seed, "7"),
