@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.6 2003-01-08 16:23:51 sh002i Exp $
+# $Id: global.conf.dist,v 1.7 2003-01-09 19:03:53 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -79,7 +79,7 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 
 my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %courseURLs = (
-	base      => "$courseURLRoot", # *** # this should be "root"?
+	root      => "$courseURLRoot",
 	html      => "$courseURLRoot",
 	html_temp => "$courseURLRoot/tmp",
 );
@@ -94,7 +94,6 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 );
 
 %externalPrograms = (
-	mv       => "/bin/mv", # *** is this used? probably not...
 	tth      => "/usr/local/bin/tth",
 	pdflatex => "/usr/local/bin/pdflatex",
 	latex    => "/usr/local/bin/latex",

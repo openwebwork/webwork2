@@ -15,6 +15,7 @@ use strict;
 use warnings;
 use base qw(Exporter);
 our @EXPORT    = qw();
-our @EXPORT_OK = qw(SECRET);
+our @EXPORT_OK = qw(SECRET WEBWORK_HOME);
 
 use constant SECRET => 'fkjOPIiSUfeT6dm5pevSrM1xgFmsex7.Z/.6Wjcxqb9Pi4Zm9JUGygwv^FdG8^yth^*KbDFWMXiLtNDggWNA370llFj68JxNKMCyCeSJxCHRfU2P6br10HtPS!NvcaJ7';
+use constant WEBWORK_HOME => "/";

@@ -17,6 +17,7 @@ use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
+use WeBWorK::Constants qw(WEBWORK_HOME);
 use WeBWorK::ContentGenerator::Feedback;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
@@ -71,12 +72,11 @@ sub handler() {
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
 	
-	# If no course was specified, phreak out.
-	# Eventually, display a list of courses, or something.
+	# If no course was specified, redirect to the URL specified by the constant WEBWORK_HOME
+	# (this is typically just "/".)
 	unless (defined $course) {
-		warn "No course specified.\n";
-		return DECLINED;
-		# *** we should either write a "Courses" module, or redirect to a static page.
+		$r->header_out(Location => WEBWORK_HOME);
+		return REDIRECT;
 	}
 	
 	# Try to get the course environment.
@@ -100,7 +100,6 @@ sub handler() {
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
-		# *** &verify should throw a descriptive exception on weird failures
 		return WeBWorK::ContentGenerator::Login->new($r, $course_env)->go;
 	} else {
 		# After we are authenticated, there are some things that need to be
@@ -118,7 +117,6 @@ sub handler() {
 		} elsif ($arg eq "hardcopy") {
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			# *** can i say go(shift || "") here?
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
 			return WeBWorK::ContentGenerator::Professor->new($r, $course_env)->go;
@@ -129,7 +127,6 @@ sub handler() {
 		} elsif ($arg eq "logout") {
 			return WeBWorK::ContentGenerator::Logout->new($r, $course_env)->go;
 		} elsif ($arg eq "test") {
-			# *** we should change this name, or remove it altogether.
 			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
@@ -138,10 +135,7 @@ sub handler() {
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
 				return WeBWorK::ContentGenerator::ProblemSet->new($r, $course_env)->go($problem_set);
-			} elsif ($ps_arg eq "hardcopy") {
-				# *** do we need this? hardcopy is not being called this way
-			}
-			else {
+			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
 				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
