@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.133 2005/01/29 01:19:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.134 2005/02/06 20:45:39 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -472,9 +472,16 @@ sub links {
 	
 	# we're linking to other places in the same course, so grab the courseID from the current path
 	my $courseID = $urlpath->arg("courseID");
+
+	# grab the effective user, set and problem
+	my $userID    = $r->param("effectiveUser");
+	my $setID     = $urlpath->arg("setID");
+	$setID = "" if (defined $setID && !(grep /$setID/, $db->listUserSets($userID)));
+	my $problemID = $urlpath->arg("problemID");
+	$problemID = "" if (defined $problemID && !(grep /$problemID/, $db->listUserProblems($userID, $setID)));
 	
 	# to make things more concise
-	my %args = ( courseID => $courseID );
+	my %args = ( courseID => $courseID);
 	my $pfx = "WeBWorK::ContentGenerator::";
 	
 	my $sets    = $urlpath->newFromModule("${pfx}ProblemSets", %args);
@@ -492,11 +499,35 @@ sub links {
 	                      showOldAnswers => $self->{will}->{showOldAnswers}
 	);
 	print CGI::start_ul({class=>"LinksMenu"});
-	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets,
+	print CGI::start_li(),
+	    CGI::span({style=>"font-size:larger"},
+		     CGI::a({href=>$self->systemLink($sets,
 		                                params=>{  %displayOptions,}
-									    )}, sp2nbsp("Homework Sets")))
+									    )}, sp2nbsp("Homework Sets"))
 	);
+	if (defined $setID and $setID ne "") {
+		my $setPath = $urlpath->newFromModule("${pfx}ProblemSet", courseID =>$courseID, setID =>$setID);
+		print CGI::start_ul();
+		print CGI::li(CGI::a({href=>$self->systemLink($setPath,
+		                                params=>{  %displayOptions,}
+									    )}, $setID)
+		);
+#  Displaying a link back to the problem may not be necessary or useful.
+# 		if (defined $problemID and $problemID ne "") {
+# 		    my $problemPath = $urlpath->newFromModule("${pfx}Problem", 
+# 		                 courseID =>$courseID, setID =>$setID, problemID =>$problemID);
+# 			print CGI::start_ul();
+# 				CGI::li(CGI::a({href=>$self->systemLink($problemPath,
+# 		                                params=>{  %displayOptions,}
+# 									    )}, $problemID)
+# 				);
+# 			print CGI::end_ul();
+# 		}
+	
+		print CGI::end_ul();
+	}
+	print CGI::end_li();    
+
 	
 	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
 		print CGI::li(CGI::a({href=>$self->systemLink($options,
@@ -514,11 +545,6 @@ sub links {
 	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		my $ipfx = "${pfx}Instructor::";
 		
-		my $userID    = $r->param("effectiveUser");
-		my $setID     = $urlpath->arg("setID");
-		$setID = "" if (defined $setID && !(grep /$setID/, $db->listUserSets($userID)));
-		my $problemID = $urlpath->arg("problemID");
-		$problemID = "" if (defined $problemID && !(grep /$problemID/, $db->listUserProblems($userID, $setID)));
 		# instructor tools link
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
 		# Class list editor
@@ -562,12 +588,14 @@ sub links {
 	## Homework sets editor and sub links
 		print CGI::a({href=>$self->systemLink($setList,params=>{  %displayOptions,})}, sp2nbsp($setList->name));
 		if (defined $setID and $setID ne "") {
+			print CGI::start_ul();
 			print CGI::li( CGI::a({href=>$self->systemLink($setDetail,params=>{  %displayOptions,})}, $setID) );
 			if (defined $problemID and $problemID ne "") {
 				print CGI::ul(
 					CGI::li(CGI::a({href=>$self->systemLink($problemEditor,params=>{  %displayOptions,})}, $problemID))
 				);
 			}
+			print CGI::end_ul();
 		}
 		print CGI::end_li();
 	## Library browser
@@ -576,30 +604,26 @@ sub links {
 	## Stats	
 		print CGI::li(CGI::a({href=>$self->systemLink($stats,params=>{  %displayOptions,})}, sp2nbsp($stats->name)));
 		print CGI::start_li();
+		    print CGI::start_ul();
 			if (defined $userID and $userID ne "") {
-				print '&nbsp;&nbsp;&nbsp;',
-					CGI::a({href=>$self->systemLink($userStats,params=>{  %displayOptions,})}, $userID),
-					CGI::br();
+				print CGI::li(CGI::a({href=>$self->systemLink($userStats,params=>{  %displayOptions,})}, $userID)),
 			}
 			if (defined $setID and $setID ne "") {
-				print '&nbsp;&nbsp;&nbsp;',
-					CGI::a({href=>$self->systemLink($setStats,params=>{  %displayOptions,})}, sp2nbsp($setID)),
-					CGI::br();
+				print CGI::li(CGI::a({href=>$self->systemLink($setStats,params=>{  %displayOptions,})}, sp2nbsp($setID))),
 			}
+			print CGI::end_ul();
 		print CGI::end_li();
 	## Student Progress	
 	    print CGI::li(CGI::a({href=>$self->systemLink($progress,params=>{  %displayOptions,})}, sp2nbsp($progress->name)));
 		print CGI::start_li();
+			print CGI::start_ul();
 			if (defined $userID and $userID ne "") {
-				print '&nbsp;&nbsp;&nbsp;',
-					CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID),
-					CGI::br();
+				print  CGI::li(CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID));
 			}
 			if (defined $setID and $setID ne "") {
-				print '&nbsp;&nbsp;&nbsp;',
-					CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, sp2nbsp($setID)),
-					CGI::br();
+				print CGI::li(CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, sp2nbsp($setID)));
 			}
+			print CGI::end_ul();
 		print CGI::end_li();
 	## Scoring tools
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring,params=>{  %displayOptions,})}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
