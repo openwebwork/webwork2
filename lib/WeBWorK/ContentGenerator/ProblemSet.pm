@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.46 2004/05/06 20:20:00 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.47 2004/05/07 00:55:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,10 +49,19 @@ sub initialize {
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
 	die "permisson level for user $userName  not found."  unless $permissionLevel;
 	
-	# We don't want to die if this set does not exist or isn't defined for this player
-	# we'll just return a page with nothing but an error on it.
-	#die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
-	$self->{invalidSet} = !(defined $set);
+	# FIXME: This is a temporary fix to fill in the database
+	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
+	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
+	my $globalSet = $db->getGlobalSet($setName);
+	$globalSet->published("1") unless $globalSet->published eq "0";
+	$set->published("1") unless $set->published eq "0";
+	$db->putGlobalSet($globalSet);
+
+	my $published = ($set->published) ? "Published" : "Unpublished";
+	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$published}, $published))) if $permissionLevel->permission > 0;
+	
+	# A set is valid if it is defined and if it is either published or the user is privileged.
+	$self->{invalidSet} = !(defined $set && ($set->published || $permissionLevel->permission > 0));
 	return if $self->{invalidSet};
 
 
@@ -94,7 +103,7 @@ sub siblings {
 	print CGI::start_li();
 	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
 	print CGI::start_ul();
-	
+
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);

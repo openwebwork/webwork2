@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.47 2004/04/06 01:58:25 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.48 2004/05/11 21:05:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -294,6 +294,8 @@ sub body {
         	                                       courseID => $courseName,
 	                                               setID    => $set->set_id,
         );
+	
+	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
 		$table .= CGI::Tr({}, 
 			CGI::td([ 
 				CGI::checkbox({
@@ -302,7 +304,7 @@ sub body {
 					"label"=>"",
 					"checked"=>"0"
 				}),
-				'&nbsp;&nbsp;'.$set->set_id . '&nbsp;'.CGI::a({href=>$self->systemLink($setEditorPage)}, 'Edit'),
+				CGI::font({class=>$publishedClass}, '&nbsp;&nbsp;'.$set->set_id) . '&nbsp;'.CGI::a({href=>$self->systemLink($setEditorPage)}, 'Edit'),
 				formatDateTime($set->open_date),
 				formatDateTime($set->due_date),
 				formatDateTime($set->answer_date),

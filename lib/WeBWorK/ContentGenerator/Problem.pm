@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.125 2004/05/09 17:47:35 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.126 2004/05/12 14:28:43 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -96,6 +96,14 @@ sub pre_header_initialize {
 	
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
+
+	# FIXME: This is a temporary fix to fill in the database
+	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
+	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
+	my $globalSet = $db->getGlobalSet($setName);
+	$globalSet->published("1") unless $globalSet->published eq "0";
+	$db->putGlobalSet($globalSet);
+
 	
 	my $editMode = $r->param("editMode");
 	
@@ -162,15 +170,15 @@ sub pre_header_initialize {
 		if (defined $problemSeed) {
 			$problem->problem_seed($problemSeed);
 		}
+
+		my $published = ($set->published) ? "Published" : "Unpublished";
+		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$published}, $published)));
 	} else {
 		# students can't view problems not assigned to them
-		# die "Set $setName is not assigned to $effectiveUserName" unless defined $set;
-		# die "Problem $problemNumber in set $setName is not assigned to $effectiveUserName" unless defined $problem;
 
-		# We don't want to die if this set does not exist or isn't defined for this user
-		# we'll just return a page with nothing but an error on it.
-		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0;
-		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0;
+		# A set is valid if it exists and if it is either published or the user is privileged.
+		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0 || !($set->published || $permissionLevel->permission > 0); # this is redundant because of the above if
+		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0 || !($set->published || $permissionLevel->permission > 0);;
 
 	}
 	

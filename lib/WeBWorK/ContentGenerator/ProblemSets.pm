@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.46 2004/03/23 01:10:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.47 2004/04/07 00:13:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,8 +139,11 @@ sub body {
 	
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
-		print $self->setListRow($set, ($permissionLevel > 0),
-			($permissionLevel > 0));
+		# don't show unpublished sets to 
+		if ($set->published || $permissionLevel == 10) {
+			print $self->setListRow($set, ($permissionLevel > 0),
+				($permissionLevel > 0));
+		}
 	}
 	
 	print CGI::end_table();
@@ -194,6 +197,7 @@ sub setListRow {
 		$control = CGI::checkbox(
 			-name=>"hcSet",
 			-value=>$name,
+			-style=>"color: red;",
 			-label=>"",
 		);
 	} else {
@@ -219,6 +223,10 @@ sub setListRow {
 	} else {
 		$status = "closed, answers available";
 	}
+	
+	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
+
+	$status = CGI::font({class=>$publishedClass}, $status) if $preOpenSets;
 	
 	return CGI::Tr(CGI::td([
 		$control,
