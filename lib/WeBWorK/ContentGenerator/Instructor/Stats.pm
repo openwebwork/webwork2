@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.20 2004/02/16 03:16:50 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.21 2004/03/04 21:05:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -154,21 +154,23 @@ sub index {
 	);
 	
 }
-
+###################################################
+# Determines the percentage of students whose score is greater than a given value
+# The percentages are fixed at 75, 50, 25 and 5%
 sub determine_percentiles {
-	my $rh_percentiles    = shift;
-	my $max_score         = shift;
-	my @index_list        = @_;
-	@index_list           = sort {$a<=>$b} @index_list;
-	my $num_students      = $#index_list;
-	$rh_percentiles->{0}  = @index_list[int( 1*$num_students/4)];
-	$rh_percentiles->{1}  = @index_list[int( 2*$num_students/4)];
-	$rh_percentiles->{2}  = @index_list[int( 3*$num_students/4)];
-	$rh_percentiles->{3}  = @index_list[int( 95*$num_students/100)];
-	$rh_percentiles->{4}  = @index_list[int( 4*$num_students/4)];
+	my $percent_brackets  = shift;
+	my @list_of_scores    = @_;
+	@list_of_scores       = sort {$a<=>$b} @list_of_scores;
+	my %percentiles          = ();
+	my $num_students      = $#list_of_scores;
+	foreach my $percentage (@{$percent_brackets}) {
+		$percentiles{$percentage} = @list_of_scores[int( (100-$percentage)*$num_students/100)];
+	}
+	# for example
+	# $percentiles{75}  = @list_of_scores[int( 25*$num_students/100)]; 
+	# means that 75% of the students received this score ($percentiles{75}) or higher
+	%percentiles;
 }
-my @index_list = ();
-my @score_list = ();
 sub displaySets {
 	my $self       = shift;
 	my $setName    = shift;
@@ -184,6 +186,10 @@ sub displaySets {
 	my $sort_method_name = $r->param('sort');  
 	my @studentList   = $db->listUsers;
 
+   	my @index_list                      = ();  # list of all student index 
+	my @score_list                      = ();  # list of all student total percentage scores 
+    my %attempts_list_for_problem       = ();  # a list of the number of attempts for each problem
+    my %correct_answers_for_problem     = ();  # roughly the number of students correctly answering this problem
 	my $sort_method = sub {
 		my ($a,$b) = @_;
 		return 0 unless defined($sort_method_name);
@@ -209,20 +215,23 @@ sub displaySets {
 	$WeBWorK::timer->continue("End obtaining user records for set $setName") if defined($WeBWorK::timer);
     $WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
  	my @augmentedUserRecords    = ();
+ 	my $number_of_active_students;
+    
 	foreach my $studentRecord (@userRecords)   {
 		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next if $studentRecord->status !~/C/;              # don't show dropped students FIXME
-	    my $status = 0;
-	    my $attempted = 0;
-	    my $longStatus = '';
-	    my $string     = '';
-	    my $twoString  = '';
-	    my $totalRight = 0;
-	    my $total      = 0;
+		$number_of_active_students++;
+	    my $status          = 0;
+	    my $attempted       = 0;
+	    my $longStatus      = '';
+	    my $string          = '';
+	    my $twoString       = '';
+	    my $totalRight      = 0;
+	    my $total           = 0;
 		my $num_of_attempts = 0;
-		my %h_problemData  = ();
+		my %h_problemData   = ();
 		my $probNum         = 0;
 		
 		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
@@ -234,8 +243,8 @@ sub displaySets {
 
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
-			my $prob = $problemRecord->problem_id;
-			$probNum++;
+			my $probID = $problemRecord->problem_id;
+			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
 				# warn "Can't find record for problem $prob in set $setName for $student";
@@ -274,9 +283,10 @@ sub displaySets {
 			my $num_correct   = $problemRecord->num_incorrect || 0;
 			my $num_incorrect = $problemRecord->num_correct   || 0;
 			$num_of_attempts += $num_correct + $num_incorrect;
-			$h_problemData{$probNum} = $incorrect;
+			push( @{ $attempts_list_for_problem{$probID} } ,     $num_correct + $num_incorrect);
+			$correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
+			$correct_answers_for_problem{$probID} += $status;    # add on the 
 		}
-		# FIXME   we can do this more effficiently  get the list first
 		
 		
 		my $act_as_student_url = "$root/$courseName/$setName?user=".$r->param("user").
@@ -299,7 +309,8 @@ sub displaySets {
 		                                  email_address  => $studentRecord->email_address,
 		                                  problemData    => {%h_problemData},
 		}; 
-		#update_percentiles($temp_hash->{score}, $temp_hash->{total});
+		# add this data to the list of total scores (out of 100)
+		# add this data to the list of success indices.
 		push( @index_list, $temp_hash->{index});
 		push( @score_list, ($temp_hash->{total}) ?$temp_hash->{score}/$temp_hash->{total} : 0 ) ;
 		push( @augmentedUserRecords, $temp_hash );
@@ -311,61 +322,107 @@ sub displaySets {
 												||
 							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
 	
+	# sort the problem IDs
+	my @problemIDs   = sort {$a<=>$b} keys %correct_answers_for_problem;
 	# determine index quartiles
-# 	@index_list = sort {$a<=>$b} @index_list;
-# 	my $num_students = $#index_list;
-# 	my %index_percentiles = ();
-# 	$index_percentiles{0} = @index_list[int( 1*$num_students/4)];
-# 	$index_percentiles{1} = @index_list[int( 2*$num_students/4)];
-# 	$index_percentiles{2} = @index_list[int( 3*$num_students/4)];
-# 	$index_percentiles{3} = @index_list[int( 95*$num_students/100)];
-# 	$index_percentiles{4} = @index_list[int( 4*$num_students/4)];
-	my %index_percentiles = ();
-    determine_percentiles(\%index_percentiles, @index_list);
-    my %score_percentiles = ();
-    determine_percentiles(\%score_percentiles, @score_list);
+    my @brackets          = (75, 50,25,5);
+	my %index_percentiles = determine_percentiles(\@brackets, @index_list);
+    my %score_percentiles = determine_percentiles(\@brackets, @score_list);
+    my %attempts_percentiles_for_problem = ();
+    foreach my $probID (@problemIDs) {
+    	$attempts_percentiles_for_problem{$probID} =   {
+    		determine_percentiles(\@brackets, @{$attempts_list_for_problem{$probID}})
+    	};    
+    }
     
-	# construct header
-	my $problem_header = '';
+#####################################################################################
+# Table showing the percentage of students with correct answers for each problems
+#####################################################################################
+print  
+
+	   CGI::p('The percentage of students with correct answers for each problem'),
+		CGI::start_table({-border=>1}),
+		CGI::Tr(CGI::td(
+			['Problem #', @problemIDs]
+		)),
+		CGI::Tr(CGI::td(
+			[ '% correct',map { sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_active_students) } @problemIDs ]
+		)),
+		CGI::end_table();
+
+#####################################################################################
+# table showing percentile statistics for scores and success indices
+#####################################################################################
 	print  
-	    CGI::p( {valign=>'top'},
-	    	'The table shows the percentage of students whose scores and success indices are greater than the given values.',
+
+	    	CGI::p('The percentage of students whose percentage scores and success indices are greater than the given values.'),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
-					CGI::td( ['% students','&nbsp;&nbsp;75%','&nbsp;50%','&nbsp;25%','&nbsp; 5%','top score', ]
+					CGI::td( ['% students',
+					          (map {  "&nbsp;$_"  } @brackets) ,
+					          'top score ', 
+					         ]
 					)
 				),
 				CGI::Tr(
 					CGI::td( [
 						'Score',
-						'&gt; '.100*$score_percentiles{0},
-						'&gt; '.100*$score_percentiles{1},
-						'&gt; '.100*$score_percentiles{2},
-						'&gt; '.100*$score_percentiles{3},
-						'&gt; '.100*$score_percentiles{4},
+						(map { '&gt; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets),
+						sprintf("%0.0f",100),
 						]
 					)
 				),
 				CGI::Tr(
 					CGI::td( [
 						'Success Index',
-						'&gt; '.sprintf("%0.0f",100*$index_percentiles{0}),
-						'&gt; '.sprintf("%0.0f",100*$index_percentiles{1}),
-						'&gt; '.sprintf("%0.0f",100*$index_percentiles{2}),
-						'&gt; '.sprintf("%0.0f",100*$index_percentiles{3}),
-						'&gt; '.sprintf("%0.0f",100*$index_percentiles{4}),
+						(map { '&gt; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets),
+						sprintf("%0.0f",100),
 						]
 					)
-				),
-			CGI::end_table(),	
-		),
+				)
+			;
+
+	print     CGI::end_table(),	
+
 		;
+
+#####################################################################################
+# table showing percentile statistics for scores and success indices
+#####################################################################################
+	print  
+
+	    	CGI::p('The percentage of students with no more than the indicated number of total attempts'),
+			CGI::start_table({-border=>1}),
+				CGI::Tr(
+					CGI::td( ['% students',
+					          (map {  "&nbsp;".(100-$_)  } @brackets) ,
+					        
+					         ]
+					)
+				);
+
+
+	foreach my $probID (@problemIDs) {
+		print	CGI::Tr(
+					CGI::td( [
+						"Prob $probID",
+						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets),
+
+						]
+					)
+				);
 	
+	}
+	print CGI::end_table();
+#####################################################################################
+	# construct header
+	my $problem_header = '';
 	
 	foreach my $i (1..$max_num_problems) {
 		$problem_header .= CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=p$i"},threeSpaceFill($i) );
 	}
 	print
+		CGI::p("Details"),
 	    defined($sort_method_name) ?"sort method is $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::th(  {-align=>'center'},
