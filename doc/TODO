@@ -1,0 +1,25 @@
+Son of WeBWorK - TODO list
+
+1. write template file from what we drew on the board
+2. normalize files:
+	- (c) header on all files
+	- standard order of preamble lines:
+		1. (c) header
+		
+		2. package PACKAGENAME;
+		
+		3. short summary of the package (pod's NAME section)
+		
+		4. use - pragmatic modules
+		5. use - standard perl modules
+		6. use - CPAN modules
+		7. use - webwork modules
+	- ALWAYS use strict and use warnings
+	- use "use base" rather than "our @ISA"
+	- no warnings or errors!
+	- (later on) POD documentation for all files
+3. fix templating code in ContentGenerator, add new escape functions
+4. implement the new template
+5. implement ProblemSets and ProblemSet
+6. Implement Options (email address and password)
+?. continuing code cleanup

@@ -1,0 +1,11 @@
+Barbara from UNH had some ideas:
+	- " [x] destroy existing versions " on build problem sets page.
+	- others?
+
+Dan from UNH wants to be able to "name" math expressions so that images can be made conditional (i.e. if( blah ) { TEXT(\[ ... \]) } else { TEXT(\[ ... ]\) } (see email)
+
+Image generation alternatives:
+	- math2img, with some generalization
+	- math2img, as a function in dangerousMacros
+	- something out of http://preview-latex.sourceforge.net/
+	- TeXd -- http://www.activetex.org/
