@@ -10,6 +10,7 @@ WeBWorK::ContentGenerator::Instructor - Abstract superclass for the Instructor p
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::DB::Utils qw(global2user initializeUserProblem);
 
 sub hiddenEditForUserFields {
 	my ($self, @editForUser) = @_;
@@ -53,14 +54,7 @@ sub assignProblemToUser {
 	$userProblem->set_id($globalProblem->set_id);
 	$userProblem->problem_id($globalProblem->problem_id);
 	
-	# Initialize user-only fields
-	$userProblem->status(0.0);
-	$userProblem->attempted(0);
-	$userProblem->num_correct(0);
-	$userProblem->num_incorrect(0);
-	$userProblem->attempted(0);
-	$userProblem->problem_seed(int(rand(5000)));
-	
+	initializeUserProblem($userProblem);
 	eval {$db->addUserProblem($userProblem)};
 }
 

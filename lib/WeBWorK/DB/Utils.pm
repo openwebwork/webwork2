@@ -147,6 +147,20 @@ sub user2global($$) {
 	return $GlobalRecord;
 }
 
+# Populate a user record with sane defaults and a random seed
+# This function edits the record in place, so you can discard
+# the return value.
+sub initializeUserProblem {
+	my ($userProblem) = @_;
+	$userProblem->status(0.0);
+	$userProblem->attempted(0);
+	$userProblem->num_correct(0);
+	$userProblem->num_incorrect(0);
+	$userProblem->problem_seed(int(rand(5000)));
+
+	return $userProblem;
+}
+
 ################################################################################
 # default generation
 ################################################################################
