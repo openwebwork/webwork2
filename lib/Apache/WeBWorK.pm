@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.67 2004/07/01 21:24:35 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.68 2004/08/28 13:56:54 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,6 +76,7 @@ sub handler($) {
 		# the __DIE__ handler stores the call stack at the time of an error
 		local $SIG{__DIE__} = sub {
 			my ($error) = @_;
+			die $error if ref($error); # return if it's not a string
 			#
 			#  Add traceback unless it already has been added.  It looks like traps
 			#  are in effect from 5 or 6 places, and all of them end up here, with
