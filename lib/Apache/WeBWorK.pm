@@ -17,7 +17,7 @@ your httpd.conf file to achieve this:
 
  <IfModule mod_perl.c>
  	PerlFreshRestart On
- 	<Location /webwork>
+ 	<Location /webwork2>
  		SetHandler perl-script
  		PerlHandler Apache::WeBWorK
  		PerlSetVar webwork_root /path/to/webwork-modperl
