@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.42 2004/05/11 19:07:54 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.43 2004/07/02 20:31:33 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use Date::Format;
 use Date::Parse;
 use Errno;
+use File::Find;   # used in Instructor.pm
 use File::Path qw(rmtree);
 use Carp;
 
