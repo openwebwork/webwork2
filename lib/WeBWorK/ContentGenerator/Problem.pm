@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.138 2004/05/28 14:55:01 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.139 2004/05/31 04:17:59 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -169,8 +169,9 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $published = ($set->published) ? "visable to students." : "hidden from students.";
-		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$published}, $published)));
+		my $publishedClass = ($set->published) ? "Published" : "Unpublished";
+		my $publishedText = ($set->published) ? "visable to students." : "hidden from students.";
+		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
 	} else {
 	
 		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("This problem will not count towards your grade."))) unless $problem->value;;
