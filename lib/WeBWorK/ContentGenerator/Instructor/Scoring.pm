@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.33 2004/05/08 20:31:28 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.34 2004/05/11 16:11:49 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,14 +41,9 @@ sub initialize {
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "score_sets")) {
-		$self->addmessage(CGI::div({class=>'ResultsWithError'}, CGI::p("You aren't authorized to score problem sets")));
-		return;
-	}
-
-	
-
-	
+	# Check permission
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	return unless $authz->hasPermissions($user, "score_sets");
 	
 	if (defined $r->param('scoreSelected')) {
 		my @selected               = $r->param('selectedSet');
@@ -108,9 +103,6 @@ sub initialize {
 	# store data
 	$self->{ra_sets}              =   \@setNames; # ra_sets IS NEVER USED AGAIN!!!!!
 	$self->{ra_set_records}       =   \@set_records;
-	
-	
-	
 }
 
 
@@ -130,6 +122,14 @@ sub body {
 	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", 
 	                                      courseID => $courseName
 	);
+	
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to score sets.")
+		unless $authz->hasPermissions($r->param("user"), "score_sets");
+
 	print join("",
 			CGI::start_form(-method=>"POST", -action=>$scoringURL),"\n",
 			$self->hidden_authen_fields,"\n",
