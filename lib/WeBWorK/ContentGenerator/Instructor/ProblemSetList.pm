@@ -21,7 +21,6 @@ sub header {
 	my $root = $ce->{webworkURLs}->{root};
 	
 	if (defined $r->param('scoreSelected')) {
-		warn "scoreSelected\n";
 		$r->header_out(Location => "$root/$courseName/instructor/scoring?".$self->url_args);
 		$self->{noContent} = 1;
 		return REDIRECT;
