@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.13 2004/06/07 02:13:27 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.14 2004/06/26 20:44:54 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -79,9 +79,9 @@ sub new_helper {
 	) = @_;
 	
 	# write timing log entry
-	writeTimingLogEntry($ce, "WeBWorK::PG::new",
-		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
-		"begin");
+# 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
+# 		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
+# 		"begin");
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
@@ -208,9 +208,9 @@ EOF
 	$translator->rf_safety_filter(\&WeBWorK::PG::nullSafetyFilter);
 	
 	# write timing log entry -- the translator is now all set up
-	writeTimingLogEntry($ce, "WeBWorK::PG::new",
-		"initialized",
-		"intermediate");
+# 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
+# 		"initialized",
+# 		"intermediate");
 	
 	# translate the PG source into text
 	#warn "PG: translating the PG source into text\n";
@@ -289,7 +289,7 @@ EOF
 	}
 	
 	# write timing log entry
-	writeTimingLogEntry($ce, "WeBWorK::PG::new", "", "end");
+# 	writeTimingLogEntry($ce, "WeBWorK::PG::new", "", "end");
 	
 	# return an object which contains the translator and the results of
 	# the translation process. this is DIFFERENT from the "format expected
