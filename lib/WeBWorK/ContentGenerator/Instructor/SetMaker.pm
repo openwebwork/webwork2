@@ -37,6 +37,7 @@ require WeBWorK::Utils::ListingDB;
 
 use constant MAX_SHOW => 20;
 
+## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
 ## item is 1 or 0 depending on whether or not the current
 ## directory has any pg files.  The second is a list of directories
@@ -119,7 +120,7 @@ sub add_selected {
 }
 
 
-############# List of library sets
+############# List of sets of problems in templates directory
 
 sub getalllibsets {
   my $ce = shift;
@@ -197,6 +198,7 @@ sub browse_mysets_panel {
 sub browse_library_panel {
   my $self = shift;
   my $r = $self->r;
+  my $ce = $r->ce;
 
   my $libraryRoot = $r->{ce}->{webworkDirs}->{libraryRoot};
 
@@ -204,6 +206,18 @@ sub browse_library_panel {
     print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
         "The problem library has not been installed.")));
     return;
+  }
+  # Test if the Library directory exists.  If not, try to make it
+  unless(-d "$ce->{courseDirs}->{templates}/Library") {
+    unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
+    $self->{libmsg} .= <<"HERE";
+You are missing the directory <code>templates/Library</code>, which is needed
+for the Problem Library to function.  It should be a link pointing to
+<code>$libraryRoot</code>, which you set in <code>conf/global.conf</code>.
+I tried to make the link for you, but that failed.  Check the permissions
+in your <code>templates</code> directory.
+HERE
+    }
   }
 
   my $default_chap = "All Chapters";
@@ -357,18 +371,18 @@ sub make_data_row {
 
   my $edit_link =  '';
   if($self->{r}->param('browse_which') ne 'browse_library') {
-    $edit_link = CGI::a({href=>$self->systemLink( 
-						   $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
-								 args=>{courseID =>$urlpath->arg("courseID"),
-									setID=>"Undefined_Set", problemID=>"1" }
-								), params=>{sourceFilePath => "$sourceFileName"}
+    $edit_link = CGI::a({href=>$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+						courseID =>$urlpath->arg("courseID"),
+						setID=>"Undefined_Set",
+						problemID=>"1"),
+						params=>{sourceFilePath => "$sourceFileName"}
 						  )}, "Edit it" );
   }
 
-  my $try_link = CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
-								args=>{courseID =>$urlpath->arg("courseID"),
-								       setID=>"Undefined_Set", problemID=>"1"}
-							       ),
+  my $try_link = CGI::a({href=>$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+						courseID =>$urlpath->arg("courseID"),
+						setID=>"Undefined_Set",
+						problemID=>"1"),
 						  params =>{effectiveUser => $self->r->param('user'), 
 							    editMode => "SetMaker", 
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
