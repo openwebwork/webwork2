@@ -18,6 +18,7 @@ use CGI qw();
 use File::Path qw(rmtree);
 use WeBWorK::Form;
 use WeBWorK::PG;
+use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
@@ -215,7 +216,7 @@ sub pre_header_initialize {
 	
 	##### sticky answers #####
 	
-	if (not $submitAnswers and $will{showOldAnswers}) {
+	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
@@ -704,10 +705,21 @@ sub attemptResults($$$$$$) {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
+	my $ce = $self->{ce};
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+	
+	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
+	my $imgGen = WeBWorK::PG::ImageGenerator->new(
+		tempDir  => $ce->{webworkDirs}->{tmp},
+		dir	 => $ce->{courseDirs}->{html_temp},
+		url	 => $ce->{courseURLs}->{html_temp},
+		basename => $basename,
+		latex	 => $ce->{externalPrograms}->{latex},
+		dvipng   => $ce->{externalPrograms}->{dvipng},
+	);
 	
 	my $header;
 	#$header .= CGI::th("Part");
@@ -722,8 +734,8 @@ sub attemptResults($$$$$$) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
 		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult)
-					: "");
+		                    	? $self->previewAnswer($answerResult, $imgGen)
+		                    	: "");
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
@@ -744,6 +756,9 @@ sub attemptResults($$$$$$) {
 		$row .= $answerMessage      ? CGI::td(nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
+	
+	# render equation images
+	$imgGen->render(refresh => 1);
 	
 	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
@@ -809,7 +824,7 @@ sub viewOptions($) {
 }
 
 sub previewAnswer($$) {
-	my ($self, $answerResult) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->{ce};
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -840,30 +855,32 @@ sub previewAnswer($$) {
 		}
 		return $result;
 	} elsif ($displayMode eq "images") {
-		# how are we going to name this?
-		my $targetPathCommon = "/m2i/"
-			. $effectiveUser->user_id . "."
-			. $set->set_id . "."
-			. $problem->problem_id . "."
-			. $answerResult->{ans_name} . ".png";
-
-		# figure out where to put things
-		my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
-		my $latex = $ce->{externalPrograms}->{latex};
-		my $dvipng = $ce->{externalPrograms}->{dvipng};
-		my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
-				# should use surePathToTmpFile, but we have to
-				# isolate it from the problem enivronment first
-		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
+		## how are we going to name this?
+		#my $targetPathCommon = "/m2i/"
+		#	. $effectiveUser->user_id . "."
+		#	. $set->set_id . "."
+		#	. $problem->problem_id . "."
+		#	. $answerResult->{ans_name} . ".png";
+		#
+		## figure out where to put things
+		#my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
+		#my $latex = $ce->{externalPrograms}->{latex};
+		#my $dvipng = $ce->{externalPrograms}->{dvipng};
+		#my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
+		#		# should use surePathToTmpFile, but we have to
+		#		# isolate it from the problem enivronment first
+		#my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
+		#
+		## call dvipng to generate a preview
+		#dvipng($wd, $latex, $dvipng, $tex, $targetPath);
+		#rmtree($wd, 0, 0);
+		#if (-e $targetPath) {
+		#	return "<img src=\"$targetURL\" alt=\"$tex\" />";
+		#} else {
+		#	return "<b>[math2img failed]</b>";
+		#}
+		$imgGen->add($answerResult->{preview_latex_string});
 		
-		# call dvipng to generate a preview
-		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
-		rmtree($wd, 0, 0);
-		if (-e $targetPath) {
-			return "<img src=\"$targetURL\" alt=\"$tex\" />";
-		} else {
-			return "<b>[math2img failed]</b>";
-		}
 	}
 }
 
