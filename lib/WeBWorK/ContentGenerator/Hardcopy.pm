@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.48 2004/08/18 22:55:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.49 2004/09/10 22:03:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,6 +46,22 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
+
+=head1 CONFIGURATION VARIABLES
+
+=over
+
+=item $PreserveTempFiles
+
+If true, don't delete temporary files.
+
+=cut
+
+our $PreserveTempFiles = 0  unless defined $PreserveTempFiles;
+
+=back
+
+=cut
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -444,7 +460,11 @@ sub generateHardcopy($) {
 
 		$pdfFileURL = $hardcopyFileURL;
 
-		rmtree($tempDir);
+		if ($PreserveTempFiles) {
+			warn "Temporary directory preserved at '$tempDir'.\n";
+		} else {
+			rmtree($tempDir);
+		}
 
 #	     $tex = protect_HTML($tex);
 #	     #$tex =~ s/\n/\<br\>\n/g;
@@ -541,7 +561,11 @@ sub latex2pdf {
 
 	
 	## remove temporary directory
-	rmtree($wd, 0, 0);
+	if ($PreserveTempFiles) {
+		warn "Working directory preserved at '$wd'.\n";
+	} else {
+		rmtree($wd, 0, 0);
+	}
 
 	
 	-e $hardcopyFilePath or die "Failed to create $finalFile for no apparent reason.\n";
