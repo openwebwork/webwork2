@@ -195,9 +195,9 @@ var jsMath = {
     '.cmex10':         'font-family: cmex10',
     '.arial':          'font-family: Arial unicode MS',
 
-    '.normal':         'font-family: serif; font-style: normal; font-size: 115%',
+    '.normal':         'font-family: serif; font-style: normal; font-size: 125%',
     '.math':           'font-family: serif; font-style: normal; color: grey33; font-size: 75%',
-    '.typeset':        'font-family: serif; font-style: normal; font-size: 115%',
+    '.typeset':        'font-family: serif; font-style: normal; font-size: 125%',
     '.mathlink':       'text-decoration: none',
     '.mathHD':         'border-width: 0; width: 1px; margin-right: -1px',
   
@@ -3499,8 +3499,11 @@ jsMath.Package(jsMath.Parser,{
     iff:                ['Macro','\\;\\Longleftrightarrow\\;'],
     mathrm:             ['Macro','{\\rm #1}',1],
     mathbf:             ['Macro','{\\bf #1}',1],
-    mathit:             ['Macro','{\\it #1}',1],
     mathbb:             ['Macro','{\\bf #1}',1],
+    mathit:             ['Macro','{\\it #1}',1],
+    boldsymbol:         ['Macro','{\\bf #1}',1],  // for now
+
+    TeX:                ['Macro','T\\kern-.1667em\\lower.5ex{E}\\kern-.125em X'],
 
     // for WeBWorK
     lt:			['Macro','<'],
