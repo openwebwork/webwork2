@@ -65,11 +65,12 @@ sub body {
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $db = $self->{db};
+
+        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+
 	my $userTemplate = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
 	
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
-
 	# This code will require changing if the permission and user tables ever have different keys.
 	my @users = $db->listUsers;
 
