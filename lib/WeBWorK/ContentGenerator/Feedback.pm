@@ -201,7 +201,10 @@ sub body {
 			# *** we might want to have a CE setting for
 			# "additional recipients"
 			smtp    => $ce->{mail}->{smtpServer},
-			subject => "Feedback from the WeBWorK system",
+			subject => "WeBWorK feedback: ".$user->first_name." ".$user->last_name. 
+			                (   ( defined($setName) && defined($problemNumber) ) ?
+			                				 " set$setName/prob$problemNumber" : ""
+			                ),
 			headers => "X-Remote-Host: ".$r->get_remote_host(),
 		});
 		unless (ref $mailer) {
