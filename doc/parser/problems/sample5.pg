@@ -12,7 +12,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "PGgraphmacros.pl",
-  "PGauxiliaryfunctions2.pl",
+  "PGauxiliaryFunctions.pl",
   "unionImage.pl",
   "unionTables.pl",
   "Parser.pl",
