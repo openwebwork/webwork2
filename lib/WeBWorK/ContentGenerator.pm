@@ -465,13 +465,10 @@ sub links {
 }
 
 sub submiterror {
-	warn "submiterror\n";
 	my ($self) = @_;
 	if (exists $self->{submitError}) {
-		warn "returning ".$self->{submitError}."\n";
 		return $self->{submitError};
 	} else {
-		warn "returning \"\"\n";
 		return "";
 	}
 }
@@ -495,13 +492,10 @@ sub if_loggedin($$) {
 }
 
 sub if_submiterror($$) {
-	warn "if_submiterror\n";
 	my ($self, $arg) = @_;
 	if (exists $self->{submitError}) {
-		warn "returning $arg\n";
 		return $arg;
 	} else {
-		warn "returning ".!$arg."\n";
 		return !$arg;
 	}
 }
