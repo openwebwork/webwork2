@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.23 2004/08/04 17:31:22 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.24 2004/08/28 02:09:16 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ use warnings;
 
 use CGI::Pretty qw();
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max);
+use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
 require WeBWorK::Utils::ListingDB;
@@ -765,7 +765,7 @@ sub pre_header_initialize {
   ############# List of local sets
 
   my @all_set_defs = $db->listGlobalSets;
-  @all_set_defs = sort @all_set_defs;
+  @all_set_defs = sortByName(undef, @all_set_defs);
 
   if ($use_previous_problems) {
     @pg_files = @all_past_list;
