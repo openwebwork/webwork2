@@ -101,15 +101,29 @@ sub index {
 	my @studentList   = sort $db->listUsers;
 	my @setList       = sort  $db->listGlobalSets;
 	my $uri           = $r->uri;
-	print CGI::h3('View statistics by set');
+	my @setLinks      = ();
+	my @studentLinks  = (); 
 	foreach my $set (@setList) {
-		print CGI::a({-href=>"${uri}set/$set/?".$self->url_authen_args },"set $set" ),'&nbsp;&nbsp;';	
+		push @setLinks, CGI::a({-href=>"${uri}set/$set/?".$self->url_authen_args },"set $set" );	
 	}
-	print CGI::h3('View statistics by student');
+	
 	foreach my $student (@studentList) {
-		print CGI::a({-href=>"${uri}student/$student/?".$self->url_authen_args},"  $student" ),'&nbsp;&nbsp;';	
+		push @studentLinks, CGI::a({-href=>"${uri}student/$student/?".$self->url_authen_args},"  $student" ),;	
 	}
-	return '';
+	print join("",
+		CGI::start_table({-border=>2}),
+		CGI::Tr(
+			CGI::td({-valign=>'top'}, 
+				CGI::h3({-align=>'center'},'View statistics by set'),
+				CGI::ul(  CGI::li( [@setLinks] ) ), 
+			),
+			CGI::td({-valign=>'top'}, 
+				CGI::h3({-align=>'center'},'View statistics by student'),
+				CGI::ul(CGI::li( [ @studentLinks ] ) ),
+			),
+		),
+		CGI::end_table(),
+	);
 	
 }
 sub displaySets {

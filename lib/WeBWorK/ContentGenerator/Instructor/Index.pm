@@ -48,36 +48,44 @@ sub body {
 	my $full_url = "$prof_url?course=$courseName&$authen_args";
 	my $userEditorURL = "users/?" . $self->url_args;
 	my $problemSetEditorURL = "sets/?" . $self->url_args;
+	my $statsURL       = "stats/?" . $self->url_args;
+	my $emailURL       = "send_mail/?" . $self->url_args;
 	################### debug code
 #     my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
 #     
 #     my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
 #     return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
     ################### debug code
-	return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	return 
-		CGI::p("\n".
-			CGI::a({href=>$userEditorURL}, "Users"). " - View and edit data and settings for users of $courseName" . CGI::br(). "\n".
-			CGI::a({href=>$problemSetEditorURL}, "Problem Sets"). " - View and edit settings for problem sets in $courseName".CGI::br()."\n"
-		)."\n".CGI::hr()."\n".
-		CGI::p(
-			CGI::b("NOTE: ") . 
-			"The Instructor Tools in this preview release of WeBWorK
-			2.0 are not stable or complete.  If you need reliable and
-			stable course editing features, than at this time you
-			will need to use the Professor tools from WeBWorK 1.8
-			or earlier.  Use the links below to go to the Professor
-			pages of your system's WeBWorK 1.x installation."
-		)."\n".
-		CGI::ul(
-			CGI::li(
-				CGI::a({-href=>$full_url}, "Go to Professor pages")
-			). 
-			CGI::li(
-				CGI::a({-href=>$full_url, -target=>"_new"}, "Open Professor pages in new window")
-			)
-		);
+	return join("", 
+		CGI::start_table({-border=>2,-cellpadding=>10}),
+		CGI::Tr({-align=>'center'},
+			CGI::td(
+				CGI::a({href=>$userEditorURL}, "Edit $courseName class list")  ,
+			),
+			CGI::td(
+				CGI::a({href=>$problemSetEditorURL}, "Edit $courseName problem sets"),
+					
+			),"\n",
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td([
+				CGI::a({-href=>$emailURL}, "Send e-mail to $courseName"),
+				CGI::a({-href=>$statsURL}, "Statistics for $courseName"),
+			]),
+			"\n",
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td([
+				'WeBWorK 1.9 Instructor '.CGI::a({-href=>$full_url}, 'Tools'),
+				'Open WeBWorK 1.0 Instructor '.CGI::a({-href=>$full_url, -target=>'_new'}, 'Tools').' in new window',
+			]),
+			"\n",
+		),
+		
+		CGI::end_table(),
+	);
 }
 
 1;
