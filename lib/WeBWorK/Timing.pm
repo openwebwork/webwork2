@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.8 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.9 2004/05/13 18:28:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,6 +23,12 @@ WeBWorK::Timing - Log timing data.
 head1 SYNOPSIS
 
  use WeBWorK::Timing;
+ 
+ # Enable timing
+ $WeBWorK::Timing::Enable = 1;
+ 
+ # Log to a file instead of STDERR
+ $WeBWorK::Timing::Logfile = "/path/to/timing.log";
  
  my $timer = WeBWorK::Timing->new("do some processesing");
  $timer->start;
@@ -54,10 +60,35 @@ use warnings;
 use Time::HiRes qw(gettimeofday tv_interval);
 
 our $TASK_COUNT = 0; # number of tasks processed in this child process
-# You can customize the output to go to some file besides STDERR (usually ErrorLog for Apache)
-our $TIMING_LOG = '';
 
-#our $TIMING_LOG = '/home/gage/webwork/webwork-modperl/logs/timing.log';
+################################################################################
+
+=head1 CONFIGURATION VARIABLES
+
+=over
+
+=item $Enabled
+
+If true, timing messages will be output. If false, they will be ignored.
+
+=cut
+
+our $Enabled = 0  unless defined $Enabled;
+
+=item $Logfile
+
+If non-empty, timing output will be sent to the file named rather than STDERR.
+
+=cut
+
+our $Logfile = "" unless defined $Logfile;
+
+=back
+
+=cut
+
+################################################################################
+
 =head1 CONSTRUCTOR
 
 =over
@@ -65,8 +96,6 @@ our $TIMING_LOG = '';
 =item new($task)
 
 C<new> creates a new timing object, with the task given in $task.
-
-=back
 
 =cut
 
@@ -80,6 +109,12 @@ sub new {
 	};
 	return bless $self, ref $invocant || $invocant
 }
+
+=back
+
+=cut
+
+################################################################################
 
 =head1 METHODS
 
@@ -133,47 +168,55 @@ not called explicitly, it is called when the object goes out of scope.
 
 sub save {
 	my ($self) = @_;
-	local(*TIMING);
-	if ($TIMING_LOG =~ /\S/) { 
-		open(TIMING, ">>$TIMING_LOG") || die "Can't open timing log: $TIMING_LOG";
-	} else {
-		*TIMING = *STDERR;
-	} 
-		
-	my $id = $self->{id};
-	my $task = $self->{task};
-	my $now = gettimeofday();
 	
-	my $diff = sprintf("%.6f", 0);
-	if ($self->{start}) {
-		my $start = sprintf("%.6f", $self->{start});
-		print TIMING "TIMING $$ $id $start ($diff) $task: START\n";
-	} else {
-		my $ctime = sprintf("%.6f", $self->{ctime});
-		print TIMING "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
-	}
-	
-	if ($self->{steps}) {
-		my @steps = @{$self->{steps}};
-		foreach my $step (@steps) {
-			my ($time, $data) = @$step;
-			$time = sprintf("%.6f", $time);
-			my $start = sprintf("%.6f", $self->{start});
-			my $diff  = sprintf("%.6f", $time-$start);
-			print TIMING "TIMING $$ $id $time ($diff) $task: $data\n";
+	if ($Enabled) {
+		my $fh;
+		if ($Logfile ne "") { 
+			if (open my $tmpFH, ">>", $Logfile) {
+				$fh = $tmpFH;
+			} else {
+				warn "Failed to open timing log '$Logfile' in append mode: $!";
+				$fh = *STDERR;
+			}
+		} else {
+			$fh = *STDERR;
 		}
-	}
-	
-	if ($self->{stop}) {
-		my $stop = sprintf("%.6f", $self->{stop});
-		my $start = sprintf("%.6f", $self->{start});
-		my $diff  = sprintf("%.6f", $stop-$start);
-		print TIMING "TIMING $$ $id $stop ($diff) $task: END\n";
-	} else {
-		$now = sprintf("%.6f", $now);
-		my $start = sprintf("%.6f", $self->{start});
-		my $diff  = sprintf("%.6f", $now-$start);
-		print TIMING "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
+		
+		my $id = $self->{id};
+		my $task = $self->{task};
+		my $now = gettimeofday();
+		
+		my $diff = sprintf("%.6f", 0);
+		if ($self->{start}) {
+			my $start = sprintf("%.6f", $self->{start});
+			print $fh "TIMING $$ $id $start ($diff) $task: START\n";
+		} else {
+			my $ctime = sprintf("%.6f", $self->{ctime});
+			print $fh "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
+		}
+		
+		if ($self->{steps}) {
+			my @steps = @{$self->{steps}};
+			foreach my $step (@steps) {
+				my ($time, $data) = @$step;
+				$time = sprintf("%.6f", $time);
+				my $start = sprintf("%.6f", $self->{start});
+				my $diff  = sprintf("%.6f", $time-$start);
+				print $fh "TIMING $$ $id $time ($diff) $task: $data\n";
+			}
+		}
+		
+		if ($self->{stop}) {
+			my $stop = sprintf("%.6f", $self->{stop});
+			my $start = sprintf("%.6f", $self->{start});
+			my $diff = sprintf("%.6f", $stop-$start);
+			print $fh "TIMING $$ $id $stop ($diff) $task: END\n";
+		} else {
+			$now = sprintf("%.6f", $now);
+			my $start = sprintf("%.6f", $self->{start});
+			my $diff = sprintf("%.6f", $now-$start);
+			print $fh "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
+		}
 	}
 	
 	$self->{saved} = 1;
@@ -185,13 +228,15 @@ sub DESTROY {
 	$self->save unless $self->{saved};
 }
 
+=back
+
+=cut
+
+################################################################################
+
 =head1 AUTHOR
 
 Written by Sam Hathaway, sh002i (at) math.rochester.edu.
-
-=head1 BUGS
-
-Currently outputs to STDERR instead of something more graceful.
 
 =head1 SEE ALSO
 
