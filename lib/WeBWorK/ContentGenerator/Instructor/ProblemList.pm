@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.28 2004/05/31 16:02:28 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.29 2004/05/31 16:59:17 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -277,6 +277,9 @@ sub initialize {
 		
 		}
 	      }
+	      # the attempted field has to be computed from num correct and num incorrect
+	      my $attempted = ($userProblemRecord->num_correct+$userProblemRecord->num_incorrect > 0) ? 1 : 0;
+	      $userProblemRecord->attempted($attempted);
 	      $db->putUserProblem($userProblemRecord);
 	
 	    }
