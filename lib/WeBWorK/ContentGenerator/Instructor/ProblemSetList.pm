@@ -615,7 +615,7 @@ sub publish_form {
 		CGI::popup_menu(
 			-name => "action.publish.scope",
 			-values => [ qw(none all selected) ],
-			-default => $actionParams{"action.publish.scope"}->[0] || "none",
+			-default => $actionParams{"action.publish.scope"}->[0] || "selected",
 			-labels => {
 				none => "",
 				all => "all sets",
@@ -679,7 +679,7 @@ sub publish_handler {
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return join("",
-	    qq!\n<div style="background-color:red">!,
+	    qq!\n<div class="ResultsWithError">!,
 		"Delete ",
 		CGI::popup_menu(
 			-name => "action.delete.scope",
@@ -788,15 +788,16 @@ sub import_form {
 			},
 			-onchange => "$onChange;$importScript",
 		),
-		" from set definition file(s) ",
+		" from ", # set definition file(s) ",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getDefList() ],
+			-labels => { "" => "the following file(s)" },
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-size => $actionParams{"action.import.number"}->[0] || "1",
 			-onchange => $onChange,
 		),
-		" with set name: ",
+		" with set name(s): ",
 		CGI::textfield(
 			-name => "action.import.name",
 			-value => $actionParams{"action.import.name"}->[0] || "",
@@ -806,14 +807,10 @@ sub import_form {
 		"assigning this set to ",
 		CGI::popup_menu(
 			-name => "action.import.assign",
-			-value => [qw(all visible selected none)],
+			-value => [qw(all none)],
 			-default => $actionParams{"action.import.assign"}->[0] || "none",
 			-labels => {
 				all => "all current users.",
-				#visible => "visible users.",
-				visible => "",
-				#selected => "selected users.",
-				selected => "",
 				none => "no users.",
 			},
 			-onchange => $onChange,
