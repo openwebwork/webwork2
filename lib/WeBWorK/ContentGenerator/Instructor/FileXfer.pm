@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.3 2004/03/23 01:15:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.4 2004/05/05 00:53:13 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -158,11 +158,7 @@ sub handleDownload {
 	}
 	
 	# set the file to sent:
-	$self->{sendFile} = {
-		source => "$dir/$fileToDownload",
-		type => "text/plain",
-		name => $fileToDownload,
-	};
+	$self->reply_with_file("text/plain", "$dir/$fileToDownload", $fileToDownload, 0);
 }
 
 sub handleUpload {
