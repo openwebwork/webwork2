@@ -59,8 +59,11 @@ sub body {
 	my $sort = $r->param("sort") || "status";
 	my $wwdb = $self->{wwdb};
 	
-	my $motd = eval { readFile($courseEnvironment->{courseFiles}->{motd}) };
-	$@ or print $motd;
+	if (defined $courseEnvironment->{courseFiles}->{motd}
+		and $courseEnvironment->{courseFiles}->{motd}) {
+		my $motd = eval { readFile($courseEnvironment->{courseFiles}->{motd}) };
+		$@ or print $motd;
+	}
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 	my $baseURL = $r->uri . "?" . $self->url_authen_args();
