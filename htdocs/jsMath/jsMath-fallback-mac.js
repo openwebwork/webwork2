@@ -419,11 +419,11 @@ jsMath.Add(jsMath.TeX,{
     {c: '&#x22C1;', tclass: 'symbol'},
     // 60 - 6F
     {c: '&#x22A2;', tclass: 'symbol'},
-    {c: '&#x22A3;', tclass: 'symbol'},
-    {c: '&#x23A3;', a:.3, d:.2, tclass: 'normal'},
-    {c: '&#x23A6;', a:.3, d:.2, tclass: 'normal'},
-    {c: '&#x23A1;', a:.3, d:.2, tclass: 'normal'},
-    {c: '&#x23A4;', a:.3, d:.2, tclass: 'normal'},
+    {c: '&#x22A3;', tclass: 'symbol2'},
+    {c: '&#xF8F0;', a:.3, d:.2, tclass: 'normal'},
+    {c: '&#xF8FB;', a:.3, d:.2, tclass: 'normal'},
+    {c: '&#xF8EE;', a:.3, d:.2, tclass: 'normal'},
+    {c: '&#xF8F9;', a:.3, d:.2, tclass: 'normal'},
     {c: '{', d:.2, tclass: 'normal'},
     {c: '}', d:.2, tclass: 'normal'},
     {c: '&#x3008;', a:.3, d:.2, tclass: 'normal'},
@@ -448,8 +448,8 @@ jsMath.Add(jsMath.TeX,{
     {c: '&#x2021;', d:.1, tclass: 'normal'},
     {c: '&#xB6;', a:.3, d:.1, tclass: 'lucida'},
     {c: '&#x2663;', tclass: 'symbol'},
-    {c: '&#x2662;', tclass: 'symbol'},
-    {c: '&#x2661;', tclass: 'symbol'},
+    {c: '&#x2666;', tclass: 'symbol'},
+    {c: '&#x2665;', tclass: 'symbol'},
     {c: '&#x2660;', tclass: 'symbol'}
   ],
 
@@ -459,14 +459,14 @@ jsMath.Add(jsMath.TeX,{
     {c: ')', h: 0.04, d: 1.16, n: 17, tclass: 'delim1'},
     {c: '[', h: 0.04, d: 1.16, n: 104, tclass: 'delim1'},
     {c: ']', h: 0.04, d: 1.16, n: 105, tclass: 'delim1'},
-    {c: '&#x23A3', h: 0.04, d: 1.16, n: 106, tclass: 'delim1a'},
-    {c: '&#x23A6;', h: 0.04, d: 1.16, n: 107, tclass: 'delim1a'},
-    {c: '&#x23A1;', h: 0.04, d: 1.16, n: 108, tclass: 'delim1a'},
-    {c: '&#x23A4;', h: 0.04, d: 1.16, n: 109, tclass: 'delim1a'},
+    {c: '&#xF8F0', h: 0.04, d: 1.16, n: 106, tclass: 'delim1'},
+    {c: '&#xF8FB;', h: 0.04, d: 1.16, n: 107, tclass: 'delim1'},
+    {c: '&#xF8EE;', h: 0.04, d: 1.16, n: 108, tclass: 'delim1'},
+    {c: '&#xF8F9;', h: 0.04, d: 1.16, n: 109, tclass: 'delim1'},
     {c: '{', h: 0.04, d: 1.16, n: 110, tclass: 'delim1'},
     {c: '}', h: 0.04, d: 1.16, n: 111, tclass: 'delim1'},
-    {c: '&#x3008;', h: 0.04, d: 1.16, n: 68, tclass: 'delim1a'},
-    {c: '&#x3009;', h: 0.04, d: 1.16, n: 69, tclass: 'delim1a'},
+    {c: '&#x3008;', h: 0.04, d: 1.16, n: 68, tclass: 'delim1c'},
+    {c: '&#x3009;', h: 0.04, d: 1.16, n: 69, tclass: 'delim1c'},
     {c: '|', h:.7, d:.1, delim: {rep: 12}, tclass: 'vertical2'},
     {c: '||', h:.7, d:.1, delim: {rep: 13}, tclass: 'vertical2'},
     {c: '&#x2215;', h: 0.04, d: 1.16, n: 46, tclass: 'delim1b'},
@@ -478,14 +478,14 @@ jsMath.Add(jsMath.TeX,{
     {c: ')', h: 0.04, d: 2.36, n: 33, tclass: 'delim3'},
     {c: '[', h: 0.04, d: 2.36, n: 34, tclass: 'delim3'},
     {c: ']', h: 0.04, d: 2.36, n: 35, tclass: 'delim3'},
-    {c: '&#x23A3;', h: 0.04, d: 2.36, n: 36, tclass: 'delim3'},
-    {c: '&#x23A6;', h: 0.04, d: 2.36, n: 37, tclass: 'delim3'},
-    {c: '&#x23A1;', h: 0.04, d: 2.36, n: 38, tclass: 'delim3'},
-    {c: '&#x23A4;', h: 0.04, d: 2.36, n: 39, tclass: 'delim3'},
+    {c: '&#xF8F0;', h: 0.04, d: 2.36, n: 36, tclass: 'delim3'},
+    {c: '&#xF8FB;', h: 0.04, d: 2.36, n: 37, tclass: 'delim3'},
+    {c: '&#xF8EE;', h: 0.04, d: 2.36, n: 38, tclass: 'delim3'},
+    {c: '&#xF8F9;', h: 0.04, d: 2.36, n: 39, tclass: 'delim3'},
     {c: '<SPAN STYLE="margin: -.1em">{</SPAN>', h: 0.04, d: 2.36, n: 40, tclass: 'delim3'},
     {c: '<SPAN STYLE="margin: -.1em">}</SPAN>', h: 0.04, d: 2.36, n: 41, tclass: 'delim3'},
-    {c: '&#x3008;', h: 0.04, d: 2.36, n: 42, tclass: 'delim3a'},
-    {c: '&#x3009;', h: 0.04, d: 2.36, n: 43, tclass: 'delim3a'},
+    {c: '&#x3008;', h: 0.04, d: 2.36, n: 42, tclass: 'delim3c'},
+    {c: '&#x3009;', h: 0.04, d: 2.36, n: 43, tclass: 'delim3c'},
     {c: '&#x2215;', h: 0.04, d: 2.36, n: 44, tclass: 'delim3b'},
     {c: '&#x2216;', h: 0.04, d: 2.36, n: 45, tclass: 'delim3b'},
     // 20 - 2F
@@ -493,42 +493,42 @@ jsMath.Add(jsMath.TeX,{
     {c: ')', h: 0.04, d: 2.96, n: 49, tclass: 'delim4'},
     {c: '[', h: 0.04, d: 2.96, n: 50, tclass: 'delim4'},
     {c: ']', h: 0.04, d: 2.96, n: 51, tclass: 'delim4'},
-    {c: '&#x23A3;', h: 0.04, d: 2.96, n: 52, tclass: 'delim4'},
-    {c: '&#x23A6;', h: 0.04, d: 2.96, n: 53, tclass: 'delim4'},
-    {c: '&#x23A1;', h: 0.04, d: 2.96, n: 54, tclass: 'delim4'},
-    {c: '&#x23A4;', h: 0.04, d: 2.96, n: 55, tclass: 'delim4'},
+    {c: '&#xF8F0;', h: 0.04, d: 2.96, n: 52, tclass: 'delim4'},
+    {c: '&#xF8FB;', h: 0.04, d: 2.96, n: 53, tclass: 'delim4'},
+    {c: '&#xF8EE;', h: 0.04, d: 2.96, n: 54, tclass: 'delim4'},
+    {c: '&#xF8F9;', h: 0.04, d: 2.96, n: 55, tclass: 'delim4'},
     {c: '<SPAN STYLE="margin: -.1em">{</SPAN>', h: 0.04, d: 2.96, n: 56, tclass: 'delim4'},
     {c: '<SPAN STYLE="margin: -.1em">}</SPAN>', h: 0.04, d: 2.96, n: 57, tclass: 'delim4'},
-    {c: '&#x3008;', h: 0.04, d: 2.96, tclass: 'delim4a'},
-    {c: '&#x3009;', h: 0.04, d: 2.96, tclass: 'delim4a'},
+    {c: '&#x3008;', h: 0.04, d: 2.96, tclass: 'delim4c'},
+    {c: '&#x3009;', h: 0.04, d: 2.96, tclass: 'delim4c'},
     {c: '&#x2215;', h: 0.04, d: 2.96, tclass: 'delim4b'},
     {c: '&#x2216;', h: 0.04, d: 2.96, tclass: 'delim4b'},
     {c: '&#x2215;', h: 0.04, d: 1.76, n: 30, tclass: 'delim2b'},
     {c: '&#x2216;', h: 0.04, d: 1.76, n: 31, tclass: 'delim2b'},
     // 30 - 3F
-    {c: '&#x239B;', h: .8, d: .15, delim: {top: 48, bot: 64, rep: 66}, tclass: 'delimx'},
-    {c: '&#x239E;', h: .8, d: .15, delim: {top: 49, bot: 65, rep: 67}, tclass: 'delimx'},
-    {c: '&#x23A1;', h: .8, d: .15, delim: {top: 50, bot: 52, rep: 54}, tclass: 'delimx'},
-    {c: '&#x23A4;', h: .8, d: .15, delim: {top: 51, bot: 53, rep: 55}, tclass: 'delimx'},
-    {c: '&#x23A3;', h: .8, d: .15, delim: {bot: 52, rep: 54}, tclass: 'delimx'},
-    {c: '&#x23A6;', h: .8, d: .15, delim: {bot: 53, rep: 55}, tclass: 'delimx'},
-    {c: '&#x23A2;', h: .8, d: .15, delim: {top: 50, rep: 54}, tclass: 'delimx'},
-    {c: '&#x23A5;', h: .8, d: .15, delim: {top: 51, rep: 55}, tclass: 'delimx'},
-    {c: '&#x23A7;', h: .8, d: .15, delim: {top: 56, mid: 60, bot: 58, rep: 62}, tclass: 'delimx'},
-    {c: '&#x23AB;', h: .8, d: .15, delim: {top: 57, mid: 61, bot: 59, rep: 62}, tclass: 'delimx'},
-    {c: '&#x23A9;', h: .8, d: .15, delim: {top: 56, bot: 58, rep: 62}, tclass: 'delimx'},
-    {c: '&#x23AD;', h: .8, d: .15, delim: {top: 57, bot: 59, rep: 62}, tclass: 'delimx'},
-    {c: '&#x23A8;', h: .8, d: .15, delim: {rep: 63}, tclass: 'delimx'},
-    {c: '&#x23AC;', h: .8, d: .15, delim: {rep: 119}, tclass: 'delimx'},
-    {c: '&#x23AA;', h: .8, d: .15, delim: {rep: 62}, tclass: 'delimx'},
-    {c: '&#x23D0;', h: .8, d: .15, delim: {top: 120, bot: 121, rep: 63}, tclass: 'delimx'},
+    {c: '&#xF8EB;', h: .8, d: .15, delim: {top: 48, bot: 64, rep: 66}, tclass: 'normal'},
+    {c: '&#xF8F6;', h: .8, d: .15, delim: {top: 49, bot: 65, rep: 67}, tclass: 'normal'},
+    {c: '&#xF8EE;', h: .8, d: .15, delim: {top: 50, bot: 52, rep: 54}, tclass: 'normal'},
+    {c: '&#xF8F9;', h: .8, d: .15, delim: {top: 51, bot: 53, rep: 55}, tclass: 'normal'},
+    {c: '&#xF8F0;', h: .8, d: .15, delim: {bot: 52, rep: 54}, tclass: 'normal'},
+    {c: '&#xF8FB;', h: .8, d: .15, delim: {bot: 53, rep: 55}, tclass: 'normal'},
+    {c: '&#xF8EF;', h: .8, d: .15, delim: {top: 50, rep: 54}, tclass: 'normal'},
+    {c: '&#xF8FA;', h: .8, d: .15, delim: {top: 51, rep: 55}, tclass: 'normal'},
+    {c: '&#xF8F1;', h: .8, d: .15, delim: {top: 56, mid: 60, bot: 58, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8FC;', h: .8, d: .15, delim: {top: 57, mid: 61, bot: 59, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8F3;', h: .8, d: .15, delim: {top: 56, bot: 58, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8FE;', h: .8, d: .15, delim: {top: 57, bot: 59, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8F2;', h: .8, d: .15, delim: {rep: 63}, tclass: 'normal'},
+    {c: '&#xF8FD;', h: .8, d: .15, delim: {rep: 119}, tclass: 'normal'},
+    {c: '&#xF8F4;', h: .8, d: .15, delim: {rep: 62}, tclass: 'normal'},
+    {c: '|', h: .7, d: .15, delim: {top: 120, bot: 121, rep: 63}, tclass: 'vertical2'},
     // 40 - 4F
-    {c: '&#x239D;', h: .8, d: .15, delim: {top: 56, bot: 59, rep: 62}, tclass: 'delimx'},
-    {c: '&#x23A0;', h: .8, d: .15, delim: {top: 57, bot: 58, rep: 62}, tclass: 'delimx'},
-    {c: '&#x239C;', h: .8, d: .15, delim: {rep: 66}, tclass: 'delimx'},
-    {c: '&#x239F;', h: .8, d: .15, delim: {rep: 67}, tclass: 'delimx'},
-    {c: '&#x3008;', h: 0.04, d: 1.76, n: 28, tclass: 'delim2a'},
-    {c: '&#x3009;', h: 0.04, d: 1.76, n: 29, tclass: 'delim2a'},
+    {c: '&#xF8ED;', h: .8, d: .15, delim: {top: 56, bot: 59, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8F8;', h: .8, d: .15, delim: {top: 57, bot: 58, rep: 62}, tclass: 'normal'},
+    {c: '&#xF8EC;', h: .8, d: .15, delim: {rep: 66}, tclass: 'normal'},
+    {c: '&#xF8F7;', h: .8, d: .15, delim: {rep: 67}, tclass: 'normal'},
+    {c: '&#x3008;', h: 0.04, d: 1.76, n: 28, tclass: 'delim2c'},
+    {c: '&#x3009;', h: 0.04, d: 1.76, n: 29, tclass: 'delim2c'},
     {c: '&#x2294;', h: 0, d: 1, n: 71, tclass: 'bigop1'},
     {c: '&#x2294;', h: 0.1, d: 1.5, tclass: 'bigop2'},
     {c: '&#x222E;', h: 0, d: 1.11, ic: 0.095, n: 73, tclass: 'bigop1c'},
@@ -559,18 +559,18 @@ jsMath.Add(jsMath.TeX,{
     // 60 - 6F
     {c: '&#x2210;', h: 0, d: 1, n: 97, tclass: 'bigop1a'},
     {c: '&#x2210;', h: 0.1, d: 1.5, tclass: 'bigop2a'},
-    {c: '&#x2040;', h: 0.722, w: .65, n: 99, tclass: 'wide1'},
-    {c: '&#x2040;', h: 0.85, w: 1.1, n: 100, tclass: 'wide2'},
-    {c: '&#x2040;', h: 0.99, w: 1.65, tclass: 'wide3'},
+    {c: '&#xFE3F;', h: 0.722, w: .65, n: 99, tclass: 'wide1'},
+    {c: '&#xFE3F;', h: 0.85, w: 1.1, n: 100, tclass: 'wide2'},
+    {c: '&#xFE3F;', h: 0.99, w: 1.65, tclass: 'wide3'},
     {c: '&#x2053;', h: 0.722, w: .75, n: 102, tclass: 'wide1a'},
     {c: '&#x2053;', h: 0.8, w: 1.35, n: 103, tclass: 'wide2a'},
     {c: '&#x2053;', h: 0.99, w: 2, tclass: 'wide3a'},
     {c: '[', h: 0.04, d: 1.76, n: 20, tclass: 'delim2'},
     {c: ']', h: 0.04, d: 1.76, n: 21, tclass: 'delim2'},
-    {c: '&#x23A3;', h: 0.04, d: 1.76, n: 22, tclass: 'delim2'},
-    {c: '&#x23A6;', h: 0.04, d: 1.76, n: 23, tclass: 'delim2'},
-    {c: '&#x23A1;', h: 0.04, d: 1.76, n: 24, tclass: 'delim2'},
-    {c: '&#x23A4', h: 0.04, d: 1.76, n: 25, tclass: 'delim2'},
+    {c: '&#xF8F0;', h: 0.04, d: 1.76, n: 22, tclass: 'delim2'},
+    {c: '&#xF8FB;', h: 0.04, d: 1.76, n: 23, tclass: 'delim2'},
+    {c: '&#xF8EE;', h: 0.04, d: 1.76, n: 24, tclass: 'delim2'},
+    {c: '&#xF8F9', h: 0.04, d: 1.76, n: 25, tclass: 'delim2'},
     {c: '<SPAN STYLE="margin: -.1em">{</SPAN>', h: 0.04, d: 1.76, n: 26, tclass: 'delim2'},
     {c: '<SPAN STYLE="margin: -.1em">}</SPAN>', h: 0.04, d: 1.76, n: 27, tclass: 'delim2'},
     // 70 - 7F
@@ -584,10 +584,10 @@ jsMath.Add(jsMath.TeX,{
     {c: '<SPAN STYLE="margin:.1em">||</SPAN>', h:.65, d:.15, delim: {top: 126, bot: 127, rep: 119}, tclass: 'vertical2'},
     {c: '&#x25B5;', h:.45, delim: {top: 120, rep: 63}, tclass: 'arrow1b'},
     {c: '&#x25BF;', h:.45, delim: {bot: 121, rep: 63}, tclass: 'arrow1b'},
-    {c: '<SPAN STYLE="font-size: 75%; position:relative; top:.35em; margin-left:-.5em">&#x256D;</SPAN>', h:.1, tclass: 'symbol'},
-    {c: '<SPAN STYLE="font-size: 75%; position:relative; top:.35em; margin-right:-.5em">&#x256E;</SPAN>', h:.1, tclass: 'symbol'},
-    {c: '<SPAN STYLE="font-size: 75%; position:relative; top:.35em; margin-left:-.5em">&#x2570;</SPAN>', h:.1, tclass: 'symbol'},
-    {c: '<SPAN STYLE="font-size: 75%; position:relative; top:.35em; margin-right:-.5em">&#x256F;</SPAN>', h:.1, tclass: 'symbol'},
+    {c: '<SPAN STYLE="font-size: 67%; position:relative; top:.35em; margin-left:-.5em">&#x256D;</SPAN>', h:.1, tclass: 'symbol'},
+    {c: '<SPAN STYLE="font-size: 67%; position:relative; top:.35em; margin-right:-.5em">&#x256E;</SPAN>', h:.1, tclass: 'symbol'},
+    {c: '<SPAN STYLE="font-size: 67%; position:relative; top:.35em; margin-left:-.5em">&#x2570;</SPAN>', h:.1, tclass: 'symbol'},
+    {c: '<SPAN STYLE="font-size: 67%; position:relative; top:.35em; margin-right:-.5em">&#x256F;</SPAN>', h:.1, tclass: 'symbol'},
     {c: '&#x25B5;', h:.5, d:-.1, delim: {top: 126, rep: 119}, tclass: 'arrow2b'},
     {c: '&#x25BF;', h:.5, d:-.1, delim: {bot: 127, rep: 119}, tclass: 'arrow2b'}
   ],
@@ -879,14 +879,14 @@ jsMath.Add(jsMath.TeX,{
  */
 
 jsMath.Add(jsMath.Box,{
-  TeX: function (c,font,style) {
+  TeX: function (c,font,style,size) {
     c = jsMath.TeX[font][c];
     if (c.h != null) {c.a = c.h-1.1*jsMath.TeX.x_height; if (c.d == 1) {c.d += .0001}}
-    var box = this.Text(c.c,c.tclass,style,c.a,c.d);
-    var factor = (style.charAt(1) == 'S')? .6: (style.charAt(0) == 'S')? .75: 1;
+    var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
+    var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
-      box.bh = factor*c.bh;
-      box.bd = factor*c.bd;
+      box.bh = c.bh * scale;
+      box.bd = c.bd * scale;
     } else {
       var h = box.bd+box.bh;
       var ph = Math.round(h*jsMath.em);
@@ -896,8 +896,8 @@ jsMath.Add(jsMath.Box,{
                           + 'width: 1; height: '+ph+'px">').h - h;
         box.bh = h - box.bd;
       }
-      c.bh = box.bh/factor;
-      c.bd = box.bd/factor;
+      c.bh = box.bh/scale;
+      c.bd = box.bd/scale;
     }
     if (jsMath.msieFontBug) {
       // hack to avoid Font changing back to the default
@@ -926,32 +926,31 @@ jsMath.UpdateStyles({
     '.symbol2':        'font-family: Hiragino Mincho Pro; margin:-.2em',
     '.symbol3':        'font-family: AppleGothic',
     '.delim1':         'font-family: Times; font-size: 133%; position:relative; top:.75em',
-    '.delim1a':        'font-family: Times; font-size: 120%; position:relative; top:.8em',
-    '.delim1b':        'font-family: Times; font-size: 133%; position:relative; top:.8em; margin: -.1em',
+    '.delim1b':        'font-family: Hiragino Mincho Pro; font-size: 133%; position:relative; top:.8em; margin: -.1em',
+    '.delim1c':        'font-family: Symbol; font-size: 120%; position:relative; top:.8em;',
     '.delim2':         'font-family: Baskerville; font-size: 180%; position:relative; top:.75em',
-    '.delim2a':        'font-family: Baskerville; font-size: 167%; position:relative; top:.85em',
-    '.delim2b':        'font-family: Baskerville; font-size: 190%; position:relative; top:.8em; margin: -.1em',
+    '.delim2b':        'font-family: Hiragino Mincho Pro; font-size: 190%; position:relative; top:.8em; margin: -.1em',
+    '.delim2c':        'font-family: Symbol; font-size: 167%; position:relative; top:.8em;',
     '.delim3':         'font-family: Baskerville; font-size: 250%; position:relative; top:.725em',
-    '.delim3a':        'font-family: Baskerville; font-size: 240%; position:relative; top:.775em',
-    '.delim3b':        'font-family: Baskerville; font-size: 250%; position:relative; top:.8em; margin: -.1em',
+    '.delim3b':        'font-family: Hiragino Mincho Pro; font-size: 250%; position:relative; top:.8em; margin: -.1em',
+    '.delim3c':        'font-family: symbol; font-size: 240%; position:relative; top:.775em;',
     '.delim4':         'font-family: Baskerville; font-size: 325%; position:relative; top:.7em',
-    '.delim4a':        'font-family: Baskerville; font-size: 300%; position:relative; top:.775em',
-    '.delim4b':        'font-family: Baskerville; font-size: 325%; position:relative; top:.8em; margin: -.1em',
-    '.delimx':         'font-family: Symbol',
+    '.delim4b':        'font-family: Hiragino Mincho Pro; font-size: 325%; position:relative; top:.8em; margin: -.1em',
+    '.delim4c':        'font-family: Symbol; font-size: 300%; position:relative; top:.8em;',
     '.vertical':       'font-family: Copperplate',
     '.vertical2':      'font-family: Copperplate; font-size: 85%',
     '.greek':          'font-family: Symbol',
     '.bigop1':         'font-family: Hiragino Mincho Pro; font-size: 133%; position: relative; top: .85em; margin:-.05em',
     '.bigop1a':        'font-family: Baskerville; font-size: 100%; position: relative; top: .775em;',
     '.bigop1b':        'font-family: Hiragino Mincho Pro; font-size: 160%; position: relative; top: .7em; margin:-.1em',
-    '.bigop1c':        'font-family: Hiragino Mincho Pro; font-size: 125%; position: relative; top: .75em; margin:-.05em',
+    '.bigop1c':        'font-family: Apple Symbols; font-size: 125%; position: relative; top: .75em; margin:-.1em;',
     '.bigop2':         'font-family: Hiragino Mincho Pro; font-size: 200%; position: relative; top: .8em; margin:-.07em',
     '.bigop2a':        'font-family: Baskerville; font-size: 175%; position: relative; top: .7em;',
     '.bigop2b':        'font-family: Hiragino Mincho Pro; font-size: 270%; position: relative; top: .62em; margin:-.1em',
-    '.bigop2c':        'font-family: Hiragino Mincho Pro; font-size: 230%; position: relative; top: .75em; margin-right:-.1em',
-    '.wide1':          'font-size: 75%; position: relative; top:-.1em',
-    '.wide2':          'font-size: 133%; position: relative; top:.25em',
-    '.wide3':          'font-size: 200%; position: relative; top:.35em',
+    '.bigop2c':        'font-family: Apple Symbols; font-size: 250%; position: relative; top: .7em; margin:-.17em;',
+    '.wide1':          'font-size: 67%; position: relative; top:-.8em',
+    '.wide2':          'font-size: 110%; position: relative; top:-.5em',
+    '.wide3':          'font-size: 175%; position: relative; top:-.32em',
     '.wide1a':         'font-size: 75%; position: relative; top:-.5em',
     '.wide2a':         'font-size: 133%; position: relative; top: -.15em',
     '.wide3a':         'font-size: 200%; position: relative; top: -.05em',
@@ -969,7 +968,7 @@ jsMath.noAppleSymbols =  (jsMath.BBoxFor('&#x2223;').w ==
 if (jsMath.noAppleSymbols) {
   jsMath.UpdateTeXfonts({
     cmsy10: {
-      '16': {c: '<SPAN STYLE="position:relative;top:.25em; font-size: 67%">&#x2323;</SPAN><SPAN STYLE="position:relative;top:-.2em;font-size:67%;margin-left:-1em">&#x2322;</SPAN>', tclass: 'normal'},
+      '16': {c: '<SPAN STYLE="position:relative;top:.25em; font-size: 67%">&#x2323;</SPAN><SPAN STYLE="position:relative;top:-.15em;font-size:67%;margin-left:-1em">&#x2322;</SPAN>', tclass: 'normal'},
       '22': {c: '&#x227A;<SPAN STYLE="position:relative;top:.3em; margin-left:-1em">&mdash;</SPAN>', tclass: 'normal'},
       '23': {c: '&#x227B;<SPAN STYLE="position:relative;top:.3em; margin-left:-1em">&mdash;</SPAN>', tclass: 'normal'},
       '91': {c: '&#x222A;'},
@@ -1005,19 +1004,9 @@ if (navigator.accentColorName) {
       '55':  {c: '<SPAN STYLE="font-size: 75%; position:relative; left:.3em; top:-.15em; margin-left:-.3em">&#x02EB;</SPAN>'},
       '104': {c: '<SPAN STYLE="position:relative; top:.2em; margin-left:-.55em">&#x3008;</SPAN>'},
       '105': {c: '<SPAN STYLE="position:relative; top:.2em; margin-right:-.55em">&#x3009;</SPAN>'}
-    },
-    cmex10: {
-      '10': {c: '<SPAN STYLE="position:relative; top:.1em; margin-left:-.55em">&#x3008;</SPAN>'},
-      '11': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.55em">&#x3009;</SPAN>'},
-      '28': {c: '<SPAN STYLE="position:relative; top:.1em; margin-left:-.55em">&#x3008;</SPAN>'},
-      '29': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.55em">&#x3009;</SPAN>'},
-      '42': {c: '<SPAN STYLE="position:relative; top:.1em; margin-left:-.55em">&#x3008;</SPAN>'},
-      '43': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.55em">&#x3009;</SPAN>'},
-      '68': {c: '<SPAN STYLE="position:relative; top:.1em; margin-left:-.55em">&#x3008;</SPAN>'},
-      '69': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.55em">&#x3009;</SPAN>'}
     }
   });
-
+  
   jsMath.UpdateStyles({
     '.arrow2':   'font-family: Symbol; font-size: 100%; position: relative; top: -.1em; margin:-1px'
   });

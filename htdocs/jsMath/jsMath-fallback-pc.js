@@ -879,26 +879,26 @@ jsMath.Add(jsMath.TeX,{
  */
 
 jsMath.Add(jsMath.Box,{
-  TeX: function (c,font,style) {
+  TeX: function (c,font,style,size) {
     c = jsMath.TeX[font][c];
     if (c.h != null) {c.a = c.h-1.1*jsMath.TeX.x_height; if (c.d == 1) {c.d += .0001}}
-    var box = this.Text(c.c,c.tclass,style,c.a,c.d);
-    var factor = (style.charAt(1) == 'S')? .6: (style.charAt(0) == 'S')? .75: 1;
+    var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
+    var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
-      box.bh = factor*c.bh;
-      box.bd = factor*c.bd;
+      box.bh = c.bh * scale;
+      box.bd = c.bd * scale;
     } else {
       var h = box.bd+box.bh;
       var ph = Math.round(h*jsMath.em);
       if (h > jsMath.hd) {
         box.bd = c.bd = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)
                           + '<IMG SRC="'+jsMath.blank+'" STYLE="'
-                          + 'width: 0; height: '+ph+'px">').h - h;
+                          + 'width: 1; height: '+ph+'px">').h - h;
         box.bh = h - box.bd;
       }
-      c.bh = box.bh/factor;
-      c.bd = box.bd/factor;
-    } 
+      c.bh = box.bh/scale;
+      c.bd = box.bd/scale;
+    }
     if (jsMath.msieFontBug) {
       // hack to avoid Font changing back to the default
       // font when a unicode reference is not followed

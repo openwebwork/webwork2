@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.2ww
+ *  Version: 1.4ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -140,29 +140,32 @@ var jsMath = {
     sup_drop:    .386108,
     sub_drop:    .05,
     delim1:     2.39,
-    delim2:     1.0             + .1,  //  just a bit bigger
+    delim2:     1.0,
     axis_height: .25,
     default_rule_thickness: .04,
-    big_op_spacing1:  .111111   - .1,  //  a little less space here
-    big_op_spacing2:  .166666   - .05, //
-    big_op_spacing3:  .2        - .1,  //
-    big_op_spacing4:  .6        - .05, //
-    big_op_spacing5:  .1        - .025, //
+    big_op_spacing1:  .111111,
+    big_op_spacing2:  .166666,
+    big_op_spacing3:  .2,
+    big_op_spacing4:  .6,
+    big_op_spacing5:  .1,
 
     integer:          6553.6,     // conversion of em's to TeX internal integer
     scriptspace:         .05,
     nulldelimiterspace:  .12,
     delimiterfactor:     901,
-    delimitershortfall:  .5
+    delimitershortfall:   .5,
+    scale:                 1      //  scaling factor for font dimensions
   },
-  TeXscript: {}, TeXscriptscript: {},
   
-  allowAbsolute: 1,    // tells if browser can nest absolutely positioned
-                       //   SPANs inside relative SPANs
-  absoluteOffsetY: -.05,   // height adjustment when absolute position is used
-  allowAbsoluteDelim: 0,
-  renameOK: 1,         // tells if brower will find a tag whose name
-                       //   has been set via setAttributes
+  // Font sizes for \tiny, \small, etc. (must match styles below)
+  sizes: [50, 60, 70, 85, 100, 120, 144, 173, 207, 249],
+
+  allowAbsolute: 1,           // tells if browser can nest absolutely positioned
+                              //   SPANs inside relative SPANs
+  absoluteOffsetY: 0,         // vertical adjustment when absolute position is used
+  allowAbsoluteDelim: 0,      // OK to use absolute placement for building delims?
+  renameOK: 1,                // tells if brower will find a tag whose name
+                              //   has been set via setAttributes
   separateNetgativeSkips: 0,  // MSIE doesn't do negative left margins
   noEmptySpans: 0,            // empty spans are/aren't allowed
   lineH: 1,                   // for MSIE span height adjustments
@@ -184,8 +187,16 @@ var jsMath = {
   //  The styles needed for the TeX fonts
   //
   styles: {
-    '.script':         'font-size: 75%',
-    '.scriptscript':   'font-size: 60%',
+    '.size0':          'font-size: 50%',  // tiny (\scriptscriptsize)
+    '.size1':          'font-size: 60%',  //       (50% of \large for consistency)
+    '.size2':          'font-size: 70%',  // scriptsize
+    '.size3':          'font-size: 85%',  // small (70% of \large for consistency)
+    '.size4':          'font-size: 100%', // normalsize
+    '.size5':          'font-size: 120%', // large
+    '.size6':          'font-size: 144%', // Large
+    '.size7':          'font-size: 173%', // LARGE
+    '.size8':          'font-size: 207%', // huge
+    '.size9':          'font-size: 249%', // Huge
   
     '.cmr10':          'font-family: cmr10',
     '.cmbx10':         'font-family: cmbx10, cmr10',
@@ -193,11 +204,11 @@ var jsMath = {
     '.cmmi10':         'font-family: cmmi10',
     '.cmsy10':         'font-family: cmsy10',
     '.cmex10':         'font-family: cmex10',
-    '.arial':          'font-family: Arial unicode MS',
+    '.arial':          'font-family: Arial unicode MS', // for MSIE
 
-    '.normal':         'font-family: serif; font-style: normal; font-size: 125%',
+    '.normal':         'font-family: serif; font-style: normal; font-size: 133%',
     '.math':           'font-family: serif; font-style: normal; color: grey33; font-size: 75%',
-    '.typeset':        'font-family: serif; font-style: normal; font-size: 125%',
+    '.typeset':        'font-family: serif; font-style: normal; font-size: 133%',
     '.mathlink':       'text-decoration: none',
     '.mathHD':         'border-width: 0; width: 1px; margin-right: -1px',
   
@@ -311,7 +322,7 @@ var jsMath = {
    *  of other parameters used throughout jsMath.
    */
   Init: function() {
-    this.em = this.BBoxFor('<DIV STYLE="width: 1em; height: 1em"></DIV>').w;
+    this.em = this.BBoxFor('<DIV STYLE="width: 20em; height: 1em"></DIV>').w/20;
     var h = this.BBoxFor('x').h;    // Line height and depth to baseline
     var d = this.BBoxFor('x<IMG SRC="'+jsMath.black+'" HEIGHT="'+h+'" WIDTH="1">').h - h;
     this.h = (h-d)/this.em; this.d = d/this.em;
@@ -324,21 +335,12 @@ var jsMath = {
     this.TeX.x_height = this.EmBoxFor('<SPAN CLASS="cmr10">M</SPAN>').w/2;
     this.TeX.M_height = this.TeX.x_height*(26/14);
     this.TeX.h = this.h; this.TeX.d = this.d; this.TeX.hd = this.hd;
-
     // factor for \big and its brethren
     this.p_height = (this.TeX.cmex10[0].h+this.TeX.cmex10[0].d) / .85;
 
-    //  Fix sizes for script and scriptscript sizes
-    //  ### these factors should be in a parameter somewhere ##
-    for (var i in this.TeX) {
-      if (typeof(this.TeX[i]) != 'object') {
-        this.TeXscript[i] = .75*this.TeX[i];
-        this.TeXscriptscript[i] = .6*this.TeX[i];
-      }
-    }
+    this.InitSizes();
     
     this.initialized = 1;
-
   },
 
   /*
@@ -374,7 +376,22 @@ var jsMath = {
       }
     }
   },
-  
+
+  /*
+   *  Compute font parameters for various sizes
+   */
+  InitSizes: function () {
+    this.TeXparams = [];
+    for (var j=0; j < this.sizes.length; j++) {this.TeXparams[j] = {}}
+    for (var i in this.TeX) {
+      if (typeof(this.TeX[i]) != 'object') {
+        for (var j=0; j < this.sizes.length; j++) {
+          this.TeXparams[j][i] = this.sizes[j]*this.TeX[i]/100;
+        }
+      }
+    }
+  },
+
   /*
    *  Test for browser characteristics, and adjust the font table
    *  to overcome specific browser bugs
@@ -488,6 +505,7 @@ var jsMath = {
       if (version < 125) {this.allowAbsolute = 0; this.oldSafari = 1}
       for (var i = 0; i < this.TeX.fam.length; i++)
         {if (this.TeX.fam[i] != '') {this.TeX[this.TeX.fam[i]].dh = .1}}
+      this.absoluteOffsetY = -.05;
       this.TeX.axis_height += .05;
 //    this.allowAbsoluteDelim = ! this.oldSafari;
     }
@@ -1462,6 +1480,17 @@ jsMath.HTML = {
    */
   Frame: function (x,y,w,h,c,pos) {
 
+    h -= 2/jsMath.em; // use 2 pixels to compensate for border size
+    w -= 2/jsMath.em;
+    y -= 1/jsMath.em;
+    if (!c) {c = 'black'};
+    if (pos) {pos = 'absolute;'} else
+             {pos = 'relative; margin-right: '+this.Em(-(w+2/jsMath.em))+'; '}
+    return '<IMG SRC="'+jsMath.blank+'" STYLE="position:' + pos
+             + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
+             + 'width:'+this.Em(w)+'; height: '+this.Em(h)+'; '
+             + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
+
 //    if (!c) {c = 'black'};
 //    if (pos) {pos = 'absolute;'} else
 //             {pos = 'relative; margin-right: '+this.Em(-w-.1)+'; '}
@@ -1470,16 +1499,18 @@ jsMath.HTML = {
 //             + 'width:'+this.Em(w)+'; height: '+this.Em(h)+'; '
 //             + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
 
-    h = Math.round(h*jsMath.em)-2; // use pixels to compensate for border size
-    w = Math.round(w*jsMath.em)-2;
-    y = Math.round(y*jsMath.em)-1;
-    if (!c) {c = 'black'};
-    if (pos) {pos = 'absolute;'} else
-             {pos = 'relative; margin-right: '+(-w-2)+'px; '}
-    return '<IMG SRC="'+jsMath.blank+'" STYLE="position:' + pos
-             + 'vertical-align: '+y+'px; left: '+this.Em(x)+'; '
-             + 'width:'+w+'px; height: '+h+'px; '
-             + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
+    /* 
+     * h = Math.round(h*jsMath.em)-2; // use pixels to compensate for border size
+     * w = Math.round(w*jsMath.em)-2;
+     * y = Math.round(y*jsMath.em)-1;
+     * if (!c) {c = 'black'};
+     * if (pos) {pos = 'absolute;'} else
+     *          {pos = 'relative; margin-right: '+(-w-2)+'px; '}
+     * return '<IMG SRC="'+jsMath.blank+'" STYLE="position:' + pos
+     *          + 'vertical-align: '+y+'px; left: '+this.Em(x)+'; '
+     *          + 'width:'+w+'px; height: '+h+'px; '
+     *          + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
+     */
   },
 
   /*
@@ -1505,7 +1536,7 @@ jsMath.HTML = {
   Rule: function (w,h) {
     if (h == null) {h = jsMath.TeX.default_rule_thickness}
     if (w == 0 || h == 0) return;  // should make an invisible box?
-    h *= jsMath.em; h = Math.round(h);
+    h = Math.round(h*jsMath.em);
     if (h < 1) {h = 1}
     return '<IMG SRC="'+jsMath.black+'" HSPACE="0" VSPACE="0" '
               + 'STYLE="width:'+this.Em(w)+'; height: '+h+'px">';
@@ -1604,15 +1635,15 @@ jsMath.Add(jsMath.Box,{
    *  A box containing only text whose class and style haven't been added
    *  yet (so that we can combine ones with the same styles).  It gets
    *  the text dimensions, if needed.  (In general, this has been
-   *  replaced by TeX() below.)
+   *  replaced by TeX() below, but is still used in fallback mode.)
    */
-  Text: function (text,tclass,style,a,d) {
+  Text: function (text,tclass,style,size,a,d) {
     var html = jsMath.Typeset.AddClass(tclass,text);
-        html = jsMath.Typeset.AddStyle(style,html);
-    var BB = jsMath.EmBoxFor(html); var TeX = jsMath.Typeset.TeX(style);
+        html = jsMath.Typeset.AddStyle(style,size,html);
+    var BB = jsMath.EmBoxFor(html); var TeX = jsMath.Typeset.TeX(style,size);
     var bd = ((tclass == 'cmsy10' || tclass == 'cmex10')? BB.h-TeX.h: TeX.d*BB.h/TeX.hd);
     var box = new jsMath.Box('text',text,BB.w,BB.h-bd,bd);
-    box.style = style; box.tclass = tclass;
+    box.style = style; box.size = size; box.tclass = tclass;
     if (d != null) {if (d != 1) {box.d = d}} else {box.d = 0}
     if (a == null || a == 1) {box.h = .9*TeX.M_height}
       else {box.h = 1.1*TeX.x_height + a}
@@ -1624,13 +1655,13 @@ jsMath.Add(jsMath.Box,{
    *  The box is a text box (like the ones above), so that characters from
    *  the same font can be combined.
    */
-  TeX: function (c,font,style) {
+  TeX: function (c,font,style,size) {
     c = jsMath.TeX[font][c];
     if (c.d == null) {c.d = 0}; if (c.h == null) {c.h = 0}
-    var scale = jsMath.Typeset.TeX(style).quad;
+    var scale = jsMath.Typeset.TeX(style,size).scale;
     var h = c.h + jsMath.TeX[font].dh
     var box = new jsMath.Box('text',c.c,c.w*scale,h*scale,c.d*scale);
-    box.style = style;
+    box.style = style; box.size = size;
     if (c.tclass) {
       box.tclass = c.tclass;
       box.bh = scale*jsMath.h;
@@ -1701,8 +1732,8 @@ jsMath.Add(jsMath.Box,{
       if (C.h == null) {C.h = jsMath.defaultH}; if (C.d == null) {C.d = 0}
       h = C.h+C.d;
       if (C.delim) {return [c,font,'',H]}
-      if (isSS && .6*h >= H) {return [c,font,'SS',.6*h]}
-      if (isS && .75*h >= H) {return [c,font,'S',.75*h]}
+      if (isSS && .5*h >= H) {return [c,font,'SS',.5*h]}
+      if (isS  && .7*h >= H) {return [c,font,'S',.7*h]}
       if (h >= H || C.n == null) {return [c,font,'T',h]}
       c = C.n
     }
@@ -1773,10 +1804,10 @@ jsMath.Add(jsMath.Box,{
     if (C.delim.mid) {// braces
       var mid = this.GetChar(C.delim.mid,font);
       var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d)-(bot.h+bot.d))/(2*(rep.h+rep.d)));
-      H = 2*n*(rep.h+rep.d-.05) + (top.h+top.d) + (mid.h+mid.d) + (bot.h+bot.d);
+      H = 2*n*(rep.h+rep.d) + (top.h+top.d) + (mid.h+mid.d) + (bot.h+bot.d);
       
       html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,-top.h);
-      var h = rep.h+rep.d - Font.hd; var y = -(top.h+top.d + rep.h) + Font.hd;
+      var h = rep.h+rep.d - Font.hd; var y = -(top.h+top.d + rep.h-.05) + Font.hd;
       var ext = jsMath.HTML.Class(font,rep.c)
       for (var i = 0; i < n; i++) {html += '<BR>'+jsMath.HTML.Place(ext,0,y-i*h)}
       html += '<BR>' + jsMath.HTML.Place(jsMath.HTML.Class(mid.tclass,mid.c),0,y-i*h);
@@ -1788,7 +1819,7 @@ jsMath.Add(jsMath.Box,{
       H = n*(rep.h+rep.d-.1) + (top.h+top.d) + (bot.h+bot.d);
 
       html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,-top.h);
-      var h = rep.h+rep.d-.1 - Font.hd; var y = -(top.h+top.d + rep.h) + Font.hd;
+      var h = rep.h+rep.d-.1 - Font.hd; var y = -(top.h+top.d + rep.h-.05) + Font.hd;
       var ext = jsMath.HTML.Class(rep.tclass,rep.c)
       for (var i = 0; i < n; i++) {html += '<BR>'+jsMath.HTML.Place(ext,0,y-i*h)}
       html += '<BR>' + jsMath.HTML.Place(jsMath.HTML.Class(bot.tclass,bot.c),0,y-i*h);
@@ -1796,7 +1827,7 @@ jsMath.Add(jsMath.Box,{
     
     var w = top.w; h = Font.h; 
     if (nocenter) {y = top.h} else {y = (H/2 + a) - top.h}
-    if (jsMath.isSafari) {y -= .175}
+    if (jsMath.isSafari) {y -= .2}
     html = '<SPAN STYLE="position: relative; '
            +   'width: '+jsMath.HTML.Em(w)+'; ' // for MSIE
            +   'height: '+jsMath.HTML.Em(top.h)+'; ' //for MSIE
@@ -1811,7 +1842,10 @@ jsMath.Add(jsMath.Box,{
          + '</SPAN>';
 
     if (nocenter) {h = top.h} else {h = H/2+a}
-    return new jsMath.Box('html',html,rep.w,h,H-h);
+    var box = new jsMath.Box('html',html,rep.w,h,H-h);
+    box.bh = top.h; box.bd = top.d;
+    box.bh = jsMath.TeX[font].h; box.bd = jsMath.TeX[font].d;
+    return box;
   },
   
   /*
@@ -1820,22 +1854,19 @@ jsMath.Add(jsMath.Box,{
    *  more complex HTML needed for a stretchable delimiter.
    */
   Delimiter: function (H,delim,style,nocenter) {
-    var TeX = jsMath.Typeset.TeX(style);
+    var size = 4;  //### pass this?
+    var TeX = jsMath.Typeset.TeX(style,size);
     var CFSH = this.DelimBestFit(H,(delim&0xFF000)>>12,(delim&0xF00000)>>20,style);
     if (CFSH == null || CFSH[3] < H) 
       {CFSH = this.DelimBestFit(H,(delim&0xFF),(delim&0xF00)>>8,style)}
     if (CFSH == null) {return this.Space(TeX.nulldelimiterspace)}
     if (CFSH[2] == '')
       {return this.DelimExtend(H,CFSH[0],CFSH[1],TeX.axis_height,nocenter)}
-    box = jsMath.Box.TeX(CFSH[0],CFSH[1],CFSH[2]).Styled();
-    if (nocenter) {
-      box.h -= jsMath.TeX[CFSH[1]].dh;
-      box.d += jsMath.TeX[CFSH[1]].dh;
-    } else {
-      box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height);
-      if (Math.abs(box.y) < .0001) {box.y = 0}
-      if (box.y) {box = jsMath.Box.SetList([box],CFSH[2])}
-    }
+    box = jsMath.Box.TeX(CFSH[0],CFSH[1],CFSH[2],size).Styled();
+    if (nocenter) {box.y = -jsMath.TeX[CFSH[1]].dh*TeX.scale}
+      else {box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height)}
+    if (Math.abs(box.y) < .0001) {box.y = 0}
+    if (box.y) {box = jsMath.Box.SetList([box],CFSH[2],size)}
     return box;
   },
   
@@ -1856,6 +1887,7 @@ jsMath.Add(jsMath.Box,{
    *  Create a horizontally stretchable "delimiter" (like over- and
    *  underbraces).
    */
+//###  Add size?
   Leaders: function (W,leader) {
     var h; var d; var w; var html; var font;
     if (leader.lmid) {// braces
@@ -1912,16 +1944,18 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  Layout: function (table,align) {
+  Layout: function (size,table,align) {
     if (align == null) {align = []}
     
     // get row and column maximum dimensions
+    var scale = jsMath.sizes[size]/100;
     var W = []; var H = []; var D = [];
     var unset = -1000; var bh = unset; var bd = unset;
     var i; var j; var row;
     for (i = 0; i < table.length; i++) {
-      row = table[i]; H[i] = jsMath.h; D[i] = jsMath.d;
+      row = table[i]; H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
       for (j = 0; j < row.length; j++) {
+        row[j] = row[j].Remeasured();
         if (row[j].h > H[i]) {H[i] = row[j].h}
         if (row[j].d > D[i]) {D[i] = row[j].d}
         if (j >= W.length) {W[j] = row[j].w}
@@ -1933,6 +1967,7 @@ jsMath.Add(jsMath.Box,{
     if (bh == unset) {bh = 0}; if (bd == unset) {bd = 0}
 
     // lay out the columns
+    var HD = (jsMath.hd-.1)*scale;
     var html = ''; var pW = 0; var cW = 0;
     var w; var h; var y;
     var box; var mlist; var entry;
@@ -1948,24 +1983,24 @@ jsMath.Add(jsMath.Box,{
           mlist[mlist.length] = entry;
         }
         if (i == table.length-1) {y -= D[i]}
-        else {y -= Math.max(jsMath.hd-.1,D[i]+H[i+1]) + .1}
+        else {y -= Math.max(HD,D[i]+H[i+1]) + scale/10}
       }
       if (mlist.length > 0) {
-        box = jsMath.Box.SetList(mlist,'T');
+        box = jsMath.Box.SetList(mlist,'T',size);
         html += jsMath.HTML.Place(box.html,cW,0);
-        cW = W[j] - box.w + 1;
-      } else {cW += 1}
+        cW = W[j] - box.w + scale;
+      } else {cW += scale}
     }
     
     // get the full width and height
-    w = -1; for (i = 0; i < W.length; i++) {w += W[i] + 1}
+    w = -scale; for (i = 0; i < W.length; i++) {w += W[i] + scale}
     h = jsMath.TeX.axis_height-y/2;
     
     // adjust the final row width, and vcenter the table
     //   (add 1/6em at each side for the \,)
-    html += jsMath.HTML.Spacer(cW-1 + 1/6);
-    html = jsMath.HTML.Place(html,1/6,h);
-    box = new jsMath.Box('html',html,w+1/3,h,-y-h);
+    html += jsMath.HTML.Spacer(cW-scale + scale/6);
+    html = jsMath.HTML.Place(html,scale/6,h);
+    box = new jsMath.Box('html',html,w+scale/3,h,-y-h);
     box.bh = bh; box.bd = bd;
     return box;
   },
@@ -1973,8 +2008,8 @@ jsMath.Add(jsMath.Box,{
   /*
    *  Look for math within \hbox and other non-math text
    */
-  InternalMath: function (text) {
-    if (!text.match(/\$|\\\(/)) {return this.Text(text,'nonmath','T').Styled()}
+  InternalMath: function (text,size) {
+    if (!text.match(/\$|\\\(/)) {return this.Text(text,'nonmath','T',size).Styled()}
     
     var i = 0; var k = 0; var c; var match = '';
     var mlist = []; var parse; var html; var box;
@@ -1982,37 +2017,37 @@ jsMath.Add(jsMath.Box,{
       c = text.charAt(i++);
       if (c == '$') {
         if (match == '$') {
-          parse = jsMath.Parse(text.slice(k,i-1));
+          parse = jsMath.Parse(text.slice(k,i-1),null,size);
           if (parse.error) {
-            mlist[mlist.length] = this.Text(parse.error,'error','T',1,1);
+            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,1);
           } else {
-            parse.Atomize('T');
-            mlist[mlist.length] = parse.mlist.Typeset('T').Styled();
+            parse.Atomize();
+            mlist[mlist.length] = parse.mlist.Typeset('T',size).Styled();
           }
           match = ''; k = i;
         } else {
-          mlist[mlist.length] = this.Text(text.slice(k,i-1),'nonmath','T',1,1);
+          mlist[mlist.length] = this.Text(text.slice(k,i-1),'nonmath','T',size,1,1);
           match = '$'; k = i;
         }
       } else if (c == '\\') {
         c = text.charAt(i++);
         if (c == '(' && match == '') {
-          mlist[mlist.length] = this.Text(text.slice(k,i-2),'nonmath','T',1,1);
+          mlist[mlist.length] = this.Text(text.slice(k,i-2),'nonmath','T',size,1,1);
           match = ')'; k = i;
         } else if (c == ')' && match == ')') {
-          parse = jsMath.Parse(text.slice(k,i-2));
+          parse = jsMath.Parse(text.slice(k,i-2),null,size);
           if (parse.error) {
-            mlist[mlist.length] = this.Text(parse.error,'error','T',1,1);
+            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,1);
           } else {
-            parse.Atomize('T');
-            mlist[mlist.length] = parse.mlist.Typeset('T').Styled();
+            parse.Atomize();
+            mlist[mlist.length] = parse.mlist.Typeset('T',size).Styled();
           }
           match = ''; k = i;
         }
       }
     }
-    mlist[mlist.length] = this.Text(text.slice(k),'nonmath','T',1,1);
-    return this.SetList(mlist,'T');
+    mlist[mlist.length] = this.Text(text.slice(k),'nonmath','T',size,1,1);
+    return this.SetList(mlist,'T',size);
   },
   
   /*
@@ -2020,19 +2055,19 @@ jsMath.Add(jsMath.Box,{
    *  HTML version of the contents of the box, at its desired (x,y)
    *  position.
    */
-  Set: function (box,style,addstyle) {
+  Set: function (box,style,size,addstyle) {
     if (box) {
       if (box.type == 'typeset') {return box}
       if (box.type == 'mlist') {
-        box.mlist.Atomize(style);
-        return box.mlist.Typeset(style);
+        box.mlist.Atomize(style,size);
+        return box.mlist.Typeset(style,size);
       }
       if (box.type == 'text') {
-        box = this.Text(box.text,box.tclass,style,box.ascend,box.descend);
+        box = this.Text(box.text,box.tclass,style,size,box.ascend,box.descend);
         if (addstyle != 0) {box.Styled()}
         return box;
       }
-      box = this.TeX(box.c,box.font,style);
+      box = this.TeX(box.c,box.font,style,size);
       if (addstyle != 0) {box.Styled()}
       return box;
     }
@@ -2043,15 +2078,15 @@ jsMath.Add(jsMath.Box,{
    *  Convert a list of boxes to a single typeset box.  I.e., finalize
    *  the HTML for the list of boxes, properly spaced and positioned.
    */
-  SetList: function (boxes,style) {
+  SetList: function (boxes,style,size) {
     var mlist = []; var box;
     for (var i = 0; i < boxes.length; i++) {
       box = boxes[i];
-      if (box.type == 'typeset') {box = new jsMath.mItem.Typeset(box)}
+      if (box.type == 'typeset') {box = jsMath.mItem.Typeset(box)}
       mlist[mlist.length] = box;
     }
     var typeset = new jsMath.Typeset(mlist);
-    return typeset.Typeset(style);
+    return typeset.Typeset(style,size);
   }
 
 });
@@ -2066,11 +2101,20 @@ jsMath.Package(jsMath.Box,{
   Styled: function () {
     if (this.format == 'text') {
       this.html = jsMath.Typeset.AddClass(this.tclass,this.html);
-      this.html = jsMath.Typeset.AddStyle(this.style,this.html);
-//      var BB = jsMath.EmBoxFor(this.html);
-//      this.w = BB.w;
+      this.html = jsMath.Typeset.AddStyle(this.style,this.size,this.html);
       delete this.tclass; delete this.style;
       this.format = 'html';
+    }
+    return this;
+  },
+  
+  /*
+   *  Recompute the box width to make it more accurate.
+   */
+  Remeasured: function () {
+    if (this.w > 0) {
+      if (!jsMath.spanHeightVaries || !this.html.match(/position: ?absolute/))
+        {this.w = jsMath.EmBoxFor(this.html).w}
     }
     return this;
   }
@@ -2169,10 +2213,12 @@ jsMath.Add(jsMath.mItem,{
  *  contain some state information, like the position of the
  *  most recent open paren and \over command, and the current font.
  */
-jsMath.mList = function (list) {
+jsMath.mList = function (list,font,size,style) {
   if (list) {this.mlist = list} else {this.mlist = []}
-  this.openI = this.overI = this.overF = null;
-  this.font = null;
+  if (style == null) {style = 'T'}; if (size == null) {size = 4}
+  this.data = {openI: null, overI: null, overF: null,
+               font: font, size: size, style: style};
+  this.init = {size: size, style: style};
 }
 
 jsMath.Package(jsMath.mList,{
@@ -2227,12 +2273,11 @@ jsMath.Package(jsMath.mList,{
    *  when this one os closed.
    */
   Open: function (left) {
-    var box = this.Add(new jsMath.mItem('boundary',
-      {overI: this.overI, overF: this.overF,
-       openI: this.openI, font: this.font}
-    ));
-    delete this.overI; delete this.overF;
-    this.openI = this.mlist.length-1;
+    var box = this.Add(new jsMath.mItem('boundary',{data: this.data}));
+    var olddata = this.data;
+    this.data = {}; for (var i in olddata) {this.data[i] = olddata[i]}
+    delete this.data.overI; delete this.data.overF;
+    this.data.openI = this.mlist.length-1;
     if (left != null) {box.left = left}
     return box;
   },
@@ -2248,12 +2293,9 @@ jsMath.Package(jsMath.mList,{
    */
   Close: function (right) {
     if (right != null) {right = new jsMath.mItem('boundary',{right: right})}
-    var atom; var open = this.openI;
-    var over = this.overI; var from = this.overF;
-    this.openI = this.mlist[open].openI;
-    this.overI = this.mlist[open].overI;
-    this.overF = this.mlist[open].overF;
-    this.font  = this.mlist[open].font;
+    var atom; var open = this.data.openI;
+    var over = this.data.overI; var from = this.data.overF;
+    this.data  = this.mlist[open].data;
     if (over) {
       atom = jsMath.mItem.Fraction(from.name,
         {type: 'mlist', mlist: this.Range(open+1,over-1)},
@@ -2277,7 +2319,7 @@ jsMath.Package(jsMath.mList,{
    *  contains an \over (or \above, etc).
    */
   Over: function () {
-    var over = this.overI; var from = this.overF
+    var over = this.data.overI; var from = this.data.overF
     var atom = jsMath.mItem.Fraction(from.name,
       {type: 'mlist', mlist: this.Range(open+1,over-1)},
       {type: 'mlist', mlist: this.Range(over)},
@@ -2290,23 +2332,22 @@ jsMath.Package(jsMath.mList,{
    *  expression), and perform the modifications outlined in
    *  Appendix G of the TeXbook.  
    */
-  Atomize: function (style) {
+  Atomize: function (style,size) {
     var mitem; var prev = '';
-    this.style = style;
+    this.style = style; this.size = size;
     for (var i = 0; i < this.mlist.length; i++) {
       mitem = this.mlist[i]; mitem.delta = 0;
-      if (mitem.type == 'style') {this.style = mitem.style}
-      else if (mitem.type == 'choice') 
+      if (mitem.type == 'choice') 
         {this.mlist = this.Atomize.choice(this.style,mitem,i,this.mlist); i--}
       else if (this.Atomize[mitem.type]) {
-        var f = this.Atomize[mitem.type];
-        f(this.style,mitem,prev,this,i);
+        var f = this.Atomize[mitem.type]; // Opera needs separate name
+        f(this.style,this.size,mitem,prev,this,i);
       }
       prev = mitem;
     }
     if (mitem && mitem.type == 'bin') {mitem.type = 'ord'}
     if (this.mlist.length >= 2 && mitem.type == 'boundary' &&
-        this.mlist[0].type == 'boundary') {this.AddDelimiters(style)}
+        this.mlist[0].type == 'boundary') {this.AddDelimiters(style,size)}
   },
 
   /*
@@ -2315,7 +2356,7 @@ jsMath.Package(jsMath.mList,{
    *  atoms whose nuclei are the specified delimiters perperly sized
    *  for the contents of the list.  (Rule 19)
    */
-  AddDelimiters: function(style) {
+  AddDelimiters: function(style,size) {
     var unset = -10000; var h = unset; var d = unset;
     for (var i = 0; i < this.mlist.length; i++) {
       mitem = this.mlist[i];
@@ -2324,7 +2365,7 @@ jsMath.Package(jsMath.mList,{
         d = Math.max(d,mitem.nuc.d-mitem.nuc.y);
       }
     }
-    var TeX = jsMath.TeX; var a = jsMath.Typeset.TeX(style).axis_height;
+    var TeX = jsMath.TeX; var a = jsMath.Typeset.TeX(style,size).axis_height;
     var delta = Math.max(h-a,d+a);
     var H =  Math.max(Math.floor(TeX.integer*delta/500)*TeX.delimiterfactor,
                       TeX.integer*(2*delta-TeX.delimitershortfall))/TeX.integer;
@@ -2334,13 +2375,13 @@ jsMath.Package(jsMath.mList,{
     left.type = 'open'; left.atom = 1; delete left.left;
     right.type = 'close'; right.atom = 1; delete right.right;
   },
-
+  
   /*
    *  Typeset a math list to produce final HTML for the list.
    */
-  Typeset: function (style) {
+  Typeset: function (style,size) {
     var typeset = new jsMath.Typeset(this.mlist);
-    return typeset.Typeset(style);
+    return typeset.Typeset(style,size);
   }
 
 });
@@ -2372,12 +2413,26 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
   },
   
   /*
+   *  Handle \displaystyle, \textstyle, etc.
+   */
+  style: function (style,size,mitem,prev,mlist) {
+    mlist.style = mitem.style;
+  },
+  
+  /*
+   *  Handle \tiny, \small, etc.
+   */
+  size: function (style,size,mitem,prev,mlist) {
+    mlist.size = mitem.size;
+  },
+  
+  /*
    *  Create empty boxes of the proper sizes for the various
    *  phantom-type commands
    */
-  phantom: function (style,mitem) {
-    var box = mitem.nuc = jsMath.Box.Set(mitem.phantom,style);
-    if (mitem.h) {box.html = jsMath.HTML.Spacer(box.w)}
+  phantom: function (style,size,mitem) {
+    var box = mitem.nuc = jsMath.Box.Set(mitem.phantom,style,size);
+    if (mitem.h) {box.Remeasured(); box.html = jsMath.HTML.Spacer(box.w)}
       else {box.html = '', box.w = 0}
     if (!mitem.v) {box.h = box.d = 0}
     box.bd = box.bh = 0;
@@ -2389,8 +2444,8 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Create a box of zero height and depth containing the
    *  contents of the atom
    */
-  smash: function (style,mitem) {
-    var box = mitem.nuc = jsMath.Box.Set(mitem.smash,style);
+  smash: function (style,size,mitem) {
+    var box = mitem.nuc = jsMath.Box.Set(mitem.smash,style,size).Remeasured();
     box.h = box.d = box.bd = box.bh = 0;
     delete mitem.smash;
     mitem.type = 'box';
@@ -2399,8 +2454,8 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
   /*
    *  Move a box up or down vertically
    */
-  raise: function (style,mitem) {
-    mitem.nuc = jsMath.Box.Set(mitem.nuc,style);
+  raise: function (style,size,mitem) {
+    mitem.nuc = jsMath.Box.Set(mitem.nuc,style,size);
     var y = mitem.raise;
     mitem.nuc.html = jsMath.HTML.Place(mitem.nuc.html,0,y);
     mitem.nuc.h += y; mitem.nuc.d -= y;
@@ -2411,14 +2466,14 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Hide the size of a box so that it laps to the left or right, or
    *  up or down.
    */
-  lap: function (style,mitem) {
-    var box = jsMath.Box.Set(mitem.nuc,style);
+  lap: function (style,size,mitem) {
+    var box = jsMath.Box.Set(mitem.nuc,style,size).Remeasured();
     var mlist = [box];
     if (mitem.lap == 'llap') {box.x = -box.w} else
     if (mitem.lap == 'rlap') {mlist[1] = jsMath.mItem.Space(-box.w)} else
     if (mitem.lap == 'ulap') {box.y = box.d; box.h = box.d = 0} else
     if (mitem.lap == 'dlap') {box.y = -box.h; box.h = box.d = 0}
-    mitem.nuc = jsMath.Box.SetList(mlist);
+    mitem.nuc = jsMath.Box.SetList(mlist,style,size);
     if (mitem.lap == 'ulap' || mitem.lap == 'dlap') {mitem.nuc.h = mitem.nuc.d = 0}
     mitem.type = 'box'; delete mitem.atom;
   },
@@ -2426,102 +2481,102 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
   /*
    *  Handle a Bin atom. (Rule 5)
    */
-  bin: function (style,mitem,prev) {
+  bin: function (style,size,mitem,prev) {
     if (prev) {
       var type  = prev.type;
       if (type == 'bin' || type == 'op' || type == 'rel' ||
           type == 'open' || type == 'punct' || type == '' ||
           (type == 'boundary' && prev.left != '')) {mitem.type = 'ord'}
     } else {mitem.type = 'ord'}
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a Rel atom.  (Rule 6)
    */
-  rel: function (style,mitem,prev) {
+  rel: function (style,size,mitem,prev) {
     if (prev.type == 'bin') {prev.type = 'ord'}
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a Close atom.  (Rule 6)
    */
-  close: function (style,mitem,prev) {
+  close: function (style,size,mitem,prev) {
     if (prev.type == 'bin') {prev.type = 'ord'}
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a Punct atom.  (Rule 6)
    */
-  punct: function (style,mitem,prev) {
+  punct: function (style,size,mitem,prev) {
     if (prev.type == 'bin') {prev.type = 'ord'}
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Open atom.  (Rule 7)
    */
-  open: function (style,mitem) {
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+  open: function (style,size,mitem) {
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Inner atom.  (Rule 7)
    */
-  inner: function (style,mitem) {
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+  inner: function (style,size,mitem) {
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a Vcent atom.  (Rule 8)
    */
-  vcenter: function (style,mitem) {
-    var box = jsMath.Box.Set(mitem.nuc,style);
-    var TeX = jsMath.Typeset.TeX(style);
+  vcenter: function (style,size,mitem) {
+    var box = jsMath.Box.Set(mitem.nuc,style,size);
+    var TeX = jsMath.Typeset.TeX(style,size);
     box.y = TeX.axis_height - (box.h-box.d)/2;
     mitem.nuc = box; mitem.type = 'ord';
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Over atom.  (Rule 9)
    */
-  overline: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style);
-    var box = jsMath.Box.Set(mitem.nuc,jsMath.Typeset.PrimeStyle(style));
+  overline: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size);
+    var box = jsMath.Box.Set(mitem.nuc,jsMath.Typeset.PrimeStyle(style),size).Remeasured();
     var t = TeX.default_rule_thickness;
     var rule = jsMath.Box.Rule(box.w,t);
     rule.x = -rule.w; rule.y = box.h + 3*t;
-    mitem.nuc = jsMath.Box.SetList([box,rule]);
+    mitem.nuc = jsMath.Box.SetList([box,rule],style,size);
     mitem.nuc.h += t;
     mitem.type = 'ord';
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Under atom.  (Rule 10)
    */
-  underline: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style);
-    var box = jsMath.Box.Set(mitem.nuc,jsMath.Typeset.PrimeStyle(style));
+  underline: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size);
+    var box = jsMath.Box.Set(mitem.nuc,jsMath.Typeset.PrimeStyle(style),size).Remeasured();
     var t = TeX.default_rule_thickness;
     var rule = jsMath.Box.Rule(box.w,t);
     rule.x = -rule.w; rule.y = -box.d - 3*t - t;
-    mitem.nuc = jsMath.Box.SetList([box,rule]);
+    mitem.nuc = jsMath.Box.SetList([box,rule],style,size);
     mitem.nuc.d += t;
     mitem.type = 'ord';
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a Rad atom.  (Rule 11 plus stuff for \root..\of)
    */
-  radical: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style);
+  radical: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size);
     var Cp = jsMath.Typeset.PrimeStyle(style);
-    var box = jsMath.Box.Set(mitem.nuc,Cp);
+    var box = jsMath.Box.Set(mitem.nuc,Cp,size).Remeasured();
     var t = TeX.default_rule_thickness;
     var p = t; if (style == 'D' || style == "D'") {p = TeX.x_height}
     var r = t + p/4; 
@@ -2529,22 +2584,26 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     t = surd.h; // thickness of rule is height of surd character
     if (surd.d > box.h+box.d+r) {r = (r+surd.d-box.h-box.d)/2}
     surd.y = box.h+r;
-    var rule = jsMath.Box.Rule(box.w,t); rule.y = box.h+r; box.x = -box.w;
+    var rule = jsMath.Box.Rule(box.w,t);
+    rule.y = surd.y-t/2; rule.h += 3*t/2; box.x = -box.w;
     var Cr = jsMath.Typeset.UpStyle(jsMath.Typeset.UpStyle(style));
-    var root = jsMath.Box.Set(mitem.root,Cr);
-    if (mitem.root) {root.y = .6*(box.h-box.d+3*t+r); surd.x = -(2/3)*surd.w}
-    mitem.nuc = jsMath.Box.SetList([root,surd,rule,box],style);
+    var root = jsMath.Box.Set(mitem.root,Cr,size).Remeasured();
+    if (mitem.root) {
+      root.y = .55*(box.h+box.d+3*t+r)-box.d; surd.x = -(11/18)*surd.w;
+      root.x = Math.max((11/18)*surd.w - root.w, 0);
+    }
+    mitem.nuc = jsMath.Box.SetList([root,surd,rule,box],style,size);
     mitem.type = 'ord';
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Acc atom.  (Rule 12)
    */
-  accent: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style);
+  accent: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size);
     var Cp = jsMath.Typeset.PrimeStyle(style);
-    var box = jsMath.Box.Set(mitem.nuc,Cp);
+    var box = jsMath.Box.Set(mitem.nuc,Cp,size);
     var u = box.w; var s; var Font;
     if (mitem.nuc.type == 'TeX') {
       Font = jsMath.TeX[mitem.nuc.font];
@@ -2561,49 +2620,51 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     if (mitem.nuc.type == 'TeX') {
       var nitem = jsMath.mItem.Atom('ord',mitem.nuc);
       nitem.sup = mitem.sup; nitem.sub = mitem.sub; nitem.delta = 0;
-      jsMath.mList.prototype.Atomize.SupSub(style,nitem);
+      jsMath.mList.prototype.Atomize.SupSub(style,size,nitem);
       delta += (nitem.nuc.h - box.h);
       box = mitem.nuc = nitem.nuc;
       delete mitem.sup; delete mitem.sub;
     }
-    var acc = jsMath.Box.TeX(c,font,style);
+    var acc = jsMath.Box.TeX(c,font,style,size);
     acc.y = box.h - delta; acc.x = -box.w + s + (u-acc.w)/2;
-    if (Font[c].ic) {acc.x -= Font[c].ic}
+    if (Font[c].ic) {acc.x -= Font[c].ic * TeX.scale}
 
-    mitem.nuc = jsMath.Box.SetList([box,acc],style);
-    if (mitem.nuc.w != box.w) 
-      {mitem.nuc = jsMath.Box.SetList([mitem.nuc,jsMath.mItem.Space(box.w-mitem.nuc.w)])}
+    mitem.nuc = jsMath.Box.SetList([box,acc],style,size);
+    if (mitem.nuc.w != box.w) {
+      var space = jsMath.mItem.Space(box.w-mitem.nuc.w);
+      mitem.nuc = jsMath.Box.SetList([mitem.nuc,space],style,size);
+    }
     mitem.type = 'ord';
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle an Op atom.  (Rules 13 and 13a)
    */
-  op: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style); var box;
+  op: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size); var box;
     mitem.delta = 0; var isD = (style.charAt(0) == 'D');
     if (mitem.limits == null && isD) {mitem.limits = 1}
 
     if (mitem.nuc.type == 'TeX') {
       var C = jsMath.TeX[mitem.nuc.font][mitem.nuc.c];
       if (isD && C.n) {mitem.nuc.c = C.n; C = jsMath.TeX[mitem.nuc.font][C.n]}
-      box = jsMath.Box.Set(mitem.nuc,style);
+      box = jsMath.Box.Set(mitem.nuc,style,size);
       if (C.ic) {
-        mitem.delta = C.ic;
+        mitem.delta = C.ic * TeX.scale;
         if (mitem.limits || !mitem.sub || jsMath.msieIntegralBug) 
-          {box = jsMath.Box.SetList([box,jsMath.mItem.Space(C.ic)],style)}
+          {box = jsMath.Box.SetList([box,jsMath.mItem.Space(mitem.delta)],style,size)}
       }
       box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height);
       if (Math.abs(box.y) < .0001) (box.y = 0)
     }
 
-    if (!box) {box = jsMath.Box.Set(mitem.nuc,style)}
+    if (!box) {box = jsMath.Box.Set(mitem.nuc,style,size).Remeasured()}
     if (mitem.limits) {
       var W = box.w; var x = box.w;
       var mlist = [box]; var dh = 0; var dd = 0;
       if (mitem.sup) {
-        var sup = jsMath.Box.Set(mitem.sup,jsMath.Typeset.UpStyle(style));
+        var sup = jsMath.Box.Set(mitem.sup,jsMath.Typeset.UpStyle(style),size).Remeasured();
         sup.x = ((box.w-sup.w)/2 + mitem.delta/2) - x; dh = TeX.big_op_spacing5;
         W = Math.max(W,sup.w); x += sup.x + sup.w;
         sup.y = box.h+sup.d + box.y +
@@ -2611,7 +2672,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
         mlist[mlist.length] = sup; delete mitem.sup;
       }
       if (mitem.sub) {
-        var sub = jsMath.Box.Set(mitem.sub,jsMath.Typeset.DownStyle(style));
+        var sub = jsMath.Box.Set(mitem.sub,jsMath.Typeset.DownStyle(style),size).Remeasured();
         sub.x = ((box.w-sub.w)/2 - mitem.delta/2) - x; dd = TeX.big_op_spacing5;
         W = Math.max(W,sub.w); x += sub.x + sub.w;
         sub.y = -box.d-sub.h + box.y -
@@ -2620,20 +2681,20 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
       }
       if (W > box.w) {box.x = (W-box.w)/2; x += box.x}
       if (x < W) {mlist[mlist.length] = jsMath.mItem.Space(W-x)}
-      mitem.nuc = jsMath.Box.SetList(mlist);
+      mitem.nuc = jsMath.Box.SetList(mlist,style,size);
       mitem.nuc.h += dh; mitem.nuc.d += dd;
     } else {
       if (jsMath.msieIntegralBug && mitem.sub && C && C.ic) 
-        {mitem.nuc = jsMath.Box.SetList([box,jsMath.Box.Space(-C.ic)],style)}
-      else if (box.y) {mitem.nuc = jsMath.Box.SetList([box],style)}
-      jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+        {mitem.nuc = jsMath.Box.SetList([box,jsMath.Box.Space(-C.ic*TeX.scale)],style,size)}
+      else if (box.y) {mitem.nuc = jsMath.Box.SetList([box],style,size)}
+      jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
     }
   },
 
   /*
    *  Handle an Ord atom.  (Rule 14)
    */
-  ord: function (style,mitem,prev,mList,i) {
+  ord: function (style,size,mitem,prev,mList,i) {
     if (mitem.nuc.type == 'TeX' && !mitem.sup && !mitem.sub) {
       var nitem = mList.mlist[i+1];
       if (nitem && nitem.atom && nitem.type &&
@@ -2643,6 +2704,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
         if (nitem.nuc.type == 'TeX' && nitem.nuc.font == mitem.nuc.font) {
           mitem.textsymbol = 1;
           var krn = jsMath.TeX[mitem.nuc.font][mitem.nuc.c].krn;
+          krn *= jsMath.Typeset.TeX(style,size).scale;
           if (krn && krn[nitem.nuc.c]) {
             for (var k = mList.mlist.length-1; k > i; k--)
               {mList.mlist[k+1] = mList.mlist[k]}
@@ -2651,21 +2713,21 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
         }
       }
     }
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Handle a generalized fraction.  (Rules 15 to 15e)
    */
-  fraction: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style); var t = 0;
+  fraction: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size); var t = 0;
     if (mitem.thickness != null) {t = mitem.thickness}
     else if (mitem.from.match(/over/)) {t = TeX.default_rule_thickness}
     var isD = (style.charAt(0) == 'D');
     var Cn = (style == 'D')? 'T': (style == "D'")? "T'": jsMath.Typeset.UpStyle(style);
     var Cd = (isD)? "T'": jsMath.Typeset.DownStyle(style);
-    var num = jsMath.Box.Set(mitem.num,Cn);
-    var den = jsMath.Box.Set(mitem.den,Cd);
+    var num = jsMath.Box.Set(mitem.num,Cn,size).Remeasured();
+    var den = jsMath.Box.Set(mitem.den,Cd,size).Remeasured();
 
     var u; var v; var w;
     var H = (isD)? TeX.delim1 : TeX.delim2;
@@ -2674,11 +2736,11 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
 
     if (num.w < den.w) {
       num.x = (den.w-num.w)/2;
-      den.x = -(num.w+den.w)/2;
+      den.x = -(num.w + num.x);
       w = den.w; mlist[1] = num; mlist[2] = den;
     } else {
       den.x = (num.w-den.w)/2;
-      num.x = -(num.w+den.w)/2;
+      num.x = -(den.w + den.x);
       w = num.w; mlist[1] = den; mlist[2] = num;
     }
     if (isD) {u = TeX.num1; v = TeX.denom1} else {
@@ -2699,31 +2761,31 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     num.y = u; den.y = -v;
 
     mlist[mlist.length] = right;
-    mitem.nuc = jsMath.Box.SetList(mlist,style);
+    mitem.nuc = jsMath.Box.SetList(mlist,style,size);
     mitem.type = 'ord'; mitem.atom = 1;
     delete mitem.num; delete mitem.den;
-    jsMath.mList.prototype.Atomize.SupSub(style,mitem);
+    jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
   /*
    *  Add subscripts and superscripts.  (Rules 17-18f)
    */
-  SupSub: function (style,mitem) {
-    var TeX = jsMath.Typeset.TeX(style);
+  SupSub: function (style,size,mitem) {
+    var TeX = jsMath.Typeset.TeX(style,size);
     var nuc = mitem.nuc;
-    var box = mitem.nuc = jsMath.Box.Set(mitem.nuc,style,0);
+    var box = mitem.nuc = jsMath.Box.Set(mitem.nuc,style,size,0);
     if (box.format == 'null') 
-      {box = mitem.nuc = jsMath.Box.Text('','normal',style)}
+      {box = mitem.nuc = jsMath.Box.Text('','normal',style,size)}
 
     if (nuc.type == 'TeX') {
       if (!mitem.textsymbol) {
         var C = jsMath.TeX[nuc.font][nuc.c];
         if (C.ic) {
-          mitem.delta = C.ic;
+          mitem.delta = C.ic * TeX.scale;
           if (!mitem.sub) {
-            box = mitem.nuc = jsMath.Box.SetList([box,jsMath.Box.Space(C.ic)],style);
+            box = mitem.nuc = jsMath.Box.SetList([box,jsMath.Box.Space(mitem.delta)],style,size);
             mitem.delta = 0;
-          } else {mitem.delta = C.ic}
+          }
         }
       } else {mitem.delta = 0}
     }
@@ -2733,25 +2795,25 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     
     var Cd = jsMath.Typeset.DownStyle(style);
     var Cu = jsMath.Typeset.UpStyle(style);
-    var q = jsMath.Typeset.TeX(Cu).sup_drop;
-    var r = jsMath.Typeset.TeX(Cd).sub_drop;
+    var q = jsMath.Typeset.TeX(Cu,size).sup_drop;
+    var r = jsMath.Typeset.TeX(Cd,size).sub_drop;
     var u = 0; var v = 0; var p;
     if (nuc.type != 'text' && nuc.type != 'TeX' && nuc.type != 'null')
       {u = box.h - q; v = box.d + r}
 
     if (mitem.sub) {
-      var sub = jsMath.Box.Set(mitem.sub,Cd);
-      sub = jsMath.Box.SetList([sub,jsMath.mItem.Space(TeX.scriptspace)],style);
+      var sub = jsMath.Box.Set(mitem.sub,Cd,size);
+      sub = jsMath.Box.SetList([sub,jsMath.mItem.Space(TeX.scriptspace)],style,size);
     }
 
     if (!mitem.sup) {
       sub.y = -Math.max(v,TeX.sub1,sub.h-(4/5)*TeX.x_height);
-      mitem.nuc = jsMath.Box.SetList([box,sub],style).Styled(); delete mitem.sub;
+      mitem.nuc = jsMath.Box.SetList([box,sub],style,size).Styled(); delete mitem.sub;
       return;
     }
 
-    var sup = jsMath.Box.Set(mitem.sup,Cu);
-    sup = jsMath.Box.SetList([sup,jsMath.mItem.Space(TeX.scriptspace)],style);
+    var sup = jsMath.Box.Set(mitem.sup,Cu,size);
+    sup = jsMath.Box.SetList([sup,jsMath.mItem.Space(TeX.scriptspace)],style,size);
     if (style == 'D') {p = TeX.sup1}
     else if (style.charAt(style.length-1) == "'") {p = TeX.sup3}
     else {p = TeX.sup2}
@@ -2759,7 +2821,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
 
     if (!mitem.sub) {
       sup.y = u;
-      mitem.nuc = jsMath.Box.SetList([box,sup],style); delete mitem.sup;
+      mitem.nuc = jsMath.Box.SetList([box,sup],style,size); delete mitem.sup;
       return;
     }
 
@@ -2770,10 +2832,11 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
       p = (4/5)*TeX.x_height - (u-sup.d);
       if (p > 0) {u += p; v -= p}
     }
+    sup.Remeasured(); sub.Remeasured();
     sup.y = u; sub.y = -v; sup.x = mitem.delta;
     if (sup.w+sup.x > sub.w)
-      {sup.x -= sub.w; mitem.nuc = jsMath.Box.SetList([box,sub,sup],style)} else
-      {sub.x -= (sup.w+sup.x); mitem.nuc = jsMath.Box.SetList([box,sup,sub],style)}
+      {sup.x -= sub.w; mitem.nuc = jsMath.Box.SetList([box,sub,sup],style,size)} else
+      {sub.x -= (sup.w+sup.x); mitem.nuc = jsMath.Box.SetList([box,sup,sub],style,size)}
 
     delete mitem.sup; delete mitem.sub;
   }
@@ -2825,29 +2888,28 @@ jsMath.Add(jsMath.Typeset,{
    *  A value scaled to the appropriate size for scripts
    */
   StyleValue: function (style,v) {
-    if (style == "S" || style == "S'") {return .75*v}
-    if (style == "SS" || style == "SS'") {return .6*v}
+    if (style == "S" || style == "S'")   {return .7*v}
+    if (style == "SS" || style == "SS'") {return .5*v}
     return v;
   },
 
   /*
    *  Return the font parameter table for the given style
    */
-  TeX: function (style) {
-    if (style.charAt(0) == 'D' || style.charAt(0) == 'T') {return jsMath.TeX}
-    if (style == "S" || style == "S'") {return jsMath.TeXscript}
-    return jsMath.TeXscriptscript;
+  TeX: function (style,size) {
+    if      (style == "S" || style == "S'")   {size = Math.max(0,size-2)}
+    else if (style == "SS" || style == "SS'") {size = Math.max(0,size-4)}
+    return jsMath.TeXparams[size];
   },
 
 
   /*
    *  Add the CSS class for the given TeX style
    */
-  AddStyle: function (style,html) {
-    if (style == "S" || style == "S'") 
-      {html = '<SPAN CLASS="script">'+html+'</SPAN>'}
-    else if (style == "SS" || style == "SS'") 
-      {html = '<SPAN CLASS="scriptscript">'+html+'</SPAN>'}
+  AddStyle: function (style,size,html) {
+    if      (style == "S" || style == "S'")   {size = Math.max(0,size-2)}
+    else if (style == "SS" || style == "SS'") {size = Math.max(0,size-4)}
+    if (size != 4) {html = '<SPAN CLASS="size'+size+'">' + html + '</SPAN>'}
     return html;
   },
 
@@ -2921,8 +2983,8 @@ jsMath.Package(jsMath.Typeset,{
    *  the individual parts (widths are in pixels, but the browsers
    *  puts pieces together using sub-pixel accuracy).
    */
-  Typeset: function (style) {
-    this.style = style; var unset = -10000
+  Typeset: function (style,size) {
+    this.style = style; this.size = size; var unset = -10000
     this.w = 0; this.h = unset; this.d = unset;
     this.bh = this.h; this.bd = this.d;
     this.tbuf = ''; this.tx = 0; this.tclass = '';
@@ -2933,16 +2995,23 @@ jsMath.Package(jsMath.Typeset,{
       prev = mitem; mitem = this.mlist[i];
       switch (mitem.type) {
 
+        case 'size':
+          this.FlushClassed();
+          this.size = mitem.size;
+          mitem = prev; // hide this from TeX
+          break;
+
         case 'style':
           this.FlushClassed();
           if (this.style.charAt(this.style.length-1) == "'")
             {this.style = mitem.style + "'"} else {this.style = mitem.style}
+          mitem = prev; // hide this from TeX
           break;
 
         case 'space':
           if (typeof(mitem.w) == 'object') {
-            if (this.style.charAt(1) == 'S') {mitem.w = .6*mitem.w[0]/18}
-            else if (this.style.charAt(0) == 'S') {mitem.w = .75*mitem.w[0]/18}
+            if (this.style.charAt(1) == 'S') {mitem.w = .5*mitem.w[0]/18}
+            else if (this.style.charAt(0) == 'S') {mitem.w = .7*mitem.w[0]/18}
             else {mitem.w = mitem.w[0]/18}
           }
           this.dx += mitem.w-0; // mitem.w is sometimes a string?
@@ -2971,8 +3040,8 @@ jsMath.Package(jsMath.Typeset,{
             if (this.hbuf == '') {this.hx = this.x}
             this.hbuf += mitem.nuc.html;
           }
-          this.h = Math.max(this.h,mitem.nuc.h); this.bh = Math.max(this.bh,mitem.nuc.bh);
-          this.d = Math.max(this.d,mitem.nuc.d); this.bd = Math.max(this.bd,mitem.nuc.bd);
+          this.h = Math.max(this.h,mitem.nuc.h+mitem.nuc.y); this.bh = Math.max(this.bh,mitem.nuc.bh);
+          this.d = Math.max(this.d,mitem.nuc.d-mitem.nuc.y); this.bd = Math.max(this.bd,mitem.nuc.bd);
           break;
       }
     }
@@ -2980,8 +3049,6 @@ jsMath.Package(jsMath.Typeset,{
     this.FlushClassed(); // make sure scaling is included
     if (this.dx) {this.hbuf += jsMath.HTML.Spacer(this.dx)}
     if (this.hbuf == '') {return jsMath.Box.Null}
-    if (this.w >= 0 && (!jsMath.spanHeightVaries || !this.hbuf.match(/position: ?absolute/)))
-       {this.w = jsMath.EmBoxFor(this.hbuf).w}
     if (this.h == unset) {this.h = 0}
     if (this.d == unset) {this.d = 0}
     var box = new jsMath.Box('html',this.hbuf,this.w,this.h,this.d);
@@ -3007,7 +3074,7 @@ jsMath.Package(jsMath.Typeset,{
     this.FlushText();
     if (this.cbuf == '') return;
     if (this.hbuf == '') {this.hx = this.tx}
-    this.hbuf += jsMath.Typeset.AddStyle(this.style,this.cbuf);
+    this.hbuf += jsMath.Typeset.AddStyle(this.style,this.size,this.cbuf);
     this.cbuf = '';
   },
 
@@ -3068,16 +3135,15 @@ jsMath.Package(jsMath.Typeset,{
  *  the mList to be typeset by the Typeset object above.
  */
 
-jsMath.Parse = function (s,font) {
-  var parse = new jsMath.Parser(s,font);
+jsMath.Parse = function (s,font,size,style) {
+  var parse = new jsMath.Parser(s,font,size,style);
   parse.Parse();
   return parse;
 }
 
-jsMath.Parser = function (s,font) {
+jsMath.Parser = function (s,font,size,style) {
   this.string = s; this.i = 0;
-  this.mlist = new jsMath.mList();
-  if (font != null) {this.mlist.font = font}
+  this.mlist = new jsMath.mList(null,font,size,style);
 }
 
 jsMath.Package(jsMath.Parser,{
@@ -3501,20 +3567,19 @@ jsMath.Package(jsMath.Parser,{
     mathbf:             ['Macro','{\\bf #1}',1],
     mathbb:             ['Macro','{\\bf #1}',1],
     mathit:             ['Macro','{\\it #1}',1],
-    boldsymbol:         ['Macro','{\\bf #1}',1],  // for now
 
     TeX:                ['Macro','T\\kern-.1667em\\lower.5ex{E}\\kern-.125em X'],
 
-    // for WeBWorK
-    lt:			['Macro','<'],
-    gt:			['Macro','>'],
+     // for WeBWorK
+    lt:                 ['Macro','<'],
+    gt:                 ['Macro','>'],
     setlength:          ['Macro','',2],
 
     limits:       ['Limits',1],
     nolimits:     ['Limits',0],
 
     ',':          ['Spacer',1/6],
-    ':':          ['Spacer',1/6],
+    ':':          ['Spacer',1/6],  // for LaTeX
     '>':          ['Spacer',2/9],
     ';':          ['Spacer',5/18],
     '!':          ['Spacer',-1/6],
@@ -3561,6 +3626,7 @@ jsMath.Package(jsMath.Parser,{
     hbox:       'HBox',
     text:       'HBox',
     mbox:       'HBox',
+    fbox:       'FBox',
 
     strut:      'Strut',
     mathstrut:  ['Macro','\\vphantom{(}'],
@@ -3596,6 +3662,17 @@ jsMath.Package(jsMath.Parser,{
     //  LaTeX
     begin:      'Begin',
     end:        'End',
+    tiny:       ['HandleSize',0],
+    Tiny:       ['HandleSize',1],  // non-standard
+    scriptsize: ['HandleSize',2],
+    small:      ['HandleSize',3],
+    normalsize: ['HandleSize',4],
+    large:      ['HandleSize',5],
+    Large:      ['HandleSize',6],
+    LARGE:      ['HandleSize',7],
+    huge:       ['HandleSize',8],
+    Huge:       ['HandleSize',9],
+    dots:       ['Macro','\\ldots'],
 
     //  Extensions to TeX
     color:      'Color',
@@ -3653,11 +3730,20 @@ jsMath.Package(jsMath.Parser,{
   /***************************************************************************/
 
   /*
+   *  Check if the next character is a space
+   */
+  nextIsSpace: function () {
+    return this.string.charAt(this.i) == ' ';
+  },
+
+  /*
    *  Parse a substring to get its mList, and return it.
    *  Check that no errors occured
    */
   Process: function (arg) {
-    arg = jsMath.Parse(arg,this.mlist.font); if (arg.error) {this.Error(arg); return}
+    var data = this.mlist.data;
+    arg = jsMath.Parse(arg,data.font,data.size,data.style);
+      if (arg.error) {this.Error(arg); return}
     if (arg.mlist.Length() == 0) {return null}
     if (arg.mlist.Length() == 1) {
       var atom = arg.mlist.Last();
@@ -3683,7 +3769,7 @@ jsMath.Package(jsMath.Parser,{
    *  or the contents of the next set of braces).
    */
   GetArgument: function (name,noneOK) {
-    while (this.string.charAt(this.i) == " ") {this.i++}
+    while (this.nextIsSpace()) {this.i++}
     if (this.i >= this.string.length) {if (!noneOK) this.Error("Missing argument for "+name); return}
     if (this.string.charAt(this.i) == this.close) {if (!noneOK) this.Error("Extra close brace"); return}
     if (this.string.charAt(this.i) == this.cmd) {this.i++; return this.cmd+this.GetCommand()}
@@ -3713,7 +3799,7 @@ jsMath.Package(jsMath.Parser,{
    *  Get the name of a delimiter (check it in the delimiter list).
    */
   GetDelimiter: function (name) {
-    while (this.string.charAt(this.i) == " ") {this.i++}
+    while (this.nextIsSpace()) {this.i++}
     var c = this.string.charAt(this.i);
     if (this.i < this.string.length) {
       this.i++;
@@ -3733,7 +3819,7 @@ jsMath.Package(jsMath.Parser,{
     var match = rest.match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)/);
     if (!match) {this.Error("Missing dimension or its units for "+name); return}
     this.i += match[0].length;
-    if (this.string.charAt(this.i) == ' ') {this.i++}
+    if (this.nextIsSpace()) {this.i++}
     var d = match[1]-0;
     if (match[4] == 'px') {d /= jsMath.em}
     else if (match[4] == 'pt') {d /= 10}
@@ -3746,7 +3832,7 @@ jsMath.Package(jsMath.Parser,{
    *  Get the next non-space character
    */
   GetNext: function () {
-    while (this.string.charAt(this.i) == " ") {this.i++}
+    while (this.nextIsSpace()) {this.i++}
     return this.string.charAt(this.i);
   },
   
@@ -3776,7 +3862,7 @@ jsMath.Package(jsMath.Parser,{
    *  Get everything up to the given control sequence name (token)
    */
   GetUpto: function (name,token) {
-    while (this.string.charAt(this.i) == " ") {this.i++}
+    while (this.nextIsSpace()) {this.i++}
     var start = this.i; var pcount = 0;
     while (this.i < this.string.length) {
       var c = this.string.charAt(this.i++);
@@ -3909,12 +3995,14 @@ jsMath.Package(jsMath.Parser,{
    *  Insert some raw HTML around the argument (this will not affect
    *  the spacing or other TeX features)
    */
-  AddHTML: function (name,data) {
+  AddHTML: function (name,params) {
+    var data = this.mlist.data;
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
-    arg = jsMath.Parse(arg,this.mlist.font); if (arg.error) {this.Error(arg); return}
-    this.mlist.Add(jsMath.mItem.HTML(data[0]));
+    arg = jsMath.Parse(arg,data.font,data.size,data.style);
+      if (arg.error) {this.Error(arg); return}
+    this.mlist.Add(jsMath.mItem.HTML(params[0]));
     for (var i = 0; i < arg.mlist.Length(); i++) {this.mlist.Add(arg.mlist.Get(i))}
-    this.mlist.Add(jsMath.mItem.HTML(data[1]));
+    this.mlist.Add(jsMath.mItem.HTML(params[1]));
   },
   
   /*
@@ -3929,8 +4017,7 @@ jsMath.Package(jsMath.Parser,{
     if (!arg[1]) {arg[1] = 'normal'}
     this.mlist.Add(jsMath.mItem.TextAtom('ord',arg[0],arg[1],arg[2]));
   },
-
-
+  
   /*
    *  Implements \frac{num}{den}
    */
@@ -4000,27 +4087,28 @@ jsMath.Package(jsMath.Parser,{
   Char: function (name) {
     var font = this.GetArgument(this.cmd+name); if (this.error) return;
     var n = this.GetArgument(this.cmd+name); if (this.error) return;
-    this.mlist.Add(jsMath.mItem.Typeset(jsMath.Box.TeX(n-0,font,'T')));
+    this.mlist.Add(jsMath.mItem.Typeset(jsMath.Box.TeX(n-0,font,'T',this.mlist.data.size)));
     return;
   },
   
   /*
    *  Create an array or matrix.
    */
-  Matrix: function (name,data) {
+  Matrix: function (name,delim) {
+    var data = this.mlist.data;
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
-    var parse = new jsMath.Parser(arg);
+    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
     parse.matrix = name; parse.row = []; parse.table = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(parse.table,data[2]);
+    var box = jsMath.Box.Layout(data.size,parse.table,delim[2]);
     // Add parentheses, if needed
-    if (data[0] && data[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[1]],'T');
-      box = jsMath.Box.SetList([left,box,right]);
+    if (delim[0] && delim[1]) {
+      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
-    this.mlist.Add(jsMath.mItem.Atom((data[0]? 'inner': 'ord'),box));
+    this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
   },
   
   /*
@@ -4030,15 +4118,16 @@ jsMath.Package(jsMath.Parser,{
   HandleEntry: function (name) {
     if (!this.matrix) 
       {this.Error(name+" can only appear in a matrix or array"); return}
-    if (this.mlist.openI != null) {
-      var open = this.mlist.Get(this.mlist.openI);
+    if (this.mlist.data.openI != null) {
+      var open = this.mlist.Get(this.mlist.data.openI);
       if (open.left) {this.Error("Missing "+this.cmd+"right")}
         else {this.Error("Missing close brace")}
     }
-    if (this.mlist.overI != null) {this.mlist.Over()}
-    this.mlist.Atomize('T'); var box = this.mlist.Typeset('T');
+    if (this.mlist.data.overI != null) {this.mlist.Over()}
+    var data = this.mlist.data;
+    this.mlist.Atomize('T',data.size); var box = this.mlist.Typeset('T',data.size);
     this.row[this.row.length] = box;
-    this.mlist = new jsMath.mList(); 
+    this.mlist = new jsMath.mList(null,null,data.size); 
   },
   
   /*
@@ -4056,28 +4145,28 @@ jsMath.Package(jsMath.Parser,{
   /*
    *  LaTeX array environment
    */
-  Array: function (name,data) {
-    var columns = data[2];
+  Array: function (name,delim) {
+    var columns = delim[2];
     if (!columns) {
       columns = this.GetArgument(this.cmd+'begin{'+name+'}');
       if (this.error) return;
     }
     columns = columns.replace(/[^clr]/g,'');
     columns = columns.split('');
+    var data = this.mlist.data;
     var arg = this.GetEnd(name); if (this.error) return;
-    var parse = new jsMath.Parser(arg);
+    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
     parse.matrix = name; parse.row = []; parse.table = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(parse.table,columns);
+    var box = jsMath.Box.Layout(data.size,parse.table,columns);
     // Add parentheses, if needed
-    if (data[0] && data[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[data[1]],'T');
-      box = jsMath.Box.SetList([left,box,right]);
+    if (delim[0] && delim[1]) {
+      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
-    this.mlist.Add(jsMath.mItem.Atom((data[0]? 'inner': 'ord'),box));
-    
+    this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
   },
   
   /*
@@ -4137,8 +4226,22 @@ jsMath.Package(jsMath.Parser,{
    */
   HBox: function (name) {
     var text = this.GetArgument(this.cmd+name); if (this.error) return;
-    var box = jsMath.Box.InternalMath(text);
+    var box = jsMath.Box.InternalMath(text,this.mlist.data.size);
     this.mlist.Add(jsMath.mItem.Typeset(box));
+  },
+  
+  /*
+   *  Implement \fbox{...}
+   */
+  FBox: function (name) {
+    var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
+    var f = 0.25 * jsMath.sizes[this.mlist.data.size]/100;
+    var box = jsMath.Box.Set(arg,this.mlist.data.style,this.mlist.data.size,1).Remeasured();
+    var frame = jsMath.HTML.Frame(-f,-box.d-f,box.w+2*f,box.h+box.d+2*f);
+    box.html = frame + box.html + jsMath.HTML.Spacer(f);
+    box.h += f; box.d += f; box.w +=2*f; box.x += f;
+    box.bh = Math.max(box.bh,box.h); box.bd = Math.max(box.bd,box.d);
+    this.mlist.Add(jsMath.mItem.Atom('ord',box));
   },
   
   /*
@@ -4163,8 +4266,9 @@ jsMath.Package(jsMath.Parser,{
    *  Inserts an empty box of a specific height and depth
    */
   Strut: function () {
-    var box = jsMath.Box.Text('','normal','T').Styled();
-    box.bh = box.dh = 0; box.h = .8; box.d = .3; box.w = 0;
+    var size = this.mlist.data.size;
+    var box = jsMath.Box.Text('','normal','T',size).Styled();
+    box.bh = box.bd = 0; box.h = .8; box.d = .3; box.w = 0;
     this.mlist.Add(jsMath.mItem.Typeset(box));
   },
   
@@ -4258,11 +4362,12 @@ jsMath.Package(jsMath.Parser,{
    */
   HandleLeaders: function (name,data) {
     var box = this.ProcessArg(this.cmd+name); if (this.error) return;
-    box = jsMath.Box.Set(box,'D');
+    box = jsMath.Box.Set(box,'D',this.mlist.data.size).Remeasured();
     var leader = jsMath.Box.Leaders(box.w,this.leaders[data[0]]);
     if (data[2]) {leader.y = -leader.h - box.d} else {leader.y = box.h + leader.d}
     leader.x = -(leader.w + box.w)/2;
-    box = jsMath.mItem.Atom(data[1]? 'op': 'inner',jsMath.Box.SetList([box,leader],'T'));
+    box = jsMath.mItem.Atom(data[1]? 'op': 'inner',
+      jsMath.Box.SetList([box,leader],'T',this.mlist.data.size));
     box.limits = (data[1]? 1: 0);
     this.mlist.Add(box);
   },
@@ -4300,7 +4405,7 @@ jsMath.Package(jsMath.Parser,{
    *  font if the type is 7 (variable) or the font is not specified)
    */
   HandleTeXchar: function (type,font,code) {
-    if (type == 7 && this.mlist.font != null) {font = this.mlist.font}
+    if (type == 7 && this.mlist.data.font != null) {font = this.mlist.data.font}
     font = jsMath.TeX.fam[font];
     this.mlist.Add(jsMath.mItem.TeXAtom(jsMath.TeX.atom[type],code,font));
   },
@@ -4336,14 +4441,23 @@ jsMath.Package(jsMath.Parser,{
    *  Add a style change (e.g., \displaystyle, etc)
    */
   HandleStyle: function (name,style) {
+    this.mlist.data.style = style[0];
     this.mlist.Add(new jsMath.mItem('style',{style: style[0]}));
   },
   
   /*
+   *  Implements \small, \large, etc.
+   */
+  HandleSize: function (name,size) {
+    this.mlist.data.size = size[0];
+    this.mlist.Add(new jsMath.mItem('size',{size: size[0]}));
+  },
+
+  /*
    *  Set the current font (e.g., \rm, etc)
    */
   HandleFont: function (name,font) {
-    this.mlist.font = font[0];
+    this.mlist.data.font = font[0];
   },
 
   /*
@@ -4373,8 +4487,8 @@ jsMath.Package(jsMath.Parser,{
    */
   HandleOpen: function () {this.mlist.Open()},
   HandleClose: function () {
-    if (this.mlist.openI == null) {this.Error("Extra close brace"); return}
-    var open = this.mlist.Get(this.mlist.openI);
+    if (this.mlist.data.openI == null) {this.Error("Extra close brace"); return}
+    var open = this.mlist.Get(this.mlist.data.openI);
     if (!open || open.left == null) {this.mlist.Close()}
       else {this.Error("Extra close brace or missing "+this.cmd+"right"); return}
   },
@@ -4392,7 +4506,7 @@ jsMath.Package(jsMath.Parser,{
    */
   HandleRight: function (name) {
     var right = this.GetDelimiter(this.cmd+name); if (this.error) return;
-    var open = this.mlist.Get(this.mlist.openI);
+    var open = this.mlist.Get(this.mlist.data.openI);
     if (open && open.left != null) {this.mlist.Close(right)}
       else {this.Error("Extra open brace or missing "+this.cmd+"left");}
   },
@@ -4401,20 +4515,20 @@ jsMath.Package(jsMath.Parser,{
    *  Implements generalized fractions (\over, \above, etc.)
    */
   HandleOver: function (name,data) {
-    if (this.mlist.overI != null) 
+    if (this.mlist.data.overI != null) 
       {this.Error('Ambiguous use of '+this.cmd+name); return}
-    this.mlist.overI = this.mlist.Length();
-    this.mlist.overF = {name: name};
+    this.mlist.data.overI = this.mlist.Length();
+    this.mlist.data.overF = {name: name};
     if (data.length > 0) {
-      this.mlist.overF.left  = this.delimiter[data[0]];
-      this.mlist.overF.right = this.delimiter[data[1]];
+      this.mlist.data.overF.left  = this.delimiter[data[0]];
+      this.mlist.data.overF.right = this.delimiter[data[1]];
     } else if (name.match(/withdelims$/)) {
-      this.mlist.overF.left  = this.GetDelimiter(this.cmd+name); if (this.error) return;
-      this.mlist.overF.right = this.GetDelimiter(this.cmd+name); if (this.error) return;
+      this.mlist.data.overF.left  = this.GetDelimiter(this.cmd+name); if (this.error) return;
+      this.mlist.data.overF.right = this.GetDelimiter(this.cmd+name); if (this.error) return;
     }
     if (name.match(/^above/))
     {
-      this.mlist.overF.thickness = this.GetDimen(this.cmd.name,1);
+      this.mlist.data.overF.thickness = this.GetDimen(this.cmd.name,1);
       if (this.error) return;
     }
   },
@@ -4454,18 +4568,21 @@ jsMath.Package(jsMath.Parser,{
       else if (this.number.test(c)) {this.HandleNumber(c)}
       else {this.HandleOther(c)}
     }
-    if (this.mlist.openI != null) {
-      var open = this.mlist.Get(this.mlist.openI);
+    if (this.mlist.data.openI != null) {
+      var open = this.mlist.Get(this.mlist.data.openI);
       if (open.left) {this.Error("Missing "+this.cmd+"right")}
         else {this.Error("Missing close brace")}
     }
-    if (this.mlist.overI != null) {this.mlist.Over()}
+    if (this.mlist.data.overI != null) {this.mlist.Over()}
   },
 
   /*
    *  Perform the processing of Appendix G
    */
-  Atomize: function (style) {if (!this.error) this.mlist.Atomize(style)},
+  Atomize: function () {
+    var data = this.mlist.init;
+    if (!this.error) this.mlist.Atomize(data.style,data.size)
+  },
 
   /*
    *  Produce the final HTML.
@@ -4478,14 +4595,15 @@ jsMath.Package(jsMath.Parser,{
    *  
    *  This is where the touchiest browser-dependent code appears.
    */
-  Typeset: function (style) {
-    var box = this.typeset = this.mlist.Typeset(style);
+  Typeset: function () {
+    var data = this.mlist.init;
+    var box = this.typeset = this.mlist.Typeset(data.style,data.size);
     if (this.error) {return '<SPAN CLASS="error">'+this.error+'</SPAN>'}
     if (box.format == 'null') {return ''};
     var rules = ''; var html
 
+    box.Styled().Remeasured(); var isSmall = 0; var isBig = 0;
     var w = box.w; var h = box.bh; var d = box.bd;
-    box.Styled(); var isSmall = 0; var isBig = 0;
     if (box.bh > box.h && box.bh > jsMath.h+.001) {isSmall = 1; h = box.h;}
     if (box.bd > box.d && box.bd > jsMath.d+.001) {isSmall = 1; d = box.d;}
     if (box.h > jsMath.h) {isBig = 1; h = Math.max(h,box.h);}
@@ -4496,7 +4614,7 @@ jsMath.Package(jsMath.Parser,{
     if (jsMath.show.Baseline) {rules += jsMath.HTML.Line(0,0,w,'blue')}
 
     html = box.html; var y = jsMath.absoluteOffsetY;
-    if (jsMath.absoluteHeightVaries) {y += (jsMath.h - box.bh)}
+    if (jsMath.absoluteHeightVaries || box.bh > jsMath.h+.001) {y += (jsMath.h - box.bh)}
     if (jsMath.spanHeightVaries) {y = 1-box.bh} // for MSIE
     if (isSmall) {// hide the extra size
       if (jsMath.allowAbsolute) {
@@ -4563,7 +4681,7 @@ jsMath.Parser.prototype.AddSpecial({
  *  requires.  These are substituted for #1, #2, etc. within the 
  *  replacement string of the macro.  For example
  *  
- *      <SCRIPT> jsMath.Macro('x','{\vec x}_{#1}') </SCRIPT>
+ *      <SCRIPT> jsMath.Macro('x','{\vec x}_{#1}',1) </SCRIPT>
  *  
  *  would make \x1 produce {\vec x}_{1} and \x{i+1} produce {\vec x}_{i+1}.
  *
@@ -4607,9 +4725,9 @@ jsMath.Add(jsMath,{
    *  Typeset a string in \textstyle and return the HTML for it
    */
   TextMode: function (s) {
-    var parse = jsMath.Parse(s);
-    parse.Atomize('T');
-    var html = parse.Typeset('T');
+    var parse = jsMath.Parse(s,null,null,'T');
+    parse.Atomize();
+    var html = parse.Typeset();
     return html;
   },
 
@@ -4618,9 +4736,9 @@ jsMath.Add(jsMath,{
    *  ### need to give more control over whether to center, etc. ###
    */
   DisplayMode: function (s) {
-    var parse = jsMath.Parse(s);
-    parse.Atomize('D');
-    var html = parse.Typeset('D');
+    var parse = jsMath.Parse(s,null,null,'D');
+    parse.Atomize();
+    var html = parse.Typeset();
     html = '<p align="CENTER">' + html + '</p>'
     return html;
   },
