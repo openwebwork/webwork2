@@ -107,7 +107,8 @@ sub handler() {
 		if (!defined $arg) { # We want the list of problem sets
 			return WeBWorK::ContentGenerator::ProblemSets->new($r, $course_env)->go;
 		} elsif ($arg eq "hardcopy") {
-			my $hardcopyArgument = shift @components || "";
+			my $hardcopyArgument = shift @components;
+			$hardcopyArgument = "" unless defined $hardcopyArgument;
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
 			# ***
