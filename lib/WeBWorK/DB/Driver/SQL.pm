@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.6 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.7 2004/08/10 23:55:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,10 +60,12 @@ sub new($$$) {
 	my ($proto, $source, $params) = @_;
 	
 	my $handleRO = DBI->connect_cached($source, $params->{usernameRO}, $params->{passwordRO});
-	return 0 unless defined $handleRO;
+	die $DBI::errstr unless defined $handleRO;
+	$handleRO->{RaiseError} = 1;
 	
 	my $handleRW = DBI->connect_cached($source, $params->{usernameRW}, $params->{passwordRW});
-	return 0 unless defined $handleRW;
+	die $DBI::errstr unless defined $handleRW;
+	$handleRW->{RaiseError} = 1;
 	
 	my $self = $proto->SUPER::new($source, $params);
 	
