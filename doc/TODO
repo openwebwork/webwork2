@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.15 2002-10-28 21:26:34 sh002i Exp $
+# $Id: TODO,v 1.16 2002-10-30 19:50:54 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -72,7 +72,7 @@ DONE	time logging
 DONE	make static images work
 DONE	make GD-generated images work
 DONE	make HTML links work
---->	make images in PDFs work
+DONE	make images in PDFs work
 	remove dependancies on Global:: from IO functions
 	handle PG errors (and warnings) in Hardcopy
 	fix TTH mode character encodings (check on mac and windows)
