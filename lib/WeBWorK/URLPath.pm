@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.3 2004/03/06 18:50:00 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.4 2004/03/09 15:42:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,10 +26,10 @@ use strict;
 use warnings;
 
 sub debug {
-	my ($label, $indent, @message) = @_;
-	print STDERR " "x$indent;
-	print STDERR "$label: " if $label ne "";
-	print STDERR @message;
+#	my ($label, $indent, @message) = @_;
+#	print STDERR " "x$indent;
+#	print STDERR "$label: " if $label ne "";
+#	print STDERR @message;
 }
 
 =head1 VIRTUAL HEIRARCHY
