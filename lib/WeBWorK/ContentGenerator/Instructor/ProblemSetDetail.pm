@@ -758,10 +758,9 @@ sub initialize {
 		# if the current naming scheme is changed/broken, this could reek havoc
 		# on all kinds of things
 		foreach my $param ($r->param) {
-			$r->param($param, "") if $param =~ /^(set|problem|header)\./;
+			$r->param($param, "") if $param =~ /^(set|problem|header)\./  && $param !~ /displaymode/;
 		}
 	}
-	
 }
 
 # helper method for debugging
