@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.58 2004/06/23 00:37:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.59 2004/06/23 20:45:01 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,7 @@ BEGIN { $main::VERSION = "2.0"; }
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common REDIRECT DONE);
+use Apache::Constants qw(:common :http REDIRECT DONE);
 
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
@@ -58,6 +58,7 @@ use WeBWorK::Utils qw(runtime_use);
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
+use constant ERROR_MODULE => "WeBWorK::ContentGenerator::Error";
 
 sub dispatch($) {
 	my ($apache) = @_;
@@ -117,7 +118,7 @@ sub dispatch($) {
 	
 	my $displayModule = $urlPath->module;
 	my %displayArgs = $urlPath->args;
-	
+
 	debug("The display module for this path is: $displayModule\n");
 	debug("...and here are the arguments we'll pass to it:\n");
 	foreach my $key (keys %displayArgs) {
@@ -170,6 +171,17 @@ sub dispatch($) {
 	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
+
+	my $validCourse = 0;
+	if ($displayArgs{courseID}) {
+		my $courseRoot = $ce->{courseDirs}->{root};
+		$validCourse = -e $courseRoot and -r $courseRoot;
+		
+		unless ($validCourse) { # send the user to an 404 style error page
+			$displayModule = ERROR_MODULE;
+			$r->status(HTTP_NOT_FOUND);
+		}
+	}
 	
 	my @uploads = $r->upload;
 	foreach my $u (@uploads) {
@@ -186,10 +198,11 @@ sub dispatch($) {
 		my $hash = $upload->hash;
 		$r->param($u->name => "$id $hash");
 	}
+
 	
 	my ($db, $authz);
-	
-	if ($displayArgs{courseID} and not $ce->{'!'}) {
+
+	if ($displayArgs{courseID} and $validCourse) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
 		debug("...we can create a database object...\n");
 		$db = new WeBWorK::DB($ce->{dbLayout});
@@ -235,15 +248,6 @@ sub dispatch($) {
 			$displayModule = AUTHEN_MODULE;
 			debug("set displayModule to $displayModule\n");
 		}
-	}
-	
-	# if a course ID was given in the URL and resulted in an error (as stored in $!)
-	# it probably means that the course does not exist or was misspelled
-	if ($displayArgs{courseID} and $ce->{'!'}) {
-		debug("Something was wrong with the courseID: \n");
-		debug("\t\t" . $ce->{'!'} . "\n");
-		debug("Time to bail!\n");
-		return DECLINED;
 	}
 	
 	debug(("-" x 80) . "\n");
