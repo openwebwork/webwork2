@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.36 2004/11/11 15:40:21 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.37 2004/11/19 19:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -196,7 +196,8 @@ sub verify($) {
 	my $force_passwd_authen = $r->param('force_passwd_authen');
 	my $login_practice_user = $r->param('login_practice_user');
 	my $send_cookie = $r->param("send_cookie");
-	
+	my @temp_users = $r->param("user");
+	warn "users start out as ", join(" ", @temp_users) if @temp_users >1;
 	my $error;
 	my $failWithoutError = 0;
 	my $credentialSource = "params";
@@ -240,6 +241,7 @@ sub verify($) {
 				$user = $cookieUser;
 				$key = $cookieKey;
 				$r->param("user", $user);
+				#$r->args->{user} = $user;
 				$r->param("key", $key);
 				$credentialSource = "cookie";
 			} else {
@@ -384,6 +386,18 @@ sub verify($) {
 		# neither a key or a password were supplied.
 		$error = "You must enter a password."
 	}
+	#############################################
+	# Check for multiply defined users
+	############################################
+	my @test_users = $r->param("user");
+	if (@test_users>1)    {
+		warn "User has been multiply defined in Authen.pm ", join(" ", @test_users)  ;
+		$r->param("user"=>$test_users[0]);
+		@test_users = $r->param("user");
+		warn "New value of user is ", join(" ", @test_users);
+	}
+	##### end check ######################
+	
 	
 	if (defined $error) {
 		# authentication failed, store the error message
