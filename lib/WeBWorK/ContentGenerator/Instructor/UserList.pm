@@ -245,7 +245,10 @@ sub body {
 	foreach my $currentUser (@users) {
 		my $userRecord = $db->getUser($currentUser);
 		my $permissionLevel = $db->getPermissionLevel($currentUser);
-		die "No permissionLevel record for user $currentUser" unless defined $permissionLevel;
+		unless (defined $permissionLevel) {
+			warn "No permissionLevel record for user $currentUser" ;
+			next;  
+		}
 		
 		# A concise way of printing a row containing a cell for each field, editable unless it's a key
 		print CGI::Tr({},
