@@ -67,7 +67,7 @@ sub body {
 	
 	STUFF: {
 		my $courseName = $self->{courseEnvironment}->{courseName};
-		my $userName = $self->{r}->param("user");
+		my $userName = $self->{r}->param("effectiveUser");
 		my @sets = @{$self->{sets}};
 
 		unless (@sets) {
@@ -281,7 +281,7 @@ sub getProblemTeX {
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
-	my $user = $cldb->getUser($r->param("user"));
+	my $user = $cldb->getUser($r->param("effectiveUser"));
 	my $set  = $wwdb->getSet($user->id, $setName);
 	my $psvn = $wwdb->getPSVN($user->id, $setName);
 	
