@@ -21,21 +21,16 @@ Context('Numeric');
 
 #############################################
 #
-#   Create a ''Combinations" function
+#   Create a "Combinations" function
 #
 
 package MyFunction2;
 our @ISA = qw(Parser::Function::numeric2); # this is what makes it R^2 -> R
 
 sub C {
-  shift; my ($n,$r) = @_;
-  $r = $n-$r if ($r > $n - $r); # find the smaller of the two
-  my $m = $n - $r; my $C = 1;
-  #
-  #  We compute this so that the value never gets too large
-  #
-  while ($n > $m) {$C = $C*$n/$r; $n--; $r-- if $r > 1}
-  while ($r > 1) {$C /= $r; $r--}
+  shift; my ($n,$r) = @_; my $C = 1;
+  $r = $n-$r if ($r > $n-$r); # find the smaller of the two
+  for (1..$r) {$C = $C*($n-$_+1)/$_}
   return $C
 }
 
@@ -50,8 +45,7 @@ sub C {Parser::Function->call('C',@_)}
 #  Add the new functions into the Parser
 #
 
-Context()->functions->add(C => {class => 'MyFunction2'},
-);
+Context()->functions->add(C => {class => 'MyFunction2'});
 
 #
 #  Something about Context() requires this to be loaded here (FIXME)
@@ -67,7 +61,7 @@ BEGIN_TEXT
 In this problem, we have added a new function to the Parser: ${BTT}C(n,r)${ETT}.
 (Edit the code to see how this is done).
 $PAR
-Assuming that ${BTT}${DOLLAR}x = Formula('x')${ETT}, they can be used as follows:
+Assuming that ${BTT}${DOLLAR}x = Formula('x')${ETT}, it can be used as follows:
 $PAR
 
 \{ParserTable(

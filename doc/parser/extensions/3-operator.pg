@@ -34,14 +34,9 @@ sub _check {
 #  Compute the value of n choose r.
 #
 sub _eval {
-  shift; my ($n,$r) = @_;
-  $r = $n-$r if ($r > $n - $r); # find the smaller of the two
-  my $m = $n - $r; my $C = 1;
-  #
-  #  We compute this so that the value never gets too large
-  #
-  while ($n > $m) {$C = $C*$n/$r; $n--; $r-- if $r > 1}
-  while ($r > 1) {$C /= $r; $r--}
+  shift; my ($n,$r) = @_; my $C = 1;
+  $r = $n-$r if ($r > $n-$r); # find the smaller of the two
+  for (1..$r) {$C = $C*($n-$_+1)/$_}
   return $C
 }
 
@@ -73,11 +68,11 @@ $prec = Context()->operators->get('+')->{precedence} - .25;
 Context()->operators->add(
   '#' => {
      class => 'MyOperator',
-     precedence => $prec,             #  just below addition
+     precedence => $prec,         #  just below addition
      associativity => 'left',     #  computed left to right
      type => 'bin',               #  binary operator
-     string => ' # ',            #  output string for it
-     TeX => '\mathop{#}',     #  TeX version (overridden above, but just an example)
+     string => ' # ',             #  output string for it
+     TeX => '\mathop{#}',         #  TeX version (overridden above, but just an example)
   }
 );
 
@@ -93,7 +88,7 @@ loadMacros("parserTables.pl");
 #
 BEGIN_TEXT
 
-In this problem, we have added a new operator to the Parser: ${BTT} n # r${ETT}, 
+In this problem, we have added a new operator to the Parser: ${BTT}n # r${ETT}, 
 which returns \(n\choose r\).
 $PAR
 

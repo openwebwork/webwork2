@@ -6,12 +6,6 @@ To use the new parser in your own problems, you need to load the
      loadMacros("Parser.pl");
 
 which defines the commands you need to interact with the parser.
-Some of these conflict with the current ones in PGauxiliaryFunctions.pl, 
-so you should NOT load PGauxiliaryFunctions.pl into your problems that use 
-the new parser.  Instead, I have provided PGauxiliaryFunctions2.pl, which 
-contains only the non-conflicting functions.  (This will all be ironed out 
-if the new parser is incorporated into the official WeBWorK.)
-
 Once you have done that, you can call the Parser functions to create 
 formulas for you.  The main call is Formula(), which takes a string and 
 returns a parsed version of the string.  For example:
@@ -104,14 +98,14 @@ makes $f be a formula, and is equivalent to having done
 
     $f = Formula("3x^2 + 2x - 1");
 
-This can be very convenient, but also has some pitfalls.  First, you can to
-include '*' for multiplication, since perl doesn't do implied
+This can be very convenient, but also has some pitfalls.  First, you
+need to include '*' for multiplication, since perl doesn't do implied
 multiplication, and you must remember to use '**' not '^'.  (If you use '^'
 on a formula, the parser will remind you to use '**'.)  Second, the
-precedences of the operators in perl are fixed, and so changes you make the
+precedences of the operators in perl are fixed, and so changes you make to
 the precedence table for the parser are not reflected in formulas produced
 in this way.  (The reason '^' is not overloaded to do exponentiation is
-that the precedence of '^' is wrong for that in perl, and that can't be 
+that the precedence of '^' is wrong for that in perl, and it can't be 
 changed.)  As long as you leave the default precedences, however, things 
 should work as you expect.
 
@@ -122,7 +116,7 @@ generate appropriate formulas when their values are formulas.  For example,
     $f = cos(3*$x + 1);
 
 produces the same result as $f = Formula("cos(3x+1)"); and you can then go 
-on to output its TeX for, etc.
+on to output its TeX form, etc.
 
 
 SPECIAL SYNTAX:
@@ -152,7 +146,7 @@ within formulas, as described below:
     complex        a + b i  where a and b are numbers:  1+i, -5i, 6-7i, etc.
 
     point          (a,b,c)  where a, b and c are real or complex numbers.
-                   any number of coordinates is allowed.  Eg, (1,2), 
+                   any number of coordinates are allowed.  Eg, (1,2), 
                    (1,0,0,0), (-1,2,-3).  Points are promoted to vectors 
                    automatically, when necessary.
 
@@ -169,7 +163,7 @@ within formulas, as described below:
                    Points and vectors are promoted to matrices when 
                    appropriate.  Vectors are converted to column vectors 
                    when needed for matrix-vector multiplication.  Matrices 
-                   can be 3-dimensional or higher buy repeated nesting of 
+                   can be 3-dimensional or higher by repeated nesting of 
                    matrices.  (In this way, a 2-dimensional matrix is really 
                    thought of as a vector of vectors, and n-dimensional 
                    ones as vectors of (n-1)-dimensional ones.)
@@ -178,8 +172,8 @@ within formulas, as described below:
                    For example, (1+i, -3, <1,2,3>, Infinity).
                    The empty list () is allowed, and the parentheses are 
                    optional if there is only one list.  (This makes it 
-                   possible to list-based answer checkers that really know 
-                   where the separations occur.)
+                   possible to make list-based answer checkers that
+                   really know where the separations occur.)
 
    interval        (a,b), (a,b], [a,b), [a,b], or [a]  where a and b are
                    numbers or appropriate forms of infinity.
@@ -188,7 +182,7 @@ within formulas, as described below:
    union           represented by 'U'.  For example  [-1,0) U (0,1].
 
 
-These forms are what are used int eh strings passed to Formula.  If you 
+These forms are what are used in the strings passed to Formula().  If you 
 want to create versions of these by hand in perl, you can use the following 
 routines.  If their inputs are constant, they produce a constant of the 
 appropriate type.  If an input is a formula, they produce corresponding 
