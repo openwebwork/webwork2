@@ -92,9 +92,9 @@ sub pre_header_initialize {
 					sourceFilePath  => $self->{currentSourceFilePath},
 					submiterror     => $self->{submiterror},  
 				}
-			);  warn "error message is", $self->{submiterror};  # pass along any error messages
+			); 
 		};
-		warn "submit error is ",$r->param('submiterror');
+
 		# set headers redirect to ProblemSet.pm
 		$self->{file_type} eq 'set_header' and do {
 			my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
