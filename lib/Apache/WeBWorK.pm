@@ -17,7 +17,6 @@ use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
-use WeBWorK::Constants qw(WEBWORK_HOME);
 use WeBWorK::ContentGenerator::Feedback;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
@@ -29,6 +28,7 @@ use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::Professor;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
 
 # This module should be installed as a Handler for the location selected for
 # WeBWorK on your webserver. Here is an example of a stanza that can be added
@@ -74,72 +74,75 @@ sub handler() {
 	my $course = shift @components;
 	
 	# Try to get the course environment.
-	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $course);};
+	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $course);};
 	if ($@) { # If there was an error getting the requested course
 		# TODO: display an error page.  For now, 404 it.
 		warn $@;
 		return DECLINED;
 	}
 	
-	# If no course was specified, redirect to the URL specified by the constant WEBWORK_HOME
-	# (this is typically just "/".)
+	# If no course was specified, redirect to the home URL
 	unless (defined $course) {
-		$r->header_out(Location => $course_env->{webworkURLs}->{home});
+		$r->header_out(Location => $ce->{webworkURLs}->{home});
 		return REDIRECT;
 	}
 	
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
-	if (!-e $course_env->{webworkDirs}->{courses} . "/$course") {
+	if (!-e $ce->{webworkDirs}->{courses} . "/$course") {
 		warn "Course directory for $course not found at "
-			. $course_env->{webworkDirs}->{courses} . "/$course" ."\n";
+			. $ce->{webworkDirs}->{courses} . "/$course" ."\n";
 		return DECLINED;
 	}
+	
+	# Bring up a connection to the database (for Authen/Authz, and eventually
+	# to be passed to content generators, when we clean this file up).
+	my $db = WeBWorK::DB->new($ce);
 	
 	### Begin dispatching ###
 	
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
-	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
-		return WeBWorK::ContentGenerator::Login->new($r, $course_env)->go;
+	if (!WeBWorK::Authen->new($r, $ce, $db)->verify) {
+		return WeBWorK::ContentGenerator::Login->new($r, $ce)->go;
 	} else {
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
 		my $user = $r->param("user");
 		my $effectiveUser = $r->param("effectiveUser") || $user;
-		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
+		my $su_authorized = WeBWorK::Authz->new($r, $ce, $db)->hasPermissions($user, "become_student", $effectiveUser);
 		$effectiveUser = $user unless $su_authorized;
 		$r->param("effectiveUser", $effectiveUser);
 		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
-			return WeBWorK::ContentGenerator::ProblemSets->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::ProblemSets->new($r, $ce)->go;
 		} elsif ($arg eq "hardcopy") {
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
+			return WeBWorK::ContentGenerator::Hardcopy->new($r, $ce)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
-			return WeBWorK::ContentGenerator::Professor->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Professor->new($r, $ce)->go;
 		} elsif ($arg eq "options") {
-			return WeBWorK::ContentGenerator::Options->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Options->new($r, $ce)->go;
 		} elsif ($arg eq "feedback") {
-			return WeBWorK::ContentGenerator::Feedback->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Feedback->new($r, $ce)->go;
 		} elsif ($arg eq "logout") {
-			return WeBWorK::ContentGenerator::Logout->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Logout->new($r, $ce)->go;
 		} elsif ($arg eq "test") {
-			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
+			return WeBWorK::ContentGenerator::Test->new($r, $ce)->go;
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
 			my $ps_arg = shift @components;
 
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
-				return WeBWorK::ContentGenerator::ProblemSet->new($r, $course_env)->go($problem_set);
+				return WeBWorK::ContentGenerator::ProblemSet->new($r, $ce)->go($problem_set);
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
+				return WeBWorK::ContentGenerator::Problem->new($r, $ce)->go($problem_set, $problem);
 			}
 		}
 		
