@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.29 2004/09/29 23:45:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.30 2004/10/10 20:48:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -532,6 +532,9 @@ sub add_course_validate {
 	if ($add_courseID eq "") {
 		push @errors, "You must specify a course ID.";
 	}
+	unless ($add_courseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
+		push @errors, "Course ID may only contain letters, numbers, hyphens, and underscores.";
+	}
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
 		push @errors, "A course with ID $add_courseID already exists.";
 	}
@@ -648,7 +651,7 @@ sub do_add_course {
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
 		foreach my $userID ($db->listUsers) {
-			if ($userID eq add_initial_userID) {
+			if ($userID eq $add_initial_userID) {
 				warn "User '$userID' will not be copied from admin course as it is the initial instructor.";
 				next;
 			}
