@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.109 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.110 2003/12/10 18:50:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -839,7 +839,7 @@ sub attemptResults($$$$$$) {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
 		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore ? "correct" : "incorrect";
+		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
 		
 		# get rid of the goofy prefix on the answer names (supposedly, the format
 		# of the answer names is changeable. this only fixes it for "AnSwEr"
