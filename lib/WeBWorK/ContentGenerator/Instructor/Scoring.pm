@@ -19,11 +19,18 @@ use WeBWorK::Utils qw(readFile formatDateTime);
 
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
 # will have to be rewritten some.
+# $format can be any of "normal", "full", "info", or "totals".  An undefined value defaults to "normal"
+#   normal: student info, the status of each problem in the set, and a "totals" column
+#   full: student info, the status of each problem, and the number of correct and incorrect attempts
+#   info: student info columns only
+#   totals: total column only
 sub scoreSet {
-	my ($self, $setID) = @_;
+	my ($self, $setID, $format) = @_;
 	my $db = $self->{db};
 	my @scoringData;
 	
+	$format = "normal" unless $format eq "full" or $format eq "totals" or $format eq "info";
+	my $columnsPerProblem = $format eq "full" ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
 	my %users;
 	foreach my $userID ($db->listUsers) {
@@ -38,30 +45,36 @@ sub scoreSet {
 		push @scoringData, [];
 	}
 	
-	$scoringData[0][0] = "NO OF FIELDS";
-	$scoringData[1][0] = "SET NAME";
-	$scoringData[2][0] = "PROB NUMBER";
-	$scoringData[3][0] = "DUE DATE";
-	$scoringData[4][0] = "DUE TIME";
-	$scoringData[5][0] = "PROB VALUE";
+	
+	unless ($format eq "totals") {
+		$scoringData[0][0] = "NO OF FIELDS";
+		$scoringData[1][0] = "SET NAME";
+		$scoringData[2][0] = "PROB NUMBER";
+		$scoringData[3][0] = "DUE DATE";
+		$scoringData[4][0] = "DUE TIME";
+		$scoringData[5][0] = "PROB VALUE";
+	}
 	
 	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
 	my @userKeys = sort keys %users;
 	
 	# Write identifying information about the users
-	for (my $field=0; $field < @userInfoFields; $field++) {
-		if ($field > 0) {
-			for (my $i = 0; $i < 6; $i++) {
-				$scoringData[$i][$field] = "";
+	unless ($format eq "totals") {
+		for (my $field=0; $field < @userInfoFields; $field++) {
+			if ($field > 0) {
+				for (my $i = 0; $i < 6; $i++) {
+					$scoringData[$i][$field] = "";
+				}
+			}
+			$scoringData[6][$field] = $userInfoColumnHeadings[$field];
+			for (my $user = 0; $user < @userKeys; $user++) {
+				my $fieldName = $userInfoFields[$field];
+				$scoringData[7 + $user][$field] = $users{$userKeys[$user]}->$fieldName;
 			}
 		}
-		$scoringData[6][$field] = $userInfoColumnHeadings[$field];
-		for (my $user = 0; $user < @userKeys; $user++) {
-			my $fieldName = $userInfoFields[$field];
-			$scoringData[7 + $user][$field] = $users{$userKeys[$user]}->$fieldName;
-		}
 	}
+	return @scoringData if $format eq "info";
 	
 	# Write the problem data
 	my $dueDateString = formatDateTime($setRecord->due_date);
@@ -70,34 +83,58 @@ sub scoreSet {
 	my %userStatusTotals = ();
 	for (my $problem = 0; $problem < @problemIDs; $problem++) {
 		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]);
-		$scoringData[0][5 + $problem] = "";
-		$scoringData[1][5 + $problem] = $setRecord->set_id;
-		$scoringData[2][5 + $problem] = $globalProblem->problem_id;
-		$scoringData[3][5 + $problem] = $dueDate;
-		$scoringData[4][5 + $problem] = $dueTime;
-		$scoringData[5][5 + $problem] = $globalProblem->value;
-		$scoringData[6][5 + $problem] = "STATUS";
+		my $column = 5 + $problem * $columnsPerProblem;
+		unless ($format eq "totals") {
+			$scoringData[0][$column] = "";
+			$scoringData[1][$column] = $setRecord->set_id;
+			$scoringData[2][$column] = $globalProblem->problem_id;
+			$scoringData[3][$column] = $dueDate;
+			$scoringData[4][$column] = $dueTime;
+			$scoringData[5][$column] = $globalProblem->value;
+			$scoringData[6][$column] = "STATUS";
+			if ($format eq "full") { # Fill in with blanks, or maybe the problem number
+				for (my $row = 0; $row < 6; $row++) {
+					for (my $col = $column+1; $col <= $column + 2; $col++) {
+						if ($row == 2) {
+							$scoringData[$row][$col] = $globalProblem->problem_id;
+						} else {
+							$scoringData[$row][$col] = "";
+						}
+					}
+				}
+				$scoringData[6][$column + 1] = "#corr";
+				$scoringData[6][$column + 2] = "#incorr";
+			}
+		}
 		$valueTotal += $globalProblem->value;
 		for (my $user = 0; $user < @userKeys; $user++) {
 			# getting the UserProblem is quicker, and we only need user-only data, anyway
 			my $userProblem = $db->getUserProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
 			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
-			$scoringData[7 + $user][5 + $problem] = $userProblem->status;
+			unless ($format eq "totals") {
+				$scoringData[7 + $user][$column] = $userProblem->status;
+				if ($format eq "full") {
+					$scoringData[7 + $user][$column + 1] = $userProblem->num_correct;
+					$scoringData[7 + $user][$column + 2] = $userProblem->num_incorrect;
+				}
+			}
 		}
 	}
 	
 	# write the status totals
-	my $totalsColumn = 5 + @problemIDs;
-	$scoringData[0][$totalsColumn] = "";
-	$scoringData[1][$totalsColumn] = $setRecord->set_id;
-	$scoringData[2][$totalsColumn] = "";
-	$scoringData[3][$totalsColumn] = "";
-	$scoringData[4][$totalsColumn] = "";
-	$scoringData[5][$totalsColumn] = $valueTotal;
-	$scoringData[6][$totalsColumn] = "total";
-	for (my $user = 0; $user < @userKeys; $user++) {
-		$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
+	unless ($format eq "full") { # Ironic, isn't it?
+		my $totalsColumn = $format eq "totals" ? 0 : 5 + @problemIDs * $columnsPerProblem;
+		$scoringData[0][$totalsColumn] = "";
+		$scoringData[1][$totalsColumn] = $setRecord->set_id;
+		$scoringData[2][$totalsColumn] = "";
+		$scoringData[3][$totalsColumn] = "";
+		$scoringData[4][$totalsColumn] = "";
+		$scoringData[5][$totalsColumn] = $valueTotal;
+		$scoringData[6][$totalsColumn] = "total";
+		for (my $user = 0; $user < @userKeys; $user++) {
+			$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
+		}
 	}
 	
 	return @scoringData;
