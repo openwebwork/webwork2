@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.103 2004/09/10 22:03:26 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.104 2004/09/11 06:15:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -339,6 +339,9 @@ $problemLibrary{passwordSQL} = "";
 # mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
 $webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
 
+# Logs courses created via the web-based Course Administration module.
+$webworkFiles{logs}{hosted_courses} = "$webworkDirs{logs}/hosted_courses.log";
+
 # The transaction log contains data from each recorded answer submission. This
 # is useful if the database becomes corrupted.
 $webworkFiles{logs}{transaction}    = "$courseDirs{logs}/transaction.log";
@@ -553,6 +556,7 @@ $pg{displayModeOptions}{images} = {
 	#     GRANT ALL ON DvipngDepths.* TO webworkWrite;
 	# 
 	# In the last statement, "webworkWrite" should match the user below.
+	# FIXME: this database can become a table in the 'webwork' database
 	dvipng_depth_db => {
 		dbsource => 'dbi:mysql:DvipngDepths',
 		user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
