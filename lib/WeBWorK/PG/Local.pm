@@ -181,7 +181,7 @@ EOF
 	# install a safety filter
 	#warn "PG: installing a safety filter\n";
 	#$translator->rf_safety_filter(\&oldSafetyFilter);
-	$translator->rf_safety_filter(\&nullSafetyFilter);
+	$translator->rf_safety_filter(\&WeBWorK::PG::nullSafetyFilter);
 	
 	# write timing log entry -- the translator is now all set up
 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
