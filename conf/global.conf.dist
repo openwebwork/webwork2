@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.91 2004/07/13 04:24:37 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.92 2004/07/15 21:22:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,7 @@
 $webwork_url         = "/webwork2";
 
 # Root directory of PG.
-$pg_dir              = "/home/sh002i/work/pg";
+$pg_dir              = "/opt/pg";
 
 # URL and path to htdocs directory.
 $webwork_htdocs_url  = "/webwork2_files";
