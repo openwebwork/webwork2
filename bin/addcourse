@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/addcourse,v 1.14 2004/09/23 16:53:25 sh002i Exp $
+# $CVSHeader: webwork2/bin/addcourse,v 1.15 2004/10/10 20:32:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -251,9 +251,16 @@ if ($users) {
 		my $PermissionLevel = new $permissionClass(user_id => $user_id, permission => 0);
 		my $Password = new $passwordClass(user_id => $user_id, password => cryptPassword($record{student_id}));
 		
-		if (exists $professors{$user_id}) {
+		if (exists $record{permission}) {
+			$PermissionLevel->permission($record{permission});
+			delete $professors{$user_id};
+		} elsif (exists $professors{$user_id}) {
 			$PermissionLevel->permission(10);
 			delete $professors{$user_id};
+		}
+		
+		if (exists $record{password}) {
+			$Password->password($record{password});
 		}
 		
 		push @users, [ $User, $Password, $PermissionLevel ];
