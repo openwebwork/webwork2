@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.20 2004/04/05 03:56:05 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.21 2004/05/24 01:43:36 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,17 +53,19 @@ sub body {
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
 	if (defined @{$ce->{viewable_recitations}->{$user}})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-	foreach my $student (@Users){
-		my $keep = 0;
-		foreach my $sec (@viewable_sections){
-			if ($student->section() eq $sec){$keep = 1;}
+	if (@viewable_sections or @viewable_recitations){
+		foreach my $student (@Users){
+			my $keep = 0;
+			foreach my $sec (@viewable_sections){
+				if ($student->section() eq $sec){$keep = 1;}
+			}
+			foreach my $rec (@viewable_recitations){
+				if ($student->section() eq $rec){$keep = 1;}
+			}
+			if ($keep) {push @myUsers, $student;}
 		}
-		foreach my $rec (@viewable_recitations){
-			if ($student->section() eq $rec){$keep = 1;}
-		}
-		if ($keep) {push @myUsers, $student;}
+		@Users = @myUsers;
 	}
-	@Users = @myUsers;
 ## End Mark's Edits
 
 	
