@@ -29,16 +29,16 @@ use CGI qw();
 	
 	# new URLS
 	my $classList	= "$root/$courseName/instructor/userList/?". $self->url_authen_args();
+	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
 	my $problemSetList = "$root/$courseName/instructor/problemSetList/?". $self->url_authen_args();
 	
-	$pathString .="<hr>";
-	$pathString .= ($permLevel > 0
-			? CGI::a({-href=>$classList}, "Class List editor") . CGI::br()
-			: "");
-	$pathString .= ($permLevel > 0
-			? CGI::a({-href=>$problemSetList}, "Problem Set editor") . CGI::br()
-			: "");
-	return $self->SUPER::links(), $pathString;
+	if ($permLevel > 0 ) {
+		$pathString .="<hr>";
+		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
+		$pathString .=  '&nbsp;&nbsp;'.CGI::a({-href=>$addStudent}, "Add&nbsp;Student") . CGI::br();
+		$pathString .= CGI::a({-href=>$problemSetList}, "ProbSet&nbsp;editor") . CGI::br();
+	}
+	return $self->SUPER::links() . $pathString;
 }
 
 1;
