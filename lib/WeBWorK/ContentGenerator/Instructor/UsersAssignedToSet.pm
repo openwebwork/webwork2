@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.12 2004/06/17 14:35:05 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.13 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,7 +63,7 @@ sub initialize {
 	} elsif (defined $r->param('assignToSelected')) {
 	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
-	} else {
+	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken
 	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
 	}
@@ -128,6 +128,9 @@ sub body {
 	);
 				        
 	print CGI::start_table({});
+	print CGI::Tr(CGI::th(["Assigned","ID","&nbsp;","Student Name","&nbsp;","Section","&nbsp;","Due Date"]));
+	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+
 	# get user records
 	my @userRecords  = ();
 	foreach my $currentUser ( @users) {
@@ -157,7 +160,7 @@ sub body {
 		my $dueDate    = $userSetRecord->due_date if ref($userSetRecord);
 		my $prettyDate = ($dueDate)?  '(' . $self->formatDateTime($dueDate) . ') ' : '';
 		print CGI::Tr({}, 
-			CGI::td({}, [
+			CGI::td({-align=>"center"},
 				($user eq $globalUserID
 					? "" # no checkbox for global user!
 					: CGI::checkbox({
@@ -171,25 +174,30 @@ sub body {
 						value=>$user,
 						label=>"",
 					})
-				),
+				)
+			),CGI::td({},[
 				CGI::div({class=>$statusClass}, $user),
+				"",
 				"($prettyName)", " ", $userRecord->section, " ",
 				(
 					defined $userSetRecord
-					? $prettyDate . CGI::a(
+###					? $prettyDate . CGI::a(
+					? ($prettyDate, "", CGI::a(
 						{href=>$self->systemLink($urlpath->new(type =>'instructor_set_detail',
 						                                       args =>{courseID => $courseName,
 						                                               setID    => $setID
 						                                       }),
 						                         params =>{editForUser=> $user}
 						)},
+						"",
 						"Edit data for $user"
-					)
+					))
 					: ()
 				),
 			])
 		);
 	}
+	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	print CGI::end_table();
 	print $self->hidden_authen_fields;
 	print CGI::submit({name=>"assignToSelected", value=>"Save"});
@@ -202,10 +210,7 @@ sub body {
 						CGI::br(),
 						CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
 						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
-		
 				  ),
-				  
-				  
 				  CGI::hr(),
 	);
 	print CGI::end_form();
