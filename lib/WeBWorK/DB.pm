@@ -1434,14 +1434,32 @@ sub getMergedSets {
 			       and defined $userSetIDs[$i]->[1];
 	}
 	
+	# a horrible, terrible hack ;)
+	warn $self->{set_user};
+	warn $self->{set};
+	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
+			and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator")
+	{
+		warn __PACKAGE__.": using a terrible hack.\n";
+		$WeBWorK::timer->continue("DB: getsNoFilter start") if defined($WeBWorK::timer);
+		my @MergedSets = $self->{set_user}->getsNoFilter(@userSetIDs);
+		$WeBWorK::timer->continue("DB: getsNoFilter end") if defined($WeBWorK::timer);
+		return @MergedSets;
+	}
+	
+	$WeBWorK::timer->continue("DB: getUserSets start") if defined($WeBWorK::timer);
 	my @UserSets = $self->getUserSets(@userSetIDs); # checked
 	
+	$WeBWorK::timer->continue("DB: pull out set IDs start") if defined($WeBWorK::timer);
 	my @globalSetIDs = map { $_->[1] } @userSetIDs;
+	$WeBWorK::timer->continue("DB: getGlobalSets start") if defined($WeBWorK::timer);
 	my @GlobalSets = $self->getGlobalSets(@globalSetIDs); # checked
 	
+	$WeBWorK::timer->continue("DB: calc common fields start") if defined($WeBWorK::timer);
 	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
 	my @commonFields = grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
 	
+	$WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
 	for (my $i = 0; $i < @UserSets; $i++) {
 		my $UserSet = $UserSets[$i];
 		my $GlobalSet = $GlobalSets[$i];
@@ -1451,6 +1469,7 @@ sub getMergedSets {
 			$UserSet->$field($GlobalSet->$field);
 		}
 	}
+	$WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
 	
 	return @UserSets;
 }
@@ -1526,14 +1545,19 @@ sub getMergedProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
+	$WeBWorK::timer->continue("DB: getUserProblems start") if defined($WeBWorK::timer);
 	my @UserProblems = $self->getUserProblems(@userProblemIDs); # checked
 	
+	$WeBWorK::timer->continue("DB: pull out set/problem IDs start") if defined($WeBWorK::timer);
 	my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @userProblemIDs;
+	$WeBWorK::timer->continue("DB: getGlobalProblems start") if defined($WeBWorK::timer);
 	my @GlobalProblems = $self->getGlobalProblems(@globalProblemIDs); # checked
 	
+	$WeBWorK::timer->continue("DB: calc common fields start") if defined($WeBWorK::timer);
 	my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
 	my @commonFields = grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
 	
+	$WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
 	for (my $i = 0; $i < @UserProblems; $i++) {
 		my $UserProblem = $UserProblems[$i];
 		my $GlobalProblem = $GlobalProblems[$i];
@@ -1543,6 +1567,7 @@ sub getMergedProblems {
 			$UserProblem->$field($GlobalProblem->$field);
 		}
 	}
+	$WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
 	
 	return @UserProblems;
 }
