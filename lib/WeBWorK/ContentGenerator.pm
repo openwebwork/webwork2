@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.86 2004/03/15 04:09:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.87 2004/03/15 23:03:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1055,14 +1055,17 @@ object from which the base path will be taken. %options can consist of:
 
 =item params
 
-A reference to a list containing names of parameters to add to the URL. The
-parameter values are taken from the current request.
+A reference to a list containing names of parameters to add to the C<values>
+hash below. The values are taken from the current request.
 
 =item values
 
-A reference to a hash associating request parameters with replacement values. If
-parameter is given in C<params> above, the value given here will be substituted
-for that in the current request.
+A reference to a hash associating request parameters with replacement values.
+Each parameter listed here is added to the URL.
+
+FIXME: this should be changed so that params is a hash, and a value is taken
+from the current request if the value given is undef. The get rid of values. FIX
+THIS SOON before too much code relies on it!
 
 =item authen
 
