@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.68 2004/08/28 13:56:54 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.69 2004/08/30 19:22:27 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,6 +43,7 @@ your httpd.conf file to achieve this:
 use strict;
 use warnings;
 use HTML::Entities;
+use Date::Format;
 use WeBWorK;
 
 #
@@ -94,7 +95,9 @@ sub handler($) {
 	}
 	
 	if ($@) {
-		print STDERR "uncaught exception in Apache::WeBWorK::handler: $@";
+	    print STDERR "[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$r->uri,"]\n ", "Uncaught exception in Apache::WeBWorK::handler: $@\n";
+		#print STDERR "uncaught exception in Apache::WeBWorK::handler: $@";
+		
 		my $message = message($r, $@);
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
