@@ -1,30 +1,32 @@
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: TODO,v 1.2 2002-08-16 20:43:37 sh002i Exp $
+# $Id: TODO,v 1.3 2002-08-20 01:04:57 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
 
-1. write template file from what we drew on the board
-2. normalize files:
-	- (c) header on all files
-	- standard order of preamble lines:
-		1. (c) header
-		
-		2. package PACKAGENAME;
-		
-		3. short summary of the package (pod's NAME section)
-		
-		4. use - pragmatic modules
-		5. use - standard perl modules
-		6. use - CPAN modules
-		7. use - webwork modules
-	- ALWAYS use strict and use warnings
-	- use "use base" rather than "our @ISA"
-	- no warnings or errors!
-	- (later on) POD documentation for all files
-3. fix templating code in ContentGenerator, add new escape functions
-4. implement the new template
-5. implement ProblemSets and ProblemSet
-6. Implement Options (email address and password)
-?. continuing code cleanup
+OK	write template file from what we drew on the board
+OK	normalize files:
+		- (c) header on all files
+		- standard order of preamble lines:
+			1. (c) header
+			
+			2. package PACKAGENAME;
+			
+			3. short summary of the package (pod's NAME section)
+			
+			4. use - pragmatic modules
+			5. use - standard perl modules
+			6. use - CPAN modules
+			7. use - webwork modules
+		- ALWAYS use strict and use warnings
+		- use "use base" rather than "our @ISA"
+		- no warnings or errors!
+		- (later on) POD documentation for all files
+OK	fix templating code in ContentGenerator, add new escape functions
+OK	implement the new template
+OK	implement ProblemSets and ProblemSet
+	implement Hardcopy
+	implement display of set headers (a.k.a. screenHeaderFile or whatever)
+	Implement Options (email address and password)
+	continuing code cleanup
