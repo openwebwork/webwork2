@@ -887,7 +887,7 @@ sub process_answers{
 			$rh_ans_evaluation_result = $self->{safe} ->reval( '&{ $rf_fun }($temp_ans)' ) ;
 			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
 		} elsif (ref($rf_fun) eq 'AnswerEvaluator')   {
-			$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans)');
+			$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans, ans_label => \''.$ans_name.'\')');
 			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
 			warn "Evaluation error: Answer $ans_name:<BR>\n", 
 				$rh_ans_evaluation_result->error_flag(), " :: ",
