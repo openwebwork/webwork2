@@ -1,5 +1,7 @@
 package WeBWorK::ContentGenerator;
 
+use strict;
+use warnings;
 use CGI qw(-compile :html :form);
 use Apache::Constants qw(:common);
 
@@ -35,11 +37,18 @@ sub print_form_data {
 	my ($self, $begin, $middle, $end, $qr_omit) = @_;
 	my $return_string = "";
 	
-	$r=$self->{r};
+	my $r=$self->{r};
 	my @form_data = $r->param;
 	foreach my $name (@form_data) {
 		next if ($qr_omit and $name =~ /$qr_omit/);
 		my @values = $r->param($name);
+		
+		
+		foreach my $variable (qw(begin name middle value end)) {
+			no strict 'refs';
+			${$variable} = "" unless defined ${$variable};
+		}
+
 		foreach my $value (@values) {
 			$return_string .= "$begin$name$middle$value$end";
 		}
@@ -54,7 +63,7 @@ sub hidden_authen_fields {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $html = "";
 	
-	foreach $param ("user","effectiveUser","key") {
+	foreach my $param ("user","effectiveUser","key") {
 		my $value = $r->param($param);
 		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
 	}
@@ -74,7 +83,7 @@ sub hidden_fields($;@) {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $html = "";
 	
-	foreach $param (@fields) {
+	foreach my $param (@fields) {
 		my $value = $r->param($param);
 		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
 	}
@@ -111,12 +120,12 @@ sub initialize {}
 
 sub logo {
 	my $self = shift;
-	return $self->{courseEnvironment}->{webworkUrls}->{logo};
+	return $self->{courseEnvironment}->{webworkURLs}->{logo};
 }
 
 sub htdocs_base {
 	my $self = shift;
-	return $self->{courseEnvironment}->{webworkUrls}->{base};
+	return $self->{courseEnvironment}->{webworkURLs}->{base};
 }
 
 sub test_args {
@@ -166,11 +175,13 @@ sub template {
 		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
 			my ($before, $function, $raw_args) = ($1, $2, $3);
 			# $args here will be a hashref
-			my $args = cook_args $raw_args if $raw_args =~ /\S/;
+			my $args = $raw_args =~ /\S/ ? cook_args $raw_args : {};
 			print $before;
+			
 			print $self->$function(@_, $args) if $self->can($function);
 		}
-		print substr $line, pos($line);
+		
+		print substr $line, (defined(pos($line)) ? pos($line) : 0);
 	}
 }
 

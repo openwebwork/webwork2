@@ -1,6 +1,8 @@
 package WeBWorK::ContentGenerator::ProblemSet;
 our @ISA = qw(WeBWorK::ContentGenerator);
 
+use strict;
+use warnings;
 use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
 use CGI qw(-compile :html :form);

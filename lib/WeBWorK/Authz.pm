@@ -1,5 +1,8 @@
 package WeBWorK::Authz;
 
+use strict;
+use warnings;
+
 use WeBWorK::DB::Auth;
 
 sub new($$$) {

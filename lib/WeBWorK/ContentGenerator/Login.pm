@@ -7,6 +7,8 @@
 
 package WeBWorK::ContentGenerator::Login;
 
+use strict;
+use warnings;
 use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
 use CGI qw(-comple :html :form);
@@ -32,7 +34,7 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	if ($r->notes("authen_error")) {
-		print font({-color=>red}, b($r->notes("authen_error"))),br;
+		print font({-color => 'red'}, b($r->notes("authen_error"))),br;
 	}
 	
 	print p("Please enter your username and password for ",b($course)," below:");

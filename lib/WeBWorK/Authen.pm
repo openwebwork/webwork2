@@ -1,6 +1,8 @@
 package WeBWorK::Authen;
 
 use WeBWorK::DB::Auth;
+use strict;
+use warnings;
 
 sub new($$$) {
 	my $invocant = shift;
@@ -46,7 +48,8 @@ sub verify($) {
 	# but usability dictates that we not clear out invalid passwords.
 	#$r->param('passwd',undef);
 	
-	my $return, $error;
+	my $error;
+	my $return;
 	
 	my $auth = WeBWorK::DB::Auth->new($course_env);
 	
@@ -72,8 +75,8 @@ sub verify($) {
 		# - They aren't allowed to log in if an active key exists
 		#   (except for $debugPracticeUser)
 		# - They are allowed to log in with any password
-		$practiceUserPrefix = $course_env->{"practiceUserPrefix"};
-		$debugPracticeUser = $course_env->{"debugPracticeUser"};
+		my $practiceUserPrefix = $course_env->{"practiceUserPrefix"};
+		my $debugPracticeUser = $course_env->{"debugPracticeUser"};
 		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
 			if (!$auth->getPassword($user)) { # the only way DB::Auth provides for checking the existence of a user
 				$error = "That practice account does not exist";
@@ -113,8 +116,7 @@ sub verify($) {
 		$return = 0;
 	}
 
-		
-	$r->notes("authen_error",$error);
+	$r->notes("authen_error",$error) if defined($error);
 	return $return;
 	
 	# Whatever you do, don't delete this!
