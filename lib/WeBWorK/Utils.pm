@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.37 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.38 2004/03/17 08:16:13 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -278,8 +278,8 @@ sub refBaseType($) {
 sub sortByName {
 	my ($field, @items) = @_;
 	return sort {
-		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $a->$field;
-		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $b->$field;
+		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $a->$field : $a;
+		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $b->$field : $b;
 		while (@aParts and @bParts) {
 			my $aPart = shift @aParts;
 			my $bPart = shift @bParts;
