@@ -41,6 +41,7 @@ sub new {
 	# if readFile failed, we don't bother trying to reval
 	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
 	$@ or $safe->reval($courseFileContents);
+	$@ = "";
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
