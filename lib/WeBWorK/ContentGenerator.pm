@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.101 2004/05/22 21:24:42 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.102 2004/05/28 15:32:35 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -618,7 +618,7 @@ sub loginstatus {
 		
 		print "\n<!-- BEGIN " . __PACKAGE__ . "::loginstatus -->\n";
 		
-		print "Logged in as $userID. ";
+		print "Logged in as $userID. ", CGI::br();
 		print CGI::a({href=>$logoutURL}, "Log Out");
 		
 		if ($eUserID ne $userID) {
@@ -812,6 +812,33 @@ The implementation in this package checks for a note in the request named
 "warnings". If present, its contents are formatted and returned.
 
 =cut
+
+=item helpMacro($name)
+
+This escape is represented by a question mark which links to an html page in the
+helpFiles  directory.  Currently the link is made to the file $name.html
+
+=cut
+
+sub helpMacro {
+    my $self = shift;
+	my $name = shift;
+	$name = 'NoHelp' unless defined $name;
+	my $ce   = $self->r->ce;
+	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
+	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
+	return CGI::a({href      => $url,
+	               target    => 'ww_help',
+	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=on')"},
+	               CGI::img({src=>$imageURL}));
+}
+
+sub help {
+	my $self = shift;
+	my $args = shift;
+	my $name = $args->{name};
+	$self->helpMacro($name);
+}
 
 sub warnings {
 	my ($self) = @_;
@@ -1080,6 +1107,8 @@ sub siblingsMacro {
 	
 	return join($sep, @result) . "\n";
 }
+
+
 
 =item navMacro($args, $tail, @links)
 
