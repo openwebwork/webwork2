@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.124 2004/05/06 22:46:13 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.125 2004/05/09 17:47:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -200,6 +200,12 @@ sub pre_header_initialize {
 	$self->{checkAnswers}   = $checkAnswers;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
+
+	# get result and send to message
+	my $success	       = $r->param("sucess");
+	my $failure	       = $r->param("failure");
+	$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p($failure))) if $failure;
+	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p($success))) if $success;
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
@@ -653,14 +659,15 @@ sub body {
 		if ($editMode eq "temporaryFile") {
 			print CGI::p(CGI::i("Editing temporary file: ", $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
-			if ( defined($r->param('submiterror')) and $r->param('submiterror') ) {
+			# FIXME: this is all done automatically if submitError exists.
+			#if ( defined($r->param('submiterror')) and $r->param('submiterror') ) {
 			    # FIXME  The following line doesn't work because the submiterror hook has already been called.
 			    # The actions below should take place during the initialization phase.
-				$self->{submiterror} .= $r->param('submiterror');
-				print CGI::p(CGI::div({class=>'ResultsWithError'},$self->{submiterror}));
-			} else {
-				print CGI::p(CGI::div({ class=>'ResultsWithoutError'}, "Problem saved to: ", $problem->source_file));
-			}
+			#	$self->{submiterror} .= $r->param('submiterror');
+			#	print CGI::p(CGI::div({class=>'ResultsWithError'},$self->{submiterror}));
+			#} else {
+			#	print CGI::p(CGI::div({ class=>'ResultsWithoutError'}, "Problem saved to: ", $problem->source_file));
+			#}
 		}
 	}
 	#FIXME  we need error messages here if the problem was really not saved.
@@ -1114,6 +1121,7 @@ sub mustRecordAnswers($) {
 }
 
 
+# FIXME: does this even get used?
 sub submiterror  {
 	my $self = shift;
 	my $submiterror = (defined($self->{submiterror}) ) ? $self->{submiterror} : '';
