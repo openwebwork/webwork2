@@ -68,13 +68,13 @@ sub initialize {
 	}   
 	
 	# Obtaining list of sets:
-	$WeBWorK::timer2->continue("Begin listing sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
 	my @setNames =  $db->listGlobalSets();
-	$WeBWorK::timer2->continue("End listing sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
 	my @set_records = ();
-	$WeBWorK::timer2->continue("Begin obtaining sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
 	@set_records = $db->getGlobalSets( @setNames);
-	$WeBWorK::timer2->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
 	
 	
 	# store data
@@ -175,11 +175,16 @@ sub scoreSet {
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
 	my %users;
+	my %userStudentID=();
+	$WeBWorK::timer->continue("Begin getting users for set $setID") if defined($WeBWorK::timer);
 	foreach my $userID ($db->listUsers()) {
 		my $userRecord = $db->getUser($userID);
 		# The key is what we'd like to sort by.
 		$users{$userRecord->student_id} = $userRecord;
+		$userStudentID{$userID} = $userRecord->student_id;
 	}
+	$WeBWorK::timer->continue("End getting users for set $setID") if defined($WeBWorK::timer);
+	
 	my @problemIDs = $db->listGlobalProblems($setID);
 
 	# determine what information will be returned
@@ -297,8 +302,18 @@ sub scoreSet {
 			}
 		}
 		$valueTotal += $globalProblem->value;
+		
+ 		my @userLoginIDs = $db->listUsers();
+ 		$WeBWorK::timer->continue("Begin getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
+ 		#my @userProblems = $db->getMergedProblems( map { [ $_, $setID, $problemIDs[$problem] ] } @userLoginIDs );
+ 		my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs );
+ 		my %userProblems;
+ 		foreach my $item (@userProblems) {
+ 			$userProblems{$item->user_id} = $item if ref $item;
+ 		}
+ 		$WeBWorK::timer->continue("End getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
 		for (my $user = 0; $user < @userKeys; $user++) {
-			my $userProblem = $db->getMergedProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
+			my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
 			unless (defined $userProblem) { # assume an empty problem record if the problem isn't assigned to this user
 				$userProblem = $db->newUserProblem;
 				$userProblem->status(0);
@@ -307,7 +322,8 @@ sub scoreSet {
 				$userProblem->num_incorrect(0);
 			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
-			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;				
+			#$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
+			$userStatusTotals{$user} += $userProblem->status * $globalProblem->value;	
 			if ($scoringItems->{successIndex})   {
 				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});
 				my $num_correct     = $userProblem->num_correct;
@@ -328,27 +344,27 @@ sub scoreSet {
 	if ($scoringItems->{successIndex}) {
 		for (my $user = 0; $user < @userKeys; $user++) {
 			my $avg_num_attempts = ($num_of_problems) ? $numberOfAttempts{$user}/$num_of_problems : 0;
-			$userSuccessIndex{$user} = ($avg_num_attempts) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0 ;						
+			$userSuccessIndex{$user} = ($avg_num_attempts) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0;						
 		}
 	}
 	# write the status totals
 	if ($scoringItems->{setTotals}) { # Ironic, isn't it?
 		my $totalsColumn = $format eq "totals" ? 0 : 5 + @problemIDs * $columnsPerProblem;
-		$scoringData[0][$totalsColumn] = "";
-		$scoringData[1][$totalsColumn] = $setRecord->set_id;
-		$scoringData[1][$totalsColumn+1] = $setRecord->set_id if $scoringItems->{successIndex};
-		$scoringData[2][$totalsColumn] = "";
-		$scoringData[3][$totalsColumn] = "";
-		$scoringData[4][$totalsColumn] = "";
-		$scoringData[5][$totalsColumn] = $valueTotal;
-		$scoringData[6][$totalsColumn] = "total";
-		$scoringData[6][$totalsColumn+1] = "index" if $scoringItems->{successIndex};
+		$scoringData[0][$totalsColumn]    = "";
+		$scoringData[1][$totalsColumn]    = $setRecord->set_id;
+		$scoringData[1][$totalsColumn+1]  = $setRecord->set_id if $scoringItems->{successIndex};
+		$scoringData[2][$totalsColumn]    = "";
+		$scoringData[3][$totalsColumn]    = "";
+		$scoringData[4][$totalsColumn]    = "";
+		$scoringData[5][$totalsColumn]    = $valueTotal;
+		$scoringData[6][$totalsColumn]    = "total";
+		$scoringData[6][$totalsColumn+1]  = "index" if $scoringItems->{successIndex};
 		for (my $user = 0; $user < @userKeys; $user++) {
 			$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
 			$scoringData[7+$user][$totalsColumn+1] = $userSuccessIndex{$user} if $scoringItems->{successIndex};
 		}
 	}
-	
+	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
 	return @scoringData;
 }
 
