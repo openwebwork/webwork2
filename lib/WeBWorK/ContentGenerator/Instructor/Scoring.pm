@@ -15,7 +15,76 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils qw(readFile formatDateTime);
+
+# If, some day, it becomes possible to assign a different number of problems to each student, this code
+# will have to be rewritten some.
+sub scoreSet {
+	my ($self, $setID) = @_;
+	my $db = $self->{db};
+	my @scoringData;
+	
+	my $setRecord = $db->getGlobalSet($setID);
+	my %users;
+	foreach my $userID ($db->listUsers) {
+		my $userRecord = $db->getUser($userID);
+		# The key is what we'd like to sort by.
+		$users{$userRecord->student_id} = $userRecord;
+	}
+	my @problemIDs = $db->listGlobalProblems($setID);
+	# 7 is how many descriptive fields there are in each column
+	for (my $i = 0; $i < keys(%users) + 7; $i++) {
+		push @scoringData, [];
+	}
+	
+	$scoringData[0][0] = "NO OF FIELDS";
+	$scoringData[1][0] = "SET NAME";
+	$scoringData[2][0] = "PROB NUMBER";
+	$scoringData[3][0] = "DUE DATE";
+	$scoringData[4][0] = "DUE TIME";
+	$scoringData[5][0] = "PROB VALUE";
+	
+	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
+	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
+	my @userKeys = sort keys %users;
+	
+	for (my $field=0; $field < @userInfoFields; $field++) {
+		if ($field > 0) {
+			for (my $i = 0; $i < 6; $i++) {
+				$scoringData[$i][$field] = "";
+			}
+		}
+		$scoringData[6][$field] = $userInfoColumnHeadings[$field];
+		for (my $user = 0; $user < @userKeys; $user++) {
+			my $fieldName = $userInfoFields[$field];
+			$scoringData[7 + $user][$field] = $users{$userKeys[$user]}->$fieldName;
+		}
+	}
+	
+	my $dueDateString = formatDateTime($setRecord->due_date);
+	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
+	for (my $problem = 0; $problem < @problemIDs; $problem++) {
+		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]);
+		$scoringData[0][5 + $problem] = "";
+		$scoringData[1][5 + $problem] = $setRecord->set_id;
+		$scoringData[2][5 + $problem] = $globalProblem->problem_id;
+		$scoringData[3][5 + $problem] = $dueDate;
+		$scoringData[4][5 + $problem] = $dueTime;
+		$scoringData[5][5 + $problem] = $globalProblem->value;
+		$scoringData[6][5 + $problem] = "STATUS";
+		for (my $user = 0; $user < @userKeys; $user++) {
+			# getting the UserProblem is quicker, and we only need user-only data, anyway
+			my $userProblem = $db->getUserProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
+			$scoringData[7 + $user][5 + $problem] = $userProblem->status;
+		}
+	}
+	
+	# Still needs "totals" data
+	
+	return @scoringData;
+}
+	
+	
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
 # row of data:
@@ -38,7 +107,7 @@ sub writeCSV {
 	for (my $row = 0; $row < @csv; $row++) {
 		for (my $column = 0; $column < @{$csv[$row]}; $column++) {
 			$lengths[$column] = 0 unless defined $lengths[$column];
-			$lengths[$column] = length $csv[$row]->[$column] if length $csv[$row]->[$column] > $lengths[$column];
+			$lengths[$column] = length $csv[$row][$column] if length $csv[$row][$column] > $lengths[$column];
 		}
 	}
 	
