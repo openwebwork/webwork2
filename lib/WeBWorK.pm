@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.47 2004/02/12 19:23:43 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.48 2004/02/14 00:54:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -411,7 +411,11 @@ The dispatcher implements a virtual heirarchy that looks like this:
 					}
 					else {
 						$contentGenerator = "WeBWorK::ContentGenerator::Error";
-						@arguments = ($setID, "$problemID (error)", "Problem $problemID is not a valid problem in set $setID", "The problem number ($problemID) entered in the URL in your web browser does not seem to be a valid problem for the current set ($setID).  Please check to make sure that the problem number was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.  You can view a list of sets by clicking on the link \"Problem Sets\" on the left.");
+						$r->param("set", $setID);
+						$r->param("problem", $problemID);
+						$r->param("error", "Problem $problemID is not a valid problem in set $setID");
+						$r->param("msg", "The problem number ($problemID) entered in the URL in your web browser does not seem to be a valid problem for the current set ($setID).  Please check to make sure that the problem number was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.  You can view a list of sets by clicking on the link \"Problem Sets\" on the left.");
+						@arguments = ($setID);
 					}
 				}
 				else {
@@ -422,7 +426,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 			} 
 			else {
 				$contentGenerator = "WeBWorK::ContentGenerator::Error";
-				@arguments = ("$setID (error)", "$problemID (error)", "$setID is not a valid set for user $user", "The set ($setID) entered in the URL in your web browser does not seem to be a valid set for the current user.  Please check to make sure that the set was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.");
+				$r->param("set", $setID);
+				$r->param("problem", $problemID) if (defined $problemID);
+				$r->param("error", "$setID is not a valid set");
+				$r->param("msg", "The set ($setID) entered in the URL in your web browser does not seem to be a valid set for the current user.  Please check to make sure that the set was entered correctly.  If you believe this error was generated mistakenly, please report it to your professor.");
 			}
 
 		}
