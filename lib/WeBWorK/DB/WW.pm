@@ -161,9 +161,13 @@ sub getProblems($$$) {
 	my %record = $self->fetchRecord($PSVN);
 	return unless %record;
 	my @result;
-	my $i = 1;
-	while (exists $record{"pse".$i}) {
-		push @result, $i++;
+	#my $i = 1;
+	#while (exists $record{"pse".$i}) {
+	#	push @result, $i++;
+	#}
+	foreach (keys %record) {
+		next unless m/^pse(\d+)$/;
+		push @result, $1;
 	}
 	return @result;
 }
@@ -457,19 +461,6 @@ sub hash2problem($%) {
 sub problem2hash($) {
 	my $problem = shift;
 	my $n = $problem->id;
-#	my %hash;
-#	$hash{stnm}    = $problem->set_id        if defined $problem->set_id;
-#	$hash{stlg}    = $problem->login_id      if defined $problem->login_id;
-#	$hash{"pfn$n"} = $problem->source_file   if defined $problem->source_file;
-#	$hash{"pva$n"} = $problem->value         if defined $problem->value;
-#	$hash{"pmia$n"}= $problem->max_attempts  if defined $problem->max_attempts;
-#	$hash{"pse$n"} = $problem->problem_seed  if defined $problem->problem_seed;
-#	$hash{"pst$n"} = $problem->status        if defined $problem->status;
-#	$hash{"pat$n"} = $problem->attempted     if defined $problem->attempted;
-#	$hash{"pan$n"} = $problem->last_answer   if defined $problem->last_answer;
-#	$hash{"pca$n"} = $problem->num_correct   if defined $problem->num_correct;
-#	$hash{"pia$n"} = $problem->num_incorrect if defined $problem->num_incorrect;
-#	return %hash;
 	return (
 		stnm     => $problem->set_id,
 		stlg     => $problem->login_id,
