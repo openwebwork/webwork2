@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.42 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.43 2004/03/28 04:46:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -337,15 +337,23 @@ sub body {
 	#no type matches module WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser with args at 
 	# /home/gage/webwork/webwork-modperl/lib/WeBWorK/URLPath.pm line 497.
     # error in URLPath.pm??????
-# 	my $setsAssignedToUserPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser");
-# 	my %paramHash = ();
-# 	$paramHash{editForUser}    = $_ foreach @editForUser;
-# 
-# 	my $editProblemsURL        = $self->systemLink($setsAssignedToUserPage,
-# 	                             params => \%paramHash
-# 	);
-# 	print CGI::a({href=>$editProblemsURL},
-	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)},
+ 	my $problemSetListPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ProblemList",
+ 	                                                  courseID => $courseName,
+ 	                                                  setID    => $setName
+ 	);
+ 
+ 	my $editProblemsURL        = $self->systemLink($problemSetListPage, 
+ 	                                               params => ['editForUser']   # include all editForUser parameters
+ 	);
+ 	my $usersAssignedToSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
+ 	                                                  courseID => $courseName,
+ 	                                                  setID    => $setName
+ 	);
+ 
+ 	my $editUsersAssignedToSetURL        = $self->systemLink($usersAssignedToSetPage, 
+ 	                                             
+ 	);
+ 	print CGI::a({href=>$editProblemsURL},
 	 (@editForUser) ? "Edit the list of problems in this set for ". CGI::b(join ", ", @editForUser) :
 	                  "Edit the list of problems in this set");
 
@@ -354,7 +362,7 @@ sub body {
 		my $usersOfSet = $db->countSetUsers($setName);
 		print CGI::h2({}, "Users"), "\n";
 		print CGI::p({}, "This set is assigned to ".$self->userCountMessage($usersOfSet, $userCount).".");
-		print CGI::a({href=>$r->uri."users/?".$self->url_authen_args}, "Determine who this set is assigned to");
+		print CGI::a({href=>$editUsersAssignedToSetURL}, "Determine who this set is assigned to");
 	}
 	
 	return "";
