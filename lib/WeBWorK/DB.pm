@@ -278,7 +278,7 @@ sub addGlobalProblem($$) {
 
 sub getGlobalProblem($$$) {
 	my ($self, $setID, $problemID) = @_;
-	return $self->{problem}->get($problemID);
+	return $self->{problem}->get($setID, $problemID);
 }
 
 sub putGlobalProblem($$) {
