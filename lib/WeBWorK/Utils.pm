@@ -35,8 +35,7 @@ our @EXPORT_OK = qw(
 	decodeAnswers
 	encodeAnswers
 	ref2string
-	dequoteHere
-	wrapText
+	sortByName
 );
 
 sub runtime_use($) {
@@ -142,29 +141,6 @@ sub max {
 	return defined $soFar ? $soFar : 0;
 }
 
-# -----
-
-#sub dbDecode($) {
-#	my $string = shift;
-#	return unless defined $string and $string;
-#	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
-#	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
-#	return %hash;
-#}
-#
-#sub dbEncode(@) {
-#	my %hash = @_;
-#	my $string;
-#	foreach (keys %hash) {
-#		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
-#		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
-#		$string .= "$_=$hash{$_}&";
-#	}
-#	chop $string; # remove final '&' from string for old code :p
-#	return $string;
-#}
-# moved to lib/WeBWorK/DB/Utils.pm
-
 sub decodeAnswers($) {
 	my $string = shift;
 	return unless defined $string and $string;
@@ -196,8 +172,6 @@ sub encodeAnswers(\%\@) {
 	$string =~ s/##$//; # remove last pair of hashs
 	return $string;
 }
-
-# -----
 
 sub ref2string($;$);
 sub ref2string($;$) {
@@ -255,6 +229,40 @@ sub refBaseType($) {
 	my $ref = shift;
 	$ref =~ m/(\w+)\(/; # this might not be robust...
 	return $1;
+}
+
+# p. 101, Camel, 3rd ed.
+# The <=> and cmp operators return -1 if the left operand is less than the
+# right operand, 0 if they are equal, and +1 if the left operand is greater
+# than the right operand.
+
+sub sortByName {
+	my ($field, @items) = @_;
+	return sort {
+		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $a->$field;
+		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $b->$field;
+		while (@aParts and @bParts) {
+			my $aPart = shift @aParts;
+			my $bPart = shift @bParts;
+			my $aNumeric = $aPart =~ m/^\d*$/;
+			my $bNumeric = $bPart =~ m/^\d*$/;
+
+			# numbers should come before words
+			return -1 if     $aNumeric and not $bNumeric;
+			return +1 if not $aNumeric and     $bNumeric;
+
+			# both have the same type
+			if ($aNumeric and $bNumeric) {
+				next if $aPart == $bPart; # check next pair
+				return $aPart <=> $bPart; # compare numerically
+			} else {
+				next if $aPart eq $bPart; # check next pair
+				return $aPart cmp $bPart; # compare lexicographically
+			}
+		}
+		return +1 if @aParts; # a has more sections, should go second
+		return -1 if @bParts; # a had fewer sections, should go first
+	} @items;
 }
 
 1;

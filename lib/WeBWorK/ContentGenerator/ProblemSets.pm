@@ -15,7 +15,7 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile formatDateTime);
+use WeBWorK::Utils qw(readFile formatDateTime sortByName);
 
 sub path {
 	my ($self, $args) = @_;
@@ -69,7 +69,7 @@ sub body {
 	foreach my $setID ($db->listUserSets($effectiveUser)) {
 		push @sets, $db->getMergedSet($effectiveUser, $setID);
 	}
-	@sets = sort byname @sets if $sort eq "name";
+	@sets = sortByName("set_id", @sets) if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
 		print $self->setListRow($set, ($permissionLevel > 0),
@@ -129,14 +129,12 @@ sub setListRow($$$) {
 	}
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, $name);
-	#my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download");
 	
 	my $status;
 	if (time < $set->open_date) {
 		$status = "opens at $openDate";
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
-		#$hardcopy = "";
 	} elsif (time < $set->due_date) {
 		$status = "open, due at $dueDate";
 	} elsif (time < $set->answer_date) {
@@ -149,7 +147,6 @@ sub setListRow($$$) {
 		$control,
 		$interactive,
 		$status,
-		#$hardcopy,
 	]));
 }
 

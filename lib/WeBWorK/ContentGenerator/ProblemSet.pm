@@ -92,8 +92,8 @@ sub siblings {
 	my @sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
 	# put closed sets last;
 	my $now = time();
-	my @open_sets = grep {$_->due_date>$now} @sorted_sets;
-	my @closed_sets = grep {$_->due_date<=$now} @sorted_sets;
+	my @open_sets = grep {$_->due_date>$now} @sets;
+	my @closed_sets = grep {$_->due_date<=$now} @sets;
 	@sorted_sets = (@open_sets,@closed_sets);
 	
 	foreach my $set (@sorted_sets) { 

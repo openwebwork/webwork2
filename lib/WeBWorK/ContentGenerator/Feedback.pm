@@ -21,7 +21,6 @@ use Data::Dumper;
 use CGI qw();
 use Mail::Sender;
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw(dequoteHere wrapText);
 
 # request paramaters used
 # 
