@@ -1,12 +1,16 @@
+#TODO: The HTML code here has two failings:
+# - It is hard-coded into the script, which is against policy
+# - It is very ugly and hastily written
+
+# Other than that, this file is done for the forseeable future,
+# and should serve us nicely unless the interface to WeBWorK::Authen
+# changes.
+
 package WeBWorK::Login;
 
-sub new($$$) {
-	my $class = shift;
-	my $self = {};
-	($self->{r}, $self->{courseEnvironment}) = @_;
-	bless $self, $class;
-	return $self;
-}
+use WeBWorK::ContentGenerator;
+
+our @ISA = qw(WeBWorK::ContentGenerator);
 
 sub go($) {
 	my $self = shift;
@@ -22,24 +26,28 @@ sub go($) {
 	$r->content_type("text/html");
 	$r->send_http_header;
     	print '<html><head><title>WeBWorK Login Page</title></head><body>',
-	  '<h1>WeBWorK Login Page</h1>',
-	  "Please enter your username and password for <b>",
+	  '<h1>WeBWorK Login Page</h1>';
+	
+	# WeBWorK::Authen::verify will set the note "authen_error" 
+	# if invalid authentication is found.  If this is done, it's a signal to
+	# us to yell at the user for doing that, since Authen isn't a content-
+	# generating module.
+	if ($r->notes("authen_error")) {
+	  	print '<font color="red"><b>',$r->notes("authen_error"),"</b></font><br>";
+	}
+	
+	# $self->print_form_data(""," = ","<br>\n");
+	
+	print "Please enter your username and password for <b>",
 	  $course,
 	  "</b> below: <p>",
 	  '<form method="POST" action="',$r->uri,'">';
 	
 	# write out the form data posted to the requested URI
-	my @previous_data = $r->param;
-	foreach my $name (@previous_data) {
-		next if ($name =~ /^(user|passwd|key)$/);
-		my @values = $r->param($name);
-		foreach my $value (@values) {
-			print "\n<input type=\"hidden\" name=\"$name\" value=\"$value\">\n";
-		}
-	}
+	$self->print_form_data('<input type="hidden" name="','" value="',"\">\n",qr/^(user|passwd|key)$/);
 	
-	print '<input type="textfield" name="user" value="',$user,'"><br>',
-	  '<input type="password" name="passwd" value="',$passwd,'"><br>',
+	print '<table border="0"><tr><td>Username:</td><td><input type="textfield" name="user" value="',$user,'"><br></td></tr>',
+	  '<tr><td>Password:</td><td><input type="password" name="passwd" value="',$passwd,'"><i>(Will not be echoed)</i></tr></table>',
 	  '<input type="submit" value="Continue">',
 	  '</form></body></html>';
 

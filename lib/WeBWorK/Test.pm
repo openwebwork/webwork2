@@ -1,15 +1,16 @@
 package WeBWorK::Test;
 
+# This file will cease to be as soon as the real content generation modules
+# have been written.  However, there's always reason to keep it around, as
+# it showcases many things that new content generators will want to do,
+# since it's generally where I dump new functionality before I put it in any
+# end-user modules.
+
 use Apache::Request;
 use Apache::Constants qw(:common);
+use WeBWorK::ContentGenerator;
 
-sub new($$$) {
-	my $class = shift;
-	my $self = {};
-	($self->{r}, $self->{courseEnvironment}) = @_;
-	bless $self, $class;
-	return $self;
-}
+our @ISA = qw(WeBWorK::ContentGenerator);
 
 sub go($) {
 	my $self = shift;
@@ -20,39 +21,25 @@ sub go($) {
 	# get some stuff together
 	my $user = $r->param("user");
 	my $key = $r->param("key");
+	my $uri = $r->uri;
 
 print<<EOT;
 <html>
 <head><title>Welcome to Hell.</title></head>
 <body>
 <h1>There you go.</h1>
+<p>You're now accessing $uri.</p>
 EOT
-	my @previous_data = $r->param;
-	foreach my $name (@previous_data) {
-		my @values = $r->param($name);
-		foreach my $value (@values) {
-			print "$name = $value<br>\n";
-		}
-	}
-
+	$self->print_form_data(""," = ","<br>");
+	
 	print '<br><form method="POST" action="',$r->uri,'">';
-	foreach my $name (@previous_data) {
-		my @values = $r->param($name);
-		foreach my $value (@values) {
-			print "\n<input type=\"hidden\" name=\"$name\" value=\"$value\">\n";
-		}
-	}
+	$self->print_form_data('<input type="hidden" name="','" value = "',"\">\n");
 	print '<input type="submit" value="repost"></form>';
 	
 	print '<form method="POST" action="',$r->uri,'">';
-	foreach my $name (@previous_data) {
-		next if ($name eq "key");
-		my @values = $r->param($name);
-		foreach my $value (@values) {
-			print "\n<input type=\"hidden\" name=\"$name\" value=\"$value\">\n";
-		}
-	}
-	print '<input type="submit" value="repost without key"></form>';
+	$self->print_form_data('<input type="hidden" name="','" value = "',"\">\n",qr/^key$/);
+	print "<input type=\"hidden\" name=\"key\" value=\"invalidkeyhahaha\">";
+	print '<input type="submit" value="invalidate key"></form>';
 
 
 print<<EOT;
