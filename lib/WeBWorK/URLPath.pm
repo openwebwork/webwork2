@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.16 2004/09/21 19:51:45 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.17 2004/09/29 16:49:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -116,7 +116,7 @@ our %pathTypes = (
 	################################################################################
 	
 	set_list => {
-		name    => 'Homework Sets',
+		name    => '$courseID',
 		parent  => 'root',
 		kids    => [ qw/equation_display feedback gateway_quiz grades hardcopy
 			logout options instructor_tools problem_list
