@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.26 2004/03/23 22:59:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.29 2004/05/06 21:53:41 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -138,6 +138,16 @@ sub initialize  {
 	# if we got to initialize(), then saveFileChanges was not called in pre_header_initialize().
 	# therefore we call it here:
 	$self->saveFileChanges($setName, $problemNumber);
+}
+
+sub title {
+	my $self = shift;
+	my $r = $self->r;
+	my $problemNumber = $r->urlpath->arg("problemID");
+	my $file_type = $self->{'file_type'} || '';
+	return "Set Header" if($file_type eq 'set_header');
+	return "Course Information" if($file_type eq 'course_info');
+	return 'Problem ' . $r->{urlpath}->name;
 }
 
 sub body {
