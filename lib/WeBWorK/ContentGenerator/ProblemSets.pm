@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.44 2004/03/09 15:50:03 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.45 2004/03/17 08:17:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,7 @@ sub info {
 			}
 			
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
-			my $editorURL = $self->systemLink($editorPage, values=>{file_type=>"course_info"});
+			my $editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 			
 			print CGI::p(CGI::b("Course Info"), " ",
 				CGI::a({href=>$editorURL}, "[edit]"));
@@ -109,10 +109,10 @@ sub body {
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 	my $nameHeader = $sort eq "name"
-		? CGI::a({href=>$self->systemLink($urlpath, values=>{sort=>"name"})}, "Name")
+		? CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name")
 		: CGI::u("Name");
 	my $statusHeader = $sort eq "status"
-		? CGI::a({href=>$self->systemLink($urlpath, values=>{sort=>"status"})}, "Status")
+		? CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status")
 		: CGI::u("Status");
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
