@@ -66,6 +66,7 @@ sub pre_header_initialize {
 	my $displayMode        = $r->param("displayMode") || $courseEnv->{pg}->{options}->{displayMode};
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
+	my $checkAnswers       = $r->param("checkAnswers");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
 	# coerce form fields into CGI::Vars format
@@ -79,7 +80,8 @@ sub pre_header_initialize {
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $courseEnv->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $courseEnv->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $courseEnv->{pg}->{options}->{showSolutions},
-		recordAnswers      => $r->param("recordAnswers")      || 1,
+		#recordAnswers      => $r->param("recordAnswers")      || 1,
+		recordAnswers      => $submitAnswers,
 	);
 	
 	# are certain options enforced?
@@ -156,6 +158,7 @@ sub pre_header_initialize {
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
+	$self->{checkAnswers}   = $checkAnswers;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 	
@@ -269,7 +272,11 @@ sub body {
 	my $problem         = $self->{problem};
 	my $permissionLevel = $self->{permissionLevel};
 	my $submitAnswers   = $self->{submitAnswers};
+	my $checkAnswers    = $self->{checkAnswers};
 	my $previewAnswers  = $self->{previewAnswers};
+	my %want            = %{ $self->{want} };
+	my %can             = %{ $self->{can} };
+	my %must            = %{ $self->{must} };
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
 	
@@ -323,13 +330,23 @@ sub body {
 	# attempt summary
 	if ($submitAnswers or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
-		print $self->attemptResults($pg, $submitAnswers, $will{showCorrectAnswers},
+		print $self->attemptResults($pg, $submitAnswers,
+			$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 0);
+	} elsif ($checkAnswers) {
+		# print this if user previewed answers
+		print $self->attemptResults($pg, 1, 0, 1, 0);
+			# show attempt answers
+			# don't show correct answers
+			# show attempt results (correctness)
+			# don't show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
 		print $self->attemptResults($pg, 1, 0, 0, 1);
-			# don't show correctness
+			# show attempt answers
 			# don't show correct answers
+			# don't show attempt results (correctness)
+			# show attempt previews
 	}
 	
 	# score summary
@@ -372,8 +389,16 @@ sub body {
 		CGI::p(CGI::i($pg->{result}->{msg})),
 		CGI::p($pg->{body_text}),
 		CGI::p(
-			CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers"),
-			CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers"),
+			($can{recordAnswers}
+				? CGI::submit(-name=>"submitAnswers",
+					-label=>"Submit Answers")
+				: ""),
+			($can{recordAnswers}
+				? CGI::submit(-name=>"checkAnswers",
+					-label=>"Check Answers")
+				: ""),
+			CGI::submit(-name=>"previewAnswers",
+				-label=>"Preview Answers"),
 		),
 		$self->viewOptions(),
 		CGI::endform();
