@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.23 2004/07/10 16:06:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.24 2004/07/10 16:28:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,6 +32,15 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw(cryptPassword writeLog);
 use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
+
+# put the following database layouts at the top of the list, in this order
+our @DB_LAYOUT_ORDER = qw/sql_single gdbm sql/;
+
+our %DB_LAYOUT_DESCRIPTIONS = (
+	gdbm => "Deprecated. Uses GDBM databases to record WeBWorK data. Use this layout if the course must be used with WeBWorK 1.x.",
+	sql => "Deprecated. Uses a separate SQL database to record WeBWorK data for each course.",
+	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
+);
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -261,7 +270,24 @@ sub add_course_form {
 	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
 	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
 	
-	my @dbLayouts = sort keys %{ $ce->{dbLayouts} };
+	my @dbLayouts = do {
+		my @ordered_layouts;
+		foreach my $layout (@DB_LAYOUT_ORDER) {
+			if (exists $ce->{dbLayouts}->{$layout}) {
+				push @ordered_layouts, $layout;
+			}
+		}
+		
+		my %ordered_layouts; @ordered_layouts{@ordered_layouts} = ();
+		my @other_layouts;
+		foreach my $layout (keys %{ $ce->{dbLayouts} }) {
+			unless (exists $ordered_layouts{$layout}) {
+				push @other_layouts, $layout;
+			}
+		}
+		
+		(@ordered_layouts, @other_layouts);
+	};
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -380,13 +406,17 @@ sub add_course_form {
 	foreach my $dbLayout (@dbLayouts) {
 		print CGI::start_table({class=>"FormLayout"});
 		
+		my $dbLayoutLabel = (defined $DB_LAYOUT_DESCRIPTIONS{$dbLayout})
+			? "$dbLayout - $DB_LAYOUT_DESCRIPTIONS{$dbLayout}"
+			: $dbLayout;
+		
 		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
 		print CGI::Tr(
 			CGI::td({style=>"text-align: right"},
 				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
 				. ($add_dbLayout eq $dbLayout ? " checked" : "") . ' />',
 			),
-			CGI::td($dbLayout),
+			CGI::td($dbLayoutLabel),
 		);
 		
 		print CGI::start_Tr();
@@ -767,40 +797,52 @@ sub delete_course_form {
 		. CGI::b("sql") . ", supply the SQL connections information requested below."
 	);
 	
-	print CGI::start_table({class=>"FormLayout"});
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-		CGI::td(
-			CGI::textfield("delete_sql_host", $delete_sql_host, 25),
-			CGI::br(),
-			CGI::small("Leave blank to use the default host."),
-		),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-		CGI::td(
-			CGI::textfield("delete_sql_port", $delete_sql_port, 25),
-			CGI::br(),
-			CGI::small("Leave blank to use the default port."),
-		),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-		CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-		CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-		CGI::td(
-			CGI::textfield("delete_sql_database", $delete_sql_database, 25),
-			CGI::br(),
-			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
-		),
-	);
-	print CGI::end_table();
+			print CGI::start_table({class=>"FormLayout"});
+			print CGI::Tr(CGI::td({colspan=>2}, 
+					"Enter the user ID and password for an SQL account with sufficient permissions to delete an existing database."
+				)
+			);
+			print CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+				CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
+			);
+			print CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+				CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
+			);
+			
+			#print CGI::Tr(CGI::td({colspan=>2},
+			#		"The optionial SQL settings you enter below must match the settings in the DBI source"
+			#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
+			#		. " with the course name you entered above."
+			#	)
+			#);
+			print CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+				CGI::td(
+					CGI::textfield("delete_sql_host", $delete_sql_host, 25),
+					CGI::br(),
+					CGI::small("Leave blank to use the default host."),
+				),
+			);
+			print CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+				CGI::td(
+					CGI::textfield("delete_sql_port", $delete_sql_port, 25),
+					CGI::br(),
+					CGI::small("Leave blank to use the default port."),
+				),
+			);
+		
+			print CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+				CGI::td(
+					CGI::textfield("delete_sql_database", $delete_sql_database, 25),
+					CGI::br(),
+					CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+				),
+			);
+			print CGI::end_table();
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit("delete_course", "Delete Course"));
 	
