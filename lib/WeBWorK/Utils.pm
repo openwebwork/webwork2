@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.51 2004/09/13 17:42:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.52 2004/09/14 22:10:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -187,7 +187,7 @@ sub listFilesRecursiveHelper($$$$$$) {
 		} elsif (-f $full_path or -p $full_path or -S $full_path) {
 			my $file = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
 			my $match_string = $match_full ? $file : $dir_entry;
-			if (not defined $match_string or $dir_entry =~ m/$match_qr/) {
+			if (not defined $match_string or $match_string =~ m/$match_qr/) {
 				push @matches, $file;
 			}
 		}
