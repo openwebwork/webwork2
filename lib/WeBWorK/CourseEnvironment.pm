@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.23 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,22 +54,29 @@ sub new {
 	my $include = q[ sub include {
 		my ($file) = @_;
 		my $fullPath = "].$webworkRoot.q[/$file";
-		# This regex matches any string that:
-		# : begins with ../
-		# : ends with /..
-		# : contains /../, or
-		# : is .. 
+		# This regex matches any string that begins with "../",
+		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
 			die "Included file $file has potentially insecure path: contains \"..\"";
 		} else {
 			local @INC = ();
-			do $fullPath or die "\n\n Couldn't include $fullPath.  Has it been created from a distribution file?\n\n";
+			unless (my $result = do $fullPath) {
+				# FIXME: "do" is misbehaving: if there's a syntax error, $@
+				# should be set to the error string, but it's not getting set.
+				# $! is set to an odd error message "Broken pipe" or something.
+				# On the command line, both $! and $@ are set in the case of a
+				# syntax error. This just means that errors will be confusing.
+				$! and die "Failed to read include file $fullPath: $! (has it been created from the corresponding .dist file?)";
+				$@ and die "Failed to compile include file $fullPath: $@";
+				die "Include file $fullPath did not return a true value.";
+			}
 		}
 	} ];
 	
 	my $maskBackup = $safe->mask;
 	$safe->mask(empty_opset);
 	$safe->reval($include);
+	$@ and die "Failed to reval include subroutine: $@";
 	$safe->mask($maskBackup);
 
 	# determine location of globalEnvironmentFile
