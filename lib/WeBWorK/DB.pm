@@ -143,7 +143,7 @@ use constant TABLES => qw(password permission key user set set_user problem prob
 =item new($ce)
 
 The C<new> method creates a DB object and brings up the underlying
-schema/driver structure according to the C<%dbLayout> hash in $ce, a
+schema/driver structure according to the C<%dbLayout> hash in C<$ce>, a
 WeBWorK::CourseEnvironment object.
 
 =back
@@ -576,6 +576,6 @@ sub dumpDB($$) {
 
 Written by Sam Hathaway, sh002i (at) math.rochester.edu.
 
-=cut 
+=cut
 
 1;
