@@ -1,57 +1,81 @@
 
                                      WeBWorK                                    
                          Online Homework Delivery System                        
-                                  Version 2.0.1                                 
+                                   Version 2.1                                  
 
                     Copyright 2000-2004, The WeBWorK Project                    
                               All rights reserved.                              
 
 Introduction
 
-   This release fixes two bugs in WeBWorK 2.0.
+   The [8]WeBWorKTeam is pleased to announce the release of WeBWorK 2.1.
+   This release includes new functionality and enhancements to the user
+   interface, database system, and PG language:
 
-    1. When course databases were upgraded, sets, but not problems, were
-       assigned to the global user. This caused sets appear to be empty
-       when it was assigned to a user after the upgrade. Bugzilla bugs
-       [1]#611 and [2]#614 are related to this issue.
-    2. The date calculation routines before() and after(), used to
-       compare the current time to the set dates, were not inclusive.
+     * New sql_single database layout, for more efficient access to SQL
+       databases.
+     * New [9]mathematical-expression parser (for use in writing PG
+       problems).
+     * New File Manager module provides full access to course files.
+       (Will replace File Xfer module in a future release.)
+     * New Problem Set Detail module allows editing of set data (dates,
+       headers), editing of problems (source file, value, etc.), and
+       reordering of problems.
+     * Improvements to jsMath display mode.
+     * Many usability and cosmetic improvements.
+     * Many bugfixes.
+
+   (Contributiors: please feel free to add anything I've forgotten.)
 
 Availability
 
-   WeBWorK 2.0.1 is available our CVS repository. Read
-   [3]WeBWorKCVSReadOnly for more information.
+   WeBWorK 2.1 requires [10]PGLanguageRelease2pt1. Both WeBWorK and PG is
+   available on our SourceForge project page:
+   [11]http://sourceforge.net/project/showfiles.php?group_id=93112
 
-   WeBWorK 2.0.1 is also available in tarball form from our SourceForge
-   project page:
-   [4]http://sourceforge.net/project/showfiles.php?group_id=93112
+   Installation directly from CVS is also possible. Refer to the
+   [12]InstallationManualV2pt1 for more information.
 
 Installation
 
-   Read the section in the section in the installation manual on
-   [5]Upgrading WeBWorK.
+   Documentation on installing and configuring WeBWorK is available in
+   the [13]InstallationManualV2pt1. If you are upgrading an existing
+   installation, be sure to read the section [14]Upgrading an existing
+   WeBWorK installation.
 
-Fixing courses upgraded with WeBWorK 2.0
+  Using the new 'sql_single' database layout
 
-   To fix corruption of courses upgraded with WeBWorK 2.0:
+   The new sql_single database layout stores the data for all courses
+   using the layout in a single database, reducing the number of
+   connections that need to be made to the SQL server and eliminates the
+   need for database to be created and deleted as courses are created and
+   deleted. It also adds indexing to data tables, improving system speed.
 
-    1. Log into the course with WeBWorK 1.9 and delete the global user
-       (usually called global_user).
-    2. Log into the course with WeBWorK 2.0.1. You will be prompted to
-       upgrade the database. Do so.
-    3. If you had assigned sets to any users with WeBWorK 2.0, unassign
-       and reassign the sets to each user.
+   To learn more about the database options available in WeBWorK 2.1,
+   including the sql_single layout, consult the [15]Database
+   configuration section of [16]InstallationManualV2pt1 and the
+   [17]DatabaseLayoutManual.
+
+   Before creating courses using the sql_single layout (or converting
+   existing courses), you must [18]create a single database and grant
+   access to it.
+
+   We suggest that you convert all courses using the sql database layout
+   to use sql_single instead and add indexing to converted courses.
+   Instructions are available in the [19]CourseAdministrationManual.
 
 Help
 
-   If you need help installing or using WeBWorK 2.0, visit the [6]WeBWorK
-   discussion group and post your question there. The developers monitor
-   this forum.
+   If you need help installing or using WeBWorK 2.1, consult
+   [20]WeBWorKDocs and [21]WeBWorKFAQs.
+
+   You can also visit the [22]WeBWorK discussion group and post your
+   question there. The developers monitor this forum.
 
 Bug Reports & Feature Requests
 
    Submit bug reports and feature requests at
-   [7]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
+   [23]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
    features if you don't tell us about them!
 
 Patches
@@ -60,15 +84,27 @@ Patches
    CVS code, you save us and yourself time. A bug in this release may be
    fixed in CVS, and we can more easily handle patches against the latest
    code. Check out the latest development version from CVS and patch
-   against that. Consult the [8]WeBWorKCVS topic for more information.
+   against that. Consult the [24]WeBWorKCVS topic for more information.
+
+   -- [25]SamHathaway - 28 Oct 2004
 
 References
 
-   1. http://bugs.webwork.rochester.edu/show_bug.cgi?id=611
-   2. http://bugs.webwork.rochester.edu/show_bug.cgi?id=614
-   3. file://localhost/twiki/bin/view/Webwork/WeBWorKCVSReadOnly
-   4. http://sourceforge.net/project/showfiles.php?group_id=93112
-   5. file://localhost/twiki/bin/view/Webwork/InstallationManual#Upgrading_WeBWorK
-   6. http://webhost.math.rochester.edu/webworkdocs/discuss/
-   7. http://bugs.webwork.rochester.edu/
-   8. file://localhost/twiki/bin/view/Webwork/WeBWorKCVS
+   8. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKTeam
+   9. http://devel.webwork.rochester.edu/doc/cvs/webwork2_rel-2-1/doc/parser/
+  10. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGLanguageRelease2pt1
+  11. http://sourceforge.net/project/showfiles.php?group_id=93112
+  12. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1
+  13. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1
+  14. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1#Upgrading_an_existing_WeBWorK_in
+  15. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1#Database_configuration
+  16. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1
+  17. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DatabaseLayoutManual
+  18. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManualV2pt1#Configration_for_the_sql_single_
+  19. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseAdministrationManual
+  20. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKDocs
+  21. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKFAQs
+  22. http://webhost.math.rochester.edu/webworkdocs/discuss/
+  23. http://bugs.webwork.rochester.edu/
+  24. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS
+  25. http://devel.webwork.rochester.edu/twiki/bin/view/Main/SamHathaway
