@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.7 2004/02/14 00:56:00 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.8 2004/02/14 04:07:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,19 +42,13 @@ directory of the new course.
 =item B<--db-layout>=I<LAYOUT>
 
 The specified database layout will be used in place of the default specified in
-F<global.conf>. Please note that if you specify a layout other than the default
-given in F<global.conf>, you will need to manually create a F<course.conf> file
-in the new course's directory containing the following line:
-
- *dbLayout = $dbLayouts{layoutName};
-
-This is described in greater detail in the F<global.conf> and F<database.conf>
-files.
+F<global.conf>.
 
 =item B<--global-user>=I<USERID>
 
 Specifies that the user ID of the global user will be I<USERID>, overriding the
-value set in F<database.conf>.
+value set in F<database.conf>. Applicable only to courses using the C<gdbm>
+database layout.
 
 =item B<--users>=I<FILE>
 
