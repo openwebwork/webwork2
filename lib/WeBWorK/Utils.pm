@@ -25,6 +25,8 @@ our @EXPORT_OK = qw(
 	parseDateTime
 	writeLog
 	writeTimingLogEntry
+	list2hash
+	max
 	dbDecode
 	dbEncode
 	decodeAnswers
@@ -95,6 +97,21 @@ sub writeTimingLogEntry($$$$) {
 	return unless defined $ce->{webworkFiles}->{logs}->{timing};
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
 	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
+}
+
+sub list2hash {
+	map {$_ => "0"} @_;
+}
+
+sub max {
+	my $soFar;
+	foreach my $item (@_) {
+		$soFar = $item unless defined $soFar;
+		if ($item > $soFar) {
+			$soFar = $item;
+		}
+	}
+	return $soFar;
 }
 
 # -----
