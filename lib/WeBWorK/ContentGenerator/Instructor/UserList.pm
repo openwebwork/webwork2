@@ -241,7 +241,11 @@ sub body {
 	} elsif (defined $r->param("no_visible_users")) {
 		$self->{visibleUserIDs} = [];
 	} else {
-		$self->{visibleUserIDs} = [ @allUserIDs ];
+		if (@allUserIDs > HIDE_USERS_THRESHHOLD) {
+			$self->{visibleUserIDs} = [];
+		} else {
+			$self->{visibleUserIDs} = [ @allUserIDs ];
+		}
 	}
 	
 	$self->{prevVisibleUserIDs} = $self->{visibleUserIDs};
@@ -271,7 +275,7 @@ sub body {
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
 		print CGI::p(
-			"Action: ",
+			"Result of last action performed: ",
 			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))
 		);
 	}
@@ -349,15 +353,6 @@ sub body {
 	
 	print "\n<!-- state data here -->\n";
 	
-	########## print table
-	
-	print CGI::p("Showing ", scalar @visibleUserIDs, " out of ", scalar @allUserIDs, " users.");
-	
-	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
-		editMode => $editMode,
-		selectedUserIDs => \@selectedUserIDs,
-	);
-	
 	########## print action forms
 	
 	print CGI::start_table({});
@@ -388,6 +383,16 @@ sub body {
 		CGI::submit(-value=>"Take Action!"))
 	);
 	print CGI::end_table();
+	
+	########## print table
+	
+	print CGI::p("Showing ", scalar @visibleUserIDs, " out of ", scalar @allUserIDs, " users.");
+	
+	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
+		editMode => $editMode,
+		selectedUserIDs => \@selectedUserIDs,
+	);
+	
 	
 	########## print end of form
 	
@@ -427,6 +432,10 @@ sub getTableParams {
 ################################################################################
 # actions and action triggers
 ################################################################################
+
+# filter, edit, cancelEdit, and saveEdit should stay with the display module and
+# not be real "actions". that way, all actions are shown in view mode and no
+# actions are shown in edit mode.
 
 sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -475,7 +484,7 @@ sub edit_form {
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all visible selected)],
-			-default => $actionParams{"action.edit.scope"}->[0] || "selected",
+			-default => $actionParams{"action.edit.scope"}->[0] || "visible",
 			-labels => {
 				all => "all users",
 				visible => "visible users",
@@ -513,18 +522,15 @@ sub delete_form {
 		"Delete ",
 		CGI::popup_menu(
 			-name => "action.delete.scope",
-			-values => [qw(all visible selected)],
+			-values => [qw(visible selected)],
 			-default => $actionParams{"action.delete.scope"}->[0] || "selected",
 			-labels => {
-				all => "all users",
 				visible => "visible users",
 				selected => "selected users"
 			},
 			-onchange => $onChange,
 		),
-		CGI::em(" Deletion is not undoable!"),
-		CGI::br(),
-		CGI::em("Deleting a user destroys the user-specific set and problem data for that user."),
+		CGI::em(" Deletion destroys all user-related data and is not undoable!"),
 	);
 }
 
@@ -534,9 +540,7 @@ sub delete_handler {
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 	
 	my @userIDsToDelete;
-	if ($scope eq "all") {
-		@userIDsToDelete = @{ $self->{allUserIDs} };
-	} elsif ($scope eq "visible") {
+	if ($scope eq "visible") {
 		@userIDsToDelete = @{ $self->{visibleUserIDs} };
 	} elsif ($scope eq "selected") {
 		@userIDsToDelete = @{ $self->{selectedUserIDs} };
@@ -570,7 +574,7 @@ sub import_form {
 			-values => [ "", $self->getCSVList() ],
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-onchange => $onChange,
-		), CGI::br(),
+		),
 		"replacing",
 		CGI::popup_menu(
 			-name => "action.import.replace",
@@ -584,8 +588,7 @@ sub import_form {
 			},
 			-onchange => $onChange,
 		),
-		"existing users", CGI::br(),
-		" and adding",
+		"existing users and adding",
 		CGI::popup_menu(
 			-name => "action.import.add",
 			-values => [qw(any none)],
@@ -626,6 +629,9 @@ sub import_handler {
 	my ($replaced, $added, $skipped)
 		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
 	
+	# make new users visible... do we really want to do this? probably.
+	push @{ $self->{visibleUserIDs} }, @$added;
+	
 	my $numReplaced = @$replaced;
 	my $numAdded = @$added;
 	my $numSkipped = @$skipped;
@@ -637,12 +643,12 @@ sub import_handler {
 
 sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return join(" ",
-		"Export",
+	return join("",
+		"Export ",
 		CGI::popup_menu(
 			-name => "action.export.scope",
 			-values => [qw(all visible selected)],
-			-default => $actionParams{"action.export.scope"}->[0] || "selected",
+			-default => $actionParams{"action.export.scope"}->[0] || "visible",
 			-labels => {
 				all => "all users",
 				visible => "visible users",
@@ -650,33 +656,54 @@ sub export_form {
 			},
 			-onchange => $onChange,
 		),
-		" -- not yet implemented",
-		CGI::br(),
-		CGI::input({
-			-type     => "radio",
-			-name     => "action.export.target",
-			-value    => "existing",
-			-onchange => $onChange,
-		}),
-		" Overwrite the existing classlist file named ",
+		" to ",
 		CGI::popup_menu(
-			-name=>"action.export.existingName",
-			-values => [ "", $self->getCSVList() ],
-			-default => $actionParams{"action.export.existingName"}->[0] || "",
-		), CGI::br(),
-		CGI::input({
-			-type     => "radio",
-			-name     => "action.export.target",
-			-value    => "new",
+			-name=>"action.export.target",
+			-values => [ "new", $self->getCSVList() ],
+			-labels => { new => "a new file named:" },
+			-default => $actionParams{"action.export.target"}->[0] || "",
 			-onchange => $onChange,
-		}),
-		" Create a new classlist file named ",
-		CGI::textfield(
-			-name => "action.export.newName",
-			-value => "",
-			-width => "31",
 		),
+		#CGI::br(),
+		#"new file to create: ",
+		CGI::textfield(
+			-name => "action.export.new",
+			-value => $actionParams{"action.export.new"}->[0] || "",,
+			-width => "50",
+			-onchange => $onChange,
+		),
+		CGI::tt(".lst"),
 	);
+}
+
+sub export_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $scope = $actionParams->{"action.export.scope"}->[0];
+	my $target = $actionParams->{"action.export.target"}->[0];
+	my $new = $actionParams->{"action.export.new"}->[0];
+	
+	my $fileName;
+	if ($target eq "new") {
+		$fileName = $new;
+	} else {
+		$fileName = $target;
+	}
+	
+	$fileName .= ".lst" unless $fileName =~ m/\.lst$/;
+	
+	my @userIDsToExport;
+	if ($scope eq "all") {
+		@userIDsToExport = @{ $self->{allUserIDs} };
+	} elsif ($scope eq "visible") {
+		@userIDsToExport = @{ $self->{visibleUserIDs} };
+	} elsif ($scope eq "selected") {
+		@userIDsToExport = @{ $self->{selectedUserIDs} };
+	}
+	
+	$self->exportUsersToCSV($fileName, @userIDsToExport);
+	
+	return scalar @userIDsToExport . " users exported";
 }
 
 sub cancelEdit_form {
@@ -863,6 +890,37 @@ sub importUsersFromCSV {
 	}
 	
 	return \@replaced, \@added, \@skipped;
+}
+
+sub exportUsersToCSV {
+	my ($self, $fileName, @userIDsToExport) = @_;
+	my $ce = $self->{ce};
+	my $db = $self->{db};
+	my $dir = $ce->{courseDirs}->{templates};
+		
+	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
+	
+	open my $fh, ">", "$dir/$fileName"
+		or die "failed to open file $dir/$fileName for writing: $!\n";
+	
+	foreach my $userID (@userIDsToExport) {
+		my $User = $db->getUser($userID);
+		my @fields = (
+			$User->student_id,
+			$User->last_name,
+			$User->first_name,
+			$User->status,
+			$User->comment,
+			$User->section,
+			$User->recitation,
+			$User->email_address,
+			$User->user_id,
+		);
+		my $string = join ",", @fields;
+		print $fh "$string\n";
+	}
+	
+	close $fh;
 }
 
 ################################################################################
