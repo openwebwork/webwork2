@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.92 2004/04/27 02:45:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.93 2004/04/29 22:20:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -515,6 +515,7 @@ sub links {
 		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetEditor", %args, setID => $setID);
 		my $problemEditor = $urlpath->newFromModule("${ipfx}PGProblemEditor", %args, setID => $setID, problemID => $problemID);
 		
+		my $maker = $urlpath->newFromModule("${ipfx}SetMaker", %args);
 		my $assigner = $urlpath->newFromModule("${ipfx}Assigner", %args);
 		my $mail     = $urlpath->newFromModule("${ipfx}SendMail", %args);
 		my $scoring  = $urlpath->newFromModule("${ipfx}Scoring", %args);
@@ -526,6 +527,7 @@ sub links {
 		
 		my $files = $urlpath->newFromModule("${ipfx}FileXfer", %args);
 		
+		print CGI::hr();
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
 		print CGI::start_ul();
@@ -546,6 +548,7 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, $maker->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, $assigner->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
