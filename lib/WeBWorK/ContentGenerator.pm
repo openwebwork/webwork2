@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.116 2004/09/29 16:49:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.117 2004/09/29 21:38:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,6 +46,7 @@ use warnings;
 use Apache::Constants qw(:response);
 use Carp;
 use CGI::Pretty qw(*ul *li);
+use Date::Format;
 use URI::Escape;
 use WeBWorK::Template qw(template);
 
@@ -1429,6 +1430,7 @@ sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	return
 		CGI::h3("Software Error"),
+		CGI::p("[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$self->r->uri,"] ",),
 		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this
 problem. It is likely that there is an error in the problem itself. If you are
@@ -1451,6 +1453,7 @@ sub warningOutput($$) {
 	
 	return
 		CGI::h3("Software Warnings"),
+		CGI::p("[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$self->r->uri,"] ",),
 		CGI::p(<<EOF),
 WeBWorK has encountered warnings while attempting to process this problem. It
 is likely that this indicates an error or ambiguity in the problem itself. If

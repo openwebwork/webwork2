@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.16 2004/09/08 01:42:46 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.17 2004/09/10 22:09:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,11 +50,12 @@ $WeBWorK::Debug::QuellSubroutineOutput = undef;
 
 # If true, WeBWorK::Timing will print timing data.
 # 
-$WeBWorK::Timing::Enabled = 0;
+$WeBWorK::Timing::Enabled = 1;
 
 # If non-empty, timing data will be sent to the file named rather than STDERR.
 # 
-$WeBWorK::Timing::Logfile = "";
+$WeBWorK::Timing::Logfile =
+"/home/gage/webwork/webwork-modperl/logs/timing.log";
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy

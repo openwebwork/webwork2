@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.164 2004/09/10 22:40:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -802,7 +802,7 @@ sub body {
 	}
 	
 	##### translation errors? #####
-	
+
 	if ($pg->{flags}->{error_flag}) {
 		print $self->errorOutput($pg->{errors}, $pg->{body_text});
 		print $editorLink;
