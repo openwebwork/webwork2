@@ -91,41 +91,6 @@ which can be used by the PG problems.  The keyword 'reset' or 'erase' erases the
 
 =cut
 
-#my @class_modules = ();
-#sub evaluate_modules{
-#	my $self = shift;
-#	my @modules = @_;
-#	# temporary  -
-#	# We  need a method for setting the course directory without calling Global.
-#	
-#	my $courseScriptsDirectory = $self->rh_directories->{courseScriptsDirectory};
-#	my $save_SIG_die_trap = $SIG{__DIE__};
-#	$SIG{__DIE__} = sub {CORE::die(@_) };
-#	while (@modules) {
-#		my $module_name = shift @modules;
-#		print STDERR "evaluate_modules: about to evaluate $module_name\n";
-#		$module_name =~ s/\.pm$//;   # remove trailing .pm if someone forgot
-#		if ($module_name eq 'reset'  or $module_name eq 'erase' ) {
-#			@class_modules = ();
-#			next;
-#		}
-#		if ( -r  "${courseScriptsDirectory}${module_name}.pm"   ) {
-#			eval(qq! require "${courseScriptsDirectory}${module_name}.pm";  import ${module_name};! );
-#			warn "Errors in including the module ${courseScriptsDirectory}$module_name.pm $@" if $@;
-#		} else {
-#			eval(qq! require "${module_name}.pm";  import ${module_name};! );
-#			warn "Errors in including either the module $module_name.pm or ${courseScriptsDirectory}${module_name}.pm $@" if $@;
-#		}
-#		push(@class_modules, "\%${module_name}::");
-#		print STDERR "loading $module_name\n";
-#	}
-#	$SIG{__DIE__} = $save_SIG_die_trap;
-#}
-
-# *** attention! Right now, packages DO NOT have the WeBWorK::PG prefix
-# before release, we HAVE to figure out how to make them behave WITH the
-# prefix -- this may involve changing the actual package names.
-
 sub evaluate_modules {
 	my $self = shift;
 	local $SIG{__DIE__} = "DEFAULT"; # we're going to be eval()ing code
@@ -133,10 +98,6 @@ sub evaluate_modules {
 		#warn "attempting to load $_\n";
 		# ensure that the name is in fact a base name
 		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
-#		# generate a full package name from the base name
-#		unless (/::/) {
-#			$_ = "WeBWorK::PG::$_";
-#		}
 		# call runtime_use on the package name
 		# don't worry -- runtime_use won't load a package twice!
 		eval { runtime_use $_ };
@@ -165,10 +126,6 @@ sub load_extra_packages{
 	foreach (@package_list) {
 		# ensure that the name is in fact a base name
 		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
-#		# generate a full package name from the base name
-#		unless (/::/) {
-#			$_ = "WeBWorK::PG::$_";
-#		}
 		# import symbols from the extra package
 		import $_;
 		warn "Failed to evaluate module $_: $@" if $@;
