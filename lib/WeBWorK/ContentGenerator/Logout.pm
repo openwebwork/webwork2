@@ -42,6 +42,7 @@ sub body {
 	print CGI::p("You have been logged out of WeBWorK.");
 	print CGI::start_form(-method=>"POST", -action=>"$root/$courseName/");
 	print CGI::hidden("user", $userName);
+	print CGI::hidden("force_passwd_authen", 1);
 	print CGI::p({-align=>"center"}, CGI::submit("submit", "Log In Again"));
 	print CGI::end_form();
 	

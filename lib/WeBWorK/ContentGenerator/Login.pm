@@ -46,7 +46,7 @@ sub body {
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
-	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key)$/);
+	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen)$/);
 	
 	print
 		CGI::table({-border => 0}, 

@@ -103,6 +103,7 @@ sub verify($) {
 	my $user = $r->param('user');
 	my $passwd = $r->param('passwd');
 	my $key = $r->param('key');
+	my $force_passwd_authen = $r->param('force_passwd_authen');
 	
 	my $error;
 	my $failWithoutError = 0;
@@ -117,7 +118,12 @@ sub verify($) {
 			last VERIFY;
 		}
 		
-		# no user was supplied.
+		if (defined $user and $force_passwd_authen) {
+			$failWithoutError = 1;
+			last VERIFY;
+		}
+		
+		# no user was supplied.  somebody's building their own GET
 		unless ($user) {
 			$error = "You must specify a username.";
 			last VERIFY;
