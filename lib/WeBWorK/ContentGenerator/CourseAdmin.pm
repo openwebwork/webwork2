@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.5 2004/05/07 04:28:54 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.6 2004/05/07 14:12:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -509,7 +509,7 @@ sub do_add_course {
 		$add_courseID,
 	);
 	
-	my %courseOptions = { dbLayoutName => $add_dbLayout };
+	my %courseOptions = ( dbLayoutName => $add_dbLayout );
 	if ($add_dbLayout eq "gdbm") {
 		$courseOptions{globalUserID} = $add_gdbm_globalUserID if $add_gdbm_globalUserID ne "";
 	}
