@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.104 2004/06/06 02:48:00 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.105 2004/06/16 01:59:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,7 +67,7 @@ use constant
 use constant
 	USER_LIST => "Class&nbsp;List&nbsp;Editor";
 use constant
-	SET_LIST  => "Homework&nbsp;Editor";
+	SET_LIST  => "Hmwk&nbsp;Sets&nbsp;Editor";
 use constant
 	SET_MAKER => "Library&nbsp;Browser";
 use constant
