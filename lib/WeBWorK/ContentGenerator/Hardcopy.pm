@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.49 2004/09/10 22:03:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.50 2004/09/10 22:09:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -258,7 +258,14 @@ sub displayForm($) {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	
-	print CGI::start_p(), "Select the problem sets for which to generate hardcopy versions.";
+	my $ss= '';
+	my $aa= ' a ';
+	if ($authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser")) {
+		$ss= 's';
+		$aa= ' ';
+	}	
+	
+	print CGI::start_p(), "Select the problem set$ss for which to generate${aa}hardcopy version$ss.";
 	if ($authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser")) {
 		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
 	}
@@ -272,11 +279,14 @@ sub displayForm($) {
 	my $courseName = $ce->{courseName};
 	my $actionURL  = "$root/$courseName/hardcopy/";
 	#  ################################################
+
+	my $phrase_for_privileged_users = '';
+	$phrase_for_privileged_users ='to privileged users or' if $authz->hasPermissions($r->param("user"), "download_hardcopy_multiuser");
 	
 	print CGI::start_form(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields();
 	print CGI::h3("Options");
-	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available to privileged users or after the answer date of the problem set.");
+	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available $phrase_for_privileged_users after the answer date of the problem set.");
 	print CGI::p(
 		CGI::checkbox(
 			-name    => "showCorrectAnswers",
