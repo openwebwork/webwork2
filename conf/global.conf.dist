@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.26 2003-06-10 00:18:09 sh002i Exp $
+# $Id: global.conf.dist,v 1.27 2003-06-10 00:52:00 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -24,7 +24,7 @@
 	bin     => "$webworkRoot/bin",
 	conf    => "$webworkRoot/conf",
 	courses => "$webworkRoot/courses",
-	lib     => "$pgRoot/lib",
+	lib     => "$webworkRoot/lib",
 	logs    => "$webworkRoot/logs",
 	macros  => "$pgRoot/macros",
 	tmp     => "$webworkRoot/tmp",
