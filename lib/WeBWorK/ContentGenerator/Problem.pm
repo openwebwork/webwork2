@@ -549,6 +549,8 @@ sub body {
 						-label   => "Show correct answers",
 					) . CGI::br()
 				: "" ),
+			CGI::submit(-name=>"previewAnswers",
+				-label=>"Preview Answers"),
 			($can{recordAnswers}
 				? CGI::submit(-name=>"submitAnswers",
 					-label=>"Submit Answers")
@@ -557,8 +559,6 @@ sub body {
 				? CGI::submit(-name=>"checkAnswers",
 					-label=>"Check Answers")
 				: ""),
-			CGI::submit(-name=>"previewAnswers",
-				-label=>"Preview Answers"),
 		);
 	print CGI::end_div();
 	
