@@ -593,7 +593,7 @@ sub print_form {
         if ($@ and $merge_file ne 'None') {
 			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
         } else {
-			print CGI::pre("",data_format(0..($#tmp2)),"<br>\n", data_format2(@tmp2));
+			print CGI::pre("",data_format(0..($#tmp2)),"<br>", data_format2(@tmp2));
 		}
 #create a textbox with the subject and a textarea with the message
 #print actual body of message
@@ -748,7 +748,7 @@ sub process_message {
  	
  	$msg =~ s/\r//g;
 
-	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"<br>\n", data_format2(@COL)).
+	my $preview_header = 	CGI::pre("",data_format(0..($#COL)),"<br>", data_format2(@COL)).
 		                    CGI::h3( "This sample mail would be sent to $EMAIL");
 
 
