@@ -228,7 +228,10 @@ sub body {
 		}
 	}
 	
-	print CGI::h2({}, "Set Data"), "\n";	
+	print CGI::h2({}, "Set Data"), "\n";
+	if (@editForUser) {
+		print CGI::p("Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
+	}
 	print CGI::start_form({method=>"post", action=>$r->uri}), "\n";
 	print CGI::table({},
 		CGI::Tr({}, [

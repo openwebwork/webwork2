@@ -55,8 +55,11 @@ sub directoryListHTML {
 	my ($level, $selected, @path) = @_;
 	$selected = [$selected] unless ref $selected eq "ARRAY";
 	my $dirName = join "/", @path[0..$level];
-	my @contents = sort grep {m/\.pg$/ or -d $dirName.'/'.$_ and not m/^\.{1,2}$/} readDirectory($dirName);
-	my %contentsPretty = map {$_ => (-d $dirName.'/'.$_ ? $_.'/' : $_)} @contents;
+	my $pathInLibrary = join "/", @path[1..$level];
+	my @contents = sort grep {m/\.pg$/ or -d "$dirName/$_" and not m/^\.{1,2}$/} readDirectory($dirName);
+	my %contentsPretty = map {$pathInLibrary . "/" . $_ => (-d "$dirName/$_" ? "$_/" : $_)} @contents;
+	@contents = map {"$pathInLibrary/$_"} @contents; # Make the full path the actual values, so weird user behavior doesn't hurt.
+	@$selected = map {"$pathInLibrary/$_"} @$selected;
 	
 	my $html = ($level eq "0" ? "problem library" : $path[$level]) . CGI::br();
 	$html .= CGI::scrolling_list({
@@ -139,35 +142,38 @@ sub initialize {
 		my $done = 0;
 		my @path = ();
 		my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
+		
 		while (defined $r->param("directory_level_$count") and not $done) {
-			my @selected = $r->param("directory_level_$count");
-			my $dirFound = 0;
-			# If any directories are selected, "cd" into the first one and stop processing this level.
-			foreach my $selected (@selected) {
-				if (-d join "/", $libraryRoot, @path, $selected) {
-					push @path, $selected;
-					$dirFound = 1;
-					last;
-				}
-			}
-			# Otherwise, create a new global problem for each of the files selected
-			unless ($dirFound) {
-				foreach my $selected (@selected) {
-					my $file = join "/", @path, $selected;
-					my $problemRecord = new WeBWorK::DB::Record::Problem;
-					$problemRecord->problem_id($freeProblemID++);
-					$problemRecord->set_id($setName);
-					$problemRecord->source_file($file);
-					$problemRecord->value("1");
-					$problemRecord->max_attempts("-1");
-					$db->addGlobalProblem($problemRecord);
-					$self->assignProblemToAllSetUsers($problemRecord);
-				}
-				$done = 1;
-			}
-			
 			if (defined $r->param("open_add_$count")) {
 				$done = 1;
+				my @selected = $r->param("directory_level_$count");
+				my $dirFound = 0;
+				foreach my $selected (@selected) {
+					if (-d "$libraryRoot/$selected") {
+						@path = split "/", $selected;
+						shift @path if $path[0] eq ""; # remove the null element from the begining
+						$dirFound = 1;
+						last;
+					}
+				}
+				# Otherwise, create a new global problem for each of the files selected
+				unless ($dirFound) {
+					foreach my $selected (@selected) {
+						my $file = $selected;
+						@path = split "/", $selected;
+						pop @path; # Remove the file name from the path
+						shift @path if $path[0] eq ""; # remove the null element from the begining
+						my $problemRecord = $db->newGlobalProblem();
+						$problemRecord->problem_id($freeProblemID++);
+						$problemRecord->set_id($setName);
+						$problemRecord->source_file($file);
+						$problemRecord->value("1");
+						$problemRecord->max_attempts("-1");
+						$db->addGlobalProblem($problemRecord);
+						$self->assignProblemToAllSetUsers($problemRecord);
+					}
+
+				}
 			}
 			$count++;
 		}

@@ -79,7 +79,7 @@ sub body {
 		CGI::Tr({ -align=>'center'},
 			CGI::td([
 				'WeBWorK 1.9 Instructor '.CGI::a({-href=>$full_url}, 'Tools'),
-				'Open WeBWorK 1.0 Instructor '.CGI::a({-href=>$full_url, -target=>'_new'}, 'Tools').' in new window',
+				'Open WeBWorK 1.9 Instructor '.CGI::a({-href=>$full_url, -target=>'_new'}, 'Tools').' in new window',
 			]),
 			"\n",
 		),
