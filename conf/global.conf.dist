@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.77 2004/06/24 17:21:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.78 2004/06/25 16:29:20 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -299,6 +299,19 @@ $practiceUserPrefix = "practice";
 	renderers => {
 		"WeBWorK::PG::Remote" => {
 			proxy => "http://localhost:21000/RenderD"
+		},
+
+		# next can be baseline, absmiddle, or mysql
+		dvipng_align => 'baseline', 
+
+		# if we choose mysql, we need information on connecting
+		# to the database.  Whatever you use here, you have to
+		# create the database and grant read/write priveleges to
+		# the user listed here
+		dvipng_depth_db => {
+			dbsource => 'dbi:mysql:DvipngDepths',
+                        user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
+                        passwd   => $dbLayouts{sql}->{password}->{params}->{passwordRW},
 		}
 	},
 	# currently selected renderer
