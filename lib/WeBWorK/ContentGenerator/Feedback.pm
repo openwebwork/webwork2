@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.18 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -290,7 +290,7 @@ sub body {
 		# print confirmation
 		print CGI::p("Your message was sent successfully.");
 		print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
-		print CGI::p( wrap("", "", $feedback) );
+		print CGI::pre( wrap("", "", $feedback) );
 	} else {
 		# just print the feedback form, with no message
 		$self->feedbackForm(  $user, $returnURL,"",);
