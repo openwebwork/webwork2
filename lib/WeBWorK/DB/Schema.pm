@@ -110,6 +110,13 @@ Attempts to retrieve the record matching C<@keyparts> from the table. Returns
 an instance of the table's record class if there is a match. Returns undef if
 no record matches. All elements of C<@keyparts> must be defined.
 
+=item gets(@keypartsRefs)
+
+Returns a list of records matching the keyparts refered to in each element of
+C<@keypartsRef>. Each element of the returned list will contain either a record
+object (if there was a match) or the value C<undef> (if there was no match). All
+elements of C<@keyparts> must be defined.
+
 =item put($Record)
 
 Attempts to replace the record in the table that matches the key of $Record.
