@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.23 2002-11-25 18:50:06 sh002i Exp $
+# $Id: TODO,v 1.24 2002-12-02 19:42:48 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -56,8 +56,6 @@ DONE	New interface to PG.pm
 			- PRO: latex2png gets to decide where to put files
 			- CON: stuff sits in RAM
 			- CON: uses a package array to queue equations :p
-	
---------------------------------------------------------------------------------
 
 DONE	display of screen set header in ProblemSet.pm (easy)
 DONE	add <!--#if can="blah" warning="1" error="1"-->
@@ -76,12 +74,44 @@ DONE	make images in PDFs work
 DONE	remove dependancies on Global:: from send_mail_to
 DONE	preview button in Problem
 DONE	handle PG errors (and warnings) in Hardcopy
-DONE	Options - email address and password
-	Feedback - need nice modular way of sending email
 DONE	have logout button invalidate key
-	Pretty die messages (from outside of the translator)
-	check TTH mode character encodings on mac and windows
-	grep for "***" in source, address all issues
+DONE	Options - email address and password
+
+--------------------------------------------------------------------------------
+
+>>>>> FOR DECEMBER PREVIEW RELEASE <<<<<
+
+--->	Feedback - need nice modular way of sending email
+	Professor - redirect to the old system
+	&send_mail_to should collect info and send it to IO.pm for processing
+	pretty die messages (from outside of the translator)
+	make sure students can't look at not-yet-open problem sets
+	make answer previews use $displayMode
+	make preview-on-submit optional
+	check TTH mode character encodings on mac
+	grep for "***" in source, address all issues (hah!)
+
+>>>>> FOR JANUARY PREVIEW RELEASE <<<<<
+
+	write TeXImage module to take care of TeX image caching and generation
+	replace direct access of $permissionLevel with calls to Authz
+	replace hardcoded URL construction with some other method
+		(unify dispatcher URL parsing and module URL generation)
+
+>>>>> FOR SPRING RELEASE <<<<<
+
+	implement professor pages
+		have the prof modules be subclasses of the single Professor
+		ContentGenerator module? more structured? less structured?
+		THIS WILL TAKE LONGER THAN I THINK IT WILL
+	implement better (and more unified) file editor
+
+>>>>> AFTER SPRING RELEASE <<<<<
+
+	MySQL and PostgreSQL database backend
+	problem library work (?)
+	PG language work (?)
+	renderer/frontend/database uncoupling (?)
 
 --------------------------------------------------------------------------------
 
