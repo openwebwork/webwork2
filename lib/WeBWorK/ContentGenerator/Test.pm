@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Test;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -13,7 +14,6 @@ WeBWorK::ContentGenerator::Test - display debugging information.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
 use WeBWorK::Form;
 use WeBWorK::Utils qw(ref2string);
