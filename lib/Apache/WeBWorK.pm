@@ -104,7 +104,7 @@ sub handler() {
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $ce, $db)->verify) {
-		return WeBWorK::ContentGenerator::Login->new($r, $ce)->go;
+		return WeBWorK::ContentGenerator::Login->new($r, $ce, $db)->go;
 	} else {
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
@@ -117,32 +117,32 @@ sub handler() {
 		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
-			return WeBWorK::ContentGenerator::ProblemSets->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::ProblemSets->new($r, $ce, $db)->go;
 		} elsif ($arg eq "hardcopy") {
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			return WeBWorK::ContentGenerator::Hardcopy->new($r, $ce)->go($hardcopyArgument);
+			return WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
-			return WeBWorK::ContentGenerator::Professor->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::Professor->new($r, $ce, $db)->go;
 		} elsif ($arg eq "options") {
-			return WeBWorK::ContentGenerator::Options->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
 		} elsif ($arg eq "feedback") {
-			return WeBWorK::ContentGenerator::Feedback->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::Feedback->new($r, $ce, $db)->go;
 		} elsif ($arg eq "logout") {
-			return WeBWorK::ContentGenerator::Logout->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::Logout->new($r, $ce, $db)->go;
 		} elsif ($arg eq "test") {
-			return WeBWorK::ContentGenerator::Test->new($r, $ce)->go;
+			return WeBWorK::ContentGenerator::Test->new($r, $ce, $db)->go;
 		} else { # We've got the name of a problem set.
 			my $problem_set = $arg;
 			my $ps_arg = shift @components;
 
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
-				return WeBWorK::ContentGenerator::ProblemSet->new($r, $ce)->go($problem_set);
+				return WeBWorK::ContentGenerator::ProblemSet->new($r, $ce, $db)->go($problem_set);
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-				return WeBWorK::ContentGenerator::Problem->new($r, $ce)->go($problem_set, $problem);
+				return WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
 			}
 		}
 		

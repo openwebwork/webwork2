@@ -33,13 +33,13 @@ use WeBWorK::Utils qw(readFile);
 # 
 # and throws away the result ;)
 #
-sub new($$$) {
-	my ($invocant, $r, $ce) = @_;
+sub new($$$$) {
+	my ($invocant, $r, $ce, $db) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {
 		r  => $r,
 		ce => $ce,
-		db => WeBWorK::DB->new($ce),
+		db => $db,
 	};
 	bless $self, $class;
 	return $self;
