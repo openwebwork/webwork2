@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.114 2004/11/22 17:43:16 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.115 2004/12/28 04:56:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@
 ################################################################################
 
 # Set these variables to correspond to your configuration and preferences. You
-# will need to restart the webserver to reset the variables in this section
+# will need to restart the webserver to reset the variables in this section.
 
 # URL of WeBWorK handler.
 $webwork_url         = "/webwork2";
@@ -49,6 +49,7 @@ $webwork_courses_dir = "$webwork_dir/courses";
 ################################################################################
 
 $externalPrograms{mkdir}    = "/bin/mkdir";
+$externalPrograms{mv}       = "/bin/mv";
 $externalPrograms{mysql}    = "/usr/local/bin/mysql";
 
 $externalPrograms{latex}    = "/usr/local/bin/latex";
@@ -162,6 +163,9 @@ $webworkURLs{oldProf}       = "/webwork1/profLogin.pl";
 # URL of WeBWorK Bugzilla database.
 $webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/";
 
+# Location of CSS
+$webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/ur.css";
+
 # Location of jsMath script, used for the jsMath display mode.
 $webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath.js";
 
@@ -252,8 +256,8 @@ $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/h
 # The set header is displayed on the problem set page. It is a PG file.
 $webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
 
+# A PG template for creation of new problems.
 $webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem.pg"; # screenSetHeader.pg"
-
 
 ################################################################################
 # Course-specific files
@@ -295,7 +299,22 @@ $courseFiles{problibs}    = {
 };
 
 ################################################################################
-# Database options
+# Database options (WWDBv3)
+################################################################################
+
+# The four arguments passed to the DBI::connect() method. See the DBI manual for
+# more information.
+$wwdbv3_settings{dsn}          = "dbi:mysql:wwdbv3";
+$wwdbv3_settings{user}         = "wwdbv3";
+$wwdbv3_settings{pass}         = "xyzzy";
+$wwdbv3_settings{attr}         = {};
+
+# WWDBv3 needs a lock file to prevent concurrent database upgrades. The file
+# will be locked with flock().
+$wwdbv3_settings{upgrade_lock} = "$webworkDirs{tmp}/wwdbv3_upgrade.lock";
+
+################################################################################
+# Database options (WWDBv2)
 ################################################################################
 
 # Several database are defined in the file conf/database.conf and stored in the
