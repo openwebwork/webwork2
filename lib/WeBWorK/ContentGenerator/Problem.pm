@@ -618,17 +618,7 @@ sub body {
 			-name  => "showOldAnswers",
 			-value => $will{showOldAnswers}
 		),
-		CGI::hidden(
-			-name  => "showCorrectAnswers",
-			-value => $will{showCorrectAnswers}
-		),
-		CGI::hidden(
-			-name  => "showHints",
-			-value => $will{showHints}),
-		CGI::hidden(
-			-name  => "showSolutions",
-			-value => $will{showSolutions},
-		),
+
 		CGI::hidden(
 			-name  => "displayMode",
 			-value => $self->{displayMode}
@@ -769,13 +759,13 @@ sub attemptResults($$$$$$) {
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		
+		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
 		$numCorrect += $answerScore > 0;
 		my $resultString = $answerScore ? "correct" : "incorrect";
 		
 		# get rid of the goofy prefix on the answer names (supposedly, the format
 		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		$name =~ s/^AnSwEr//;
+		#$name =~ s/^AnSwEr//;
 		
 		my $row;
 		#$row .= CGI::td($name);
@@ -790,10 +780,25 @@ sub attemptResults($$$$$$) {
 	# render equation images
 	$imgGen->render(refresh => 1);
 	
-	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
+#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-	my $summary = "On this attempt, you answered $numCorrect out of "
-		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
+#   FIXME  -- I left the old code in in case we have to back out.
+#	my $summary = "On this attempt, you answered $numCorrect out of "
+#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
+	my $summary = ""; 
+	if (scalar @answerNames == 1) {
+			if ($numCorrect == scalar @answerNames) {
+				$summary .= "The above answer is correct.";
+			 } else {
+			 	 $summary .= "The above answer is NOT correct.";
+			 }
+	} else {
+			if ($numCorrect == scalar @answerNames) {
+				$summary .= "All of the above answers are correct.";
+			 } else {
+			 	 $summary .= "At least one of the above answers is NOT correct.";
+			 }
+	}
 	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 sub nbsp {
