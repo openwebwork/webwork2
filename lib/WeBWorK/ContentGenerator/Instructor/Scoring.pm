@@ -32,8 +32,9 @@ sub scoreSet {
 		$users{$userRecord->student_id} = $userRecord;
 	}
 	my @problemIDs = $db->listGlobalProblems($setID);
-	# 7 is how many descriptive fields there are in each column
-	for (my $i = 0; $i < keys(%users) + 7; $i++) {
+
+	# Initialize a two-dimensional array of the proper size
+	for (my $i = 0; $i < keys(%users) + 7; $i++) { # 7 is how many descriptive fields there are in each column
 		push @scoringData, [];
 	}
 	
@@ -48,6 +49,7 @@ sub scoreSet {
 	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
 	my @userKeys = sort keys %users;
 	
+	# Write identifying information about the users
 	for (my $field=0; $field < @userInfoFields; $field++) {
 		if ($field > 0) {
 			for (my $i = 0; $i < 6; $i++) {
@@ -61,8 +63,11 @@ sub scoreSet {
 		}
 	}
 	
+	# Write the problem data
 	my $dueDateString = formatDateTime($setRecord->due_date);
 	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
+	my $valueTotal = 0;
+	my %userStatusTotals = ();
 	for (my $problem = 0; $problem < @problemIDs; $problem++) {
 		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]);
 		$scoringData[0][5 + $problem] = "";
@@ -72,19 +77,31 @@ sub scoreSet {
 		$scoringData[4][5 + $problem] = $dueTime;
 		$scoringData[5][5 + $problem] = $globalProblem->value;
 		$scoringData[6][5 + $problem] = "STATUS";
+		$valueTotal += $globalProblem->value;
 		for (my $user = 0; $user < @userKeys; $user++) {
 			# getting the UserProblem is quicker, and we only need user-only data, anyway
 			my $userProblem = $db->getUserProblem($users{$userKeys[$user]}->user_id, $setID, $problemIDs[$problem]);
+			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
+			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
 			$scoringData[7 + $user][5 + $problem] = $userProblem->status;
 		}
 	}
 	
-	# Still needs "totals" data
+	# write the status totals
+	my $totalsColumn = 5 + @problemIDs;
+	$scoringData[0][$totalsColumn] = "";
+	$scoringData[1][$totalsColumn] = $setRecord->set_id;
+	$scoringData[2][$totalsColumn] = "";
+	$scoringData[3][$totalsColumn] = "";
+	$scoringData[4][$totalsColumn] = "";
+	$scoringData[5][$totalsColumn] = $valueTotal;
+	$scoringData[6][$totalsColumn] = "total";
+	for (my $user = 0; $user < @userKeys; $user++) {
+		$scoringData[7+$user][$totalsColumn] = $userStatusTotals{$user};
+	}
 	
 	return @scoringData;
 }
-	
-	
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
 # row of data:
