@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.22 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.23 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -352,40 +352,7 @@ sub body {
 	
 	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
 	
-	print join("",
-		CGI::start_table({-border=>2,-cellpadding=>20}),
-		CGI::Tr({-align=>'center'},
-			CGI::td(
-				CGI::a({href=>$userEditorURL}, "User List"),
-			),
-			CGI::td(
-				CGI::a({href=>$problemSetEditorURL}, "Set List"),
-					
-			),"\n",
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td([
-				CGI::a({-href=>$emailURL}, "Mail Merge"),
-				CGI::a({-href=>$scoringURL}, "Scoring"),
-			]),
-			"\n",
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td([
-				CGI::a({-href=>$statsURL}, "Statistics"),
-				CGI::a({-href=>$emailURL}, "File Transfer"),
-			]),
-			"\n",
-		),
-		CGI::Tr({ -align=>'left'},
-			CGI::td({-colspan=>2},
-				CGI::a({-href=>$full_url}, 'WeBWorK 1.x Instructor Tools'),
-				" (" . CGI::a({-href=>$full_url, -target=>'_new'}, 'open in a new window') . ")",
-			),
-			"\n",
-		),
-		CGI::end_table(),
-	);
+
 	
 	print join("",
 		CGI::h2("Quick access to commonly used instructor tools"),
@@ -458,6 +425,35 @@ sub body {
 
 		CGI::end_table(),
 		CGI::end_form()
+	);
+		print join("",
+		CGI::start_table({-border=>2,-cellpadding=>20}),
+		CGI::Tr({-align=>'center'},
+			CGI::td([
+				CGI::a({href=>$userEditorURL}, "User List"),
+				CGI::a({href=>$problemSetEditorURL}, "Set List"),
+				CGI::a({-href=>$emailURL}, "Mail Merge"), 
+				CGI::a({-href=>$scoringURL}, "Scoring"),
+				CGI::a({-href=>$statsURL}, "Statistics"),
+				CGI::a({-href=>$emailURL}, "File Transfer"),
+			]),
+			"\n",
+		),
+		
+# 		CGI::Tr({ -align=>'center'},
+# 			CGI::td([
+# 			   
+# 			]),
+# 			"\n",
+# 		),
+		CGI::Tr({ -align=>'left'},
+			CGI::td({-colspan=>6},
+				CGI::a({-href=>$full_url}, 'WeBWorK 1.x Instructor Tools'),
+				" (" . CGI::a({-href=>$full_url, -target=>'_new'}, 'open in a new window') . ")",
+			),
+			"\n",
+		),
+		CGI::end_table(),
 	);
 }
 sub addStudentForm {
