@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.9 2004/03/10 16:00:16 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.10 2004/03/19 21:54:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,21 +34,60 @@ Also, one or more users can be granted professor privileges.
 
 =over
 
-=item B<--templates>=I<DIR>
-
-The contents of the directory I<DIR> will be copied to the F<templates>
-directory of the new course.
-
 =item B<--db-layout>=I<LAYOUT>
 
 The specified database layout will be used in place of the default specified in
 F<global.conf>.
+
+If B<--db-layout> is set to C<gdbm>, the following options are valid:
+
+=over
 
 =item B<--global-user>=I<USERID>
 
 Specifies that the user ID of the global user will be I<USERID>, overriding the
 value set in F<database.conf>. Applicable only to courses using the C<gdbm>
 database layout.
+
+=back
+
+If B<--db-layout> is set to C<sql>, the following options are valid:
+
+=over
+
+=item B<--sql-host>=I<HOST>
+
+Specifies the hostname of the SQL server on which to create the course database.
+If not specified, the default for your RDBMS will be used.
+
+=item B<--sql-port>=I<PORT>
+
+Specifies the port of the SQL server on which to create the course database. If
+not specified, the default for your RDBMS will be used.
+
+=item B<--sql-user>=I<USER>
+
+Specifies the username to use when connecting to the SQL server to create the
+course database. This user must have CREATE, DELETE, FILE, INSERT, SELECT, and
+UPDATE privileges, WITH GRANT OPTION.
+
+=item B<--sql-pass>=I<PASS>
+
+Specifies the password to use when connecting to the SQL server.
+
+=item B<--sql-db>=I<DBNAME>
+
+Specifies the name of the database to create. (This is usually
+"webwork_COURSENAME", but can be overridden by changing the database layout in
+F<global.conf>.)
+
+=item B<--sql-wwhost>=I<WWHOST>
+
+Specifies the host from which the webwork database users will be allowed to
+connect. (if B<--sql-host> is set to localhost, this should be set to localhost
+too.)
+
+=back
 
 =item B<--users>=I<FILE>
 
@@ -69,6 +108,11 @@ The name of the course to create.
 
 =cut
 
+BEGIN {
+	# hide arguments (there could be passwords there!)
+	$0 = "$0";
+}
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -81,43 +125,61 @@ BEGIN {
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw(readFile cryptPassword);
+use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
+use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
 
 sub usage {
 	print STDERR "usage: $0 [options] COURSEID\n";
 	print STDERR "Options:\n";
-	print STDERR "  [--templates=DIR]\n";
 	print STDERR "  [--db-layout=LAYOUT]\n";
-	print STDERR "  [--global-user=USERID]\n";
+	print STDERR "  for \"sql\" database layout:\n";
+	print STDERR "    [--sql-host=HOST] [--sql-port=port]\n";
+	print STDERR "    --sql-user=USER --sql-pass=PASS\n";
+	print STDERR "    --sql-db=DBNAME --sql-wwhost=WWHOST\n";
+	print STDERR "  for \"gdbm\" database layout:\n";
+	print STDERR "    [--global-user=USERID]\n";
 	print STDERR "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
 
-my $templates = "";
+sub usage_error {
+	print STDERR "$0: @_\n";
+	usage();
+}
+
 my $dbLayout = "";
-my $users = "";
+my $sql_host = "";
+my $sql_port = "";
+my $sql_user = "";
+my $sql_pass = "";
+my $sql_db = "";
+my $sql_wwhost = "";
 my $globalUserID = "";
+my $users = "";
 my @professors = ();
+my $templates = "";
+
+##### get command-line options #####
 
 GetOptions(
-	"templates=s" => \$templates,
 	"db-layout=s" => \$dbLayout,
-	"users=s" => \$users,
+	"sql-host=s" => \$sql_host,
+	"sql-port=s" => \$sql_port,
+	"sql-user=s" => \$sql_user,
+	"sql-pass=s" => \$sql_pass,
+	"sql-db=s" => \$sql_db,
+	"sql-wwhost=s" => \$sql_wwhost,
 	"global-user=s" => \$globalUserID,
+	"users=s" => \$users,
 	"professors=s" => \@professors,
+	"templates=s" => \$templates,
 );
 my %professors = map { $_ => 1 } map { split /,/ } @professors;
 my $courseID = shift;
 
-unless ($courseID) {
-	print STDERR "$0: must specify COURSEID.\n";
-	usage();
-};
+##### perform sanity checks #####
 
-if (@professors and not $users) {
-	print STDERR "$0: can't specify --professors without also specifying --users.\n";
-	usage();
-}
+usage_error("must specify COURSEID.") unless $courseID;
 
 # bring up a minimal course environment
 my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "FAKE_URL_ROOT",
@@ -127,26 +189,114 @@ if ($dbLayout) {
 	die "Database layout $dbLayout does not exist in the course environment.",
 			" (It must be defined in global.conf.)\n"
 		unless exists $ce->{dbLayouts}->{$dbLayout};
+} else {
+	# use default value
+	$dbLayout = $ce->{dbLayoutName};
 }
 
-# collect some data
-my $coursesDir = $ce->{webworkDirs}->{courses};
-my $courseDir = "$coursesDir/$courseID";
-
-# make sure the course doesn't already exist
-if (-e $courseDir) {
-	die "$courseID: course exists\n";
+if ($dbLayout eq "sql") {
+	usage_error("must specify --sql-user.")   unless $sql_user;
+	usage_error("must specify --sql-pass.")   unless $sql_pass;
+	usage_error("must specify --sql-db.")     unless $sql_db;
+	usage_error("must specify --sql-wwhost.") unless $sql_wwhost;
+} elsif ($dbLayout eq "gdbm") {
+	# no required params, apparently...
 }
 
-umask 0002;
+usage_error("can't specify --professors without also specifying --users.")
+	if @professors and not $users;
 
-# create required directories
-my @subDirs = sort values %{ $ce->{courseDirs} };
-foreach my $subDir (@subDirs) {
-	print "mkdir $subDir\n";
-	mkdir "$subDir"
-		or die "Failed to create course directory $subDir: $!\n";
+##### set up parameters to pass to addCourse() #####
+
+my %courseOptions = ( dbLayoutName => $dbLayout );
+if ($dbLayout eq "gdbm") {
+	$courseOptions{globalUserID} = $globalUserID if $globalUserID ne "";
 }
+
+my %dbOptions;
+if ($dbLayout eq "sql") {
+	$dbOptions{host}     = $sql_host if $sql_host ne "";
+	$dbOptions{port}     = $sql_port if $sql_port ne "";
+	$dbOptions{username} = $sql_user;
+	$dbOptions{password} = $sql_pass;
+	$dbOptions{database} = $sql_db;
+	$dbOptions{wwhost}   = $sql_wwhost;
+}
+
+my @users;
+if ($users) {
+	# this is a hack to create records without bringing up a DB object
+	#my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayout});
+	my $userClass = $ce->{dbLayouts}->{$dbLayout}->{user}->{record};
+	my $passwordClass = $ce->{dbLayouts}->{$dbLayout}->{password}->{record};
+	my $permissionClass = $ce->{dbLayouts}->{$dbLayout}->{permission}->{record};
+	
+	runtime_use($userClass);
+	runtime_use($passwordClass);
+	runtime_use($permissionClass);
+	
+	my @contents = split /\n/, readFile($users);
+	
+	# much of this code is burgled from UserList.pm
+	foreach my $string (@contents) {
+		$string =~ s/^\s+//;
+		$string =~ s/\s+$//;
+		my (
+			$student_id, $last_name, $first_name, $status, $comment,
+			$section, $recitation, $email_address, $user_id
+		) = split /\s*,\s*/, $string;
+		
+		my $User = $userClass->new();
+		$User->user_id($user_id);
+		$User->first_name($first_name);
+		$User->last_name($last_name);
+		$User->email_address($email_address);
+		$User->student_id($student_id);
+		$User->status($status);
+		$User->section($section);
+		$User->recitation($recitation);
+		$User->comment($comment);
+		
+		my $Password = $passwordClass->new;
+		$Password->user_id($user_id);
+		$Password->password(cryptPassword($student_id));
+		
+		my $PermissionLevel = $permissionClass->new;
+		$PermissionLevel->user_id($user_id);
+		if (exists $professors{$user_id}) {
+			$PermissionLevel->permission(10);
+			delete $professors{$user_id};
+		} else {
+			$PermissionLevel->permission(0);
+		}
+		
+		push @users, [ $User, $Password, $PermissionLevel ];
+	}
+	
+	if (my @ids = keys %professors) {
+		print STDERR "warning: @ids not in imported user list.\n";
+	}
+}
+
+##### call addCourse(), handle errors #####
+
+eval {
+	addCourse(
+		courseID      => $courseID,
+		ce            => $ce,
+		courseOptions => \%courseOptions,
+		dbOptions     => \%dbOptions,
+		users         => \@users,
+	);
+};
+
+if ($@) {
+	my $error = $@;
+	print STDERR "$error\n";
+	exit;
+}
+
+__END__
 
 if ($templates) {
 	unless (-d "$courseDir/templates") {
