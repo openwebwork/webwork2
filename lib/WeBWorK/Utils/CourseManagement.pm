@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.15 2004/06/23 19:20:20 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.16 2004/06/23 23:11:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -746,6 +746,30 @@ EOF
 	if (defined $options{feedbackRecipients}) {
 		print $fh '$mail{feedbackRecipients} = [',
 				join(", ", map { "'" . protectQString($_) . "'" } @{ $options{feedbackRecipients} }), '];', "\n";
+		print $fh "\n";
+	} else {
+		print $fh "\n\n\n";
+	}
+	
+	print $fh <<'EOF';
+# Users for whom to label problems with the PG file name (global value typically "professor")
+# 
+# For users in this list, PG will display the source file name when rendering a problem.
+# 
+# global.conf values:
+EOF
+	
+	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {
+		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} }), '];', "\n";
+	} else {
+		print $fh "# \t", '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [  ];', "\n";
+	}
+	print $fh "\n";
+	
+	if (defined $options{PRINT_FILE_NAMES_FOR}) {
+		print $fh '$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [',
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $options{PRINT_FILE_NAMES_FOR} }), '];', "\n";
 		print $fh "\n";
 	} else {
 		print $fh "\n\n\n";
