@@ -147,7 +147,7 @@ TREATMENT OF THE CURRENT API
 The current API consists of the following functions:
 
 getSets($userID)
-getSet($userID)
+getSet($userID, $setID)
 setSet($set)
 deleteSet($userID, $setID)
 
@@ -176,7 +176,7 @@ Writes which would create a new record ARE NOT ALLOWED using the old API!
 
 Deletes using the current API will be implemented by calling the global deleteGlobal{Set,Problem} functions. Note that delete{Set,Problem} is never called outside of the professor pages, so these functions could be safely removed.
 
-PSVN access will be implemented by keying into the set_user table.
+{get,set,delete}PSVN and getPSVNs will be REMOVED, as PSVN is now a field in set_user.
 
 NEW API FUNCTIONS
 -----------------
@@ -185,8 +185,8 @@ There will be new getGlobalSets() and getGlobalProblems($setID) functions that u
 
 There will be a getSetUsers($setID) function that returns the userIDs of all users for whom a given set is assigned.
 
-There will be new {get,set,delete}GlobalSet($setID) and {get,set,delete}GlobalProblem($setID, $problemNumber) functions to access and modify the global {set,problem} tables. Delete functions will remove all matching records from the user-specific table, and remove the single matching record from the global table. setGlobal{Set,Problem} functions may create records.
+There will be new {get,set,delete}GlobalSet($setID) and {get,set,delete}GlobalProblem($setID, $problemID) functions to access and modify the global {set,problem} tables. Delete functions will remove all matching records from the user-specific table, and remove the single matching record from the global table. setGlobal{Set,Problem} functions may create records.
 
-There will be new assignSet($userID, $setID) function that creates a user-specific set_user record for a given user and set. A unique PSVN is generated. A similar assignProblem($userID, $setID, $problemNumber) function will create a user-specific problem_user record for the given problem number. A random seed will be generated. unAssign{Set,Problem} functions will also be created.
+There will be new assignSet($userID, $setID) function that creates a user-specific set_user record for a given user and set. A unique PSVN is generated. A similar assignProblem($userID, $setID, $problemID) function will create a user-specific problem_user record for the given problem number. A random seed will be generated. unAssign{Set,Problem} functions will also be created.
 
-There will be new {get,set}UserSet($userID, $setID) and {get,set}UserProblem($userID, $setID, $problemNumber) functions that allow access to user-specific records without first falling back on global values (as {get,set}{Set,Problem} do. setUser{Set,Problem} functions may not create records -- this is done with assign{Set,Problem}.
+There will be new {get,set}UserSet($userID, $setID) and {get,set}UserProblem($userID, $setID, $problemID) functions that allow access to user-specific records without first falling back on global values (as {get,set}{Set,Problem} do. setUser{Set,Problem} functions may not create records -- this is done with assign{Set,Problem}.

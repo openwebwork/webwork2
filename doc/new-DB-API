@@ -1,0 +1,132 @@
+--------------------------------------------------------------------------------
+Current API
+--------------------------------------------------------------------------------
+
+Auth.pm
+
+	getUsers()
+	
+	getPassword($userID)
+	getPassword($userID, $password)
+	verifyPassword($userID, $password)
+	deletePassword($userID)
+	
+	getKey($userID)
+	setKey($userID, $key)
+	verifyKey($userID, $key)
+	deleteKey($userID)
+	
+	getPermissions($userID)
+	setPermissions($userID, $permissions)
+	deletePermissions($userID)
+
+Classlist.pm
+
+	getUsers()
+	getUser($userID)
+	setUser($user)
+	deleteUser($userID)
+
+WW.pm
+
+	getSets($userID)
+	getSet($userID, $setID)
+	setSet($set)
+	deleteSet($userID, $setID)
+	getProblems($userID, $setID)
+	getProblem($userID, $setID, $problemNumber)
+	setProblem($problem)
+	deleteProblem($userID, $setID, $problemNumber)
+	getPSVNs($userID)
+	getPSVN($userID, $setID)
+	setPSVN($userID, $setID)
+	deletePSVN($userID, $setID)
+
+--------------------------------------------------------------------------------
+DB.pm
+--------------------------------------------------------------------------------
+
+password
+
+	getPasswords()
+	getPassword($userID)
+	getPassword($userID, $password)
+?	verifyPassword($userID, $password)
+	deletePassword($userID)
+
+permission_level
+
+	getPermissionLevels()
+	getPermissionLevel($userID)
+	setPermissionLevel($userID, $permissions)
+	deletePermissionLevel($userID)
+
+key
+
+	getKeys()
+	getKey($userID)
+	setKey($userID, $key)
+?	verifyKey($userID, $key)
+	deleteKey($userID)
+
+user
+
+	getUsers()
+	getUser($userID)
+	setUser($user)
+	deleteUser($userID)
+
+set
+
+	getGlobalSets()
+	getGlobalSet($setID)
+	setGlobalSet($set)
+	deleteGlobalSet($setID)
+
+set_user
+
+	getUserSets($userID)
+	getUserSet($userID, $setID)
+	setUserSet($userSet)
+	deleteUserSet($userID, $setID)
+
+problem
+
+	getGlobalProblems()
+	getGlobalProblem($setID, $problemID)
+	setGlobalProblem($problem)
+	deleteGlobalProblem($setID, $problemID)
+
+problem_user
+
+	getUserProblems($userID, $setID)
+	getUserProblem($userID, $setID, $problemID)
+	setUserProblem($userProblem)
+	deleteUserProblem($userID, $setID, $problemID)
+
+set+set_user
+
+	assignedSets($userID)
+	assignSet($userID, $setID)
+	unassignSet($userID, $setID)
+
+problem+problem_user
+
+	assignedProblems($userID, $setID)
+	assignProblem($userID, $setID, $problemID)
+	unassignProblem($userID, $setID, $problemID)
+
+[emulated]
+
+	getSet($userID, $setID)
+	setSet($set)
+	deleteSet($userID, $setID)
+
+	getProblem($userID, $setID, $problemID)
+	setProblem($problem)
+	deleteProblem($userID, $setID, $problemID)
+
+[aliased]
+
+	getSets($userID)		=> getUserSets($userID)
+	getProblems($userID, $setID)	=> getUserProblems($userID, $setID)
