@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.17 2004/01/31 14:47:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.18 2004/02/02 23:11:13 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,13 +42,6 @@ sub initialize {
 	my $authz = $self->{authz};
  	my $user = $r->param('user');
  	my $setName = $_[0];
-#FIXME these don't appear to be used any where
-#  	$setName = 0 unless defined($setName);  #FIXME relay to index page for statistics
-#  	my $setRecord = $db->getGlobalSet($setName); # checked
-# # 	die "global set $setName  not found." unless $setRecord;
-# 
-#  	$self->{set}   = $setRecord;
-#####################################
  	$self->{type}  = $type;
  	if ($type eq 'student') {
  		$self->{studentName } = $components[0] || $user;
@@ -103,7 +96,7 @@ sub body {
 	my $args       = pop(@_);
 	my $type       = $self->{type};
 	if ($type eq 'student') {
-		$self->displayStudents($self->{studentName});
+		$self->displayStudentStats($self->{studentName});
 	} elsif( $type eq 'set') {
 		my $setName = $self->{setName};
 		$self->displaySets($self->{setName});
@@ -187,11 +180,8 @@ sub displaySets {
 ###############################################################
 #  Print table
 ###############################################################
-	my @problems = sort {$a <=> $b } $db->listUserProblems($user, $setName);
-
-	# FIXME I'm assuming the problems are all the same
-
-	my $num_of_problems  = @problems;
+	
+	my $max_num_problems  = 0;
 	# get user records
 	$WeBWorK::timer->continue("Begin obtaining user records for set $setName") if defined($WeBWorK::timer);
 	my @userRecords  = $db->getUsers(@studentList);
@@ -213,17 +203,17 @@ sub displaySets {
 		my $num_of_attempts = 0;
 		my %h_problemData  = ();
 		my $probNum         = 0;
-		my @triplets = map {[$student, $setName, $_ ]} @problems;
+		#my @triplets = map {[$student, $setName, $_ ]} @problems;
 		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 		#my @problemRecords = $db->getUserProblems( @triplets );
-		my @problemRecords = $db->getAllUserProblems( $student, $setName );
+		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
+		my $num_of_problems = @problemRecords;
+		my $max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
 
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
 			my $prob = $problemRecord->problem_id;
-		#foreach my $prob (@problems) {
-			#my $problemRecord   = $db->getUserProblem($student, $setName, $prob);
 			$probNum++;
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -297,11 +287,10 @@ sub displaySets {
 												||
 							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
 							
-		# construct header
+	# construct header
 	my $problem_header = '';
-	my $i=0;
-	foreach (@problems) {
-	    $i++;
+	
+	foreach my $i (1..$max_num_problems) {
 		$problem_header .= CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=p$i"},threeSpaceFill($i) );
 	}
 	print
@@ -344,7 +333,7 @@ sub displaySets {
 			
 	return "";
 }
-sub displayStudents {
+sub displayStudentStats {
 	my $self     = shift;
 	my $studentName  = shift;
 	my $r = $self->{r};
@@ -386,31 +375,23 @@ sub displayStudents {
 	    my $totalRight = 0;
 	    my $total      = 0;
 		my $num_of_attempts = 0;
-		
-		# an old, slow way to do it:
-		#my @problems = sort {$a <=> $b } $db->listUserProblems($studentName, $setName);
-		#my $num_of_problems  = @problems;
-		#$max_problems = $num_of_problems if $num_of_problems > $max_problems;
-		#
-		#$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
-		#my @problemRecords = $db->getUserProblems( map {[$studentName, $setName,$_]}  @problems);
-		#$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
-		
-		# a new, faster way to do it:
+	
 		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
 		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
 		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
 		
-		my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
-		my $num_of_problems  = @problems;
-		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
+		# FIXME the following line doesn't sort the problemRecords
+		#my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
+		$WeBWorK::timer->continue("Begin sorting problems for set $setName") if defined($WeBWorK::timer);
+		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
+		$WeBWorK::timer->continue("End sorting problems for set $setName") if defined($WeBWorK::timer);
+		my $num_of_problems  = @problemRecords;
+		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
 		
 		# construct header
 		
 		foreach my $problemRecord (@problemRecords) {
 			my $prob = $problemRecord->problem_id;
-		#foreach my $prob (@problems) {
-			#my $problemRecord   = $db->getUserProblem($studentName, $setName, $prob);
 			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -450,10 +431,6 @@ sub displayStudents {
 			$num_of_attempts += $num_correct + $num_incorrect;
 		}
 		
-		# FIXME   we can do this more effficiently  get the list first
-		
-
-		# FIXME  this needs formatting
 		
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
