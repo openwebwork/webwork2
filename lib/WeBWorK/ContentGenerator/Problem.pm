@@ -469,10 +469,9 @@ sub body {
 		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
 	print CGI::end_div();
-	print CGI::hr(), CGI::start_div({class=>"viewOptions"});
-	print
-		$self->viewOptions(),CGI::end_div(),
-		CGI::endform();
+#	print CGI::hr(), CGI::start_div({class=>"viewOptions"});
+#	print		$self->viewOptions(),CGI::end_div(),
+    print		CGI::endform();
 		
 	print  CGI::start_div({class=>"problemFooter"});
 	# feedback form
@@ -488,22 +487,9 @@ sub body {
 	my $authen_args = $self->url_authen_args();
 	my $showPastAnswersURL = "$cgi_url/showPastAnswers.pl";
 	
-	#print feedback form
-	print
-		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::hidden("module",             __PACKAGE__),"\n",
-		CGI::hidden("set",                $set->set_id),"\n",
-		CGI::hidden("problem",            $problem->problem_id),"\n",
-		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
-		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
-		CGI::hidden("showHints",          $will{showHints}),"\n",
-		CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
-		CGI::p({-align=>"right"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
-		),
-		CGI::endform(),"\n";
+
+	print CGI::end_div();
+	print CGI::start_div();
 	# print answer inspection button
 	if ($self->{permissionLevel} >0)      {
     	
@@ -515,19 +501,40 @@ sub body {
 				CGI::hidden(-name => 'probNum', -value=>$problem->problem_id), "\n",
 				CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
 				CGI::hidden(-name => 'User',    -value=>$problem->user_id), "\n",
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers'), "\n",
+				CGI::p( {-align=>"left"},
+					CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+				), "\n",
 				CGI::endform();
 	
 	
 	
-	}
+	}	#print feedback form
+
+	
+	print
+		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::hidden("module",             __PACKAGE__),"\n",
+		CGI::hidden("set",                $set->set_id),"\n",
+		CGI::hidden("problem",            $problem->problem_id),"\n",
+		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
+		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
+		CGI::hidden("showHints",          $will{showHints}),"\n",
+		CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
+		CGI::p({-align=>"left"},
+			CGI::submit(-name=>"feedbackForm", -label=>"Contact instructor")
+		),
+		CGI::endform(),"\n";
+		
 	# FIXME print editor link
 	# print editor link if the user is an instructor AND the file is not in temporary editing mode
 	if ($self->{permissionLevel}>=10 and ( (not defined($self->{edit_mode}))  or $self->{edit_mode} eq 'savedFile') ) {
 		print CGI::a({-href=>"/webwork/$courseName/instructor/pgProblemEditor/".$set->set_id.
 		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
 	}
-	print CGI::end_div();
+	
+    print CGI::end_div();
 	
 	# end answer inspection button
 	# warning output
@@ -620,46 +627,47 @@ sub viewOptions($) {
 	
 	my $optionLine;
 	$can{showOldAnswers} and $optionLine .= join "",
-		"Show: &nbsp;",
+		"Show: &nbsp;".CGI::br(),
 		CGI::checkbox(
 			-name    => "showOldAnswers",
 			-checked => $will{showOldAnswers},
 			-label   => "Saved answers",
-		), "&nbsp;&nbsp;";
+		), "&nbsp;&nbsp;".CGI::br();
 	$can{showCorrectAnswers} and $optionLine .= join "",
 		CGI::checkbox(
 			-name    => "showCorrectAnswers",
 			-checked => $will{showCorrectAnswers},
 			-label   => "Correct answers",
-		), "&nbsp;&nbsp;";
+		), "&nbsp;&nbsp;".CGI::br();
 	$can{showHints} and $optionLine .= join "",
 		CGI::checkbox(
 			-name    => "showHints",
 			-checked => $will{showHints},
 			-label   => "Hints",
-		), "&nbsp;&nbsp;";
+		), "&nbsp;&nbsp;".CGI::br();
 	$can{showSolutions} and $optionLine .= join "",
 		CGI::checkbox(
 			-name    => "showSolutions",
 			-checked => $will{showSolutions},
 			-label   => "Solutions",
-		), "&nbsp;&nbsp;";
+		), "&nbsp;&nbsp;".CGI::br();
 	$optionLine and $optionLine .= join "", CGI::br();
 	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex"},
-			"View equations as: &nbsp;",
+	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
+			"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br(),
 		CGI::radio_group(
 			-name    => "displayMode",
 			-values  => ['plainText', 'formattedText', 'images'],
 			-default => $displayMode,
+			-linebreak=>'true',
 			-labels  => {
-				plainText     => "plain text",
-				formattedText => "formatted text",
+				plainText     => "plain",
+				formattedText => "formatted",
 				images        => "images",
 			}
-		), CGI::br(),
+		), CGI::br(),CGI::hr(),
 		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Redisplay Problem"),
+		CGI::submit(-name=>"redisplay", -label=>"Redisplay"),
 	);
 }
 
@@ -722,9 +730,17 @@ sub previewAnswer($$) {
 	}
 }
 
-sub info {
-
-return "Identifying information goes here";
+sub options {
+	my $self=shift;
+	my $out;
+	$out     .=join("", 
+                    CGI::startform("POST", $self->{r}->uri),
+                    $self->hidden_authen_fields,
+                    CGI::hr(), 
+                    CGI::start_div({class=>"viewOptions"}),
+                    $self->viewOptions(),CGI::end_div(),
+	);
+return $out;
 
 }
 ##### logging subroutine ####
