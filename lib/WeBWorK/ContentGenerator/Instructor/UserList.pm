@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.50 2004/05/21 20:48:21 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.51 2004/06/08 17:13:45 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,7 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
-use constant HIDE_USERS_THRESHHOLD => 20;
+use constant HIDE_USERS_THRESHHOLD => 50;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter edit  import export add delete)];
 use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode sortField)];

@@ -79,7 +79,8 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptPassword);
 
-use constant HIDE_SETS_THRESHOLD => 20;
+use constant HIDE_SETS_THRESHOLD => 50;
+use constant DEFAULT_PUBLISHED_STATE => 1;
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import score create delete)];
@@ -928,7 +929,7 @@ sub create_handler {
 	$newSetRecord->open_date("0");
 	$newSetRecord->due_date("0");
 	$newSetRecord->answer_date("0");
-	$newSetRecord->published("0");	# don't want students to see an empty set
+	$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
 	eval {$db->addGlobalSet($newSetRecord)};
 	
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: $@") if $@;
@@ -1267,7 +1268,7 @@ sub importSetsFromDef {
 		$newSetRecord->open_date($openDate);
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
-		$newSetRecord->published("0"); # FIXME: unpublished by default?
+		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
