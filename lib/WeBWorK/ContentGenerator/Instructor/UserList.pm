@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.51 2004/06/08 17:13:45 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.52 2004/06/08 19:11:39 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -682,7 +682,7 @@ sub import_form {
 		"Import users from file",
 		CGI::popup_menu(
 			-name => "action.import.source",
-			-values => [ "", $self->getCSVList() ],
+			-values => [ $self->getCSVList() ],
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-onchange => $onChange,
 		),
@@ -1098,6 +1098,11 @@ sub recordEditHTML {
 	                                                                   }),
 										   params => {effectiveUser => $User->user_id}
 	);
+
+	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
+
+	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
+        my $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0}));
 	
 	my @tableCells;
 	
@@ -1119,7 +1124,7 @@ sub recordEditHTML {
 		# column not there
 	} else {
 		# selection checkbox
-		push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id);
+		push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
 	}
 	
 	# User ID
@@ -1151,7 +1156,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
-	return CGI::Tr({}, CGI::td({}, \@tableCells));
+	return CGI::Tr({}, CGI::td({nowrap=>1}, \@tableCells));
 }
 
 sub printTableHTML {
@@ -1190,7 +1195,7 @@ sub printTableHTML {
 	if ($editMode) {
 		print CGI::start_table({});
 	} else {
-		print CGI::start_table({-border=>1});
+		print CGI::start_table({-border=>1, -nowrap=>1});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
