@@ -39,7 +39,7 @@ sub body {
 	#     $libraryName  -- the name of the available library 
 	#     $setDirectory  -- the current library directory 
 	#     $oldSetDirectory -- the previous library directory
-	#     $problemName    -- the name of the library problem (in the previous library directory)
+	# $problemName    -- the name of the library problem (in the previous library directory)
 	#     $problemList    -- the contents of the textarea form
 	#     answer dates
 	my ($setName,$formURL,
@@ -92,11 +92,7 @@ sub body {
 	# add the new problem entry if the address is complete. (still buggy -- how do insure that oldSetDirectory is not empty?
 	$problemList .= $problemEntry unless $problemEntry =~ m|^/|;  # don't print if oldSetDirectory name is empy (FIXME: -- more checks are needed?)  
 	# format the complete textArea string
-	$textAreaString = qq!<textarea name="problemList", cols="40", rows="$rowheight">! .
-	$problemList . 
-	
-	qq!</textarea>!;
-	
+	$textAreaString = CGI::textarea({"name"=>"problemList", "cols"=>"40", "rows"=>$rowheight, "default"=>$problemList});
 	
 	#Determine the headline for the page 
  
@@ -129,10 +125,11 @@ sub body {
 	
 	my $viewProblemLink;
 	if ( (defined($oldSetDirectory) and defined($problemName)) ) {
-		$viewProblemLink = qq!View : <a href=! .
-	           qq!"http://webhost.math.rochester.edu/webworkdocs/ww/pgView/$oldSetDirectory/$problemName"! .
-	           qq! target = "_probwindow">! .
-	           qq!$oldSetDirectory/$problemName</a>!;
+		$viewProblemLink = "View: "
+			. CGI::a({
+					"href"=>"http://webhost.math.rochester.edu/webworkdocs/ww/pgView/$oldSetDirectory/$problemName", 
+					"target"=>"_probwindow"
+				}, "$oldSetDirectory/$problemName");
 	} else {
 		$viewProblemLink = '';
 	
@@ -140,49 +137,46 @@ sub body {
 	#########################################################################
 	# Format the page
 	#########################################################################
-	           
-	return CGI::p($header),
-		#CGI::start_form(-action=>"/webwork/mth143/instructor/problemSetEditor/"),
-		CGI::start_form(-action=>$formURL),
-		CGI::table( {-border=>2},
-			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-				CGI::th('Editing set : '),
-				CGI::td(CGI::textfield(  -name=>'setName',-size=>'20',-value=>$setName,-override=>1)), 
-				CGI::td(CGI::submit(-name=>'submitButton',-value=>'Save'))
-			),
-			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-				CGI::td($textAreaString),
-				CGI::td($popUpSetDirectoryString), 
-				CGI::td($popUpPGProblemString)
-             	
-            ),
-             #(defined($viewProblemLink)) ? 
-             #	qq!<tr align="CENTER" valign="TOP"><th colspan="3">$viewProblemLink</th></tr>! 
-             #	: '',
-            CGI::Tr( {-align=>'CENTER',-valign=>'TOP'},
-            	CGI::th([	$viewProblemLink,
-            				CGI::submit(-name=>'submitButton'  , -value =>'Select set'),
-            				CGI::submit(-name=>'submitButton'  , -value =>'Choose problem')
-            			])
-            ),
-            	            
-            CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-            	CGI::th(["Open date","Due date", "Answer date"]),
-            
-            ),
-          
-            CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
-  		 		CGI::td(CGI::textfield(-name=>'open_date', -size=>'20',	-value=>$openDate) ),
-            	CGI::td(CGI::textfield(-name=>'due_date', -size=>'20',	-value=>$dueDate) ),
-            	CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20',-value=>$answerDate) ),             
-            ),
-            qq!<tr align="center" valign="top"><td colspan="3">View entire set (pdf format) -- not yet implemented</td></tr>!,
-        ),
-        CGI::hidden(-name=>'user', -value=>$user),
-        CGI::hidden(-name=>'key',-value=>$key),
-        CGI::hidden(-name=>'oldSetDirectory', -value=>$setDirectory),
 
-		CGI::end_form(),
+	return CGI::p($header)
+		#CGI::start_form(-action=>"/webwork/mth143/instructor/problemSetEditor/"),
+		. CGI::start_form(-action=>$formURL)
+		. CGI::table( {-border=>2},
+			CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
+				CGI::th('Editing set : ')
+				. CGI::td(CGI::textfield(  -name=>'setName',-size=>'20',-value=>$setName,-override=>1))
+				. CGI::td(CGI::submit(-name=>'submitButton',-value=>'Save'))
+			)
+			. CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
+				CGI::td($textAreaString)
+				. CGI::td($popUpSetDirectoryString)
+				. CGI::td($popUpPGProblemString)
+			 	
+			)
+			 #(defined($viewProblemLink)) ? 
+			 #	CGI::Tr({"align"=>"center","valign"=>"top"}, CGI::th({"colspan"="3"}, $viewProblemLink)) 
+			 #	: '',
+			. CGI::Tr( {-align=>'CENTER',-valign=>'TOP'},
+				CGI::th([$viewProblemLink,
+					CGI::submit(-name=>'submitButton'  , -value =>'Select set'),
+					CGI::submit(-name=>'submitButton'  , -value =>'Choose problem')
+				])
+			)			
+			. CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
+				CGI::th(["Open date","Due date", "Answer date"])
+			)
+			. CGI::Tr({-align=>'CENTER',-valign=>'TOP'},
+  		 		CGI::td(CGI::textfield(  -name=>'open_date',   -size=>'20', -value=>$openDate))
+				. CGI::td(CGI::textfield(-name=>'due_date',    -size=>'20', -value=>$dueDate))
+				. CGI::td(CGI::textfield(-name=>'answer_date', -size=>'20', -value=>$answerDate))		 
+			)
+			. CGI::Tr({"align"=>"center", "valign"=>"top"}, 
+				CGI::td({"colspan"=>"3"}, "View entire set (pdf format) -- not yet implemented")
+			)
+		)
+		. $self->hidden_authen_fields
+		. CGI::hidden(-name=>'oldSetDirectory', -value=>$setDirectory)
+		. CGI::end_form()
 #		"<p> the parameters passed are "  #FIXME: -- debugging code
 #		. join("<BR>", %{$r->param()}) . $self->gatherProblemList($setName)."setName is $setName"; 
 	;
