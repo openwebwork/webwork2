@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.12 2004/06/05 19:20:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.13 2004/06/08 01:10:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -141,6 +141,7 @@ sub addCourse {
 		croak "$courseID: course exists";
 	}
 	
+	# FIXME: is hyphen ok? signs point to "no"
 	croak "Invalid characters in course ID: '$courseID' (valid characters are [A-Za-z0-9_])"
 		unless $courseID =~ m/^[\w-]*$/;
 	
