@@ -15,6 +15,10 @@ WeBWorK::DB::Record::Set - represent a record from the set table.
 use strict;
 use warnings;
 
+sub KEYFIELDS($) {qw(
+	id
+)}
+
 sub FIELDS($) {qw(
 	id
 	set_header

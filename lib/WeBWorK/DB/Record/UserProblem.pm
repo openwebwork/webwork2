@@ -16,6 +16,12 @@ table.
 use strict;
 use warnings;
 
+sub KEYFIELDS($) {qw(
+	user_id
+	set_id
+	problem_id
+)}
+
 sub FIELDS($) {qw(
 	user_id
 	set_id

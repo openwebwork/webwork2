@@ -15,6 +15,11 @@ WeBWorK::DB::Record::Problem - represent a record from the problem table.
 use strict;
 use warnings;
 
+sub KEYFIELDS($) {qw(
+	set_id
+	id
+)}
+
 sub FIELDS($) {qw(
 	id
 	set_id

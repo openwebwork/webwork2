@@ -15,6 +15,10 @@ WeBWorK::DB::Record::User - represent a record from the user table.
 use strict;
 use warnings;
 
+sub KEYFIELDS($) {qw(
+	id
+)}
+
 sub FIELDS($) {qw(
 	id
 	first_name

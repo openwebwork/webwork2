@@ -15,6 +15,11 @@ WeBWorK::DB::Record::UserSet - represent a record from the set_user table.
 use strict;
 use warnings;
 
+sub KEYFIELDS($) {qw(
+	user_id
+	set_id
+)}
+
 sub FIELDS($) {qw(
 	user_id
 	set_id
