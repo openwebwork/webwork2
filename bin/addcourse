@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.4 2003/12/27 21:41:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.5 2004/01/03 20:07:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,7 +42,14 @@ directory of the new course.
 =item B<--db-layout>=I<LAYOUT>
 
 The specified database layout will be used in place of the default specified in
-F<global.conf>.
+F<global.conf>. Please note that if you specify a layout other than the default
+given in F<global.conf>, you will need to manually create a F<course.conf> file
+in the new course's directory containing the following line:
+
+ *dbLayout = $dbLayouts{layoutName};
+
+This is described in greater detail in the F<global.conf> and F<database.conf>
+files.
 
 =item B<--users>=I<FILE>
 
@@ -78,8 +85,10 @@ use WeBWorK::DB;
 use WeBWorK::Utils qw(readFile cryptPassword);
 
 sub usage {
-	print STDERR "$0 [options] COURSEID\n";
-	print STDERR "  [--templates=DIR] [--db-layout=LAYOUT]\n";
+	print STDERR "usage: $0 [options] COURSEID\n";
+	print STDERR "Options:\n";
+	print STDERR "  [--templates=DIR]\n";
+	print STDERR "  [--db-layout=LAYOUT]\n";
 	print STDERR "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
@@ -207,6 +216,10 @@ if ($users) {
 	if (my @ids = keys %professors) {
 		print STDERR "warning: @ids not in imported user list.\n";
 	}
+}
+
+if ($dbLayout) {
+	print "Don't forget to set dbLayout to \"$dbLayout\" in course.conf!\n";
 }
 
 =head1 BUGS
