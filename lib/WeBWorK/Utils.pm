@@ -144,25 +144,26 @@ sub max {
 
 # -----
 
-sub dbDecode($) {
-	my $string = shift;
-	return unless defined $string and $string;
-	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
-	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
-	return %hash;
-}
-
-sub dbEncode(@) {
-	my %hash = @_;
-	my $string;
-	foreach (keys %hash) {
-		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
-		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
-		$string .= "$_=$hash{$_}&";
-	}
-	chop $string; # remove final '&' from string for old code :p
-	return $string;
-}
+#sub dbDecode($) {
+#	my $string = shift;
+#	return unless defined $string and $string;
+#	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
+#	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
+#	return %hash;
+#}
+#
+#sub dbEncode(@) {
+#	my %hash = @_;
+#	my $string;
+#	foreach (keys %hash) {
+#		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
+#		$hash{$_} =~ s/(=|&)/\\$1/g; # escape & and =
+#		$string .= "$_=$hash{$_}&";
+#	}
+#	chop $string; # remove final '&' from string for old code :p
+#	return $string;
+#}
+# moved to lib/WeBWorK/DB/Utils.pm
 
 sub decodeAnswers($) {
 	my $string = shift;
@@ -181,6 +182,15 @@ sub encodeAnswers(\%\@) {
 		my $value = defined $hash{$name} ? $hash{$name} : "";
 		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
 		$value =~ s/#/\\#\\/g; # and it's not my fault!
+		if ($value =~ m/\\$/) {
+			# if the value ends with a backslash, string2hash will
+			# interpret that as a normal escape sequence (not part
+			# of the weird pound escape sequence) if the next
+			# character is &. So we have to protect against this.
+			# will adding a spcae at the end of the last answer
+			# hurt anything? i don't think so...
+			$value .= " ";
+		}
 		$string .= "$name##$value##"; # this is also not my fault
 	}
 	$string =~ s/##$//; # remove last pair of hashs
