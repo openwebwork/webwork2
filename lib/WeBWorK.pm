@@ -189,16 +189,15 @@ sub dispatch($) {
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-<<<<<<< WeBWorK.pm
+
 				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
 				$WeBWorK::timer0->start;
 				my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
 				$WeBWorK::timer0->stop;
 				$WeBWorK::timer0->save;
 				return $result;
-=======
-				$result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
->>>>>>> 1.13
+
+
 			}
 		}
 	}
