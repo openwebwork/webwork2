@@ -54,10 +54,28 @@ sub disconnect($$) {
 
 # -----
 
+sub getUsers($) {
+	my $self = shift;
+	return unless $self->{password_db}->connect("ro");
+	my @password_users = keys %{$self->{password_db}->hashRef};
+	$self->{password_db}->disconnect;
+	return unless $self->{permissions_db}->connect("ro");
+	my @permissions_users = keys %{$self->{permissions_db}->hashRef};
+	$self->{permissions_db}->disconnect;
+	return unless $self->{keys_db}->connect("ro");
+	my @keys_users = keys %{$self->{keys_db}->hashRef};
+	$self->{keys_db}->disconnect;
+	my %all_users;
+	$all_users{$_}++ foreach (@password_users, @permissions_users, @keys_users);
+	return keys %all_users;
+}
+
+# -----
+
 sub getPassword($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{password_db}->connect("rw");
+	return unless $self->{password_db}->connect("ro");
 	my $result = $self->{password_db}->hashRef->{$user};
 	$self->{password_db}->disconnect;
 	return $result;
@@ -94,7 +112,7 @@ sub deletePassword($$) {
 sub getKey($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{keys_db}->connect("rw");
+	return unless $self->{keys_db}->connect("ro");
 	my $result = $self->{keys_db}->hashRef->{$user};
 	$self->{keys_db}->disconnect;
 	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
@@ -140,7 +158,7 @@ sub deleteKey($$) {
 sub getPermissions($$) {
 	my $self = shift;
 	my $user = shift;
-	return unless $self->{permissions_db}->connect("rw");
+	return unless $self->{permissions_db}->connect("ro");
 	my $result = $self->{permissions_db}->hashRef->{$user};
 	$self->{permissions_db}->disconnect;
 	return $result;
