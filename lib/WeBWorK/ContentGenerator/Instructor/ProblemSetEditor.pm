@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.40 2003/12/26 01:29:14 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.41 2004/03/04 21:05:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,14 +78,14 @@ sub setRowHTML {
 # Initialize does all of the form processing.  It's extensive, and could probably be cleaned up and
 # consolidated with a little abstraction.
 sub initialize {
-	my ($self) = @_;
-	my $r           = $self->{r};
-	my $db          = $self->{db};
-	my $ce          = $self->{ce};
-	my $authz       = $self->{authz};
+	my ($self)      = @_;
+	my $r           = $self->r;
+	my $db          = $r->db;
+	my $ce          = $r->ce;
+	my $authz       = $r->authz;
 	my $user        = $r->param('user');
-	#my $setName     = $self->getSetName(@components);
-	my $setName = $r->urlpath->arg("setID");
+	#my $setName    = $self->getSetName(@components);
+	my $setName     = $r->urlpath->arg("setID");
 	my $setRecord   = $db->getGlobalSet($setName); #checked
 	die "global set $setName not found." unless $setRecord;
 
@@ -231,41 +231,17 @@ EOF
 	}
 }
 
-sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
-	my $ce            = $self->{ce};
-	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $ce->{courseName};
-	my $set_id        = $self->{set}->set_id;
-	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'Instructor Tools'    => "$root/$courseName/instructor",
-		'Set List'          => "$root/$courseName/instructor/sets/",
-		"$set_id"   => '',
-	);
-}
-
-sub title {
-	my ($self, @components) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	return "Problem Set Editor - ".$self->{ce}->{courseName}." : $setName";
-}
 
 sub body {
 	my ($self, @components) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $courseName = $ce->{courseName};
-	#my $setName = $self->getSetName(@components);
-	my $setRecord = $db->getGlobalSet($setName);  # checked
+	my $r                   = $self->r;
+	my $db                  = $r->db;
+	my $ce                  = $r->ce;
+	my $authz               = $r->authz;
+	my $user                = $r->param('user');
+	my $courseName          = $r->urlpath->arg("courseID");
+	my $setName             = $r->urlpath->arg("setID");
+	my $setRecord           = $db->getGlobalSet($setName);  # checked
 	die "global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
@@ -349,13 +325,18 @@ sub body {
 	my $problemCount = $db->listGlobalProblems($setName);
 	print CGI::h2({}, "Problems"), "\n";
 	print CGI::p({}, "This set contains $problemCount problem" . ($problemCount == 1 ? "" : "s").".");
-	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)}, "Edit the list of problems in this set");
+	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)},
+	 (@editForUser) ? "Edit the list of problems in this set for ". CGI::b(join ", ", @editForUser) :
+	                  "Edit the list of problems in this set");
+
 	
 	my $userCount = $db->listUsers;
 	my $usersOfSet = $db->countSetUsers($setName);
 	print CGI::h2({}, "Users"), "\n";
 	print CGI::p({}, "This set is assigned to ".$self->userCountMessage($usersOfSet, $userCount).".");
-	print CGI::a({href=>$r->uri."users/?".$self->url_authen_args}, "Determine who this set is assigned to");
+	print CGI::a({href=>$r->uri."users/?".$self->url_authen_args},
+	  (@editForUser) ? "Edit the list of problems in this set for ". CGI::b(join ", ", @editForUser) :
+	                   "Determine who this set is assigned to");
 	
 	return "";
 }

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.9 2004/01/25 19:46:54 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.10 2004/03/23 01:11:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -101,10 +101,10 @@ sub initialize {
 
 sub body {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
 	
 	my $courseName = $r->urlpath->arg("courseID");
 	my $authen_args = $self->url_authen_args();

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.27 2004/01/31 14:46:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.29 2004/02/19 22:47:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,12 +32,13 @@ use WeBWorK::Timing;
 
 sub initialize {
 	my ($self)     = @_;
-	my $r          = $self->{r};
-	my $ce         = $self->{ce};
-	my $db         = $self->{db};
-	my $authz      = $self->{authz};
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $ce         = $r->ce;
+	my $db         = $r->db;
+	my $authz      = $r->authz;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $courseName = $ce->{courseName};
+	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
 
 	unless ($authz->hasPermissions($user, "score_sets")) {
@@ -109,36 +110,17 @@ sub initialize {
 	
 }
 
-sub path {
-	my $self          = shift;
-    my @components    = @_;
-	my $args          = $_[-1];
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	
-	return $self->pathMacro($args,
-		"Home"             => "$root",
-		$courseName        => "$root/$courseName",
-		"Instructor Tools" => "$root/$courseName/instructor",
-		"Scoring"          => # "$root/$courseName/instructor/scoring",
-	);
-}
-
-sub title {
-	"Scoring";
-}
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
-	my $actionURL= $r->uri;
+	my ($self)      = @_;
+	my $r           = $self->r;
+	my $urlpath     = $r->urlpath;
+	my $ce          = $r->ce;
+	my $authz       = $r->authz;
+	my $scoringDir  = $ce->{courseDirs}->{scoring};
+	my $courseName  = $urlpath->arg("courseID");
+	my $user        = $r->param('user');
+	my $actionURL   = $r->uri;
 	
 	
 	print join("",
@@ -219,7 +201,8 @@ sub body {
 #   totals: total column only
 sub scoreSet {
 	my ($self, $setID, $format, $showIndex, $UsersRef, $sortedUserIDsRef) = @_;
-	my $db = $self->{db};
+	my $r  = $self->r;
+	my $db = $r->db;
 	my @scoringData;
 	my $scoringItems   = {    info             => 0,
 		                      successIndex     => 0,
@@ -645,11 +628,12 @@ sub maxLength {
 
 sub popup_set_form {
 	my $self  = shift;
-	my $r     = $self->{r};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my $r     = $self->r;	
+	my $db    = $r->db;
+	my $ce    = $r->ce;
+	my $authz = $r->authz;
+	my $user  = $r->param('user');
+
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 

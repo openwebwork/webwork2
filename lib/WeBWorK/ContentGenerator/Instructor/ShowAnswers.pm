@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,13 +29,14 @@ use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
 
 sub initialize {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseName = $urlpath->arg("courseID");
+	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
 		$self->{submitError} = "You aren't authorized to create or delete problems";
@@ -45,38 +46,21 @@ sub initialize {
 
 }
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		'showAnswers'   => ''
-	);
-}
-
-sub title {
-	my $self = shift;
-	return "Instructor Tools - Show answers submitted by students in".$self->{ce}->{courseName};
-}
 
 sub body {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $user = $r->param('user');
-	my $key  = $r->param('key');
-	my $studentUser = $r->param('studentUser');
-	my $setName = $r->param('setName');
-	my $problemNumber = $r->param('problemNumber');
+	my $self          = shift;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $db            = $r->db;
+	my $ce            = $r->ce;
+	my $authz         = $r->authz;
+	my $root          = $ce->{webworkURLs}->{root};
+	my $courseName    = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg('setID');
+	my $problemNumber = $urlpath->arg('problemID');
+	my $user          = $r->param('user');
+	my $key           = $r->param('key');
+	my $studentUser   = $r->param('studentUser');
 	
 	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
 	

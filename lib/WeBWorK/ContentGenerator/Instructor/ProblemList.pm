@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.16 2003/12/18 03:02:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.17 2004/03/04 21:05:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -86,20 +86,20 @@ sub directoryListHTML {
 }
 
 sub initialize {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
+	my ($self)    = @_;
+	my $r         = $self->r;
+	my $db        = $r->db;
+	my $ce        = $r->ce;
+	my $authz     = $r->authz;
+	my $user      = $r->param('user');
+	my $setName   = $r->urlpath->arg("setID");
 	my $setRecord = $db->getGlobalSet($setName); # checked
 	die "global set $setName  not found." unless $setRecord;
 
 	$self->{set}  = $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
-	my $forUsers = scalar(@editForUser);
+	my $forUsers   = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
 	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
@@ -198,50 +198,28 @@ sub initialize {
 
 }
 
-sub path {
-	my $self           = shift;
-	my $args           = $_[-1];
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $set_id     = $self->{set}->set_id;
-	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		'sets'          => "$root/$courseName/instructor/sets/",
-		"set $set_id"   => "$root/$courseName/instructor/sets/$set_id",
-		'problems'  => '',    
-	);
-}
-
-sub title {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	return "Problems in ".$self->{ce}->{courseName}." : ".$setName;
-}
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $courseName = $ce->{courseName};
-	my $setRecord = $db->getGlobalSet($setName); # checked
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $user       = $r->param('user');
+	my $urlpath    = $r->urlpath;
+	my $courseName = $urlpath->arg("courseID");
+	my $setName    = $urlpath->arg("setID");
+	my $setRecord  = $db->getGlobalSet($setName); 
 	die "Global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
-	my $forUsers = scalar(@editForUser);
+	my $forUsers   = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+    return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	my $userCount = $db->listUsers();
-	my $setUserCount = $db->countSetUsers($setName);
+	my $userCount        = $db->listUsers();
+	my $setUserCount     = $db->countSetUsers($setName);
 	my $userCountMessage = "This set is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
 
 	if (@editForUser) {
