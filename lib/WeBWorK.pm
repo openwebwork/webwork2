@@ -26,6 +26,7 @@ use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Instructor::UserList;
+use WeBWorK::ContentGenerator::Instructor::Assigner;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -138,7 +139,7 @@ sub dispatch($) {
 					} elsif ($setArg eq "problems") {
 						return WeBWorK::ContentGenerator::Instructor::ProblemList->new($r, $ce, $db)->go($setID);
 					} elsif ($setArg eq "users") {
-						return WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go($setID);
+						return WeBWorK::ContentGenerator::Instructor::Assigner->new($r, $ce, $db)->go($setID);
 					}
 				} else {
 					return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
