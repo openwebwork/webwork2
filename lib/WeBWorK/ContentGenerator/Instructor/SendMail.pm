@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.31 2004/05/12 14:36:43 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.32 2004/05/24 15:32:11 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-
+use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
 my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
 sub initialize {
@@ -39,6 +39,10 @@ sub initialize {
 	my $ce     = $r->ce;
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
+
+	my @selected_filters;
+	if (defined ($r->param('classList!filter'))){ @selected_filters = $r->param('classList!filter');}
+	else {@selected_filters = ("all");}
 
 	unless ($authz->hasPermissions($user, "send_mail")) {
 		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to send mail to students.")));
@@ -143,6 +147,13 @@ sub initialize {
 	#FIXME  this (radio) is a lousy name
 	my $recipients                 = $r->param('radio');
 	if (defined($recipients) and $recipients eq 'all_students') {  #only active students #FIXME status check??
+		
+## Add code so that only people who pass the current filters are added to our list of recipients.		
+#	@user_records = filterRecords({filter=\@selected_filters},@user_records);
+#  I wasn't able to make this work
+#  I edited the selection button to make that clear.
+#
+
 		foreach my $ur (@user_records) {
 			push(@send_to,$ur->user_id) if $ur->status eq 'C' and not($ur->user_id =~ /practice/);
 		}
@@ -560,14 +571,14 @@ sub print_form {
 #			   
 #			    		    CGI::strong("Send to:"),
 #							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-#								-labels=>{all_students=>'All',studentID => 'Selected'},
+#								-labels=>{all_students=>'All students in course',studentID => 'Selected'},
 #								-default=>'studentID',
 #								-linebreak=>0
 #							), CGI::br(),CGI::br(),
 ## Edit by Mark to insert scrolling list
 					CGI::td({-style=>"width:33%"},CGI::strong("Send to:"),
 		                                       CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-		                                                        -labels=>{all_students=>'All',studentID => 'Selected'},
+		                                                        -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
 		                                                        -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list),
 ## Edit here to insert filtering 
