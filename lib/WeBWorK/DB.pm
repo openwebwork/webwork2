@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.51 2004/06/16 18:26:59 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.52 2004/06/17 20:11:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -412,6 +412,7 @@ sub hashDatabaseOK {
 				$self->{set_user}->{driver}->connect("ro")
 					or return 0, @results, "Failed to connect to set_user database.";
 				my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
+				my @RawUserProblems = $self->{problem_user}->getAllNoFilter($userID, $setID);
 				$self->{set_user}->{driver}->disconnect();
 				unless ($RawUserSet) {
 					#warn "failed to fetch UserSet '$setID' for user '$userID'!\n";
@@ -421,10 +422,14 @@ sub hashDatabaseOK {
 				# change user ID to globalUserID and add to database
 				$RawUserSet->user_id($globalUserID);
 				$self->{set_user}->add($RawUserSet);
-				
-				push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
+				foreach my $RawUserProblem (@RawUserProblems) {
+					$RawUserProblem->user_id($globalUserID);
+					$self->{problem_user}->add($RawUserProblem);
+					#warn "hashDatabaseOK($fix): assigned problem '", $RawUserProblem->problem_id, "' from set '$setID' to global user '$globalUserID' -- good.\n";
+				}
 				
 				#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
+				push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
 			}
 		} else {
 			foreach my $setID (keys %orphanUserSets) {
