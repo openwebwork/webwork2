@@ -27,7 +27,7 @@ $b = non_zero_random(-5,5,1);
 
 $f = ($x**2 + $a*$y**2 + $b*$x**2*$y) -> reduce;
 
-$x = sqrt(2*$a)/$b; $y = 1/$b;
+$x = sqrt(2*$a)/$b; $y = -1/$b;
 
 ###########################################################
 #
@@ -37,7 +37,7 @@ $x = sqrt(2*$a)/$b; $y = 1/$b;
 Context()->texStrings;
 BEGIN_TEXT
 
-Suppose \(f(x) = $f\).
+Suppose \(f(x,y) = $f\).
 $PAR
 Then \(f\) has critical points at the following
 points: \{ans_rule(30)\}.
