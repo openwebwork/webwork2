@@ -495,6 +495,9 @@ sub body {
 	
 	
 	}
+	# FIXME print editor link
+	print CGI::a({-href=>"/webwork/$courseName/instructor/pgProblemEditor/".$set->set_id.
+	'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this page');
 	print CGI::end_div();
 	# end answer inspection button
 	# warning output
