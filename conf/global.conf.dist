@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.17 2003-04-17 21:01:14 sh002i Exp $
+# $Id: global.conf.dist,v 1.18 2003-04-23 06:35:06 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -226,6 +226,12 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 
 # $sessionKeyTimeout defines seconds of inactivity before a key expires
 $sessionKeyTimeout = 60*30;
+
+# $sessionKeyLength defines the length (in characters) of the session key
+$sessionKeyLength = 40;
+
+# @sessionKeyChars lists the legal session key characters
+@sessionKeyChars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
 
 # Practice users are users who's names start with $practiceUser
 # (you can comment this out to remove practice user support)
