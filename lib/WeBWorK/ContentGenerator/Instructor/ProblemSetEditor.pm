@@ -352,7 +352,7 @@ sub body {
 		print CGI::end_table();
 		print hiddenEditForUserFields(@editForUser);
 		print $self->hidden_authen_fields;
-		print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
+		print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problem Changes"});
 		print CGI::end_form();
 	} else {
 		print CGI::p("This set doesn't contain any problems yet.");
@@ -367,11 +367,11 @@ sub body {
 		print CGI::start_form({method=>"post", action=>$r->uri.'#addProblem'});
 		print CGI::input({type=>"hidden", name=>"fileBrowsing", value=>"Yes"});
 		print CGI::start_table();
-		print "<tr>";
+		my $columns = "";
 		for (my $counter = 0; $counter < scalar(@path); $counter++) {
-			print CGI::td(directoryListHTML ($counter, (exists $path[$counter+1] ? $path[$counter+1] : []), @path));
+			$columns .= CGI::td(directoryListHTML ($counter, (exists $path[$counter+1] ? $path[$counter+1] : []), @path));
 		}
-		print "</tr>";
+		print CGI::Tr($columns);
 		print CGI::end_table();
 		print $self->hidden_authen_fields;
 		print CGI::end_form();
