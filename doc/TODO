@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.7 2002-08-22 23:32:08 sh002i Exp $
+# $Id: TODO,v 1.8 2002-08-23 18:30:03 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -74,11 +74,11 @@ DONE	New interface to PG.pm
 			- CON: stuff sits in RAM
 			- CON: uses a package array to queue equations :p
 	
-	display of screen set header in ProblemSet.pm (easy)
-	display of screen problem header in Problem.pm (wait, why do i want this?)
+DONE	display of screen set header in ProblemSet.pm (easy)
 	make "enter" on the problem form trigger "submit answer", not "redisplay"
 	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
-	add template escape for error status
+	have logout button invalidate key
+	add <!--#if can="blah" warning="1" error="1"-->
 	handling of PG warnings (?!?!?!?!)
 	Options
 		- email address and password
