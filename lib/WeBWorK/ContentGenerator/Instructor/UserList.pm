@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.40 2004/01/25 18:17:31 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.41 2004/01/25 19:46:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -505,7 +505,7 @@ sub filter_form {
 				-labels => {
 					all => "all users",
 					none => "no users",
-					selected => "users selected below",
+					selected => "users checked below",
 					match_ids => "users with matching user IDs:",
 					match_section => "users in selected section",
 					match_recitation => "users in selected recitation",
@@ -623,7 +623,7 @@ sub delete_form {
 			-default => $actionParams{"action.delete.scope"}->[0] || "none",
 			-labels => {
 			    none     => "no users.",
-				visible  => "visible users.",
+				#visible  => "visible users.",
 				selected => "selected users."
 			},
 			-onchange => $onChange,
@@ -639,9 +639,10 @@ sub delete_handler {
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 	
 	my @userIDsToDelete = ();
-	if ($scope eq "visible") {
-		@userIDsToDelete = @{ $self->{visibleUserIDs} };
-	} elsif ($scope eq "selected") {
+	#if ($scope eq "visible") {
+	#	@userIDsToDelete = @{ $self->{visibleUserIDs} };
+	#} elsif ($scope eq "selected") {
+	if ($scope eq "selected") {
 		@userIDsToDelete = @{ $self->{selectedUserIDs} };
 	}
 	
