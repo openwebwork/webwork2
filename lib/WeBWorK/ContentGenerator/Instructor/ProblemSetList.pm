@@ -80,7 +80,7 @@ Delete sets:
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptPassword);
+use WeBWorK::Utils qw(formatDateTime parseDateTime readFile readDirectory cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
@@ -354,8 +354,17 @@ sub body {
 	my $secondarySortSub = $sortSubs{$secondarySortField};	
 	
 	# don't forget to sort in opposite order of importance
-	@Sets = sort $secondarySortSub @Sets;
-	@Sets = sort $primarySortSub @Sets;
+	if ($secondarySortField eq "set_id") {
+		@Sets = sortByName("set_id", @Sets);
+	} else {
+		@Sets = sort $secondarySortSub @Sets;
+	}
+
+	if ($primarySortField eq "set_id") {
+		@Sets = sortByName("set_id", @Sets);
+	} else {
+		@Sets = sort $primarySortSub @Sets;
+	}
 
 	########## print beginning of form
 	
@@ -967,7 +976,7 @@ sub import_handler {
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
-	$newSetName = "" if @fileNames > 1; # cannot assign set names to multiple imports
+	$newSetName = "" if $actionParams->{"action.import.number"}->[0] > 1; # cannot assign set names to multiple imports
 	my $assign = $actionParams->{"action.import.assign"}->[0];
 	
 	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, @fileNames);
