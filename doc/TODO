@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.5 2002-08-22 21:11:52 sh002i Exp $
+# $Id: TODO,v 1.6 2002-08-22 21:13:53 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -29,11 +29,11 @@ OK	finish ProblemSets and ProblemSet
 	
 --------------------------------------------------------------------------------
 	
-	New interface to PG.pm
-		- instead of it accessing the database directly, accept $user,
+DONE	New interface to PG.pm
+	DONE	- instead of it accessing the database directly, accept $user,
 		  $set, and $problem as arguments (instead of $setName, etc.)
-		- UPDATE PG.pm'S DOCS!!!!!!!!!!!!!
-		- Fix Problem.pm and Hardcopy.pm to work with the new interface
+	DONE	- UPDATE PG.pm'S DOCS!!!!!!!!!!!!!
+	DONE	- Fix Problem.pm and Hardcopy.pm to work with the new interface
 	
 	Hardcopy generation
 	DONE	- ad-hoc version of &latex2png in Hardcopy.pm (move later)
@@ -74,9 +74,8 @@ OK	finish ProblemSets and ProblemSet
 			- CON: stuff sits in RAM
 			- CON: uses a package array to queue equations :p
 			
-	
 	display of screen set header in ProblemSet.pm (easy)
-	display of screen problem header in Problem.pm (wait, what is this?)
+	display of screen problem header in Problem.pm (wait, why do i want this?)
 	handling of PG warnings (?!?!?!?!)
 	Options
 		- email address and password
