@@ -455,18 +455,24 @@ sub links {
 	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
 	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
 	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
+	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
+	my $users      = "$root/$courseName/instructor/users?" . $self->url_authen_args();
 	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
 	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
 	
-	return
-		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"). CGI::br().
+	return join("",
+		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"), CGI::br(),
 		($permLevel > 0
-			? CGI::a({-href=>$instructor}, "Instructor") . CGI::br()
-			: "").
-		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"). CGI::br().
-		CGI::a({-href=>$help}, "Help"). CGI::br().
-		CGI::a({-href=>$logout}, "Log Out"). CGI::br()
-	;
+			? join("",
+				CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
+			  	CGI::a({-href=>$sets}, "&nbsp;&nbsp;SetList") , CGI::br(),
+			  	CGI::a({-href=>$users}, "&nbsp;&nbsp;ClassList") , CGI::br(),)
+			: ""
+		),
+		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
+		CGI::a({-href=>$help}, "Help"), CGI::br(),
+		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+	);
 }
 
 # &if_can will return 1 if the current object->can("do $_[1]")
