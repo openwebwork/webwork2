@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.36 2003-06-21 02:34:10 gage Exp $
+# $Id: global.conf.dist,v 1.37 2003-07-14 15:21:52 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -26,6 +26,7 @@
 	courses => "$webworkRoot/courses",
 	lib     => "$webworkRoot/lib",
 	logs    => "$webworkRoot/logs",
+	macros  => "$pgRoot/macros",
 	tmp     => "$webworkRoot/tmp",
 );
 
@@ -41,7 +42,7 @@
 		postamble      => "$webworkDirs{conf}/snippets/hardcopyPostamble.tex",
 	},
 	screenSnippets => {
-		setHeader => "$webworkDirs{conf}/snippets/screenSetHeader.pg",
+		setHeader => "$webworkDirs{conf}/snippets/setHeader.pg",
 	},
 	logs => {
 		timing         => "$webworkDirs{logs}/timing.log",
@@ -72,6 +73,7 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 	scoring     => "$courseRoot/scoring",
 	templates   => "$courseRoot/templates",
 	macros      => "$courseRoot/templates/macros",
+	email       => "$courseRoot/templates/email",
 );
 
 %courseFiles = (
@@ -117,7 +119,9 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	#  0: send only the feedback comment and context link
 	#  1: as in 0, plus user, set, problem, and PG data
 	#  2: as in 1, plus the problem environment (debugging data)
-	feedbackVerbosity => 1,
+	feedbackVerbosity      => 1,
+	editor_window_rows     => 15,
+	editor_window_columns  => 100,
 );
 
 %externalPrograms = (
@@ -177,6 +181,7 @@ my $professor = 10;
 	modify_problem_sets            => $professor,
 	assign_problem_sets            => $professor,
 	modify_student_data            => $professor,
+	send_mail					   => $professor,
 );
 
 ################################################################################
@@ -216,7 +221,17 @@ $practiceUserPrefix = "practice";
 	# currently selected renderer
 	renderer => "WeBWorK::PG::Local",
 	# directories used by PG
+	# options for various renderers
+	renderers => {
+		"WeBWorK::PG::Remote" => {
+			uri => "http://localhost:8089/RPC2"
+		}
+	},
+	# currently selected renderer
+	renderer => "WeBWorK::PG::Local",
+	# directories used by PG
 	directories => {
+		# directories used only by PG
 		lib    => "$pgRoot/lib",
 		macros => "$pgRoot/macros",
 	},
