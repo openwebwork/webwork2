@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.10 2004/03/23 22:58:10 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.11 2004/04/05 03:58:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
  instructor_file_transfer            /$courseID/instructor/files/
+ instructor_set_maker                /$courseID/instructor/setmaker/
  
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
@@ -204,7 +205,8 @@ our %pathTypes = (
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
-			instructor_set_assigner instructor_file_transfer instructor_problem_editor
+			instructor_set_assigner instructor_file_transfer
+			instructor_problem_editor instructor_set_maker
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_statistics
 		/ ],
@@ -302,6 +304,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'assigner/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
+	},
+	instructor_set_maker => {
+		name    => 'Set Maker',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmaker/|,
+		capture => [ qw// ],
+		produce => 'setmaker/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
 	instructor_file_transfer => {
 		name    => 'File Transfer',
