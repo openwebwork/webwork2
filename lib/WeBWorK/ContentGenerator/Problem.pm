@@ -814,11 +814,12 @@ sub options {
 	my $self=shift;
 	my $out;
 	$out     .=join("", 
-                    CGI::startform("POST", $self->{r}->uri),
+                    CGI::start_form("POST", $self->{r}->uri),
                     $self->hidden_authen_fields,
                     CGI::hr(), 
                     CGI::start_div({class=>"viewOptions"}),
                     $self->viewOptions(),CGI::end_div(),
+                    CGI::end_form()
 	);
 return $out;
 
