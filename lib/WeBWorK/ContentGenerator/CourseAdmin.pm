@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.28 2004/09/29 16:19:37 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.29 2004/09/29 23:45:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -184,8 +184,6 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		#print "<!-- ”Ì£¢Óô‡¿¤¸¹Õ‹˜‚¯·©¡º„Í—ˆŠû«þµ -->\n";
-		#print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
 		$self->do_export_database;
 	} else {
 		$self->SUPER::content;
@@ -650,6 +648,10 @@ sub do_add_course {
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
 		foreach my $userID ($db->listUsers) {
+			if ($userID eq add_initial_userID) {
+				warn "User '$userID' will not be copied from admin course as it is the initial instructor.";
+				next;
+			}
 			my $User            = $db->getUser($userID);
 			my $Password        = $db->getPassword($userID);
 			my $PermissionLevel = $db->getPermissionLevel($userID);
