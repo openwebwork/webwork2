@@ -30,6 +30,7 @@ use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
 use WeBWorK::DB::Record::Set;
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use WeBWorK::Debug;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
@@ -81,7 +82,7 @@ use constant  FIELD_PROPERTIES => {
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "24",
+		size      => "26",
 		override  => "any",
 		labels    => {
 				0 => "None Specified",
@@ -91,7 +92,7 @@ use constant  FIELD_PROPERTIES => {
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "24",
+		size      => "26",
 		override  => "any",
 		labels    => {
 				0 => "None Specified",
@@ -101,7 +102,7 @@ use constant  FIELD_PROPERTIES => {
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "24",
+		size      => "26",
 		override  => "any",
 		labels    => {
 				0 => "None Specified",
@@ -129,13 +130,13 @@ use constant  FIELD_PROPERTIES => {
 	value => {
 		name      => "Weight",
 		type      => "edit",
-		size      => 5,
+		size      => 6,
 		override  => "any",
 	},
 	max_attempts => {
 		name      => "Max&nbsp;attempts",
 		type      => "edit",
-		size      => 5,
+		size      => 6,
 		override  => "any",
 		labels    => {
 				"-1" => "unlimited",
@@ -144,15 +145,15 @@ use constant  FIELD_PROPERTIES => {
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
-		size      => 5,
+		size      => 6,
 		override  => "one",
 		
 	},
 	status => {
 		name      => "Status",
 		type      => "edit",
-		size      => 5,
-		override  => "any",
+		size      => 6,
+		override  => "one",
 		default   => 0,
 	},
 	attempted => {
@@ -500,8 +501,41 @@ sub initialize {
 		$r->param("set.$setID.$_", $value);
 	}
 
+	#####################################################################
+	# Check date information
+	#####################################################################
+
+	my ($open_date, $due_date, $answer_date);
+	my $error = 0;
 	if (defined $r->param('submit_changes')) {
-	
+
+		my $od_param = $r->param("set.$setID.open_date");
+		my $dd_param = $r->param("set.$setID.due_date");
+		my $ad_param = $r->param("set.$setID.answer_date");
+		my $setRecord = $db->getGlobalSet($setID);
+
+		$open_date = $od_param ? $self->parseDateTime($od_param) : $setRecord->open_date;
+		$due_date = $dd_param ? $self->parseDateTime($dd_param) : $setRecord->due_date;
+		$answer_date = $ad_param ? $self->parseDateTime($ad_param) : $setRecord->answer_date;
+
+		if ($answer_date < $due_date || $answer_date < $open_date) {		
+			$self->addbadmessage("Answers cannot be made available until on or after the due date!");
+			$error = $r->param('submit_changes');
+		}
+		
+		if ($due_date < $open_date) {
+			$self->addbadmessage("Answers cannot be due until on or after the open date!");
+			$error = $r->param('submit_changes');
+		}
+		
+		if ($error) {
+			$self->addbadmessage("No changes were saved!");
+		}
+	}
+
+
+	if (defined $r->param('submit_changes') && !$error) {
+
 		my $setRecord = $db->getGlobalSet($setID);
 
 		#####################################################################
@@ -531,7 +565,6 @@ sub initialize {
 				$db->putUserSet($record);
 			}
 		} else {
-		
 			foreach my $field ( @{ SET_FIELDS() } ) {
 				next unless canChange($forUsers, $field);
 
@@ -551,14 +584,13 @@ sub initialize {
 		# Save problem information
 		#####################################################################
 
-		my @problemIDs = $db->listGlobalProblems($setID);
+		my @problemIDs = sort { $a <=> $b } $db->listGlobalProblems($setID);;
 		my @problemRecords = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
 		foreach my $problemRecord (@problemRecords) {
 			my $problemID = $problemRecord->problem_id;
 			die "Global problem $problemID for set $setID not found." unless $problemRecord;
 			
 			if ($forUsers) {
-
 				# Since we're editing for specific users, we don't allow the GlobalProblem record to be altered on that same page
 				# So we only need to make changes to the UserProblem record and only then if we are overriding a value
 				# in the GlobalProblem record or for fields unique to the UserProblem record.
@@ -599,7 +631,6 @@ sub initialize {
 					$db->putUserProblem($record) if $changed;
 				}
 			} else { 
-
 				# Since we're editing for ALL set users, we will make changes to the GlobalProblem record.
 				# We may also have instances where a field is unique to the UserProblem record but we want
 				# all users to (at least initially) have the same value
@@ -637,12 +668,10 @@ sub initialize {
 					my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
 					my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
 					foreach my $record (@userProblemRecords) {
-						my $copy = $record;
 						my $changed = 0; # keep track of any changes, if none are made, avoid unnecessary db accesses
-						foreach my $field ( @{ USER_PROBLEM_FIELDS() } ) {
+						foreach my $field ( keys %useful ) {
 							next unless canChange($forUsers, $field);
-							next unless $useful{$field};
-	
+
 							my $param = $r->param("problem.$problemID.$field");
 							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 							$param = $undoLabels{$field}->{$param} || $param;
@@ -664,15 +693,21 @@ sub initialize {
 		foreach my $header ($r->param('defaultHeader')) {
 			$setRecord->$header("");
 		}
-	} elsif (defined $r->param('undo_changes')) {
 		
-		# reset all the parameters dealing with set/problem/header information
-		# if the current naming scheme is changed/broken, this could reek havoc
-		# on all kinds of things
-		foreach my $param ($r->param) {
-			$r->param($param, "") if $param =~ /^(set|problem|header)\./;
+		# Mark the specified problems as correct for all users
+		foreach my $problemID ($r->param('markCorrect')) {
+			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
+			my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
+			foreach my $record (@userProblemRecords) {
+$self->addbadmessage($record->user_id);
+				if (defined $record && ($record->status eq "" || $record->status < 1)) {
+					$record->status(1);
+					$record->attempted(1);
+					$db->putUserProblem($record);
+				}
+			}
 		}
-	}
+	}	
 	
 # Leftover code from when there were up/down buttons
 
@@ -695,25 +730,25 @@ sub initialize {
 #		}
 #	}
 
-	
 
-	# handle renumbering of problems if necessary
- 	print CGI::a({name=>"problems"});
-	
-	my %newProblemNumbers = ();
-	my $maxProblemNumber = -1;
-	for my $jj ($db->listGlobalProblems($setID)) {
-		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
-		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
+	# This erases any sticky fields if the user saves changes, resets the form, or reorders problems
+	# It may not be obvious why this is necessary when saving changes or reordering problems
+	# 	but when the problems are reorder the param problem.1.source_file needs to be the source
+	#	file of the problem that is NOW #1 and not the problem that WAS #1.
+	unless (defined $r->param('refresh')) {
+		
+		# reset all the parameters dealing with set/problem/header information
+		# if the current naming scheme is changed/broken, this could reek havoc
+		# on all kinds of things
+		foreach my $param ($r->param) {
+			$r->param($param, "") if $param =~ /^(set|problem|header)\./;
+		}
 	}
-
-	my $forceRenumber = $r->param('force_renumber') || 0;
-	handle_problem_numbers(\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber);
-	$self->{maxProblemNumber} = $maxProblemNumber;
+	
 }
 
 # helper method for debugging
-sub debug ($) {
+sub definedness ($) {
 	my ($variable) = @_;
 
 	return "undefined" unless defined $variable;
@@ -784,35 +819,57 @@ sub body {
 	my $authz       = $r->authz;
 	my $userID      = $r->param('user');
 	my $urlpath     = $r->urlpath;
-	my $courseID  = $urlpath->arg("courseID");
-	my $setID     = $urlpath->arg("setID");
-	my $setRecord   = $db->getGlobalSet($setID); 
-		die "Global set $setID not found." unless $setRecord;
+	my $courseID    = $urlpath->arg("courseID");
+	my $setID       = $urlpath->arg("setID");
+	my $setRecord   = $db->getGlobalSet($setID) or die "No record for global set $setID.";
+
+	my $userRecord = $db->getUser($userID) or die "No record for user $userID.";
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($userRecord->user_id, "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+		unless $authz->hasPermissions($userRecord->user_id, "modify_problem_sets");
+
 	my @editForUser = $r->param('editForUser');
 
+	# Check that every user that we're editing for has a valid UserSet
+	my @assignedUsers;
+	my @unassignedUsers;
+	if (scalar @editForUser) {
+		foreach my $ID (@editForUser) {
+			if ($db->getUserSet($ID, $setID)) {
+				unshift @assignedUsers, $ID;
+			} else {
+				unshift @unassignedUsers, $ID;
+			}
+		}
+		@editForUser = @assignedUsers;
+		$r->param("editForUser", \@editForUser);
+		
+		if (scalar @editForUser && scalar @unassignedUsers) {
+			print CGI::div({class=>"ResultsWithError"}, "The following users are NOT assigned to this set and will be ignored: " . CGI::b(join(", ", @unassignedUsers)));
+		} elsif (scalar @editForUser == 0) {
+			print CGI::div({class=>"ResultsWithError"}, "None of the selected users are assigned to this set: " . CGI::b(join(", ", @unassignedUsers)));
+			print CGI::div({class=>"ResultsWithError"}, "Global set data will be shown instead of user specific data");
+		}		
+	}
+	
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
 
-	# If you're editing for users, initially they're records will be different but
+	# If you're editing for users, initially their records will be different but
 	# if you make any changes to them they will be the same.
 	# if you're editing for one user, the problems shown should be his/hers
-	my $userToShow = $forUsers ? $editForUser[0] : $userID;
-
-	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	my $userToShow        = $forUsers ? $editForUser[0] : $userID;
 	
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
-		unless $authz->hasPermissions($r->param("user"), "modify_problem_sets");
-
-
-
-
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets() if $forOneUser;
 	my $setUserCount     = $db->countSetUsers($setID);
 	my $userSetCount     = $db->countUserSets($editForUser[0]) if $forOneUser;
+
+	
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
@@ -842,7 +899,18 @@ sub body {
 		print CGI::p($userCountMessage);
 	}
 	
-	
+	# handle renumbering of problems if necessary
+ 	print CGI::a({name=>"problems"});
+
+	my %newProblemNumbers = ();
+	my $maxProblemNumber = -1;
+	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
+		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
+	}
+
+	my $forceRenumber = $r->param('force_renumber') || 0;
+	handle_problem_numbers(\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber) unless defined $r->param('undo_changes');
 
 	my %properties = %{ FIELD_PROPERTIES() };
 
@@ -997,10 +1065,8 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = $db->listGlobalProblems($setID);
+	my @problemIDList = sort { $a <=> $b } $db->listGlobalProblems($setID);
 	if (scalar @problemIDList) {
-
-		my $maxProblemNumber = $self->{maxProblemNumber};
 
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
@@ -1021,6 +1087,10 @@ sub body {
 			} else {
 				$problemRecord = $db->getGlobalProblem($setID, $problemID);
 			}
+
+#$self->addgoodmessage("");
+#$self->addbadmessage($problemRecord->toString());
+
 			
 			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
@@ -1061,6 +1131,7 @@ sub body {
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewProblemLink}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")))) .
 					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => "Delete it?"})))) .
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
+					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
 				CGI::end_table(),
 				$self->FieldTable($userToShow, $setID, $problemID),
 # A comprehensive list of problems is just TOO big to be handled well
@@ -1089,6 +1160,7 @@ sub body {
 
 		  CGI::br();
 		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
+		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
 		print CGI::p(<<HERE);
 Any time problem numbers are intentionally changed, the problems will
 always be renumbered consecutively, starting from one.  When deleting
