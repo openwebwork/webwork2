@@ -105,7 +105,7 @@ sub body {
 sub setListRow($$$) {
 	my ($self, $set, $multiSet, $preOpenSets) = @_;
 	
-	my $name = "set " . $set->set_id;
+	my $name = $set->set_id;
 	
 	my $interactiveURL = "$name/?" . $self->url_authen_args;
 	#my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
@@ -132,7 +132,7 @@ sub setListRow($$$) {
 		);
 	}
 	
-	my $interactive = CGI::a({-href=>$interactiveURL}, $name);
+	my $interactive = CGI::a({-href=>$interactiveURL}, "set $name");
 	
 	my $status;
 	if (time < $set->open_date) {
