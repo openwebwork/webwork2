@@ -98,15 +98,6 @@ sub new($$$$$$$$) {
 		my $err = $translator->unrestricted_load($macroPath);
 		warn "Error while loading $macroPath: $err" if $err;
 	}
-	#my $pg_pl              = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
-	#my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
-	#my $io_pl              = $courseEnv->{webworkDirs}->{macros} . "/IO.pl";
-	#my $err = $translator->unrestricted_load($pg_pl);
-	#warn "Error while loading $pg_pl: $err" if $err;
-	#$err = $translator->unrestricted_load($dangerousMacros_pl);
-	#warn "Error while loading $dangerousMacros_pl: $err" if $err;
-	#$err = $translator->unrestricted_load($io_pl);
-	#warn "Error while loading $io_pl: $err" if $err;
 	
 	# set the opcode mask (using default values)
 	#warn "PG: setting the opcode mask (using default values)\n";
