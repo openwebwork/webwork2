@@ -25,11 +25,13 @@ sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $webworkRoot = shift;
+	my $webworkURLRoot = shift;
 	my $courseName = shift;
 	my $safe = Safe->new;
 	
 	# set up some defaults that the environment files will need
 	$safe->reval("\$webworkRoot = '$webworkRoot'");
+	$safe->reval("\$webworkURLRoot = '$webworkURLRoot'");
 	$safe->reval("\$courseName = '$courseName'");
 	
 	# determine location of globalEnvironmentFile

@@ -55,6 +55,9 @@ sub handler() {
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
+	$current_uri =~ m/^(.*)$path_info/;
+	my $urlRoot = $1;
+	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
 	unless (substr($current_uri,-1) eq '/') {
@@ -77,7 +80,7 @@ sub handler() {
 	}
 	
 	# Try to get the course environment.
-	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $course);};
+	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $course);};
 	if ($@) { # If there was an error getting the requested course
 		# TODO: display an error page.  For now, 404 it.
 		warn $@;
