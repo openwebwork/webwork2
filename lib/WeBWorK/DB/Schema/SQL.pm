@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.15 2003/12/13 01:30:20 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.16 2003/12/13 01:44:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,31 +144,7 @@ sub add($$) {
 
 sub get($@) {
 	my ($self, @keyparts) = @_;
-#	
-#	my $table = $self->{table};
-#	my @keynames = $self->sqlKeynames();
-#	
-#	croak "wrong number of keyparts for table $table (needs: @keynames)"
-#		unless @keyparts == @keynames;
-#	
-#	my $stmt = "SELECT * FROM $table ";
-#	$stmt .= $self->makeWhereClause(@keyparts);
-#	$self->debug("SQL-get: $stmt\n");
-#	
-#	$self->{driver}->connect("ro");
-#	my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
-#	$self->{driver}->disconnect();
-#	# $result comes back undefined if there are no matches. hmm...
-#	return undef unless defined $result;
-#	
-#	my @record = @$result;
-#	my $Record = $self->{record}->new();
-#	my @realFieldnames = $self->{record}->FIELDS();
-#	foreach (@realFieldnames) {
-#		$Record->$_(shift @record);
-#	}
-#	
-#	return $Record;
+	
 	return ($self->gets(\@keyparts))[0];
 }
 
@@ -188,7 +164,7 @@ sub gets($@) {
 		
 		my $stmt = "SELECT * FROM $table ";
 		$stmt .= $self->makeWhereClause(@keyparts);
-		$self->debug("SQL-get: $stmt\n");
+		$self->debug("SQL-gets: $stmt\n");
 		my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
 		
 		if (defined $result) {
@@ -201,6 +177,47 @@ sub gets($@) {
 			push @records, $Record;
 		} else {
 			push @records, undef;
+		}
+	}
+	$self->{driver}->disconnect();
+	
+	return @records;
+}
+
+=item getAll($userID, $setID)
+
+Returns all problems in a given set. Only supported for the problem_user table.
+
+=cut
+
+sub getAll {
+	my ($self, @keyparts) = @_;
+	my $table = $self->{table};
+	
+	croak "getAll: only supported for the problem_user table"
+		unless $table eq "problem_user";
+	
+	my @keynames = $self->sqlKeynames();
+	pop @keynames; # get rid of problem_id
+	
+	my $stmt = "SELECT * FROM $table ";
+	$stmt .= $self->makeWhereClause(@keyparts);
+	$self->debug("SQL-getAll: $stmt\n");
+	
+	my @records;
+	
+	$self->{driver}->connect("ro");
+	my $results = $self->{driver}->dbi()->selectall_arrayref($stmt);
+	
+	foreach my $result (@$results) {
+		if (defined $result) {
+			my @record = @$result;
+			my $Record = $self->{record}->new();
+			my @realFieldnames = $self->{record}->FIELDS();
+			foreach (@realFieldnames) {
+				$Record->$_(shift @record);
+			}
+			push @records, $Record;
 		}
 	}
 	$self->{driver}->disconnect();
