@@ -1,0 +1,52 @@
+###########################################################
+#
+#  Example showing how to use the Parser to make
+#  a formula that you can evaluate and print in TeX form.
+#
+
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+  "PGbasicmacros.pl",
+  "PGanswermacros.pl",
+  "Parser.pl",
+);
+
+TEXT(beginproblem());
+
+###########################################################
+#
+#   Use vector mode
+#
+Context('Vector');
+
+#
+#   Define a vector
+#
+$a = non_zero_random(-8,8,1);
+$b = non_zero_random(-8,8,1);
+$c = non_zero_random(-8,8,1);
+
+$V = $a*i + $b*j + $c*k;  # equivalently: $V = Vector($a,$b,$c);
+
+###########################################################
+#
+#  The problem text
+#
+BEGIN_TEXT
+
+The length of the vector \(\{$V->TeX\}\) is \{ans_rule(20)\}.
+
+END_TEXT
+
+###########################################################
+#
+#  The answer
+#
+
+ANS(num_cmp(norm($V));
+$showPartialCorrectAnswers = 1;
+
+###########################################################
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.

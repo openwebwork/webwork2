@@ -1,0 +1,224 @@
+USING THE PARSER:
+
+To use the new parser in your own problems, you need to load the 
+"Parser.pl" macro file:
+
+     loadMacros("Parser.pl");
+
+which defines the commands you need to interact with the parser.
+Some of these conflict with the current ones in PGauxiliaryFunctions.pl, 
+so you should NOT load PGauxiliaryFunctions.pl into your problems that use 
+the new parser.  Instead, I have provided PGauxiliaryFunctions2.pl, which 
+contains only the non-conflicting functions.  (This will all be ironed out 
+if the new parser is incorporated into the official WeBWorK.)
+
+Once you have done that, you can call the Parser functions to create 
+formulas for you.  The main call is Formula(), which takes a string and 
+returns a parsed version of the string.  For example:
+
+      $f = Formula("x^2 + 3x + 1");
+
+will set $f to a reference to the parsed version of the formula.
+
+
+WORKING WITH FORMULAS:
+
+A formula has a number of methods that you can call.  These include:
+
+    $f->eval(x=>5)       Evaluate the formula when x is 5.
+                         If $f has more variables than that, then
+                         you must provide additional values, as in
+                         $f->eval(x=>3,y=>1/2);
+
+    $f->reduce           Tries to remove redundent items from your 
+                         formula.  For example, Formula("1x+0") returns "x".
+                         Reduce tries to factor out negatives and do
+                         some other adjustments as well.  (There still
+                         needs to be more work done on this.  What it does 
+                         is correct, but not always smart, and there need 
+                         to be many more situations covered.)  You can use
+                         $f->reduce(x=>5) to first substitute 5 for x
+                         and reduce the result.
+
+    $f->substitue(x=>5)  Replace x by the value 5 throughout (you may want
+                         to reduce the result afterword, as this is not 
+                         done automatically).  Note that you can replace a 
+                         variable by another formula, if you wish.  To make 
+                         this easier, substitute will apply Formula() to 
+                         any string values automatically.  E.g.,
+                             Formula("x-1")->substitute(x=>"y")
+                         returns "y-1" as a formula.
+
+    $f->string           returns a string representation of the formula
+                         (should be equivalent to the original, though not
+                         necessarily equal to it).
+
+    $f->TeX              returns a LaTeX representation of the formula.
+                         You can use this in BEGIN_TEXT...END_TEXT blocks
+                         as follows:
+
+                             BEGIN_TEXT
+                               Suppose \(f(x) = \{$f->TeX}\). ...
+                             END_TEXT
+
+    $f->perl             returns a representation of the formula that could
+                         be evaluated by perl's eval() function.
+
+    $f->perlFunction     returns a perl code block that can be called to
+                         evaluate the function.  For example:
+
+                             $f = Formula('x^2 + 3')->perlFunction;
+                             $y = &$f(5);
+
+                         will assign the value 28 to $y.
+                         You can also pass a function name to perlFunction 
+                         to get a named function to call:
+
+                             Formula('x^2 + 3')->perlFunction('f');
+                             $y = f(5);
+
+                         If the formula involves more than one variable,
+                         then the paramaters should be given in 
+                         alphabetical order.
+
+                             Formula('x^2 + y')->perlFunction('f');
+                             $z = f(5,3);  # $z is 28.
+
+                         Alternatively, you can tell the order for the
+                         parameters:
+
+                            Formula('x^2 + y')->perlFunction('f',['y','x']);
+                            $z = f(5,3); $ now $z is 14.
+
+
+COMBINING FORMULAS:
+
+There is a second way to create formulas.  Once you have a formula, you can 
+create additional formulas simply by using perls' built-in operations and 
+functions, which have been overloaded to handle formulas.  For example,
+
+    $x = Formula('x');
+    $f = 3*x**2 + 2*$x - 1;
+
+makes $f be a formula, and is equivalent to having done
+
+    $f = Formula("3x^2 + 2x - 1");
+
+This can be very convenient, but also has some pitfalls.  First, you can to
+include '*' for multiplication, since perl doesn't do implied
+multiplication, and you must remember to use '**' not '^'.  (If you use '^'
+on a formula, the parser will remind you to use '**'.)  Second, the
+precedences of the operators in perl are fixed, and so changes you make the
+the precedence table for the parser are not reflected in formulas produced
+in this way.  (The reason '^' is not overloaded to do exponentiation is
+that the precedence of '^' is wrong for that in perl, and that can't be 
+changed.)  As long as you leave the default precedences, however, things 
+should work as you expect.
+
+Note that the standard functions, like sin, cos, etc, are overloaded to 
+generate appropriate formulas when their values are formulas.  For example,
+
+    $x = Formula('x');
+    $f = cos(3*$x + 1);
+
+produces the same result as $f = Formula("cos(3x+1)"); and you can then go 
+on to output its TeX for, etc.
+
+
+SPECIAL SYNTAX:
+
+This parser has support for some things that are missing from the current 
+one, like absolute values.  You can say  |1+x|  rather than  abs(1+x)
+(though both are allowed), and even |1 - |x|| works.
+
+Also, you can use  sin^2(x)  (or even sin^2 x) to get  (sin(x))^2.
+
+Finally, you can use  sin^-1(x)  to get  arcsin(x).
+
+There is an experimental set of operator precedences that make it possible 
+to write  sin 2x + 3 and get  sin(2x) + 3.  See examples/7-precedence.pg 
+for some details.
+
+
+THE FORMULA TYPES:
+
+The parser understands a wide range of data types, including real and 
+complex numbers, points, vectors, matrices, arbitrary lists, intervals, 
+unions of intervals, and predefined words.  Each has a syntax for use 
+within formulas, as described below:
+
+    numbers        the usual form:  153, 233.5, -2.456E-3, etc.
+
+    complex        a + b i  where a and b are numbers:  1+i, -5i, 6-7i, etc.
+
+    point          (a,b,c)  where a, b and c are real or complex numbers.
+                   any number of coordinates is allowed.  Eg, (1,2), 
+                   (1,0,0,0), (-1,2,-3).  Points are promoted to vectors 
+                   automatically, when necessary.
+
+    vector         <a,b,c>  or  a i + b j + c k  (when used in vector context).
+                   As with points, vectors can have any number of 
+                   coordinates.  For example, <1,0,0>, <-1,3>, <x,1-x>, etc.
+
+    matrix         [[a11,...,a1n],...[am1,...amn]], i.e., use [..] around 
+                   each row, and around the matrix itself.  The elements 
+                   are separated by commas (not spaces).  e.g,
+                        [[1,2],[3,4]]     (a 2x2 matrix)
+                        [1,2]             (a 1x2 matrix, really a vector)
+                        [[1],[2]]         (a 2x1 matrix, ie. column vector)
+                   Points and vectors are promoted to matrices when 
+                   appropriate.  Vectors are converted to column vectors 
+                   when needed for matrix-vector multiplication.  Matrices 
+                   can be 3-dimensional or higher buy repeated nesting of 
+                   matrices.  (In this way, a 2-dimensional matrix is really 
+                   thought of as a vector of vectors, and n-dimensional 
+                   ones as vectors of (n-1)-dimensional ones.)
+
+   list            (a,b,c)  where a,b,c are arbitrary elements.
+                   For example, (1+i, -3, <1,2,3>, Infinity).
+                   The empty list () is allowed, and the parentheses are 
+                   optional if there is only one list.  (This makes it 
+                   possible to list-based answer checkers that really know 
+                   where the separations occur.)
+
+   interval        (a,b), (a,b], [a,b), [a,b], or [a]  where a and b are
+                   numbers or appropriate forms of infinity.
+                   For example, (-INF,3], [4], [2,INF), (-INF,INF).
+
+   union           represented by 'U'.  For example  [-1,0) U (0,1].
+
+
+These forms are what are used int eh strings passed to Formula.  If you 
+want to create versions of these by hand in perl, you can use the following 
+routines.  If their inputs are constant, they produce a constant of the 
+appropriate type.  If an input is a formula, they produce corresponding 
+formula objects.
+
+    Complex(a,b)       create a complex number a + b i
+
+    Point(x1,...xn) or Point([x1,...,xn])      produces (x1,...,xn)
+
+    Vector(x1,...,xn) or Vector([x1,...,xn])   produces <x1,...,xn>
+
+    Matrix([a11,...,a1m],...,[am1,...,amn]) or
+    Matrix([[a11,...,a1m],...,[am1,...,amn]])  produces an n x m matrix
+
+    List(a,...,b)   produces a list with the given elements
+
+    Interval('(',a,b,']')   produces (a,b], (the other endpoints work as
+                            expected.  Use 'INF' and '-INF' for infinities.)
+
+    Union(I1,...,In)  takes the union of the n intervals. (where I1 to In 
+                      are intervals.)
+
+For example,
+
+    $a = random(-5,5,1)
+    $V = Vector($a,1-$a,$a**2+1);
+
+Objects of these types also have TeX, string and perl methods, so you can 
+use:
+
+    Vector(1,2,3)->TeX
+
+to produce a TeX version of the vector, just as you can with formulas.
