@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.0ww
+ *  Version: 1.1ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -270,11 +270,8 @@ var jsMath = {
    *  ### still need a jsMath-fallback-unix.js file ###
    */
   CheckFonts: function () {
-    var hd = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>').h;
-    var  d = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c +
-          '<IMG SRC="'+jsMath.black+'" STYLE="height:'+hd+'; width:1"></SPAN>').h 
-          - hd;
-    if (d < hd/2 || hd == 0) {
+    var wh = this.BBoxFor('<SPAN STYLE="font-family: cmex10">'+this.TeX.cmex10[1].c+'</SPAN>');
+    if (wh.w*3 > wh.h || wh.h == 0) {
       this.NoFontMessage();
       if (navigator.platform == 'Win32') {
         document.writeln('<SCRIPT SRC="'+this.root+'jsMath-fallback-pc.js"></SCRIPT>');
@@ -4666,8 +4663,13 @@ jsMath.Add(jsMath,{
 /*
  *  We use a hidden <DIV> for measuring the BBoxes of things
  */
-document.write('<DIV CLASS="normal" ID="jsMath.Hidden" ');
-document.write('STYLE="visibility: hidden; position:absolute; top: 0; left: 0;"></DIV>');
+jsMath.hidden = '<DIV CLASS="normal" ID="jsMath.Hidden" ' + 
+      'STYLE="position:absolute; top:0 left:0;"></DIV>';
+if (document.body.insertAdjacentHTML) {
+   document.body.insertAdjacentHTML('AfterBegin',jsMath.hidden);
+} else {
+   document.write(jsMath.hidden);
+}
 jsMath.hidden = document.getElementById("jsMath.Hidden");
 
 /*
