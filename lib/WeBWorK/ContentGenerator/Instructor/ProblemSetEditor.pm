@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.46 2004/04/27 23:30:03 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.47 2004/05/04 15:16:58 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetEditor - Edit a set definition 
 use strict;
 use warnings;
 use CGI qw();
+use File::Copy;
 use WeBWorK::DB::Record::Problem;
 use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirectory max);
 
@@ -120,6 +121,15 @@ sub initialize {
 					$setRecord->$_(parseDateTime($r->param($_)));
 				} else {
 					$setRecord->$_($r->param($_));
+					if($_ eq 'set_header') {
+					# be nice and copy the default file here if it doesn't exist yet
+					# empty set headers lead to trouble
+						my $newheaderpath = $r->{ce}->{courseDirs}->{templates} . '/'. $r->param('set_header');
+						unless(($r->param('set_header') !~ /\S/) or -e $newheaderpath) {
+							my $default_header = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+							File::Copy::copy($default_header, $newheaderpath);
+						}
+					}
 				}
 			}
 		}
@@ -308,7 +318,7 @@ sub body {
 	
 	print $self->hiddenEditForUserFields(@editForUser),
 	      $self->hidden_authen_fields,
-	      CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"}),
+	      CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set", style=>"{width: 13ex}"}),
 	      '&nbsp;';
 	
 		#### link to edit setHeader 
@@ -323,7 +333,7 @@ sub body {
 	}
 	
 	print CGI::br(),
-	      CGI::submit({ name=>"export_set", label=>"Export Set"} ),
+	      CGI::submit({ name=>"export_set", label=>"Export Set",  style=>"{width: 13ex}"} ),
 	      ' as ',
 	      CGI::input({type=>'text',name=>'export_file_name',value=>"set$setName.def",size=>32});
 	      
