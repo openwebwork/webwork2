@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.33 2004/05/11 19:06:23 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.34 2004/05/12 14:29:36 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,6 +97,7 @@ sub pre_header_initialize {
 			} else { # other problems redirect to Problem.pm
 				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 					courseID => $courseName, setID => $setName, problemID => $problemNumber);
+				$self->{currentSourceFilePath} =~ s|^$ce->{courseDirs}->{templates}/||;
 				$viewURL = $self->systemLink($problemPage,
 					params => {
 						displayMode     => $displayMode,
