@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.60 2004/10/26 00:04:28 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.61 2004/12/21 15:29:55 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -622,6 +622,12 @@ sub filter_handler {
 		my @userIDs;
 		foreach my $record (@userRecords) {
 			next unless $record;
+
+			# add permission level to user record hash so we can match it if necessary
+			if ($field eq "permission") {
+				my $permissionLevel = $db->getPermissionLevel($record->user_id);
+        	                $record->{permission} = $permissionLevel->permission;
+			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
 		$self->{visibleUserIDs} = \@userIDs;
