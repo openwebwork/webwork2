@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.63 2004/07/12 02:30:23 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.64 2004/08/18 01:40:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,7 +54,8 @@ use WeBWorK::Request;
 use WeBWorK::Timing;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
-use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
+use Date::Format;
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
@@ -264,6 +265,8 @@ sub dispatch($) {
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
 	
+	my $localStartTime = time;
+	
 	runtime_use($displayModule);
 	
 	debug("...instantiate it...\n");
@@ -278,9 +281,13 @@ sub dispatch($) {
 	debug("-------------------- call to ${displayModule}::go\n");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
+	#$WeBWorK::timer->continue("[" . time2str("%a %b %d %H:%M:%S %Y", time) . "]" . "[" . $r->uri . "]");
+	#$WeBWorK::timer->stop();
+	#$WeBWorK::timer->save();
 	
-	$WeBWorK::timer->save();
-	
+	my $localStopTime = time;
+	my $timeDiff = $localStopTime - $localStartTime;
+	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("diff = %.6f", $timeDiff)." ".$ce->{dbLayoutName},"" );
 	return $result;
 	
 }
