@@ -42,12 +42,18 @@ sub initialize {
 	my $authz = $self->{authz};
  	my $user = $r->param('user');
  	my $setName = $_[0];
+ 	
+ 	
  	$self->{type}  = $type;
  	if ($type eq 'student') {
  		$self->{studentName } = $components[0] || $user;
  		
  	} elsif ($type eq 'set') {
  		$self->{setName}     = $components[0]  || 0 ;
+ 		my $setRecord  = $db->getGlobalSet($setName); # checked
+		die "global set $setName  not found." unless $setRecord;
+		$self->{set_due_date} = $setRecord->due_date;
+		$self->{setRecord}   = $setRecord;
  	}
  	
  	
@@ -88,6 +94,7 @@ sub title {
 		$string             .= "student ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
 		$string             .= "set   ".$self->{setName};
+		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". WeBWorK::Utils::formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -145,19 +152,31 @@ sub index {
 	);
 	
 }
+
+sub determine_percentiles {
+	my $rh_percentiles    = shift;
+	my $max_score         = shift;
+	my @index_list        = @_;
+	@index_list           = sort {$a<=>$b} @index_list;
+	my $num_students      = $#index_list;
+	$rh_percentiles->{0}  = @index_list[int( 1*$num_students/4)];
+	$rh_percentiles->{1}  = @index_list[int( 2*$num_students/4)];
+	$rh_percentiles->{2}  = @index_list[int( 3*$num_students/4)];
+	$rh_percentiles->{3}  = @index_list[int( 95*$num_students/100)];
+	$rh_percentiles->{4}  = @index_list[int( 4*$num_students/4)];
+}
+my @index_list = ();
+my @score_list = ();
 sub displaySets {
-	my $self    = shift;
-	#FIXME
-	my $setName = shift;
-	
+	my $self       = shift;
+	my $setName    = shift;
 	my $r          = $self->{r};
 	my $db         = $self->{db};
 	my $ce         = $self->{ce};
 	my $authz      = $self->{authz};
 	my $user       = $r->param('user');
 	my $courseName = $ce->{courseName};
-	my $setRecord  = $db->getGlobalSet($setName); # checked
-	die "global set $setName  not found." unless $setRecord;
+	my $setRecord  = $self->{setRecord};
 	my $root       = $ce->{webworkURLs}->{root};
 	my $url        = $r->uri; 
 	my $sort_method_name = $r->param('sort');  
@@ -176,7 +195,7 @@ sub displaySets {
 		}
 
 	};
-	#FIXME  need to be able to sort by index and score as well.
+
 ###############################################################
 #  Print table
 ###############################################################
@@ -203,9 +222,9 @@ sub displaySets {
 		my $num_of_attempts = 0;
 		my %h_problemData  = ();
 		my $probNum         = 0;
-		#my @triplets = map {[$student, $setName, $_ ]} @problems;
+		
 		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
-		#my @problemRecords = $db->getUserProblems( @triplets );
+		
 		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 		my $num_of_problems = @problemRecords;
@@ -278,6 +297,9 @@ sub displaySets {
 		                                  email_address  => $studentRecord->email_address,
 		                                  problemData    => {%h_problemData},
 		}; 
+		#update_percentiles($temp_hash->{score}, $temp_hash->{total});
+		push( @index_list, $temp_hash->{index});
+		push( @score_list, ($temp_hash->{total}) ?$temp_hash->{score}/$temp_hash->{total} : 0 ) ;
 		push( @augmentedUserRecords, $temp_hash );
 		                                
 	}	
@@ -286,9 +308,57 @@ sub displaySets {
 	@augmentedUserRecords = sort {           &$sort_method($a,$b)
 												||
 							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
-							
+	
+	# determine index quartiles
+# 	@index_list = sort {$a<=>$b} @index_list;
+# 	my $num_students = $#index_list;
+# 	my %index_percentiles = ();
+# 	$index_percentiles{0} = @index_list[int( 1*$num_students/4)];
+# 	$index_percentiles{1} = @index_list[int( 2*$num_students/4)];
+# 	$index_percentiles{2} = @index_list[int( 3*$num_students/4)];
+# 	$index_percentiles{3} = @index_list[int( 95*$num_students/100)];
+# 	$index_percentiles{4} = @index_list[int( 4*$num_students/4)];
+	my %index_percentiles = ();
+    determine_percentiles(\%index_percentiles, @index_list);
+    my %score_percentiles = ();
+    determine_percentiles(\%score_percentiles, @score_list);
+    
 	# construct header
 	my $problem_header = '';
+	print  
+	    CGI::p( {valign=>'top'},
+	    	'The table shows the percentage of students whose scores and success indices are greater than the given values.',
+			CGI::start_table({-border=>1}),
+				CGI::Tr(
+					CGI::td( ['% students','&nbsp;&nbsp;75%','&nbsp;50%','&nbsp;25%','&nbsp; 5%','top score', ]
+					)
+				),
+				CGI::Tr(
+					CGI::td( [
+						'Score',
+						'&gt; '.100*$score_percentiles{0},
+						'&gt; '.100*$score_percentiles{1},
+						'&gt; '.100*$score_percentiles{2},
+						'&gt; '.100*$score_percentiles{3},
+						'&gt; '.100*$score_percentiles{4},
+						]
+					)
+				),
+				CGI::Tr(
+					CGI::td( [
+						'Success Index',
+						'&gt; '.sprintf("%0.0f",100*$index_percentiles{0}),
+						'&gt; '.sprintf("%0.0f",100*$index_percentiles{1}),
+						'&gt; '.sprintf("%0.0f",100*$index_percentiles{2}),
+						'&gt; '.sprintf("%0.0f",100*$index_percentiles{3}),
+						'&gt; '.sprintf("%0.0f",100*$index_percentiles{4}),
+						]
+					)
+				),
+			CGI::end_table(),	
+		),
+		;
+	
 	
 	foreach my $i (1..$max_num_problems) {
 		$problem_header .= CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=p$i"},threeSpaceFill($i) );
@@ -319,8 +389,8 @@ sub displaySets {
 			CGI::td($rec->{total}), # out of 
 			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
 			CGI::td($rec->{problemString}), # problems
-			CGI::td($rec->{section}),
-			CGI::td($rec->{recitation}),
+			CGI::td($self->nbsp($rec->{section})),
+			CGI::td($self->nbsp($rec->{recitation})),
 			CGI::td($rec->{user_id}),			
 			
 		);
