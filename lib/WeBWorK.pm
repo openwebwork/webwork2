@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.40 2003/12/09 01:12:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,7 +19,6 @@ package WeBWorK;
 =head1 NAME
 
 WeBWorK - Dispatch requests to the appropriate content generator.
-
 
 =head1 SYNOPSIS
 
@@ -39,7 +38,6 @@ C<WeBWorK::ContentGenerator> to call.
  summary: the URI controls 
 
 =cut
-
 
 BEGIN { $main::VERSION = "2.0"; }
 
@@ -164,7 +162,7 @@ See also L<WeBWorK::DB>.
 
 	# Bring up a connection to the database (for Authen/Authz, and eventually
 	# to be passed to content generators, when we clean this file up).
-	my $db = WeBWorK::DB->new($ce);
+	my $db = WeBWorK::DB->new($ce->{dbLayout});
 
 =item Capture any uploads
 
