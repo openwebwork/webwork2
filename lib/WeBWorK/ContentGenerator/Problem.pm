@@ -102,8 +102,8 @@ sub pre_header_initialize {
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $courseEnv->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $courseEnv->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $courseEnv->{pg}->{options}->{showSolutions},
-		#recordAnswers      => $r->param("recordAnswers")      || 1,
 		recordAnswers      => $submitAnswers,
+		checkAnswers       => $checkAnswers,
 	);
 	
 	# are certain options enforced?
@@ -113,6 +113,7 @@ sub pre_header_initialize {
 		showHints          => 0,
 		showSolutions      => 0,
 		recordAnswers      => mustRecordAnswers($permissionLevel),
+		checkAnswers       => 0,
 	);
 	
 	# does the user have permission to use certain options?
@@ -121,9 +122,12 @@ sub pre_header_initialize {
 		showCorrectAnswers => canShowCorrectAnswers($permissionLevel, $set->answer_date),
 		showHints          => 1,
 		showSolutions      => canShowSolutions($permissionLevel, $set->answer_date),
+		# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
 		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
 			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
-			# num_correct+num_incorrect+1 -- as this happens before updating $problem
+		checkAnswers       => canCheckAnswers($permissionLevel, $set->open_date,
+			$set->due_date, $set->answer_date, $problem->max_attempts,
+			$problem->num_correct + $problem->num_incorrect + 1),
 	);
 	
 	# final values for options
@@ -402,7 +406,7 @@ sub body {
 				? CGI::submit(-name=>"submitAnswers",
 					-label=>"Submit Answers")
 				: ""),
-			($can{recordAnswers}
+			($can{checkAnswers}
 				? CGI::submit(-name=>"checkAnswers",
 					-label=>"Check Answers")
 				: ""),
@@ -439,7 +443,7 @@ sub body {
 	}
 	
 	# debugging stuff
-	if (1) {
+	if (0) {
 		print
 			CGI::hr(),
 			CGI::h2("debugging information"),
@@ -650,6 +654,11 @@ sub canRecordAnswers($$$$$) {
 	my $attemptsOK = $maxAttempts == -1 || $attempts <= $maxAttempts;
 	my $recordAnswers = $permHigh || ($timeOK && $attemptsOK);
 	return $recordAnswers;
+}
+
+sub canCheckAnswers($$$$$) {
+	my ($permissionLevel, $openDate, $dueDate, $answerDate, $maxAttempts, $attempts) = @_;
+	return time >= $answerDate or canRecordAnswers($permissionLevel, $openDate, $dueDate, $maxAttempts, $attempts);
 }
 
 sub mustRecordAnswers($) {
