@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.15 2003/12/28 21:02:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.16 2004/01/31 04:08:57 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -196,7 +196,7 @@ sub displaySets {
 	$WeBWorK::timer->continue("Begin obtaining user records for set $setName") if defined($WeBWorK::timer);
 	my @userRecords  = $db->getUsers(@studentList);
 	$WeBWorK::timer->continue("End obtaining user records for set $setName") if defined($WeBWorK::timer);
-$WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
+    $WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
  	my @augmentedUserRecords    = ();
 	foreach my $studentRecord (@userRecords)   {
 		next unless ref($studentRecord);
@@ -391,7 +391,8 @@ sub displayStudents {
 		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
 		# construct header
 		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
-		my @problemRecords = $db->getUserProblems( map {[$studentName, $setName,$_]}  @problems);
+		#my @problemRecords = $db->getUserProblems( map {[$studentName, $setName,$_]}  @problems);
+		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
 		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
 		foreach my $problemRecord (@problemRecords) {
 			my $prob = $problemRecord->problem_id;
