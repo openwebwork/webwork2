@@ -228,7 +228,6 @@ sub initialize {
 			}
 			# Otherwise, create a new global problem for each of the files selected
 			unless ($dirFound) {
-				warn "one wasn't.  adding problems selected at level $count\n";
 				foreach my $selected (@selected) {
 					my $file = join "/", @path, $selected;
 					my $problemRecord = new WeBWorK::DB::Record::Problem;

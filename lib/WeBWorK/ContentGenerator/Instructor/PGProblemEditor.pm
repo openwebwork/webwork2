@@ -65,6 +65,104 @@ sub go {
 
 }
 
+sub initialize {
+	
+	my ($self, $setName, $problemNumber) = @_;
+	my $ce 						= 	$self->{ce};
+	my $r						=	$self->{r};
+	my $path_info 				= 	$r->path_info || "";
+	my $db						=	$self->{db};
+	my $user					=	$r->param('user');
+	my $effectiveUserName		=	$r->param('effectiveUser');
+	my $courseName				=	$ce->{courseName};
+
+#   FIXME -- sometimes this doesn't find a set	
+#	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
+#	my $setID					=	$set->set_id;
+	
+	# Find URL for viewing problem
+	
+	# find path to pg file for the problem
+	# FIXME  there is a discrepancy in the way that the problems are found.
+	# FIXME  more error checking is needed in case the problem doesn't exist.
+	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
+	my $problem_record          = 	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	my $templateDirectory		=	$ce->{courseDirs}->{templates};
+	my $problemPath				=	$templateDirectory."/".$problem_record->source_file;
+	my $editFileSuffix			=	'tmp';
+	my $submit_button			= 	$r->param('submit');
+
+	my $displayMode	  			= 	( defined($r->param('displayMode')) 	) ? $r->param('displayMode') : $ce->{pg}->{options}->{displayMode};
+	my $problemSeed				=	( defined($r->param('problemSeed'))	) ? $r->param('problemSeed') : $problem_record->problem_seed;	
+	$problemSeed				=	'1234' unless defined($problemSeed) and $problemSeed =~/\S/;
+	
+	my $problemContents	= '';
+	my $currentSourceFilePath	=	'';
+	# update the .pg and .pg.tmp files in the directory
+	if (not defined($submit_button) ) {
+		# this is a fresh editing job
+		# copy the pg file to a new file with the same name with .tmp added
+		# store this name in the $ce->currentSourceFilePath for use in body 
+		
+		eval { $problemContents			=	WeBWorK::Utils::readFile($problemPath)  
+		};  # try to read file
+		$problemContents = $@ if $@;
+		$currentSourceFilePath			=	"$problemPath.$editFileSuffix"; 
+		$ce->{currentSourceFilePath}	=	$currentSourceFilePath; 
+	} elsif ($submit_button	eq 'Refresh' ) {
+		# grab the problemContents from the form and save it to the tmp file
+		# store tmp file name in the $ce->currentSourceFilePath for use in body 
+		
+		$problemContents				=	$r->param('problemContents');
+		$currentSourceFilePath			=	"$problemPath.$editFileSuffix";	
+		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;
+	} elsif ($submit_button eq 'Save') {
+		# grab the problemContents from the form and save it to the permanent file
+		# unlink (delete) the temporary file
+		# store the permanent file name in the $ce->problemContents for use in body 
+		
+		$problemContents				=	$r->param('problemContents');
+		$currentSourceFilePath			=	"$problemPath"; 		
+		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;		
+	} else {
+		# give a warning
+		die "Unrecognized submit command $submit_button";
+	}
+	# print changed pg files
+	# FIXME  make sure that the permissions are set correctly!!!
+	# Make sure that the warning is being transmitted properly.
+	eval {
+		local *OUTPUTFILE;
+		open OUTPUTFILE, ">", $currentSourceFilePath
+				or die "Failed to write to $currentSourceFilePath: $!";
+		print OUTPUTFILE $problemContents;
+		close OUTPUTFILE;
+	};
+	my $errors = $@ if $@;
+	if (  $errors)   {
+	
+		$ce->{editErrors}	= "Unable to write to $currentSourceFilePath: $errors";
+		
+	} else {	# unlink the temporary file if there are no errors.
+		$ce->{editErrors}	=	'';
+		unlink("$problemPath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';
+		
+	};
+	
+		
+	# return values.  FIXME  -- is this the right way to pass the values to body??
+	# Should temporary results be passed in self or in ce??
+	# $ce->{viewProblemURL}	=	$viewProblemURL;
+	$ce->{problemPath} 		= 	$problemPath;
+	$self->{displayMode}	=	$displayMode;
+	$self->{problemSeed}	=	$problemSeed;
+#	$ce->{path_components}	=	join("/",$setID,$problemNumber);
+	
+	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
+
+	
+	
+}
 
 sub body {
 	my $self = shift;
@@ -192,104 +290,6 @@ sub body {
 
 }
 
-sub initialize {
-	
-	my ($self, $setName, $problemNumber) = @_;
-	my $ce 						= 	$self->{ce};
-	my $r						=	$self->{r};
-	my $path_info 				= 	$r->path_info || "";
-	my $db						=	$self->{db};
-	my $user					=	$r->param('user');
-	my $effectiveUserName		=	$r->param('effectiveUser');
-	my $courseName				=	$ce->{courseName};
-
-#   FIXME -- sometimes this doesn't find a set	
-#	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
-#	my $setID					=	$set->set_id;
-	
-	# Find URL for viewing problem
-	
-	# find path to pg file for the problem
-	# FIXME  there is a discrepancy in the way that the problems are found.
-	# FIXME  more error checking is needed in case the problem doesn't exist.
-	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
-	my $problem_record          = 	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
-	my $templateDirectory		=	$ce->{courseDirs}->{templates};
-	my $problemPath				=	$templateDirectory."/".$problem_record->source_file;
-	my $editFileSuffix			=	'tmp';
-	my $submit_button			= 	$r->param('submit');
-
-	my $displayMode	  			= 	( defined($r->param('displayMode')) 	) ? $r->param('displayMode') : $ce->{pg}->{options}->{displayMode};
-	my $problemSeed				=	( defined($r->param('problemSeed'))	) ? $r->param('problemSeed') : $problem_record->problem_seed;	
-	$problemSeed				=	'1234' unless defined($problemSeed) and $problemSeed =~/\S/;
-	
-	my $problemContents	= '';
-	my $currentSourceFilePath	=	'';
-	# update the .pg and .pg.tmp files in the directory
-	if (not defined($submit_button) ) {
-		# this is a fresh editing job
-		# copy the pg file to a new file with the same name with .tmp added
-		# store this name in the $ce->currentSourceFilePath for use in body 
-		
-		eval { $problemContents			=	WeBWorK::Utils::readFile($problemPath)  
-		};  # try to read file
-		$problemContents = $@ if $@;
-		$currentSourceFilePath			=	"$problemPath.$editFileSuffix"; 
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath; 
-	} elsif ($submit_button	eq 'Refresh' ) {
-		# grab the problemContents from the form and save it to the tmp file
-		# store tmp file name in the $ce->currentSourceFilePath for use in body 
-		
-		$problemContents				=	$r->param('problemContents');
-		$currentSourceFilePath			=	"$problemPath.$editFileSuffix";	
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;
-	} elsif ($submit_button eq 'Save') {
-		# grab the problemContents from the form and save it to the permanent file
-		# unlink (delete) the temporary file
-		# store the permanent file name in the $ce->problemContents for use in body 
-		
-		$problemContents				=	$r->param('problemContents');
-		$currentSourceFilePath			=	"$problemPath"; 		
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;		
-	} else {
-		# give a warning
-		die "Unrecognized submit command $submit_button";
-	}
-	# print changed pg files
-	# FIXME  make sure that the permissions are set correctly!!!
-	# Make sure that the warning is being transmitted properly.
-	eval {
-		local *OUTPUTFILE;
-		open OUTPUTFILE, ">", $currentSourceFilePath
-				or die "Failed to write to $currentSourceFilePath: $!";
-		print OUTPUTFILE $problemContents;
-		close OUTPUTFILE;
-	};
-	my $errors = $@ if $@;
-	if (  $errors)   {
-	
-		$ce->{editErrors}	= "Unable to write to $currentSourceFilePath: $errors";
-		
-	} else {	# unlink the temporary file if there are no errors.
-		$ce->{editErrors}	=	'';
-		unlink("$problemPath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';
-		
-	};
-	
-		
-	# return values.  FIXME  -- is this the right way to pass the values to body??
-	# Should temporary results be passed in self or in ce??
-	# $ce->{viewProblemURL}	=	$viewProblemURL;
-	$ce->{problemPath} 		= 	$problemPath;
-	$self->{displayMode}	=	$displayMode;
-	$self->{problemSeed}	=	$problemSeed;
-#	$ce->{path_components}	=	join("/",$setID,$problemNumber);
-	
-	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
-
-	
-	
-}
 
 # sub gatherProblemList {   #workaround for obtaining the definition of a problem set (awaiting implementation of db function)
 # 	my $self = shift;
