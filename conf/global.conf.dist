@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.86 2004/07/08 15:23:28 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.87 2004/07/10 16:05:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,58 +19,27 @@
 # requests. Values may be overwritten by the course.conf for a specific course.
 # All package variables set in this file are added to the course environment.
 # If you wish to set a variable here but omit it from the course environment,
-# use the "my" keyword. The following variables are available to this file:
-#
-#         $webworkRoot    directory that contains the WeBWorK distribution
-#                         corresponds to the directory !WEBWORK_ROOT! in the stanza below
-#         $webworkURLRoot base URL handled by Apache::WeBWorK
-#                         corresponds to url /webwork2 in the stanza below
-#         $pgRoot         directory that contains the PG distribution
-#                         corresponds to the directory !PG_ROOT! below
-#         $courseName     name of the course being used (e.g. mth101)
-#
-#   Stanza placed in the httpd.conf directory
-# <Location /webwork2>
-#     SetHandler perl-script
-#     PerlHandler Apache::WeBWorK
+# use the "my" keyword. The following variables are set in the WeBWorK Apache
+# configuration file (webwork.apache-config) and available for use here:
 # 
-#     PerlSetVar webwork_root !WEBWORK_ROOT!
-#     PerlSetVar pg_root !PG_ROOT!
-#     <Perl>
-# 	use lib '!WEBWORK_ROOT!/lib';
-# 	use lib '!PG_ROOT!/lib';
-#     </Perl>
-# </Location>
+#     $webwork_url            The base URL handled by Apache::WeBWorK.
+#     $webwork_dir            The path to the base webwork2 directory.
+#     $pg_dir                 The path to the base pg directory.
+#     
+#     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
+#     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
+#     
+#     $webwork_courses_url    The base URL of the WeBWorK courses directory.
+#     $webwork_courses_dir    The path to the WeBWorK courses directory.
+# 
+# In addition, the $courseName variable holds the name of the current course.
 
-################################################################################
-# The following two variables must match the first and second entries of the 
-# AliasMatch statement placed in the httpd.conf file
-################################################################################
-
-
-# The AliasMatch directive directs to files stored in the html directory of each course.
-# AliasMatch ^/webwork2_course_files/([^/]*)/(.*) !COURSES_ROOT!/$1/html/$2
-#                     URL                --------->   html directory of the course
-#
-#    $1 matches the courseName     $2 matches any subdirectories of the course html directory
-#    !COURSES_ROOT!  matches $courseDirsRoot
-
-my $courseURLRoot = "/webwork2_course_files/$courseName";
-
-my $courseDirsRoot = "$webworkRoot/courses/";
-
-
-# This alias directive redirects /webwork2_files to the toplevel material in the global webwork2/htdocs directory 
-# Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
-
-my $webworkLocalDocsURL   = "/webwork2_files";
-my $webworkLocalDocsDir   = "$webworkRoot/htdocs";
 ################################################################################
 # System-wide locations (directories and URLs)
 ################################################################################
 
 # The root directory, set by webwork_root variable in Apache configuration.
-$webworkDirs{root}          = "$webworkRoot";
+$webworkDirs{root}          = "$webwork_dir";
 
 # Location of system-wide data files.
 $webworkDirs{DATA}          = "$webworkDirs{root}/DATA";
@@ -85,7 +54,7 @@ $webworkDirs{bin}           = "$webworkDirs{root}/bin";
 $webworkDirs{conf}          = "$webworkDirs{root}/conf";
 
 # Location of course directories.
-$webworkDirs{courses}       = "$courseDirsRoot";
+$webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
 
 # Contains the WeBWorK libraries. (FIXME: not used)
 #$webworkDirs{lib}           = "$webworkDirs{root}/lib";
@@ -94,7 +63,7 @@ $webworkDirs{courses}       = "$courseDirsRoot";
 $webworkDirs{logs}          = "$webworkDirs{root}/logs";
 
 # Location of PG macros. (FIXME: not used)
-#$webworkDirs{macros}        = "$pgRoot/macros";
+#$webworkDirs{macros}        = "$pg_dir/macros";
 
 # Contains non-web-accessible temporary files, such as TeX working directories.
 $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
@@ -102,12 +71,12 @@ $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
 ##### The following locations are web-accessible.
 
 # The root URL (usually /webwork2), set by <Location> in Apache configuration.
-$webworkURLs{root}          = "$webworkURLRoot";
+$webworkURLs{root}          = "$webwork_url";
 
 # Location of system-wide web-accessible files, such as equation images, and
 # help files.
-$webworkDirs{htdocs}        = "$webworkLocalDocsDir";
-$webworkURLs{htdocs}        = "$webworkLocalDocsURL";
+$webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
+$webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
 # The URL of the static WeBWorK home page (FIXME: not used)
 #$webworkURLs{home}          = "$webworkURLs{htdocs}/index.html";
@@ -157,7 +126,7 @@ $courseDirs{auth_DATA}   = "$courseDirs{DATA}/.auth";
 
 # Location of course HTML files, passed to PG.
 $courseDirs{html}        = "$courseDirs{root}/html";
-$courseURLs{html}        = "/webwork2_course_files/$courseName";
+$courseURLs{html}        = "$webwork_courses_url/$courseName";
 #$courseURLs{root}        = $courseURLs{html}; # FIXME: not used
 
 # Location of course image files, passed to PG.
@@ -382,7 +351,7 @@ include "conf/database.conf";
 # use courses from WeBWorK 1 without first adding course.conf files to them.
 # However, the recommended database layout for new courses is "sql". This can
 # be set when creating a course.
-$dbLayoutName = "sql"; # or: "gdbm"
+$dbLayoutName = "sql"; # or "gdbm";
 
 # This sets the symbol "dbLayout" as an alias for the selected database layout.
 *dbLayout     = $dbLayouts{$dbLayoutName};
@@ -545,7 +514,7 @@ $pg{displayModeOptions}{images} = {
 ##### Directories used by PG
 
 # The root of the PG directory tree (from pg_root in Apache config).
-$pg{directories}{root}   = "$pgRoot";
+$pg{directories}{root}   = "$pg_dir";
 $pg{directories}{lib}    = "$pg{directories}{root}/lib";
 $pg{directories}{macros} = "$pg{directories}{root}/macros";
 
@@ -617,3 +586,12 @@ $pg{ansEvalDefaults} = {
 	useBaseTenLog                 => 0,
 	defaultDisplayMatrixStyle     => "[s]",
 };
+
+################################################################################
+# Compatibility
+################################################################################
+
+# Define the old names for the various "root" variables.
+$webworkRoot    = $webworkDirs{root};
+$webworkURLRoot = $webworkURLs{root};
+$pgRoot         = $pg{directories}{root};

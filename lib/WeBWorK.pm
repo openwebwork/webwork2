@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.61 2004/07/01 23:35:22 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.62 2004/07/03 17:13:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,6 +59,8 @@ use WeBWorK::Utils qw(runtime_use);
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
+our %SeedCE;
+
 sub dispatch($) {
 	my ($apache) = @_;
 	my $r = new WeBWorK::Request $apache;
@@ -68,8 +70,8 @@ sub dispatch($) {
 	my $uri = $r->uri;
 	my $path_info = $r->path_info | "";
 	my $args = $r->args || "";
-	my $webwork_root = $r->dir_config("webwork_root");
-	my $pg_root = $r->dir_config("pg_root");
+	#my $webwork_root = $r->dir_config("webwork_root");
+	#my $pg_root = $r->dir_config("pg_root");
 	
 	debug("Hi, I'm the new dispatcher!\n");
 	debug(("-" x 80) . "\n");
@@ -80,8 +82,8 @@ sub dispatch($) {
 	debug("The URI is $uri\n");
 	debug("The path-info is $path_info\n");
 	debug("The argument string is $args\n");
-	debug("The WeBWorK root directory is $webwork_root\n");
-	debug("The PG root directory is $pg_root\n");
+	#debug("The WeBWorK root directory is $webwork_root\n");
+	#debug("The PG root directory is $pg_root\n");
 	debug(("-" x 80) . "\n");
 	
 	debug("The first thing we need to do is munge the path a little:\n");
@@ -167,7 +169,13 @@ sub dispatch($) {
 	$WeBWorK::timer->start;
 	
 	debug("We need to get a course environment (with or without a courseID!)\n");
-	my $ce = eval { new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID}) };
+	my $ce = eval { new WeBWorK::CourseEnvironment({
+		#webworkRoot => $r->dir_config("webwork_root"),
+		#webworkURLRoot => $location,
+		#pgRoot => $r->dir_config("pg_root"),
+		%SeedCE,
+		courseName => $displayArgs{courseID},
+	}) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
