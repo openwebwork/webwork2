@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.2 2002-11-25 08:29:55 sh002i Exp $
+# $Id: global.conf.dist,v 1.3 2002-11-26 21:49:51 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -14,6 +14,8 @@
 #         $courseName     name of the course being used
 
 ################################################################################
+# WeBWorK settings
+################################################################################
 
 %webworkDirs = (
 	root    => "$webworkRoot",
@@ -24,20 +26,6 @@
 	logs    => "$webworkRoot/logs",
 	macros  => "$webworkRoot/macros",
 	tmp     => "$webworkRoot/tmp",
-);
-
-my $courseRoot = "$webworkDirs{courses}/$courseName";
-%courseDirs = (
-	root        => "$courseRoot",
-	DATA        => "$courseRoot/DATA",
-	auth_DATA   => "$courseRoot/DATA/.auth",
-	html        => "$courseRoot/html",
-	html_images => "$courseRoot/html/images",
-	html_temp   => "$courseRoot/html/tmp",
-	logs        => "$courseRoot/logs",
-	scoring     => "$courseRoot/scoring",
-	templates   => "$courseRoot/templates",
-	macros      => "$courseRoot/templates/macros",
 );
 
 %webworkFiles = (
@@ -59,24 +47,85 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 	},
 );
 
-%courseFiles = (
-	environment       => "$courseDirs{root}/course.conf",
-);
-
-my $webworkURLRoot = "/webwork";
+my $webworkURLRoot = "/webwork"; # *** # this should be detected!
 %webworkURLs = (
 	root   => "$webworkURLRoot",
 	htdocs => "/webwork_files",
 	docs   => "http://webhost.math.rochester.edu/webworkdocs/docs",
 );
 
-my $courseURLRoot = "$webworkURLs{htdocs}/$courseName";
+################################################################################
+# Default course-specific settings
+################################################################################
+
+my $courseRoot = "$webworkDirs{courses}/$courseName";
+%courseDirs = (
+	root        => "$courseRoot",
+	DATA        => "$courseRoot/DATA",
+	auth_DATA   => "$courseRoot/DATA/.auth",
+	html        => "$courseRoot/html",
+	html_images => "$courseRoot/html/images",
+	html_temp   => "$courseRoot/html/tmp",
+	logs        => "$courseRoot/logs",
+	scoring     => "$courseRoot/scoring",
+	templates   => "$courseRoot/templates",
+	macros      => "$courseRoot/templates/macros",
+);
+
+%courseFiles = (
+	environment => "$courseDirs{root}/course.conf",
+);
+
+my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 %courseURLs = (
-	base      => "$courseURLRoot",
+	base      => "$courseURLRoot", # *** # this should be "root"?
 	html      => "$courseURLRoot",
 	html_temp => "$courseURLRoot/tmp",
 );
 
+################################################################################
+# Other site-specific options
+################################################################################
+
+%mail = (
+	smtpServer => "mail.math.rochester.edu",
+	smtpSender => "webwork\@math.rochester.edu",
+);
+
+%externalPrograms = (
+	mv       => "/bin/mv", # *** is this used? probably not...
+	tth      => "/usr/local/bin/tth",
+	pdflatex => "/usr/local/bin/pdflatex",
+	latex    => "/usr/local/bin/latex",
+	dvipng   => "/usr/local/bin/dvipng -mode ljfivemp -D600 -Q6 -x1000.5 -bgTransparent",
+	gif2eps  => "$webworkDirs{bin}/gif2eps",
+	png2eps  => "$webworkDirs{bin}/png2eps",
+	gif2png  => "$webworkDirs{bin}/gif2png",
+);
+
+################################################################################
+# Frontend options 
+################################################################################
+
+%templates = (
+	system => "$webworkDirs{conf}/barebones.template",
+);
+
+# $sessionKeyTimeout defines seconds of inactivity before a key expires
+$sessionKeyTimeout = 60*30;
+
+# Practice users are users who's names start with $practiceUser
+# (you can comment this out to remove practice user support)
+$practiceUserPrefix = "practice";
+
+# There is a practice user who can be logged in multiple times.  He's
+# commented out by default, though, so you don't hurt yourself.  It is
+# kindof a backdoor to the practice user system, since he doesn't have a
+# password.  Come to think of it, why do we even have this?!
+#$debugPracticeUser = "practice666";
+
+################################################################################
+# Database and session 
 ################################################################################
 
 %dbInfo = (
@@ -91,23 +140,6 @@ my $courseURLRoot = "$webworkURLs{htdocs}/$courseName";
 	psvn_digits      => 5,
 );
 
-%templates = (
-	system => "$webworkDirs{conf}/barebones.template",
-);
-
-# sessionKeyTimeout defines length of inactivity before a key expires (seconds)
-$sessionKeyTimeout = 60*30;
-
-# Practice users are users who's names start with $practiceUser
-# (you can comment this out to remove practice user support)
-$practiceUserPrefix = "practice";
-
-# There is a practice user who can be logged in multiple times.  He's
-# commented out by default, though, so you don't hurt yourself.  It is
-# kindof a backdoor to the practice user system, since he doesn't have a
-# password.  Come to think of it, why do we even have this?!
-#$debugPracticeUser = "practice666";
-
 # This lets you specify a minimum permission level needed to perform
 # certain actions.  In the current system, >=10 will allow a professor
 # to perform the action, >=5 will allow a TA to, and >=0 will allow a
@@ -116,24 +148,21 @@ $practiceUserPrefix = "practice";
 	"become_student" => 10,
 );
 
-# mail
-%mail = (
-	smtpServer => "mail.math.rochester.edu",
-	smtpSender => "webwork\@math.rochester.edu",
-);
+################################################################################
+# PG translation options
+################################################################################
 
-# PG translation stuff
 %pg = (
 	options => {
-		# default translation options:
+		# default translation options
 		displayMode        => "images",
 		showOldAnswers     => 1,
 		showCorrectAnswers => 0,
 		showHints          => 0,
 		showSolutions      => 0,
+		catchWarnings      => 1,
 		# default grader
 		grader => "avg_problem_grader",
-		catchWarnings      => 1,
 	},
 	# modules lists module names and the packages each contains
 	modules => [
@@ -180,15 +209,4 @@ $practiceUserPrefix = "practice";
 		numZeroLevelDefault           => 1E-14,
 		numZeroLevelTolDefault        => 1E-12,
 	},
-);
-
-%externalPrograms = (
-	mv       => "/bin/mv", # *** is this used? probably not...
-	tth      => "/usr/local/bin/tth",
-	pdflatex => "/usr/local/bin/pdflatex",
-	latex    => "/usr/local/bin/latex",
-	dvipng   => "/usr/local/bin/dvipng -mode ljfivemp -D600 -Q6 -x1000.5 -bgTransparent",
-	gif2eps  => "$webworkDirs{bin}/gif2eps",
-	png2eps  => "$webworkDirs{bin}/png2eps",
-	gif2png  => "$webworkDirs{bin}/gif2png",
 );
