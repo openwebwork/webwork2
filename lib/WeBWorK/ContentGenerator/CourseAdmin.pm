@@ -616,6 +616,7 @@ sub do_add_course {
 			}
 		}
 	} else {
+	    #log the action
 	    writeLog($ce, "hosted_courses", join("\t",
 	    	"\tAdded",
 	    	$add_contact_institution,
@@ -624,6 +625,8 @@ sub do_add_course {
 	    	$add_contact_person,
 	  		$add_contact_email,
 	    ));
+	    # add contact to admin course as student?
+	    # FIXME -- should we do this?
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully created the course $add_courseID"),
 		);
