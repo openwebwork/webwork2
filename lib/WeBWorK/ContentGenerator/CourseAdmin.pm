@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.11 2004/05/21 20:55:38 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.12 2004/05/22 01:08:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -608,7 +608,11 @@ sub delete_course_form {
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-		CGI::td(CGI::textfield("delete_sql_database", $delete_sql_database, 25)),
+		CGI::td(
+			CGI::textfield("delete_sql_database", $delete_sql_database, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+		),
 	);
 	print CGI::end_table();
 	
@@ -649,8 +653,8 @@ sub delete_course_validate {
 	
 	if ($ce2->{dbLayoutName} eq "sql") {
 		push @errors, "You must specify the SQL admin username." if $delete_sql_username eq "";
-		push @errors, "You must specify the SQL admin password." if $delete_sql_password eq "";
-		push @errors, "You must specify the SQL database name." if $delete_sql_database eq "";
+		#push @errors, "You must specify the SQL admin password." if $delete_sql_password eq "";
+		#push @errors, "You must specify the SQL database name." if $delete_sql_database eq "";
 	}
 	
 	return @errors;
@@ -694,7 +698,7 @@ sub delete_course_confirm {
 			),
 			CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td($delete_sql_database),
+				CGI::td($delete_sql_database || "webwork_$delete_courseID"),
 			),
 		);
 	} else {
@@ -744,7 +748,7 @@ sub do_delete_course {
 		$dbOptions{port}     = $delete_sql_port if $delete_sql_port ne "";
 		$dbOptions{username} = $delete_sql_username;
 		$dbOptions{password} = $delete_sql_password;
-		$dbOptions{database} = $delete_sql_database;
+		$dbOptions{database} = $delete_sql_database || "webwork_$delete_courseID";
 	}
 	
 	eval {
