@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime);
+use WeBWorK::Timing;
 
 sub initialize {
 	my ($self) = @_;
@@ -31,7 +32,6 @@ sub initialize {
 		}
 	}
 }
-	
 
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
 # will have to be rewritten some.
@@ -61,7 +61,6 @@ sub scoreSet {
 	for (my $i = 0; $i < keys(%users) + 7; $i++) { # 7 is how many descriptive fields there are in each column
 		push @scoringData, [];
 	}
-	
 	
 	unless ($format eq "totals") {
 		$scoringData[0][0] = "NO OF FIELDS";
