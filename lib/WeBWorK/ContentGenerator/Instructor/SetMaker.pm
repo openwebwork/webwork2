@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.18 2004/06/06 21:03:54 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.19 2004/06/07 02:50:52 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -117,13 +117,9 @@ sub add_selected {
   for $selected (@selected) {
     if($selected->[1] & ADDED) {
       $file = $selected->[0];
-      my $problemRecord = $db->newGlobalProblem();
-      $problemRecord->problem_id($freeProblemID++);
-      $problemRecord->set_id($setName);
-      $problemRecord->source_file($file);
-      $problemRecord->value("1");
-      $problemRecord->max_attempts("-1");
-      $db->addGlobalProblem($problemRecord);
+      my $problemRecord = $self->addProblemToSet(setName => $setName,
+        sourceFile => $file, problemID => $freeProblemID);
+      $freeProblemID++;
       $self->assignProblemToAllSetUsers($problemRecord);
       $selected->[1] |= SUCCESS;
       $addedcount++;
