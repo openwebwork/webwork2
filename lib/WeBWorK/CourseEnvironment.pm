@@ -41,7 +41,6 @@ sub new {
 	# if readFile failed, we don't bother trying to reval
 	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
 	$@ or $safe->reval($courseFileContents);
-	$@ = "";
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
@@ -115,7 +114,7 @@ sub array2string {
 sub readFile {
 	my $fileName = shift;
 	open INPUTFILE, "<", $fileName
-		or die "Couldn't open environment file $fileName: $!";
+		;#or die "Couldn't open environment file $fileName: $!";
 	my $result = join "\n", <INPUTFILE>;
 	close INPUTFILE;
 	return $result;
