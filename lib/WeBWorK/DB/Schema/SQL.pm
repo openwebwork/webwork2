@@ -370,7 +370,7 @@ sub makeWhereClause($@) {
 		next unless defined $part;
 		
 		$where .= " AND" unless $first;
-		$where .= " $name=?";
+		$where .= " BINARY $name=?";
 		push @used_keyparts, $part;
 		
 		$first = 0;
