@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.57 2004/06/17 20:10:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.58 2004/06/23 00:37:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -189,7 +189,7 @@ sub dispatch($) {
 	
 	my ($db, $authz);
 	
-	if ($displayArgs{courseID}) {
+	if ($displayArgs{courseID} and not $ce->{'!'}) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
 		debug("...we can create a database object...\n");
 		$db = new WeBWorK::DB($ce->{dbLayout});
@@ -224,9 +224,9 @@ sub dispatch($) {
 			debug("userID=$userID eUserID=$eUserID\n");
 			my $su_authorized = $authz->hasPermissions($userID, "become_student", $eUserID);
 			if ($su_authorized) {
-				debug("Ok, looks like you're is allowed to become $eUserID. Whoopie!\n");
+				debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 			} else {
-				debug("Uh oh, you're isn't allowed to become $eUserID. Nice try!\n");
+				debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
 				$eUserID = $userID;
 			}
 			$r->param("effectiveUser" => $eUserID);
@@ -235,6 +235,15 @@ sub dispatch($) {
 			$displayModule = AUTHEN_MODULE;
 			debug("set displayModule to $displayModule\n");
 		}
+	}
+	
+	# if a course ID was given in the URL and resulted in an error (as stored in $!)
+	# it probably means that the course does not exist or was misspelled
+	if ($displayArgs{courseID} and $ce->{'!'}) {
+		debug("Something was wrong with the courseID: \n");
+		debug("\t\t" . $ce->{'!'} . "\n");
+		debug("Time to bail!\n");
+		return DECLINED;
 	}
 	
 	debug(("-" x 80) . "\n");
