@@ -57,6 +57,9 @@
      <hr />
      <div>
       <small>
+         <a href="http://webwork3.math.rochester.edu/bugzilla"> Report bugs</a>
+         <hr />
+     
        <!--#links-->
       </small>
      </div>

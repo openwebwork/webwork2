@@ -41,8 +41,11 @@
     <td align="left" rowspan="2">
      <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" /><br />
      <hr />
+     
      <div>
       <small>
+            <a href="http://webwork3.math.rochester.edu/bugzilla"> Report bugs</a>
+            </hr />
        <!--#links-->
       </small>
      </div>
