@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.53 2004/06/09 21:40:36 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.54 2004/06/13 01:30:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,10 +63,28 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use WeBWorK::Authen qw(checkKey);
 use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
 use constant HIDE_USERS_THRESHHOLD => 50;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter edit  import export add delete)];
+use constant VIEW_FORMS => [qw(filter edit import export add delete)];
+
+# permissions needed to perform a given action
+use constant FORM_PERMS => {
+		saveEdit => "modify_student_data",
+		edit => "modify_student_data",
+		import => "modify_student_data",
+		export => "modify_classlist_files",
+		add => "modify_student_data",
+		delete => "modify_student_data",
+};
+
+# permissions needed to view a given field
+use constant FIELD_PERMS => {
+		act_as => "become_student",
+		sets	=> "assign_problem_sets",
+};
+
 use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode sortField)];
 
 use constant SORT_SUBS => {
@@ -148,12 +166,17 @@ sub pre_header_initialize {
 	my $self          = shift;
 	my $r             = $self->r;
 	my $urlpath       = $r->urlpath;
+	my $authz         = $r->authz;
 	my $ce            = $r->ce;
 	my $courseName    = $urlpath->arg("courseID");
+	my $user          = $r->param('user');
 	# Handle redirects, if any.
 	##############################
 	# Redirect to the addUser page
 	##################################
+
+	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	defined($r->param('action')) && $r->param('action') eq 'add' && do {
 		# fix url and redirect
@@ -202,10 +225,8 @@ sub initialize {
 	my $authz  = $r->authz;
 	my $user   = $r->param('user');
 
-	unless ($authz->hasPermissions($user, "modify_student_data")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data")));
-		return;
-	}
+	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	#if (defined($r->param('addStudent'))) {
 	#	my $newUser = $db->newUser;
@@ -241,7 +262,7 @@ sub body {
 	my $userTemplate            = $self->{userTemplate}            = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 	
-	return CGI::em("You are not authorized to access the Instructor tools.")
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	# This table can be consulted when display-ready forms of field names are needed.
@@ -276,6 +297,7 @@ sub body {
 	########## set initial values for state fields
 	
 	my @allUserIDs = $db->listUsers;
+	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
 	$self->{allUserIDs} = \@allUserIDs;
 	
 	if (defined $r->param("visible_users")) {
@@ -299,6 +321,10 @@ sub body {
 	}
 	
 	$self->{editMode} = $r->param("editMode") || 0;
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data"))
+		if $self->{editMode} and not $authz->hasPermissions($user, "modify_student_data");
+
 	
 	$self->{sortField} = $r->param("sortField") || "last_name";
 	
@@ -318,21 +344,25 @@ sub body {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }) {
 			die "Action $actionID not found";
 		}
-		my $actionHandler = "${actionID}_handler";
-		my %genericParams;
-		foreach my $param (qw(selected_users)) {
-			$genericParams{$param} = [ $r->param($param) ];
+		# Check permissions
+		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
+			my $actionHandler = "${actionID}_handler";
+			my %genericParams;
+			foreach my $param (qw(selected_users)) {
+				$genericParams{$param} = [ $r->param($param) ];
+			}
+			my %actionParams = $self->getActionParams($actionID);
+			my %tableParams = $self->getTableParams();
+			print CGI::p(
+			    '<div style="color:green">',
+				"Result of last action performed: ",
+				CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)),
+				'</div>',
+				CGI::hr()
+			);
+		} else {
+			return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to perform this action."));
 		}
-		my %actionParams = $self->getActionParams($actionID);
-		my %tableParams = $self->getTableParams();
-		print CGI::p(
-		    '<div style="color:green">',
-			"Result of last action performed: ",
-			CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)),
-			'</div>',
-			CGI::hr()
-			
-		);
 	}
 		
 	########## retrieve possibly changed values for member fields
@@ -422,6 +452,8 @@ sub body {
 	
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
+		# Check permissions
+		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 		my $actionForm = "${actionID}_form";
 		my $onChange = "document.userlist.action[$i].checked=true";
 		my %actionParams = $self->getActionParams($actionID);
@@ -441,7 +473,7 @@ sub body {
 	
 	########## print table
 	
-	print CGI::p("Showing ", scalar @visibleUserIDs, " out of ", scalar @allUserIDs, " users.");
+	print CGI::p("Showing ", scalar @Users, " out of ", scalar @allUserIDs, " users.");
 	
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
@@ -575,6 +607,7 @@ sub filter_handler {
 
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
+
 	return join("",
 		"Edit ",
 		CGI::popup_menu(
@@ -593,7 +626,7 @@ sub edit_form {
 
 sub edit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
+
 	my $result;
 	
 	my $scope = $actionParams->{"action.edit.scope"}->[0];
@@ -614,6 +647,7 @@ sub edit_handler {
 
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
+
 	return join("",
 	    	CGI::div({class=>"ResultsWithError"},
 		"Delete ",
@@ -637,6 +671,7 @@ sub delete_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r         = $self->r;
 	my $db        = $r->db;
+	my $user      = $r->param('user');
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 	
 	my @userIDsToDelete = ();
@@ -651,19 +686,25 @@ sub delete_handler {
 	my %visibleUserIDs = map { $_ => 1 } @{ $self->{visibleUserIDs} };
 	my %selectedUserIDs = map { $_ => 1 } @{ $self->{selectedUserIDs} };
 	
+	my $error = "";
+	my $num = 0;
 	foreach my $userID (@userIDsToDelete) {
+		if ($user eq $userID) { # don't delete yourself!!
+			$error = "You cannot delete yourself!";
+			next;
+		}
 		delete $allUserIDs{$userID};
 		delete $visibleUserIDs{$userID};
 		delete $selectedUserIDs{$userID};
 		$db->deleteUser($userID);
+		$num++;
 	}
 	
 	$self->{allUserIDs} = [ keys %allUserIDs ];
 	$self->{visibleUserIDs} = [ keys %visibleUserIDs ];
 	$self->{selectedUserIDs} = [ keys %selectedUserIDs ];
 	
-	my $num = @userIDsToDelete;
-	return "deleted $num user" . ($num == 1 ? "" : "s");
+	return "deleted $num user" . ($num == 1 ? "" : "s.  ") . $error;
 }
 sub add_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -927,6 +968,7 @@ sub importUsersFromCSV {
 	my $ce    = $r->ce;
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
+	my $user  = $r->param('user');
 	
 	die "illegal character in input: \"/\"" if $fileName =~ m|/|;
 	die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
@@ -952,6 +994,11 @@ sub importUsersFromCSV {
 			$student_id, $last_name, $first_name, $status, $comment,
 			$section, $recitation, $email_address, $user_id
 		) = split /\s*,\s*/, $string;
+		
+		if ($user_id eq $user) { # don't replace yourself!!
+			push @skipped, $user_id;
+			next;
+		}
 		
 		if (exists $allUserIDs{$user_id} and not exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
@@ -1079,7 +1126,10 @@ sub recordEditHTML {
 	my ($self, $User, $PermissionLevel, %options) = @_;
 	my $r           = $self->r;
 	my $urlpath     = $r->urlpath;
+	my $db          = $r->db;
 	my $ce          = $r->ce;
+	my $authz	= $r->authz;
+	my $user	= $r->param('user');
 	my $root        = $ce->{webworkURLs}->{root};
 	my $courseName  = $urlpath->arg("courseID");
 	
@@ -1087,6 +1137,9 @@ sub recordEditHTML {
 	my $userSelected = $options{userSelected};
 
 	my $statusClass = $ce->{siteDefaults}->{status}->{$User->{status}};
+
+	my $sets = $db->countUserSets($User->user_id);
+	my $totalSets = $self->{totalSets};
 	
 	my $changeEUserURL = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
 										   params => {effectiveUser => $User->user_id}
@@ -1124,7 +1177,20 @@ sub recordEditHTML {
 		# column not there
 	} else {
 		# selection checkbox
-		push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
+		if ( FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as}) ){
+			push @tableCells, $User->user_id . $imageLink;
+		} else {
+			push @tableCells, CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
+		}
+	}
+	
+	# Login Status
+	if ($editMode) {
+		# column not there
+	} else {
+		# check to see if a user is currently logged in
+		my $Key = $db->getKey($User->user_id);
+		push @tableCells, ($Key and WeBWorK::Authen::checkKey($self, $User->user_id, $Key->key)) ? CGI::b("active") : CGI::em("inactive");
 	}
 	
 	# User ID
@@ -1133,7 +1199,12 @@ sub recordEditHTML {
 		push @tableCells, CGI::div({class=>$statusClass}, $User->user_id);
 	} else {
 		# "edit sets assigned to user" link
-		push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");
+		#push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");
+		if ( FIELD_PERMS()->{sets} and not $authz->hasPermissions($user, FIELD_PERMS()->{sets}) ) {
+			push @tableCells, "$sets/$totalSets";
+		} else {
+			push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "$sets/$totalSets");
+		}
 	}
 
 	# User Fields
@@ -1189,7 +1260,7 @@ sub printTableHTML {
 	};
 	
 	# prepend selection checkbox? only if we're NOT editing!
-	unshift @tableHeadings, "Select", "Act As" unless $editMode;
+	unshift @tableHeadings, "Select", "Act As", "Login Status" unless $editMode;
 	
 	# print the table
 	if ($editMode) {
