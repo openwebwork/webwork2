@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: 
+# $CVSHeader: $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -507,8 +507,7 @@ sub body {
     my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r->{ce}, "$chap", "$sect");
     my ($result, $tolibpath);
     for $result (@dbsearch) {
-      $tolibpath = "$result->{path}/$result->{filename}";
-      $tolibpath =~ s|^/ud/jj/src/Database/Libs|Library|;
+      $tolibpath = "Library/$result->{path}/$result->{filename}";
       
       ## Too clunky!!!!
       push @pg_files, $tolibpath;
