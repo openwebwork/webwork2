@@ -45,19 +45,32 @@ sub go {
 		my $editFileSuffix  =	$self->{ce}->{editFileSuffix};
 		my $problemSeed		= 	($r->param('problemSeed')) ? $r->param('problemSeed') : '';
 		my $displayMode		=	($r->param('displayMode')) ? $r->param('displayMode') : '';
-
-		my $viewURL  		= 	"http://$hostname:$port";
-		$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
-		$viewURL		   .=	$self->url_authen_args;
-		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
-		if ($submit_button eq 'Save') {
-			$viewURL		   .=	"&editMode=savedFile";
-		} else {		
-			$viewURL		   .=	"&editMode=temporaryFile";
+        my $viewURL         =   '';
+        if ($self->{file_type} eq 'problem') {
+        	# redirect to have problem read by Problem.pm
+			$viewURL  		= 	"http://$hostname:$port";
+			$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
+			$viewURL		   .=	$self->url_authen_args;
+			$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
+			if ($submit_button eq 'Save') {
+				$viewURL		   .=	"&editMode=savedFile";
+			} else {		
+				$viewURL		   .=	"&editMode=temporaryFile";
+			}
+			$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
+			#$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
+	#		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 
+	                                                                                   # of problem being viewed.
+	    } elsif ($self->{file_type} eq 'set_header') {
+	    	# redirect set headers to ProblemList page
+	    	$viewURL  		= 	"http://$hostname:$port";
+			$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/?";
+			$viewURL		   .=	$self->url_authen_args;
+			$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
+			if ($submit_button eq 'Save') {
+				$viewURL		   .=	"&editMode=savedFile";
+			}
 		}
-		$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
-		#$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
-#		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 		$r->header_out(Location => $viewURL );
 		return REDIRECT;
 	} else {
@@ -102,10 +115,12 @@ sub initialize {
 		die "Cannot find a problem record for set $setName / problem $problemNumber" 
 			unless defined($problem_record);
 		$problemPath           .=   '/'.$problem_record->source_file;
+		$self->{file_type}      =   'problem';
 	} elsif (defined($problemNumber) and $problemNumber==0) { # we are editing a header file
 		my $set_record          =   $db->getMergedSet($effectiveUserName, $setName);
 		die "Cannot find a set record for set $setName" unless defined($set_record);	
 		$problemPath           .=   '/'.$set_record->set_header;
+		$self->{file_type}      =   'set_header';
 	}
 	
 	my $editFileSuffix			=	'tmp';
@@ -295,6 +310,7 @@ sub body {
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
 		qq!<form method="POST" action="$uri" enctype="application/x-www-form-urlencoded", target="_problem">!,
 		$self->hidden_authen_fields,
+		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div(
 		CGI::textfield(-name=>'problemSeed',-value=>$problemSeed),
 		'Mode: ',
@@ -311,7 +327,7 @@ sub body {
 			),
 		),
 		CGI::p(
-			CGI::submit(-value=>'Refresh',-name=>'submit'),
+			( ($self->{file_type} eq 'problem') ? CGI::submit(-value=>'Refresh',-name=>'submit') : ''   ),
 			CGI::submit(-value=>'Save',-name=>'submit'),
 #			$actionString
 		),
