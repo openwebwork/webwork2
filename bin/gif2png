@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# This script wraps system-dependant calls to several netpbm utilities.
+# In order to use this script, set the NETPBM variable below to the
+# directory which contains giftopnm, ppmtopgm, and pnmtops.
+
+NETPBM=/usr/local/bin
+
+# If you wish to set the paths to each utility separately, i.e. if they
+# are in different locations, do so below:
+
+GIFTOPNM=$NETPBM/giftopnm;
+PNMTOPNG=$NETPBM/pnmtopng;
+
+# There should be no need for customization beyond this point.
+
+umask 022
+cat $1 | $GIFTOPNM | $PNMTOPNG > $2
