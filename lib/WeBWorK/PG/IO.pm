@@ -233,7 +233,7 @@ sub dvipng($$$$$) {
 	
 	my $texFile  = "$wd/equation.tex";
 	my $dviFile  = "$wd/equation.dvi";
-	my $dviFile2 = "$wd/equationequation.dvi";
+	#my $dviFile2 = "$wd/equationequation.dvi"; # this work around is no longer needed -- see below.
 	my $dviCall  = "equation";
 	my $pngFile  = "$wd/equation1.png";
 	
@@ -268,14 +268,18 @@ EOF
 	return 0 unless -e $dviFile;
 	
 	# change the name of the DVI file to get around dvipng's crackheadedness
-	system "/bin/mv", $dviFile, $dviFile2;
+	# This is no longer needed with the newest version of dvipng (10 something)
+	#system "/bin/mv", $dviFile, $dviFile2;
 	
-	# call dvipng
-	system "cd $wd && $dvipng $dviCall" and die "dvipng:dvipng failed: $!";
+	# call dvipng  -- using warn instead of die passes some extra information back to the user
+	# the complete warning is still printed in the apache error log and a simple message (mth2image failed) is returned
+	# to the webpage.
+	my $cmdout;
+	$cmdout = system "cd $wd && $dvipng $dviCall" and warn "dvipng:dvipng call cd $wd && $dvipng $dviCall failed: $! with signal $cmdout";
 	
 	return 0 unless -e $pngFile;
 	
-	system "/bin/mv", $pngFile, $targetPath and die "Failed to mv: $!\n";
+	$cmdout = system "/bin/mv", $pngFile, $targetPath and warn "Failed to mv: /bin/mv  $pngFile $targetPath $!. Call returned $cmdout. \n";
 }
 
 1;
