@@ -17,6 +17,7 @@
 package WeBWorK::DBv3;
 use base 'Class::DBI';
 use WeBWorK::DBv3::NormalizerMixin;
+use Class::DBI::Plugin::AbstractCount;
 
 =head1 NAME
 
@@ -177,12 +178,12 @@ DATETIME column should be inflated to and deflated from a DateTime.pm object.
 
 =cut
 
-sub datetime_inflate {
+sub _datetime_inflate {
 	my $dt = $dt_format->parse_datetime($_[0]) or _croak("invalid date: '$_[0]'");
 	return $dt->set_time_zone("UTC");
 }
 
-sub datetime_deflate {
+sub _datetime_deflate {
 	my $dt = $_[0]->clone->set_time_zone("UTC"); # clone to avoid changing timezone of original object
 	return $dt_format->format_datetime($dt);
 }
@@ -195,8 +196,8 @@ sub has_a_datetime {
 	
 	$class->has_a(
 		$field  => "DateTime",
-		inflate => \&datetime_inflate,
-		deflate => \&datetime_deflate,
+		inflate => \&_datetime_inflate,
+		deflate => \&_datetime_deflate,
 	);
 }
 
@@ -253,7 +254,7 @@ True values will be normalized to C<1>, false values to C<0>.
 
 =cut
 
-sub bool_normalizer { $_[0] ? 1 : 0 }
+sub _bool_normalizer { $_[0] ? 1 : 0 }
 sub has_a_boolean {
 	my ($class, $field) = @_;
 	return unless $field;
@@ -263,7 +264,93 @@ sub has_a_boolean {
 
 =back
 
+=head2 MACROS FOR UNIQUENESS CONSTRAINTS
+
+has_unique_columns() allows you do define uniqueness constraints by listing the
+fields that must be unique:
+
+ __PACKAGE__->has_unique_columns($name => qw/field1 field2 field3/);
+
+$name gives a name to this constraint, which is included in the error message
+given when the conditions of the constraint are not met.
+
 =cut
+
+sub has_unique_columns {
+	my ($class, $name, @columns) = @_;
+	
+	$class->_invalid_object_method('has_unique_columns()') if ref $class;
+	$name or $class->_croak("has_unique_columns needs a name");
+	
+	foreach my $column (@columns) {
+		# normalize columns, and croak on any invalid columns
+		my $normalized_column = $class->find_column($column)
+			or $class->_croak("has_unique_columns: '$column' is not a valid column");
+		$column = $normalized_column;
+	}
+	
+	# closure over @columns, $name
+	my $unique_columns = sub {
+		my ($self) = @_;
+		my %search_spec = map { $_ => $self->$_ } @columns;
+		$search_spec{id} = { '!=', $self->id };
+		unless ($self->count_search_where(%search_spec) == 0) {
+			my $columns = join(",", @columns);
+			my $values = join(",", map "'$search_spec{$_}'", @columns);
+			my $fail = @columns == 1 ? "fails" : "fail";
+			return $self->_croak("$class ($columns) $fail uniqueness constraint '$name' with ($values)");
+		}
+	};
+	
+	$class->add_trigger(before_create => $unique_columns);
+	$class->add_trigger(before_update => $unique_columns);
+}
+
+=head2 COMMA-SEPARATED LIST HANDLING
+
+has_cs_list() allows you to define a column as containing a comma-separated list
+of values. It will add an accessor/modifier to the invocant's class with the
+suffix C<_list>.
+
+Note that this handling is pretty dumb, and cannot deal with embedded commas.
+This is typically OK, since cs_list fields are usually used to store list of
+record IDs or strings that are valid identifiers. (If you really need to store
+strings with embedded commas, you may URL-encode them or whatever you like. Just
+make sure you decode them on the way out.)
+
+ __PACKAGE__->has_cs_list("problem_order");
+ 
+ # results in this method being added to __PACKAGE__
+ sub problem_order_list {
+ 		my ($self, @list) = @_;
+ 		if (@list) {
+ 			return $self->problem_order(join(",", @list));
+ 		} else {
+ 			return split(",", $self->problem_order);
+ 		}
+ }
+
+=cut
+
+sub has_cs_list {
+	my ($class, $field) = @_;
+	return unless $field;
+	
+	my $method_name = "${class}::${field}_list";
+	
+	# closure over $field
+	my $cs_list = sub {
+		my ($self, @list) = @_;
+		if (@list) {
+			return $self->$field(join(",", @list));
+		} else {
+			return split(",", $self->$field);
+		}
+	};
+	
+	no strict 'refs';
+	*$method_name = $cs_list;
+}
 
 ################################################################################
 # Table classes: each table in the database is a subclass of WeBWorK::DBv3.
@@ -325,14 +412,16 @@ __PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
 
 # FIXME need trigger to set creation_date
 
-sub problem_order_list {
-	my ($self, @problem_order) = @_;
-	if (@problem_order) {
-		return $self->problem_order(join(",", @problem_order));
-	} else {
-		return split(",", $self->problem_order);
-	}
-}
+#sub problem_order_list {
+#	my ($self, @problem_order) = @_;
+#	if (@problem_order) {
+#		return $self->problem_order(join(",", @problem_order));
+#	} else {
+#		return split(",", $self->problem_order);
+#	}
+#}
+
+__PACKAGE__->has_cs_list("problem_order");
 
 ################################################################################
 
@@ -352,6 +441,9 @@ __PACKAGE__->has_a(participant => "WeBWorK::DBv3::Participant");
 
 # FIXME need to make version_due_date_offset/version_answer_date_offset
 # DateTime::Offset objects
+
+__PACKAGE__->has_unique_columns('override_scope_unique_for_abstract_problem'
+	=> qw/section recitation participant abstract_problem/);
 
 ################################################################################
 
@@ -377,14 +469,19 @@ __PACKAGE__->has_a_datetime("answer_date");
 # FIXME need to make version_due_date_offset/version_answer_date_offset
 # DateTime::Offset objects
 
-sub problem_order_list {
-	my ($self, @problem_order) = @_;
-	if (@problem_order) {
-		return $self->problem_order(join(",", @problem_order));
-	} else {
-		return split(",", $self->problem_order);
-	}
-}
+#sub problem_order_list {
+#	my ($self, @problem_order) = @_;
+#	if (@problem_order) {
+#		return $self->problem_order(join(",", @problem_order));
+#	} else {
+#		return split(",", $self->problem_order);
+#	}
+#}
+
+__PACKAGE__->has_cs_list("problem_order");
+
+__PACKAGE__->has_unique_columns('override_scope_unique_for_abstract_set'
+	=> qw/section recitation participant abstract_set/);
 
 ################################################################################
 
@@ -399,6 +496,9 @@ __PACKAGE__->has_a(abstract_problem => "WeBWorK::DBv3::AbstractProblem");
 
 __PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 __PACKAGE__->has_many(problem_versions => "WeBWorK::DBv3::ProblemVersion");
+
+__PACKAGE__->has_unique_columns('set_assignment_unique_for_abstract_problem'
+	=> qw/set_assignment abstract_problem/);
 
 ################################################################################
 
@@ -415,14 +515,19 @@ __PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment")
 __PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
 __PACKAGE__->has_many(set_versions => "WeBWorK::DBv3::SetVersion");
 
-sub problem_order_list {
-	my ($self, @problem_order) = @_;
-	if (@problem_order) {
-		return $self->problem_order(join(",", @problem_order));
-	} else {
-		return split(",", $self->problem_order);
-	}
-}
+#sub problem_order_list {
+#	my ($self, @problem_order) = @_;
+#	if (@problem_order) {
+#		return $self->problem_order(join(",", @problem_order));
+#	} else {
+#		return split(",", $self->problem_order);
+#	}
+#}
+
+__PACKAGE__->has_cs_list("problem_order");
+
+__PACKAGE__->has_unique_columns('abstract_set_unique_for_participant'
+	=> qw/abstract_set participant/);
 
 ################################################################################
 
@@ -439,6 +544,9 @@ __PACKAGE__->has_a(abstract_set => "WeBWorK::DBv3::AbstractSet");
 
 __PACKAGE__->has_many(problem_assignments => "WeBWorK::DBv3::ProblemAssignment");
 
+__PACKAGE__->has_unique_columns('name_unique_for_abstract_set'
+	=> qw/name abstract_set/);
+
 # FIXME need to make version_due_date_offset/version_answer_date_offset
 # DateTime::Offset objects
 
@@ -448,7 +556,7 @@ package WeBWorK::DBv3::AbstractSet;
 use base 'WeBWorK::DBv3';
 
 __PACKAGE__->table("abstract_set");
-__PACKAGE__->columns(All => qw/id course name set_header problem_header
+__PACKAGE__->columns(All => qw/id course name set_header hardcopy_header
 open_date due_date answer_date published problem_order reorder_type
 reorder_subset_size reorder_time atomicity max_attempts_per_version
 version_creation_interval versions_per_interval version_due_date_offset
@@ -466,14 +574,18 @@ __PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
 # FIXME need to make version_due_date_offset/version_answer_date_offset
 # DateTime::Offset objects
 
-sub problem_order_list {
-	my ($self, @problem_order) = @_;
-	if (@problem_order) {
-		return $self->problem_order(join(",", @problem_order));
-	} else {
-		return split(",", $self->problem_order);
-	}
-}
+#sub problem_order_list {
+#	my ($self, @problem_order) = @_;
+#	if (@problem_order) {
+#		return $self->problem_order(join(",", @problem_order));
+#	} else {
+#		return split(",", $self->problem_order);
+#	}
+#}
+
+__PACKAGE__->has_cs_list("problem_order");
+
+__PACKAGE__->has_unique_columns('name_unique_for_course' => qw/name course/);
 
 ################################################################################
 
@@ -495,6 +607,8 @@ __PACKAGE__->has_many(set_assignments => "WeBWorK::DBv3::SetAssignment");
 __PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
 __PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 
+__PACKAGE__->has_unique_columns('user_unique_for_course' => qw/user course/);
+
 ################################################################################
 
 package WeBWorK::DBv3::Recitation;
@@ -508,6 +622,8 @@ __PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
 __PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
 __PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
+
+__PACKAGE__->has_unique_columns('name_unique_for_course' => qw/name course/);
 
 ################################################################################
 
@@ -523,6 +639,8 @@ __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
 __PACKAGE__->has_many(set_overrides => "WeBWorK::DBv3::SetOverride");
 __PACKAGE__->has_many(problem_overrides => "WeBWorK::DBv3::ProblemOverride");
 
+__PACKAGE__->has_unique_columns('name_unique_for_course' => qw/name course/);
+
 ################################################################################
 
 package WeBWorK::DBv3::Role;
@@ -535,14 +653,18 @@ __PACKAGE__->has_a(course => "WeBWorK::DBv3::Course");
 
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
 
-sub priv_list {
-	my ($self, @privs) = @_;
-	if (@privs) {
-		return $self->privs(join(",", @privs));
-	} else {
-		return split(",", $self->privs);
-	}
-}
+#sub priv_list {
+#	my ($self, @privs) = @_;
+#	if (@privs) {
+#		return $self->privs(join(",", @privs));
+#	} else {
+#		return split(",", $self->privs);
+#	}
+#}
+
+__PACKAGE__->has_cs_list("privs");
+
+__PACKAGE__->has_unique_columns('name_unique' => qw/name/);
 
 ################################################################################
 
@@ -561,6 +683,8 @@ __PACKAGE__->has_a_boolean("include_in_scoring");
 
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
 
+__PACKAGE__->has_unique_columns('name_unique' => qw/name/);
+
 ################################################################################
 
 package WeBWorK::DBv3::User;
@@ -573,6 +697,13 @@ login_id password display_mode show_old_answers/);
 __PACKAGE__->has_a_boolean("show_old_answers");
 
 __PACKAGE__->has_many(participants => "WeBWorK::DBv3::Participant");
+
+__PACKAGE__->add_constraint("student_id_unique", student_id => sub {
+	return __PACKAGE__->search(student_id => $_[0])->count == 0;
+});
+
+__PACKAGE__->has_unique_columns('student_id_unique' => qw/student_id/);
+__PACKAGE__->has_unique_columns('login_id_unique' => qw/login_id/);
 
 ################################################################################
 
@@ -592,6 +723,8 @@ __PACKAGE__->has_many(sections => "WeBWorK::DBv3::Section");
 __PACKAGE__->has_many(recitations => "WeBWorK::DBv3::Recitation");
 __PACKAGE__->has_many(participants  => "WeBWorK::DBv3::Participant");
 __PACKAGE__->has_many(abstract_sets => "WeBWorK::DBv3::AbstractSet");
+
+__PACKAGE__->has_unique_columns('name_unique' => qw/name/);
 
 ################################################################################
 
