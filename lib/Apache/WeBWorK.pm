@@ -14,6 +14,7 @@
 package Apache::WeBWorK;
 
 use strict;
+use warnings;
 use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
 use WeBWorK::CourseEnvironment;
