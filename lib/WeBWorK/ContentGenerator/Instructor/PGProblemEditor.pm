@@ -21,7 +21,7 @@ our $rowheight;
 sub title {
 	my $self = shift;
 	#FIXME  don't need the entire path  ??
-	return "Instructor Tools - PG Problem Editor for ". $self->{problemPath};
+	return "Instructor Tools - PG Problem Editor ";
 }
 sub go {
 	my $self 			= shift;
@@ -42,7 +42,6 @@ sub go {
 		my $port     		= 	$r->get_server_port();
 		my $uri		 		= 	$r->uri;
 		my $courseName		=	$self->{ce}->{courseName};
-		my $editFileSuffix  =	$self->{ce}->{editFileSuffix};
 		my $problemSeed		= 	($r->param('problemSeed')) ? $r->param('problemSeed') : '';
 		my $displayMode		=	($r->param('displayMode')) ? $r->param('displayMode') : '';
         my $viewURL         =   '';
@@ -58,9 +57,8 @@ sub go {
 				$viewURL		   .=	"&editMode=temporaryFile";
 			}
 			$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
-			#$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
-	#		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 
-	                                                                                   # of problem being viewed.
+			                                                                            # allows Problem.pg to recognize state
+	                                                                                    # of problem being viewed.
 	    } elsif ($self->{file_type} eq 'set_header') {
 	    	# redirect set headers to ProblemList page
 	    	$viewURL  		= 	"http://$hostname:$port";
@@ -93,9 +91,6 @@ sub initialize {
 	my $effectiveUserName		=	$r->param('effectiveUser');
 	my $courseName				=	$ce->{courseName};
 
-#   FIXME -- sometimes this doesn't find a set	
-#	my $set            			= 	$db->getMergedSet($effectiveUserName, $setName);
-#	my $setID					=	$set->set_id;
 	
 	# Find URL for viewing problem
 	
@@ -123,7 +118,7 @@ sub initialize {
 		$self->{file_type}      =   'set_header';
 	}
 	
-	my $editFileSuffix			=	'tmp';
+	my $editFileSuffix			=	$user.'.tmp';
 	my $submit_button			= 	$r->param('submit');
 
 	my $displayMode	  			= 	( defined($r->param('displayMode')) 	) ? $r->param('displayMode') : $ce->{pg}->{options}->{displayMode};
@@ -139,15 +134,21 @@ sub initialize {
 	
 	my $problemContents	= '';
 	my $currentSourceFilePath	=	'';
-	my $editErrors = '';
+	my $editErrors = '';	
+	
 	# update the .pg and .pg.tmp files in the directory
-	if (not defined($submit_button) ) {
+	# if a .tmp file already exists use that, unless the revert button has been pressed.
+	# These .tmp files are
+	# removed when the file is finally saved.
+	my $inputFilePath           =  (-r "$problemPath.$editFileSuffix")?"$problemPath.$editFileSuffix" : $problemPath;
+	$inputFilePath              =   $problemPath  if defined($submit_button) and $submit_button eq 'Revert';
+	
+	if (not defined($submit_button) or $submit_button eq 'Revert' ) {
 		# this is a fresh editing job
 		# copy the pg file to a new file with the same name with .tmp added
 		# store this name in the $self->currentSourceFilePath for use in body 
-		
-		eval { $problemContents			=	WeBWorK::Utils::readFile($problemPath)  
-		};  # try to read file
+		eval { $problemContents			=	WeBWorK::Utils::readFile($inputFilePath)    };  
+		# try to read file
 		$problemContents = $@ if $@;
 		$editErrors .= $problemContents;
 		$currentSourceFilePath			=	"$problemPath.$editFileSuffix"; 
@@ -166,7 +167,7 @@ sub initialize {
 		
 		$problemContents				=	$r->param('problemContents');
 		$currentSourceFilePath			=	"$problemPath"; 		
-		$self->{currentSourceFilePath}	=	$currentSourceFilePath;		
+		$self->{currentSourceFilePath}	=	$currentSourceFilePath;	
 	} else {
 		# give a warning
 		die "Unrecognized submit command $submit_button";
@@ -216,10 +217,11 @@ sub initialize {
 	
 		
 	# return values for use in the body subroutine
-	$self->{problemPath}    =   $problemPath;
-	$self->{displayMode}    =   $displayMode;
-	$self->{problemSeed}    =   $problemSeed;
-	
+	$self->{problemPath}              =   $problemPath;
+	$self->{inputFilePath}            =   $inputFilePath;
+	$self->{displayMode}              =   $displayMode;
+	$self->{problemSeed}              =   $problemSeed;
+	$self->{r_problemContents}        =   \$problemContents;
 	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
 
 	
@@ -240,7 +242,7 @@ sub path {
 		$courseName     => "$root/$courseName",
 		'instructor'    => "$root/$courseName/instructor",
 		'sets'          => "$root/$courseName/instructor/sets/",
-		"$set_id"   => "$root/$courseName/instructor/sets/$set_id/",
+		"$set_id"       => "$root/$courseName/instructor/sets/$set_id/",
 		"problems"      => "$root/$courseName/instructor/sets/$set_id/problems",
 		"$problem_id"   => ''
 	);
@@ -262,24 +264,24 @@ sub body {
 	#     $problemPath  -- 
 	#     $formURL -- given by $r->uri
 	#     $tmpProblemPath 
-	my $problemPath 	= 	$self->{problemPath};
-
+	my $problemPath 	         =   $self->{problemPath};
+	my $inputFilePath            =   $self->{inputFilePath};
 	
 	
 
 	
 	
 
-	my $header = "Editing problem:  $problemPath";
+	my $header = CGI::i("Editing problem:  $inputFilePath");
 
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
 	# or in the original file in the template directory
 	#########################################################################
-	my $problemContents = '';
+	my $problemContents = ${$self->{r_problemContents}};
 
-	eval { $problemContents	=	WeBWorK::Utils::readFile($problemPath)  };  # try to read file
-	$problemContents = $@ if $@;
+#	eval { $problemContents	=	WeBWorK::Utils::readFile($problemPath)  };  # try to read file
+#	$problemContents = $@ if $@;
 	
 			
 			
@@ -330,24 +332,9 @@ sub body {
 		CGI::p(
 			( ($self->{file_type} eq 'problem') ? CGI::submit(-value=>'Refresh',-name=>'submit') : ''   ),
 			CGI::submit(-value=>'Save',-name=>'submit'),
-#			$actionString
-		),
-		
-		#CGI::a({-href=>$ce->{viewProblemURL},-target=>'_viewProblem'},'view problem'),
+			CGI::submit(-value=>'Revert',-name=>'submit'),
+		),	
 		CGI::end_form(),
-#		"<p> the parameters passed are "  #FIXME -- debugging code
-#		. join("<BR>", %{$r->param()}) . 
-#		"</p> and the gatheredInfo is ",
-#		"problemPath=$problemPath<br> formURL=".$r->uri . "<br>"   ,
-#		"viewProblemURL ".$ce->{viewProblemURL}."<br>",
-#		"problem_obj =". $ce->{problem_obj}."<br>",
-#		"path_components ". $ce->{path_components}.'<br>',
-# 		"hostname =$hostname<br>",
-# 		"port =$port <br>",
-# 		"uri = $uri <br>",
-# 		"viewURL =".$ce->{viewURL}."<br>",
-		 
-	;
 
 
 }

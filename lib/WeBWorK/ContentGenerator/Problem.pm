@@ -655,16 +655,25 @@ sub body {
 	print CGI::end_div();
 		
 	# save state for viewOptions
-	print CGI::hidden(
-			-name  => "showOldAnswers",
-			-value => $will{showOldAnswers}
-		),
+	print  CGI::hidden(
+			   -name  => "showOldAnswers",
+			   -value => $will{showOldAnswers}
+		   ),
 
-		CGI::hidden(
-			-name  => "displayMode",
-			-value => $self->{displayMode}
-		);
-	
+		   CGI::hidden(
+			   -name  => "displayMode",
+			   -value => $self->{displayMode}
+		   );
+	print( CGI::hidden(
+			   -name    => 'editMode',
+			   -value   => $self->{editMode},
+		   )
+	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
+	print( CGI::hidden(
+		   		-name   => 'sourceFilePath',
+		   		-value  =>  $self->{problem}->{source_file}
+	))  if defined($self->{problem}->{source_file});
+			
 	# end of main form
 	print CGI::endform();
 	
