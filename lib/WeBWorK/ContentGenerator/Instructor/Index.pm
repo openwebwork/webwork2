@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.31 2004/03/23 01:55:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.32 2004/05/06 22:17:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,7 +48,7 @@ sub pre_header_initialize {
 	my $urlpath = $r->urlpath;
 	
 	unless ($authz->hasPermissions($r->param("user"), "modify_student_data")) {
-		$self->{submitError} = "You are not authorized to modify student data";
+		$self->addmessage("You are not authorized to modify student data");
 		return;
 	}
 	
@@ -184,7 +184,11 @@ sub pre_header_initialize {
 	# handle errors, redirect to target page
 	
 	if (@error) {
-		$self->{error} = \@error;
+		$self->addmessage(CGI::div({class=>"ResultsWithError"},
+			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:"),
+			CGI::ul(CGI::li(\@error)),
+		));
+
 	} elsif ($module) {
 		my $page = $urlpath->newFromModule($module, %args);
 		my $url = $self->systemLink($page, params => \%params);
@@ -206,14 +210,6 @@ sub body {
 	
 	print CGI::p("Select user(s) and/or set(s) below and click the action button
 	of your choice.");
-	
-	if ($self->{error}) {
-		my @errors = @{ $self->{error} };
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p("Your request could not be fulfilled. Please correct the following errors and try again:"),
-			CGI::ul(CGI::li(\@errors)),
-		);
-	}
 	
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
