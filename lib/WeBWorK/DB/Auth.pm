@@ -184,32 +184,4 @@ sub deletePermissions($$) {
 	$self->{permissions_db}->disconnect;
 }
 
-# ----- ghetto for stupid functions -----
-
-sub change_user_in_password_file($$$) {
-	my $self = shift;
-	my $user = shift;
-	my $new_user = shift;
-	$self->{password_db}->connect("rw");
-	my $pwhash = $self->{password_db}->hashRef; # make things easier
-	if (exists $pwhash->{$user}) {
-		$pwhash->{$new_user} = $pwhash->{$user};
-		delete $pwhash->{$user};
-	}
-	$self->{password_db}->disconnect;
-}
-
-sub change_user_in_permissions_file($$$) {
-	my $self = shift;
-	my $user = shift;
-	my $new_user = shift;
-	$self->{permissions_db}->connect("rw");
-	my $permhash = $self->{permissions_db}->hashRef; # make things easier
-	if (exists $permhash->{$user}) {
-		$permhash->{$new_user} = $permhash->{$user};
-		delete $permhash->{$user};
-	}
-	$self->{permissions_db}->disconnect;
-}
-
 1;
