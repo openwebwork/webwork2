@@ -13,6 +13,7 @@ WeBWorK::DB - interface with the WeBWorK databases (WWDBv2).
 
 use strict;
 use warnings;
+use Data::Dumper;
 use WeBWorK::Utils qw(runtime_use);
 
 use constant TABLES => qw(password permission key user set set_user problem problem_user);

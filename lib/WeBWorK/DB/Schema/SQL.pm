@@ -46,6 +46,7 @@ sub new($$$) {
 		record => $record,
 		params => $params,
 	};
+	$self->{table} = $params->{tableOverride} if $params->{tableOverride};
 	bless $self, $class;
 	return $self;
 }
@@ -54,65 +55,65 @@ sub new($$$) {
 # table access functions
 ################################################################################
 
-sub list($) {
+sub list($@) {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
-	my @keynames = $self->{record}->KEYFIELDS();
+	my @keynames = $self->sqlKeynames();
 	my $keynames = join(", ", @keynames);
-	my $stmt = "SELECT $keynames FROM $table";
-	$stmt .= " WHERE" if @keyparts;
-	while (@keyparts) {
-		$stmt .= " " . shift @keynames . "=" . shift @keyparts;
-		$stmt .= " AND" if @keyparts;
-	}
+	
+	die "too many keyparts for table $table (need at most: @keynames)"
+		if @keyparts > @keynames;
+	
+	my $stmt = "SELECT $keynames FROM $table ";
+	$stmt .= $self->makeWhereClause(@keyparts);
+	warn "SQL-list: $stmt\n";
 	
 	$self->{driver}->connect("ro");
-	my $keys = $self->{driver}->handle()->selectall_arrayref($stmt);
+	my $result = $self->{driver}->handle()->selectall_arrayref($stmt);
 	$self->{driver}->disconnect();
-	
-	unless (defined $keys) {
-		die "failed to SELECT: $DB::errstr";
-	}
-	
-	return $keys;
+	die "failed to SELECT: $DBI::errstr" unless defined $result;
+	return @$result;
 }
 
-sub exists($$) {
+sub exists($@) {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
-	my @keynames = $self->{record}->KEYFIELDS();
+	my @keynames = $self->sqlKeynames();
 	
 	die "wrong number of keyparts for table $table (needs: @keynames)"
-		unless (@keyparts == @keynames);
+		unless @keyparts == @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM $table WHERE";
-	while (@keyparts) {
-		$stmt .= " " . shift @keynames . "=" . shift @keyparts;
-		$stmt .= " AND" if @keyparts;
-	}
+	my $stmt = "SELECT COUNT(*) FROM $table ";
+	$stmt .= $self->makeWhereClause(@keyparts);
+	warn "SQL-exists: $stmt\n";
 	
 	$self->{driver}->connect("ro");
-	my $exists = $self->{driver}->handle()->do($stmt);
+	my ($result) = $self->{driver}->handle()->selectrow_array($stmt);
 	$self->{driver}->disconnect();
-	
-	unless (defined $exists) {
-		die "failed to SELECT: $DB::errstr";
-	}
-	
-	return $exists;
+	die "failed to SELECT: $DBI::errstr" unless defined $result;
+	return $result > 0;
 }
 
 sub add($$) {
 	my ($self, $Record) = @_;
 	
+	my @realKeynames = $self->{record}->KEYFIELDS();
+	my @keyparts = map { $Record->$_() } @realKeynames;
+	die "(" . join(", ", @keyparts) . "): exists (use put)"
+		if $self->exists(@keyparts);
+	
 	my $table = $self->{table};
-	my @fieldnames = $self->{record}->FIELDS();
+	my @fieldnames = $self->sqlFieldnames();
 	my $fieldnames = join(", ", @fieldnames);
-	my @fieldvalues = map { $Record->$_() } @fieldnames;
 	my $marks = join(", ", map { "?" } @fieldnames);
+	
+	my @realFieldnames = $self->{record}->FIELDS();
+	my @fieldvalues = map { $Record->$_() } @realFieldnames;
+	
 	my $stmt = "INSERT INTO $table ($fieldnames) VALUES ($marks)";
+	warn "SQL-add: $stmt\n";
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->handle()->prepare($stmt);
@@ -120,40 +121,38 @@ sub add($$) {
 	$self->{driver}->disconnect();
 	
 	unless (defined $result) {
-		my @keynames = $self->{record}->KEYFIELDS();
-		my @keyvalues = map $Record->$_() } @keynames;
-		die "(@keyvalues): failed to INSERT: $DB::errstr";
+		my @realKeynames = $self->{record}->KEYFIELDS();
+		my @keyvalues = map { $Record->$_() } @realKeynames;
+		die "(" . join(", ", @keyvalues) . "): failed to INSERT: $DBI::errstr";
 	}
 	
 	return 1;
 }
 
-sub get($$) {
-	my ($self, @keyfields) = @_;
+sub get($@) {
+	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
-	my @keynames = $self->{record}->KEYFIELDS();
+	my @keynames = $self->sqlKeynames();
 	
 	die "wrong number of keyparts for table $table (needs: @keynames)"
-		unless (@keyparts == @keynames);
+		unless @keyparts == @keynames;
 	
-	my $stmt = "SELECT * FROM $table WHERE";
-	while (@keyparts) {
-		$stmt .= " " . shift @keynames . "=" . shift @keyparts;
-		$stmt .= " AND" if @keyparts;
-	}
+	my $stmt = "SELECT * FROM $table ";
+	$stmt .= $self->makeWhereClause(@keyparts);
+	warn "SQL-get: $stmt\n";
 	
 	$self->{driver}->connect("ro");
-	my @record = $self->{driver}->handle()->selectrow_array($stmt);
+	my $result = $self->{driver}->handle()->selectrow_arrayref($stmt);
 	$self->{driver}->disconnect();
+	# $result comes back undefined if there are no matches. hmm...
+	#die "failed to SELECT: $DBI::errstr" unless defined $result;
+	return undef unless defined $result;
 	
-	unless (defined @record) {
-		die "failed to SELECT: $DB::errstr";
-	}
-	
+	my @record = @$result;
 	my $Record = $self->{record}->new();
-	my @fieldnames = $self->{record}->FIELDS();
-	foreach (@fieldnames) {
+	my @realFieldnames = $self->{record}->FIELDS();
+	foreach (@realFieldnames) {
 		$Record->$_(shift @record);
 	}
 	
@@ -163,16 +162,25 @@ sub get($$) {
 sub put($$) {
 	my ($self, $Record) = @_;
 	
+	my @realKeynames = $self->{record}->KEYFIELDS();
+	my @keyparts = map { $Record->$_() } @realKeynames;
+	die "(" . join(", ", @keyparts) . "): not found (use add)"
+		unless $self->exists(@keyparts);
+	
 	my $table = $self->{table};
-	my @fieldnames = $self->{record}->FIELDS();
+	my @fieldnames = $self->sqlFieldnames();
 	my $fieldnames = join(", ", @fieldnames);
-	my @fieldvalues = map { $Record->$_() } @fieldnames;
 	my $marks = join(", ", map { "?" } @fieldnames);
+	
+	my @realFieldnames = $self->{record}->FIELDS();
+	my @fieldvalues = map { $Record->$_() } @realFieldnames;
+	
 	my $stmt = "UPDATE $table SET";
 	while (@fieldnames) {
-		$stmt .= " " . shift @fieldnames . "=?";
+		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
 	}
+	warn "SQL-put: $stmt\n";
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->handle()->prepare($stmt);
@@ -180,42 +188,79 @@ sub put($$) {
 	$self->{driver}->disconnect();
 	
 	unless (defined $result) {
-		my @keynames = $self->{record}->KEYFIELDS();
-		my @keyvalues = map $Record->$_() } @keynames;
-		die "(@keyvalues): failed to UPDATE: $DB::errstr";
+		#my @realKeynames = $self->{record}->KEYFIELDS();
+		#my @keyvalues = map { $Record->$_() } @realKeynames;
+		die "(" . join(", ", @keyparts) . "): failed to UPDATE: $DBI::errstr";
 	}
 	
 	return 1;
 }
 
-sub delete($$) {
+sub delete($@) {
 	my ($self, @keyparts) = @_;
 	
+	die "(" . join(", ", @keyparts) . "): not found"
+		unless $self->exists(@keyparts);
+	
 	my $table = $self->{table};
-	my @keynames = $self->{record}->KEYFIELDS();
+	my @keynames = $self->sqlKeynames();
 	
 	die "wrong number of keyparts for table $table (needs: @keynames)"
-		unless (@keyparts == @keynames);
+		unless @keyparts == @keynames;
 	
-	my $stmt = "DELETE FROM $table WHERE";
-	while (@keyparts) {
-		$stmt .= " " . shift @keynames . "=" . shift @keyparts;
-		$stmt .= " AND" if @keyparts;
-	}
+	my $stmt = "DELETE FROM $table ";
+	$stmt .= $self->makeWhereClause(@keyparts);
+	warn "SQL-delete: $stmt\n";
 	
-	$self->{driver}->connect("ro");
-	my $num = $self->{driver}->handle()->do($stmt);
+	$self->{driver}->connect("rw");
+	my $result = $self->{driver}->handle()->do($stmt);
 	$self->{driver}->disconnect();
+	die "failed to DELETE: $DBI::errstr" unless defined $result;
 	
-	unless (defined $num) {
-		die "failed to SELECT: $DB::errstr";
-	}
-	
-	unless ($num > 1) {
+	if ($result > 1) {
 		warn "danger! deleted more than one record!";
 	}
 	
-	return $num;
+	return $result;
+}
+
+################################################################################
+# utility functions
+################################################################################
+
+sub makeWhereClause($@) {
+	my ($self, @keyparts) = @_;
+	
+	my @keynames = $self->sqlKeynames();
+	my $where;
+	my $first = 1;
+	while (@keyparts) {
+		unless (defined $keyparts[0]) {
+			shift @keynames;
+			shift @keyparts;
+			next;
+		}
+		$where .= " AND" unless $first;
+		$where .= " " . (shift @keynames);
+		$where .= "='" . (shift @keyparts) . "'";
+		$first = 0;
+	}
+	
+	return $where ? "WHERE$where" : "";
+}
+
+sub sqlKeynames($) {
+	my ($self) = @_;
+	my @keynames = $self->{record}->KEYFIELDS();
+	return map { $self->{params}->{fieldOverride}->{$_} || $_ }
+		@keynames;
+}
+
+sub sqlFieldnames($) {
+	my ($self) = @_;
+	my @keynames = $self->{record}->FIELDS();
+	return map { $self->{params}->{fieldOverride}->{$_} || $_ }
+		@keynames;
 }
 
 1;
