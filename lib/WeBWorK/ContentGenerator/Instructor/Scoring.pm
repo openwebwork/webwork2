@@ -33,10 +33,22 @@ sub readCSV {
 # Write a CSV file from an array in the same format that readCSV produces
 sub writeCSV {
 	my ($self, $filename, @csv) = @_;
+	
+	my @lengths = ();
+	for (my $row = 0; $row < @csv; $row++) {
+		for (my $column = 0; $column < @{$csv[$row]}; $column++) {
+			$lengths[$column] = 0 unless defined $lengths[$column];
+			$lengths[$column] = length $csv[$row]->[$column] if length $csv[$row]->[$column] > $lengths[$column];
+		}
+	}
+	
 	open my $fh, ">", $filename;
 	foreach my $row (@csv) {
-		my $maxLength = $self->maxLength($row) + 1;
-		print $fh (join ",", map {$self->pad($_, $maxLength)} @$row);
+		my @rowPadded = ();
+		foreach (my $column = 0; $column < @$row; $column++) {
+			push @rowPadded, $self->pad($row->[$column], $lengths[$column] + 1);
+		}
+		print $fh join(",", @rowPadded);
 		print $fh "\n";
 	}
 	close $fh;
@@ -60,7 +72,7 @@ sub writeStandardCSV {
 	my ($self, $filename, @csv) = @_;
 	open my $fh, ">", $filename;
 	foreach my $row (@csv) {
-		print (join ",", map {$self->quote} @$row);
+		print (join ",", map {$self->quote($_)} @$row);
 		print "\n";
 	}
 	close $fh;
@@ -114,10 +126,11 @@ sub splitQuoted {
 sub quote {
 	my ($self, $string) = @_;
 	if ($string =~ m/[", ]/) {
+		warn "needs quoting\n";
 		$string =~ s/"/""/;
-		$string =~ "\"$string\"";
-		return $string;
+		$string = "\"$string\"";
 	}
+	return $string;
 }
 
 sub pad {
