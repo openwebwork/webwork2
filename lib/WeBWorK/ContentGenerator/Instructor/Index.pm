@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.38 2004/06/14 20:30:30 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.39 2004/06/15 14:46:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,7 +51,7 @@ sub pre_header_initialize {
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
-
+    $self->{courseName} = $courseID;
 	# Check permissions
 	return unless ($authz->hasPermissions($userID, "access_instructor_tools"));
 	
@@ -211,6 +211,7 @@ sub body {
 	my $db = $r->db;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
+	my $courseName = $self->{courseName};
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
@@ -313,7 +314,7 @@ sub body {
 				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>",
 			),
 			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::a({href=>"http://webwork3.math.rochester.edu:11002/webwork2/mth143b/instructor/add_users?".$self->url_authen_args},
+				CGI::a({href=>"http://webwork3.math.rochester.edu:11002/webwork2/$courseName/instructor/add_users?".$self->url_authen_args},
 				"Add users",
 				),
 			),
