@@ -241,10 +241,10 @@ sub body {
 		published		
 	)} = (
 		"Select",
-		"Problems",
-		"Assigned Users",
+		"Edit<br> Problems",
+		"Edit<br> Assigned Sets",
 		"Set Definition Filename",
-		"Set Name", 
+		"Edit<br> Set Data", 
 		"Set Header", 
 		"Hardcopy Header", 
 		"Open Date", 
