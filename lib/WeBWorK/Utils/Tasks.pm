@@ -78,7 +78,7 @@ sub fake_set {
   $set->due_date(time());
   $set->answer_date(time());
   $set->published(0); 
-  $set->problem_header("");
+  $set->hardcopy_header("");
   return($set); 
 } 
 

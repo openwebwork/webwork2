@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.20 2004/06/09 02:51:57 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.21 2004/07/01 20:31:13 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -675,7 +675,7 @@ sub pre_header_initialize {
 	$newSetRecord = $db->{set}->{record}->new();
 	$newSetRecord->set_id($newSetName);
 	$newSetRecord->set_header("");
-	$newSetRecord->problem_header("");
+	$newSetRecord->hardcopy_header("");
 	$newSetRecord->open_date(time()+60*60*24*7); # in one week
 	$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 	$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks

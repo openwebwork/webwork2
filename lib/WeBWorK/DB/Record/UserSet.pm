@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/UserSet.pm,v 1.5 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/UserSet.pm,v 1.6 2004/03/25 00:27:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ sub KEYFIELDS {qw(
 sub NONKEYFIELDS {qw(
 	psvn
 	set_header
-	problem_header
+	hardcopy_header
 	open_date
 	due_date
 	answer_date
@@ -46,7 +46,7 @@ sub FIELDS {qw(
 	set_id
 	psvn
 	set_header
-	problem_header
+	hardcopy_header
 	open_date
 	due_date
 	answer_date
