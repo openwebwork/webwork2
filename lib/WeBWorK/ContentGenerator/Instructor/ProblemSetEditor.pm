@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.38 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.39 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -107,7 +107,9 @@ sub initialize {
 	# The set form was submitted with the save button pressed
 	# Save changes to the set
 	###################################################
-	if (defined($r->param('submit_set_changes'))) {
+		$self->{error_message} = undef;
+		
+		if (defined($r->param('submit_set_changes'))) {
 		foreach (@{SET_FIELDS()}) {
 			if (defined($r->param($_))) {
 				if (m/_date$/) {
@@ -117,7 +119,23 @@ sub initialize {
 				}
 			}
 		}
+		###################################################
+		# Check that the open, due and answer dates are in increasing order.
+		# Bail if this is not correct.
+		###################################################
+
+		if ($setRecord->open_date > $setRecord->due_date)  {
+			$self->{error_message} .= '<p style="color:red" >Error: Due date must come after open date</p>'
+		}
+		if ($setRecord->due_date > $setRecord->answer_date) {
+			$self->{error_message} .= '<p style="color:red">Error: Answer date must come after due date</p>'
+		}
+		return if defined($self->{error_message});
+		###################################################
+		# End date check section.
+		###################################################
 		$db->putGlobalSet($setRecord);
+		
 		if ($forOneUser) {
 			
 			my $userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
@@ -133,11 +151,28 @@ sub initialize {
 					} else {
 						$userSetRecord->$field(undef);
 					}
-					
-					$db->putUserSet($userSetRecord);
 				}
 			}
+			###################################################
+			# Check that the open, due and answer dates are in increasing order.
+			# Bail if this is not correct.
+			###################################################
+			my $active_open_date   = $userSetRecord->open_date   ? $userSetRecord->open_date   : $setRecord->open_date;
+			my $active_due_date    = $userSetRecord->due_date    ? $userSetRecord->due_date    : $setRecord->due_date;
+			my $active_answer_date = $userSetRecord->answer_date ? $userSetRecord->answer_date : $setRecord->answer_date;
+			if ( $active_open_date >$active_due_date ) {
+				$self->{error_message} .= '<p style="color:red" >Error: Due date override must come after open date</p>'
+			}
+			if ( $active_due_date > $active_answer_date ) {
+				$self->{error_message} .= '<p style="color:red">Error: Answer date override must come after due date</p>'
+			}
+			return if defined($self->{error_message});
+			###################################################
+			# End date check section.
+			###################################################
+			$db->putUserSet($userSetRecord);
 		}
+
 	} 
 	
 	###################################################
@@ -249,7 +284,7 @@ sub body {
 			$overrideArgs{$field} = [undef, undef];
 		}
 	}
-	
+	print $self->{error_message} if defined($self->{error_message}) and $self->{error_message};
 	print CGI::h2({}, "Set Data"), "\n";
 	if (@editForUser) {
 		print CGI::p("Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
