@@ -485,7 +485,7 @@ sub nbsp {
 	($str) ? $str : '&nbsp;';  # returns non-breaking space for empty strings
 }
 sub previewAnswer($$) {
-	my ($self, $answerResult) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->{ce};
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -497,9 +497,9 @@ sub previewAnswer($$) {
 	# so we'll just deal with each case explicitly here. there's some code
 	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
 	
-	my $tex = $answerResult->{preview_latex_string}; #FIXME
+	my $tex = $answerResult->{preview_latex_string};
 	
-	return "" if not defined($tex) or $tex eq "" ;
+	return "" unless defined $tex and $tex ne "";
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
@@ -516,33 +516,34 @@ sub previewAnswer($$) {
 		}
 		return $result;
 	} elsif ($displayMode eq "images") {
-		# how are we going to name this?
-		my $targetPathCommon = "/m2i/"
-			. $effectiveUser->user_id . "."
-			. $set->set_id . "."
-			. $problem->problem_id . "."
-			. $answerResult->{ans_name} . ".png";
-
-		# figure out where to put things
-		my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
-		my $latex = $ce->{externalPrograms}->{latex};
-		my $dvipng = $ce->{externalPrograms}->{dvipng};
-		my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
-				# should use surePathToTmpFile, but we have to
-				# isolate it from the problem enivronment first
-		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
-
-		# call dvipng to generate a preview
-		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
-		rmtree($wd, 0, 0);
-		if (-e $targetPath) {
-			return "<img src=\"$targetURL\" alt=\"$tex\" />";
-		} else {
-			return "<b>[math2img failed]</b>";
-		}
+		## how are we going to name this?
+		#my $targetPathCommon = "/m2i/"
+		#	. $effectiveUser->user_id . "."
+		#	. $set->set_id . "."
+		#	. $problem->problem_id . "."
+		#	. $answerResult->{ans_name} . ".png";
+		#
+		## figure out where to put things
+		#my $wd = makeTempDirectory($ce->{courseDirs}->{html_temp}, "webwork-dvipng");
+		#my $latex = $ce->{externalPrograms}->{latex};
+		#my $dvipng = $ce->{externalPrograms}->{dvipng};
+		#my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
+		#		# should use surePathToTmpFile, but we have to
+		#		# isolate it from the problem enivronment first
+		#my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
+		#
+		## call dvipng to generate a preview
+		#dvipng($wd, $latex, $dvipng, $tex, $targetPath);
+		#rmtree($wd, 0, 0);
+		#if (-e $targetPath) {
+		#	return "<img src=\"$targetURL\" alt=\"$tex\" />";
+		#} else {
+		#	return "<b>[math2img failed]</b>";
+		#}
+		$imgGen->add($answerResult->{preview_latex_string});
+		
 	}
 }
-
 
 
 sub attemptResults($$$$$$) {
@@ -553,12 +554,24 @@ sub attemptResults($$$$$$) {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
+	my $ce = $self->{ce};
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
-	my $header = CGI::th("Part");
+	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
+	my $imgGen = WeBWorK::PG::ImageGenerator->new(
+		tempDir  => $ce->{webworkDirs}->{tmp},
+		latex	 => $ce->{externalPrograms}->{latex},
+		dvipng   => $ce->{externalPrograms}->{dvipng},
+		useCache => 1,
+		cacheDir => $ce->{webworkDirs}->{equationCache},
+		cacheURL => $ce->{webworkURLs}->{equationCache},
+		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
+	);
+	
+	my $header;
 	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
 	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
@@ -572,7 +585,7 @@ sub attemptResults($$$$$$) {
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
 		
 		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult)
+		                    	? $self->previewAnswer($answerResult,$imgGen)
 					: "");
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
@@ -581,11 +594,8 @@ sub attemptResults($$$$$$) {
 		$numCorrect += $answerScore > 0;
 		my $resultString = $answerScore ? "correct" : "incorrect";
 		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		$name =~ s/^AnSwEr//;
-		
-		my $row = CGI::td($name);
+	
+		my $row = ''; 
 		$row .= $showAttemptAnswers ? CGI::td(nbsp($studentAnswer)) : "";
 		$row .= $showAttemptPreview ? CGI::td(nbsp($preview))       : "";
 		$row .= $showCorrectAnswers ? CGI::td(nbsp($correctAnswer)) : "";
@@ -594,6 +604,9 @@ sub attemptResults($$$$$$) {
 		push @tableRows, $row;
 	}
 	
+	# render equation images
+	$imgGen->render(refresh => 1);
+
 	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
 	my $summary = "On this attempt, you answered $numCorrect out of "
