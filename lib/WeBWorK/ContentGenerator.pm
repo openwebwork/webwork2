@@ -244,6 +244,7 @@ sub navMacro {
 	my $tail = shift;
 	my @links = @_;
 	my $auth = $self->url_authen_args;
+	my $ce = $self->{courseEnvironment};
 	my @result;
 	while (@links) {
 		my $name = shift @links;
@@ -405,10 +406,10 @@ sub loginstatus {
 	my $key = $r->param("key");
 	return "" unless $key;
 	my $exitURL = $r->uri() . "?user=$user&key=$key";
-	print CGI::small("Logged in as:", CGI::br(), "$user");
+	print CGI::small("User:", "$user");
 	if ($user ne $eUser) {
 		print CGI::br(), CGI::font({-color=>'red'},
-				CGI::small("Acting as:", CGI::br(), "$eUser")
+				CGI::small("Acting as:", "$eUser")
 			),
 			CGI::br(), CGI::a({-href=>$exitURL},
 				CGI::small("Stop Acting")

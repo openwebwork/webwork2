@@ -150,27 +150,20 @@ sub body {
 		# generate context URL
 		my $URL;
 		if ($user) {
-			if ($set) {
-				if ($problem) {
-					$URL = "http://$hostname:$port"
-						. $ce->{webworkURLs}->{root}
-						. "/" . $ce->{courseName}
-						. "/" . $problem->set_id
-						. "/" . $problem->id
-						. "/" . "?effectiveUser=$userName";
-				} else {
-					$URL = "http://$hostname:$port"
-						. $ce->{webworkURLs}->{root}
-						. "/" . $ce->{courseName}
-						. "/" . $set->id
-						. "/" . "?effectiveUser=$userName";
-				}
-			} else {
-				$URL = "http://$hostname:$port"
-					. $ce->{webworkURLs}->{root}
-					. "/" . $ce->{courseName}
-					. "/" . "?effectiveUser=$userName";
-			}
+			$URL = "http://$hostname:$port"
+				. $ce->{webworkURLs}->{root}
+				. "/" . $ce->{courseName}
+				. ($set 
+					? "/".$problem->set_id . ($problem ? "/".$problem->id : "")
+					: "")
+				. "/" . "?effectiveUser=$userName"
+				. ($problem 
+					? "&displayMode=$displayMode" 
+					. "&showOldAnswers=$showOldAnswers"
+					. "&showCorrectAnswers=$showCorrectAnswers"
+					. "&showHints=$showHints"
+					. "&showSolutions=$showSolutions" 
+					: "" );
 		} else {
 			$URL = "(not available)";
 		}
