@@ -407,12 +407,12 @@ sub addCourseSQL {
 	my $source;
 	if (keys %sources > 1) {
 		# more than one -- warn and select the most popular source
- 		warn "addCourseSQL: database layout $dbLayoutName defines more than one SQL source.\n";
+ 		#warn "addCourseSQL: database layout $dbLayoutName defines more than one SQL source.\n";
 		foreach my $curr (keys %sources) {
 			$source = $curr if not defined $source or @{ $sources{$curr} } > @{ $sources{$source} };
  		}
- 		warn "addCourseSQL: only creating tables with source \"$source\".\n";
- 		warn "addCourseSQL: others will have to be created manually.\n";
+ 		#warn "addCourseSQL: only creating tables with source \"$source\".\n";
+ 		#warn "addCourseSQL: others will have to be created manually.\n";
  	} else {
 		# there's only one
 		($source) = keys %sources;
