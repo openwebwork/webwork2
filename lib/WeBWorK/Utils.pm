@@ -81,7 +81,8 @@ sub readFile($) {
 sub readDirectory($) {
 	my $dirName = shift;
 	opendir my $dh, $dirName
-		or die "failed to read directory $dirName: $!";
+		or die "Failed to read directory $dirName. Please check that",
+		                            "webserver has permission to read this directory. $!";
 	my @result = readdir $dh;
 	close $dh;
 	return @result;

@@ -273,7 +273,7 @@ sub initialize {
 		#  get merge file
 		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 		my $delimiter       = ',';
-		my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 		unless (ref($rh_merge_data) ) {
 			warn "no merge data file";
 			$self->submission_error("Can't read merge file $merge_file. No message sent");
@@ -359,7 +359,7 @@ sub print_preview {
 	#  get merge file
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 	my $delimiter       = ',';
-	my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 
 	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data);
 	
@@ -423,7 +423,7 @@ sub print_form {
 	my @sorted_merge_files = $self->get_merge_file_names;
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 	my $delimiter       = ',';
-	my $rh_merge_data   = $self->read_merge_file("$merge_file", "$delimiter");
+	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my @merge_keys      = keys %$rh_merge_data;
 	my $preview_user    = $self->{preview_user};
 	my $preview_record   = $db->getUser($preview_user); 
@@ -627,65 +627,17 @@ sub read_input_file {
 	return ($from, $replyTo, $subject, \$text);
 }
 
+
 sub get_message_file_names {
-	my $self             = shift;
-	my $emailDirectory   = $self->{ce}->{courseDirs}->{email};
-	#get all message files and create a list
-	local(*EMAILDIR);
-	opendir( EMAILDIR, $emailDirectory )|| die "Can't access directory $emailDirectory. Please check that webserver has permission to read this directory.";
-		my @messageFiles = grep /\.msg$/, readdir EMAILDIR; #all message files
-	closedir EMAILDIR;
-
-	return sort @messageFiles;
+	my $self         = shift;
+	return $self->read_dir($self->{ce}->{courseDirs}->{email}, '\\.msg$');
 }
-sub get_merge_file_names {
-	my $self             = shift;
-	my $scoringDirectory   = $self->{ce}->{courseDirs}->{scoring};
-	#get all message files and create a list
-	local(*SCORINGDIR);
-	opendir( SCORINGDIR, $scoringDirectory )|| die "Can't access directory $scoringDirectory.",
-	                                           "Please check that webserver has permission to read this directory.";
-	my @mergeFiles = grep( /\.csv$/, readdir SCORINGDIR); #all message files
-	closedir SCORINGDIR;
-	@mergeFiles    = sort @mergeFiles;
-#	warn "FIXME scoring directory $scoringDirectory merge Files", join(" ", @mergeFiles);
-	unshift(@mergeFiles, 'None');
-	return @mergeFiles;
+sub get_merge_file_names   {
+	my $self         = shift;
+	return 'None', $self->read_dir($self->{ce}->{courseDirs}->{scoring}, '\\.csv$');
 }
 
-sub read_merge_file    {
-	my $self            = shift;
-	my $fileName        = shift;
-	my $delimiter       = shift;
-	$delimiter          = ',' unless defined($delimiter);
-	my $scoringDirectory= $self->{ce}->{courseDirs}->{scoring};
-	my $filePath        = "$scoringDirectory/$fileName";  
-        #       Takes a delimited file as a parameter and returns an
-        #       associative array with the first field as the key.
-        #       Blank lines are skipped. White space is removed
-    my(@dbArray,$key,$dbString);
-    my %assocArray = ();
-    local(*FILE);
-    if ($fileName eq 'None') {
-    	# do nothing
-    } elsif ( open(FILE, "$filePath")  )   {
-		my $index=0;
-		while (<FILE>){
-			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
-			chomp;
-			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
-			$key    =$dbArray[$index][0];
-			#@dbArray    =  map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  @dbArray;
-			#$dbString   = join(" | ",@dbArray);
-			$assocArray{$key}=$dbArray[$index];
-			$index++;
-		}
-		close(FILE);
-     } else {
-     	warn "Couldn't read file $filePath";
-     }
-     return \%assocArray;
-}
+
 sub getRecord {
 	my $self    = shift;
 	my $line    = shift;

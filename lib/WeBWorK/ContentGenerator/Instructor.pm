@@ -113,6 +113,45 @@ sub assignSetToAllUsers {
 	}
 }
 
+sub read_dir {  # read a directory
+	my $self      = shift;
+	my $directory = shift;
+	my $pattern   = shift;
+	my @files = grep /$pattern/, WeBWorK::Utils::readDirectory($directory); 
+	return sort @files;
+}
+
+sub read_scoring_file    { # used in SendMail and ....?
+	my $self            = shift;
+	my $fileName        = shift;
+	my $delimiter       = shift;
+	$delimiter          = ',' unless defined($delimiter);
+	my $scoringDirectory= $self->{ce}->{courseDirs}->{scoring};
+	my $filePath        = "$scoringDirectory/$fileName";  
+        #       Takes a delimited file as a parameter and returns an
+        #       associative array with the first field as the key.
+        #       Blank lines are skipped. White space is removed
+    my(@dbArray,$key,$dbString);
+    my %assocArray = ();
+    local(*FILE);
+    if ($fileName eq 'None') {
+    	# do nothing
+    } elsif ( open(FILE, "$filePath")  )   {
+		my $index=0;
+		while (<FILE>){
+			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
+			chomp;
+			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
+			$key    =$dbArray[$index][0];
+			$assocArray{$key}=$dbArray[$index];
+			$index++;
+		}
+		close(FILE);
+     } else {
+     	warn "Couldn't read file $filePath";
+     }
+     return \%assocArray;
+}
 ## Template Escapes ##
 
 sub links {
