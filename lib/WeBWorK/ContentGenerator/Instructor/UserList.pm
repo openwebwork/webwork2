@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.52 2004/06/08 19:11:39 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.53 2004/06/09 21:40:36 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -892,8 +892,8 @@ sub saveEdit_handler {
 ################################################################################
 
 sub byUserID       { $a->user_id       cmp $b->user_id       }
-sub byFirstName    { $a->first_name    cmp $b->first_name    }
-sub byLastName     { $a->last_name     cmp $b->last_name     }
+sub byFirstName    {  (defined($a->first_name ) && defined($b->first_name) ) ?  $a->first_name   cmp $b->first_name  : 0;  }
+sub byLastName     {  (defined($a->last_name )  && defined($b->last_name)  ) ?  $a->last_name    cmp $b->last_name   : 0;  }
 sub byEmailAddress { $a->email_address cmp $b->email_address }
 sub byStudentID    { $a->student_id    cmp $b->student_id    }
 sub byStatus       { $a->status        cmp $b->status        }
