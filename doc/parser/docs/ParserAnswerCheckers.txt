@@ -134,8 +134,7 @@ will prevent the answer checker from reporting errors due to the
 student entering in the wrong type of answer (say a vector rather than
 a number).
 
-There are also three that are a number of flags common to all the
-checkers:
+There are a number of flags common to all the checkers:
 
   showTypeWarnings=>1 or 0    show/don't show messages about student
 			      answers not being of the right type.
@@ -196,6 +195,8 @@ In addition to these, the individual types have their own flags:
 
       parallel=>1 or 0		    Mark the answer as correct if it
 				    is parallel to the professor's answer.
+				    Note that a value of 1 forces
+				    showCoordinateHints to be 0.
 				    (default: 0)
 
       sameDirection=>1 or 0         During a parallel check, mark the

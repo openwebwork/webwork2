@@ -30,9 +30,11 @@ A formula has a number of methods that you can call.  These include:
                          some other adjustments as well.  (There still
                          needs to be more work done on this.  What it does 
                          is correct, but not always smart, and there need 
-                         to be many more situations covered.)  You can use
-                         $f->reduce(x=>5) to first substitute 5 for x
-                         and reduce the result.
+                         to be many more situations covered.)  All the
+			 reduction rules can be individually enabled
+                         or disabled using the Context()->reduction->set()
+			 method, but the documentation for the various
+                         rules is not yet ready.
 
     $f->substitue(x=>5)  Replace x by the value 5 throughout (you may want
                          to reduce the result afterword, as this is not 
@@ -342,7 +344,7 @@ used for variables above.  The command
 
 will return the value of the consant M.  (See the
 pg/lib/Value/Context/Data.pm file for more information on the methods
-youc an call for the various types of context data.)
+you can call for the various types of context data.)
 
 To add new predefined words (like 'NONE' and 'DNE'), use something
 like
@@ -366,7 +368,7 @@ control these via commands like:
 
 For example,
 
-       $context->flags->set(ijk->1);
+       $context->flags->set(ijk=>1);
 
 will cause the output of all vectors to be written in ijk format
 rather than <...> format.
