@@ -326,7 +326,7 @@ sub getPasswords {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{password}->gets(@userIDs);
+	return $self->{password}->gets(map { [$_] } @userIDs);
 }
 
 =item putPassword($Password)
@@ -474,7 +474,7 @@ sub getPermissionLevels {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{permission}->gets(@userIDs);
+	return $self->{permission}->gets(map { [$_] } @userIDs);
 }
 
 =item putPermissionLevel($PermissionLevel)
@@ -618,7 +618,7 @@ sub getKeys {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{key}->gets(@userIDs);
+	return $self->{key}->gets(map { [$_] } @userIDs);
 }
 
 =item putKey($Key)
@@ -758,7 +758,7 @@ sub getUsers {
 			unless defined $userIDs[$i];
 	}
 	
-	return $self->{user}->gets(@userIDs);
+	return $self->{user}->gets(map { [$_] } @userIDs);
 }
 
 =item putUser($User)
@@ -886,7 +886,7 @@ sub getGlobalSets {
 			unless defined $setIDs[$i];
 	}
 	
-	return $self->{set}->gets(@setIDs);
+	return $self->{set}->gets(map { [$_] } @setIDs);
 }
 
 sub putGlobalSet($$) {
@@ -1397,7 +1397,7 @@ sub getMergedSets {
 	
 	my @UserSets = $self->getUserSets(@userSetIDs);
 	
-	my @globalSetIDs = map { [ $_->[1] ] } @userSetIDs;
+	my @globalSetIDs = map { $_->[1] } @userSetIDs;
 	my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
 	
 	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
@@ -1407,8 +1407,11 @@ sub getMergedSets {
 		my $UserSet = $UserSets[$i];
 		my $GlobalSet = $GlobalSets[$i];
 		next unless $UserSet and $GlobalSet;
+		#warn "---------- USER SET\n", $UserSet->toString, "---------- USER SET\n";
+		#warn "---------- GLOBAL SET\n", $GlobalSet->toString, "---------- GLOBAL SET\n";
 		foreach my $field (@commonFields) {
-			next if $UserSet->$field;
+			next if defined $UserSet->$field;
+			#warn "using global value for field $field\n";
 			$UserSet->$field($GlobalSet->$field);
 		}
 	}
@@ -1520,7 +1523,7 @@ sub getMergedProblems {
 		my $GlobalProblem = $GlobalProblems[$i];
 		next unless $UserProblem and $GlobalProblem;
 		foreach my $field (@commonFields) {
-			next if $UserProblem->$field;
+			next if defined $UserProblem->$field;
 			$UserProblem->$field($GlobalProblem->$field);
 		}
 	}

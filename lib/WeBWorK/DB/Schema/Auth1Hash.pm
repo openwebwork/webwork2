@@ -87,14 +87,15 @@ sub get {
 #		);
 #	}
 	my @results = 
-	return ($self->gets($userID))[0];
+	return ($self->gets([$userID]))[0];
 }
 
 sub gets {
-	my ($self, @userIDs) = @_;
+	my ($self, @keypartsRefList) = @_;
 	$self->{driver}->connect("ro");
 	my @records;
-	foreach my $userID (@userIDs) {
+	foreach my $keypartsRef (@keypartsRefList) {
+		my $userID = $keypartsRef->[0];
 		my $string = $self->{driver}->hash()->{$userID};
 		if (defined $string) {
 			if ($self->{table} eq "key") {
