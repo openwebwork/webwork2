@@ -28,7 +28,7 @@ sub problemElementHTML {
 	
 	my $html = CGI::input($attributeHash);
 	if (defined $override) {
-		$attributeHash->{name} = "${fieldName}_override";
+		$attributeHash->{name} = "${fieldName}.override";
 		$attributeHash->{value} = ($override ? $overrideValue : "");
 		$html = "default:".CGI::br().$html.CGI::br()
 			. CGI::checkbox({
@@ -120,8 +120,8 @@ sub initialize {
 						}
 						
 					}
-					$db->putUserProblem($userProblemRecord);
 				}
+				$db->putUserProblem($userProblemRecord);
 				
 			}
 		}
