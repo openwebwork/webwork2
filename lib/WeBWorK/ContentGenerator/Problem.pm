@@ -365,7 +365,7 @@ sub body {
 			CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers"),
 			CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers"),
 		),
-		$self->viewOptions,
+		$self->viewOptions(),
 		CGI::endform();
 	
 	# feedback form

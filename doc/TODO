@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.26 2002-12-06 17:50:22 malsyned Exp $
+# $Id: TODO,v 1.27 2002-12-09 18:40:02 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -81,8 +81,9 @@ DONE	Options - email address and password
 
 >>>>> FOR DECEMBER PREVIEW RELEASE <<<<<
 
-DONE	Feedback - need nice modular way of sending email
-	Professor - redirect to the old system
+	Feedback - need nice modular way of sending email
+		customize reciever, make object dumps prettier, link to context
+DONE	Professor - redirect to the old system
 --->	&send_mail_to should collect info and send it to IO.pm for processing
 	pretty die messages (from outside of the translator)
 	make sure students can't look at not-yet-open problem sets
@@ -91,6 +92,15 @@ DONE	Feedback - need nice modular way of sending email
 	check TTH mode character encodings on mac
 	grep for "***" in source, address all issues (hah!)
 	Increase border size on images by a couple pixels
+	effectiveUser for at least Problem.pm
+	calling logout requires valid key -- doesn't make sense.
+	sort problems by due date
+	disable "show hint/solution" when there's no hint/solution
+	results table
+		part(or blank)/entered/preview/result/messages
+		don't show messages unless there are some
+	make displayMode sticky (for nav and siblings)
+	hardcopy - allow hardcopy with correct answers
 
 >>>>> FOR JANUARY PREVIEW RELEASE <<<<<
 

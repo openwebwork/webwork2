@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.4 2002-12-06 17:50:21 malsyned Exp $
+# $Id: global.conf.dist,v 1.5 2002-12-09 18:40:02 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -11,6 +11,7 @@
 # use the "my" keyword. The following variables are available to this file:
 #
 #         $webworkRoot    directory that contains the WeBWorK distribution
+#     *** $webworkURL     base URL handled by Apache::WeBWorK
 #         $courseName     name of the course being used
 
 ################################################################################
@@ -47,12 +48,13 @@
 	},
 );
 
-my $webworkURLRoot = "/webwork"; # *** # this should be detected!
+my $webworkURLRoot = "/webwork"; # *** # this should be detected! (see above)
 %webworkURLs = (
 	root    => "$webworkURLRoot",
 	htdocs  => "/webwork_files",
 	docs    => "http://webhost.math.rochester.edu/webworkdocs/docs",
 	oldProf => "/webwork-old/profLogin.pl",
+		# *** what would oldProf be if it was a "normal" installation?
 );
 
 ################################################################################

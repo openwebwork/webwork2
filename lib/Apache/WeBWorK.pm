@@ -83,7 +83,7 @@ sub handler() {
 		warn $@;
 		return DECLINED;
 	}
-
+	
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
 	if (!-e $course_env->{webworkDirs}->{courses} . "/$course") {
@@ -97,6 +97,7 @@ sub handler() {
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
+		# *** &verify should throw a descriptive exception on weird failures
 		return WeBWorK::ContentGenerator::Login->new($r, $course_env)->go;
 	} else {
 		# After we are authenticated, there are some things that need to be
