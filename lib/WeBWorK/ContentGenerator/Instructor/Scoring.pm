@@ -31,7 +31,14 @@ sub readCSV {
 }
 
 sub writeCSV {
-	my ($self, @csv) = @_;
+	my ($self, $filename, @csv) = @_;
+	open my $fh, ">", $filename;
+	foreach my $column (@csv) {
+		my $maxLength = $self->maxLength($column);
+		print (join ",", map {$self->pad($_, $maxLength)} $@column);
+		print "\n";
+	}
+	close $fh;
 }
 
 sub readStandardCSV {
@@ -45,7 +52,13 @@ sub readStandardCSV {
 }
 
 sub writeStandardCSV {
-
+	my ($self, $filename, @csv) = @_;
+	open my $fh, ">", $filename;
+	foreach my $column (@csv) {
+		print (join ",", map {$self->quote} $@column);
+		print "\n";
+	}
+	close $fh;
 }
 
 ###
@@ -100,4 +113,19 @@ sub quote {
 		$string =~ "\"$string\"";
 		return $string;
 	}
+}
+
+sub pad {
+	my ($self, $string, $padTo) = @_;
+	my $spaces = $padTo - length $string;
+	return $string . " "x$spaces;
+}
+
+sub maxLength {
+	my ($self, $arrayRef) = @_;
+	my $max = 0;
+	foreach my $cell (@$arrayRef) {
+		$max = length $cell unless length $cell < $max;
+	}
+	return $max;
 }
