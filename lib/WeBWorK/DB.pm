@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.41 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1380,6 +1380,32 @@ sub getUserProblems {
 	}
 	
 	return $self->{problem_user}->gets(@userProblemIDs);
+}
+
+=item getAllUserProblems($userID, $setID)
+
+Returns a list of UserProblem objects representing all the problems in the
+given set. When using the WW1Hash/GlobalTableEmulator schemas, this is far
+more efficient than using listUserProblems and getUserProblems.
+
+=cut
+
+sub getAllUserProblems {
+	my ($self, $userID, $setID) = @_;
+	
+	croak "getUserProblem: requires 2 arguments"
+		unless @_ == 3;
+	croak "getUserProblem: argument 1 must contain a user_id"
+		unless defined $userID;
+	croak "getUserProblem: argument 2 must contain a set_id"
+		unless defined $setID;
+	
+	if ($self->{problem_user}->can("getAll")) {
+		return $self->{problem_user}->getAll($userID, $setID);
+	} else {
+		my @problemIDTriples = $self->{problem_user}->list($userID, $setID, undef);
+		return $self->{problem_user}->gets(@problemIDTriples);
+	}
 }
 
 sub putUserProblem {

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.20 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ tables with a WWDBv1 hash-style backend.
 
 use strict;
 use warnings;
+use Carp;
 use WeBWorK::DB::Utils qw(hash2string string2hash);
 use WeBWorK::Timing;
 
@@ -39,6 +40,12 @@ use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
 ################################################################################
 # table access functions
 ################################################################################
+
+=head1 ADDITIONAL METHODS
+
+=over
+
+=cut
 
 sub count {
 	my ($self, @keyparts) = @_;
@@ -264,39 +271,8 @@ sub add {
 
 sub get {
 	my ($self, @keyparts) = @_;
-# 	
-# 	my ($userID, $setID) = @keyparts[0 .. 1];
-# 	# FIXME: move these checks up to DB
-# 	die "userID not specified." unless defined $userID;
-# 	die "setID not specified." unless defined $setID;
-# 	
-# 	return unless $self->{driver}->connect("ro");
-# 	
-# 	my $PSVN = $self->getPSVN($userID, $setID);
-# 	
-# 	unless (defined $PSVN) {
-# 		$self->{driver}->disconnect();
-# 		return;
-# 	}
-# 	my $string = $self->fetchString($PSVN);
-# 	$self->{driver}->disconnect();
-# 	
-# 	if ($self->{table} eq "set_user") {
-# 		my $UserSet = $self->string2set($string);
-# 		$UserSet->psvn($PSVN);
-# 		return $UserSet;
-# 	} elsif ($self->{table} eq "problem_user") {
-# 		my ($problemID) = $keyparts[2];
-# 		die "problemID not specified." unless defined $problemID;
-# 		#my (undef, @UserProblems) = $self->string2records($string);
-# 		# grep returns the number of matches in scalar context, so we have
-# 		# to put it in list context, and pluck out the first (and only)
-# 		# match, so that we can be called in scalar context.
-# 		#my ($UserProblem) = grep { $_->problem_id() eq $problemID } @UserProblems;
-# 		my $UserProblem = $self->string2problem($string, $problemID);
-# 		return $UserProblem;
-# 	}
-	return ($self->gets(\@keyparts))[0];
+	
+	return ( $self->gets(\@keyparts) )[0];
 }
 
 sub gets {
@@ -314,23 +290,14 @@ sub gets {
 	return @records;
 }
 
-sub getsNoFilter {
-	my ($self, @keypartsRefList) = @_;
-	
-	my @records;
-	$self->{driver}->connect("ro");
-	foreach my $keypartsRef (@keypartsRefList) {
-		my @keyparts = @$keypartsRef;
-		my $UserSet = $self->get1NoFilter(@keyparts);
-		push @records, $UserSet;
-	}
-	$self->{driver}->disconnect();
-	
-	return @records;
-}
+=item get1(@keyparts)
 
-# helper used by gets
-# assumes that the database is already connected
+Retrieves one set or problem from the database, packages it into a record
+object, and removes values that match global defaults. Assumes that the driver
+is already connected to the database. Used by gets().
+
+=cut
+
 sub get1 {
 	my ($self, @keyparts) = @_;
 	my $db = $self->{db};
@@ -357,8 +324,37 @@ sub get1 {
 	return $UserRecord;
 }
 
+=item getsNoFilter(@keypartsRefList)
+
+Similar to gets(), but does not remove values that match global defaults.
+
+=cut
+
+sub getsNoFilter {
+	my ($self, @keypartsRefList) = @_;
+	
+	my @records;
+	$self->{driver}->connect("ro");
+	foreach my $keypartsRef (@keypartsRefList) {
+		my @keyparts = @$keypartsRef;
+		my $UserSet = $self->get1NoFilter(@keyparts);
+		push @records, $UserSet;
+	}
+	$self->{driver}->disconnect();
+	
+	return @records;
+}
+
 # helper used by get1
 # also used by GlobalTableEmulator when it needs "real" records
+
+=item get1NoFilter(@keyparts)
+
+Similar to get1(), but does not remove values that match global defaults. Used
+by getsNoFilter() and several methods in GlobalTableEmulator.
+
+=cut
+
 sub get1NoFilter {
 	my ($self, @keyparts) = @_;
 	
@@ -381,17 +377,85 @@ sub get1NoFilter {
 	} elsif ($self->{table} eq "problem_user") {
 		my ($problemID) = $keyparts[2];
 		die "problemID not specified." unless defined $problemID;
-		#my (undef, @UserProblems) = $self->string2records($string);
-		# grep returns the number of matches in scalar context, so we have
-		# to put it in list context, and pluck out the first (and only)
-		# match, so that we can be called in scalar context.
-		#my ($UserProblem) = grep { $_->problem_id() eq $problemID } @UserProblems;
 		my $UserProblem = $self->string2problem($string, $problemID);
 		return $UserProblem;
 	}
 }
 
-sub put($$) {
+=item getAll($userID, $setID)
+
+Returns all problems in a given set. Only supported for the problem_user table.
+
+=cut
+
+sub getAll {
+	my ($self, @keyparts) = @_;
+	my $db = $self->{db};
+	my $table = $self->{table};
+	my ($globalTable) = $table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$globalTable};
+	
+	croak "getAll: only supported for the problem_user table"
+		unless $table eq "problem_user";
+	
+	my @UnsortedUserProblems = $self->getAllNoFilter(@keyparts);
+	my @UnsortedGlobalProblems = $globalSchema->getAll(@keyparts[1 .. $#keyparts]);
+	
+	my (@UserProblems, @GlobalProblems);
+	foreach my $UserProblem (@UnsortedUserProblems) {
+		@UserProblems[$UserProblem->problem_id] = $UserProblem;
+	}
+	foreach my $GlobalProblem (@UnsortedGlobalProblems) {
+		@GlobalProblems[$GlobalProblem->problem_id] = $GlobalProblem;
+	}
+	
+	foreach my $problemID (0 .. $#GlobalProblems) {
+		my $GlobalProblem = $GlobalProblems[$problemID];
+		my $UserProblem = $UserProblems[$problemID];
+		
+		next unless defined $UserProblem;
+		
+		if (defined $GlobalProblem) {
+			foreach my $field ($GlobalProblem->NONKEYFIELDS) {
+				if ($UserProblem->$field eq $GlobalProblem->$field) {
+					$UserProblem->$field(undef);
+				}
+			}
+		} else {
+			warn __PACKAGE__, ": keyparts=@keyparts: $table record exists, but $globalTable record does not. returning user record unmodified. this could cause problems later.";
+		}
+	}
+	
+	return @UserProblems;
+}
+
+=item getAllNoFilter($userID, $setID)
+
+Similar to getAll(), but does not remove values that match global defaults.
+Used by getAll() and the getAll() method in GlobalTableEmulator.
+
+=cut
+
+sub getAllNoFilter {
+	my ($self, $userID, $setID) = @_;
+	
+	croak "getAll: only supported for the problem_user table"
+		unless $self->{table} eq "problem_user";
+	
+	$self->{driver}->connect("ro");
+	
+	my $PSVN = $self->getPSVN($userID, $setID);
+	return unless defined $PSVN;
+	
+	my $string = $self->fetchString($PSVN);
+	my @UserProblems = $self->string2problems($string);
+	
+	$self->{driver}->disconnect;
+	
+	return @UserProblems;
+}
+
+sub put {
 	my ($self, $Record) = @_;
 	my $userID = $Record->user_id();
 	my $setID = $Record->set_id();
@@ -451,7 +515,7 @@ sub put($$) {
 	return $result;
 }
 
-sub delete($@) {
+sub delete {
 	my ($self, $userID, $setID, $problemID) = @_;
 	
 	return 0 unless $self->{driver}->connect("rw");
@@ -473,13 +537,7 @@ sub delete($@) {
 	
 	if (@matchingPSVNs) {
 		foreach my $PSVN (@matchingPSVNs) {
-			# this is tricky. _deleteOne has different behavior
-			# depending on the table. for the set_user table, it
-			# ignores $problemID and deletes the set with the
-			# matching $PSVN. for the problem_user table, it deletes
-			# the problem matching $problemID from the set matching
-			# $PSVN, or all problems if $problemID is not defined.
-			$self->_deleteOne($PSVN, $problemID);
+			$self->delete1($PSVN, $problemID);
 		}
 	}
 	
@@ -487,11 +545,17 @@ sub delete($@) {
 	return 1;
 }
 
-################################################################################
-# deletion helper
-################################################################################
+=item delete1($PSVN, $problemID)
 
-sub _deleteOne {
+for the set_user table,  ignore $problemID and deletes the set with the
+matching $PSVN. for the problem_user table, deletes the problem matching
+$problemID from the set matching $PSVN, or all problems if $problemID is not
+defined. Assumes that the driver is already connected to the database. Used by
+delete().
+
+=cut
+
+sub delete1 {
 	my ($self, $PSVN, $problemID) = @_;
 	
 	my $string = $self->fetchString($PSVN);
@@ -521,6 +585,10 @@ sub _deleteOne {
 	
 	return $result;
 }
+
+=back
+
+=cut
 
 ################################################################################
 # add/put override copy helper
@@ -679,7 +747,7 @@ sub problem2hash {
 ################################################################################
 
 # retrieves a list of existing PSVNs from the user PSVN index
-sub getPSVNsForUser($$) {
+sub getPSVNsForUser {
 	my ($self, $userID) = @_;
 	my $setsForUser = $self->fetchString(LOGIN_PREFIX.$userID);
 	return unless defined $setsForUser;
@@ -688,7 +756,7 @@ sub getPSVNsForUser($$) {
 }
 
 # retrieves a list of existing PSVNs from the set PSVN index
-sub getPSVNsForSet($$) {
+sub getPSVNsForSet {
 	my ($self, $setID) = @_;
 	my $usersForSet = $self->fetchString(SET_PREFIX.$setID);
 	return unless defined $usersForSet;
@@ -697,7 +765,7 @@ sub getPSVNsForSet($$) {
 }
 
 # retrieves an existing PSVN from the PSVN indexes
-sub getPSVN($$$) {
+sub getPSVN {
 	my ($self, $userID, $setID) = @_;
 	my $setsForUser = $self->{driver}->hash()->{LOGIN_PREFIX.$userID};
 	my $usersForSet = $self->{driver}->hash()->{SET_PREFIX.$setID};
@@ -729,7 +797,7 @@ sub getPSVN($$$) {
 
 # generates a new PSVN, updates the PSVN indexes, returns the PSVN
 # if there is already a PSVN for this pair, reuse it
-sub setPSVN($$$) {
+sub setPSVN {
 	my ($self, $userID, $setID) = @_;
 	my $PSVN = $self->getPSVN($userID, $setID);
 	unless ($PSVN) {
@@ -763,7 +831,7 @@ sub setPSVN($$$) {
 }
 
 # remove an existing PSVN from the PSVN indexes
-sub deletePSVN($$$) {
+sub deletePSVN {
 	my ($self, $userID, $setID) = @_;
 	my $PSVN = $self->getPSVN($userID, $setID);
 	return unless $PSVN;
@@ -792,19 +860,19 @@ sub deletePSVN($$$) {
 # hash string interface
 ################################################################################
 
-sub fetchString($$) {
+sub fetchString {
 	my ($self, $PSVN) = @_;
 	my $string = $self->{driver}->hash()->{$PSVN};
 	return $string;
 }
 
 
-sub storeString($$$) {
+sub storeString {
 	my ($self, $PSVN, $string) = @_;
 	$self->{driver}->hash()->{$PSVN} = $string;
 }
 
-sub deleteString($$) {
+sub deleteString {
 	my ($self, $PSVN) = @_;
 	delete $self->{driver}->hash()->{$PSVN};
 }

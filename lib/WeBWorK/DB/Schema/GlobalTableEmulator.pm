@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/GlobalTableEmulator.pm,v 1.15 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/GlobalTableEmulator.pm,v 1.16 2003/12/09 02:42:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ WeBWorK::DB::Schema::GlobalTableEmulator - emulate the global 'set' and
 
 use strict;
 use warnings;
+use Carp;
 use Data::Dumper;
 use WeBWorK::DB::Utils qw(global2user user2global initializeUserProblem findDefaults);
 
@@ -36,7 +37,7 @@ use constant STYLE  => "null";
 # constructor
 ################################################################################
 
-sub new($$$) {
+sub new {
 	my ($proto, $db, $driver, $table, $record, $params) = @_;
 	
 	die "parameter globalUserID not found"
@@ -62,7 +63,7 @@ sub count {
 	return $userSchema->count($globalUserID, @keyparts);
 }
 
-sub list($@) {
+sub list {
 	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
@@ -80,7 +81,7 @@ sub list($@) {
 	return @recordIDs;
 }
 
-sub exists($@) {
+sub exists {
 	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
@@ -91,7 +92,7 @@ sub exists($@) {
 	return $userSchema->exists($globalUserID, @keyparts);
 }
 
-sub add($$) {
+sub add {
 	my ($self, $Record) = @_;
 	
 	my $db = $self->{db};
@@ -125,21 +126,13 @@ sub add($$) {
 	return $userSchema->add($UserRecord);
 }
 
-sub get($@) {
+sub get {
 	my ($self, @keyparts) = @_;
-#	
-#	my $db = $self->{db};
-#	my $table = $self->{table};
-#	my $userSchema = $db->{"${table}_user"};
-#	my $globalUserID = $self->{params}->{globalUserID};
-#	
-#	my $UserRecord = $userSchema->get($globalUserID, @keyparts);
-#	return unless $UserRecord; # maybe it didn't exist?
-#	return user2global($self->{record}, $UserRecord);
+	
 	return ($self->gets(\@keyparts))[0];
 }
 
-sub gets($@) {
+sub gets {
 	my ($self, @keypartsRefList) = @_;
 	
 	my $db = $self->{db};
@@ -158,9 +151,8 @@ sub gets($@) {
 }
 
 # helper used by gets
-sub get1($@) {
+sub get1 {
 	my ($self, @keyparts) = @_;
-	
 	my $db = $self->{db};
 	my $table = $self->{table};
 	my $userSchema = $db->{"${table}_user"};
@@ -171,7 +163,27 @@ sub get1($@) {
 	return user2global($self->{record}, $UserRecord);
 }
 
-sub put($$) {
+sub getAll {
+	my ($self, @keyparts) = @_;
+	my $db = $self->{db};
+	my $table = $self->{table};
+	my $userSchema = $db->{"${table}_user"};
+	my $globalUserID = $self->{params}->{globalUserID};
+	
+	croak "getAll: only supported for the problem table"
+		unless $table eq "problem";
+	
+	my @UserProblems = $userSchema->getAllNoFilter($globalUserID, @keyparts);
+	
+	foreach my $UserProblem (@UserProblems) {
+		next unless $UserProblem; # maybe it didn't exist?
+		$UserProblem = user2global($self->{record}, $UserProblem);
+	}
+	
+	return @UserProblems;
+}
+
+sub put {
 	my ($self, $Record) = @_;
 	
 	my $db = $self->{db};
@@ -214,7 +226,7 @@ sub put($$) {
 	return $result;
 }
 
-sub delete($@) {
+sub delete {
 	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
@@ -233,7 +245,7 @@ sub delete($@) {
 # function to distribute new global values to each user-specific record
 ################################################################################
 
-sub distGlobalValues($$$@) {
+sub distGlobalValues {
 	my ($self, $OldGlobalRecord, $NewGlobalRecord, @userIDs) = @_;
 	
 	my $db = $self->{db};
