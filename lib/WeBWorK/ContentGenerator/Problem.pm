@@ -17,7 +17,7 @@ use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
 use WeBWorK::Form;
 use WeBWorK::PG;
-use WeBWorK::Utils qw(ref2string encodeAnswers decodeAnswers);
+use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string);
 
 ############################################################
 # 
@@ -164,7 +164,7 @@ sub if_errors($$) {
 	return $self->{pg}->{flags}->{error_flag};
 }
 
-sub header {
+sub head {
 	my $self = shift;
 	
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
@@ -247,8 +247,6 @@ sub title {
 sub body {
 	my $self = shift;
 	
-	#$self->prepare(@_);
-	
 	# unpack some useful variables
 	my $r               = $self->{r};
 	my $wwdb            = $self->{wwdb};
@@ -286,6 +284,21 @@ sub body {
 			$problem->num_correct($pg->{state}->{num_of_correct_ans});
 			$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
 			$wwdb->setProblem($problem);
+			# write to the transaction log, just to make sure
+			writeLog($self->{courseEnvironment}, "transaction",
+				$problem->id."\t".
+				$problem->set_id."\t".
+				$problem->login_id."\t".
+				$problem->source_file."\t".
+				$problem->value."\t".
+				$problem->max_attempts."\t".
+				$problem->problem_seed."\t".
+				$problem->status."\t".
+				$problem->attempted."\t".
+				$problem->last_answer."\t".
+				$problem->num_correct."\t".
+				$problem->num_incorrect
+			);
 		}
 	}
 	

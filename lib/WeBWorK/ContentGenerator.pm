@@ -122,12 +122,14 @@ sub template {
 			} elsif ($function eq "endif" and @ifstack > 1) {
 				pop @ifstack;
 			} elsif ($ifstack[-1]) {
-				print $self->$function(@_, {@args}) if $self->can($function);
+				if ($self->can($function)) {
+					print $self->$function(@_, {@args});
+				}
 			}
 		}
 		
 		if ($ifstack[-1]) {
-			print substr $line, (defined pos $line) ? pos $line : 0;
+			print substr($line, (defined pos $line) ? pos $line : 0), "\n";
 		}
 	}
 }
@@ -366,6 +368,7 @@ sub links {
 	my $courseName = $ce->{courseName};
 	my $root = $ce->{webworkURLs}->{root};
 	my $permLevel = WeBWorK::DB::Auth->new($ce)->getPermissions($userName);
+	return "" unless defined $permLevel;
 	
 	my $probSets = "$root/$courseName/?" . $self->url_authen_args();
 	my $prefs    = "$root/$courseName/prefs/?" . $self->url_authen_args();

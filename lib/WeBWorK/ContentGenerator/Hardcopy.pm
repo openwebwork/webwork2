@@ -64,6 +64,9 @@ sub body {
 		return OK;
 	}
 	
+	#print CGI::pre($self->getMultiSetTeX(@sets));
+	#return "";
+	
 	print CGI::p("Generating your hardcopy...");
 	my $url = $self->makeHardcopy(@sets);
 	if ($url) {
@@ -119,6 +122,7 @@ sub latex2pdf {
 	my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
 	my $texFile = "$wd/hardcopy.tex";
 	my $pdfFile = "$wd/hardcopy.pdf";
+	my $logFile = "$wd/hardcopy.log";
 	
 	# write the tex file
 	local *TEX;

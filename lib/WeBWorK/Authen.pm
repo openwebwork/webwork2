@@ -105,7 +105,7 @@ sub verify($) {
 		# Not a practice user.  Do normal authentication.
 		elsif ($auth->verifyPassword($user, $passwd)) {
 			# Remove the passwd field from subsequent requests.
-			$r->param('passwd',undef);
+			$r->param('passwd',"");
 			$key = $auth->getKey($user) || generate_key;
 			$auth->setKey($user, $key);
 			$r->param('key',$key);

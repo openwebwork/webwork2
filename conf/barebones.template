@@ -8,11 +8,7 @@
   <title>WeBWorK - <!--#title--></title>
   <!--#head-->
  </head>
-<!--#if warnings="1"-->
- <body bgcolor="#ffcccc" text="black" link="blue" alink="red" vlink="purple">
-<!--#else-->
  <body>
-<!--#endif-->
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
    <tr valign="middle">
     <td align="center">
@@ -37,7 +33,11 @@
       </small>
      </div>
     </td>
-    <td>
+<!--#if warnings="1"-->
+       <td bgcolor="#ffcccc">
+<!--#else-->
+       <td>
+<!--#endif-->
      <div align="center">
       <!--#nav style="text" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
      </div>

@@ -94,7 +94,7 @@ sub handler() {
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
-		my $effectiveUser = $r->param("effectiveUser");
+		my $effectiveUser = $r->param("effectiveUser") || "";
 		my $user = $r->param("user");
 		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
 		# This hoary statement has the effect of forcing effectiveUser to equal user unless

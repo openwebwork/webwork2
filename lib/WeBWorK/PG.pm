@@ -19,7 +19,7 @@ use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
 use WeBWorK::Problem;
-use WeBWorK::Utils qw(readFile formatDateTime);
+use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry);
 
 sub new($$$$$$$$) {
 	my $invocant = shift;
@@ -36,6 +36,11 @@ sub new($$$$$$$$) {
 		                     # translator, such as whether to show
 				     # hints and the display mode to use
 	) = @_;
+	
+	# write timing log entry
+	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
+		"user=".$user->id.",problem=".$courseEnv->{courseName}."/".$set->id."/".$problem->id.",mode=".$translationOptions->{displayMode},
+		"begin");
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
@@ -89,10 +94,13 @@ sub new($$$$$$$$) {
 	#warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
 	my $pg_pl = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
 	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
+	my $io_pl = $courseEnv->{webworkDirs}->{macros} . "/IO.pl";
 	my $err = $translator->unrestricted_load($pg_pl);
 	warn "Error while loading $pg_pl: $err" if $err;
 	$err = $translator->unrestricted_load($dangerousMacros_pl);
 	warn "Error while loading $dangerousMacros_pl: $err" if $err;
+	$err = $translator->unrestricted_load($io_pl);
+	warn "Error while loading $io_pl: $err" if $err;
 	
 	# set the opcode mask (using default values)
 	#warn "PG: setting the opcode mask (using default values)\n";
@@ -184,6 +192,9 @@ EOF
 		
 	}
 	
+	# write timing log entry
+	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new", "", "end");
+	
 	# return an object which contains the translator and the results of
 	# the translation process. this is DIFFERENT from the "format expected
 	# by Webwork.pm (and I believe processProblem8, but check.)"
@@ -269,12 +280,14 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{inputs_ref} = $formFields;
 	
 	# External Programs
-	# ADDED: externalLaTeXPath, externalDvipngPath, externalMath2imgPath
+	# ADDED: externalLaTeXPath, externalDvipngPath,
+	#        externalGif2EpsPath, externalPng2EpsPath
 	
 	$envir{externalTTHPath}      = $courseEnv->{externalPrograms}->{tth};
 	$envir{externalLaTeXPath}    = $courseEnv->{externalPrograms}->{latex};
 	$envir{externalDvipngPath}   = $courseEnv->{externalPrograms}->{dvipng};
-	$envir{externalMath2imgPath} = $courseEnv->{externalPrograms}->{math2img};
+	$envir{externalGif2EpsPath}  = $courseEnv->{externalPrograms}->{gif2eps};
+	$envir{externalPng2EpsPath}  = $courseEnv->{externalPrograms}->{png2eps};
 	
 	# Directories and URLs
 	# REMOVED: courseName
@@ -286,13 +299,13 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{classDirectory}         = undef;
 	$envir{courseScriptsDirectory} = $courseEnv->{webworkDirs}->{macros}."/";
 	$envir{htmlDirectory}          = $courseEnv->{courseDirs}->{html}."/";
-	$envir{htmlURL}                = $courseEnv->{courseURLs}->{html};
+	$envir{htmlURL}                = $courseEnv->{courseURLs}->{html}."/";
 	$envir{macroDirectory}         = $courseEnv->{courseDirs}->{macros}."/";
 	$envir{templateDirectory}      = $courseEnv->{courseDirs}->{templates}."/";
 	$envir{tempDirectory}          = $courseEnv->{courseDirs}->{html_temp}."/";
-	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp};
+	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp}."/";
 	$envir{scriptDirectory}        = undef;
-	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
+	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs}."/";
 	$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
 		? tempdir("webwork-dvipng-XXXXXXXX", DIR => $envir{tempDirectory})
 		: undef;

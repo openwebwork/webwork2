@@ -23,6 +23,8 @@ our @EXPORT_OK = qw(
 	readFile
 	formatDateTime
 	parseDateTime
+	writeLog
+	writeTimingLogEntry
 	dbDecode
 	dbEncode
 	decodeAnswers
@@ -56,7 +58,7 @@ sub formatDateTime($) {
 	# %I 	hour, 12 hour clock, leading 0's)
 	# %M 	minute, leading 0's
 	# %P 	am or pm (Yes %p and %P are backwards :)
-	return time2str "%m/%d/%y %I:%M%P", $dateTime;
+	return time2str("%m/%d/%y %I:%M%P", $dateTime);
 }
 
 sub parseDateTime($) {
@@ -64,17 +66,28 @@ sub parseDateTime($) {
 	return str2time $string;
 }
 
-#sub writeLog($$$) {
-#	my ($ce, $facility, $message) = @_;
-#	die "There is no log file for $facility defined."
-#		unless $ce->{webworkFiles}->{logs}->{$facility};
-#	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
-#	local *LOG;
-#	open LOG, "<<", $logFile
-#		of die "failed to open $logFile for writing: $!";
-#	print LOG $message;
-#	close LOG;
-#}
+sub writeLog($$@) {
+	my ($ce, $facility, @message) = @_;
+	unless ($ce->{webworkFiles}->{logs}->{$facility}) {
+		warn "There is no log file for the $facility facility defined.\n";
+		return;
+	}
+	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
+	local *LOG;
+	if (open LOG, ">>", $logFile) {
+		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
+		close LOG;
+	} else {
+		warn "failed to open $logFile for writing: $!";
+	}
+}
+
+sub writeTimingLogEntry($$$$) {
+	my ($ce, $function, $details, $beginEnd) = @_;
+	return unless defined $ce->{webworkFiles}->{logs}->{timing};
+	$beginEnd = ($beginEnd eq "begin") ? ">" : "<";
+	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
+}
 
 # -----
 

@@ -32,7 +32,8 @@ sub hasPermissions {
 	my $auth = WeBWorK::DB::Auth->new($courseEnvironment);
 	
 	my $permissionLevel = $auth->getPermissions($user);
-	if ($permissionLevel >= $permission_hash->{$activity}) {
+	if (defined $permission_hash->{$activity}
+	    and $permissionLevel >= $permission_hash->{$activity}) {
 		return 1;
 	} else {return 0;}
 }

@@ -273,19 +273,19 @@ The macros shared with the safe compartment are
 
 # SHARE variables and routines with safe compartment
 my %shared_subroutine_hash = (
-	'&read_whole_problem_file' => 'PGtranslator', #the values are dummies.
-	'&convertPath'             => 'PGtranslator', # if they're dummies, why set them to
-	'&surePathToTmpFile'       => 'PGtranslator', # something that seems meaningful,
-	'&fileFromPath'            => 'PGtranslator', # instead of '1' or something?
-	'&directoryFromPath'       => 'PGtranslator',
-	'&createFile'              => 'PGtranslator',
+#IO#	'&read_whole_problem_file' => 'PGtranslator', #the values are dummies.
+#IO#	'&convertPath'             => 'PGtranslator', # if they're dummies, why set them to
+#IO#	'&surePathToTmpFile'       => 'PGtranslator', # something that seems meaningful,
+#IO#	'&fileFromPath'            => 'PGtranslator', # instead of '1' or something?
+#IO#	'&directoryFromPath'       => 'PGtranslator',
+#IO#	'&createFile'              => 'PGtranslator',
 	'&PG_answer_eval'          => 'PGtranslator',
 	'&PG_restricted_eval'      => 'PGtranslator',
 	'&be_strict'               => 'PGtranslator',
-	'&send_mail_to'            => 'PGtranslator',
+#IO#	'&send_mail_to'            => 'PGtranslator',
 	'&PGsort'                  => 'PGtranslator',
 	'&dumpvar'                 => 'PGtranslator',
-	'&includePGtext'           => 'PGtranslator',
+#IO#	'&includePGtext'           => 'PGtranslator',
 );
 
 sub initialize {

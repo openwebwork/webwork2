@@ -197,8 +197,10 @@ sub convertPath {
 sub getDirDelim {
 	return ("/");
 }
+
 sub getCourseTempDirectory {
 	return ($Global::courseTempDirectory);
+	#return "/ww/webwork/courses/sam_course/html/tmp/";
 }
 
 =head2 surePathToTmpFile

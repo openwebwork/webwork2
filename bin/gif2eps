@@ -4,7 +4,7 @@
 # In order to use this script, set the NETPBM variable below to the
 # directory which contains giftopnm, ppmtopgm, and pnmtops.
 
-NETPBM=/usr/X11/bin
+NETPBM=/usr/local/bin
 
 # If you wish to set the paths to each utility separately, i.e. if they
 # are in different locations, do so below:

@@ -112,7 +112,7 @@ sub getKey($$) {
 	return unless $self->{keys_db}->connect("ro");
 	my $result = $self->{keys_db}->hashRef->{$user};
 	$self->{keys_db}->disconnect;
-	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
+	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, 0);
 	if (time <= $timestamp+$self->{key_timeout}) {
 		return $key;
 	} else {
@@ -158,6 +158,7 @@ sub deleteKey($$) {
 sub getPermissions($$) {
 	my $self = shift;
 	my $user = shift;
+	return unless defined $user;
 	return unless $self->{permissions_db}->connect("ro");
 	my $result = $self->{permissions_db}->hashRef->{$user};
 	$self->{permissions_db}->disconnect;
@@ -168,6 +169,7 @@ sub setPermissions($$$) {
 	my $self = shift;
 	my $user = shift;
 	my $permissions = shift;
+	return unless defined $user and $permissions;
 	$self->{permissions_db}->connect("rw");
 	$self->{permissions_db}->hashRef->{$user} = $permissions;
 	$self->{permissions_db}->disconnect;
@@ -176,6 +178,7 @@ sub setPermissions($$$) {
 sub deletePermissions($$) {
 	my $self = shift;
 	my $user = shift;
+	return unless defined $user;
 	$self->{permissions_db}->connect("rw");
 	delete $self->{permissions_db}->hashRef->{$user};
 	$self->{permissions_db}->disconnect;
