@@ -172,8 +172,8 @@ sub saveFileChanges {
 		$editFilePath           .= '/'. $ce->{courseFiles}->{course_info};
 		$self->{file_type}       = 'course_info';
 	    # no problem_record is defined in this case
-	
-	}   else   {                    # we areediting a problem file or a set header file
+ 
+	}   else   {                    # we are editing a problem file or a set header file
 	
 			# FIXME  there is a discrepancy in the way that the problems are found.
 			# FIXME  more error checking is needed in case the problem doesn't exist.
@@ -243,6 +243,7 @@ sub saveFileChanges {
 		$editErrors .= $problemContents;
 		$currentSourceFilePath			=	"$editFilePath.$editFileSuffix"; 
 		$self->{currentSourceFilePath}	=	$currentSourceFilePath; 
+		$self->{problemPath}            =   $editFilePath;
 	} elsif ($submit_button	eq 'Refresh' ) {
 		# grab the problemContents from the form in order to save it to the tmp file
 		# store tmp file name in the $self->currentSourceFilePath for use in body 
@@ -250,6 +251,7 @@ sub saveFileChanges {
 		$problemContents				=	$r->param('problemContents');
 		$currentSourceFilePath			=	"$editFilePath.$editFileSuffix";	
 		$self->{currentSourceFilePath}	=	$currentSourceFilePath;
+		$self->{problemPath}            =   $editFilePath;
 	} elsif ($submit_button eq 'Save') {
 		# grab the problemContents from the form in order to save it to the permanent file
 		# later we will unlink (delete) the temporary file
@@ -258,6 +260,16 @@ sub saveFileChanges {
 		$problemContents				=	$r->param('problemContents');
 		$currentSourceFilePath			=	"$editFilePath"; 		
 		$self->{currentSourceFilePath}	=	$currentSourceFilePath;	
+		$self->{problemPath}            =   $editFilePath;
+	} elsif ($submit_button eq 'Save as') {
+		# grab the problemContents from the form in order to save it to a new permanent file
+		# later we will unlink (delete) the current temporary file
+	 	# store new permanent file name in the $self->currentSourceFilePath for use in body 
+		
+		$problemContents				=	$r->param('problemContents');
+		$currentSourceFilePath			=	$ce->{courseDirs}->{templates} . '/' .$r->param('save_to_new_file'); 		
+		$self->{currentSourceFilePath}	=	$currentSourceFilePath;	
+		$self->{problemPath}            =   $currentSourceFilePath;
 	} else {
 		# give a warning
 		die "Unrecognized submit command $submit_button";
@@ -267,24 +279,31 @@ sub saveFileChanges {
 	$problemContents    =~    s/\r\n/\n/g;
 	$problemContents    =~    s/\r/\n/g;
 	
-	# FIXME  convert all double returns to paragraphs
-	$problemContents    =~    s/\n\n/\n<p>\n/g;
+	# FIXME  convert all double returns to paragraphs for .txt files
+	if ($self->{file_type} eq 'course_info' ) {
+		$problemContents    =~    s/\n\n/\n<p>\n/g;
+	}
 	##############################################################################
 	#
 	# write changes to the approriate files
 	# FIXME  make sure that the permissions are set correctly!!!
 	# Make sure that the warning is being transmitted properly.
 	##############################################################################
-	eval {
-		local *OUTPUTFILE;
-		open OUTPUTFILE, ">", $currentSourceFilePath
-				or die "Failed to write to $currentSourceFilePath.  
-				It is likely that the permissions in the template directory have not been set correctly.".
-				"The web server must be able to create and write to files in the directory containing the problem. 
-				$!";
-		print OUTPUTFILE $problemContents;
-		close OUTPUTFILE;
-	};
+	# FIXME  set a local state rather continue to call on the submit button.
+	if (defined($submit_button) and $submit_button eq 'Save as' and defined($currentSourceFilePath) and -e $currentSourceFilePath) {
+		warn "File $currentSourceFilePath exists.  File not saved.";
+	} else {
+		eval {
+			local *OUTPUTFILE;
+			open OUTPUTFILE, ">", $currentSourceFilePath
+					or die "Failed to write to $currentSourceFilePath.  
+					It is likely that the permissions in the template directory have not been set correctly.".
+					"The web server must be able to create and write to files in the directory containing the problem. 
+					$!";
+			print OUTPUTFILE $problemContents;
+			close OUTPUTFILE;
+		};
+	}
 	# record an error string for later use if there was a difficulty in writing to the file
 	# FIXME is this string ever inspected?
 	
@@ -306,12 +325,12 @@ sub saveFileChanges {
 		# unlink the temporary file if there are no errors and the save button has been pushed
 	    
 		$self->{openTempFileErrors}	=	'';
-		unlink("$editFilePath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';		
+		unlink("$editFilePath.$editFileSuffix") if defined($submit_button) and ($submit_button eq 'Save' or $submit_button eq 'Save as');		
 	};
 	
 		
 	# return values for use in the body subroutine
-	$self->{problemPath}              =   $editFilePath;
+#	$self->{problemPath}              =   $editFilePath;
 	$self->{inputFilePath}            =   $inputFilePath;
 	$self->{displayMode}              =   $displayMode;
 	$self->{problemSeed}              =   $problemSeed;
@@ -440,8 +459,10 @@ sub body {
 		),
 		CGI::p(
 			CGI::submit(-value=>'Refresh',-name=>'submit'),
-			CGI::submit(-value=>'Save',-name=>'submit'),
-			CGI::submit(-value=>'Revert',-name=>'submit'),
+			CGI::submit(-value=>'Save',   -name=>'submit'),
+			CGI::submit(-value=>'Revert', -name=>'submit'),
+			CGI::submit(-value=>'Save as',-name=>'submit'),
+			CGI::textfield(-name=>'save_to_new_file', -value=>""),
 		),	
 		CGI::end_form(),
 
