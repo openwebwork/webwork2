@@ -286,7 +286,10 @@ my %shared_subroutine_hash = (
 	'&PGsort'                  => 'PGtranslator',
 	'&dumpvar'                 => 'PGtranslator',
 #IO#	'&includePGtext'           => 'PGtranslator',
+	'&getImageDimmensions'     => 'PGtranslator',
 );
+
+# *** # remember to document the IO.pl vs. IO.pm issues!
 
 sub initialize {
     my $self = shift;

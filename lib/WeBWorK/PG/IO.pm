@@ -8,6 +8,7 @@ package WeBWorK::PG::IO;
 use strict;
 use warnings;
 use Exporter;
+use Image::Info qw(image_info dim);
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -25,6 +26,7 @@ our @EXPORT = qw(
 	createDirectory
 	REMOTE_HOST
 	REMOTE_ADDR
+	getImageDimmensions
 );
 
 
@@ -334,6 +336,21 @@ sub createDirectory
       warn("$0: createDirectory error", " Can't do chmod($permission, $dirName)");
     unless ($numgid == -1) {chown(-1,$numgid,$dirName) or
       warn("$0: createDirectory error", " Can't do chown(-1,$numgid,$dirName)");}
+}
+
+=head2 getImageDimmensions
+
+(height, width) = getImageDimmensions(imagePath)
+
+Returns the height and width of an image, given a path the the image file. Uses Image::Info
+
+=cut
+
+sub getImageDimmensions($) {
+	my $image = shift;
+	my $info = image_info($image);
+	my ($width, $height) = dim($info);
+	return ($height, $width);
 }
 
 1;

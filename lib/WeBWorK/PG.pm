@@ -257,7 +257,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
 	$envir{answerDate}          = $set->answer_date;
 	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
-	$envir{numOfAttempts}       = $problem->num_correct + $problem->num_incorrect;
+	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $courseEnv->{courseName};

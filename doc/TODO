@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.13 2002-09-27 23:53:40 sh002i Exp $
+# $Id: TODO,v 1.14 2002-10-25 20:56:47 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -68,12 +68,13 @@ DONE	remove webwork-dvipng-xxxxx temp directories when finished with them
 DONE	make "enter" on the problem form trigger "submit answer", not "redisplay"
 DONE	handling of PG warnings (?!?!?!?!)
 DONE	time logging
-	transaction logging
+	test transaction logging
 DONE	make static images work
 DONE	make GD-generated images work
 DONE	make HTML links work
-	make images in PDFs work
-	fix TTH mode character encodings
+--->	make images in PDFs work
+	handle PG errors (and warnings) in Hardcopy
+	fix TTH mode character encodings (check on mac and windows)
 	have logout button invalidate key
 	Pretty die messages (from outside of the translator)
 	Feedback - need nice modular way of sending email
@@ -81,18 +82,7 @@ DONE	make HTML links work
 
 --------------------------------------------------------------------------------
 
-change notes (9/27)
-
-- created macros/IO.pl, which is loaded with no opmask by PG.pm. It is a copy
-  of WeBWorK::PG::IO.pm, with some changes to make it work as a macro package.
-  The translator no longer shares IO.pm's functions with the safe compartment.
-  This is a BAD THING, and should be reconsidered when the Translator is
-  revised.
-- Changed many (but not all) checks for HTML or HTML_tth modes to match /^HTML/
-  in the macros.
-- changed &header to &head in Problem.pm
-- Added problem environment variables for gif2eps and png2eps and modified
-  &dangerousMacros::alias to use them
+change notes
 
 --------------------------------------------------------------------------------
 

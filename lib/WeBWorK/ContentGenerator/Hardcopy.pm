@@ -142,7 +142,7 @@ sub latex2pdf {
 	}
 	
 	# remove temporary directory
-	rmtree($wd, 0, 1);
+	#rmtree($wd, 0, 1);
 	
 	return -e $finalFile;
 }
@@ -250,6 +250,9 @@ sub getProblemTeX {
 			processAnswers  => 0,
 		},
 	);
+	
+	warn "***GET READY FOR PG WARNINGS!!!!!\n***SET=$setName PROBLEM=$problemNumber\n",
+		$pg->{warnings}, "***OK NO MORE PG WARNINGS!!!!\n" if $pg->{warnings};
 	
 	return $pg->{body_text};
 }
