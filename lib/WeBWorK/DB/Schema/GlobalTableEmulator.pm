@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/GlobalTableEmulator.pm,v 1.15 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,6 +50,17 @@ sub new($$$) {
 ################################################################################
 # table access functions
 ################################################################################
+
+sub count {
+	my ($self, @keyparts) = @_;
+	
+	my $db = $self->{db};
+	my $table = $self->{table};
+	my $userSchema = $db->{"${table}_user"};
+	my $globalUserID = $self->{params}->{globalUserID};
+	
+	return $userSchema->count($globalUserID, @keyparts);
+}
 
 sub list($@) {
 	my ($self, @keyparts) = @_;

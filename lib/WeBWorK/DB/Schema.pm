@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema.pm,v 1.6 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -99,8 +99,7 @@ sub new {
 
 =item count(@keyparts)
 
-Returns the number of records matching @keyparts is found in the table. (This
-is currently implemented only for the WW1Hash schema.)
+Returns the number of records matching @keyparts is found in the table.
 
 =item list(@keyparts)
 

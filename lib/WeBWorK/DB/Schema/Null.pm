@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/Null.pm,v 1.7 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,6 +33,7 @@ use constant STYLE  => "null";
 # table access functions
 ################################################################################
 
+sub count  { return 0;       }
 sub list   { return ();      }
 sub exists { return 1;       }
 sub add    { return 0;       }

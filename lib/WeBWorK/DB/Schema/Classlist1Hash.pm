@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/Classlist1Hash.pm,v 1.10 2003/12/09 01:12:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,6 +34,20 @@ use constant STYLE  => "hash";
 ################################################################################
 # table access functions
 ################################################################################
+
+sub count {
+	my ($self, @keyparts) = @_;
+	my ($matchUserID) = @keyparts;
+	my $count;
+	$self->{driver}->connect("ro");
+	if (defined $matchUserID) {
+		$count = exists $self->{driver}->hash()->{$matchUserID};
+	} else {
+		$count = scalar grep { not m/^>>/ } keys %{ $self->{driver}->hash() };
+	}
+	$self->{driver}->disconnect();
+	return $count;
+}
 
 sub list {
 	my ($self, @keyparts) = @_;
