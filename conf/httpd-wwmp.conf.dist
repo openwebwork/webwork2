@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.12 2003/12/28 22:33:33 gage Exp $
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp.conf.dist,v 1.13 2004/01/05 01:02:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,6 +43,8 @@ ErrorLog !WEBWORK_ROOT!/logs/error.log
 # systems.
 #ScoreBoardFile /var/run/httpd.scoreboard
 
+########## WeBWorK 2 ##########
+
 PerlFreshRestart On
 <Location /webwork2>
     SetHandler perl-script
@@ -68,13 +70,9 @@ MaxRequestsPerChild 100
 
 # This DocumentRoot doesn't actually make a lot of sense.  In a
 # WeBWorK mod_perl system, there is no static document root, but the
-
 # DocumentRoot does have to exist, and not have a subdirectory
 # named "webwork2".  It suffices.
-
-# If no document root is defined by the webserver, you can uncomment the line below
-
-# DocumentRoot "!WEBWORK_ROOT!/htdocs"
+DocumentRoot "!WEBWORK_ROOT!/htdocs"
 
 # These aliases are important. 
 # The segment !COURSES_ROOT!  should be replaced by the full path reference
@@ -93,6 +91,8 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
     Order allow,deny
     Allow from all
 </Directory>
+
+########## Access control ##########
 
 # Possible forms of access limitation (edit to taste)
 
@@ -123,3 +123,5 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
 #	Require valid-user
 ##	Require group wwdev
 #</Location>
+
+########## Local additions ##########
