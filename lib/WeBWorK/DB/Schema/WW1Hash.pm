@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.23 2003/12/17 21:24:38 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.24 2004/03/25 00:28:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -769,6 +769,12 @@ sub getPSVNsForSet {
 	return unless defined $usersForSet;
 	my %users = string2hash($usersForSet);
 	return values %users;
+}
+
+# retrieves a list of existing PSVNs from the set PSVN index
+sub getAllPSVNs {
+	my ($self) = @_;
+	return grep { m/^\d+$/ } keys %{ $self->{driver}->hash() };
 }
 
 # retrieves an existing PSVN from the PSVN indexes
