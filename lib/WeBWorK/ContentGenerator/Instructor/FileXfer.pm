@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.5 2004/05/07 18:21:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.6 2004/05/11 20:47:44 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,17 +51,17 @@ sub pre_header_initialize {
 	# make sure we have permission to do what we want to do
 	if ($type eq "def") {
 		unless ($authz->hasPermissions($userID, "modify_set_def_files")) {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of set definition files.")));
+			$self->addbadmessage(CGI::p("You are not authorized to modify the list of set definition files."));
 			return;
 		}
 	} elsif ($type eq "classlist") {
 		unless ($authz->hasPermissions($userID, "modify_classlist_files")) {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of classlist files.")));
+			$self->addbadmessage(CGI::p("You are not authorized to modify the list of classlist files."));
 			return;
 		}
 	} elsif ($type eq "scoringFile") {
 		unless ($authz->hasPermissions($userID, "modify_scoring_files")) {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of scoring files.")));
+			$self->addbadmessage(CGI::p("You are not authorized to modify the list of scoring files."));
 			return;
 		}
 	}
@@ -101,7 +101,7 @@ sub handleDelete {
 	# get file name
 	my $fileToDelete = $r->param($selectParam);
 	unless ($fileToDelete) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for deletion.")));
+		$self->addbadmessage(CGI::p("No file selected for deletion."));
 		return;
 	}
 	
@@ -112,7 +112,7 @@ sub handleDelete {
 	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDelete } @fileList) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File \"$fileToDelete\" not found in file list.")));
+		$self->addbadmessage(CGI::p("File \"$fileToDelete\" not found in file list."));
 		return;
 	}
 	
@@ -147,13 +147,13 @@ sub handleDownload {
 	# get file name
 	my $fileToDownload = $r->param($selectParam);
 	unless ($fileToDownload) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for download.")));
+		$self->addbadmessage(CGI::p("No file selected for download."));
 		return;
 	}
 	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDownload } @fileList) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File \"$fileToDownload\" not found in file list.")));
+		$self->addbadmessage(CGI::p("File \"$fileToDownload\" not found in file list."));
 		return;
 	}
 	
@@ -190,7 +190,7 @@ sub handleUpload {
 	# get upload ID and hash
 	my $uploadIDHash = $r->param($uploadParam);
 	unless ($uploadIDHash) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for upload.")));
+		$self->addbadmessage(CGI::p("No file selected for upload."));
 		return;
 	}
 	my ($id, $hash) = split /\s+/, $uploadIDHash;
@@ -215,7 +215,7 @@ sub handleUpload {
 	
 	# does a file already exist with that name?
 	if (grep { $_ eq $fileName } @fileList) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("A file named \"$fileName\" exists. Either remove it, or chose a different name for your upload.")));
+		$self->addbadmessage(CGI::p("A file named \"$fileName\" exists. Either remove it, or chose a different name for your upload."));
 		return;
 	}
 	
@@ -229,8 +229,8 @@ sub body {
 	
 	my $userID = $r->param("user");
 	
-	return CGI::em("You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($userID, "access_instructor_tools");
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
 	# if we needed to get either of these lists earlier, use the cached copy
 	# otherwise, get them from the filesystem
@@ -245,8 +245,9 @@ Use the tools below to modify course files. Set definition files and classlist
 files are only used for importing and exporting set and user data.
 EOT
 	
-	print CGI::table({-border=>1},
+	print CGI::table({-border=>1, -nowrap=>1},
 		CGI::Tr({-valign=>"top"},
+			$authz->hasPermissions($userID, "modify_set_def_files") ?
 			CGI::td({},
 				CGI::p("Set Definition Files"),
 				CGI::startform("POST", $r->uri, "multipart/form-data"),
@@ -270,7 +271,8 @@ EOT
 				"Use name:", CGI::textfield("newDefName", "", 30), CGI::br(),
 				CGI::submit("uploadDef", "Upload Set Definition File"),
 				CGI::endform(),
-			),
+			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of set definition files."))),
+			$authz->hasPermissions($userID, "modify_classlist_files") ?
 			CGI::td({},
 				CGI::p("Classlist Files"),
 				CGI::startform("POST", $r->uri, "multipart/form-data"),
@@ -293,9 +295,10 @@ EOT
 				"Use name:", CGI::textfield("newClasslistName", "", 30), CGI::br(),
 				CGI::submit("uploadClasslist", "Upload Classlist File"),
 				CGI::endform(),
-			),
+			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of classlist files."))),
 		),
 		CGI::Tr({-valign=>"top"},
+			$authz->hasPermissions($userID, "modify_scoring_files") ?
 			CGI::td({},
 				CGI::p("Scoring Files"),
 				CGI::startform("POST", $r->uri, "multipart/form-data"),
@@ -319,7 +322,7 @@ EOT
 				"Use name:", CGI::textfield("newScoringFileName", "", 30), CGI::br(),
 				CGI::submit("uploadScoringFile", "Upload Scoring File"),
 				CGI::endform(),
-			),
+			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of scoring files."))),
 		),
 	);
 	
