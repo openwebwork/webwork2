@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.6 2004/01/04 07:20:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.7 2004/02/14 00:56:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -301,18 +301,21 @@ print $fh <<EOF;
 # the GDBM database layout.
 # 
 # Example: \$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = 'some_user';
-#          \$dbLayouts{gdbm}->{{problem}->{params}->{globalUserID} = 'some_user';
+#          \$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = 'some_user';
 # 
 EOF
 
 if ($globalUserID) {
-	print $fh "\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '$globalUserID'\n";
+	print $fh "\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '$globalUserID';\n";
+	print $fh "\$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = '$globalUserID';\n";
 } else {
 	my $defaultGlobalUserID = $ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID};
 	if (defined $defaultGlobalUserID) {
 		print $fh "#\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '$defaultGlobalUserID';\n";
+		print $fh "#\$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = '$defaultGlobalUserID';\n";
 	} else {
 		print $fh "#\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '#NOT#FOUND#';\n";
+		print $fh "#\$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = '#NOT#FOUND#';\n";
 		warn "default GDBM global user ID not found in course environment.\n";
 	}
 }
