@@ -82,6 +82,11 @@ sub writeLog($$@) {
 	}
 }
 
+# $ce - a WeBWork::CourseEnvironment object
+# $function - fully qualified function name
+# $details - any information, do not use the characters '[' or ']'
+# $beginEnd - the string "begin" or "end"
+# use an empty string for $details when calling for END
 sub writeTimingLogEntry($$$$) {
 	my ($ce, $function, $details, $beginEnd) = @_;
 	return unless defined $ce->{webworkFiles}->{logs}->{timing};
