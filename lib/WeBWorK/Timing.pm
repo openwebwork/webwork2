@@ -126,10 +126,11 @@ sub save {
 	
 	if ($self->{start}) {
 		my $start = sprintf("%.6f", $self->{start});
-		print STDERR "TIMING $$ $id $start $task: START\n";
+		my $diff = sprintf("%.6f",0);
+		print STDERR "TIMING $$ $id $start ($diff) $task: START\n";
 	} else {
 		my $ctime = sprintf("%.6f", $self->{ctime});
-		print STDERR "TIMING $$ $id $ctime $task: START (assumed)\n";
+		print STDERR "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
 	}
 	
 	if ($self->{steps}) {
@@ -137,16 +138,22 @@ sub save {
 		foreach my $step (@steps) {
 			my ($time, $data) = @$step;
 			$time = sprintf("%.6f", $time);
-			print STDERR "TIMING $$ $id $time $task: $data\n";
+			my $start = sprintf("%.6f", $self->{start});
+		    my $diff  = sprintf("%.6f",$time-$start);
+			print STDERR "TIMING $$ $id $time ($diff) $task: $data\n";
 		}
 	}
 	
 	if ($self->{stop}) {
 		my $stop = sprintf("%.6f", $self->{stop});
-		print STDERR "TIMING $$ $id $stop $task: END\n";
+		my $start = sprintf("%.6f", $self->{start});
+		my $diff  = sprintf("%.6f",$stop-$start);
+		print STDERR "TIMING $$ $id $stop ($diff) $task: END\n";
 	} else {
 		$now = sprintf("%.6f", $now);
-		print STDERR "TIMING $$ $id $now $task: END (assumed)\n";
+		my $start = sprintf("%.6f", $self->{start});
+		my $diff  = sprintf("%.6f",$now-$start);
+		print STDERR "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
 	}
 	
 	$self->{saved} = 1;
