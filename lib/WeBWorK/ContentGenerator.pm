@@ -130,7 +130,7 @@ sub cook_args($) {
 # for all content generators that are creating HTML output, and is called by
 # default by the &go method.
 sub template {
-	my ($self, $templateFile) = @_;
+	my ($self, $templateFile) = (shift, shift);
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 	
@@ -164,8 +164,8 @@ sub go {
 	$self->header(@_); return OK if $r->header_only;
 	$self->initialize(@_);
 	
-	$self->template($courseEnvironment->{templates}->{system});
-		
+	$self->template($courseEnvironment->{templates}->{system}, @_);
+
 	return OK;
 }
 
