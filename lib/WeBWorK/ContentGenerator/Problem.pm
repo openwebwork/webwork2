@@ -813,7 +813,11 @@ sub attemptResults($$$$$$) {
 			 	 $summary .= "At least one of the above answers is NOT correct.";
 			 }
 	}
-	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+	#FIXME  there must be a better way to force refresh.
+	my $refresh_warning = 'Hold down shift and click "refresh" or "reload" to update answer preview images.';
+	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . 
+	CGI::div({style=>'color:red; font-size:10pt'},$refresh_warning) . 
+	($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 sub nbsp {
 	my $str = shift;
