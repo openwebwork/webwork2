@@ -722,17 +722,6 @@ sub canChange ($$) {
 	return 0;	# FIXME: maybe it should default to 1?
 }
 
-# overrides regular "Set Detail" title with "Set Detail for set 15"
-sub title {
-	my ($self)    = @_;
-	my $r         = $self->r;
-	my $setName   = $r->urlpath->arg("setID");
-	
-	print $r->urlpath->name . " for set $setName ";
-	
-	return "";
-}
-
 # Creates two separate tables, first of the headers, and the of the problems in a given set
 # If one or more users are specified in the "editForUser" param, only the data for those users
 # becomes editable, not all the data
@@ -769,27 +758,38 @@ sub body {
 
 
 	my $userCount        = $db->listUsers();
+	my $setCount         = $db->listGlobalSets() if $forOneUser;
 	my $setUserCount     = $db->countSetUsers($setName);
+	my $userSetCount     = $db->countUserSets($editForUser[0]) if $forOneUser;
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
                   courseID => $courseName, setID => $setName));
+	my $editSetsAssignedToUserURL = $self->systemLink(
+	      $urlpath->newFromModule(
+                "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
+                  courseID => $courseName, userID => $editForUser[0])) if $forOneUser;
+
 
 	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseName, setID => $setName);
 	my $setDetailURL   = $self->systemLink($setDetailPage,authen=>0);
 
 
-	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL},
-		$self->userCountMessage($setUserCount, $userCount));
+	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
+	my $setCountMessage = CGI::a({href=>$editSetsAssignedToUserURL}, $self->setCountMessage($userSetCount, $setCount)) if $forOneUser;
 
 	$userCountMessage = "The set $setName is assigned to " . $userCountMessage . ".";
+	$setCountMessage  = "The user $editForUser[0] has been assigned " . $setCountMessage . "." if $forOneUser;
 
-
-	if (@editForUser) {
+	if ($forUsers) {
 		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
+		if ($forOneUser) {
+			print CGI::p($setCountMessage);
+		}
 	} else {
 		print CGI::p($userCountMessage);
 	}
+	
 	
 
 	my %properties = %{ FIELD_PROPERTIES() };
