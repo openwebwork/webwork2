@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.59 2004/06/17 18:12:56 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.60 2004/07/07 14:37:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -304,7 +304,7 @@ sub body {
 		$userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
 		die "set $setName not found for user $editForUser[0]." unless $userSetRecord;
 		foreach my $field (@{SET_FIELDS()}) {
-			$overrideArgs{$field} = [defined $userSetRecord->$field, ($field =~ /_date$/ ? formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
+			$overrideArgs{$field} = [defined $userSetRecord->$field && $userSetRecord->$field ne "", ($field =~ /_date$/ ? formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
 		}
 	} else {
 		foreach my $field (@{SET_FIELDS()}) {
