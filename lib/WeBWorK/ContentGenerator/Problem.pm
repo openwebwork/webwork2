@@ -248,16 +248,16 @@ sub nav {
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my $tail = "&displayMode=".$self->{displayMode};
 	
-	my @links = ("Problem List" , "$root/$courseName/$setName", "ProbList");
+	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
 	
 	my $prevProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber-1);
 	my $nextProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber+1);
 	unshift @links, "Previous Problem" , ($prevProblem
 		? "$root/$courseName/$setName/".$prevProblem->id
-		: "") , "Prev";
+		: "") , "navPrev";
 	push @links, "Next Problem" , ($nextProblem
 		? "$root/$courseName/$setName/".$nextProblem->id
-		: "") , "Next";
+		: "") , "navNext";
 	
 	return $self->navMacro($args, $tail, @links);
 }

@@ -245,12 +245,19 @@ sub navMacro {
 	my @links = @_;
 	my $auth = $self->url_authen_args;
 	my $ce = $self->{courseEnvironment};
+	my $prefix = $ce->{webworkURLs}->{htdocs}."/images";
 	my @result;
 	while (@links) {
 		my $name = shift @links;
 		my $url = shift @links;
 		my $img = shift @links;
-		my $html = ($img && $args{style} eq "images") ? CGI::img({src=>($args{imageprefix}.$img.$args{imagesuffix}), border=>""}): $name;
+		my $html = 
+			($img && $args{style} eq "images") 
+			? CGI::img(
+				{src=>($prefix."/".$img.$args{imagesuffix}), 
+				border=>"",
+				alt=>"$name"})
+			: $name;
 		unless($img && !$url) {
 			push @result, $url
 				? CGI::a({-href=>"$url?$auth$tail"}, $html)

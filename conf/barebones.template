@@ -84,7 +84,7 @@
     >
 <!--#endif-->
      <div align="center">
-      <!--#nav style="text" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
+      <!--#nav style="text" imagesuffix=".png" separator=" | "-->
      </div>
      <table width="100%" cellpadding="10" cellspacing="0" border="0">
       <tr valign="top">

@@ -43,7 +43,7 @@
      <!--#links-->
     </td>
     <td align="center">
-     <!--#nav style="images" imageprefix="/webwork_files/images/nav" imagesuffix=".gif" separator=" "-->
+     <!--#nav style="images" imagesuffix=".gif" separator=" "-->
     </td>
     <td align="right">
      <h1>WeBWorK <em>2.0</em></h1>

@@ -30,7 +30,7 @@
     </td>
     <td style="color: black; background-color: white; padding-left: 2em; padding-right: 2em">
      <div style="text-align: center">
-      <!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png"-->
+      <!--#nav style="image" imagesuffix=".png"-->
      </div>
      <h1><!--#title--></h1>
      <!--#body-->

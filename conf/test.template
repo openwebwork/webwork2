@@ -11,7 +11,7 @@
   <h1>#path</h1>	<div><!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "--></div>
   <h1>#quicklinks</h1>	<div><!--#quicklinks--></div>
   <h1>#siblings</h1>	<div><!--#siblings--></div>
-  <h1>#nav</h1>		<div><!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "--></div>
+  <h1>#nav</h1>		<div><!--#nav style="image" imagesuffix=".png" separator=" | "--></div>
   <h1>#title</h1>	<div><!--#title--></div>
   <h1>#body</h1>	<div><!--#body--></div>
  </body>
