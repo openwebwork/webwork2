@@ -285,7 +285,6 @@ sub pre_header_initialize {
 	$self->{must} = \%must;
 	$self->{can}  = \%can;
 	$self->{will} = \%will;
-	
 	$self->{pg} = $pg;
 }
 
@@ -414,6 +413,9 @@ sub body {
 	# unpack some useful variables
 	my $r               = $self->{r};
 	my $db              = $self->{db};
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $editMode        = $self->{editMode};
@@ -427,10 +429,20 @@ sub body {
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
 	
+	
+	
+	#####create Editor link   #####
+	# print editor link if the user is an instructor AND the file is not in temporary editing mode
+	my $editorLinkMessage   =   '';
+	# and ( (not defined($self->{editMode}))  or $self->{editMode} eq 'savedFile')  # FIXME is this needed?
+	if ($self->{permissionLevel}>=10  ) {
+		$editorLinkMessage = CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".
+		$set->set_id.'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
+	}
 	##### translation errors? #####
 	
 	if ($pg->{flags}->{error_flag}) {
-		return $self->errorOutput($pg->{errors}, $pg->{body_text});
+		return $self->errorOutput($pg->{errors}, $pg->{body_text}.CGI::p($editorLinkMessage));
 	}
 	
 	##### answer processing #####
@@ -677,10 +689,6 @@ sub body {
 	# end of main form
 	print CGI::endform();
 	
-	# stuff we need below (pull these out at the beginning?)
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
 	
 	print  CGI::start_div({class=>"problemFooter"});
 	
@@ -732,11 +740,7 @@ sub body {
 		CGI::endform(),"\n";
 		
 	# FIXME print editor link
-	# print editor link if the user is an instructor AND the file is not in temporary editing mode
-	if ($self->{permissionLevel}>=10 and ( (not defined($self->{edit_mode}))  or $self->{edit_mode} eq 'savedFile') ) {
-		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$set->set_id.
-		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
-	}
+	print $editorLinkMessage;   #empty unless it is appropriate to have an editor link.
 	
 	print CGI::end_div();
 	
