@@ -30,6 +30,9 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
+my $timingON     =1;
+
+
 use strict;
 use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
@@ -230,12 +233,12 @@ The dispatcher logic currently looks like this:
 			
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
-			$WeBWorK::timer1->start;
+			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument") if $timingON == 1;
+			$WeBWorK::timer1->start if $timingON == 1;
 			
 			my $result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
-			$WeBWorK::timer1 ->stop;
-			$WeBWorK::timer1 ->save;
+			$WeBWorK::timer1 ->stop if $timingON == 1;
+			$WeBWorK::timer1 ->save if $timingON == 1;
 			return $result;
 		} elsif ($arg eq "instructor2") {  
 			my $instructorArgument = shift @components;
@@ -245,12 +248,12 @@ The dispatcher logic currently looks like this:
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
-				$WeBWorK::timer2 = WeBWorK::Timing->new("Instructor index $course:");
-				$WeBWorK::timer2->start;
+				$WeBWorK::timer2 = WeBWorK::Timing->new("Instructor index $course:") if $timingON == 1;
+				$WeBWorK::timer2->start if $timingON == 1;
 				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
-				$WeBWorK::timer2->continue("Listing instructor page is done");
-				$WeBWorK::timer2->stop;
-				$WeBWorK::timer2->save;
+				$WeBWorK::timer2->continue("Listing instructor page is done") if $timingON == 1;
+				$WeBWorK::timer2->stop if $timingON == 1;
+				$WeBWorK::timer2->save if $timingON == 1;
 			} elsif ($instructorArgument eq "scoring") {
 				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go; #FIXME!!!!
 			} elsif ($instructorArgument eq "add_users") {
@@ -273,7 +276,13 @@ The dispatcher logic currently looks like this:
 						$result = WeBWorK::ContentGenerator::Instructor::Assigner->new($r, $ce, $db)->go($setID);
 					}
 				} else {
+				    $WeBWorK::timer2 = WeBWorK::Timing->new("Problem Set List $course:") if $timingON == 1;
+					$WeBWorK::timer2->start if $timingON == 1;
 					$result = WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
+					$WeBWorK::timer2->continue("Problem Set List is done");
+					$WeBWorK::timer2->stop if $timingON == 1;
+					$WeBWorK::timer2->save if $timingON == 1;
+
 				}
 			} elsif ($instructorArgument eq "pgProblemEditor") {
 				$result = WeBWorK::ContentGenerator::Instructor::PGProblemEditor->new($r, $ce, $db)->go(@components);
@@ -301,18 +310,18 @@ The dispatcher logic currently looks like this:
 
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
-				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set");
-				$WeBWorK::timer0->start;
+				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set") if $timingON == 1;
+				$WeBWorK::timer0->start if $timingON == 1;
 				$result = WeBWorK::ContentGenerator::ProblemSet->new($r, $ce, $db)->go($problem_set);
-				$WeBWorK::timer0->continue("problem set listing is done");
-				$WeBWorK::timer0->stop;
-				$WeBWorK::timer0->save;
+				$WeBWorK::timer0->continue("problem set listing is done") if $timingON == 1;
+				$WeBWorK::timer0->stop if $timingON == 1;
+				$WeBWorK::timer0->save if $timingON == 1;
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
 
-				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
-				$WeBWorK::timer0->start;
+				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem") if $timingON == 1;
+				$WeBWorK::timer0->start if $timingON == 1;
 #				my $pid = fork();
 #				if ($pid) {
 #					wait;
@@ -325,9 +334,9 @@ The dispatcher logic currently looks like this:
 #					#  We REALLY REALLY want this grandchild to exit. But not the child.  How to do this
 #					# cleanly???? FIXME
 #				}
-				$WeBWorK::timer0->continue("Problem done)");
-				$WeBWorK::timer0->stop;
-				$WeBWorK::timer0->save;
+				$WeBWorK::timer0->continue("Problem done)") if $timingON == 1;
+				$WeBWorK::timer0->stop if $timingON == 1;
+				$WeBWorK::timer0->save if $timingON == 1;
 				return $result;
 
 
