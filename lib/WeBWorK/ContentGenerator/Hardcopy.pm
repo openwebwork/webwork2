@@ -5,7 +5,7 @@
 
 package WeBWorK::ContentGenerator::Hardcopy;
 use base qw(WeBWorK::ContentGenerator);
-my $timer1_ON = 1;
+
 
 =head1 NAME
 
@@ -601,7 +601,7 @@ sub getSetTeX {
 }
 
 sub getProblemTeX {
-    $WeBWorK::timer1 ->continue("hardcopy: begin processing problem") if $timer1_ON;
+    $WeBWorK::timer1 ->continue("hardcopy: begin processing problem") if defined($WeBWorK::timer1);
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
@@ -709,7 +709,7 @@ sub getProblemTeX {
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
-	$WeBWorK::timer1 ->continue("hardcopy: end processing problem") if $timer1_ON;
+	$WeBWorK::timer1 ->continue("hardcopy: end processing problem") if defined($WeBWorK::timer1);
 	return $pg->{body_text};
 }
 
