@@ -1,4 +1,4 @@
-package IOGlue;
+package WeBWorK::PG::IOGlue;
 use strict;
 use warnings;
 

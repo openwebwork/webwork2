@@ -1,136 +1,299 @@
-package PGtranslator;
+package WeBWorK::PG::Translator;
 
 use strict;
 use warnings;
 use Opcode;
 use Safe;
 use Net::SMTP;
-use IOGlue;
+use WeBWorK::Utils qw(runtime_use);
+use WeBWorK::PG::IO;
 
+# loading GD within the Safe compartment has occasionally caused infinite recursion
+# Putting these use statements here seems to avoid this problem
+# It is not clear that this is essential once things are working properly.
 use Exporter;
 use DynaLoader;
+#use GD;
+
+=head1 NAME
+
+WeBWorK::PG::Translator - Evaluate PG code and evaluate answers safely
+
+=head1 SYNPOSIS
+
+    my $pt = new PGtranslator;      # create a translator;
+    $pt->environment(\%envir);      # provide the environment variable for the problem
+    $pt->initialize();              # initialize the translator
+    $pt-> set_mask();               # set the operation mask for the translator safe compartment
+    $pt->source_string($source);    # provide the source string for the problem
+
+    $pt -> unrestricted_load("${courseScriptsDirectory}PG.pl");
+    $pt -> unrestricted_load("${courseScriptsDirectory}dangerousMacros.pl");
+                                    # load the unprotected macro files
+                                    # these files are evaluated with the Safe compartment wide open
+                                    # other macros are loaded from within the problem using loadMacros
+
+    $pt ->translate();              # translate the problem (the out following 4 pieces of information are created)
+    
+    $PG_PROBLEM_TEXT_ARRAY_REF = $pt->ra_text();              # output text for the body of the HTML file (in array form)
+    $PG_PROBLEM_TEXT_REF = $pt->r_text();                     # output text for the body of the HTML file
+    $PG_HEADER_TEXT_REF = $pt->r_header;#\$PG_HEADER_TEXT;    # text for the header of the HTML file
+    $PG_ANSWER_HASH_REF = $pt->rh_correct_answers;            # a hash of answer evaluators
+    $PG_FLAGS_REF = $pt ->rh_flags;                           # misc. status flags.
+
+    $pt -> process_answers(\%inputs);    # evaluates all of the answers using submitted answers from %input
+    
+    my $rh_answer_results = $pt->rh_evaluated_answers;  # provides a hash of the results of evaluating the answers.
+    my $rh_problem_result = $pt->grade_problem;         # grades the problem using the default problem grading method.
+
+=head1 DESCRIPTION
+
+This module defines an object which will translate a problem written in the Problem Generating (PG) language
+
+=cut
+
+=head2 be_strict
+
+This creates a substitute for C<use strict;> which cannot be used in PG problem
+sets or PG macro files.  Use this way to imitate the behavior of C<use strict;>
+
+	BEGIN {
+		be_strict(); # an alias for use strict.
+		             # This means that all global variable
+		             # must contain main:: as a prefix.
+	}
+
+=cut
 
 BEGIN {
-	sub be_strict {   # allows the use of strict within macro packages.
-		require 'strict.pm';
-		strict::import();
+	sub be_strict { # allows the use of strict within macro packages.
+		require 'strict.pm'; strict::import();
 	}
 }
 
-my @class_modules = ();
+=head2 evaluate_modules
 
-sub new {
-	my $class = shift;
-	my $safe_cmpt = new Safe; #('PG_priv');
-	my $self = {
-		envir => undef,
-		PG_PROBLEM_TEXT_ARRAY_REF => [],
-		PG_PROBLEM_TEXT_REF => 0,
-		PG_HEADER_TEXT_REF => 0,
-		PG_ANSWER_HASH_REF => {},
-		PG_FLAGS_REF =>	{},
-		safe =>  $safe_cmpt,
-		safe_compartment_name => $safe_cmpt->root,
-		errors => "",
-		source => "",
-		rh_correct_answers => {},
-		rh_student_answers => {},
-		rh_evaluated_answers => {},
-		rh_problem_result => {},
-		rh_problem_state => {
-			recorded_score => 0, # the score recorded in the data base
-			num_of_correct_ans => 0, # the number of correct attempts at doing the problem
-			num_of_incorrect_ans => 0, # the number of incorrect attempts
-		},
-		rf_problem_grader => \&std_problem_grader,
-		rf_safety_filter => \&safetyFilter,
-		ra_included_modules => [
-			@class_modules
-		],
-		rh_directories => {},
-	};
-	bless $self, $class;
-}
+	Usage:  $obj -> evaluate_modules('WWPlot', 'Fun', 'Circle');
+	        $obj -> evaluate_modules('reset');
 
-sub evaluate_modules{
+Adds the modules WWPlot.pm, Fun.pm and Circle.pm in the courseScripts directory to the list of modules
+which can be used by the PG problems.  The keyword 'reset' or 'erase' erases the list of modules already loaded
+
+=cut
+
+#my @class_modules = ();
+#sub evaluate_modules{
+#	my $self = shift;
+#	my @modules = @_;
+#	# temporary  -
+#	# We  need a method for setting the course directory without calling Global.
+#	
+#	my $courseScriptsDirectory = $self->rh_directories->{courseScriptsDirectory};
+#	my $save_SIG_die_trap = $SIG{__DIE__};
+#	$SIG{__DIE__} = sub {CORE::die(@_) };
+#	while (@modules) {
+#		my $module_name = shift @modules;
+#		print STDERR "evaluate_modules: about to evaluate $module_name\n";
+#		$module_name =~ s/\.pm$//;   # remove trailing .pm if someone forgot
+#		if ($module_name eq 'reset'  or $module_name eq 'erase' ) {
+#			@class_modules = ();
+#			next;
+#		}
+#		if ( -r  "${courseScriptsDirectory}${module_name}.pm"   ) {
+#			eval(qq! require "${courseScriptsDirectory}${module_name}.pm";  import ${module_name};! );
+#			warn "Errors in including the module ${courseScriptsDirectory}$module_name.pm $@" if $@;
+#		} else {
+#			eval(qq! require "${module_name}.pm";  import ${module_name};! );
+#			warn "Errors in including either the module $module_name.pm or ${courseScriptsDirectory}${module_name}.pm $@" if $@;
+#		}
+#		push(@class_modules, "\%${module_name}::");
+#		print STDERR "loading $module_name\n";
+#	}
+#	$SIG{__DIE__} = $save_SIG_die_trap;
+#}
+
+sub evaluate_modules {
 	my $self = shift;
-	my @modules = @_;
-	# temporary  -
-	# We  need a method for setting the course directory without calling Global.
-	
-	my $courseScriptsDirectory = $self->rh_directories->{courseScriptsDirectory};
-	my $save_SIG_die_trap = $SIG{__DIE__};
-	local $SIG{__DIE__} = sub {CORE::die(@_) };
-	while (@modules) {
-		my $module_name = shift @modules;
-		$module_name =~ s/\.pm$//;   # remove trailing .pm if someone forgot
-		if ($module_name eq 'reset'  or $module_name eq 'erase' ) {
-			@class_modules = ();
-			next;
+	local $SIG{__DIE__} = "DEFAULT"; # we're going to be eval()ing code
+	foreach (@_) {
+		# ensure that the name is in fact a base name
+		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
+		# generate a full package name from the base name
+		unless (/::/) {
+			$_ = "WeBWorK::PG::$_";
 		}
-		if ( -r  "${courseScriptsDirectory}${module_name}.pm"   ) {
-			eval(qq! require "${courseScriptsDirectory}${module_name}.pm";  import ${module_name};! );
-			warn "Errors in including the module ${courseScriptsDirectory}$module_name.pm $@" if $@;
-		} else {
-			eval(qq! require "${module_name}.pm";  import ${module_name};! );
-			warn "Errors in including either the module $module_name.pm or ${courseScriptsDirectory}${module_name}.pm $@" if $@;
-		}
-		push(@class_modules, "\%${module_name}::");
-		print STDERR "loading $module_name\n";
+		# call runtime_use on the package name
+		# don't worry -- runtime_use won't load a package twice!
+		runtime_use $_;
+		warn "Failed to evaluate module $_: $@";
+		# record this in the appropriate place
+		push @{$self->{ra_included_modules}}, "\%${_}::";
 	}
-	#$SIG{__DIE__} = $save_SIG_die_trap;
 }
+
+=head2 load_extra_packages
+
+	Usage:  $obj -> load_extra_packages('AlgParserWithImplicitExpand',
+	                                    'Expr','ExprWithImplicitExpand');
+
+Loads extra packages for modules that contain more than one package.  Works in conjunction with
+evaluate_modules.  It is assumed that the file containing the extra packages (along with the base
+pachage name which is the same as the name of the file minus the .pm extension) has already been
+loaded using evaluate_modules
+=cut
 
 sub load_extra_packages{
 	my $self = shift;
 	my @package_list = @_;
 	my $package_name;
-
-    foreach $package_name (@package_list) {
-        eval(qq! import ${package_name};! );
-	    warn "Errors in importing the package $package_name $@" if $@;
-        push(@class_modules, "\%${package_name}::");
-    }
+	
+	foreach $package_name (@package_list) {
+		# ensure that the name is in fact a base name
+		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
+		# generate a full package name from the base name
+		unless (/::/) {
+			$_ = "WeBWorK::PG::$_";
+		}
+		# call runtime_use on the package name
+		# don't worry -- runtime_use won't load a package twice!
+		import $_;
+		warn "Failed to evaluate module $_: $@" if $@;
+		# record this in the appropriate place
+		push @{$self->{ra_included_modules}}, "\%${_}::";
+	}
 }
 
-	##############################################################################
-	        # SHARE variables and routines with safe compartment
+=head2  new
+	Creates the translator object.
+
+=cut
+
+
+sub new {
+	my $class = shift;
+	my $safe_cmpt = new Safe; #('PG_priv');
+	my $self = {
+		envir                     => undef,
+		PG_PROBLEM_TEXT_ARRAY_REF => [],
+		PG_PROBLEM_TEXT_REF       => 0,
+		PG_HEADER_TEXT_REF        => 0,
+		PG_ANSWER_HASH_REF        => {},
+		PG_FLAGS_REF              => {},
+		safe                      => $safe_cmpt,
+		safe_compartment_name     => $safe_cmpt->root,
+		errors                    => "",
+		source                    => "",
+		rh_correct_answers        => {},
+		rh_student_answers        => {},
+		rh_evaluated_answers      => {},
+		rh_problem_result         => {},
+		rh_problem_state          => {
+			recorded_score       => 0, # the score recorded in the data base
+			num_of_correct_ans   => 0, # the number of correct attempts at doing the problem
+			num_of_incorrect_ans => 0, # the number of incorrect attempts
+		},
+		rf_problem_grader         => \&std_problem_grader,
+		rf_safety_filter          => \&safetyFilter,
+		# ra_included_modules is now populated independantly of @class_modules:
+		ra_included_modules       => [], # [ @class_modules ],
+		rh_directories            => {},
+	};
+	bless $self, $class;
+}
+
+=pod
+
+(b) The following routines defined within the PG module are shared:
+
+	&be_strict
+	&read_whole_problem_file
+	&convertPath
+	&surePathToTmpFile
+	&fileFromPath
+	&directoryFromPath
+	&createFile
+
+	&includePGtext
+
+	&PG_answer_eval
+	&PG_restricted_eval
+
+	&send_mail_to
+	&PGsort
+
+In addition the environment hash C<%envir> is shared.  This variable is unpacked
+when PG.pl is run and provides most of the environment variables for each problem
+template.
+
+=for html
+
+	<A href =
+	"${Global::webworkDocsURL}techdescription/pglanguage/PGenvironment.html"> environment variables</A>
+
+=cut
+
+
+=pod
+
+(c) Sharing macros:
+
+The macros shared with the safe compartment are
+
+	'&read_whole_problem_file'
+	'&convertPath'
+	'&surePathToTmpFile'
+	'&fileFromPath'
+	'&directoryFromPath'
+	'&createFile'
+	'&PG_answer_eval'
+	'&PG_restricted_eval'
+	'&be_strict'
+	'&send_mail_to'
+	'&PGsort'
+	'&dumpvar'
+	'&includePGtext'
+
+=cut
+
+# SHARE variables and routines with safe compartment
 my %shared_subroutine_hash = (
 	'&read_whole_problem_file' => 'PGtranslator', #the values are dummies.
-	'&convertPath'	=> 'PGtranslator',
-	'&surePathToTmpFile' => 'PGtranslator',
-	'&fileFromPath' => 'PGtranslator',
-	'&directoryFromPath' => 'PGtranslator',
-	'&createFile' => 'PGtranslator',
-	'&PG_answer_eval' => 'PGtranslator',
-	'&PG_restricted_eval' => 'PGtranslator',
-	'&be_strict' => 'PGtranslator',
-	'&send_mail_to' => 'PGtranslator',
-	'&PGsort' => 'PGtranslator',
-	'&dumpvar' => 'PGtranslator',
-	'&includePGtext' => 'PGtranslator',
+	'&convertPath'             => 'PGtranslator',
+	'&surePathToTmpFile'       => 'PGtranslator',
+	'&fileFromPath'            => 'PGtranslator',
+	'&directoryFromPath'       => 'PGtranslator',
+	'&createFile'              => 'PGtranslator',
+	'&PG_answer_eval'          => 'PGtranslator',
+	'&PG_restricted_eval'      => 'PGtranslator',
+	'&be_strict'               => 'PGtranslator',
+	'&send_mail_to'            => 'PGtranslator',
+	'&PGsort'                  => 'PGtranslator',
+	'&dumpvar'                 => 'PGtranslator',
+	'&includePGtext'           => 'PGtranslator',
 );
 
 sub initialize {
-    my $self = shift;
-    my $safe_cmpt = $self->{safe};
-    #print "initializing safeCompartment",$safe_cmpt -> root(), "\n";
-
-    $safe_cmpt -> share(keys %shared_subroutine_hash);
-    no strict;
-    local(%envir) = %{ $self ->{envir} };
+	my $self = shift;
+	my $safe_cmpt = $self->{safe};
+	#print "initializing safeCompartment",$safe_cmpt -> root(), "\n";
+	
+	$safe_cmpt -> share(keys %shared_subroutine_hash);
+	
+# begin experiment?
+	no strict;
+	local %envir = %{ $self->{envir} };
 	$safe_cmpt -> share('%envir');
-#   local($rf_answer_eval) = sub { $self->PG_answer_eval(@_); };
-#   local($rf_restricted_eval) = sub { $self->PG_restricted_eval(@_); };
-#   $safe_cmpt -> share('$rf_answer_eval');
-#   $safe_cmpt -> share('$rf_restricted_eval');
-
+	#local($rf_answer_eval) = sub { $self->PG_answer_eval(@_); };
+	#local($rf_restricted_eval) = sub { $self->PG_restricted_eval(@_); };
+	#$safe_cmpt -> share('$rf_answer_eval');
+	#$safe_cmpt -> share('$rf_restricted_eval');
 	use strict;
-
-    # end experiment
-    $self->{ra_included_modules} = [@class_modules];
-    $safe_cmpt -> share_from('main', $self->{ra_included_modules} ); #$self ->{ra_included_modules}
-
+# end experiment
+    
+	# ra_included_modules is now populated independantly of @class_modules:
+	#$self->{ra_included_modules} = [@class_modules];
+	
+	$safe_cmpt -> share_from('WeBWorK::PG', $self->{ra_included_modules} );
 }
 
 sub environment{
@@ -145,6 +308,12 @@ sub environment{
 	}
 	$self->{envir} ; #reference to current environment
 }
+
+=head2   Safe compartment pass through macros
+
+
+
+=cut
 
 sub mask {
 	my $self = shift;
@@ -334,6 +503,81 @@ sub errors{
 	$self->{errors};
 }
 
+# sub DESTROY {
+#     my $self = shift;
+#     my $nameSpace = $self->nameSpace;
+#  	no strict 'refs';
+#    	my $nm = "${nameSpace}::";
+#      my $nsp = \%{"$nm"};
+#       my @list = keys %$nsp;
+#       while (@list) {
+#    	 	my $name = pop(@list);
+#   	 	if  ( defined(&{$nsp->{$name}})  )  {
+#   	 	   #print "checking \&$name\n";
+#   	 	   unless (exists( $shared_subroutine_hash{"\&$name"} ) ) {
+#   	 	 		undef( &{$nsp->{$name}} );
+#   	 	 		#print "destroying \&$name\n";
+#   	 	   } else {
+#   	 	   		#delete( $nsp->{$name} );
+#   	 	   		#print "what is left",join(" ",%$nsp) ,"\n\n";
+#   	 	   }
+#   	 	   
+#   	 	}
+#   	 	if  ( defined(${$nsp->{$name}})  )  {
+#   	 	   #undef( ${$nsp->{$name}} );         ## unless commented out download hardcopy bombs with Perl 5.6
+#            #print "destroying \$$name\n";
+#   	 	} 
+#   	 	if  ( defined(@{$nsp->{$name}})  )  {
+#   	 	   undef( @{$nsp->{$name}} );  
+#   	 	   #print "destroying \@$name\n";
+#   	 	} 
+#    	 	if  ( defined(%{$nsp->{$name}})  )  {
+#    	 	   undef( %{$nsp->{$name}} ) unless $name =~ /::/ ;  
+#    	 	   #print "destroying \%$name\n";
+#    	 	}
+#    	 	# changed for Perl 5.6
+# 	 	delete ( $nsp->{$name} ) if defined($nsp->{$name});  # this must be uncommented in Perl 5.6 to reinitialize variables
+# 	 	# changed for Perl 5.6
+# 	 #print "deleting $name\n";	
+# 		#undef( @{$nsp->{$name}} ) if defined(@{$nsp->{$name}});
+# 		#undef( %{$nsp->{$name}} ) if defined(%{$nsp->{$name}}) and $name ne "main::"; 	
+#  	 }
+# 
+# 	use strict;
+#     #print "\nObject going bye-bye\n";
+#     
+# }
+
+=head2  set_mask
+
+
+
+
+
+
+(e) Now we close the safe compartment.  Only the certain operations can be used
+within PG problems and the PG macro files.  These include the subroutines
+shared with the safe compartment as defined above and most Perl commands which
+do not involve file access, access to the system or evaluation.
+
+Specifically the following are allowed
+
+	time()
+		# gives the current Unix time
+		# used to determine whether solutions are visible.
+	atan, sin cos exp log sqrt
+		# arithemetic commands -- more are defined in PGauxiliaryFunctions.pl
+
+The following are specifically not allowed:
+
+	eval()
+	unlink, symlink, system, exec
+	print require
+
+
+
+=cut
+
 ##############################################################################
 
 	        ## restrict the operations allowed within the safe compartment
@@ -355,6 +599,11 @@ sub set_mask {
 ############################################################################
 
 
+=head2  Translate
+
+
+=cut
+
 sub translate {
 	my $self = shift;
 	my @PROBLEM_TEXT_OUTPUT = ();
@@ -366,6 +615,67 @@ sub translate {
     # reset the error detection
     my $save_SIG_die_trap = $SIG{__DIE__};
     $SIG{__DIE__} = sub {CORE::die(@_) };
+
+
+
+=pod
+
+(3) B<Preprocess the problem text>
+
+The input text is subjected to two global replacements.
+First every incidence of
+
+	BEGIN_TEXT
+	problem text
+	END_TEXT
+
+is replaced by
+
+   	TEXT( EV3( <<'END_TEXT' ) );
+	problem text
+	END_TEXT
+
+The first construction is syntactic sugar for the second. This is explained
+in C<PGbasicmacros.pl>.
+
+Second every incidence
+of \ (backslash) is replaced by \\ (double backslash).  Third each incidence of
+~~ is replaced by a single backslash.
+
+This is done to alleviate a basic
+incompatibility between TeX and Perl. TeX uses backslashes constantly to denote
+a command word (as opposed to text which is to be entered literally).  Perl
+uses backslash to escape the following symbol.  This escape
+mechanism takes place immediately when a Perl script is compiled and takes
+place throughout the code and within every quoted string (both double and single
+quoted strings) with the single exception of single quoted "here" documents.
+That is backlashes which appear in
+
+    TEXT(<<'EOF');
+    ... text including \{   \} for example
+    EOF
+
+are the only ones not immediately evaluated.  This behavior makes it very difficult
+to use TeX notation for defining mathematics within text.
+
+The initial global
+replacement, before compiling a PG problem, allows one to use backslashes within
+text without doubling them. (The anomolous behavior inside single quoted "here"
+documents is compensated for by the behavior of the evaluation macro EV3.) This
+makes typing TeX easy, but introduces one difficulty in entering normal Perl code.
+
+The second global replacement provides a work around for this -- use ~~ when you
+would ordinarily use a backslash in Perl code.
+In order to define a carriage return use ~~n rather than \n; in order to define
+a reference to a variable you must use ~~@array rather than \@array. This is
+annoying and a source of simple compiler errors, but must be lived with.
+
+The problems are not evaluated in strict mode, so global variables can be used
+without warnings.
+
+
+
+=cut
 
 ############################################################################
 
@@ -380,6 +690,17 @@ sub translate {
 
 				$evalString =~ s/\\/\\\\/g;    # \ can't be used for escapes because of TeX conflict
 		        $evalString =~ s/~~/\\/g;      # use ~~ as escape instead, use # for comments
+
+=pod
+
+(4) B<Evaluate the problem text>
+
+Evaluate the text within the safe compartment.  Save the errors. The safe
+compartment is a new one unless the $safeCompartment was set to zero in which
+case the previously defined safe compartment is used. (See item 1.)
+
+=cut
+
 
 				my ($PG_PROBLEM_TEXT_REF, $PG_HEADER_TEXT_REF, $PG_ANSWER_HASH_REF, $PG_FLAGS_REF)
 				      =$safe_cmpt->reval("   $evalString");
@@ -401,6 +722,21 @@ sub translate {
         #############################################################################
         ##########  end  EVALUATION code                                  ###########
         #############################################################################
+
+=pod
+
+(5) B<Process errors>
+
+The error provided by Perl
+is truncated slightly and returned. In the text
+string which would normally contain the rendered problem.
+
+The original text string is given line numbers and concatenated to
+the errors.
+
+=cut
+
+
 
         ##########################################
 		###### PG error processing code ##########
@@ -440,6 +776,18 @@ sub translate {
 
         }
 
+=pod
+
+(6) B<Prepare return values>
+
+	Returns:
+			$PG_PROBLEM_TEXT_ARRAY_REF -- Reference to a string containing the rendered text.
+			$PG_HEADER_TEXT_REF -- Reference to a string containing material to placed in the header (for use by JavaScript)
+			$PG_ANSWER_HASH_REF -- Reference to an array containing the answer evaluators.
+			$PG_FLAGS_REF -- Reference to a hash containing flags and other references:
+				'error_flag' is set to 1 if there were errors in rendering
+
+=cut
 
         ## we need to make sure that the other output variables are defined
 
@@ -459,6 +807,18 @@ sub translate {
 	    $SIG{__DIE__} = $save_SIG_die_trap;
 	    $self ->{errors};
 }  # end translate
+
+
+=head2   Answer evaluation methods
+
+=cut
+
+=head3  access methods
+
+	$obj->rh_student_answers
+
+=cut
+
 
 
 sub rh_evaluated_answers {
@@ -497,6 +857,15 @@ sub rh_problem_state {
 	}
 	$self->{rh_problem_state};
 }
+
+
+=head3 process_answers
+
+
+	$obj->process_answers()
+
+
+=cut
 
 
 sub process_answers{
@@ -562,6 +931,17 @@ sub process_answers{
  	$self->rh_evaluated_answers;
 
 }
+
+
+
+=head3 grade_problem
+
+	$obj->rh_problem_state(%problem_state);  # sets the current problem state
+	$obj->grade_problem(%form_options);
+
+
+=cut
+
 
 sub grade_problem {
 	my $self = shift;
@@ -795,13 +1175,91 @@ sub safetyFilter {
 		return($answer, $errorno);
 }
 
+##   Check submittedAnswer for forbidden characters, etc.
+#     ($submittedAnswer,$errorno) = safetyFilter($submittedAnswer);
+#     	$errors .= "No answer was submitted.<BR>" if $errorno == 1;
+#     	$errors .= "There are forbidden characters in your answer: $submittedAnswer<BR>" if $errorno ==2;
+#
+##   Check correctAnswer for forbidden characters, etc.
+#     unless (ref($correctAnswer) ) {  #skip check if $correctAnswer is a function
+#     	($correctAnswer,$errorno) = safetyFilter($correctAnswer);
+#     	$errors .= "No correct answer is given in the statement of the problem.
+#     	            Please report this to your instructor.<BR>" if $errorno == 1;
+#     	$errors .= "There are forbidden characters in the problems answer.
+#     	            Please report this to your instructor.<BR>" if $errorno == 2;
+#     }
+
+
+
+=head2 PGsort
+
+Because of the way sort is optimized in Perl, the symbols $a and $b
+have special significance.
+
+C<sort {$a<=>$b} @list>
+C<sort {$a cmp $b} @list>
+
+sorts the list numerically and lexically respectively. 
+
+If C<my $a;> is used in a problem, before the sort routine is defined in a macro, then
+things get badly confused.  To correct this, the following macros are defined in
+dangerougMacros.pl which is evaluated before the problem template is read.
+
+	PGsort sub { $_[0] <=> $_[1] }, @list;
+	PGsort sub { $_[0] cmp $_[1] }, @list;
+
+provide slightly slower, but safer, routines for the PG language. (The subroutines
+for ordering are B<required>. Note the commas!)
+
+=cut
+# This sort can cause troubles because of its special use of $a and $b
+# Putting it in dangerousMacros.pl worked frequently, but not always.
+# In particular ANS( ans_eva1 ans_eval2) caused trouble.
+# One answer at a time did not --- very strange.
+
 sub PGsort {
 	my $sort_order = shift;
 	die "Must supply an ordering function with PGsort: PGsort sub {\$a cmp \$b }, \@list\n" unless ref($sort_order) eq 'CODE';
 	sort {&$sort_order($a,$b)} @_;
 }
 
+=head2 includePGtext
+
+	includePGtext($string_ref, $envir_ref)
+
+Calls C<createPGtext> recursively with the $safeCompartment variable set to 0
+so that the rendering continues in the current safe compartment.  The output
+is the same as the output from createPGtext. This is used in processing
+some of the sample CAPA files.
+
+=cut
+
+#this is a method for importing additional PG files from within one PG file.
+# sub includePGtext {
+#     my $self = shift;
+#     my $string_ref =shift;
+#     my $envir_ref = shift;
+#     $self->environment($envir_ref);
+# 	$self->createPGtext($string_ref);
+# }
+# evaluation macros
+
+
+
 no strict;   # this is important -- I guess because eval operates on code which is not written with strict in mind.
+
+
+
+=head2 PG_restricted_eval
+
+	PG_restricted_eval($string)
+
+Evaluated in package 'main'. Result of last statement is returned.
+When called from within a safe compartment the safe compartment package
+is 'main'.
+
+
+=cut
 
 sub PG_restricted_eval {
     my $string = shift;
@@ -821,6 +1279,23 @@ sub PG_restricted_eval {
     $SIG{__WARN__} = $save_SIG_warn_trap;
     return (wantarray) ?  ($out, $errors,$full_error_report) : $out;
 }
+
+=head2 PG_answer_eval
+
+
+	PG_answer_eval($string)
+
+Evaluated in package defined by the current safe compartment.
+Result of last statement is returned.
+When called from within a safe compartment the safe compartment package
+is 'main'.
+
+There is still some confusion about how these two evaluation subroutines work
+and how best to define them.  It is useful to have two evaluation procedures
+since at some point one might like to make the answer evaluations more stringent.
+
+=cut
+
 
 sub PG_answer_eval {
    local($string) = shift;   # I made this local just in case -- see PG_estricted_eval

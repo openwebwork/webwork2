@@ -3,6 +3,7 @@ package WeBWorK::CourseEnvironment;
 use strict;
 use warnings;
 use Safe;
+use WeBWorK::Utils qw(readFile);
 
 # new($invocant, $webworkRoot, $courseName)
 # $invocant	implicitly set by caller
@@ -106,17 +107,6 @@ sub array2string {
 			$result .= " " . $ar->[$_] . "\n";
 		}
 	}
-	return $result;
-}
-
-# ----- utils -----
-
-sub readFile {
-	my $fileName = shift;
-	open INPUTFILE, "<", $fileName
-		or return; #die "Couldn't open environment file $fileName: $!";
-	my $result = join "\n", <INPUTFILE>;
-	close INPUTFILE;
 	return $result;
 }
 

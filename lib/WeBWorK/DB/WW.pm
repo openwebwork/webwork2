@@ -44,25 +44,25 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
-sub fixMyMistakes($) { # ***
-	my $self = shift;
-	my $userID = "practice1";
-	my $setID = "dummy";
-	my $PSVN = 95540;
-	$self->{webwork_db}->connect("rw");
-	delete $self->{webwork_db}->hashRef->{$PSVN};
-	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
-	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
-	my %sets = decode($setsForUser);  # sets built for user $userID
-	my %users = decode($usersForSet); # users for which set $setID has been built
-	delete $sets{$setID};
-	delete $users{$userID};
-	$setsForUser = encode(%sets);
-	$usersForSet = encode(%users);
-	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
-	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
-	$self->{webwork_db}->disconnect;
-}
+#sub fixMyMistakes($) { # ***
+#	my $self = shift;
+#	my $userID = "practice1";
+#	my $setID = "dummy";
+#	my $PSVN = 95540;
+#	$self->{webwork_db}->connect("rw");
+#	delete $self->{webwork_db}->hashRef->{$PSVN};
+#	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+#	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
+#	my %sets = decode($setsForUser);  # sets built for user $userID
+#	my %users = decode($usersForSet); # users for which set $setID has been built
+#	delete $sets{$setID};
+#	delete $users{$userID};
+#	$setsForUser = encode(%sets);
+#	$usersForSet = encode(%users);
+#	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
+#	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
+#	$self->{webwork_db}->disconnect;
+#}
 
 # -----
 
