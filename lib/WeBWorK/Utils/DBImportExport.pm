@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.2 2004/04/09 20:18:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.1 2004/04/27 03:38:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -225,12 +225,10 @@ sub dbImport {
 		return "Failed to parse XML document: $@";
 	}
 	
-	#warn "***** begin parse tree *****\n", Dumper($tree), "***** end parse tree *****\n";
-	
 	# find "webwork" node
 	my ($root_element) = findNodes($tree, "e", "webwork");
 	unless (defined $root_element) {
-		return "Format error: <webwork> element not found.";
+		return "Format error: 'webwork' element not found.";
 	}
 	
 	# verify version
@@ -249,7 +247,7 @@ sub dbImport {
 		
 		my ($table_element) = findNodes($root_element->{content}, "e", $table."s");
 		unless ($table_element) {
-			push @nonfatal_errors, "Format error: <${table}s> element not found.";
+			push @nonfatal_errors, "Format error: '${table}s' element not found.";
 			next TABLE;
 		}
 		
@@ -260,8 +258,6 @@ sub dbImport {
 		foreach my $record_element (@record_elements) {
 			my $Record = $NEW_SUBS{$table}->($options{db});
 			element2record($record_element, $Record);
-			#warn "***** begin @{[ref $Record]} record *****\n", $Record->toString, "***** end @{[ref $Record]} record *****\n";
-			#warn ref $Record, " => ", $Record->idsToString, "\n";
 			
 			eval { $options{db}->$add_sub($Record) };
 			if ($@) {
