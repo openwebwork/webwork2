@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.25 2004/08/28 14:10:13 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.26 2004/09/04 23:31:46 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -548,7 +548,7 @@ sub pre_header_initialize {
       $self->{error} = 1;
       $self->addbadmessage('You need to select a "Target Set" before you can edit it.');
     } else {
-      my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+      my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
       my $url = $self->systemLink($page);
       $self->reply_with_redirect($url);
     }
