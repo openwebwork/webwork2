@@ -47,6 +47,7 @@ sub initialize {
 	$self->{columns}                =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
+	$self->{merge_file}             =   (defined($r->param('merge_file'))) ? $r->param('merge_file') : 'None';
 #################################################################
 # Check the validity of the input file name
 #################################################################
@@ -79,26 +80,34 @@ sub initialize {
 #################################################################
 # Determine the file name to save message into
 #################################################################
-	my $output_file      = '';	
+	my $output_file      = 'FIXME no output file specified';	
 	if (defined($action) and $action eq 'Save as Default') {
 		$output_file  = $default_msg_file;
-	} elsif ( defined($savefilename) ){
+	} elsif ( defined($action) and ($action =~/save/i) and defined($savefilename) ){
 		$output_file  = $savefilename;
 	} elsif ( defined($input_file) ) {
 		$output_file  = $input_file;
 	}
-	
+#	warn "FIXME savefilename $savefilename  output file $output_file";
 	#################################################################
 	# Sanity check on save file name
 	#################################################################
 
 	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
-		$self->submission_error("For security reasons, you cannot specify a merge file from a directory 
-		higher than the email directory (you can't use ../blah/blah).  
-		Please specify a different file or move the needed file to the email directory");
+		$self->submission_error("For security reasons, you cannot specify a merge file from a directory", 
+								"higher than the email directory (you can't use ../blah/blah). ", 
+								"Please specify a different file or move the needed file to the email directory",
+		);
 	}
-	
-	$self->{output_file} = $output_file;
+	unless ($output_file =~ m|\.msg$| ) {
+		$self->submission_error("Invalid file name.", 
+		                        "The file name \"$output_file\" does not have a \".msg\" extension",
+								"All email file names must end in the extension \".msg\"",
+								"choose a file name with a \".msg\" extension.",
+								"The message was not saved.",
+		);
+	}
+	$self->{output_file} = $output_file;  # this is ok.  It will be put back in the text input box for re-editing.
     # FIXME $output_file can be blank if there was no savefilename
 
 #############################################################################################
@@ -111,8 +120,9 @@ sub initialize {
 #############################################################################################
 	my($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
-
+#		warn "FIXME obtaining source from $emailDirectory/$input_file";
 		($from, $replyTo,$subject,$r_text) = $self->read_input_file("$emailDirectory/$input_file");
+#		warn "FIXME Done reading source";
 
 	} elsif ($input_source eq 'form') {
 		# read info from the form
@@ -138,7 +148,8 @@ sub initialize {
 # if no form is submitted, gather data needed to produce the mail form and return
 #############################################################################################
 
-	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window' ){  
+	if(not defined($action) or $action eq 'Open' or $action eq 'Resize message window'
+	   or $action eq 'Choose merge file' ){  
 #		warn "FIXME action is |$action| no further initialization required";
 		return '';
 	}
@@ -199,21 +210,25 @@ sub initialize {
 		# overwrite protection
 		#################################################################
 		if ($action eq 'Save as:' and -e "$emailDirectory/$output_file") {
-			$self->submission_error("The file $emailDirectory/$output_file already exists and cannot be overwritten");
+			$self->submission_error("The file $emailDirectory/$output_file already exists and cannot be overwritten",
+			                         "The message was not saved");
 			return;	
 		}
  
 		#################################################################
 	    # Back up existing file?
 	    #################################################################
-	    if ($action eq 'Save as Default') {
-	    	warn "FIXME backup existing default file";
+	    if ($action eq 'Save as Default' and -e "$emailDirectory/$default_msg_file") {
+	    	rename("$emailDirectory/$default_msg_file","$emailDirectory/$old_default_msg_file") or 
+	    	       die "Can't rename $emailDirectory/$default_msg_file to $emailDirectory/$old_default_msg_file ",
+	    	           "Check permissions for webserver on directory $emailDirectory. $!";
+	    	$self->{message} .= "Backup file <code>$emailDirectory/$old_default_msg_file</code> created.".CGI::br();
 	    }
 	    #################################################################
 	    # Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" );
-		$self->{message}         = "Message saved to file ${emailDirectory}/$output_file";
+		$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
 #		warn "FIXME saving to ${emailDirectory}/$output_file";
 	} elsif ($action eq 'preview') {
 	
@@ -638,24 +653,26 @@ sub body {
 	my $text            = defined($self->{r_text}) ? ${ $self->{r_text} }: 'FIXME no text was produced by initialization!!';
 	my $input_file      = $self->{input_file};
 	my $output_file     = $self->{output_file};
+	my @sorted_messages = $self->get_message_file_names;
+	my @sorted_merge_files = $self->get_merge_file_names;
+	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 	
-    CGI::popup_menu(-name=>'classList',
-						   -values=>\@users,
-						   -labels=>\%classlistLabels,
-						   -size  => 10,
-						   -multiple => 1,
-						   -default=>'Yourself'
-	);
+	
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 #create list of sudents
 # show professors's name and email address
 # show replyTo field and From field
     print CGI::start_table({-border=>'2', -cellpadding=>'4'});
 	print CGI::Tr({-align=>'left',-valign=>'VCENTER'},
-			 CGI::td("Input file: $input_file","\n",CGI::br(),
-				 CGI::submit(-name=>'action', -value=>'open',-label=>'Open'), "\n",
-				 CGI::textfield(-name=>'openfilename', -size => 20, -value=> "$input_file", -override=>1), "\n",CGI::br(),
-				 "Output file: $output_file","\n",CGI::br(),
+			 CGI::td("Message file: $input_file","\n",CGI::br(),
+				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
+				 #CGI::textfield(-name=>'openfilename', -size => 20, -value=> "$input_file", -override=>1), "\n",CGI::br(),
+				 CGI::popup_menu(-name=>'openfilename', 
+				                 -values=>\@sorted_messages, 
+				                 -default=>$input_file
+				 ), "\n",CGI::br(),
+
+				 "Save file to: $output_file","\n",CGI::br(),
 				 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
 				 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
 				 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>40, -override=>1),  
@@ -677,6 +694,11 @@ sub body {
 				
 			),
 			CGI::td({align=>'left'},
+				 CGI::submit(-name=>'action', -value=>'Choose merge file'),
+				 CGI::popup_menu(-name=>'merge_file', 
+				                 -values=>\@sorted_merge_files, 
+				                 -default=>$merge_file,
+				 ), "\n",CGI::br(),
 				CGI::submit(-name=>'preview', -value=>'preview',-label=>'Preview')," email to ",
 				CGI::popup_menu(-name=>'classList',
 							   -values=>\@users,
@@ -741,22 +763,12 @@ sub body {
 ##############################################################################
 sub submission_error {
 	my $self = shift;
-    my $msg = join " ", @_;
-# 	$cgi->start_html('-title' => 'User error'),
-# 	$cgi->h1('User error'),
-# 	$cgi->p,
-# 	$cgi->b(HTML::Entities::encode($msg)),
-# 	$cgi->p,
-#         "Please hit the &quot;<B>Back</B>&quot; button on your browser to ",
-# 	"try again, or notify ", $cgi->br,
-# 	"&lt;", $cgi->a({href=>"mailto:$Global::webmaster"}, $Global::webmaster), "&gt; ",
-# 	"if you believe this message is in error.",
-# 	$cgi->end_html;
-	$self->{submitError}= CGI::b(HTML::Entities::encode($msg)).CGI::br().
-		qq{Please hit the &quot;<B>Back</B>&quot; button on your browser to 
-		try again, or notify your web master
-		if you believe this message is in error.
-		};
+    my $msg = join( " ", @_);
+	$self->{submitError}= $msg; #CGI::b(HTML::Entities::encode($msg));
+# 		qq{Please hit the &quot;<B>Back</B>&quot; button on your browser to 
+# 		try again, or notify your web master
+# 		if you believe this message is in error.
+# 		};
     return;
 }
 
@@ -781,9 +793,9 @@ sub read_input_file {
 	my $header = '';
 	my ($subject, $from, $replyTo);
 	local(*FILE);
-	if (-e "$filePath") {
-		open FILE, "$filePath" || $self->submission_error("Can't open $filePath");
-		while ($header !~ s/Message:\s*$//m) { 
+	if (-e "$filePath" and -r "$filePath") {
+		open FILE, "$filePath" || do { $self->submission_error("Can't open $filePath"); return};
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
 			$header .= <FILE>; 
 		}
 		$text = join( '', <FILE>);
@@ -800,9 +812,35 @@ sub read_input_file {
 	} else {
 		$from           = $self->{defaultFrom};
 		$replyTo        = $self->{defaultReply};
-		$text           =  "FIXME file $filePath doesn't exist";
+		$text           =  (-e "$filePath") ? "FIXME file $filePath can't be read" :"FIXME file $filePath doesn't exist";
 		$subject        = "FIXME default subject";
 	}
 	return ($from, $replyTo, $subject, \$text);
+}
+
+sub get_message_file_names {
+	my $self             = shift;
+	my $emailDirectory   = $self->{ce}->{courseDirs}->{email};
+	#get all message files and create a list
+	local(*EMAILDIR);
+	opendir( EMAILDIR, $emailDirectory )|| die "Can't access directory $emailDirectory. Please check that webserver has permission to read this directory.";
+		my @messageFiles = grep /\.msg$/, readdir EMAILDIR; #all message files
+	closedir EMAILDIR;
+
+	return sort @messageFiles;
+}
+sub get_merge_file_names {
+	my $self             = shift;
+	my $scoringDirectory   = $self->{ce}->{courseDirs}->{scoring};
+	#get all message files and create a list
+	local(*SCORINGDIR);
+	opendir( SCORINGDIR, $scoringDirectory )|| die "Can't access directory $scoringDirectory.",
+	                                           "Please check that webserver has permission to read this directory.";
+	my @mergeFiles = grep( /\.csv$/, readdir SCORINGDIR); #all message files
+	closedir SCORINGDIR;
+	@mergeFiles    = sort @mergeFiles;
+#	warn "FIXME scoring directory $scoringDirectory merge Files", join(" ", @mergeFiles);
+	unshift(@mergeFiles, 'None');
+	return @mergeFiles;
 }
 1;
