@@ -143,25 +143,28 @@ sub body {
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
 
-	my $form = CGI::start_form({"method"=>"POST", "action"=>$r->uri})."\n" # This form is for deleting sets, and points to itself
-		. $table."\n"
-		. CGI::br()."\n"
-		. $self->hidden_authen_fields."\n"
-		. CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"})."\n"
-		. CGI::end_form()."\n"
-		. CGI::start_form({"method"=>"POST", "action"=>$r->uri})."\n"
-		. $self->hidden_authen_fields."\n"
-		. "New Set Name: "
-		. CGI::input({type=>"text", name=>"newSetName", value=>""})
-		. CGI::submit({"name"=>"makeNewSet", "label"=>"Create"})."\n"
-		. CGI::end_form()."\n"
-		. CGI::start_form({"method"=>"POST", "action"=>$importURL})."\n"
-		. $self->hidden_authen_fields."\n"
-		. CGI::submit({"name"=>"importSet", "label"=>"Import"})."\n"
-		.  CGI::popup_menu(-name=>'set_definition_file', 
+	my $form = join("",
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n", # This form is for deleting sets, and points to itself
+		$table,"\n",
+		CGI::br(),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),"\n",
+		CGI::end_form(),"\n",
+		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
+		$self->hidden_authen_fields,"\n",
+		"New Set Name: ",
+		CGI::input({type=>"text", name=>"newSetName", value=>""}),
+		CGI::submit({"name"=>"makeNewSet", "label"=>"Create"}),"\n",
+		CGI::end_form(),"\n",
+		CGI::start_form({"method"=>"POST", "action"=>$importURL}),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::submit({"name"=>"importSet", "label"=>"Import"}),"\n",
+		CGI::popup_menu(-name=>'set_definition_file', 
 				                 -values=>\@set_definition_files, 
-		)
-		. CGI::end_form()."\n";
+		),' as set ',
+		CGI::input({type=>"text", name=>"importedSetName", value=>""}),
+		CGI::end_form(),"\n"
+	);
 	print $form;
 	
 	return "";
