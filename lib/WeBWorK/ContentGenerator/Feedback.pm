@@ -122,7 +122,7 @@ sub body {
 					. "&showSolutions=$showSolutions" 
 					: "" );
 			$emailableURL = $URL . "?effectiveUser=$userName";
-			$returnURL = $URL . $self->url_authen_args;
+			$returnURL = $URL . '&'. $self->url_authen_args;
 		} else {
 			$URL = $emailableURL = "(not available)";
 			$returnURL = "";
@@ -270,16 +270,17 @@ sub body {
 		# print confirmation
 		print CGI::p("Your message was sent successfully.");
 		print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
+		print CGI::p( wrap("", "", $feedback) );
 	} else {
 		# just print the feedback form, with no message
-		$self->feedbackForm($user, $returnURL);
+		$self->feedbackForm($returnURL,  $user, "",);
 	}
 	
 	return "";
 }
 
 sub feedbackForm($;$$$) {
-	my ($self, $returnURL, $message, $user) = @_;
+	my ($self, $returnURL, $user, $message, ) = @_;
 	my $r = $self->{r};
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
@@ -298,7 +299,7 @@ sub feedbackForm($;$$$) {
 	print CGI::p(CGI::i($message)) if $message;
 	print CGI::p(
 		CGI::b("Feedback:"), CGI::br(),
-		CGI::textarea("feedback", "", 10, 50),
+		CGI::textarea("feedback", "", 20, 80),
 	);
 	print CGI::submit("sendFeedback", "Send Feedback");
 	print CGI::end_form();
