@@ -1,0 +1,21 @@
+{
+	field_name => {
+		type => /text|date|password/,
+		size => /\d*/,
+		specificity => /global|user/,
+		access => /readonly|writeonly|readwrite/,
+	}
+}
+
+type	number, text, longtext, date
+name	
+value
+specificity	global	user
+	Indicates whether it is a global setting that is overridden for a user,
+	or a user-only setting that is only overwritten for multiUser editing.
+
+RecordType_Key_Field
+
+Talk to Sam about:
+legal characters in NAMEs (all?), legal characters in WW2 identifiers (inherited
+from WW1, perhaps?)
