@@ -22,9 +22,8 @@ use constant TABLES => qw(password permission key user set set_user problem prob
 ################################################################################
 
 sub new($$) {
-	my $invocant = shift;
+	my ($invocant, $ce) = @_;
 	my $class = ref($invocant) || $invocant;
-	my $ce = shift;
 	my $self = {};
 	
 	# load the modules required to handle each table, and create driver
@@ -327,7 +326,17 @@ sub deleteUserProblem($$$$) {
 
 sub getGlobalUserSet($$$) {
 	my ($self, $userID, $setID) = @_;
-	# ***
+	my $UserSet = $self->getUserSet($userID, $setID);
+	return unless $UserSet;
+	my $GlobalSet = $self->getGlobalSet($setID);
+	if ($GlobalSet) {
+		foreach ($UserSet->FIELDS()) {
+			next unless $GlobalSet->can($_);
+			next if $UserSet->$_();
+			$UserSet->$_($GlobalSet->$_());
+		}
+	}
+	return $UserSet;
 }
 
 ################################################################################
@@ -336,7 +345,17 @@ sub getGlobalUserSet($$$) {
 
 sub getGlobalUserProblem($$$$) {
 	my ($self, $userID, $setID, $problemID) = @_;
-	# ***
+	my $UserProblem = $self->getUserProblem($userID, $setID, $problemID);
+	return unless $UserProblem;
+	my $GlobalProblem = $self->getGlobalProblem($setID, $problemID);
+	if ($GlobalProblem) {
+		foreach ($UserProblem->FIELDS()) {
+			next unless $GlobalProblem->can($_);
+			next if $UserProblem->$_();
+			$UserProblem->$_($GlobalProblem->$_());
+		}
+	}
+	return $UserProblem;
 }
 
 ################################################################################
