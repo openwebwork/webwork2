@@ -8,7 +8,7 @@ CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
 PID=$WEBWORKROOT/logs/httpd.pid
 
 usage() {
-	echo "$0 { start | stop | restart }"
+	echo "$0 { start | stop | restart | graceful | configtest }"
 }
 
 case $1 in
