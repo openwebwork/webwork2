@@ -620,7 +620,7 @@ sub threeSpaceFill {
     
     if (length($num)<=1) {return "$num".'  ';}
     elsif (length($num)==2) {return "$num".' ';}
-    else {return "###";}
+    else {return "## ";}
 }
 sub round_score{
 	return shift;
