@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.49 2004/05/11 21:31:04 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.50 2004/05/13 16:02:55 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,7 +54,7 @@ sub setRowHTML {
 	$attributeHash->{size} = $size if defined $size;
 	
 	my $input = (defined $override) ? $fieldValue : CGI::input($attributeHash);
-	
+
 	my $html = CGI::td({}, [$description, $input]);
 	
 	if (defined $override) {
@@ -75,6 +75,23 @@ sub setRowHTML {
 	
 	return $html;
 			
+}
+
+
+# FIXME: this or something similar could get pulled up to Instructor.pm
+sub recurseDirectory {
+
+	my ($self, $dir, $pattern) = @_;
+	
+	my @dirs = grep {$_ ne "." and $_ ne ".." and $_ ne "Library" and $_ ne "CVS" and -d "$dir/$_"} readDirectory($dir);
+
+	my @files = map { "$dir/$_" } $self->read_dir($dir, $pattern);
+
+	foreach (@dirs) {
+		push (@files, $self->recurseDirectory("$dir/$_", $pattern));
+	}
+
+	return @files;
 }
 
 
@@ -112,52 +129,53 @@ sub initialize {
 	# Save changes to the set
 	###################################################
 		
-		if (defined($r->param('submit_set_changes'))) {
-		foreach (@{SET_FIELDS()}) {
-			if (defined($r->param($_))) {
-				if (m/_date$/) {
-					$setRecord->$_(parseDateTime($r->param($_)));
-				} else {
-					$setRecord->$_($r->param($_));
-					if($_ eq 'set_header') {
-					# be nice and copy the default file here if it doesn't exist yet
-					# empty set headers lead to trouble
-						my $newheaderpath = $r->{ce}->{courseDirs}->{templates} . '/'. $r->param('set_header');
-						unless(($r->param('set_header') !~ /\S/) or -e $newheaderpath) {
-							my $default_header = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
-							File::Copy::copy($default_header, $newheaderpath);
+	if (defined($r->param('submit_set_changes'))) {
+
+		if (!$forUsers) {
+			foreach (@{SET_FIELDS()}) {
+				if (defined($r->param($_))) {
+					if (m/_date$/) {
+						$setRecord->$_(parseDateTime($r->param($_)));
+					} else {
+						$setRecord->$_($r->param($_));
+						if($_ eq 'set_header') {
+						# be nice and copy the default file here if it doesn't exist yet
+						# empty set headers lead to trouble
+							my $newheaderpath = $r->{ce}->{courseDirs}->{templates} . '/'. $r->param('set_header');
+							unless(($r->param('set_header') !~ /\S/) or -e $newheaderpath) {
+								my $default_header = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+								File::Copy::copy($default_header, $newheaderpath);
+							}
 						}
 					}
-				}
-			} else {
-				if (m/published$/) {
-					$setRecord->$_(0);
+				} else {
+					if (m/published$/) {
+						$setRecord->$_(0);
+					}
 				}
 			}
-		}
 		
 
 		
 		
-		###################################################
-		# Check that the open, due and answer dates are in increasing order.
-		# Bail if this is not correct.
-		###################################################
-		if ($setRecord->open_date > $setRecord->due_date)  {
-			$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date'));
-			return;
-		}
-		if ($setRecord->due_date > $setRecord->answer_date) {
-			$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date'));
-			return;
-		}
-		###################################################
-		# End date check section.
-		###################################################
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName were successfully saved."));
-		$db->putGlobalSet($setRecord);
-		
-		if ($forOneUser) {
+			###################################################
+			# Check that the open, due and answer dates are in increasing order.
+			# Bail if this is not correct.
+			###################################################
+			if ($setRecord->open_date > $setRecord->due_date)  {
+				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date'));
+				return;
+			}
+			if ($setRecord->due_date > $setRecord->answer_date) {
+				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date'));
+				return;
+			}
+			###################################################
+			# End date check section.
+			###################################################
+			$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName were successfully saved."));
+			$db->putGlobalSet($setRecord);
+		} else {
 			
 			my $userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
 			die "set $setName not found for $editForUser[0]." unless $userSetRecord;
@@ -181,7 +199,7 @@ sub initialize {
 			my $active_open_date   = $userSetRecord->open_date   ? $userSetRecord->open_date   : $setRecord->open_date;
 			my $active_due_date    = $userSetRecord->due_date    ? $userSetRecord->due_date    : $setRecord->due_date;
 			my $active_answer_date = $userSetRecord->answer_date ? $userSetRecord->answer_date : $setRecord->answer_date;
-			if ( $active_open_date >$active_due_date ) {
+			if ( $active_open_date > $active_due_date ) {
 				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date override must come after open date'));
 				return;
 			}
@@ -289,6 +307,11 @@ sub body {
 	if (@editForUser) {
 		print CGI::p("Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
 	}
+
+	my @headers = $self->recurseDirectory($self->{ce}->{courseDirs}->{templates}, '(?i)header.*?\\.pg$');
+	map { s|^$self->{ce}->{courseDirs}->{templates}/?|| } @headers;
+	@headers = sort @headers;
+	
 	print CGI::start_form({method=>"post", action=>$r->uri}), "\n";
 	print CGI::table({},
 		CGI::Tr({}, [
@@ -307,19 +330,23 @@ sub body {
 						formatDateTime($setRecord->answer_date), 
 						undef, 
 						@{$overrideArgs{answer_date}})."\n",
-			setRowHTML( "Set Header:", "set_header", 
-						$setRecord->set_header, 
-						32, 
-						@{$overrideArgs{set_header}})."\n",
+#			setRowHTML( "Set Header:", "set_header", 
+#						$setRecord->set_header, 
+#						32, 
+#						@{$overrideArgs{set_header}})."\n",
 # FIXME  we're not using this right at the moment as far as I know.  There may someday be a use for it, so don't take this out yet.
 # 			setRowHTML( "Problem Header:", 
 # 						"problem_header", 
 # 						$setRecord->problem_header, 
 # 						undef, 
 # 						@{$overrideArgs{problem_header}})."\n",
+			CGI::td({}, ["Set Header:" , ($forOneUser) ? $setRecord->set_header 
+									: CGI::popup_menu(-name=>'set_header', 
+												-values=>\@headers, 
+												-default=>$setRecord->set_header)]) . "\n",
 		])
 	);
-	
+
 	if (@editForUser) {
 		my $publishedColor = ($setRecord->published) ? "Published" : "Unpublished";
 		print CGI::p("This set is currently", CGI::font({class=>$publishedColor}, (($setRecord->published) ? "Published" : "Unpublished")), CGI::br(), "(You cannot publish/unpublish a set for specific users.)");
