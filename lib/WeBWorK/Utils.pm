@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.38 2004/03/17 08:16:13 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.39 2004/03/18 21:08:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,6 +56,7 @@ our @EXPORT_OK = qw(
 	pretty_print_rh
 	cryptPassword
 	dequote
+	undefstr
 );
 
 sub runtime_use($) {
@@ -350,6 +351,10 @@ sub dequote($) {
 	}
 	s/^\s*?$leader(?:$white)?//gm;
 	return $_;
+}
+
+sub undefstr($@) {
+	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
 }
 
 1;
