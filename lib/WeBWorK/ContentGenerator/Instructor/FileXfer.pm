@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.4 2004/05/05 00:53:13 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.5 2004/05/07 18:21:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,17 +51,17 @@ sub pre_header_initialize {
 	# make sure we have permission to do what we want to do
 	if ($type eq "def") {
 		unless ($authz->hasPermissions($userID, "modify_set_def_files")) {
-			$self->{submitError} = "You are not authorized to modify the list of set definition files.";
+			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of set definition files.")));
 			return;
 		}
 	} elsif ($type eq "classlist") {
 		unless ($authz->hasPermissions($userID, "modify_classlist_files")) {
-			$self->{submitError} = "You are not authorized to modify the list of classlist files.";
+			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of classlist files.")));
 			return;
 		}
 	} elsif ($type eq "scoringFile") {
 		unless ($authz->hasPermissions($userID, "modify_scoring_files")) {
-			$self->{submitError} = "You are not authorized to modify the list of scoring files.";
+			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of scoring files.")));
 			return;
 		}
 	}
@@ -101,7 +101,7 @@ sub handleDelete {
 	# get file name
 	my $fileToDelete = $r->param($selectParam);
 	unless ($fileToDelete) {
-		$self->{submitError} = "No file selected for deletion.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for deletion.")));
 		return;
 	}
 	
@@ -112,7 +112,7 @@ sub handleDelete {
 	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDelete } @fileList) {
-		$self->{submitError} = "File \"$fileToDelete\" not found in file list.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File \"$fileToDelete\" not found in file list.")));
 		return;
 	}
 	
@@ -147,13 +147,13 @@ sub handleDownload {
 	# get file name
 	my $fileToDownload = $r->param($selectParam);
 	unless ($fileToDownload) {
-		$self->{submitError} = "No file selected for download.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for download.")));
 		return;
 	}
 	
 	# make sure it's in the file list
 	unless (grep { $_ eq $fileToDownload } @fileList) {
-		$self->{submitError} = "File \"$fileToDownload\" not found in file list.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File \"$fileToDownload\" not found in file list.")));
 		return;
 	}
 	
@@ -190,7 +190,7 @@ sub handleUpload {
 	# get upload ID and hash
 	my $uploadIDHash = $r->param($uploadParam);
 	unless ($uploadIDHash) {
-		$self->{submitError} = "No file selected for upload.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No file selected for upload.")));
 		return;
 	}
 	my ($id, $hash) = split /\s+/, $uploadIDHash;
@@ -215,7 +215,7 @@ sub handleUpload {
 	
 	# does a file already exist with that name?
 	if (grep { $_ eq $fileName } @fileList) {
-		$self->{submitError} = "A file named \"$fileName\" exists. Either remove it, or chose a different name for your upload.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("A file named \"$fileName\" exists. Either remove it, or chose a different name for your upload.")));
 		return;
 	}
 	
