@@ -127,7 +127,7 @@ sub getKey($$) {
 	my $result = $self->{keys_db}->hashRef->{$user};
 	$self->{keys_db}->disconnect;
 	my ($key, $timestamp) = defined $result ? split /\s+/, $result : (undef, undef);
-	return defined $result ? split /\s+/, $result : undef;
+	return ($key, $timestamp);
 }
 
 sub setKey($$$$) {
@@ -146,10 +146,10 @@ sub verifyKey($$$$$) {
 	my $user = shift;
 	my $key = shift;
 	my $timestamp = shift;
-	
 	my ($real_key, $real_timestamp) = $self->getKey($user);
 	return unless defined $real_key and defined $real_timestamp;
 	if ($key eq $real_key and $timestamp <= $real_timestamp+$self->{key_timeout}) {
+		# update timestamp
 		$self->setKey($user, $key, $timestamp);
 		return 1;
 	} else {
