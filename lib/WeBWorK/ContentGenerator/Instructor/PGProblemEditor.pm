@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.21 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -118,17 +118,17 @@ sub initialize {
 		# FIXME  there is a discrepancy in the way that the problems are found.
 		# FIXME  more error checking is needed in case the problem doesn't exist.
 	if (defined($problemNumber) and $problemNumber) {
-		$problem_record		=	$db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
+		$problem_record		=	$db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
 		# If there is no global_user defined problem, (i.e. the sets haven't been assigned yet), 
 		# look for a global version of the problem.
-		$problem_record			=	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
+		$problem_record			=	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record); # checked
 		# bail if no problem is found
 		die "Cannot find a problem record for set $setName / problem $problemNumber" 
 			unless defined($problem_record);
 		$problemPath           .=   '/'.$problem_record->source_file;
 		$self->{file_type}      =   'problem';
 	} elsif (defined($problemNumber) and $problemNumber==0) { # we are editing a header file
-		my $set_record          =   $db->getMergedSet($effectiveUserName, $setName);
+		my $set_record          =   $db->getMergedSet($effectiveUserName, $setName); # checked
 		die "Cannot find a set record for set $setName" unless defined($set_record);	
 		$problemPath           .=   '/'.$set_record->set_header;
 		$self->{file_type}      =   'set_header';
@@ -271,7 +271,7 @@ sub body {
 	my $db      =   $self->{db};
 	my $ce      =   $self->{ce};
 	my $user    =   $r->param('user');
-	my $key     =   $db->getKey($user)->key();
+	
 	
 	
 	################

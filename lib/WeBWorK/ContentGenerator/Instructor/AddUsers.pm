@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -108,7 +108,7 @@ sub body {
 	my $emailURL       = "send_mail/?" . $self->url_args;
 	
 	################### debug code
-	#my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
+	#my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission(); #checked
 	#my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
 	#return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
     ################### debug code

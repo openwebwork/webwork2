@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,7 +75,11 @@ sub initialize {
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 	my @users = sort $db->listUsers;
 	my @user_records = ();
-	push(@user_records,$db->getUser($_)) foreach  (@users);
+	foreach my $userName (@users) {
+		my $userRecord = $db->getUser($userName); # checked
+		die "record for user $userName not found" unless $userRecord;
+		push(@user_records, $userRecord);
+	}
 	
 	# store data
 	$self->{ra_users}              =   \@users;
@@ -299,7 +303,8 @@ sub initialize {
 		
 		foreach my $recipient (@recipients) {
 			#warn "FIXME sending email to $recipient";
-			my $ur      = $self->{db}->getUser($recipient);
+			my $ur      = $self->{db}->getUser($recipient); #checked
+			die "record for user $recipient not found" unless $ur;
 			my ($msg, $preview_header);
 			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
 			warn "There were errors in processing user $ur, merge file $merge_file. $@" if $@;
@@ -370,7 +375,8 @@ sub body {
 sub print_preview {
 	my ($self, $setID)  = @_;
 	#  get preview user
-	my $ur      = $self->{db}->getUser($self->{preview_user});
+	my $ur      = $self->{db}->getUser($self->{preview_user}); #checked
+	die "record for preview user ".$self->{preview_user}. " not found." unless $ur;
 	
 	#  get merge file
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
@@ -442,7 +448,9 @@ sub print_form {
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my @merge_keys      = keys %$rh_merge_data;
 	my $preview_user    = $self->{preview_user};
-	my $preview_record   = $db->getUser($preview_user); 
+	my $preview_record   = $db->getUser($preview_user); # checked
+	die "record for preview user ".$self->{preview_user}. " not found." unless $preview_record;
+
 
 #############################################################################################		
 
@@ -550,7 +558,7 @@ sub print_form {
 #	merge file fragment and message text area field
 #############################################################################################	
 		my @tmp2;
-        eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };};
+        eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };}; # checked
         if ($@) {
 #        	print CGI::p( "Couldn't get merge data for $preview_user", CGI::br(), $@) ;
 			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();

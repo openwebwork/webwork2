@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.3 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -52,7 +52,7 @@ sub initialize {
 		my %selectedSets = map { $_ => 1 } $r->param("selected");
 		
 		# get current user
-		my $User = $db->getUser($userID);
+		my $User = $db->getUser($userID); # checked
 		die "record not found for $userID.\n" unless $User;
 		
 		# go through each possible set
@@ -60,7 +60,7 @@ sub initialize {
 			# does the user want it to be assigned to the selected user
 			if (exists $selectedSets{$setID}) {
 				# user asked to have the set assigned to the selected user
-				my $Set = $db->getGlobalSet($setID);
+				my $Set = $db->getGlobalSet($setID); #checked
 				if ($Set) {
 					$self->assignSetToUser($userID, $Set);
 				} else {
@@ -152,7 +152,7 @@ sub body {
 		my $prettyName = formatDateTime($Set->open_date);
 		
 		# this is true if $Set is assigned to the selected user
-		my $currentlyAssigned = defined $db->getUserSet($userID, $setID);
+		my $currentlyAssigned = defined $db->getUserSet($userID, $setID); # checked
 		
 		# URL to edit user-specific set data
 		my $url = $ce->{webworkURLs}->{root}

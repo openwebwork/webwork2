@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.34 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,8 @@ sub body {
 	my $user = $r->param("user");
 	my $effectiveUser = $r->param("effectiveUser");
 	my $sort = $r->param("sort") || "status";
-	my $permissionLevel = $db->getPermissionLevel($user)->permission();
+	my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
+	$permissionLevel =0 unless defined $permissionLevel;
 	
 	if (defined $courseEnvironment->{courseFiles}->{motd}
 		and $courseEnvironment->{courseFiles}->{motd}) {
@@ -88,6 +89,7 @@ sub body {
 	$WeBWorK::timer->continue("End preparing merged sets") if defined($WeBWorK::timer);
 	
 	foreach my $set (@sets) {
+		die "set $set not defined" unless $set;
 		print $self->setListRow($set, ($permissionLevel > 0),
 			($permissionLevel > 0));
 	}

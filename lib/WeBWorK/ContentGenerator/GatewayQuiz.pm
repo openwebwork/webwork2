@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.5 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,19 +42,26 @@ sub pre_header_initialize {
 	my $userName             = $r->param('user');
 	my $effectiveUserName    = $r->param('effectiveUser');
 	my $key					 = $r->param('key');
-	my $user                 = $db->getUser($userName);
-	my $effectiveUser        = $db->getUser($effectiveUserName);
+	my $user                 = $db->getUser($userName); # checked
+	my $effectiveUser        = $db->getUser($effectiveUserName); # checked
+	
+	die "user ", $r->param("user"), " (real user) not found."
+		unless $user;
+	die " effective user ", $r->param("user"), "  not found. One 'acts as' the effective user. "
+		unless $effectiveUser;
 	
 	# obtain the effective user set, or if that is not yet defined obtain global set
-	my $set                  = $db->getMergedSet($effectiveUserName, $setName);
+	my $set                  = $db->getMergedSet($effectiveUserName, $setName);  # checked
 	unless (defined $set) {
 		my $userSetClass     = $courseEnv->{dbLayout}->{set_user}->{record};
-		$set                 = global2user($userSetClass, $db->getGlobalSet($setName));
+		$set                 = global2user($userSetClass, $db->getGlobalSet($setName)); # checked
+		die "set  $setName  not found."  unless $set ;
 		$set->psvn('000');
 	}
 	
 	# FIXME obtain first problem for recording number of attempts FIXME
-	my $problem = $db->getMergedProblem($effectiveUser->user_id, $setName, 1);
+	my $problem = $db->getMergedProblem($effectiveUser->user_id, $setName, 1); # checked
+	die "problem 1 for set $setName and user ".$effectiveUser->user_id." not found." unless $problem;
 	
 	my	$psvn                = $set->psvn();
 	
@@ -63,7 +70,8 @@ sub pre_header_initialize {
 	
 		##### get and save permission levels #####
 		
-	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
+	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
+	die "permission level for $userName not found." unless $permissionLevel;
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -179,12 +187,17 @@ sub initialize {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $userName = $r->param("user");
-	my $effectiveUserName = $r->param("effectiveUser");
+	my $effectiveUserName = $r->param("effectiveUser"); 
 	
-	my $user            = $db->getUser($userName);
-	my $effectiveUser   = $db->getUser($effectiveUserName);
-	my $set             = $db->getMergedSet($effectiveUserName, $setName);
-	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
+	my $user            = $db->getUser($userName); # checked
+	die "user $user (real user) not found."  unless $user; 
+	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
+	die "effective user $effectiveUser  not found. One 'acts as' the effective user."  unless $effectiveUser;
+	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
+	die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
+	
+	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
+	die "permission level undefined for $userName. " unless $permissionLevel;
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -399,13 +412,17 @@ sub getProblemHTML {
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
+	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName); #checked
+	die "set $setName for effectiveUser ".$effectiveUser->user_id." not found." unless $set;
+
 	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {
-		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber);
+		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber); #checked
+		die "Unable to find  problem $problemNumber in set $setName for user ".$effectiveUser->user_id."." unless $problem;
+
 	} elsif ($pgFile) {
 		$problem = WeBWorK::DB::Record::UserProblem->new(
 			set_id => $set->set_id,
@@ -415,7 +432,6 @@ sub getProblemHTML {
 			# the rest of Problem's fields are not needed, i think
 		);
 	}
-	
 	# figure out if we're allowed to get solutions and call PG->new accordingly.
 	my $showCorrectAnswers = $self->{will}->{showCorrectAnswers};
 	my $showHints          = $self->{will}->{showHints};

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.37 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -85,7 +85,9 @@ sub initialize {
 	my $authz       = $self->{authz};
 	my $user        = $r->param('user');
 	my $setName     = $self->getSetName(@components);
-	my $setRecord   = $db->getGlobalSet($setName);
+	my $setRecord   = $db->getGlobalSet($setName); #checked
+	die "global set $setName not found." unless $setRecord;
+
 	$self->{set}    = $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
@@ -118,7 +120,8 @@ sub initialize {
 		$db->putGlobalSet($setRecord);
 		if ($forOneUser) {
 			
-			my $userSetRecord = $db->getUserSet($editForUser[0], $setName);
+			my $userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
+			die "set $setName not found for $editForUser[0]." unless $userSetRecord;
 			foreach my $field (@{SET_FIELDS()}) {
 				if (defined $r->param("${field}_override")) {
 					if (exists $overrides{$field}) {
@@ -159,7 +162,8 @@ sub initialize {
 	    my @problemList = $db->listGlobalProblems($setName);
 	    my $problemList  = '';
 	    foreach my $prob (sort {$a <=> $b} @problemList) {
-	    	my $problemRecord = $db->getGlobalProblem($setName, $prob);
+	    	my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
+	    	die "global problem $prob for set $setName not found" unless defined($problemRecord);
 	    	my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
@@ -222,7 +226,8 @@ sub body {
 	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
 	my $setName = $self->getSetName(@components);
-	my $setRecord = $db->getGlobalSet($setName);
+	my $setRecord = $db->getGlobalSet($setName);  # checked
+	die "global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
 	my $forUsers = scalar(@editForUser);
@@ -234,7 +239,8 @@ sub body {
 	my $userSetRecord;
 	my %overrideArgs;
 	if ($forOneUser) {
-		$userSetRecord = $db->getUserSet($editForUser[0], $setName);
+		$userSetRecord = $db->getUserSet($editForUser[0], $setName); #checked
+		die "set $setName not found for user $editForUser[0]." unless $userSetRecord;
 		foreach my $field (@{SET_FIELDS()}) {
 			$overrideArgs{$field} = [defined $userSetRecord->$field, ($field =~ /_date$/ ? formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
 		}

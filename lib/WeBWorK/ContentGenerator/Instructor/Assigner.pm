@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.7 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,8 @@ sub initialize {
 	if (defined $r->param('assignToAll')) {
 		$self->assignSetToAllUsers($setID);
 	} elsif (defined $r->param('assignToSelected')) {
-		my $setRecord = $db->getGlobalSet($setID);
+		my $setRecord = $db->getGlobalSet($setID); #checked
+		die "Unable to get global set record for $setID " unless $setRecord;
 		foreach my $selectedUser (@users) {
 			if (exists $selectedUsers{$selectedUser}) {
 				$self->assignSetToUser($selectedUser, $setRecord)
@@ -106,14 +107,17 @@ sub body {
 	# get user records
 	my @userRecords  = ();
 	foreach my $currentUser ( @users) {
-		push (@userRecords, $db->getUser($currentUser) );
+		my $userObj = $db->getUser($currentUser); #checked
+		die "Unable to find user object for $currentUser. " unless $userObj;
+		push (@userRecords, $userObj );
 	}
 	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) || 
 	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
 
 	foreach my $userRecord (@userRecords) {
 		my $user = $userRecord->user_id;
-		my $userSetRecord = $db->getUserSet($user, $setID);
+		my $userSetRecord = $db->getUserSet($user, $setID); #checked
+		die "Unable to find record for user $user and set $setID " unless $userSetRecord;
 		my $prettyName = $userRecord->last_name
 			. ", "
 			. $userRecord->first_name;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.34 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -325,7 +325,7 @@ sub body {
 	
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
-		my $PermissionLevel = $db->getPermissionLevel($User->user_id);
+		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
 		
 		unless ($PermissionLevel) {
 			# uh oh! no permission level record found!
@@ -799,9 +799,10 @@ sub saveEdit_handler {
 	
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
-		my $User = $db->getUser($userID);
-		my $PermissionLevel = $db->getPermissionLevel($userID);
-		
+		my $User = $db->getUser($userID); # checked
+		die "record for visible user $userID not found" unless $User;
+		my $PermissionLevel = $db->getPermissionLevel($userID); # checked
+		die "permissions for $userID not defined" unless defined $PermissionLevel;
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.${userID}.${field}";
 			if (defined $tableParams->{$param}->[0]) {
@@ -955,7 +956,8 @@ sub exportUsersToCSV {
 		or die "failed to open file $dir/$fileName for writing: $!\n";
 	
 	foreach my $userID (@userIDsToExport) {
-		my $User = $db->getUser($userID);
+		my $User = $db->getUser($userID); # checked
+		die "record for user $userID not found." unless $User;
 		my @fields = (
 			$User->student_id,
 			$User->last_name,

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,9 +42,13 @@ sub initialize {
 	my $authz = $self->{authz};
  	my $user = $r->param('user');
  	my $setName = $_[0];
- 	$setName = 0 unless defined($setName);  #FIXME relay to index page for statistics
- 	my $setRecord = $db->getGlobalSet($setName);
- 	$self->{set}   = $setRecord;
+#FIXME these don't appear to be used any where
+#  	$setName = 0 unless defined($setName);  #FIXME relay to index page for statistics
+#  	my $setRecord = $db->getGlobalSet($setName); # checked
+# # 	die "global set $setName  not found." unless $setRecord;
+# 
+#  	$self->{set}   = $setRecord;
+#####################################
  	$self->{type}  = $type;
  	if ($type eq 'student') {
  		$self->{studentName } = $components[0] || $user;
@@ -149,7 +153,8 @@ sub displaySets {
 	my $authz      = $self->{authz};
 	my $user       = $r->param('user');
 	my $courseName = $ce->{courseName};
-	my $setRecord  = $db->getGlobalSet($setName);
+	my $setRecord  = $db->getGlobalSet($setName); # checked
+	die "global set $setName  not found." unless $setRecord;
 	my $root       = $ce->{webworkURLs}->{root};
 	my $url        = $r->uri; 
 	my $sort_method_name = $r->param('sort');  
@@ -330,7 +335,8 @@ sub displayStudents {
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $courseName = $ce->{courseName};
-	my $studentRecord = $db->getUser($studentName);
+	my $studentRecord = $db->getUser($studentName); # checked
+	die "record for user $studentName not found" unless $studentRecord;
 	my $root = $ce->{webworkURLs}->{root};
 	
 	my @setIDs    = sort $db->listUserSets($studentName);

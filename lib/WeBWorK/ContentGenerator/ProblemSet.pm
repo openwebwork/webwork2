@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.37 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,11 +37,16 @@ sub initialize {
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 	
-	my $user            = $db->getUser($userName);
-	my $effectiveUser   = $db->getUser($effectiveUserName);
-	my $set             = $db->getMergedSet($effectiveUserName, $setName);
-	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
+	my $user            = $db->getUser($userName); # checked
+	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
+	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
+	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
 	
+	die "user $user (real user) not found."  unless $user;
+	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
+	die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
+	die "permisson level for user $userName  not found."  unless defined $permissionLevel;
+
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
 	$self->{effectiveUser}   = $effectiveUser;
@@ -152,8 +157,10 @@ sub info {
 	
 	return "" unless $self->{isOpen};
 	
-	my $effectiveUser = $db->getUser($r->param("effectiveUser"));
-	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
+	my $effectiveUser = $db->getUser($r->param("effectiveUser")); # checked 
+	die "effective user ".$r->param("effectiveUser")." not found. One 'acts as' the effective user."  unless $effectiveUser;
+	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName); # checked
+	die "set $setName for effectiveUser ".$effectiveUser->user_id." not found." unless $set;
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
@@ -232,10 +239,12 @@ sub body {
 		CGI::th("Status"),
 	);
 	
-	my $set = $db->getMergedSet($effectiveUser, $setName);
+	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
+	die "set $setName for user $effectiveUser not found" unless $set;
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
 	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
-		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber);
+		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
+		die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
 		print $self->problemListRow($set, $problem);
 	}
 	

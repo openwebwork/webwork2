@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.20 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -84,7 +84,7 @@ sub initialize {
 	$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
 	my @set_records = ();
 	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
-	@set_records = $db->getGlobalSets( @setNames);
+	@set_records = $db->getGlobalSets( @setNames); 
 	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
 	
 	
@@ -184,12 +184,14 @@ sub scoreSet {
 	$format = "normal" unless defined $format;
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
-	my $setRecord = $db->getGlobalSet($setID);
+	my $setRecord = $db->getGlobalSet($setID); #checked
+	die "global set $setID not found. " unless $setRecord;
 	my %users;
 	my %userStudentID=();
 	$WeBWorK::timer->continue("Begin getting users for set $setID") if defined($WeBWorK::timer);
 	foreach my $userID ($db->listUsers()) {
-		my $userRecord = $db->getUser($userID);
+		my $userRecord = $db->getUser($userID); # checked
+		die "user record for $userID not found" unless $userID;
 		# The key is what we'd like to sort by.
 		$users{$userRecord->student_id} = $userRecord;
 		$userStudentID{$userID} = $userRecord->student_id;
@@ -288,7 +290,8 @@ sub scoreSet {
 	my %numberOfAttempts = ();
 	my $num_of_problems  = @problemIDs;
 	for (my $problem = 0; $problem < @problemIDs; $problem++) {
-		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]);
+		my $globalProblem = $db->getGlobalProblem($setID, $problemIDs[$problem]); #checked
+		die "global problem $problemIDs[$problem] not found for set $setID" unless $globalProblem;
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
 			$scoringData[0][$column] = "";
@@ -317,7 +320,7 @@ sub scoreSet {
  		my @userLoginIDs = $db->listUsers();
  		$WeBWorK::timer->continue("Begin getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
  		#my @userProblems = $db->getMergedProblems( map { [ $_, $setID, $problemIDs[$problem] ] } @userLoginIDs );
- 		my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs );
+ 		my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs ); # checked
  		my %userProblems;
  		foreach my $item (@userProblems) {
  			$userProblems{$item->user_id} = $item if ref $item;

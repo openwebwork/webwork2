@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.21 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,9 +36,16 @@ sub pre_header_initialize {
 	my $userName             = $r->param('user');
 	my $effectiveUserName    = $r->param('effectiveUser');
 	my $key                  = $r->param('key');
-	my $user                 = $db->getUser($userName);
-	my $effectiveUser        = $db->getUser($effectiveUserName);
-	my $permissionLevel      = $db->getPermissionLevel($userName)->permission();
+	my $user                 = $db->getUser($userName); #checked 
+	my $effectiveUser        = $db->getUser($effectiveUserName); #checked
+	my $permissionLevel      = $db->getPermissionLevel($userName)->permission(); #checked
+	die "user $user (real user) not found."  unless $user;
+	die "effective user $effectiveUser  not found. One 'acts as' the effective user."  unless $effectiveUser;
+	die "permisson level for user $userName  not found."  unless $permissionLevel;
+	
+	
+	
+	
 	unless ($authz->hasPermissions($userName, "modify_student_data")) {
 		$self->{submitError} = "You are not authorized to modify student data";
 		return;
@@ -272,25 +279,25 @@ sub initialize {
 #############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 # Obtaining the list of users
-    $WeBWorK::timer2->continue("Begin listing users") if defined $WeBWorK::timer2;
-	my @userNames =  $db->listUsers;
-	$WeBWorK::timer2->continue("End listing users") if defined $WeBWorK::timer2;
-	$WeBWorK::timer2->continue("Begin obtaining users") if defined $WeBWorK::timer2;
-	my @user_records = $db->getUsers(@userNames);
-	$WeBWorK::timer2->continue("End obtaining users: ".@user_records) if defined $WeBWorK::timer2;
+    $WeBWorK::timer->continue("Begin listing users") if defined $WeBWorK::timer;
+	my @userNames =  $db->listUsers; # checked
+	$WeBWorK::timer->continue("End listing users") if defined $WeBWorK::timer;
+	$WeBWorK::timer->continue("Begin obtaining users") if defined $WeBWorK::timer;
+	my @user_records = $db->getUsers(@userNames); # checked
+	$WeBWorK::timer->continue("End obtaining users: ".@user_records) if defined $WeBWorK::timer;
 
 	# store data
 	$self->{ra_users}              =   \@userNames;
 	$self->{ra_user_records}       =   \@user_records;
 
 # Obtaining list of sets:
-	$WeBWorK::timer2->continue("Begin listing sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
 	my @setNames =  $db->listGlobalSets();
-	$WeBWorK::timer2->continue("End listing sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
 	my @set_records = ();
-	$WeBWorK::timer2->continue("Begin obtaining sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
 	@set_records = $db->getGlobalSets( @setNames);
-	$WeBWorK::timer2->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
 # 	foreach my $name (@setNames) {
 # 	    my $set_record;
 # 		$set_record = $db->getMergedSet($user,$name,) ;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.14 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -92,7 +92,9 @@ sub initialize {
 	my $ce = $self->{ce};
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
-	my $setRecord = $db->getGlobalSet($setName);
+	my $setRecord = $db->getGlobalSet($setName); # checked
+	die "global set $setName  not found." unless $setRecord;
+
 	$self->{set}  = $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
@@ -111,7 +113,8 @@ sub initialize {
 	if (defined($r->param('submit_problem_changes'))) {
 		my @problemList = $db->listGlobalProblems($setName);
 		foreach my $problem (@problemList) {
-			my $problemRecord = $db->getGlobalProblem($setName, $problem);
+			my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+			die "global $problem for set $setName not found." unless $problemRecord;
 			foreach my $field (@{PROBLEM_FIELDS()}) {
 				my $paramName = "problem.${problem}.${field}";
 				if (defined($r->param($paramName))) {
@@ -121,7 +124,8 @@ sub initialize {
 			$db->putGlobalProblem($problemRecord);
 
 			if ($forOneUser) {
-				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
+				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
+				die " problem $problem for set $setName and effective user $editForUser[0] not found" unless $userProblemRecord;
 				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
 					my $paramName = "problem.${problem}.${field}";
 					if (defined($r->param($paramName))) {
@@ -223,7 +227,8 @@ sub body {
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
-	my $setRecord = $db->getGlobalSet($setName);
+	my $setRecord = $db->getGlobalSet($setName); # checked
+	die "Global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
 	my $forUsers = scalar(@editForUser);
@@ -256,13 +261,15 @@ sub body {
 			($forUsers ? ("Number Correct", "Number Incorrect") : ())
 		]));
 		foreach my $problem (sort {$a <=> $b} @problemList) {
-			my $problemRecord = $db->getGlobalProblem($setName, $problem);
+			my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+			die "global problem $problem in set $setName not found." unless $problemRecord;
 			my $problemID = $problemRecord->problem_id;
 			my $userProblemRecord;
 			my %problemOverrideArgs;
 
 			if ($forOneUser) {
-				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
+				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
+				die "problem $problem for set $setName and user $editForUser[0] not found. " unless $userProblemRecord;
 				foreach my $field (@{PROBLEM_FIELDS()}) {
 					$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
 				}
