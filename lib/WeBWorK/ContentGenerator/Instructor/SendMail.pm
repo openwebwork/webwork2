@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.32 2004/05/24 15:32:11 mschmitt Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.33 2004/05/24 18:05:26 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,10 +44,11 @@ sub initialize {
 	if (defined ($r->param('classList!filter'))){ @selected_filters = $r->param('classList!filter');}
 	else {@selected_filters = ("all");}
 
-	unless ($authz->hasPermissions($user, "send_mail")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to send mail to students.")));
-		return;
-	}
+
+	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	return unless $authz->hasPermissions($user, "send_mail");
+
 #############################################################################################
 #	gather directory data
 #############################################################################################	
@@ -174,18 +175,18 @@ sub initialize {
 			if ( -R "${emailDirectory}/$openfilename") {
 				$input_file = $openfilename;
 			} else {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p(join("",
+				$self->addbadmessage(CGI::p(join("",
 					"The file ${emailDirectory}/$openfilename is not readable by the webserver.",CGI::br(),
 					"Check that it's permissions are set correctly.",
-				))));
+				)));
 			}
 		} else {
 			$input_file = $default_msg_file;
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p(join("",
+			$self->addbadmessage(CGI::p(join("",
 				  "The file ${emailDirectory}/$openfilename cannot be found.",CGI::br(),
 				  "Check whether it exists and whether the directory $emailDirectory can be read by the webserver.",CGI::br(),
 				  "Using contents of the default message $default_msg_file instead.",
-			))));
+			)));
 		}
 	} else {
 		$input_file     = $default_msg_file;
@@ -202,7 +203,7 @@ sub initialize {
 		if (defined($savefilename) and $savefilename ) {
 			$output_file  = $savefilename;
 		} else {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No filename was specified for saving!  The message was not saved.")));
+			$self->addbadmessage(CGI::p("No filename was specified for saving!  The message was not saved."));
 		}
 	} elsif ( defined($input_file) ) {
 		$output_file  = $input_file;
@@ -213,18 +214,16 @@ sub initialize {
 	#################################################################
 
 	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"},
-					CGI::p("For security reasons, you cannot specify a message file from a directory", 
+		$self->addbadmessage(CGI::p("For security reasons, you cannot specify a message file from a directory", 
 						"higher than the email directory (you can't use ../blah/blah for example). ", 
-						"Please specify a different file or move the needed file to the email directory",)));
+						"Please specify a different file or move the needed file to the email directory",));
 	} 
 	unless ($output_file =~ m|\.msg$| ) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"},
-					CGI::p("Invalid file name.", 
+		$self->addbadmessage(CGI::p("Invalid file name.", 
 		                        "The file name \"$output_file\" does not have a \".msg\" extension",
 								"All email file names must end in the extension \".msg\"",
 								"choose a file name with a \".msg\" extension.",
-								"The message was not saved.",)));
+								"The message was not saved.",));
 	}
 
 	$self->{output_file} = $output_file;  # this is ok.  It will be put back in the text input box for re-editing.
@@ -257,7 +256,7 @@ sub initialize {
 		$subject           =    $r->param('subject');
 		my $body              =    $r->param('body');
 		# Sanity check: body must contain non-white space
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p('You didn\'t enter any message.'))) unless ($r->param('body') =~ /\S/);
+		$self->addbadmessage(CGI::p('You didn\'t enter any message.')) unless ($r->param('body') =~ /\S/);
 		$r_text               =    \$body;
 
 	}
@@ -333,9 +332,8 @@ sub initialize {
 		# overwrite protection
 		#################################################################
 		if ($action eq 'Save as:' and -e "$emailDirectory/$output_file") {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"},
-					CGI::p("The file $emailDirectory/$output_file already exists and cannot be overwritten",
-			                         "The message was not saved")));
+			$self->addbadmessage(CGI::p("The file $emailDirectory/$output_file already exists and cannot be overwritten",
+			                         "The message was not saved"));
 			return;
 		}
  
@@ -346,14 +344,14 @@ sub initialize {
 	    	rename("$emailDirectory/$default_msg_file","$emailDirectory/$old_default_msg_file") or 
 	    	       die "Can't rename $emailDirectory/$default_msg_file to $emailDirectory/$old_default_msg_file ",
 	    	           "Check permissions for webserver on directory $emailDirectory. $!";
-	    	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Backup file <code>$emailDirectory/$old_default_msg_file</code> created.".CGI::br())));
+	    	$self->addgoodmessage(CGI::p("Backup file <code>$emailDirectory/$old_default_msg_file</code> created." . CGI::br()));
 	    }
 	    #################################################################
 	    # Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" ) unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || not $output_file =~ m|\.msg$|);
 		unless ( $self->{submit_message} or not -w "${emailDirectory}/$output_file" )  {  # if there are no errors report success
-			$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>.")));
+			$self->addgoodmessage(CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>."));
 		}    
 
 	} elsif ($action eq 'Preview message') {
@@ -363,15 +361,14 @@ sub initialize {
 		$self->{response}         = 'send_email';
 
 		my @recipients            = @{$self->{ra_send_to}};
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-			CGI::p("No recipients selected "))) unless @recipients;
+		$self->addbadmessage(CGI::p("No recipients selected ")) unless @recipients;
 		#  get merge file
 		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 		my $delimiter       = ',';
 		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 		unless (ref($rh_merge_data) ) {
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No merge data file")));
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Can't read merge file $merge_file. No message sent")));
+			$self->addbadmessage(CGI::p("No merge data file"));
+			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
 			return;
 		} ;
 		
@@ -381,13 +378,12 @@ sub initialize {
 			my $ur      = $self->{db}->getUser($recipient); #checked
 			die "record for user $recipient not found" unless $ur;
 			unless ($ur->email_address) {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, 
-					CGI::p("user $recipient does not have an email address -- skipping")));
+				$self->addbadmessage(CGI::p("user $recipient does not have an email address -- skipping"));
 				next;
 			}
 			my ($msg, $preview_header);
 			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
-			$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("There were errors in processing user $ur, merge file $merge_file. $@"))) if $@;
+			$self->addbadmessage(CGI::p("There were errors in processing user $ur, merge file $merge_file. $@")) if $@;
 			my $mailer = Mail::Sender->new({
 				from    =>   $from,
 				to      =>   $ur->email_address,
@@ -396,22 +392,22 @@ sub initialize {
 				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
 			});
 			unless (ref $mailer) {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Failed to create a mailer for user $recipient: $Mail::Sender::Error")));
+				$self->addbadmessage(CGI::p("Failed to create a mailer for user $recipient: $Mail::Sender::Error"));
 				next;
 			}
 			unless (ref $mailer->Open()) {
-				$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Failed to open the mailer for user $recipient: $Mail::Sender::Error")));
+				$self->addbadmessage(CGI::p("Failed to open the mailer for user $recipient: $Mail::Sender::Error"));
 				next;
 			}
-			my $MAIL = $mailer->GetHandle() or $self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Couldn't get handle")));
-			print $MAIL  $msg || $self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Couldn't print to $MAIL")));
-			close $MAIL || $self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Couldn't close $MAIL")));
+			my $MAIL = $mailer->GetHandle() or $self->addbadmessage(CGI::p("Couldn't get handle"));
+			print $MAIL  $msg || $self->addbadmessage(CGI::p("Couldn't print to $MAIL"));
+			close $MAIL || $self->addbadmessage(CGI::p("Couldn't close $MAIL"));
 		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
 			 
 		} 
 			
 	} else {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Didn't recognize button $action")));
+		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
 	}
 
 
@@ -426,12 +422,22 @@ sub body {
 	my ($self)          = @_;
 	my $r               = $self->r;
 	my $urlpath         = $r->urlpath;
+	my $authz           = $r->authz;
 	my $setID           = $urlpath->arg("setID");    
 	my $response        = (defined($self->{response}))? $self->{response} : '';
+	my $user            = $r->param('user');
+
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+		unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to send mail to students"))
+		unless $authz->hasPermissions($user, "send_mail");
+
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif (($response eq 'send_email')){
-		$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.")));
+		$self->addgoodmessage(CGI::p("Email sent to ".  scalar(@{$self->{ra_send_to}})." students."));
 		$self->{message} .= CGI::i("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.");
 		$self->print_form($setID);
 	} else {
@@ -718,15 +724,12 @@ sub saveProblem {
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
 	open (PROBLEM, ">$probFileName") ||
-		$self->addmessage(CGI::div({class=>"ResultsWithError"},
-					CGI::p("Could not open $probFileName for writing.
-						Check that the  permissions for this problem are 660 (-rw-rw----)")));
+		$self->addbadmessage(CGI::p("Could not open $probFileName for writing.
+						Check that the  permissions for this problem are 660 (-rw-rw----)"));
 	print PROBLEM $body if -w $probFileName;
 	close PROBLEM;
 	chmod 0660, "$probFileName" ||
-	             $self->addmessage(CGI::div({class=>"ResultsWithError"},
-					CGI::p("
-	                 			CAN'T CHANGE PERMISSIONS ON FILE $probFileName")));
+	             $self->addbadmessage(CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName"));
 }
 
 sub read_input_file {
@@ -737,7 +740,7 @@ sub read_input_file {
 	my ($subject, $from, $replyTo);
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || do { $self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Can't open $filePath"))); return};
+		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p("Can't open $filePath")); return};
 		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
 			$header .= <FILE>; 
 		}
@@ -813,7 +816,7 @@ sub process_message {
 	# FIXME this is inefficient.  The info should be cached
 	my @COL            = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
 	if ($merge_file ne 'None' && not defined($rh_merge_data->{$SID})  ) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("No merge data for student id:$SID; name:$FN $LN; login:$LOGIN")));
+		$self->addbadmessage(CGI::p("No merge data for student id:$SID; name:$FN $LN; login:$LOGIN"));
 	}
 	
 	my $endCol = @COL;
