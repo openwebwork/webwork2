@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.51 2004/06/25 00:09:18 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.52 2004/07/10 18:11:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,9 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime sortByName);
+
+# what do we consider a "recent" problem set?
+use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
 
 sub info {
 	my ($self) = @_;
@@ -129,7 +132,8 @@ sub body {
 	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
 	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
-	@sets = sort byduedate @sets if $sort eq "status";
+	@sets = sort byUrgency @sets if $sort eq "status";
+	
 	$WeBWorK::timer->continue("End preparing merged sets") if defined($WeBWorK::timer);
 	
 	foreach my $set (@sets) {
@@ -227,6 +231,8 @@ sub setListRow {
 		$status = "now open, due $dueDate";
 	} elsif (time < $set->answer_date) {
 		$status = "closed, answers on $answerDate";
+	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
+		$status = "closed, answers recently available";
 	} else {
 		$status = "closed, answers available";
 	}
@@ -243,6 +249,26 @@ sub setListRow {
 }
 
 sub byname { $a->set_id cmp $b->set_id; }
-sub byduedate { $a->due_date <=> $b->due_date; }
+
+sub byUrgency {
+	my $mytime = time;
+	my @a_parts = ($a->answer_date + RECENT <= $mytime) ?  (4, $a->open_date, $a->due_date, $a->set_id) 
+		: ($a->answer_date <= $mytime and $mytime < $a->answer_date + RECENT) ? (3, $a-> answer_date, $a-> due_date, $a->set_id)
+		: ($a->due_date <= $mytime and $mytime < $a->answer_date ) ? (2, $a->answer_date, $a->due_date, $a->set_id)
+		: ($mytime < $a->open_date) ? (1, $a->open_date, $a->due_date, $a->set_id) 
+		: (0, $a->due_date, $a->open_date, $a->set_id);
+	my @b_parts = ($b->answer_date + RECENT <= $mytime) ?  (4, $b->open_date, $b->due_date, $b->set_id) 
+		: ($b->answer_date <= $mytime and $mytime < $b->answer_date + RECENT) ? (3, $b-> answer_date, $b-> due_date, $b->set_id)
+		: ($b->due_date <= $mytime and $mytime < $b->answer_date ) ? (2, $b->answer_date, $b->due_date, $b->set_id)
+		: ($mytime < $b->open_date) ? (1, $b->open_date, $b->due_date, $b->set_id) 
+		: (0, $b->due_date, $b->open_date, $b->set_id);
+	my $returnIt=0;
+	while (scalar(@a_parts) > 1) {
+		if ($returnIt = ( (shift @a_parts) <=> (shift @b_parts) ) ) {
+			return($returnIt);
+		}
+	}
+	return (  $a_parts[0] cmp  $b_parts[0] );
+}
 
 1;
