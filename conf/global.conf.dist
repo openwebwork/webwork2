@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.22 2003-06-06 21:47:23 sh002i Exp $
+# $Id: global.conf.dist,v 1.23 2003-06-06 23:52:13 malsyned Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -224,6 +224,13 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 		params => { psvnLength => 5 },
 	},
 );
+
+# If you are using the GlobalTableEmulator, you need these to be set to
+# a user that will exist.  Professors will probably want to override this
+# in their course's course.conf
+$dbLayout{set}->{params}->{globalUserID} = "professor";
+$dbLayout{problem}->{params}->{globalUserID} = "professor";
+
 
 # This lets you specify a minimum permission level needed to perform
 # certain actions.  In the current system, >=10 will allow a professor
