@@ -15,8 +15,6 @@ use strict;
 use warnings;
 use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
-use WeBWorK::DB::Classlist;
-use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
 use WeBWorK::Problem;
 use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry);
