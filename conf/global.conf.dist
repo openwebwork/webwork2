@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.109 2004/10/14 16:55:36 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.110 2004/10/20 17:00:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -630,6 +630,7 @@ ${pg}{modules} = [
 	[qw(Units)],
 	[qw(VectorField)],
 	[qw(Parser Value)],
+	[qw(Apache::Log)],
 ];
 
 ##### Answer evaluatior defaults
