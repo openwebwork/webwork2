@@ -55,6 +55,7 @@ $x = Formula('x');
 #  The problem text
 #
 BEGIN_TEXT
+$BEGIN_ONE_COLUMN
 
 In this problem, we have added a new function to the Parser: ${BTT}C(n,r)${ETT}.
 (Edit the code to see how this is done).
@@ -74,6 +75,7 @@ $PAR
      'C(1,2,3)',
   )\}
 
+$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################

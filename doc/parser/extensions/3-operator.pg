@@ -73,9 +73,12 @@ Context()->operators->add(
      associativity => 'left',     #  computed left to right
      type => 'bin',               #  binary operator
      string => ' # ',             #  output string for it
-     TeX => '\mathop{#}',         #  TeX version (overridden above, but just an example)
+     TeX => '\mathop{\#}',         #  TeX version (overridden above, but just an example)
   }
 );
+
+
+$CHOOSE = MODES(TeX => '\#', HTML => '#');
 
 
 ###########################################################
@@ -83,8 +86,9 @@ Context()->operators->add(
 #  The problem text
 #
 BEGIN_TEXT
+$BEGIN_ONE_COLUMN
 
-In this problem, we have added a new operator to the Parser: ${BTT}n # r${ETT}, 
+In this problem, we have added a new operator to the Parser: ${BTT}n $CHOOSE r${ETT}, 
 which returns \(n\choose r\).
 $PAR
 
@@ -101,6 +105,7 @@ $PAR
     'Formula("1 # <x,3>")',
   )\}
 
+$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################

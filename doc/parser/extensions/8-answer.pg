@@ -1,7 +1,11 @@
 ##########################################################
 #
 #  Example showing an answer checker that uses the parser
-#  in an unsophisticated way.
+#  to evaluate the student (and professor's) answers.
+#
+#  This is now obsolete, as the paser's ->cmp method
+#  can be used to produce an answer checker for any
+#  of the parser types.
 #
 
 DOCUMENT();        # This should be the first executable line in the problem.
@@ -39,26 +43,19 @@ sub vector_cmp {
 sub vector_cmp_check {
   my $ans = shift; my $v = $ans->{vector},
   $ans->score(0);  # assume failure
-  my $student = $ans->{student_ans};
-  #
-  #  Make student answer safe to eval by doubling \ and quoting '
-  #  (remember, ~~ equals \)
-  #
-  $student =~ s/~~~~/~~~~~~~~/g; $student =~ s/'/~~~~'/g;
-  my ($fV,$err) = PG_restricted_eval('$f = Formula(~~''.$student.'~~'); [$f,$f->eval]');
-  if (defined $fV) {
-    my ($f,$V) = @{$fV}; # extract the formula and is value
+  my $f = Parser::Formula($ans->{student_ans});
+  my $V = Parser::Evaluate($f);
+  if (defined $V) {
+    $V = Formula($V) unless Value::isValue($V);  #  make sure we can call Value methods
     $ans->{preview_latex_string} = $f->TeX;
     $ans->{preview_text_string} = $f->string;
-    $ans->{student_ans} = Formula($V)->string;
-    if (Value::isValue($V) && $V->type eq 'Vector') {
-      #
-      #  Let the overloaded == do the check
-      #
-      $ans->score(1) if ($V == $v);
+    $ans->{student_ans} = $V->string;
+    if ($V->type eq 'Vector') {
+      $ans->score(1) if ($V == $v); #  Let the overloaded == do the check
     } else {
       $ans->{ans_message} = $ans->{error_message} =
-         "Your answer doesn't seem to be a Vector" unless $inputs_ref->{previewAnswers};
+         "Your answer doesn't seem to be a Vector (it looks like ".Value::showClass($V).")"
+            unless $inputs_ref->{previewAnswers};
     }
   } else {
     #
@@ -89,14 +86,18 @@ sub vector_cmp_check {
 
 $V = Vector(1,2,3);
 
+Context()->flags->set(ijk=>0);
 Context()->constants->add(a=>1,b=>1,c=>1);
+
+$ABC = Formula("<a,b,c>");
 
 BEGIN_TEXT
 Enter the vector \(\{$V->TeX\}\) in any way you like: \{ans_rule(20)\}.
 $PAR
-You can use either \(\{Formula("<a,b,c>")->TeX\}\)
-or \(\{Formula("ai+bj+ck")->TeX\}\) notation,$BR
+You can use either \(\{$ABC->TeX\}\) or \(\{$ABC->ijk\}\) notation,$BR
 and can perform vector operations to produce your answer.
+$PAR
+${BBOLD}Note:${EBOLD} This problem is obsolete.
 END_TEXT
 
 ###########################################################

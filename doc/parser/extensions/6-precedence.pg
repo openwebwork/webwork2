@@ -61,6 +61,7 @@ $nonstandard = ParserTable(
 #  The problem text
 #
 BEGIN_TEXT
+$BEGIN_ONE_COLUMN
 
 In this problem, we compare the standard and non-standard precedences for
 multiplication.
@@ -75,6 +76,7 @@ $PAR$BR
 $PAR
 $standard
 
+$END_ONE_COLUMN
 END_TEXT
 
 ###########################################################
