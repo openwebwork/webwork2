@@ -1,6 +1,17 @@
 ################################################################################
-# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id$
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.107 2004/06/21 20:11:58 toenail Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
 ################################################################################
 
 package WeBWorK::ContentGenerator::Error;
@@ -8,7 +19,7 @@ use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Error - display debugging information.
+WeBWorK::ContentGenerator::Error - handles invalid course requests
 
 =cut
 
@@ -17,38 +28,41 @@ use warnings;
 use CGI qw();
 use WeBWorK::Form;
 use WeBWorK::Utils qw(ref2string);
+use Apache::Constants qw(:http :common);
+
+sub loginstatus { "" }
+sub links { "" }
+
+sub header {
+	my $self = shift;
+	my $r = $self->r;
+	
+	$r->status(HTTP_NOT_FOUND);
+	$r->content_type("text/html");
+	$r->send_http_header();
+	
+	# normally header() would return the proper status
+	# but returning a status of HTTP_NOT_FOUND appends
+	# a 404 Not Found body as well as just a header, which we don't want
+	return;
+}
 
 sub title {
 	my $self = shift;
-	my $r = $self->{r};
+	my $r = $self->r;
 	
-	my $error = $r->param("error");
-	
-	if (!defined $error  or $error eq "") {
-		return "An Error Occurred";
-	} else {
-		return $error;
-	}
+	return "404 Not Found";
 }
 
 sub body {
 	my $self = shift;
 	my $r = $self->r;
+	my $urlpath = $r->urlpath;
 	
-	my $msg = $r->param("msg");
+	my $courseID = $urlpath->arg('courseID');
 	
-	if (!defined $msg or $msg eq "") {
-		return $self->errorOutput();
-	} else {
-		return $msg;
-	}
+	print CGI::div({class=>"ResultsWithError"}, "The requested course \"$courseID\" does not exist or is not valid.");
+	print CGI::p("Click " . CGI::a({href => "/webwork2/"}, "here") . " for a list of valid course names.");
+	return "";
 }
-
-sub errorOutput() {
-	return "An error has occured while processing the requested action.  
-		If you typed a URL, check that it is correct.  
-		If you submitted a form, you may not have entered all the necessary information.  
-		If you believe there is a bug, please report it to your professor.";
-}
-
 1;
