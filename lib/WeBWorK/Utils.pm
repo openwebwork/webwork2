@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.52 2004/09/14 22:10:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.53 2004/09/23 22:03:03 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,7 +46,7 @@ use constant MKDIR_ATTEMPTS => 10;
 #     %I = hour, 12 hour clock, leading 0's)
 #     %M = minute, leading 0's
 #     %P = am or pm (Yes %p and %P are backwards :)
-use constant DATE_FORMAT => "%m/%d/%y at %I:%M%P";
+use constant DATE_FORMAT => "%m/%d/%y at %I:%M%P %Z";
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
