@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.7 2004/10/04 20:56:00 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.8 2004/10/09 03:05:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -307,7 +307,7 @@ sub displayStudentStats {
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
 		push @rows, CGI::Tr(
-			CGI::td(CGI::a({-href=>$act_as_student_set_url},$setName)),
+			CGI::td(CGI::a({-href=>$act_as_student_set_url}, underscore2nbsp($setName))),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
@@ -351,13 +351,20 @@ sub displayStudentStats {
 # Utility function NOT a method
 #################################
 sub threeSpaceFill {
-    my $num = shift @_ || 0;
-    
-    if (length($num)<=1) {return "$num".'  ';}
-    elsif (length($num)==2) {return "$num".' ';}
-    else {return "## ";}
+	my $num = shift @_ || 0;
+
+	if (length($num)<=1) {return "$num".'  ';}
+	elsif (length($num)==2) {return "$num".' ';}
+	else {return "## ";}
 }
 sub round_score{
 	return shift;
 }
+
+sub underscore2nbsp {
+	my $str = shift;
+	$str =~ s/_/&nbsp;/g;
+	return($str);
+}                    
+
 1;
