@@ -1,10 +1,6 @@
 package WeBWorK::Authen;
 
-use WeBWorK::DB::Auth
-
-# Package constants.  These should never be changed in other places ever
-my $key_length = 40;			# number of chars in each key
-my @key_chars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
+use WeBWorK::DB::Auth;
 
 sub new($$$) {
 	my $invocant = shift;
@@ -16,6 +12,10 @@ sub new($$$) {
 }
 
 sub generate_key {
+	# Package constants.  These should never be changed in other places ever
+	my $key_length = 40;			# number of chars in each key
+	my @key_chars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
+
 	my $i = $key_length;
 	my $key = '';
 	srand;
@@ -42,12 +42,9 @@ sub verify($) {
 	my $key = $r->param('key');
 	my $time = time;
 	
-	# Get this out of the way first thing.  We don't want anything else
-	# having access to this.  It's bad enough that it goes over the wire
-	# plaintext.
-	# I wish there was a way to delete this entirely, rather than just
-	# undefining it, just because it would be neater.
-	$r->param('passwd',undef);
+	# I wanted to get rid of that passwd up here for security reasons,
+	# but usability dictates that we not clear out invalid passwords.
+	#$r->param('passwd',undef);
 	
 	my $return, $error;
 	
@@ -73,6 +70,8 @@ sub verify($) {
 	# his work on the database stuff.
 	elsif ($passwd) {
 		if ($auth->verifyPassword($user, $passwd)) {
+			# Remove the passwd field from subsequent requests.
+			$r->param('passwd',undef);
 			$key = generate_key;
 			$auth->setKey($user, $key, time);
 			$r->param('key',$key);

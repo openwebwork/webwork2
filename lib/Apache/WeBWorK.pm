@@ -38,7 +38,7 @@ sub handler() {
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
 	unless (substr($current_uri,-1) eq '/') {
-		$r->header_out(Location => "$current_uri/?$args");
+		$r->header_out(Location => "$current_uri/" . ($args ? "?$args" : ""));
 		return REDIRECT;
 	}
 	
