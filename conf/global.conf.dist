@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.113 2004/11/19 19:13:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.114 2004/11/22 17:43:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -251,6 +251,9 @@ $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/h
 
 # The set header is displayed on the problem set page. It is a PG file.
 $webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
+
+$webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem.pg"; # screenSetHeader.pg"
+
 
 ################################################################################
 # Course-specific files
