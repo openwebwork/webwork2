@@ -36,27 +36,8 @@ sub fullyQualifiedPackageName($) {
 	return $package;
 }
 
-=pod
-sub connect($$$) {
-	my $self = shift;
-	my $db = shift;
-	my $mode = shift;
-	return if defined $self->{$db."_db"};
-	$self->{$db."_db"} = $self->{dbModule}->new($db."_file", $mode);
-	$self->{$db."_db"}->connect();
-}
-
-sub disconnect($$) {
-	my $self = shift;
-	my $db = shift;
-	return unless defined $self->{$db."_db"};
-	$self->{$db."_db"}->disconnect;
-}
-=cut
-
 # -----
 
-=pod
 sub getUsers($) {
 	my $self = shift;
 	my @password_users, @permissions_users, @keys_users;
@@ -78,7 +59,6 @@ sub getUsers($) {
 	}
 	return keys %all_users;
 }
-=cut
 
 # -----
 
