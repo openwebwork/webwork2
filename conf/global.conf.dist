@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.29 2003-06-10 19:58:27 sh002i Exp $
+# $Id: global.conf.dist,v 1.30 2003-06-11 02:18:04 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -38,6 +38,7 @@
 		problemDivider => "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex",
 		setFooter      => "$webworkDirs{conf}/snippets/hardcopySetFooter.pg",
 		setDivider     => "$webworkDirs{conf}/snippets/hardcopySetDivider.tex",
+		userDivider    => "$webworkDirs{conf}/snippets/hardcopyUserDivider.tex",
 		postamble      => "$webworkDirs{conf}/snippets/hardcopyPostamble.tex",
 	},
 	screenSnippets => {
