@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: addcourse,v 1.1 2003-12-04 06:03:25 sh002i Exp $
+# $Id: addcourse,v 1.2 2003-12-04 06:16:25 sh002i Exp $
 ################################################################################
 
 =head1 NAME
@@ -53,7 +53,7 @@ use Getopt::Long;
 use lib "$FindBin::Bin/../lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw/readFile/;
+use WeBWorK::Utils qw/readFile cryptPassword/;
 
 sub usage {
 	print STDERR "$0 [--users=FILE [--professors=USERID[,USERID]...] ]\n";
@@ -147,7 +147,7 @@ if ($users) {
 		
 		my $Password = $db->newPassword;
 		$Password->user_id($user_id);
-		$Password->password($student_id);
+		$Password->password(cryptPassword($student_id));
 		
 		$db->addUser($User);
 		$db->addPermissionLevel($PermissionLevel);

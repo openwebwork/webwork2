@@ -914,7 +914,7 @@ sub importUsersFromCSV {
 		
 		my $Password = $db->newPassword;
 		$Password->user_id($user_id);
-		$Password->password($student_id);
+		$Password->password(cryptPassword($student_id));
 		
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
