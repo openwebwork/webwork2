@@ -15,7 +15,8 @@ tables with a WWDBv1 hash-style backend.
 
 use strict;
 use warnings;
-use WeBWorK::DB::Utils qw(record2hash hash2record hash2string string2hash);
+use WeBWorK::DB::Utils qw(hash2string string2hash);
+use WeBWorK::Timing;
 
 use constant TABLES => qw(set_user problem_user);
 use constant STYLE  => "hash";
@@ -55,25 +56,31 @@ sub list($@) {
 	my @result;
 	if ($self->{table} eq "set_user") {
 		foreach (@matchingPSVNs) {
-			my $string = $self->{driver}->hash()->{$_};
-			# the record may have been removed while we were doing other things
+			my $string = $self->fetchString($_);
 			next unless defined $string;
-			my $UserSet = $self->string2records($string);
-			push @result, [$UserSet->user_id(), $UserSet->set_id()];
+			my %hash = string2hash($string);
+			push @result, [$hash{stlg}, $hash{stnm}];
 		}
 	} elsif ($self->{table} eq "problem_user") {
 		my $matchProblemID = $keyparts[2];
 		foreach (@matchingPSVNs) {
-			my $string = $self->{driver}->hash()->{$_};
-			# the record may have been removed while we were doing other things
+			my $string = $self->fetchString($_);
 			next unless defined $string;
-			my (undef, @UserProblems) = $self->string2records($string);
-			foreach (@UserProblems) {
-				# if we're looking for a particular problem:
-				next if defined $matchProblemID
-					and $matchProblemID ne $_->problem_id();
-				push @result, [$_->user_id(), $_->set_id(),
-					       $_->problem_id()];
+			my %hash = string2hash($string);
+			my $userID = $hash{stlg};
+			my $setID = $hash{stnm};
+			if (defined $matchProblemID) {
+				# we only want one 
+				if (exists $hash{"pfn$matchProblemID"}) {
+					push @result, [$userID, $setID, $matchProblemID];
+				}
+			} else {
+				my (undef, undef, @problemIDs) = $self->hash2IDs(%hash);
+				foreach my $n (@problemIDs) {
+					if (exists $hash{"pfn$n"}) {
+						push @result, [$userID, $setID, $n];
+					}
+				}
 			}
 		}
 	}
@@ -183,33 +190,51 @@ sub add($$) {
 
 sub get($@) {
 	my ($self, @keyparts) = @_;
+	
 	my ($userID, $setID) = @keyparts[0 .. 1];
 	# FIXME: move these checks up to DB
 	die "userID not specified." unless defined $userID;
 	die "setID not specified." unless defined $setID;
 	
+	#my $timer = WeBWorK::Timing->new("WW1Hash-get");
+	#$timer->start;
+	
 	return unless $self->{driver}->connect("ro");
 	
+	#$timer->continue("connected");
+	
 	my $PSVN = $self->getPSVN($userID, $setID);
+	
+	#$timer->continue("got PSVN for $userID $setID");
+	
 	unless (defined $PSVN) {
 		$self->{driver}->disconnect();
 		return;
 	}
 	my $string = $self->fetchString($PSVN);
+	#$timer->continue("got string for $PSVN");
 	$self->{driver}->disconnect();
+	#$timer->continue("disconnected");
 	
 	if ($self->{table} eq "set_user") {
-		my $UserSet = $self->string2records($string);
+		my $UserSet = $self->string2set($string);
+		#$timer->continue("converted string to UserSet");
 		$UserSet->psvn($PSVN);
+		#$timer->continue("set PSVN field to $PSVN");
 		return $UserSet;
 	} elsif ($self->{table} eq "problem_user") {
 		my ($problemID) = $keyparts[2];
 		die "problemID not specified." unless defined $problemID;
-		my (undef, @UserProblems) = $self->string2records($string);
+		#my (undef, @UserProblems) = $self->string2records($string);
+		#$timer->continue("converted string to UserProblems");
 		# grep returns the number of matches in scalar context, so we have
 		# to put it in list context, and pluck out the first (and only)
 		# match, so that we can be called in scalar context.
-		return (grep { $_->problem_id() eq $problemID } @UserProblems)[0];
+		#my ($UserProblem) = grep { $_->problem_id() eq $problemID } @UserProblems;
+		#$timer->continue("grep'd for problem id $problemID");
+		my $UserProblem = $self->string2problem($string, $problemID);
+		#$timer->continue("converted string to ONE UserProblem");
+		return $UserProblem;
 	}
 }
 
@@ -279,7 +304,6 @@ sub delete($@) {
 				keys %{ $self->{driver}->hash() };
 	}
 	
-	my $result = 0;
 	if (@matchingPSVNs) {
 		foreach my $PSVN (@matchingPSVNs) {
 			# this is tricky. _deleteOne has different behavior
@@ -288,12 +312,12 @@ sub delete($@) {
 			# matching $PSVN. for the problem_user table, it deletes
 			# the problem matching $problemID from the set matching
 			# $PSVN, or all problems if $problemID is not defined.
-			$result = $self->_deleteOne($PSVN, $problemID);
+			$self->_deleteOne($PSVN, $problemID);
 		}
 	}
 	
 	$self->{driver}->disconnect();
-	return $result;
+	return 1;
 }
 
 ################################################################################
@@ -332,10 +356,55 @@ sub _deleteOne {
 }
 
 ################################################################################
-# matching function
+# string <-> data conversion functions
 ################################################################################
 
-# FIXME: we could factor out the code that decides what PSVNs to select.
+sub string2IDs {
+	my ($self, $string) = @_;
+	return $self->hash2IDs(string2hash($string));
+}
+ 
+sub string2set {
+	my ($self, $string) = @_;
+	return $self->hash2set(string2hash($string));
+}
+
+sub string2problem {
+	my ($self, $string, $problemID) = @_;
+	return $self->hash2problem($problemID, string2hash($string));
+}
+
+sub string2problems {
+	my ($self, $string) = @_;
+	my %hash = string2hash($string);
+	my @Problems;
+	foreach my $problemID (grep { s/^pfn// } keys %hash) {
+		push @Problems, $self->hash2problem($problemID, %hash);
+	}
+	return @Problems;
+}
+
+sub string2records {
+	my ($self, $string) = @_;
+	my %hash = string2hash($string);
+	my @Records = $self->hash2set(%hash);
+	if (wantarray) {
+		foreach my $problemID (grep { s/^pfn// } keys %hash) {
+			push @Records, $self->hash2problem($problemID, %hash);
+		}
+	}
+	return @Records;
+}
+
+sub records2string {
+	my ($self, $Set, @Problems) = @_;
+	my @hashArray = $self->set2hash($Set);
+	foreach my $Problem (@Problems) {
+		push @hashArray, $self->problem2hash($Problem);
+	}
+	my %hash = @hashArray;
+	return hash2string(%hash);
+}
 
 ################################################################################
 # table multiplexing functions
@@ -344,60 +413,74 @@ sub _deleteOne {
 #  two records into a single hash value.
 ################################################################################
 
-sub string2IDs {
-	my ($self, $string) = @_;
-	my %hash = string2hash($string);
+sub hash2IDs {
+	my ($self, %hash) = @_;
 	my $userID = $hash{stlg};
 	my $setID = $hash{stnm};
 	my @problemIDs = grep { s/^pfn// } keys %hash;
 	return $userID, $setID, @problemIDs;
 }
 
-# here's a little issue... the schema API seems to allow the user to specify
-# what record class to use (per instance), but since WW1Hash has to monkey with
-# multiple record types in the same instance, we have to hardcode record
-# classes. this is fine, as long as no one tries to use non-default record
-# classes. This is bad.
-# (FIXME: we can say $self->{db}->{problem_user}->{record} instead)
-sub string2records($$) {
-	my ($self, $string) = @_;
-	my %hash = string2hash($string);
-	my $UserSet = hash2record("WeBWorK::DB::Record::UserSet", %hash);
-	return $UserSet unless wantarray;
-	my @UserProblems;
-	foreach (grep { s/^pfn// } keys %hash) {
-		my %problemHash = (
-			"stlg"  => $hash{stlg},
-			"stnm"  => $hash{stnm},
-			"#"     => $_,
-			"pfn#"  => $hash{"pfn$_"},
-			"pva#"  => $hash{"pva$_"},
-			"pmia#" => $hash{"pmia$_"},
-			"pse#"  => $hash{"pse$_"},
-			"pst#"  => $hash{"pst$_"},
-			"pat#"  => $hash{"pat$_"},
-			"pan#"  => $hash{"pan$_"},
-			"pca#"  => $hash{"pca$_"},
-			"pia#"  => $hash{"pia$_"},
-		);
-		push @UserProblems, hash2record("WeBWorK::DB::Record::UserProblem", %problemHash);
-	}
-	return $UserSet, @UserProblems;
+sub hash2set {
+	my ($self, %hash) = @_;
+	return $self->{db}->{set_user}->{record}->new(
+		user_id        => $hash{stlg},
+		set_id         => $hash{stnm},
+		set_header     => $hash{shfn},
+		problem_header => $hash{phfn},
+		open_date      => $hash{opdt},
+		due_date       => $hash{dudt},
+		answer_date    => $hash{andt},
+	);
 }
 
-sub records2string($$@) {
-	my ($self, $Set, @Problems) = @_;
-	my %hash = record2hash($Set);
-	foreach (@Problems) {
-		my %problemHash = record2hash($_);
-		my $n = $problemHash{"#"};
-		foreach ('pfn#', 'pva#', 'pmia#', 'pse#', 'pst#', 'pat#', 'pan#', 'pca#', 'pia#') {
-			my $realKey = $_;
-			$realKey =~ s/#/$n/;
-			$hash{$realKey} = $problemHash{$_};
-		}
-	}
-	return hash2string(%hash);
+sub hash2problem {
+	my ($self, $n, %hash) = @_;
+	return $self->{db}->{problem_user}->{record}->new(
+		user_id       => $hash{"stlg"},
+		set_id        => $hash{"stnm"},
+		problem_id    => $n,
+		source_file   => $hash{"pfn$n"},
+		value         => $hash{"pva$n"},
+		max_attempts  => $hash{"pmia$n"},
+		problem_seed  => $hash{"pse$n"},
+		status        => $hash{"pst$n"},
+		attempted     => $hash{"pat$n"},
+		last_answer   => $hash{"pan$n"},
+		num_correct   => $hash{"pca$n"},
+		num_incorrect => $hash{"pia$n"},
+	);
+}
+
+sub set2hash {
+	my ($self, $Set) = @_;
+	return (
+		stlg => $Set->user_id,
+		stnm => $Set->set_id,
+		shfn => $Set->set_header,
+		phfn => $Set->problem_header,
+		opdt => $Set->open_date,
+		dudt => $Set->due_date,
+		andt => $Set->answer_date,
+	);
+}
+
+sub problem2hash {
+	my ($self, $Problem) = @_;
+	my $n = $Problem->problem_id;
+	return (
+		"stlg"   => $Problem->user_id,
+		"stnm"   => $Problem->set_id,
+		"pfn$n"  => $Problem->source_file,
+		"pva$n"  => $Problem->value,
+		"pmia$n" => $Problem->max_attempts,
+		"pse$n"  => $Problem->problem_seed,
+		"pst$n"  => $Problem->status,
+		"pat$n"  => $Problem->attempted,
+		"pan$n"  => $Problem->last_answer,
+		"pca$n"  => $Problem->num_correct,
+		"pia$n"  => $Problem->num_incorrect,
+	);
 }
 
 ################################################################################
