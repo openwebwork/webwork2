@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.99 2004/05/21 23:38:52 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.100 2004/05/22 01:50:35 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -516,6 +516,12 @@ sub links {
 		my $stats     = $urlpath->newFromModule("${ipfx}Stats", %args);
 		my $userStats = $urlpath->newFromModule("${ipfx}Stats", %args, statType => "student", userID => $userID);
 		my $setStats  = $urlpath->newFromModule("${ipfx}Stats", %args, statType => "set", setID => $setID);
+
+		# progress links
+		my $progress     = $urlpath->newFromModule("${ipfx}StudentProgress", %args);
+		my $userProgress = $urlpath->newFromModule("${ipfx}StudentProgress", %args, statType => "student", userID => $userID);
+		my $setProgress  = $urlpath->newFromModule("${ipfx}StudentProgress", %args, statType => "set", setID => $setID);
+		
 		
 		my $files = $urlpath->newFromModule("${ipfx}FileXfer", %args);
 		
@@ -557,6 +563,22 @@ sub links {
 			);
 		}
 		print CGI::end_li();
+		
+	## Added Link for Student Progress	
+		print CGI::start_li();
+		print CGI::a({href=>$self->systemLink($progress)}, $progress->name);
+		if (defined $userID and $userID ne "") {
+			print CGI::ul(
+				CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
+			);
+		}
+		if (defined $setID and $setID ne "") {
+			print CGI::ul(
+				CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, $setID))
+			);
+		}
+		print CGI::end_li();
+		
 		print CGI::li(CGI::a({href=>$self->systemLink($files)}, $files->name));
 		print CGI::end_ul();
 		print CGI::end_li();
