@@ -102,7 +102,9 @@ sub new($$$$$$$$) {
 	
 	# store the problem source
 	#warn "PG: storing the problem source\n";
-	my $sourceFile = $problem->source_file;
+	my $sourceFile = ( defined($translationOptions->{override_problem_source}) ) ?
+						$translationOptions->{override_problem_source} :
+						$problem->source_file;
 	$sourceFile = $courseEnv->{courseDirs}->{templates}."/".$sourceFile
 		unless ($sourceFile =~ /^\//);
 	eval { $translator->source_string(readFile($sourceFile)) };
@@ -240,7 +242,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{questionNumber}    = $envir{probNum};		 
 	$envir{fileName}          = $problem->source_file;	 
 	$envir{probFileName}      = $envir{fileName};		 
-	$envir{problemSeed}       = $problem->problem_seed;	 
+	$envir{problemSeed}       = (defined($options->{override_seed}) ) ? $options->{override_seed} :$problem->problem_seed;	 
 	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
 	$envir{languageMode}      = $envir{displayMode};	 
 	$envir{outputMode}        = $envir{displayMode};	 
