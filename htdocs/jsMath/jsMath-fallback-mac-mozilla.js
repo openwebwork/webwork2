@@ -33,9 +33,12 @@
 
 jsMath.UpdateTeXfonts({
   cmmi10: {
+//  '41':  // leftharpoondown
+//  '43':  // rightharpoondown    
     '44': {c: '<SPAN STYLE="position:relative; top:.15em; margin-right:-.1em; margin-left:-.2em">&#x02D3;</SPAN>'},
     '45': {c: '<SPAN STYLE="position:relative; top:.15em; margin-right:-.1em; margin-left:-.2em">&#x02D2;</SPAN>'},
-    '47':  {c: '<SPAN STYLE="font-size:55%">&#x25C1;</SPAN>'},
+    '47': {c: '<SPAN STYLE="font-size:60%">&#x25C1;</SPAN>'},
+//  '92':  // natural
     '126': {c: '<SPAN STYLE="position:relative; left: .3em; top: -.7em; font-size: 50%">&#x2192;</SPAN>'}
   },
 
@@ -45,9 +48,13 @@ jsMath.UpdateTeXfonts({
     '42': {c: '&#x2963;'}, '43': {c: '&#x2965'},
     '48': {c: '<SPAN STYLE="font-size: 133%; margin-right: -.75em; position: relative; top:.4em">&#x2032;</SPAN>', tclass: 'normal'},
     '93': {c: '&#x222A;<SPAN STYLE="font-size: 50%; margin-left:-1.3em; position: relative; top:-.3em; margin-right:.6em">+</SPAN>'},
-    '104': {c: '<SPAN STYLE="position:relative; top:.2em; margin-left:-.6em">&#x3008;</SPAN>'},
-    '105': {c: '<SPAN STYLE="position:relative; top:.2em; margin-right:-.6em">&#x3009;</SPAN>'},
+    '104': {c: '<SPAN STYLE="position:relative; top:.15em; margin-left:-.6em">&#x3008;</SPAN>'},
+    '105': {c: '<SPAN STYLE="position:relative; top:.15em; margin-right:-.6em">&#x3009;</SPAN>'},
     '109': {c: '&#x2963;<SPAN STYLE="position:relative; top:.1em; margin-left:-1em">&#x2965;</SPAN>'}
+//, '116':  // sqcup
+//  '117':  // sqcap
+//  '118':  // sqsubseteq
+//  '119':  // sqsupseteq
   },
   
   cmex10: {
@@ -61,14 +68,10 @@ jsMath.UpdateTeXfonts({
     '43': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.6em">&#x3009;</SPAN>'},
     '44': {c: '/'}, '45': {c: '\\'},
     '46': {c: '/'}, '47': {c: '\\'},
-    '56': {tclass: 'delimy', d:0},
-    '57': {tclass: 'delimy', d:0},
-    '58': {tclass: 'delimy', h:1, d:-.2},
-    '59': {tclass: 'delimy', h:1, d:-.2},
-    '60': {tclass: 'delimy', h:1, d:0},
-    '61': {tclass: 'delimy', h:1, d:0},
     '68': {c: '<SPAN STYLE="position:relative; top:.1em; margin-left:-.6em">&#x3008;</SPAN>'},
     '69': {c: '<SPAN STYLE="position:relative; top:.1em; margin-right:-.6em">&#x3009;</SPAN>'},
+//  '70':  // sqcup
+//  '71':  // big sqcup
     '72': {ic: .194},  '73': {ic: .444},
     '82': {tclass: 'bigop1cx', ic: .15}, '90': {tclass: 'bigop2cx', ic:.6},
     '85': {c: '&#x222A;<SPAN STYLE="font-size: 50%; margin-left:-1.3em; position: relative; top:-.3em; margin-right:.6em">+</SPAN>'},
@@ -93,7 +96,6 @@ jsMath.UpdateStyles({
   '.delim2b': 'font-family: Times; font-size: 210%; position:relative; top:.8em; margin:.01em',
   '.delim3b': 'font-family: Times; font-size: 300%; position:relative; top:.75em; margin:.01em',
   '.delim4b': 'font-family: Times; font-size: 400%; position:relative; top:.725em; margin:.01em',
-  '.delimy': 'margin:-.25em'
 });
 
 
