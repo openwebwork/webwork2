@@ -149,6 +149,38 @@ WeBWorK::CourseEnvironment object.
 
 =back
 
+=head2 C<%dbLayout> Format
+
+The C<%dbLayout> hash consists of items keyed by table names. The value of each
+item is a reference to a hash containing the following items:
+
+=over
+
+=item record
+
+The name of a perl module to use for representing the data in a record.
+
+=item schema
+
+The name of a perl module to use for access to the table.
+
+=item driver
+
+The name of a perl module to use for access to the data source.
+
+=item source
+
+The location of the data source that should be used by the driver module.
+Depending on the driver, this may be a path, a url, or a DBI spec.
+
+=item params
+
+A reference to a hash containing extra information needed by the schema. Some
+schemas require parameters, some do not. Consult the documentation for the
+schema in question.
+
+=back
+
 =cut
 
 sub new($$) {
@@ -309,6 +341,16 @@ sub deletePassword($$) {
 # permission functions
 ################################################################################
 
+=head2 Permission Level Methods
+
+=over
+
+=item listPermissionLevels()
+
+Returns a list of user IDs representing the records in the permission table.
+
+=cut
+
 sub listPermissionLevels($) {
 	my ($self) = @_;
 	
@@ -318,6 +360,15 @@ sub listPermissionLevels($) {
 	return map { $_->[0] }
 		$self->{permission}->list(undef);
 }
+
+=item addPermissionLevel($PermissionLevel)
+
+$PermissionLevel is a record object. The permission level will be added to the
+permission table if a permission level with the same user ID does not already
+exist. If one does exist, an exception is thrown. To add a permission level, a
+user with a matching user ID must exist in the user table.
+
+=cut
 
 sub addPermissionLevel($$) {
 	my ($self, $PermissionLevel) = @_;
@@ -334,6 +385,14 @@ sub addPermissionLevel($$) {
 	return $self->{permission}->add($PermissionLevel);
 }
 
+=item getPermissionLevel($userID)
+
+If a record with a matching user ID exists, a record object containting that
+record's data will be returned. If no such record exists, an undefined value
+will be returned.
+
+=cut
+
 sub getPermissionLevel($$) {
 	my ($self, $userID) = @_;
 	
@@ -344,6 +403,15 @@ sub getPermissionLevel($$) {
 	
 	return $self->{permission}->get($userID);
 }
+
+=item putPermissionLevel($PermissionLevel)
+
+$PermissionLevel is a record object. If a permission level record with the same
+user ID exists in the permission table, the data in the record is replaced with
+the data in $PermissionLevel. If a matching permission level record does not
+exist, an exception is thrown.
+
+=cut
 
 sub putPermissionLevel($$) {
 	my ($self, $PermissionLevel) = @_;
@@ -357,6 +425,14 @@ sub putPermissionLevel($$) {
 	
 	return $self->{permission}->put($PermissionLevel);
 }
+
+=item deletePermissionLevel($userID)
+
+If a permission level record with a user ID matching $userID exists in the
+permission table, it is removed and the method returns a true value. If one
+does exist, a false value is returned.
+
+=cut
 
 sub deletePermissionLevel($$) {
 	my ($self, $userID) = @_;
@@ -373,6 +449,16 @@ sub deletePermissionLevel($$) {
 # key functions
 ################################################################################
 
+=head2 Key Methods
+
+=over
+
+=item listKeys()
+
+Returns a list of user IDs representing the records in the key table.
+
+=cut
+
 sub listKeys($) {
 	my ($self) = @_;
 	
@@ -382,6 +468,15 @@ sub listKeys($) {
 	return map { $_->[0] }
 		$self->{key}->list(undef);
 }
+
+=item addKey($Key)
+
+$Key is a record object. The key will be added to the key table if a key with
+the same user ID does not already exist. If one does exist, an exception is
+thrown. To add a key, a user with a matching user ID must exist in the user
+table.
+
+=cut
 
 sub addKey($$) {
 	my ($self, $Key) = @_;
@@ -398,6 +493,14 @@ sub addKey($$) {
 	return $self->{key}->add($Key);
 }
 
+=item getKey($userID)
+
+If a record with a matching user ID exists, a record object containting that
+record's data will be returned. If no such record exists, an undefined value
+will be returned.
+
+=cut
+
 sub getKey($$) {
 	my ($self, $userID) = @_;
 	
@@ -408,6 +511,14 @@ sub getKey($$) {
 	
 	return $self->{key}->get($userID);
 }
+
+=item putKey($Key)
+
+$Key is a record object. If a key record with the same user ID exists in the
+key table, the data in the record is replaced with the data in $Key. If a
+matching key record does not exist, an exception is thrown.
+
+=cut
 
 sub putKey($$) {
 	my ($self, $Key) = @_;
@@ -421,6 +532,14 @@ sub putKey($$) {
 	
 	return $self->{key}->put($Key);
 }
+
+=item deleteKey($userID)
+
+If a key record with a user ID matching $userID exists in the key table, it is
+removed and the method returns a true value. If one does exist, a false value
+is returned.
+
+=cut
 
 sub deleteKey($$) {
 	my ($self, $userID) = @_;
@@ -437,6 +556,16 @@ sub deleteKey($$) {
 # user functions
 ################################################################################
 
+=head2 User Methods
+
+=over
+
+=item listUsers()
+
+Returns a list of user IDs representing the records in the user table.
+
+=cut
+
 sub listUsers($) {
 	my ($self) = @_;
 	
@@ -446,6 +575,14 @@ sub listUsers($) {
 	return map { $_->[0] }
 		$self->{user}->list(undef);
 }
+
+=item addUser($User)
+
+$User is a record object. The user will be added to the user table if a user
+with the same user ID does not already exist. If one does exist, an exception
+is thrown.
+
+=cut
 
 sub addUser($$) {
 	my ($self, $User) = @_;
@@ -460,6 +597,14 @@ sub addUser($$) {
 	return $self->{user}->add($User);
 }
 
+=item getUser($userID)
+
+If a record with a matching user ID exists, a record object containting that
+record's data will be returned. If no such record exists, an undefined value
+will be returned.
+
+=cut
+
 sub getUser($$) {
 	my ($self, $userID) = @_;
 	
@@ -470,6 +615,14 @@ sub getUser($$) {
 	
 	return $self->{user}->get($userID);
 }
+
+=item putUser($User)
+
+$User is a record object. If a user record with the same user ID exists in the
+user table, the data in the record is replaced with the data in $User. If a
+matching user record does not exist, an exception is thrown.
+
+=cut
 
 sub putUser($$) {
 	my ($self, $User) = @_;
@@ -483,6 +636,16 @@ sub putUser($$) {
 	
 	return $self->{user}->put($User);
 }
+
+=item deleteUser($userID)
+
+If a user record with a user ID matching $userID exists in the user table, it
+is removed and the method returns a true value. If one does exist, a false
+value is returned. When a user record is deleted, all records associated with
+that user are also deleted. This includes the password, permission, and key
+records, and all user set records for that user.
+
+=cut
 
 sub deleteUser($$) {
 	my ($self, $userID) = @_;

@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.28 2003-06-10 16:27:26 malsyned Exp $
+# $Id: global.conf.dist,v 1.29 2003-06-10 19:58:27 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -120,8 +120,6 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	feedbackVerbosity => 1,
 );
 
-
-
 %externalPrograms = (
 	mkdir    => "/bin/mkdir",
 	tth      => "/usr/local/bin/tth",
@@ -142,105 +140,46 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 );
 
 ################################################################################
-# Database and session 
+# Database options
 ################################################################################
-	
-# dbInfo records some data for the "old" WW/Classlist/Auth.pm database system
-# {auth,wwdb,cldb}_type = database type: GDBM currently implemented
-# {auth_passwd,auth_perm,auth_keys,wwdb,cldb}_file = path to database file
-%dbInfo = (
-	auth_type        => "GDBM",
-	auth_passwd_file => "$courseDirs{auth_DATA}/$courseName\_password_DB",
-	auth_perm_file   => "$courseDirs{auth_DATA}/$courseName\_permissions_DB",
-	auth_keys_file   => "$courseDirs{auth_DATA}/keys",
-	wwdb_type        => "GDBM",
-	wwdb_file        => "$courseDirs{DATA}/$courseName\_webwork_DB",
-	cldb_type        => "GDBM",
-	cldb_file        => "$courseDirs{DATA}/$courseName\_classlist_DB",
-	psvn_digits      => 5,
-);
 
-# dbLayout records the schema and source for each table in the "new" DB.pm
-# database system. consult DB.pm for the authoritative list of tables.
-# schema = perl module to use for access to the table
-# driver = perl module to use for access to the data source
-# source = location of data source (i.e. path, url, DBI spec)
-# params = extra information needed by the schema (optional)
-# note: schema and driver must have the same interface.
-%dbLayout = (
-	password => {
-		record => "WeBWorK::DB::Record::Password",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/$courseName\_password_DB",
-	},
-	permission => {
-		record => "WeBWorK::DB::Record::PermissionLevel",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/$courseName\_permissions_DB",
-	},
-	key => {
-		record => "WeBWorK::DB::Record::Key",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/keys",
-	},
-	user => {
-		record => "WeBWorK::DB::Record::User",
-		schema => "WeBWorK::DB::Schema::Classlist1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_classlist_DB",
-	},
-	set => {
-		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
-		driver => "WeBWorK::DB::Driver::Null",
-		source => undef,
-	},
-	set_user => {
-		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
-		params => { psvnLength => 5 },
-	},
-	problem => {
-		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
-		driver => "WeBWorK::DB::Driver::Null",
-		source => undef,
-	},
-	problem_user => {
-		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
-		params => { psvnLength => 5 },
-	},
-);
+# Several database layouts are defined in separate environment files. Select the
+# one which should be used by all courses by default, and include it. This can
+# be overridden by including a difference environment file in the course.conf of
+# a particular course.
 
-# If you are using the GlobalTableEmulator, you need these to be set to
-# a user that will exist.  Professors will probably want to override this
-# in their course's course.conf, using their own user name instead of "professor".
+# Include sql.conf to specify a database layout for use with an SQL server.
+#include "conf/sql.conf";
 
-$dbLayout{set}->{params}->{globalUserID} = "professor";
-$dbLayout{problem}->{params}->{globalUserID} = "professor";
+# Include gdbm.conf to specify a database layout for WeBWorK 1.x compatible GDBM
+# databases. Use this layout if you wish to share courses between WeBWorK 1.x
+# and WeBWorK 2.
+include "conf/gdbm.conf";
 
+# Please read the documentation in the file that you chose to include, as there
+# are layout-specific options that must be configured.
 
-# This lets you specify a minimum permission level needed to perform
-# certain actions.  In the current system, >=10 will allow a professor
-# to perform the action, >=5 will allow a TA to, and >=0 will allow a
-# student to perform an action (almost never what you want).
+################################################################################
+# Authorization system
+################################################################################
+
+# This lets you specify a minimum permission level needed to perform certain
+# actions.  In the current system, >=10 will allow a professor to perform the
+# action, >=5 will allow a TA to, and >=0 will allow a student to perform an
+# action (almost never what you want).
 my $ta = 5;
 my $professor = 10;
 %permissionLevels = (
-	"become_student" => $professor,
-	"access_instructor_tools" => $ta,
-	"create_and_delete_problem_sets" => $professor,
-	"modify_problem_sets" => $professor,
-	"assign_problem_sets" => $professor,
+	become_student                 => $professor,
+	access_instructor_tools        => $ta,
+	create_and_delete_problem_sets => $professor,
+	modify_problem_sets            => $professor,
+	assign_problem_sets            => $professor,
 );
+
+################################################################################
+# Session options
+################################################################################
 
 # $sessionKeyTimeout defines seconds of inactivity before a key expires
 $sessionKeyTimeout = 60*30;
@@ -266,6 +205,11 @@ $practiceUserPrefix = "practice";
 ################################################################################
 
 %pg = (
+	directories => {
+		# directories used only by PG
+		lib    => "$pgRoot/lib",
+		macros => "$pgRoot/macros",
+	}, # (not used yet)
 	options => {
 		# default translation options
 		displayMode        => "images",

@@ -1,0 +1,89 @@
+#!perl
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id: gdbm.conf.dist,v 1.1 2003-06-10 19:58:27 sh002i Exp $
+################################################################################
+
+=head1 NAME
+
+gdbm.conf - defines database layout for WeBWorK 1.x compatible GDBM databases.
+
+=head1 SYNOPSIS
+
+In global.conf (or course.conf):
+
+ include "conf/gdbm.conf";
+
+=head1 DESCRIPTION
+
+This layout uses the traditional WeBWorK 1.x database format, using the  GDBM
+file format. Use this layout if you wish to share courses between WeBWorK 1.x
+and WeBWorK 2.
+
+The C<globalUserID> parameter given for the C<set> and C<problem> tables
+denotes the ID of the user that the GlobalTableEmulator will use to store data
+for the C<set> and C<problem> tables. This is set to "professor" by default,
+but should be overridden on a course-by-course basis to the ID of the professor
+who is most likely to be involved in creating new courses. Only the user
+selected will be able to see sets which are not assigned to any users.
+
+Use the following code to override these values in each course's course.conf
+file:
+
+ $dbLayout{set}->{params}->{globalUserID} = "some_user";
+ $dbLayout{problem}->{params}->{globalUserID} = "some_user";
+
+=cut
+
+%dbLayout = (
+	password => {
+		record => "WeBWorK::DB::Record::Password",
+		schema => "WeBWorK::DB::Schema::Auth1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{auth_DATA}/$courseName\_password_DB",
+	},
+	permission => {
+		record => "WeBWorK::DB::Record::PermissionLevel",
+		schema => "WeBWorK::DB::Schema::Auth1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{auth_DATA}/$courseName\_permissions_DB",
+	},
+	key => {
+		record => "WeBWorK::DB::Record::Key",
+		schema => "WeBWorK::DB::Schema::Auth1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{auth_DATA}/keys",
+	},
+	user => {
+		record => "WeBWorK::DB::Record::User",
+		schema => "WeBWorK::DB::Schema::Classlist1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{DATA}/$courseName\_classlist_DB",
+	},
+	set => {
+		record => "WeBWorK::DB::Record::Set",
+		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
+		driver => "WeBWorK::DB::Driver::Null",
+		source => { globalUserID => "professor" },
+	},
+	set_user => {
+		record => "WeBWorK::DB::Record::UserSet",
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		params => { psvnLength => 5 },
+	},
+	problem => {
+		record => "WeBWorK::DB::Record::Problem",
+		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
+		driver => "WeBWorK::DB::Driver::Null",
+		source => { globalUserID => "professor" },
+	},
+	problem_user => {
+		record => "WeBWorK::DB::Record::UserProblem",
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
+		params => { psvnLength => 5 },
+	},
+);
