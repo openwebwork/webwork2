@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.33 2004/09/10 22:40:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,12 +78,12 @@ div.ResultsWithoutError { background-color: #66ff99 } /* light green */
 div.ResultsWithError    { background-color: #ffcccc } /* light red */
 
 /* text colors for published and unpublished sets */
-font.Published   { font-style: normal; font-weight: bold;   color: #000000; } /* black */
+font.Published   { font-style: normal; font-weight: normal;   color: #000000; } /* black */
 font.Unpublished { font-style: italic; font-weight: normal; color: #aaaaaa; } /* light grey */
 
 /* text colors for Auditing, Current, and Dropped students */
-div.Audit	{ font-style: normal;	color: black; }
-div.Enrolled	{ font-weight: bold;	color: black; }
+div.Audit	{ font-style: normal;	color: purple; }
+div.Enrolled	{ font-weight: normal;	color: black; }
 div.Drop	{ font-style: italic;	color: grey; }
 
 /*******************/
