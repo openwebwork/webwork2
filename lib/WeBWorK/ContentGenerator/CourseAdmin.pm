@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.2 2004/04/09 20:19:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.3 2004/04/29 22:22:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -388,7 +388,7 @@ sub add_course_form {
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "GDBM Global User ID:"),
-				CGI::td(CGI::textfield("add_gdbm_globalUserID", $add_gdbm_globalUserID || "professor", 25)),
+				CGI::td(CGI::textfield("add_gdbm_globalUserID", $add_gdbm_globalUserID || "global_user", 25)),
 			);
 			print CGI::end_table();
 		}
@@ -494,6 +494,11 @@ sub do_add_course {
 		$add_courseID,
 	);
 	
+	my %courseOptions = { dbLayoutName => $add_dbLayout };
+	if ($add_dbLayout eq "gdbm") {
+		$courseOptions{globalUserID} = $add_gdbm_globalUserID if $add_gdbm_globalUserID ne "";
+	}
+	
 	my %dbOptions;
 	if ($add_dbLayout eq "sql") {
 		$dbOptions{host}     = $add_sql_host if $add_sql_host ne "";
@@ -506,28 +511,28 @@ sub do_add_course {
 	
 	my @users;
 	if ($add_initial_userID ne "") {
-		 my $User = $db->newUser(
+		my $User = $db->newUser(
 			user_id => $add_initial_userID,
 			status => "C",
-		 );
-		 my $Password = $db->newPassword(
+		);
+		my $Password = $db->newPassword(
 			user_id => $add_initial_userID,
 			password => cryptPassword($add_initial_password),
-		 );
-		 my $PermissionLevel = $db->newPermissionLevel(
+		);
+		my $PermissionLevel = $db->newPermissionLevel(
 			user_id => $add_initial_userID,
 			permission => "10",
-		 );
-		 push @users, [ $User, $Password, $PermissionLevel ];
+		);
+		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 	
 	eval {
 		addCourse(
-			courseID => $add_courseID,
-			ce => $ce2,
-			courseOptions => { dbLayoutName => $add_dbLayout },
-			dbOptions => \%dbOptions,
-			users => \@users,
+			courseID      => $add_courseID,
+			ce            => $ce2,
+			courseOptions => \%courseOptions,
+			dbOptions     => \%dbOptions,
+			users         => \@users,
 		);
 	};
 	
