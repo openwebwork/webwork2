@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.5 2004/01/03 20:07:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.6 2004/01/04 07:20:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,6 +51,11 @@ in the new course's directory containing the following line:
 This is described in greater detail in the F<global.conf> and F<database.conf>
 files.
 
+=item B<--global-user>=I<USERID>
+
+Specifies that the user ID of the global user will be I<USERID>, overriding the
+value set in F<database.conf>.
+
 =item B<--users>=I<FILE>
 
 The users listed in the comma-separated text file I<FILE> will be added to the
@@ -89,6 +94,7 @@ sub usage {
 	print STDERR "Options:\n";
 	print STDERR "  [--templates=DIR]\n";
 	print STDERR "  [--db-layout=LAYOUT]\n";
+	print STDERR "  [--global-user=USERID]\n";
 	print STDERR "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
@@ -96,12 +102,14 @@ sub usage {
 my $templates = "";
 my $dbLayout = "";
 my $users = "";
+my $globalUserID = "";
 my @professors = ();
 
 GetOptions(
 	"templates=s" => \$templates,
 	"db-layout=s" => \$dbLayout,
 	"users=s" => \$users,
+	"global-user=s" => \$globalUserID,
 	"professors=s" => \@professors,
 );
 my %professors = map { $_ => 1 } map { split /,/ } @professors;
@@ -136,6 +144,8 @@ if (-e $courseDir) {
 	die "$courseID: course exists\n";
 }
 
+umask 0002;
+
 # create required directories
 my @subDirs = sort values %{ $ce->{courseDirs} };
 foreach my $subDir (@subDirs) {
@@ -169,6 +179,8 @@ if ($users) {
 	}
 	
 	my @contents = split /\n/, readFile($users);
+	
+	my $globalUserPresent = 0;
 	
 	foreach my $string (@contents) {
 		$string =~ s/^\s+//;
@@ -205,6 +217,10 @@ if ($users) {
 		$db->addPermissionLevel($PermissionLevel);
 		$db->addPassword($Password);
 		
+		if ($user_id eq $globalUserID) {
+			$globalUserPresent = 1;
+		}
+		
 		if (exists $professors{$user_id}) {
 			print "add professor $user_id\n";
 			delete $professors{$user_id};
@@ -216,21 +232,151 @@ if ($users) {
 	if (my @ids = keys %professors) {
 		print STDERR "warning: @ids not in imported user list.\n";
 	}
+	
+	unless ($globalUserPresent) {
+		warn "warning: global user $globalUserID not in imported user list.\n",
+		     "         please add a user with this user ID manually.\n";
+	}
 }
 
+my $courseEnvFile = $ce->{courseFiles}->{environment};
+print "writing $courseEnvFile... ";
+open my $fh, ">", $courseEnvFile
+	or die "failed to open $courseEnvFile for writing.\n";
+
+print $fh <<EOF;
+#!perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+# This file is used to override the global WeBWorK course environment for
+# requests to this course. All package variables set in this file are added to
+# the course environment. If you wish to set a variable here but omit it from
+# the course environment,  use the "my" keyword. Commonly changed configuration
+# options are noted below. The commented-out values are the values which were
+# set in the global configuration file at the time this course was created.
+
+EOF
+
+print $fh <<EOF;
+# Database layout -- if this course uses a different database layout than the
+# one defined in the global configuration file, set it here.
+# 
+# Example: \$dbLayoutName = "sql";
+#          \*dbLayout = \$dbLayouts{sql};
+# 
+EOF
+
 if ($dbLayout) {
-	print "Don't forget to set dbLayout to \"$dbLayout\" in course.conf!\n";
+	print $fh "\$dbLayoutName = '$dbLayout';\n";
+	print $fh "\*dbLayout = \$dbLayouts{$dbLayout};\n";
+} else {
+	my $defaultLayoutName = $ce->{dbLayoutName};
+	if ($defaultLayoutName) {
+		print $fh "#\$dbLayoutName = '$defaultLayoutName';\n";
+		print $fh "#\*dbLayout = \$dbLayouts{\$dbLayoutName};\n";
+	} else {
+		print $fh "#\$dbLayoutName = '#NOT#FOUND#';\n";
+		print $fh "#\*dbLayout = \$dbLayouts#NOT#FOUND#;\n";
+		warn "default database layout name (\$dbLayoutName) not found in course environment.\n";
+	}
 }
+
+print $fh <<EOF;
+
+# Global user ID - denotes the ID of the user that the GlobalTableEmulator will
+# use to store data for the set and problem tables. only applicable when using
+# the GDBM database layout.
+# 
+# Example: \$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = 'some_user';
+#          \$dbLayouts{gdbm}->{{problem}->{params}->{globalUserID} = 'some_user';
+# 
+EOF
+
+if ($globalUserID) {
+	print $fh "\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '$globalUserID'\n";
+} else {
+	my $defaultGlobalUserID = $ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID};
+	if (defined $defaultGlobalUserID) {
+		print $fh "#\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '$defaultGlobalUserID';\n";
+	} else {
+		print $fh "#\$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = '#NOT#FOUND#';\n";
+		warn "default GDBM global user ID not found in course environment.\n";
+	}
+}
+
+print $fh <<EOF;
+
+# Allowed mail recipients - list of email addresses that the PG system is
+# allowed to send mail to. (This prevents subtle PG exploits.) If this is not
+# set somewhere, mail from the PG system (i.e. questionaires, essay questions)
+# will fail.
+# 
+# Example: \$mail->{allowedRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu' ];
+# 
+EOF
+
+if (defined $ce->{mail}->{allowedRecipients}) {
+	my $value = join ", ", map { "'$_'" } @{ $ce->{mail}->{allowedRecipients} };
+	print $fh "#\$mail->{allowedRecipients} = [ $value ];\n";
+} else {
+	print $fh "#\$mail->{allowedRecipients} = [  ];\n";
+}
+
+print $fh <<EOF;
+
+# Feedback recipients - list of email addresses to send feedback to. If not
+# defined, mail is sent to all professors and TAs.
+# 
+# Example: \$mail->{allowedRecipients} = [ 'gage\@math.rochester.edu', 'apizer\@math.rochester.edu', 'feedback-list\@lists.webwork.rochester.edu' ];
+# 
+EOF
+
+if (defined $ce->{mail}->{feedbackRecipients}) {
+	my $value = join ", ", map { "'$_'" } @{ $ce->{mail}->{feedbackRecipients} };
+	print $fh "#\$mail->{feedbackRecipients} = [ $value ];\n";
+} else {
+	print $fh "#\$mail->{allowedRecipients} = [  ];\n";
+}
+
+print $fh <<EOF;
+
+# Special PG environment variable: PRINT_FILE_NAMES_FOR -  List the user IDs of
+# users who should get PG source file names in their rendered problems. This is
+# usually set to the list of professors and TAs in the course.
+# 
+# Example: \$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ 'gage', 'apizer', 'voloshin' ];
+# 
+EOF
+
+if (defined $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}) {
+	my $value = join ", ", map { "'$_'" }
+		@{ $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR} };
+	print $fh "#\$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [ $value ];\n";
+} else {
+	print $fh "#\$pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}  = [  ];\n";
+}
+
+close $fh;
+print "done.\n";
 
 =head1 BUGS
 
-Databases are created using the database layout specified in the global
-configuration file (F<global.conf>), which requires users to temporarily modify
-their system's configuration in order to create a course with a nonstandard
-database layout.
-
-Also, some database drivers are unable to create storage for their data. The
-GDBM backend can do this, but the SQL backend cannot (currently).
+Some database drivers are unable to create storage for their data. The GDBM
+backend can do this, but the SQL backend cannot (currently). If you wish to
+create a course using the SQL database layout, you must create a
 
 =head1 AUTHOR
 
