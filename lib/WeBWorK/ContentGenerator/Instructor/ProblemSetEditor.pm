@@ -122,10 +122,10 @@ sub path {
 	my $self          = shift;
 	my $args          = $_[-1];
 	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $set_id    = $self->{set}->set_id;
+	my $ce            = $self->{ce};
+	my $root          = $ce->{webworkURLs}->{root};
+	my $courseName    = $ce->{courseName};
+	my $set_id        = $self->{set}->set_id;
 	return $self->pathMacro($args,
 		"Home"          => "$root",
 		$courseName     => "$root/$courseName",
@@ -139,6 +139,7 @@ sub title {
 	my ($self, @components) = @_;
 	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
 }
+
 sub body {
 	my ($self, @components) = @_;
 	my $r = $self->{r};
@@ -174,17 +175,44 @@ sub body {
 	print CGI::start_form({method=>"post", action=>$r->uri}), "\n";
 	print CGI::table({},
 		CGI::Tr({}, [
-			setRowHTML("Open Date:", "open_date", formatDateTime($setRecord->open_date), undef, @{$overrideArgs{open_date}})."\n",
-			setRowHTML("Due Date:", "due_date", formatDateTime($setRecord->due_date), undef, @{$overrideArgs{due_date}})."\n",
-			setRowHTML("Answer Date:", "answer_date", formatDateTime($setRecord->answer_date), undef, @{$overrideArgs{answer_date}})."\n",
-			setRowHTML("Set Header:", "set_header", $setRecord->set_header, undef, @{$overrideArgs{set_header}})."\n",
-			setRowHTML("Problem Header:", "problem_header", $setRecord->problem_header, undef, @{$overrideArgs{problem_header}})."\n"
+			setRowHTML( "Open Date:", 
+						"open_date", 
+						formatDateTime($setRecord->open_date),
+						undef,
+						@{$overrideArgs{open_date}})."\n",
+			setRowHTML( "Due Date:",
+						"due_date", 
+						formatDateTime($setRecord->due_date), 
+						undef, 
+						@{$overrideArgs{due_date}})."\n",
+			setRowHTML( "Answer Date:",
+						"answer_date", 
+						formatDateTime($setRecord->answer_date), 
+						undef, 
+						@{$overrideArgs{answer_date}})."\n",
+			setRowHTML( "Set Header:", "set_header", 
+						$setRecord->set_header, 
+						undef, 
+						@{$overrideArgs{set_header}})."\n",
+# FIXME  we're not using this right at the moment as far as I know.  There may someday be a use for it, so don't take this out yet.
+# 			setRowHTML( "Problem Header:", 
+# 						"problem_header", 
+# 						$setRecord->problem_header, 
+# 						undef, 
+# 						@{$overrideArgs{problem_header}})."\n"
 		])
 	);
 	
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"});
+	print '&nbsp;';
+	
+	#### link to edit setHeader 
+	if (defined($setRecord) and $setRecord->set_header) {
+		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setRecord->set_id.'/0'.
+	             '?'.$self->url_authen_args},'Edit set header: '.$setRecord->set_header);
+	}
 	print CGI::end_form();
 	
 	my $problemCount = $db->listGlobalProblems($setName);

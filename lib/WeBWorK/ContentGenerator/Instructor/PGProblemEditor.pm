@@ -87,16 +87,27 @@ sub initialize {
 	# Find URL for viewing problem
 	
 	# find path to pg file for the problem
-	# FIXME  there is a discrepancy in the way that the problems are found.
-	# FIXME  more error checking is needed in case the problem doesn't exist.
-	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
-	my $problem_record			=	$db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
-	# If there is no global_user defined problem, (i.e. the sets haven't been assigned yet), then look for a global version of the problem.
-	$problem_record			    =	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
-	die "Cannot find a problem record for set $setName / problem $problemNumber" 
-		unless defined($problem_record);
+	
 	my $templateDirectory		=	$ce->{courseDirs}->{templates};
-	my $problemPath				=	$templateDirectory."/".$problem_record->source_file;
+	my $problemPath             =   $templateDirectory;
+	my $problem_record          =   undef;
+		# FIXME  there is a discrepancy in the way that the problems are found.
+		# FIXME  more error checking is needed in case the problem doesn't exist.
+	if (defined($problemNumber) and $problemNumber) {
+		$problem_record		=	$db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
+		# If there is no global_user defined problem, (i.e. the sets haven't been assigned yet), 
+		# look for a global version of the problem.
+		$problem_record			=	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
+		# bail if no problem is found
+		die "Cannot find a problem record for set $setName / problem $problemNumber" 
+			unless defined($problem_record);
+		$problemPath           .=   '/'.$problem_record->source_file;
+	} elsif (defined($problemNumber) and $problemNumber==0) { # we are editing a header file
+		my $set_record          =   $db->getMergedSet($effectiveUserName, $setName);
+		die "Cannot find a set record for set $setName" unless defined($set_record);	
+		$problemPath           .=   '/'.$set_record->set_header;
+	}
+	
 	my $editFileSuffix			=	'tmp';
 	my $submit_button			= 	$r->param('submit');
 
@@ -105,7 +116,7 @@ sub initialize {
 	my $problemSeed;
 	if ( defined($r->param('problemSeed'))	) {
 		$problemSeed            =   $r->param('problemSeed');	
-	} elsif ($problem_record->can('problem_seed')) {
+	} elsif (defined($problem_record) and  $problem_record->can('problem_seed')) {
 		$problemSeed            =   $problem_record->problem_seed;
 	}
 	# make absolutely sure that the problem seed is defined, if it hasn't been.
@@ -157,7 +168,10 @@ sub initialize {
 	eval {
 		local *OUTPUTFILE;
 		open OUTPUTFILE, ">", $currentSourceFilePath
-				or die "Failed to write to $currentSourceFilePath: $!";
+				or die "Failed to write to $currentSourceFilePath.  
+				It is likely that the permissions in the template directory have not been set correctly.".
+				"The web server must be able to create and write to files in the directory containing the problem. 
+				$!";
 		print OUTPUTFILE $problemContents;
 		close OUTPUTFILE;
 	};
@@ -211,9 +225,9 @@ sub path {
 		$courseName     => "$root/$courseName",
 		'instructor'    => "$root/$courseName/instructor",
 		'sets'          => "$root/$courseName/instructor/sets/",
-		"set:$set_id"   => "$root/$courseName/instructor/sets/$set_id/",
+		"$set_id"   => "$root/$courseName/instructor/sets/$set_id/",
 		"problems"      => "$root/$courseName/instructor/sets/$set_id/problems",
-		"problem:$problem_id"   => ''
+		"$problem_id"   => ''
 	);
 }
 sub body {
