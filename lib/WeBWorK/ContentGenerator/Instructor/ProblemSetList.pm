@@ -42,9 +42,9 @@ sub body {
 	# Gather data from the database
 	my @users = $db->listUsers;
 	my %counts;
-	my %problems;
+	my %problemCounts;
 	foreach my $set (@sets) {
-		$problems{$set} = [$db->listGlobalProblems($set->set_id)];
+		$problemCounts{$set} = scalar($db->listGlobalProblems($set->set_id));
 		my $count = 0;
 		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
@@ -57,7 +57,7 @@ sub body {
 		}elsif ($sort =~ /_date$/) {
 			return $a->$sort <=> $b->$sort;
 		} elsif ($sort eq "num_probs") {
-			return scalar(@{$problems{$a->set_id}}) <=> scalar(@{$problems{$b->set_id}});
+			return $problemCounts{$a->set_id} <=> $problemCounts{$b->set_id};
 		} elsif ($sort eq "num_students") {
 			return $counts{$a->set_id} <=> $counts{$b->set_id};
 		}
@@ -74,7 +74,6 @@ sub body {
 	) . "\n";
 	
 	foreach my $set (@sets) {
-		my @problems = @{$problems{$set->set_id}};
 		my $count = $counts{$set->set_id};
 		
 		my $userCountMessage;
@@ -103,7 +102,7 @@ sub body {
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
-			. CGI::td({}, scalar(@problems))
+			. CGI::td({}, $problemCounts{$set})
 			. CGI::td({}, $userCountMessage)
 		) . "\n"
 	}
