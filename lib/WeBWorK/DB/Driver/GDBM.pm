@@ -35,12 +35,13 @@ sub style() {
 # constructor
 ################################################################################
 
-sub new($$) {
-	my ($proto, $source) = @_;
+sub new($$$) {
+	my ($proto, $source, $params) = @_;
 	my $class = ref($proto) || $proto;
 	my $self = {
 		hash   => {},
 		source => $source,
+		params => $params,
 	};
 	bless $self, $class;
 	return $self;

@@ -43,7 +43,7 @@ sub new($$) {
 		runtime_use($record);
 		runtime_use($schema);
 		runtime_use($driver);
-		$self->{$table} = $schema->new($driver->new($source), $table, $record, $params);
+		$self->{$table} = $schema->new($driver->new($source, $params), $table, $record, $params);
 	}
 	
 	bless $self, $class;

@@ -131,8 +131,9 @@ COMMON
 $style = style()
 	returns the supported driver style.
 
-$handle = new($source)
-	creates a new interface to the data contained in $source.
+$handle = new($source, $params)
+	creates a new interface to the data contained in $source. $params
+	contains extra information needed by the schema.
 
 $result = $handle->connect($mode)
 	connects to the data source with access mode $mode. dies if connection

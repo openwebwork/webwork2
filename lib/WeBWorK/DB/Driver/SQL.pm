@@ -7,7 +7,7 @@ package WeBWorK::DB::Driver::SQL;
 
 =head1 NAME
 
-WeBWorK::DB::Driver::SQ - SQL style interface to SQL databases.
+WeBWorK::DB::Driver::SQL - SQL style interface to SQL databases.
 
 =cut
 
@@ -29,12 +29,22 @@ sub style() {
 # constructor
 ################################################################################
 
-sub new($$) {
-	my ($proto, $source) = @_;
+sub new($$$) {
+	my ($proto, $source, $params) = @_;
 	my $class = ref($proto) || $proto;
+	
+	$handleRO = DBI->connect($source, $param->{usernameRO}, $param->{passwordRO});
+	return 0 unless defined $handleRO;
+	
+	$handleRW = DBI->connect($source, $param->{usernameRW}, $param->{passwordRW});
+	return 0 unless defined $handleRW;
+	
 	my $self = {
-		handle => undef,
-		source => $source,
+		handle   => undef,
+		handleRO => $handleRO,
+		handleRW => $handleRW,
+		source   => $source,
+		params   => $params,
 	};
 	bless $self, $class;
 	return $self;
@@ -46,28 +56,31 @@ sub new($$) {
 
 sub connect($$) {
 	my ($self, $mode) = @_;
-	my $handle = $self->{handle};
-	my $source = $self->{source};
 	
-	return 1 if defined $handle;
-	$handle = DBI->new($source);
+	if ($mode eq "ro") {
+		$self->{handle} = $self->{handleRO};
+	} else {
+		$self->{handle} = $self->{handleRW};
+	}
+	
+	return 1;
 }
 
 sub disconnect($) {
 	my $self = shift;
-	return 1 unless tied %{$self->{hash}}; # not tied!
-	return untie %{$self->{hash}}; 
+	
+	undef $self->{handle};
+	
+	return 1;
 }
 
 ################################################################################
-# hash-style methods
+# sql-style methods
 ################################################################################
 
-sub hash($) {
+sub handle($) {
 	my ($self) = @_;
-	croak "hash not tied"
-		unless tied %{$self->{hash}};
-	return $self->{hash};
+	return $self->{handle};
 }
 
 1;
