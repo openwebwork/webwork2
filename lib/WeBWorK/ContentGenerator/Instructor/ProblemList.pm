@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.17 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.18 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -153,10 +153,10 @@ sub initialize {
 		}
 	# The file list field was submitted
 	} elsif (defined $r->param('fileBrowsing')) {
-		my $libraryRoot = $ce->{courseDirs}->{templates};
-		my $count = 0;
-		my $done = 0;
-		my @path = ();
+		my $libraryRoot   = $ce->{courseDirs}->{templates};
+		my $count         = 0;
+		my $done          = 0;
+		my @path          = ();
 		my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 		
 		while (defined $r->param("directory_level_$count") and not $done) {
@@ -200,21 +200,21 @@ sub initialize {
 
 
 sub body {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $db         = $r->db;
-	my $ce         = $r->ce;
-	my $authz      = $r->authz;
-	my $user       = $r->param('user');
-	my $urlpath    = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-	my $setName    = $urlpath->arg("setID");
-	my $setRecord  = $db->getGlobalSet($setName); 
+	my ($self)      = @_;
+	my $r           = $self->r;
+	my $db          = $r->db;
+	my $ce          = $r->ce;
+	my $authz       = $r->authz;
+	my $user        = $r->param('user');
+	my $urlpath     = $r->urlpath;
+	my $courseName  = $urlpath->arg("courseID");
+	my $setName     = $urlpath->arg("setID");
+	my $setRecord   = $db->getGlobalSet($setName); 
 	die "Global set $setName not found." unless $setRecord;
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
-	my $forUsers   = scalar(@editForUser);
-	my $forOneUser = $forUsers == 1;
+	my $forUsers    = scalar(@editForUser);
+	my $forOneUser  = $forUsers == 1;
 
     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
@@ -298,8 +298,8 @@ sub body {
 	}
 	
 	unless ($forUsers) {
-		my $libraryRoot = $ce->{courseDirs}->{templates};
-		my @path = defined $self->{path} ? @{$self->{path}} : ();
+		my $libraryRoot     = $ce->{courseDirs}->{templates};
+		my @path            = defined $self->{path} ? @{$self->{path}} : ();
 		unshift @path, $libraryRoot;
 		print CGI::a({name=>"addProblem"});
 		print CGI::h3({}, "Add Problem(s)");

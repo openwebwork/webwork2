@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.41 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.42 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -126,10 +126,10 @@ sub initialize {
 		###################################################
 
 		if ($setRecord->open_date > $setRecord->due_date)  {
-			$self->{error_message} .= '<p style="color:red" >Error: Due date must come after open date</p>'
+			$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date');
 		}
 		if ($setRecord->due_date > $setRecord->answer_date) {
-			$self->{error_message} .= '<p style="color:red">Error: Answer date must come after due date</p>'
+			$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date');
 		}
 		return if defined($self->{error_message});
 		###################################################
@@ -162,10 +162,10 @@ sub initialize {
 			my $active_due_date    = $userSetRecord->due_date    ? $userSetRecord->due_date    : $setRecord->due_date;
 			my $active_answer_date = $userSetRecord->answer_date ? $userSetRecord->answer_date : $setRecord->answer_date;
 			if ( $active_open_date >$active_due_date ) {
-				$self->{error_message} .= '<p style="color:red" >Error: Due date override must come after open date</p>'
+				$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Due date override must come after open date');
 			}
 			if ( $active_due_date > $active_answer_date ) {
-				$self->{error_message} .= '<p style="color:red">Error: Answer date override must come after due date</p>'
+				$self->{error_message} .= CGI::div({class=>'ResultsWithError'},'Error: Answer date override must come after due date');
 			}
 			return if defined($self->{error_message});
 			###################################################
@@ -235,18 +235,19 @@ EOF
 sub body {
 	my ($self, @components) = @_;
 	my $r                   = $self->r;
+	my $urlpath             = $r->urlpath;
 	my $db                  = $r->db;
 	my $ce                  = $r->ce;
 	my $authz               = $r->authz;
 	my $user                = $r->param('user');
-	my $courseName          = $r->urlpath->arg("courseID");
-	my $setName             = $r->urlpath->arg("setID");
+	my $courseName          = $urlpath->arg("courseID");
+	my $setName             = $urlpath->arg("setID");
 	my $setRecord           = $db->getGlobalSet($setName);  # checked
 	die "global set $setName not found." unless $setRecord;
-	my @editForUser = $r->param('editForUser');
+	my @editForUser         = $r->param('editForUser');
 	# some useful booleans
-	my $forUsers = scalar(@editForUser);
-	my $forOneUser = $forUsers == 1;
+	my $forUsers            = scalar(@editForUser);
+	my $forOneUser          = $forUsers == 1;
 
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
@@ -306,9 +307,14 @@ sub body {
 	      '&nbsp;';
 	
 		#### link to edit setHeader 
+    my $PGProblemEditor    = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+                                                     courseID  => $courseName,
+                                                     setID     => $setName,
+                                                     problemID => '0'
+    );
+    my $setHeaderEditLink = $self->systemLink($PGProblemEditor);
 	if (defined($setRecord) and $setRecord->set_header) {
-		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setRecord->set_id.'/0'.
-	             '?'.$self->url_authen_args},'Edit set header: '.$setRecord->set_header);
+		print CGI::a({-href=>$setHeaderEditLink},'Edit set header: '.$setRecord->set_header);
 	}
 	
 	print CGI::br(),
@@ -325,18 +331,31 @@ sub body {
 	my $problemCount = $db->listGlobalProblems($setName);
 	print CGI::h2({}, "Problems"), "\n";
 	print CGI::p({}, "This set contains $problemCount problem" . ($problemCount == 1 ? "" : "s").".");
+	#FIXME
+	# the code below doesn't work ---
+	# get message 
+	#no type matches module WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser with args at 
+	# /home/gage/webwork/webwork-modperl/lib/WeBWorK/URLPath.pm line 497.
+    # error in URLPath.pm??????
+# 	my $setsAssignedToUserPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser");
+# 	my %paramHash = ();
+# 	$paramHash{editForUser}    = $_ foreach @editForUser;
+# 
+# 	my $editProblemsURL        = $self->systemLink($setsAssignedToUserPage,
+# 	                             params => \%paramHash
+# 	);
+# 	print CGI::a({href=>$editProblemsURL},
 	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)},
 	 (@editForUser) ? "Edit the list of problems in this set for ". CGI::b(join ", ", @editForUser) :
 	                  "Edit the list of problems in this set");
 
-	
-	my $userCount = $db->listUsers;
-	my $usersOfSet = $db->countSetUsers($setName);
-	print CGI::h2({}, "Users"), "\n";
-	print CGI::p({}, "This set is assigned to ".$self->userCountMessage($usersOfSet, $userCount).".");
-	print CGI::a({href=>$r->uri."users/?".$self->url_authen_args},
-	  (@editForUser) ? "Edit the list of problems in this set for ". CGI::b(join ", ", @editForUser) :
-	                   "Determine who this set is assigned to");
+	unless (@editForUser) {      # this is not needed when we are editing details for a user
+		my $userCount = $db->listUsers;
+		my $usersOfSet = $db->countSetUsers($setName);
+		print CGI::h2({}, "Users"), "\n";
+		print CGI::p({}, "This set is assigned to ".$self->userCountMessage($usersOfSet, $userCount).".");
+		print CGI::a({href=>$r->uri."users/?".$self->url_authen_args}, "Determine who this set is assigned to");
+	}
 	
 	return "";
 }
