@@ -44,7 +44,7 @@ CREATE TABLE set_not_a_keyword (
 CREATE TABLE set_user (
 	user_id VARCHAR(255) NOT NULL,
 	set_id VARCHAR(255) NOT NULL,
-	psvn INT AUTO INCREMENT,
+	psvn INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	set_header TEXT,
 	problem_header TEXT,
 	open_date INT,
