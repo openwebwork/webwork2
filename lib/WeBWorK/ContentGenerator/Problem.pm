@@ -64,9 +64,9 @@ sub pre_header_initialize {
 	}
 	# obtain the effective user problem, or if that is not yet defined obtain global problem
 	my $problem              = $db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
-	unless (defined $set) {
+	unless (defined $problem) {
 		my $userProblemClass = $courseEnv->{dbLayout}->{problem_user}->{record};
-		$problem             = global2user($userProblemClass, $db->getGlobalSet($setName));
+		$problem             = global2user($userProblemClass, $db->getGlobalProblem($setName,$problemNumber));
 		$problem->max_attempts(-1);
 	}
 	#$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
