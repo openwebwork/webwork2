@@ -484,7 +484,7 @@ sub initialize {
 	# We then reset the param to the first if its not-empty or the second (empty or not).
 	foreach ( @{ HEADER_ORDER() } ) {
 		my @values = $r->param("set.$setID.$_");
-		my $value = $values[0] || $values[1];	
+		my $value = $values[0] || $values[1] || "";	
 		$r->param("set.$setID.$_", $value);
 	}
 
