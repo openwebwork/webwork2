@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use Safe;
 use WeBWorK::Utils qw(readFile);
+use Opcode qw(empty_opset);
 
 # new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
 # $invocant             implicitly set by caller
@@ -38,23 +39,27 @@ sub new {
 	$safe->reval("\$pgRoot = '$pgRoot'");
 	$safe->reval("\$courseName = '$courseName'");
 	
-	# This crazy code to create &include in the safe compartment
-	# would have been crazier, but Safe->varglob doesn't do what it's 
-	# authors think it does.
-
-	# This needs to be a closure so that it has a $webworkRoot variable
-	# that can't be modified by the code in the safe compartment.
-	# You can only include relative to webworkRoot.
-	local *include = sub {
-		my ($file) = @_;
-		my $fullPath = "$webworkRoot/$file";
-		if ($fullPath =~ m/(?:^|\/)..(?:\/|$)/) {
-			die "Included file $file has potentially insecure path: contains '/..' or '../'";
+	# Compile the "include" function with all opcodes available.
+	my $include = "sub include {
+		my (\$file) = \@_;
+		my \$fullPath = \"$webworkRoot/\$file\";
+		# This regex matches any string that:
+		# : begins with ../
+		# : ends with /..
+		# : contains /../, or
+		# : is .. 
+		if (\$fullPath =~ m!(?:^|/)..(?:/|\$)!) {
+			die \"Included file \$file has potentially insecure path: contains '..'\";
 		} else {
-			do $fullPath;
+			local \@INC = ();
+			do \$fullPath;
 		}
-	};
-	$safe->share('&include');
+	}";
+	
+	my $maskBackup = $safe->mask;
+	$safe->mask(empty_opset);
+	$safe->reval($include);
+	$safe->mask($maskBackup);
 
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile = "$webworkRoot/conf/global.conf";
