@@ -51,7 +51,7 @@ sub body {
 	# Determine a name for this set
 	#########################################################################
 	# Determine the set number, if there is one. Otherwise make setName = "new set".
-	# fix me
+	# FIXME:
 #	my ($path_info,@components) = $self->gatherInfo();
 #	my $setName = $components[0];  # get GET  address for set name
 
@@ -66,7 +66,7 @@ sub body {
 # 	my $setDirectory = $r->param('setDirectory');
 #	my $oldSetDirectory = $r->param('oldSetDirectory');
 	
-	#fix me
+	#FIXME:
 	# A user can select a new set AND a problem (in the old set) but the problem won't be in the new set!
 	# In other words we must prevent the user from changing the problem and the set simultaneously.
 	# We solve this by defining a hidden variable oldSetDirectory which matches the currently displayed problem list
@@ -81,7 +81,7 @@ sub body {
 	#########################################################################
 	
 	my $textAreaString;
-	#fix me  -- this does not handle multiple problem selections correctly.
+	#FIXME:  -- this does not handle multiple problem selections correctly.
 # 	my $problemName = $r->param('pgProblem');
 # 	my $problemList = $r->param('problemList');
 	
@@ -90,7 +90,7 @@ sub body {
 	
 	my $problemEntry = $oldSetDirectory.'/'.$problemName.", 1, -1 \r\n";
 	# add the new problem entry if the address is complete. (still buggy -- how do insure that oldSetDirectory is not empty?
-	$problemList .= $problemEntry unless $problemEntry =~ m|^/|;  # don't print if oldSetDirectory name is empy (fix me -- more checks are needed?)  
+	$problemList .= $problemEntry unless $problemEntry =~ m|^/|;  # don't print if oldSetDirectory name is empy (FIXME: -- more checks are needed?)  
 	# format the complete textArea string
 	$textAreaString = qq!<textarea name="problemList", cols="40", rows="$rowheight">! .
 	$problemList . 
@@ -101,7 +101,7 @@ sub body {
 	#Determine the headline for the page 
  
 	
-	#fix me   Debugging code
+	#FIXME:   Debugging code
 # 	my $header = "Choose problems from $libraryName directory" .
 # 		"<p>This form is not yet operational. 
 # 		<p>SetDirectory is $setDirectory.  
@@ -112,7 +112,7 @@ sub body {
 	
 	#########################################################################	
 	# Define the popup strings used for selecting the library set directory, and the problem from that directory
-	#fix me
+	#FIXME:
 	# he problem of multiple selections needs to be handled properly.
 	#########################################################################
 	my $popUpSetDirectoryString = $self->fetchSetDirectories($setDirectory);  #pass default choice as current directory
@@ -121,7 +121,7 @@ sub body {
 	
 	#########################################################################
 	# Define a link to view the problem
-	#fix me:
+	#FIXME:
 	# Currently this link used the webwork problem library, which might be out of 
 	# sync with the local library
 	#########################################################################
@@ -183,7 +183,7 @@ sub body {
         CGI::hidden(-name=>'oldSetDirectory', -value=>$setDirectory),
 
 		CGI::end_form(),
-#		"<p> the parameters passed are "  #fix me -- debugging code
+#		"<p> the parameters passed are "  #FIXME: -- debugging code
 #		. join("<BR>", %{$r->param()}) . $self->gatherProblemList($setName)."setName is $setName"; 
 	;
 
@@ -202,7 +202,7 @@ sub gatherInfo {
 	my($junk, $setName, @components) = split "/", $remaining_path;
 	# Override the setName if it is defined in a form.
 	$setName = $r->param('setName') if defined($r->param('setName'));
-	# fix me?? -- this insures backward compatibility with the old file naming convention.
+	# FIXME:?? -- this insures backward compatibility with the old file naming convention.
 	$setName = "set$setName" unless $setName =~/^set/;
 	
 	# Find the URL for the form
@@ -217,7 +217,7 @@ sub gatherInfo {
 	my $oldSetDirectory = $r->param('oldSetDirectory');
 	
 	# Determine the problem name
-	#fix me  -- this does not handle multiple problem selections correctly.
+	#FIXME  -- this does not handle multiple problem selections correctly.
 	my $problemName = $r->param('pgProblem');
 	# Determine the text area string (contents of set definition "file")
 	my $problemList = $r->param('problemList');
@@ -286,7 +286,7 @@ sub fetchPGproblems {
 	my $setDirectory = shift;
 	
 	# Handle default for setDirectory  
-	# fix me -- this is not bullet proof
+	# FIXME -- this is not bullet proof
 	$setDirectory = "set0" unless defined($setDirectory);
 	my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
 	
