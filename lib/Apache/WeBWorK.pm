@@ -52,8 +52,9 @@ sub handler($) {
 		# the __DIE__ handler stores the call stack at the time of an error
 		local $SIG{__DIE__} = sub {
 			my ($error) = @_;
-			my $trace = join "\n", Apache::DB->backtrace();
-			$r->notes("lastCallStack" => $trace);
+			# Traces are still causing problems
+			#my $trace = join "\n", Apache::DB->backtrace();
+			#$r->notes("lastCallStack" => $trace);
 			die $error;
 		};
 		
