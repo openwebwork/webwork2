@@ -1292,11 +1292,11 @@ sub getMergedSet {
 	
 	#my $timer = WeBWorK::Timing->new("getMergedSet");
 	
-	croak "getGlobalUserSet: requires 2 arguments"
+	croak "getMergedSet: requires 2 arguments"
 		unless @_ == 3;
-	croak "getGlobalUserSet: argument 1 must contain a user_id"
+	croak "getMergedSet: argument 1 must contain a user_id"
 		unless defined $userID;
-	croak "getGlobalUserSet: argument 2 must contain a set_id"
+	croak "getMergedSet: argument 2 must contain a set_id"
 		unless defined $setID;
 	
 	#$timer->start;
@@ -1317,22 +1317,26 @@ sub getMergedSet {
 	return $UserSet;
 }
 
+
 =item geMegedSets(@userSetIDs)
+
 
 Return a list of merged set records associated with the user IDs given. If there
 is no record associated with a given user ID, that element of the list will be
-undefined. @userProblemIDs consists of references to arrays in which the first
+undefined. @userSetIDs consists of references to arrays in which the first
 element is the user_id and the second element is the set_id.
+
 
 =cut
 
-sub geMegedSets {
+
+sub getMergedSets {
 	my ($self, @userSetIDs) = @_;
 	
-	croak "geMegedSets: requires 1 or more argument"
+	croak "getMergedSets: requires 1 or more argument"
 		unless @_ >= 2;
 	foreach my $i (0 .. $#userSetIDs) {
-		croak "geMegedSets: element $i of argument list must contain a <user_id, set_id> pair"
+		croak "getMergedSets: element $i of argument list must contain a <user_id, set_id> pair"
 			unless defined $userSetIDs[$i]
 			       and ref $userSetIDs[$i] eq "ARRAY"
 			       and @{$userSetIDs[$i]} == 2
@@ -1341,7 +1345,10 @@ sub geMegedSets {
 	}
 	
 	return map { $self->getMergedSet(@{$_}) } @userSetIDs;
+
 }
+
+
 
 ################################################################################
 # problem+problem_user functions
