@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.42 2004/06/07 00:23:00 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.43 2004/06/10 16:30:46 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -157,6 +157,16 @@ sub initialize  {
 	# if we got to initialize(), then saveFileChanges was not called in pre_header_initialize().
 	# therefore we call it here unless there has been an error already:
 	$self->saveFileChanges($setName, $problemNumber) unless $self->{failure};
+	# this seems like a good place to deal with the add to set
+	my $submit_button = $r->param('submit') || '';
+	if($submit_button eq 'Add this problem to: ') {
+		my $ce = $r->ce;
+		my $sourcePath = $self->{problemPath};
+		$sourcePath =~ s|^$ce->{courseDirs}->{templates}/||;
+		$self->addProblemToSet(setName => $r->param('target_set'),
+		                       sourceFile => $sourcePath);
+		$self->addgoodmessage("Added $sourcePath to ". $r->param('target_set') );
+	}
 }
 
 sub title {
@@ -206,6 +216,29 @@ sub body {
 	my $force_field = defined($r->param('sourceFilePath')) ?
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$r->param('sourceFilePath')) : '';
+	my @allSetNames = $db->listGlobalSets;
+	for (my $j=0; $j<scalar(@allSetNames); $j++) {
+		$allSetNames[$j] =~ s|^set||;
+		$allSetNames[$j] =~ s|\.def||;
+	}
+	# next, the content of our "add to stuff", which only appears if we are a problem
+	my $add_to_stuff = '';
+	if($self->{file_type} eq 'problem') {
+		# second form which does not open a new window
+		$add_to_stuff = CGI::start_form(-method=>"POST", -action=>"$uri").
+		$self->hidden_authen_fields.
+		$force_field.
+		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}).
+		CGI::hidden(-name=>'problemSeed',-default=>$problemSeed).
+		CGI::hidden(-name=>'displayMode',-default=>$displayMode).
+		CGI::hidden(-name=>'problemContents',-default=>$problemContents).
+		CGI::p(
+			CGI::submit(-value=>'Add this problem to: ',-name=>'submit'),
+			CGI::popup_menu(-name=>'target_set',-values=>\@allSetNames)
+		).
+		CGI::end_form();
+	}
+
 			    
 	return CGI::p($header),
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
@@ -237,6 +270,7 @@ sub body {
 			CGI::textfield(-name=>'save_to_new_file', -size=>40, -value=>""),
 		),
 		CGI::end_form(),
+	 	$add_to_stuff;
 }
 
 ################################################################################
@@ -422,6 +456,11 @@ sub saveFileChanges {
 		$currentSourceFilePath = $ce->{courseDirs}->{templates} . '/' . $r->param('save_to_new_file'); 		
 		$self->{currentSourceFilePath} = $currentSourceFilePath;	
 		$self->{problemPath} = $currentSourceFilePath;
+	} elsif ($submit_button eq 'Add this problem to: ') {
+		$problemContents = $r->param('problemContents');
+		$currentSourceFilePath = "$editFilePath.$editFileSuffix";	
+		$self->{currentSourceFilePath} = $currentSourceFilePath;	
+		$self->{problemPath} = $editFilePath;
 	} else {
 		die "Unrecognized submit command: $submit_button";
 	}
