@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.122 2004/04/28 15:51:19 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.124 2004/05/06 22:46:13 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -676,7 +676,7 @@ sub body {
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
-		print "ANSWERS ONLY CHECKED  -- ",CGI::br(),"ANSWERS NOT RECORDED", CGI::br();
+		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED  -- ",CGI::br(),"ANSWERS NOT RECORDED", CGI::br() );
 		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
 			# show attempt answers
 			# show correct answers if asked
@@ -684,7 +684,7 @@ sub body {
 			# show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print "PREVIEW ONLY -- NOT RECORDED",CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
