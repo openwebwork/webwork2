@@ -66,6 +66,7 @@ sub pre_header_initialize {
 	# Make sure that nothing bad is stored back in the database. 
 	# It would be nice to store lastAnswer somewhere -- perhaps that could be done as a special case.
 	
+	
 	# This supplies a psvn if $set doesn't have it.  Unfortunately the problem is called on to provide
 	# data in many places and it might not even have methods defined.
 	
@@ -567,7 +568,7 @@ sub body {
 	# FIXME print editor link
 	# print editor link if the user is an instructor AND the file is not in temporary editing mode
 	if ($self->{permissionLevel}>=10 and ( (not defined($self->{edit_mode}))  or $self->{edit_mode} eq 'savedFile') ) {
-		print CGI::a({-href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$set->set_id.
+		print CGI::a({-href=>"/webwork/$courseName/instructor/pgProblemEditor/".$set->set_id.
 		'/'.$problem->problem_id.'?'.$self->url_authen_args},'Edit this problem');
 	}
 	
