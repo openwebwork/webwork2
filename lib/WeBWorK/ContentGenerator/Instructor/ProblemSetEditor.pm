@@ -17,6 +17,7 @@ our $libraryName;  #library directory name
 
 use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
+use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 sub getSetName {
 	my ($self, $pathSetName) = @_;
@@ -42,8 +43,14 @@ sub initialize {
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
+	my %overrides;
+	# build a quick lookup table
+	foreach my $param ($r->param('override')) {
+		$overrides{$param} = "DUMMY";
+	}
+	
+	# The set form was submitted
 	if (defined($r->param('submit_set_changes'))) {
-		my $changed = 0;
 		foreach (@{SET_FIELDS()}) {
 			if (defined($r->param($_))) {
 				if (m/_date$/) {
@@ -51,26 +58,65 @@ sub initialize {
 				} else {
 					$setRecord->$_($r->param($_));
 				}
-				$changed = 1;
 			}
 		}
-		$db->putGlobalSet($setRecord) if $changed;
+		$db->putGlobalSet($setRecord);
 		
-		
+		if ($forOneUser) {
+			
+			my $userSetRecord = $db->getUserSet($editForUser[0], $setName);
+			foreach my $field (@{SET_FIELDS()}) {
+				if (defined $r->param("${field}_override")) {
+					if (exists $overrides{$field}) {
+						if ($field =~ m/_date$/) {
+							$userSetRecord->$field(parseDateTime($r->param("${field}_override")));
+						} else {
+							$userSetRecord->$field($r->param("${field}_override"));
+						}
+					} else {
+						$userSetRecord->$field(undef);
+					}
+					
+					$db->putUserSet($userSetRecord);
+				}
+			}
+		}
 	} 
+	# the Problem form was submitted
 	elsif (defined($r->param('submit_problem_changes'))) {
 		my @problemList = $db->listGlobalProblems($setName);
 		foreach my $problem (@problemList) {
-			my $changed = 0;
 			my $problemRecord = $db->getGlobalProblem($setName, $problem);
-			foreach (@{PROBLEM_FIELDS()}) {
-				my $paramName = "problem_${problem}_$_";
+			foreach my $field (@{PROBLEM_FIELDS()}) {
+				my $paramName = "problem_${problem}_${field}";
 				if (defined($r->param($paramName))) {
-					$problemRecord->$_($r->param($paramName));
-					$changed = 1;
+					$problemRecord->$field($r->param($paramName));
 				}
 			}
-			$db->putGlobalProblem($problemRecord)
+			$db->putGlobalProblem($problemRecord);
+
+			if ($forOneUser) {
+				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
+				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
+					my $paramName = "problem_${problem}_${field}";
+					if (defined($r->param($paramName))) {
+						$userProblemRecord->$field($r->param($paramName));
+					}
+				}
+				foreach my $field (@{PROBLEM_FIELDS()}) {
+					my $paramName = "problem_${problem}_${field}";
+					if (defined($r->param("${paramName}_override"))) {
+						if (exists $overrides{$paramName}) {
+							$userProblemRecord->$field($r->param("${paramName}_override"));
+						} else {
+							$userProblemRecord->$field(undef);
+						}
+						
+						$db->putUserProblem($userProblemRecord);
+					}
+				}
+				
+			}
 		}
 	}
 }
@@ -92,17 +138,26 @@ sub setRowHTML {
 			CGI::checkbox({
 				type=>"checkbox", 
 				name=>"override", 
-				label=>"",
+				label=>"override with:",
 				value=>$fieldName,
 				checked=>($override ? 1 : 0)
 			}),
-			"override with:",
 			CGI::input($attributeHash)
 		]);
 	}
 	
 	return $html;
 			
+}
+
+sub hiddenUserFields {
+	my @editForUser = @_;
+	my $return = "";
+	foreach my $editUser (@editForUser) {
+		$return .= CGI::input({type=>"hidden", name=>"editForUser", value=>$editUser});
+	}
+	
+	return $return;
 }
 
 sub problemElementHTML {
@@ -114,15 +169,15 @@ sub problemElementHTML {
 	if (defined $override) {
 		$attributeHash->{name} = "${fieldName}_override";
 		$attributeHash->{value} = ($override ? $overrideValue : "");
-		$html = "default:".$html.CGI::br()
+		$html = "default:".CGI::br().$html.CGI::br()
 			. CGI::checkbox({
 				type => "checkbox",
 				name => "override",
-				label => "",
+				label => "override:",
 				value => $fieldName,
 				checked => ($override ? 1 : 0)
 			})
-			. "override:"
+			. CGI::br()
 			. CGI::input($attributeHash);
 	}
 	
@@ -140,12 +195,13 @@ sub body {
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 	
+	## Set Form ##
 	my $userSetRecord;
 	my %overrideArgs;
 	if ($forOneUser) {
 		$userSetRecord = $db->getUserSet($editForUser[0], $setName);
 		foreach my $field (@{SET_FIELDS()}) {
-			$overrideArgs{$field} = [defined $userSetRecord->$field, $userSetRecord->$field];
+			$overrideArgs{$field} = [defined $userSetRecord->$field, ($field =~ /_date$/ ? formatDateTime($userSetRecord->$field) : $userSetRecord->$field)];
 		}
 	} else {
 		foreach my $field (@{SET_FIELDS()}) {
@@ -153,33 +209,35 @@ sub body {
 		}
 	}
 	
-	print CGI::h2({}, "Set Data");	
-	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::h2({}, "Set Data"), "\n";	
+	print CGI::start_form({method=>"post", action=>$r->uri}), "\n";
 	print CGI::table({},
 		CGI::Tr({}, [
-			setRowHTML("Open Date:", "open_date", formatDateTime($setRecord->open_date), undef, @{$overrideArgs{open_date}}),
-			setRowHTML("Due Date:", "due_date", formatDateTime($setRecord->due_date), undef, @{$overrideArgs{due_date}}),
-			setRowHTML("Answer Date:", "answer_date", formatDateTime($setRecord->answer_date), undef, @{$overrideArgs{answer_date}}),
-			setRowHTML("Set Header:", "set_header", $setRecord->set_header, undef, @{$overrideArgs{set_header}}),
-			setRowHTML("Problem Header:", "problem_header", $setRecord->problem_header, undef, @{$overrideArgs{problem_header}})
+			setRowHTML("Open Date:", "open_date", formatDateTime($setRecord->open_date), undef, @{$overrideArgs{open_date}})."\n",
+			setRowHTML("Due Date:", "due_date", formatDateTime($setRecord->due_date), undef, @{$overrideArgs{due_date}})."\n",
+			setRowHTML("Answer Date:", "answer_date", formatDateTime($setRecord->answer_date), undef, @{$overrideArgs{answer_date}})."\n",
+			setRowHTML("Set Header:", "set_header", $setRecord->set_header, undef, @{$overrideArgs{set_header}})."\n",
+			setRowHTML("Problem Header:", "problem_header", $setRecord->problem_header, undef, @{$overrideArgs{problem_header}})."\n"
 		])
 	);
 	
+	print hiddenUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_set_changes", value=>"Save Set"});
 	print CGI::end_form();
 	
+	## Problems Form ##
 	print CGI::h2({}, "Problems");
 	
 	my @problemList = $db->listGlobalProblems($setName);
 	
 	print CGI::start_form({method=>"POST", action=>$r->uri});
-	print CGI::start_table({});
+	print CGI::start_table({border=>1, cellpadding=>4});
 	print CGI::Tr({}, CGI::th({}, [
 		"Problem",
 		($forUsers ? ("Status", "Problem Seed") : ()),
 		"Source File", "Max. Attempts", "Weight",
-		($forUsers ? ("Last Answer", "Number Correct", "Number Incorrect") : ())
+		($forUsers ? ("Number Correct", "Number Incorrect") : ())
 	]));
 	foreach my $problem (sort {$a <=> $b} @problemList) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem);
@@ -203,7 +261,7 @@ sub body {
 		}
 		
 		print CGI::Tr({}, 
-			CGI::td({align=>"right"}, [
+			CGI::td({}, [
 				$problemID,
 				($forUsers ? (
 					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
@@ -213,7 +271,6 @@ sub body {
 				problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
 				problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
 				($forUsers ? (
-					problemElementHTML("problem_${problemID}_last_answer", $userProblemRecord->last_answer, "20"),
 					problemElementHTML("problem_${problemID}_num_correct", $userProblemRecord->num_correct, "7"),
 					problemElementHTML("problem_${problemID}_num_incorrect", $userProblemRecord->num_incorrect, "7")
 				) : ())
@@ -222,6 +279,7 @@ sub body {
 		)
 	}
 	print CGI::end_table();
+	print hiddenUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_problem_changes", value=>"Save Problems"});
 	print CGI::end_form();
