@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.51 2004/06/02 20:27:47 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.52 2004/06/02 23:32:56 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,22 +50,21 @@ sub initialize {
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
 	die "permisson level for user $userName  not found."  unless $permissionLevel;
 	
+	# A set is valid if it is defined and if it is either published or the user is privileged.
+	$self->{invalidSet} = !(defined $set && ($set->published || $permissionLevel->permission > 0));
+	return if $self->{invalidSet};
+
 	# FIXME: This is a temporary fix to fill in the database
 	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
 	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
 	my $globalSet = $db->getGlobalSet($setName);
-	$globalSet->published("1") unless defined($globalSet->published) && $globalSet->published eq "0";
-	$set->published("1") unless defined($set->published) && $set->published eq "0";
+	$globalSet->published("1") if defined $globalSet and defined($globalSet->published) and $globalSet->published ne "0";
+	$set->published("1") if defined $set and defined($set->published) and $set->published ne "0";
 	$db->putGlobalSet($globalSet);
 
 	my $publishedText = ($set->published) ? "visable to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
 	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $permissionLevel->permission > 0;
-	
-	# A set is valid if it is defined and if it is either published or the user is privileged.
-	$self->{invalidSet} = !(defined $set && ($set->published || $permissionLevel->permission > 0));
-	return if $self->{invalidSet};
-
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
