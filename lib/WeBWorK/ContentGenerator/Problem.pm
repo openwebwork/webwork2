@@ -170,6 +170,7 @@ sub pre_header_initialize {
 	
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+
 	
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
@@ -443,14 +444,14 @@ sub body {
 			# store answers in DB for sticky answers
 			my %answersToStore;
 			my %answerHash = %{ $pg->{answers} };
-			$answersToStore{$_} = $answerHash{$_}->{original_student_ans}
+			$answersToStore{$_} = $self->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
 				foreach (keys %answerHash);
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
 			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
 			
-			$answersToStore{$_} = $r->param($_) foreach  (@extra_answer_names);
+			$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
 			
 			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
 			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
