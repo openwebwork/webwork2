@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.43 2004/06/16 15:22:08 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.44 2004/06/24 18:07:13 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -334,6 +334,7 @@ sub displaySets {
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
 			my $probID = $problemRecord->problem_id;
+			$num_of_attempts = 0;
 			
 			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
@@ -455,7 +456,7 @@ print
 		)),
 		CGI::Tr(CGI::td(
 			[ 'avg attempts',map {($number_of_students_attempting_problem{$_})
-			                      ? sprintf("%0.0f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_}) 
+			                      ? sprintf("%0.1f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_})
 			                      : '-'}			                   
 			                       @problemIDs 
 			]
