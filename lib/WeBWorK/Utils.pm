@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.44 2004/07/08 15:19:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.45 2004/07/08 18:41:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -90,7 +90,13 @@ sub readFile($) {
 		or die "failed to read file $fileName: $!";
 	my $result = <$dh>;
 	close $dh;
-	return $result;
+	return force_eoln($result);
+}
+sub force_eoln {     # convert windows and mac line endings to unix line endings in string
+                     # \r = \015  \n = \012  windows: \r\n  mac: \r  unix: \n
+	my $string = shift;
+	$string =~ s/\015\012?/\012/g;  
+	$string;
 }
 
 sub readDirectory($) {
