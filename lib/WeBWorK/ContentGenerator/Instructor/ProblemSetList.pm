@@ -228,7 +228,7 @@ sub body {
 		"Assigned Users",
 		"Set Name", 
 		"Set Header", 
-		"Problem Header", 
+		"Paper Header", 
 		"Open Date", 
 		"Due Date", 
 		"Answer Date", 
@@ -555,13 +555,13 @@ sub sort_form {
 			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 			-labels => {
-				set_id		=> "set name",
-				set_header 	=> "set header",
-				problem_header	=> "problem header",
-				open_date	=> "open date",
-				due_date	=> "due date",
-				answer_date	=> "answer date",
-				published	=> "visibility",
+				set_id		=> "Set Name",
+				set_header 	=> "Set Header",
+				problem_header	=> "Paper Header",
+				open_date	=> "Open Date",
+				due_date	=> "Due Date",
+				answer_date	=> "Answer Date",
+				published	=> "Visibility",
 			},
 			-onchange => $onChange,
 		),
@@ -571,13 +571,13 @@ sub sort_form {
 			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
 			-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 			-labels => {
-				set_id		=> "set name",
-				set_header 	=> "set header",
-				problem_header	=> "problem header",
-				open_date	=> "open date",
-				due_date	=> "due date",
-				answer_date	=> "answer date",
-				published	=> "visibility",
+				set_id		=> "Set Name",
+				set_header 	=> "Set Header",
+				problem_header	=> "Paper Header",
+				open_date	=> "Open Date",
+				due_date	=> "Due Date",
+				answer_date	=> "Answer Date",
+				published	=> "Visibility",
 			},
 			-onchange => $onChange,
 		),
@@ -595,13 +595,13 @@ sub sort_handler {
 	$self->{secondarySortField} = $secondary;
 
 	my %names = (
-		set_id		=> "set name",
-		set_header	=> "set header",
-		problem_header	=> "problem header",
-		open_date	=> "open date",
-		due_date	=> "due date",
-		answer_date	=> "answer date",
-		published	=> "visibility",
+		set_id		=> "Set Name",
+		set_header	=> "Set Header",
+		problem_header	=> "Paper Header",
+		open_date	=> "Open Date",
+		due_date	=> "Due Date",
+		answer_date	=> "Answer Date",
+		published	=> "Visibility",
 	);
 	
 	return "sort by $names{$primary} and then by $names{$secondary}.";
@@ -1018,7 +1018,7 @@ sub import_handler {
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
-	$newSetName = "" if $newSetName =~ /\(/;
+	$newSetName = "" if @fileNames > 1; # cannot assign set names to multiple imports
 	my $assign = $actionParams->{"action.import.assign"}->[0];
 	
 	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, @fileNames);
