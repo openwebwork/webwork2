@@ -15,6 +15,7 @@ WeBWorK::ContentGenerator::Instructor::Index - Menu interface to the Instructor 
 use strict;
 use warnings;
 use CGI qw();
+
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->{r};
@@ -57,32 +58,25 @@ sub initialize {
 	       
 	    );
 	}
-
-
-
-
-
-
-
-
 }
+
 sub path {
-	my $self          = shift;
-	my $args          = $_[-1];
-	
+	my $self = shift;
+	my $args = $_[-1];
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
+	
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => '',
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		'Instructor Tools' => '',
 	);
 }
 
 sub title {
 	my $self = shift;
-	return "Instructor tools for ".$self->{ce}->{courseName};
+	return "Instructor Tools";
 }
 
 sub body {
@@ -100,13 +94,15 @@ sub body {
 	my $problemSetEditorURL = "sets/?" . $self->url_args;
 	my $statsURL       = "stats/?" . $self->url_args;
 	my $emailURL       = "send_mail/?" . $self->url_args;
+	
 	################### debug code
-#     my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
-#     
-#     my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
-#     return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
+	#my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
+	#my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
+	#return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
     ################### debug code
-	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
+    
+	return CGI::em('You are not authorized to access the Instructor tools.')
+		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	return join("", 
 		CGI::start_table({-border=>2,-cellpadding=>20}),
@@ -117,7 +113,8 @@ sub body {
 			CGI::td(
 				CGI::a({href=>$problemSetEditorURL}, "Edit $courseName problem sets"),
 					
-			),"\n",
+			),
+			"\n",
 		),
 		CGI::Tr({ -align=>'center'},
 			CGI::td([
@@ -136,17 +133,21 @@ sub body {
 		
 		CGI::end_table(),
 		CGI::hr(),
-		CGI::p( defined($self->{studentEntryReport}) ? $self->{studentEntryReport}:''
+		CGI::p(
+			defined($self->{studentEntryReport})
+				? $self->{studentEntryReport}
+				: ''
 		),
 		$self->addStudentForm,
 	);
 }
+
 sub addStudentForm {
 	my $self = shift;
 	my $r = $self->{r};
 	
 	# Add a student form
-	join( "",
+	return join("",
 		CGI::p("Add new students"),	
 		CGI::start_form({method=>"post", action=>$r->uri()}),
 		$self->hidden_authen_fields(),
@@ -175,13 +176,8 @@ sub addStudentForm {
 		CGI::submit({name=>"addStudent", value=>"Add Student"}),
 		CGI::end_form(),
 	);
-
-
-
-
-
-
 }
+
 1;
 
 __END__
