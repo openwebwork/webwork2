@@ -217,7 +217,6 @@ sub get($@) {
 	} elsif ($self->{table} eq "problem_user") {
 		my ($problemID) = $keyparts[2];
 		die "problemID not specified." unless defined $problemID;
-		warn "THE STRING IS:\n\n$string\n\n";
 		my (undef, @UserProblems) = $self->string2records($string);
 		# grep returns the number of matches in scalar context, so we have
 		# to put it in list context, and pluck out the first (and only)

@@ -78,7 +78,7 @@ sub assignSetToUser {
 # it belongs to is assigned should have it assigned to them.
 # Note that this does NOT assign to all users of a course, just all users
 # of a set.
-sub assignProblemToAllUsers {
+sub assignProblemToAllSetUsers {
 	my ($self, $globalProblem) = @_;
 	my $db = $self->{db};
 	my $setID = $globalProblem->set_id;
@@ -97,7 +97,7 @@ sub assignSetToAllUsers {
 	my ($self, $setID) = @_;
 	my $db = $self->{db};
 	my @problems = ();
-	my @users = $db->listUsers($setID);
+	my @users = $db->listUsers;
 	my @problemRecords = map {$db->getGlobalProblem($setID, $_)} $db->listGlobalProblems($setID);
 	
 	foreach my $user (@users) {
