@@ -30,8 +30,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
-my $timingON     = 0;
-
+my $timingON = 0;
 
 use strict;
 use warnings;
@@ -39,36 +38,11 @@ use Apache::Constants qw(:common REDIRECT DONE);
 use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
-use WeBWorK::ContentGenerator::Feedback;
-use WeBWorK::ContentGenerator::GatewayQuiz;
-use WeBWorK::ContentGenerator::Hardcopy;
-use WeBWorK::ContentGenerator::Instructor::AddUsers;
-use WeBWorK::ContentGenerator::Instructor::Assigner;
-use WeBWorK::ContentGenerator::Instructor::FileXfer;
-use WeBWorK::ContentGenerator::Instructor::Index;
-#use WeBWorK::ContentGenerator::Instructor::Index2;
-use WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
-use WeBWorK::ContentGenerator::Instructor::ProblemList;
-use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
-use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
-use WeBWorK::ContentGenerator::Instructor::Scoring;
-use WeBWorK::ContentGenerator::Instructor::ScoringDownload;
-use WeBWorK::ContentGenerator::Instructor::ScoringTotals;
-use WeBWorK::ContentGenerator::Instructor::SendMail;
-use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
-use WeBWorK::ContentGenerator::Instructor::Stats;
-use WeBWorK::ContentGenerator::Instructor::UserList;
-use WeBWorK::ContentGenerator::Login;
-use WeBWorK::ContentGenerator::Logout;
-use WeBWorK::ContentGenerator::Options;
-use WeBWorK::ContentGenerator::Problem;
-use WeBWorK::ContentGenerator::ProblemSet;
-use WeBWorK::ContentGenerator::ProblemSets;
-use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Timing;
 use WeBWorK::Upload;
+use WeBWorK::Utils qw(runtime_use);
 
 =head1 THE C<&dispatch> FUNCTION
 
@@ -212,16 +186,16 @@ See also L<WeBWorK::Authen>.
 
 	### Begin dispatching ###
 	
-	#my $dispatchTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch");
-	#$dispatchTimer->start;
-	
-	my $result;
-
+	my $contentGenerator = "";
+	my @arguments = ();
+		
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $ce, $db)->verify) {
-		$result = WeBWorK::ContentGenerator::Login->new($r, $ce, $db)->go;
-	} else {
+		$contentGenerator = "WeBWorK::ContentGenerator::Login";
+		@arguments = ();
+	}
+	else {
 
 =item Determine if the user is allowed to set C<effectiveUser>
 
@@ -238,140 +212,204 @@ See also L<WeBWorK::Authz>.
 		# content generators.
 		my $user = $r->param("user");
 		my $effectiveUser = $r->param("effectiveUser") || $user;
-		my $su_authorized = WeBWorK::Authz->new($r, $ce, $db)->hasPermissions($user, "become_student", $effectiveUser);
+		my $authz = WeBWorK::Authz->new($r, $ce, $db);
+		my $su_authorized = $authz->hasPermissions($user, "become_student", $effectiveUser);
 		$effectiveUser = $user unless $su_authorized;
 		$r->param("effectiveUser", $effectiveUser);
 
-=item Create and call the appropriate subclass of C<WeBWorK::ContentGenerator> based on the URI.
+=item Determine the appropriate subclass of C<WeBWorK::ContentGenerator> to call based on the URI.
 
-The dispatcher logic currently looks like this:
+The dispatcher implements a virtual heirarchy that looks like this:
 
- FIXME: write this part
- for now, consult the code
+ $courseID ($courseID) - list of sets
+ 	hardcopy (Hardcopy Generator) - generate hardcopy for user/set pairs
+ 	options (User Options) - change email address and password
+ 	feedback (Feedback) - send feedback to professor via email
+ 	logout (Logout) - expire session and erase authentication tokens
+ 	test (Test) - display request information
+ 	quiz_mode (Quiz) - "quiz" containing all problems from a set
+ 	instructor (Instructor Tools) - main menu for instructor tools
+ 		add_users (Add Users) - to be removed
+ 		scoring (Scoring Tools) - generate scoring files for problem sets
+ 		scoringDownload - send a scoring file to the client
+  		scoring_totals - ???
+		users (Users) - view/edit users
+ 			$userID ($userID) - user detail for given user
+ 				sets (Assigned Sets) - view/edit sets assigned to given user
+ 		sets (Sets) - list of sets, add new sets, delete existing sets
+ 			$setID - view/edit the given set
+ 				problems (Problems) - view/edit problems in the given set
+ 					$problemID - this is where the pg problem editor SHOULD be
+ 				users (Users Assigned) - view/edit users to whom the given set is assigned
+ 		pgProblemEditor (Problem Source) - edit the source of a problem
+ 		send_mail (Mail Merge) - send mail to users in course
+ 		show_answers (Answers Submitted) - show submitted answers
+ 		stats (Statistics) - show statistics
+ 		files (File Transfer) - transfer files to/from the client
+ 	$setID ($setID) - list of problems in the given set
+ 		$problemID ($problemID) - interactive display of problem
 
 =cut
 
-		my $arg = shift @components;
-		if (!defined $arg) { # We want the list of problem sets
-			$result = WeBWorK::ContentGenerator::ProblemSets->new($r, $ce, $db)->go;
-		} elsif ($arg eq "hardcopy") {
+		my $arg = shift @components || "";
+		if (not $arg) { # We want the list of problem sets
+			$contentGenerator = "WeBWorK::ContentGenerator::ProblemSets";
+			@arguments = ();
+		}
+		elsif ($arg eq "hardcopy") {
+			my $setID = shift @components || "";
+			$contentGenerator = "WeBWorK::ContentGenerator::Hardcopy";
+			@arguments = ($setID);
+		}
+		elsif ($arg eq "options") {
+			$contentGenerator = "WeBWorK::ContentGenerator::Options";
+			@arguments = ();
+		}
+		elsif ($arg eq "feedback") {
+			$contentGenerator = "WeBWorK::ContentGenerator::Feedback";
+			@arguments = ();
+		}
+		elsif ($arg eq "logout") {
+			$contentGenerator = "WeBWorK::ContentGenerator::Logout";
+			@arguments = ();
+		}
+		elsif ($arg eq "test") {
+			$contentGenerator = "WeBWorK::ContentGenerator::Test";
+			@arguments = ();
+		}
+		elsif ($arg eq "quiz_mode" ) {
+			$contentGenerator = "WeBWorK::ContentGenerator::GatewayQuiz";
+			@arguments = @components;
+		}
+		elsif ($arg eq "instructor") {
+			my $instructorArgument = shift @components || "";
 			
-			my $hardcopyArgument = shift @components;
-			$hardcopyArgument = "" unless defined $hardcopyArgument;
-			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument") if $timingON == 1;
-			$WeBWorK::timer1->start if $timingON == 1;
-			
-			my $result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
-			$WeBWorK::timer1 ->stop if $timingON == 1;
-			$WeBWorK::timer1 ->save if $timingON == 1;
-			return $result;
-		} elsif ($arg eq "instructor2") {  
-			my $instructorArgument = shift @components;
-			if (!defined $instructorArgument) {
-				$result = WeBWorK::ContentGenerator::Instructor::Index2->new($r, $ce, $db)->go;
+			if (not $instructorArgument) {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Index";
+				@arguments = ();
 			}
-		} elsif ($arg eq "instructor") {
-			my $instructorArgument = shift @components;
-			if (!defined $instructorArgument) {
-				$WeBWorK::timer2 = WeBWorK::Timing->new("Instructor index $course:") if $timingON == 1;
-				$WeBWorK::timer2->start if $timingON == 1;
-				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
-				$WeBWorK::timer2->continue("Listing instructor page is done") if $timingON == 1;
-				$WeBWorK::timer2->stop if $timingON == 1;
-				$WeBWorK::timer2->save if $timingON == 1;
-			} elsif ($instructorArgument eq "scoring") {
-				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go; #FIXME!!!!
-			} elsif ($instructorArgument eq "add_users") {
-				$result = WeBWorK::ContentGenerator::Instructor::AddUsers->new($r, $ce, $db)->go; #FIXME!!!!
-			} elsif ($instructorArgument eq "scoringDownload") {
-				$result = WeBWorK::ContentGenerator::Instructor::ScoringDownload->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "scoring_totals") {
-				$result = WeBWorK::ContentGenerator::Instructor::ScoringTotals->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "users") {
-				$result = WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go;
-			} elsif ($instructorArgument eq "sets") {
-				my $setID = shift @components;
-				if (defined $setID) {
-					my $setArg = shift @components;
-					if (!defined $setArg) {
-						$result = WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go($setID);
-					} elsif ($setArg eq "problems") {
-						$result = WeBWorK::ContentGenerator::Instructor::ProblemList->new($r, $ce, $db)->go($setID);
-					} elsif ($setArg eq "users") {
-						$result = WeBWorK::ContentGenerator::Instructor::Assigner->new($r, $ce, $db)->go($setID);
+			elsif ($instructorArgument eq "add_users") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::AddUsers";
+				@arguments = ();
+			}
+			elsif ($instructorArgument eq "scoring") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Scoring";
+				@arguments = ();
+			}
+			elsif ($instructorArgument eq "scoring_totals") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ScoringTotals";
+				@arguments = ();
+			}
+			elsif ($instructorArgument eq "scoringDownload") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ScoringDownload";
+				@arguments = ();
+			}
+			elsif ($instructorArgument eq "users") {
+				my $userID = shift @components || "";
+				
+				if ($userID) {
+					my $userArg = shift @components || "";
+					if (defined $userArg) {
+						if ($userArg eq "sets") {
+							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser";
+							@arguments = ($userID);
+						}
 					}
-				} else {
-				    $WeBWorK::timer2 = WeBWorK::Timing->new("Problem Set List $course:") if $timingON == 1;
-					$WeBWorK::timer2->start if $timingON == 1;
-					$result = WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
-					$WeBWorK::timer2->continue("Problem Set List is done");
-					$WeBWorK::timer2->stop if $timingON == 1;
-					$WeBWorK::timer2->save if $timingON == 1;
+					else {
+						$contentGenerator = "WeBWorK::ContentGenerator::Instructor::UserDetail";
+						@arguments = ($userID);
+					}
+				}
+				else {
+					$contentGenerator = "WeBWorK::ContentGenerator::Instructor::UserList";
+					@arguments = ();
+				}
+			}
+			elsif ($instructorArgument eq "sets") {
+				my $setID = shift @components || "";
+				
+				if ($setID) {
+					my $setArg = shift @components || "";
+					
+					if ($setArg) {
+						if ($setArg eq "problems") {
+							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ProblemList";
+							@arguments = ($setID);
+						}
+						elsif ($setArg eq "users") {
+							$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Assigner";
+							@arguments = ($setID);
+						}
+					}
+					else {
+						$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ProblemSetEditor";
+						@arguments = ($setID);
+					}
+				}
+				else {
+					$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ProblemSetList";
+					@arguments = ();
 
 				}
-			} elsif ($instructorArgument eq "pgProblemEditor") {
-				$result = WeBWorK::ContentGenerator::Instructor::PGProblemEditor->new($r, $ce, $db)->go(@components);
-			} elsif ($instructorArgument eq "send_mail") {
-				$result = WeBWorK::ContentGenerator::Instructor::SendMail->new($r, $ce, $db)->go(@components);
-			} elsif ($instructorArgument eq "show_answers") {
-				$result = WeBWorK::ContentGenerator::Instructor::ShowAnswers->new($r, $ce, $db)->go(@components);
-			} elsif ($instructorArgument eq "stats") {
-				$result = WeBWorK::ContentGenerator::Instructor::Stats->new($r, $ce, $db)->go(@components);
-			}elsif ($instructorArgument eq "files") {
-				$result = WeBWorK::ContentGenerator::Instructor::FileXfer->new($r, $ce, $db)->go(@components);
 			}
-		} elsif ($arg eq "options") {
-			$result = WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
-		} elsif ($arg eq "feedback") {
-			$result = WeBWorK::ContentGenerator::Feedback->new($r, $ce, $db)->go;
-		} elsif ($arg eq "logout") {
-			$result = WeBWorK::ContentGenerator::Logout->new($r, $ce, $db)->go;
-		} elsif ($arg eq "test") {
-			$result = WeBWorK::ContentGenerator::Test->new($r, $ce, $db)->go;
-		} elsif ($arg eq "quiz_mode" ) {
-			# Gateway quiz capability -- very similar to problem set (initially)
-			$result = WeBWorK::ContentGenerator::GatewayQuiz->new($r, $ce, $db)->go(@components);
-		} else { # We've got the name of a problem set.
-			my $problem_set = $arg;
-			my $ps_arg = shift @components;
-
-			if (!defined $ps_arg) {
-				# list the problems in the problem set
-				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set") if $timingON == 1;
-				$WeBWorK::timer0->start if $timingON == 1;
-				$result = WeBWorK::ContentGenerator::ProblemSet->new($r, $ce, $db)->go($problem_set);
-				$WeBWorK::timer0->continue("problem set listing is done") if $timingON == 1;
-				$WeBWorK::timer0->stop if $timingON == 1;
-				$WeBWorK::timer0->save if $timingON == 1;
-			} else {
-				# We've got the name of a problem
-				my $problem = $ps_arg;
-
-				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem") if $timingON == 1;
-				$WeBWorK::timer0->start if $timingON == 1;
-#				my $pid = fork();
-#				if ($pid) {
-#					wait;
-#				} else {
-					my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
-#					$WeBWorK::timer0->continue("Exiting child process");
-#					#$WeBWorK::timer0->stop;
-#				    #$WeBWorK::timer0->save;
-#					eval{ APACHE::exit(0);} || warn "Error in leaving child |$@|";
-#					#  We REALLY REALLY want this grandchild to exit. But not the child.  How to do this
-#					# cleanly???? FIXME
-#				}
-				$WeBWorK::timer0->continue("Problem done)") if $timingON == 1;
-				$WeBWorK::timer0->stop if $timingON == 1;
-				$WeBWorK::timer0->save if $timingON == 1;
-				return $result;
-
-
+			elsif ($instructorArgument eq "pgProblemEditor") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::PGProblemEditor";
+				@arguments = @components;
+			}
+			elsif ($instructorArgument eq "send_mail") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::SendMail";
+				@arguments = @components;
+			}
+			elsif ($instructorArgument eq "show_answers") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ShowAnswers";
+				@arguments = @components;
+			}
+			elsif ($instructorArgument eq "stats") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Stats";
+				@arguments = @components;
+			}
+			elsif ($instructorArgument eq "files") {
+				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::FileXfer";
+				@arguments = @components;
+			}
+		}
+		else {
+			# $arg is a set ID
+			my $setID = $arg;
+			my $problemID = shift @components;
+			
+			if (defined $problemID) {
+				$contentGenerator = "WeBWorK::ContentGenerator::Problem";
+				@arguments = ($setID, $problemID);
+			}
+			else {
+				$contentGenerator = "WeBWorK::ContentGenerator::ProblemSet";
+				@arguments = ($setID);
 			}
 		}
 	}
-	
-	#$dispatchTimer->stop;
+
+=item Call the selected content generator
+
+Instantiate the selected subclass of content generator and call its C<&go> method. Store the result.
+
+=cut
+
+	my $result;
+	if ($contentGenerator) {
+		runtime_use($contentGenerator);
+		my $cg = $contentGenerator->new($r, $ce, $db);
+		
+		my $timer = WeBWorK::Timing->new("${contentGenerator}::go(@arguments)") if $timingON == 1;
+		$timer->start if $timingON == 1;
+		
+		$result = $cg->go(@arguments);
+		
+		$timer->stop if $timingON == 1;
+		$timer->save if $timingON == 1;
+	} else {
+		return NOT_FOUND;
+	}
 
 =item Return the result of calling the content generator
 
