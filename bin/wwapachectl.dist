@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.7 2004/01/05 01:02:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.8 2004/05/23 19:54:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,6 +24,8 @@ WEBWORKROOT=/home/yourname/webwork2
 
 CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
 PID=$WEBWORKROOT/logs/httpd.pid
+GLOBAL=$WEBWORKROOT/conf/global.conf
+DATABASE=$WEBWORKROOT/conf/database.conf
 
 usage() {
 	echo "$0 { start | stop | restart | graceful | configtest }"
@@ -43,9 +45,18 @@ checknopid() {
 	fi
 }
 
+checkconf() {
+	if [ $1.dist -nt $1 ]; then
+		echo "WARNING: "`basename $1.dist`" is newer than "\
+		`basename $1`": UPDATE "`basename $1`"!"
+	fi
+}
+
 case $1 in
 	start)
 		checknopid
+		checkconf $GLOBAL
+		checkconf $DATABASE
 		"${HTTPD}" -f "${CONFIG}"
 		;;
 	stop)
@@ -54,11 +65,15 @@ case $1 in
 		;;
 	restart)
 		checkpid
+		checkconf $GLOBAL
+		checkconf $DATABASE
 		kill -HUP `cat "${PID}"`
 		;;
 	graceful)
 		checkpid
 		kill -USR1 `cat "${PID}"`
+		checkconf $GLOBAL
+		checkconf $DATABASE
 		;;
 	configtest)
 		"${HTTPD}" -t -f "${CONFIG}"
