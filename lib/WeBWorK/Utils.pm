@@ -225,11 +225,8 @@ sub ref2string($;$) {
 
 sub refBaseType($) {
 	my $ref = shift;
-	local $SIG{__DIE__} = 'IGNORE';
-	return "HASH"   if eval { $_ = %$ref; 1 };
-	return "ARRAY"  if eval { $_ = @$ref; 1 };
-	return "SCALAR" if eval { $_ = $$ref; 1 };
-	return 0;
+	$ref =~ m/(\w+)\(/; # this might not be robust...
+	return $1;
 }
 
 1;
