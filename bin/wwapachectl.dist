@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.8 2004/05/23 19:54:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwapachectl.dist,v 1.9 2004/05/24 18:16:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,17 +15,33 @@
 # Artistic License for more details.
 ################################################################################
 
-# Set the following values to correspond to your local configuration
+# This is a wrapper for the apachectl utility suitable for use when doing
+# development on the WeBWorK 2 system. This setup allows each developer to run
+# an independent Apache server under their own UID, using their own working copy
+# of the WeBWorK code.
+
+################################################################################
+# Configuration
+################################################################################
+
+# The path to the Apache binary
 HTTPD=/usr/local/sbin/httpd
-WEBWORKROOT=/home/yourname/webwork2
+
+# The path to your personal webwork2 directory
+WEBWORKROOT=$HOME/webwork-modperl
 
 # If you're sharing files with systems being run by other users, uncomment this
 #umask 2
 
-CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
+# Change these only if you need to customize the locations
+CONFIG=$WEBWORKROOT/conf/devel.apache-config
 PID=$WEBWORKROOT/logs/httpd.pid
 GLOBAL=$WEBWORKROOT/conf/global.conf
 DATABASE=$WEBWORKROOT/conf/database.conf
+
+################################################################################
+# Implementation
+################################################################################
 
 usage() {
 	echo "$0 { start | stop | restart | graceful | configtest }"
@@ -57,26 +73,26 @@ case $1 in
 		checknopid
 		checkconf $GLOBAL
 		checkconf $DATABASE
-		"${HTTPD}" -f "${CONFIG}"
+		"$HTTPD" -f "$CONFIG"
 		;;
 	stop)
 		checkpid
-		kill -TERM `cat "${PID}"`
+		kill -TERM `cat "$PID"`
 		;;
 	restart)
 		checkpid
 		checkconf $GLOBAL
 		checkconf $DATABASE
-		kill -HUP `cat "${PID}"`
+		kill -HUP `cat "$PID"`
 		;;
 	graceful)
 		checkpid
-		kill -USR1 `cat "${PID}"`
+		kill -USR1 `cat "$PID"`
 		checkconf $GLOBAL
 		checkconf $DATABASE
 		;;
 	configtest)
-		"${HTTPD}" -t -f "${CONFIG}"
+		"$HTTPD" -t -f "$CONFIG"
 		;;
 	*)
 		usage
