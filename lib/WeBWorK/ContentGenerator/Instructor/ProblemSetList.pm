@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.46 2004/04/03 16:24:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.47 2004/04/06 01:58:25 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,7 @@ sub initialize {
 	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
-		$self->{submitError} = "You aren't authorized to create or delete problems";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You aren't authorized to create or delete problems")));
 		return;
 	}
 	if (defined($r->param('update_global_user'))  ){
