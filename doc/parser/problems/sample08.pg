@@ -15,7 +15,7 @@ TEXT(beginproblem());
 
 ##########################################################
 #
-#  Use Complex context
+#  The setup
 #
 
 Context('Complex');
@@ -30,10 +30,14 @@ $fz = $f->eval(z => $z);
 #  The problem text
 #
 
+Context()->texStrings;
 BEGIN_TEXT
-Suppose \(f(z) = \{$f->TeX\}\).$BR
-Then \(f(\{$z->TeX\})\) = \{ans_rule(20)\}.
+
+Suppose \(f(z) = $f\).$BR
+Then \(f($z)\) = \{ans_rule(20)\}.
+
 END_TEXT
+Context()->normalStrings;
 
 ###########################################################
 #

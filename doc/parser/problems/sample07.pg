@@ -15,7 +15,7 @@ TEXT(beginproblem());
 
 ##########################################################
 #
-#  Use Numeric context
+#  The setup
 #
 
 Context('Numeric');
@@ -30,11 +30,14 @@ $c = sqrt($a**2 + $b**2);  # still a Real object
 #  The problem text
 #
 
+Context()->texStrings;
 BEGIN_TEXT
-Suppose the legs of a triangle are of length \(\{$a->TeX\}\) and
-\(\{$b->TeX\}\).$BR
+
+Suppose the legs of a triangle are of length \($a\) and \($b\).$BR
 Then the hypoteneuse is of length \{ans_rule(20)\}.
+
 END_TEXT
+Context()->normalStrings();
 
 ###########################################################
 #
