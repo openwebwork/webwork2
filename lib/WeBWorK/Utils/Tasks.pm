@@ -77,6 +77,7 @@ sub fake_set {
   $set->open_date(time());
   $set->due_date(time());
   $set->answer_date(time());
+  $set->published(0); 
   $set->problem_header("");
   return($set); 
 } 
@@ -95,7 +96,6 @@ sub fake_problem {
   $problem = global2user($db->{problem_user}->{record}, $problem); 
   $problem->set_id(fakeSetName); 
   $problem->value(""); 
-  $problem->published(0); 
   $problem->max_attempts("-1"); 
  
   $problem->problem_seed(0); 
