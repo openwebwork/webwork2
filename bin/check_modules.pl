@@ -1,28 +1,14 @@
 #!/usr/bin/perl -w
 
-print "\n\n\nSearching for modules needed for WeBWorK\n\n";
-while (<DATA>)  {
-	
-	next unless $_ =~/\S/;
-	chomp;
-	eval "use $_" ;
-	if ($@) {
-		print "----------Can't find $_\n";
-	} else {
-		print "$_ found. \n";
-	}
-
-}
 
 
-
-__END__
-
+my @modulesList = qw(
 Apache::Constants
 Apache::Cookie
 Apache::Request
 Carp
 CGI
+CGI::Pretty
 Data::Dumper
 Data::UUID
 Date::Format
@@ -45,3 +31,49 @@ URI::Escape
 XML::Parser
 XML::Parser::EasyTree
 XML::Writer
+);
+
+my @applicationsList = qw(
+
+dvipng 
+tth
+latex
+pdflatex
+giftopnm
+ppmtopgm
+pnmtops
+pnmtopng
+pngtopnm
+
+);
+
+
+print "\n\n Searching for executables\n\n";
+
+foreach my $app (@applicationsList)  {
+
+	my $result = `which $app`;
+	chomp($result);
+	if ($result)  {
+		print "$app found at $result\n";
+	} else {
+		print "---------Can't find $app\n";
+	}
+}
+print "\nSearching for modules needed for WeBWorK\n\n";
+foreach my $module (@modulesList)  {
+	
+	eval "use $module" ;
+	if ($@) {
+		print "----------Can't find $module\n";
+	} else {
+		print "$module found. \n";
+	}
+
+}
+
+
+
+__END__
+
+
