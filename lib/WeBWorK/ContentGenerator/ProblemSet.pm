@@ -92,11 +92,12 @@ sub siblings {
 	my @sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
 	# put closed sets last;
 	my $now = time();
-	my @open_sets = grep {$_->due_date>$now} @sets;
-	my @closed_sets = grep {$_->due_date<=$now} @sets;
-	my @sorted_sets = (@open_sets,@closed_sets);
+	my @open_sets = grep {$_->due_date>$now} @sorted_sets;
+	my @closed_sets = grep {$_->due_date<=$now} @sorted_sets;
+	@sorted_sets = (@open_sets,@closed_sets);
 	
-	foreach my $set (@sorted_sets) {  
+	foreach my $set (@sorted_sets) { 
+	    print STDERR "set ".$set->set_id." due date ",$set->due_date,"\n"; 
 		if (time >= $set->open_date) {
 			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
 				. $self->url_authen_args}, $set->set_id), CGI::br();
