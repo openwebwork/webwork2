@@ -1278,13 +1278,12 @@ sub importSetsFromDef {
 		# add problems
 		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 		foreach my $rh_problem (@problemList) {
-			my $problemRecord = $db->newGlobalProblem;
-			$problemRecord->problem_id($freeProblemID++);
-			$problemRecord->set_id($setName);
-			$problemRecord->source_file($rh_problem->{source_file});
-			$problemRecord->value($rh_problem->{value});
-			$problemRecord->max_attempts($rh_problem->{max_attempts});
-			$db->addGlobalProblem($problemRecord);
+			$self->addProblemToSet(
+			  setName => $setName,
+			  sourceFile => $rh_problem->{source_file},
+			  problemID => $freeProblemID++,
+			  value => $rh_problem->{value},
+			  maxAttempts => $rh_problem->{max_attempts});
 		}
 
 
