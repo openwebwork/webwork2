@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.102 2004/09/05 00:54:31 dpvc Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.103 2004/09/10 22:03:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -371,6 +371,16 @@ $siteDefaults{status} = {
 	current  => "Enrolled",
 	enrolled => "Enrolled",
 };
+
+# Set the default timezone of courses on this server. This must be a value valid
+# for the TZ environment variable. See also tzset(3).
+# 
+# If left blank, the system timezone will be used. This is usually what you
+# want. You might want to set this if your server is NOT in the same timezone as
+# your school. If just a few courses are in a different timezone, set this in
+# course.conf for the affected courses instead.
+# 
+$siteDefaults{timezone} = "";
 
 ################################################################################
 # Frontend options 
