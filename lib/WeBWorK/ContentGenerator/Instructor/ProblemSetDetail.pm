@@ -1139,6 +1139,7 @@ sub body {
 				$repeatFile = "This problem uses the same source file as number " . $shownYet{$problemFile} . ".";
 			} else {
 				$shownYet{$problemFile} = $problemID;
+				$repeatFile = "";
 			}
 			
 			my $error = $self->checkFile($problemFile);
