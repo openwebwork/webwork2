@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.50 2004/05/24 01:03:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.51 2004/05/24 02:01:25 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -201,11 +201,12 @@ sub defineProblemEnvir {
 	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
 	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
 	
-	# variables for interpreting capa problems.
-	$envir{CAPA_Tools}               = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
-	$envir{CAPA_MCTools}             = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
-	$envir{CAPA_Graphics_URL}        = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
-	$envir{CAPA_GraphicsDirectory}   = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
+	# variables for interpreting capa problems and other things to be
+        # seen in a pg file
+	my $specialPGEnvironmentVarHash = $ce->{pg}->{specialPGEnvironmentVars};
+	for my $SPGEV (keys %{$specialPGEnvironmentVarHash}) {
+		$envir{$SPGEV} = $specialPGEnvironmentVarHash->{$SPGEV};
+	}
 	
 	return \%envir;
 }
