@@ -217,10 +217,8 @@ sub initialize {
 			my @selected = $r->param("directory_level_$count");
 			my $dirFound = 0;
 			# If any directories are selected, "cd" into the first one and stop processing this level.
-			warn "checking if a directory was selected at level $count\n";
 			foreach my $selected (@selected) {
 				if (-d join "/", $libraryRoot, @path, $selected) {
-					warn "one was\n";
 					push @path, $selected;
 					$dirFound = 1;
 					last;
@@ -239,12 +237,10 @@ sub initialize {
 					$problemRecord->max_attempts("-1");
 					$db->addGlobalProblem($problemRecord);
 				}
-				warn "done and done\n";
 				$done = 1;
 			}
 			
 			if (defined $r->param("open_add_$count")) {
-				warn "open_add_$count was defined\n";
 				$done = 1;
 			}
 			$count++;

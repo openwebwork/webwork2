@@ -28,6 +28,11 @@ sub initialize {
 		my $newSetRecord = WeBWorK::DB::Record::Set->new();
 		my $newSetName = $r->param('newSetName');
 		$newSetRecord->set_id($newSetName);
+		$newSetRecord->set_header("");
+		$newSetRecord->problem_header("");
+		$newSetRecord->open_date("0");
+		$newSetRecord->due_date("0");
+		$newSetRecord->answer_date("0");
 		$db->addGlobalSet($newSetRecord) unless $db->getGlobalSet($newSetName);
 	}
 
