@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.55 2004/05/13 18:28:32 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.56 2004/06/14 22:59:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,7 +36,6 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
-
 my $timingON = 0;
 
 use strict;
@@ -55,8 +54,8 @@ use WeBWorK::URLPath;
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
-#sub debug(@) { print STDERR "dispatch_new: ", join("", @_) };
-sub debug(@) {  };
+sub debug(@) { print STDERR "dispatch_new: ", join("", @_) };
+#sub debug(@) {  };
 
 sub dispatch($) {
 	my ($apache) = @_;
@@ -162,6 +161,13 @@ sub dispatch($) {
 	
 	debug(("-" x 80) . "\n");
 	
+	# create a package-global timing object
+	if ($timingON) {
+		my $label = defined $displayArgs{courseID} ? $displayArgs{courseID} : "ROOT";
+		$WeBWorK::timer = WeBWorK::Timing->new($label);
+		$WeBWorK::timer->start;
+	}
+	
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = new WeBWorK::CourseEnvironment($webwork_root, $location, $pg_root, $displayArgs{courseID});
 	debug("Here's the course environment: $ce\n");
@@ -245,14 +251,14 @@ sub dispatch($) {
 	debug("...and call it:\n");
 	debug("-------------------- call to ${displayModule}::go\n");
 	
-	$WeBWorK::timer = WeBWorK::Timing->new("$displayArgs{courseID}") if $timingON;
-	$WeBWorK::timer -> start() if $timingON;
 	my $result = $instance->go();
 	
 	debug("-------------------- call to ${displayModule}::go\n");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
+	
 	$WeBWorK::timer -> save() if $timingON;
+	
 	return $result;
 	
 }
