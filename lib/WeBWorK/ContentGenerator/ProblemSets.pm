@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.50 2004/05/24 16:05:10 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.51 2004/06/25 00:09:18 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,7 +73,14 @@ sub info {
 		return "";
 	}
 }
-
+sub help {   # non-standard help, since the file path includes the course name
+	my $self = shift;
+	my $args = shift;
+	my $name = $args->{name};
+	$name = lc('course home') unless defined($name);
+	$name =~ s/\s/_/g;
+	$self->helpMacro($name);
+}
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
