@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.45 2004/07/08 18:41:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.46 2004/07/10 18:13:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,8 @@ our @EXPORT_OK = qw(
 	readDirectory
 	formatDateTime
 	parseDateTime
+	textDateTime
+	intDateTime
 	writeLog
 	writeCourseLog
 	writeTimingLogEntry
@@ -126,6 +128,14 @@ sub parseDateTime($) {
 	# need to bring our string from  "%m/%d/%y at %I:%M%P" to "%m/%d/%y %I:%M%P" format.
 	$string =~ s/\bat\b/ /;
 	return str2time($string);
+}
+
+sub textDateTime($) {
+	return ($_[0] =~ m/^\d*$/) ? formatDateTime($_[0]) : $_[0];
+}
+
+sub intDateTime($) {
+	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
 }
 
 sub writeLog($$@) {
