@@ -156,7 +156,6 @@ sub add($$) {
 }
 
 sub get($@) {
-	warn "\@_=@_\n";
 	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
