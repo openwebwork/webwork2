@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.47 2004/05/06 13:17:16 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.48 2004/05/11 20:13:22 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1085,6 +1085,8 @@ sub recordEditHTML {
 	
 	my $editMode = $options{editMode};
 	my $userSelected = $options{userSelected};
+
+	my $statusClass = $ce->{siteDefaults}->{status}->{$User->{status}};
 	
 	my $changeEUserURL = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
 										   params => {effectiveUser => $User->user_id}
@@ -1123,12 +1125,12 @@ sub recordEditHTML {
 	# User ID
 	if ($editMode) {
 		# straight user ID
-		push @tableCells, $User->user_id;
+		push @tableCells, CGI::div({class=>$statusClass}, $User->user_id);
 	} else {
 		# "edit sets assigned to user" link
 		push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");
 	}
-	
+
 	# User Fields
 	foreach my $field ($User->NONKEYFIELDS) {
 		my $fieldName = "user." . $User->user_id . "." . $field,
@@ -1136,7 +1138,7 @@ sub recordEditHTML {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
-		push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
+		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
 	# PermissionLevel Fields
@@ -1146,7 +1148,7 @@ sub recordEditHTML {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
-		push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
+		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
 	return CGI::Tr({}, CGI::td({}, \@tableCells));

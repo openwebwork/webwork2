@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.48 2004/05/11 21:05:25 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.49 2004/05/13 16:02:55 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -370,7 +370,7 @@ sub body {
         " (leave blank to use name of set definition file)",
 		CGI::br(),
 		CGI::checkbox(-name=>"assignNewSet",
-			-label=>"Assign imported set to all users"),
+			-label=>"Assign imported set to all current users"),
 		CGI::br(),
 		CGI::submit({"name"=>"importSet", "label"=>"Import a Single Set"}),
 		CGI::end_form(),
@@ -388,7 +388,7 @@ sub body {
 		CGI::br(),
 		CGI::scrolling_list(-name=>"set_definition_files", -values=>\@set_definition_files, -size=>10, -multiple=>"true"),
 		CGI::br(),
-		CGI::checkbox(-name=>"assignNewSet", -label=>"Assign imported sets to all users"),
+		CGI::checkbox(-name=>"assignNewSet", -label=>"Assign imported sets to all current users"),
 		CGI::br(),
 		$slownessWarning,
 		CGI::submit({"name"=>"importSets", "label"=>"Import Multiple Sets"}),
