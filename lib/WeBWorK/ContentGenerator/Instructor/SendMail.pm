@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.30 2004/05/11 19:56:27 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.31 2004/05/12 14:36:43 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,8 @@ use warnings;
 use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
+use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+
 
 my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
 sub initialize {
@@ -49,7 +51,7 @@ sub initialize {
 	my $scoringDirectory  =    $ce->{courseDirs}->{scoring};
 	my $templateDirectory =    $ce->{courseDirs}->{templates};
 	
-	my $action            =    $r->param('action'); 
+	my $action            =    $r->param('action') ; 
 	my $openfilename      =	   $r->param('openfilename');
 	my $savefilename      =	   $r->param('savefilename');
 	
@@ -75,29 +77,57 @@ sub initialize {
 #############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 	my @users =  $db->listUsers;
+	my @Users = $db->getUsers(@users);
 	my @user_records = ();
-	foreach my $userName (@users) {
-		my $userRecord = $db->getUser($userName); # checked
-		die "record for user $userName not found" unless $userRecord;
-		push(@user_records, $userRecord);
+
+## Mark's code to prefilter userlist
+
+	
+	my (@viewable_sections,@viewable_recitations);
+	
+	if (defined @{$ce->{viewable_sections}->{$user}})
+		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
+	if (defined @{$ce->{viewable_recitations}->{$user}})
+		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
+
+	if (@viewable_sections or @viewable_recitations){
+		foreach my $student (@Users){
+			my $keep = 0;
+			foreach my $sec (@viewable_sections){
+				if ($student->section() eq $sec){$keep = 1;}
+			}
+			foreach my $rec (@viewable_recitations){
+				if ($student->recitation() eq $rec){$keep = 1;}
+			}
+			if ($keep) {push @user_records, $student;}
+		}
 	}
+	else {@user_records = @Users;}
+
+## End Mark's code
+
+#	foreach my $userName (@users) {
+#		my $userRecord = $db->getUser($userName); # checked
+#		die "record for user $userName not found" unless $userRecord;
+#		push(@user_records, $userRecord);
+#	}
 	###########################
 	# Sort the users for presentation in the select list
 	###########################
-	if (defined $r->param("sort_by") ) {
-		my $sort_method = $r->param("sort_by");
-		if ($sort_method eq 'section') {
-			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'recitation') {
-			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'alphabetical') {
-			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-		} elsif ($sort_method eq 'id' )          {
-		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
-		}
-	} else {
-		@user_records = sort { $a->user_id cmp $b->user_id }  @user_records;
-	}
+#	if (defined $r->param("sort_by") ) {
+#		my $sort_method = $r->param("sort_by");
+#		if ($sort_method eq 'section') {
+#			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+#		} elsif ($sort_method eq 'recitation') {
+#			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+#		} elsif ($sort_method eq 'alphabetical') {
+#			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+#		} elsif ($sort_method eq 'id' )          {
+#		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
+#		}
+#	} else {
+#		@user_records = sort { $a->user_id cmp $b->user_id }  @user_records;
+#	}
 	
 
 	# replace the user names by a sorted version.
@@ -192,7 +222,11 @@ sub initialize {
 #############################################################################################
 # Determine input source
 #############################################################################################
-	my $input_source =  ( defined( $r->param('body') ) and $action ne 'Open' ) ? 'form' : 'file';
+	#warn "Action = $action";
+	my $input_source;
+	if ($action){	
+		$input_source =  ( defined( $r->param('body') ) and $action ne 'Open' ) ? 'form' : 'file';}
+	else { $input_source = ( defined($r->param('body')) ) ? 'form' : 'file';}
 
 #############################################################################################
 # Get inputs
@@ -460,6 +494,16 @@ sub print_form {
 		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
 	}
 
+## Mark edit define scrolling list
+	my $scrolling_user_list = scrollingRecordList({
+		name => "classList", 			## changed from classList to action
+		request => $r,
+		default_sort => "lnfn",
+		default_format => "lnfn_uid",
+		default_filters => ["all"],
+		size => 5,
+		multiple => 1,
+	}, @{$ra_user_records});
 
 ##############################################################################################################
 	
@@ -512,32 +556,43 @@ sub print_form {
 #############################################################################################
 #	second column
 #############################################################################################	
-			CGI::td({-align=>'left',style=>'font-size:smaller'},
-			   
-			    		    CGI::strong("Send to:"),
-							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-								-labels=>{all_students=>'All',studentID => 'Selected'},
-								-default=>'studentID',
-								-linebreak=>0
-							), CGI::br(),CGI::br(),
-						
-						    CGI::input({type=>'submit',value=>'Sort by',name=>'action'}),, 
-							CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
-								-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
-								-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
-								-linebreak=>0
-							),
+#			CGI::td({-align=>'left',style=>'font-size:smaller'},
+#			   
+#			    		    CGI::strong("Send to:"),
+#							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
+#								-labels=>{all_students=>'All',studentID => 'Selected'},
+#								-default=>'studentID',
+#								-linebreak=>0
+#							), CGI::br(),CGI::br(),
+## Edit by Mark to insert scrolling list
+					CGI::td({-style=>"width:33%"},CGI::strong("Send to:"),
+		                                       CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
+		                                                        -labels=>{all_students=>'All',studentID => 'Selected'},
+		                                                        -default=>'studentID', -linebreak=>0), 
+							CGI::br(),$scrolling_user_list),
+## Edit here to insert filtering 
+## be sure to fail GRACEFULLY!
+#
+#
+#						    CGI::input({type=>'submit',value=>'Sort by',name=>'action'}),, 
+#							CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
+#								-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
+#								-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
+#								-linebreak=>0
+#							),
+#
+#						CGI::br(),CGI::br(),
+#				CGI::popup_menu(-name=>'classList',
+#						   -values=>\@users,
+#						   -labels=>\%classlistLabels,
+#						   -size  => 10,
+#						   -multiple => 1,
+#						   -default=>$user
+#				),
+#			),	
 
-						CGI::br(),CGI::br(),
-				CGI::popup_menu(-name=>'classList',
-						   -values=>\@users,
-						   -labels=>\%classlistLabels,
-						   -size  => 10,
-						   -multiple => 1,
-						   -default=>$user
-				),
-			),	
-				
+					
+
 
 #############################################################################################
 #	third column
