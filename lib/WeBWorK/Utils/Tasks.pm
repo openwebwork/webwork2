@@ -136,7 +136,8 @@ sub renderProblems {
   my $onefile;
   if($displayMode eq 'None') {
     for $onefile (@problem_list) {
-      my $res = { body_text=>'Click "Try it" to see the problem rendered'};
+      my $res = { body_text=>''};
+      #my $res = { body_text=>'Click "Try it" to see the problem rendered'};
       push @output, $res; 
     }
   } else {
