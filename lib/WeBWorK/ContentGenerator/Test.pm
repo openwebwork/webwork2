@@ -9,6 +9,7 @@ package WeBWorK::ContentGenerator::Test;
 use Apache::Request;
 use Apache::Constants qw(:common);
 use WeBWorK::ContentGenerator;
+use WeBWorK::Utils qw(hash2string);
 
 #use CGI::Carp qw(fatalsToBrowser);
 
@@ -47,7 +48,7 @@ sub body() {
 
 	print "<hr><pre>";
 	
-	print $course_env->hash2string;
+	print hash2string($course_env);
 
 	print "</pre>";
 
