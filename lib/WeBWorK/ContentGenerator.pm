@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.85 2004/03/15 03:18:15 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.86 2004/03/15 04:09:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1091,7 +1091,7 @@ sub systemLink {
 		%values = %{ $options{values} };
 	}
 	
-	my $authen = $options{authen} || not exists $options{authen};
+	my $authen = exists $options{authen} ? $options{authen} : 1;
 	push @params, qw/user effectiveUser key/ if $authen;
 	
 	foreach my $param (@params) {
