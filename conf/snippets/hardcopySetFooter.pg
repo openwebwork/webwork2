@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: hardcopySetFooter.pg,v 1.1 2002-08-21 15:28:06 sh002i Exp $
+# $Id: hardcopySetFooter.pg,v 1.1 2003-06-10 00:18:12 sh002i Exp $
 ################################################################################
 # 
 # hardcopySetFooter.pg - generic hardcopy set footer file
