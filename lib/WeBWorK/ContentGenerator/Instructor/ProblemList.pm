@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.29 2004/05/31 16:59:17 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.30 2004/06/04 19:10:30 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,7 +44,7 @@ use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_inco
 
 sub problemElementHTML {
 	my ($fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
-	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
+	my $attributeHash = {type => "text", name => $fieldName, value => $fieldValue};
 	$attributeHash->{size} = $size if defined $size;
 	my $html;
 #	my $html = CGI::input($attributeHash);
@@ -55,7 +55,7 @@ sub problemElementHTML {
 		$html = $fieldValue;
 		$attributeHash->{name} = "${fieldName}.override";
 		$attributeHash->{value} = ($override ? $overrideValue : "");
-		$html = "default:".CGI::br().$html.CGI::br()
+		$html = "default:" . CGI::br() . $html . CGI::br()
 			. CGI::checkbox({
 				type => "checkbox",
 				name => "override",
@@ -71,96 +71,97 @@ sub problemElementHTML {
 }
 
 sub problem_number_popup {
-  my $num = shift;
-  my $total = shift;
-  return (CGI::popup_menu(-name=> "problem_num_$num",
-			     -values=>[1..$total],
-			     -default=>$num));
+	my $num = shift;
+	my $total = shift;
+	return (CGI::popup_menu(-name => "problem_num_$num",
+				-values => [1..$total],
+				-default => $num));
 }
 
 sub handle_problem_numbers {
-  my $newProblemNumbersref = shift;
-  my %newProblemNumbers = %$newProblemNumbersref;
-  my $maxNum = shift;
-  my $db = shift;
-  my $setName = shift;
-  my $force = shift || 0;
-  my @sortme=();
-  my ($j, $val);
+	my $newProblemNumbersref = shift;
+	my %newProblemNumbers = %$newProblemNumbersref;
+	my $maxNum = shift;
+	my $db = shift;
+	my $setName = shift;
+	my $force = shift || 0;
+	my @sortme=();
+	my ($j, $val);
 
-  for $j (keys %newProblemNumbers) {
-    # what happens our first time on this page
-    return("") if (not defined($newProblemNumbers{"$j"}));
-    if($newProblemNumbers{"$j"} != $j) {
-      $force = 1;
-      $val = 1000*$newProblemNumbers{$j}-$j;
-    } else {
-      $val = 1000*$newProblemNumbers{$j};
-    }
-    push @sortme, [$j, $val];
-    $newProblemNumbers{$j} = $db->getGlobalProblem($setName, $j);
-    die "global $j for set $setName not found." unless $newProblemNumbers{$j};
-  }
+	foreach $j (keys %newProblemNumbers) {
+		# what happens our first time on this page
+		return "" if (not defined $newProblemNumbers{"$j"});
+		if ($newProblemNumbers{"$j"} != $j) {
+			$force = 1;
+			$val = 1000 * $newProblemNumbers{$j} - $j;
+		} else {
+			$val = 1000 * $newProblemNumbers{$j};
+		}
+		push @sortme, [$j, $val];
+		$newProblemNumbers{$j} = $db->getGlobalProblem($setName, $j);
+		die "global $j for set $setName not found." unless $newProblemNumbers{$j};
+	}
 
-  return("") unless $force;
+	return "" unless $force;
 
-  @sortme = sort {$a->[1] <=> $b->[1]} @sortme;
-  # now, for global and each user with this set, loop through problem list
-  #   get all of the problem records
-  # assign new problem numbers
-  # loop - if number is new, put the problem record
-#print "Sorted to get ". join(', ', map {$_->[0] } @sortme) ."<p>\n";
-
-
-  # Now, three stages.  First global values
-
-  for($j=0; $j<scalar(@sortme); $j++) {
-    if($sortme[$j]->[0] == $j+1) {
-      ;
-    } elsif (not defined $newProblemNumbers{($j+1)}) {
-      $newProblemNumbers{$sortme[$j]->[0]}->problem_id($j+1);
-      $db->addGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
-    } else {
-      $newProblemNumbers{$sortme[$j]->[0]}->problem_id($j+1);
-      $db->putGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
-    }
-  }
-
-  my @setUsers = $db->listSetUsers($setName);
-  my (@problist, $user);
-  my $globalUserID = $db->{set}->{params}->{globalUserID} || '';
-
-  for $user (@setUsers) {
-    # if this is gdbm, the global user has been taken care of above.
-    # we can't do it again.  This relies on the global user not having
-    # a blank name.
-    next if($globalUserID eq $user);
-    for $j (keys %newProblemNumbers) {
-      $problist[$j] = $db->getUserProblem($user, $setName, $j);
-      die " problem $j for set $setName and effective user $user not found" 
-	unless $problist[$j];
-    }
-    # ok, now we have all problem data for $user
-    for($j=0; $j<scalar(@sortme); $j++) { 
-      if($sortme[$j]->[0] == $j+1) { 
-      } elsif (not defined $newProblemNumbers{($j+1)}) { 
-	$problist[$sortme[$j]->[0]]->problem_id($j+1); 
-	$db->addUserProblem($problist[$sortme[$j]->[0]]); 
-      } else { 
-	$problist[$sortme[$j]->[0]]->problem_id($j+1); 
-	$db->putUserProblem($problist[$sortme[$j]->[0]]); 
-      } 
-    } 
-  }
+	@sortme = sort {$a->[1] <=> $b->[1]} @sortme;
+	# now, for global and each user with this set, loop through problem list
+	#   get all of the problem records
+	# assign new problem numbers
+	# loop - if number is new, put the problem record
+	# print "Sorted to get ". join(', ', map {$_->[0] } @sortme) ."<p>\n";
 
 
-  for($j=scalar(@sortme); $j<$maxNum; $j++) {
-    if(defined $newProblemNumbers{($j+1)}) {
-      $db->deleteGlobalProblem($setName, $j+1);
-    }
-  }
+	# Now, three stages.  First global values
 
-  return join(', ', map {$_->[0]} @sortme);
+	for ($j = 0; $j < scalar @sortme; $j++) {
+		if($sortme[$j]->[0] == $j + 1) {
+			# do nothing
+		} elsif (not defined $newProblemNumbers{$j + 1}) {
+			$newProblemNumbers{$sortme[$j]->[0]}->problem_id($j + 1);
+			$db->addGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+		} else {
+			$newProblemNumbers{$sortme[$j]->[0]}->problem_id($j + 1);
+			$db->putGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+		}
+	}
+
+	my @setUsers = $db->listSetUsers($setName);
+	my (@problist, $user);
+	my $globalUserID = $db->{set}->{params}->{globalUserID} || '';
+
+	foreach $user (@setUsers) {
+		# if this is gdbm, the global user has been taken care of above.
+		# we can't do it again.  This relies on the global user not having
+		# a blank name.
+		next if $globalUserID eq $user;
+		for $j (keys %newProblemNumbers) {
+			$problist[$j] = $db->getUserProblem($user, $setName, $j);
+			die " problem $j for set $setName and effective user $user not found" 
+				unless $problist[$j];
+		}
+		# ok, now we have all problem data for $user
+		for($j = 0; $j < scalar @sortme; $j++) { 
+			if ($sortme[$j]->[0] == $j + 1) {
+				# do nothing
+			} elsif (not defined $newProblemNumbers{$j + 1}) { 
+				$problist[$sortme[$j]->[0]]->problem_id($j + 1); 
+				$db->addUserProblem($problist[$sortme[$j]->[0]]); 
+			} else { 
+				$problist[$sortme[$j]->[0]]->problem_id($j + 1); 
+				$db->putUserProblem($problist[$sortme[$j]->[0]]); 
+			} 
+		} 
+	}
+
+
+	foreach ($j = scalar @sortme; $j < $maxNum; $j++) {
+		if (defined $newProblemNumbers{$j + 1}) {
+			$db->deleteGlobalProblem($setName, $j+1);
+		}
+	}
+
+	return join(', ', map {$_->[0]} @sortme);
 }
 
 # swap index given with next bigger index
@@ -168,48 +169,45 @@ sub handle_problem_numbers {
 # maybe we will bring them back
 
 sub moveme {
-  my $index = shift;
-  my $db = shift;
-  my $setName = shift;
-  my (@problemList) = @_;
-  my ($prob1, $prob2, $prob);
+	my $index = shift;
+	my $db = shift;
+	my $setName = shift;
+	my (@problemList) = @_;
+	my ($prob1, $prob2, $prob);
 
-  for $prob (@problemList) {
-    my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
-    die "global $prob for set $setName not found." unless $problemRecord;
-    if($problemRecord->problem_id == $index) {
-      $prob1 = $problemRecord;
-    } elsif($problemRecord->problem_id == ($index+1)) {
-      $prob2 = $problemRecord;
-    }
-  }
-  if(not defined($prob1) or not defined($prob2)) {
-    die "cannot find problem $index or ".($index+1);
-  }
+	foreach $prob (@problemList) {
+		my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
+		die "global $prob for set $setName not found." unless $problemRecord;
+		if ($problemRecord->problem_id == $index) {
+			$prob1 = $problemRecord;
+		} elsif ($problemRecord->problem_id == $index + 1) {
+			$prob2 = $problemRecord;
+		}
+	}
+	if (not defined $prob1 or not defined $prob2) {
+		die "cannot find problem $index or " . ($index + 1);
+	}
 
-  $prob1->problem_id($index+1);
-  $prob2->problem_id($index);
-  $db->putGlobalProblem($prob1);
-  $db->putGlobalProblem($prob2);
+	$prob1->problem_id($index + 1);
+	$prob2->problem_id($index);
+	$db->putGlobalProblem($prob1);
+	$db->putGlobalProblem($prob2);
 
+	my @setUsers = $db->listSetUsers($setName);
 
-  my @setUsers = $db->listSetUsers($setName);
-
-  my $user;
-  for $user (@setUsers) {
-    $prob1 = $db->getUserProblem($user, $setName, $index); #checked
-    die " problem $index for set $setName and effective user $user not found"
-      unless $prob1;
-    $prob2 = $db->getUserProblem($user, $setName, $index+1); #checked
-    die " problem $index for set $setName and effective user $user not found"
-      unless $prob2;
-    $prob1->problem_id($index+1);
-    $prob2->problem_id($index);
-    $db->putUserProblem($prob1);
-    $db->putUserProblem($prob2);
-  }
-
-
+	my $user;
+	foreach $user (@setUsers) {
+		$prob1 = $db->getUserProblem($user, $setName, $index); #checked
+		die " problem $index for set $setName and effective user $user not found"
+			unless $prob1;
+		$prob2 = $db->getUserProblem($user, $setName, $index+1); #checked
+		die " problem $index for set $setName and effective user $user not found"
+			unless $prob2;
+    		$prob1->problem_id($index+1);
+		$prob2->problem_id($index);
+		$db->putUserProblem($prob1);
+		$db->putUserProblem($prob2);
+	}
 }
 
 
@@ -230,82 +228,82 @@ sub initialize {
 	my $forUsers   = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		$self->addmessage(CGI::div({class=>"ResultWithError"}, CGI::p("You are not authorized to modify problem sets")));
-		return;
-	}
+	# Check permissions
+	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
 
 	my @problemList = $db->listGlobalProblems($setName);	# the Problem form was submitted
 	if (defined($r->param('submit_problem_changes'))) {
-	  foreach my $problem (@problemList) {
-	    my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
-	    die "global $problem for set $setName not found." unless $problemRecord;
+		foreach my $problem (@problemList) {
+			my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+			die "global $problem for set $setName not found." unless $problemRecord;
 	    
-	    foreach my $field (@{PROBLEM_FIELDS()}) {
-	      my $paramName = "problem.${problem}.${field}";
-	      if (defined($r->param($paramName))) {
-		my $pvalue = $r->param($paramName);
-		if($field eq "max_attempts") {
-		  $pvalue =~ s/[^-\d]//g;
-		  if($pvalue eq "") {$pvalue = -1;}
-		}
-		$problemRecord->$field($pvalue);
-	      }
-	    }
-	    $db->putGlobalProblem($problemRecord);
+			foreach my $field (@{PROBLEM_FIELDS()}) {
+				my $paramName = "problem.${problem}.${field}";
+				if (defined($r->param($paramName))) {
+					my $pvalue = $r->param($paramName);
+					if ($field eq "max_attempts") {
+						$pvalue =~ s/[^-\d]//g;
+						$pvalue = -1 if $pvalue eq "";
+					}
+					$problemRecord->$field($pvalue);
+				}
+			}
+			$db->putGlobalProblem($problemRecord);
 	    
-	    if ($forOneUser) {
-	      my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
-	      die " problem $problem for set $setName and effective user $editForUser[0] not found" unless $userProblemRecord;
-	      foreach my $field (@{PROBLEM_USER_FIELDS()}) {
-		my $paramName = "problem.${problem}.${field}";
-		if (defined($r->param($paramName))) {
-		  $userProblemRecord->$field($r->param($paramName));
+			if ($forOneUser) {
+				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
+				die " problem $problem for set $setName and effective user $editForUser[0] not found" unless $userProblemRecord;
+				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
+					my $paramName = "problem.${problem}.${field}";
+					if (defined($r->param($paramName))) {
+						$userProblemRecord->$field($r->param($paramName));
+					}
+				}
+
+				foreach my $field (@{PROBLEM_FIELDS()}) {
+					my $paramName = "problem.${problem}.${field}";
+					if (defined($r->param("${paramName}.override"))) {
+						if (exists $overrides{$paramName}) {
+							$userProblemRecord->$field($r->param("${paramName}.override"));
+						} else {
+							$userProblemRecord->$field(undef);
+						}
+					}
+				}
+
+				# the attempted field has to be computed from num correct and num incorrect
+				my $attempted = ($userProblemRecord->num_correct+$userProblemRecord->num_incorrect > 0) ? 1 : 0;
+				$userProblemRecord->attempted($attempted);
+				$db->putUserProblem($userProblemRecord);
+			}
 		}
-	      }
-	      foreach my $field (@{PROBLEM_FIELDS()}) {
-		my $paramName = "problem.${problem}.${field}";
-		if (defined($r->param("${paramName}.override"))) {
-		  if (exists $overrides{$paramName}) {
-		    $userProblemRecord->$field($r->param("${paramName}.override"));
-		  } else {
-		    $userProblemRecord->$field(undef);
-		  }
-		
+
+		foreach my $problem ($r->param('deleteProblem')) {
+			$db->deleteGlobalProblem($setName, $problem);
 		}
-	      }
-	      # the attempted field has to be computed from num correct and num incorrect
-	      my $attempted = ($userProblemRecord->num_correct+$userProblemRecord->num_incorrect > 0) ? 1 : 0;
-	      $userProblemRecord->attempted($attempted);
-	      $db->putUserProblem($userProblemRecord);
-	
-	    }
-	  }
-	  foreach my $problem ($r->param('deleteProblem')) {
-	    $db->deleteGlobalProblem($setName, $problem);
-	  }
 	
 	} else {
-	  # Look for up and down buttons
-	  my $index = 2;
-	  while($index<=scalar(@problemList)) {
-	    if(defined $r->param("move.up.$index.x")) {
-	      moveme($index-1, $db, $setName, @problemList);
-	    }
-	    $index++;
-	  }
-	  $index=1;
-	  while($index< scalar(@problemList)) {
-	    if(defined $r->param("move.down.$index.x")) {
-	      moveme($index, $db, $setName, @problemList);
-	    }
-	    $index++;
-	  }
+		# Look for up and down buttons
+		my $index = 2;
+		while ($index <= scalar @problemList) {
+			if (defined $r->param("move.up.$index.x")) {
+				moveme($index-1, $db, $setName, @problemList);
+			}
+			$index++;
+		}
+		$index = 1;
+		
+		while ($index < scalar @problemList) {
+			if (defined $r->param("move.down.$index.x")) {
+				moveme($index, $db, $setName, @problemList);
+			}
+			$index++;
+		}
 	}
-
 }
 
 sub title {
@@ -339,9 +337,14 @@ sub body {
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
-    my $editForUserName = $editForUser[0];
+	my $editForUserName = $editForUser[0];
     
-    return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+		unless $authz->hasPermissions($r->param("user"), "modify_problem_sets");
 	
 	my $userCount        = $db->listUsers();
 	my $setUserCount     = $db->countSetUsers($setName);
@@ -352,8 +355,8 @@ sub body {
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL},
 		$self->userCountMessage($setUserCount, $userCount));
-	$userCountMessage = "The set $setName is assigned to " .
-	  $userCountMessage . ".";
+
+	$userCountMessage = "The set $setName is assigned to " . $userCountMessage . ".";
 
 	if (@editForUser) {
 		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
@@ -369,8 +372,8 @@ sub body {
 	my %newProblemNumbers = ();
 	my $maxProblemNumber = -1;
 	for my $jj (@problemList) {
-	  $newProblemNumbers{$jj} = $r->param('problem_num_'.$jj);
-	  $maxProblemNumber = $jj if($jj>$maxProblemNumber);
+		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
+		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
 	}
 
 	my $forceRenumber = $r->param('force_renumber') || 0;
@@ -380,18 +383,17 @@ sub body {
 
 	@problemList = $db->listGlobalProblems($setName); #reload them
 
-	if (scalar(@problemList)) {
-	  # This will contain the mode list control
-	  my $problemWord = 'Display&nbsp;Mode:&nbsp;';
-	  my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	  my @active_modes = grep { exists $display_modes{$_} }
-	         @{$r->ce->{pg}->{displayModes}};
-	  push @active_modes, 'None';
-	  my $default_mode = $r->param('mydisplaymode') || 'None';
-	  $problemWord .= CGI::popup_menu(-name=> "mydisplaymode",
-			     -values=>\@active_modes,
-			     -default=>$default_mode);
-	  $problemWord .= '&nbsp;'. CGI::input({type=>"submit", name=>"refresh", value=>"Refresh"});
+	if (scalar @problemList) {
+		# This will contain the mode list control
+		my $problemWord = 'Display&nbsp;Mode:&nbsp;';
+		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+		my @active_modes = grep { exists $display_modes{$_} } @{$r->ce->{pg}->{displayModes}};
+		push @active_modes, 'None';
+		my $default_mode = $r->param('mydisplaymode') || 'None';
+		$problemWord .= CGI::popup_menu(-name => "mydisplaymode",
+						-values => \@active_modes,
+						-default => $default_mode);
+		$problemWord .= '&nbsp;'. CGI::input({type => "submit", name => "refresh", value => "Refresh"});
 
 	  if($forUsers) {
 ############### Order things differently.  This is for one user
