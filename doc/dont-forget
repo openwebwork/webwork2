@@ -9,3 +9,10 @@ Image generation alternatives:
 	- math2img, as a function in dangerousMacros
 	- something out of http://preview-latex.sourceforge.net/
 	- TeXd -- http://www.activetex.org/
+
+
+
+
+global.conf:
+	- the "root" of the modperl handler should be sent in from outside
+	- right now, it's in $webworkURLs{root}

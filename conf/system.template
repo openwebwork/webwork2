@@ -6,23 +6,32 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
  <head>
   <title>WeBWorK - <!--#title--></title>
+  <style type="text/css"><!--
+   a:link { color: red }
+   a:active { color: white }
+   a:visited { color: silver }
+  --></style>
  </head>
  <body style="margin: 0px">
   <table style="width: 100%; padding: 0px; margin: 0px" cellspacing="0">
    <tr>
-    <td style="background-color: darkblue; padding: 0px; margin: 0px"><img src="/webwork_files/images/webwork_square.png" height="64" width="66" /></td>
-    <td style="background-color: darkblue; padding: 0px; margin: 0px">
-     <h1 style="color: white; text-align: center; font-size: 20pt">WeBWorK II</h1>
-     <!--#path style="image" iamge="webwork_files/images/right_arrow.png"-->
+    <td style="color: white; background-color: darkblue; padding: 0px; margin: 0px">
+     <img src="/webwork_files/images/webwork_square.png" height="64" width="66" />
+    </td>
+    <td style="color: white; background-color: darkblue; padding: 0px; margin: 0px">
+     <h1 style="text-align: center; font-size: 20pt">WeBWorK II</h1>
+     <!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "-->
     </td>
    </tr>
    <tr>
-    <td style="background-color: darkblue; width: 66px">
+    <td style="white-space: nowrap; color: white; background-color: darkblue; width: 66px">
      <div><!--#quicklinks--></div>
      <div><!--#siblings--></div>
     </td>
-    <td style="background-color: white; padding-left: 2em; padding-right: 2em">
-     <div style="text-align: center"><!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png"--></div>
+    <td style="color: black; background-color: white; padding-left: 2em; padding-right: 2em">
+     <div style="text-align: center">
+      <!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png"-->
+     </div>
      <h1><!--#title--></h1>
      <!--#body-->
     </td>

@@ -31,13 +31,23 @@ sub initialize {
 	$self->{wwdb} = $wwdb;
 }
 
+sub path {
+	my ($self, $args) = @_;
+	
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	return $self->pathMacro($args,
+		"Home" => "$root",
+		$courseName => "",
+	);
+}
+
 sub title {
 	my $self = shift;
-	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
-	my $user = $r->param('user');
-
-	return "Problem Sets for $user";
+	
+	return $courseEnvironment->{courseName};
 }
 
 sub body {
@@ -47,59 +57,51 @@ sub body {
 	my $user = $r->param('user');
 	my $wwdb = $self->{wwdb};
 	
-#	if (!defined $wwdb->getSets($user)) {
-#		print "undefined".CGI::br();
-#	}
-	
-	print CGI::startform(-method=>"POST", -action=>$r->uri);
+	print CGI::startform(-method=>"POST", -action=>$r->uri."/hardcopy");
 	print CGI::start_table();
 	print CGI::Tr(
-		CGI::th(""),
+		CGI::th("Sel."),
 		CGI::th("Name"),
 		CGI::th("Status"),
-		CGI::th({-colspan=>2}, "Actions"),
+		CGI::th("Hardcopy"),
 	);
 	
-	my @setNames = $wwdb->getSets($user);
-	foreach my $setName (sort @setNames) {
-		my $set = $wwdb->getSet($user, $setName);
-		print setListRow($set);
+	my @sets;
+	push @sets, $wwdb->getSet($user, $_) foreach ($wwdb->getSets($user));
+	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
+		print $self->setListRow($set);
 	}
 	
 	print CGI::end_table();
+	print $self->hidden_authen_fields;
+	print CGI::p(CGI::submit("hardcopy", "Download Harcopy for Selected Sets"));
 	print CGI::endform();
 	
 	return "";
-	
-#	print "Set Names", CGI::br(), "\n";
-#	print join(CGI::br()."\n", sort @setNames);
-#	print CGI::p();
-#	
-#	print CGI::startform({-method=>"POST", -action=>$r->uri."set0/"});
-#	print $self->hidden_authen_fields;
-#	print CGI::input({-type=>"submit", -value=>"Do Set 0"});
-#	print CGI::endform();
-#	"";
 }
 
-sub setListRow($) {
+sub setListRow($$) {
+	my $self = shift;
 	my $set = shift;
 	
 	my $name = $set->id;
+	
+	my $interactiveURL = "set$name/?" . $self->url_authen_args;
+	my $hardcopyURL = "hardcopy/set$name/?" . $self->url_authen_args;
 	
 	my $openDate = formatDateTime($set->open_date);
 	my $dueDate = formatDateTime($set->due_date);
 	my $answerDate = formatDateTime($set->answer_date);
 	
 	my $checkbox = CGI::checkbox(-name=>"set", -value=>$set->id, -label=>"");
-	my $interactive = CGI::submit("", "do problem set");
-	my $hardcopy = CGI::submit("", "get hard copy");
+	my $interactive = CGI::a({-href=>$interactiveURL}, $name);
+	my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download hardcopy");
 	
 	my $status;
 	if (time < $set->open_date) {
 		$status = "opens at $openDate";
 		$checkbox = "";
-		$interactive = "";
+		$interactive = $name;
 		$hardcopy = "";
 	} elsif (time < $set->due_date) {
 		$status = "open, due at $dueDate";
@@ -111,9 +113,8 @@ sub setListRow($) {
 	
 	return CGI::Tr(CGI::td([
 		$checkbox,
-		$name,
-		$status,
 		$interactive,
+		$status,
 		$hardcopy,
 	]));
 }

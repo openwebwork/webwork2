@@ -1,3 +1,8 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id: TODO,v 1.2 2002-08-16 20:43:37 sh002i Exp $
+################################################################################
+
 Son of WeBWorK - TODO list
 
 1. write template file from what we drew on the board
