@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.45 2004/06/24 21:06:22 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.46 2004/07/07 14:37:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,6 +24,19 @@ WeBWorK::ContentGenerator::Hardcopy - generate a PDF version of one or more
 problem sets.
 
 =cut
+
+################################################################################
+##
+##   WARNING: This file has been hacked so that it will download
+##            TeX files rather than displaying them in the browser.
+##            In particular, if a TeX file is requested then
+##            the value of the variable $pdfFileURL (in spite of its name)
+##            will be the URL for the texFile, i.e., 
+##                $pdfFileURL = $texFileURL  if TeX file is requested
+##
+##            wheeler@indiana.edu, 7/9/04
+##
+################################################################################
 
 use strict;
 use warnings;
@@ -106,9 +119,9 @@ sub pre_header_initialize {
 				# throw the error up higher.
 				# The error is reported in body.
 				# the tempDir was removed in generateHardcopy
-			} elsif ( $self->{hardcopy_format} eq 'tex')   {
-				# Only tex output was asked for, proceed to have the tex output
-				# handled by the subroutine "body".
+#			} elsif ( $self->{hardcopy_format} eq 'tex')   {
+#				# Only tex output was asked for, proceed to have the tex output
+#				# handled by the subroutine "body".
 			} else {
 				# information for redirect
 				$self->{pdfFileURL} = $pdfFileURL;
@@ -177,10 +190,10 @@ sub body {
 		# the PDF instead. DAMN!
 		$self->multiWarningOutput(@{$self->{warnings}});
 	}
-	if ($self->{hardcopy_format} eq 'tex') {
-		my $r_tex_content = $self->{r_tex_content};
-		return $$r_tex_content;
-	}
+#	if ($self->{hardcopy_format} eq 'tex') {
+#		my $r_tex_content = $self->{r_tex_content};
+#		return $$r_tex_content;
+#	}
 	$self->displayForm();
 }
 
@@ -409,11 +422,31 @@ sub generateHardcopy($) {
 		
 		}
 	} elsif ($self->{hardcopy_format} eq 'tex')    {
-	    $tex = protect_HTML($tex);
-	    #$tex =~ s/\n/\<br\>\n/g;
-	    $tex = join('', ("<pre>\n",$tex,"\n</pre>\n"));
-		$self->{r_tex_content} = \$tex;
 		
+		my $TeXdownloadFileName = "$courseName.$fileNameUser.$fileNameSet.tex";
+	
+		# Location for hardcopy file to be downloaded
+		# FIXME  this should use surePathToTmpFile
+		my $hardcopyTempDirectory = $ce->{courseDirs}->{html_temp}."/hardcopy";
+		mkdir ($hardcopyTempDirectory)  or die "Unable to make $hardcopyTempDirectory" unless -e $hardcopyTempDirectory;
+		my $hardcopyFilePath        =  "$hardcopyTempDirectory/$TeXdownloadFileName";
+		my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$TeXdownloadFileName";
+		$self->{hardcopyFilePath}   =  $hardcopyFilePath;
+		$self->{hardcopyFileURL}    =  $hardcopyFileURL;
+		# write the tex file
+		local *TEX;
+		open TEX, ">", $hardcopyFilePath or die "Failed to open $hardcopyFilePath: $!\n".CGI::br();
+		print TEX $tex;
+		close TEX;
+
+		$pdfFileURL = $hardcopyFileURL;
+
+		rmtree($tempDir);
+
+#	     $tex = protect_HTML($tex);
+#	     #$tex =~ s/\n/\<br\>\n/g;
+#	     $tex = join('', ("<pre>\n",$tex,"\n</pre>\n"));
+#		$self->{r_tex_content} = \$tex;
 	
 	} else {
 	
