@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.49 2004/06/15 18:55:26 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.50 2004/06/16 17:13:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1147,9 +1147,9 @@ sub newUserSet {
 sub countSetUsers {
 	my ($self, $setID) = @_;
 	
-	croak "listSetUsers: requires 1 argument"
+	croak "countSetUsers: requires 1 argument"
 		unless @_ == 2;
-	croak "listSetUsers: argument 1 must contain a set_id"
+	croak "countSetUsers: argument 1 must contain a set_id"
 		unless defined $setID;
 	
 	# inefficient way
@@ -1172,6 +1172,17 @@ sub listSetUsers {
 	
 	return map { $_->[0] } # extract user_id
 		$self->{set_user}->list(undef, $setID);
+}
+
+sub countUserSets {
+	my ($self, $userID) = @_;
+	
+	croak "countUserSets: requires 1 argument"
+		unless @_ == 2;
+	croak "countUserSets: argument 1 must contain a user_id"
+		unless defined $userID;
+		
+	return $self->{set_user}->count($userID, undef);
 }
 
 sub listUserSets {
