@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.14 2004/05/22 01:50:35 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.15 2004/05/22 16:46:03 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 
 require WeBWorK::Utils::ListingDB;
 
-use constant MAX_SHOW => 20;
+use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => 'There are no local sets yet';
 use constant SELECT_SET_STRING => 'Select a Set for This Course';
 use constant SELECT_LOCAL_STRING => 'Select a Local Problem Collection';
@@ -148,6 +148,34 @@ sub get_problem_directories {
   return (\@all_problem_directories);
 }
 
+############# Everyone has a view problems line.  Abstract it
+sub view_problems_line {
+  my $internal_name = shift;
+  my $label = shift;
+  my $r = shift; # so we can get parameter values
+  my $result = CGI::submit(-name=>"$internal_name", -value=>$label);
+
+  my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+  my @active_modes = grep { exists $display_modes{$_} }
+    @{$r->ce->{pg}->{displayModes}};
+  push @active_modes, 'None';
+  # We have our own displayMode since its value may be None, which is illegal
+  # in other modules.
+  my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
+  $result .= '&nbsp;Display&nbsp;Mode:&nbsp;'.CGI::popup_menu(-name=> 'mydisplayMode',
+				      -values=>\@active_modes,
+				      -default=> $mydisplayMode);
+  # Now we give a choice of the number of problems to show
+  my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
+  $result .= '&nbsp;Max. Shown:&nbsp'.
+    CGI::popup_menu(-name=> 'max_shown',
+                    -values=>[5,10,15,20,25,30,50,'All'],
+                    -default=> $defaultMax);
+  
+  return($result);
+}
+
+
 ### The browsing panel has three versions
 #####  Version 1 is local problems
 sub browse_local_panel {
@@ -165,13 +193,13 @@ sub browse_local_panel {
       $library_selected = $default_value;
     }
   }
-  
+  my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
   print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Local Problems: ",
 			CGI::popup_menu(-name=> 'library_sets', 
 					-values=>$list_of_prob_dirs, 
 					-default=> $library_selected),
 			CGI::br(), 
-			CGI::submit(-name=>"view_local_set", -value=>"View Problems"),
+			$view_problem_line,
 		       ));
 }
 
@@ -189,12 +217,13 @@ sub browse_mysets_panel {
     $library_selected = $default_value; 
   } 
 
+  my $view_problem_line = view_problems_line('view_mysets_set', 'View Problems', $self->r);
   print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Browse from: ",
 			CGI::popup_menu(-name=> 'library_sets', 
 					-values=>$list_of_local_sets, 
 					-default=> $library_selected),
 			CGI::br(), 
-			CGI::submit(-name=>"view_mysets_set", -value=>"View This Set"),
+                        $view_problem_line
 		       ));
 }
 
@@ -247,6 +276,7 @@ HERE
 
   unshift @sects, $default_sect;
   my $section_selected =  $r->param('library_sections') || $default_sect;
+  my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
 
   print CGI::Tr(CGI::td({-class=>"InfoPanel"}, 
 			CGI::start_table(),
@@ -279,7 +309,8 @@ HERE
 #                                 CGI::td({-colspan=>2}, CGI::textfield(-name=>"keywords",
 # 								      -default=>"Keywords not implemented yet",
 # 								      -override=>1, -size=>60))),
-			CGI::Tr(CGI::td({-colspan=>3},CGI::submit(-name=>"lib_view", -value=>"View Problems"))),
+			CGI::Tr(CGI::td({-colspan=>3},
+                          $view_problem_line)),
 			CGI::end_table(),
 		       ));
 }
@@ -369,7 +400,7 @@ sub make_data_row {
 
   my $urlpath = $self->r->urlpath;
   my $problem_output = $pg->{flags}->{error_flag} ?
-    CGI::em("This problem produced an error") 
+    CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
     : CGI::div({class=>"RenderSolo"}, $pg->{body_text});
 
 
@@ -420,6 +451,8 @@ sub pre_header_initialize {
   $self->{error}=0;
   my $ce = $r->ce;
   my $db = $r->db;
+  my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
+  $maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
 
 
   my $userName = $r->param('user');
@@ -630,7 +663,7 @@ sub pre_header_initialize {
     @all_past_list = (@all_past_list[0..($first_shown-1)],
 		      @pg_files,
 		      @all_past_list[($last_shown+1)..(scalar(@all_past_list)-1)]);
-    $last_shown = $first_shown+MAX_SHOW -1;
+    $last_shown = $first_shown+$maxShown -1;
     $last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
 
     ## FIXME: you should say something if no problems are selected
@@ -640,11 +673,11 @@ sub pre_header_initialize {
 
   } elsif ($r->param('next_page')) {
     $first_shown = $last_shown+1;
-    $last_shown = $first_shown+MAX_SHOW-1;
+    $last_shown = $first_shown+$maxShown-1;
     $last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
   } elsif ($r->param('prev_page')) {
     $last_shown = $first_shown-1;
-    $first_shown = $last_shown - MAX_SHOW+1;
+    $first_shown = $last_shown - $maxShown+1;
 
     $first_shown = 0 if($first_shown<0);
 
@@ -669,7 +702,7 @@ sub pre_header_initialize {
     @pg_files = @all_past_list;
   } else {
     $first_shown = 0;
-    $last_shown = scalar(@pg_files)<MAX_SHOW ? scalar(@pg_files) : MAX_SHOW;
+    $last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown;
     $last_shown--;		# to make it an array index
   }
   ############# Now store data in self for retreival by body
@@ -721,7 +754,10 @@ sub body {
   my @all_set_defs = @{$self->{all_set_defs}};
 
   my @pg_html=($last_shown>=$first_shown) ?
-    renderProblems($r,$user, @pg_files[$first_shown..$last_shown]) : ();
+    renderProblems(r=> $r,
+                   user => $user,
+                   problem_list => [@pg_files[$first_shown..$last_shown]],
+                   displayMode => $r->param('mydisplayMode')) : ();
 
   ##########  Top part
   print CGI::startform({-method=>"POST", -action=>$r->uri}),
