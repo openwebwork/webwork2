@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.1 2004/05/22 21:22:18 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.2 2004/05/23 01:09:48 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -244,6 +244,8 @@ sub displaySets {
 		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
 		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
 		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
+		return $a->{recitation} cmp $b->{recitation} if $sort_method_name eq 'recitation';
+		return $a->{user_id} cmp $b->{user_id} if $sort_method_name eq 'user_id';
 		if ($sort_method_name =~/p(\d+)/) {
 		    my $left  =  $b->{problemData}->{$1} ||0;
 		    my $right =  $a->{problemData}->{$1} ||0;
@@ -410,8 +412,8 @@ sub displaySets {
 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
 			 'Problems'.CGI::br().$problem_header,
 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
-			 'Recitation',
-			 'login_name',
+			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'recitation'})},'Recitation'),
+			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'user_id'})},'Login Name'),
 			 ])
 
 		);
