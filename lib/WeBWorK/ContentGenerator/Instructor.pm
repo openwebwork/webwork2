@@ -60,19 +60,19 @@ sub assignProblemToUser {
 }
 
 sub assignSetToUser {
-	my ($self, $user, $globalSet) = @_;
+	my ($self, $userID, $globalSet) = @_;
 	my $db = $self->{db};
 	my $userSet = $db->{set_user}->{record}->new;
 	my $setID = $globalSet->set_id;
 
-	$userSet->user_id($user);
+	$userSet->user_id($userID);
 	$userSet->set_id($setID);
 	eval {$db->addUserSet($userSet)};
 	warn $@ if $@ and not $@ =~ m/user set exists/;
 	
 	foreach my $problemID ($db->listGlobalProblems($setID)) {
 		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
-		$self->assignProblemToUser($user, $problemRecord);
+		$self->assignProblemToUser($userID, $problemRecord);
 	}
 }
 
