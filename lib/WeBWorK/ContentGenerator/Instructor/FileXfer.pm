@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.7 2004/06/14 20:23:32 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.8 2004/07/08 14:53:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -267,6 +267,7 @@ sub body {
 	#my $setDefsRef    = $self->{setDefs}    || [ $self->getDefList ];
 	
 	my $templateSubDir    = $r->param("templateSubDir");
+	$templateSubDir = "" if $templateSubDir and $templateSubDir eq ' Top'; #deal with special value for top directory
 	my $classlistsRef     = [ $self->getCSVList         ];
 	my $setDefsRef        = [ $self->getDefList         ];
 	my $scoringFileRef    = [ $self->getScoringFileList ];
