@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.34 2004/05/12 14:29:36 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.35 2004/05/18 05:19:33 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -134,7 +134,11 @@ sub pre_header_initialize {
 				}
 			);
 		};
-		
+
+		# don't redirect on bad save attempts
+		# FIXME: even with an error we still open a new page because of the target specified in the form
+		return if $self->{failure};
+				
 		if ($viewURL) {
 			$self->reply_with_redirect($viewURL);
 		} else {
@@ -149,10 +153,10 @@ sub initialize  {
 	
 	my $setName = $r->urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
-	
+
 	# if we got to initialize(), then saveFileChanges was not called in pre_header_initialize().
-	# therefore we call it here:
-	$self->saveFileChanges($setName, $problemNumber);
+	# therefore we call it here unless there has been an error already:
+	$self->saveFileChanges($setName, $problemNumber) unless $self->{failure};
 }
 
 sub title {
@@ -203,6 +207,7 @@ sub body {
 	my $force_field = defined($r->param('sourceFilePath')) ?
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$r->param('sourceFilePath')) : '';
+			    
 	return CGI::p($header),
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
 		# THIS IS BECAUSE TARGET IS NOT A PARAMETER OF <FORM>!!!!!!!!
@@ -408,7 +413,7 @@ sub saveFileChanges {
 		# later we will unlink (delete) the current temporary file
 	 	# store new permanent file name in the $self->currentSourceFilePath for use in body 
 		$problemContents = $r->param('problemContents');
-		$currentSourceFilePath = $ce->{courseDirs}->{templates} . '/' .$r->param('save_to_new_file'); 		
+		$currentSourceFilePath = $ce->{courseDirs}->{templates} . '/' . $r->param('save_to_new_file'); 		
 		$self->{currentSourceFilePath} = $currentSourceFilePath;	
 		$self->{problemPath} = $currentSourceFilePath;
 	} else {
@@ -425,18 +430,25 @@ sub saveFileChanges {
 	#	$problemContents =~ s/\n\n/\n<p>\n/g;
 	#}
 	
+
 	##############################################################################
 	# write changes to the approriate files
 	# FIXME  make sure that the permissions are set correctly!!!
 	# Make sure that the warning is being transmitted properly.
 	##############################################################################
-	
+
 	# FIXME  set a local state rather continue to call on the submit button.
-	if (defined $submit_button and $submit_button eq 'Save as' and defined $currentSourceFilePath and -e $currentSourceFilePath) {
-		warn "File $currentSourceFilePath exists.  File not saved.";
+	if (defined $submit_button and $submit_button eq 'Save as' and $r->param('save_to_new_file') !~ /\w/) {
+		# setting $self->{failure} stops any future redirects
+		$self->{failure} = "Please specify a file to save to.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Please specify a file to save to.")));
+	} elsif (defined $submit_button and $submit_button eq 'Save as' and defined $currentSourceFilePath and -e $currentSourceFilePath) {
+		# setting $self->{failure} stops any future redirects
+		$self->{failure} = "File $currentSourceFilePath exists.  File not saved.";
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("File $currentSourceFilePath exists.  File not saved.")));
 	} else {
-	    # make sure any missing directories are created
-	    $currentSourceFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$currentSourceFilePath);
+		# make sure any missing directories are created
+		$currentSourceFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$currentSourceFilePath);
 		eval {
 			local *OUTPUTFILE;
 			open OUTPUTFILE, ">", $currentSourceFilePath
@@ -444,9 +456,8 @@ sub saveFileChanges {
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;
 		};  # any errors are caught in the next block
-
 	}
-	
+
 	###########################################################
 	# Catch errors in saving files,  clean up temp files
 	###########################################################
@@ -456,10 +467,11 @@ sub saveFileChanges {
 	if ($openTempFileErrors) {
 		$self->{failure} = "Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly. See log for details.";
 		#diagnose errors:
-		warn "Unable to write to $currentSourceFilePath: $openTempFileErrors";
-		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath; #FIXME 
-		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
-		warn "The file $currentSourceFilePath does not have write permissions. \n"
+		# FIXME: these error messages tend to be redundand
+		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Unable to write to $currentSourceFilePath: $openTempFileErrors")));
+		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("The file $currentSourceFilePath exists. \n "))) if -e $currentSourceFilePath; #FIXME 
+		#$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("The file $currentSourceFilePath cannot be found. \n "))) unless -e $currentSourceFilePath;
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly.")))
 		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
 	} else {
 		$self->{success} = "Problem saved to: $currentSourceFilePath";
