@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.48 2004/06/14 22:58:55 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.49 2004/06/15 18:55:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1714,8 +1714,8 @@ sub getMergedSets {
 		next unless defined $UserSet and defined $GlobalSet;
 		foreach my $field (@commonFields) {
 			#next if defined $UserSet->$field;
-			# ok, now we're testing for emptiness instead of definedness.
-			next if $UserSet->$field ne "";
+			# ok, now we're testing for emptiness as well as definedness.
+			next if defined $UserSet->$field and $UserSet->$field ne "";
 			$UserSet->$field($GlobalSet->$field);
 		}
 	}
@@ -1817,8 +1817,8 @@ sub getMergedProblems {
 			# Shouldn't we be testing for emptiness rather than definedness?
 			# I think the spec says that if a field is EMPTY the global value is used.
 			#next if defined $UserProblem->$field;
-			# ok, now we're testing for emptiness instead of definedness.
-			next if $UserProblem->$field ne "";
+			# ok, now we're testing for emptiness as well as definedness.
+			next if defined $UserProblem->$field and $UserProblem->$field ne "";
 			$UserProblem->$field($GlobalProblem->$field);
 		}
 	}
