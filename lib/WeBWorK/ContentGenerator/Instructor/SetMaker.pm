@@ -38,8 +38,8 @@ use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => 'There are no local sets yet';
 use constant SELECT_SET_STRING => 'Select a Set for This Course';
 use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
-use constant MY_PROBLEMS => '	 My Problems	';
-use constant MAIN_PROBLEMS => '	 Main Problems	';
+use constant MY_PROBLEMS => '  My Problems  ';
+use constant MAIN_PROBLEMS => '  Main Problems  ';
 
 ## Flags for operations on files
 
