@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.7 2003/12/31 03:28:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.8 2004/03/04 21:05:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -16,12 +16,6 @@
 
 package WeBWorK::ContentGenerator::GatewayQuiz;
 use base qw(WeBWorK::ContentGenerator);
-use File::Path qw(rmtree);
-use WeBWorK::Form;
-use WeBWorK::PG;
-use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
-use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 
 =head1 NAME
 
@@ -33,13 +27,19 @@ problem set. (modifying this from ProblemSet.pm)
 use strict;
 use warnings;
 use CGI qw();
+use File::Path qw(rmtree);
+use WeBWorK::Form;
+use WeBWorK::PG;
+use WeBWorK::PG::IO;
+use WeBWorK::Utils qw(writeLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
+use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 
 sub pre_header_initialize {
 	my ($self)     = @_;
-	my $r                    = $self->{r};
+	my $r                    = $self->r;
 	my $setName = $r->urlpath->arg("setID");
-	my $courseEnv            = $self->{ce};
-	my $db                   = $self->{db};
+	my $courseEnv            = $r->ce;
+	my $db                   = $r->db;
 	my $userName             = $r->param('user');
 	my $effectiveUserName    = $r->param('effectiveUser');
 	my $key					 = $r->param('key');
@@ -184,10 +184,10 @@ sub pre_header_initialize {
 }
 sub initialize {
 	my ($self) = @_;
-	my $courseEnvironment = $self->{ce};
-	my $r = $self->{r};
+	my $r = $self->r;
+	my $courseEnvironment = $r->ce;
 	my $setName = $r->urlpath->arg("setID");
-	my $db = $self->{db};
+	my $db = $r->db;
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser"); 
 	
@@ -212,21 +212,6 @@ sub initialize {
 	$self->{isOpen} = time >= $set->open_date || $permissionLevel > 0;
 }
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		$setName => "",
-	);
-}
-
 sub nav {
 	my ($self, $args) = @_;
 	
@@ -240,34 +225,17 @@ sub nav {
 	
 	return $self->navMacro($args, $tail, @links);
 }
-	
-
-sub siblings {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	return "";
-}
-
-sub title {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	return $setName;
-}
-
-
 
 sub body {
-	my $self			= shift;
+	my ($self)			= @_;
 	
 		return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."))
 		unless $self->{isOpen};
 	
 	# unpack some useful variables
 	
-	my $r               = $self->{r};
-	my $db              = $self->{db};
+	my $r               = $self->r;
+	my $db              = $r->db;
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $permissionLevel = $self->{permissionLevel};
@@ -322,7 +290,7 @@ sub body {
 #	print CGI::end_table();
 	
 	# feedback form
-	my $ce = $self->{ce};
+	my $ce = $r->ce;
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";
@@ -339,8 +307,8 @@ sub body {
 	return "";
 }
 
-sub viewOptions($) {
-	my $self = shift;
+sub viewOptions {
+	my ($self) = @_;
 	my $displayMode = $self->{displayMode};
 	my %must = %{ $self->{must} };
 	my %can  = %{ $self->{can}  };
@@ -391,10 +359,11 @@ sub viewOptions($) {
 		CGI::submit(-name=>"redisplay", -label=>"Save Options"),
 	);
 }
+
 sub options {
-	my $self = shift;
+	my ($self) = @_;
 	return join("",
-		CGI::start_form("POST", $self->{r}->uri),
+		CGI::start_form("POST", $self->r->uri),
 		$self->hidden_authen_fields,
 		CGI::hr(), 
 		CGI::start_div({class=>"viewOptions"}),
@@ -411,9 +380,9 @@ sub options {
 ############################################################################
 sub getProblemHTML {
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	my $key =  $r->param('key');
 	# Should we provide a default user ? I think not FIXME
 	# $effectiveUser = $self->{effectiveUser} unless defined($effectiveUser);
