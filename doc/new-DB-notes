@@ -16,6 +16,18 @@ set_user and problem_user tables have been added, containing student-specific da
 
 a problem_order field has been added to the set and set_user tables. It contains a definition of how the problems in each set will be ordered.
 
+RECORD CREATION DEPENDANCIES
+----------------------------
+
+    password -> user
+  permission -> user
+         key -> user
+	user -> 
+         set -> 
+    set_user -> user, set
+     problem -> set
+problem_user -> set_user, problem
+
 TABLE STRUCTURE IMPLEMENTATION IN HASH-BASED DATABASES
 ------------------------------------------------------
 

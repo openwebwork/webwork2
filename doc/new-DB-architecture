@@ -10,7 +10,7 @@ TOP LAYER: DB
 The top layer of the architecture is the DB module. It provides the methods
 listed in doc/new-DB-API, and uses schema modules (via tables) to implement those methods.
 
-                  / list* new* get* put* delete* \                   <- api
+              / list* exists* new* get* put* delete* \               <- api
 +------------------------------------------------------------------+
 |                                DB                                |
 +------------------------------------------------------------------+
@@ -84,6 +84,9 @@ $record   - an object representing a record in the table
 @tables = tables()
 	returns list of tables supported.
 
+$style = style()
+	returns the required driver style.
+
 $handle = new($driver, $table)
 	creates a schema interface for $table, using the driver interface
 	provided by $driver. returns a false value if the $driver does not 
@@ -92,6 +95,9 @@ $handle = new($driver, $table)
 @keys = $handle->list()
 	returns a list containing the key of each record in the table. the
 	elements of @keys are \@keyparts.
+
+$result = $handle->exists(@keyparts)
+	returns whether a record matching @keyparts exists in the table.
 
 $result = $handle->new($record)
 	attempts to add $record to the table. returns a false value if a record
@@ -116,12 +122,11 @@ Driver API
 COMMON
 ------
 
-@styles = styles()
-	returns the styles supported by the driver.
+$style = style()
+	returns the supported driver style.
 
 $handle = new($source)
-	creates a new interface to the data contained in $source. If $source is
-	malformed of can't be accessed, a false value is returned.
+	creates a new interface to the data contained in $source.
 
 $result = $handle->connect($mode)
 	connects to the data source with access mode $mode. returns a false

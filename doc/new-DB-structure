@@ -4,6 +4,8 @@ DB table structure
 
 The DB API models an underlying table structure that may or may not literally exist, depending on what transformations the schema modules make. However, this is the table structure that is presented to users of the DB module.
 
+The order of key fields in this list is the order that arguments should be passed to the exists(), get(), and delete() schema functions, and the order of the values in the return value of the list() schema function.
+
 *  indicates a key
 => indicates a relation
 !  indicates an override field
@@ -54,6 +56,7 @@ problem
 	max_attempts
 problem_user
 	user_id		*,=> user.id
+	set_id		*,=> set.id
 	problem_id	*,=> problem.id
 	source_file	!
 	value		!
@@ -64,4 +67,3 @@ problem_user
 	last_answer	~
 	num_correct	~
 	num_incorrect	~
-

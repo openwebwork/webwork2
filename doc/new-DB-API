@@ -43,37 +43,37 @@ user
 set
 
 	listGlobalSets()
-	newGlobalSet($Set)
+	newGlobalSet($GlobalSet)
 	getGlobalSet($setID)
-	putGlobalSet($Set)
+	putGlobalSet($GlobalSet)
 	deleteGlobalSet($setID)
-		=>deleteGlobalProblem($setID, *)
-		=>deleteUserSet(*, $setID)
+		=> deleteGlobalProblem($setID, *)
+		=> deleteUserSet(*, $setID)
 
 set_user
 
 	listUserSets($userID)
-	newUserSet($Set)
+	newUserSet($UserSet)
 	getUserSet($userID, $setID)
-	putUserSet($Set)
+	putUserSet($UserSet)
 	deleteUserSet($userID, $setID)
 		=> deleteUserProblem($userID, $setID, *)
 
 problem
 
 	listGlobalProblems($setID)
-	newGlobalProblem($Problem)
+	newGlobalProblem($GlobalProblem)
 	getGlobalProblem($setID, $problemID)
-	putGlobalProblem($Problem)
+	putGlobalProblem($GlobalProblem)
 	deleteGlobalProblem($setID, $problemID)
 		=> deleteUserProblem(*, $setID, $problemID)
 
 problem_user
 
 	listUserProblems($userID, $setID)
-	newUserProblem($Problem)
+	newUserProblem($UserProblem)
 	getUserProblem($userID, $setID, $problemID)
-	putUserProblem($Problem)
+	putUserProblem($UserProblem)
 	deleteUserProblem($userID, $setID, $problemID)
 
 set+set_user
