@@ -395,13 +395,14 @@ sub pre_load_macro_files {
 #    All other files are loaded with restriction
 #     
 			my $store_mask; 
-			if ($fileName =~ /PG.pl|dangerousMacros.pl|IO.pl/) {
+			my $unrestricted_files  = "PG.pl|dangerousMacros.pl|IO.pl";
+			if ($fileName =~ /$unrestricted_files/) {
 	        	$store_mask = $cached_safe_cmpt->mask();
 				$cached_safe_cmpt ->mask(Opcode::empty_opset());
 	        } 			
 			$cached_safe_cmpt -> reval("package main;\n" .$string);
 			warn "preload Macros: errors in compiling $macro_file_name:<br> $@" if $@; 
-			if ($fileName eq 'PG.pl') {
+			if ($fileName =~ /$unrestricted_files/) {
 	        	$cached_safe_cmpt ->mask($store_mask);
 	        	warn "mask restored after $fileName" if $debugON;
 	        }
