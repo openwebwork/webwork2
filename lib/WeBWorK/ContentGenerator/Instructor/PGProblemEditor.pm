@@ -47,13 +47,13 @@ sub go {
 		my $displayMode		=	($r->param('displayMode')) ? $r->param('displayMode') : '';
 
 		my $viewURL  		= 	"http://$hostname:$port";
-		$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
+		$viewURL		   .= 	"/webwork/$courseName/$setName/$problemNumber/?";
 		$viewURL		   .=	$self->url_authen_args;
 		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
 		$viewURL		   .=	"&editMode=temporaryFile";
 		$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
 		$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
-		$viewURL		   .=   '&editErrors='.$self->{ce}->{editErrors};																				 # of problem being viewed.
+		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 		$r->header_out(Location => $viewURL );
 		return REDIRECT;
 	} else {
@@ -86,15 +86,26 @@ sub initialize {
 	# FIXME  there is a discrepancy in the way that the problems are found.
 	# FIXME  more error checking is needed in case the problem doesn't exist.
 	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
-	my $problem_record          = 	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	my $problem_record			=	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	# If there is no global_user defined problem, (i.e. the sets haven't been assigned yet), then look for a global version of the problem.
+	$problem_record			    =	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
+	die "Cannot find a problem record for set $setName / problem $problemNumber" 
+		unless defined($problem_record);
 	my $templateDirectory		=	$ce->{courseDirs}->{templates};
 	my $problemPath				=	$templateDirectory."/".$problem_record->source_file;
 	my $editFileSuffix			=	'tmp';
 	my $submit_button			= 	$r->param('submit');
 
 	my $displayMode	  			= 	( defined($r->param('displayMode')) 	) ? $r->param('displayMode') : $ce->{pg}->{options}->{displayMode};
-	my $problemSeed				=	( defined($r->param('problemSeed'))	) ? $r->param('problemSeed') : $problem_record->problem_seed;	
-	$problemSeed				=	'1234' unless defined($problemSeed) and $problemSeed =~/\S/;
+	# try to get problem seed from the input parameter, or from the problem record
+	my $problemSeed;
+	if ( defined($r->param('problemSeed'))	) {
+		$problemSeed            =   $r->param('problemSeed');	
+	} elsif ($problem_record->can('problem_seed')) {
+		$problemSeed            =   $problem_record->problem_seed;
+	}
+	# make absolutely sure that the problem seed is defined, if it hasn't been.
+	$problemSeed				=	'123456' unless defined($problemSeed) and $problemSeed =~/\S/;
 	
 	my $problemContents	= '';
 	my $currentSourceFilePath	=	'';
