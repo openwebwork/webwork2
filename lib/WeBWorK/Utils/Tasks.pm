@@ -35,6 +35,9 @@ It also provides functions which are useful for taking problems which are
 not part of any set and making live versions of them, or loading them into
 the editor.
 
+Finally, it provides a function to produce javascript entries for aligning
+a dvipng image.
+
 =cut
 
 # Ultimately, this may provide functions for turning problems into hardcopy
@@ -53,6 +56,7 @@ our @EXPORT_OK = qw(
 	renderProblems
 	fake_set
 	fake_problem
+	print_dvipng_script
 );
 
 use constant fakeSetName => "Undefined_Set";
@@ -170,6 +174,29 @@ sub renderProblems {
   }
   return(@output); 
 } 
+
+=item print_dvipng_script($imagegen)
+
+Input is the imagegen object from a pg object, and it prints a bunch
+of javascript commands to align images.
+
+=cut
+
+sub print_dvipng_script {
+  my $imagegen = shift;
+  if($imagegen) {
+    print '<script><!--'."\n";
+    for my $imageid (keys %{$imagegen->{depths}}) {
+      my $depth = $imagegen->{depths}->{$imageid};
+      next if $depth eq 'none';  # signal that we don't know this one
+      $depth = 0-$depth;         # avoid "-0" while negating
+      print 'document.getElementById("'. $imageid .
+            '").setAttribute("style", "vertical-align:'. $depth.'px")'."\n";
+    }
+    print ' --> </script>'."\n";
+  }
+}
+
 
 =head1 AUTHOR
 
