@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.25 2004/01/18 00:12:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.26 2004/01/21 00:17:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,23 +127,23 @@ sub pre_header_initialize {
 		$self->{noContent} =  1;  # forces redirect
 		return;
     };
-    defined($r->param('assign-passwords')) && do {
-  		my @userList        = $r->param("classList");
-		# can only become the first user listed.
-		my $effectiveUser   = shift @userList;
-		my @setList         = $r->param("setList");
-		my $setName         =  shift @setList;
-		my $root            = $ce->{webworkURLs}->{root};
-		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
-		#FIXME  does the display mode need to be defined?
-		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
-		# even that might not work with every browser since there are two effective User assignments.
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
-		return;
-    };
+#     defined($r->param('assign-passwords')) && do {
+#   		my @userList        = $r->param("classList");
+# 		# can only become the first user listed.
+# 		my $effectiveUser   = shift @userList;
+# 		my @setList         = $r->param("setList");
+# 		my $setName         =  shift @setList;
+# 		my $root            = $ce->{webworkURLs}->{root};
+# 		my $courseName      = $ce->{courseName};
+# 
+# 		my $uri="$root/$courseName/options/?effectiveUser=$effectiveUser&".$self->url_authen_args;
+# 		#FIXME  does the display mode need to be defined?
+# 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
+# 		# even that might not work with every browser since there are two effective User assignments.
+# 		$r->header_out(Location => $uri);
+# 		$self->{noContent} =  1;  # forces redirect
+# 		return;
+#     };
     defined($r->param('set-stats')) && do {
      	my $root            = $ce->{webworkURLs}->{root};
 		my $courseName      = $ce->{courseName};
@@ -155,14 +155,28 @@ sub pre_header_initialize {
 		$self->{noContent} =  1;  # forces redirect
 		return;
     };
-    defined($r->param('drop-students')) && do {
-    #FIXME  this operation should be made faster
-    	my $root            = $ce->{webworkURLs}->{root};
+#     defined($r->param('drop-students')) && do {
+#     #FIXME  this operation should be made faster
+#     	my $root            = $ce->{webworkURLs}->{root};
+# 		my $courseName      = $ce->{courseName};
+# 		my @setList        = $r->param("setList");
+# 		# can only become the first user listed.
+# 		my $setName         = shift @setList;
+# 		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
+# 		$r->header_out(Location => $uri);
+# 		$self->{noContent} =  1;  # forces redirect
+# 		return;
+#     };
+    defined($r->param('assign-student-sets')) && do {
+      	my $root            = $ce->{webworkURLs}->{root};
 		my $courseName      = $ce->{courseName};
-		my @setList        = $r->param("setList");
+		my @userList        = $r->param("classList");
+		# can act on the first user listed.
+		my $student         = shift @userList;
+		my @setList         = $r->param("setList");
 		# can only become the first user listed.
 		my $setName         = shift @setList;
-		my $uri="$root/$courseName/instructor/users/?".$self->url_authen_args;
+		my $uri="$root/$courseName/instructor/users/$student/sets//?editForUser=$student&".$self->url_authen_args;
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -223,8 +237,8 @@ sub pre_header_initialize {
     defined($r->param('add-students')) && do {
 		my $root            = $ce->{webworkURLs}->{root};
 		my $courseName      = $ce->{courseName};
-
-		my $uri="$root/$courseName/instructor/add_users/?".$self->url_authen_args;
+        my $num_of_students = $r->param('number_of_students');
+		my $uri="$root/$courseName/instructor/add_users/?number_of_students=$num_of_students&".$self->url_authen_args;
 		$r->header_out(Location => $uri);
 		$self->{noContent} =  1;  # forces redirect
 		return;
@@ -344,9 +358,120 @@ sub body {
 	my $filexferURL = "files/?" . $self->url_args;
 	my $actionURL = $r->uri;
 	
-	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
+	return CGI::em('You are not authorized to access the Instructor tools.') 
+	     unless $authz->hasPermissions($user, 'access_instructor_tools');
 	
-		print join("",
+	
+	
+	print join("",
+		CGI::p({align=>'center',style=>'font-weight:bold'},'Select student and/or set, then click on action.'),
+		CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::start_table({-border=>2,-cellpadding=>5}),	
+		CGI::Tr({ -align=>'center', style=>'background-color:#99FFFF'},
+			CGI::td({colspan=>1},
+					CGI::input({type=>'submit',value=>'Add',name=>'add-students'}),
+					CGI::input({name=>'number_of_students', value=>1,size => 3}), 
+					" student(s). "
+			),
+			CGI::td({colspan=>1},
+					CGI::input({type=>'submit',value=>'Send email...',name=>'send-email'}),
+			),
+			CGI::td({colspan=>2},
+				CGI::a({href=>$userEditorURL}, "Class List"),' | ',
+				CGI::a({href=>$problemSetEditorURL}, "Set List"),' | ',
+				CGI::a({-href=>$filexferURL}, "File Transfer"),					
+			
+			),
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td({colspan=>1},[
+					
+					CGI::input({type=>'submit',value=>'Reset password',name=>'reset-password'}),
+#					CGI::input({type=>'submit',value=>'Assign passwords...',name=>'assign-passwords'}), 
+                    CGI::input({type=>'submit',value=>'Act as student...',name=>'act-as-student'}),
+
+				],			
+			),
+			CGI::td({colspan=>2},
+				
+				CGI::input({type=>'submit',value=>' Edit set data  --- assign set to students  ',name=>'edit-sets'}),
+			),		
+		),
+
+		CGI::Tr({ -align=>'center'},
+			CGI::td({colspan=>1},[
+					CGI::input({type=>'submit',value=>'View  student stats...',name=>'student-stats'}),
+					CGI::input({type=>'submit',value=>'Edit  student(s) class data...',name=>'edit-class-data'}),					
+				]
+			),
+			CGI::td({colspan=>1},[
+					CGI::input({type=>'submit',value=>' View selected set stats... ',name=>'set-stats'}),
+					CGI::input({type=>'submit',value=>' Score selected sets... ',name=>'score-sets'}),
+				],
+			),
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td({colspan=>2},[
+					CGI::input({type=>'submit',value=>' Assign sets to selected student ',name=>'assign-student-sets'}),
+					CGI::input({type=>'submit',value=>' Over-ride selected student/set data... ',name=>'edit-students-sets'}),					
+				]
+			),
+		),
+		CGI::Tr({ -align=>'left'},
+		   	CGI::td({colspan=>2,style=>'font-size:smaller'},
+					CGI::input({type=>'submit',value=>'Sort',name=>'sort_students'}),
+					CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
+							-labels=>{id=>'Id',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
+							-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
+							-linebreak=>0
+						),
+			),
+			CGI::td({colspan=>2,style=>'color:red'},'Select student and/or set below, then click on actions above.'
+			),
+
+		),
+# 		CGI::Tr({ -align=>'center'},
+# 			CGI::td({colspan=>4},'Select student and/or set below, then click on action above.',
+# 			),
+# 		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td({colspan=>2},[
+					$self->popup_user_form,
+					$self->popup_set_form,
+				]
+			)
+		
+		),
+# 		CGI::Tr({ -align=>'center'},
+# 			CGI::td({colspan=>1},[
+# 					
+# 					CGI::input({type=>'submit',value=>'Edit student(s)/set(s) dates',name=>'student-dates'}),
+# 					'&nbsp;',
+# 				]
+# 			),
+# 			CGI::td({colspan=>2}, 
+# 				
+# 				
+# 				
+# 			)
+# 		
+# 		),
+
+# 		CGI::Tr({ -align=>'center'},
+# 			CGI::td({colspan=>2},[
+# 					CGI::input({type=>'submit',value=>'Drop student(s)',name=>'drop-students'}),
+# 					'&nbsp;'
+# 					]
+# 			),
+# 			
+# 		
+# 		),
+
+		CGI::end_table(),
+		CGI::end_form(),
+	);
+	print join("",CGI::hr(),
 		CGI::start_table({-border=>2,-cellpadding=>20}),
 		CGI::Tr({-align=>'center'},
 			CGI::td([
@@ -368,79 +493,6 @@ sub body {
 			"\n",
 			),
 			CGI::end_table(),
-		);
-	
-	print join("",
-		CGI::p('Quick access to common instructor tools.'),
-		CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::start_table({-border=>2,-cellpadding=>5}),	
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>2},[
-					CGI::input({type=>'submit',value=>'Add students...',name=>'add-students'}),
-					CGI::input({type=>'submit',value=>'Send email...',name=>'send-email'}),
-				]
-			),
-
-		
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>1},[
-					
-					CGI::input({type=>'submit',value=>'Reset password',name=>'reset-password'}),
-					CGI::input({type=>'submit',value=>'Assign passwords...',name=>'assign-passwords'}), 
-					CGI::input({type=>'submit',value=>'View set statistics...',name=>'set-stats'}),
-					CGI::input({type=>'submit',value=>'Edit set(s) dates...',name=>'edit-set-dates'})
-				]
-			)
-		
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>1},[
-					CGI::input({type=>'submit',value=>'View student statistics...',name=>'student-stats'}),
-					CGI::input({type=>'submit',value=>'Edit class data for students...',name=>'edit-class-data'}),
-					CGI::input({type=>'submit',value=>'Edit set(s) data...',name=>'edit-sets'}),
-					CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
-				]
-			),
-		),
-
-		
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>2},[
-					$self->popup_user_form,
-					$self->popup_set_form,
-				]
-			)
-		
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>1},[
-					
-					CGI::input({type=>'submit',value=>'Edit student(s)/set(s) dates',name=>'student-dates'}),
-					CGI::input({type=>'submit',value=>'Act as student in set...',name=>'act-as-student'}),
-				]
-			),
-			CGI::td({colspan=>2}, 
-				CGI::input({type=>'submit',value=>'Edit student(s) data for selected set(s)...',name=>'edit-students-sets'}),
-				
-				
-			)
-		
-		),
-
-		CGI::Tr({ -align=>'center'},
-			CGI::td({colspan=>2},[
-					CGI::input({type=>'submit',value=>'Drop student(s)',name=>'drop-students'}),
-					'&nbsp;'
-					]
-			),
-			
-		
-		),
-
-		CGI::end_table(),
-		CGI::end_form(),
 	);
 	return "";
 
@@ -487,14 +539,15 @@ sub addStudentForm {
 
 }
 sub popup_user_form {
-	my $self  = shift;
-	my $r     = $self->{r};
-	my $authz = $self->{authz};
-	my $user = $r->param('user');
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
+	my $self          = shift;
+	my $r             = $self->{r};
+	my $authz         = $self->{authz};
+	my $user          = $r->param('user');
+	my $db            = $self->{db};
+	my $ce            = $self->{ce};
+	my $root          = $ce->{webworkURLs}->{root};
+	my $courseName    = $ce->{courseName};
+	my $sortMethod    = $r->param('sort_by') || '';
 
  #     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
@@ -502,8 +555,23 @@ sub popup_user_form {
     my @users                 = ();
 	my $ra_user_records       = $self->{ra_user_records};
 	my %classlistLabels       = ();#  %$hr_classlistLabels;
-	my @user_records   = sort { ( lc($a->section) cmp lc($b->section) ) || 
-	                     ( lc($a->last_name) cmp lc($b->last_name ))  } @{$ra_user_records};
+	
+	##########################################################
+	my @user_records  = @{$ra_user_records};
+	if ( $r->param("sort_by") ) {
+		my $sort_method = $r->param("sort_by");
+		if ($sort_method eq 'section') {
+			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} elsif ($sort_method eq 'recitation') {
+			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} elsif ($sort_method eq 'alphabetical') {
+			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
+		} 
+	} else {
+		@user_records   = sort { ( lc($a->section) cmp lc($b->section) ) || 
+	                     ( lc($a->last_name) cmp lc($b->last_name ))  } @user_records;
+	}
+
 	foreach my $ur (@{user_records}) {
 		$classlistLabels{$ur->user_id} = $ur->last_name. ', '. $ur->first_name.'   -   '.$ur->section.' '.$ur->user_id;
 		push(@users, $ur->user_id);
