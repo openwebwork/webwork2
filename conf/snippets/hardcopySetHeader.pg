@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/snippets/setHeader.pg,v 1.5 2004/03/04 04:43:44 gage Exp $
+# $CVSHeader: webwork-modperl/conf/snippets/hardcopySetHeader.pg,v 1.3 2004/04/22 20:47:24 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,11 +36,14 @@ BEGIN_TEXT
 $BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedDueDate. $EBOLD
 
 $PAR
-(This is early Monday morning, so it needs to be done SUNDAY night!)
-Remember to get this done early! 
-$PAR
-The \{ htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home page") \} 
-for the course contains the syllabus, grading policy, and other information.  
+The 
+(* home page *)
+\{ 
+#htmlLink(qq!http://www.math.rochester.edu/courses/161/home/!,"home
+page") 
+\} 
+for the course contains the syllabus, grading policy and other
+information.  
 $PAR
 END_TEXT
 
