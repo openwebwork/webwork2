@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::PG::Local;
+use base qw(WeBWorK::PG);
 
 =head1 NAME
 
@@ -26,19 +27,17 @@ the WeBWorK::PG module for information about the API.
 use strict;
 use warnings;
 use File::Path qw(rmtree);
-use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::Translator;
-use WeBWorK::Utils qw(readFile formatDateTime writeTimingLogEntry makeTempDirectory);
+use WeBWorK::Utils qw(readFile writeTimingLogEntry);
+
 BEGIN {
-
-#	This safe compartment is used to read the large macro files such as 
-#   PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
-#   future calls have preloaded versions of these large files.
-#   This saves a significant amount of time.
-
+	# This safe compartment is used to read the large macro files such as
+	# PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
+	# future calls have preloaded versions of these large files. This saves a
+	# significant amount of time.
 	$WeBWorK::PG::Local::safeCache = new Safe;
-#	warn "Creating new Safe cache compartment ".$WeBWorK::PG::Local::safeCache->root;
 }
+
 sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
@@ -52,7 +51,7 @@ sub new {
 		$formFields, # in CGI::Vars format
 		$translationOptions, # hashref containing options for the
 		                     # translator, such as whether to show
-				     # hints and the display mode to use
+		                     # hints and the display mode to use
 	) = @_;
 	
 	# write timing log entry
@@ -91,7 +90,7 @@ sub new {
 	
 	# set the environment (from defineProblemEnvir)
 	#warn "PG: setting the environment (from defineProblemEnvir)\n";
-	my $envir = defineProblemEnvir(
+	my $envir = $class->defineProblemEnvir(
 		$ce,
 		$user,
 		$key,
@@ -106,48 +105,51 @@ sub new {
 	# initialize the Translator
 	#warn "PG: initializing the Translator\n";
 	$translator->initialize();
-#	$translator->dumpSafe;   # debugging code
-###############################################################################
-#   Preload the macros files which are used routinely:  PG.pl, dangerousMacros.pl, IO.pl
-#   PGbasicmacros.pl and PGanswermacros.pl
-#   Preloading the last two files safes a significant amount of time.
-###############################################################################
+	
+	# Preload the macros files which are used routinely: PG.pl,
+	# dangerousMacros.pl, IO.pl, PGbasicmacros.pl, and PGanswermacros.pl
+	# (Preloading the last two files safes a significant amount of time.)
+	# 
+	# IO.pl, PG.pl, and dangerousMacros.pl are loaded using
+	# unrestricted_load This is hard wired into the
+	# Translator::pre_load_macro_files subroutine. I'd like to change this
+	# at some point to have the same sort of interface to global.conf that
+	# the module loading does -- have a list of macros to load
+	# unrestrictedly.
+	# 	
+	# This has been replaced by the pre_load_macro_files subroutine.  It
+	# loads AND caches the files. While PG.pl and dangerousMacros are not
+	# large, they are referred to by PGbasicmacros and PGanswermacros.
+	# Because these are loaded into the cached name space (e.g.
+	# Safe::Root1::) all calls to, say NEW_ANSWER_NAME are actually calls
+	# to Safe::Root1::NEW_ANSWER_NAME.  It is useful to have these names
+	# inside the Safe::Root1: cached safe compartment.  (NEW_ANSWER_NAME
+	# and all other subroutine names are also automatically exported into
+	# the current safe compartment Safe::Rootx::
+	# 
+	# The headers of both PGbasicmacros and PGanswermacros has code that
+	# insures that the constants used are imported into the current safe
+	# compartment.  This involves evaluating references to, say
+	# $main::displayMode, at runtime to insure that main refers to
+	# Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main::
+	# at compile time.
+	# 
+	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:
+	eval{$translator->pre_load_macro_files(
+		$WeBWorK::PG::Local::safeCache,
+		$ce->{pg}->{directories}->{macros}, 
+		'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl'
+	)};
+    warn "Error while preloading macro files: $@" if $@;
 
-	#  IO.pl, PG.pl, and dangerousMacros.pl are loaded using unrestricted_load
-	# This is hard wired into the Translator::pre_load_macro_files subroutine
-	# I'd like to change this at some point to have the same sort of interface to global.conf
-	# that the module loading does -- have a list of macros to load unrestrictedly.
-    
-#    This has been replaced by the pre_load_macro_files subroutine.  It loads AND caches the files.
-#   While PG.pl and dangerousMacros are not large, they are referred to by PGbasicmacros and PGanswermacros.
-#   Because these are loaded into the cached name space (e.g. Safe::Root1::) all calls to, say NEW_ANSWER_NAME
-#   are actually calls to Safe::Root1::NEW_ANSWER_NAME.  It is useful to have these names inside the Safe::Root1:
-#   cached safe compartment.  (NEW_ANSWER_NAME and all other subroutine names are also automatically exported into 
-#   the current safe compartment Safe::Rootx::
-
-#   The headers of both PGbasicmacros and PGanswermacros has code that insures that the constants used are imported into
-#   the current safe compartment.  This involves evaluating references to, say $main::displayMode, at runtime to insure that main
-#   refers to Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main:: at compile time.
-
-
-###############################################################################
-#   TO ENABLE CACHEING UNCOMMENT THE CACHEING CODE 
-#   On webwork3  cached code is .2 seconds faster than non-cached code for an existing child.
-
-#   CACHING CODE:
-    eval{
-	$translator->pre_load_macro_files($WeBWorK::PG::Local::safeCache, $ce->{pg}->{directories}->{macros}, 
-      'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl');};
-    warn "Error while preloading macro files:  $@" if $@;
-
-#   STANDARD LOADING CODE: for cached script files this merely initializes the constants.
-	foreach (qw( PG.pl dangerousMacros.pl IO.pl)) {
+	# STANDARD LOADING CODE: for cached script files, this merely
+	# initializes the constants.
+	foreach (qw(PG.pl dangerousMacros.pl IO.pl)) {
 		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
-		warn "Error while loading $macroPath: |$err|" if $err;
+		warn "Error while loading $macroPath: $err" if $err;
 	}
-############################################################################### 
-
+	
 	# set the opcode mask (using default values)
 	#warn "PG: setting the opcode mask (using default values)\n";
 	$translator->set_mask();
@@ -279,205 +281,15 @@ EOF
 	}, $class;
 }
 
-# -----
-
-sub defineProblemEnvir {
-	my (
-		$ce,
-		$user,
-		$key,
-		$set,
-		$problem,
-		$psvn,
-		$formFields,
-		$options,
-	) = @_;
-	
-	my %envir;
-	
-	# ----------------------------------------------------------------------
-	
-	# PG environment variables
-	# from docs/pglanguage/pgreference/environmentvariables as of 06/25/2002
-	# any changes are noted by "ADDED:" or "REMOVED:"
-	
-	# Vital state information
-	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img,
-	#        texDisposition
-	
-	$envir{psvn}              = $set->psvn;
-	$envir{psvnNumber}        = $envir{psvn};
-	$envir{probNum}           = $problem->problem_id;
-	$envir{questionNumber}    = $envir{probNum};
-	$envir{fileName}          = $problem->source_file;	 
-	$envir{probFileName}      = $envir{fileName};		 
-	$envir{problemSeed}       = $problem->problem_seed;
-	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
-	$envir{languageMode}      = $envir{displayMode};	 
-	$envir{outputMode}        = $envir{displayMode};	 
-	$envir{displayHintsQ}     = $options->{showHints};	 
-	$envir{displaySolutionsQ} = $options->{showSolutions};
-	# FIXME: this is HTML_img specific
-	#$envir{refreshMath2img}   = $options->{refreshMath2img};
-	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
-	
-	# Problem Information
-	# ADDED: courseName, formatedDueDate
-	
-	$envir{openDate}            = $set->open_date;
-	$envir{formattedOpenDate}   = formatDateTime($envir{openDate});
-	$envir{dueDate}             = $set->due_date;
-	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
-	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
-	$envir{answerDate}          = $set->answer_date;
-	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
-	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
-	$envir{problemValue}        = $problem->value;
-	$envir{sessionKey}          = $key;
-	$envir{courseName}          = $ce->{courseName};
-	
-	# Student Information
-	# ADDED: studentID
-	
-	$envir{sectionName}      = $user->section;
-	$envir{sectionNumber}    = $envir{sectionName};
-	$envir{recitationName}   = $user->recitation;
-	$envir{recitationNumber} = $envir{recitationName};
-	$envir{setNumber}        = $set->set_id;
-	$envir{studentLogin}     = $user->user_id;
-	$envir{studentName}      = $user->first_name . " " . $user->last_name;
-	$envir{studentID}        = $user->student_id;
-	
-	# Answer Information
-	# REMOVED: refSubmittedAnswers
-	
-	$envir{inputs_ref} = $formFields;
-	
-	# External Programs
-	# ADDED: externalLaTeXPath, externalDvipngPath,
-	#        externalGif2EpsPath, externalPng2EpsPath
-	
-	$envir{externalTTHPath}      = $ce->{externalPrograms}->{tth};
-	$envir{externalLaTeXPath}    = $ce->{externalPrograms}->{latex};
-	$envir{externalDvipngPath}   = $ce->{externalPrograms}->{dvipng};
-	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
-	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
-	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
-	
-	# Directories and URLs
-	# REMOVED: courseName
-	# ADDED: dvipngTempDir
-	
-	$envir{cgiDirectory}           = undef;
-	$envir{cgiURL}                 = undef;
-	$envir{classDirectory}         = undef;
-	$envir{courseScriptsDirectory} = $ce->{pg}->{directories}->{macros}."/";
-	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
-	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
-	$envir{macroDirectory}         = $ce->{courseDirs}->{macros}."/";
-	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";
-	$envir{tempDirectory}          = $ce->{courseDirs}->{html_temp}."/";
-	$envir{tempURL}                = $ce->{courseURLs}->{html_temp}."/";
-	$envir{scriptDirectory}        = undef;
-	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
-	# FIXME: this is HTML_img mode-specific
-	#$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
-	#	? makeTempDirectory($envir{tempDirectory}, "webwork-dvipng")
-	#	: undef;
-	
-	# Information for sending mail
-	
-	$envir{mailSmtpServer} = $ce->{mail}->{smtpServer};
-	$envir{mailSmtpSender} = $ce->{mail}->{smtpSender};
-	$envir{ALLOW_MAIL_TO}  = $ce->{mail}->{allowedRecipients};
-	
-	# Default values for evaluating answers
-	
-	my $ansEvalDefaults = $ce->{pg}->{ansEvalDefaults};
-	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
-	
-	# ----------------------------------------------------------------------
-	
-	my $basename = "equation-$envir{psvn}.$envir{probNum}";
-	$basename .= ".$envir{problemSeed}" if $envir{problemSeed};
-		
-	# Object for generating equation images
-	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
-		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
-		latex	 => $envir{externalLaTeXPath},
-		dvipng   => $envir{externalDvipngPath},
-		useCache => 1,
-		cacheDir => $ce->{webworkDirs}->{equationCache},
-		cacheURL => $ce->{webworkURLs}->{equationCache},
-		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
-	);
-	
-	# Other things...
-	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
-	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
-	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
-	
-	# variables for interpreting capa problems.
-	$envir{CAPA_Tools}               = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
-	$envir{CAPA_MCTools}             = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
-	$envir{CAPA_Graphics_URL}        = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
-	$envir{CAPA_GraphicsDirectory}   = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
-	
-	return \%envir;
-}
-
-sub translateDisplayModeNames($) {
-	my $name = shift;
-	return {
-		tex           => "TeX",
-		plainText     => "HTML",
-		formattedText => "HTML_tth",
-		images        => "HTML_dpng", # "HTML_img",
-	}->{$name};
-}
-
-sub oldSafetyFilter {
-	my $answer = shift; # accepts one answer and checks it
-	my $submittedAnswer = $answer;
-	$answer = '' unless defined $answer;
-	my ($errorno);
-	$answer =~ tr/\000-\037/ /;
-	# Return if answer field is empty
-	unless ($answer =~ /\S/) {
-		#$errorno = "<BR>No answer was submitted.";
-		$errorno = 0;  ## don't report blank answer as error
-		return ($answer,$errorno);
-	}
-	# replace ^ with **    (for exponentiation)
-	# $answer =~ s/\^/**/g;
-	# Return if forbidden characters are found
-	unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\[\]\(\)\,\|]+$/ )  {
-		$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
-		$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";
-		return ($answer,$errorno);
-	}
-	$errorno = 0;
-	return($answer, $errorno);
-}
-
-sub nullSafetyFilter {
-	return shift, 0; # no errors
-}
-
 1;
 
 __END__
 
 =head1 OPERATION
 
-WeBWorK::PG goes through the following operations when constructed:
+WeBWorK::PG::Local goes through the following operations when constructed:
 
 =over
-
-=item Get database information
-
-Retrieve information about the current user, set, and problem from the
-database.
 
 =item Create a translator
 
@@ -495,14 +307,15 @@ Using the module list from the course environment (pg->modules), perform a
 
 =item Set the problem environment
 
-Use data from the user, set, and problem, as well as the course environemnt and
-translation options, to set the problem environment.
+Use data from the user, set, and problem, as well as the course
+environemnt and translation options, to set the problem environment. The
+default subroutine, &WeBWorK::PG::defineProblemEnvir, is used.
 
 =item Initialize the translator
 
 Call &WeBWorK::PG::Translator::initialize. What more do you want?
 
-=item Load PG.pl and dangerousMacros.pl
+=item Load IO.pl, PG.pl and dangerousMacros.pl
 
 These macros must be loaded without opcode masking, so they are loaded here.
 
