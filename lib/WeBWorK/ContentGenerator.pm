@@ -329,13 +329,15 @@ sub url_args($;@) {
 	my $self = shift;
 	my $r = $self->{r};
 	my @fields = @_;
-	@fields or @fields = $r->param;
+	@fields or @fields = $r->param; # If no fields are passed in, do them all.
 	my $courseEnvironment = $self->{ce};
 	
 	my @pairs;
 	foreach my $param (@fields) {
-		my $value = $r->param($param) || "";
-		push @pairs, uri_escape($param) . "=" . uri_escape($value);
+		my @values = $r->param($param);
+		foreach my $value (@values) {
+			push @pairs, uri_escape($param) . "=" . uri_escape($value);
+		}
 	}
 	
 	return join("&", @pairs);
