@@ -46,7 +46,7 @@ our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
-our $HOSTURL      ="$HOST_NAME:11002"; #FIXME
+our $HOSTURL      ="http://$HOST_NAME:11002"; #FIXME
 our $ce           =$WebworkWebservice::SeedCE;
 
 #print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
@@ -261,7 +261,7 @@ sub renderProblem {
     # HTML_dpng, on the other hand, uses an ImageGenerator. We have to
 	# render the queued equations.
 	if ($envir->{imagegen}) {
-		my $sourceFile = 'foobar'; #$ce->{courseDirs}->{templates} . "/" . $problem->source_file;
+		my $sourceFile = ''; #$ce->{courseDirs}->{templates} . "/" . $problem->source_file;
 		my %mtimeOption = -e $sourceFile
 			? (mtime => (stat $sourceFile)[9])
 			: ();
@@ -317,14 +317,14 @@ sub renderProblem {
     # Don't send code data.
     my %PG_flag=();
     	
-    if($rh->{envir}->{displayMode} eq 'HTML_dpng') {
-		my $forceRefresh=1;
-#		if($inputs{'refreshCachedImages'} || $main::refreshCachedImages
-#			 || $displaySolutionsQ || $displayHintsQ) {
-#			$forceRefresh=1;
-#		}
-#		$imgen->render('refresh'=>$forceRefresh); # Can force new images
-	}
+#     if($rh->{envir}->{displayMode} eq 'HTML_dpng') {
+# 		my $forceRefresh=1;
+# 		if ( (defined($inputs{'refreshCachedImages'}) and $inputs{'refreshCachedImages'}) || $main::refreshCachedImages
+# 			 || $displaySolutionsQ || $displayHintsQ) {
+# 			$forceRefresh=1;
+# 		}
+# 		$imgen->render('refresh'=>$forceRefresh); # Can force new images
+# 	}
 
 	my $out = { 	
  					text 						=> encode_base64( ${$pt ->r_text()}  ),
