@@ -5,6 +5,11 @@
 #	!WEBWORK_PORT! -> the port on which you want to run this server
 #	                  (please use 10000 + your UID)
 #	!PG_ROOT! -> the root of your personal pg tree
+# If your home directories are stored somewhere other than /home (for example,
+# /u) you should also replace /home with the directory used at your site.
+
+# After those find/replace operations, you should edit the access control
+# statements at the bottom of this file.
 
 Include /usr/local/etc/apache/httpd-wwmp-header.conf
 
@@ -62,3 +67,33 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
     Order allow,deny
     Allow from all
 </Directory>
+
+# Possible forms of access limitation (edit to taste)
+
+# The user maintains his own htpasswd file, presumably with only herself in it
+#<Location />
+#	AuthType Basic
+#	AuthName "!WEBWORK_USER!'s WeBWorK development system"
+#	AuthUserFile /home/!WEBWORK_USER!/webwork-modperl/conf/htpasswd
+#	Require valid-user
+#</Location>
+
+# The system administrator maintains an htpasswd file that all users reference
+#<Location />
+#	AuthType Basic
+#	AuthName "!WEBWORK_USER!'s WeBWorK development system"
+#	AuthUserFile /usr/local/etc/apache/htpasswd-wwmp
+#	Require valid-user
+#</Location>
+
+# You have mod_pam_auth and would like to authenticate against your
+# /etc/passwd file.  (NOTE: It is a good idea to use Digest authentication
+# instead of Basic, even though this limits your choice of browsers, because
+# of the heightened sensitivity of normal system passwords.)
+#<Location />
+#	AuthType Digest
+#	AuthName "!WEBWORK_USER!'s WeBWorK development system"
+#	AuthPAM_Enabled on
+#	Require valid-user
+##	Require group wwdev
+#</Location>
