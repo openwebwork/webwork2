@@ -1521,11 +1521,14 @@ sub recordEditHTML {
 	
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_problem_list', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
+	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
+        my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
 	
 	my @tableCells;
 	my %fakeRecord;
 	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $Set->set_id, -checked => $setSelected, -label => "", );
-	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $Set->set_id);
+	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $Set->set_id) . ($editMode ? "" : $imageLink);
 	$fakeRecord{problems} = CGI::a({href=>$problemListURL}, "$problems");
 	$fakeRecord{users} = CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
 		
@@ -1542,10 +1545,8 @@ sub recordEditHTML {
 		);
 	}
 	
-
-
 	# Set ID
-	push @tableCells, CGI::font({class=>$publishedClass}, $Set->set_id);
+	push @tableCells, CGI::font({class=>$publishedClass}, $Set->set_id . $imageLink);
 
 	# Problems link
 	if ($editMode) {
