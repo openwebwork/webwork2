@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.50 2004/12/17 18:06:38 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.51 2004/12/21 18:44:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -294,7 +294,7 @@ sub pre_header_initialize {
     # FIXME: even with an error we still open a new page because of the target specified in the form
 	
 
-	# Some cases do not need a redirect revert, no fresh_edit
+	# Some cases do not need a redirect: revert,  fresh_edit
 	my $action = $self->{action};
 
     return unless $action eq 'save' 
@@ -400,7 +400,7 @@ sub pre_header_initialize {
 		#          redirect to ProblemSet.pm
 		######################################
 		
-		$file_type eq 'set_header' and do {
+		($file_type eq 'set_header' or $file_type eq 'hardcopy_header' ) and do {
 			if ($action eq 'save_as') { # redirect to myself
 			    my $sourceFilePath = $self->{problemPath};
 				# strip off template directory prefix
@@ -485,9 +485,9 @@ sub initialize  {
 	
 	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
 	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
-	my $protected_file = not -w $inputFilePath;
+	my $protected_file = (not -w $inputFilePath ) and -e $inputFilePath;  #FIXME -- let's try to insure that the input file always exists, even for revert.
 	$self->addbadmessage("Changes in this file have not yet been permanently saved.") if -r $tempFilePath;
-    $self->addbadmessage("This file protected! To edit this text you must first use 'Save As' to save it to another file.") if $protected_file;
+    $self->addbadmessage("This file |$inputFilePath| is protected! To edit this text you must first use 'Save As' to save it to another file.") if $protected_file;
 	
 }
 
@@ -951,7 +951,7 @@ sub saveFileChanges {
 		($action eq 'add_problem_to_set') and do {
 				my $sourceFile = $editFilePath;
 				my $targetSetName  = $r->param('target_set');
-				my $freeProblemID;	
+				my $freeProblemID  = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;	
 				$sourceFile    =~ s|^$ce->{courseDirs}->{templates}/||;
 				my $problemRecord  = $self->addProblemToSet(
 									   setName        => $targetSetName,
