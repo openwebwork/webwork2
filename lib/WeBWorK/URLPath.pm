@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.18 2004/10/10 20:53:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.19 2004/10/11 23:11:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,9 +63,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
  instructor_file_transfer            /$courseID/instructor/files/
+ instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
  
- instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
@@ -314,19 +314,10 @@ our %pathTypes = (
 		name    => 'File Transfer',
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
-		match   => qr|^files/|,
+		match   => qr|^file_xfer/|,
 		capture => [ qw// ],
-		produce => 'files/',
+		produce => 'file_xfer/',
 		display => 'WeBWorK::ContentGenerator::Instructor::FileXfer',
-	},
-	instructor_problem_editor => {
-		name    => 'Problem Editor',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor_withset/ ],
-		match   => qr|^pgProblemEditor/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_file_manager => {
 		name    => 'File Manager',
@@ -336,6 +327,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'file_manager/',
 		display => 'WeBWorK::ContentGenerator::Instructor::FileManager',
+	},
+	instructor_problem_editor => {
+		name    => 'Problem Editor',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_problem_editor_withset/ ],
+		match   => qr|^pgProblemEditor/|,
+		capture => [ qw// ],
+		produce => 'pgProblemEditor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
