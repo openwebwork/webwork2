@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.55 2004/09/13 19:35:05 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.56 2004/10/26 00:14:32 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -202,7 +202,11 @@ sub setListRow {
 	
 	my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 		courseID => $courseName, setID => $name);
-	my $interactiveURL = $self->systemLink($problemSetPage);
+	my $interactiveURL = $self->systemLink($problemSetPage,
+	                                       params=>{  displayMode => $self->{displayMode}, 
+													  showOldAnswers => $self->{will}->{showOldAnswers}
+										   }
+	);
 	
 	my $openDate = $self->formatDateTime($set->open_date);
 	my $dueDate = $self->formatDateTime($set->due_date);

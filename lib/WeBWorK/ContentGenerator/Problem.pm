@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.166 2004/10/09 03:06:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.167 2004/11/18 01:45:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -274,59 +274,59 @@ sub attemptResults {
 		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 
-sub viewOptions {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
-
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %must = %{ $self->{must} };
-	my %can  = %{ $self->{can}  };
-	my %will = %{ $self->{will} };
-	
-	my $optionLine;
-	$can{showOldAnswers} and $optionLine .= join "",
-		"Save&nbsp;answers?".CGI::br(),
-		CGI::radio_group(
-			-name    => "showOldAnswers",
-			-values  => [1,0],
-			-default => $will{showOldAnswers},
-			-labels   => {
-							0 => 'No',
-							1 => 'Yes',	
-			},
-		), "&nbsp;&nbsp;".CGI::br();
-
-	$optionLine and $optionLine .= join "", CGI::br();
-	
-	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	my @active_modes = grep { exists $display_modes{$_} }
-			@{$ce->{pg}->{displayModes}};
-	my $modeLine = (scalar(@active_modes) > 1) ?
-		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
-		CGI::radio_group(
-			-name    => "displayMode",
-			-values  => \@active_modes,
-			-default => $displayMode,
-			-linebreak=>'true',
-			-labels  => {
-				plainText     => "plain",
-				formattedText => "formatted",
-				images        => "images",
-				jsMath	      => "jsMath",
-				asciimath     => "asciimath",
-			},
-		). CGI::br().CGI::hr() : '';
-	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-		$modeLine,
-		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
-	);
-}
+# sub viewOptions {
+# 	my ($self) = @_;
+# 	my $ce = $self->r->ce;
+# 
+# 	# don't show options if we don't have anything to show
+# 	return if $self->{invalidSet} or $self->{invalidProblem};
+# 	return unless $self->{isOpen};
+# 	
+# 	my $displayMode = $self->{displayMode};
+# 	my %must = %{ $self->{must} };
+# 	my %can  = %{ $self->{can}  };
+# 	my %will = %{ $self->{will} };
+# 	
+# 	my $optionLine;
+# 	$can{showOldAnswers} and $optionLine .= join "",
+# 		"Show&nbsp;saved&nbsp;answers?".CGI::br(),
+# 		CGI::radio_group(
+# 			-name    => "showOldAnswers",
+# 			-values  => [1,0],
+# 			-default => $will{showOldAnswers},
+# 			-labels   => {
+# 							0 => 'No',
+# 							1 => 'Yes',	
+# 			},
+# 		), .CGI::br();
+# 
+# 	$optionLine and $optionLine .= join "", CGI::br();
+# 	
+# 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+# 	my @active_modes = grep { exists $display_modes{$_} }
+# 			@{$ce->{pg}->{displayModes}};
+# 	my $modeLine = (scalar(@active_modes) > 1) ?
+# 		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
+# 		CGI::radio_group(
+# 			-name    => "displayMode",
+# 			-values  => \@active_modes,
+# 			-default => $displayMode,
+# 			-linebreak=>'true',
+# 			-labels  => {
+# 				plainText     => "plain",
+# 				formattedText => "formatted",
+# 				images        => "images",
+# 				jsMath	      => "jsMath",
+# 				asciimath     => "asciimath",
+# 			},
+# 		). CGI::br().CGI::hr() : '';
+# 	
+# 	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
+# 		$modeLine,
+# 		$optionLine,
+# 		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
+# 	);
+# }
 
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen) = @_;
@@ -563,7 +563,7 @@ sub pre_header_initialize {
 		checkAnswers       => 0,
 		getSubmitButton    => 0,
 	);
-	
+	 
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 	my %can = (
@@ -690,7 +690,7 @@ sub siblings {
 			courseID => $courseID, setID => $setID, problemID => $problemID);
 		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
-																showOldAnswers => $self->{will}->{showOldAnswers}
+															   showOldAnswers => $self->{will}->{showOldAnswers}
 															})},  "Problem $problemID")
 	   );
 	}
