@@ -1,116 +1,57 @@
 
                                      WeBWorK                                    
                          Online Homework Delivery System                        
-                                   Version 2.0                                  
+                                  Version 2.0.1                                 
 
                     Copyright 2000-2004, The WeBWorK Project                    
                               All rights reserved.                              
 
 Introduction
 
-   The [1]WeBWorKTeam is pleased to announce the final release of WeBWorK
-   2.0. After two years of work, WeBWorK 2 is stable and ready for
-   general use. The WeBWorK 1.x series has been end-of-lifed, and we
-   recommend that all users upgrade to WeBWorK 2.
+   This release fixes two bugs in WeBWorK 2.0.
 
-   This release includes almost all of the functionality of WeBWorK 1.9,
-   and contains new functionality beyond what it possible with 1.9. New
-   feature since WeBWorK 1.9 include:
-
-     * An improved database system.
-          + Problem sets can be manipulated in the abstract without being
-            assigned to students.
-          + Sets can be easily assigned and unassigned
-          + Problem set defaults are stored once, making it easy to
-            change defaults without distubing values overridden for
-            particular students.
-          + Support for both WeBWorK 1.x databases and SQL databases.
-     * A more consistent and easier to use user interface.
-          + Breadcrumbs show your current location in the system relative
-            to the root.
-          + Login message indicates who you are logged in as and who you
-            are acting as.
-          + Links bar allows quick access to many featuers of the system.
-          + Siblings list allows one-click access to other problems in
-            the same set or other sets in the same course.
-     * Look of pages is fully-customizeable look due to HTML template
-       system and CSS support.
-     * Global Act As feature allowing instructors to view the system from
-       the point of view of a student.
-     * Web-based course administration tools.
-          + Create and delete courses.
-          + Export course databases to standard XML format, import
-            exported databases.
-     * Architectural improvements make it easy to add features to the
-       system.
-          + Object-based content generation system enables addition of
-            new components easy.
-          + Table-driven virtual heirarchy of system components allows
-            for customization of system URLs.
-          + Modular database layer enables support for additional
-            database backends.
-
-   New features since [2]PreviewRelease4 include:
-
-     * New display modes: [3]jsMath and [4]ASCIIMathML (DavideCervone).
-     * Support for problem library metadata database (JohnJones).
-     * Improved Statistics and Student Progress functionality.
-     * Improved Apache configuration and CourseEnvironment seeding.
-     * Lockdown of authorization system.
-     * Behavior of interactive problem processor customizable.
-     * Published flag for problem sets.
-     * Hmwk Set Editor updated to match UI of Classlist Editor.
-     * User interface improvements.
-     * Set Maker improvements (JohnJones).
-     * dvipng baseline support for equation images (JohnJones).
-     * Automatic upgrading of databases from WeBWorK 1.x courses.
-     * Improved sorting of problem sets (WilliamWheeler).
-     * Enable upload/download/delete problem files.
-
-   (Contributiors: please feel free to add anything I've forgotten.)
+    1. When course databases were upgraded, sets, but not problems, were
+       assigned to the global user. This caused sets appear to be empty
+       when it was assigned to a user after the upgrade. Bugzilla bugs
+       [1]#611 and [2]#614 are related to this issue.
+    2. The date calculation routines before() and after(), used to
+       compare the current time to the set dates, were not inclusive.
 
 Availability
 
-   The complete system is distributed as two tarballs. One for the
-   WeBWorK system itself, and one for the PG system, including a standard
-   set of PG modules and macro files.
+   WeBWorK 2.0.1 is available our CVS repository. Read
+   [3]WeBWorKCVSReadOnly for more information.
 
-   Files are available below and on our SourceForge project page:
-   [5]http://sourceforge.net/project/showfiles.php?group_id=93112
-
-   Installation directly from CVS is also possible. Refer to the
-   [6]InstallationManual for more information.
+   WeBWorK 2.0.1 is also available in tarball form from our SourceForge
+   project page:
+   [4]http://sourceforge.net/project/showfiles.php?group_id=93112
 
 Installation
 
-   Documentation on installing and configuring WeBWorK is available in
-   the [7]InstallationManual. Instructions on [8]CourseCreation and
-   [9]CourseUpgrade are also available.
+   Read the section in the section in the installation manual on
+   [5]Upgrading WeBWorK.
 
-Upgrading SQL course databases
+Fixing courses upgraded with WeBWorK 2.0
 
-   The structure of SQL databases changed slightly with this release. As
-   a result, you must modify any SQL course databases that were created
-   with an earlier version of WeBWorK 2. Specifically, you must change
-   the name of the problem_header field to hardcopy_header. If you are
-   using MySQL, you can use the following tiny script:
-echo "ALTER TABLE set_not_a_keyword CHANGE COLUMN problem_header hardcopy_heade
-r TEXT;" \
-"ALTER TABLE set_user CHANGE COLUMN problem_header hardcopy_header TEXT;" |
-mysql -u root -p webwork_CourseID
+   To fix corruption of courses upgraded with WeBWorK 2.0:
 
-   Replace CourseID with the name of the course you want to modify.
+    1. Log into the course with WeBWorK 1.9 and delete the global user
+       (usually called global_user).
+    2. Log into the course with WeBWorK 2.0.1. You will be prompted to
+       upgrade the database. Do so.
+    3. If you had assigned sets to any users with WeBWorK 2.0, unassign
+       and reassign the sets to each user.
 
 Help
 
-   If you need help installing or using WeBWorK 2.0, visit the
-   [10]WeBWorK discussion group and post your question there. The
-   developers monitor this forum.
+   If you need help installing or using WeBWorK 2.0, visit the [6]WeBWorK
+   discussion group and post your question there. The developers monitor
+   this forum.
 
 Bug Reports & Feature Requests
 
    Submit bug reports and feature requests at
-   [11]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
+   [7]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
    features if you don't tell us about them!
 
 Patches
@@ -119,19 +60,15 @@ Patches
    CVS code, you save us and yourself time. A bug in this release may be
    fixed in CVS, and we can more easily handle patches against the latest
    code. Check out the latest development version from CVS and patch
-   against that. Consult the [12]WeBWorKCVS topic for more information.
+   against that. Consult the [8]WeBWorKCVS topic for more information.
 
 References
 
-   1. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKTeam
-   2. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4
-   3. http://www.math.union.edu/~dpvc/jsMath/
-   4. http://www1.chapman.edu/~jipsen/asciimath.html
-   5. http://sourceforge.net/project/showfiles.php?group_id=93112
-   6. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManual
-   7. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/InstallationManual
-   8. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseCreation
-   9. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseUpgrade
-  10. http://webhost.math.rochester.edu/webworkdocs/discuss/
-  11. http://bugs.webwork.rochester.edu/
-  12. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS
+   1. http://bugs.webwork.rochester.edu/show_bug.cgi?id=611
+   2. http://bugs.webwork.rochester.edu/show_bug.cgi?id=614
+   3. file://localhost/twiki/bin/view/Webwork/WeBWorKCVSReadOnly
+   4. http://sourceforge.net/project/showfiles.php?group_id=93112
+   5. file://localhost/twiki/bin/view/Webwork/InstallationManual#Upgrading_WeBWorK
+   6. http://webhost.math.rochester.edu/webworkdocs/discuss/
+   7. http://bugs.webwork.rochester.edu/
+   8. file://localhost/twiki/bin/view/Webwork/WeBWorKCVS
