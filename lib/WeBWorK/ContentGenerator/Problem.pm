@@ -683,11 +683,11 @@ sub attemptResults($$$$$$) {
 		$name =~ s/^AnSwEr//;
 		
 		my $row = CGI::td($name);
-		$row .= $showAttemptAnswers ? CGI::td($studentAnswer) : "";
-		$row .= $showAttemptPreview ? CGI::td($preview)       : "";
-		$row .= $showCorrectAnswers ? CGI::td($correctAnswer) : "";
-		$row .= $showAttemptResults ? CGI::td($resultString)  : "";
-		$row .= $answerMessage      ? CGI::td($answerMessage) : "";
+		$row .= $showAttemptAnswers ? CGI::td(nbsp($studentAnswer)) : "";
+		$row .= $showAttemptPreview ? CGI::td(nbsp($preview))       : "";
+		$row .= $showCorrectAnswers ? CGI::td(nbsp($correctAnswer)) : "";
+		$row .= $showAttemptResults ? CGI::td(nbsp($resultString))  : "";
+		$row .= $answerMessage      ? CGI::td(nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -697,7 +697,10 @@ sub attemptResults($$$$$$) {
 		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . ($showSummary ? CGI::p($summary) : "");
 }
-
+sub nbsp {
+	my $str = shift;
+	($str) ? $str : '&nbsp;';  # returns non-breaking space for empty strings
+}
 sub viewOptions($) {
 	my $self = shift;
 	my $displayMode = $self->{displayMode};
