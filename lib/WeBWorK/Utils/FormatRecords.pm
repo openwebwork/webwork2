@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FormatRecords.pm,v 1.3 2004/03/01 06:33:45 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FormatRecords.pm,v 1.4 2004/03/23 04:20:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -68,7 +68,7 @@ our @EXPORT_OK = qw(
 );
 
 use constant PRESET_FORMATS => {
-	WeBWorK::DB::Record::User => {
+	"WeBWorK::DB::Record::User" => {
 		"uid_lnfn" => {
 			name => "user_id - last_name, first_name",
 			field_order => [ qw/user_id last_name first_name/ ],
@@ -100,7 +100,7 @@ use constant PRESET_FORMATS => {
 			format_string => "%s, %s (%s)",
 		},
 	},
-	WeBWorK::DB::Record::Set => {
+	"WeBWorK::DB::Record::Set" => {
 		"sid" => {
 			name => "set_id",
 			field_order => [ qw/set_id/ ],

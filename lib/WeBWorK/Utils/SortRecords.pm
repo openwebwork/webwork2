@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.37 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/SortRecords.pm,v 1.3 2004/03/01 06:33:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,7 +60,7 @@ our @EXPORT_OK = qw(
 );
 
 use constant PRESET_SORTS => {
-	WeBWorK::DB::Record::User => {
+	"WeBWorK::DB::Record::User" => {
 		"lnfn" => {
 			name => "last name, first name",
 			fields => [ qw/last_name first_name/ ],
