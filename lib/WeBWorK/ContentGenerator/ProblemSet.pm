@@ -128,7 +128,7 @@ sub info {
 	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
 	my $psvn = $set->psvn();
 	
-	my $screenSetHeader = $set->problem_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $displayMode     = $ce->{pg}->{options}->{displayMode};
 	
 	return "" unless defined $screenSetHeader and $screenSetHeader;
