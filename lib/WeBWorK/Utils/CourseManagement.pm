@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.2 2004/04/09 20:18:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.3 2004/05/05 22:02:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -502,8 +502,16 @@ sub execSQLStatements {
 	}
 }
 
-=item mostPopularSource(%dbLayout) {
-	
+=item protectQString($string)
+
+Protects the contents of a single-quoted Perl string.
+
+=cut
+
+sub protectQString {
+	my ($string) = @_;
+	$string =~ s/'/\'/g;
+	return $string;
 }
 
 =item writeCourseConf($fh, $ce, %options)
@@ -559,12 +567,12 @@ EOF
 # global.conf values:
 EOF
 	
-	print $fh "# \t", '$dbLayoutName = "', quotemeta($ce->{dbLayoutName}), '";', "\n";
+	print $fh "# \t", '$dbLayoutName = \'', protectQString($ce->{dbLayoutName}), '\';', "\n";
 	print $fh "# \t", '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
 	print $fh "\n";
 	
 	if (defined $options{dbLayoutName}) {
-		print $fh '$dbLayoutName = "', quotemeta($options{dbLayoutName}), '";', "\n";
+		print $fh '$dbLayoutName = \'', protectQString($options{dbLayoutName}), '\';', "\n";
 		print $fh '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
 		print $fh "\n";
 	} else {
@@ -589,20 +597,20 @@ EOF
 # global.conf values:
 EOF
 	
-	print $fh "# \t", '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = "',
-			quotemeta($ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}), '";', "\n";
-	print $fh "# \t", '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "',
-			quotemeta($ce->{dbLayouts}->{gdbm}->{problem}->{params}->{globalUserID}), '";', "\n";
+	print $fh "# \t", '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = \'',
+			protectQString($ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}), '\';', "\n";
+	print $fh "# \t", '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = \'',
+			protectQString($ce->{dbLayouts}->{gdbm}->{problem}->{params}->{globalUserID}), '\';', "\n";
 	print $fh "\n";
 	
 	if (defined $options{globalUserID} or defined $options{globalUserID}) {
 		if (defined $options{globalUserID}) {
-			print $fh '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = "',
-					quotemeta($options{globalUserID}), '";', "\n";
+			print $fh '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = \'',
+					protectQString($options{globalUserID}), '\';', "\n";
 		}
 		if (defined $options{globalUserID}) {
-			print $fh '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = "',
-					quotemeta($options{globalUserID}), '";', "\n";
+			print $fh '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = \'',
+					protectQString($options{globalUserID}), '\';', "\n";
 		}
 		print $fh "\n";
 	} else {
@@ -622,15 +630,15 @@ EOF
 	
 	if (defined $ce->{mail}->{allowedRecipients}) {
 		print $fh "# \t", '$mail{allowedRecipients} = [',
-				join ", ", map { "'$_'" } @{ $ce->{mail}->{allowedRecipients} }, '];', "\n";
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $ce->{mail}->{allowedRecipients} }), '];', "\n";
 	} else {
-		print $fh "# \t", 'No global value defined for $mail{allowedRecipients}.', "\n";
+		print $fh "# \t", '$mail{allowedRecipients} = [  ];', "\n";
 	}
 	print $fh "\n";
 	
 	if (defined $options{allowedRecipients}) {
 		print $fh '$mail{allowedRecipients} = [',
-				join ", ", map { "'$_'" } @{ $options{allowedRecipients} }, '];', "\n";
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $options{allowedRecipients} }), '];', "\n";
 		print $fh "\n";
 	} else {
 		print $fh "\n\n\n";
@@ -647,15 +655,15 @@ EOF
 	
 	if (defined $ce->{mail}->{feedbackRecipients}) {
 		print $fh "# \t", '$mail{feedbackRecipients} = [',
-				join ", ", map { "'$_'" } @{ $ce->{mail}->{feedbackRecipients} }, '];', "\n";
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $ce->{mail}->{feedbackRecipients} }), '];', "\n";
 	} else {
-		print $fh "# \t", 'No global value defined for $mail{feedbackRecipients}.', "\n";
+		print $fh "# \t", '$mail{feedbackRecipients} = [  ];', "\n";
 	}
 	print $fh "\n";
 	
 	if (defined $options{feedbackRecipients}) {
 		print $fh '$mail{feedbackRecipients} = [',
-				join ", ", map { "'$_'" } @{ $options{feedbackRecipients} }, '];', "\n";
+				join(", ", map { "'" . protectQString($_) . "'" } @{ $options{feedbackRecipients} }), '];', "\n";
 		print $fh "\n";
 	} else {
 		print $fh "\n\n\n";
