@@ -99,7 +99,7 @@ sub body {
 					"checked"=>"0"
 				})
 			)
-			. CGI::td({}, CGI::a({href=>"$setEditorURL?setName=".$set->set_id."&".$self->url_authen_args}, $set->set_id))
+			. CGI::td({}, CGI::a({href=>"$setEditorURL".$set->set_id."/?".$self->url_authen_args}, $set->set_id))
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))

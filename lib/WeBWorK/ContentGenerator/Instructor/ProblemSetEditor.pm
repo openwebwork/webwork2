@@ -1,6 +1,6 @@
 package WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use base qw(WeBWorK::ContentGenerator::Instructor);
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils qw(readFile formatDateTime parseDateTime);
 
 =head1 NAME
 
@@ -12,15 +12,148 @@ use strict;
 use warnings;
 use CGI qw();
 
-
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
+
+sub getSetName {
+	my ($self, $pathSetName) = @_;
+	if (ref $pathSetName eq "HASH") {
+		$pathSetName = undef;
+	}
+	return $pathSetName;
+}
+
 sub title {
-	my $self = shift;
-	return "Instructor Tools - Problem Set Editor for ".$self->{ce}->{courseName};
+	my ($self, @components) = @_;
+	return "Problem Set Editor - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
+}
+
+sub initialize {
+	my ($self, @components) = @_;
+	my $r = $self->{r};
+	my $db = $self->{db};
+	my $setName = $self->getSetName(@components);
+	my $setRecord = $db->getGlobalSet($setName);
+	my $changed = 0;
+
+	if (defined($r->param('save_set_changes'))) {
+		foreach (qw(open_date due_date answer_date)) {
+			if (defined($r->param($_))) {
+				if (m/_date$/) {
+					$setRecord->$_(parseDateTime($r->param($_)));
+				} else {
+					$setRecord->$_($r->param($_));
+				}
+				$changed = 1;
+			}
+		}
+
+		if ($changed) {
+			$db->putGlobalSet($setRecord);
+		}
+	}
 }
 
 sub body {
+	my ($self, @components) = @_;
+	my $r = $self->{r};
+	my $db = $self->{db};
+	my $setName = $self->getSetName(@components);
+	my $setRecord = $db->getGlobalSet($setName);
+	
+	
+	print CGI::h2({}, "Set Data");	
+	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::table({},
+		CGI::Tr({}, [
+			CGI::td({}, [
+				"Open Date:", 
+				CGI::input({
+					type=>"text", 
+					name=>"open_date", 
+					value=>formatDateTime($setRecord->open_date)
+				})
+			]),
+			CGI::td({}, [
+				"Due Date:",
+				CGI::input({
+					type=>"text", 
+					name=>"due_date", 
+					value=>formatDateTime($setRecord->due_date)
+				})
+			]),
+			CGI::td({}, [
+				"Answer Date:",
+				CGI::input({
+					type=>"text", 
+					name=>"answer_date", 
+					value=>formatDateTime($setRecord->answer_date)
+				})
+			]),
+			CGI::td({}, [
+				"Set Header:",
+				CGI::input({
+					type=>"text", 
+					name=>"set_header", 
+					value=>$setRecord->set_header
+				})
+			]),
+			CGI::td({}, [
+				"Problem Header:",
+				CGI::input({
+					type=>"text", 
+					name=>"problem_header", 
+					value=>$setRecord->problem_header
+				})
+			])
+			
+		])
+	);
+	
+	print $self->hidden_authen_fields;
+	print CGI::input({type=>"submit", name=>"save_set_changes", value=>"Save Changes"});
+	print CGI::end_form();
+	
+	print CGI::h2({}, "Problems");
+	
+	my @problemList = $db->listGlobalProblems($setName);
+	
+	print CGI::start_table({});
+	print CGI::Tr({}, CGI::th({}, ["Problem", "Weight", "Max. Attempts", "Source File"]));
+	foreach my $problem (sort {$a <=> $b} @problemList) {
+		my $problemRecord = $db->getGlobalProblem($setName, $problem);
+		my $problemID = $problemRecord->problem_id;
+		
+		print CGI::Tr({}, 
+			CGI::td({}, [
+				$problemID,
+			CGI::input({
+					size=>"7",
+					type=>"text",
+					name=>"problem_${problemID}_max_attempts",
+					value=>$problemRecord->max_attempts
+				}),				CGI::input({
+					size=>"7",
+					type=>"text",
+					name=>"problem_${problemID}_value",
+					value=>$problemRecord->value
+				}),
+					CGI::input({
+					size=>"40", 
+					type=>"text", 
+					name=>"problem_${problemID}_source_file", 
+					value=>$problemRecord->source_file
+				}),
+
+			])
+
+		)
+	}
+	
+	return "";
+}
+
+sub mike_body {
 	my $self = shift;
 	
 	# test area

@@ -135,7 +135,7 @@ sub handler() {
 			} elsif ($instructorArgument eq "problemSetList") {
 				return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "problemSetEditor") {
-				return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go;
+				return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go(@components);
 			} elsif ($instructorArgument eq "pgProblemEditor") {
 				return WeBWorK::ContentGenerator::Instructor::PGProblemEditor->new($r, $ce, $db)->go(@components);
 			}
