@@ -151,7 +151,7 @@ sub put($$) {
 	
 	# distribute new global values to each user
 	# don't overwrite the user record that's storing global values
-	my @userIDs = grep { $_ ne $globalUserID } $classlistSchema->list(undef);
+	my @userIDs = grep { $_ ne $globalUserID } map {$_->[0]} $classlistSchema->list(undef);
 	$self->distGlobalValues($CurrentGlobalRecord, $Record, @userIDs);
 	
 	return $result;
@@ -199,6 +199,7 @@ sub distGlobalValues($$$@) {
 	# impose the new values for each user
 	my $anyChanged = 0;
 	foreach my $userID (@userIDs) {
+		warn "userID: $userID, keyparts: ".(join " ", @keyparts)."\n";
 		my $UserRecord = $userSchema->get($userID, @keyparts);
 		next unless defined $UserRecord;
 		my $changed = 0;
