@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.3 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,11 +28,11 @@ use warnings;
 use Apache::Constants qw(:common);
 
 sub header {
-	my ($self) = @_;
-	my $r      = $self->r;
-	my $ce     = $r->ce;
+	my ($self)     = @_;
+	my $r          = $self->r;
+	my $ce         = $r->ce;
 	my $scoringDir = $ce->{courseDirs}->{scoring};
-	my $file = $r->param('getFile');
+	my $file       = $r->param('getFile');
 	if (-f "$scoringDir/$file") {
 		$r->content_type('text/comma-separated-values');
 		$r->header_out("Content-Disposition" => "attachment; filename=$file;");

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.3 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,19 +55,20 @@ sub body {
 	my $ce            = $r->ce;
 	my $authz         = $r->authz;
 	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $urlpath->arg("courseID");
-	my $setName       = $urlpath->arg('setID');
-	my $problemNumber = $urlpath->arg('problemID');
+	my $courseName    = $urlpath->arg('courseID');  
+	my $setName       = $r->param('setID');     # these are passed in the search args in this case
+	my $problemNumber = $r->param('problemID');
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
-	my $studentUser   = $r->param('studentUser');
+	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
 	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	$studentUser = $r->param('studentUser') if ( defined($r->param('studentUser')) );
+	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
+	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
+	
 	my ($safeUser,$safeCourse) = (showHTML($studentUser),showHTML($courseName));
 	my ($safeSet,$safeProb) = (showHTML($setName),showHTML($problemNumber));
-	
 	
 	#####################################################################
 	# print form
@@ -75,15 +76,21 @@ sub body {
 	
 	print "<p>\n\n<HR>\n";
 	print '<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0"><TR><TD>';
-	print CGI::start_form("POST", $self->{r}->uri,-target=>'information'),
+	print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
 	  CGI::submit(-name => 'action',  -value=>'Past Answers for'), "\n",
 	  " &nbsp; \n",
 	  $self->hidden_authen_fields,
-	  qq{<INPUT TYPE="TEXT" NAME="studentUser" VALUE="$safeUser" SIZE="15">},
-	  " &nbsp; &nbsp;\n",
-	  qq{Set: <INPUT TYPE="TEXT" NAME="setName" VALUE="$safeSet" SIZE="10">},
-	  " &nbsp; &nbsp;\n",
-	  qq{Problem: <INPUT TYPE="TEXT" NAME="problemNumber" VALUE="$safeProb" SIZE="5">},
+# 	  qq{<INPUT TYPE="TEXT" NAME="studentUser" VALUE="$safeUser" SIZE="15">},
+# 	  " &nbsp; &nbsp;\n",
+# 	  qq{Set: <INPUT TYPE="TEXT" NAME="setID" VALUE="$safeSet" SIZE="10">},
+# 	  " &nbsp; &nbsp;\n",
+# 	  qq{Problem: <INPUT TYPE="TEXT" NAME="problemID" VALUE="$safeProb" SIZE="5">},
+      CGI::textfield(-name => 'studentUser', -value => $safeUser, -size =>10 ), 
+      " &nbsp; \n Set:  &nbsp;",
+      CGI::textfield( -name => 'setID',         -value => $safeSet, -size =>10  ), 
+      " &nbsp; \n Problem:  &nbsp;",
+	  CGI::textfield(-name => 'problemID',      -value => $safeProb,-size =>10  ),  
+	  " &nbsp; \n",
 	  CGI::end_form(),"\n\n";
 	print "</TABLE>";
 	
@@ -98,7 +105,7 @@ sub body {
 		my ($safeSet,$safeProb) = (showHTML($setName),showHTML($problemNumber));
 	
 		
-		print CGI::h3( "Past Answers for $safeUser, set $safeSet, problem$safeProb)" );
+		print CGI::h3( "Past Answers for $safeUser, set $safeSet, problem$safeProb" );
 	
 		$studentUser = "[^|]*"    if ($studentUser eq ""    or $studentUser eq "*");
 		$setName = "[^|]*"  if ($setName eq ""  or $setName eq "*");
@@ -126,7 +133,7 @@ sub body {
 		
 		  print "<CENTER>\n";
 		  print '<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3">',"\n";
-		  print "No entries for $safeUser set $safeSet, problem $safeProb)" unless @lines;  # warn if there are no answers
+		  print "No entries for $safeUser set $safeSet, problem $safeProb" unless @lines;  # warn if there are no answers
 		  foreach $line (sort(@lines)) {
 			print $self->tableRow(split("\t",$line."\tx"));
 		  }

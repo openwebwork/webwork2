@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.43 2004/02/12 21:38:24 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.44 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -162,7 +162,9 @@ sub pre_header_initialize {
 		my $numberOfStudents  = $r->param('number_of_students');
 		warn "number of students not defined " unless defined $numberOfStudents;
 
-		my $uri="$root/$courseName/instructor/add_users?number_of_students=$numberOfStudents&".$self->url_authen_args;
+		my $uri=$self->systemLink($urlpath->new(type => 'instructor_add_users'),
+		                          params=>{number_of_students=>$numberOfStudents}
+		);
 		#FIXME  does the display mode need to be defined?
 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
 		# even that might not work with every browser since there are two effective User assignments.
@@ -378,7 +380,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$r->uri, name=>"userlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -1081,16 +1083,16 @@ sub recordEditHTML {
 	my $editMode = $options{editMode};
 	my $userSelected = $options{userSelected};
 	
-	my $changeEUserURL = "$root/$courseName?"
-		. "user="           . $r->param("user")
-		. "&effectiveUser=" . $User->user_id
-		. "&key="           . $r->param("key");
+	my $changeEUserURL = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
+										   params => {effectiveUser => $User->user_id}
+	);
 	
-	my $setsAssignedToUserURL = "$root/$courseName/instructor/users/"
-		. $User->user_id . "/sets/?"
-		. "user="           . $r->param("user")
-		. "&effectiveUser=" . $r->param("effectiveUser")
-		. "&key="           . $r->param("key");
+	my $setsAssignedToUserURL = $self->systemLink($urlpath->new(type=>'instructor_sets_assigned_to_user',
+	                                                            args=>{courseID => $courseName, 
+	                                                                   userID   => $User->user_id
+	                                                                   }),
+										   params => {effectiveUser => $User->user_id}
+	);
 	
 	my @tableCells;
 	
@@ -1172,12 +1174,7 @@ sub printTableHTML {
 	#my $hrefPrefix = $r->uri . "?" . $self->url_args(@stateParams); # $self->url_authen_args
 	my @tableHeadings;
 	foreach my $field (@realFieldNames) {
-		my $result;
-		#if (exists $sortSubs{$field}) {
-		#	$result = CGI::a({-href=>"$hrefPrefix&sort=$field"}, $fieldNames{$field});
-		#} else {
-			$result = $fieldNames{$field};
-		#}
+		my $result = $fieldNames{$field};
 		push @tableHeadings, $result;
 	};
 	
@@ -1218,226 +1215,3 @@ sub printTableHTML {
 
 1;
 
-__END__
-	
-	my $editMode = 0;
-	if (defined $r->param("edit_selected") or defined $r->param("edit_visible")) {
-		$editMode = 1;
-	}
-	
-	my @userIDs = $db->listUsers;
-	my @userRecords = $db->getUsers(@userIDs);
-	
-	my (%sections, %recitations);
-	foreach my $user (@userRecords) {
-		push @{$sections{$user->section}}, $user;
-		push @{$recitations{$user->recitation}}, $user;
-	}
-	
-	my $filter_type = $r->param("filter_type")
-		|| (@userIDs > HIDE_USERS_THRESHHOLD ? "none" : "all");
-	my $filter_user_id = $filter_type eq "filter_user_id"
-		? $r->param("filter_user_id") || ""
-		: "";
-	my $filter_section = $filter_type eq "filter_section"
-		? $r->param("filter_section") || ""
-		: "";
-	my $filter_recitation = $filter_type eq "filter_recitation"
-		? $r->param("filter_recitation") || ""
-		: "";
-	
-	# override filter selection if "Edit Selected Users" button is pressed
-	if (defined $r->param("edit_selected")) {
-		$filter_type = "filter_selected";
-	}
-	
-	if ($filter_type eq "none") {
-		@userRecords = ();
-	} elsif ($filter_type eq "filter_selected") {
-		@userRecords = ();
-		my @userIDs = $r->param("selectUser");
-		if (@userIDs) {
-			@userRecords = $db->getUsers(@userIDs);
-		}
-	} elsif ($filter_type eq "filter_user_id") {
-		@userRecords = ();
-		if ($filter_user_id ne "") {
-			my $userRecord = $db->getUser($filter_user_id);
-			@userRecords = ($userRecord) if $userRecord;
-		}
-	} elsif ($filter_type eq "filter_section") {
-		@userRecords = ();
-		@userRecords = @{$sections{$filter_section}}
-			if exists $sections{$filter_section};
-	} elsif ($filter_type eq "filter_recitation") {
-		@userRecords = ();
-		@userRecords = @{$recitations{$filter_recitation}}
-			if exists $recitations{$filter_recitation};
-	}
-	
-	@userRecords = sort {
-		(lc $a->section cmp lc $b->section)
-			|| (lc $a->last_name cmp lc $b->last_name)
-			|| (lc $a->first_name cmp lc $b->first_name)
-			|| (lc $a->user_id cmp lc $b->user_id)
-	} @userRecords;
-	
-	print CGI::start_form({method=>"post", action=>$r->uri()});
-	print $self->hidden_authen_fields();
-	
-	filter options
-	my %labels = (
-		none => "No users",
-		all => "All " . scalar @userIDs . " users",
-		filter_selected => "Users selected below",
-		filter_user_id => "User with ID " . CGI::input({
-			type=>"text",
-			name=>"filter_user_id",
-			value=>$filter_user_id,
-			size=>"20"
-		}),
-		filter_section => "Users in section " . CGI::popup_menu(
-			-name=>"filter_section",
-			-values=>[ keys %sections ],
-			-labels=>{ $self->menuLabels(\%sections) },
-			-default=>$filter_section,
-		),
-		filter_recitation => "Users in recitation " . CGI::popup_menu(
-			-name=>"filter_recitation",
-			-values=>[ sort keys %recitations ],
-			-labels=>{ $self->menuLabels(\%recitations) },
-			-default=>$filter_recitation,
-		),
-	);
-	
-	if ($editMode) {
-		print CGI::hidden(
-			-name=>"filter_type",
-			-value=>"filter_selected",
-		);
-	} else {
-		my $cgi = new CGI;
-		$cgi->autoEscape(0);
-		print "Show:", CGI::br();
-		print $cgi->radio_group(
-			-name=>"filter_type",
-			-values=>[ qw(none all filter_selected filter_user_id filter_section filter_recitation) ],
-			-default=>$filter_type,
-			-linebreak=>"true",
-			-labels=>\%labels,
-			-rows=>3,
-			-columns=>2,
-		);
-		print CGI::submit({name=>"filter", value=>"Filter"});
-	}
-	
-	print CGI::start_table({});
-	
-	# Table headings, prettied-up
-	my @tableHeadings = (
-		($editMode ? () : "Select"),
-		map {$prettyFieldNames{$_}} (
-			$userTemplate->KEYFIELDS(),
-			$userTemplate->NONKEYFIELDS(),
-			$permissionLevelTemplate->NONKEYFIELDS(),
-		),
-	);
-	
-	# now print them
-	print CGI::Tr({},
-		CGI::th({}, \@tableHeadings)
-	);
-	
-	my @userIDsForHiddenSelectField;
-	
-	# process user records
-	foreach my $userRecord (@userRecords) {
-		my $currentUser = $userRecord->user_id;
-		push @userIDsForHiddenSelectField, $currentUser;
-		my $permissionLevel = $db->getPermissionLevel($currentUser);
-		unless (defined $permissionLevel) {
-			warn "No permissionLevel record for user $currentUser -- added";
-			my $newPermissionLevel = $db->newPermissionLevel;
-			$newPermissionLevel->user_id($currentUser);
-			$newPermissionLevel->permission(0);
-			$db->addPermissionLevel($newPermissionLevel);
-			$permissionLevel = $newPermissionLevel;
- 			# permission set to minimum level
-		}
-		
-		# A concise way of printing a row containing a cell for each field, editable unless it's a key
-		print CGI::Tr({},
-			CGI::td({}, [
-				($editMode
-					? () # don't show selection checkbox if we're in edit mode -- hidden field below
-					#: CGI::input({type=>"checkbox", name=>"selectUser", value=>$currentUser})
-					: CGI::checkbox(
-						-name=>"selectUser",
-						-value=>$currentUser,
-						-checked=>($filter_type eq "filter_selected" and not defined $r->param("editingAllVisibleUsers")),
-						-label=>""
-					)
-				),
-				($editMode
-					? $currentUser
-					: (map {
-						my $changeEUserURL = "$root/$courseName?"
-							. "user=" . $r->param("user")
-							. "&effectiveUser=" . $userRecord->user_id
-							. "&key=" . $r->param("key");
-						CGI::a({href=>$changeEUserURL}, $userRecord->$_)
-					} $userRecord->KEYFIELDS)
-				),
-				(map {
-					$self->fieldEditHTML(
-						"user." . $userRecord->user_id . "." .$_,
-						$userRecord->$_, $fieldProperties{$_});
-				} $userRecord->NONKEYFIELDS()), 
-				(map {
-					$self->fieldEditHTML(
-						"permission." . $permissionLevel->user_id . "." . $_,
-						$permissionLevel->$_, $fieldProperties{$_});
-				} $permissionLevel->NONKEYFIELDS()),
-			])
-		);
-	}
-	
-	unless (@userRecords) {
-		print CGI::Tr({},
-			CGI::td({-colspan=>scalar(@tableHeadings), -align=>"center"},
-				"No users match the filter criteria above."
-			),
-		);
-	}
-	
-	print CGI::end_table();
-	
-	if ($editMode) {
-		print CGI::hidden(-name=>"selectUser", -value=>[ @userIDsForHiddenSelectField ]);
-		if (defined $r->param("edit_visible")) {
-			print CGI::hidden(-name=>"editingAllVisibleUsers", -value=>1);
-		}
-	}
-	
-	if ($editMode) {
-		print CGI::submit({name=>"discard_chagnes", value=>"Discard Changes to Users"});
-		print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
-	} else {
-		print CGI::submit({name=>"edit_visible", value=>"Edit Visible Users"});
-		print CGI::submit({name=>"edit_selected", value=>"Edit Selected Users"});
-		print CGI::submit({name=>"delete_selected", value=>"Delete Selected Users"});
-	}
-	
-	print CGI::end_form();
-	
-	# Add a student form
-	unless ($editMode) {
-		print CGI::start_form({method=>"post", action=>$r->uri()});
-		print $self->hidden_authen_fields();
-		print "User ID:";
-		print CGI::input({type=>"text", name=>"newUserID", value=>"", size=>"20"});
-		print CGI::submit({name=>"addStudent", value=>"Add User"});
-		print CGI::end_form();
-	}
-	
-	return "";

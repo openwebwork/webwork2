@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.29 2004/02/19 22:47:02 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.30 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -120,11 +120,15 @@ sub body {
 	my $scoringDir  = $ce->{courseDirs}->{scoring};
 	my $courseName  = $urlpath->arg("courseID");
 	my $user        = $r->param('user');
-	my $actionURL   = $r->uri;
 	
+	my $scoringPage       = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
+	my $scoringURL        = $self->systemLink($scoringPage);
 	
+	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", 
+	                                      courseID => $courseName
+	);
 	print join("",
-			CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
+			CGI::start_form(-method=>"POST", -action=>$scoringURL),"\n",
 			$self->hidden_authen_fields,"\n",
 			CGI::hidden({-name=>'scoreSelected', -value=>1}),
 			$self->popup_set_form,
@@ -154,17 +158,7 @@ sub body {
 		my @selected = $r->param('selectedSet');
 		print CGI::p("All of these files will also be made available for mail merge");
 		foreach my $setID (@selected) {
-			#print CGI::h2("$setID");
-			#foreach my $type ("scr", "ful") {
-			#	my $filename = "s$setID$type.csv";
-			#	my $path = "$scoringDir/$filename";
-			#	if (-f $path) {
-			#		print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
-			#		print CGI::br();
-			#	}
-			#}
-			#print CGI::hr();
-			
+	
 			my @validFiles;
 			foreach my $type ("scr", "ful") {
 				my $filename = "s$setID$type.csv";
@@ -174,7 +168,9 @@ sub body {
 			if (@validFiles) {
 				print CGI::h2("$setID");
 				foreach my $filename (@validFiles) {
-					print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
+					#print CGI::a({href=>"../scoringDownload/?getFile=${filename}&".$self->url_authen_args}, $filename);
+					print CGI::a({href=>$self->systemLink($scoringDownloadPage,
+					               params=>{getFile => $filename } )}, $filename);
 					print CGI::br();
 				}
 				print CGI::hr();
@@ -182,7 +178,9 @@ sub body {
 		}
 		if (-f "$scoringDir/${courseName}_totals.csv") {
 			print CGI::h2("Totals");
-			print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
+			#print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
+			print CGI::a({href=>$self->systemLink($scoringDownloadPage,
+					               params=>{getFile => "${courseName}_totals.csv" } )}, "${courseName}_totals.csv");
 			print CGI::hr();
 			print CGI::pre({style=>'font-size:smaller'},WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
 		}

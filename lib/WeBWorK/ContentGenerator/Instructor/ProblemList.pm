@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.19 2004/03/28 04:46:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.20 2004/04/03 16:24:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -228,7 +228,8 @@ sub body {
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
-
+    my $editForUserName = $editForUser[0];
+    
     return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $userCount        = $db->listUsers();
@@ -282,10 +283,17 @@ sub body {
 				CGI::td({}, [
 					($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
 					"$problemID "
-						. CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, "view")
-						. " "
-						. CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, "edit")
-						,
+						. CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
+						                                                args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+						                                                ),
+						                                   params =>{effectiveUser => $editForUserName}
+						                                 )}, "view"
+						) . " "
+						. CGI::a({href=>$self->systemLink( $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
+						                                                args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
+						                                                )
+						                                 )}, "edit"
+						),
 					($forUsers ? (
 						problemElementHTML("problem.${problemID}.status", $userProblemRecord->status, "7"),
 						problemElementHTML("problem.${problemID}.problem_seed", $userProblemRecord->problem_seed, "7"),

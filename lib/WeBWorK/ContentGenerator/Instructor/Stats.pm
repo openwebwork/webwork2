@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.32 2004/03/06 21:41:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.33 2004/03/28 03:25:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,13 +35,14 @@ sub initialize {
 	my $self     = shift; 
 	# FIXME  are there args here?
 	my @components = @_;
-	my $r = $self->{r};
-	my $type       = $r->urlpath->arg("statType") || '';
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $authz = $self->{authz};
- 	my $user = $r->param('user');
- 	#my $setName = $_[0];
+	my $r          = $self->{r};
+	my $urlpath    = $r->urlpath;
+	my $type       = $urlpath->arg("statType") || '';
+	my $db         = $self->{db};
+	my $ce         = $self->{ce};
+	my $authz      = $self->{authz};
+	my $courseName = $urlpath->arg('courseID');
+ 	my $user       = $r->param('user');
  	
  	
  	$self->{type}  = $type;
@@ -114,11 +115,16 @@ sub body {
 		
 		my $studentRecord = $db->getUser($studentName); # checked
 			die "record for user $studentName not found" unless $studentRecord;
-		my $root = $ce->{webworkURLs}->{root};
 		
 		my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
-	    my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
-			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+ 
+        my $courseHomePage     = $urlpath->new(type  => 'set_list',
+												args => {courseID   => $courseName}
+		);
+		my $act_as_student_url = $self->systemLink($courseHomePage,
+												   params => { effectiveUser => $studentName }
+		);
+
 		my $email    = $studentRecord->email_address;
 		print  
 			CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
@@ -126,7 +132,7 @@ sub body {
 			"Recitation: ", $studentRecord->recitation,CGI::br(),
 			'Act as: ',
 			CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
-		WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
+		    WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
 		
 		# The table format has been borrowed from the Grades.pm module
 	} elsif( $type eq 'set') {
@@ -153,15 +159,28 @@ sub index {
 	
 	my @studentList   = sort $db->listUsers;
 	my @setList       = sort  $db->listGlobalSets;
-	my $uri           = $r->uri;
+	
+	
 	my @setLinks      = ();
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {
-		push @setLinks, CGI::a({-href=>"${uri}set/$set/?".$self->url_authen_args },"set $set" );	
+	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module,
+	                                                      courseID => $courseName,
+	                                                      statType => 'set',
+	                                                      setID    => $set
+	    );
+		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) },"set $set" );	
 	}
 	
 	foreach my $student (@studentList) {
-		push @studentLinks, CGI::a({-href=>"${uri}student/$student/?".$self->url_authen_args},"  $student" ),;	
+	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
+	                                                      courseID => $courseName,
+	                                                      statType => 'student',
+	                                                      userID   => $student
+	    );
+		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
+		                                                     prams=>{effectiveUser => $student}
+		                                                     )},"  $student" ),;	
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
@@ -208,10 +227,11 @@ sub displaySets {
 	my $user             = $r->param('user');
 	my $setRecord        = $self->{setRecord};
 	my $root             = $ce->{webworkURLs}->{root};
-	my $url              = $r->uri; 
+	
+	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
 	my $sort_method_name = $r->param('sort');  
 	my @studentList      = $db->listUsers;
-
+    
    	my @index_list                           = ();  # list of all student index 
 	my @score_list                           = ();  # list of all student total percentage scores 
     my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
@@ -266,7 +286,7 @@ sub displaySets {
 		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 		my $num_of_problems = @problemRecords;
-		my $max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
+		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
 
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
@@ -296,19 +316,21 @@ sub displaySets {
 			else	{
 				$longStatus 	= 'X  ';
 			}
-
-			my $incorrect     = $problemRecord->num_incorrect || 0; 
+			
+			my $num_correct   = $problemRecord->num_correct || 0;
+			my $num_incorrect = $problemRecord->num_incorrect   || 0;
 			# It's possible that $incorrect is an empty or blank string instead of 0  the || clause fixes this and prevents 
 			# warning messages in the comparison below.
 			$string          .=  $longStatus;
-			$twoString       .= threeSpaceFill($incorrect);
+			$twoString       .= threeSpaceFill($num_incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
 			$total           += $probValue;
 			$totalRight      += round_score($status*$probValue) if $valid_status;
-			my $num_correct   = $problemRecord->num_incorrect || 0;
-			my $num_incorrect = $problemRecord->num_correct   || 0;
+
 			$num_of_attempts += $num_correct + $num_incorrect;
+			
+			$h_problemData{$probID} = $num_incorrect;
 			
 			$correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
 			 # add on the scores for this problem
@@ -321,14 +343,15 @@ sub displaySets {
 		}
 		
 		
-		my $act_as_student_url = "$root/$courseName/$setName?user=".$r->param("user").
-			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
-		my $email    = $studentRecord->email_address;
+		my $act_as_student_url = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
+		                                           params=>{effectiveUser => $studentRecord->user_id}
+		);
+		my $email              = $studentRecord->email_address;
 		# FIXME  this needs formatting
 		
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-		my $temp_hash         = {    user_id     => $studentRecord->user_id,
+		my $temp_hash         = {         user_id        => $studentRecord->user_id,
 		                                  last_name      => $studentRecord->last_name,
 		                                  first_name     => $studentRecord->first_name,
 		                                  score          => $totalRight,
@@ -453,19 +476,19 @@ print
 	my $problem_header = '';
 	
 	foreach my $i (1..$max_num_problems) {
-		$problem_header .= CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=p$i"},threeSpaceFill($i) );
+		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
 	}
 	print
 		CGI::p("Details"),
 	    defined($sort_method_name) ?"sort method is $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
-		CGI::Tr(CGI::th(  {-align=>'center'},
-			[CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=name"},'Name'),
-			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=score"},'Score'),
+		CGI::Tr(CGI::td(  {-align=>'left'},
+			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
+			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
 			 'Out'.CGI::br().'Of',
-			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=index"},'Ind'),
-			 '<pre>Problems'.CGI::br().$problem_header.'</pre>',
-			 CGI::a({"href"=>$url."?".$self->url_authen_args."&sort=section"},'Section'),
+			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
+			 'Problems'.CGI::br().$problem_header,
+			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
 			 'Recitation',
 			 'login_name',
 			 ])
@@ -504,8 +527,8 @@ print
 sub threeSpaceFill {
     my $num = shift @_ || 0;
     
-    if (length($num)<=1) {return "$num".'  ';}
-    elsif (length($num)==2) {return "$num".' ';}
+    if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
+    elsif (length($num)==2) {return "$num".'&nbsp;';}
     else {return "## ";}
 }
 sub round_score{
