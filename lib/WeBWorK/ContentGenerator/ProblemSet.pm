@@ -56,9 +56,9 @@ sub siblings {
 	print CGI::strong("Problem Sets"), CGI::br();
 	
 	my $wwdb = $self->{wwdb};
-	my $user = $self->{r}->param("user");
+	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @sets;
-	push @sets, $wwdb->getSet($user, $_) foreach ($wwdb->getSets($user));
+	push @sets, $wwdb->getSet($effectiveUser, $_) foreach ($wwdb->getSets($effectiveUser));
 	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
 		if (time >= $set->open_date) {
 			print CGI::a({-href=>"$root/$courseName/".$set->id."/?"
@@ -83,9 +83,9 @@ sub info {
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
-	my $user = $cldb->getUser($r->param("user"));
-	my $set  = $wwdb->getSet($user->id, $setName);
-	my $psvn = $wwdb->getPSVN($user->id, $setName);
+	my $effectiveUser = $cldb->geteffectiveUser($r->param("effectiveUser"));
+	my $set  = $wwdb->getSet($effectiveUser->id, $setName);
+	my $psvn = $wwdb->getPSVN($effectiveUser->id, $setName);
 	
 	my $screenSetHeader = $set->problem_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $displayMode     = $ce->{pg}->{options}->{displayMode};
@@ -96,14 +96,14 @@ sub info {
 	my $problem = WeBWorK::Problem->new(
 		id => 0,
 		set_id => $set->id,
-		login_id => $user->id,
+		login_id => $effectiveUser->id,
 		source_file => $screenSetHeader,
 		# the rest of Problem's fields are not needed, i think
 	);
 	
 	my $pg = WeBWorK::PG->new(
 		$ce,
-		$user,
+		$effectiveUser,
 		$r->param('key'),
 		$set,
 		$problem,
@@ -130,7 +130,7 @@ sub body {
 	my ($self, $setName) = @_;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
-	my $user = $r->param('user');
+	my $effectiveUser = $r->param('effectiveUser');
 	my $wwdb = $self->{wwdb};
 	
 	my $hardcopyURL =
@@ -148,10 +148,10 @@ sub body {
 		CGI::th("Status"),
 	);
 	
-	my $set = $wwdb->getSet($user, $setName);
-	my @problemNumbers = $wwdb->getProblems($user, $setName);
+	my $set = $wwdb->getSet($effectiveUser, $setName);
+	my @problemNumbers = $wwdb->getProblems($effectiveUser, $setName);
 	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
-		my $problem = $wwdb->getProblem($user, $setName, $problemNumber);
+		my $problem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber);
 		print $self->problemListRow($set, $problem);
 	}
 	

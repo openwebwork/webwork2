@@ -26,7 +26,7 @@ sub initialize {
 	
 	$self->{cldb} = WeBWorK::DB::Classlist->new($ce);
 	$self->{authdb} = WeBWorK::DB::Auth->new($ce);
-	$self->{user} = $self->{cldb}->getUser($r->param('user'));
+	$self->{effectiveUser} = $self->{cldb}->getUser($r->param('effectiveUser'));
 }
 
 sub path {
@@ -45,14 +45,14 @@ sub path {
 sub title {
 	my $self = shift;
 	
-	return "User Options for " . $self->{user}->first_name
-		. " " . $self->{user}->last_name;
+	return "User Options for " . $self->{effectiveUser}->first_name
+		. " " . $self->{effectiveUser}->last_name;
 }
 
 sub body {
 	my $self = shift;
 	my $r = $self->{r};
-	my $user = $self->{user};
+	my $effectiveUser = $self->{effectiveUser};
 	
 	my $changeOptions = $r->param("changeOptions");
 	my $newP = $r->param("newPassword");
@@ -67,7 +67,7 @@ sub body {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
 				# possibly do some format checking?
-				eval { $self->{authdb}->setPassword($user->id, $newP) };
+				eval { $self->{authdb}->setPassword($effectiveUser->id, $newP) };
 				if ($@) {
 					print CGI::p("Couldn't change your
 					password: $@");
@@ -98,11 +98,11 @@ sub body {
 		if ($newA or $confirmA) {
 			if ($newA eq $confirmA) {
 				# possibly do some format checking?
-				my $oldA = $user->email_address;
-				$user->email_address($newA);
-				eval { $self->{cldb}->setUser($user) };
+				my $oldA = $effectiveUser->email_address;
+				$effectiveUser->email_address($newA);
+				eval { $self->{cldb}->setUser($effectiveUser) };
 				if ($@) {
-					$user->email_address($oldA);
+					$effectiveUser->email_address($oldA);
 					print CGI::p("Couldn't change your
 					email address: $@");
 				} else {
@@ -121,7 +121,7 @@ sub body {
 	print CGI::table(
 		CGI::Tr(
 			CGI::td("Current Address"),
-			CGI::td($user->email_address),
+			CGI::td($effectiveUser->email_address),
 		),
 		CGI::Tr(
 			CGI::td("New Address"),

@@ -55,6 +55,7 @@ sub body {
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param("user");
+	my $effectiveUser = $r->param("effectiveUser");
 	my $sort = $r->param("sort") || "status";
 	my $wwdb = $self->{wwdb};
 	
@@ -77,7 +78,7 @@ sub body {
 	);
 	
 	my @sets;
-	push @sets, $wwdb->getSet($user, $_) foreach ($wwdb->getSets($user));
+	push @sets, $wwdb->getSet($effectiveUser, $_) foreach ($wwdb->getSets($effectiveUser));
 	@sets = sort byname @sets if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
