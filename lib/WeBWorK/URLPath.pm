@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.15 2004/06/01 14:44:17 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.16 2004/09/21 19:51:45 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -116,7 +116,7 @@ our %pathTypes = (
 	################################################################################
 	
 	set_list => {
-		name    => '$courseID',
+		name    => 'Homework Sets',
 		parent  => 'root',
 		kids    => [ qw/equation_display feedback gateway_quiz grades hardcopy
 			logout options instructor_tools problem_list
@@ -157,7 +157,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
 	},
 	grades => {
-		name    => 'Student Grades',
+		name    => 'Grades',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^grades/|,
@@ -184,7 +184,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
 	},
 	logout => {
-		name    => 'Log Out',
+		name    => 'Logout',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^logout/|,
@@ -193,7 +193,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => 'User Options',
+		name    => 'Password/Email',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^options/|,
@@ -223,7 +223,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_user_list => {
-		name    => 'User List',
+		name    => 'Classlist Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users/|,
@@ -253,7 +253,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_set_list => {
-		name    => 'Set List',
+		name    => 'Hmwk Sets Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets/|,
@@ -301,7 +301,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
 	},
 	instructor_set_maker => {
-		name    => 'Set Maker',
+		name    => 'Library Browser',
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^setmaker/|,
@@ -364,7 +364,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ScoringDownload',
 	},
 	instructor_mail_merge => {
-		name    => 'Mail Merge',
+		name    => 'Email',
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^send_mail/|,

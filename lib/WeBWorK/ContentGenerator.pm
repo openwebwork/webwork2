@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.114 2004/09/13 19:29:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.115 2004/09/21 19:51:45 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,26 +48,6 @@ use Carp;
 use CGI::Pretty qw(*ul *li);
 use URI::Escape;
 use WeBWorK::Template qw(template);
-
-################################################################################
-
-use constant PROBLEM_SETS => "Homework&nbsp;Sets";
-use constant OPTIONS      => "Password/Email";
-use constant GRADES       => "Grades";
-use constant LOG_OUT      => "Logout";
-
-use constant ADD_USERS     => "Add&nbsp;Users";
-use constant USER_LIST     => "Class&nbsp;List&nbsp;Editor";
-use constant SET_LIST      => "Hmwk&nbsp;Sets&nbsp;Editor";
-use constant SET_MAKER     => "Library&nbsp;Browser";
-use constant ASSIGNER      => "Set&nbsp;Assigner";
-use constant MAIL          => "Email";
-use constant SCORING       => "Scoring&nbsp;Tools";
-use constant STATS         => "Statistics";
-use constant PROGRESS      =>"Student&nbsp;Progress";
-use constant FILE_TRANSFER => "File&nbsp;Transfer";
-
-# Note: Perl 5.6 doesn't seem to allow multiple definitions of constants.
 
 ###############################################################################
 
@@ -506,10 +486,10 @@ sub links {
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
-		CGI::a({href=>$self->systemLink($sets)}, PROBLEM_SETS)));
-	print CGI::li(CGI::a({href=>$self->systemLink($options)}, OPTIONS));
-	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  GRADES));
-	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  LOG_OUT));
+		CGI::a({href=>$self->systemLink($sets)}, sp2nbsp($sets->name))));
+	print CGI::li(CGI::a({href=>$self->systemLink($options)}, sp2nbsp($options->name)));
+	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  sp2nbsp($grades->name)));
+	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  sp2nbsp($logout->name)));
 	
 	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		my $ipfx = "${pfx}Instructor::";
@@ -553,10 +533,10 @@ sub links {
 		                 CGI::a({href=>$self->systemLink($instr)},  space2nbsp($instr->name))
 		);
 		print CGI::start_ul();
-		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, ADD_USERS)) if $authz->hasPermissions($user, "modify_student_data");
-		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, USER_LIST));
+		#print CGI::li(CGI::a({href=>$self->systemLink($addUsers)}, sp2nbsp($addUsers->name))) if $authz->hasPermissions($user, "modify_student_data");
+		print CGI::li(CGI::a({href=>$self->systemLink($userList)}, sp2nbsp($userList->name)));
 		print CGI::start_li();
-		print CGI::a({href=>$self->systemLink($setList)}, SET_LIST);
+		print CGI::a({href=>$self->systemLink($setList)}, sp2nbsp($setList->name));
 		if (defined $setID and $setID ne "") {
 			print CGI::start_ul();
 			print CGI::start_li();
@@ -570,25 +550,13 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
-		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, SET_MAKER)) if $authz->hasPermissions($user, "modify_problem_sets");
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, ASSIGNER)) if $authz->hasPermissions($user, "assign_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($maker)}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner)}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($stats)}, STATS));
-# 		print CGI::start_li();	
-# 		if (defined $userID and $userID ne "") {
-# 			print CGI::ul(
-# 				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
-# 			);
-# 		}
-# 		if (defined $setID and $setID ne "") {
-# 			print CGI::ul(
-# 				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, space2nbsp($setID)))
-# 			);
-# 		}
-# 		print CGI::end_li();
+		print CGI::li(CGI::a({href=>$self->systemLink($stats)}, sp2nbsp($stats->name)));
 		
 	## Added Link for Student Progress	
-	    print CGI::li(CGI::a({href=>$self->systemLink($progress)}, PROGRESS));
+	    print CGI::li(CGI::a({href=>$self->systemLink($progress)}, sp2nbsp($progress->name)));
 		print CGI::start_li();
 			if (defined $userID and $userID ne "") {
 				print CGI::ul(
@@ -602,9 +570,9 @@ sub links {
 			}
 		print CGI::end_li();
 		
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, SCORING)) if $authz->hasPermissions($user, "score_sets");
-		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, MAIL)) if $authz->hasPermissions($user, "send_mail");
-		print CGI::li(CGI::a({href=>$self->systemLink($files)}, FILE_TRANSFER));
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
+		print CGI::li(CGI::a({href=>$self->systemLink($files)}, sp2nbsp($files->name)));
 		print CGI::li( $self->helpMacro('instructor_links'));
 		print CGI::end_ul();
 
@@ -1416,9 +1384,22 @@ Otherwise $string is returned.
 =cut
 
 sub nbsp {
-	my $self = shift;
-	my $str  = shift;
-	(defined $str && $str =~/\S/) ? $str : '&nbsp;';
+	my ($self, $str) = @_;
+	return (defined $str && $str =~/\S/) ? $str : "&nbsp;";
+}
+
+=item sp2nbsp($string)
+
+A copy of $string is returned with each space character replaced by the
+C<&nbsp;> entity.
+
+=cut
+
+sub sp2nbsp {
+	my ($str) = @_;
+	return unless defined $str;
+	$str =~ s/ /&nbsp;/g;
+	return $str;
 }
 
 =item space2nbsp($string)
