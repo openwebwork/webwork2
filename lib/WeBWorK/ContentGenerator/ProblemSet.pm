@@ -83,9 +83,20 @@ sub siblings {
 		foreach ($db->listUserSets($effectiveUser));
 #	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
 #   FIXME only experience will tell us the best sorting procedure
-#   due_date seems right for students, but alphabetically is more useful for professors.
+#   due_date seems right for students, but alphabetically is more useful for professors?;
 
-	foreach my $set (sort { $a->set_id cmp $b->set_id } @sets) {  # sort by set name
+	# sort by set name
+	#@sets = sort { $a->set_id cmp $b->set_id } @sets;
+	
+	# sort by set due date
+	my @sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
+	# put closed sets last;
+	my $now = time();
+	my @open_sets = grep {$_->due_date>$now} @sets;
+	my @closed_sets = grep {$_->due_date<=$now} @sets;
+	my @sorted_sets = (@open_sets,@closed_sets);
+	
+	foreach my $set (@sorted_sets) {  
 		if (time >= $set->open_date) {
 			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
 				. $self->url_authen_args}, $set->set_id), CGI::br();
