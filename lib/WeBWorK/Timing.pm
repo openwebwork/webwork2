@@ -124,7 +124,7 @@ sub save {
 	if ($TIMING_LOG =~ /\S/) { 
 		open(TIMING, ">>$TIMING_LOG") || die "Can't open timing log: $TIMING_LOG";
 	} else {
-		*TIMING_LOG = *STDERR;
+		*TIMING = *STDERR;
 	} 
 		
 	my $id = $self->{id};
@@ -134,10 +134,10 @@ sub save {
 	my $diff = sprintf("%.6f", 0);
 	if ($self->{start}) {
 		my $start = sprintf("%.6f", $self->{start});
-		print TIMING_LOG "TIMING $$ $id $start ($diff) $task: START\n";
+		print TIMING "TIMING $$ $id $start ($diff) $task: START\n";
 	} else {
 		my $ctime = sprintf("%.6f", $self->{ctime});
-		print TIMING_LOG "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
+		print TIMING "TIMING $$ $id $ctime ($diff) $task: START (assumed)\n";
 	}
 	
 	if ($self->{steps}) {
@@ -147,7 +147,7 @@ sub save {
 			$time = sprintf("%.6f", $time);
 			my $start = sprintf("%.6f", $self->{start});
 			my $diff  = sprintf("%.6f", $time-$start);
-			print TIMING_LOG "TIMING $$ $id $time ($diff) $task: $data\n";
+			print TIMING "TIMING $$ $id $time ($diff) $task: $data\n";
 		}
 	}
 	
@@ -155,12 +155,12 @@ sub save {
 		my $stop = sprintf("%.6f", $self->{stop});
 		my $start = sprintf("%.6f", $self->{start});
 		my $diff  = sprintf("%.6f", $stop-$start);
-		print TIMING_LOG "TIMING $$ $id $stop ($diff) $task: END\n";
+		print TIMING "TIMING $$ $id $stop ($diff) $task: END\n";
 	} else {
 		$now = sprintf("%.6f", $now);
 		my $start = sprintf("%.6f", $self->{start});
 		my $diff  = sprintf("%.6f", $now-$start);
-		print TIMING_LOG "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
+		print TIMING "TIMING $$ $id $now ($diff) $task: END (assumed)\n";
 	}
 	
 	$self->{saved} = 1;
