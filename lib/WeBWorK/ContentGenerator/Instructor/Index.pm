@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.43 2004/09/21 19:59:19 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.44 2004/09/21 20:20:25 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -217,9 +217,10 @@ sub body {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $courseName = $self->{courseName};
+	my $user = $r->param("user");
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	print CGI::p("Use the interface below to quickly access commonly-used
 	instructor tools, or select a tool from the list to the left.", CGI::br(),
@@ -231,7 +232,6 @@ sub body {
 
 ## Mark's Edits for filtering
 	my @myUsers;
-	my $user = $r->param("user");
 	
 	my (@viewable_sections,@viewable_recitations);
 	
