@@ -187,7 +187,7 @@ sub findDefaults($@) {
 		$Defaults->$field($maxValue);
 	}
 	
-	warn "Consensus defaults: ", Dumper($Defaults);
+	#warn "Consensus defaults: ", Dumper($Defaults);
 	
 	return $Defaults;
 }
