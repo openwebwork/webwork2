@@ -128,9 +128,10 @@ sub renderProblems {
   my $ce = $r->ce; 
   my $key = $r->param('key'); 
   my $set = fake_set($db); 
-  my $problem_seed = $r->param('problem_seed') || 0;
+  my $problem_seed = $args{'problem_seed'} || $r->param('problem_seed') || 0;
   my $displayMode = $args{displayMode} ||
     $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+  my $problemNumber= $args{'problem_number'} || 1;
 
   my @output = (); 
   my $onefile;
@@ -144,7 +145,6 @@ sub renderProblems {
     my $problem = fake_problem($db, 'problem_seed'=>$problem_seed); 
     my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
  
-    my $problemNumber=1;
     for $onefile (@problem_list) { 
       $problem->problem_id($problemNumber++); 
       $problem->source_file($onefile); 
