@@ -72,6 +72,19 @@ sub body {
 	return "";
 }
 
+sub info {
+	my $self = shift;
+	my $r = $self->{r};
+	my $courseEnvironment = $self->{ce};
+
+	if (defined $courseEnvironment->{courseFiles}->{login_info}
+		and $courseEnvironment->{courseFiles}->{login_info}) {
+		my $login_info = eval { WeBWorK::Utils::readFile($courseEnvironment->{courseFiles}->{login_info}) };
+		$@ or print $login_info;
+
+	}
+	'';
+}
 # This content generator is NOT logged in.
 sub if_loggedin($$) {
 	my ($self, $arg) = (@_);

@@ -153,7 +153,18 @@ sub setListRow($$$) {
 		$status,
 	]));
 }
+sub info {
+	my $self = shift;
+	my $r = $self->{r};
+	my $courseEnvironment = $self->{ce};
 
+	if (defined $courseEnvironment->{courseFiles}->{course_info}
+		and $courseEnvironment->{courseFiles}->{course_info}) {
+		my $course_info = eval { readFile($courseEnvironment->{courseFiles}->{course_info}) };
+		$@ or print $course_info;
+	}
+	'';
+}
 sub byname { $a->set_id cmp $b->set_id; }
 sub byduedate { $a->due_date <=> $b->due_date; }
 
