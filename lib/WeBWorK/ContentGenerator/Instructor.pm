@@ -117,31 +117,31 @@ sub assignSetToAllUsers {
 
 sub links {
  	my $self 		= shift;
- 	
- 	# keep the links from the parent
- 	my $pathString 	= "";
- 	
-	
-	my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $userName = $self->{r}->param("user");
-	my $courseName = $ce->{courseName};
-	my $root = $ce->{webworkURLs}->{root};
-	my $permLevel = $db->getPermissionLevel($userName)->permission();
-	my $key = $db->getKey($userName)->key();
-	return "" unless defined $key;
-	
-	# new URLS
-	my $classList	= "$root/$courseName/instructor/users/?". $self->url_authen_args();
-	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
-	my $problemSetList = "$root/$courseName/instructor/sets/?". $self->url_authen_args();
-	
-	if ($permLevel > 0 ) {
-		$pathString .="<hr>";
-		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
-		$pathString .= CGI::a({-href=>$problemSetList}, "Set editor") . CGI::br();
-	}
-	return $self->SUPER::links() . $pathString;
+#  	these links are being placed in ContentGenerator.pm
+#  	
+#  	my $pathString 	= "";
+#  	
+# 	
+# 	my $ce = $self->{ce};
+# 	my $db = $self->{db};
+# 	my $userName = $self->{r}->param("user");
+# 	my $courseName = $ce->{courseName};
+# 	my $root = $ce->{webworkURLs}->{root};
+# 	my $permLevel = $db->getPermissionLevel($userName)->permission();
+# 	my $key = $db->getKey($userName)->key();
+# 	return "" unless defined $key;
+# 	
+# 	# new URLS
+# 	my $classList	= "$root/$courseName/instructor/users/?". $self->url_authen_args();
+# 	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
+# 	my $problemSetList = "$root/$courseName/instructor/sets/?". $self->url_authen_args();
+# 	
+# 	if ($permLevel > 0 ) {
+# 		$pathString .="<hr>";
+# 		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
+# 		$pathString .= CGI::a({-href=>$problemSetList}, "Set editor") . CGI::br();
+# 	}
+	return $self->SUPER::links(); # . $pathString;
 }
 
 1;
