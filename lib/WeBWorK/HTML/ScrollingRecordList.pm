@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.3 2004/05/23 18:28:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.4 2004/05/23 23:35:42 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -87,7 +87,7 @@ sub scrollingRecordList {
 		my $class = ref $Records[0];
 
 		($filters, $filter_labels) = getFiltersForClass(@Records);
-		if (defined $r->param("$name!filter")){warn "Param =", $r->param("$name!filter");
+		if (defined $r->param("$name!filter")){
 			@selected_filters = $r->param("$name!filter");
 			@selected_filters = ("all") unless @selected_filters;
 		}
