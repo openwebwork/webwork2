@@ -36,6 +36,7 @@ sub fullyQualifiedPackageName($) {
 	return $package;
 }
 
+=pod
 sub connect($$$) {
 	my $self = shift;
 	my $db = shift;
@@ -51,24 +52,33 @@ sub disconnect($$) {
 	return unless defined $self->{$db."_db"};
 	$self->{$db."_db"}->disconnect;
 }
+=cut
 
 # -----
 
+=pod
 sub getUsers($) {
 	my $self = shift;
-	return unless $self->{password_db}->connect("ro");
-	my @password_users = keys %{$self->{password_db}->hashRef};
-	$self->{password_db}->disconnect;
-	return unless $self->{permissions_db}->connect("ro");
-	my @permissions_users = keys %{$self->{permissions_db}->hashRef};
-	$self->{permissions_db}->disconnect;
-	return unless $self->{keys_db}->connect("ro");
-	my @keys_users = keys %{$self->{keys_db}->hashRef};
-	$self->{keys_db}->disconnect;
+	my @password_users, @permissions_users, @keys_users;
+	if ($self->{password_db}->connect("ro")) {
+		@password_users = keys %{$self->{password_db}->hashRef};
+		$self->{password_db}->disconnect;
+	}
+	if ($self->{permissions_db}->connect("ro")) {
+		@permissions_users = keys %{$self->{permissions_db}->hashRef};
+		$self->{permissions_db}->disconnect;
+	}
+	if ($self->{keys_db}->connect("ro")) {
+		@keys_users = keys %{$self->{keys_db}->hashRef};
+		$self->{keys_db}->disconnect;
+	}
 	my %all_users;
-	$all_users{$_}++ foreach (@password_users, @permissions_users, @keys_users);
+	foreach (@password_users, @permissions_users, @keys_users) {
+		$all_users{$_}++;
+	}
 	return keys %all_users;
 }
+=cut
 
 # -----
 
@@ -95,6 +105,7 @@ sub verifyPassword($$$) {
 	my $user = shift;
 	my $password = shift;
 	my $real_password = $self->getPassword($user);
+	return unless defined $real_password;
 	$password = crypt $password, $real_password;
 	return $password eq $real_password;
 }
