@@ -135,8 +135,10 @@ sub new {
 #   On webwork3  cached code is .2 seconds faster than non-cached code for an existing child.
 
 #   CACHING CODE:
+    eval{
 	$translator->pre_load_macro_files($WeBWorK::PG::Local::safeCache, $ce->{pg}->{directories}->{macros}, 
-      'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl');
+      'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl');};
+    warn "Error while preloading macro files:  $@" if $@;
 
 #   STANDARD LOADING CODE: for cached script files this merely initializes the constants.
 	foreach (qw( PG.pl dangerousMacros.pl IO.pl)) {
