@@ -516,10 +516,10 @@ sub filter_handler {
 		$self->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq "match_section") {
 		my $section = $actionParams->{"action.filter.section"}->[0];
-		$self->{visibleUserIDs} = $self->{sections}->{$section};
+		$self->{visibleUserIDs} = $self->{sections}->{$section}; # an arrayref
 	} elsif ($scope eq "match_recitation") {
 		my $recitation = $actionParams->{"action.filter.recitation"}->[0];
-		$self->{visibleUserIDs} = $self->{recitations}->{$recitation};
+		$self->{visibleUserIDs} = $self->{recitations}->{$recitation}; # an arrayref
 	}
 	
 	return $result;
