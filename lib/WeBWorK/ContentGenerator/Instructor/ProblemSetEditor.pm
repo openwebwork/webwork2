@@ -190,7 +190,7 @@ sub body {
 	my $problemCount = $db->listGlobalProblems($setName);
 	print CGI::h2({}, "Problems"), "\n";
 	print CGI::p({}, "This set contains $problemCount problem" . ($problemCount == 1 ? "" : "s").".");
-	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args}, "Edit the list of problems in this set");
+	print CGI::a({href=>$r->uri."problems/?".$self->url_authen_args.(join "", map {"\&editForUser=$_"} @editForUser)}, "Edit the list of problems in this set");
 	
 	my $userCount = $db->listUsers;
 	my $usersOfSet = $db->listSetUsers($setName);

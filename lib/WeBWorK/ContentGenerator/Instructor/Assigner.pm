@@ -45,6 +45,9 @@ sub body {
 	my $r = $self->{r};
 	my $authz = $self->{authz};
 	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $webworkRoot = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
 	my $user = $r->param('user');
 	
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -73,6 +76,14 @@ sub body {
 				}),
 				$user,
 				"($prettyName)",
+				(
+					defined $userSetRecord
+					? CGI::a(
+						{href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/sets/$setID/?editForUser=$user&".$self->url_authen_args()},
+						"Edit user-specific set data for $user"
+					)
+					: ()
+				),
 			])
 		);
 	}
