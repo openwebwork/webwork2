@@ -98,8 +98,9 @@ sub pre_header_initialize {
 	
 	# final values for options
 	my %will;
-	foreach(keys %must) {
+	foreach (keys %must) {
 		$will{$_} = $can{$_} && ($want{$_} || $must{$_});
+		#warn "$_: can? $can{$_} want? $want{$_} must? $must{$_} will? $will{$_}\n";
 	}
 	
 	##### sticky answers #####
@@ -538,8 +539,9 @@ sub canRecordAnswers($$$$$) {
 	my ($permissionLevel, $openDate, $dueDate, $maxAttempts, $attempts) = @_;
 	my $permHigh = $permissionLevel > 0;
 	my $timeOK = time >= $openDate && time <= $dueDate;
-	my $attemptsOK = $attempts <= $maxAttempts;
-	return $permHigh || ($timeOK && $attemptsOK);
+	my $attemptsOK = $maxAttempts == -1 || $attempts <= $maxAttempts;
+	my $recordAnswers = $permHigh || ($timeOK && $attemptsOK);
+	return $recordAnswers;
 }
 
 sub mustRecordAnswers($) {
