@@ -19,6 +19,9 @@
 	lib/WeBWorK/ContentGenerator/ProblemSet.pm
 	lib/WeBWorK/ContentGenerator/ProblemSets.pm
 	
+	lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm
+	
+	
 3 => 2 + GET PATH DATA FROM URLPath INSTEAD OF FROM $self->r
 (this has to be done before we can take advantage of path/param munging.)
 	lib/WeBWorK/ContentGenerator/GatewayQuiz.pm
