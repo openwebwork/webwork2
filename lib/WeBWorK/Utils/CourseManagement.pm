@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.4 2004/05/07 21:49:48 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.5 2004/05/09 14:52:21 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -160,13 +160,26 @@ sub addCourse {
 	
 	my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
 	
+	# make sure we add the global user
+	if (exists $courseOptions{globalUserID}) {
+		unless (grep { $_->[0]->user_id eq $courseOptions{globalUserID} } @users) {
+			push @users, [
+				$db->newUser(user_id => $courseOptions{globalUserID}),
+				$db->newPassword(user_id => $courseOptions{globalUserID}),
+				$db->newPermissionLevel(user_id => $courseOptions{globalUserID}),
+			];
+		}
+	}
+	
 	my @professors; # user ID of any user whose permission level == 10
 	
 	foreach my $userTriple (@users) {
 		my ($User, $Password, $PermissionLevel) = @$userTriple;
-		if ($PermissionLevel->permission == 10) {
+		
+		if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
 			push @professors, $PermissionLevel->user_id;
 		}
+		
 		eval { $db->addUser($User)                       }; warn $@ if $@;
 		eval { $db->addPassword($Password)               }; warn $@ if $@;
 		eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
@@ -528,7 +541,7 @@ sub writeCourseConf {
 	# several options should be defined no matter what
 	$options{dbLayoutName} = $ce->{dbLayoutName} unless defined $options{dbLayoutName};
 	$options{globalUserID} = $ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}
-		unless defined $options{dbLayoutName};
+		unless defined $options{globalUserID};
 	
 	print $fh <<'EOF';
 #!perl
