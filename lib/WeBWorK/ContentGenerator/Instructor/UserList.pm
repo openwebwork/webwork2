@@ -241,12 +241,24 @@ sub body {
 			)
 		])
 	);
-	
-	foreach my $currentUser (@users) {
-		my $userRecord = $db->getUser($currentUser);
+	# get user records
+	my @userRecords  = ();
+	foreach my $currentUser ( @users) {
+		push (@userRecords, $db->getUser($currentUser) );
+	}
+	@userRecords = sort {lc($a->last_name) cmp lc($b->last_name) } @userRecords;
+	@userRecords = sort {lc($a->section) cmp lc($b->section)} @userRecords;
+	# process user records
+	foreach my $userRecord (@userRecords) {
+		my $currentUser = $userRecord->user_id;
 		my $permissionLevel = $db->getPermissionLevel($currentUser);
 		unless (defined $permissionLevel) {
 			warn "No permissionLevel record for user $currentUser" ;
+			my $newPermissionLevel = $db->newPermissionLevel;
+			$newPermissionLevel->user_id($currentUser);
+			$newPermissionLevel->permission(0);
+			$db->addPermissionLevel($newPermissionLevel);
+ 			# permission set to minimum level
 			next;  
 		}
 		
