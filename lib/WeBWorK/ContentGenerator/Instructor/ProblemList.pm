@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.25 2004/05/14 21:20:56 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.26 2004/05/28 23:16:27 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -378,6 +378,18 @@ sub body {
 	@problemList = $db->listGlobalProblems($setName); #reload them
 
 	if (scalar(@problemList)) {
+	  # This will contain the mode list control
+	  my $problemWord = 'Display&nbsp;Mode:&nbsp;';
+	  my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	  my @active_modes = grep { exists $display_modes{$_} }
+	         @{$r->ce->{pg}->{displayModes}};
+	  push @active_modes, 'None';
+	  my $default_mode = $r->param('mydisplaymode') || 'None';
+	  $problemWord .= CGI::popup_menu(-name=> "mydisplaymode",
+			     -values=>\@active_modes,
+			     -default=>$default_mode);
+	  $problemWord .= '&nbsp;'. CGI::input({type=>"submit", name=>"refresh", value=>"Refresh"});
+
 	  if($forUsers) {
 ############### Order things differently.  This is for one user
 		print CGI::start_form({method=>"POST", action=>$problemListURL.'#problems'});
@@ -386,7 +398,8 @@ sub body {
 			($forUsers ? () : ("Delete?")), 
 			"Problem",
 			($forUsers ? ("Status", "Problem Seed") : ()),
-			"Source File", "Max. Attempts", "Weight",
+			#"Source File", 
+		        $problemWord, "Max. Attempts", "Weight",
 			($forUsers ? ("Number Correct", "Number Incorrect") : ())
 		]));
 		foreach my $problem (sort {$a <=> $b} @problemList) {
@@ -398,6 +411,7 @@ sub body {
 
 			my @problem_html = renderProblems(r=> $r, 
 			                      user => $db->getUser($user),
+			                      displayMode=> $default_mode,
 			                      problem_list =>[$problemRecord->source_file]);
 
 			if ($forOneUser) {
@@ -462,7 +476,7 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			"Data",
-			"Problem"
+			$problemWord
 		]));
 		my (%shown_yet) = ();
 		foreach my $problem (sort {$a <=> $b} @problemList) {
@@ -480,6 +494,7 @@ sub body {
 
 			my @problem_html = renderProblems(r=> $r, 
 			                      user => $db->getUser($user),
+			                      displayMode=> $default_mode,
 			                      problem_list =>[$problemRecord->source_file]);
 
 
