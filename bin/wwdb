@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/bin/wwdb,v 1.5 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,6 +18,11 @@
 =head1 NAME
 
 wwdb - command-line interface to the WeBWorK databases (WWDBv2).
+
+=head1 NOTE
+
+This utility is deprecated. All database functionality can be accessed using the
+F<wwsh> utility.
 
 =cut
 
@@ -52,7 +57,7 @@ sub main(@) {
 	}
 	
 	my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $course);
-	my $db = WeBWorK::DB->new($ce);
+	my $db = WeBWorK::DB->new($ce->{dbLayout});
 	
 	if ($command eq "dumpDB") {
 		print $db->$command("set_user");
