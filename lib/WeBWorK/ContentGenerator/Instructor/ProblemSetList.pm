@@ -74,6 +74,9 @@ Delete sets:
 
 =cut
 
+# FIXME: rather than having two types of boolean modes $editMode and $exportMode
+#	make one $mode variable that contains a string like "edit", "view", or "export"
+
 use strict;
 use warnings;
 use CGI qw();
@@ -83,12 +86,33 @@ use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter sort edit publish import score create export delete)];
+use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
+use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
 use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header problem_header) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header problem_header) ];
+use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode primarySortField secondarySortField)];
+# permissions needed to perform a given action
+use constant FORM_PERMS => {
+		saveEdit => "modify_problem_sets",
+		edit => "modify_problem_sets",
+		publish => "modify_problem_sets",
+		import => "create_and_delete_problem_sets",
+		export => "modify_set_def_files",
+		saveExport => "modify_set_def_files",
+		score => "score_sets",
+		create => "create_and_delete_problem_sets",
+		delete => "create_and_delete_problem_sets",
+};
+
+# permissions needed to view a given field
+use constant FIELD_PERMS => {
+		problems => "modify_problem_sets",
+		users	=> "assign_problem_sets",
+};
+
+use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
 
 use constant SORT_SUBS => {
 	set_id		=> \&bySetID,
@@ -207,6 +231,7 @@ sub body {
 		select
 		problems
 		users
+		filename
 		set_id
 		set_header
 		problem_header
@@ -218,6 +243,7 @@ sub body {
 		"Select",
 		"Problems",
 		"Assigned Users",
+		"Set Definition Filename",
 		"Set Name", 
 		"Set Header", 
 		"Paper Header", 
@@ -256,6 +282,14 @@ sub body {
 	
 	$self->{editMode} = $r->param("editMode") || 0;
 	
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify problem sets."))
+		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+	
+	$self->{exportMode} = $r->param("exportMode") || 0;
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify set definition files."))
+		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
+	
 	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
 	
@@ -275,9 +309,11 @@ sub body {
 	
 	my $actionID = $r->param("action");
 	if ($actionID) {
-		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }) {
+		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ EXPORT_FORMS() }) {
 			die "Action $actionID not found";
 		}
+		# Check permissions
+		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 		my $actionHandler = "${actionID}_handler";
 		my %genericParams;
 		foreach my $param (qw(selected_sets)) {
@@ -296,6 +332,7 @@ sub body {
 	my @prevVisibleSetIDs = @{ $self->{prevVisibleSetIDs} };
 	my @selectedSetIDs = @{ $self->{selectedSetIDs} };
 	my $editMode = $self->{editMode};
+	my $exportMode = $self->{exportMode};
 	my $primarySortField = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 	
@@ -339,6 +376,7 @@ sub body {
 	}
 	
 	print CGI::hidden(-name=>"editMode", -value=>$editMode);
+	print CGI::hidden(-name=>"exportMode", -value=>$exportMode);
 	
 	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
 	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);	
@@ -357,8 +395,14 @@ sub body {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
+	if ($exportMode) {
+		@formsToShow = @{ EXPORT_FORMS() };
+	}
+	
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
+		# Check permissions
+		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 		my $actionForm = "${actionID}_form";
 		my $onChange = "document.problemsetlist.action[$i].checked=true";
 		my %actionParams = $self->getActionParams($actionID);
@@ -382,6 +426,7 @@ sub body {
 	
 	$self->printTableHTML(\@Sets, \%prettyFieldNames,
 		editMode => $editMode,
+		exportMode => $exportMode,
 		selectedSetIDs => \@selectedSetIDs,
 	);
 	
@@ -595,13 +640,7 @@ sub sort_handler {
 
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-	
-	return CGI::em("You are not authorized to modify problem sets.") 
-		unless ($authz->hasPermissions($user, "modify_problem_sets"));
-	
+
 	return join("",
 		"Edit ",
 		CGI::popup_menu(
@@ -621,13 +660,6 @@ sub edit_form {
 sub edit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to modify problem sets.") 
-		unless ($authz->hasPermissions($user, "modify_problem_sets"));
-	
 	my $result;
 	
 	my $scope = $actionParams->{"action.edit.scope"}->[0];
@@ -648,13 +680,6 @@ sub edit_handler {
 
 sub publish_form {
 	my ($self, $onChange, %actionParams) = @_;
-
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to modify problem sets.") 
-		unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
 	return join ("",
 		"Make ",
@@ -687,14 +712,9 @@ sub publish_form {
 sub publish_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $db     = $r->db;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
+	my $r = $self->r;
+	my $db = $r->db;
 
-	return CGI::em("You are not authorized to modify problem sets.") 
-		unless ($authz->hasPermissions($user, "modify_problem_sets"));
-	
 	my $result = "";
 	
 	my $scope = $actionParams->{"action.publish.scope"}->[0];
@@ -729,13 +749,6 @@ sub publish_handler {
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
 
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to score sets.") 
-		unless ($authz->hasPermissions($user, "score_sets"));
-	
 	return join ("",
 		"Score ",
 		CGI::popup_menu(
@@ -760,12 +773,7 @@ sub score_handler {
 
 	my $r      = $self->r;
 	my $urlpath = $r->urlpath;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
 	my $courseName = $urlpath->arg("courseID");
-
-	return CGI::em("You are not authorized to score sets.") 
-		unless ($authz->hasPermissions($user, "score_sets"));
 
 	my $scope = $actionParams->{"action.score.scope"}->[0];	
 	my @setsToScore;
@@ -797,13 +805,6 @@ sub score_handler {
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
 
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to delete problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
-
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
 			"Delete ",
@@ -828,11 +829,6 @@ sub delete_handler {
 
 	my $r      = $self->r;
 	my $db     = $r->db;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to delete problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 
@@ -866,11 +862,6 @@ sub create_form {
 	my ($self, $onChange, %actionParams) = @_;
 
 	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to create problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
 	return "Create a new set named: ", 
 		CGI::textfield(
@@ -886,11 +877,6 @@ sub create_handler {
 
 	my $r      = $self->r;
 	my $db     = $r->db;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to create problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
 	my $newSetRecord = $db->newGlobalSet;
 	my $newSetName = $actionParams->{"action.create.name"}->[0];
@@ -912,14 +898,11 @@ sub create_handler {
 
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
-
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to create problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
 	
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
 	# a valid reference to the object named 'action.import.number'
@@ -979,13 +962,6 @@ sub import_form {
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $authz  = $r->authz;
-	my $user   = $r->param('user');
-
-	return CGI::em("You are not authorized to create problem sets.") 
-		unless ($authz->hasPermissions($user, "create_and_delete_problem_sets"));
-
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
 	$newSetName = "" if @fileNames > 1; # cannot assign set names to multiple imports
@@ -1006,7 +982,7 @@ sub import_handler {
 
 sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
-	#return CGI::i("Exporting multiple sets would probably require a different form if you want to specify their names");
+
 	return join("",
 		"Export ",
 		CGI::popup_menu(
@@ -1020,115 +996,92 @@ sub export_form {
 			},
 			-onchange => $onChange,
 		),
-# 		" to ",
-# 		CGI::popup_menu(
-# 			-name=>"action.export.target",
-# 			-values => [ "new", $self->getDefList() ],
-# 			-labels => { new => "a new file named:" },
-# 			-default => $actionParams{"action.export.target"}->[0] || "",
-# 			-onchange => $onChange,
-# 		),
-# 		#CGI::br(),
-# 		#"new file to create: ",
-# 		CGI::textfield(
-# 			-name => "action.export.new",
-# 			-value => $actionParams{"action.export.new"}->[0] || "",,
-# 			-width => "50",
-# 			-onchange => $onChange,
-# 		),
-# 		CGI::tt(".def"),
 	);
 }
 
-# FIXME: this will NOT work as is
+# this does not actually export any files, rather it sends us to a new page in order to export the files
 sub export_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+
+	my $result;
 	
 	my $scope = $actionParams->{"action.export.scope"}->[0];
-# 	my $target = $actionParams->{"action.export.target"}->[0];
-# 	my $new = $actionParams->{"action.export.new"}->[0];
-# 	
-# 	my $fileName;
-# 	if ($target eq "new") {
-# 		$fileName = $new;
-# 	} else {
-# 		$fileName = $target;
-# 	}
-	
-#	$fileName .= ".def" unless $fileName =~ m/\.def$/;
-	
-	my @setIDsToExport;
 	if ($scope eq "all") {
-		@setIDsToExport = @{ $self->{allSetIDs} };
+		$result = "exporting all sets";
+		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $self->{allSetIDs};
+
 	} elsif ($scope eq "visible") {
-		@setIDsToExport = @{ $self->{visibleSetIDs} };
+		$result = "exporting visible sets";
+		$self->{selectedSetIDs} = $self->{visibleSetIDs};
 	} elsif ($scope eq "selected") {
-		@setIDsToExport = @{ $self->{selectedSetIDs} };
+		$result = "exporting selected sets";
+		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
 	}
-	my @setIDsExported = ();
-	foreach my $set (@setIDsToExport) {
-		if ($self->exportSetsToDef($set) ) {
-			push @setIDsExported, $set;   # success
-		}
-	}
+	$self->{exportMode} = 1;
 	
-	return scalar @setIDsExported . " sets exported";
+	return $result;
 }
 
-sub exportSetsToDef {
-    #FIXME  -- this needs refining.
-	my $self     = shift;
-	my $fileName = shift;
-	my $setName  = $fileName;
-	my $ce       = $self->r->ce;
-	my $db       = $self->r->db;
-	
-	$fileName .= ".def" unless $fileName =~ m/\.def$/;
-    $fileName  = "set".$fileName unless $fileName =~ m/^set/;
-	my $setRecord   = $db->getGlobalSet($setName);
-		my $filePath  = $ce->{courseDirs}->{templates}.'/'.$fileName;
-		# back up existing file
-		if(-e $filePath) {
-		    rename($filePath,"$filePath.bak") or 
-	    	       die "Can't rename $filePath to $filePath.bak ",
-	    	           "Check permissions for webserver on directories. $!";
-	        $self->addgoodmessage(CGI::p("Earlier set def file backed up to $filePath.bak"));
-		}
-	    my $openDate     = formatDateTime($setRecord->open_date);
-	    my $dueDate      = formatDateTime($setRecord->due_date);
-	    my $answerDate   = formatDateTime($setRecord->answer_date);
-	    my $setHeader    = $setRecord->set_header;
-	    
-	    my @problemList = $db->listGlobalProblems($setName);
-	    my $problemList  = '';
-	    foreach my $prob (sort {$a <=> $b} @problemList) {
-	    	my $problemRecord = $db->getGlobalProblem($setName, $prob); # checked
-	    	die "global problem $prob for set $setName not found" unless defined($problemRecord);
-	    	my $source_file   = $problemRecord->source_file();
-			my $value         = $problemRecord->value();
-			my $max_attempts  = $problemRecord->max_attempts();
-	    	$problemList     .= "$source_file, $value, $max_attempts \n";	    
-	    }
-	    my $fileContents = <<EOF;
-
-openDate          = $openDate
-dueDate           = $dueDate
-answerDate        = $answerDate
-paperHeaderFile   = $setHeader
-screenHeaderFile  = $setHeader
-problemList       = 
-
-$problemList
-
-
-
-EOF
-
-
-	    $self->saveProblem($fileContents, $filePath);
-	    $self->addgoodmessage(CGI::p("Set definition saved to $filePath"));
-	return 1;
+sub cancelExport_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return "Abandon export";
 }
+
+sub cancelExport_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r      = $self->r;
+	
+	#$self->{selectedSetIDs) = $self->{visibleSetIDs};
+		# only do the above if we arrived here via "edit selected users"
+	if (defined $r->param("prev_visible_sets")) {
+		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
+	} elsif (defined $r->param("no_prev_visible_sets")) {
+		$self->{visibleSetIDs} = [];
+	} else {
+		# leave it alone
+	}
+	$self->{exportMode} = 0;
+	
+	return "export abandoned";
+}
+
+sub saveExport_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return "Export selected sets (This may take a long time.  Even if your browser times out, all the files will be exported).";
+}
+
+sub saveExport_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r           = $self->r;
+	my $db          = $r->db;
+	
+	my @setIDsToExport = @{ $self->{selectedSetIDs} };
+
+	my %filenames = map { $_ => (@{ $tableParams->{"set.$_"} }[0] || $_) } @setIDsToExport;
+
+	my ($exported, $skipped, $reason) = $self->exportSetsToDef(%filenames);
+	
+	if (defined $r->param("prev_visible_sets")) {
+		$self->{visibleSetIDs} = [ $r->param("prev_visible_sets") ];
+	} elsif (defined $r->param("no_prev_visble_sets")) {
+		$self->{visibleSetIDs} = [];
+	} else {
+		# leave it alone
+	}
+	
+	$self->{exportMode} = 0;
+	
+	my $numExported = @$exported;
+	my $numSkipped = @$skipped;
+	
+	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
+
+	return 	$numExported . " set" . ($numExported == 1 ? "" : "s") . " exported, "
+		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped."
+		. (($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : "");
+
+}
+
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return "Abandon changes";
@@ -1249,7 +1202,6 @@ sub importSetsFromDef {
 
 	# FIXME: do we really want everything to fail on one bad file name?
 	foreach my $fileName (@setDefFiles) {
-		die "illegal character in input: \"/\"" if $fileName =~ m|/|;
 		die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
 			unless -r "$dir/$fileName";
 	}
@@ -1441,6 +1393,97 @@ sub readSetDef {
 	}
 }
 
+sub exportSetsToDef {
+    	my ($self, %filenames) = @_;
+
+	my $r        = $self->r;
+	my $ce       = $r->ce;
+	my $db       = $r->db;
+
+	my (@exported, @skipped, %reason);
+
+SET:	foreach my $set (keys %filenames) {
+
+		my $fileName = $filenames{$set};
+		$fileName .= ".def" unless $fileName =~ m/\.def$/;
+		$fileName  = "set" . $fileName unless $fileName =~ m/^set/;
+		# files can be exported to sub directories but not parent directories
+		if ($fileName =~ /\.\./) {
+			push @skipped, $set;
+			$reason{$set} = "Illegal filename contains '..'";
+			next SET;
+		}
+
+		my $setRecord = $db->getGlobalSet($set);
+		unless (defined $setRecord) {
+			push @skipped, $set;
+			$reason{$set} = "No record found.";
+			next SET;
+		}
+		my $filePath = $ce->{courseDirs}->{templates} . '/' . $fileName;
+
+		# back up existing file
+		if(-e $filePath) {
+			rename($filePath, "$filePath.bak") or 
+				$reason{$set} = "Existing file $filePath could not be backed up and was lost.";
+		}
+		
+		my $openDate     = formatDateTime($setRecord->open_date);
+		my $dueDate      = formatDateTime($setRecord->due_date);
+		my $answerDate   = formatDateTime($setRecord->answer_date);
+		my $setHeader    = $setRecord->set_header;
+		my @problemList = $db->listGlobalProblems($set);
+
+		my $problemList  = '';
+		foreach my $prob (sort {$a <=> $b} @problemList) {
+			my $problemRecord = $db->getGlobalProblem($set, $prob); # checked
+			unless (defined $problemRecord) {
+				push @skipped, $set;
+				$reason{$set} = "No record found for problem $prob.";
+				next SET;
+			}
+			my $source_file   = $problemRecord->source_file();
+			my $value         = $problemRecord->value();
+			my $max_attempts  = $problemRecord->max_attempts();
+			$problemList     .= "$source_file, $value, $max_attempts \n";
+		}
+		my $fileContents = <<EOF;
+
+openDate          = $openDate
+dueDate           = $dueDate
+answerDate        = $answerDate
+paperHeaderFile   = $setHeader
+screenHeaderFile  = $setHeader
+problemList       = 
+
+$problemList
+
+
+
+EOF
+
+		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
+		eval {
+			local *SETDEF;
+			open SETDEF, ">$filePath" or die "Failed to open $filePath";
+			print SETDEF $fileContents;
+			close SETDEF;
+		};
+		
+		if ($@) {
+			push @skipped, $set;
+			$reason{$set} = $@;
+		} else {
+			push @exported, $set;
+		}
+
+	}
+	
+	return \@exported, \@skipped, \%reason;
+
+}
+
+
 # search recursively through a directory looking for all filenames matching a given pattern
 sub recurseDirectory {
 
@@ -1533,10 +1576,13 @@ sub recordEditHTML {
 	my $urlpath     = $r->urlpath;
 	my $ce          = $r->ce;
 	my $db		= $r->db;
+	my $authz	= $r->authz;
+	my $user	= $r->param('user');
 	my $root        = $ce->{webworkURLs}->{root};
 	my $courseName  = $urlpath->arg("courseID");
 	
 	my $editMode = $options{editMode};
+	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
 	my $publishedClass = $Set->published ? "Published" : "Unpublished";
@@ -1553,10 +1599,17 @@ sub recordEditHTML {
 	
 	my @tableCells;
 	my %fakeRecord;
-	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $Set->set_id, -checked => $setSelected, -label => "", );
-	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $Set->set_id) . ($editMode ? "" : $imageLink);
-	$fakeRecord{problems} = CGI::a({href=>$problemListURL}, "$problems");
-	$fakeRecord{users} = CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
+	my $set_id = $Set->set_id;
+	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $set_id, -checked => $setSelected, -label => "", );
+	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $set_id) . ($editMode ? "" : $imageLink);
+	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
+					? "$problems"
+					: CGI::a({href=>$problemListURL}, "$problems");
+	$fakeRecord{users} = (FIELD_PERMS()->{users} and not $authz->hasPermissions($user, FIELD_PERMS()->{users}))
+					? "$users/$totalUsers"
+					: CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
+	$fakeRecord{filename} = CGI::input({-name => "set.$set_id", -value=>"set$set_id.def", -size=>60});
+					
 		
 	# Select
 	if ($editMode) {
@@ -1565,14 +1618,14 @@ sub recordEditHTML {
 		# selection checkbox
 		push @tableCells, CGI::checkbox(
 			-name => "selected_sets",
-			-value => $Set->set_id,
+			-value => $set_id,
 			-checked => $setSelected,
 			-label => "",
 		);
 	}
 	
 	# Set ID
-	push @tableCells, CGI::font({class=>$publishedClass}, $Set->set_id . $imageLink);
+	push @tableCells, CGI::font({class=>$publishedClass}, $set_id . $imageLink);
 
 	# Problems link
 	if ($editMode) {
@@ -1592,7 +1645,7 @@ sub recordEditHTML {
 	
 	# Set Fields
 	foreach my $field ($Set->NONKEYFIELDS) {
-		my $fieldName = "set." . $Set->set_id . "." . $field,		
+		my $fieldName = "set." . $set_id . "." . $field,		
 		my $fieldValue = $Set->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
@@ -1609,6 +1662,10 @@ sub recordEditHTML {
 	} else {
 		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
 	}
+	
+	if ($exportMode) {
+		@fieldsToShow = @{ EXPORT_FIELD_ORDER() };
+	}
 
 	@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
 
@@ -1618,11 +1675,14 @@ sub recordEditHTML {
 sub printTableHTML {
 	my ($self, $SetsRef, $fieldNamesRef, %options) = @_;
 	my $r                       = $self->r;
+	my $authz                   = $r->authz;
+	my $user                    = $r->param('user');
 	my $setTemplate	            = $self->{setTemplate};
 	my @Sets                    = @$SetsRef;
 	my %fieldNames              = %$fieldNamesRef;
 	
 	my $editMode                = $options{editMode};
+	my $exportMode              = $options{exportMode};
 	my %selectedSetIDs          = map { $_ => 1 } @{ $options{selectedSetIDs} };
 	my $currentSort             = $options{currentSort};
 	
@@ -1637,6 +1697,10 @@ sub printTableHTML {
 	} else {
 		@realFieldNames = @{ VIEW_FIELD_ORDER() };
 	}
+	
+	if ($exportMode) {
+		@realFieldNames = @{ EXPORT_FIELD_ORDER() };
+	}
 
 	
 	my %sortSubs = %{ SORT_SUBS() };
@@ -1649,19 +1713,14 @@ sub printTableHTML {
 	$headers{""} = "Use System Default";
 	$self->{headerFiles} = \%headers;	# store these header files so we don't have to look for them later.
 
-	my @tableHeadings;
-	foreach my $field (@realFieldNames) {
-		my $result = $fieldNames{$field};
-		push @tableHeadings, $result;
-	};
+
+	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
 	
 	# prepend selection checkbox? only if we're NOT editing!
 #	unshift @tableHeadings, "Select", "Set", "Problems" unless $editMode;
 
-
-	
 	# print the table
-	if ($editMode) {
+	if ($editMode or $exportMode) {
 		print CGI::start_table({});
 	} else {
 		print CGI::start_table({-border=>1});
@@ -1675,6 +1734,7 @@ sub printTableHTML {
 		
 		print $self->recordEditHTML($Set,
 			editMode => $editMode,
+			exportMode => $exportMode,
 			setSelected => exists $selectedSetIDs{$Set->set_id}
 		);
 	}
@@ -1689,19 +1749,6 @@ sub printTableHTML {
                       CGI::i("No sets shown.  Choose one of the options above to list the sets in the course.")
 	) unless @Sets;
 }
-###########################################################################
-# utility
-###########################################################################
-sub saveProblem {     
-    my $self      = shift;
-	my ($body, $probFileName)= @_;
-	local(*PROBLEM);
-	open (PROBLEM, ">$probFileName") ||
-		$self->addbadmessage(CGI::p("Could not open $probFileName for writing. Check that the  permissions for this problem are 660 (-rw-rw----)"));
-	print PROBLEM $body;
-	close PROBLEM;
-	chmod 0660, "$probFileName" ||
-		$self->addbadmessage(CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName"));
-}
+
 1;
 
