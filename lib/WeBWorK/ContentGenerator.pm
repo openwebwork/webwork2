@@ -226,7 +226,7 @@ sub pathMacro {
 			? CGI::a({-href=>"$url?$auth"}, $name)
 			: $name;
 	}
-	return join($sep, @result), "\n";
+	return join($sep, @result) . "\n";
 }
 
 sub siblingsMacro {
@@ -271,7 +271,7 @@ sub navMacro {
 				: $html;
 		}
 	}
-	return join($args{separator}, @result), "\n";
+	return join($args{separator}, @result) . "\n";
 }
 
 # hidden_fields(LIST) - return hidden <INPUT> tags for each field mentioned in
