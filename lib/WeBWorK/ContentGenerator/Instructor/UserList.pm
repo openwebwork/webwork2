@@ -179,7 +179,7 @@ sub path {
 		"Home"              => "$root",
 		$courseName         => "$root/$courseName",
 		"Instructor Tools"  => "$root/$courseName/instructor",
-		"User List"         => "",
+		"Users"             => "", # "$root/$courseName/instructor/users",
 	);
 }
 
