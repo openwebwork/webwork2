@@ -628,7 +628,7 @@ sub pre_header_initialize {
 	} else {
 	  my $addcount = add_selected($self, $db, $localSet);
 	  if($addcount > 0) {
-	    $self->adderrmsg("Successfully added $addcount problem".(($addcount>1)?'s':'').
+	    $self->addgoodmsg("Successfully added $addcount problem".(($addcount>1)?'s':'').
 	      " to $localSet.");
 	  }
 	}
