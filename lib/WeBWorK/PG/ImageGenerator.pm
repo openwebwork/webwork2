@@ -134,7 +134,7 @@ sub render {
 	my $strings  = $self->{strings};
 	
 	my $mtime   = $options{mtime};
-	my $refresh = not defined $mtime || $options{refresh};
+	my $refresh = $options{refresh} || ! defined $mtime;
 		# must refresh if no mtime is given
 	
 	return unless @$strings; # Don't run latex if there are no images to generate
