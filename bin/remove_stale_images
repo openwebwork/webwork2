@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: $
+# $CVSHeader: webwork-modperl/bin/remove_stale_images,v 1.1 2004/06/25 16:23:38 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -141,24 +141,10 @@ $end = $now - 24*60*60*$end;
 ##### "wanted" function for find #####
 
 sub wanted {
-  # $File::Find::dir
-  # $_
-  # $File::Find::name
   if(-f $File::Find::name and $File::Find::name =~ /\.png$/) {
     my @stat = stat(_);
 
-    # Now split based on what we are supposed to do
-    if($reportoption) {
-      return() if($stat[$type]<$start or $stat[$type]>$end);
-      my $lapse = $now - $stat[$type];
-      my $val = int(($lapse)/(60*60*24));
-      $val = " ".$val if($val<10);
-      $val = " ".$val if($val<100);
-      if(defined($days{$val})) {$days{$val} += 1;} else {$days{$val} = 1;}
-      $val = int($val/7);
-      if(defined($week{$val})) {$week{$val} += 1;} else {$week{$val} = 1;}
-      $grandtotal++;
-    } else {
+    if($deloption) {
       my $fullmd5 = $File::Find::name;
       if(length($_) > (4+32)) { # this is an old style path
 	$fullmd5 = $_;
@@ -169,16 +155,31 @@ sub wanted {
       }
       if($stat[$type]<$start or $stat[$type]>$end) {
 	$kept{$fullmd5} = '';
-	return();
-      }
-      my $result = unlink($File::Find::name);
-      if($result) {
-        $num_removed++;
       } else {
-        print "Tried, but could not remove $File::Find::name\n";
-	$kept{$fullmd5} = '';
+        my $result = unlink($File::Find::name);
+        if($result) {
+          $num_removed++;
+          return();
+        } else {
+          # If you don't have permissions to delete a file, you will probably
+          # mess up the permissions on the equation cache
+          die "Tried, but could not remove $File::Find::name\n";
+        }
       }
     }
+
+    if($reportoption) {
+      return() if(not $deloption and ($stat[$type]<$start or $stat[$type]>$end));
+      my $lapse = $now - $stat[$type];
+      my $val = int(($lapse)/(60*60*24));
+      $val = " ".$val if($val<10);
+      $val = " ".$val if($val<100);
+      if(defined($days{$val})) {$days{$val} += 1;} else {$days{$val} = 1;}
+      $val = int($val/7);
+      if(defined($week{$val})) {$week{$val} += 1;} else {$week{$val} = 1;}
+      $grandtotal++;
+    }
+
   }
 }
 
@@ -212,9 +213,13 @@ my $tmpfile = "$tmpdir/equationcache.tmp";
 
 find({wanted => \&wanted, follow_fast => 1}, $dirHead);
 
+print "Removed $num_removed images.\n\n" if($deloption);
 count_report() if($reportoption);
-exit() unless($deloption);
-exit() unless ($cachePath);
+
+## The rest is updating the equation cache if we deleted images and there is a cache
+exit() unless($deloption and $num_removed);
+exit() unless ($cachePath); 
+print "Updating the equation cache\n";
 my ($perms, $uid, $groupID) = (stat $cachePath)[2,4,5]; #Get values from current cache file
 my $cachevalues = readFile($cachePath);
 my @cachelines = split "\n", $cachevalues;
@@ -228,8 +233,8 @@ for $ent (@cachelines) {
   }
 }
 
-print "Temp file $tmpfile\n";
-print "Cache file had group $groupID and perms $perms\n";
+#print "Temp file $tmpfile\n";
+#print "Cache file had group $groupID and perms $perms\n";
 open(OUTF, ">$tmpfile") or die "Could not write to temp file $tmpfile";
 for $ent (keys %kept) {
   if($kept{$ent}) {
