@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.31 2004/09/08 15:49:24 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.32 2004/09/08 16:43:53 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -330,8 +330,9 @@ sub verify($) {
 		# a key was supplied.
 		if ($key) {
 			# we're not interested in a user's password if they're
-			# supplying a key
-			$r->param("passwd", "");
+			# supplying a key unless that key comes from a cookie in which case
+			# the key could be expired but the password good.
+			$r->param("passwd", "") unless $cookieKey;
 			
 			if ($self->checkKey($user, $key)) {
 				# valid key, so succeed.
@@ -339,8 +340,10 @@ sub verify($) {
 			} else {
 				# invalid key. the login page doesn't propogate the key,
 				# so we know this is an expired session.
-				$error = "Your session has timed out due to inactivity. You must login again.";
-				last VERIFY;
+				unless ($passwd) {
+					$error = "Your session has timed out due to inactivity. You must login again.";
+					last VERIFY;
+				}
 			}
 		}
 
