@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authz.pm,v 1.14 2004/03/15 20:17:35 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.10 2004/06/22 17:13:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,3 +25,63 @@ WeBWorK::Constants - provide constant values for other WeBWorK modules.
 use strict;
 use warnings;
 
+################################################################################
+# WeBWorK::Debug
+################################################################################
+
+# If true, WeBWorK::Debug will print debugging output.
+# 
+$WeBWorK::Debug::Enabled = 0;
+
+# If non-empty, debugging output will be sent to the file named rather than STDERR.
+# 
+$WeBWorK::Debug::Logfile = "";
+
+################################################################################
+# WeBWorK::Timing
+################################################################################
+
+# If true, WeBWorK::Timing will print timing data.
+# 
+$WeBWorK::Timing::Enabled = 0;
+
+# If non-empty, timing data will be sent to the file named rather than STDERR.
+# 
+$WeBWorK::Timing::Logfile = "";
+
+################################################################################
+# WeBWorK::PG::ImageGenerator
+################################################################################
+
+# Arguments to pass to dvipng. This is dependant on the version of dvipng.
+# 
+# For dvipng < 1.0
+#     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-x4000.5 -bgTransparent -Q6 -mode toshiba -D180";
+# For dvipng >= 1.0
+#     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120";
+# 
+$WeBWorK::PG::ImageGenerator::DvipngArgs = "-x4000.5 -bgTransparent -Q6 -mode toshiba -D180";
+
+# If true, don't delete temporary files
+# 
+$WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0;
+
+# TeX to prepend to equations to be processed.
+# 
+$WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
+\documentclass[12pt]{article}
+\nonstopmode
+\usepackage{amsmath,amsfonts,amssymb}
+\def\gt{>}
+\def\lt{<}
+\usepackage[active,textmath,displaymath]{preview}
+\begin{document}
+EOF
+
+# TeX to append to equations to be processed.
+# 
+$WeBWorK::PG::ImageGenerator::TexPostamble = <<'EOF';
+\end{document}
+EOF
+
+1;
