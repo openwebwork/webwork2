@@ -84,8 +84,16 @@ sub body {
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action=>$r->uri});
 	print CGI::start_table({});
-	foreach my $user (@users) {
-		my $userRecord = $db->getUser($user);
+	# get user records
+	my @userRecords  = ();
+	foreach my $currentUser ( @users) {
+		push (@userRecords, $db->getUser($currentUser) );
+	}
+	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) || 
+	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
+
+	foreach my $userRecord (@userRecords) {
+		my $user = $userRecord->user_id;
 		my $userSetRecord = $db->getUserSet($user, $setID);
 		my $prettyName = $userRecord->last_name
 			. ", "
@@ -104,7 +112,7 @@ sub body {
 					label=>"",
 				}),
 				$user,
-				"($prettyName)",
+				"($prettyName)", " ", $userRecord->section, " ",
 				(
 					defined $userSetRecord
 					? CGI::a(
