@@ -85,7 +85,7 @@ use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit duplicate)];
+use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
@@ -1211,6 +1211,11 @@ sub saveEdit_handler {
 
 sub duplicate_form {
 	my ($self, $onChange, %actionParams) = @_;
+
+	my $r = $self->r;
+	my @visible_sets = $r->param('visible_sets');
+
+	return "" unless @visible_sets == 1;
 	
 	return join ("", 
 		"Duplicate this set and name it: ", 
