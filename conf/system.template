@@ -9,9 +9,8 @@
  </head>
  <body>
   <div style="text-align:center"><img src="<!--#logo-->" alt="WeBWorK" /></div>
-  <hr />
   <h1 style="text-align:center">WeBWorK <!--#title--></h1>
-  <p><!--<!--#test_args one="a" two="b" three="c"-->--></p>
+  <hr />
   <!--#body-->
  </body>
 </html>

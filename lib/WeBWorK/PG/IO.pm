@@ -1,4 +1,4 @@
-package WeBWorK::PG::IOGlue;
+package WeBWorK::PG::IO;
 use strict;
 use warnings;
 
@@ -182,7 +182,7 @@ which is defined in C<Global.pm>.
 ## converts full path names to to use the $dirDelim instead of /
 
 sub convertPath {
-    return @_;
+    return wantarray ? @_ : shift;
 }
 
 # hacks to make this program work independent of Global.pm

@@ -1,4 +1,4 @@
-package WeBWork::PG;
+package WeBWorK::PG;
 
 # hide PG::* from the not-yet-insane.
 
@@ -9,15 +9,20 @@ use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
 
-sub new($$$$$$) {
+sub new($$$$$$$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
-	
-	my $courseEnv = shift;
-	my $userName = shift;
-	my $setName = shift;
-	my $problemNumber = shift;
-	my $formData = shift;
+	my (
+		$courseEnv,
+		$userName,
+		$key,
+		$setName,
+		$problemNumber,
+		$translationOptions, # hashref containing options for the
+		                     # translator, such as whether to show
+				     # hints and the display mode to use
+		$formFields, # in CGI::Vars format
+	) = @_;
 	
 	# get database information
 	my $classlist = WeBWorK::DB::Classlist->new($courseEnv);
@@ -28,9 +33,11 @@ sub new($$$$$$) {
 	my $psvn = $wwdb->getPSVN($userName, $setName);
 	
 	# create a Translator
+	warn "PG: creating a Translator\n";
 	my $translator = WeBWorK::PG::Translator->new;
 	
-	# give it a directory hash
+	# set the directory hash
+	warn "PG: setting the directory hash\n";
 	$translator->rh_directories({
 		courseScriptsDirectory => $courseEnv->{webworkDirs}->{macros},
 		macroDirectory         => $courseEnv->{courseDirs}->{macros},
@@ -38,77 +45,124 @@ sub new($$$$$$) {
 		tempDirectory          => $courseEnv->{courseDirs}->{html_temp},
 	});
 	
-	# give it modules to evaluate
-	# give it "extra packages" to load
-	my $modules = $courseEnv->{pg}->{modules};
-	foreach $module (keys %$modules) {
-		my $main_package_loaded = 0;
-		foreach $package (@{$modules->{$module}}) {
-			if ($package eq $module) {
-				# this is the main package
-				$translator->evaluate_modules($package);
-				$main_package_loaded = 1;
-			} else {
-				# this is an "extra" package
-				if ($main_package_loaded) {
-					$translator->load_extra_packages($package);
-				} else {
-				warn "Can't load extra package $package: module $module hasn't been evaluated.";
-				}
-
-			}
-		}
+	# evaluate modules and "extra packages"
+	warn "PG: evaluating modules and \"extra packages\"\n";
+	my @modules = @{ $courseEnv->{pg}->{modules} };
+	foreach my $module_packages (@modules) {
+		# the first item in $module_packages is the main package
+		$translator->evaluate_modules(shift @$module_packages);
+		# the remaining items are "extra" packages
+		$translator->load_extra_packages(@$module_packages);
 	}
 	
-	# give it an environment (from defineProblemEnvir)
-	$translator->environment(
-		defineProblemEnvir($courseEnv, $user, $set, $problem, $psvn, $formData)
-	);
+	# set the environment (from defineProblemEnvir)
+	warn "PG: setting the environment (from defineProblemEnvir)\n";
+	$translator->environment(defineProblemEnvir(
+		$courseEnv, $user, $key, $set, $problem, $psvn, $formFields, $translationOptions));
 	
-	# initialize it
+	# initialize the Translator
+	warn "PG: initializing the Translator\n";
 	$translator->initialize();
 	
-	# have it "unrestricted load" PG.pl and dangerousMacros.pl
+	# load PG.pl and dangerousMacros.pl using unrestricted_load
+	warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
 	my $pg_pl = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
-	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl"
+	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
 	my $err = $translator->unrestricted_load($pg_pl);
 	warn "Error while loading $pg_pl: $err" if $err;
 	$err = $translator->unrestricted_load($dangerousMacros_pl);
 	warn "Error while loading $dangerousMacros_pl: $err" if $err;
 	
-	# give it an opcode mask (using default values)
+	# set the opcode mask (using default values)
+	warn "PG: setting the opcode mask (using default values)\n";
 	$translator->set_mask();
 	
-	# give it the problem source
+	# store the problem source
+	warn "PG: storing the problem source\n";
 	my $sourceFile = $courseEnv->{courseDirs}->{templates}."/".$problem->source_file;
 	$translator->source_string(readFile($sourceFile));
 	
 	# install a safety filter (&safetyFilter)
+	warn "PG: installing a safety filter\n";
 	$translator->rf_safety_filter(\&safetyFilter);
 	
 	# translate the PG source into text
+	warn "PG: translating the PG source into text\n";
 	$translator->translate();
 	
-	# install a grader
-	my $grader = $courseEnv->{pg}->{grader};
-	$translator->rf_problem_grader(\&FIXME); # *** need a coderef!
+	# [in Problem.pm and processProblem8.pl, "install a grader" is here]
 	
-	# process student answers (if any)
-	$translator->process_answers($formData);
+	# process student answers
+	warn "PG: processing student answers\n";
+	$translator->process_answers($formFields);
 	
-	# a PG object is a REFERENCE to a Translator object
-	return bless \$translator, $class;
+	# retrieve the problem state and give it to the translator
+	warn "PG: retrieving the problem state and giving it to the translator\n";
+	$translator->rh_problem_state({
+		recorded_score =>       $problem->status,
+		num_of_correct_ans =>   $problem->num_correct,
+		num_of_incorrect_ans => $problem->num_incorrect,
+	});
+	
+	# determine an entry order -- the ANSWER_ENTRY_ORDER flag is built by
+	# the PG macro package (PG.pl)
+	warn "PG: determining an entry order\n";
+	my @answerOrder =
+		$translator->rh_flags->{ANSWER_ENTRY_ORDER}
+			? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
+			: keys %{ $translator->rh_evaluated_answers };
+	
+	# install a grader -- use the one specified in the problem,
+	# or fall back on the default from the course environment.
+	# (two magic strings are accepted, to avoid having to
+	# reference code when it would be difficult.)
+	warn "PG: installing a grader\n";
+	my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
+		|| $courseEnv->{pg}->{options}->{grader};
+	$grader = $translator->rf_std_problem_grader
+		if $grader eq "std_problem_grader";
+	$grader = $translator->rf_avg_problem_grader
+		if $grader eq "avg_problem_grader";
+	die "Problem grader $grader is not a CODE reference."
+		unless ref $grader eq "CODE";
+	$translator->rf_problem_grader($grader);
+	
+	# grading the problem
+	warn "PG: grade the problem\n";
+	my ($result, $state) = $translator->grade_problem(
+		answers_submitted  => $translationOptions->{processAnswers},
+		ANSWER_ENTRY_ORDER => \@answerOrder,
+	);
+	
+	# return an object which contains the translator and the results of
+	# the translation process. this is DIFFERENT from the "format expected
+	# by Webwork.pm (and I believe processProblem8, but check.)"
+	return bless {
+		translator => $translator,
+		head_text  => ${ $translator->r_header },
+		body_text  => ${ $translator->r_text   },
+		answers    => $translator->rh_evaluated_answers,
+		result     => $result,
+		state      => $state,
+		errors     => $translator->errors, # *** what is this doing?
+		warnings   => undef, # *** gotta catch warnings eventually...
+		flags      => $translator->rh_flags,
+	}, $class;
 }
 
 # -----
 
-sub defineProblemEnvir($$$$$$) {
-	my $courseEnv = shift;
-	my $user = shift;
-	my $set = shift;
-	my $problem = shift;
-	my $psvn = shift;
-	my $form = shift;
+sub defineProblemEnvir($$$$$$$) {
+	my (
+		$courseEnv,
+		$user,
+		$key,
+		$set,
+		$problem,
+		$psvn,
+		$formFields,
+		$options,
+	) = @_;
 	
 	my %envir;
 	
@@ -126,25 +180,25 @@ sub defineProblemEnvir($$$$$$) {
 	$envir{fileName}          = $problem->source_file;	 
 	$envir{probFileName}      = $envir{fileName};		 
 	$envir{problemSeed}       = $problem->problem_seed;	 
-	$envir{displayMode}       = $form->param('Mode');
+	$envir{displayMode}       = translateDisplayModeNames($options->{displayMode});
 	$envir{languageMode}      = $envir{displayMode};	 
 	$envir{outputMode}        = $envir{displayMode};	 
-	$envir{displayHintsQ}     = $form->param('ShowHint');	 
-	$envir{displaySolutionsQ} = $form->param('ShowSol');
+	$envir{displayHintsQ}     = $options->{hints};	 
+	$envir{displaySolutionsQ} = $options->{solutions};
 	$envir{externalTTHPath}   = $courseEnv->{externalPrograms}->{tth};
 	
 	# Problem Information
 	# ADDED: courseName
 	
 	$envir{openDate}            = $set->open_date;
-	$envir{formattedOpenDate}   = formatDateTime $envir{openDate};
+	$envir{formattedOpenDate}   = formatDateTime($envir{openDate});
 	$envir{dueDate}             = $set->due_date;
-	$envir{formattedDueDate}    = formatDateTime $envir{dueDate};
+	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
 	$envir{answerDate}          = $set->answer_date;
-	$envir{formattedAnswerDate} = formatDateTime $envir{answerDate};
+	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
 	$envir{numOfAttempts}       = $problem->num_correct + $problem->num_incorrect;
 	$envir{problemValue}        = $problem->value;
-	$envir{sessionKey}          = $form->param('key');
+	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $courseEnv->{courseName};
 	
 	# Student Information
@@ -157,12 +211,12 @@ sub defineProblemEnvir($$$$$$) {
 	$envir{setNumber}        = $set->id;
 	$envir{studentLogin}     = $user->id;
 	$envir{studentName}      = $user->first_name . " " . $user->last_name;
-	$envir{studentID}        = $user->student_id
+	$envir{studentID}        = $user->student_id;
 	
 	# Answer Information
+	# REMOVED: refSubmittedAnswers (alledgedly unused, causes errors)
 	
-	$envir{inputs_ref}          = {}; # *** keys like "Answer1"
-	$envir{refSubmittedAnswers} = {}; # *** keys like "AnSwEr1"
+	$envir{inputs_ref}          = $formFields;
 	
 	# Default values for evaluating answers
 	
@@ -175,17 +229,26 @@ sub defineProblemEnvir($$$$$$) {
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
 	$envir{classDirectory}         = undef;
-	$envir{courseScriptsDirectory} = $courseEnv->{webworkDirs}->{macros};
-	$envir{htmlDirectory}          = $courseEnv->{courseDirs}->{html};
+	$envir{courseScriptsDirectory} = $courseEnv->{webworkDirs}->{macros}."/";
+	$envir{htmlDirectory}          = $courseEnv->{courseDirs}->{html}."/";
 	$envir{htmlURL}                = $courseEnv->{courseURLs}->{html};
-	$envir{macroDirectory}         = $courseEnv->{courseDirs}->{macros};
-	$envir{templateDirectory}      = $courseEnv->{courseDirs}->{templates};
-	$envir{tempDirectory}          = $courseEnv->{courseDirs}->{html_temp};
+	$envir{macroDirectory}         = $courseEnv->{courseDirs}->{macros}."/";
+	$envir{templateDirectory}      = $courseEnv->{courseDirs}->{templates}."/";
+	$envir{tempDirectory}          = $courseEnv->{courseDirs}->{html_temp}."/";
 	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp};
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
 	
 	return \%envir;
+}
+
+sub translateDisplayModeNames($) {
+	my $name = shift;
+	return {
+		plainText     => "HTML",
+		formattedText => "HTML_tth",
+		images        => "Latex2HTML"
+	}->{$name};
 }
 
 sub safetyFilter {

@@ -66,9 +66,14 @@ sets or PG macro files.  Use this way to imitate the behavior of C<use strict;>
 =cut
 
 BEGIN {
-	sub be_strict { # allows the use of strict within macro packages.
-		require 'strict.pm'; strict::import();
+	# allows the use of strict within macro packages.
+	sub be_strict {
+		require 'strict.pm';
+		strict::import();
 	}
+	
+	# also define in Main::, for PG modules.
+	sub Main::be_strict { &be_strict }
 }
 
 =head2 evaluate_modules
@@ -112,20 +117,25 @@ which can be used by the PG problems.  The keyword 'reset' or 'erase' erases the
 #	$SIG{__DIE__} = $save_SIG_die_trap;
 #}
 
+# *** attention! Right now, packages DO NOT have the WeBWorK::PG prefix
+# before release, we HAVE to figure out how to make them behave WITH the
+# prefix -- this may involve changing the actual package names.
+
 sub evaluate_modules {
 	my $self = shift;
 	local $SIG{__DIE__} = "DEFAULT"; # we're going to be eval()ing code
 	foreach (@_) {
+		#warn "attempting to load $_\n";
 		# ensure that the name is in fact a base name
 		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
-		# generate a full package name from the base name
-		unless (/::/) {
-			$_ = "WeBWorK::PG::$_";
-		}
+#		# generate a full package name from the base name
+#		unless (/::/) {
+#			$_ = "WeBWorK::PG::$_";
+#		}
 		# call runtime_use on the package name
 		# don't worry -- runtime_use won't load a package twice!
-		runtime_use $_;
-		warn "Failed to evaluate module $_: $@";
+		eval { runtime_use $_ };
+		warn "Failed to evaluate module $_: $@" if $@;
 		# record this in the appropriate place
 		push @{$self->{ra_included_modules}}, "\%${_}::";
 	}
@@ -147,15 +157,14 @@ sub load_extra_packages{
 	my @package_list = @_;
 	my $package_name;
 	
-	foreach $package_name (@package_list) {
+	foreach (@package_list) {
 		# ensure that the name is in fact a base name
 		s/\.pm$// and warn "fixing your broken package name: $_.pm => $_";
-		# generate a full package name from the base name
-		unless (/::/) {
-			$_ = "WeBWorK::PG::$_";
-		}
-		# call runtime_use on the package name
-		# don't worry -- runtime_use won't load a package twice!
+#		# generate a full package name from the base name
+#		unless (/::/) {
+#			$_ = "WeBWorK::PG::$_";
+#		}
+		# import symbols from the extra package
 		import $_;
 		warn "Failed to evaluate module $_: $@" if $@;
 		# record this in the appropriate place
@@ -258,9 +267,9 @@ The macros shared with the safe compartment are
 # SHARE variables and routines with safe compartment
 my %shared_subroutine_hash = (
 	'&read_whole_problem_file' => 'PGtranslator', #the values are dummies.
-	'&convertPath'             => 'PGtranslator',
-	'&surePathToTmpFile'       => 'PGtranslator',
-	'&fileFromPath'            => 'PGtranslator',
+	'&convertPath'             => 'PGtranslator', # if they're dummies, why set them to
+	'&surePathToTmpFile'       => 'PGtranslator', # something that seems meaningful,
+	'&fileFromPath'            => 'PGtranslator', # instead of '1' or something?
 	'&directoryFromPath'       => 'PGtranslator',
 	'&createFile'              => 'PGtranslator',
 	'&PG_answer_eval'          => 'PGtranslator',
@@ -293,7 +302,10 @@ sub initialize {
 	# ra_included_modules is now populated independantly of @class_modules:
 	#$self->{ra_included_modules} = [@class_modules];
 	
-	$safe_cmpt -> share_from('WeBWorK::PG', $self->{ra_included_modules} );
+#	push @{$self->{ra_included_modules}}, "\%PGrandom::";
+#	warn "included_modules = ", join(" ", @{ $self->{ra_included_modules} }), "\n";
+	$safe_cmpt -> share_from('main', $self->{ra_included_modules} );
+		# the above line will get changed when we fix the PG modules thing. heh heh.
 }
 
 sub environment{
@@ -389,20 +401,19 @@ sub unrestricted_load {
 	my $macro_file_name = fileFromPath($filePath);
 	$macro_file_name =~s/\.pl//;  # trim off the extenstion
 	my $export_subroutine_name = "_${macro_file_name}_export";
-    my $init_subroutine_name = "_${macro_file_name}_init";
-    my $macro_file_loaded;
-    my $local_errors = "";
-    no strict;
-    $macro_file_loaded	= defined(&{"${safe_cmpt_package_name}::$init_subroutine_name"} );
-    print STDERR "$macro_file_name   has not yet been loaded\n" unless $macro_file_loaded;	
+	my $init_subroutine_name = "_${macro_file_name}_init";
+	my $macro_file_loaded;
+	my $local_errors = "";
+	no strict;
+	$macro_file_loaded	= defined(&{"${safe_cmpt_package_name}::$init_subroutine_name"} );
+	#print STDERR "$macro_file_name   has not yet been loaded\n" unless $macro_file_loaded;	
 	unless ($macro_file_loaded) {
-		# print "loading $filePath\n";
 		## load the $filePath file
 		## Using rdo insures that the $filePath file is loaded for every problem, allowing initializations to occur.
 		## Ordinary mortals should not be fooling with the fundamental macros in these files.  
 		my $local_errors = "";
 		if (-r $filePath ) {
-			$safe_cmpt -> rdo( "$filePath" ) ; 
+			my $rdoResult = $safe_cmpt->rdo($filePath);
 			#warn "There were problems compiling the file: $filePath: <BR>--$@" if $@;
 			$local_errors ="\nThere were problems compiling the file:\n $filePath\n $@\n" if $@;
 			$self ->{errors} .= $local_errors if $local_errors;
@@ -416,8 +427,8 @@ sub unrestricted_load {
 	}
 	$macro_file_loaded	= defined(&{"${safe_cmpt_package_name}::$init_subroutine_name"} );
 	$local_errors .= "\nUnknown error.  Unable to load $filePath\n" if ($local_errors eq '' and not $macro_file_loaded);
-	print STDERR "$filePath is properly loaded\n\n" if $macro_file_loaded;
-    $local_errors;
+	#print STDERR "$filePath is properly loaded\n\n" if $macro_file_loaded;
+	$local_errors;
 }
 
 sub nameSpace {
@@ -427,7 +438,7 @@ sub nameSpace {
 
 sub a_text {
 	my $self  = shift;
-    @{$self->{PG_PROBLEM_TEXT_ARRAY_REF}};
+	@{$self->{PG_PROBLEM_TEXT_ARRAY_REF}};
 }
 
 sub header {
@@ -859,7 +870,7 @@ sub rh_problem_state {
 }
 
 
-=head3 process_answers
+=head3 g
 
 
 	$obj->process_answers()
@@ -884,52 +895,50 @@ sub process_answers{
  	# apply each instructors answer to the corresponding student answer
 
  	foreach my $ans_name ( @answer_entry_order ) {
- 	    my ($ans, $errors) = $self->filter_answer( $h_student_answers{$ans_name} );
- 	    no strict;
- 	    # evaluate the answers inside the safe compartment.
- 	    local($rf_fun,$temp_ans) = (undef,undef);
- 	    if ( defined($rh_correct_answers ->{$ans_name} ) ) {
- 	    	$rf_fun  = $rh_correct_answers->{$ans_name};
- 	    } else {
- 	    	warn "There is no answer evaluator for the question labeled $ans_name";
- 	    }
- 	    $temp_ans  = $ans;
- 	    $temp_ans = '' unless defined($temp_ans);  #make sure that answer is always defined
- 	                                              # in case the answer evaluator forgets to check
- 	    $self->{safe}->share('$rf_fun','$temp_ans');
+		my ($ans, $errors) = $self->filter_answer( $h_student_answers{$ans_name} );
+		no strict;
+		# evaluate the answers inside the safe compartment.
+		local($rf_fun,$temp_ans) = (undef,undef);
+		if ( defined($rh_correct_answers ->{$ans_name} ) ) {
+			$rf_fun  = $rh_correct_answers->{$ans_name};
+		} else {
+			warn "There is no answer evaluator for the question labeled $ans_name";
+		}
+		$temp_ans  = $ans;
+		$temp_ans = '' unless defined($temp_ans); #make sure that answer is always defined
+		                                          # in case the answer evaluator forgets to check
+		$self->{safe}->share('$rf_fun','$temp_ans');
  	    
-        # reset the error detection
-    	my $save_SIG_die_trap = $SIG{__DIE__};
-    	$SIG{__DIE__} = sub {CORE::die(@_) };
-    	my $rh_ans_evaluation_result;
-        if (ref($rf_fun) eq 'CODE' ) {
-  	    	$rh_ans_evaluation_result = $self->{safe} ->reval( '&{ $rf_fun }($temp_ans)' ) ;
-  	    	warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
-  	    } elsif (ref($rf_fun) eq 'AnswerEvaluator')   {
-  	    	$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans)');
-  	    	warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
-  	    	warn "Evaluation error: Answer $ans_name:<BR>\n", $rh_ans_evaluation_result->error_flag(), " :: ",$rh_ans_evaluation_result->error_message(),"<BR>\n" 
-  	    	             if defined($rh_ans_evaluation_result)  and defined($rh_ans_evaluation_result->error_flag());
-  	    } else {
-  	    	warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n Unrecognized evaluator type |", ref($rf_fun), "|";
-  	    }	
+		# reset the error detection
+		my $save_SIG_die_trap = $SIG{__DIE__};
+		$SIG{__DIE__} = sub {CORE::die(@_) };
+		my $rh_ans_evaluation_result;
+		if (ref($rf_fun) eq 'CODE' ) {
+			$rh_ans_evaluation_result = $self->{safe} ->reval( '&{ $rf_fun }($temp_ans)' ) ;
+			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
+		} elsif (ref($rf_fun) eq 'AnswerEvaluator')   {
+			$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans)');
+	  	    	warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
+ 	 	    	warn "Evaluation error: Answer $ans_name:<BR>\n", $rh_ans_evaluation_result->error_flag(), " :: ",$rh_ans_evaluation_result->error_message(),"<BR>\n" 
+			if defined($rh_ans_evaluation_result)  and defined($rh_ans_evaluation_result->error_flag());
+		} else {
+			warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n Unrecognized evaluator type |", ref($rf_fun), "|";
+		}	
   	    
-        $SIG{__DIE__} = $save_SIG_die_trap;
+		$SIG{__DIE__} = $save_SIG_die_trap;
         
         
-  	    use strict;
-  	    unless ( ( ref($rh_ans_evaluation_result) eq 'HASH') or ( ref($rh_ans_evaluation_result) eq 'AnswerHash') ) {
-  	    	warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n
-  	    	      Answer evaluators must return a hash or an AnswerHash type, not type |", 
-  	    	      ref($rh_ans_evaluation_result), "|";
-  	    }
-  	    $rh_ans_evaluation_result ->{ans_message} .= "$errors \n" if $errors;
-  	    $rh_ans_evaluation_result ->{ans_name} = $ans_name;
-  		$self->{rh_evaluated_answers}->{$ans_name} = $rh_ans_evaluation_result;
-
- 	}
- 	$self->rh_evaluated_answers;
-
+		use strict;
+		unless ( ( ref($rh_ans_evaluation_result) eq 'HASH') or ( ref($rh_ans_evaluation_result) eq 'AnswerHash') ) {
+			warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n
+				Answer evaluators must return a hash or an AnswerHash type, not type |", 
+				ref($rh_ans_evaluation_result), "|";
+		}
+		$rh_ans_evaluation_result ->{ans_message} .= "$errors \n" if $errors;
+		$rh_ans_evaluation_result ->{ans_name} = $ans_name;
+		$self->{rh_evaluated_answers}->{$ans_name} = $rh_ans_evaluation_result;
+	}
+	$self->rh_evaluated_answers;
 }
 
 
@@ -1066,7 +1075,7 @@ sub rf_avg_problem_grader {
 	return \&avg_problem_grader;
 }
 sub avg_problem_grader{
-		my $rh_evaluated_answers = shift;
+	my $rh_evaluated_answers = shift;
 	my $rh_problem_state = shift;
 	my %form_options = @_;
 	my %evaluated_answers = %{$rh_evaluated_answers};
@@ -1085,15 +1094,16 @@ sub avg_problem_grader{
 
  	# initial setup of the answer
  	my	$total=0;
- 	my %problem_result = ( score 				=> 0,
- 						   errors 				=> '',
- 						   type   				=> 'avg_problem_grader',
- 						   msg					=> '',
- 						 );
-    my $count = keys %evaluated_answers;
-    $problem_result{msg} = 'You can earn partial credit on this problem.' if $count >1;
-    # Return unless answers have been submitted
-    unless ($form_options{answers_submitted} == 1) {
+ 	my %problem_result = (
+		score => 0,
+		errors => '',
+		type => 'avg_problem_grader',
+		msg => '',
+	);
+	my $count = keys %evaluated_answers;
+	$problem_result{msg} = 'You can earn partial credit on this problem.' if $count >1;
+	# Return unless answers have been submitted
+	unless ($form_options{answers_submitted} == 1) {
  		return(\%problem_result,\%problem_state);
  	}
  	# Answers have been submitted -- process them.
@@ -1106,7 +1116,7 @@ sub avg_problem_grader{
 	$problem_state{recorded_score} = $problem_result{score} if $problem_result{score} > $problem_state{recorded_score};
 
 
-    $problem_state{num_of_correct_ans}++ if $total == $count;
+	$problem_state{num_of_correct_ans}++ if $total == $count;
 	$problem_state{num_of_incorrect_ans}++ if $total < $count ;
 	warn "Error in grading this problem the total $total is larger than $count" if $total > $count;
 	(\%problem_result, \%problem_state);
@@ -1329,7 +1339,7 @@ sub PG_answer_eval {
     use strict;
     $SIG{__DIE__} = $save_SIG_die_trap;
     $SIG{__WARN__} = $save_SIG_warn_trap;
-    $SIG{'FPE'} = $save_SIG_FPE_trap;
+    $SIG{'FPE'} = $save_SIG_FPE_trap if defined $save_SIG_FPE_trap;
     return (wantarray) ?  ($out, $errors,$full_error_report) : $out;
 
 

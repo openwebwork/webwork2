@@ -7,11 +7,19 @@ use Date::Format;
 use Date::Parse;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(runtime_use readFile formatDate hash2string array2string);
+our @EXPORT_OK = qw(
+	runtime_use
+	readFile
+	formatDateTime
+	parseDateTime
+	ref2string
+	hash2string
+	array2string
+);
 
 sub runtime_use($) {
 	return unless @_;
-	eval "require $_[0]; import $_[0]";
+	eval "package Main; require $_[0]; import $_[0]";
 	die $@ if $@;
 }
 
@@ -38,96 +46,143 @@ sub formatDateTime($) {
 }
 
 sub parseDateTime($) {
-	$string = shift;
+	my $string = shift;
 	return str2time $string;
 }
 
-sub hash2string {
-	my $hr = shift;
-	my $indent = shift || 0;
-	my $result;
-	foreach (keys %$hr) {
-		$result .= "\t"x$indent . "{$_} =";
-		if (ref $hr->{$_} eq 'HASH') {
-			$result .= "\n";
-			$result .= hash2string($hr->{$_}, $indent+1);
-		} elsif (ref $hr->{$_} eq 'ARRAY') {
-			$result .= "\n";
-			$result .= array2string($hr->{$_}, $indent+1);
-		} else {
-			$result .= " " . $hr->{$_} . "\n";
-		}
-	}
-	return $result;
-}
+# -----
 
-sub array2string {
-	my $ar = shift;
-	my $indent = shift || 0;
+sub ref2string($;$);
+sub ref2string($;$) {
+	my $ref = shift;
+	my $dontExpand = shift || {};
+	my $refType = ref $ref;
 	my $result;
-	foreach (0 .. @$ar-1) {
-		$result .= "\t"x$indent . "[$_] =";
-		if (ref $ar->[$_] eq 'HASH') {
-			$result .= "\n";
-			$result .= hash2string($ar->[$_], $indent+1);
-		} elsif (ref $ar->[$_] eq 'ARRAY') {
-			$result .= "\n";
-			$result .= array2string($ar->[$_], $indent+1);
+	if ($refType and not $dontExpand->{$refType}) {
+		my $baseType = refBaseType($ref);
+		$result .= '<font size="1" color="grey">' . $refType;
+		$result .= " ($baseType)" if $refType ne $baseType;
+		$result .= ":</font><br>";
+		$result .= '<table border="1" cellpadding="2">';
+		if ($baseType eq "HASH") {
+			my %hash = %$ref;
+			foreach (sort keys %hash) {
+				$result .= '<tr valign="top">';
+				$result .= "<td>$_</td>";
+				$result .= "<td>" . ref2string($hash{$_}, $dontExpand) . "</td>";
+				$result .= "</tr>";
+			}
+		} elsif ($baseType eq "ARRAY") {
+			my @array = @$ref;
+			foreach (0 .. $#array) {
+				$result .= '<tr valign="top">';
+				$result .= "<td>$_</td>";
+				$result .= "<td>" . ref2string($array[$_], $dontExpand) . "</td>";
+				$result .= "</tr>";
+			}
+		} elsif ($baseType eq "SCALAR") {
+			my $scalar = $$ref;
+			$result .= '<tr valign="top">';
+			$result .= "<td>$scalar</td>";
+			$result .= "</tr>";
 		} else {
-			$result .= " " . $ar->[$_] . "\n";
+			# perhaps a coderef? in any case, i don't feel like dealing with it!
+			$result .= '<tr valign="top">';
+			$result .= "<td>$ref</td>";
+			$result .= "</tr>";
 		}
-	}
-	return $result;
-}
-
-=pod
-sub pretty_print_rh {
-    my $r_input = shift;
-    my $out = '';
-    if ( not ref($r_input) ) {
-    	$out = $r_input;    # not a reference
-    } elsif (is_hash_ref($r_input)) {
-	    local($^W) = 0;
-		$out .= "<TABLE border = \"2\" cellpadding = \"3\" BGCOLOR = \"#FFFFFF\">";
-		foreach my $key (sort keys %$r_input ) {
-			$out .= "<tr><TD> $key</TD><TD>=&gt;</td><td>&nbsp;".pretty_print_rh($r_input->{$key}) . "</td></tr>";
-		}
-		$out .="</table>";
-	} elsif (is_array_ref($r_input) ) {
-		my @array = @$r_input;
-		$out .= "( " ;
-		while (@array) {
-			$out .= pretty_print_rh(shift @array) . " , ";
-		}
-		$out .= " )"; 
-	} elsif (ref($r_input) eq 'CODE') {
-		$out = "$r_input";
+		$result .= "</table>"
 	} else {
-		$out = $r_input;
-	}
-		$out;
+		$result .= defined $ref ? $ref : '<font color="red">undef</font>';
+	}	
 }
 
-sub is_hash_ref {
-	my $in =shift;
-	my $save_SIG_die_trap = $SIG{__DIE__};
-    $SIG{__DIE__} = sub {CORE::die(@_) };
-	my $out = eval{  %{   $in  }  };
-	$out = ($@ eq '') ? 1 : 0;
-	$@='';
-	$SIG{__DIE__} = $save_SIG_die_trap;
-	$out;
+sub refBaseType($) {
+	my $ref = shift;
+	local $SIG{__DIE__} = 'IGNORE';
+	return "CODE"   if eval { $_ = \&$ref; 1 };
+	return "HASH"   if eval { $_ = %$ref; 1 };
+	return "ARRAY"  if eval { $_ = @$ref; 1 };
+	return "SCALAR" if eval { $_ = $$ref; 1 };
+	return 0;
 }
-sub is_array_ref {
-	my $in =shift;
-	my $save_SIG_die_trap = $SIG{__DIE__};
-    $SIG{__DIE__} = sub {CORE::die(@_) };
-	my $out = eval{  @{   $in  }  };
-	$out = ($@ eq '') ? 1 : 0;
-	$@='';
-	$SIG{__DIE__} = $save_SIG_die_trap;
-	$out;
-}
-=cut
+
+# -----
+
+#sub hash2string($;$$) {
+#	my $hr = shift;
+#	my $table = shift || 0;
+#	my $indent = shift || 0;
+#	my $result = $table ? '<table border="1">' : "";
+#	foreach my $key (keys %$hr) {
+#		my $value = $hr->{$key};
+#		$result .= $table
+#			? "<tr><td>$key</td>"
+#			: "\t"x$indent . "{$key} =";
+#		if (ref $value eq 'HASH') {
+#			$result .= $table ? "<td>" : "\n";
+#			$result .= hash2string($value, $table, $indent+1);
+#			$result .= $table ? "</td>" : "";
+#		} elsif (ref $value eq 'ARRAY') {
+#			$result .= $table ? "<td>" : "\n";
+#			$result .= array2string($value, $table, $indent+1);
+#			$result .= $table ? "</td>" : "";
+#		} elsif (defined $value) {
+#			$result .= $table
+#				? "<td>$value</td>"
+#				: " $value\n";
+#		} else {
+#			$result .= $table ? "" : "\n";
+#		}
+#		$result .= $table ? "</tr>" : "";
+#	}
+#	$result .= "</table>";
+#	return $result;
+#}
+#
+#sub array2string($;$$) {
+#	my $ar = shift;
+#	my $table = shift || 0;
+#	my $indent = shift || 0;
+#	my $result = $table ? '<table border="1">' : "";
+#	foreach my $index (0 .. @$ar-1) {
+#		my $value = $ar->[$index];
+#		$result .= $table
+#			? "<tr><td>$index</td>"
+#			: "\t"x$indent . "[$index] =";
+#		if (ref $value eq 'HASH') {
+#			$result .= $table ? "<td>" : "\n";
+#			$result .= hash2string($value, $table, $indent+1);
+#			$result .= $table ? "</td>" : "";
+#		} elsif (ref $value eq 'ARRAY') {
+#			$result .= $table ? "<td>" : "\n";
+#			$result .= array2string($value, $table, $indent+1);
+#			$result .= $table ? "</td>" : "";
+#		} elsif (defined $value) {
+#			$result .= $table
+#				? "<td>$value</td>"
+#				: " $value\n";
+#		} else {
+#			$result .= $table ? "" : "\n";
+#		}
+#		$result .= $table ? "</tr>" : "";
+#	}
+#	$result .= "</table>";
+#	return $result;
+#}
+#
+#sub isHashRef($) {
+#	my $ref = shift;
+#	local $SIG{__DIE__} = 'IGNORE';
+#	$_ = eval{ %$ref };
+#	return not defined $@;
+#}
+#
+#sub isArrayRef($) {
+#	my $ref = shift;
+#	local $SIG{__DIE__} = 'IGNORE';
+#	$_ = eval{ @$ref };
+#	return not defined $@;
+#}
 
 1;
