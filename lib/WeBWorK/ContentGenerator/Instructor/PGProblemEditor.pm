@@ -57,16 +57,26 @@ sub body {
 	#########################################################################
 	my $problemContents = '';
 	my $editMode		= (defined($r->param('problemContents')))? 
-								'tmpMode':'stdMode';
+								'tmpMode':'startMode';
 	
 	if ( $editMode eq 'tmpMode') {
 		$problemContents	=	$r->param('problemContents');
 
-	} else {
-		eval {
-			$problemContents	=	WeBWorK::Utils::readFile($problemPath);
-		};
-		$problemContents = $@ if $@;
+	} else{
+		 eval { $problemContents	=	WeBWorK::Utils::readFile($problemPath)  };  # try to read file
+		 $problemContents = $@ if $@;
+	} 
+		
+	#  save Action  FIXME  -- is this the write place for this?
+	my $actionString = '';
+	if ($r->param('submit') eq 'Save') {
+		$actionString = "File saved to $problemPath";
+		#FIXME  it would be MUCH better to work with temporary files
+		open(FILE,">$problemPath") or die "Can't open $problemPath";
+		print FILE $problemContents;
+		close(FILE);
+		
+	}
 	
 		# create tmp file version for later use 
 		# So that you don't need duplicate information in forms
@@ -74,17 +84,18 @@ sub body {
 		# open(FILE,">$tmpProblemPath") || die "Failed to open $tmpProblemPath";
 		# print FILE "tmpfileVersion\n\n" . $problemContents;
 		# close(FILE);
-	}
 		
 	# Define parameters for textarea
-	my $rows 	= 	40;
-	my $columns	= 	80;
-	
-	#########################################################################
+	# FIXME these parameters should be capable of being updated dynamically.
+	my $rows 		= 	20;
+	my $columns		= 	80;
+	my $mode_list 	= 	['HTML', 'HTML_tth','HTML_dpng', 'Latex2HTML'];
+	my $mode	  	= 	( defined($r->param('mode')) 	) ? $r->param('mode') : 'HTML_tth';
+	my $seed		=	( defined($r->param('seed'))	) ? $r->param('seed') : '1234';	
+	########################################################################
 	# Define a link to view the problem
-	#fix me:
-	# Currently this link used the webwork problem library, which might be out of 
-	# sync with the local library
+	#FIXME
+	
 	#########################################################################
 
 	
@@ -96,13 +107,34 @@ sub body {
 	return CGI::p($header),
 		CGI::startform("POST",$r->uri),
 		$self->hidden_authen_fields,
-		CGI::textarea(-name => 'problemContents', -default => $problemContents,
-					  -rows => $rows, -columns => $columns, -override => 1,
+		CGI::div(
+		CGI::textfield(-name=>'seed',-value=>$seed),
+		'Mode: ',
+		CGI::popup_menu(-name=>'mode', -'values'=>$mode_list,
+													 -default=>$mode),
+		CGI::a(
+			{-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
+			'Manpages',
+			)
 		),
+		CGI::p(
+			CGI::textarea(-name => 'problemContents', -default => $problemContents,
+						  -rows => $rows, -columns => $columns, -override => 1,
+			),
+		),
+		CGI::p(
+			CGI::submit(-value=>'Save',-name=>'submit'),
+			$actionString
+		),
+		CGI::a({-href=>$ce->{viewProblemURL},-target=>'_viewProblem'},'view problem'),
+		CGI::end_form(),
 		"<p> the parameters passed are "  #FIXME -- debugging code
 		. join("<BR>", %{$r->param()}) . 
 		"</p> and the gatheredInfo is ",
 		"problemPath=$problemPath<br> formURL=".$r->uri . "<br> tmpProblemPath=$tmpProblemPath<br>"   ,
+		"viewProblemURL ".$ce->{viewProblemURL}."<br>",
+		"problem_obj =". $ce->{problem_obj}."<br>",
+		"path_components ". $ce->{path_components};
 		 
 	;
 
@@ -110,23 +142,32 @@ sub body {
 
 sub initialize {
 	#fix me.  This is very much hacked together.  In particular can we pass the key inside the post?
-	my ($self, @path_components) = @_;
-	my $ce 				= 	$self->{ce};
-	my $r				=	$self->{r};
-	my $path_info 		= $r->path_info || "";
+	my ($self, $setName, $problemNumber) = @_;
+	my $ce 						= 	$self->{ce};
+	my $r						=	$self->{r};
+	my $path_info 				= 	$r->path_info || "";
+	my $db						=	$self->{db};
+	my $user					=	$r->param('user');
+	my $effectiveUserName		=	$r->param('effectiveUser');
+	my $courseName				=	$ce->{courseName};
 	
-	## Determine relative path to the file to be edited
+	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
+	my $setID					=	$set->set_id;
+	# Find URL for viewing problem
+	my $viewProblemURL		=	"/webwork/$courseName/".join("/",$setID,$problemNumber)."?" .$self->url_authen_args();
 	
-	my $templateDirectory 	= $self->{ce}->{courseDirs}->{templates};
-	my $problemPath 		=  join("/",$templateDirectory,@path_components) .'.pg';
-	
-	
-	# find path to the temporary file
-	my $tmpDirectory 		= 	$ce->{courseDirs}->{html_temp};
-	my $fileName 			=	join("-", $r->param('user'),@path_components).'.pg'; 
-	my $tmpProblemPath		=	"$tmpDirectory/$fileName";
+	my $problem_record		=	$db->getUserProblem($user,$setID,1);
+	my $templateDirectory	=	$ce->{courseDirs}->{templates};
+	my $problemPath			=	$templateDirectory."/".$problem_record->source_file;
+	# return values.  FIXME  -- is this the right way to pass the values to body??
+	$ce->{viewProblemURL}	=	$viewProblemURL;
 	$ce->{problemPath} 		= 	$problemPath;
-	$ce->{tmpProblemPath}	= 	$tmpProblemPath;	
+	$ce->{path_components}	=	join("/",$setID,$problemNumber);
+	
+	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
+
+	
+	
 }
 
 # sub gatherProblemList {   #workaround for obtaining the definition of a problem set (awaiting implementation of db function)
