@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.6b-ww
+ *  Version: 1.7e-ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -12,7 +12,7 @@
  *
  *  for the latest version, and for documentation on how to use jsMath.
  * 
- *  Copyright (c) 2004 by Davide P. Cervone.
+ *  Copyright (c) 2004-2005 by Davide P. Cervone.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -167,8 +167,9 @@ var jsMath = {
   renameOK: 1,                // tells if brower will find a tag whose name
                               //   has been set via setAttributes
   separateNetgativeSkips: 0,  // MSIE doesn't do negative left margins
+  separateSkips: 0,           // Netscape doesn't combine skips well
   noEmptySpans: 0,            // empty spans are/aren't allowed
-  lineH: 1,                   // for MSIE span height adjustments
+  msieSpaceFix: '',           // for MSIE spacing bug fix
 
   delay: 1,       // delay for asynchronous math processing
   
@@ -209,6 +210,8 @@ var jsMath = {
     '.normal':         'font-family: serif; font-style: normal; font-size: 133%',
     '.math':           'font-family: serif; font-style: normal; color: grey33; font-size: 75%',
     '.typeset':        'font-family: serif; font-style: normal; font-size: 133%',
+    'span.typeset':    'font-family: serif; font-style: normal',
+    'div.typeset':     'font-family: serif; font-style: normal; text-align: center; margin-top: 1em; margin-bottom: 1em',
     '.mathlink':       'text-decoration: none',
     '.mathHD':         'border-width: 0; width: 1px; margin-right: -1px',
   
@@ -272,7 +275,6 @@ var jsMath = {
     if (n == null) {n = 124}; if (factor == null) {factor = 2}
     var wh1 = this.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+this.TeX[name][n].c+'</SPAN>');
     var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX[name][n].c+'</SPAN>');
-//alert([wh1.w,wh1.h,wh2.w,wh2.h,factor,wh1.w>factor*wh2.w && wh1.h != 0]);
     return (wh1.w > factor*wh2.w && wh1.h != 0);
   },
 
@@ -280,7 +282,6 @@ var jsMath = {
     if (n == null) {n = 124}; if (factor == null) {factor = 2}
     var wh1 = this.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+this.TeX[name][n].c+'</SPAN>');
     var wh2 = this.BBoxFor('<SPAN STYLE="font-family: serif">'+this.TeX[name][n].c+'</SPAN>');
-//alert([this.TeX[name][n].c,wh1.w,wh1.h,wh2.w,wh2.h,factor,wh2.w > factor*wh1.w && wh1.h != 0]);
     return (wh2.w > factor*wh1.w && wh1.h != 0);
   },
   
@@ -349,7 +350,6 @@ var jsMath = {
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
     this.ph = h-d; this.pd = d;
-    if (this.lineH == null) {this.lineH = this.h}
     
     this.InitTeXfonts();
     
@@ -446,16 +446,18 @@ var jsMath = {
           cmbx10: {'10': {c: '<B>&Omega;</B>', tclass: 'normal'}}
         });
         this.allowAbsoluteDelim = 1;
-        this.separateNegativeSkips = 1;
-        this.lineH = 1.03;
+	this.separateSkips = 1;
         this.msieFontBug = 1; this.msieIntegralBug = 1;
-	jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
+        this.msieSpaceFix = '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD">';
+        jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
+        jsMath.Macro('mapsto','\\mapstochar\\kern-.54em\\rightarrow');
         jsMath.Macro('longmapsto','\\mapstochar\\kern-.54em\\char{cmsy10}{0}\\joinrel\\rightarrow');
       } else if (navigator.platform == 'MacPPC') {
         document.writeln('<SCRIPT SRC="'+this.root+'jsMath-msie-mac.js"></SCRIPT>');
+        jsMath.Parser.prototype.macros.angle = ['Replace','ord','<FONT FACE="Symbol">&#x8B;</FONT>','normal'];
+        jsMath.msieAbsoluteBug = 1;
       }
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
-      jsMath.Parser.prototype.macros.angle = ['Replace','ord','<FONT FACE="Symbol">&#x8B;</FONT>','normal'];
     }
 
     //
@@ -539,7 +541,7 @@ var jsMath = {
         {if (this.TeX.fam[i] != '') {this.TeX[this.TeX.fam[i]].dh = .1}}
       this.absoluteOffsetY = -.05;
       this.TeX.axis_height += .05;
-//    this.allowAbsoluteDelim = ! this.oldSafari;
+      this.allowAbsoluteDelim = ! this.oldSafari;
     }
 
     //
@@ -547,8 +549,10 @@ var jsMath = {
     // 
     if (this.allowAbsoluteDelim) {
       jsMath.Box.DelimExtend = jsMath.Box.DelimExtendAbsolute;
+      jsMath.Box.Layout = jsMath.Box.LayoutAbsolute;
     } else {
       jsMath.Box.DelimExtend = jsMath.Box.DelimExtendRelative;
+      jsMath.Box.Layout = jsMath.Box.LayoutRelative;
     }
     
     if (this.separateNegativeSkips) {
@@ -1499,7 +1503,8 @@ jsMath.HTML = {
    */
   Spacer: function (w) {
     if (w == 0) {return ''};
-    return '<SPAN STYLE="margin-left: '+this.Em(w)+'"></SPAN>';
+    return jsMath.msieSpaceFix
+      + '<SPAN STYLE="margin-left: '+this.Em(w)+'"></SPAN>';
   },
 
   /*
@@ -1526,27 +1531,6 @@ jsMath.HTML = {
              + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
              + 'width:'+this.Em(w)+'; height: '+this.Em(h)+'; '
              + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
-
-//    if (!c) {c = 'black'};
-//    if (pos) {pos = 'absolute;'} else
-//             {pos = 'relative; margin-right: '+this.Em(-w-.1)+'; '}
-//    return '<IMG SRC="blank.gif" STYLE="position:' + pos
-//             + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
-//             + 'width:'+this.Em(w)+'; height: '+this.Em(h)+'; '
-//             + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
-
-    /* 
-     * h = Math.round(h*jsMath.em)-2; // use pixels to compensate for border size
-     * w = Math.round(w*jsMath.em)-2;
-     * y = Math.round(y*jsMath.em)-1;
-     * if (!c) {c = 'black'};
-     * if (pos) {pos = 'absolute;'} else
-     *          {pos = 'relative; margin-right: '+(-w-2)+'px; '}
-     * return '<IMG SRC="'+jsMath.blank+'" STYLE="position:' + pos
-     *          + 'vertical-align: '+y+'px; left: '+this.Em(x)+'; '
-     *          + 'width:'+w+'px; height: '+h+'px; '
-     *          + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
-     */
   },
 
   /*
@@ -1626,7 +1610,10 @@ jsMath.HTML = {
       if (y) {span += ' top:'+this.Em(-y)+';'}
       html = span + '">' + html + '</SPAN>';
     }
-    if (x < 0) {html = '<SPAN STYLE="margin-left:'+this.Em(x)+';"></SPAN>' + html}
+    if (x < 0) {
+      html = jsMath.msieSpaceFix
+               + '<SPAN STYLE="margin-left:'+this.Em(x)+';"></SPAN>' + html;
+    }
     return html;
   },
 
@@ -1638,7 +1625,44 @@ jsMath.HTML = {
     if (Math.abs(y) < .0001) {y = 0}
     if (y) {html = '<SPAN STYLE="position: relative; top:'+this.Em(-y)+';'
                        + '">' + html + '</SPAN>'}
-    if (x) {html = '<SPAN STYLE="margin-left:'+this.Em(x)+';"></SPAN>' + html}
+    if (x) {html = jsMath.msieSpaceFix 
+                       + '<SPAN STYLE="margin-left:'+this.Em(x)+';"></SPAN>' + html}
+    return html;
+  },
+  
+  /*
+   *  Place a SPAN with absolute coordinates
+   */
+  PlaceAbsolute: function (html,x,y) {
+    if (Math.abs(x) < .0001) {x = 0}
+    if (Math.abs(y) < .0001) {y = 0}
+    html = '<SPAN STYLE="position: absolute; left:'+this.Em(x)+'; '
+              + 'top:'+this.Em(y)+';">' + html + '&nbsp;</SPAN>';
+              //  space normalizes line height
+    return html;
+  },
+
+  Absolute: function(html,w,h,d,y,H) {
+    var align = "";
+    if (d) {align = ' vertical-align: '+jsMath.HTML.Em(-d)+';'}
+    if (y != "none") {
+      if (Math.abs(y) < .0001) {y = 0}
+      html = '<SPAN STYLE="position: absolute; '
+               + 'top:'+jsMath.HTML.Em(y)+'; left: 0em;">'
+               + html + '&nbsp;' // space normalizes line height in script styles
+             + '</SPAN>';
+    }
+    html += '<IMG SRC="'+jsMath.blank+'" STYLE="width: '+jsMath.HTML.Em(w)+'; '
+                        + 'height: '+jsMath.HTML.Em(h)+';'+align+'">';
+    if (jsMath.msieAbsoluteBug) {// for MSIE (Mac)
+      html = '<SPAN STYLE="position: relative;">' + html + '</SPAN>';
+    }
+    html =   '<SPAN STYLE="position: relative;'
+           +     ' width: '+jsMath.HTML.Em(w)+';'       // for MSIE
+           +     ' height: '+jsMath.HTML.Em(H)+';'  // for MSIE
+           +     '">'
+           +   html
+           + '</SPAN>';
     return html;
   }
 
@@ -1747,7 +1771,7 @@ jsMath.Add(jsMath.Box,{
     var c = jsMath.TeX[font][code];
     if (c.tclass == null) {c.tclass = font}
     if (!c.computedW) {
-      c.w = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)).w;
+      c.w = jsMath.EmBoxFor(jsMath.Typeset.AddClass(c.tclass,c.c)).w;
       if (c.h == null) {c.h = jsMath.defaultH}; if (c.d == null) {c.d = 0}
       c.computedW = 1;
     }
@@ -1787,7 +1811,7 @@ jsMath.Add(jsMath.Box,{
     var top = this.GetChar(C.delim.top? C.delim.top: C.delim.rep,font);
     var rep = this.GetChar(C.delim.rep,font);
     var bot = this.GetChar(C.delim.bot? C.delim.bot: C.delim.rep,font);
-    var ext = jsMath.HTML.Class(rep.tclass,rep.c);
+    var ext = jsMath.Typeset.AddClass(rep.tclass,rep.c);
     var w = rep.w; var h = rep.h+rep.d
     var y; var dx;
     if (C.delim.mid) {// braces
@@ -1795,9 +1819,9 @@ jsMath.Add(jsMath.Box,{
       var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d)-(bot.h+bot.d))/(2*(rep.h+rep.d)));
       H = 2*n*(rep.h+rep.d) + (top.h+top.d) + (mid.h+mid.d) + (bot.h+bot.d);
       if (nocenter) {y = 0} else {y = H/2+a}; var Y = y;
-      var html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,y-top.h)
-               + jsMath.HTML.Place(jsMath.HTML.Class(bot.tclass,bot.c),-(top.w+bot.w)/2,y-(H-bot.d))
-               + jsMath.HTML.Place(jsMath.HTML.Class(mid.tclass,mid.c),-(bot.w+mid.w)/2,y-(H+mid.h-mid.d)/2);
+      var html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
+               + jsMath.HTML.Place(jsMath.Typeset.AddClass(bot.tclass,bot.c),-(top.w+bot.w)/2,y-(H-bot.d))
+               + jsMath.HTML.Place(jsMath.Typeset.AddClass(mid.tclass,mid.c),-(bot.w+mid.w)/2,y-(H+mid.h-mid.d)/2);
       dx = (w-mid.w)/2; if (Math.abs(dx) < .0001) {dx = 0}
       if (dx) {html += jsMath.HTML.Spacer(dx)}
       y -= top.h+top.d + rep.h;
@@ -1810,12 +1834,12 @@ jsMath.Add(jsMath.Box,{
       if (top.h+top.d < .9*(rep.h+rep.d)) {n = Math.max(1,n)}
       H = n*(rep.h+rep.d) + (top.h+top.d) + (bot.h+bot.d);
       if (nocenter) {y = 0} else {y = H/2+a}; var Y = y;
-      var html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,y-top.h)
+      var html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
       dx = (w-top.w)/2; if (Math.abs(dx) < .0001) {dx = 0}
       if (dx) {html += jsMath.HTML.Spacer(dx)}
       y -= top.h+top.d + rep.h;
       for (var i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
-      html += jsMath.HTML.Place(jsMath.HTML.Class(bot.tclass,bot.c),-(w+bot.w)/2,Y-(H-bot.d));
+      html += jsMath.HTML.Place(jsMath.Typeset.AddClass(bot.tclass,bot.c),-(w+bot.w)/2,Y-(H-bot.d));
     }
     if (nocenter) {h = top.h} else {h = H/2+a}
     var box = new jsMath.Box('html',html,rep.w,h,H-h);
@@ -1835,51 +1859,35 @@ jsMath.Add(jsMath.Box,{
     var top = this.GetChar(C.delim.top? C.delim.top: C.delim.rep,font);
     var rep = this.GetChar(C.delim.rep,font);
     var bot = this.GetChar(C.delim.bot? C.delim.bot: C.delim.rep,font);
-    rep.h = 0; // fix adjusted heights
     
     if (C.delim.mid) {// braces
       var mid = this.GetChar(C.delim.mid,font);
-      var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d)-(bot.h+bot.d))/(2*(rep.h+rep.d)));
-      H = 2*n*(rep.h+rep.d) + (top.h+top.d) + (mid.h+mid.d) + (bot.h+bot.d);
+      var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d-.05)-(bot.h+bot.d-.05))/(2*(rep.h+rep.d-.05)));
+      H = 2*n*(rep.h+rep.d-.05) + (top.h+top.d) + (mid.h+mid.d-.05) + (bot.h+bot.d-.05);
       
-      html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,-top.h);
-      var h = rep.h+rep.d - Font.hd; var y = -(top.h+top.d + rep.h-.05) + Font.hd;
-      var ext = jsMath.HTML.Class(font,rep.c)
-      for (var i = 0; i < n; i++) {html += '<BR>'+jsMath.HTML.Place(ext,0,y-i*h)}
-      html += '<BR>' + jsMath.HTML.Place(jsMath.HTML.Class(mid.tclass,mid.c),0,y-i*h);
-      y -= i*h+mid.h+mid.d - Font.hd;
-      for (var i = 0; i < n; i++) {html += '<BR>'+jsMath.HTML.Place(ext,0,y-i*h)}
-      html += '<BR>' + jsMath.HTML.Place(jsMath.HTML.Class(bot.tclass,bot.c),0,y-i*h);
+      html = jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(top.tclass,top.c),0,0);
+      var h = rep.h+rep.d - .05; var y = top.d-.05 + rep.h;
+      var ext = jsMath.Typeset.AddClass(font,rep.c)
+      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(mid.tclass,mid.c),0,y+n*h-rep.h+mid.h);
+      y += n*h + mid.h+mid.d - .05;
+      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(bot.tclass,bot.c),0,y+n*h-rep.h+bot.h);
     } else {// all others
-      var n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d))/(rep.h+rep.d-.1));
-      H = n*(rep.h+rep.d-.1) + (top.h+top.d) + (bot.h+bot.d);
+      var n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d-.05))/(rep.h+rep.d-.05));
+      H = n*(rep.h+rep.d-.05) + (top.h+top.d) + (bot.h+bot.d-.05);
 
-      html = jsMath.HTML.Place(jsMath.HTML.Class(top.tclass,top.c),0,-top.h);
-      var h = rep.h+rep.d-.1 - Font.hd; var y = -(top.h+top.d + rep.h-.05) + Font.hd;
-      var ext = jsMath.HTML.Class(rep.tclass,rep.c)
-      for (var i = 0; i < n; i++) {html += '<BR>'+jsMath.HTML.Place(ext,0,y-i*h)}
-      html += '<BR>' + jsMath.HTML.Place(jsMath.HTML.Class(bot.tclass,bot.c),0,y-i*h);
+      html = jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(top.tclass,top.c),0,0);
+      var h = rep.h+rep.d-.05; var y = top.d-.05 + rep.h;
+      var ext = jsMath.Typeset.AddClass(rep.tclass,rep.c);
+      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(bot.tclass,bot.c),0,y+n*h-rep.h+bot.h);
     }
     
-    var w = top.w; h = Font.h; 
-    if (nocenter) {y = top.h} else {y = (H/2 + a) - top.h}
-    if (jsMath.isSafari) {y -= .2}
-    html = '<SPAN STYLE="position: relative; '
-           +   'width: '+jsMath.HTML.Em(w)+'; ' // for MSIE
-           +   'height: '+jsMath.HTML.Em(top.h)+'; ' //for MSIE
-           +   '">'
-             + '<SPAN STYLE="position: absolute; '
-               +   'top: '+jsMath.HTML.Em(-y)+'; '
-               +   'left: 0;">'
-               + html
-             + '</SPAN>'
-             + '<IMG SRC="'+jsMath.blank+'" STYLE="width: '+jsMath.HTML.Em(w)+'; '
-                        + 'height: '+jsMath.HTML.Em(h)+';">'
-         + '</SPAN>';
-
-    if (nocenter) {h = top.h} else {h = H/2+a}
+    var w = top.w;
+    if (nocenter) {h = top.h; y = 0} else {h = H/2 + a; y = h - top.h}
+    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,top.h);
     var box = new jsMath.Box('html',html,rep.w,h,H-h);
-    box.bh = top.h; box.bd = top.d;
     box.bh = jsMath.TeX[font].h; box.bd = jsMath.TeX[font].d;
     return box;
   },
@@ -1914,9 +1922,19 @@ jsMath.Add(jsMath.Box,{
     var font = jsMath.TeX.fam[(code&0xF00)>>8];
     var Font = jsMath.TeX[font];
     var c = Font[code & 0xFF];
-    if (c.w == null) {c.w = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)).w}
-    if (c.tclass == null) {c.tclass = font}
+    if (c.w == null) {c.w = jsMath.EmBoxFor(jsMath.Typeset.AddClass(c.tclass,c.c)).w}
+    if (c.font == null) {c.font = font}
     return c;
+  },
+
+  /*
+   * Add the class to the html, and use the font if there isn't one
+   * specified already
+   */
+
+  AddClass: function (tclass,html,font) {
+    if (tclass == null) {tclass = font}
+    return jsMath.Typeset.AddClass(tclass,html);
   },
   
   /*
@@ -1933,15 +1951,12 @@ jsMath.Add(jsMath.Box,{
       var lmid = this.GetCharCode(leader.lmid);
       var rmid = this.GetCharCode(leader.rmid);
       w = (W - left.w - right.w - lmid.w - rmid.w)/2 - .1; h = .4; d = .3;
-      if (w > 0) {
-        html = jsMath.HTML.Class(left.tclass,left.c) 
-             + jsMath.HTML.Rule(w,left.h)
-             + jsMath.HTML.Class(lmid.tclass,lmid.c+rmid.c)
-             + jsMath.HTML.Rule(w,right.h)
-             + jsMath.HTML.Class(right.tclass,right.c);
-      } else {
-        html = jsMath.HTML.Class(left.tclass,left.c + lmid.c + rmid.c + right.c);
-      }
+      if (w < 0) {w = 0}
+      html = this.AddClass(left.tclass,left.c,left.font) 
+           + jsMath.HTML.Rule(w,left.h)
+           + this.AddClass(lmid.tclass,lmid.c+rmid.c,lmid.font)
+           + jsMath.HTML.Rule(w,right.h)
+           + this.AddClass(right.tclass,right.c,right.font);
     } else { //arrows
       font = jsMath.TeX.fam[(leader.rep &0xF00) >> 8];
       var left = this.GetCharCode(leader.left? leader.left: leader.rep);
@@ -1951,14 +1966,14 @@ jsMath.Add(jsMath.Box,{
       w = (W - left.w - right.w + .4 - n*(rep.w - .3));
       if (leader.left) {h = left.h; d = left.d} else {h = right.h; d = right.d}
       if (d == null) {d = 0}; if (h == null) {h = 0}
-      var html = jsMath.HTML.Class(left.tclass,left.c); var m = Math.floor(n/2);
+      var html = this.AddClass(left.tclass,left.c,left.font); var m = Math.floor(n/2);
       var ext = jsMath.HTML.Place(rep.c,-.3,0);
       var ehtml = ''; for (var i = 0; i < m; i++) {ehtml += ext};
-      html += jsMath.HTML.Class(rep.tclass,ehtml) + jsMath.HTML.Spacer(w);
+      html += this.AddClass(rep.tclass,ehtml,rep.font) + jsMath.HTML.Spacer(w);
       ehtml = ''; for (var i = m; i < n; i++) {ehtml += ext};
-      html += jsMath.HTML.Class(rep.tclass,ehtml);
+      html += this.AddClass(rep.tclass,ehtml,rep.font);
       if (jsMath.msieFontBug) {html += '<SPAN STYLE="display: none">x</SPAN>'}
-      html += jsMath.HTML.Place(jsMath.HTML.Class(right.tclass,right.c),-.4,0);
+      html += jsMath.HTML.Place(this.AddClass(right.tclass,right.c,right.font),-.4,0);
     }
     w = jsMath.EmBoxFor(html).w;
     if (w != W) {
@@ -1980,7 +1995,7 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  Layout: function (size,table,align,cspacing) {
+  LayoutRelative: function (size,table,align,cspacing) {
     if (align == null) {align = []}
     if (cspacing == null) {cspacing = []}
     
@@ -2004,7 +2019,7 @@ jsMath.Add(jsMath.Box,{
     if (bh == unset) {bh = 0}; if (bd == unset) {bd = 0}
 
     // lay out the columns
-    var HD = (jsMath.hd-.1)*scale;
+    var HD = (jsMath.hd-.01)*scale;
     var html = ''; var pW = 0; var cW = 0;
     var w; var h; var y;
     var box; var mlist; var entry;
@@ -2031,16 +2046,82 @@ jsMath.Add(jsMath.Box,{
     }
     
     // get the full width and height
-    w = -cspacing[W.length-1];
+    w = -cspacing[W.length-1]; y = (H.length-1)*scale/10;
     for (i = 0; i < W.length; i++) {w += W[i] + cspacing[i]}
-    h = jsMath.TeX.axis_height-y/2;
+    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i])}
+    h = y/2 + jsMath.TeX.axis_height; var d = y-h;
     
     // adjust the final row width, and vcenter the table
     //   (add 1/6em at each side for the \,)
     html += jsMath.HTML.Spacer(cW-cspacing[W.length-1] + scale/6);
     html = jsMath.HTML.Place(html,scale/6,h);
-    box = new jsMath.Box('html',html,w+scale/3,h,-y-h);
+    box = new jsMath.Box('html',html,w+scale/3,h,d);
     box.bh = bh; box.bd = bd;
+    return box;
+  },
+
+  /*
+   *  Create the HTML for an alignment (e.g., array or matrix)
+   *  Use absolute position for elements in the array.
+   *  
+   *  ###  still need to allow users to specify row and column attributes,
+   *       and do things like \span and \multispan  ###
+   */
+  LayoutAbsolute: function (size,table,align,cspacing) {
+    if (align == null) {align = []}
+    if (cspacing == null) {cspacing = []}
+    
+    // get row and column maximum dimensions
+    var scale = jsMath.sizes[size]/100;
+    var HD = (jsMath.hd-.01)*scale;
+    var W = []; var H = []; var D = [];
+    var w = 0; var h; var x; var y;
+    var i; var j; var row;
+    for (i = 0; i < table.length; i++) {
+      row = table[i];
+      H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
+      for (j = 0; j < row.length; j++) {
+        row[j] = row[j].Remeasured();
+        if (row[j].h > H[i]) {H[i] = row[j].h}
+        if (row[j].d > D[i]) {D[i] = row[j].d}
+        if (j >= W.length) {W[j] = row[j].w}
+        else if (row[j].w > W[j]) {W[j] = row[j].w}
+      }
+    }
+
+    // get the height and depth of the centered table
+    y = (H.length-1)*scale/6;
+    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i])}
+    h = y/2 + jsMath.TeX.axis_height; var d = y - h;
+
+    // lay out the columns
+    var html = ''; var entry; w = scale/6;
+    for (j = 0; j < W.length; j++) {
+      y = H[0]-h;
+      for (i = 0; i < table.length; i++) {
+        entry = table[i][j];
+        if (entry && entry.format != 'null') {
+          if (align[j] == 'l') {x = 0} else
+          if (align[j] == 'r') {x = W[j] - entry.w} else
+            {x = (W[j] - entry.w)/2}
+          html += jsMath.HTML.PlaceAbsolute(entry.html,w+x,
+                    y-Math.max(0,entry.bh-jsMath.h*scale));
+        }
+        if (i == table.length-1) {y += D[i]}
+        else {y += Math.max(HD,D[i]+H[i+1]) + scale/6}
+      }
+      if (cspacing[j] == null) cspacing[j] = scale;
+      w += W[j] + cspacing[j];
+    }
+    
+    // get the full width
+    w = -cspacing[W.length-1]+scale/3;
+    for (i = 0; i < W.length; i++) {w += W[i] + cspacing[i]}
+
+    html = jsMath.HTML.Spacer(scale/6)+html+jsMath.HTML.Spacer(scale/6);
+    if (jsMath.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
+    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
+    var box = new jsMath.Box('html',html,w+scale/3,h,d);
     return box;
   },
 
@@ -2956,8 +3037,7 @@ jsMath.Add(jsMath.Typeset,{
    *  Add the font class, if needed
    */
   AddClass: function (tclass,html) {
-    if (tclass != '' && tclass != 'normal') 
-      {html = '<SPAN CLASS="'+tclass+'">'+html+'</SPAN>'}
+    if (tclass != '' && tclass != 'normal') {html = jsMath.HTML.Class(tclass,html)}
     return html;
   }
 
@@ -3158,8 +3238,9 @@ jsMath.Package(jsMath.Typeset,{
       {item.html = '<SPAN STYLE="position: relative; top:'+jsMath.HTML.Em(-item.y)+';'
                        + '">' + item.html + '</SPAN>'}
     if (item.x) 
-      {item.html = '<SPAN STYLE="margin-left:'+jsMath.HTML.Em(item.x)+';'
-                       + '"></SPAN>' + item.html}
+      {item.html = jsMath.msieSpaceFix
+                       + '<SPAN STYLE="margin-left:'+jsMath.HTML.Em(item.x)+';">'
+                       + '</SPAN>' + item.html}
     item.h += item.y; item.d -= item.y;
     item.x = 0; item.y = 0;
   }
@@ -3695,7 +3776,7 @@ jsMath.Package(jsMath.Parser,{
         
     matrix:     'Matrix',
     array:      'Matrix',  // ### still need to do alignment options ###
-    pmatrix:    ['Matrix','(',')'],
+    pmatrix:    ['Matrix','(',')','c'],
     cases:      ['Matrix','\\{','.',['l','l']],
     cr:         'HandleRow',
     '\\':       'HandleRow',
@@ -4398,9 +4479,11 @@ jsMath.Package(jsMath.Parser,{
         if (c == '\\') {text += c + data[0].charAt(i++)}
         else if (c == '#') {
           c = data[0].charAt(i++);
-          if (!c.match(/[0-9]/) || c > args.length)
-            {this.Error("Illegal macro argument reference"); return}
-          text += args[c-1];
+          if (c == "#") {text += c} else {
+            if (!c.match(/[1-9]/) || c > args.length)
+              {this.Error("Illegal macro argument reference"); return}
+            text += args[c-1];
+          }
         } else {text += c}
       }
     }
@@ -4526,7 +4609,6 @@ jsMath.Package(jsMath.Parser,{
     if (this.macros[cmd]) {
       var macro = this.macros[cmd];
       if (typeof(macro) == "string") {macro = [macro]}
-//    var args = macro.slice(1); if (args.length == 1) {args = args[0]}
       this[macro[0]](cmd,macro.slice(1)); return;
     }
     if (this.mathchardef[cmd]) {
@@ -4662,34 +4744,22 @@ jsMath.Package(jsMath.Parser,{
 
     box.Styled().Remeasured(); var isSmall = 0; var isBig = 0;
     var w = box.w; var h = box.bh; var d = box.bd;
-    if (box.bh > box.h && box.bh > jsMath.h+.001) {isSmall = 1; h = box.h;}
-    if (box.bd > box.d && box.bd > jsMath.d+.001) {isSmall = 1; d = box.d;}
-    if (box.h > jsMath.h) {isBig = 1; h = Math.max(h,box.h);}
-    if (box.d > jsMath.d) {isBig = 1; d = Math.max(d,box.d);}
+    if (box.bh > box.h && box.bh > jsMath.h+.001) {isSmall = 1}
+    if (box.bd > box.d && box.bd > jsMath.d+.001) {isSmall = 1}
+    if (box.h > jsMath.h) {isBig = 1; h = box.h}
+    if (box.d > jsMath.d) {isBig = 1; d = box.d}
 
     if (jsMath.show.BBox) {rules += jsMath.HTML.Frame(0,-box.d,w,box.h+box.d,'green')}
     if (jsMath.show.Top) {rules += jsMath.HTML.Line(0,box.h,w,'red')}
     if (jsMath.show.Baseline) {rules += jsMath.HTML.Line(0,0,w,'blue')}
 
-    html = box.html; var y = jsMath.absoluteOffsetY;
-    if (jsMath.absoluteHeightVaries || box.bh > jsMath.h+.001) {y += (jsMath.h - box.bh)}
-    if (jsMath.spanHeightVaries) {y = 1-box.bh} // for MSIE
+    html = box.html;
     if (isSmall) {// hide the extra size
       if (jsMath.allowAbsolute) {
-        html = '<SPAN STYLE="position: relative;'
-               +   ' width: '+jsMath.HTML.Em(w)+';'          // for MSIE
-               +   ' height: '+jsMath.HTML.Em(jsMath.lineH)+';'  // for MSIE
-               +   '">'
-               + '<SPAN STYLE="position: relative;">'        // for MSIE (Mac)
-                 + '<SPAN STYLE="position: absolute; '
-                   + 'top:'+jsMath.HTML.Em(y)+'; left:0;">'
-                   + html + '&nbsp;' // space normalizes line height in script styles
-                 + '</SPAN>'
-                 + '<IMG SRC="'+jsMath.blank+'" STYLE="width: '+jsMath.HTML.Em(w)+'; '
-                            + 'height: '+jsMath.HTML.Em(jsMath.h)+';">'
-               + '</SPAN>'                                   // for MSIE (Mac)
-             + '</SPAN>';
-        isBig = 1;
+        var y = jsMath.absoluteOffsetY;
+        if (jsMath.absoluteHeightVaries || box.bh > jsMath.h+.001) {y += (jsMath.h - box.bh)}
+        html = jsMath.HTML.Absolute(html,w,jsMath.h,0,y,jsMath.h);
+	isBig = 1; h = box.h; d = box.d; 
       } else {// remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
         html = '<SPAN STYLE="line-height: 0;'
@@ -4700,10 +4770,11 @@ jsMath.Package(jsMath.Parser,{
       }
     }
     html = '<NOBR>' + rules + html;
-    if (isBig) {// add height and depth to the line
+    if (isBig) {// add height and depth to the line (force a little
+                //    extra to separate lines if needed)
       html += '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD" '
-               +   'STYLE="height: '+jsMath.HTML.Em(h+d)+'; '
-               +   'vertical-align: '+jsMath.HTML.Em(-d)+';">'
+               +   'STYLE="height: '+jsMath.HTML.Em(h+d+.2)+'; '
+               +   'vertical-align: '+jsMath.HTML.Em(-d-.1)+';">'
     }
     html += '<NOBR>'
     return html;
@@ -4797,7 +4868,6 @@ jsMath.Add(jsMath,{
     var parse = jsMath.Parse(s,null,null,'D');
     parse.Atomize();
     var html = parse.Typeset();
-    html = '<p align="CENTER">' + html + '</p>'
     return html;
   },
   
