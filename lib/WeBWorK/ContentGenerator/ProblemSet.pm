@@ -74,26 +74,29 @@ sub siblings {
 	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
+	my $effectiveUser = $self->{r}->param("effectiveUser");
 	
 	print CGI::strong("Problem Sets"), CGI::br();
 	
-	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my @sets;
 	push @sets, $db->getMergedSet($effectiveUser, $_)
 		foreach ($db->listUserSets($effectiveUser));
-#	foreach my $set (sort { $a->open_date <=> $b->open_date } @sets) {
-#   FIXME only experience will tell us the best sorting procedure
-#   due_date seems right for students, but alphabetically is more useful for professors?;
-
+	
+	# FIXME only experience will tell us the best sorting procedure.
+	# due_date seems right for students, but alphabetically may be more
+	# useful for professors?
+	
+	my @sorted_sets;
+	
 	# sort by set name
-	#@sets = sort { $a->set_id cmp $b->set_id } @sets;
+	#@sorted_sets = sort { $a->set_id cmp $b->set_id } @sets;
 	
 	# sort by set due date
-	my @sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
-	# put closed sets last;
+	@sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
+	# ...and put closed sets last;
 	my $now = time();
-	my @open_sets = grep {$_->due_date>$now} @sorted_sets;
-	my @closed_sets = grep {$_->due_date<=$now} @sorted_sets;
+	my @open_sets = grep { $_->due_date > $now } @sorted_sets;
+	my @closed_sets = grep { $_->due_date <= $now } @sorted_sets;
 	@sorted_sets = (@open_sets,@closed_sets);
 	
 	foreach my $set (@sorted_sets) { 
