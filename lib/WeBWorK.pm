@@ -24,6 +24,7 @@ use WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use WeBWorK::ContentGenerator::Instructor::UserList;
+use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -121,7 +122,12 @@ sub dispatch($) {
 			} elsif ($instructorArgument eq "sets") {
 				my $setID = shift @components;
 				if (defined $setID) {
-					return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go($setID);
+					my $setArg = shift @components;
+					if ($setArg eq "problems") {
+						return WeBWorK::ContentGenerator::Instructor::ProblemList->new($r, $ce, $db)->go($setID);
+					} else {
+						return WeBWorK::ContentGenerator::Instructor::ProblemSetEditor->new($r, $ce, $db)->go($setID);
+					}
 				} else {
 					return WeBWorK::ContentGenerator::Instructor::ProblemSetList->new($r, $ce, $db)->go;
 				}

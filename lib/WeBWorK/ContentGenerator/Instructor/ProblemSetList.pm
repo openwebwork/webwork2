@@ -100,18 +100,7 @@ sub body {
 	foreach my $set (@sets) {
 		my $count = $counts{$set->set_id};
 		
-		my $userCountMessage;
-		if ($count == 0) {
-			$userCountMessage = CGI::em("No users");
-		} elsif ($count == scalar(@users)) {
-			$userCountMessage = "All users";
-		} elsif ($count == 1) {
-			$userCountMessage = "1 user";
-		} elsif ($count > scalar(@users) || $count < 0) {
-			$userCountMessage = CGI::em("Impossible number of users: $count");
-		} else {
-			$userCountMessage = "$count users";
-		}
+		my $userCountMessage = $self->userCountMessage($count, scalar(@users));
 	
 		$table .= CGI::Tr({}, 
 			CGI::td({}, 
@@ -126,8 +115,8 @@ sub body {
 			. CGI::td({}, formatDateTime($set->open_date))
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
-			. CGI::td({}, $problemCounts{$set->set_id})
-			. CGI::td({}, $userCountMessage)
+			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/problems/?".$self->url_authen_args}, $problemCounts{$set->set_id}))
+			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/".$self->url_authen_args}, $userCountMessage))
 		) . "\n"
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
@@ -149,7 +138,6 @@ sub body {
 		. CGI::submit({"name"=>"importSet", "label"=>"Import"})."\n"
 		. CGI::end_form()."\n";
 	print $form;
-	print CGI::br();
 	
 	return "";
 }

@@ -11,7 +11,39 @@ use strict;
 use warnings;
 use CGI qw();
 
- sub links {
+sub hiddenEditForUserFields {
+	my ($self, @editForUser) = @_;
+	my $return = "";
+	foreach my $editUser (@editForUser) {
+		$return .= CGI::input({type=>"hidden", name=>"editForUser", value=>$editUser});
+	}
+	
+	return $return;
+}
+
+sub userCountMessage {
+	my ($self, $count, $numUsers) = @_;
+	
+	my $message;
+	if ($count == 0) {
+		$message = CGI::em("no users");
+	} elsif ($count == $numUsers) {
+		$message = "all users";
+	} elsif ($count == 1) {
+		$message = "1 user";
+	} elsif ($count > $numUsers || $count < 0) {
+		$message = CGI::em("an impossible number of users: $count out of $numUsers");
+	} else {
+		$message = "$count users";
+	}
+	
+	return $message;
+}
+
+
+## Template Escapes ##
+
+sub links {
  	my $self 		= shift;
  	
  	# keep the links from the parent
