@@ -40,21 +40,39 @@ sub new {
 	$safe->reval("\$courseName = '$courseName'");
 	
 	# Compile the "include" function with all opcodes available.
-	my $include = 'sub include {
+	# why did this first version work (see the grep pattern?)
+	# my guess it's because the path on webwork.math starts with
+	# /ww/ !!!!!!
+# 	my $include = 'sub include {
+# 		my ($file) = @_;
+# 		my $fullPath = "'.$webworkRoot.'/$file";
+# 		# This regex matches any string that:
+# 		# : begins with ../
+# 		# : ends with /..
+# 		# : contains /../, or
+# 		# : is .. 
+# 		if ($fullPath =~ m!(?:^|/)..(?:/|$)!) {
+# 			die "Included file $file has potentially insecure path: contains \"..\"";
+# 		} else {
+# 			local @INC = ();
+# 			do $fullPath;
+# 		}
+# 	}';
+	my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "'.$webworkRoot.'/$file";
+		my $fullPath = "].$webworkRoot.q[/$file";
 		# This regex matches any string that:
 		# : begins with ../
 		# : ends with /..
 		# : contains /../, or
 		# : is .. 
-		if ($fullPath =~ m!(?:^|/)..(?:/|$)!) {
+		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
 			die "Included file $file has potentially insecure path: contains \"..\"";
 		} else {
 			local @INC = ();
-			do $fullPath;
+			do $fullPath or die "\n\n Couldn't include $fullPath.  Has it been created from a distribution file?\n\n";
 		}
-	}';
+	} ];
 	
 	my $maskBackup = $safe->mask;
 	$safe->mask(empty_opset);
