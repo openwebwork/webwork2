@@ -1,29 +1,38 @@
 package WeBWorK::ContentGenerator::Problem;
-our @ISA = qw(WeBWorK::ContentGenerator);
+use base qw(WeBWorK::ContentGenerator);
 
 use strict;
 use warnings;
-use lib '/home/malsyned/xmlrpc/daemon';
-use lib '/Users/gage/webwork-modperl/lib';
-use PGtranslator5;
-use WeBWorK::ContentGenerator;
 use Apache::Constants qw(:common);
+use WeBWorK::ContentGenerator;
+use WeBWorK::PG;
 
-###############################################################################
-# Configuration
-###############################################################################
-my $USER_DIRECTORY = '/Users/gage';
-my $COURSE_SCRIPTS_DIRECTORY = "$USER_DIRECTORY/webwork/system/courseScripts/";
-my $MACRO_DIRECTORY 	= 	"$USER_DIRECTORY/webwork-modperl/courses/demoCourse/templates/macros/";
-my $TEMPLATE_DIRECTORY 	= 	"$USER_DIRECTORY/rochester_problib/";
-my $TEMP_URL   			=	"http://127.0.0.1/~gage/rochester_problibtmp/";
-##my $HTML_DIRECTORY 		= 	"/Users/gage/Sites/rochester_problib/"  #already obtained from courseEnvironment
-my $HTML_URL 			=	"http://127.0.0.1/~gage/rochester_problib/";
-my $TEMP_DIRECTORY = ""; # has to be here... for now
-
-###############################################################################
-# End configuration
-###############################################################################
+# "Classic" form fields from processProblem8.pl
+# 
+# user - user ID
+# key - session key
+# course - course name
+# probSetKey - USUALLY known as the PSVN
+# probNum - problem number a.k.a. ID a.k.a. name
+# 
+# Mode - display mode (HTML, HTML_tth, or typeset or whatever it's called)
+# show_old_answers - whether or not student's old answers should be filled in
+# ShowAns - asks for correct answer to be shown -- only available for instructors
+# answer$i - student answers
+# showEdit - checks if the ShowEditor button should be shown and clicked
+# showSol - checks if the solution button ishould be shown and clicked
+# 
+# source - contains modified problem source when called from the web-based problem editor
+# seed - contains problem seed when called from the web-based problem editor
+# readSourceFromHTMLQ - if true, problem is read from 'source' instead of file
+# action - submit button clicked to invoke script (alledgedly)
+# 	'Save updated version'
+# 	'Read problem from disk'
+# 	'Submit Answers'
+# 	'Preview Answers'
+# 	'Preview Again'
+# probFileName - name of the PG file being edited
+# languageType - afaik, always set to 'pg'
 
 sub title {
 	my ($self, $problem_set, $problem) = @_;
@@ -32,249 +41,67 @@ sub title {
 	return "Problem $problem of problem set $problem_set for $user";
 }
 
-###############################################################################
-#
-# INITIALIZATION  
-#
-# The following code initializes an instantiation of PGtranslator5 in the 
-# parent process.  This initialized object is then share with each of the 
-# children forked from this parent process by the daemon.
-#
-# As far as I can tell, the child processes don't share any variable values even
-# though their namespaces are the same.
-###############################################################################
-#  First some dummy values to use for testing.
-#  These should be available from the problemEnvironment(it might be ok to assume that PG and dangerousMacros
-#  live in the courseScripts (system level macros) directory.
-
-#print STDERR "Begin intitalization\n";
-my $dummy_envir = {	courseScriptsDirectory 	=> 	$COURSE_SCRIPTS_DIRECTORY,
-					displayMode 			=>	'HTML_tth',
-					macroDirectory			=> 	$MACRO_DIRECTORY,
-					cgiURL					=>	'foo_cgiURL'};
-
-
-my $PG_PL 						= 	"${COURSE_SCRIPTS_DIRECTORY}PG.pl";
-my $DANGEROUS_MACROS_PL			= 	"${COURSE_SCRIPTS_DIRECTORY}dangerousMacros.pl";
-my @MODULE_LIST					= ( 	"Exporter", "DynaLoader", "GD", "WWPlot", "Fun", 
-										"Circle", "Label", "PGrandom", "Units", "Hermite", 
-										"List", "Match","Multiple", "Select", "AlgParser", 
-										"AnswerHash", "Fraction", "VectorField", "Complex1", 
-										"Complex", "MatrixReal1", "Matrix","Distributions",
-										"Regression"
-);
-my @EXTRA_PACKAGES				= ( 	"AlgParserWithImplicitExpand", "Expr", 
-										"ExprWithImplicitExpand", "AnswerEvaluator", 
-
-);
-my $INITIAL_MACRO_PACKAGES 		=  <<END_OF_TEXT;
-		DOCUMENT();
-		loadMacros(
-				"PGbasicmacros.pl",
-				"PGchoicemacros.pl",
-				"PGanswermacros.pl",
-				"PGnumericalmacros.pl",
-				"PGgraphmacros.pl",
-				"PGauxiliaryFunctions.pl",
-				"PGmatrixmacros.pl",
-				"PGcomplexmacros.pl",
-				"PGstatisticsmacros.pl"
-		
-		);
-		
-		TEXT("Hello world");
-		
-			ENDDOCUMENT();
-				
-END_OF_TEXT
-	
-#These here documents have their drawbacks.  KEEP END_OF_TEXT left justified!!!!!!	
-
-###############################################################################
-# Now to define the body subroutine which does the hard work.
-###############################################################################
-
-
-#my $SOURCE1 = $INITIAL_MACRO_PACKAGES;
-
 sub body {
 	my ($self, $problem_set, $problem) = @_;
-	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
-	my $user = $r->param('user');
 	
-	my $rh = {}; # this needs to be set to a hash containing CGI params
+	# we have to call init_translator like this:
+	my $pt = WeBWorK::PG->new($courseEnv, $userName, $setName, $problemNumber, $formData);
 	
+	# 
 	
-	my $SOURCE1 = readFile("$problem_set/$problem.pg");
-	print STDERR "SOURCEFILE: \n$SOURCE1\n\n";
+	# ----- this is not a place of honor -----
 	
-	###########################################################################
-	#  The pg problem class should have a method for installing it's problemEnvironment
-	###########################################################################
-	
-	my $problemEnvir_rh = defineProblemEnvir($self);
-	
-
-	##################################################################################
-	#  Prime the PGtranslator object and set it loose
-	##################################################################################
-	
-
-	###############################################################################
-			
-	###############################################################################
-	#Create the PG translator.
-	###############################################################################
-	
-	my $pt = new PGtranslator5;  #pt stands for problem translator;
-	
-	
-	# All of these hard coded directories need to be drawn from courseEnvironment.
-	# In addition I don't think that PGtranslator uses this stack internally yet.
-	# Passing these directories through the problemEnvironment variable is what
-	# is currently being done, but I don't think it is quite right, at least for most
-	# of them.
-	
-	
-	$pt ->rh_directories(	{	courseScriptsDirectory 	=> $COURSE_SCRIPTS_DIRECTORY,
-								macroDirectory			=> $MACRO_DIRECTORY,
-									,
-								templateDirectory		=> $TEMPLATE_DIRECTORY,
-								tempDirectory			=> $TEMP_DIRECTORY,
-							}
-	);
-	
-	###############################################################################
-	# First we load the modules from courseScripts directory.
-	# These do the "heavy lifting" in terms of formatting, creating graphs, and
-	# performing other heavy duty algorithms.
-	#
-	###############################################################################
-	
-	$pt -> evaluate_modules( @MODULE_LIST);
-	$pt -> load_extra_packages( @EXTRA_PACKAGES );
-	
-	###############################################################################
-	# Load the environment constants.  Some are used by the PGtranslator object but
-	# most of them are installed inside the Safe compartment where the problem
-	# runs.
-	###############################################################################
-	#$pt -> environment($dummy_envir);
-	$pt -> environment($problemEnvir_rh);
-	
-	
-	# I've forgotten what this does exactly :-)
-	$pt->initialize();
-	
-	###############################################################################
-	# PG.pl contains the basic code which defines the problem interface, input and output.
-	# dangerousMacros.pl contains subroutines which have access to the hard drive and 
-	# and the directory structure.  All use of external resources by the problem is supposed
-	# to go through these subroutines.  The idea is to put the potentially dangerous
-	# algorithms in on place so they can be watched closely.
-	# These two files are evaluated in the Safe compartment without any restrictions.
-	# They have full use of the perl commands.
-	###############################################################################
-	 my $loadErrors    = $pt -> unrestricted_load($PG_PL );
-	 print STDERR "$loadErrors\n" if ($loadErrors);
-	 $loadErrors = $pt -> unrestricted_load($DANGEROUS_MACROS_PL);
-	 print STDERR "$loadErrors\n" if ($loadErrors);
-	
-	###############################################################################
-	# Now set the mask to restrict the operations which can be performed within
-	# a problem or a macro file.
-	###############################################################################
-	 $pt-> set_mask();
-	 
-	#	print  "\nPG.pl: $PG_PL<br>\n";
-	#	print  "DANGEROUS_MACROS_PL: $DANGEROUS_MACROS_PL<br>\n";
-	#	print  "Print dummy environment<br>\n";
-	#	print  pretty_print_rh($dummy_envir), "<p>\n\n";
-	
-	# Read in the source code for the problem
-	
-	 #$INITIAL_MACRO_PACKAGES =~ tr /\r/\n/;  # change everything to unix line endings.
-	 $SOURCE1 =~ tr /\r/\n/;
-	 #print STDERR "Source again \n $SOURCE1";
-	 $pt->source_string( $SOURCE1   );
-	
-	###############################################################################
-	# Install a safety filter for screening student answers.  The default is now the blank
-	# filter since the answer evaluators do a pretty good job of recompiling and screening
-	# student's answers.  Still, you could prohibit back ticks, or something of the kind.
-	###############################################################################
-	
-	 $pt ->rf_safety_filter( \&safetyFilter);   # install blank safety filter
-	
-	
-	print STDERR "New PGtranslator object inititialization completed.<br>\n";
-	################################################################################
-	## This ends the initialization of the PGtranslator object
-	################################################################################
-	
-	
-	################################################################################
 	# Run the problem (output the html text) but also store it within the object.
 	# The correct answers are also calculated and stored within the object
-	################################################################################
-	 $pt ->translate();
+	$pt ->translate();
 	
-	#print problem output
+	# print problem output
 	print "Problem goes here<p>\n";
 	print "Problem output <br>\n";
-	print "################################################################################<br><br>";
+	print "<HR>";
 	print ${$pt->r_text()};
-	print "<br><br>################################################################################<br>";
+	print "<HR>";
 	print "<p>End of problem output<br>";
 	
 	
-	#print source code
+	# print source code
 	print "Source code<pre>\n";
 	print $SOURCE1;
 	print "</pre>End source code<p>";
-	################################################################################
+	
 	# The format for the output is described here.  We'll need a local variable
 	# to handle the warnings.  From within the problem the warning command
 	# has been slaved to the __WARNINGS__  routine which is defined in Global.
 	# We'll need to provide an alternate mechanism.
 	# The base64 encoding is only needed for xml transmission.
-	################################################################################
-	print "################################################################################<br>";
+	print "<hr>";
 	print "Warnings output<br>";
 	my $WARNINGS = "Let this be a warning:";
 	
 	print $WARNINGS;
 	
-	################################################################################
 	# Install the standard problem grader.  See gage/xmlrpc/daemon.pm or processProblem8 for detailed
 	# code on how to choose which problem grader to install, depending on courseEnvironment and problem data.
 	# See also PG.pl which provides for problem by problem overrides.
-	################################################################################
-	
 	$pt->rf_problem_grader($pt->rf_std_problem_grader);
 	
-	################################################################################
 	# creates and stores a hash of answer results inside the object: $rh_answer_results
-	################################################################################
 	$pt -> process_answers($rh->{envir}->{inputs_ref});
 	
 	
 	# THE UPDATE AND GRADING LOGIC COULD USE AN OVERHAUL.  IT WAS SOMEWHAT CONSTRAINED
 	# BY LEGACY CONDITIONS IN THE ORIGINAL PROCESSPROBLEM8.  IT'S NOT BAD
 	# BUT IT COULD PROBABLY BE MADE A LITTLE MORE STRAIGHT FORWARD.
-	################################################################################
+	# 
 	# updates the problem state stored by the translator object from the problemEnvironment data
-	################################################################################
 	
 	# $pt->rh_problem_state({ recorded_score 			=> $rh->{problem_state}->{recorded_score},
 	# 						num_of_correct_ans		=> $rh->{problem_state}->{num_of_correct_ans} ,
 	# 						num_of_incorrect_ans	=> $rh->{problem_state}->{num_of_incorrect_ans}
 	# 					} );
-	################################################################################
-	# grade the problem (and update the problem state again.)
-	################################################################################
 	
+	# grade the problem (and update the problem state again.)
+	# 
 	# Define an entry order -- the default is the order they are received from the browser.
 	# (Which as I understand it is NOT guaranteed to be the Left->Right Up-> Down order we're
 	# used to in the West.
@@ -301,10 +128,8 @@ sub body {
 					problem_state				=> $rh_problem_state,
 					PG_flag						=> \%PG_FLAGS
 			   };
-	##########################################################################################
-	# Debugging printout of environment tables
-	##########################################################################################
 	
+	# Debugging printout of environment tables
 	print "<P>Request item<P>\n\n";
 	print "<TABLE border=\"3\">";
 	print $self->print_form_data('<tr><td>','</td><td>','</td></tr>');
@@ -316,139 +141,9 @@ sub body {
 	print "<P>\n\nproblemEnvironment<P>\n\n";
 	print pretty_print_rh($problemEnvir_rh);
 
-	##########################################################################################
-	# End
-	##########################################################################################
-		"";
-}
-#  End the"body" routine for the Problem object.
-
-
-sub safetyFilter {
-	    my $answer = shift;  # accepts one answer and checks it
-	    my $submittedAnswer = $answer;
-		$answer = '' unless defined $answer;
-		my ($errorno);
-		$answer =~ tr/\000-\037/ /;
-   #### Return if answer field is empty ########
-		unless ($answer =~ /\S/) {
-#			$errorno = "<BR>No answer was submitted.";
-            $errorno = 0;  ## don't report blank answer as error
-
-			return ($answer,$errorno);
-			}
-   ######### replace ^ with **    (for exponentiation)
-   # 	$answer =~ s/\^/**/g;
-   ######### Return if  forbidden characters are found
-		unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)]+$/ )  {
-			$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
-			$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";
-
-			return ($answer,$errorno);
-			}
-
-		$errorno = 0;
-		return($answer, $errorno);
+	"";
 }
 
-
-
-
-########################################################################################
-# This is the problemEnvironment structure that needs to be filled out in order to  provide
-# information to PGtranslator which in turn supports the problem environment
-########################################################################################
-
-sub defineProblemEnvir {
-	my $self = shift;
-	my $r = $self->{r};
-	my $courseEnvironment = $self->{courseEnvironment};
-    my %envir=();
-#    $envir{'refSubmittedAnswers'}  =   $refSubmittedAnswers if defined($refSubmittedAnswers);
-     $envir{'psvnNumber'}	   		=   123456789;
-  	$envir{'psvn'}		   			=	123456789;
- 	 $envir{'studentName'}	   		=   'Jane Doe';
-	$envir{'studentLogin'}	    	=	'jd001m';
-	$envir{'studentID'}	    		=	'xxx-xx-4321';
-	$envir{'sectionName'}	    	=	'gage';
-	$envir{'sectionNumber'}	    	=	'111foobar';
-	$envir{'recitationName'}	    =	'gage_recitation';
-	$envir{'recitationNumber'}	    =	'11_foobar recitation';
-	$envir{'setNumber'}	    		=	'setAlgebraicGeometry';
-	$envir{'questionNumber'}      	=	43;
-	$envir{'probNum'} 	    		=	43;
-	$envir{'openDate'}	    		=	3014438528;
-	$envir{'formattedOpenDate'}    	=	'3/4/02';
-	$envir{'dueDate'} 	    		=	4014438528;
-	$envir{'formattedDueDate'}     	=	'10/4/04';
-	$envir{'answerDate'}	    	=	4014438528;
-	$envir{'formattedAnswerDate'}  	=	'10/4/04';
-	$envir{'problemValue'}	    	=	1;
-	$envir{'fileName'}	    		=	'problem1';
-	$envir{'probFileName'}	    	=	'problem1';
-	$envir{'languageMode'}	    	=	'HTML_tth';
-	$envir{'displayMode'}	    	=	'HTML_tth';
-	$envir{'outputMode'}	    	=	'HTML_tth';
- 	$envir{'courseName'}	    	=	$courseEnvironment ->{courseName};
-	$envir{'sessionKey'}	    	=	'asdf';
-
-#	initialize constants for PGanswermacros.pl
-	$envir{'numRelPercentTolDefault'} 	=     .1;
-	$envir{'numZeroLevelDefault'}		=     1E-14;
-	$envir{'numZeroLevelTolDefault'} 	=     1E-12;
-	$envir{'numAbsTolDefault'} 			=     .001;
-	$envir{'numFormatDefault'}			=     '';
-	$envir{'functRelPercentTolDefault'} =     .1;
-	$envir{'functZeroLevelDefault'} 	=     1E-14;
-	$envir{'functZeroLevelTolDefault'} 	=     1E-12;
-	$envir{'functAbsTolDefault'} 		=     .001;
-	$envir{'functNumOfPoints'} 			=     3;
-	$envir{'functVarDefault'} 			=     'x';
-	$envir{'functLLimitDefault'} 		=     .0000001;
-	$envir{'functULimitDefault'} 		=     .9999999;
-	$envir{'functMaxConstantOfIntegration'} = 1E8;
-#	kludge check definition of number of attempts again. The +1 is because this is used before the current answer is evaluated.
-	$envir{'numOfAttempts'}             =    2; #&getProblemNumOfCorrectAns($probNum,$psvn)
-	                                            # &getProblemNumOfIncorrectAns($probNum,$psvn)+1;
-
-# 
-# 
-# 	defining directorys and URLs
- 	$envir{'templateDirectory'}   		=	$courseEnvironment ->{courseDirs}->{templates};
-############	$envir{'classDirectory'}   			=	$Global::classDirectory;
-#	$envir{'cgiDirectory'}   			=	$Global::cgiDirectory;
-#	$envir{'cgiURL'}                    =   getWebworkCgiURL();
-
-# 	$envir{'scriptDirectory'}   		=	$Global::scriptDirectory;##omit
-	$envir{'webworkDocsURL'}   			=	'http://webwork.math.rochester.edu';
-	$envir{'externalTTHPath'}   		=	'/usr/local/bin/tth';
-	
-
-# 
-	$envir{'inputs_ref'}                =   $r->param;
- 	$envir{'problemSeed'}	   			=   3245;
- 	$envir{'displaySolutionsQ'}			= 	1;
- 	$envir{'displayHintsQ'}				= 	1;
-
-# Directory values -- do we really need them here? 	
- 	$envir{courseScriptsDirectory} 	= $COURSE_SCRIPTS_DIRECTORY;
-	$envir{macroDirectory}			= $MACRO_DIRECTORY;
-	$envir{templateDirectory}		= $TEMPLATE_DIRECTORY;
-	$envir{tempDirectory}			= $TEMP_DIRECTORY;
-	$envir{tempURL}					= $TEMP_URL;
-	$envir{htmlURL}					= $HTML_URL;
-	$envir{'htmlDirectory'}             =   $courseEnvironment ->{courseDirectory}->{html};
-	# here is a way to pass environment variables defined in webworkCourse.ph
-#	my $k;
-#	foreach $k (keys %Global::PG_environment ) {
-#		$envir{$k} = $Global::PG_environment{$k};
-#	}
-	\%envir;
-}
-
-########################################################################################
-# This recursive pretty_print function will print a hash and its sub hashes.
-########################################################################################
 sub pretty_print_rh {
     my $r_input = shift;
     my $out = '';
@@ -497,28 +192,9 @@ sub is_array_ref {
 	$out;
 }
 
-######
-# Utility for slurping souce files
-#######
+1;
 
-sub readFile {
-	my $input = shift;    # The set and problem:  'set0/prob1.pg'
-	my $filePath =$TEMPLATE_DIRECTORY .$input;
-	print STDERR "Reading problem from file  $filePath \n";
-	print STDERR "<br>Reading problem from file  $filePath <br>\n";
-	my $out;
-	print "The file is readable = ", -r $filePath, "\n";
-	if (-r $filePath) {
-		open IN, "<$filePath" or print STDERR "Hey, this file was supposed to be readable\n";
-		local($/)=undef;
-		$out = <IN>;
-		close(IN);
-	} else {
-		print "Could not read file at |$filePath|";
-		print STDERR "Could not read file at |$filePath|";
-	}
-	return($out);
-}
+__END__
 
 my $foo =0;
 
@@ -662,5 +338,3 @@ BEGIN {
 
 
 }
-
-1;

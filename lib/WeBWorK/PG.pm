@@ -9,11 +9,10 @@ use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
 
-use base qw(Exporter);
-our @EXPORT = qw(init_translator);
-our @EXPORT_OK = qw();
-
-sub init_translator($$$$$) {
+sub new($$$$$$) {
+	my $invocant = shift;
+	my $class = ref($invocant) || $invocant;
+	
 	my $courseEnv = shift;
 	my $userName = shift;
 	my $setName = shift;
@@ -87,8 +86,18 @@ sub init_translator($$$$$) {
 	# install a safety filter (&safetyFilter)
 	$translator->rf_safety_filter(\&safetyFilter);
 	
-	# return the translator
-	return $translator;
+	# translate the PG source into text
+	$translator->translate();
+	
+	# install a grader
+	my $grader = $courseEnv->{pg}->{grader};
+	$translator->rf_problem_grader(\&FIXME); # *** need a coderef!
+	
+	# process student answers (if any)
+	$translator->process_answers($formData);
+	
+	# a PG object is a REFERENCE to a Translator object
+	return bless \$translator, $class;
 }
 
 # -----
@@ -180,7 +189,7 @@ sub defineProblemEnvir($$$$$$) {
 }
 
 sub safetyFilter {
-	my $answer = shift;  # accepts one answer and checks it
+	my $answer = shift; # accepts one answer and checks it
 	my $submittedAnswer = $answer;
 	$answer = '' unless defined $answer;
 	my ($errorno);
