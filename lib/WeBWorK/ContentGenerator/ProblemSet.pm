@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.50 2004/05/24 20:43:05 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.51 2004/06/02 20:27:47 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -337,7 +337,7 @@ sub problemListRow($$$) {
 	
 	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	
-	return CGI::Tr(CGI::td({-nowrap=>1}, [
+	return CGI::Tr(CGI::td({-nowrap=>1, -align=>"center"}, [
 		$interactive,
 		$attempts,
 		$remaining,
