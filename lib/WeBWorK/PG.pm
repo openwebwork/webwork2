@@ -347,12 +347,15 @@ sub defineProblemEnvir($$$$$$$) {
 	
 	# ----------------------------------------------------------------------
 	
+	my $basename = "equation-$envir{psvn}.$envir{probNum}";
+	$basename .= ".$envir{problemSeed}" if $envir{problemSeed};
+		
 	# Object for generating equation images
 	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
 		tempDir  => $courseEnv->{webworkDirs}->{tmp}, # global temp dir
 		dir	 => $envir{tempDirectory},
 		url	 => $envir{tempURL},
-		basename => "equation-$envir{psvn}.$envir{probNum}.$envir{problemSeed}",
+		basename => $basename,
 		latex	 => $envir{externalLaTeXPath},
 		dvipng   => $envir{externalDvipngPath},
 	);

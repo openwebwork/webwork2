@@ -88,12 +88,15 @@ sub add {
 	# if the string came in with delimiters, chop them off and set the mode
 	# based on whether they were \[ .. \] or \( ... \). this means that if
 	# the string has delimiters, the mode *argument* is ignored.
-	if ($string =~ s/^\\\[(.*)\\\]$/$1/) {
+	if ($string =~ s/^\\\[(.*)\\\]$/$1/s) {
 		$mode = "display";
-	} elsif ($string =~ s/^\\\((.*)\\\)$/$1/) {
+	} elsif ($string =~ s/^\\\((.*)\\\)$/$1/s) {
 		$mode = "inline";
 	}
 	# otherwise, leave the string and the mode alone.
+	
+	# assume that a bare string with no mode specified is inline
+	$mode ||= "inline";
 	
 	my $imageNum  = @$strings + 1;
 	my $imageURL  = "$url/$basename.$imageNum.png";

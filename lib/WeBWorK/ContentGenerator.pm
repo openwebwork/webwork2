@@ -371,6 +371,8 @@ EOF
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
 	
+	my @warnings = split m/\n+/, $warnings;
+	
 	return
 		CGI::h3("Software Warnings"),
 		CGI::p(<<EOF),
@@ -380,7 +382,7 @@ you are a student, contact your professor to have the problem corrected. If you
 are a professor, please consut the warning output below for more informaiton.
 EOF
 		CGI::h3("Warning messages"),
-		CGI::p(CGI::tt($warnings)),
+		CGI::ul(CGI::li(\@warnings)),
 	;
 }
 
