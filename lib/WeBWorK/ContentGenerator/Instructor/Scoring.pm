@@ -30,6 +30,7 @@ sub readCSV {
 	return @result;
 }
 
+# Write a CSV file from an array in the same format that readCSV produces
 sub writeCSV {
 	my ($self, $filename, @csv) = @_;
 	open my $fh, ">", $filename;
@@ -41,6 +42,10 @@ sub writeCSV {
 	close $fh;
 }
 
+# As soon as backwards compatability is no longer a concern and we don't expect to have
+# to use old ww1.x code to read the output anymore, I recommend switching to using
+# these routines, which are more versatile and compatable with other programs which
+# deal with CSV files.
 sub readStandardCSV {
 	my ($self, $filename) = @_;
 	my @result = ();
