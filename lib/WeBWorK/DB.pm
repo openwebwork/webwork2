@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.58 2004/10/22 23:06:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.59 2004/12/07 16:04:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1970,8 +1970,8 @@ sub checkKeyfields($) {
 			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
 				unless $value =~ m/^\d*$/;
 		} else {
-			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_])"
-				unless $value =~ m/^[\w-]*$/;
+			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_\.])"
+				unless $value =~ m/^[\w-\.]*$/;
 		}
 	}
 }
