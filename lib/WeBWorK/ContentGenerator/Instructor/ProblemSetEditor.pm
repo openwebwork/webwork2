@@ -16,6 +16,7 @@ our $rowheight = 20;  #controls the length of the popup menus.
 our $libraryName;  #library directory name
 
 use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 
 sub getSetName {
 	my ($self, $pathSetName) = @_;
@@ -36,6 +37,10 @@ sub initialize {
 	my $db = $self->{db};
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
+	my @editForUser = $r->param('editForUser');
+	# some useful booleans
+	my $forUsers = scalar(@editForUser);
+	my $forOneUser = $forUsers == 1;
 
 	if (defined($r->param('submit_set_changes'))) {
 		my $changed = 0;
@@ -50,13 +55,15 @@ sub initialize {
 			}
 		}
 		$db->putGlobalSet($setRecord) if $changed;
+		
+		
 	} 
 	elsif (defined($r->param('submit_problem_changes'))) {
 		my @problemList = $db->listGlobalProblems($setName);
 		foreach my $problem (@problemList) {
 			my $changed = 0;
 			my $problemRecord = $db->getGlobalProblem($setName, $problem);
-			foreach (qw(source_file value max_attempts)) {
+			foreach (@{PROBLEM_FIELDS()}) {
 				my $paramName = "problem_${problem}_$_";
 				if (defined($r->param($paramName))) {
 					$problemRecord->$_($r->param($paramName));
@@ -99,12 +106,27 @@ sub setRowHTML {
 }
 
 sub problemElementHTML {
-	my ($fieldName, $fieldValue, $size) = @_;
+	my ($fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
 	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
 	$attributeHash->{size} = $size if defined $size;
 	
+	my $html = CGI::input($attributeHash);
+	if (defined $override) {
+		$attributeHash->{name} = "${fieldName}_override";
+		$attributeHash->{value} = ($override ? $overrideValue : "");
+		$html = "default:".$html.CGI::br()
+			. CGI::checkbox({
+				type => "checkbox",
+				name => "override",
+				label => "",
+				value => $fieldName,
+				checked => ($override ? 1 : 0)
+			})
+			. "override:"
+			. CGI::input($attributeHash);
+	}
 	
-	return CGI::input($attributeHash);
+	return $html;
 }
 
 sub body {
@@ -115,8 +137,8 @@ sub body {
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
-	my $forUser = scalar(@editForUser);
-	my $forOneUser = $forUser == 1;
+	my $forUsers = scalar(@editForUser);
+	my $forOneUser = $forUsers == 1;
 	
 	my $userSetRecord;
 	my %overrideArgs;
@@ -153,17 +175,48 @@ sub body {
 	
 	print CGI::start_form({method=>"POST", action=>$r->uri});
 	print CGI::start_table({});
-	print CGI::Tr({}, CGI::th({}, ["Problem", "Max. Attempts", "Weight", "Source File"]));
+	print CGI::Tr({}, CGI::th({}, [
+		"Problem",
+		($forUsers ? ("Status", "Problem Seed") : ()),
+		"Source File", "Max. Attempts", "Weight",
+		($forUsers ? ("Last Answer", "Number Correct", "Number Incorrect") : ())
+	]));
 	foreach my $problem (sort {$a <=> $b} @problemList) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem);
 		my $problemID = $problemRecord->problem_id;
+		my $userProblemRecord;
+		my %problemOverrideArgs;
+		
+		if ($forOneUser) {
+			$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
+			foreach my $field (@{PROBLEM_FIELDS()}) {
+				$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
+			}
+#		} elsif ($forUsers) {
+#			foreach my $field (@{PROBLEM_FIELDS()}) {
+#				$problemOverrideArgs{$field} = ["", ""];
+#			}
+		} else {
+			foreach my $field (@{PROBLEM_FIELDS()}) {
+				$problemOverrideArgs{$field} = [undef, undef];
+			}
+		}
 		
 		print CGI::Tr({}, 
-			CGI::td({}, [
+			CGI::td({align=>"right"}, [
 				$problemID,
-				problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7"),
-				problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7"),
-				problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40")
+				($forUsers ? (
+					problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
+					problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),
+				) : ()),
+				problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
+				problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
+				problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
+				($forUsers ? (
+					problemElementHTML("problem_${problemID}_last_answer", $userProblemRecord->last_answer, "20"),
+					problemElementHTML("problem_${problemID}_num_correct", $userProblemRecord->num_correct, "7"),
+					problemElementHTML("problem_${problemID}_num_incorrect", $userProblemRecord->num_incorrect, "7")
+				) : ())
 			])
 
 		)
