@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.48 2004/09/21 20:07:48 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.49 2004/12/17 17:08:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -323,7 +323,6 @@ sub pre_header_initialize {
 			my $sourceFilePath = $self->{problemPath};
 			# strip off template directory prefix
 			$sourceFilePath =~ s|^$ce->{courseDirs}->{templates}/||;
-			warn "setting sourceFilePath to $sourceFilePath";
 			if ($action eq 'save_as') { # redirect to myself
 				my $edit_level = $r->param("edit_level") || 0;
 				$edit_level++;
@@ -537,10 +536,10 @@ sub body {
  
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
-		unless $authz->hasPermissions($r->param("user"), "modify_student_data");
+		unless $authz->hasPermissions($user, "modify_student_data");
 
 	
 	# Gathering info
