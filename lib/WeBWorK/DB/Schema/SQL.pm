@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.20 2004/08/10 23:55:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.21 2004/08/27 21:14:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,15 +80,20 @@ sub count {
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` ";
-	$stmt .= $self->makeWhereClause(@keyparts);
+	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+	
+	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` $where";
 	$self->debug("SQL-count: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my @result = $self->{driver}->dbi()->selectrow_array($stmt);
+	
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
+	$sth->execute(@where_args);
+	my ($result) = $sth->fetchrow_array;
+	
 	$self->{driver}->disconnect();
 	
-	return $result[0];
+	return $result;
 }
 
 sub list($@) {
@@ -102,13 +107,19 @@ sub list($@) {
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT $keynames FROM `$sqlTable` ";
-	$stmt .= $self->makeWhereClause(@keyparts);
+	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+	
+	my $stmt = "SELECT $keynames FROM `$sqlTable` $where";
 	$self->debug("SQL-list: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my $result = $self->{driver}->dbi()->selectall_arrayref($stmt);
+	
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
+	$sth->execute(@where_args);
+	my $result = $sth->fetchall_arrayref;
+	
 	$self->{driver}->disconnect();
+	
 	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return @$result;
 }
@@ -123,13 +134,19 @@ sub exists($@) {
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` ";
-	$stmt .= $self->makeWhereClause(@keyparts);
+	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+	
+	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` $where";
 	$self->debug("SQL-exists: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my ($result) = $self->{driver}->dbi()->selectrow_array($stmt);
+	
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
+	$sth->execute(@where_args);
+	my ($result) = $sth->fetchrow_array;
+	
 	$self->{driver}->disconnect();
+	
 	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return $result > 0;
 }
@@ -189,10 +206,14 @@ sub gets($@) {
 		croak "wrong number of keyparts for table $table (needs: @keynames)"
 			unless @keyparts == @keynames;
 		
-		my $stmt = "SELECT * FROM `$sqlTable` ";
-		$stmt .= $self->makeWhereClause(@keyparts);
+		my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+		
+		my $stmt = "SELECT * FROM `$sqlTable` $where";
 		$self->debug("SQL-gets: $stmt\n");
-		my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
+		
+		my $sth = $self->{driver}->dbi()->prepare($stmt);
+		$sth->execute(@where_args);
+		my $result = $sth->fetchrow_arrayref;
 		
 		if (defined $result) {
 			my @record = @$result;
@@ -231,14 +252,18 @@ sub getAll {
 	my @keynames = $self->sqlKeynames();
 	pop @keynames; # get rid of problem_id
 	
-	my $stmt = "SELECT * FROM `$sqlTable` ";
-	$stmt .= $self->makeWhereClause(@keyparts);
+	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+	
+	my $stmt = "SELECT * FROM `$sqlTable` $where";
 	$self->debug("SQL-getAll: $stmt\n");
 	
 	my @records;
 	
 	$self->{driver}->connect("ro");
-	my $results = $self->{driver}->dbi()->selectall_arrayref($stmt);
+	
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
+	$sth->execute(@where_args);
+	my $results = $sth->fetchall_arrayref;
 	
 	foreach my $result (@$results) {
 		if (defined $result) {
@@ -275,18 +300,19 @@ sub put($$) {
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
+	my ($where, @where_args) = $self->makeWhereClause(map { $Record->$_() } @realKeynames);
+	
 	my $stmt = "UPDATE `$sqlTable` SET";
 	while (@fieldnames) {
 		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
 	}
-	$stmt .= " ";
-	$stmt .= $self->makeWhereClause(map { $Record->$_() } @realKeynames);
+	$stmt .= " $where";
 	$self->debug("SQL-put: $stmt\n");
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->dbi()->prepare($stmt);
-	my $result = $sth->execute(@fieldvalues);
+	my $result = $sth->execute(@fieldvalues, @where_args);
 	$self->{driver}->disconnect();
 	
 	unless (defined $result) {
@@ -308,12 +334,16 @@ sub delete($@) {
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "DELETE FROM `$sqlTable` ";
-	$stmt .= $self->makeWhereClause(@keyparts);
+	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
+	
+	my $stmt = "DELETE FROM `$sqlTable` $where";
 	$self->debug("SQL-delete: $stmt\n");
 	
 	$self->{driver}->connect("rw");
-	my $result = $self->{driver}->dbi()->do($stmt);
+	
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
+	my $result = $sth->execute(@where_args);
+	
 	$self->{driver}->disconnect();
 	croak "failed to DELETE: $DBI::errstr" unless defined $result;
 	
@@ -328,21 +358,27 @@ sub makeWhereClause($@) {
 	my ($self, @keyparts) = @_;
 	
 	my @keynames = $self->sqlKeynames();
-	my $where;
+	
+	my $where = "";
+	my @used_keyparts;
+	
 	my $first = 1;
 	while (@keyparts) {
-		unless (defined $keyparts[0]) {
-			shift @keynames;
-			shift @keyparts;
-			next;
-		}
+		my $name = shift @keynames;
+		my $part = shift @keyparts;
+		
+		next unless defined $part;
+		
 		$where .= " AND" unless $first;
-		$where .= " " . (shift @keynames);
-		$where .= "='" . (shift @keyparts) . "'";
+		$where .= " $name=?";
+		push @used_keyparts, $part;
+		
 		$first = 0;
 	}
 	
-	return $where ? "WHERE$where" : "";
+	my $clause = $where ? "WHERE$where" : "";
+	
+	return ($clause, @used_keyparts);
 }
 
 sub sqlKeynames($) {
