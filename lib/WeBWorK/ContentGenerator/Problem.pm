@@ -46,12 +46,12 @@ use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 
 sub pre_header_initialize {
 	my ($self, $setName, $problemNumber) = @_;
-	my $r = $self->{r};
-	my $courseEnv = $self->{ce};
-	my $db = $self->{db};
-	my $userName = $r->param('user');
-	my $effectiveUserName = $r->param('effectiveUser');
-	
+	my $r                    = $self->{r};
+	my $courseEnv            = $self->{ce};
+	my $db                   = $self->{db};
+	my $userName             = $r->param('user');
+	my $effectiveUserName    = $r->param('effectiveUser');
+	my $key					 = $r->param('key');
 	my $user                 = $db->getUser($userName);
 	my $effectiveUser        = $db->getUser($effectiveUserName);
 
@@ -207,7 +207,7 @@ sub pre_header_initialize {
 	my $pg = WeBWorK::PG->new(
 		$courseEnv,
 		$effectiveUser,
-		$r->param('key'),
+		$key,
 		$set,
 		$problem,
 		$psvn,
