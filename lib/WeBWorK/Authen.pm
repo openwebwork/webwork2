@@ -147,7 +147,7 @@ sub verify($) {
 					last VERIFY;
 				} else {
 					# the key was invalid.
-					$error = "Your session has expired. You must login again.";
+					$error = "Your session has timed out due to inactivity. You must login again.";
 					last VERIFY;
 				}
 			}
@@ -193,7 +193,7 @@ sub verify($) {
 			} else {
 				# invalid key. the login page doesn't propogate the key,
 				# so we know this is an expired session.
-				$error = "Your session has expired. You must login again.";
+				$error = "Your session has timed out due to inactivity. You must login again.";
 				last VERIFY;
 			}
 		}
