@@ -111,7 +111,7 @@ sub index {
 		push @studentLinks, CGI::a({-href=>"${uri}student/$student/?".$self->url_authen_args},"  $student" ),;	
 	}
 	print join("",
-		CGI::start_table({-border=>2}),
+		CGI::start_table({-border=>2, -cellpadding=>20}),
 		CGI::Tr(
 			CGI::td({-valign=>'top'}, 
 				CGI::h3({-align=>'center'},'View statistics by set'),

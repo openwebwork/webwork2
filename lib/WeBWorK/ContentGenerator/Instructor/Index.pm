@@ -59,7 +59,7 @@ sub body {
 	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	return join("", 
-		CGI::start_table({-border=>2,-cellpadding=>10}),
+		CGI::start_table({-border=>2,-cellpadding=>20}),
 		CGI::Tr({-align=>'center'},
 			CGI::td(
 				CGI::a({href=>$userEditorURL}, "Edit $courseName class list")  ,
