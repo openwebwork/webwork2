@@ -122,6 +122,8 @@ sub handler() {
 			my $hardcopyArgument = shift @components;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
+		} elsif ($arg eq "instructor") {
+			return WeBWorK::ContentGenerator::Instructor->new($r, $ce, $db)->go;
 		} elsif ($arg eq "prof") {
 			return WeBWorK::ContentGenerator::Professor->new($r, $ce, $db)->go;
 		} elsif ($arg eq "options") {
