@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.84 2004/03/11 03:07:46 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.85 2004/03/15 03:18:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,6 +44,7 @@ miscellaneous utilities are provided.
 use strict;
 use warnings;
 use Apache::Constants qw(:common);
+use Carp;
 use CGI::Pretty qw(*ul *li);
 use URI::Escape;
 use WeBWorK::Template qw(template);
@@ -479,7 +480,11 @@ sub loginstatus {
 		my $userID = $r->param("user");
 		my $eUserID = $r->param("effectiveUser");
 		
-		my $stopActingURL = $self->systemLink($urlpath, effectiveUserID => $userID);
+		my $stopActingURL = $self->systemLink($urlpath, # current path
+			values => {
+				effectiveUser => $userID,
+			},
+		);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
 		
 		print "\n<!-- BEGIN " . __PACKAGE__ . "::loginstatus -->\n";
@@ -562,9 +567,9 @@ sub path {
 	
 	$path[$#path] = ""; # we don't want the last path element to be a link
 	
-	print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
+	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);
-	print "<!-- END " . __PACKAGE__ . "::path -->\n";
+	#print "<!-- END " . __PACKAGE__ . "::path -->\n";
 	
 	return "";
 }
@@ -616,9 +621,9 @@ sub title {
 	my $r = $self->r;
 	
 	
-	print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
+	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
 	print $r->urlpath->name;
-	print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	
 	return "";
 }
@@ -1048,46 +1053,57 @@ object from which the base path will be taken. %options can consist of:
 
 =over
 
+=item params
+
+A reference to a list containing names of parameters to add to the URL. The
+parameter values are taken from the current request.
+
+=item values
+
+A reference to a hash associating request parameters with replacement values. If
+parameter is given in C<params> above, the value given here will be substituted
+for that in the current request.
+
 =item authen
 
-Boolen, whether to include authentication information in the resulting URL. If
-not given, a true value is assumed.
-
-=item realUserID
-
-If C<authen> is true, the current real user ID is replaced with this value.
-
-=item sessionKey
-
-If C<authen> is true, the current session key is replaced with this value.
-
-=item effectiveUserID
-
-If C<authen> is true, the current effective user ID is replaced with this value.
+If true, authentication parameters (C<user>, C<effectiveUser>, and <key>) will
+be included in the list of C<params>. Since this is usually what you want, if
+this option is not given a true value is assumed.
 
 =back
 
 =cut
 
+# FIXME: there should probably be an option for prepending "http://hostname:port"
 sub systemLink {
 	my ($self, $urlpath, %options) = @_;
 	my $r = $self->r;
 	
-	my $authen = $options{authen} || 1;
+	my @params = ();
+	if (exists $options{params}) {
+		croak "option 'params' is not an arrayref" unless ref $options{params} eq "ARRAY";
+		@params = @{ $options{params} };
+	}
+	
+	my %values = ();
+	if (exists $options{values}) {
+		croak "option 'values' is not an hashref" unless ref $options{values} eq "HASH";
+		%values = %{ $options{values} };
+	}
+	
+	my $authen = $options{authen} || not exists $options{authen};
+	push @params, qw/user effectiveUser key/ if $authen;
+	
+	foreach my $param (@params) {
+		next if exists $values{$param};
+		$values{$param} = $r->param($param);
+	}
 	
 	my $url = $r->location . $urlpath->path;
 	
-	if ($authen) {
-		my $realUserID      = $options{realUserID}      || $r->param("user");
-		my $sessionKey      = $options{sessionKey}      || $r->param("key");
-		my $effectiveUserID = $options{effectiveUserID} || $r->param("effectiveUser");
-		
-		my @params;
-		defined $realUserID      and push @params, "user=$realUserID";
-		defined $sessionKey      and push @params, "key=$sessionKey";
-		defined $effectiveUserID and push @params, "effectiveUser=$effectiveUserID";
-		
-		$url .= "?" . join("&", @params) if @params;
+	if (keys %values) {
+		$url .= "?";
+		$url .= join("&", map { "$_=$values{$_}" } keys %values);
 	}
 	
 	return $url;
