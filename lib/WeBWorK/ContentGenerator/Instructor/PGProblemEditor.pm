@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.46 2004/07/07 18:42:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.47 2004/07/08 23:27:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -214,7 +214,8 @@ sub title {
 	my $r = $self->r;
 	my $problemNumber = $r->urlpath->arg("problemID");
 	my $file_type = $self->{'file_type'} || '';
-	return "Set Header" if($file_type eq 'set_header');
+	return "Set Header" if ($file_type eq 'set_header');
+	return "Hardcopy Header" if ($file_type eq 'hardcopy_header');
 	return "Course Information" if($file_type eq 'course_info');
 	return 'Problem ' . $r->{urlpath}->name;
 }
@@ -226,6 +227,7 @@ sub body {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $user = $r->param('user');
+	my $make_local_copy = $r->param('make_local_copy');
 
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
@@ -313,7 +315,7 @@ sub body {
 		),
 		CGI::p(
 			CGI::submit(-value=>'Refresh',-name=>'submit'),
-			CGI::submit(-value=>'Save',   -name=>'submit'),
+			$make_local_copy ? CGI::submit(-value=>'Save',-name=>'submit', -disabled=>1) : CGI::submit(-value=>'Save',-name=>'submit'),
 			CGI::submit(-value=>'Revert', -name=>'submit'),
 			CGI::submit(-value=>'Save as',-name=>'submit'),
 			CGI::textfield(-name=>'save_to_new_file', -size=>40, -value=>""),
@@ -370,7 +372,11 @@ sub saveFileChanges {
 		if (defined $problemNumber) {
 			if ($problemNumber == 0) {
 				# we are editing a header file
-				$self->{file_type} = 'set_header';
+				if ($file_type eq 'set_header' or $file_type eq 'hardcopy_header') {
+					$self->{file_type} = $file_type 
+				} else {
+					$self->{file_type} = 'set_header';
+				}
 				
 				# first try getting the merged set for the effective user
 				my $set_record = $db->getMergedSet($effectiveUserName, $setName); # checked
@@ -381,7 +387,24 @@ sub saveFileChanges {
 				# bail if no set is found
 				die "Cannot find a set record for set $setName" unless defined($set_record);
 				
-				$editFilePath .= '/' . $set_record->set_header;
+				my $header_file = "";
+				$header_file = $set_record->{$self->{file_type}};
+				if ($header_file && $header_file ne "") {
+					$editFilePath .= '/' . $header_file;
+				} else {
+					# if the set record doesn't specify the filename
+					# then the set uses the deafult from snippets
+					# so we'll load that file, but change where it will be saved
+					# to and grey out the "Save" button
+					if ($r->param('make_local_copy')) {
+						$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{setHeader} if $self->{file_type} eq 'set_header';
+						$editFilePath = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader} if $self->{file_type} eq 'hardcopy_header';
+						$self->addbadmessage("$editFilePath is the default header file and cannot be edited directly.");
+						$self->addbadmessage("Any changes you make will have to be saved as another file.");
+					}
+				}
+					
+				
 			} else {
 				# we are editing a "real" problem
 				$self->{file_type} = 'problem';
@@ -407,6 +430,16 @@ sub saveFileChanges {
 			}
 		}
 	}
+	
+	# if a set record or problem record contains an empty blank for a header or problem source_file
+	# we could find ourselves trying to edit /blah/templates/.toenail.tmp or something similar
+	# which is almost undoubtedly NOT desirable
+
+	if (-d $editFilePath) {
+		$self->{failure} = "The file $editFilePath is a directory!";
+		$self->addbadmessage("The file $editFilePath is a directory!");
+	}
+
 	
 	my $editFileSuffix = $user.'.tmp';
 	my $submit_button = $r->param('submit');
@@ -463,7 +496,7 @@ sub saveFileChanges {
 		# store this name in the $self->currentSourceFilePath for use in body 
 		
 		# try to read file
-		if(-e $inputFilePath) {
+		if(-e $inputFilePath and not -d $inputFilePath) {
 			eval { $problemContents = WeBWorK::Utils::readFile($inputFilePath) };
 			$problemContents = $@ if $@;
 		} else { # file not existing is not an error
@@ -557,7 +590,7 @@ sub saveFileChanges {
 	###########################################################
 
 	my $openTempFileErrors = $@ if $@;
-	
+
 	if ($openTempFileErrors) {
 	
 		$currentSourceFilePath =~ m|^(/.*?/)[^/]+$|;
