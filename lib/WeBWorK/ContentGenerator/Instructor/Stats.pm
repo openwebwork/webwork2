@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.34 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.35 2004/04/25 01:20:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -451,7 +451,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage of active students with no more than the indicated number of total attempts'),
+	    	CGI::p('The percentage1 of active students with no more than the indicated number of total attempts'),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
@@ -463,9 +463,11 @@ print
 
 
 	foreach my $probID (@problemIDs) {
+	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+			courseID => $courseName, setID => $setName, problemID => $probID);
 		print	CGI::Tr(
 					CGI::td( [
-						"Prob $probID",
+						CGI::a({href=>$self->systemLink($problemPage)},"Prob $probID"),
 						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets, 0),
 
 						]
@@ -483,7 +485,8 @@ print
 	}
 	print
 		CGI::p("Details"),
-	    defined($sort_method_name) ?"sort method is $sort_method_name":"",
+		"Click heading to sort table: ",
+	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
 			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
