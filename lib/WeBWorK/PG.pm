@@ -46,8 +46,6 @@ sub new($$$$$$$$) {
 	my $warnings = "";
 	if ($courseEnv->{pg}->{options}->{catchWarnings}) {
 		local $SIG{__WARN__} = sub { $warnings .= shift };
-	} else {
-		$warnings = "WeBWorK::PG: PG warnings are not being caught. Check STDERR.\n";
 	}
 	
 	# create a Translator
