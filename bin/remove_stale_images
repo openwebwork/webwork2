@@ -1,0 +1,249 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=head1 NAME
+
+remove_stale_images - remove old dvipng images
+
+=head1 SYNOPSIS
+
+ remove_stale_images ARGUMENTS
+
+=head1 DESCRIPTION
+
+Remove old dvipng images.
+
+=head1 ARGUMENTS
+
+=over
+
+Arguments are optional.
+
+  --help         prints the usage message
+  --delete       delete selected images
+  --remove       same as --delete
+  --report       just report information about image dates
+
+  --days=E       final date for images considered is E days ago
+                   E can be a decimal.  E defaults to 7 days ago
+                   for deleting, and now for reporting
+  --access-dates use last-accessed date, the default
+  --modify-dates use last-modified date (probably the creation date)
+
+  --from=D       start deleting D days ago; D can be a decimal
+                   defaulting at the beginning of time
+
+
+You can also just specify E at the end of the command line.
+
+To get a status report on all of your images, use
+
+  remove_stale_images
+
+To remove all which have not been accessed in the past 10 days, use
+
+  remove_stale_images --delete --days=10
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use File::Find;
+
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::Utils qw(runtime_use readFile);
+
+use constant ACCESSED => 8;
+use constant MODIFIED => 9;
+
+my $now = time();
+my $which = ACCESSED;
+
+##### global variables to hold information from the find
+
+my $num_removed = 0;
+my %kept = ();
+my %days=();
+my %week=();
+my $grandtotal=0;
+
+##### get command-line options #####
+
+my $start = $now; # way too big, but definitely before the beginning of the epoch
+my $end = -1;
+my $help = 0;
+my $deloption = 0;
+my $reportoption = 0;
+my $modifydate = 0;
+my $accessdate = 0;
+
+GetOptions('from=s' => \$start,
+           'days=s' => \$end,
+	   'delete|remove' => \$deloption,
+	   'report' => \$reportoption,
+	   'modify-dates' => \$modifydate,
+	   'access-dates' => \$accessdate,
+           'help' => \$help) or pod2usage(1);
+
+pod2usage(1) if $help;
+
+$reportoption = 1 if(not $deloption);
+
+if($modifydate and $accessdate) {
+  print "You cannot specify using both access dates and modify dates\n";
+  pod2usage(1);
+}
+
+## now fix up type
+my $type = $accessdate ? ACCESSED : MODIFIED;
+
+if(scalar(@ARGV)>0) {
+  if(scalar(@ARGV)>1) {
+    print "Too many arguments given\n";
+    pod2usage(1);
+  }
+  $end = $ARGV[0];
+}
+
+$end = 7 if($end == -1 and $deloption);
+
+if($start<= $end) {
+  print "The start time must be greater than the end length\n";
+  exit();
+}
+## Fix up the start and end times
+
+$start = $now - 24*60*60*$start;
+$end = $now - 24*60*60*$end;
+
+##### "wanted" function for find #####
+
+sub wanted {
+  # $File::Find::dir
+  # $_
+  # $File::Find::name
+  if(-f $File::Find::name and $File::Find::name =~ /\.png$/) {
+    my @stat = stat(_);
+
+    # Now split based on what we are supposed to do
+    if($reportoption) {
+      return() if($stat[$type]<$start or $stat[$type]>$end);
+      my $lapse = $now - $stat[$type];
+      my $val = int(($lapse)/(60*60*24));
+      $val = " ".$val if($val<10);
+      $val = " ".$val if($val<100);
+      if(defined($days{$val})) {$days{$val} += 1;} else {$days{$val} = 1;}
+      $val = int($val/7);
+      if(defined($week{$val})) {$week{$val} += 1;} else {$week{$val} = 1;}
+      $grandtotal++;
+    } else {
+      my $fullmd5 = $File::Find::name;
+      if(length($_) > (4+32)) { # this is an old style path
+	$fullmd5 = $_;
+	$fullmd5 =~ s/\.png$//;
+      } else {
+	$fullmd5 =~ s|.*/([^/]+)/([^/]+)$|$1$2|;
+	$fullmd5 =~ s/\.png$//;
+      }
+      if($stat[$type]<$start or $stat[$type]>$end) {
+	$kept{$fullmd5} = '';
+	return();
+      }
+      my $result = unlink($File::Find::name);
+      if($result) {
+        $num_removed++;
+      } else {
+        print "Tried, but could not remove $File::Find::name\n";
+	$kept{$fullmd5} = '';
+      }
+    }
+  }
+}
+
+##### reporting function #####
+
+sub count_report {
+  my $j;
+  print "Days\n";
+  for $j (sort keys(%days)) {
+    print "$j  $days{$j}\n";
+  }
+
+  print "\nWeeks\n";
+  for $j (sort keys(%week)) {
+    print " $j  $week{$j}\n";
+  }
+
+  print "\nTotal: $grandtotal\n";
+}
+
+##### main function #####
+
+
+# bring up a minimal course environment
+my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "FAKE_URL_ROOT",
+	"FAKE_PG_ROOT", 'fake_course_id');
+my $dirHead = $ce->{webworkDirs}->{equationCache};
+my $cachePath = $ce->{webworkFiles}->{equationCacheDB};
+my $tmpdir = $ce->{webworkDirs}->{tmp};
+my $tmpfile = "$tmpdir/equationcache.tmp";
+
+find({wanted => \&wanted, follow_fast => 1}, $dirHead);
+
+count_report() if($reportoption);
+exit() unless($deloption);
+exit() unless ($cachePath);
+my ($perms, $uid, $groupID) = (stat $cachePath)[2,4,5]; #Get values from current cache file
+my $cachevalues = readFile($cachePath);
+my @cachelines = split "\n", $cachevalues;
+my $ent;
+for $ent (@cachelines) {
+  chomp($ent);
+  my $entmd5 = $ent;
+  $entmd5 =~ s/^(\S+)\s+(\S+)\s+.*$/$1$2/;
+  if(defined($kept{$entmd5})) {
+    $kept{$entmd5} = $ent;
+  }
+}
+
+print "Temp file $tmpfile\n";
+print "Cache file had group $groupID and perms $perms\n";
+open(OUTF, ">$tmpfile") or die "Could not write to temp file $tmpfile";
+for $ent (keys %kept) {
+  if($kept{$ent}) {
+    print OUTF $kept{$ent}."\n";
+  } else {print "could not find $ent\n";}
+}
+close(OUTF);
+rename($tmpfile, $cachePath);
+# hopefully, either we are superuser and this works, or we are
+# the web server in which case it wasn't needed
+chmod $perms, $cachePath;
+chown $uid, $groupID, $cachePath;
+
+
+
+
+
