@@ -138,6 +138,7 @@ sub displaySets {
 	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
 	my $setRecord = $db->getGlobalSet($setName);
+	my $root = $ce->{webworkURLs}->{root};
 	my @studentList   = $db->listUsers;
 
 
@@ -167,8 +168,15 @@ sub displaySets {
 	# FIXME I'm assuming the problems are all the same
 
 	my $num_of_problems  = @problems;
-	foreach my $student (@studentList)   {
-		my $studentRecord = $db->getUser($student);
+	# get user records
+	my @userRecords  = ();
+	foreach my $currentUser ( @studentList) {
+		push (@userRecords, $db->getUser($currentUser) );
+	}
+	@userRecords = sort { lc($a->last_name) cmp lc($b->last_name ) } @userRecords;
+ 
+	foreach my $studentRecord (@userRecords)   {
+		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next if $studentRecord->status !~/C/;              # don't show dropped students FIXME
 	    my $status = 0;
@@ -221,6 +229,8 @@ sub displaySets {
 		# FIXME   we can do this more effficiently  get the list first
 		
 		my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+		my $act_as_student_url = "$root/$courseName/$setName?user=".$r->param("user").
+			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
 		my $email    = $studentRecord->email_address;
 		# FIXME  this needs formatting
 		
@@ -228,7 +238,7 @@ sub displaySets {
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
 		print CGI::Tr(
-			CGI::td($fullName, CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
+			CGI::td(CGI::a({-href=>$act_as_student_url},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
 			CGI::td($totalRight), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
