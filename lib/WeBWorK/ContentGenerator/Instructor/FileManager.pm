@@ -105,8 +105,13 @@ sub body {
   my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
   my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 
-  print CGI::start_multipart_form({id=>"FileManager",name=>"FileManager"},"POST",$fileManagerURL),
-        $self->hidden_authen_fields;
+  print CGI::start_multipart_form(
+    -method=>"POST",
+    -action=>$fileManagerURL,
+    -id=>"FileManager",
+    -name=>"FileManager"
+  );
+  print $self->hidden_authen_fields;
 
   $self->{courseRoot} = $courseRoot;
   $self->{courseName} = $courseName;
