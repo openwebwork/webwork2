@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Hardcopy;
+use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
@@ -14,12 +15,10 @@ problem sets.
 
 use strict;
 use warnings;
-use base qw(WeBWorK::ContentGenerator);
 use CGI qw();
 use File::Path qw(rmtree);
-use File::Temp qw(tempdir);
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils qw(readFile makeTempDirectory);
 
 sub go {
 	my ($self, $singleSet) = @_;
@@ -67,6 +66,9 @@ sub go {
 			my ($tempDir, $fileName) = eval { $self->generateHardcopy() };
 			if ($@) {
 				$self->{generationError} = $@;
+				
+				# FIXME: this leaves the temp dir around.
+				# perhaps: rmtree($tempdir) here?
 			} else {
 				my $filePath = "$tempDir/$fileName";
 
@@ -83,6 +85,8 @@ sub go {
 					print $buf;
 				}
 				close INPUTFILE;
+
+				rmtree($tempDir);
 
 				return;
 			}
@@ -120,7 +124,7 @@ sub body {
 		if (ref $self->{generationError} eq "ARRAY") {
 			my ($disposition, @rest) = @{$self->{generationError}};
 			if ($disposition eq "PGFAIL") {
-				print $self->multiErrorOutput(@{$self->{errors}});
+				$self->multiErrorOutput(@{$self->{errors}});
 				return "";
 			} elsif ($disposition eq "FAIL") {
 				print $self->errorOutput(@rest);
@@ -135,6 +139,12 @@ sub body {
 			die $self->{generationError};
 		}
 	}
+	if (@{$self->{warnings}}) {
+		# FIXME: this code will only be reached if there was also a
+		# generation error, because otherwise the module will send
+		# the PDF instead. DAMN!
+		$self->multiWarningOutput(@{$self->{warnings}});
+	}
 	$self->displayForm();
 }
 
@@ -143,15 +153,33 @@ sub multiErrorOutput($@) {
 	
 	print CGI::h2("Software Errors");
 	print CGI::p(<<EOF);
-WeBWorK has encountered one or more software errors while attempting to process these sets.
-It is likely that there are error(s) in the problem itself.
-If you are a student, contact your professor to have the error(s) corrected.
-If you are a professor, please consut the error output below for more informaiton.
+WeBWorK has encountered one or more software errors while attempting to process
+these problem sets. It is likely that there are errors in the problems
+themselves. If you are a student, contact your professor to have the errors
+corrected. If you are a professor, please consut the error output below for
+more informaiton.
 EOF
 	foreach my $error (@errors) {
 		print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
 		print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
 		print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
+	}
+}
+
+sub multiWarningOutput($@) {
+	my ($self, @warnings) = @_;
+	
+	print CGI::h2("Software Warnings");
+	print CGI::p(<<EOF);
+WeBWorK has encountered one or more warnings while attempting to process these
+problem sets. It is likely that this indicates errors or ambiguitiees in the
+problems themselves. If you are a student, contact your professor to have the
+problems corrected. If you are a professor, please consut the warning output
+below for more informaiton.
+EOF
+	foreach my $warning (@warnings) {
+		print CGI::h3("Set: ", $warning->{set}, ", Problem: ", $warning->{problem});
+		print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($warning->{message}));
 	}
 }
 
@@ -201,7 +229,7 @@ sub displayForm($) {
 		print CGI::h3("Sets");
 		print CGI::start_table();
 		my @sets;
-		push @sets, $db->getGlobalUserSet($self->{effectiveUser}->user_id, $_)
+		push @sets, $db->getMergedSet($self->{effectiveUser}->user_id, $_)
 			foreach ($db->listUserSets($self->{effectiveUser}->user_id));
 		@sets = sort { $a->set_id cmp $b->set_id } @sets;
 		foreach my $set (@sets) {
@@ -271,6 +299,7 @@ sub displayForm($) {
 
 sub generateHardcopy($) {
 	my $self = shift;
+	my $ce = $self->{ce};
 	my @sets = @{$self->{sets}};
 	my @users = @{$self->{users}};
 	my $multiSet = $self->{permissionLevel} > 0;
@@ -284,16 +313,8 @@ sub generateHardcopy($) {
 	}
 	
 	# determine where hardcopy is going to go
-	#my $tempDir = $self->{ce}->{courseDirs}->{html_temp} . "/hardcopy";
-	my $tempDir = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
-
-	# make sure tempDir exists
-	#unless (-e $tempDir) {
-	#	if (system "mkdir", "-p", $tempDir) {
-	#		die ["FAIL", "Failed to mkdir $tempDir", $!];
-	#	}
-	#}
-
+	my $tempDir = makeTempDirectory($ce->{webworkDirs}->{tmp}, "webwork-hardcopy");
+	
 	# determine name of PDF file  #FIXME it might be best to have the effective user in here somewhere
 	my $courseName = $self->{ce}->{courseName};
 	my $fileNameSet = (@sets > 1 ? "multiset" : $sets[0]);
@@ -322,6 +343,12 @@ sub generateHardcopy($) {
 		die ["PGFAIL"];
 	}
 	
+	# FIXME: add something like:
+	#if (@{$self->{warnings}}) {
+	#	$self->{generationWarnings} = 1;
+	#}
+	# ???????
+	
 	# "try" to generate pdf
 	eval { $self->latex2pdf($tex, $tempDir, $fileName) };
 	if ($@) {
@@ -336,12 +363,15 @@ sub generateHardcopy($) {
 sub latex2pdf {
 	# this is a little ad-hoc function which I will replace with a LaTeX
 	# module at some point (or put it in Utils).
-	my ($self, $tex, $fileBase, $fileName) = @_;
-	my $finalFile = "$fileBase/$fileName";
+	my ($self, $tex, $tempDir, $fileName) = @_;
+	my $finalFile = "$tempDir/$fileName";
 	my $ce = $self->{ce};
 	
-	# create a temporary directory for tex to shit in
-	my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
+	## create a temporary directory for tex to shit in
+	#my $wd = tempdir("webwork-hardcopy-XXXXXXXX", TMPDIR => 1);
+	# - we're using the existing temp dir. now
+	
+	my $wd = $tempDir;
 	my $texFile = "$wd/hardcopy.tex";
 	my $pdfFile = "$wd/hardcopy.pdf";
 	my $logFile = "$wd/hardcopy.log";
@@ -378,13 +408,15 @@ sub latex2pdf {
 	
 	if (-e $pdfFile) {
 		# move resulting PDF file to appropriate location
-		system "/bin/mv", $pdfFile, $finalFile and die "Failed to mv: $!\n";
+		system "/bin/mv", $pdfFile, $finalFile
+			and die "Failed to mv: $!\n";
 	}
 	
-	# remove temporary directory
-	#FIXME  rmtree is commented out only for debugging purposes.
-	#print STDERR "tex temp directory at $wd";
-	 rmtree($wd, 0, 1);
+	## remove temporary directory
+	##FIXME  rmtree is commented out only for debugging purposes.
+	##print STDERR "tex temp directory at $wd";
+	#rmtree($wd, 0, 0);
+	# - not creating the temp dir here anymore
 	
 	-e $finalFile or die "Failed to create $finalFile for no apparent reason.\n";
 }
@@ -432,7 +464,7 @@ sub getSetTeX {
 	my $setHeader = $db->getMergedSet($effectiveUserName, $setName)->set_header
 		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
-	#my $setFooter = $wwdb->getGlobalUserSet($effectiveUserName, $setName)->set_footer
+	#my $setFooter = $wwdb->getMergedSet($effectiveUserName, $setName)->set_footer
 	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
 	# so we don't allow per-set customization, which is probably okay :)
 	my $setFooter = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
