@@ -64,7 +64,7 @@ sub go {
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
 			my ($tempDir, $fileName,$errors) = eval { $self->generateHardcopy() };
-			warn "tempDir $tempDir fileName $fileName ";
+			
 			if ($@) {
 				$self->{generationError} = $@;
 				# In this case no correct pdf file was generated.
@@ -442,6 +442,8 @@ sub latex2pdf {
 			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n".CGI::br();
 			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n".CGI::br();
 			my $logFileContents = eval { readTexErrorLog($logFile) };
+			$logFileContents    .=  CGI::hr().CGI::hr();
+			$logFileContents    .= eval { formatTexFile($texFile)     };
 			if ($@) {
 				$textErrorMessage .= "Additionally, the pdflatex log file could not be read, though it exists.\n".CGI::br();
 			} else {
@@ -468,6 +470,7 @@ sub latex2pdf {
 
 # -----
 # FIXME move to Utils? probably not
+
 sub readTexErrorLog {
 	my $filePath = shift;
 	my $print_error_switch = 0;
@@ -480,7 +483,25 @@ sub readTexErrorLog {
 	    $print_error_switch = 1  if $line =~ /^!/;  # after a fatal error start printing messages
 		push(@message, protect_HTML($line)) if $print_error_switch;
     }
-    close($filePath);
+    close(LOGFILE);
+    join("<br>\n",@message);
+}
+
+sub formatTexFile {
+	my $texFilePath   = shift;
+    open (TEXFILE, "$texFilePath")
+	               or die "Can't open tex source file: path= $texFilePath: $!";
+	
+	my @message       = ();
+    push @message, '<BR>\n<h3>TeX Source File:</h3><BR>\n',     ;
+ 
+    my $lineNumber    = 1;
+    while (<TEXFILE>) {
+		push @message, protect_HTML("$lineNumber $_")."\n";
+        $lineNumber++;
+    }
+    close(TEXFILE);
+    #push @message, '</pre>';
     join("<br>\n",@message);
 }
 sub protect_HTML {
