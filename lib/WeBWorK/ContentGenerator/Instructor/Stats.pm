@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.13 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -68,12 +68,22 @@ sub path {
 	my $courseName = $ce->{courseName};
 	
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		'stats'         => "$root/$courseName/instructor/stats/",
-		( $self->{type} eq 'set')     ? ("set/".$self->{setName}  => '')        : ''   ,
-		( $self->{type} eq 'student') ? ("student/".$self->{studentName} => '') : ''   ,
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		'Instructor Tools' => "$root/$courseName/instructor",
+		'Statistics'       =>
+			($self->{type}
+				? "$root/$courseName/instructor/stats/"
+				: ""
+			),
+		($self->{type} eq 'set'
+			? ("set ".$self->{setName}  => '')
+			: ()
+		),
+		($self->{type} eq 'student'
+			? ("user ".$self->{studentName} => '')
+			: ()
+		),
 	);
 }
 

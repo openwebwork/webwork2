@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.21 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.22 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,12 +37,12 @@ sub pre_header_initialize {
 	my $effectiveUserName    = $r->param('effectiveUser');
 	my $key                  = $r->param('key');
 	my $user                 = $db->getUser($userName); #checked 
-	my $effectiveUser        = $db->getUser($effectiveUserName); #checked
-	my $permissionLevel      = $db->getPermissionLevel($userName)->permission(); #checked
 	die "user $user (real user) not found."  unless $user;
+	my $effectiveUser        = $db->getUser($effectiveUserName); #checked
 	die "effective user $effectiveUser  not found. One 'acts as' the effective user."  unless $effectiveUser;
-	die "permisson level for user $userName  not found."  unless $permissionLevel;
-	
+	my $PermissionLevelRecord      = $db->getPermissionLevel($userName); #checked
+	die "permisson level for user $userName  not found."  unless $PermissionLevelRecord;
+	my $permissionLevel = $PermissionLevelRecord->permission();
 	
 	
 	
@@ -320,15 +320,15 @@ sub path {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => '',
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		"Instructor Tools" => "",
 	);
 }
 
 sub title {
 	my $self = shift;
-	return "Instructor tools for ".$self->{ce}->{courseName};
+	return "Instructor Tools";
 }
 
 sub body {
@@ -344,21 +344,51 @@ sub body {
 	my $full_url = "$prof_url?course=$courseName&$authen_args";
 	my $userEditorURL = "users/?" . $self->url_args;
 	my $problemSetEditorURL = "sets/?" . $self->url_args;
-	my $statsURL       = "stats/?" . $self->url_args;
-	my $emailURL       = "send_mail/?" . $self->url_args;
-	################### debug code
-#     my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
-#     
-#     my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
-#     return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
-    ################### debug code
+	my $statsURL = "stats/?" . $self->url_args;
+	my $emailURL = "send_mail/?" . $self->url_args;
+	my $scoringURL = "scoring/?" . $self->url_args;
+	my $filexferURL = "files/?" . $self->url_args;
+	my $actionURL = $r->uri;
+	
 	return CGI::em('You are not authorized to access the Instructor tools.') unless $authz->hasPermissions($user, 'access_instructor_tools');
-	my $actionURL= $r->uri;
-	return join("", 
-		#defined($self->{current_action}) ? CGI::h4($self->{current_action}) :'' ,
-		#defined($self->{selected_users}) ? CGI::p($self->{selected_users}) : '',
-		#defined($self->{selected_sets}) ? CGI::p($self->{selected_sets}) : '',
-		CGI::a({href=>$full_url},"Link to WeBWorK 1.9 Instructor tools"),
+	
+	print join("",
+		CGI::start_table({-border=>2,-cellpadding=>20}),
+		CGI::Tr({-align=>'center'},
+			CGI::td(
+				CGI::a({href=>$userEditorURL}, "User List"),
+			),
+			CGI::td(
+				CGI::a({href=>$problemSetEditorURL}, "Set List"),
+					
+			),"\n",
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td([
+				CGI::a({-href=>$emailURL}, "Mail Merge"),
+				CGI::a({-href=>$scoringURL}, "Scoring"),
+			]),
+			"\n",
+		),
+		CGI::Tr({ -align=>'center'},
+			CGI::td([
+				CGI::a({-href=>$statsURL}, "Statistics"),
+				CGI::a({-href=>$emailURL}, "File Transfer"),
+			]),
+			"\n",
+		),
+		CGI::Tr({ -align=>'left'},
+			CGI::td({-colspan=>2},
+				CGI::a({-href=>$full_url}, 'WeBWorK 1.x Instructor Tools'),
+				" (" . CGI::a({-href=>$full_url, -target=>'_new'}, 'open in a new window') . ")",
+			),
+			"\n",
+		),
+		CGI::end_table(),
+	);
+	
+	print join("",
+		CGI::h2("Quick access to commonly used instructor tools"),
 		CGI::start_form(-method=>"POST", -action=>$actionURL),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::start_table({-border=>2,-cellpadding=>5}),	
@@ -427,12 +457,7 @@ sub body {
 		),
 
 		CGI::end_table(),
-		CGI::end_form(),
-# 		CGI::hr(),
-# 		CGI::p( defined($self->{studentEntryReport}) ? $self->{studentEntryReport}:''
-# 		),
-# 		
-# 		$self->addStudentForm,
+		CGI::end_form()
 	);
 }
 sub addStudentForm {

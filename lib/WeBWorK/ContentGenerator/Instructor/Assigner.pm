@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.7 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.8 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,15 +42,31 @@ sub initialize {
 	my @users = $db->listUsers;
 	my %selectedUsers = map {$_ => 1} $r->param('selected');
 	
+	my $doAssignToSelected = 0;
+	
+	# get the global user, if there is one
+	my $globalUserID = "";
+	$globalUserID = $db->{set}->{params}->{globalUserID}
+		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
+
 	if (defined $r->param('assignToAll')) {
 		$self->assignSetToAllUsers($setID);
+	} elsif (defined $r->param('unassignFromAll')) {
+		%selectedUsers = ( $globalUserID => 1 );
+		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
+		$doAssignToSelected = 1;
+	}
+	
+	if ($doAssignToSelected) {
 		my $setRecord = $db->getGlobalSet($setID); #checked
 		die "Unable to get global set record for $setID " unless $setRecord;
+		
 		foreach my $selectedUser (@users) {
 			if (exists $selectedUsers{$selectedUser}) {
 				$self->assignSetToUser($selectedUser, $setRecord)
 			} else {
+				next if $selectedUser eq $globalUserID;
 				$db->deleteUserSet($selectedUser, $setID);
 			}
 		}
@@ -75,18 +91,19 @@ sub path {
 	my $courseName = $ce->{courseName};
 	my $set_id    = $self->getSetName($components[0]);
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		'sets'          => "$root/$courseName/instructor/sets/",
-		"$set_id"   => "$root/$courseName/instructor/sets/$set_id",
-		"assign"      => ''
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		"Instructor Tools" => "$root/$courseName/instructor",
+		Sets               => "$root/$courseName/instructor/sets/",
+		$set_id            => "$root/$courseName/instructor/sets/$set_id",
+		"Assigned Users"   => ""
 	);
 }
 
 sub title {
 	my ($self, @components) = @_;
-	return "Assign problems to students - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
+	my $setID = $self->getSetName(@components);
+	return "Assigned Users for set $setID"
 }
 
 sub body {
@@ -99,10 +116,17 @@ sub body {
 	my $courseName = $ce->{courseName};
 	my $user = $r->param('user');
 	
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
-
+	return CGI::em("You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($user, "access_instructor_tools");
+	
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action=>$r->uri});
+	
+	print CGI::p(
+		CGI::submit({name=>"assignToAll", value=>"Assign to All Users"}),
+		CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
+	);
+	
 	print CGI::start_table({});
 	# get user records
 	my @userRecords  = ();
@@ -113,27 +137,36 @@ sub body {
 	}
 	@userRecords = sort { ( lc($a->section) cmp lc($b->section) ) || 
 	                     ( lc($a->last_name) cmp lc($b->last_name )) } @userRecords;
-
+	
+	# get the global user, if there is one
+	my $globalUserID = "";
+	$globalUserID = $db->{set}->{params}->{globalUserID}
+		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
+	
 	foreach my $userRecord (@userRecords) {
 		my $user = $userRecord->user_id;
 		my $userSetRecord = $db->getUserSet($user, $setID); #checked
-		die "Unable to find record for user $user and set $setID " unless $userSetRecord;
+		# don't need to check here, undefined values are handled below
+		#die "Unable to find record for user $user and set $setID " unless $userSetRecord;
 		my $prettyName = $userRecord->last_name
 			. ", "
 			. $userRecord->first_name;
 		print CGI::Tr({}, 
 			CGI::td({}, [
-				CGI::checkbox({
-					type=>"checkbox",
-					name=>"selected",
-					checked=>(
-						defined $userSetRecord
-						? "on"
-						: ""
-					),
-					value=>$user,
-					label=>"",
-				}),
+				($user eq $globalUserID
+					? "" # no checkbox for global user!
+					: CGI::checkbox({
+						type=>"checkbox",
+						name=>"selected",
+						checked=>(
+							defined $userSetRecord
+							? "on"
+							: ""
+						),
+						value=>$user,
+						label=>"",
+					})
+				),
 				$user,
 				"($prettyName)", " ", $userRecord->section, " ",
 				(
@@ -150,9 +183,6 @@ sub body {
 	print CGI::end_table();
 	print $self->hidden_authen_fields;
 	print CGI::submit({name=>"assignToSelected", value=>"Save"});
-	print CGI::br();
-	print CGI::br();
-	print CGI::submit({name=>"assignToAll", value=>"Assign to All Users"});
 	print CGI::end_form();
 	
 	return "";

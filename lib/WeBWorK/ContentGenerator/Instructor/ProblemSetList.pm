@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.35 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.36 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -142,16 +142,16 @@ sub path {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		'sets'      => ''
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		'Instructor Tools' => "$root/$courseName/instructor",
+		'Set List'         => '' # $root/$courseName/instructor/sets
 	);
 }
 
 sub title {
 	my $self = shift;
-	return "Instructor Tools - Problem Set List for ".$self->{ce}->{courseName};
+	return "Set List";
 }
 
 sub body {

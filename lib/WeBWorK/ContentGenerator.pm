@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.73 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -600,13 +600,13 @@ sub instructor_links {
 	return join("",
 		 CGI::hr(),
 		 CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") , CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
 		 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
 		 $setLink,
 		 $problemLink,
-		 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Score&nbsp;Sets"), CGI::br(),
-		 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Mail&nbsp;Merge"), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Scoring"), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, "Statistics"), CGI::br(),
 		 (defined($set))
 		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
 			: '',
