@@ -205,6 +205,13 @@ sub FieldTable {
 	}
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
+	if ($forUsers) {
+		$output .= CGI::Tr(
+			CGI::th({colspan=>"3"}, "User Value"),
+			CGI::th({}, "Global Value"),
+		);
+	}
+	
 	foreach my $field (@fieldOrder) {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		unless ($properties{type} eq "hidden") {
