@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.9 2004/05/17 16:41:07 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.10 2004/05/22 01:08:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -215,7 +215,7 @@ sub addCourse {
 		
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}->{templates};
-			my $errno = system "/bin/cp -r $sourceDir/* $destDir";
+			my $errno = system "/bin/cp -R $sourceDir/* $destDir";
 			if ($errno) {
 				warn "Failed to copy templates from course '$sourceCourse' (errno=$errno): $!\n";
 			}
