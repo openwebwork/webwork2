@@ -30,7 +30,9 @@ sub initialize {
 		foreach my $wannaDelete ($r->param('selectedSet')) {
 			$db->deleteGlobalSet($wannaDelete);
 		}
-	} elsif (defined($r->param('makeNewSet'))) {
+	} elsif (defined($r->param('scoreSelected'))) {
+		
+	}elsif (defined($r->param('makeNewSet'))) {
 		my $newSetRecord = $db->{set}->{record}->new();
 		my $newSetName = $r->param('newSetName');
 		$newSetRecord->set_id($newSetName);
@@ -149,6 +151,7 @@ sub body {
 		CGI::br(),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::submit({"name"=>"deleteSelected", "label"=>"Delete Selected"}),"\n",
+		CGI::submit({"name"=>"scoreSelected", "label"=>"Score Selected"}),"\n",
 		CGI::end_form(),"\n",
 		CGI::start_form({"method"=>"POST", "action"=>$r->uri}),"\n",
 		$self->hidden_authen_fields,"\n",
