@@ -25,7 +25,7 @@ use constant STYLE  => "hash";
 #  field to know what data its dealing with.
 ################################################################################
 
-sub list($@) {
+sub list {
 	my ($self, @keyparts) = @_;
 	my ($matchUserID) = @keyparts;
 	$self->{driver}->connect("ro");
@@ -37,7 +37,7 @@ sub list($@) {
 	return map { [$_] } @keys;
 }
 
-sub exists($$) {
+sub exists {
 	my ($self, $userID) = @_;
 	$self->{driver}->connect("ro");
 	my $result;
@@ -50,7 +50,7 @@ sub exists($$) {
 	return $result;
 }
 
-sub add($$) {
+sub add {
 	my ($self, $Record) = @_;
 	my $valueName = $self->{table};
 	$self->{driver}->connect("rw");
@@ -66,29 +66,59 @@ sub add($$) {
 	$self->{driver}->disconnect();
 }
 
-sub get($$) {
+sub get {
 	my ($self, $userID) = @_;
-	$self->{driver}->connect("ro");
-	my $value = $self->{driver}->hash()->{$userID};
-	$self->{driver}->disconnect();
-	return undef unless defined $value;
-	if ($self->{table} eq "key") {
-		# key's value contains two fields
-		my ($key, $timestamp) = $value =~ m/^(\S+)\s+(.*)$/;
-		return $self->{record}->new(
-			user_id => $userID,
-			key => $key,
-			timestamp => $timestamp,
-		);
-	} else {
-		return $self->{record}->new(
-			user_id => $userID,
-			$self->{table} => $value,
-		);
-	}
+#	$self->{driver}->connect("ro");
+#	my $value = $self->{driver}->hash()->{$userID};
+#	$self->{driver}->disconnect();
+#	return undef unless defined $value;
+#	if ($self->{table} eq "key") {
+#		# key's value contains two fields
+#		my ($key, $timestamp) = $value =~ m/^(\S+)\s+(.*)$/;
+#		return $self->{record}->new(
+#			user_id => $userID,
+#			key => $key,
+#			timestamp => $timestamp,
+#		);
+#	} else {
+#		return $self->{record}->new(
+#			user_id => $userID,
+#			$self->{table} => $value,
+#		);
+#	}
+	return $self->gets($userID);
 }
 
-sub put($$) {
+sub gets {
+	my ($self, @userIDs) = @_;
+	$self->{driver}->connect("ro");
+	my @records;
+	foreach my $userID (@userIDs) {
+		my $string = $self->{driver}->hash()->{$userID};
+		if (defined $string) {
+			if ($self->{table} eq "key") {
+				# key's value contains two fields
+				my ($key, $timestamp) = $string =~ m/^(\S+)\s+(.*)$/;
+				push @records, $self->{record}->new(
+					user_id => $userID,
+					key => $key,
+					timestamp => $timestamp,
+				);
+			} else {
+				push @records, $self->{record}->new(
+					user_id => $userID,
+					$self->{table} => $string,
+				);
+			}
+		} else {
+			push @records, undef;
+		}
+	}
+	$self->{driver}->disconnect();
+	return @records;
+}
+
+sub put {
 	my ($self, $Record) = @_;
 	my $valueName = $self->{table};
 	$self->{driver}->connect("rw");
@@ -104,7 +134,7 @@ sub put($$) {
 	$self->{driver}->disconnect();
 }
 
-sub delete($$) {
+sub delete {
 	my ($self, $userID) = @_;
 	my $valueName = $self->{table};
 	return 0 unless $self->{driver}->connect("rw");

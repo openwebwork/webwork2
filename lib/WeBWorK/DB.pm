@@ -46,7 +46,7 @@ from the adjacent layers.
 The top layer of the architecture is the DB module. It provides the methods
 listed below, and uses schema modules (via tables) to implement those methods.
 
-            / new* list* exists* add* get* put* delete* \             <- api
+         / new* list* exists* add* get* get*s put* delete* \          <- api
  +------------------------------------------------------------------+
  |                                DB                                |
  +------------------------------------------------------------------+
@@ -326,7 +326,7 @@ sub getPasswords {
 			unless defined $userIDs[$i];
 	}
 	
-	return map { $self->getPassword($_) } @userIDs;
+	return $self->{password}->gets(@userIDs);
 }
 
 =item putPassword($Password)
@@ -474,7 +474,7 @@ sub getPermissionLevels {
 			unless defined $userIDs[$i];
 	}
 	
-	return map { $self->getPermissionLevel($_) } @userIDs;
+	return $self->{permission}->gets(@userIDs);
 }
 
 =item putPermissionLevel($PermissionLevel)
@@ -618,7 +618,7 @@ sub getKeys {
 			unless defined $userIDs[$i];
 	}
 	
-	return map { $self->getKey($_) } @userIDs;
+	return $self->{key}->gets(@userIDs);
 }
 
 =item putKey($Key)
@@ -688,7 +688,7 @@ Returns a list of user IDs representing the records in the user table.
 
 =cut
 
-sub listUsers($) {
+sub listUsers {
 	my ($self) = @_;
 	
 	croak "listUsers: requires 0 arguments"
@@ -706,7 +706,7 @@ is thrown.
 
 =cut
 
-sub addUser($$) {
+sub addUser {
 	my ($self, $User) = @_;
 	
 	croak "addUser: requires 1 argument"
@@ -729,7 +729,7 @@ will be returned.
 
 =cut
 
-sub getUser($$) {
+sub getUser {
 	my ($self, $userID) = @_;
 	
 	croak "getUser: requires 1 argument"
@@ -758,7 +758,7 @@ sub getUsers {
 			unless defined $userIDs[$i];
 	}
 	
-	return map { $self->getUser($_) } @userIDs;
+	return $self->{user}->gets(@userIDs);
 }
 
 =item putUser($User)
@@ -769,7 +769,7 @@ matching user record does not exist, an exception is thrown.
 
 =cut
 
-sub putUser($$) {
+sub putUser {
 	my ($self, $User) = @_;
 	
 	croak "putUser: requires 1 argument"
@@ -794,7 +794,7 @@ records, and all user set records for that user.
 
 =cut
 
-sub deleteUser($$) {
+sub deleteUser {
 	my ($self, $userID) = @_;
 	
 	croak "deleteUser: requires 1 argument"
@@ -874,7 +874,7 @@ sub getGlobalSets {
 			unless defined $setIDs[$i];
 	}
 	
-	return map { $self->getGlobalSet($_) } @setIDs;
+	return $self->{set}->gets(@setIDs);
 }
 
 sub putGlobalSet($$) {
@@ -997,7 +997,7 @@ sub getUserSets {
 			       and defined $userSetIDs[$i]->[1];
 	}
 	
-	return map { $self->getUserSet(@{$_}) } @userSetIDs;
+	return $self->{set_user}->gets(@userSetIDs);
 }
 
 sub putUserSet($$) {
@@ -1109,7 +1109,7 @@ sub getGlobalProblems {
 			       and defined $problemIDs[$i]->[1];
 	}
 	
-	return map { $self->getGlobalProblem(@{$_}) } @problemIDs;
+	return $self->{problem}->gets(@problemIDs);
 }
 
 sub putGlobalProblem($$) {
@@ -1241,7 +1241,7 @@ sub getUserProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
-	return map { $self->getUserProblem(@{$_}) } @userProblemIDs;
+	return $self->{problem_user}->get(@userProblemIDs);
 }
 
 sub putUserProblem($$) {
@@ -1317,18 +1317,14 @@ sub getMergedSet {
 	return $UserSet;
 }
 
-
 =item geMegedSets(@userSetIDs)
-
 
 Return a list of merged set records associated with the user IDs given. If there
 is no record associated with a given user ID, that element of the list will be
 undefined. @userSetIDs consists of references to arrays in which the first
 element is the user_id and the second element is the set_id.
 
-
 =cut
-
 
 sub getMergedSets {
 	my ($self, @userSetIDs) = @_;

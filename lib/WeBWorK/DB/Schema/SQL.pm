@@ -113,31 +113,68 @@ sub add($$) {
 
 sub get($@) {
 	my ($self, @keyparts) = @_;
+#	
+#	my $table = $self->{table};
+#	my @keynames = $self->sqlKeynames();
+#	
+#	croak "wrong number of keyparts for table $table (needs: @keynames)"
+#		unless @keyparts == @keynames;
+#	
+#	my $stmt = "SELECT * FROM $table ";
+#	$stmt .= $self->makeWhereClause(@keyparts);
+#	$self->debug("SQL-get: $stmt\n");
+#	
+#	$self->{driver}->connect("ro");
+#	my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
+#	$self->{driver}->disconnect();
+#	# $result comes back undefined if there are no matches. hmm...
+#	return undef unless defined $result;
+#	
+#	my @record = @$result;
+#	my $Record = $self->{record}->new();
+#	my @realFieldnames = $self->{record}->FIELDS();
+#	foreach (@realFieldnames) {
+#		$Record->$_(shift @record);
+#	}
+#	
+#	return $Record;
+	return $self->gets(\@keyparts);
+}
+
+sub gets($@) {
+	my ($self, @keypartsRefList) = @_;
 	
 	my $table = $self->{table};
 	my @keynames = $self->sqlKeynames();
 	
-	croak "wrong number of keyparts for table $table (needs: @keynames)"
-		unless @keyparts == @keynames;
-	
-	my $stmt = "SELECT * FROM $table ";
-	$stmt .= $self->makeWhereClause(@keyparts);
-	$self->debug("SQL-get: $stmt\n");
-	
+	my @records;
 	$self->{driver}->connect("ro");
-	my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
-	$self->{driver}->disconnect();
-	# $result comes back undefined if there are no matches. hmm...
-	return undef unless defined $result;
-	
-	my @record = @$result;
-	my $Record = $self->{record}->new();
-	my @realFieldnames = $self->{record}->FIELDS();
-	foreach (@realFieldnames) {
-		$Record->$_(shift @record);
+	foreach my $keypartsRef (@keypartsRefList) {
+		my @keyparts = @$keypartsRef;
+		
+		croak "wrong number of keyparts for table $table (needs: @keynames)"
+			unless @keyparts == @keynames;
+		
+		my $stmt = "SELECT * FROM $table ";
+		$stmt .= $self->makeWhereClause(@keyparts);
+		$self->debug("SQL-get: $stmt\n");
+		my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
+		
+		if (defined $result) {
+			my @record = @$result;
+			my $Record = $self->{record}->new();
+			my @realFieldnames = $self->{record}->FIELDS();
+			foreach (@realFieldnames) {
+				$Record->$_(shift @record);
+			}
+			push @records, $Record;
+		} else {
+			push @records, undef;
+		}
 	}
+	$self->{driver}->disconnect();
 	
-	return $Record;
+	return @records;
 }
 
 sub put($$) {

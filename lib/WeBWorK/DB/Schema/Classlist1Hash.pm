@@ -24,7 +24,7 @@ use constant STYLE  => "hash";
 # table access functions
 ################################################################################
 
-sub list($) {
+sub list {
 	my ($self, @keyparts) = @_;
 	my ($matchUserID) = @keyparts;
 	$self->{driver}->connect("ro");
@@ -36,7 +36,7 @@ sub list($) {
 	return map { [$_] } @keys;
 }
 
-sub exists($$) {
+sub exists {
 	my ($self, $userID) = @_;
 	$self->{driver}->connect("ro");
 	my $result;
@@ -49,7 +49,7 @@ sub exists($$) {
 	return $result;
 }
 
-sub add($$) {
+sub add {
 	my ($self, $User) = @_;
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
@@ -58,18 +58,37 @@ sub add($$) {
 	$self->{driver}->disconnect();
 }
 
-sub get($$) {
+sub get {
 	my ($self, $userID) = @_;
-	$self->{driver}->connect("ro");
-	my $string = $self->{driver}->hash()->{$userID};
-	$self->{driver}->disconnect();
-	return undef unless defined $string;
-	my $record = hash2record($self->{record}, string2hash($string));
-	$record->user_id($userID);
-	return $record;
+#	$self->{driver}->connect("ro");
+#	my $string = $self->{driver}->hash()->{$userID};
+#	$self->{driver}->disconnect();
+#	return undef unless defined $string;
+#	my $record = hash2record($self->{record}, string2hash($string));
+#	$record->user_id($userID);
+#	return $record;
+	return $self->gets($userID);
 }
 
-sub put($$) {
+sub gets {
+	my ($self, @userIDs) = @_;
+	$self->{driver}->connect("ro");
+	my @records;
+	foreach my $userID (@userIDs) {
+		my $string = $self->{driver}->hash()->{$userID};
+		if (defined $string) {
+			my $record = hash2record($self->{record}, string2hash($string));
+			$record->user_id($userID);
+			push @records, $record;
+		} else {
+			push @records, undef;
+		}
+	}
+	$self->{driver}->disconnect();
+	return @records;
+}
+
+sub put {
 	my ($self, $User) = @_;
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
@@ -78,7 +97,7 @@ sub put($$) {
 	$self->{driver}->disconnect();
 }
 
-sub delete($$) {
+sub delete {
 	my ($self, $userID) = @_;
 	return 0 unless $self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();

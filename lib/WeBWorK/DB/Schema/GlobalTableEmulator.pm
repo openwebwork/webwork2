@@ -105,13 +105,46 @@ sub add($$) {
 
 sub get($@) {
 	my ($self, @keyparts) = @_;
+#	
+#	my $db = $self->{db};
+#	my $table = $self->{table};
+#	my $userSchema = $db->{"${table}_user"};
+#	my $globalUserID = $self->{params}->{globalUserID};
+#	
+#	my $UserRecord = $userSchema->get($globalUserID, @keyparts);
+#	return unless $UserRecord; # maybe it didn't exist?
+#	return user2global($self->{record}, $UserRecord);
+	return $self->gets(\@keyparts);
+}
+
+sub gets($@) {
+	my ($self, @keypartsRefList) = @_;
+	
+	my $db = $self->{db};
+	my $table = $self->{table};
+	my $userSchema = $db->{"${table}_user"};
+	
+	$userSchema->{driver}->connect("ro");
+	my @records;
+	foreach my $keypartsRef (@keypartsRefList) {
+		my @keyparts = @$keypartsRef;
+		push @records, $self->get1(@keyparts);
+	}
+	$userSchema->{driver}->disconnect;
+	
+	return @records;
+}
+
+# helper used by gets
+sub get1($@) {
+	my ($self, @keyparts) = @_;
 	
 	my $db = $self->{db};
 	my $table = $self->{table};
 	my $userSchema = $db->{"${table}_user"};
 	my $globalUserID = $self->{params}->{globalUserID};
 	
-	my $UserRecord = $userSchema->get($globalUserID, @keyparts);
+	my $UserRecord = $userSchema->get1($globalUserID, @keyparts);
 	return unless $UserRecord; # maybe it didn't exist?
 	return user2global($self->{record}, $UserRecord);
 }

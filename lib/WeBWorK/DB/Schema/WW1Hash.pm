@@ -202,50 +202,85 @@ sub add($$) {
 
 sub get($@) {
 	my ($self, @keyparts) = @_;
+# 	
+# 	my ($userID, $setID) = @keyparts[0 .. 1];
+# 	# FIXME: move these checks up to DB
+# 	die "userID not specified." unless defined $userID;
+# 	die "setID not specified." unless defined $setID;
+# 	
+# 	return unless $self->{driver}->connect("ro");
+# 	
+# 	my $PSVN = $self->getPSVN($userID, $setID);
+# 	
+# 	unless (defined $PSVN) {
+# 		$self->{driver}->disconnect();
+# 		return;
+# 	}
+# 	my $string = $self->fetchString($PSVN);
+# 	$self->{driver}->disconnect();
+# 	
+# 	if ($self->{table} eq "set_user") {
+# 		my $UserSet = $self->string2set($string);
+# 		$UserSet->psvn($PSVN);
+# 		return $UserSet;
+# 	} elsif ($self->{table} eq "problem_user") {
+# 		my ($problemID) = $keyparts[2];
+# 		die "problemID not specified." unless defined $problemID;
+# 		#my (undef, @UserProblems) = $self->string2records($string);
+# 		# grep returns the number of matches in scalar context, so we have
+# 		# to put it in list context, and pluck out the first (and only)
+# 		# match, so that we can be called in scalar context.
+# 		#my ($UserProblem) = grep { $_->problem_id() eq $problemID } @UserProblems;
+# 		my $UserProblem = $self->string2problem($string, $problemID);
+# 		return $UserProblem;
+# 	}
+	return $self->gets(\@keyparts);
+}
+
+sub gets($@) {
+	my ($self, @keypartsRefList) = @_;
+	
+	my @records;
+	$self->{driver}->connect("ro");
+	foreach my $keypartsRef (@keypartsRefList) {
+		my @keyparts = @$keypartsRef;
+		push @records, $self->get1(@keyparts);
+	}
+	$self->{driver}->disconnect();
+	
+	return @records;
+}
+
+# helper used by gets
+# assumes that the database is already connected
+sub get1($@) {
+	my ($self, @keyparts) = @_;
 	
 	my ($userID, $setID) = @keyparts[0 .. 1];
 	# FIXME: move these checks up to DB
 	die "userID not specified." unless defined $userID;
 	die "setID not specified." unless defined $setID;
 	
-	#my $timer = WeBWorK::Timing->new("WW1Hash-get");
-	#$timer->start;
-	
-	return unless $self->{driver}->connect("ro");
-	
-	#$timer->continue("connected");
-	
 	my $PSVN = $self->getPSVN($userID, $setID);
 	
-	#$timer->continue("got PSVN for $userID $setID");
-	
 	unless (defined $PSVN) {
-		$self->{driver}->disconnect();
 		return;
 	}
 	my $string = $self->fetchString($PSVN);
-	#$timer->continue("got string for $PSVN");
-	$self->{driver}->disconnect();
-	#$timer->continue("disconnected");
 	
 	if ($self->{table} eq "set_user") {
 		my $UserSet = $self->string2set($string);
-		#$timer->continue("converted string to UserSet");
 		$UserSet->psvn($PSVN);
-		#$timer->continue("set PSVN field to $PSVN");
 		return $UserSet;
 	} elsif ($self->{table} eq "problem_user") {
 		my ($problemID) = $keyparts[2];
 		die "problemID not specified." unless defined $problemID;
 		#my (undef, @UserProblems) = $self->string2records($string);
-		#$timer->continue("converted string to UserProblems");
 		# grep returns the number of matches in scalar context, so we have
 		# to put it in list context, and pluck out the first (and only)
 		# match, so that we can be called in scalar context.
 		#my ($UserProblem) = grep { $_->problem_id() eq $problemID } @UserProblems;
-		#$timer->continue("grep'd for problem id $problemID");
 		my $UserProblem = $self->string2problem($string, $problemID);
-		#$timer->continue("converted string to ONE UserProblem");
 		return $UserProblem;
 	}
 }
