@@ -29,7 +29,6 @@ use warnings;
 use Carp;
 use WeBWorK::DB::Utils qw(hash2string string2hash);
 use WeBWorK::Timing;
-use WeBWorK::Utils qw(undefstr);
 
 use constant TABLES => qw(set_user problem_user);
 use constant STYLE  => "hash";
