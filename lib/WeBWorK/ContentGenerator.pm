@@ -518,32 +518,49 @@ sub instructor_links {
 
 	
 	#  Add direct links to sets e.g.  3:4 for set3 problem 4
-	my $setURL     = (defined($set)) ? "$root/$courseName/instructor/sets/$set/?" .
-	                   $self->url_authen_args()   : '';
-	my $probURL    = (defined($set) && defined($prob)) ? "$root/$courseName/instructor/pgProblemEditor/$set/$prob?" .
-	                   $self->url_authen_args()   : '';
-	my $setProb    = ($setURL) ? CGI::a({-href=>$setURL},$set ) : '';
+	my $setURL = (defined $set)
+		? "$root/$courseName/instructor/sets/$set/?" . $self->url_authen_args()
+		: '';
+	my $probURL = (defined $set && defined $prob)
+		? "$root/$courseName/instructor/pgProblemEditor/$set/$prob?" . $self->url_authen_args()
+		: '';
 	
-	$setProb      .= ':'.CGI::a({-href=>$probURL},$prob)  if $setProb && $probURL;     
-	join("",
-				 CGI::hr(),
-				 CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Edit&nbsp;Sets") ,':', $setProb, CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "Edit&nbsp;Class") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Score&nbsp;Sets") , CGI::br(),
-			  	 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'),CGI::br(),
-			  	 (defined($set)) ?
-			  	 	'&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "set:$set").CGI::br() 
-			  	 	: '',
-			  	 (defined($userName)) ?
-			  	 	'&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
-			  	 	: '',
-			  	  
-			  	 
-	)
-
+	my ($setLink, $problemLink) = ("", "");
+	if ($setURL) {
+		$setLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
+			. CGI::a({-href=>$setURL}, "Set&nbsp;$set")
+			. CGI::br();
+		if ($probURL) {
+			$problemLink = "&nbsp;&nbsp;&nbsp;&nbsp;"
+				. CGI::a({-href=>$probURL}, "Problem&nbsp;$prob")
+				. CGI::br();
+		}
+	}
+	
+	#my $setProb = ($setURL)
+	#	? CGI::a({-href=>$setURL}, $set)
+	#	: '';
+	#$setProb .= ':' . CGI::a({-href=>$probURL},$prob) if $setProb && $probURL;
+	
+	return join("",
+		 CGI::hr(),
+		 CGI::a({-href=>$instructor}, "Instructor&nbsp;Tools") , CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List"), CGI::br(),
+		 $setLink,
+		 $problemLink,
+		 '&nbsp;&nbsp;',CGI::a({-href=>$users}, "User&nbsp;List"), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$email}, "Send&nbsp;Email"), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$scoring}, "Score&nbsp;Sets"), CGI::br(),
+		 '&nbsp;&nbsp;',CGI::a({-href=>$stats}, 'Statistics'), CGI::br(),
+		 (defined($set))
+		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/set/$set/?".$self->url_authen_args}, "$set").CGI::br() 
+			: '',
+		 (defined($userName))
+		 	? '&nbsp;&nbsp;&nbsp;&nbsp;'.CGI::a({-href=>"$statsRoot/student/$userName/?".$self->url_authen_args}, "$userName").CGI::br()
+			: '',
+	);
 }
+
 # &if_can will return 1 if the current object->can("do $_[1]")
 sub if_can ($$) {
 	my ($self, $arg) = (@_);
