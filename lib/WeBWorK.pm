@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.68 2004/11/02 20:47:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.69 2004/11/19 19:13:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,7 +224,7 @@ sub dispatch($) {
 		}
 		
 		debug("Create an authz object (Authen needs it to check login permission)...\n");
-		$authz = new WeBWorK::Authz($r, $ce, $db);
+		$authz = new WeBWorK::Authz($r);
 		debug("(here's the authz object: $authz)\n");
 		$r->authz($authz);
 		
@@ -234,6 +234,9 @@ sub dispatch($) {
 		if ($authenOK) {
 			my $userID = $r->param("user");
 			debug("Hi, $userID, glad you made it.\n");
+			
+			# tell authorizer to cache this user's permission level
+			$authz->setCachedUser($userID);
 			
 			debug("Now we deal with the effective user:\n");
 			my $eUserID = $r->param("effectiveUser") || $userID;
