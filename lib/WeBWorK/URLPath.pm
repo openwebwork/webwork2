@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.17 2004/09/29 16:49:30 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.18 2004/10/10 20:53:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_set_maker                /$courseID/instructor/setmaker/
  
+ instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
@@ -208,7 +209,7 @@ our %pathTypes = (
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
-			instructor_set_assigner instructor_file_transfer
+			instructor_set_assigner instructor_file_transfer instructor_file_manager
 			instructor_problem_editor instructor_set_maker
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
@@ -326,6 +327,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'pgProblemEditor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
+	},
+	instructor_file_manager => {
+		name    => 'File Manager',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^file_manager/|,
+		capture => [ qw// ],
+		produce => 'file_manager/',
+		display => 'WeBWorK::ContentGenerator::Instructor::FileManager',
 	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
