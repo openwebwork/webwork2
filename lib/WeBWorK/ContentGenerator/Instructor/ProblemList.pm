@@ -25,9 +25,13 @@ sub problemElementHTML {
 	my ($fieldName, $fieldValue, $size, $override, $overrideValue) = @_;
 	my $attributeHash = {type=>"text",name=>$fieldName,value=>$fieldValue};
 	$attributeHash->{size} = $size if defined $size;
+	my $html;
+#	my $html = CGI::input($attributeHash);
 	
-	my $html = CGI::input($attributeHash);
-	if (defined $override) {
+	unless (defined $override) {
+		$html = CGI::input($attributeHash);
+	} else {
+		$html = $fieldValue;
 		$attributeHash->{name} = "${fieldName}.override";
 		$attributeHash->{value} = ($override ? $overrideValue : "");
 		$html = "default:".CGI::br().$html.CGI::br()
