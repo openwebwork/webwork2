@@ -10,6 +10,8 @@
 #	PerlHandler Apache::WeBWorK
 # </Location>
 
+# In addition, you will have to edit init.pl in what should be obvious ways.
+
 package Apache::WeBWorK;
 
 use strict;
@@ -23,7 +25,8 @@ use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::Problem;
 
-# registering discontent: wanted to call this dispatch, but mod_perl gave me lip
+# Sets up the common environment needed for every subsystem and then dispatches
+# the page request to the appropriate content generator.
 sub handler() {
 	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data ,and sift through it for the key.  So use Apache::Request
 
