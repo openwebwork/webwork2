@@ -90,14 +90,24 @@ sub body {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $feedbackURL = "$root/$courseName/feedback/";
+	
+	
+	#print feedback form
 	print
-		CGI::startform("POST", $feedbackURL),
-		$self->hidden_authen_fields,
-		CGI::hidden("module", __PACKAGE__),
-		CGI::p({-align=>"right"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
+		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+		$self->hidden_authen_fields,"\n",
+		CGI::hidden("module",             __PACKAGE__),"\n",
+		CGI::hidden("set",                ''),"\n",
+		CGI::hidden("problem",            ''),"\n",
+		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+		CGI::hidden("showOldAnswers",     ''),"\n",
+		CGI::hidden("showCorrectAnswers", ''),"\n",
+		CGI::hidden("showHints",          ''),"\n",
+		CGI::hidden("showSolutions",      ''),"\n",
+		CGI::p({-align=>"left"},
+			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 		),
-		CGI::endform();
+		CGI::endform(),"\n";
 	
 	return "";
 }
