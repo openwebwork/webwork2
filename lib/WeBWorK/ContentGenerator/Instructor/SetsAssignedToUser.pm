@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.10 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.11 2004/05/04 14:44:58 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -124,10 +124,10 @@ sub body {
 	my @setIDs = $db->listGlobalSets;
 	my @Sets = $db->getGlobalSets(@setIDs);
 	
-	# sort first by open date and then by name (this should be replaced with a
+	# sort first by due date and then by name (this should be replaced with a
 	# call to a standard sorting routine!)
 	@Sets = sort {
-		$a->open_date <=> $b->open_date
+		$a->due_date <=> $b->due_date
 		|| lc($a->set_id) cmp lc($b->set_id)
 	} @Sets;
 	
