@@ -53,9 +53,11 @@ sub body {
 	@selected = (1);
 	my $string = '';
 	foreach my $setID (@selected) {
-		$string .= join("", "there", $setID,CGI::br(), '<pre>', $self->scoreSet($setID,'totals'), '</pre>');
+		$WeBWorK::timer->continue("Begin scoring set $setID ") if defined($WeBWorK::timer);
+		$string .= join("",  $setID,CGI::br(), '<pre>', $self->scoreSet($setID,'totals'), '</pre>');
+		$WeBWorK::timer->continue("End scoring set $setID ") if defined($WeBWorK::timer);
 	}
-	return "hi", $string;
+	return $string;
 }
 
 
