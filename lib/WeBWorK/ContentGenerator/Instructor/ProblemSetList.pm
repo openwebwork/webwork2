@@ -85,12 +85,12 @@ use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
 use constant HIDE_SETS_THRESHOLD => 50;
 use constant DEFAULT_PUBLISHED_STATE => 1;
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+use constant EDIT_FORMS => [qw(cancelEdit saveEdit duplicate)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header hardcopy_header) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header hardcopy_header) ];
+use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -134,12 +134,12 @@ use constant  FIELD_PROPERTIES => {
 	set_header => {
 		type => "filelist",
 		size => 10,
-		access => "readwrite",
+		access => "readonly",
 	},
 	hardcopy_header => {
 		type => "filelist",
 		size => 10,
-		access => "readwrite",
+		access => "readonly",
 	},
 	open_date => {
 		type => "text",
@@ -881,7 +881,19 @@ sub create_form {
 			-value => $actionParams{"action.create.name"}->[0] || "",
 			-width => "50",
 			-onchange => $onChange,
+		),
+		" as ",
+		CGI::popup_menu(
+			-name => "action.create.type",
+			-values => [qw(empty copy)],
+			-default => $actionParams{"action.create.type"}->[0] || "empty",
+			-labels => {
+				empty => "a new empty set.",
+				copy => "a duplicate of the first selected set.",
+			},
+			-onchange => $onChange,
 		);
+			
 }
 
 sub create_handler {
@@ -891,20 +903,39 @@ sub create_handler {
 	my $db     = $r->db;
 	
 	my $newSetRecord = $db->newGlobalSet;
-	my $newSetName = $actionParams->{"action.create.name"}->[0];
-	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetName =~ /\S/;
-	$newSetRecord->set_id($newSetName);
-	$newSetRecord->set_header("");
-	$newSetRecord->hardcopy_header("");
-	$newSetRecord->open_date("0");
-	$newSetRecord->due_date("0");
-	$newSetRecord->answer_date("0");
-	$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
-	eval {$db->addGlobalSet($newSetRecord)};
+	my $oldSetID = $self->{selectedSetIDs}->[0];
+	my $newSetID = $actionParams->{"action.create.name"}->[0];
+	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetID =~ /\S/;
+	
+	my $type = $actionParams->{"action.create.type"}->[0];
+	if ($type eq "empty") {
+		$newSetRecord->set_id($newSetID);
+		$newSetRecord->set_header("");
+		$newSetRecord->hardcopy_header("");
+		$newSetRecord->open_date("0");
+		$newSetRecord->due_date("0");
+		$newSetRecord->answer_date("0");
+		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
+		eval {$db->addGlobalSet($newSetRecord)};
+	} elsif ($type eq "copy") {
+		return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;
+		$newSetRecord = $db->getGlobalSet($oldSetID);
+		$newSetRecord->set_id($newSetID);
+		eval {$db->addGlobalSet($newSetID)};
+
+		# take all the problems from the old set and make them part of the new set
+		foreach ($db->getAllGlobalProblems($oldSetID)) { 
+			$_->set_id($newSetID); 
+			$db->addGlobalProblem($_);
+		}
+	}
+
+	push @{ $self->{visibleSetIDs} }, $newSetID;
+	push @{ $self->{allSetIds} }, $newSetID;
 	
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: $@") if $@;
 	
-	return "Successfully created new set $newSetName";
+	return "Successfully created new set $newSetID";
 	
 }
 
@@ -989,7 +1020,8 @@ sub import_handler {
 	my $numSkipped = @$skipped;
 
 	return 	$numAdded . " set" . ($numAdded == 1 ? "" : "s") . " added, "
-		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped.";
+		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped"
+		. " (" . join (", ", @$skipped) . ") ";
 }
 
 sub export_form {
@@ -1171,6 +1203,49 @@ sub saveEdit_handler {
 	$self->{editMode} = 0;
 	
 	return "changes saved";
+}
+
+sub duplicate_form {
+	my ($self, $onChange, %actionParams) = @_;
+	
+	return join ("", 
+		"Duplicate this set and name it: ", 
+		CGI::textfield(
+			-name => "action.duplicate.name",
+			-value => $actionParams{"action.duplicate.name"}->[0] || "",
+			-width => "50",
+			-onchange => $onChange,
+		),
+	);
+}
+
+sub duplicate_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $r = $self->r;
+	my $db = $r->db;
+	
+	my $oldSetID = $self->{selectedSetIDs}->[0];
+	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;	
+	my $newSetID = $actionParams->{"action.duplicate.name"}->[0];
+	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set name specified!") unless $newSetID =~ /\S/;		
+	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: set $newSetID already exists!") if defined $db->getGlobalSet($newSetID);
+
+	my $newSet = $db->getGlobalSet($oldSetID);
+	$newSet->set_id($newSetID);
+	eval {$db->addGlobalSet($newSet)};
+	
+	# take all the problems from the old set and make them part of the new set
+	foreach ($db->getAllGlobalProblems($oldSetID)) { 
+		$_->set_id($newSetID); 
+		$db->addGlobalProblem($_);
+	}
+	
+	push @{ $self->{visibleSetIDs} }, $newSetID;
+
+	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: $@") if $@;
+	
+	return "SUCCESS";
 }
 
 ################################################################################
@@ -1444,6 +1519,7 @@ SET:	foreach my $set (keys %filenames) {
 		my $dueDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 		my $setHeader    = $setRecord->set_header;
+		my $paperHeader  = $setRecord->hardcopy_header;
 		my @problemList = $db->listGlobalProblems($set);
 
 		my $problemList  = '';
@@ -1464,7 +1540,7 @@ SET:	foreach my $set (keys %filenames) {
 openDate          = $openDate
 dueDate           = $dueDate
 answerDate        = $answerDate
-paperHeaderFile   = $setHeader
+paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader
 problemList       = 
 
@@ -1587,7 +1663,7 @@ sub recordEditHTML {
 	my $problems = $db->listGlobalProblems($Set->set_id);
 	
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
-	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_problem_list', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
         my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
@@ -1757,3 +1833,8 @@ sub printTableHTML {
 
 1;
 
+=head1 AUTHOR
+
+Written by Robert Van Dam, toenail (at) cif.rochester.edu
+
+=cut
