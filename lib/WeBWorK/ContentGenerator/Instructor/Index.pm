@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.33 2004/05/11 16:27:20 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.34 2004/05/23 23:37:40 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -227,7 +227,7 @@ sub body {
 			if ($student->section() eq $sec){$keep = 1;}
 		}
 		foreach my $rec (@viewable_recitations){
-			if ($student->section() eq $rec){$keep = 1;}
+			if ($student->recitation() eq $rec){$keep = 1;}
 		}
 		if ($keep) {push @myUsers, $student;}
 	}
