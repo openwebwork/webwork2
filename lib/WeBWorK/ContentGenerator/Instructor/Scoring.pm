@@ -24,20 +24,31 @@ sub initialize {
 	my $ce = $self->{ce};
 	
 	my $scoringDir = $ce->{courseDirs}->{scoring};
+	my $courseName = $ce->{courseName};
 	if (defined $r->param('scoreSelected')) {
 		my @selected = $r->param('selectedSet');
+		my @totals = ();
 		foreach my $setID (@selected) {
-			my @scoringData = $self->scoreSet($setID);
-			$self->writeCSV("$scoringDir/s${setID}scr.csv", @scoringData);
+			my @everything = $self->scoreSet($setID, "everything");
+			my @normal = $self->everything2normal(@everything);
+			my @full = $self->everything2full(@everything);
+			my @info = $self->everything2info(@everything);
+			my @totalsColumn = $self->everything2totals(@everything);
+			@totals = @info unless @totals;
+			$self->appendColumns(\@totals, \@totalsColumn);
+			$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
+			$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);
 		}
+		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
 	}
 }
 
 # If, some day, it becomes possible to assign a different number of problems to each student, this code
 # will have to be rewritten some.
-# $format can be any of "normal", "full", "info", or "totals".  An undefined value defaults to "normal"
+# $format can be any of "normal", "full", "everything", "info", or "totals".  An undefined value defaults to "normal"
 #   normal: student info, the status of each problem in the set, and a "totals" column
 #   full: student info, the status of each problem, and the number of correct and incorrect attempts
+#   everything: "full" plus a totals column
 #   info: student info columns only
 #   totals: total column only
 sub scoreSet {
@@ -46,8 +57,8 @@ sub scoreSet {
 	my @scoringData;
 	
 	$format = "normal" unless defined $format;
-	$format = "normal" unless $format eq "full" or $format eq "totals" or $format eq "info";
-	my $columnsPerProblem = $format eq "full" ? 3 : 1;
+	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
+	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 	my $setRecord = $db->getGlobalSet($setID);
 	my %users;
 	foreach my $userID ($db->listSetUsers($setID)) {
@@ -108,7 +119,7 @@ sub scoreSet {
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
 			$scoringData[6][$column] = "STATUS";
-			if ($format eq "full") { # Fill in with blanks, or maybe the problem number
+			if ($format eq "full" or $format eq "everything") { # Fill in with blanks, or maybe the problem number
 				for (my $row = 0; $row < 6; $row++) {
 					for (my $col = $column+1; $col <= $column + 2; $col++) {
 						if ($row == 2) {
@@ -129,7 +140,7 @@ sub scoreSet {
 			$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
 			unless ($format eq "totals") {
 				$scoringData[7 + $user][$column] = $userProblem->status;
-				if ($format eq "full") {
+				if ($format eq "full" or $format eq "everything") {
 					$scoringData[7 + $user][$column + 1] = $userProblem->num_correct;
 					$scoringData[7 + $user][$column + 2] = $userProblem->num_incorrect;
 				}
@@ -153,6 +164,57 @@ sub scoreSet {
 	}
 	
 	return @scoringData;
+}
+
+# Often it's more efficient to just get everything out of the database
+# and then pick out what you want later.  Hence, these "everything2*" functions
+sub everything2info {
+	my ($self, @everything) = @_;
+	my @result = ();
+	foreach my $row (@everything) {
+		push @result, [@{$row}[0..4]];
+	}
+	return @result;
+}
+
+sub everything2normal {
+	my ($self, @everything) = @_;
+	my @result = ();
+	foreach my $row (@everything) {
+		my @row = @$row;
+		my @newRow = ();
+		push @newRow, @row[0..4];
+		for (my $i = 5; $i < @row; $i+=3) {
+			push @newRow, $row[$i];
+		}
+		push @newRow, $row[$#row];
+		push @result, [@newRow];
+	}
+	return @result;
+}
+
+sub everything2full {
+	my ($self, @everything) = @_;
+	my @result = ();
+	foreach my $row (@everything) {
+		push @result, [@{$row}[0..($#{$row}-1)]];
+	}
+	return @result;
+}
+
+sub everything2totals {
+	my ($self, @everything) = @_;
+	my @result = ();
+	foreach my $row (@everything) {
+		push @result, [${$row}[$#{$row}]];
+	}
+}
+
+sub appendColumns {
+	my ($self, $a1, $a2) = @_;
+	my @a1 = @$a1;
+	my @a2 = @$a2;
+	# FIXME you were here
 }
 
 # Reads a CSV file and returns an array of arrayrefs, each containing a
