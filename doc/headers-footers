@@ -13,8 +13,21 @@ $TEX_SET_PREAMBLE	texSetPreamble.tex	paperSetPreamble.tex		hardcopy generation (
 $set->problem_header  is  screenSetHeader
 	---> THIS SHOULD BE CHANGED!
 
-Hardcopy generation process:
-	paperSetPreamble
-	paperSetHeader->TeX
-	problem->TeX for each problem
-	paperSetPostamble
+
+--------------------------------------------------------------------------------
+
+
+Hardcopy Snippets
+
+	TeX(hardcopyPreamble)
+		PG(hardcopySetHeader)
+			PG(problem)
+			TeX(hardcopyProblemDivider) unless last problem
+		PG(hardcopySetFooter)
+		TeX(hardcopySetDivider) unless last set
+	TeX(hardcopyPostamble)
+
+
+Interactive Snippets
+
+	PG(screenSetHeader)

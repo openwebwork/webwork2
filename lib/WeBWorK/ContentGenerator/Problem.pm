@@ -1,5 +1,5 @@
 ################################################################################
-# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
 # $Id$
 ################################################################################
 
@@ -46,12 +46,12 @@ sub pre_header_initialize {
 	my $r = $self->{r};
 	my $userName = $r->param('user');
 	
-	# make sure $problemNumber is numeric (see PG.pm)
-	die "Problem must be numeric!\n" unless $problemNumber =~ /^\d+$/;
-	
 	# fix format of setName and problem
 	$setName =~ s/^set//;
 	$problemNumber =~ s/^prob//;
+	
+	# make sure $problemNumber is numeric (see PG.pm)
+	die "Problem must be numeric!\n" unless $problemNumber =~ /^\d+$/;
 	
 	##### database setup #####
 	

@@ -1,8 +1,9 @@
-package WeBWorK::PG::Translator;
 ################################################################################
-# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
 # $Id$
 ################################################################################
+
+package WeBWorK::PG::Translator;
 
 use strict;
 use warnings;
