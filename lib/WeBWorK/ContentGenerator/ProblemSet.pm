@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.58 2004/10/04 17:54:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.59 2004/11/18 16:00:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use CGI qw(*ul *li);
 use WeBWorK::PG;
 use WeBWorK::Timing;
+use URI::Escape;
 use WeBWorK::Utils qw(sortByName);
 
 sub initialize {
@@ -50,7 +51,11 @@ sub initialize {
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
 
 	# FIXME: some day it would be nice to take out this code and consolidate the two checks
-
+	
+	# get result and send to message
+	my $status_message = $r->param("status_message");
+	$self->addmessage(CGI::p("$status_message")) if $status_message;
+	
 	# because of the database fix, we have to split our invalidSet check into two parts
 	# First, if $set is undefined then $setName was never valid
 	$self->{invalidSet} = not defined $set;
@@ -94,8 +99,10 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 	
 	my @links = ("Problem Sets" , $r->location . $problemSetsPage->path, "navUp");
-	return $self->navMacro($args, "", @links);
+	my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
+	return $self->navMacro($args, $tail, @links);
 }
+
 
 sub siblings {
 	my ($self) = @_;
@@ -209,11 +216,11 @@ sub info {
 		},
 	);
 	
-	if (defined($set) and $set->set_header and $authz->hasPermissions($userID, "modify_problem_sets")) {  
+	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
 		#FIXME ?  can't edit the default set header this way
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
-		my $editorURL = $self->systemLink($editorPage);
+		my $editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 		
 		print CGI::p(CGI::b("Set Info"), " ",
 			CGI::a({href=>$editorURL}, "[edit]"));
