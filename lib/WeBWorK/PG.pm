@@ -16,6 +16,7 @@ use warnings;
 use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
 use WeBWorK::PG::Translator;
+use WeBWorK::Problem;
 use WeBWorK::Utils qw(readFile formatDateTime);
 
 sub new($$$$$$$$) {
@@ -38,12 +39,32 @@ sub new($$$$$$$$) {
 	my $wwdb = WeBWorK::DB::WW->new($courseEnv);
 	my $user = $classlist->getUser($userName);
 	my $set = $wwdb->getSet($userName, $setName);
-	my $problem = $wwdb->getProblem($userName, $setName, $problemNumber);
 	my $psvn = $wwdb->getPSVN($userName, $setName);
 	
-	# *** NOTE: in order to support set header files, I propose adding a
-	# magic problemNumber (i.e. 0 or -1) which would cuase $problem to
-	# contain a dummy problem whose source file is the set header file.
+	my $problem;
+	if ($problemNumber =~ /^\d+$/) {
+		$problem = $wwdb->getProblem($userName, $setName, $problemNumber);
+	} else {
+		# This is the fun part: if $problemNumber is NON-NUMERIC, the
+		# user wants to specify a PG file directly. We manufacture a
+		# Problem object using fake data and the specified source file.
+		# This is potentially dangerous since an untrusted user is
+		# allowed to specifiy an arbitrary file to be evaluated as PG.
+		# A user of PG.pm MUST MAKE SURE that if $problemNumber is
+		# supplied by an untrusted source (i.e. the Apache request),
+		# it is numberic. A simple
+		# 
+		# 	die unless $problemNumber =~ /^\d+$/;
+		# 
+		# should suffice.
+		$problem = WeBWorK::Problem->new(
+			id => 0,
+			set_id => $set->id,
+			login_id => $user->id,
+			source_file => $problemNumber,
+			# the rest of Problem's fields are not needed
+		);
+	}
 	
 	# create a Translator
 	warn "PG: creating a Translator\n";
@@ -95,7 +116,9 @@ sub new($$$$$$$$) {
 	
 	# store the problem source
 	warn "PG: storing the problem source\n";
-	my $sourceFile = $courseEnv->{courseDirs}->{templates}."/".$problem->source_file;
+	my $sourceFile = $problem->source_file;
+	$sourceFile = $courseEnv->{courseDirs}->{templates}."/".$sourceFile
+		unless ($sourceFile =~ /^\//);
 	$translator->source_string(readFile($sourceFile));
 	
 	# install a safety filter (&safetyFilter)

@@ -20,6 +20,8 @@ use CGI qw();
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readFile);
 
+sub texBlockComment { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)."\n\n"; }
+
 sub go {
 	my ($self, $singleSet) = @_;
 	$singleSet =~ s/^set//;
@@ -33,45 +35,76 @@ sub go {
 	
 	$r->content_type("text/plain");
 	$r->send_http_header();
-	print $self->getSetTeX($singleSet);
+	$self->writePDF($singleSet);
+	#$self->{texFH} = \*STDOUT;
+	#$self->writeMultiSetTeX($singleSet);
 	
 	return OK;
 }
 
-sub getMultiSetTeX {
+sub writePDF {
+	my ($self, @sets) = @_;
+	my $ce = $self->{courseEnvironment};
+	my $pdflatex = $ce->{externalPrograms}->{pdflatex};
 	
+	open $self->{texFH}, "|-", "$pdflatex -v2" or die "Failed to call $pdflatex: $!\n";
+	$self->writeMultiSetTeX(@sets);
+	close $self->{texFH};
+}
+
+sub writeMultiSetTeX {
+	my ($self, @sets) = @_;
+	my $texFH = $self->{texFH};
+	my $ce = $self->{courseEnvironment};
+	
+	# print the document preamble
+	$self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{preamble});
+	
+	while (my $set = shift @sets) {
+		$self->getSetTeX($set);
+		if (@sets) {
+			# divide sets, but not after the last set
+			$self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{setDivider});
+		}
+	}
+	
+	# print the document postamble
+	$self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{postamble});
 }
 
 sub getSetTeX {
 	my ($self, $setName) = @_;
+	my $texFH = $self->{texFH};
 	my $ce = $self->{courseEnvironment};
 	my $wwdb = $self->{wwdb};
 	my $user = $self->{r}->param("user");
-	my @problemNumbers = $wwdb->getProblems($user, $setName);
+	my @problemNumbers = sort { $a <=> $b } $wwdb->getProblems($user, $setName);
 	
-	my $tex;
+	# get header and footer
+	my $setHeader = $wwdb->getSet($user, $setName)->set_header
+		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
+	my $setFooter = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
+	# database doesn't support the following yet :(
+	#my $setFooter = $wwdb->getSet($user, $setName)->set_footer
+	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
 	
-	# include the set preamble
-	$tex .= texBlockComment("BEGIN Set: $setName Preamble");
-	eval { $tex .= readFile($ce->{webworkFiles}->{paperSetPreamble}) };
-	$@ and warn $@;
-	
-	# render the set header (problem 0 is the set header, see PG.pm)
-	#$tex .= texBlockComment("BEGIN Set: $setName Header");
-	#$tex .= $self->getProblemTeX($setName, 0);
+	# render header
+	print $texFH texBlockComment("BEGIN $setName : $setHeader");
+	#print $texFH $self->getProblemTeX($setName, $setHeader);
 	
 	# render each problem
-	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
-		$tex .= texBlockComment("BEGIN Set: $setName Problem: $problemNumber");
-		$tex .= $self->getProblemTeX($setName, $problemNumber);
+	while (my $problemNumber = shift @problemNumbers) {
+		print $texFH texBlockComment("BEGIN $setName : $problemNumber");
+		print $texFH $self->getProblemTeX($setName, $problemNumber);
+		if (@problemNumbers) {
+			# divide problems, but not after the last problem
+			$self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{problemDivider});
+		}
 	}
 	
-	# include the set postamble
-	$tex .= texBlockComment("BEGIN Set: $setName Postamble");
-	eval { $tex .= readFile($ce->{webworkFiles}->{paperSetPostamble}) };
-	$@ and warn $@;
-	
-	return $tex;
+	# render footer
+	print $texFH texBlockComment("BEGIN $setName : $setFooter");
+	print $texFH $self->getProblemTeX($setName, $setFooter);
 }
 
 sub getProblemTeX {
@@ -84,21 +117,31 @@ sub getProblemTeX {
 		$r->param('user'),
 		$r->param('key'),
 		$setName,
-		$problemNumber,
+		$problemNumber, # this may be non-numeric, for headers and the like
 		{ # translation options
 			displayMode     => "tex",
 			showHints       => 0,
 			showSolutions   => 0,
 			processAnswers  => 0,
 		},
-		WeBWorK::Form->new->Vars
+		WeBWorK::Form->new->Vars # this is silly, i should say {} instead
 	);
 	
+	# *** # handle errors/warnings here!
 	return $pg->{body_text};
 }
 
-sub texBlockComment {
-	return "%% \n%% " . join("", @_) . "\n%% \n";
+sub texInclude {
+	my ($self, $texFile) = @_;
+	my $texFH = $self->{texFH};
+	
+	print $texFH texBlockComment("BEGIN: $texFile");
+	eval {
+		print $texFH readFile($texFile)
+	};
+	if ($@) {
+		print $texFH texBlockComment($@);
+	}
 }
 
 1;

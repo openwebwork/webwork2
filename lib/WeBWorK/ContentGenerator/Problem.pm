@@ -46,6 +46,9 @@ sub pre_header_initialize {
 	my $r = $self->{r};
 	my $userName = $r->param('user');
 	
+	# make sure $problemNumber is numeric (see PG.pm)
+	die "Problem must be numeric!\n" unless $problemNumber =~ /^\d+$/;
+	
 	# fix format of setName and problem
 	$setName =~ s/^set//;
 	$problemNumber =~ s/^prob//;
