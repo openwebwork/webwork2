@@ -44,7 +44,11 @@ sub new($$$$$$$$) {
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
-	local $SIG{__WARN__} = sub { $warnings .= shift };
+	if ($courseEnv->{pg}->{options}->{catchWarnings}) {
+		local $SIG{__WARN__} = sub { $warnings .= shift };
+	} else {
+		$warnings = "WeBWorK::PG: PG warnings are not being caught. Check STDERR.\n";
+	}
 	
 	# create a Translator
 	#warn "PG: creating a Translator\n";
