@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/snippets/setHeader.pg,v 1.7 2004/04/22 22:15:09 gage Exp $
+# $CVSHeader: webwork-modperl/conf/snippets/setHeader.pg,v 1.8 2004/05/23 23:17:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,7 @@ END_TEXT
 
 BEGIN_TEXT
 
-$BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedDueDate. $EBOLD
+$BBOLD WeBWorK  assignment number \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
 
 $PAR
 
