@@ -441,8 +441,17 @@ sub body {
 			my %answerHash = %{ $pg->{answers} };
 			$answersToStore{$_} = $answerHash{$_}->{original_student_ans}
 				foreach (keys %answerHash);
+			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
+			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
+			# however we need to store them.  Fortunately they are still in the input form.
+			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
+			
+			$answersToStore{$_} = $r->param($_) foreach  (@extra_answer_names);
+			
+			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
+			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
 			my $answerString = encodeAnswers(%answersToStore,
-				@{ $pg->{flags}->{ANSWER_ENTRY_ORDER} });
+				 @answer_order);
 			
 			# store last answer to database
 			$problem->last_answer($answerString);
@@ -533,20 +542,21 @@ sub body {
 	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
-	if (($pg->{flags}->{showPartialCorrectAnswers}>= 0 and $submitAnswers) or $will{showCorrectAnswers}) {
+	# do I need to check $wills{howCorrectAnswers} to make preflight work??
+	if (($pg->{flags}->{showPartialCorrectAnswers}>= 0 and $submitAnswers) ) {
 		# print this if user submitted answers OR requested correct answers
 		
-		print $self->attemptResults($pg, $submitAnswers,
+		print $self->attemptResults($pg, 1,
 			$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
 		print "ANSWERS ONLY CHECKED  -- ",CGI::br(),"ANSWERS NOT RECORDED", CGI::br();
-		print $self->attemptResults($pg, 1, 0, 1, 1, 1);
+		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
 			# show attempt answers
-			# don't show correct answers
+			# show correct answers if asked
 			# show attempt results (correctness)
-			# don't show attempt previews
+			# show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
 		print "PREVIEW ONLY -- NOT RECORDED",CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
