@@ -199,7 +199,6 @@ sub distGlobalValues($$$@) {
 	# impose the new values for each user
 	my $anyChanged = 0;
 	foreach my $userID (@userIDs) {
-		warn "userID: $userID, keyparts: ".(join " ", @keyparts)."\n";
 		my $UserRecord = $userSchema->get($userID, @keyparts);
 		next unless defined $UserRecord;
 		my $changed = 0;
