@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.53 2004/09/23 22:03:03 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.54 2004/09/24 15:21:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use DateTime;
 use Date::Parse;
 use Date::Format;
+use Time::Zone;
 #use Date::Manip;
 #use DateTime::Format::DateManip;
 use Errno;
@@ -42,11 +43,11 @@ use constant MKDIR_ATTEMPTS => 10;
 # where:
 #     %m = month number, starting with 01
 #     %d = numeric day of the month, with leading zeros (eg 01..31)
-#     %y = year (2 digits)
+#     %Y = year (4 digits)
 #     %I = hour, 12 hour clock, leading 0's)
 #     %M = minute, leading 0's
 #     %P = am or pm (Yes %p and %P are backwards :)
-use constant DATE_FORMAT => "%m/%d/%y at %I:%M%P %Z";
+use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -274,31 +275,183 @@ $dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
 
 =cut
 
+# This is a modified version of the subroutine of the same name from WeBWorK
+# 1.9.05's scripts/FILE.pl (v1.13). It has been modified to understand time
+# zones. The time zone specification must appear at the end of the string and be
+# preceded by whitespace. The return value is a list consisting of the following
+# elements:
+# 
+#     ($second, $minute, $hour, $day, $month, $year, $zone)
+# 
+# $second, $minute, $hour, $day, and $month are zero-indexed. $year is the
+# number of years since 1900. $zone is a string (hopefully) representing the
+# time zone.
+# 
+# Error handling has also been improved. Exceptions are now thrown for errors,
+# and more information is given abou the nature of errors.
+# 
+sub unformatDateAndTime {
+	my ($string) = @_;
+	my $orgString =$string;
+	$string =~ s|^\s+||;
+	$string =~ s|\s+$||;
+	$string =~ s|at| at |i; ## OK if forget to enter spaces or use wrong case
+	$string =~ s|AM| AM|i;	## OK if forget to enter spaces or use wrong case
+	$string =~ s|PM| PM|i;	## OK if forget to enter spaces or use wrong case
+	$string =~ s|,| at |;	## start translating old form of date/time to new form
+
+	my($date,$at,$time,$AMPM,$TZ) = split(/\s+/,$string);
+	unless ($time =~ /:/) {
+		{  ##bare block for 'case" structure
+			$time =~ /(\d\d)(\d\d)/;
+			my $tmp_hour = $1;
+			my $tmp_min = $2;
+			if ($tmp_hour eq '00') {$time = "12:$tmp_min"; $AMPM = 'AM';last;}
+			if ($tmp_hour eq '12') {$time = "12:$tmp_min"; $AMPM = 'PM';last;}
+			if ($tmp_hour < 12) {$time = "$tmp_hour:$tmp_min"; $AMPM = 'AM';last;}
+			if ($tmp_hour < 24) {
+				$tmp_hour = $tmp_hour - 12;
+				$time = "$tmp_hour:$tmp_min";
+				$AMPM = 'PM';
+			}
+		}  ##end of bare block for 'case" structure
+
+	}
+
+	my ($mday, $mon, $year, $wday, $yday,$sec, $pm, $min, $hour);
+	$sec=0;
+	$time =~ /^([0-9]+)\s*\:\s*([0-9]*)/;
+	$min=$2;
+	$hour = $1;
+	if ($hour < 1 or $hour > 12) {
+		die "Incorrect date/time format $orgString. Hour must be in the range [1,12]. Correct format is MM/DD/YYYY at HH:MM AMPM ZONE\n";
+	}
+	if ($min < 0 or $min > 59) {
+		die "Incorrect date/time format $orgString. Minute must be in the range [0-59]. Correct format is MM/DD/YYYY at HH:MM AMPM ZONE\n";
+	}
+	$pm = 0;
+	$pm = 12 if ($AMPM =~/PM/ and $hour < 12);
+	$hour += $pm;
+	$hour = 0 if ($AMPM =~/AM/ and $hour == 12);
+	$date =~  m!([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)! ;
+	$mday =$2;
+	$mon=($1-1);
+	if ($mday < 1 or $mday > 31) {
+		die "Incorrect date/time format $orgString. Day must be in the range [1,31]. Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
+	}
+	if ($mon < 0 or $mon > 11) {
+		die "Incorrect date/time format $orgString. Month must be in the range [1,12]. Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
+	}
+	$year=$3;
+	$wday="";
+	$yday="";
+	return ($sec, $min, $hour, $mday, $mon, $year, $TZ);
+}
+
+
 sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
 	$display_tz ||= "local";
 	#warn "parseDateTime('$string', '$display_tz')\n";
 	
-	# Method #1: using Date::Parse (uncomment "use Date::Parse" above)
-	$string =~ s/\s*\bat\b\s*/ /; # Date::Parse can't handle the "at" in WeBWorK datetimes.
-	my $epoch = str2time($string);
-	#warn "\tMethod #1: str2time($string) = $epoch\n";
-	my $dt = DateTime->from_epoch(epoch => $epoch, time_zone => "local");
-	#warn "\tMethod #1: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	# use WeBWorK 1 date parsing routine
+	my ($second, $minute, $hour, $day, $month, $year, $zone) = unformatDateAndTime($string);
+	my $zone_str = defined $zone ? $zone : "UNDEF";
+	#warn "\tunformatDateAndTime: $second $minute $hour $day $month $year $zone_str\n";
 	
-	# Method #2: using Date::Manip (uncomment "use Date::Manip" and "use
-	# DateTime::Format::DateManip" above)
-	#my $dm = ParseDateString($string);
-	#warn "\tMethod #2: ParseDateString($string) = $dm\n";
-	#my $dt = DateTime::Format::DateManip->parse_datetime($dm);
-	#warn "\tdMethod #2: \$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	# DateTime expects month 1-12, not 0-11
+	$month++;
 	
-	my $dt2 = $dt->clone->set_time_zone("floating")->set_time_zone($display_tz);
-	#warn "\t\$dt2 = ", $dt2->strftime(DATE_FORMAT." %Z"), "\n";
-	my $epoch2 = $dt2->epoch;
-	#warn "\t\$epoch2 (return value) = $epoch2\n";
+	# Do what Time::Local does to ambiguous years
+	{
+		my $ThisYear     = (localtime())[5]; # FIXME: should be relative to $string's timezone
+		my $Breakpoint   = ($ThisYear + 50) % 100;
+		my $NextCentury  = $ThisYear - $ThisYear % 100;
+		   $NextCentury += 100 if $Breakpoint < 50;
+		my $Century      = $NextCentury - 100;
+		my $SecOff       = 0;
+		
+		if ($year >= 1000) {
+			# leave alone
+		} elsif ($year < 100 and $year >= 0) {
+			$year += ($year > $Breakpoint) ? $Century : $NextCentury;
+			$year += 1900;
+		} else {
+			$year += 1900;
+		}
+	}
 	
-	return $epoch2;
+	my $epoch;
+	
+	if (defined $zone and $zone ne "") {
+		if (DateTime::TimeZone->is_valid_name($zone)) {
+			#warn "\t\$zone is valid according to DateTime::TimeZone\n";
+			
+			my $dt = new DateTime(
+				year      => $year,
+				month     => $month,
+				day       => $day,
+				hour      => $hour,
+				minute    => $minute,
+				second    => $second,
+				time_zone => $zone,
+			);
+			#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
+			
+			$epoch = $dt->epoch;
+			#warn "\t\$dt->epoch = $epoch\n";
+		} else {
+			#warn "\t\$zone is invalid according to DateTime::TimeZone, so we ask Time::Zone\n";
+			
+			# treat the date/time as UTC
+			my $dt = new DateTime(
+				year      => $year,
+				month     => $month,
+				day       => $day,
+				hour      => $hour,
+				minute    => $minute,
+				second    => $second,
+				time_zone => "UTC",
+			);
+			#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
+			
+			# convert to an epoch value
+			my $utc_epoch = $dt->epoch
+				or die "Date/time '$string' not representable as an epoch. Get more bits!\n";
+			#warn "\t\$utc_epoch = $utc_epoch\n";
+			
+			# get offset for supplied timezone and utc_epoch
+			my $offset = tz_offset($zone, $utc_epoch) or die "Time zone '$zone' not recognized.\n";
+			#warn "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n";
+			
+			#$epoch = $utc_epoch + $offset;
+			##warn "\t\$epoch = \$utc_epoch + \$offset = $epoch\n";
+			
+			$dt->subtract(seconds => $offset);
+			#warn "\t\$dt - \$offset = ", $dt->strftime(DATE_FORMAT), "\n";
+			
+			$epoch = $dt->epoch;
+			#warn "\t\$epoch = $epoch\n";
+		}
+	} else {
+		#warn "\t\$zone not supplied, using \$display_tz\n";
+		
+		my $dt = new DateTime(
+			year      => $year,
+			month     => $month,
+			day       => $day,
+			hour      => $hour,
+			minute    => $minute,
+			second    => $second,
+			time_zone => $display_tz,
+		);
+		#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
+		
+		$epoch = $dt->epoch;
+		#warn "\t\$epoch = $epoch\n";
+	}
+	
+	return $epoch;
 }
 
 =item $string = formatDateTime($dateTime, $display_tz)
@@ -315,7 +468,7 @@ sub formatDateTime($;$) {
 	#warn "formatDateTime('$dateTime', '$display_tz')\n";
 	
 	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
-	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT." %Z"), "\n";
+	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
 	return $dt->strftime(DATE_FORMAT);
 }
 
