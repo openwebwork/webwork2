@@ -32,75 +32,62 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
-
-# CGI::Carp makes pretty log and browser error messages. It should be loaded as
-# early as is possible.
-BEGIN {
-	use CGI::Carp qw(fatalsToBrowser set_message);
-	# CGI::Carp needs a little patch to make it work with the "vanilla"
-	# mod_perl API (as opposed to Apache::Registry). _longmess is supposed
-	# to filter out evals that are always there, as a result of being run
-	# under mod_perl. Under the "vanilla" API, the first stack frame is
-	# "eval {...} called at /dev/null line 0". This needs to be removed.
-	# 
-	# [later:]
-	# 
-	# Ok, so apparently, when a die happens during compilation, the first
-	# stack frame is the following:
-	# 
-	# 	eval 'require Apache::WeBWorK
-	# 	;' called at /path/to/lib/Apache/WeBWorK.pm line 0
-	# 
-	# So I'll try to handle that too.
-	sub CGI::Carp::_longmess {
-		my $message = Carp::longmess();
-		if (exists $ENV{MOD_PERL}) {
-			$message =~ s,eval[^\n]+Apache/Registry\.pm.*,,s;
-			$message =~ s,eval[^\n]+/dev/null line 0.*,,s;
-			my $pkg = __PACKAGE__;
-			$message =~ s/eval 'require $pkg\n.*//s;
-		}
-		
-		return $message;
-	}
-	# Much of this is stolen from &CGI::Carp::fatalsToBrowser;
-	my $customErrorMessage = sub {
-		my ($message) = @_;
-		my $stack = Carp::longmess();
-		my $wm = ($ENV{SERVER_ADMIN} 
-			? qq[the webmaster (<a href="mailto:$ENV{SERVER_ADMIN}">$ENV{SERVER_ADMIN}</a>)]
-			: "this site's webmaster");
-		my $mess = <<EOF;
-<html><head><title>WeBWorK - Software Error</title></head><body> <h2>WeBWorK -
-Software Error</h2><h3>Error message</h3><blockquote><pre>$message</pre>
-</blockquote><h3>Error context</h3><blockquote><pre>$stack</pre></blockquote>
-<p>For help, please send mail to $wm, giving this error message and the time
-and date of the error.</p></body></html>
-EOF
-		if (exists $ENV{MOD_PERL} && (my $r = Apache->request)) {
-			# If bytes have already been sent, then we print the
-			# message out directly. Otherwise we make a custom
-			# error handler to produce the doc for us.
-			if ($r->bytes_sent) {
-				$r->print($mess);
-				$r->exit;
-			} else {
-				$r->status(500);
-				$r->custom_response(500,$mess);
-			}
-		} else {
-			print STDOUT $mess;
-		}
-	};
-	set_message($customErrorMessage);
-}
-
-use WeBWorK;
+use WeBWorK; # leave compile-time errors alone.
 
 sub handler($) {
-	my ($apache) = @_;
+	my ($r) = @_;
+	my $result = eval {
+		WeBWorK::dispatch($r)
+	};
+	if ($@) {
+		my $message = message($r, $@);
+		unless ($r->bytes_sent) {
+			$message = "<html><body>$message</body></html>";
+			$r->content_type("text/html");
+			$r->send_http_header;
+		}
+		$r->print($message);
+		die $@;
+	}
+	return $result;
+}
+
+sub message($$) {
+	my ($r, $exception) = @_;
 	
-	return WeBWorK::dispatch($apache);
+	my $admin = ($ENV{SERVER_ADMIN}
+		? "(<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
+		: "");
+	# Error context doesn't work yet -- calling longmess() from here is stupid
+	#my $context = Carp::longmess();
+	my $method = $r->method;
+	my $uri = $r->uri;
+	my $headers = do {
+		my %headers = $r->headers_in;
+		join("", map { "<tr><td>$_</td><td>$headers{$_}</td></tr>" } keys %headers);
+	};
+	
+	return <<EOF;
+<div align="left">
+ <h1>Software Error</h1>
+ <p>An error has occured while trying to process you request. For help, please send mail to this site's webmaster $admin giving the following information about the error and the date and time that the error occured.</p>
+ <h2>Error message</h2>
+ <pre>$exception</pre>
+ <h2>Request information</h2>
+ <dl>
+  <dt>Method</dt>
+  <dd>$method</dd>
+  <dt>URI</dt>
+  <dd>$uri</dd>
+ </dl>
+ <h2>Headers received</h2>
+ <table>$headers</table>
+</div>
+EOF
+	# <h2>Error context</h2>
+	# <blockquote>
+	#  <pre>$context</pre>
+	# </blockquote>
 }
 
 1;
