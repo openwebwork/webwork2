@@ -395,7 +395,7 @@ print
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
-					          (map {  "&nbsp;".(100-$_)  } @brackets) ,
+					          (map {  "&nbsp;".(100-$_)  } @brackets, 0) ,
 					        
 					         ]
 					)
@@ -406,7 +406,7 @@ print
 		print	CGI::Tr(
 					CGI::td( [
 						"Prob $probID",
-						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets),
+						(map { '&le; '.sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets, 0),
 
 						]
 					)
