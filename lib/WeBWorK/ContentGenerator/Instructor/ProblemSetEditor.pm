@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.56 2004/06/02 20:28:23 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.57 2004/06/08 17:07:33 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 use CGI qw();
 use File::Copy;
 use WeBWorK::DB::Record::Problem;
+use WeBWorK::HTML::OptionList qw/optionList/;
 use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirectory max);
 
 our $rowheight = 20;  #controls the length of the popup menus.  
@@ -119,10 +120,9 @@ sub initialize {
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
 	
-	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify problem sets")));
-		return;
-	}
+	# Check permissions
+	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
+	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 	
 	###################################################
 	# The set form was submitted with the save button pressed
@@ -166,17 +166,17 @@ sub initialize {
 			# Bail if this is not correct.
 			###################################################
 			if ($setRecord->open_date > $setRecord->due_date)  {
-				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date must come after open date'));
+				$self->addbadmessage('Error: Due date must come after open date');
 				return;
 			}
 			if ($setRecord->due_date > $setRecord->answer_date) {
-				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date must come after due date'));
+				$self->addbadmessage('Error: Answer date must come after due date');
 				return;
 			}
 			###################################################
 			# End date check section.
 			###################################################
-			$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName were successfully saved."));
+			$self->addgoodmessage("Changes to set $setName were successfully saved.");
 			$db->putGlobalSet($setRecord);
 		} else {
 			
@@ -203,17 +203,17 @@ sub initialize {
 			my $active_due_date    = $userSetRecord->due_date    ? $userSetRecord->due_date    : $setRecord->due_date;
 			my $active_answer_date = $userSetRecord->answer_date ? $userSetRecord->answer_date : $setRecord->answer_date;
 			if ( $active_open_date > $active_due_date ) {
-				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Due date override must come after open date'));
+				$self->addbadmessage('Error: Due date override must come after open date');
 				return;
 			}
 			if ( $active_due_date > $active_answer_date ) {
-				$self->addmessage(CGI::div({class=>'ResultsWithError'},'Error: Answer date override must come after due date'));
+				$self->addbadmessage('Error: Answer date override must come after due date');
 				return;
 			}
 			###################################################
 			# End date check section.
 			###################################################
-			$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Changes to set $setName for user ",CGI::b($editForUser[0]) ,"were successfully saved."));
+			$self->addgoodmessage("Changes to set $setName for user ", CGI::b($editForUser[0]), "were successfully saved.");
 			$db->putUserSet($userSetRecord);
 		}
 
@@ -267,7 +267,7 @@ EOF
 
 
 	    $self->saveProblem($fileContents, $filePath);
-	    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Set definition saved to $filePath")));
+	    $self->addgoodmessage(CGI::p("Set definition saved to $filePath"));
 	
 	}
 }
@@ -290,7 +290,13 @@ sub body {
 	my $forUsers            = scalar(@editForUser);
 	my $forOneUser          = $forUsers == 1;
 
-        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	# Check permissions
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problem sets.")
+		unless $authz->hasPermissions($r->param("user"), "modify_problem_sets");
+
 
 	## Set Form ##
 	my $userSetRecord;
@@ -347,8 +353,12 @@ sub body {
 			CGI::td({}, [	"Set Header:" , 
 					($forOneUser) 
 						? $setRecord->set_header || "None selected."
-						: CGI::popup_menu(-name=>'set_header', -values=>\@headers, -default=>0) .
-							"(currently: " . ($setRecord->set_header || "None selected.") . ")" . "\n",
+						: 
+						CGI::popup_menu(
+							-name=>'set_header', 
+							-values=>\@headers, 
+							-default=>0) .
+						"(currently: " . ($setRecord->set_header || "None selected.") . ")" . "\n",
 				])
 		])
 	);
@@ -359,7 +369,7 @@ sub body {
 		print CGI::p("This set is currently", CGI::font({class=>$publishedClass}, $publishedText),
 		CGI::br(), "(You cannot hide or make a set visible for specific users.)");
 	} else {
-		print CGI::checkbox({type=>"checkbox", name=>"published", label=>"Visable to students", value=>"1", checked=>(($setRecord->published) ? 1 : 0)}), CGI::br();
+		print CGI::checkbox({type=>"checkbox", name=>"published", label=>"Visible to students", value=>"1", checked=>(($setRecord->published) ? 1 : 0)}), CGI::br();
 
 	}
 	
@@ -437,10 +447,10 @@ sub saveProblem {
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
 	open (PROBLEM, ">$probFileName") ||
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Could not open $probFileName for writing. Check that the  permissions for this problem are 660 (-rw-rw----)")));
+		$self->addbadmessage(CGI::p("Could not open $probFileName for writing. Check that the  permissions for this problem are 660 (-rw-rw----)"));
 	print PROBLEM $body;
 	close PROBLEM;
 	chmod 0660, "$probFileName" ||
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName")));
+		$self->addbadmessage(CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName"));
 }
 1;
