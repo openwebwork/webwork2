@@ -1,50 +1,8 @@
 --------------------------------------------------------------------------------
-Current API
+DB API
 --------------------------------------------------------------------------------
 
-Auth.pm
-
-	getUsers()
-	
-	getPassword($userID)
-	getPassword($userID, $password)
-	verifyPassword($userID, $password)
-	deletePassword($userID)
-	
-	getKey($userID)
-	setKey($userID, $key)
-	verifyKey($userID, $key)
-	deleteKey($userID)
-	
-	getPermissions($userID)
-	setPermissions($userID, $permissions)
-	deletePermissions($userID)
-
-Classlist.pm
-
-	getUsers()
-	getUser($userID)
-	setUser($user)
-	deleteUser($userID)
-
-WW.pm
-
-	getSets($userID)
-	getSet($userID, $setID)
-	setSet($set)
-	deleteSet($userID, $setID)
-	getProblems($userID, $setID)
-	getProblem($userID, $setID, $problemNumber)
-	setProblem($problem)
-	deleteProblem($userID, $setID, $problemNumber)
-	getPSVNs($userID)
-	getPSVN($userID, $setID)
-	setPSVN($userID, $setID)
-	deletePSVN($userID, $setID)
-
---------------------------------------------------------------------------------
-DB.pm
---------------------------------------------------------------------------------
+The DB API defines the following methods. These methods are grouped according to which tables they access. A method followed by a list of "=>"-prefixed methods depends on the listed methods.
 
 password
 
@@ -77,6 +35,10 @@ user
 	getUser($userID)
 	putUser($User)
 	deleteUser($userID)
+		=> deletePassword($userID)
+		=> deletePermissionLevel($userID)
+		=> deleteKey($userID)
+		=> deleteUserSet($userID, *)
 
 set
 
@@ -125,17 +87,3 @@ problem+problem_user
 	getGlobalUserProblem($userID, $setID, $problemID)
 		=> getGlobalProblem($setID, $problemID)
 		=> getUserProblem($userID, $setID, $problemID)
-
-
-
-
-
-
-
-
-
-
-
-
-
-

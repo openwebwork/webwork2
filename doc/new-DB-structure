@@ -1,0 +1,67 @@
+--------------------------------------------------------------------------------
+DB table structure
+--------------------------------------------------------------------------------
+
+The DB API models an underlying table structure that may or may not literally exist, depending on what transformations the schema modules make. However, this is the table structure that is presented to users of the DB module.
+
+*  indicates a key
+=> indicates a relation
+!  indicates an override field
+~  indicates a "dynamic" field
+
+password
+	login_id	*,=> user.id
+	password
+permissions
+	login_id	*,=> user.id
+	permissions
+key
+	login_id	*,=> user.id
+	key
+user
+	id		*
+	first_name
+	last_name
+	email_address
+	student_id
+	status
+	section
+	recitation
+	comment
+set
+	id		*
+	set_header
+	problem_header
+	open_date
+	due_date
+	answer_date
+	problem_order
+set_user
+	user_id		*,=> user.id
+	set_id		*,=> set.id
+	psvn
+	set_header	!
+	problem_header	!
+	open_date	!
+	due_date	!
+	answer_date	!
+	problem_order	!
+problem
+	id		*
+	set_id		*,=> set.id
+	source_file
+	value
+	max_attempts
+problem_user
+	user_id		*,=> user.id
+	problem_id	*,=> problem.id
+	source_file	!
+	value		!
+	max_attempts	!
+	problem_seed
+	status		~
+	attempted	~
+	last_answer	~
+	num_correct	~
+	num_incorrect	~
+

@@ -1,0 +1,121 @@
+(nudge-to-right centering)
+
+--------------------------------------------------------------------------------
+Architecture
+--------------------------------------------------------------------------------
+
+The new database system uses a three-tier architecture to insulate each layer from the adjacent layers.
+
+TOP LAYER: DB
+-------------
+
+The top layer of the architecture is the DB module. It provides the methods
+listed in doc/new-DB-API, and uses schema modules (via tables) to implement those methods.
+
+                  / list* new* get* put* delete* \                   <- api
++------------------------------------------------------------------+
+|                                DB                                |
++------------------------------------------------------------------+
+ \ password permission key user set set_user problem problem_user /  <- tables
+
+MIDDLE LAYER: SCHEMAS
+---------------------
+
+The middle layer of the architecture is provided by one or more schema modules. They are called "schema" modules because they control the structure of the data for a table. This includes odd things like the way multiple tables are encoded in a single hash in the WW1Hash schema, and the encoding scheme used.
+
+The schema modules provide an API that matches the requirements of the DB layer, on a per-table basis. Each schema module has a style that determines which drivers it can interface with. For example, WW1Hash is a "hash" style schema. SQL is a "dbi" style schema.
+
+The null schema, "0", can handle all tables, but merely returns a false value for any method call. The null schema has no style.
+
+Both WeBWorK 1.x and 2.x courses use:
+
+  / password \      / permission \	/ key \   <- tables
++--------------+  +----------------+  +---------+
+| PasswordHash |  | PermissionHash |  | KeyHash |
++--------------+  +----------------+  +---------+
+    \ hash /	       \ hash / 	\ hash /  <- style
+
+WeBWorK 1.x courses also use:
+
+ / set_user problem_user \    / * \ 
++-------------------------+  +-----+
+|         WW1Hash         |  |  0  |
++-------------------------+  +-----+
+          \ hash /                  
+
+The null schema "0" provides the set and problem tables.
+
+WeBWorK 2.x courses also use:
+
+ / set set_user problem problem_user \ 
++-------------------------------------+
+|               WW2Hash               |
++-------------------------------------+
+                \ hash /               
+
+Other drop-in schema modules could be:
+
+  / * \      / password \  
++-------+  +--------------+
+|  SQL  |  | PasswordLDAP |
++-------+  +--------------+
+ \ dbi /       \ ldap /    
+
+BOTTOM LAYER: DRIVERS
+---------------------
+
+Driver modules implement a style for a schema. They provide physical access to a data source containing the data for a table. Some driver modules are as follows:
+
+ / hash \    / hash \ 	 / hash \  <- style
++--------+  +--------+	+--------+
+|   DB   |  |  GDBM  |	|   DB3  |
++--------+  +--------+	+--------+
+
+ / dbi \    / ldap \ 
++-------+  +--------+
+|  DBI  |  |  LDAP  |
++-------+  +--------+
+
+--------------------------------------------------------------------------------
+Schema API
+--------------------------------------------------------------------------------
+
+$record   - an object representing a record in the table
+@keyparts - values for fields that make up the table's key
+
+@tables = tables()
+	returns list of tables supported. static.
+
+$handle = new($driver, $table)
+	creates a schema interface for $table, using the driver interface
+	provided by $driver. returns a false value if the $driver does not 
+	support the driver style needed by the schema.
+
+@keys = $handle->list()
+	returns a list containing the key of each record in the table. the
+	elements of @keys are \@keyparts.
+
+$result = $handle->new($record)
+	attempts to add $record to the table. returns a false value if a record
+	with the same key exists.
+
+$record = $handle->get(@keyparts)
+	attempts to retrieve the record matching @keyparts from the table.
+	returns a false value if no record matches.
+
+$result = $handle->put($record)
+	attempts to replace the record in the table that matches the key of
+	$record. returns a false value if no such record exists.
+
+$result = $handle->delete(@keyparts)
+	attempts to delete the record matching @keyparts from the table.
+	returns a false value if no such record exists.
+
+--------------------------------------------------------------------------------
+Driver API
+--------------------------------------------------------------------------------
+
+@styles = styles()
+	returns the styles supported by the driver
+
+$handle = new
