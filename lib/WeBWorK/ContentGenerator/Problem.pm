@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.118 2004/04/04 03:59:33 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.119 2004/04/05 20:21:48 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -923,15 +923,15 @@ sub attemptResults {
 	my $summary = ""; 
 	if (scalar @answerNames == 1) {
 			if ($numCorrect == scalar @answerNames) {
-				$summary .= "The above answer is correct.";
+				$summary .= CGI::div({'class="ResultsWithoutError"'},"The above answer is correct.");
 			 } else {
-			 	 $summary .= "The above answer is NOT correct.";
+			 	 $summary .= CGI::div({'class="ResultsWithError"'},"The above answer is NOT correct.");
 			 }
 	} else {
 			if ($numCorrect == scalar @answerNames) {
-				$summary .= "All of the above answers are correct.";
+				$summary .= CGI::div({'class="ResultsWithoutError"'},"All of the above answers are correct.");
 			 } else {
-			 	 $summary .= "At least one of the above answers is NOT correct.";
+			 	 $summary .= CGI::div({'class="ResultsWithError"'},"At least one of the above answers is NOT correct.");
 			 }
 	}
 	
