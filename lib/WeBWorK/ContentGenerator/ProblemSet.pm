@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.38 2003/12/12 02:24:29 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.39 2004/03/04 04:36:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -223,7 +223,10 @@ sub body {
 	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
 	die "set $setName for user $effectiveUser not found" unless $set;
 	
-	print "$setName is due: ",WeBWorK::Utils::formatDateTime($set->due_date);
+	#print "$setName is due: ",WeBWorK::Utils::formatDateTime($set->due_date);
+	#( this can be included in the set header -- it doesn't need to be hard coded into the 
+	#  ProblemSet.pm code.
+	
 	return CGI::p(CGI::font({-color=>"red"}, "This problem set is not available because it is not yet open."))
 		unless ($self->{isOpen});
 	
