@@ -28,7 +28,7 @@ sub go {
 	my $db              = $self->{db};
 	my @sets            = $r->param("hcSet");
 	my @users           = $r->param("hcUser");
-	my $hardcopy_format = $r->param('hardcopy_format');
+	my $hardcopy_format = $r->param('hardcopy_format') ? $r->param('hardcopy_format') : '';
 	
 	# add singleSet to the list of sets
 	if (length $singleSet > 0) {
@@ -51,8 +51,9 @@ sub go {
 	$self->{warnings}        = [];
 	
 	# security checks
-	my $multiSet = $self->{permissionLevel} > 0;
-	my $multiUser = $self->{permissionLevel} > 0;
+	my $multiSet    = $self->{permissionLevel} > 0;
+	my $multiUser   = $self->{permissionLevel} > 0;
+	
 	if (@sets > 1 and not $multiSet) {
 		$self->{generationError} = ["SIMPLE", "You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again."];
 	}
@@ -220,6 +221,8 @@ sub displayForm($) {
 	}
 	print CGI::end_p();
 	
+	my $download_texQ = $self->{permissionLevel} > 0;
+	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
 	print CGI::h3("Options");
@@ -314,14 +317,18 @@ sub displayForm($) {
 	}
 	
 	print CGI::end_Tr(), CGI::end_table();
-	print CGI::p( {-align => "center"},
-			CGI::radio_group(
-						-name=>"hardcopy_format",
-						-values=>['pdf', 'tex'],
-						-default=>'pdf',
-						-labels=>{'tex'=>'TeX','pdf'=>'PDF'}
-			),
-	);
+	if ($download_texQ) {  # choice of pdf or tex output 
+		print CGI::p( {-align => "center"},
+				CGI::radio_group(
+							-name=>"hardcopy_format",
+							-values=>['pdf', 'tex'],
+							-default=>'pdf',
+							-labels=>{'tex'=>'TeX','pdf'=>'PDF'}
+				),
+		);
+	} else {   # only pdf output available
+		print CGI::hidden(-name=>'hardcopy_format',-value=>'pdf');
+	}
 	print CGI::p({-align=>"center"},
 		CGI::submit(-name=>"generateHardcopy", -label=>"Generate Hardcopy"));
 	print CGI::end_form();
