@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.76 2004/01/23 21:02:22 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.77 2004/02/16 03:37:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,23 +36,46 @@ use WeBWorK::Utils qw(readFile);
 # it into logical sections.
 ################################################################################
 
-# new(Apache::Request, WeBWorK::CourseEnvironment, WeBWorK::DB) - create a new    
-# instance of a content generator. Usually only called by the dispatcher, although
-# one might be able to use it for things like "sub-requests". Uh... uh... I have  
-# to think about that one. The dispatcher uses this idiom:                        
+## new(Apache::Request, WeBWorK::CourseEnvironment, WeBWorK::DB) - create a new    
+## instance of a content generator. Usually only called by the dispatcher, although
+## one might be able to use it for things like "sub-requests". Uh... uh... I have  
+## to think about that one. The dispatcher uses this idiom:                        
+## 
+## 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce, $db)->go(@whatever);
+## 
+## and throws away the result ;)
+##
+#sub new {
+#	my ($invocant, $r, $ce, $db) = @_;
+#	my $class = ref($invocant) || $invocant;
+#	my $self = {
+#		r  => $r,
+#		ce => $ce,
+#		db => $db,
+#		authz => WeBWorK::Authz->new($r, $ce, $db),
+#		noContent => undef,
+#	};
+#	bless $self, $class;
+#	return $self;
+#}
+
+# new(WeBWorK::Request) - create a new instance of a content generator. Usually
+# only called by the dispatcher, although one might be able to use it for things
+# like "sub-requests". Uh... uh... I have to think about that one. The dispatcher
+# uses this idiom:
 # 
-# 	WeBWorK::ContentGenerator::WHATEVER->new($r, $ce, $db)->go(@whatever);
+# 	WeBWorK::ContentGenerator::WHATEVER->new($r)->go();
 # 
 # and throws away the result ;)
 #
 sub new {
-	my ($invocant, $r, $ce, $db) = @_;
+	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {
-		r  => $r,
-		ce => $ce,
-		db => $db,
-		authz => WeBWorK::Authz->new($r, $ce, $db),
+		r => $r, # this is now a WeBWorK::Request
+		ce => $r->ce(),       # these three are here for
+		db => $r->db(),       # backward-compatability
+		authz => $r->authz(), # with unconverted CGs
 		noContent => undef,
 	};
 	bless $self, $class;
