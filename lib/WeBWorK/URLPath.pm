@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.2 2004/03/05 04:16:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.3 2004/03/06 18:50:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,6 +25,13 @@ WeBWorK::URLPath - the WeBWorK virtual URL heirarchy.
 use strict;
 use warnings;
 
+sub debug {
+	my ($label, $indent, @message) = @_;
+	print STDERR " "x$indent;
+	print STDERR "$label: " if $label ne "";
+	print STDERR @message;
+}
+
 =head1 VIRTUAL HEIRARCHY
 
  root                                /
@@ -34,9 +41,9 @@ use warnings;
  equation_display                    /$courseID/equation/
  feedback                            /$courseID/feedback/
  gateway_quiz                        /$courseID/quiz_mode/$setID/
+ grades                              /$courseID/grades/
  hardcopy                            /$courseID/hardcopy/
  hardcopy_preselect_set              /$courseID/hardcopy/$setID/
- grades                              /$courseID/grades/
  logout                              /$courseID/logout/
  options                             /$courseID/options/
  
@@ -72,10 +79,6 @@ use warnings;
      
 =cut
 
-# 
-# NOTE: see below for the implementation of the WeBWorK::URLPath class.
-# 
-
 ################################################################################
 # tree of path types
 ################################################################################
@@ -96,8 +99,8 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display grades feedback gateway_quiz hardcopy logout
-			options instructor_tools problem_list
+		kids    => [ qw/equation_display feedback gateway_quiz grades hardcopy
+			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/courseID/ ],
@@ -134,6 +137,15 @@ our %pathTypes = (
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
 	},
+	grades => {
+		name    => 'Student Grades',
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^grades/|,
+		capture => [ qw// ],
+		produce => 'grades/',
+		display => 'WeBWorK::ContentGenerator::Grades',
+	},
 	hardcopy => {
 		name    => 'Hardcopy Generator',
 		parent  => 'set_list',
@@ -152,17 +164,8 @@ our %pathTypes = (
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
 	},
-	grades => {
-		name    => 'Student Grades',
-		parent  => 'set_list',
-		kids    => [ qw// ],
-		match   => qr|^grades/|,
-		capture => [ qw// ],
-		produce => 'grades/',
-		display => 'WeBWorK::ContentGenerator::Grades',
-	},
 	logout => {
-		name    => 'Logout',
+		name    => 'Log Out',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^logout/|,
@@ -428,117 +431,20 @@ a handy template:
 =cut
 
 ################################################################################
-# low level functions for traversing the path types tree
-################################################################################
-
-sub getpathType($) {
-	my ($path) = @_;
-	
-	my %args;
-	my $context = visitPathTypeNode("root", $path, \%args, 0);
-	
-	return $context, %args;
-}
-
-sub reconstructPath($) {
-	my ($type) = @_;
-	
-	my $path = "";
-	
-	while ($type) {
-		$path = $pathTypes{$type}->{produce} . $path;
-		$type = $pathTypes{$type}->{parent};
-	};
-	
-	return $path;
-}
-
-sub debug { print STDERR "visitPathTypeNode: ", @_; }
-
-sub visitPathTypeNode($$$$);
-
-sub visitPathTypeNode($$$$) {
-	my ($nodeID, $path, $argsRef, $indent) = @_;
-	debug("\t"x$indent, "visiting node $nodeID with path $path\n");
-	
-	unless (exists $pathTypes{$nodeID}) {
-		debug("\t"x$indent, "node $nodeID doesn't exist in node list: failed\n");
-		die "node $nodeID doesn't exist in node list: failed";
-	}
-	
-	my %node = %{ $pathTypes{$nodeID} };
-	my $match = $node{match};
-	my @capture_names = @{ $node{capture} };
-	
-	debug("\t"x$indent, "trying to match $match: ");
-	# FIXME: we need to test for match success and collect captures
-	# perhaps we could use m// to get captures, and then use s/// to get rid of the match
-	# this would be two REs per node, but they're already precompiled
-	if ($path =~ s/($match)//) {
-		debug("success!\n");
-		my @capture_values = $1 =~ m/$match/;
-		#debug("\t"x$indent, "\@capture_names=@capture_names\n");
-		#debug("\t"x$indent, "\@capture_values=@capture_values\n");
-		if (@capture_names) {
-			my $nexpected = @capture_names;
-			my $ncaptured = @capture_values;
-			my $max = $nexpected > $ncaptured ? $nexpected : $ncaptured;
-			warn "captured $ncaptured arguments, expected $nexpected." unless $ncaptured == $nexpected;
-			for (my $i = 0; $i < $max; $i++) {
-				my $name = $capture_names[$i];
-				my $value = $capture_values[$i];
-				if ($i > $nexpected) {
-					warn "captured an unexpected argument: $value -- ignoring it.";
-					next;
-				}
-				if ($i > $ncaptured) {
-					warn "expected an uncaptured argument named: $name -- ignoring it.";
-					next;
-				}
-				if (exists $argsRef->{$name}) {
-					my $old = $argsRef->{$name};
-					warn "encountered an existing argument again, old value: $old new value: $value -- replacing.";
-				}
-				debug("\t"x$indent, "setting argument $name => $value.\n");
-				$argsRef->{$name} = $value;
-			}
-		}
-	} else {
-		debug("failed.\n");
-		return 0;
-	}
-	
-	if ($path eq "") {
-		debug("\t"x$indent, "no path left, type is $nodeID\n");
-		return $nodeID;
-	}
-	
-	debug("\t"x$indent, "but path remains: $path\n");
-	my @kids = @{ $node{kids} };
-	if (@kids) {
-		foreach my $kid (@kids) {
-			debug("\t"x$indent, "trying child $kid:\n");
-			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent+1);
-			return $result if $result;
-		}
-		debug("\t"x$indent, "no children claimed the remaining path: failed.\n");
-	} else {
-		debug("\t"x$indent, "no children to claim the remaining path: failed.\n");
-	}
-	return 0;
-}
-
-################################################################################
-# the WeBWorK::URLPath class
-################################################################################
 
 =head1 CONSTRUCTORS
 
 =over
 
-=item new
+=item new(%fields)
 
-Creates an empty WeBWorK::URLPath. Don't use this, use C<newFromPath> instead.
+Creates a new WeBWorK::URLPath. %fields may contain the following:
+
+ type => the internal path type associated with this 
+ args => a reference to a hash associating path arguments with values
+
+This constructor is used internally. Refer to newFromPath() and newFromModule()
+for more useful constructors.
 
 =cut
 
@@ -553,41 +459,142 @@ sub new {
 	return bless $self, $class;
 }
 
-=item newFromType($type, $argsRef)
-
-Creates a new WeBWorK::URLPath given a type name and a hashref containing type
-arguments. You will probably never use this. Use C<newFromPath> instead.
-
-=cut
-
-sub newFromType {
-	my ($invocant, $type, %args) = @_;
-	return $invocant->new(
-		type => $type,
-		args => \%args,
-	);
-}
-
 =item newFromPath($path)
 
-Creates a new WeBWorK::URLPath by parsing the path given in C<$path>. It the
-path is invalid, an undefined value is returned.
+Creates a new WeBWorK::URLPath by parsing the path given in $path. It the path
+is invalid, an exception is thrown.
 
 =cut
 
 sub newFromPath {
 	my ($invocant, $path) = @_;
-	my ($type, %args) = getpathType($path);
-	return undef unless $type;
+	
+	my ($type, %args) = getPathType($path);
+	die "no type matches path $path" unless $type;
+	
 	return $invocant->new(
 		type => $type,
 		args => \%args,
 	);
 }
 
+=item newFromModule($module, %args)
+
+Creates a new WeBWorK::URLPath by finding a path type which matches the module
+and path arguments given. If no type matches, an exception is thrown.
+
+=cut
+
+sub newFromModule {
+	my ($invocant, $module, %args) = @_;
+	
+	my $type = getModuleType($module, keys %args);
+	die "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
+	
+	return $invocant->new(
+		type => $type,
+		args => \%args
+	);
+}
+
 =back
 
+=cut
+
+################################################################################
+
 =head1 METHODS
+
+=head2 Methods that return information from the object itself
+
+=over
+
+=item type()
+
+Returns the path type of the WeBWorK::URLPath.
+
+=cut
+
+sub type {
+	my ($self) = @_;
+	my $type = $self->{type};
+	
+	return $type;
+}
+
+=item args()
+
+Returns a hash of arguments derived from the WeBWorK::URLPath.
+
+=cut
+
+sub args {
+	my ($self) = @_;
+	my %args = %{ $self->{args} };
+	
+	return %args;
+}
+
+=item arg($name)
+
+Returns the named argument, as derived from the WeBWorK::URLPath.
+
+=cut
+
+sub arg {
+	my ($self, $name) = @_;
+	my %args = %{ $self->{args} };
+	
+	return $args{$name};
+}
+
+=back
+
+=cut
+
+# ------------------------------------------------------------------------------
+
+=head2 Methods that return information from path node associated with the object
+
+=over
+
+=item name()
+
+Returns the human-readable name of this WeBWorK::URLPath.
+
+=cut
+
+sub name {
+	my ($self) = @_;
+	my $type = $self->{type};
+	my %args = $self->args;
+	
+	my $name = $pathTypes{$type}->{name};
+	$name = interpolate($name, %args);
+	
+	return $name;
+}
+
+=item module()
+
+Returns the name of the module that will handle this WeBWorK::URLPath.
+
+=cut
+
+sub module {
+	my ($self) = @_;
+	my $type = $self->{type};
+	
+	return $pathTypes{$type}->{display};
+}
+
+=back
+
+=cut
+
+# ------------------------------------------------------------------------------
+
+=head2 Methods that search the virtual heirarchy
 
 =over
 
@@ -610,7 +617,7 @@ sub parent {
 	my %newArgs = %{ $self->{args} };
 	delete @newArgs{@currArgs} if @currArgs;
 	
-	return $self->newFromType($newType, %newArgs);
+	return $self->new(type => $newType, args => \%newArgs);
 }
 
 =item child($module, %newArgs)
@@ -635,79 +642,223 @@ sub child {
 	}
 	
 	if ($newType) {
-		return $self->newFromType($newType, %newArgs);
+		return $self->new(type => $newType, args => \%newArgs);
 	} else {
 		return undef;
 	}
 }
 
-=item name()
+=item path()
 
-Returns the name of this WeBWorK::URLPath.
-
-=cut
-
-sub name {
-	my ($self) = @_;
-	my $type = $self->{type};
-	my %args = $self->args;
-	my $name = $pathTypes{$type}->{name};
-	$name =~ s/\$(\w+)/$args{$1} || "\$$1"/eg; # variable interpolation
-	return $name;
-}
-
-=item module()
-
-Returns the name of the module that will handle this WeBWorK::URLPath.
-
-=cut
-
-sub module {
-	my ($self) = @_;
-	my $type = $self->{type};
-	return $pathTypes{$type}->{display};
-}
-
-=item args()
-
-Returns a hash of arguments derived from the WeBWorK::URLPath.
-
-=cut
-
-sub args {
-	my ($self) = @_;
-	return %{ $self->{args} };
-}
-
-=item arg($name)
-
-Returns the named argument, as derived from the WeBWorK::URLPath.
-
-=cut
-
-sub arg {
-	my ($self, $name) = @_;
-	return $self->{args}->{$name};
-}
-
-=item path(%newArgs)
-
-Reconstructs the path string from a WeBWorK::URLPath. The contents of
-C<%newArgs> will override the arguments stored in the URLPath.
+Reconstructs the path string from a WeBWorK::URLPath.
 
 =cut
 
 sub path {
-	my ($self, %newArgs) = @_;
+	my ($self) = @_;
+	my $type = $self->type;
+	my %args = %{ $self->{args} };
 	
-	my %args = (
-		%{ $self->{args} },
-		%newArgs,
-	);
+	my $path = buildPathFromType($type);
+	$path = interpolate($path, %args);
 	
-	my $path = reconstructPath($self->{type});
-	$path =~ s/\$(\w+)/$args{$1} || "\$$1"/eg; # variable interpolation
 	return $path;
 }
+
+=back
+
+=cut
+
+################################################################################
+
+=head1 UTILITY FUNCTIONS
+
+=head2 
+
+=over
+
+=item interpolate($string, %symbols)
+
+Replaces simple scalars (\$\w+) in $string with values in %symbols. If a scalar
+does not exist in %symbols, it is left alone.
+
+=cut
+
+sub interpolate {
+	my ($string, %symbols) = @_;
+	
+	$string =~ s/\$(\w+)/exists $symbols{$1} ? $symbols{$1} : "\$$1"/eg;
+	
+	return $string;
+}
+
+=back
+
+=cut
+
+# ------------------------------------------------------------------------------
+
+=head2 
+
+=over
+
+=item getPathType($path)
+
+Parse the string $path, determining the path type. Returns ($type, %args), where
+$type is the type of the path and %args contains any extracted path arguments.
+If conversion fails, a false value is returned.
+
+=cut
+
+sub getPathType($) {
+	my ($path) = @_;
+	
+	my %args;
+	my $context = visitPathTypeNode("root", $path, \%args, 0);
+	
+	return $context, %args;
+}
+
+=item getModuleType($module, @args)
+
+Returns the path type matching the given module and argument names, or a false
+value if no type matches.
+
+=cut
+
+sub getModuleType {
+	my ($module, @args) = @_;
+	@args = sort @args;
+	my %args;
+	@args{@args} = ();
+	
+	NODE: foreach my $nodeID (keys %pathTypes) {
+		my $node = $pathTypes{$nodeID};
+		
+		# module name matches?
+		next NODE unless $node->{display} eq $module;
+		
+		# collect all captures from here to root
+		my @captures;
+		my $tmpNodeID = $nodeID;
+		while ($tmpNodeID) {
+			my $tmpNode = $pathTypes{$tmpNodeID};
+			push @captures, @{ $tmpNode->{capture} };
+			$tmpNodeID = $tmpNode->{parent};
+		}
+		
+		# same number of captures?
+		next NODE unless @captures == @args;
+		
+		# same captures?
+		@captures = sort @captures;
+		for (my $i = 0; $i < @args; $i++) {
+			next NODE unless $args[$i] eq $captures[$i];
+		}
+		
+		# if we got here, this node matches
+		return $nodeID;
+	}
+	
+	return 0; # no node matches
+}
+
+=item buildPathFromType($type)
+
+Returns a string path for the given path type. Since arguments are not supplied,
+the string may contain scalar variables ripe for interpolation.
+
+=cut
+
+sub buildPathFromType($) {
+	my ($type) = @_;
+	
+	my $path = "";
+	
+	while ($type) {
+		$path = $pathTypes{$type}->{produce} . $path;
+		$type = $pathTypes{$type}->{parent};
+	};
+	
+	return $path;
+}
+
+=item visitPathTypeNode($nodeID, $path, $argsRef, $indent)
+
+Internal search function. See getPathType().
+
+=cut
+
+sub visitPathTypeNode($$$$);
+
+sub visitPathTypeNode($$$$) {
+	my ($nodeID, $path, $argsRef, $indent) = @_;
+	debug("visitPathTypeNode", $indent, "visiting node $nodeID with path $path\n");
+	
+	unless (exists $pathTypes{$nodeID}) {
+		debug("visitPathTypeNode", $indent, "node $nodeID doesn't exist in node list: failed\n");
+		die "node $nodeID doesn't exist in node list: failed";
+	}
+	
+	my %node = %{ $pathTypes{$nodeID} };
+	my $match = $node{match};
+	my @capture_names = @{ $node{capture} };
+	
+	debug("visitPathTypeNode", $indent, "trying to match $match: ");
+	if ($path =~ s/($match)//) {
+		debug("", 0, "success!\n");
+		my @capture_values = $1 =~ m/$match/;
+		if (@capture_names) {
+			my $nexpected = @capture_names;
+			my $ncaptured = @capture_values;
+			my $max = $nexpected > $ncaptured ? $nexpected : $ncaptured;
+			warn "captured $ncaptured arguments, expected $nexpected." unless $ncaptured == $nexpected;
+			for (my $i = 0; $i < $max; $i++) {
+				my $name = $capture_names[$i];
+				my $value = $capture_values[$i];
+				if ($i > $nexpected) {
+					warn "captured an unexpected argument: $value -- ignoring it.";
+					next;
+				}
+				if ($i > $ncaptured) {
+					warn "expected an uncaptured argument named: $name -- ignoring it.";
+					next;
+				}
+				if (exists $argsRef->{$name}) {
+					my $old = $argsRef->{$name};
+					warn "encountered an existing argument again, old value: $old new value: $value -- replacing.";
+				}
+				debug("visitPathTypeNode", $indent, "setting argument $name => $value.\n");
+				$argsRef->{$name} = $value;
+			}
+		}
+	} else {
+		debug("", 0, "failed.\n");
+		return 0;
+	}
+	
+	if ($path eq "") {
+		debug("visitPathTypeNode", $indent, "no path left, type is $nodeID\n");
+		return $nodeID;
+	}
+	
+	debug("visitPathTypeNode", $indent, "but path remains: $path\n");
+	my @kids = @{ $node{kids} };
+	if (@kids) {
+		foreach my $kid (@kids) {
+			debug("visitPathTypeNode", $indent, "trying child $kid:\n");
+			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent+1);
+			return $result if $result;
+		}
+		debug("visitPathTypeNode", $indent, "no children claimed the remaining path: failed.\n");
+	} else {
+		debug("visitPathTypeNode", $indent, "no children to claim the remaining path: failed.\n");
+	}
+	return 0;
+}
+
+=back
+
+=cut
 
 1;
