@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.26 2004/08/31 01:15:53 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.27 2004/09/02 21:21:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -184,8 +184,8 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		print "<!-- ƒ‰£¢ŠþŸ÷€ÆÒØ†¬Ë¸©ÙÍ–®·’¡ýÐÛµ -->\n";
-		print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
+		#print "<!-- äí£¢î™½ÀÛüÕÍÑù­Æøá©Á¼³ê÷ÃÉžÇßµ -->\n";
+		#print "<!-- Those were some high-bit characters to convince Safari that we really do want this saved as a file. -->\n";
 		$self->do_export_database;
 	} else {
 		$self->SUPER::content;
@@ -1050,7 +1050,10 @@ sub export_database_form {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Select a course to export the course's database.");
+	print CGI::p("Select a course to export the course's database. Please note
+	that exporting can take a very long time for a large course. If you have
+	shell access to the WeBWorK server, you may use the ", CGI::code("wwdb"), "
+	utility instead.");
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
