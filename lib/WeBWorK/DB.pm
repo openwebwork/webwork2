@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.60 2004/12/18 22:21:26 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.61 2004/12/19 00:53:27 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -343,7 +343,7 @@ sub hashDatabaseOK {
 		$self->{set_user}->{driver}->connect("ro")
 			or return 0, @results, "Failed to connect to set_user database.";
 		
-		# get PSVNs for global user (•N)
+		# get PSVNs for global user (ïN)
 		# this reads from "login<>global_user"
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
@@ -358,7 +358,7 @@ sub hashDatabaseOK {
 			#warn "got setID '$setID'\n";
 		}
 		
-		# get PSVNs for each setID (•N*M)
+		# get PSVNs for each setID (ïN*M)
 		# this reads from "set<>$_"
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
@@ -1971,7 +1971,7 @@ sub checkKeyfields($) {
 				unless $value =~ m/^\d*$/;
 		} else {
 			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_.])"
-				unless $value =~ m/^[.\w-]*$/;
+				unless $value =~ m/^[.\w\-]*$/;
 		}
 	}
 }
