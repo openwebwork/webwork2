@@ -33,8 +33,12 @@ sub handler() {
 	my $path_info = $r->path_info;
 	my $path_translated = $r->lookup_uri($path_info)->filename;
 	my $current_uri = $r->uri;
-	unless ($path_info) {
-		$r->header_out(Location => "$current_uri/");
+	my $args = $r->args;
+	
+	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
+	# alllll over the place.
+	unless (substr($current_uri,-1) eq '/') {
+		$r->header_out(Location => "$current_uri/?$args");
 		return REDIRECT;
 	}
 	

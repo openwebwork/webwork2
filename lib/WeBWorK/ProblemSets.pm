@@ -14,7 +14,7 @@ sub go() {
 	$self->header; return OK if $r->header_only;
 	$self->top("Problem Sets for $user");
 	
-	print startform({-method=>"POST", -action=>$r->uri."/set4"});
+	print startform({-method=>"POST", -action=>$r->uri."set4/"});
 	print $self->hidden_authen_fields;
 	print input({-type=>"submit", -value=>"Do Set 4"});
 	print endform;

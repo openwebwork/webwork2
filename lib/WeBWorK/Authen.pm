@@ -83,7 +83,7 @@ sub verify($) {
 		if ($key ne 'invalidkeyhahaha') {
 			$return = 1;
 		} else {
-			$error = "Your session has expired.  You must re-login";
+			$error = "Your session has expired.  You must login again";
 			$return = 0;
 		}
 	} else {

@@ -1,6 +1,5 @@
 #TODO: The HTML code here has two failings:
 # - It is hard-coded into the script, which is against policy
-# - It is very ugly and hastily written
 
 # Other than that, this file is done for the forseeable future,
 # and should serve us nicely unless the interface to WeBWorK::Authen
@@ -32,15 +31,12 @@ sub go($) {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	if ($r->notes("authen_error")) {
-	  	print '<font color="red"><b>',$r->notes("authen_error"),"</b></font><br>";
+		print font({-color=>red}, b($r->notes("authen_error"))),br;
 	}
 	
 	# $self->print_form_data(""," = ","<br>\n");
 	
-	print p("Please enter your username and password for ",
-	  b($course),
-	  " below:");
-
+	print p("Please enter your username and password for ",b($course)," below:");
 	print startform({-method=>"POST", -action=>$r->uri});
 
 	#  '<form method="POST" action="',$r->uri,'">';

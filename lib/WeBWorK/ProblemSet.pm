@@ -13,7 +13,8 @@ sub go() {
 	
 	$self->header; return OK if $r->header_only;
 	$self->top("Problem set $problem_set for $user");
-	print startform({-method=>"POST", -action=>$r->uri."/prob2"});
+
+	print startform({-method=>"POST", -action=>$r->uri."prob2/"});
 	print $self->hidden_authen_fields;
 	print input({-type=>"submit", -value=>"Do Problem 2"});
 	print endform;

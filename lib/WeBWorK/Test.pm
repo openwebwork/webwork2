@@ -15,6 +15,7 @@ our @ISA = qw(WeBWorK::ContentGenerator);
 sub go() {
 	my $self = shift;
 	my $r = $self->{r};
+	my $course_env = $self->{courseEnvironment};
 	$r->content_type("text/html");
 	$r->send_http_header;
 
@@ -32,6 +33,12 @@ print<<EOT;
 EOT
 	$self->print_form_data(""," = ","<br>");
 	
+	print "<hr><pre>";
+	
+	print $course_env->hash2string;
+
+	print "</pre>";
+		
 	print '<br><form method="POST" action="',$r->uri,'">';
 	$self->print_form_data('<input type="hidden" name="','" value = "',"\">\n");
 	print '<input type="submit" value="repost"></form>';
