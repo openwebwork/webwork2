@@ -11,7 +11,6 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
-use WeBWorK::DB::Record::Set;
 
 sub initialize {
 	my $self = shift;
@@ -32,7 +31,7 @@ sub initialize {
 			$db->deleteGlobalSet($wannaDelete);
 		}
 	} elsif (defined($r->param('makeNewSet'))) {
-		my $newSetRecord = WeBWorK::DB::Record::Set->new();
+		my $newSetRecord = $db->{set}->{record}->new();
 		my $newSetName = $r->param('newSetName');
 		$newSetRecord->set_id($newSetName);
 		$newSetRecord->set_header("");
@@ -40,7 +39,7 @@ sub initialize {
 		$newSetRecord->open_date("0");
 		$newSetRecord->due_date("0");
 		$newSetRecord->answer_date("0");
-		$db->addGlobalSet($newSetRecord) unless $db->getGlobalSet($newSetName);
+		eval {$db->addGlobalSet($newSetRecord)};
 	}
 }
 
@@ -50,6 +49,7 @@ sub title {
 }
 
 sub body {
+	warn "body\n";
 	my $self = shift;
 	my $r = $self->{r};
 	my $db = $self->{db};
