@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.91 2004/04/04 17:08:45 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.92 2004/04/27 02:45:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -228,21 +228,24 @@ sub r {
 	return $self->{r};
 }
 
-=item reply_with_file($type, $source, $name)
+=item reply_with_file($type, $source, $name, $delete_after)
 
 Enables file sending mode, causing go() to send the file specified by $source to
 the client after calling pre_header_initialize(). The content type sent is
-$type, and the suggested client-side file name is $name.
+$type, and the suggested client-side file name is $name. If $delete_after is
+true, $source is deleted after it is sent.
 
 =cut
 
 sub reply_with_file {
-	my ($self, $type, $source, $name) = @_;
+	my ($self, $type, $source, $name, $delete_after) = @_;
+	$delete_after ||= "";
 	
 	$self->{reply_with_file} = {
 		type => $type,
 		source => $source,
 		name => $name,
+		delete_after => $delete_after,
 	};
 }
 
@@ -256,9 +259,10 @@ sub do_reply_with_file {
 	my ($self, $fileHash) = @_;
 	my $r = $self->r;
 	
-	my $type = $self->{sendFile}->{type};
+	my $type = $fileHash->{type};
 	my $source = $fileHash->{source};
-	my $name = $self->{sendFile}->{name};
+	my $name = $fileHash->{name};
+	my $delete_after = $fileHash->{delete_after};
 	
 	# if there was a problem, we return here and let go() worry about sending the reply
 	return NOT_FOUND unless -e $source;
@@ -278,6 +282,10 @@ sub do_reply_with_file {
 	
 	# close the file and go home
 	close $fh;
+	
+	if ($delete_after) {
+		unlink $source or warn "failed to unlink $source after sending: $!";
+	}
 }
 
 =item reply_with_redirect($url)
