@@ -564,7 +564,7 @@ sub viewOptions($) {
 sub previewAnswer($$) {
 	my ($self, $answerResult) = @_;
 	my $ce          = $self->{courseEnvironment};
-	my $user        = $self->{user};
+	my $effectiveUser        = $self->{effectiveUser};
 	my $set         = $self->{set};
 	my $problem     = $self->{problem};
 	my $displayMode = $self->{displayMode};
@@ -594,7 +594,7 @@ sub previewAnswer($$) {
 	} elsif ($displayMode eq "images") {
 		# how are we going to name this?
 		my $targetPathCommon = "/png/"
-			. $user->id . "."
+			. $effectiveUser->id . "."
 			. $set->id . "."
 			. $problem->id . "."
 			. $answerResult->{ans_name} . ".png";
