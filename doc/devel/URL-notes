@@ -1,0 +1,47 @@
+(+) = list
+
+What we have now (outside of the instructor tree):
+
+$webworkURLRoot
+	$courseID
+		test
+		$setID
+			$problemID
+		hardcopy
+			$setID
+		login
+		logout
+		options
+		feedback
+		instructor
+			[...]
+
+What we should have (for now):
+
+$webworkURLRoot
+	$courseID -- lists sets
+		test -- prints debugging information
+		$setID -- lists problems in a set
+			$problemID -- displays problem (interactive mode)
+		hardcopy -- prompts user for which sets/users to generate
+			$setID (+) -- generates hardcopy for specified sets
+		login -- prompts for login information
+		logout -- deletes session information, displays logout message
+		options -- allows user to change email address and password
+		feedback -- allows user to send feedback to professor
+		instructor -- gives user a choice between user list and set list
+			sets -- lists/edits (global) sets
+				$setID -- displays/edits (global) set data
+					problems -- lists (global) problems for a set
+						$problemID -- displays/edits (global) set data
+					users -- lists/edits assigned users
+						$userID (+) -- displays/edits user-specific set data
+							problems -- lists/edits assigned problems
+								$problemID -- 
+			users -- lists/edits users
+				$userID -- displays/edits user data
+					sets -- lists/edits assigned sets
+						$setID -- displays/edits user-specific set data
+							problems -- lists/edits assigned problems
+								$problemID -- displays/edits user-specific
+								              problem data
