@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.25 2004/01/03 17:12:55 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.26 2004/01/17 17:05:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -286,16 +286,32 @@ sub verify($) {
 				last VERIFY;
 			}
 		}
+		########################################################
+		# Make sure user status is correct
+		########################################################
+		my $userRecord = $db->getUser($user);
+		my $userStatus = $userRecord -> status;
+		########################################################
+		# for backward compatibility handle the case where status is not defined
+		########################################################
+		unless (defined $userStatus) {
+			$userRecord-> status('C');
+			warn "Setting status for user $user to C.  It was previously undefined.";
+		}
+		#########################################################
+		# Fail with error message if status is D or dropped
+		#########################################################
+		if ($db->getUser($user)->status eq 'D' or $db->getUser($user)->status eq 'DROPPED') {
+			$error  = "The user $user has been dropped from this course. Please contact
+			your instructor if this is an error.";
+			last VERIFY;
 		
+		}
+		#########################################################
 		# a password was supplied.
+		#########################################################
 		if ($passwd) {
-			# if user has been dropped from the course fail with error message
-			unless ($db->getUser($user)->status eq 'C') {
-				$error  = "The user $user has been dropped from this course. Please contact
-				your instructor if this is an error.";
-				last VERIFY;
-			
-			}
+
 			if ($self->checkPassword($user, $passwd)) {
 				# valid password, so create a new session. (we don't want
 				# to reuse an old one, duh.)
