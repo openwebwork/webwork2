@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.20 2004/04/03 16:24:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.21 2004/04/04 04:00:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,7 +224,7 @@ sub body {
 	my @editForUser = $r->param('editForUser');
 	
 	my $problemListPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseName, setID => $setName);
-	my $problemListURL   = $self->systemLink($problemListPage);
+	my $problemListURL   = $self->systemLink($problemListPage,authen=>0);
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
