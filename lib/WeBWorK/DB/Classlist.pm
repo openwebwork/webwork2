@@ -7,7 +7,7 @@ package WeBWorK::DB::Classlist;
 
 use strict;
 use warnings;
-use WeBWorK::DB::User;
+use WeBWorK::User;
 
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
@@ -146,7 +146,7 @@ sub encode(@) {
 sub hash2user($%) {
 	my $userID = shift;
 	my %hash = @_;
-	my $user = WeBWorK::DB::User->new(id => $userID);
+	my $user = WeBWorK::User->new(id => $userID);
 	$user->first_name    ( $hash{stfn} ) if defined $hash{stfn};
 	$user->last_name     ( $hash{stln} ) if defined $hash{stln};
 	$user->email_address ( $hash{stea} ) if defined $hash{stea};

@@ -3,7 +3,7 @@
 # $Id$
 ################################################################################
 
-package WeBWorK::DB::User;
+package WeBWorK::User;
 
 use strict;
 use warnings;
