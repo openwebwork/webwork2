@@ -19,7 +19,7 @@ TEXT(beginproblem());
 #
 #   The setup
 #
-Context('Numeric')->variables->add(a=>'Real');
+Context('Interval')->variables->add(a=>'Real');
 $x = Formula('x'); $a = Formula('a');
 
 $f = log($x-$a);
