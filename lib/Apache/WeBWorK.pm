@@ -12,8 +12,10 @@ package Apache::WeBWorK;
 
 use strict;
 use Apache::Constants qw(:common REDIRECT);
-use WeBWorK::CourseEnvironment;
 use Apache::Request;
+use WeBWorK::CourseEnvironment;
+use WeBWorK::Test;
+#use WeBWorK::Authen;
 
 # registering discontent: wanted to call this dispatch, but mod_perl gave me lip
 sub handler() {
@@ -26,8 +28,6 @@ sub handler() {
 		return REDIRECT;
 	}
 	
-	$r->content_type('text/html');
-	$r->send_http_header;
 	return OK if $r->header_only;
 	my($junk, @components) = split "/", $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
@@ -36,15 +36,16 @@ sub handler() {
 	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $course);};
 	if ($@) {
 		# TODO: display an error page.  For now, print something mildly useful
-		$r->print('<p><font color=red>'.$@.'</font></p>');
+		return DECLINED;
 	}
 	
-	# These values are part of the standard webwork form, and at least two
-	# of them should appear in every form on the system.  Depending on when
-	# you are reading this, this may or may not be enforced in the code.
-	$user = $r->param('user');
-	$passwd = $r->param('passwd');
-	$key = $r->param('key');
+#	if (!WeBWorK::Authen->new($r, $course_env)->authen) {
+#		return WeBWorK::Login->new($r, $course_env)->go();
+#	} else {
+		if (1) {
+			return WeBWorK::Test->new($r, $course_env)->go();
+		}
+#	}
 	
 	
 	
