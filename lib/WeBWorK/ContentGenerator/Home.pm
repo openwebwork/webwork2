@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.1 2004/02/14 00:54:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.2 2004/03/15 23:04:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use CGI::Pretty qw();
 use WeBWorK::Utils qw/readDirectory/;
+use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 sub loginstatus { "" }
 sub links { "" }
@@ -38,7 +39,7 @@ sub body {
 	my $coursesDir = $r->ce->{webworkDirs}->{courses};
 	my $coursesURL = $r->ce->{webworkURLs}->{root};
 	
-	my @courseIDs = grep { $_ ne "." and $_ ne ".." and -d "$coursesDir/$_" } readDirectory($coursesDir);
+	my @courseIDs = listCourses($r->ce);
 	
 	print CGI::p("Welcome to WeBWorK!");
 	
