@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.13 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.14 2003/12/09 02:42:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,7 @@ sub count {
 	$self->{driver}->connect("ro");
 	my @result = $self->{driver}->dbi()->selectrow_array($stmt);
 	$self->{driver}->disconnect();
-	croak "failed to SELECT: $DBI::errstr" unless defined $result;
+	
 	return @result[0];
 }
 
