@@ -294,7 +294,7 @@ sub generateHardcopy($) {
 	#	}
 	#}
 
-	# determine name of PDF file
+	# determine name of PDF file  #FIXME it might be best to have the effective user in here somewhere
 	my $courseName = $self->{ce}->{courseName};
 	my $fileNameSet = (@sets > 1 ? "multiset" : $sets[0]);
 	my $fileNameUser = (@users > 1 ? "multiuser" : $users[0]);
@@ -302,9 +302,20 @@ sub generateHardcopy($) {
 	
 	# for each user ... generate TeX for each set
 	my $tex;
+	#
+	# the document tex preamble
+	$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{preamble});
+	# separate users by page break, or something
 	foreach my $user (@users) {
-		$tex .= $self->getMultiSetTeX(@sets);
+		$tex .=  $self->getMultiSetTeX($user, @sets);
+	    if (@users) {
+			# separate users, but not after the last set
+			$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{userDivider});
+		}
+		
 	}
+	# the document postamble
+	$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{postamble});
 	
 	# deal with PG errors
 	if (@{$self->{errors}}) {
@@ -371,7 +382,9 @@ sub latex2pdf {
 	}
 	
 	# remove temporary directory
-	rmtree($wd, 0, 1);
+	#FIXME  rmtree is commented out only for debugging purposes.
+	#print STDERR "tex temp directory at $wd";
+	 rmtree($wd, 0, 1);
 	
 	-e $finalFile or die "Failed to create $finalFile for no apparent reason.\n";
 }
@@ -381,37 +394,42 @@ sub latex2pdf {
 sub texBlockComment(@) { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)."\n\n"; }
 
 sub getMultiSetTeX {
-	my ($self, @sets) = @_;
+	my ($self, $effectiveUserName,@sets) = @_;
 	my $ce = $self->{ce};
 	my $tex = "";
 	
-	# the document preamble
-	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{preamble});
+	
 	
 	while (defined (my $setName = shift @sets)) {
-		$tex .= $self->getSetTeX($setName);
+		$tex .= $self->getSetTeX($effectiveUserName, $setName);
 		if (@sets) {
 			# divide sets, but not after the last set
 			$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{setDivider});
 		}
 	}
 	
-	# the document postamble
-	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{postamble});
+
 	
 	return $tex;
 }
 
 sub getSetTeX {
-	my ($self, $setName) = @_;
+	my ($self, $effectiveUserName,$setName) = @_;
 	my $ce = $self->{ce};
 	my $db = $self->{db};
-	my $effectiveUserName = $self->{effectiveUser}->user_id;
+	
+	# FIXME (debug code line next)
+	# print STDERR "Creating set $setName for $effectiveUserName \n";
+	
+	# FIXME We could define a default for the effective user if no correct name is passed in.
+	# I'm not sure that it is wise.
+	my $effectiveUser = $db->getUser($effectiveUserName);
+	
 	my @problemNumbers = sort { $a <=> $b }
 		$db->listUserProblems($effectiveUserName, $setName);
 	
 	# get header and footer
-	my $setHeader = $db->getGlobalUserSet($effectiveUserName, $setName)->set_header
+	my $setHeader = $db->getMergedSet($effectiveUserName, $setName)->set_header
 		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
 	#my $setFooter = $wwdb->getGlobalUserSet($effectiveUserName, $setName)->set_footer
@@ -423,12 +441,12 @@ sub getSetTeX {
 	
 	# render header
 	$tex .= texBlockComment("BEGIN $setName : $setHeader");
-	$tex .= $self->getProblemTeX($setName, 0, $setHeader);
+	$tex .= $self->getProblemTeX($effectiveUser,$setName, 0, $setHeader);
 	
 	# render each problem
 	while (my $problemNumber = shift @problemNumbers) {
 		$tex .= texBlockComment("BEGIN $setName : $problemNumber");
-		$tex .= $self->getProblemTeX($setName, $problemNumber);
+		$tex .= $self->getProblemTeX($effectiveUser,$setName, $problemNumber);
 		if (@problemNumbers) {
 			# divide problems, but not after the last problem
 			$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{problemDivider});
@@ -437,26 +455,28 @@ sub getSetTeX {
 	
 	# render footer
 	$tex .= texBlockComment("BEGIN $setName : $setFooter");
-	$tex .= $self->getProblemTeX($setName, 0, $setFooter);
+	$tex .= $self->getProblemTeX($effectiveUser,$setName, 0, $setFooter);
 	
 	return $tex;
 }
 
 sub getProblemTeX {
-	my ($self, $setName, $problemNumber, $pgFile) = @_;
+	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
 	my $db = $self->{db};
 	
-	my $effectiveUser = $self->{effectiveUser};
+	# Should we provide a default user ? I think not FIXME
+	
+	# $effectiveUser = $self->{effectiveUser} unless defined($effectiveUser);
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $db->getGlobalUserSet($effectiveUser->user_id, $setName);
+	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
 	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {
-		$problem = $db->getGlobalUserProblem($effectiveUser->user_id, $setName, $problemNumber);
+		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber);
 	} elsif ($pgFile) {
 		$problem = WeBWorK::DB::Record::UserProblem->new(
 			set_id => $set->set_id,
