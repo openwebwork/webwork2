@@ -39,6 +39,35 @@ sub initialize {
 		}
 	}
 }
+sub getSetName {
+	my ($self, $pathSetName) = @_;
+	if (ref $pathSetName eq "HASH") {
+		$pathSetName = undef;
+	}
+	return $pathSetName;
+}
+sub path {
+	my $self          = shift;
+    my @components    = @_;
+	my $args          = $_[-1];
+	
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $set_id    = $self->getSetName($components[0]);
+	return $self->pathMacro($args,
+		"Home"          => "$root",
+		$courseName     => "$root/$courseName",
+		'instructor'    => "$root/$courseName/instructor",
+		'sets'          => "$root/$courseName/instructor/sets/",
+		"$set_id"   => "$root/$courseName/instructor/sets/$set_id",
+		"assign"      => ''
+	);
+}
+sub title {
+	my ($self, @components) = @_;
+	return "Assign problems to students - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
+}
 
 sub body {
 	my ($self, $setID) = @_;

@@ -131,7 +131,7 @@ sub path {
 		$courseName     => "$root/$courseName",
 		'instructor'    => "$root/$courseName/instructor",
 		'sets'          => "$root/$courseName/instructor/sets/",
-		"set:$set_id"   => '',
+		"$set_id"   => '',
 	);
 }
 
