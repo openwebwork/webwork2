@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.168 2004/11/18 16:00:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.169 2004/12/17 16:59:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -472,12 +472,8 @@ sub pre_header_initialize {
 	$self->{formFields}     = $formFields;
 
 	# get result and send to message
-#	my $success	       = $r->param("success");
-#	my $failure	       = $r->param("failure");
 	my $status_message = $r->param("status_message");
-#	$self->addbadmessage(CGI::p($failure)) if $failure;
-#	$self->addgoodmessage(CGI::p($success)) if $success;
-	$self->addgoodmessage(CGI::p("$status_message")) if $status_message;
+	$self->addmessage(CGI::p("$status_message")) if $status_message;
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
