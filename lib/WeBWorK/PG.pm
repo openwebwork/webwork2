@@ -262,12 +262,13 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
 	
 	# Problem Information
-	# ADDED: courseName
+	# ADDED: courseName, formatedDueDate
 	
 	$envir{openDate}            = $set->open_date;
 	$envir{formattedOpenDate}   = formatDateTime($envir{openDate});
 	$envir{dueDate}             = $set->due_date;
 	$envir{formattedDueDate}    = formatDateTime($envir{dueDate});
+	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
 	$envir{answerDate}          = $set->answer_date;
 	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate});
 	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
