@@ -548,34 +548,58 @@ sub viewOptions($) {
 
 sub previewAnswer($$) {
 	my ($self, $answerResult) = @_;
-	my $ce      = $self->{courseEnvironment};
-	my $user    = $self->{user};
-	my $set     = $self->{set};
-	my $problem = $self->{problem};
+	my $ce          = $self->{courseEnvironment};
+	my $user        = $self->{user};
+	my $set         = $self->{set};
+	my $problem     = $self->{problem};
+	my $displayMode = $self->{displayMode};
 	
-	# how are we going to name this?
-	my $targetPathCommon = "/png/"
-		. $user->id . "."
-		. $set->id . "."
-		. $problem->id . "."
-		. $answerResult->{ans_name} . ".png";
+	# note: right now, we have to do things completely differently when we are
+	# rendering math from INSIDE the translator and from OUTSIDE the translator.
+	# so we'll just deal with each case explicitly here. there's some code
+	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
 	
-	# figure out where to put things
-	my $wd = tempdir("webwork-dvipng-XXXXXXXX", DIR => $ce->{courseDirs}->{html_temp});
-	my $latex = $ce->{externalPrograms}->{latex};
-	my $dvipng = $ce->{externalPrograms}->{dvipng};
 	my $tex = $answerResult->{preview_latex_string};
-	my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
-			# should use surePathToTmpFile, but we have to
-			# isolate it from the problem enivronment first
-	my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
 	
-	# call dvipng to generate a preview
-	dvipng($wd, $latex, $dvipng, $tex, $targetPath);
-	if (-e $targetPath) {
-		return "<img src=\"$targetURL\" alt=\"$tex\" />";
-	} else {
-		return "<b>[math2img failed]</b>";
+	if ($displayMode eq "plainText") {
+		return $tex;
+	} elsif ($displayMode eq "formattedText") {
+		my $tthCommand = $ce->{externalPrograms}->{tth}
+			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+			. "\\($tex\\)\n"
+			. "END_OF_INPUT\n";
+		
+		
+		# call tth
+		my $result = `$tthCommand`;
+		if ($?) {
+			return "<b>[tth failed: $? $@]</b>";
+		}
+		return $result;
+	} elsif ($displayMode eq "images") {
+		# how are we going to name this?
+		my $targetPathCommon = "/png/"
+			. $user->id . "."
+			. $set->id . "."
+			. $problem->id . "."
+			. $answerResult->{ans_name} . ".png";
+
+		# figure out where to put things
+		my $wd = tempdir("webwork-dvipng-XXXXXXXX", DIR => $ce->{courseDirs}->{html_temp});
+		my $latex = $ce->{externalPrograms}->{latex};
+		my $dvipng = $ce->{externalPrograms}->{dvipng};
+		my $targetPath = $ce->{courseDirs}->{html_temp} . $targetPathCommon;
+				# should use surePathToTmpFile, but we have to
+				# isolate it from the problem enivronment first
+		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
+
+		# call dvipng to generate a preview
+		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
+		if (-e $targetPath) {
+			return "<img src=\"$targetURL\" alt=\"$tex\" />";
+		} else {
+			return "<b>[math2img failed]</b>";
+		}
 	}
 }
 

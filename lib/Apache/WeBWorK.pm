@@ -103,14 +103,13 @@ sub handler() {
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
-		my $effectiveUser = $r->param("effectiveUser") || "";
 		my $user = $r->param("user");
+		my $effectiveUser = $r->param("effectiveUser") || "";
 		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
-		# This hoary statement has the effect of forcing effectiveUser to equal user unless
-		# the user is otherwise authorized.
-		if (!($user ne $effectiveUser && $su_authorized) || !defined $effectiveUser) {
-			$r->param("effectiveUser",$user);
-		}
+		#if (!($user ne $effectiveUser && $su_authorized) || !defined $effectiveUser) {
+		$r->param("effectiveUser", $user) unless $su_authorized;
+		
+		warn "WeBWorK: user=$user eUser=", $r->param("effectiveUser"), "\n";
 		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets

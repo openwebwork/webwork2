@@ -361,7 +361,22 @@ sub header {
 	$r->send_http_header();
 }
 
-# drunk code. rewrite.
+sub loginstatus {
+	my $self = shift;
+	my $r = $self->{r};
+	my $user = $r->param("user");
+	my $eUser = $r->param("effectiveUser");
+	my $key = $r->param("key");
+	return "" unless $key;
+	warn "user=$user eUser=$eUser\n";
+	print CGI::small("Logged in as:", CGI::br(), "$user");
+	if ($user ne $eUser) {
+		print CGI::br(), CGI::font({-color=>'red'}, CGI::small("Acting as:", CGI::br(), "$eUser"));
+	}
+	return "";
+}
+
+# *** drunk code. rewrite.
 # also, this should be structured s.t. subclasses can add items to the links
 # area, i.e. "stacking"
 sub links {
