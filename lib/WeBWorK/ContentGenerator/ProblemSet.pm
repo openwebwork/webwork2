@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.47 2004/05/07 00:55:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.48 2004/05/13 16:02:33 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use strict;
 use warnings;
 use CGI qw(*ul *li);
 use WeBWorK::PG;
+use WeBWorK::Timing;
 use WeBWorK::Utils qw(sortByName);
 
 sub initialize {
@@ -53,8 +54,8 @@ sub initialize {
 	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
 	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
 	my $globalSet = $db->getGlobalSet($setName);
-	$globalSet->published("1") unless $globalSet->published eq "0";
-	$set->published("1") unless $set->published eq "0";
+	$globalSet->published("1") unless defined($globalSet->published) && $globalSet->published eq "0";
+	$set->published("1") unless defined($set->published) && $set->published eq "0";
 	$db->putGlobalSet($globalSet);
 
 	my $published = ($set->published) ? "Published" : "Unpublished";
@@ -104,11 +105,24 @@ sub siblings {
 	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
 	print CGI::start_ul();
 
+	# FIXME: setIDs contain no info on published/unpublished so unpublished sets are still printed
+	$WeBWorK::timer->continue("Begin printing sets from listUserSets()") if defined $WeBWorK::timer;
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
 		print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $setID));
 	}
+	$WeBWorK::timer->continue("End printing sets from listUserSets()") if defined $WeBWorK::timer;
+
+	# FIXME: when database calls are faster, this will get rid of unpublished sibling links
+	#$WeBWorK::timer->continue("Begin printing sets from getMergedSets()") if defined $WeBWorK::timer;	
+	#my @userSetIDs = map {[$eUserID, $_]} @setIDs;
+	#my @sets = $db->getMergedSets(@userSetIDs);
+	#foreach my $set (@sets) {
+	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", courseID => $courseID, setID => $set->set_id);
+	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $self->{permissionLevel} > 0));
+	#}
+	#$WeBWorK::timer->continue("Begin printing sets from getMergedSets()") if defined $WeBWorK::timer;
 	
 	print CGI::end_ul();
 	print CGI::end_li();
@@ -320,11 +334,13 @@ sub problemListRow($$$) {
 	$status = 'unknown(FIXME)' if $@;                           # use a blank if problem status was not defined or not numeric.
 	                                                            # FIXME  -- this may not cover all cases.
 	
+	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+	
 	return CGI::Tr(CGI::td({-nowrap=>1}, [
 		$interactive,
 		$attempts,
 		$remaining,
-		$status,
+		$status . " " . $msg,
 	]));
 }
 

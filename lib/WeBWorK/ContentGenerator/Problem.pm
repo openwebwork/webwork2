@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.126 2004/05/12 14:28:43 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.127 2004/05/13 16:02:33 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -174,6 +174,8 @@ sub pre_header_initialize {
 		my $published = ($set->published) ? "Published" : "Unpublished";
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$published}, $published)));
 	} else {
+	
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("This problem will not count towards your grade."))) unless $problem->value;;
 		# students can't view problems not assigned to them
 
 		# A set is valid if it exists and if it is either published or the user is privileged.
@@ -778,11 +780,13 @@ sub body {
 			$setClosedMessage .= " Additional attempts will not be recorded.";
 		}
 	}
+	
+	my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	print CGI::p(
 		$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 		"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
 		$problem->attempted
-			? "Your recorded score is $lastScore." . CGI::br()
+			? "Your recorded score is $lastScore.  $notCountedMessage" . CGI::br()
 			: "",
 		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
