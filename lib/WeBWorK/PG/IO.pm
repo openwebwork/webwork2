@@ -8,7 +8,8 @@ package WeBWorK::PG::IO;
 use strict;
 use warnings;
 use Exporter;
-use Image::Info qw(image_info dim);
+#use Image::Info qw(image_info dim);
+use GD;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -202,7 +203,6 @@ sub getDirDelim {
 
 sub getCourseTempDirectory {
 	return ($Global::courseTempDirectory);
-	#return "/ww/webwork/courses/sam_course/html/tmp/";
 }
 
 =head2 surePathToTmpFile
@@ -347,9 +347,18 @@ Returns the height and width of an image, given a path the the image file. Uses 
 =cut
 
 sub getImageDimmensions($) {
-	my $image = shift;
-	my $info = image_info($image);
-	my ($width, $height) = dim($info);
+	my $imageName = shift;
+	my $image = GD::Image->new($imageName);
+	my ($width, $height) = $image->getBounds();
+	## if we pass &image_info a file name, it will try to require Symbol (so that it
+	## can generate a symbol for a file handle). instead, we pass it a reference to a
+	## reference to a file handle that we've already opened.
+	#my $image_handle;
+	#open $image_handle, "<", $image or warn "&getImageDimmensions: Couldn't open image $image: $!\n";
+	#my $info = image_info($image_handle);
+	#warn join "!!", %$info;
+	#close $image_handle;
+	#my ($width, $height) = dim($info);
 	return ($height, $width);
 }
 
