@@ -69,7 +69,7 @@ sub nav {
 
 sub siblings {
 	my ($self, $setName) = @_;
-	
+#	$WeBWorK::timer0->continue('begin  siblings');
 	my $ce = $self->{ce};
 	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
@@ -79,33 +79,49 @@ sub siblings {
 	print CGI::strong("Problem Sets"), CGI::br();
 	
 	my @sets;
-	push @sets, $db->getMergedSet($effectiveUser, $_)
-		foreach ($db->listUserSets($effectiveUser));
 	
+	#  FIXME   The following access to the complete list of sets is very slow.
+	#  $WeBWorK::timer0->continue('collect siblings');
+	#  push @sets, $db->getMergedSet($effectiveUser, $_)
+	#  	  foreach ($db->listUserSets($effectiveUser));
+	
+	my @setNames = $db->listUserSets($effectiveUser);
+	@setNames   = sort @setNames;
+#	$WeBWorK::timer0->continue('done collecting siblings');
 	# FIXME only experience will tell us the best sorting procedure.
 	# due_date seems right for students, but alphabetically may be more
 	# useful for professors?
 	
-	my @sorted_sets;
+# 	my @sorted_sets;
+# 	
+# 	# sort by set name
+# 	#@sorted_sets = sort { $a->set_id cmp $b->set_id } @sets;
+# 	
+# 	# sort by set due date
+# 	$WeBWorK::timer0->continue('begin sorting siblings');
+# 	@sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
+# 	
+# 	# ...and put closed sets last;
+# 	my $now = time();
+# 	my @open_sets = grep { $_->due_date > $now } @sorted_sets;
+# 	my @closed_sets = grep { $_->due_date <= $now } @sorted_sets;
+# 	@sorted_sets = (@open_sets,@closed_sets);
+# 	$WeBWorK::timer0->continue('end sorting siblings');
+# 	foreach my $set (@sorted_sets) { 
+# 		if (time >= $set->open_date) {
+# 			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
+# 				. $self->url_authen_args}, $set->set_id), CGI::br();
+# 		} else {
+# 			print $set->set_id, CGI::br();
+# 		}
+# 	}
+# hack to put links up quickly FIXME when database is faster.
+	foreach my $setName (@setNames) {
 	
-	# sort by set name
-	#@sorted_sets = sort { $a->set_id cmp $b->set_id } @sets;
+		print CGI::a({-href=>"$root/$courseName/".$setName."/?"
+ 				. $self->url_authen_args}, $setName), CGI::br();
 	
-	# sort by set due date
-	@sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
-	# ...and put closed sets last;
-	my $now = time();
-	my @open_sets = grep { $_->due_date > $now } @sorted_sets;
-	my @closed_sets = grep { $_->due_date <= $now } @sorted_sets;
-	@sorted_sets = (@open_sets,@closed_sets);
 	
-	foreach my $set (@sorted_sets) { 
-		if (time >= $set->open_date) {
-			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
-				. $self->url_authen_args}, $set->set_id), CGI::br();
-		} else {
-			print $set->set_id, CGI::br();
-		}
 	}
 }
 
