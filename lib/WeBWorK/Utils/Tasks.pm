@@ -110,7 +110,7 @@ sub fake_problem {
   return($problem); 
 } 
 
-=item render_problems($r, $user, @problem_list)
+=item render_problems(r => $r, user => $user, problem_list => \@problem_list)
 
 Given an Apache request object, the current user, and a list of problem
 files, return a list of pg objects which contain rendered versions of
@@ -119,42 +119,54 @@ the problems.
 =cut
 
 sub renderProblems { 
-  my ($r,$user,@problem_list) = @_; 
+  my %args = @_;
+  my $r = $args{r};
+  my $user = $args{user};
+  my @problem_list = @{$args{problem_list}};
+	
   my $db = $r->db; 
   my $ce = $r->ce; 
   my $key = $r->param('key'); 
   my $set = fake_set($db); 
   my $problem_seed = $r->param('problem_seed') || 0;
-  my $displayMode = $r->param("displayMode")   
-    || $ce->{pg}->{options}->{displayMode}; 
+  my $displayMode = $args{displayMode} ||
+    $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+
   my @output = (); 
-  my $problem = fake_problem($db, 'problem_seed'=>$problem_seed); 
-  my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
+  my $onefile;
+  if($displayMode eq 'None') {
+    for $onefile (@problem_list) {
+      my $res = { body_text=>'Click "Try it" to see the problem rendered'};
+      push @output, $res; 
+    }
+  } else {
+    my $problem = fake_problem($db, 'problem_seed'=>$problem_seed); 
+    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
  
-  my $problemNumber=1;          #Is this necessary? 
-  my $onefile; 
-  for $onefile (@problem_list) { 
-    $problem->problem_id($problemNumber++); 
-    $problem->source_file($onefile); 
-    my $pg = WeBWorK::PG->new( 
-                              $ce, 
-                              $user, 
-                              $key,
-                              $set, #$set, 
-                              $problem, 
-                              123, #  $set->psvn, # FIXME: this field should be\ removed 
-                              $formFields, 
-                              { # translation options 
-                               displayMode     => $displayMode, 
-                               showHints       => 0, 
-                               showSolutions   => 0, 
-                               refreshMath2img => 0, 
-                               processAnswers  => 0, 
-                              } 
-                             ); 
+    my $problemNumber=1;
+    for $onefile (@problem_list) { 
+      $problem->problem_id($problemNumber++); 
+      $problem->source_file($onefile); 
+      my $pg = WeBWorK::PG->new( 
+                                $ce, 
+                                $user, 
+                                $key,
+                                $set,
+                                $problem, 
+                                123, #  $set->psvn, # FIXME: this field should be\ removed 
+                                $formFields, 
+                                { # translation options 
+                                 displayMode     => $displayMode, 
+                                 showHints       => 0, 
+                                 showSolutions   => 0, 
+                                 refreshMath2img => 0, 
+                                 processAnswers  => 0, 
+                                } 
+                               ); 
  
-    push @output, $pg; 
-  } 
+      push @output, $pg; 
+    } 
+  }
   return(@output); 
 } 
 
