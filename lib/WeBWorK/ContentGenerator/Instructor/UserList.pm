@@ -65,6 +65,8 @@ sub fieldEditHTML {
 	my $type = $properties->{type};
 	my $access = $properties->{access};
 	my $items = $properties->{items};
+	my $synonyms = $properties->{synonyms};
+	
 	
 	if ($access eq "readonly") {
 		return $value;
@@ -73,6 +75,20 @@ sub fieldEditHTML {
 		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
 	}
 	if ($type eq "enumerable") {
+		my $matched = undef; # Whether a synonym match has occurred
+
+		# Process synonyms for enumerable objects
+		foreach my $synonym (keys %$synonyms) {
+			if ($synonym ne "*" and $value =~ m/$synonym/) {
+				warn "$value matched re $synonym\n";
+				$value = $synonyms->{$synonym};
+				warn $value;
+				$matched = 1;
+			}
+		}
+		if (!$matched and exists $synonyms->{"*"}) {
+			$value = $synonyms->{"*"};
+		}
 		return CGI::popup_menu({
 			name => $fieldName, 
 			values => [keys %$items],
@@ -156,6 +172,13 @@ sub body {
 			items => {
 				"C" => "Enrolled",
 				"D" => "Drop",
+				"A" => "Audit",
+			},
+			synonyms => {
+				qr/^[ce]/i => "C",
+				qr/^[dw]/i => "D",
+				qr/^a/i => "A",
+				"*" => "C",
 			}
 		},
 		section => {
