@@ -19,7 +19,40 @@ use base qw(Exporter);
 
 =head1 NAME
 
-WeBWorK::Utils::FormatRecords - utilities for formatting database records as strings.
+WeBWorK::Utils::FormatRecords - utilities for formatting database records as
+strings.
+
+=head1 SYNOPSIS
+
+ use WeBWorK::Utils::FormatRecords qw/getFormatsForClass/;
+ 
+ # get a list of formats
+ my ($formatsRef, $formatLabelsRef) = getFormatsForClass(ref $Users[0]);
+ my @formats      = @$formatsRef;      # format names
+ my %formatLabels = %$formatLabelsRef; # suitable for CGI's "-labels" parameter
+
+ use WeBWorK::Utils::FormatRecords qw/formatRecords/;
+ 
+ # start with a hash mapping identifiers to records
+ my %Records = map { $_->user_id => $_ } $db->getUsers($db->listUsers);
+ 
+ # format the records using a preset
+ my %recordLabels = formatRecords({preset=>"lnfn_uid"}, %Records);
+ 
+ # or provide a custom format
+ my %options = {
+ 	field_order   => [ qw/user_id section recitation/ ],
+ 	format_string => "%s %s/%s", # suitable for sprintf
+ };
+ my %recordLabels = formatRecords(\%options, %Records);
+ 
+ # %recordLabels is suitable for CGI's "-labels" parameter
+
+=head1 DESCRIPTION
+
+This module provides record formatting functions, and a collection of preset
+formats for the standard WeBWorK record classes. Formats are specified by a list
+of field names and an sprintf format string.
 
 =cut
 
@@ -68,6 +101,25 @@ use constant PRESET_FORMATS => {
 	},
 };
 
+=head1 FUNCTIONS
+
+=over
+
+=item getFormatsForClass($class)
+
+Given the name of a record class, returns the preset formats available for that
+class.
+
+The return value consists of a two-element list. The first element is a
+reference to a list of format names. The second element is a reference to a hash
+mapping format names to string descriptions.
+
+Together, these two lists are suitable for passing to the C<-values> and
+C<-labels> parameters of several CGI module methods, i.e. popup_menu(),
+scrolling_list(), checkbox_group(), and radio_group().
+
+=cut
+
 sub getFormatsForClass {
 	my ($class) = @_;
 	
@@ -84,6 +136,30 @@ sub getFormatsForClass {
 	#return ( [@field_order, @preset_order], {%fields, %presets} );
 	return ( \@preset_order, \%presets );
 }
+
+=item formatRecords(\%options, %Records)
+
+Given a format specification (or the name of a preset format) and a hash mapping
+record identifiers to records, returns a hash mapping identifiers to formatted
+strings.
+
+The keys of the %Records hash are not used by formatRecords() They are a
+convenience for you.
+
+%options can consist of either:
+
+ preset => the name of a preset format listed by getFormatsForClass()
+
+or:
+
+ field_order   => a reference to a list of fields in the records' class
+ format_string => an sprintf format string corresponding to the fields listed above
+
+The return value is suitable for passing to the C<-labels> parameter of several
+CGI module methods, i.e. popup_menu(), scrolling_list(), checkbox_group(), and
+radio_group().
+
+=cut
 
 sub formatRecords {
 	my ($options, %Records) = @_;
@@ -130,11 +206,15 @@ sub formatRecords {
 	return %Records;
 }
 
+=head1 BUGS
+
+The calling semantics of formatRecords is somewhat inflexible. We shouldn't make
+the user pass a hash if a list is sufficient for their use.
+
+No provision for programmatic formats, which are required for formatting dates.
+
+=back
+
+=cut
+
 1;
-
-
-
-
-
-
-
