@@ -14,6 +14,8 @@ our @EXPORT_OK = qw(
 	parseDateTime
 	dbDecode
 	dbEncode
+	decodeAnswers
+	encodeAnswers
 	ref2string
 	hash2string
 	array2string
@@ -52,11 +54,13 @@ sub parseDateTime($) {
 	return str2time $string;
 }
 
+# -----
+
 sub dbDecode($) {
 	my $string = shift;
 	return unless defined $string and $string;
 	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
-	$hash{$_} =~ s/\\(&|=)/$1/g foreach (keys %hash); # unescape & and =
+	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
 	return %hash;
 }
 
@@ -69,6 +73,28 @@ sub dbEncode(@) {
 		$string .= "$_=$hash{$_}&";
 	}
 	chop $string; # remove final '&' from string for old code :p
+	return $string;
+}
+
+sub decodeAnswers($) {
+	my $string = shift;
+	return unless defined $string and $string;
+	my @array = split m/##/, $string;
+	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
+	return @array; # it's actually a hash ;)
+}
+
+sub encodeAnswers(\%\@) {
+	my %hash = %{ shift() };
+	my @order = @{ shift() };
+	my $string;
+	foreach my $name (@order) {
+		my $value = defined $hash{$name} ? $hash{$name} : "";
+		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
+		$value =~ s/#/\\#\\/g; # and it's not my fault!
+		$string .= "$name##$value##"; # this is also not my fault
+	}
+	$string =~ s/##$//; # remove last pair of hashs
 	return $string;
 }
 
@@ -96,9 +122,16 @@ sub ref2string($;$) {
 			}
 		} elsif ($baseType eq "ARRAY") {
 			my @array = @$ref;
+			# special case for Problem, Set, and User objects, which are defined
+			# using lists and contain a @FIELDS package variable:
+			no strict 'refs';
+			my @FIELDS = eval { @{$refType."::FIELDS"} };
+			use strict 'refs';
+			undef @FIELDS unless scalar @FIELDS == scalar @array and not $@;
 			foreach (0 .. $#array) {
 				$result .= '<tr valign="top">';
 				$result .= "<td>$_</td>";
+				$result .= "<td>".$FIELDS[$_]."</td>" if @FIELDS;
 				$result .= "<td>" . ref2string($array[$_], $dontExpand) . "</td>";
 				$result .= "</tr>";
 			}
