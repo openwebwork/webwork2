@@ -313,15 +313,18 @@ sub body {
 			die "Action $actionID not found";
 		}
 		# Check permissions
-		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-		my $actionHandler = "${actionID}_handler";
-		my %genericParams;
-		foreach my $param (qw(selected_sets)) {
-			$genericParams{$param} = [ $r->param($param) ];
+		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
+			my $actionHandler = "${actionID}_handler";
+			my %genericParams;
+			foreach my $param (qw(selected_sets)) {
+				$genericParams{$param} = [ $r->param($param) ];
+			}
+			my %actionParams = $self->getActionParams($actionID);
+			my %tableParams = $self->getTableParams();
+			print CGI::div({class=>"Message"}, CGI::p("Results of last action performed: ", $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))), CGI::hr();
+		} else {
+			return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to perform this action."));
 		}
-		my %actionParams = $self->getActionParams($actionID);
-		my %tableParams = $self->getTableParams();
-		print CGI::div({class=>"Message"}, CGI::p("Results of last action performed: ", $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))), CGI::hr();
 
 	}
 		
