@@ -687,7 +687,7 @@ sub body {
 		CGI::hidden("showHints",          $will{showHints}),"\n",
 		CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
 		CGI::p({-align=>"left"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Contact instructor")
+			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 		),
 		CGI::endform(),"\n";
 		
