@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.93 2004/04/29 22:20:36 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.94 2004/05/04 16:03:09 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -504,7 +504,9 @@ sub links {
 		
 		my $userID    = $r->param("effectiveUser");
 		my $setID     = $urlpath->arg("setID");
+		$setID = "" unless grep /$setID/, $db->listUserSets($userID);
 		my $problemID = $urlpath->arg("problemID");
+		$problemID = "" unless grep /$problemID/, $db->listUserProblems($userID, $setID);
 		
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
 		my $addUsers = $urlpath->newFromModule("${ipfx}AddUsers", %args);
@@ -726,6 +728,8 @@ Defined in this package.
 
 Print any error messages resulting from the last form submission.
 
+This method is deprecated -- use message() instead
+
 The implementation in this package prints the value of the field
 $self->{submitError}, if it is present.
 
@@ -740,6 +744,50 @@ sub submiterror {
 	
 	return "";
 }
+
+=item message()
+
+Defined in this package.
+
+Print any messages (error or non-error) resulting from the last form submission.
+This could be used to give Sucess and Failure messages after an action is performed by a module.
+
+The implementation in this package prints the value of the field
+$self->{message}, if it is present.
+
+=cut
+
+sub message {
+	my ($self) = @_;
+	
+	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
+	print $self->{message} if exists $self->{message};
+	print "<!-- END " . __PACKAGE__ . "::message -->\n";
+	
+	return "";
+}
+
+=item addmessage($message)
+
+Defined in this package.
+
+Concatenates a new message to any previous ones.
+This is preferred over any direct access to $self->{message} to avoid overwriting any
+previously submitted messages
+
+The implementation in this package concatenates the given message to the end of the
+current value of the field $self->{message} or sets $self->{message} if it is empty
+
+=cut
+
+sub addmessage {
+	my ($self, $message) = @_;
+	
+	$self->{message} .= $message;
+	
+	return "";
+}
+
 
 =item title()
 
@@ -879,6 +927,40 @@ sub if_submiterror {
 	my ($self, $arg) = @_;
 	
 	if (exists $self->{submitError}) {
+		return $arg;
+	} else {
+		return !$arg;
+	}
+}
+
+=item if_message($arg)
+
+If the last form submission generated a message, $arg is returned. Otherwise, the
+inverse of $arg is returned.
+
+The implementation in this package checks for the field $self->{message} to
+determine if a message is present.
+
+If a subclass uses some other method to classify submission results, this method could be
+redefined to handle that variance:
+
+ sub if_message {
+ 	my ($self, $arg) = @_;
+ 	
+ 	my $status = $self->{processReturnValue};
+ 	if ($status != 0) {
+ 		return $arg;
+ 	} else {
+ 		return !$arg;
+ 	}
+ }
+
+=cut
+
+sub if_message {
+	my ($self, $arg) = @_;
+	
+	if (exists $self->{message}) {
 		return $arg;
 	} else {
 		return !$arg;
