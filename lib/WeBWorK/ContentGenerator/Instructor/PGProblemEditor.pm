@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.25 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.26 2004/03/23 22:59:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile);
 use Apache::Constants qw(:common REDIRECT);
+use HTML::Entities;
 
 ###########################################################
 # This editor will edit problem files or set header files or files, such as course_info
@@ -73,7 +74,7 @@ sub pre_header_initialize {
 		#my $hostname = $r->hostname();
 		#my $port = $r->get_server_port();
 		#my $uri = $r->uri;
-		my $courseName = $urlpath->arg("courseID");
+		my $courseName  = $urlpath->arg("courseID");
 		my $problemSeed = ($r->param('problemSeed')) ? $r->param('problemSeed') : '';
 		my $displayMode = ($r->param('displayMode')) ? $r->param('displayMode') : '';
 		
@@ -82,17 +83,18 @@ sub pre_header_initialize {
 		# problems redirect to Problem.pm
 		$self->{file_type} eq 'problem' and do {
 			my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-				courseID => $courseName, setID => $setName, problemID => $problemNumber);
-			$viewURL = $self->systemLink($problemPage,
+				                   courseID => $courseName, setID => $setName, problemID => $problemNumber);
+			$viewURL        = $self->systemLink($problemPage,
 				params => {
-					displayMode => $displayMode,
-					problemSeed => $problemSeed,
-					editMode => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
-					sourceFilePath => $self->{currentSourceFilePath},
+					displayMode     => $displayMode,
+					problemSeed     => $problemSeed,
+					editMode        => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
+					sourceFilePath  => $self->{currentSourceFilePath},
+					submiterror     => $self->{submiterror},  
 				}
-			);
+			);  warn "error message is", $self->{submiterror};  # pass along any error messages
 		};
-		
+		warn "submit error is ",$r->param('submiterror');
 		# set headers redirect to ProblemSet.pm
 		$self->{file_type} eq 'set_header' and do {
 			my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
@@ -101,7 +103,7 @@ sub pre_header_initialize {
 				params => {
 					displayMode => $displayMode,
 					problemSeed => $problemSeed,
-					editMode => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
+					editMode    => ($submit_button eq "Save" ? "savedFile" : "temporaryFile"),
 				}
 			);
 		};
@@ -170,7 +172,6 @@ sub body {
 	my $displayMode = $self->{displayMode};
 	my $problemSeed = $self->{problemSeed};	
 	my $uri = $r->uri;
-	
 	return CGI::p($header),
 		#CGI::start_form("POST",$r->uri,-target=>'_problem'),  doesn't pass on the target parameter???
 		# THIS IS BECAUSE TARGET IS NOT A PARAMETER OF <FORM>!!!!!!!!
@@ -394,32 +395,30 @@ sub saveFileChanges {
 		eval {
 			local *OUTPUTFILE;
 			open OUTPUTFILE, ">", $currentSourceFilePath
-					or die "Failed to write to $currentSourceFilePath.  
-					It is likely that the permissions in the template directory have not been set correctly.".
-					"The web server must be able to create and write to files in the directory containing the problem. 
-					$!";
+					or die "Failed to open $currentSourceFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;
-		};
-		# FIXME: why is this in an eval{} ?!?!?!
+		};  # any errors are caught in the next block
+
 	}
 	
-	# record an error string for later use if there was a difficulty in writing to the file
-	# FIXME is this string ever inspected?
-	
+	###########################################################
+	# Catch errors in saving files,  clean up temp files
+	###########################################################
+
 	my $openTempFileErrors = $@ if $@;
 	
 	if ($openTempFileErrors) {
-		$self->{openTempFileErrors}	= "Unable to write to $currentSourceFilePath: $openTempFileErrors";
+		$self->{submiterror}	= "Unable to write to $currentSourceFilePath: It is likely that the permissions in the template directory have not been set correctly. See log for details.";
 		#diagnose errors:
-		warn "Editing errors: $openTempFileErrors\n";
+		warn "Unable to write to $currentSourceFilePath: $openTempFileErrors";
 		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath; #FIXME 
 		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
 		warn "The file $currentSourceFilePath does not have write permissions. \n"
 		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
+		
 	} else {	
 		# unlink the temporary file if there are no errors and the save button has been pushed
-		$self->{openTempFileErrors}	= '';
 		unlink("$editFilePath.$editFileSuffix")
 			if defined $submit_button and ($submit_button eq 'Save' or $submit_button eq 'Save as');
 	}
@@ -431,5 +430,6 @@ sub saveFileChanges {
 	$self->{r_problemContents}        =   \$problemContents;
 	$self->{editFileSuffix}           =   $editFileSuffix;
 }
+
 
 1;
