@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/SortRecords.pm,v 1.1 2004/03/01 00:49:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.1 2004/03/01 06:35:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,7 +47,6 @@ sub scrollingRecordList {
 	
 	my $default_sort = $options{default_sort} || "";
 	my $default_format = $options{default_format} || "";
-	warn "default_format=$default_format\n";
 	
 	my $size = $options{size};
 	my $multiple = $options{multiple};
@@ -77,7 +76,6 @@ sub scrollingRecordList {
 		$selected_format = $r->param("$name!format")
 			|| $default_format
 			|| (@$formats ? $formats->[0] : "");
-		warn "selected_format=$selected_format";
 		
 		@Records = sortRecords({preset=>$selected_sort}, @Records);
 		
@@ -107,6 +105,7 @@ sub scrollingRecordList {
 	);
 	
 	my %list_options = (
+		-class=>"ScrollingRecordList",
 		-name => "$name",
 		-values => \@ids,
 		-default => \@selected_records,
