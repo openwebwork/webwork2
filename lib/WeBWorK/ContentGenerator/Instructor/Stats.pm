@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.46 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.47 2004/10/26 03:16:40 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -533,51 +533,51 @@ print
 	print CGI::end_table();
 #####################################################################################
 	# construct header
-	my $problem_header = '';
-	
-	foreach my $i (1..$max_num_problems) {
-		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
-	}
-	print
-		CGI::p("Details:",CGI::i('The success indicator for each student is calculated as'),CGI::br(),
-			'(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)',CGI::br(),
-			CGI::i('or 0 if there are no attempts.')
-		),
-		"Click heading to sort table: ",
-	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
-		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
-		CGI::Tr(CGI::td(  {-align=>'left'},
-			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
-			 'Out'.CGI::br().'Of',
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
-			 'Problems'.CGI::br().$problem_header,
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
-			 'Recitation',
-			 'login_name',
-			 ])
-
-		);
-								
-	foreach my $rec (@augmentedUserRecords) {
-		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
-		my $email    = $rec->{email_address}; 
-		my $twoString  = $rec->{twoString};                             
-		print CGI::Tr(
-			CGI::td(CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
-			CGI::td($rec->{total}), # out of 
-			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
-			CGI::td($rec->{problemString}), # problems
-			CGI::td($self->nbsp($rec->{section})),
-			CGI::td($self->nbsp($rec->{recitation})),
-			CGI::td($rec->{user_id}),			
-			
-		);
-	}
-
-	print CGI::end_table();
-			
+# 	my $problem_header = '';
+# 	
+# 	foreach my $i (1..$max_num_problems) {
+# 		$problem_header .= CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>"p$i"})},threeSpaceFill($i) );
+# 	}
+# 	print
+# 		CGI::p("Details:",CGI::i('The success indicator for each student is calculated as'),CGI::br(),
+# 			'(totalNumberOfCorrectProblems / totalNumberOfProblems)^2/ AvgNumberOfAttemptsPerProblem)',CGI::br(),
+# 			CGI::i('or 0 if there are no attempts.')
+# 		),
+# 		"Click heading to sort table: ",
+# 	    defined($sort_method_name) ?" sort method is $sort_method_name":"",
+# 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+# 		CGI::Tr(CGI::td(  {-align=>'left'},
+# 			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
+# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
+# 			 'Out'.CGI::br().'Of',
+# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
+# 			 'Problems'.CGI::br().$problem_header,
+# 			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
+# 			 'Recitation',
+# 			 'login_name',
+# 			 ])
+# 
+# 		);
+# 								
+# 	foreach my $rec (@augmentedUserRecords) {
+# 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
+# 		my $email    = $rec->{email_address}; 
+# 		my $twoString  = $rec->{twoString};                             
+# 		print CGI::Tr(
+# 			CGI::td(CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
+# 			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
+# 			CGI::td($rec->{total}), # out of 
+# 			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
+# 			CGI::td($rec->{problemString}), # problems
+# 			CGI::td($self->nbsp($rec->{section})),
+# 			CGI::td($self->nbsp($rec->{recitation})),
+# 			CGI::td($rec->{user_id}),			
+# 			
+# 		);
+# 	}
+# 
+# 	print CGI::end_table();
+# 			
 			
 
 			
