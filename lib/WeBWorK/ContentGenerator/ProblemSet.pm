@@ -212,7 +212,7 @@ sub problemListRow($$$) {
 	my $remaining = $problem->max_attempts < 0
 		? "unlimited"
 		: $problem->max_attempts - $attempts;
-	my $status = $problem->status * 100 . "%";
+	my $status = sprintf("%.0f%%", $problem->status * 100); # round to whole number
 	
 	return CGI::Tr(CGI::td({-nowrap=>1}, [
 		$interactive,

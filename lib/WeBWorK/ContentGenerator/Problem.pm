@@ -503,7 +503,7 @@ sub body {
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $attemptsNoun = $attempts != 1 ? "times" : "time";
-	my $lastScore = int ($problem->status * 100) . "%";
+	my $lastScore = sprintf("%.0f%%", $problem->status * 100); # Round to whole number
 	my ($attemptsLeft, $attemptsLeftNoun);
 	if ($problem->max_attempts == -1) {
 		# unlimited attempts
