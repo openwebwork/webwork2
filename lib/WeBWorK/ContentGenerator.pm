@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.75 2004/01/17 16:29:52 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.76 2004/01/23 21:02:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -395,6 +395,14 @@ sub url_authen_args($) {
 	return $self->url_args("user","effectiveUser","key");
 }
 
+# returns non-breaking space for empty strings
+sub nbsp {
+	my $self = shift;
+	my $str  = shift;
+	($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
+	                                    # tricky cases:   $str =0;
+	                                    #  $str is a complex number
+}
 # print_form_data(BEGIN, MIDDLE, END, OMIT) - return a string containing request
 # fields not matched by OMIT, placing BEGIN before each field name, MIDDLE
 # between each field and its value, and END after each value. Values are taken
