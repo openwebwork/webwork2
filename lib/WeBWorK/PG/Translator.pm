@@ -736,7 +736,7 @@ the errors.
                     $self->{envir} ->{'probNum'} .
                     qq!"><PRE>        Problem!.
                     $self->{envir} ->{'probNum'}.
-                    qq!\nERROR caught by PGtranslator while processing problem file:! .
+                    qq!\nERROR caught by Translator while processing problem file:! .
                 	$self->{envir}->{'probFileName'}.
                 	"\n****************\r\n" .
                 	$self -> {errors}."\r\n" .
@@ -885,17 +885,17 @@ sub process_answers{
 		my $rh_ans_evaluation_result;
 		if (ref($rf_fun) eq 'CODE' ) {
 			$rh_ans_evaluation_result = $self->{safe} ->reval( '&{ $rf_fun }($temp_ans)' ) ;
-			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
+			warn "Error in Translator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
 		} elsif (ref($rf_fun) eq 'AnswerEvaluator')   {
 			$rh_ans_evaluation_result = $self->{safe} ->reval('$rf_fun->evaluate($temp_ans, ans_label => \''.$ans_name.'\')');
-			warn "Error in PGtranslator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
+			warn "Error in Translator.pm::process_answers: Answer $ans_name:<BR>\n $@\n" if $@;
 			warn "Evaluation error: Answer $ans_name:<BR>\n", 
 				$rh_ans_evaluation_result->error_flag(), " :: ",
 				$rh_ans_evaluation_result->error_message(),"<BR>\n" 
 					if defined($rh_ans_evaluation_result)  
 						and defined($rh_ans_evaluation_result->error_flag());
 		} else {
-			warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n Unrecognized evaluator type |", ref($rf_fun), "|";
+			warn "Error in Translator.pm::process_answers: Answer $ans_name:<BR>\n Unrecognized evaluator type |", ref($rf_fun), "|";
 		}	
   	    
 		$SIG{__DIE__} = $save_SIG_die_trap;
@@ -903,7 +903,7 @@ sub process_answers{
         
 		use strict;
 		unless ( ( ref($rh_ans_evaluation_result) eq 'HASH') or ( ref($rh_ans_evaluation_result) eq 'AnswerHash') ) {
-			warn "Error in PGtranslator5.pm::process_answers: Answer $ans_name:<BR>\n
+			warn "Error in Translator.pm::process_answers: Answer $ans_name:<BR>\n
 				Answer evaluators must return a hash or an AnswerHash type, not type |", 
 				ref($rh_ans_evaluation_result), "|";
 		}
