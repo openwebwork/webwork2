@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.3 2004/05/24 01:49:26 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.4 2004/05/24 15:35:43 mschmitt Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,9 @@ sub initialize {
 	my $courseName = $urlpath->arg('courseID');
  	my $user       = $r->param('user');
  	
- 	
+ 	# Check permissions
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	
  	$self->{type}  = $type;
  	if ($type eq 'student') {
  		my $studentName = $r->urlpath->arg("userID") || $user;
@@ -57,19 +59,18 @@ sub initialize {
 		$self->{set_due_date} = $setRecord->due_date;
 		$self->{setRecord}   = $setRecord;
  	}
-	
-	unless ($authz->hasPermissions($r->param("user"), "access_instructor_tools")) {
-		$self->addmessage("You are not authorized to view student progress");
-		return;
-	}
-		
- 	
- 	
 }
 
 
 sub title { 
 	my ($self) = @_;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	# Check permissions
+	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
+	
 	my $type                = $self->{type};
 	my $string              = "Student Progress for ".$self->{ce}->{courseName}." ";
 	if ($type eq 'student') {
@@ -84,8 +85,12 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
 	my $urlpath = $r->urlpath;
 	
+	# Check permissions
+	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $eUserID  = $r->param("effectiveUser");
@@ -118,12 +123,13 @@ sub body {
 	my $db         = $r->db;
 	my $ce         = $r->ce;
 	my $authz      = $r->authz;
+	my $user       = $r->param('user');
 	my $courseName = $urlpath->arg("courseID");
 	my $type       = $self->{type};
-	
-	unless ($authz->hasPermissions($r->param("user"), "access_instructor_tools")) {
-		return;
-	}
+
+	# Check permissions	
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 		
 	if ($type eq 'student') {
 		my $studentName  = $self->{studentName};
