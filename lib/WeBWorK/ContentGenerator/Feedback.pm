@@ -121,7 +121,7 @@ sub body {
 					. "&showHints=$showHints"
 					. "&showSolutions=$showSolutions" 
 					: "" );
-			$emailableURL = $URL . "?effectiveUser=$userName";
+			$emailableURL = $URL . "&effectiveUser=$userName";
 			$returnURL = $URL . '&'. $self->url_authen_args;
 		} else {
 			$URL = $emailableURL = "(not available)";
