@@ -44,6 +44,9 @@ sub initialize {
 			$db->putUser($userRecord);
 			$db->putPermissionLevel($permissionLevelRecord);
 		}
+		foreach my $userID ($r->param('deleteUser')) {
+			$db->deleteUser($userID);
+		}
 	} elsif (defined($r->param('addStudent'))) {
 		my $newUser = $db->newUser;
 		my $newPermissionLevel = $db->newPermissionLevel;
@@ -80,9 +83,7 @@ sub fieldEditHTML {
 		# Process synonyms for enumerable objects
 		foreach my $synonym (keys %$synonyms) {
 			if ($synonym ne "*" and $value =~ m/$synonym/) {
-				warn "$value matched re $synonym\n";
 				$value = $synonyms->{$synonym};
-				warn $value;
 				$matched = 1;
 			}
 		}
@@ -209,6 +210,7 @@ sub body {
 	# Table headings, prettied-up
 	print CGI::Tr({},
 		CGI::th({}, [
+			"Delete?",
 			map {$prettyFieldNames{$_}} (
 				$userTemplate->KEYFIELDS(),
 				$userTemplate->NONKEYFIELDS(),
@@ -225,6 +227,7 @@ sub body {
 		# A concise way of printing a row containing a cell for each field, editable unless it's a key
 		print CGI::Tr({},
 			CGI::td({}, [
+				CGI::input({type=>"checkbox", name=>"deleteUser", value=>$currentUser}),
 				(map {$userRecord->$_} $userRecord->KEYFIELDS),
 				(map {
 #					CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})
