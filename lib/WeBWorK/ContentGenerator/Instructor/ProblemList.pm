@@ -150,6 +150,7 @@ sub initialize {
 					$problemRecord->value("1");
 					$problemRecord->max_attempts("-1");
 					$db->addGlobalProblem($problemRecord);
+					$self->assignProblemToAllUsers($problemRecord);
 				}
 				$done = 1;
 			}

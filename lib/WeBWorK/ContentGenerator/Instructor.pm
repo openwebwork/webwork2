@@ -40,10 +40,14 @@ sub userCountMessage {
 	return $message;
 }
 
+### Utility functions for assigning sets to users.
+# These silently fail if the problem or set exists for the user.
+
 sub assignProblemToUser {
 	my ($self, $user, $globalProblem) = @_;
 	my $db = $self->{db};
 	my $userProblem = $db->{problem_user}->{record}->new;
+
 	# Set up the key
 	$userProblem->user_id($user);
 	$userProblem->set_id($globalProblem->set_id);
@@ -57,7 +61,7 @@ sub assignProblemToUser {
 	$userProblem->attempted(0);
 	$userProblem->problem_seed(int(rand(5000)));
 	
-	$db->addUserProblem($userProblem);
+	eval {$db->addUserProblem($userProblem)};
 }
 
 sub assignSetToUser {
@@ -68,7 +72,7 @@ sub assignSetToUser {
 
 	$userSet->user_id($user);
 	$userSet->set_id($setID);
-	$db->addUserSet($userSet);
+	eval {$db->addUserSet($userSet)};
 	
 	foreach my $problemID ($db->listGlobalProblems) {
 		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
@@ -84,10 +88,32 @@ sub assignProblemToAllUsers {
 	my ($self, $globalProblem) = @_;
 	my $db = $self->{db};
 	my $setID = $globalProblem->set_id;
-	my @users = $db->listSetUsers($setID);
+	my @users = $db->listSetUsers;
 	
 	foreach my $user (@users) {
 		$self->assignProblemToUser($user, $globalProblem);
+	}
+}
+
+# READ THIS: Unlike the above function, "All" here refers to all of the
+# users of a course.
+# This function caches database data as a speed optimization.
+sub assignSetToAllUsers {
+	my ($self, $setID) = @_;
+	my $db = $self->{db};
+	my @problems = ();
+	my @users = $db->listUsers($setID);
+	my @problemRecords = map {$db->getGlobalProblem($setID, $_)} $db->listGlobalProblems($setID);
+	
+	foreach my $user (@users) {
+		# FIXME: Create a UserSet record for the user!!!!
+		my $userSet = $db->{set_user}->{record}->new;
+		$userSet->user_id($user);
+		$userSet->set_id($setID);
+		eval {$db->addUserSet($userSet)};
+		foreach my $problemRecord (@problemRecords) {
+			$self->assignProblemToUser($user, $problemRecord);
+		}
 	}
 }
 

@@ -116,7 +116,7 @@ sub body {
 			. CGI::td({}, formatDateTime($set->due_date))
 			. CGI::td({}, formatDateTime($set->answer_date))
 			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/problems/?".$self->url_authen_args}, $problemCounts{$set->set_id}))
-			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/".$self->url_authen_args}, $userCountMessage))
+			. CGI::td({}, CGI::a({href=>$r->uri.$set->set_id."/users/?".$self->url_authen_args}, $userCountMessage))
 		) . "\n"
 	}
 	$table = CGI::table({"border"=>"1"}, "\n".$table."\n");
