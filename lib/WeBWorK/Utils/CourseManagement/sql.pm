@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.17 2004/06/24 17:44:16 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql.pm,v 1.1 2004/08/10 23:57:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -69,6 +69,8 @@ sub addCourseHelper {
 		runtime_use($recordClass);
 		my @fields = $recordClass->FIELDS;
 		debug("$table: WeBWorK field names: @fields\n");
+		my @keyfields = $recordClass->KEYFIELDS;
+		debug("$table: WeBWorK keyfield names: @keyfields\n");
 		
 		if (exists $params{fieldOverride}) {
 			my %fieldOverride = %{ $params{fieldOverride} };
@@ -80,7 +82,6 @@ sub addCourseHelper {
 		
 		# generate table creation statement
 		
-		my $tableName = $tableOverride || $table;
 		my @fieldList;
 		foreach my $field (@fields) {
 			# a stupid hack to make PSVNs numeric and auto-increment
@@ -90,7 +91,15 @@ sub addCourseHelper {
 				push @fieldList, "`$field` TEXT";
 			}
 		}
+		foreach my $start (0 .. $#keyfields) {
+			my $line = "INDEX ( ";
+			$line .= join(", ", map { "`$_`(16)" } @keyfields[$start .. $#keyfields]);
+			$line .= " )";
+			push @fieldList, $line;
+		}
 		my $fieldString = join(", ", @fieldList);
+		
+		my $tableName = $tableOverride || $table;
 		my $createStmt = "CREATE TABLE `$tableName` ( $fieldString );";
 
 		debug("$table: CREATE statement is: $createStmt\n");
