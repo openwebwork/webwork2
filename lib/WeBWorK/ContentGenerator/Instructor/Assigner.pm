@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.14 2004/01/23 16:49:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.15 2004/03/01 06:33:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,6 +60,34 @@ sub body {
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
 	
+	my @globalSetIDs = $db->listGlobalSets;
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	
+	my @selected_users = $r->param("selected_users");
+	my @selected_sets = $r->param("selected_sets");
+	
+	if (defined $r->param("assign")) {
+		if  (@selected_users && @selected_sets) {
+			my @results = $self->assignSetsToUsers(\@selected_sets, \@selected_users);
+			
+			if (@results) {
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("The following error(s) occured while assigning:"),
+					CGI::ul(CGI::li(\@results)),
+				);
+			} else {
+				print CGI::div({class=>"ResultsWithoutError"},
+					CGI::p("All assignments were made successfully."),
+				);
+			}
+		} else {
+			print CGI::div({class=>"ResultsWithError"},
+				@selected_users ? () : CGI::p("You must select one or more users below."),
+				@selected_sets ? () : CGI::p("You must select one or more sets below."),
+			);
+		}
+	}
+	
 	my $scrolling_user_list = scrollingRecordList({
 			name => "selected_users",
 			request => $r,
@@ -68,9 +96,6 @@ sub body {
 			size => 20,
 			multiple => 1,
 		}, @Users);
-	
-	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	
 	my $scrolling_set_list = scrollingRecordList({
 		name => "selected_sets",
@@ -84,20 +109,22 @@ sub body {
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 	print $self->hidden_authen_fields();
 	
-	print CGI::table({class=>"layout"},
-		CGI::Tr(
-			CGI::th("Users"),
-			CGI::th("Sets"),
-		),
-		CGI::Tr(
-			CGI::td({-align=>"center"}, $scrolling_user_list),
-			CGI::td({-align=>"center"}, $scrolling_set_list),
-		),
-		CGI::Tr(
-			CGI::td({colspan=>2, align=>"center"},
-				CGI::submit(
-					-name => "assign",
-					-value => "Assign selected sets to selected users",
+	print CGI::div({class=>"FormLayout"},
+		CGI::table(
+			CGI::Tr(
+				CGI::th("Users"),
+				CGI::th("Sets"),
+			),
+			CGI::Tr(
+				CGI::td($scrolling_user_list),
+				CGI::td($scrolling_set_list),
+			),
+			CGI::Tr(
+				CGI::td({colspan=>2, align=>"center"},
+					CGI::submit(
+						-name => "assign",
+						-value => "Assign selected sets to selected users",
+					),
 				),
 			),
 		),
