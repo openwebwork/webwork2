@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.45 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.46 2004/04/27 02:10:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -162,8 +162,10 @@ sub pre_header_initialize {
 		my $numberOfStudents  = $r->param('number_of_students');
 		warn "number of students not defined " unless defined $numberOfStudents;
 
-		my $uri=$self->systemLink($urlpath->new(type => 'instructor_add_users'),
-		                          params=>{number_of_students=>$numberOfStudents}
+		my $uri=$self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers',courseID=>$courseName),
+		                           params=>{
+		                          			number_of_students=>$numberOfStudents,
+		                                   }
 		);
 		#FIXME  does the display mode need to be defined?
 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
