@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id: wwsh,v 1.1 2003-04-22 20:49:31 sh002i Exp $
+################################################################################
+
+=head1 NAME
+
+wwdb - command-line interface to the WeBWorK libraries.
+
+=cut
+
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::Bin";
+use PSH;
+use lib "$FindBin::Bin/../lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
+
+sub main(@) {
+	my ($course) = @_;
+	
+	unless ($ENV{WEBWORK_ROOT}) {
+		die "WEBWORK_ROOT not found in environment.\n";
+	}
+	
+	unless ($course) {
+		die "usage: $0 course\n";
+	}
+	
+	our $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", $course);
+	our $db = WeBWorK::DB->new($ce);
+	(undef) = $db; # placate warnings
+	
+	print <<'EOF';
+wwsh - The WeBWorK Shell
+Available objects: $ce (WeBWorK::CourseEnvironment)
+                   $db (WeBWorK::DB)
+EOF
+	
+	PSH::prompt();
+}
+
+main(@ARGV);
