@@ -52,7 +52,8 @@ sub initialize {
 			$db->putUser($userRecord);
 			$db->putPermissionLevel($permissionLevelRecord);
 		}
-		foreach my $userID ($r->param('deleteUser')) {
+	} elsif (defined($r->param('delete_selected'))) {
+		foreach my $userID ($r->param('selectUser')) {
 			$db->deleteUser($userID);
 		}
 	} elsif (defined($r->param('addStudent'))) {
@@ -153,12 +154,17 @@ sub body {
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-
+	
 	return CGI::em("You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
-
+	
 	my $userTemplate = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
+	
+	my $editMode = 0;
+	if (defined $r->param("edit_selected") or defined $r->param("edit_visible")) {
+		$editMode = 1;
+	}
 	
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %prettyFieldNames = map { $_ => $_ } (
@@ -197,27 +203,27 @@ sub body {
 		first_name => {
 			type => "text",
 			size => 10,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		last_name => {
 			type => "text",
 			size => 10,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		email_address => {
 			type => "text",
 			size => 20,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		student_id => {
 			type => "text",
 			size => 11,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		status => {
 			type => "enumerable",
 			size => 4,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 			items => {
 				"C" => "Enrolled",
 				"D" => "Drop",
@@ -233,22 +239,22 @@ sub body {
 		section => {
 			type => "text",
 			size => 4,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		recitation => {
 			type => "text",
 			size => 4,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		comment => {
 			type => "text",
 			size => 20,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		},
 		permission => {
 			type => "number",
 			size => 2,
-			access => "readwrite",
+			access => $editMode ? "readwrite" : "readonly",
 		}
 	);
 	
@@ -273,8 +279,19 @@ sub body {
 		? $r->param("filter_recitation") || ""
 		: "";
 	
+	# override filter selection if "Edit Selected Users" button is pressed
+	if (defined $r->param("edit_selected")) {
+		$filter_type = "filter_selected";
+	}
+	
 	if ($filter_type eq "none") {
 		@userRecords = ();
+	} elsif ($filter_type eq "filter_selected") {
+		@userRecords = ();
+		my @userIDs = $r->param("selectUser");
+		if (@userIDs) {
+			@userRecords = $db->getUsers(@userIDs);
+		}
 	} elsif ($filter_type eq "filter_user_id") {
 		@userRecords = ();
 		if ($filter_user_id ne "") {
@@ -304,6 +321,8 @@ sub body {
 	# filter options
 	my %labels = (
 		none => "No users",
+		all => "All " . scalar @userIDs . " users",
+		filter_selected => "Users selected below",
 		filter_user_id => "User with ID " . CGI::input({
 			type=>"text",
 			name=>"filter_user_id",
@@ -322,25 +341,34 @@ sub body {
 			-labels=>{ $self->menuLabels(\%recitations) },
 			-default=>$filter_recitation,
 		),
-		all => "All " . scalar @userIDs . " users",
 	);
-	my $cgi = new CGI;
-	$cgi->autoEscape(0);
-	print "Show:", CGI::br();
-	print $cgi->radio_group(
-		-name=>"filter_type",
-		-values=>[ qw(none filter_user_id filter_section filter_recitation all) ],
-		-default=>$filter_type,
-		-linebreak=>"true",
-		-labels=>\%labels,
-	);
-	print CGI::submit({name=>"filter", value=>"Filter"});
+	
+	if ($editMode) {
+		print CGI::hidden(
+			-name=>"filter_type",
+			-value=>"filter_selected",
+		);
+	} else {
+		my $cgi = new CGI;
+		$cgi->autoEscape(0);
+		print "Show:", CGI::br();
+		print $cgi->radio_group(
+			-name=>"filter_type",
+			-values=>[ qw(none all filter_selected filter_user_id filter_section filter_recitation) ],
+			-default=>$filter_type,
+			-linebreak=>"true",
+			-labels=>\%labels,
+			-rows=>3,
+			-columns=>2,
+		);
+		print CGI::submit({name=>"filter", value=>"Filter"});
+	}
 	
 	print CGI::start_table({});
 	
 	# Table headings, prettied-up
 	my @tableHeadings = (
-		"Delete",
+		($editMode ? () : "Select"),
 		map {$prettyFieldNames{$_}} (
 			$userTemplate->KEYFIELDS(),
 			$userTemplate->NONKEYFIELDS(),
@@ -353,9 +381,12 @@ sub body {
 		CGI::th({}, \@tableHeadings)
 	);
 	
+	my @userIDsForHiddenSelectField;
+	
 	# process user records
 	foreach my $userRecord (@userRecords) {
 		my $currentUser = $userRecord->user_id;
+		push @userIDsForHiddenSelectField, $currentUser;
 		my $permissionLevel = $db->getPermissionLevel($currentUser);
 		unless (defined $permissionLevel) {
 			warn "No permissionLevel record for user $currentUser -- added";
@@ -370,14 +401,26 @@ sub body {
 		# A concise way of printing a row containing a cell for each field, editable unless it's a key
 		print CGI::Tr({},
 			CGI::td({}, [
-				CGI::input({type=>"checkbox", name=>"deleteUser", value=>$currentUser}),
-				(map {
-					my $changeEUserURL = "$root/$courseName?"
-						. "user=" . $r->param("user")
-						. "&effectiveUser=" . $userRecord->user_id
-						. "&key=" . $r->param("key");
-					CGI::a({href=>$changeEUserURL}, $userRecord->$_)
-				} $userRecord->KEYFIELDS),
+				($editMode
+					? () # don't show selection checkbox if we're in edit mode -- hidden field below
+					#: CGI::input({type=>"checkbox", name=>"selectUser", value=>$currentUser})
+					: CGI::checkbox(
+						-name=>"selectUser",
+						-value=>$currentUser,
+						-checked=>($filter_type eq "filter_selected" and not defined $r->param("editingAllVisibleUsers")),
+						-label=>""
+					)
+				),
+				($editMode
+					? $currentUser
+					: (map {
+						my $changeEUserURL = "$root/$courseName?"
+							. "user=" . $r->param("user")
+							. "&effectiveUser=" . $userRecord->user_id
+							. "&key=" . $r->param("key");
+						CGI::a({href=>$changeEUserURL}, $userRecord->$_)
+					} $userRecord->KEYFIELDS)
+				),
 				(map {
 					$self->fieldEditHTML(
 						"user." . $userRecord->user_id . "." .$_,
@@ -401,16 +444,34 @@ sub body {
 	}
 	
 	print CGI::end_table();
-	print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
+	
+	if ($editMode) {
+		print CGI::hidden(-name=>"selectUser", -value=>[ @userIDsForHiddenSelectField ]);
+		if (defined $r->param("edit_visible")) {
+			print CGI::hidden(-name=>"editingAllVisibleUsers", -value=>1);
+		}
+	}
+	
+	if ($editMode) {
+		print CGI::submit({name=>"discard_chagnes", value=>"Discard Changes to Users"});
+		print CGI::submit({name=>"save_classlist", value=>"Save Changes to Users"});
+	} else {
+		print CGI::submit({name=>"edit_visible", value=>"Edit Visible Users"});
+		print CGI::submit({name=>"edit_selected", value=>"Edit Selected Users"});
+		print CGI::submit({name=>"delete_selected", value=>"Delete Selected Users"});
+	}
+	
 	print CGI::end_form();
 	
 	# Add a student form
-	print CGI::start_form({method=>"post", action=>$r->uri()});
-	print $self->hidden_authen_fields();
-	print "User ID:";
-	print CGI::input({type=>"text", name=>"newUserID", value=>"", size=>"20"});
-	print CGI::submit({name=>"addStudent", value=>"Add Student"});
-	print CGI::end_form();
+	unless ($editMode) {
+		print CGI::start_form({method=>"post", action=>$r->uri()});
+		print $self->hidden_authen_fields();
+		print "User ID:";
+		print CGI::input({type=>"text", name=>"newUserID", value=>"", size=>"20"});
+		print CGI::submit({name=>"addStudent", value=>"Add User"});
+		print CGI::end_form();
+	}
 	
 	return "";
 }
