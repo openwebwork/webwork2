@@ -5,6 +5,7 @@
 
 package WeBWorK::ContentGenerator::Hardcopy;
 use base qw(WeBWorK::ContentGenerator);
+my $timer1_ON = 0;
 
 =head1 NAME
 
@@ -322,6 +323,7 @@ sub displayForm($) {
 		#	CGI::td({-colspan=>"2"}, "All Users"),
 		#);
 		#print CGI::Tr(CGI::td({-colspan=>"3"}, "&nbsp;"));
+
 		my @users;
 		push @users, $self->{db}->getUser($_)
 			foreach ($self->{db}->listUsers());
@@ -334,6 +336,7 @@ sub displayForm($) {
 				$user->last_name.", ".$user->first_name,
 			]));
 		}
+
 		print CGI::end_table();
 		print CGI::end_td();
 	}
@@ -644,6 +647,7 @@ sub getSetTeX {
 }
 
 sub getProblemTeX {
+    $WeBWorK::timer1 ->continue("hardcopy: begin processing problem") if $timer1_ON;
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
@@ -727,6 +731,7 @@ sub getProblemTeX {
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
+	$WeBWorK::timer1 ->continue("hardcopy: end processing problem") if $timer1_ON;
 	return $pg->{body_text};
 }
 

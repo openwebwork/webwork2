@@ -11,7 +11,7 @@ use base qw(WeBWorK::ContentGenerator);
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
-
+my $timer0_ON=0;  # times pg translation phase
 use strict;
 use warnings;
 use CGI qw();
@@ -221,7 +221,8 @@ sub pre_header_initialize {
 	}
 	
 	##### translation #####
-	
+
+	$WeBWorK::timer0->continue("begin pg processing") if $timer0_ON;
 	my $pg = WeBWorK::PG->new(
 		$courseEnv,
 		$effectiveUser,
@@ -239,6 +240,7 @@ sub pre_header_initialize {
 		},
 	);
 	
+	$WeBWorK::timer0->continue("end pg processing") if $timer0_ON;
 	##### fix hint/solution options #####
 	
 	$can{showHints}     &&= $pg->{flags}->{hintExists};
@@ -311,8 +313,6 @@ sub siblings {
 	my $db = $self->{db};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	my $timer0 = WeBWorK::Timing->new("time siblings");
-	$timer0->start;
 	print CGI::strong("Problems"), CGI::br();
 	
 	my $effectiveUser = $self->{r}->param("effectiveUser");
@@ -326,12 +326,12 @@ sub siblings {
 			. $self->url_authen_args . "&displayMode=" . $self->{displayMode}},
 				"Problem ".$problem), CGI::br();
 	}
-	$timer0->stop;
-	$timer0->save;
+
 	'';
 }
 
 sub nav {
+    $WeBWorK::timer0->continue("begin nav subroutine") if $timer0_ON;
 	my $self = shift;
 	my $args = $_[-1];
 	my $setName = $self->{set}->set_id;
@@ -358,7 +358,10 @@ sub nav {
 		? "$root/$courseName/$setName/".$nextProblem->problem_id
 		: "") , "navNext";
 	
-	return $self->navMacro($args, $tail, @links);
+	my $result = $self->navMacro($args, $tail, @links);
+	$WeBWorK::timer0->continue("end nav subroutine") if $timer0_ON;
+	return $result;
+	
 }
 
 sub title {
@@ -398,7 +401,7 @@ sub body {
 	}
 	
 	##### answer processing #####
-	
+	$WeBWorK::timer0->continue("begin answer processing") if $timer0_ON;
 	# if answers were submitted:
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
@@ -477,7 +480,7 @@ sub body {
 	
 	 }
 	# end logging student answers
-	
+	$WeBWorK::timer0->continue("end answer processing") if $timer0_ON;
 	##### output #####
 	
 	print CGI::start_div({class=>"problemHeader"});
