@@ -357,7 +357,7 @@ sub print_form_data {
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	return
-		CGI::h2("Software Error"),
+		CGI::h3("Software Error"),
 		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this
 problem. It is likely that there is an error in the problem itself. If you are
@@ -372,7 +372,7 @@ sub warningOutput($$) {
 	my ($self, $warnings) = @_;
 	
 	return
-		CGI::h2("Software Warnings"),
+		CGI::h3("Software Warnings"),
 		CGI::p(<<EOF),
 WeBWorK has encountered warnings while attempting to process this problem. It
 is likely that this indicates an error or ambiguity in the problem itself. If
