@@ -12,9 +12,8 @@ use WeBWorK::User;
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
 
-# new($invocant, $courseEnv)
-# $invocant	implicitly set by caller
-# $courseEnv	an instance of CourseEnvironment
+# new($courseEnv)
+# $courseEnv - an instance of CourseEnvironment
 sub new($$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
@@ -37,6 +36,7 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
+# getUsers() - returns a list of user IDs present in the database
 sub getUsers($) {
 	my $self = shift;
 	return unless $self->{classlist_db}->connect("ro");
@@ -48,6 +48,9 @@ sub getUsers($) {
 
 # -----
 
+# getUser($userID) - returns a WeBWorK::User object if $userID exists
+#                    or an undefined value if not.
+# $userID - the ID of the user requested
 sub getUser($$) {
 	my $self = shift;
 	my $userID = shift;
@@ -62,6 +65,10 @@ sub getUser($$) {
 	return hash2user($userID, decode($result));
 }
 
+# setUser($user) - if a user with the same user ID as $user exists, that user
+#                  is replaced. if not, a new user is added. A true value is
+#                  returned in success, an undefined value on failure.
+# $user - an instance of WeBWorK::User containing user data
 sub setUser($$) {
 	my $self = shift;
 	my $user = shift;
@@ -70,11 +77,15 @@ sub setUser($$) {
 		return;
 	}
 	die "Can't add/modify user ", $user->id, ": classlist database locked" if $self->locked;
-	$self->{classlist_db}->connect("rw");
+	return unless $self->{classlist_db}->connect("rw");
 	$self->{classlist_db}->hashRef->{$user->id} = encode(user2hash($user));
 	$self->{classlist_db}->disconnect;
+	return 1;
 }
 
+# deleteUser($userID) - removed a user with the specified user ID. Returns
+#                       a true value on success, an undefined one on failure.
+# $userID - the ID of the user to delete
 sub deleteUser($$) {
 	my $self = shift;
 	my $userID = shift;
@@ -86,25 +97,32 @@ sub deleteUser($$) {
 	return unless $self->{classlist_db}->connect("rw");
 	delete $self->{classlist_db}->hashRef->{$userID};
 	$self->{classlist_db}->disconnect;
+	return 1;
 }
 
 # -----
 
+# lock() - locks the database associated with this classlist object. when
+#          a database is locked, it cannot be modified except to unlock it.
 sub lock($) {
 	my $self = shift;
 	return unless $self->{classlist_db}->connect("rw");
 	$self->{classlist_db}->hashRef->{">>lock_status"} = "locked";
 	$self->{classlist_db}->disconnect;
+	return 1;
 }
 
+# unlock() - unlocks the database associated with this classlist object.
 sub unlock($) {
 	my $self = shift;
 	return unless $self->{classlist_db}->connect("rw");
-	# the old code sets this to "unlocked", but I'm going to remove it.
+	# the old code sets this to "unlocked", but I going to delete it instead
 	delete $self->{classlist_db}->hashRef->{">>lock_status"};
 	$self->{classlist_db}->disconnect;
+	return 1;
 }
 
+# locked() - returns true if the database is locked, false if it is not.
 sub locked($) {
 	my $self = shift;
 	return unless $self->{classlist_db}->connect("ro");
