@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.75 2004/06/16 02:13:44 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.76 2004/06/23 21:04:17 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,6 +76,7 @@
 	docs          => "http://webhost.math.rochester.edu/webworkdocs/docs",
 	local_help    => "/webwork2_files/helpFiles",
 	oldProf       => "/webwork1/profLogin.pl",
+	bugReporter   => "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=WeBWorK%20mod_perl",
 	jsMath        => "/webwork2_files/jsMath/jsMath.js",
 	asciimath     => "/webwork2_files/ASCIIMathML/ASCIIMathML.js",
 );
@@ -227,10 +228,11 @@ $dbLayoutName = "gdbm";
 # actions.  In the current system, >=10 will allow a professor to perform the
 # action, >=5 will allow a TA to, and >=0 will allow a student to perform an
 # action (almost never what you want).
+my $student = 0;
 my $ta = 5;
 my $professor = 10;
 %permissionLevels = (
-	report_bugs                    => 0,
+	report_bugs                    => $student,
 	view_multiple_sets             => $ta,
 	view_unopened_sets             => $ta,
 	view_unpublished_sets          => $ta,
