@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.37 2004/12/18 20:31:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.38 2004/12/18 22:11:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,12 +49,12 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "score_sets");
 	
-	if (defined $r->param('scoreSelected')) {
-		my @selected               = $r->param('selectedSet');
+	my @selected = $r->param('selectedSet');
+	my $scoreSelected = $r->param('scoreSelected');
+	if (defined $scoreSelected && @selected) {
+
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
-		
-	    	$self->addmessage(CGI::div({class=>'ResultsWithError'},"You must select one or more sets for scoring")) unless @selected;
 		
 		# pre-fetch users
 		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
@@ -94,7 +94,10 @@ sub initialize {
 		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs);
 		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
-	}   
+
+	} elsif (defined $scoreSelected) {
+		$self->addbadmessage("You must select one or more sets for scoring");
+	} 
 	
 	# Obtaining list of sets:
 	#$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
