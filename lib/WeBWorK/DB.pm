@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.47 2004/05/13 21:14:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.48 2004/06/14 22:58:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1713,7 +1713,9 @@ sub getMergedSets {
 		my $GlobalSet = $GlobalSets[$i];
 		next unless defined $UserSet and defined $GlobalSet;
 		foreach my $field (@commonFields) {
-			next if defined $UserSet->$field;
+			#next if defined $UserSet->$field;
+			# ok, now we're testing for emptiness instead of definedness.
+			next if $UserSet->$field ne "";
 			$UserSet->$field($GlobalSet->$field);
 		}
 	}
@@ -1814,7 +1816,9 @@ sub getMergedProblems {
 			# FIXME: WW1Hash upgrades undefined fileds to "" when creating record objects
 			# Shouldn't we be testing for emptiness rather than definedness?
 			# I think the spec says that if a field is EMPTY the global value is used.
-			next if defined $UserProblem->$field;
+			#next if defined $UserProblem->$field;
+			# ok, now we're testing for emptiness instead of definedness.
+			next if $UserProblem->$field ne "";
 			$UserProblem->$field($GlobalProblem->$field);
 		}
 	}
