@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.41 2004/03/04 21:05:54 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.42 2004/03/15 03:50:05 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,150 +26,100 @@ problem set.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(*ul *li);
 use WeBWorK::PG;
+use WeBWorK::Utils qw(sortByName);
 
 sub initialize {
 	my ($self) = @_;
-	my $courseEnvironment = $self->{ce};
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 	
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
-	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
+	my $permissionLevel = $db->getPermissionLevel($userName); # checked
 	
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
 	die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
-	die "permisson level for user $userName  not found."  unless defined $permissionLevel;
+	die "permisson level for user $userName  not found."  unless $permissionLevel;
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
 	$self->{effectiveUser}   = $effectiveUser;
 	$self->{set}             = $set;
-	$self->{permissionLevel} = $permissionLevel;
+	$self->{permissionLevel} = $permissionLevel->permission;
 	
 	##### permissions #####
 	
-	$self->{isOpen} = time >= $set->open_date || $permissionLevel > 0;
-}
-
-sub path {
-	my ($self, $args) = @_;
-	
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		$setName => "",
-	);
+	$self->{isOpen} = time >= $set->open_date || $permissionLevel->permission > 0;
 }
 
 sub nav {
 	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath = $r->urlpath;
 	
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my @links = ("Problem Sets" , "$root/$courseName", "navUp");
-	my $tail = "";
+	my $courseID = $urlpath->arg("courseID");
+	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+	my $problemSetsPage = $urlpath->parent;
 	
-	return $self->navMacro($args, $tail, @links);
+	my @links = ("Problem Sets" , $r->location . $problemSetsPage->path, "navUp");
+	return $self->navMacro($args, "", @links);
 }
-	
 
 sub siblings {
 	my ($self) = @_;
-#	$WeBWorK::timer0->continue('begin  siblings');
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");my $ce = $self->{ce};
-	my $db = $self->{db};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $effectiveUser = $self->{r}->param("effectiveUser");
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
 	
-	print CGI::strong("Problem Sets"), CGI::br();
+	my $courseID = $urlpath->arg("courseID");
+	my $eUserID = $r->param("effectiveUser");
+	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
 	
-	my @sets;
+	print CGI::start_ul({class=>"LinksMenu"});
+	print CGI::start_li();
+	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
+	print CGI::start_ul();
 	
-	#  FIXME   The following access to the complete list of sets is very slow.
-	#  $WeBWorK::timer0->continue('collect siblings');
-	#  push @sets, $db->getMergedSet($effectiveUser, $_)
-	#  	  foreach ($db->listUserSets($effectiveUser));
-	
-	my @setNames = $db->listUserSets($effectiveUser);
-	@setNames   = sort @setNames;
-#	$WeBWorK::timer0->continue('done collecting siblings');
-	# FIXME only experience will tell us the best sorting procedure.
-	# due_date seems right for students, but alphabetically may be more
-	# useful for professors?
-	
-# 	my @sorted_sets;
-# 	
-# 	# sort by set name
-# 	#@sorted_sets = sort { $a->set_id cmp $b->set_id } @sets;
-# 	
-# 	# sort by set due date
-# 	$WeBWorK::timer0->continue('begin sorting siblings');
-# 	@sorted_sets = sort { $a->due_date <=> $b->due_date } @sets;
-# 	
-# 	# ...and put closed sets last;
-# 	my $now = time();
-# 	my @open_sets = grep { $_->due_date > $now } @sorted_sets;
-# 	my @closed_sets = grep { $_->due_date <= $now } @sorted_sets;
-# 	@sorted_sets = (@open_sets,@closed_sets);
-# 	$WeBWorK::timer0->continue('end sorting siblings');
-# 	foreach my $set (@sorted_sets) { 
-# 		if (time >= $set->open_date) {
-# 			print CGI::a({-href=>"$root/$courseName/".$set->set_id."/?"
-# 				. $self->url_authen_args}, $set->set_id), CGI::br();
-# 		} else {
-# 			print $set->set_id, CGI::br();
-# 		}
-# 	}
-# hack to put links up quickly FIXME when database is faster.
-	foreach my $setName (@setNames) {
-	
-		print '&nbsp;&nbsp;'.CGI::a({-href=>"$root/$courseName/".$setName."/?"
- 				. $self->url_authen_args}, $setName), CGI::br();
-	
-	
+	foreach my $setID (@setIDs) {
+		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+			courseID => $courseID, setID => $setID);
+		print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $setID));
 	}
-}
-
-sub title {
-	my ($self) = @_;
 	
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	return $setName;
+	print CGI::end_ul();
+	print CGI::end_li();
+	print CGI::end_ul();
+	
+	return "";
 }
 
 sub info {
 	my ($self) = @_;
-	
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
 	
 	return "" unless $self->{isOpen};
 	
+	my $courseID = $urlpath->arg("courseID");
+	my $setName = $r->urlpath->arg("setID");
+	
 	my $effectiveUser = $db->getUser($r->param("effectiveUser")); # checked 
-	die "effective user ".$r->param("effectiveUser")." not found. One 'acts as' the effective user."  unless $effectiveUser;
 	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName); # checked
+	
+	die "effective user ".$r->param("effectiveUser")." not found. One 'acts as' the effective user."  unless $effectiveUser;
 	die "set $setName for effectiveUser ".$effectiveUser->user_id." not found." unless $set;
+	
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
@@ -201,51 +151,57 @@ sub info {
 			processAnswers  => 0,
 		},
 	);
-	# Add link for editor
-	#### link to edit setHeader 
-	my $editor_link			= '';
-	if (defined($set) and $set->set_header and 
-	    $self->{permissionLevel} >= $ce->{permissionLevels}->{modify_problem_sets} ) {  
-	    #FIXME ?  can't edit the default set header this way
-		$editor_link = CGI::p(
-		                    CGI::a({-href=>$ce->{webworkURLs}->{root}.'/'.$ce->{courseName}.
-								'/instructor/pgProblemEditor/'.
-								$set->set_id.'/0'. '?'.$self->url_authen_args},
-								'Edit set header: '.$set->set_header
-		          			)
-		);
-	}	
-	# handle translation errors
-	if ($pg->{flags}->{error_flag}) {
-		return $self->errorOutput($pg->{errors}, $pg->{body_text}.$editor_link);
+	
+	if (defined($set) and $set->set_header and $self->{permissionLevel} >= $ce->{permissionLevels}->{modify_problem_sets}) {  
+		#FIXME ?  can't edit the default set header this way
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			courseID => $courseID, setID => $set->set_id, problemID => 0);
+		my $editorURL = $self->systemLink($editorPage);
+		
+		print CGI::p(CGI::b("Set Info"), " ",
+			CGI::a({href=>$editorURL}, "[edit]"));
 	} else {
-		return $pg->{body_text}.$editor_link;
+		print CGI::p(CGI::b("Set Info"));
 	}
+	
+	if ($pg->{flags}->{error_flag}) {
+		print CGI::div({class=>"ResultsWithError"}, $self->errorOutput($pg->{errors}, $pg->{body_text}));
+	} else {
+		print $pg->{body_text};
+	}
+	
+	return "";
 }
 
 sub body {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $courseEnvironment = $self->{ce};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	unless ($self->{isOpen}) {
+		return CGI::div({class=>"ResultsWithError"},
+			CGI::p("This problem set is not available because it is not yet open."));
+	}
+	
+	my $courseID = $urlpath->arg("courseID");
+	my $setName = $urlpath->arg("setID");
 	my $effectiveUser = $r->param('effectiveUser');
+	
 	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
 	die "set $setName for user $effectiveUser not found" unless $set;
 	
-	#print "$setName is due: ",WeBWorK::Utils::formatDateTime($set->due_date);
-	#( this can be included in the set header -- it doesn't need to be hard coded into the 
-	#  ProblemSet.pm code.
+	#my $hardcopyURL =
+	#	$ce->{webworkURLs}->{root} . "/"
+	#	. $ce->{courseName} . "/"
+	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
-	return CGI::p(CGI::font({-color=>"red"}, "This problem set is not available because it is not yet open."))
-		unless ($self->{isOpen});
+	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",
+		courseID => $courseID, setID => $setName);
+	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
-	my $hardcopyURL =
-		$courseEnvironment->{webworkURLs}->{root} . "/"
-		. $courseEnvironment->{courseName} . "/"
-		. "hardcopy/$setName/?" . $self->url_authen_args;
-	print CGI::p(CGI::a({-href=>$hardcopyURL}, "Download a hardcopy"),
-		"of this problem set.");
+	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this problem set."));
 	
 	print CGI::start_table();
 	print CGI::Tr(
@@ -255,7 +211,6 @@ sub body {
 		CGI::th("Status"),
 	);
 	
-
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
 	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
 		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
@@ -265,27 +220,39 @@ sub body {
 	
 	print CGI::end_table();
 	
-	# feedback form
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $feedbackURL = "$root/$courseName/feedback/";
-# 	print
-# 		CGI::startform("POST", $feedbackURL),
-# 		$self->hidden_authen_fields,
-# 		CGI::hidden("module", __PACKAGE__),
-# 		CGI::hidden("set",    $set->set_id),
-# 		CGI::p({-align=>"right"},
-# 			CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
-# 		),
-# 		CGI::endform();
+	## feedback form
+	#my $ce = $self->{ce};
+	#my $root = $ce->{webworkURLs}->{root};
+	#my $courseName = $ce->{courseName};
+	#my $feedbackURL = "$root/$courseName/feedback/";
+	#print
+	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+	#	$self->hidden_authen_fields,"\n",
+	#	CGI::hidden("module",             __PACKAGE__),"\n",
+	#	CGI::hidden("set",                $self->{set}->set_id),"\n",
+	#	CGI::hidden("problem",            ""),"\n",
+	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+	#	CGI::hidden("showOldAnswers",     ''),"\n",
+	#	CGI::hidden("showCorrectAnswers", ''),"\n",
+	#	CGI::hidden("showHints",          ''),"\n",
+	#	CGI::hidden("showSolutions",      ''),"\n",
+	#	CGI::p({-align=>"left"},
+	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
+	#	),
+	#	CGI::endform(),"\n";
+	
+	# feedback form url
+	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
+		courseID => $courseID);
+	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	
 	#print feedback form
 	print
 		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
 		$self->hidden_authen_fields,"\n",
 		CGI::hidden("module",             __PACKAGE__),"\n",
 		CGI::hidden("set",                $self->{set}->set_id),"\n",
-		CGI::hidden("problem",            ""),"\n",
+		CGI::hidden("problem",            ''),"\n",
 		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
 		CGI::hidden("showOldAnswers",     ''),"\n",
 		CGI::hidden("showCorrectAnswers", ''),"\n",
@@ -295,25 +262,25 @@ sub body {
 			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 		),
 		CGI::endform(),"\n";
+	
 	return "";
 }
 
 sub problemListRow($$$) {
-	my $self = shift;
-	my $set = shift;
-	my $problem = shift;
+	my ($self, $set, $problem) = @_;
+	my $r = $self->r;
+	my $urlpath = $r->urlpath;
 	
-	my $name = $problem->problem_id;
+	my $courseID = $urlpath->arg("courseID");
+	my $setID = $set->set_id;
+	my $problemID = $problem->problem_id;
 	
-	### FIXME  -- better way to find the path?
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my $interactiveURL = "$root/$courseName/$setName/$name/?" . $self->url_authen_args;
-	###
-	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $name");
+	my $interactiveURL = $self->systemLink(
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+			courseID => $courseID, setID => $setID, problemID => $problemID)
+	);
+	
+	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $problemID");
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = $problem->max_attempts < 0
 		? "unlimited"
