@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.18 2004/03/17 08:18:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.19 2004/03/23 01:11:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -102,7 +102,7 @@ sub body {
 			CGI::td($scrolling_set_list),
 		),
 		CGI::Tr(
-			CGI::td({colspan=>2, align=>"center"},
+			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::submit(
 					-name => "assign",
 					-value => "Assign selected sets to selected users",
