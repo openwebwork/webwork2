@@ -55,6 +55,7 @@ Context()->normalStrings;
 #
 
 ANS($R->cmp);
+$showPartialCorrectAnswers=1;
 
 ###########################################################
 
