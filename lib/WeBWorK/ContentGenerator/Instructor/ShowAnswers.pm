@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.11 2004/09/05 14:47:24 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.12 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -107,10 +107,11 @@ sub body {
 		  
 		  my @lines = grep(/$pattern/,<LOG>); close(LOG);
 		  chomp(@lines);
+		  foreach $line (@lines) {$line = substr($line,27)}; # remove datestamp
 		
 		  print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
 		  print "No entries for $studentUser set $setName, problem $problemNumber" unless @lines;
-		  foreach $line (sort(@lines)) {$self->tableRow(split("\t",substr($line,27),-1))}
+		  foreach $line (sort byData @lines) {$self->tableRow(split("\t",$line,-1))}
 		  print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))) if ($self->{lastn});
 		  print CGI::end_table();
 		} else {
@@ -119,6 +120,13 @@ sub body {
 	}
 		
 	return "";
+}
+
+sub byData {
+  my ($A,$B) = ($a,$b);
+  $A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/; # remove answers and correct/incorrect status
+  $B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
+  return $A cmp $B;
 }
 
 sub tableRow {
