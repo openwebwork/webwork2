@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.43 2004/03/13 05:09:20 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.44 2004/03/15 22:33:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -614,12 +614,25 @@ sub getSetTeX {
 	
 	# render each problem
 	while (my $problemNumber = shift @problemNumbers) {
+	        #
+	        #  DPVC -- do problem divider ABOVE the problem, rather than below it
+	        #
+	        $tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{problemDivider});
+		#
+		#  /DPVC
+		#
 		$tex .= texBlockComment("BEGIN $setName : $problemNumber");
 		$tex .= $self->getProblemTeX($effectiveUser,$setName, $problemNumber);
-		if (@problemNumbers) {
-			# divide problems, but not after the last problem
-			$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{problemDivider});
-		}
+		#
+		#  DPVC -- no need for it here since we do it above
+		#
+		#if (@problemNumbers) {
+		#	# divide problems, but not after the last problem
+		#	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{problemDivider});
+		#}
+		#
+		# /DPVC
+		#
 	}
 	
 	# render footer
@@ -727,14 +740,28 @@ sub getProblemTeX {
 	} else {
 		# append list of correct answers to body text
 		if ($showCorrectAnswers && $problemNumber != 0) {
-			my $correctTeX = "Correct Answers:\\par\\begin{itemize}\n";
+		        #
+		        #  DPVC  -- Adjusted spacing here, and added \small and italics.
+		        #           Put the answer in verbatim mode to make it display as typed
+		        #           by the author, rather than use hacks for ^ and _.  What about
+		        #           vectors (where TeX will complain about < and > outside of
+		        #	    math mode)?  Do we need hacks for them, too?
+		        #           This also fixes a bug when the answer begins with [
+		        #           where \item would think this was an optional parameter
+		        #           (otherwise we need to do "\\item{}$correctanswer\n").
+		        #
+			my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
+                                       . "\\vspace{-\\parskip}\\begin{itemize}\n";
 			foreach my $ansName (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}) {
 				my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
-				$correctAnswer =~ s/\^/\\\^\{\}/g;
-				$correctAnswer =~ s/\_/\\\_/g;
-				$correctTeX .= "\\item $correctAnswer\n";
+				#$correctAnswer =~ s/\^/\\\^\{\}/g;
+				#$correctAnswer =~ s/\_/\\\_/g;
+				$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
 			}
-			$correctTeX .= "\\end{itemize} \\par\n";
+			$correctTeX .= "\\end{itemize}}\\par\n";
+			#
+			# /DPVC
+			#
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
