@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.20 2002-11-15 20:51:05 sh002i Exp $
+# $Id: TODO,v 1.21 2002-11-20 21:48:01 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -75,7 +75,7 @@ DONE	make HTML links work
 DONE	make images in PDFs work
 DONE	remove dependancies on Global:: from send_mail_to
 DONE	preview button in Problem
-	handle PG errors (and warnings) in Hardcopy
+DONE	handle PG errors (and warnings) in Hardcopy
 	Feedback - need nice modular way of sending email
 	Options - email address and password
 	have logout button invalidate key
