@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.54 2004/06/23 01:19:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.55 2004/06/26 21:07:20 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -169,7 +169,10 @@ sub defineProblemEnvir {
 	
 	my $basename = "equation-$envir{psvn}.$envir{probNum}";
 	$basename .= ".$envir{problemSeed}" if $envir{problemSeed};
-		
+	
+	# to make grabbing these options easier, we'll pull them out now...
+	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+	
 	# Object for generating equation images
 	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
 		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
@@ -179,10 +182,9 @@ sub defineProblemEnvir {
 		cacheDir => $ce->{webworkDirs}->{equationCache},
 		cacheURL => $ce->{webworkURLs}->{equationCache},
 		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
-		useMarkers   => ($ce->{pg}->{renderers}->{dvipng_align} &&
-		  $ce->{pg}->{renderers}->{dvipng_align} eq 'mysql'),
-		dvipng_align => $ce->{pg}->{renderers}->{dvipng_align},
-		dvipng_depth_db => $ce->{pg}->{renderers}->{dvipng_depth_db},
+		useMarkers      => ($imagesModeOptions{dvipng_align} && $imagesModeOptions{dvipng_align} eq 'mysql'),
+		dvipng_align    => $imagesModeOptions{dvipng_align},
+		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
 	# Other things...

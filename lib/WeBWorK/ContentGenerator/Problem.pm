@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.149 2004/06/28 14:31:40 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.150 2004/07/02 20:39:12 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -897,16 +897,20 @@ sub attemptResults {
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
 	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
+	
+	# to make grabbing these options easier, we'll pull them out now...
+	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+	
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir  => $ce->{webworkDirs}->{tmp},
-		latex	 => $ce->{externalPrograms}->{latex},
-		dvipng   => $ce->{externalPrograms}->{dvipng},
-		useCache => 1,
-		cacheDir => $ce->{webworkDirs}->{equationCache},
-		cacheURL => $ce->{webworkURLs}->{equationCache},
-		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
-		dvipng_align => $ce->{pg}->{renderers}->{dvipng_align},
-                dvipng_depth_db => $ce->{pg}->{renderers}->{dvipng_depth_db},
+		tempDir         => $ce->{webworkDirs}->{tmp},
+		latex	        => $ce->{externalPrograms}->{latex},
+		dvipng          => $ce->{externalPrograms}->{dvipng},
+		useCache        => 1,
+		cacheDir        => $ce->{webworkDirs}->{equationCache},
+		cacheURL        => $ce->{webworkURLs}->{equationCache},
+		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+		dvipng_align    => $imagesModeOptions{dvipng_align},
+		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
 	my $header;
