@@ -33,7 +33,7 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
-use Apache::DB;
+#use Apache::DB;
 use WeBWorK;
 
 sub handler($) {

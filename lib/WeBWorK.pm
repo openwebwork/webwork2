@@ -37,6 +37,13 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
+#sub dispatch($) {
+#	print STDERR "Executing &WeBWorK::dispatch\n";
+#	return DECLINED;
+#}
+#1;
+#__END__
+
 sub dispatch($) {
 	my ($apache) = @_;
 	my $r = Apache::Request->new($apache);
