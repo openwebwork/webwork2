@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.40 2004/01/19 04:26:45 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.41 2004/01/20 18:56:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -88,6 +88,7 @@ sub initialize {
 		}
 		
 		foreach my $set_definition_file (@setDefFiles) {
+			$WeBWorK::timer->continue("$set_definition_file: reading set definition file") if defined $WeBWorK::timer;
 			# read data in set definition file
 			my ($setName, $paperHeaderFile, $screenHeaderFile,
 		    	$openDate, $dueDate, $answerDate, $ra_problemData,
@@ -99,6 +100,7 @@ sub initialize {
 			# entry on the form indicates that the imported set name will be used.
 			$setName = $newSetName if $newSetName;
 			
+			$WeBWorK::timer->continue("$set_definition_file: adding set") if defined $WeBWorK::timer;
 			# add the data to the set record
 			#my $newSetRecord = $db->{set}->{record}->new();
 			my $newSetRecord = $db->newGlobalSet;
@@ -113,6 +115,7 @@ sub initialize {
 			eval {$db->addGlobalSet($newSetRecord)};
 			die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
 
+			$WeBWorK::timer->continue("$set_definition_file: adding problems to database") if defined $WeBWorK::timer;
 			# add problems
 			my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 			foreach my $rh_problem (@problemList) {
@@ -130,6 +133,7 @@ sub initialize {
 			}
 			
 			if ($r->param("assignNewSet")) {
+				$WeBWorK::timer->continue("$set_definition_file: assigning set to all users") if defined $WeBWorK::timer;
 				# assign the set to all users
 				$self->assignSetToAllUsers($setName);
 			}
