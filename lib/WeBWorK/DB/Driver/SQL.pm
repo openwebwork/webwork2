@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Driver::SQL;
+use base qw(WeBWorK::DB::Driver);
 
 =head1 NAME
 
@@ -15,15 +16,7 @@ use strict;
 use warnings;
 use DBI;
 
-use constant STYLE => "sql";
-
-################################################################################
-# static functions
-################################################################################
-
-sub style() {
-	return STYLE;
-}
+use constant STYLE => "dbi";
 
 ################################################################################
 # constructor
@@ -31,7 +24,6 @@ sub style() {
 
 sub new($$$) {
 	my ($proto, $source, $params) = @_;
-	my $class = ref($proto) || $proto;
 	
 	my $handleRO = DBI->connect_cached($source, $params->{usernameRO}, $params->{passwordRO});
 	return 0 unless defined $handleRO;
@@ -39,14 +31,13 @@ sub new($$$) {
 	my $handleRW = DBI->connect_cached($source, $params->{usernameRW}, $params->{passwordRW});
 	return 0 unless defined $handleRW;
 	
-	my $self = {
-		handle   => undef,
-		handleRO => $handleRO,
-		handleRW => $handleRW,
-		source   => $source,
-		params   => $params,
-	};
-	bless $self, $class;
+	my $self = $proto->SUPER::new($source, $params);
+	
+	# add DBI-specific data
+	$self->{handle}   = undef;
+	$self->{handleRO} = $handleRO;
+	$self->{handleRW} = $handleRW;
+	
 	return $self;
 }
 
@@ -75,10 +66,10 @@ sub disconnect($) {
 }
 
 ################################################################################
-# sql-style methods
+# dbi-style methods
 ################################################################################
 
-sub handle($) {
+sub dbi($) {
 	my ($self) = @_;
 	return $self->{handle};
 }

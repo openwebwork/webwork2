@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Driver::GDBM;
+use base qw(WeBWorK::DB::Driver);
 
 =head1 NAME
 
@@ -14,36 +15,25 @@ WeBWorK::DB::Driver::GDBM - hash style interface to GDBM databases.
 use strict;
 use warnings;
 use GDBM_File;
-use Carp;
 
 use constant STYLE => "hash";
 
-# GDBM settings
 use constant MAX_TIE_ATTEMPTS => 30;
 use constant TIE_RETRY_DELAY  => 2;
-use constant TIE_PERMISSION => 0660;
+use constant TIE_PERMISSION   => 0660;
 
 ################################################################################
-# static functions
-################################################################################
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
+# constructor - GDBM-specific settings
 ################################################################################
 
 sub new($$$) {
 	my ($proto, $source, $params) = @_;
-	my $class = ref($proto) || $proto;
-	my $self = {
-		hash   => {},
-		source => $source,
-		params => $params,
-	};
-	bless $self, $class;
+	
+	my $self = $proto->SUPER::new($source, $params);
+	
+	# hashref for tied hash
+	$self->{hash} = {};
+	
 	return $self;
 }
 
@@ -83,7 +73,7 @@ sub disconnect($) {
 
 sub hash($) {
 	my ($self) = @_;
-	croak "hash not tied"
+	die "hash not tied"
 		unless tied %{$self->{hash}};
 	return $self->{hash};
 }

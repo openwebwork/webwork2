@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::WW1Hash;
+use base qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -14,7 +15,6 @@ tables with a WWDBv1 hash-style backend.
 
 use strict;
 use warnings;
-use Data::Dumper;
 use WeBWorK::DB::Utils qw(record2hash hash2record hash2string string2hash);
 
 use constant TABLES => qw(set_user problem_user);
@@ -23,40 +23,6 @@ use constant STYLE  => "hash";
 use constant LOGIN_PREFIX => "login<>";
 use constant SET_PREFIX   => "set<>";
 use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
-
-################################################################################
-# static functions
-################################################################################
-
-sub tables() {
-	return TABLES;
-}
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
-################################################################################
-
-sub new($$$) {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $class = ref($proto) || $proto;
-	die "$table: unsupported table"
-		unless grep { $_ eq $table } $proto->tables();
-	die $driver->style(), ": style mismatch"
-		unless $driver->style() eq $proto->style();
-	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-	};
-	bless $self, $class;
-	return $self;
-}
 
 ################################################################################
 # table access functions
@@ -124,24 +90,46 @@ sub exists($@) {
 	
 	return 0 unless $self->{driver}->connect("ro");
 	
-	my $PSVN = $self->getPSVN($userID, $setID);
+	# get a list of PSVNs that match the userID and setID given
+	my @matchingPSVNs;
+	if (defined $userID and not defined $setID) {
+		@matchingPSVNs = $self->getPSVNsForUser($userID);
+	} elsif (defined $setID and not defined $userID) {
+		@matchingPSVNs = $self->getPSVNsForSet($setID);
+	} elsif (defined $userID and defined $setID) {
+		@matchingPSVNs = $self->getPSVN($userID, $setID);
+	} else {
+		# we need all PSVNs, so we have to do this ourselves.
+		@matchingPSVNs =
+			grep { m/^\d+$/ }
+				keys %{ $self->{driver}->hash() };
+	}
 	
-	my $result;
-	if (defined $PSVN) {
+	my $result = 0;
+	if (@matchingPSVNs) {
 		if ($self->{table} eq "set_user") {
+			# at least one set matched
 			$result = 1;
 		} elsif ($self->{table} eq "problem_user") {
 			my $problemID = $keyparts[2];
-			my $string = $self->fetchString($PSVN);
-			# the record may have been removed while we were doing other things
-			$result = 0 unless defined $string;
-			# FIXME: this should not be creating objects just to check
-			# problemIDs... do we need a function problemsInString()?
-			my (undef, @Problems) = $self->string2records($string);
-			$result = grep { $_->problem_id() eq $problemID } @Problems;
+			if (defined $problemID) {
+				# check each set for a matching problem
+				foreach my $PSVN (@matchingPSVNs) {
+					my $string = $self->fetchString($PSVN);
+					next unless defined $string;
+					my @problemIDs = $self->string2IDs($string);
+					shift @problemIDs; # remove userID
+					shift @problemIDs; # remove setID
+					if (grep { $_ eq $problemID } @problemIDs) {
+						$result = 1;
+						last;
+					}
+				}
+			} else {
+				# we'll take ANY problem in ANY set
+				$result = 1;
+			}
 		}
-	} else {
-		$result = 0;
 	}
 	
 	$self->{driver}->disconnect();
@@ -272,43 +260,82 @@ sub put($$) {
 }
 
 sub delete($@) {
-	my ($self, @keyparts) = @_;
-	my ($userID, $setID) = @keyparts[0 .. 1];
+	my ($self, $userID, $setID, $problemID) = @_;
 	
 	return 0 unless $self->{driver}->connect("rw");
 	
-	my $PSVN = $self->getPSVN($userID, $setID);
-	
-	my $result;
-	if (defined $PSVN) {
-		if ($self->{table} eq "set_user") {
-			$self->deletePSVN($userID, $setID);
-			$self->deleteString($PSVN);
-			$result = 1;
-		} elsif ($self->{table} eq "problem_user") {
-			my $problemID = $keyparts[2];
-			my $string = $self->fetchString($PSVN);
-			if (defined $string) {
-				my ($Set, @Problems) = $self->string2records($string);
-				my $length = @Problems;
-				@Problems = grep { not $_->problem_id() eq $problemID } @Problems;
-				if ($length != @Problems) {
-					# removed one, store the new version
-					$string = $self->records2string($Set, @Problems);
-					$self->storeString($PSVN, $string);
-				}
-					$result = 1; # is didn't exist
-			} else {
-				$result = 0;
-			}
-		}
+	# get a list of PSVNs that match the userID and setID given
+	my @matchingPSVNs;
+	if (defined $userID and not defined $setID) {
+		@matchingPSVNs = $self->getPSVNsForUser($userID);
+	} elsif (defined $setID and not defined $userID) {
+		@matchingPSVNs = $self->getPSVNsForSet($setID);
+	} elsif (defined $userID and defined $setID) {
+		@matchingPSVNs = $self->getPSVN($userID, $setID);
 	} else {
-		$result = 1; # the set didn't exist...
+		# we need all PSVNs, so we have to do this ourselves.
+		@matchingPSVNs =
+			grep { m/^\d+$/ }
+				keys %{ $self->{driver}->hash() };
+	}
+	
+	my $result = 0;
+	if (@matchingPSVNs) {
+		foreach my $PSVN (@matchingPSVNs) {
+			# this is tricky. _deleteOne has different behavior
+			# depending on the table. for the set_user table, it
+			# ignores $problemID and deletes the set with the
+			# matching $PSVN. for the problem_user table, it deletes
+			# the problem matching $problemID from the set matching
+			# $PSVN, or all problems if $problemID is not defined.
+			$result = $self->_deleteOne($PSVN, $problemID);
+		}
 	}
 	
 	$self->{driver}->disconnect();
 	return $result;
 }
+
+################################################################################
+# deletion helper
+################################################################################
+
+sub _deleteOne {
+	my ($self, $PSVN, $problemID) = @_;
+	
+	my $string = $self->fetchString($PSVN);
+	return 0 unless defined $string;
+	my ($userID, $setID) = $self->string2IDs($string);
+	
+	my $result = 1;
+	if ($self->{table} eq "set_user") {
+		$self->deletePSVN($userID, $setID);
+		$self->deleteString($PSVN);
+		$result = 1;
+	} elsif ($self->{table} eq "problem_user") {
+		my ($Set, @Problems) = $self->string2records($string);
+		my $length = @Problems;
+		if (defined $problemID) {
+			@Problems = grep { not $_->problem_id() eq $problemID } @Problems;
+		} else {
+			@Problems = (); # delete all problems
+		}
+		if ($length != @Problems) {
+			# removed one, store the new version
+			$string = $self->records2string($Set, @Problems);
+			$self->storeString($PSVN, $string);
+		}
+		$result = 1;
+	}
+	
+	return $result;
+}
+
+################################################################################
+# matching function
+################################################################################
+
+# FIXME: we could factor out the code that decides what PSVNs to select.
 
 ################################################################################
 # table multiplexing functions
@@ -317,12 +344,21 @@ sub delete($@) {
 #  two records into a single hash value.
 ################################################################################
 
+sub string2IDs {
+	my ($self, $string) = @_;
+	my %hash = string2hash($string);
+	my $userID = $hash{stlg};
+	my $setID = $hash{stnm};
+	my @problemIDs = grep { s/^pfn// } keys %hash;
+	return $userID, $setID, @problemIDs;
+}
+
 # here's a little issue... the schema API seems to allow the user to specify
 # what record class to use (per instance), but since WW1Hash has to monkey with
 # multiple record types in the same instance, we have to hardcode record
 # classes. this is fine, as long as no one tries to use non-default record
-# classes. I guess this is bad, so: ***!
-# NOTE: we can use the new params layout field to specify this.
+# classes. This is bad.
+# (FIXME: we can say $self->{db}->{problem_user}->{record} instead)
 sub string2records($$) {
 	my ($self, $string) = @_;
 	my %hash = string2hash($string);
@@ -391,10 +427,8 @@ sub getPSVNsForSet($$) {
 # retrieves an existing PSVN from the PSVN indexes
 sub getPSVN($$$) {
 	my ($self, $userID, $setID) = @_;
-	#return unless $self->{driver}->connect("ro");
 	my $setsForUser = $self->{driver}->hash()->{LOGIN_PREFIX.$userID};
 	my $usersForSet = $self->{driver}->hash()->{SET_PREFIX.$setID};
-	#$self->{driver}->disconnect();
 	# * if setsForUser is non-empty, then there are sets built for this
 	#   user.
 	# * if usersForSet is non-empty, then this set has been built for at
@@ -438,7 +472,6 @@ sub setPSVN($$$) {
 			}
 			$PSVN = int(rand($max_psvn-$min_psvn+1)) + $min_psvn;
 		} while ($self->fetchString($PSVN));
-		#$self->{driver}->connect("rw"); # open "rw" to lock
 		# get current PSVN indexes
 		my $setsForUser = $self->{driver}->hash()->{LOGIN_PREFIX.$userID};
 		my $usersForSet = $self->{driver}->hash()->{SET_PREFIX.$setID};
@@ -453,7 +486,6 @@ sub setPSVN($$$) {
 		# store 'em in the database
 		$self->{driver}->hash()->{LOGIN_PREFIX.$userID} = $setsForUser;
 		$self->{driver}->hash()->{SET_PREFIX.$setID} = $usersForSet;
-		#$self->{driver}->disconnect();
 	};
 	return $PSVN;
 }
@@ -463,7 +495,6 @@ sub deletePSVN($$$) {
 	my ($self, $userID, $setID) = @_;
 	my $PSVN = $self->getPSVN($userID, $setID);
 	return unless $PSVN;
-	#$self->{driver}->connect("rw"); # open "rw" to lock
 	my $setsForUser = $self->{driver}->hash()->{LOGIN_PREFIX.$userID};
 	my $usersForSet = $self->{driver}->hash()->{SET_PREFIX.$setID};
 	my %sets = string2hash($setsForUser);  # sets built for user $userID
@@ -482,7 +513,6 @@ sub deletePSVN($$$) {
 	} else {
 		delete $self->{driver}->hash()->{SET_PREFIX.$setID};
 	}
-	#$self->{driver}->disconnect();
 	return 1;
 }
 
@@ -492,37 +522,19 @@ sub deletePSVN($$$) {
 
 sub fetchString($$) {
 	my ($self, $PSVN) = @_;
-	#$self->{driver}->connect("ro");
 	my $string = $self->{driver}->hash()->{$PSVN};
-	#$self->{driver}->disconnect();
 	return $string;
 }
 
 
 sub storeString($$$) {
 	my ($self, $PSVN, $string) = @_;
-	#$self->{driver}->connect("rw");
 	$self->{driver}->hash()->{$PSVN} = $string;
-	#$self->{driver}->disconnect();
 }
 
 sub deleteString($$) {
 	my ($self, $PSVN) = @_;
-	#$self->{driver}->connect("rw");
 	delete $self->{driver}->hash()->{$PSVN};
-	#$self->{driver}->disconnect();
 }
-
-################################################################################
-# debugging
-################################################################################
-
-#sub dumpDB($) {
-#	my ($self) = @_;
-#	#$self->{driver}->connect("ro");
-#	my $result = Dumper( $self->{driver}->hash() );
-#	#$self->{driver}->disconnect();
-#	return $result;
-#}
 
 1;

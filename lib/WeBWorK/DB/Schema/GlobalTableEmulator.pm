@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::GlobalTableEmulator;
+use base qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -18,19 +19,7 @@ use Data::Dumper;
 use WeBWorK::DB::Utils qw(global2user user2global initializeUserProblem findDefaults);
 
 use constant TABLES => qw(set problem);
-use constant STYLE  => "dummy";
-
-################################################################################
-# static functions
-################################################################################
-
-sub tables() {
-	return TABLES;
-}
-
-sub style() {
-	return STYLE;
-}
+use constant STYLE  => "null";
 
 ################################################################################
 # constructor
@@ -38,21 +27,12 @@ sub style() {
 
 sub new($$$) {
 	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $class = ref($proto) || $proto;
-	die "$table: unsupported table"
-		unless grep { $_ eq $table } $proto->tables();
-	die $driver->style(), ": style mismatch"
-		unless $driver->style() eq $proto->style();
+	
 	die "parameter globalUserID not found"
 		unless exists $params->{globalUserID};
-	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-	};
-	bless $self, $class;
+	
+	my $self = $proto->SUPER::new($db, $driver, $table, $record, $params);
+	
 	return $self;
 }
 

@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::Null;
+use base qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -15,41 +16,7 @@ use strict;
 use warnings;
 
 use constant TABLES => qw(password permission key user set set_user problem problem_user);
-use constant STYLE  => "dummy";
-
-################################################################################
-# static functions
-################################################################################
-
-sub tables() {
-	return TABLES;
-}
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
-################################################################################
-
-sub new($$$$$) {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $class = ref($proto) || $proto;
-	die "$table: unsupported table"
-		unless grep { $_ eq $table } $proto->tables();
-	die $driver->style(), ": style mismatch"
-		unless $driver->style() eq $proto->style();
-	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-	};
-	bless $self, $class;
-	return $self;
-}
+use constant STYLE  => "null";
 
 ################################################################################
 # table access functions

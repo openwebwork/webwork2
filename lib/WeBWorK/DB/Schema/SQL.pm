@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::SQL;
+use base qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -15,41 +16,20 @@ use strict;
 use warnings;
 use Carp qw(croak);
 
-use constant TABLES => qw(password permission key user set set_user problem problem_user);
-use constant STYLE  => "sql";
+use constant TABLES => qw(*);
+use constant STYLE  => "dbi";
 
 ################################################################################
-# static functions
+# constructor for SQL-specific behavior
 ################################################################################
 
-sub tables() {
-	return TABLES;
-}
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
-################################################################################
-
-sub new($$$) {
+sub new {
 	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $class = ref($proto) || $proto;
-	die "$table: unsupported table"
-		unless grep { $_ eq $table } $proto->tables();
-	die $driver->style(), ": style mismatch"
-		unless $driver->style() eq $proto->style();
-	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-	};
+	my $self = $proto->SUPER::new($db, $driver, $table, $record, $params);
+	
+	# override table name if tableOverride param is given
 	$self->{table} = $params->{tableOverride} if $params->{tableOverride};
-	bless $self, $class;
+	
 	return $self;
 }
 
@@ -72,7 +52,7 @@ sub list($@) {
 	$self->debug("SQL-list: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my $result = $self->{driver}->handle()->selectall_arrayref($stmt);
+	my $result = $self->{driver}->dbi()->selectall_arrayref($stmt);
 	$self->{driver}->disconnect();
 	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return @$result;
@@ -92,7 +72,7 @@ sub exists($@) {
 	$self->debug("SQL-exists: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my ($result) = $self->{driver}->handle()->selectrow_array($stmt);
+	my ($result) = $self->{driver}->dbi()->selectrow_array($stmt);
 	$self->{driver}->disconnect();
 	croak "failed to SELECT: $DBI::errstr" unless defined $result;
 	return $result > 0;
@@ -121,7 +101,7 @@ sub add($$) {
 	#use warnings;
 	
 	$self->{driver}->connect("rw");
-	my $sth = $self->{driver}->handle()->prepare($stmt);
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
 	my $result = $sth->execute(@fieldvalues);
 	$self->{driver}->disconnect();
 	
@@ -148,7 +128,7 @@ sub get($@) {
 	$self->debug("SQL-get: $stmt\n");
 	
 	$self->{driver}->connect("ro");
-	my $result = $self->{driver}->handle()->selectrow_arrayref($stmt);
+	my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
 	$self->{driver}->disconnect();
 	# $result comes back undefined if there are no matches. hmm...
 	#croak "failed to SELECT: $DBI::errstr" unless defined $result;
@@ -190,7 +170,7 @@ sub put($$) {
 	$self->debug("SQL-put: $stmt\n");
 	
 	$self->{driver}->connect("rw");
-	my $sth = $self->{driver}->handle()->prepare($stmt);
+	my $sth = $self->{driver}->dbi()->prepare($stmt);
 	my $result = $sth->execute(@fieldvalues);
 	$self->{driver}->disconnect();
 	
@@ -220,7 +200,7 @@ sub delete($@) {
 	$self->debug("SQL-delete: $stmt\n");
 	
 	$self->{driver}->connect("rw");
-	my $result = $self->{driver}->handle()->do($stmt);
+	my $result = $self->{driver}->dbi()->do($stmt);
 	$self->{driver}->disconnect();
 	croak "failed to DELETE: $DBI::errstr" unless defined $result;
 	

@@ -34,6 +34,15 @@ A "record key", as in the C<list> method, is a reference to a list containing
 values which correspond to the the fields returned by the C<KEYFIELDS> method
 of the table's record class.
 
+=cut
+
+use strict;
+use warnings;
+
+################################################################################
+# constructor
+################################################################################
+
 =head1 CONSTRUCTOR
 
 =over
@@ -48,6 +57,31 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 
 =back
 
+=cut
+
+sub new {
+	my ($proto, $db, $driver, $table, $record, $params) = @_;
+	my $class = ref($proto) || $proto;
+	
+	my @supportedTables = $proto->TABLES();
+	die "unsupported table (schema supports: @supportedTables)"
+		unless grep { $_ eq "*" or $_ eq $table } @supportedTables;
+	
+	my ($driverStyle, $schemaStyle) = ($driver->STYLE(), $proto->STYLE());
+	die "schema/driver style mismatch (driver provides $driverStyle, schema requires $schemaStyle)"
+		unless $driverStyle eq $schemaStyle;
+	
+	my $self = {
+		db     => $db,
+		driver => $driver,
+		table  => $table,
+		record => $record,
+		params => $params,
+	};
+	bless $self, $class;
+	return $self;
+}
+
 =head1 REQUIRED METHODS
 
 =over
@@ -59,8 +93,9 @@ values in C<@keyparts>. Elements of C<@keyparts> may be undefined.
 
 =item exists(@keyparts)
 
-Returns a boolean value representing whether a record that matches the values
-in C<@keyparts> exists in the table. All elements of keyparts must be defined.
+Returns a boolean value representing whether one or more records that match the
+values in C<@keyparts> exist in the table. Elements of C<@keyparts> may be
+undefined.
 
 =item add($Record)
 
@@ -83,9 +118,9 @@ couldn't be contacted). If no such record exists, an exception is thrown.
 
 =item delete(@keyparts)
 
-Attempts to delete the record in the table that matches C<@keyparts>. Returns
-true if the record was successfully deleted or did not exist, and false if
-deletion failed. Elements of C<@keyparts> may be undefined.
+Attempts to delete the record or records in the table that match C<@keyparts>.
+Returns true if the record(s) was successfully deleted or did not exist, and
+false if deletion failed. Elements of C<@keyparts> may be undefined.
 
 =back
 

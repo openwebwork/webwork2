@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Driver::Null;
+use base qw(WeBWorK::DB::Driver);
 
 =head1 NAME
 
@@ -13,34 +14,8 @@ WeBWorK::DB::Driver::Null - a dummy driver.
 
 use strict;
 use warnings;
-use GDBM_File;
-use Carp;
 
-use constant STYLE => "dummy";
-
-################################################################################
-# static functions
-################################################################################
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
-################################################################################
-
-sub new($$$) {
-	my ($proto, $source, $params) = @_;
-	my $class = ref($proto) || $proto;
-	my $self = {
-		hash   => {},
-		source => $source,
-		params => $params,
-	};
-	bless $self, $class;
-	return $self;
-}
+use constant STYLE => "null";
 
 ################################################################################
 # common methods

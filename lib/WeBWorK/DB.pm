@@ -181,6 +181,12 @@ schema in question.
 
 =back
 
+For each table defined in C<%dbLayout>, C<new> loads the record, schema, and
+driver modules. It the schema module's C<tables> method lists the current table
+(or contains the string "*") and the output of the schema and driver modules'
+C<style> methods match, the table is installed. Otherwise, an exception is
+thrown.
+
 =cut
 
 sub new($$) {
@@ -190,11 +196,9 @@ sub new($$) {
 	bless $self, $class; # bless this here so we can pass it to the schema
 	
 	# load the modules required to handle each table, and create driver
-	foreach my $table (TABLES) {
-		croak "table $table not specified in dbLayout"
-			unless defined $ce->{dbLayout}->{$table};
-		
-		my $layout = $ce->{dbLayout}->{$table};
+	my %dbLayout = %{$ce->{dbLayout}};
+	foreach my $table (keys %dbLayout) {
+		my $layout = $dbLayout{$table};
 		my $record = $layout->{record};
 		my $schema = $layout->{schema};
 		my $driver = $layout->{driver};
@@ -205,14 +209,14 @@ sub new($$) {
 		
 		runtime_use($driver);
 		my $driverObject = eval { $driver->new($source, $params) };
-		croak "new: error instantiating DB driver $driver for table $table: $@"
+		croak "error instantiating DB driver $driver for table $table: $@"
 			if $@;
 		
 		runtime_use($schema);
 		my $schemaObject = eval { $schema->new(
 			$self, $driver->new($source, $params),
 			$table, $record, $params) };
-		croak "new: error instantiating DB schema $schema for table $table: $@"
+		croak "error instantiating DB schema $schema for table $table: $@"
 			if $@;
 		
 		$self->{$table} = $schemaObject;
@@ -655,8 +659,9 @@ sub deleteUser($$) {
 	croak "deleteUser: argument 1 must contain a user_id"
 		unless defined $userID;
 	
-	$self->deleteUserSet($userID, $_)
-		foreach $self->listUserSets($userID);
+	#$self->deleteUserSet($userID, $_)
+	#	foreach $self->listUserSets($userID);
+	$self->deleteUserSet($userID, undef);
 	$self->deletePassword($userID);
 	$self->deletePermissionLevel($userID);
 	$self->deleteKey($userID);
@@ -720,12 +725,14 @@ sub deleteGlobalSet($$) {
 	croak "deleteGlobalSet: requires 1 argument"
 		unless @_ == 2;
 	croak "deleteGlobalSet: argument 1 must contain a set_id"
-		unless defined $setID;
+		unless defined $setID or caller eq __PACKAGE__;
 	
-	$self->deleteUserSet($_, $setID)
-		foreach $self->listSetUsers($setID);
-	$self->deleteGlobalProblem($setID, $_)
-		foreach $self->listGlobalProblems($setID);
+	#$self->deleteUserSet($_, $setID)
+	#	foreach $self->listSetUsers($setID);
+	#$self->deleteGlobalProblem($setID, $_)
+	#	foreach $self->listGlobalProblems($setID);
+	$self->deleteUserSet(undef, $setID);
+	$self->deleteGlobalProblem($setID, undef);
 	return $self->{set}->delete($setID);
 }
 
@@ -810,12 +817,13 @@ sub deleteUserSet($$$) {
 	croak "getUserSet: requires 2 arguments"
 		unless @_ == 3;
 	croak "getUserSet: argument 1 must contain a user_id"
-		unless defined $userID;
+		unless defined $userID or caller eq __PACKAGE__;
 	croak "getUserSet: argument 2 must contain a set_id"
-		unless defined $userID;
+		unless defined $userID or caller eq __PACKAGE__;
 	
-	$self->deleteUserProblem($userID, $setID, $_)
-		foreach $self->listUserProblems($userID, $setID);
+	#$self->deleteUserProblem($userID, $setID, $_)
+	#	foreach $self->listUserProblems($userID, $setID);
+	$self->deleteUserProblem($userID, $setID, undef);
 	return $self->{set_user}->delete($userID, $setID);
 }
 
@@ -881,15 +889,16 @@ sub putGlobalProblem($$) {
 sub deleteGlobalProblem($$$) {
 	my ($self, $setID, $problemID) = @_;
 	
-	croak "getGlobalProblem: requires 2 arguments"
+	croak "deleteGlobalProblem: requires 2 arguments"
 		unless @_ == 3;
-	croak "getGlobalProblem: argument 1 must contain a set_id"
-		unless defined $setID;
-	croak "getGlobalProblem: argument 2 must contain a problem_id"
-		unless defined $problemID;
+	croak "deleteGlobalProblem: argument 1 must contain a set_id"
+		unless defined $setID or caller eq __PACKAGE__;
+	croak "deleteGlobalProblem: argument 2 must contain a problem_id"
+		unless defined $problemID or caller eq __PACKAGE__;
 	
-	$self->deleteUserProblem($_, $setID, $problemID)
-		foreach $self->listProblemUsers($setID, $problemID);
+	#$self->deleteUserProblem($_, $setID, $problemID)
+	#	foreach $self->listProblemUsers($setID, $problemID);
+	$self->deleteUserProblem(undef, $setID, $problemID);
 	return $self->{problem}->delete($setID, $problemID);
 }
 
@@ -980,11 +989,11 @@ sub deleteUserProblem($$$$) {
 	croak "getUserProblem: requires 3 arguments"
 		unless @_ == 4;
 	croak "getUserProblem: argument 1 must contain a user_id"
-		unless defined $userID;
+		unless defined $userID or caller eq __PACKAGE__;
 	croak "getUserProblem: argument 2 must contain a set_id"
-		unless defined $setID;
+		unless defined $setID or caller eq __PACKAGE__;
 	croak "getUserProblem: argument 3 must contain a problem_id"
-		unless defined $problemID;
+		unless defined $problemID or caller eq __PACKAGE__;
 	
 	return $self->{problem_user}->delete($userID, $setID, $problemID);
 }

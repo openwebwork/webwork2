@@ -4,6 +4,7 @@
 ################################################################################
 
 package WeBWorK::DB::Schema::Auth1Hash;
+use base qw(WeBWorK::DB::Schema);
 
 =head1 NAME
 
@@ -17,40 +18,6 @@ use warnings;
 
 use constant TABLES => qw(password permission key);
 use constant STYLE  => "hash";
-
-################################################################################
-# static functions
-################################################################################
-
-sub tables() {
-	return TABLES;
-}
-
-sub style() {
-	return STYLE;
-}
-
-################################################################################
-# constructor
-################################################################################
-
-sub new($$$$) {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $class = ref($proto) || $proto;
-	die "$table: unsupported table"
-		unless grep { $_ eq $table } $proto->tables();
-	die $driver->style(), ": style mismatch"
-		unless $driver->style() eq $proto->style();
-	my $self = {
-		db     => $db,
-		driver => $driver,
-		table  => $table,
-		record => $record,
-		params => $params,
-	};
-	bless $self, $class;
-	return $self;
-}
 
 ################################################################################
 # table access functions
@@ -73,9 +40,14 @@ sub list($@) {
 sub exists($$) {
 	my ($self, $userID) = @_;
 	$self->{driver}->connect("ro");
-	my $exists = exists $self->{driver}->hash()->{$userID};
+	my $result;
+	if (defined $userID) {
+		$result = exists $self->{driver}->hash()->{$userID};
+	} else {
+		$result = keys %{$self->{driver}->hash()} ? 1 : 0;
+	}
 	$self->{driver}->disconnect();
-	return $exists;
+	return $result;
 }
 
 sub add($$) {
@@ -135,11 +107,16 @@ sub put($$) {
 sub delete($$) {
 	my ($self, $userID) = @_;
 	my $valueName = $self->{table};
-	$self->{driver}->connect("rw");
+	return 0 unless $self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
-	return unless exists $hash->{$userID};
-	delete $hash->{$userID};
+	if (defined $userID) {
+		delete $hash->{$userID};
+	} else {
+		# delete all elements
+		delete @$hash{keys %$hash};
+	}
 	$self->{driver}->disconnect();
+	return 1;
 }
 
 1;
