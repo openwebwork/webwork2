@@ -39,6 +39,7 @@ sub initialize {
 		}
 	}
 }
+
 sub getSetName {
 	my ($self, $pathSetName) = @_;
 	if (ref $pathSetName eq "HASH") {
@@ -46,6 +47,7 @@ sub getSetName {
 	}
 	return $pathSetName;
 }
+
 sub path {
 	my $self          = shift;
     my @components    = @_;
@@ -64,6 +66,7 @@ sub path {
 		"assign"      => ''
 	);
 }
+
 sub title {
 	my ($self, @components) = @_;
 	return "Assign problems to students - ".$self->{ce}->{courseName}." : ".$self->getSetName(@components);
