@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.22 2002-11-22 20:30:18 sh002i Exp $
+# $Id: TODO,v 1.23 2002-11-25 18:50:06 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -76,9 +76,9 @@ DONE	make images in PDFs work
 DONE	remove dependancies on Global:: from send_mail_to
 DONE	preview button in Problem
 DONE	handle PG errors (and warnings) in Hardcopy
-	Options - email address and password
+DONE	Options - email address and password
 	Feedback - need nice modular way of sending email
-	have logout button invalidate key
+DONE	have logout button invalidate key
 	Pretty die messages (from outside of the translator)
 	check TTH mode character encodings on mac and windows
 	grep for "***" in source, address all issues
