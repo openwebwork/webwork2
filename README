@@ -16,19 +16,19 @@
 Introduction
 
    The [7]WeBWorK Team is pleased to announce the release of [8]WeBWorK
-   2.0 Preview Release 3. While it is intended primarily for testing,
+   2.0 Preview Release 4. While it is intended primarily for testing,
    development, and evaluation of the new system, it is also suitable for
    use in live courses.
 
    This release includes almost all of the functionality of WeBWorK 1.9,
    and contains new functionality beyond what it possible with 1.9. New
-   features since [9]PreviewRelease2 include:
+   features since [9]PreviewRelease3 include:
 
-     * improvements in speed and efficiency
-     * many user interface enhancements
-     * improved course creation procedure
-     * "remember me" cookie actually works
-     * installation documentation improvements
+     * architectural improvements
+     * user interface improvements
+     * web-based course management
+     * new Set Maker feature for interactive set building
+       (JohnJones[10]?)
      * many bug fixes
 
 Availability
@@ -38,71 +38,87 @@ Availability
    set of PG modules and macro files.
 
    Files are available below and on our SourceForge project page:
-   [10]http://sourceforge.net/project/showfiles.php?group_id=93112
+   [11]http://sourceforge.net/project/showfiles.php?group_id=93112
 
 Installation
 
    Documentation on installing and configuring WeBWorK is available on
    this wiki. The relevant wiki topics are as follows:
 
-     * Installing Webwork
-          + Step 1: [11]SystemRequirements - satisfy system requirements.
-          + Step 2: [12]DirectorySetup - download and unpack the WeBWorK
+     * Installing WeBWorK
+          + Step 1: [12]SystemRequirements - satisfy system requirements.
+          + Step 2: [13]DirectorySetup - download and unpack the WeBWorK
             distribution.
-          + Step 3: [13]ApacheSetup - configure apache.
-          + Step 4: [14]TestCourse - create a test course to verify your
+          + Step 3: [14]ApacheSetup - configure apache.
+          + Step 4: [15]TestCourse - create a test course to verify your
             installation.
-          + Step 5: [15]SystemConfig - customize your system
+          + Step 5: [16]AdminCourse - create the admin course for
+            web-based course administration.
+          + Step 6: [17]SystemConfig - customize your system
             configuration.
-          + Step 6: [16]MiscConfig - customize miscellaneous
+          + Step 7: [18]MiscConfig - customize miscellaneous
             system-dependant settings.
      * Creating and Upgrading Courses
-          + [17]CourseCreation - creating a new course.
-          + [18]CourseUpgrade - preparing a course from WeBWorK 1.x for
+          + [19]CourseCreation - creating a new course.
+          + [20]CourseUpgrade - preparing a course from WeBWorK 1.x for
             use under WeBWorK 2.0.
 
 Help
 
-   If you need help installing or using [19]WeBWorK 2.0, visit the
-   [20]WeBWorK discussion group and post your question there. The
+   If you need help installing or using [21]WeBWorK 2.0, visit the
+   [22]WeBWorK discussion group and post your question there. The
    developers monitor this forum.
 
 Bug Reports & Feature Requests
 
    Submit bug reports and feature requests at
-   [21]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
+   [23]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
    features if you don't tell us about them!
 
 Patches
 
    While we welcome patches of any sort, by patching against the latest
-   CVS code, you save us and yourself time. A bug in Preview Release 3
+   CVS code, you save us and yourself time. A bug in Preview Release 4
    may be fixed in CVS, and we can more easily handle patches against the
    latest code. Check out the latest development version from CVS and
-   patch against that. Consult the [22]WeBWorKCVS topic for more
+   patch against that. Consult the [24]WeBWorKCVS topic for more
    information.
+
+   -- [25]SamHathaway - 13 May 2004
+
+   ----- Revision r1.1 - 13 May 2004 - 22:09 GMT - [26]SamHathaway
+
+   Copyright © 1999-2003 by the contributing authors. All material on
+   this collaboration platform is the property of the contributing
+   authors.
+   Ideas, requests, problems regarding TWiki? [27]Send feedback.
 
 References
 
-   1. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Introduction
-   2. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Availability
-   3. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Installation
-   4. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Help
-   5. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Bug_Reports_Feature_Requests
-   6. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Patches
+   1. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Introduction
+   2. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Availability
+   3. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Installation
+   4. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Help
+   5. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Bug_Reports_Feature_Requests
+   6. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease4#Patches
    7. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
    8. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
-   9. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease2
-  10. http://sourceforge.net/project/showfiles.php?group_id=93112
-  11. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemRequirements
-  12. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DirectorySetup
-  13. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/ApacheSetup
-  14. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/TestCourse
-  15. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemConfig
-  16. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/MiscConfig
-  17. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseCreation
-  18. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseUpgrade
-  19. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
-  20. http://webhost.math.rochester.edu/webworkdocs/discuss/
-  21. http://bugs.webwork.rochester.edu/
-  22. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS
+   9. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3
+  10. http://devel.webwork.rochester.edu/twiki/bin/edit/Webwork/JohnJones?topicparent=Webwork.PreviewRelease4
+  11. http://sourceforge.net/project/showfiles.php?group_id=93112
+  12. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemRequirements
+  13. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DirectorySetup
+  14. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/ApacheSetup
+  15. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/TestCourse
+  16. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/AdminCourse
+  17. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemConfig
+  18. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/MiscConfig
+  19. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseCreation
+  20. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseUpgrade
+  21. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
+  22. http://webhost.math.rochester.edu/webworkdocs/discuss/
+  23. http://bugs.webwork.rochester.edu/
+  24. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS
+  25. http://devel.webwork.rochester.edu/twiki/bin/view/Main/SamHathaway
+  26. http://devel.webwork.rochester.edu/twiki/bin/view/Main/SamHathaway
+  27. mailto:sh002i@math.rochester.edu?subject=TWiki Feedback on Webwork.PreviewRelease4
