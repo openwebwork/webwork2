@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.34 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.35 2003/12/12 02:24:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,8 +41,13 @@ sub path {
 }
 
 sub title {
-	my $self = shift;
-	return $self->{ce}->{courseName};
+	my $self        = shift;
+	my $r           = $self ->{r};
+	my $db          = $self ->{db};
+	my $user        = $r    -> param("user");
+	my $courseName  = $self ->{ce} -> {courseName};
+	
+	return "WeBWorK welcomes user $user to $courseName" ;
 }
 
 sub body {
