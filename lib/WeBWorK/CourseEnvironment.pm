@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.23 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.24 2004/01/03 19:58:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -138,7 +138,8 @@ __END__
 =head1 SYNOPSIS
 
 	use WeBWorK::CourseEnvironment;
-	$courseEnv = WeBWorK::CourseEnvironment->new($webworkRoot, $courseName);
+	$courseEnv = WeBWorK::CourseEnvironment->new($webworkRoot, $webworkURLRoot,
+			$pgRoot, $courseName);
 	
 	$timeout = $courseEnv->{sessionKeyTimeout};
 	$mode    = $courseEnv->{pg}->{options}->{displayMode};
@@ -157,7 +158,7 @@ safe compartment into a hash. This hash becomes the course environment.
 
 =over
 
-=item new (ROOT, COURSE)
+=item new (ROOT, URLROOT, PGROOT, COURSE)
 
 The C<new> method finds the file F<conf/global.conf> relative to the given ROOT
 directory. After reading this file, it uses the C<$courseFiles{environment}>
