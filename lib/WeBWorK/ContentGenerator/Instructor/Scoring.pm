@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.35 2004/06/14 22:18:16 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.36 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,10 @@ use CGI qw();
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Timing;
+
+
+our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
+our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
 
 sub initialize {
 	my ($self)     = @_;
@@ -60,21 +64,21 @@ sub initialize {
 			next unless $User;
 			$Users{$User->user_id} = $User;
 		}
-		my @sortedUserIDs = sort { $Users{$a}->student_id cmp $Users{$b}->student_id }
+		my @sortedUserIDs = sort { $Users{$a}->last_name cmp $Users{$b}->last_name }
 			keys %Users;
-		my @userInfo = (\%Users, \@sortedUserIDs);
+		#my @userInfo = (\%Users, \@sortedUserIDs);
 		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
 		
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
 		my (@everything, @normal,@full,@info,@totalsColumn);
-		@info             = $self->scoreSet($selected[0], "info", undef, @userInfo) if defined($selected[0]);
+		@info             = $self->scoreSet($selected[0], "info", undef, \%Users, \@sortedUserIDs) if defined($selected[0]);
 		@totals           = @info;
 		my $showIndex     = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
      
 		foreach my $setID (@selected) {
 		    next unless defined $setID;
 			if ($scoringType eq 'everything') {
-				@everything = $self->scoreSet($setID, "everything", $showIndex, @userInfo);
+				@everything = $self->scoreSet($setID, "everything", $showIndex, \%Users, \@sortedUserIDs);
 				@normal = $self->everything2normal(@everything);
 				@full = $self->everything2full(@everything);
 				@info = $self->everything2info(@everything);
@@ -83,10 +87,12 @@ sub initialize {
 				$self->writeCSV("$scoringDir/s${setID}scr.csv", @normal);
 				$self->writeCSV("$scoringDir/s${setID}ful.csv", @full);				
 			} else {
-				@totalsColumn  = $self->scoreSet($setID, "totals", $showIndex, @userInfo);
+				@totalsColumn  = $self->scoreSet($setID, "totals", $showIndex, \%Users, \@sortedUserIDs);
 				$self->appendColumns(\@totals, \@totalsColumn);
 			}	
 		}
+		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs);
+		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
 	}   
 	
@@ -134,26 +140,45 @@ sub body {
 			CGI::start_form(-method=>"POST", -action=>$scoringURL),"\n",
 			$self->hidden_authen_fields,"\n",
 			CGI::hidden({-name=>'scoreSelected', -value=>1}),
-			$self->popup_set_form,
-			CGI::br(),
-			CGI::checkbox({ -name=>'includeIndex',
-							-value=>1,
-							-label=>'IncludeIndex',
-							-checked=>1,
-						   },
-						   'Include Index'
-			),
-			CGI::br(),
-			CGI::checkbox({ -name=>'recordSingleSetScores',
-							-value=>1,
-							-label=>'Record Scores for Single Sets',
-							-checked=>0,
-						  },
-						 'Record Scores for Single Sets'
-			),
-			CGI::br(),
-			CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
+			CGI::start_table({border=>1,}),
+				CGI::Tr(
+					CGI::td($self->popup_set_form),
+					CGI::td(
+						CGI::checkbox({ -name=>'includeIndex',
+										-value=>1,
+										-label=>'Include Index',
+										-checked=>0,
+									   },
+						),
+						CGI::br(),
+						CGI::checkbox({ -name=>'includeTotals',
+										-value=>1,
+										-label=>'Include Total score column',
+										-checked=>1,
+									   },
+						),
+						CGI::br(),
+						CGI::checkbox({ -name=>'includePercent',
+										-value=>1,
+										-label=>'Include Percent correct column',
+										-checked=>1,
+									   },
+						),
+						CGI::br(),
+						CGI::checkbox({ -name=>'recordSingleSetScores',
+										-value=>1,
+										-label=>'Record Scores for Single Sets',
+										-checked=>0,
+									  },
+									 'Record Scores for Single Sets'
+						),
+					),
+				),
+				CGI::Tr(CGI::td({colspan =>2,align=>'center'},
+					CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
+				)),
 			
+		   CGI::end_table(),
 	);
 
 	
@@ -289,8 +314,6 @@ sub scoreSet {
 		push @scoringData, [];
 	}
 	
-	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
-	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
 	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
@@ -375,15 +398,6 @@ sub scoreSet {
 		}
 		$valueTotal += $globalProblem->value;
 		
- 		#my @userLoginIDs = $db->listUsers();
-		#$WeBWorK::timer->continue("Begin getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
- 		##my @userProblems = $db->getMergedProblems( map { [ $_, $setID, $problemIDs[$problem] ] } @userLoginIDs );
- 		#my @userProblems = $db->getUserProblems( map { [ $_, $setID, $problemIDs[$problem] ] }    @userLoginIDs ); # checked
- 		#my %userProblems;
- 		#foreach my $item (@userProblems) {
- 		#	$userProblems{$item->user_id} = $item if ref $item;
- 		#}
- 		#$WeBWorK::timer->continue("End getting user problems for set $setID, problem $problemIDs[$problem]") if defined($WeBWorK::timer);
 		
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			#my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
@@ -397,8 +411,8 @@ sub scoreSet {
 				$userProblem->num_incorrect(0);
 			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
-			#$userStatusTotals{$user} += $userProblem->status * $userProblem->value;
-			$userStatusTotals{$user} += $userProblem->status * $globalProblem->value;	
+			my $user_problem_status          = ($userProblem->status =~/^[\d\.]+$/) ? $userProblem->status : 0; # ensure it's numeric
+			$userStatusTotals{$user}        += $user_problem_status * $globalProblem->value;	
 			if ($scoringItems->{successIndex})   {
 				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});
 				my $num_correct     = $userProblem->num_correct;
@@ -427,13 +441,20 @@ sub scoreSet {
 		my $totalsColumn = $format eq "totals" ? 0 : 5 + @problemIDs * $columnsPerProblem;
 		$scoringData[0][$totalsColumn]    = "";
 		$scoringData[1][$totalsColumn]    = $setRecord->set_id;
-		$scoringData[1][$totalsColumn+1]  = $setRecord->set_id if $scoringItems->{successIndex};
 		$scoringData[2][$totalsColumn]    = "";
 		$scoringData[3][$totalsColumn]    = "";
 		$scoringData[4][$totalsColumn]    = "";
 		$scoringData[5][$totalsColumn]    = $valueTotal;
 		$scoringData[6][$totalsColumn]    = "total";
-		$scoringData[6][$totalsColumn+1]  = "index" if $scoringItems->{successIndex};
+		if ($scoringItems->{successIndex}) {
+			$scoringData[0][$totalsColumn+1]    = "";
+			$scoringData[1][$totalsColumn+1]    = $setRecord->set_id;
+			$scoringData[2][$totalsColumn+1]    = "";
+			$scoringData[3][$totalsColumn+1]    = "";
+			$scoringData[4][$totalsColumn+1]    = "";
+			$scoringData[5][$totalsColumn+1]    = '100';
+			$scoringData[6][$totalsColumn+1]  = "index" ;
+		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			$scoringData[7+$user][$totalsColumn] = sprintf("%4.1f",$userStatusTotals{$user});
 			$scoringData[7+$user][$totalsColumn+1] = sprintf("%4.1f",$userSuccessIndex{$user}) if $scoringItems->{successIndex};
@@ -442,7 +463,50 @@ sub scoreSet {
 	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
 	return @scoringData;
 }
+sub sumScores {    # Create a totals column for each student
+	my $self        = shift;
+	my $r_totals    = shift;
+	my $showIndex   = shift;
+	my $r_users     = shift;
+	my $r_sorted_user_ids =shift;
+	my $r           = $self->r;
+	my $db          = $r->db;
+	my @scoringData = ();
+	my $index_increment  = ($showIndex) ? 2 : 1;
+	# This whole thing is a hack, but here goes.  We're going to sum the appropriate columns of the totals file:
+	# I believe we have $r_totals->[rows]->[cols]  -- the way it's printed out.
+	my $start_column  = 6;  #The problem column 
+	my $last_column   = $#{$r_totals->[1]};  # try to figure out the number of the last column in the array.
+	my $row_count     = $#{$r_totals};
+	
+	# Calculate total number of problems for the course.
+	my $totalPoints      = 0;
+	my $problemValueRow  = 5;
+	for( my $j = $start_column;$j<=$last_column;$j+= $index_increment) {
+		my $score = $r_totals->[$problemValueRow]->[$j];
+		$totalPoints += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
+	}
+    foreach my $i (0..$row_count) {
+    	my $studentTotal = 0;
+		for( my $j = $start_column;$j<=$last_column;$j+= $index_increment) {
+			my $score = $r_totals->[$i]->[$j];
+			$studentTotal += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
+			
+		}
+		$scoringData[$i][0] =sprintf("%4.1f",$studentTotal);
+		$scoringData[$i][1] =($totalPoints) ?sprintf("%4.1f",100*$studentTotal/$totalPoints) : 0;
+    }
+    $scoringData[0]      = ['',''];
+    $scoringData[1]      = ['summary', '%score'];
+	$scoringData[2]      = ['',''];
+	$scoringData[3]      = ['',''];
+	$scoringData[4]      = ['',''];
+	$scoringData[6]      = ['',''];
 
+
+	return @scoringData;
+
+}
 # Often it's more efficient to just get everything out of the database
 # and then pick out what you want later.  Hence, these "everything2*" functions
 sub everything2info {
@@ -618,7 +682,7 @@ sub pad {
 	my ($self, $string, $padTo) = @_;
 	$string = '' unless defined $string;
 	my $spaces = $padTo - length $string;
-	return $string . " "x$spaces;
+	return " "x$spaces.$string;
 }
 
 sub maxLength {
