@@ -43,7 +43,6 @@ sub body {
 	my %counts;
 	foreach my $set (@sets) {
 		my @problems = $db->listGlobalProblems($set->set_id);
-		my @users = $db->listUsers();
 		my $count = 0;
 		$counts{$set->set_id} = $db->listSetUsers($set->set_id);
 	}
@@ -72,10 +71,10 @@ sub body {
 		. CGI::th(CGI::a({"href"=>$URL."?".$self->url_authen_args."&sort=num_students"}, "Assigned to:"))
 	) . "\n";
 	
+	my @users = $db->listUsers;
 	foreach my $set (@sets) {
 		my @problems = $db->listGlobalProblems($set->set_id);
 		my $count = $counts{$set->set_id};
-		my @users = $db->listUsers;
 		
 		my $userCountMessage;
 		if ($count == 0) {
