@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record.pm,v 1.6 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.7 2004/04/27 02:10:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -101,6 +101,11 @@ sub toString {
 		$result .= "\n";
 	}
 	return $result;
+}
+
+sub toHash {
+	my ($self) = @_;
+	return %$self;
 }
 
 1;
