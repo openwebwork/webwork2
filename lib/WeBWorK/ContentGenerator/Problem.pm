@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.167 2004/11/18 01:45:29 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.168 2004/11/18 16:00:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,6 +34,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
+use URI::Escape;
 
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
@@ -274,59 +275,6 @@ sub attemptResults {
 		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 
-# sub viewOptions {
-# 	my ($self) = @_;
-# 	my $ce = $self->r->ce;
-# 
-# 	# don't show options if we don't have anything to show
-# 	return if $self->{invalidSet} or $self->{invalidProblem};
-# 	return unless $self->{isOpen};
-# 	
-# 	my $displayMode = $self->{displayMode};
-# 	my %must = %{ $self->{must} };
-# 	my %can  = %{ $self->{can}  };
-# 	my %will = %{ $self->{will} };
-# 	
-# 	my $optionLine;
-# 	$can{showOldAnswers} and $optionLine .= join "",
-# 		"Show&nbsp;saved&nbsp;answers?".CGI::br(),
-# 		CGI::radio_group(
-# 			-name    => "showOldAnswers",
-# 			-values  => [1,0],
-# 			-default => $will{showOldAnswers},
-# 			-labels   => {
-# 							0 => 'No',
-# 							1 => 'Yes',	
-# 			},
-# 		), .CGI::br();
-# 
-# 	$optionLine and $optionLine .= join "", CGI::br();
-# 	
-# 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-# 	my @active_modes = grep { exists $display_modes{$_} }
-# 			@{$ce->{pg}->{displayModes}};
-# 	my $modeLine = (scalar(@active_modes) > 1) ?
-# 		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
-# 		CGI::radio_group(
-# 			-name    => "displayMode",
-# 			-values  => \@active_modes,
-# 			-default => $displayMode,
-# 			-linebreak=>'true',
-# 			-labels  => {
-# 				plainText     => "plain",
-# 				formattedText => "formatted",
-# 				images        => "images",
-# 				jsMath	      => "jsMath",
-# 				asciimath     => "asciimath",
-# 			},
-# 		). CGI::br().CGI::hr() : '';
-# 	
-# 	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-# 		$modeLine,
-# 		$optionLine,
-# 		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
-# 	);
-# }
 
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen) = @_;
@@ -524,10 +472,12 @@ sub pre_header_initialize {
 	$self->{formFields}     = $formFields;
 
 	# get result and send to message
-	my $success	       = $r->param("sucess");
-	my $failure	       = $r->param("failure");
-	$self->addbadmessage(CGI::p($failure)) if $failure;
-	$self->addgoodmessage(CGI::p($success)) if $success;
+#	my $success	       = $r->param("success");
+#	my $failure	       = $r->param("failure");
+	my $status_message = $r->param("status_message");
+#	$self->addbadmessage(CGI::p($failure)) if $failure;
+#	$self->addgoodmessage(CGI::p($success)) if $success;
+	$self->addgoodmessage(CGI::p("$status_message")) if $status_message;
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
@@ -644,27 +594,27 @@ sub head {
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
-sub options {
-	my ($self) = @_;
-	
-	return "" if $self->{invalidProblem};
-	my $sourceFilePathfield = '';
-        if($self->r->param("sourceFilePath")) {
-		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
-                                                   -value => $self->r->param("sourceFilePath"));
-	}
-	
-	return join("",
-		CGI::start_form("POST", $self->{r}->uri),
-		$self->hidden_authen_fields,
-		$sourceFilePathfield,
-		CGI::hr(), 
-		CGI::start_div({class=>"viewOptions"}),
-		$self->viewOptions(),
-		CGI::end_div(),
-		CGI::end_form()
-	);
-}
+# sub options {
+# 	my ($self) = @_;
+# 	warn "doing options in Problem";
+# 	return "" if $self->{invalidProblem};
+# 	my $sourceFilePathfield = '';
+#         if($self->r->param("sourceFilePath")) {
+# 		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
+#                                                    -value => $self->r->param("sourceFilePath"));
+# 	}
+# 	
+# 	return join("",
+# 		CGI::start_form("POST", $self->{r}->uri),
+# 		$self->hidden_authen_fields,
+# 		$sourceFilePathfield,
+# 		CGI::hr(), 
+# 		CGI::start_div({class=>"viewOptions"}),
+# 		$self->viewOptions(),
+# 		CGI::end_div(),
+# 		CGI::end_form()
+# 	);
+# }
 
 sub siblings {
 	my ($self) = @_;
@@ -929,17 +879,17 @@ sub body {
 	$WeBWorK::timer->continue("end answer processing") if defined($WeBWorK::timer);
 	
 	##### output #####
-	
-	print CGI::start_div({class=>"problemHeader"});
-	
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::i("Editing temporary file: ", $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}
 	}
+	print CGI::start_div({class=>"problemHeader"});
+	
+	
 
 	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
