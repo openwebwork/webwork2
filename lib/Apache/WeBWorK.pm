@@ -20,11 +20,13 @@ your httpd.conf file to achieve this:
  	<Location /webwork2>
  		SetHandler perl-script
  		PerlHandler Apache::WeBWorK
- 		PerlSetVar webwork_root /path/to/webwork-modperl
- 		PerlSetVar pg_root /path/to/pg
+ 	
+ 		PerlSetVar webwork_root WEBWORK_DIR/webwork-modperl
+ 		PerlSetVar pg_root /WEBWORK_DIR/pg
+ 		
  		<Perl>
- 			use lib '/path/to/webwork-modperl/lib';
- 			use lib '/path/to/pg/lib';
+ 			use lib 'WEBWORK_DIR/webwork-modperl/lib';
+ 			use lib 'WEBWORK_DIR/pg/lib';
  		</Perl>
  	</Location>
  </IfModule>
@@ -35,11 +37,15 @@ use strict;
 use warnings;
 #use Apache::DB;
 use WeBWorK;
+use WeBWorK::Timing;
 
 sub handler($) {
 	my ($r) = @_;
 	
-	my $result = do { # scope of signal localization
+	my $timer = WeBWorK::Timing->new(__PACKAGE__."::handler call to WeBWorK::dispatch");
+	
+	my $result;
+	{ # limit the scope of signal localization
 		# the __WARN__ handler stores warnings for later retrieval
 		local $SIG{__WARN__} = sub {
 			my ($warning) = @_;
@@ -58,8 +64,10 @@ sub handler($) {
 			die $error;
 		};
 		
-		eval { WeBWorK::dispatch($r) };
-	};
+		$timer->start;
+		$result = eval { WeBWorK::dispatch($r) };
+		$timer->stop;
+	}
 	
 	if ($@) {
 		print STDERR "uncaught exception in Apache::WeBWorK::handler: $@";
@@ -72,6 +80,7 @@ sub handler($) {
 		$r->print($message);
 		$r->exit;
 	}
+	
 	return $result;
 }
 
