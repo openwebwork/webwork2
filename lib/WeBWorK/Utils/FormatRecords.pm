@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FormatRecords.pm,v 1.4 2004/03/23 04:20:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/FormatRecords.pm,v 1.5 2004/04/13 14:36:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -105,21 +105,21 @@ use constant PRESET_FORMATS => {
 			name => "set_id",
 			field_order => [ qw/set_id/ ],
 		},
-		"sid_open" => {
-			name => "set_id (open_date)",
-			field_order => [ qw/set_id open_date/ ],
-			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
-		},
-		"sid_due" => {
-			name => "set_id (due_date)",
-			field_order => [ qw/set_id due_date/ ],
-			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
-		},
-		"sid_answer" => {
-			name => "set_id (answer_date)",
-			field_order => [ qw/set_id answer_date/ ],
-			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
-		},
+		#"sid_open" => {
+		#	name => "set_id (open_date)",
+		#	field_order => [ qw/set_id open_date/ ],
+		#	format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
+		#},
+		#"sid_due" => {
+		#	name => "set_id (due_date)",
+		#	field_order => [ qw/set_id due_date/ ],
+		#	format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
+		#},
+		#"sid_answer" => {
+		#	name => "set_id (answer_date)",
+		#	field_order => [ qw/set_id answer_date/ ],
+		#	format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
+		#},
 	},
 };
 
