@@ -134,7 +134,6 @@ sub findDefaults($@) {
 	#delete $fields{$_} foreach $globalClass->KEYFIELDS();
 	
 	foreach my $Record (@Records) {
-		print "RECORD IS: ", $Record->toString(), "\n";
 		foreach my $field (keys %fields) {
 			my $value = $Record->$field();
 			if ($value eq "UNDEFINED") {
@@ -147,7 +146,7 @@ sub findDefaults($@) {
 		}
 	}
 	
-	warn "Frequencies: ", Dumper(\%fields);
+	#warn "Frequencies: ", Dumper(\%fields);
 	
 	my $Defaults = $globalClass->new();
 	foreach my $field (keys %fields) {

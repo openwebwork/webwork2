@@ -115,6 +115,9 @@ sub add($$) {
 	
 	my $stmt = "INSERT INTO $table ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
+	#no warnings;
+	#$self->debug("SQL-add: fieldvalues=@fieldvalues\n");
+	#use warnings;
 	
 	$self->{driver}->connect("rw");
 	my $sth = $self->{driver}->handle()->prepare($stmt);
@@ -181,6 +184,8 @@ sub put($$) {
 		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
 	}
+	$stmt .= " ";
+	$stmt .= $self->makeWhereClause(map { $Record->$_() } @realKeynames);
 	$self->debug("SQL-put: $stmt\n");
 	
 	$self->{driver}->connect("rw");

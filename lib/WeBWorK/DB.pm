@@ -297,16 +297,16 @@ sub deleteGlobalProblem($$$) {
 # problem_user functions
 ################################################################################
 
-sub listUserProblems($$$) {
-	my ($self, $userID, $setID) = @_;
-	return map { $_->[2] }
-		$self->{problem_user}->list($userID, $setID, undef);
-}
-
 sub listProblemUsers($$$) {
 	my ($self, $setID, $problemID) = @_;
-	return map { $_->[2] }
+	return map { $_->[0] } # extract user_id
 		$self->{problem_user}->list(undef, $setID, $problemID);
+}
+
+sub listUserProblems($$$) {
+	my ($self, $userID, $setID) = @_;
+	return map { $_->[2] } # extract problem_id
+		$self->{problem_user}->list($userID, $setID, undef);
 }
 
 sub addUserProblem($$) {

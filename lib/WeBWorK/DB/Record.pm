@@ -28,6 +28,11 @@ sub new($@) {
 	return $self;
 }
 
+sub can($$) {
+	my ($self, $function) = @_;
+	return grep { $_ eq $function } $self->FIELDS();
+}
+
 sub AUTOLOAD($;@) {
 	my ($self, @args) = @_;
 	our $AUTOLOAD;
