@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.13 2004/05/08 15:49:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.14 2004/05/11 20:51:42 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,10 +40,8 @@ sub initialize {
 	my $user       = $r->param("user");
 	
 	# check authorization
-	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
-		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets")));
-		return;
-	}
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+	return unless $authz->hasPermissions($user, "assign_problem_sets");
 	
 	# get the global user, if there is one
 	my $globalUserID = "";
@@ -116,9 +114,13 @@ sub body {
 	                                                        userID=>$userID
 	);
 	my $setsAssignedToUserURL     = $self->systemLink($setsAssignedToUserPage,authen=>0);
+
 	# check authorization
-	return CGI::em("You are not authorized to access the Instructor tools.")
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access the Instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
+	
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets."))
+		unless $authz->hasPermissions($user, "assign_problem_sets");
 	
 	# get list of sets
 	my @setIDs = $db->listGlobalSets;
