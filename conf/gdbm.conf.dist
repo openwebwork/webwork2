@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: gdbm.conf.dist,v 1.3 2003-09-22 18:30:30 sh002i Exp $
+# $Id: gdbm.conf.dist,v 1.4 2003-11-10 05:05:21 sh002i Exp $
 ################################################################################
 
 =head1 NAME
@@ -16,16 +16,17 @@ In global.conf (or course.conf):
 
 =head1 DESCRIPTION
 
-This layout uses the traditional WeBWorK 1.x database format, using the  GDBM
+This layout uses the traditional WeBWorK 1.x database format, using the GDBM
 file format. Use this layout if you wish to share courses between WeBWorK 1.x
 and WeBWorK 2.
 
-The C<globalUserID> parameter given for the C<set> and C<problem> tables
-denotes the ID of the user that the GlobalTableEmulator will use to store data
-for the C<set> and C<problem> tables. This is set to "professor" by default,
-but should be overridden on a course-by-course basis to the ID of the professor
-who is most likely to be involved in creating new courses. Only the user
-selected will be able to see sets which are not assigned to any users.
+The C<globalUserID> parameter given for the C<set> and C<problem> tables denotes
+the ID of the user that the GlobalTableEmulator will use to store data for the
+C<set> and C<problem> tables. This is set to "professor" by default, but should
+be overridden on a course-by-course basis to the ID of the professor who is most
+likely to be involved in creating new problem sets. Sets which have not been
+assigned to any users will only be visible to the selected user when logging
+into WeBWorK 1.x.
 
 Use the following code to override these values in each course's course.conf
 file:
@@ -87,8 +88,7 @@ file:
 );
 
 # These lines should be overridden in course.conf
-
-$dbLayout{set}->{params}->{globalUserID} = "practice1";
-$dbLayout{problem}->{params}->{globalUserID} = "practice1";
+$dbLayout{set}->{params}->{globalUserID} = "professor";
+$dbLayout{problem}->{params}->{globalUserID} = "professor";
 
 1;
