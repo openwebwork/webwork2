@@ -768,7 +768,7 @@ sub attemptResults($$$$$$) {
 }
 sub nbsp {
 	my $str = shift;
-	($str) ? $str : '&nbsp;';  # returns non-breaking space for empty strings
+	($str eq '') ? '&nbsp;' : $str  ;  # returns non-breaking space for empty strings
 }
 sub viewOptions($) {
 	my $self = shift;
