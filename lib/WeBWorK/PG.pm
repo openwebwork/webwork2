@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.55 2004/06/26 21:07:20 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.56 2004/07/03 17:29:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -191,6 +191,14 @@ sub defineProblemEnvir {
 	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
 	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
 	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
+
+        #  ADDED: __files__
+        #    an array for mapping (eval nnn) to filenames in error messages
+	$envir{__files__} = {
+	  root => $ce->{webworkDirs}{root},     # used to shorten filenames
+	  pg   => $ce->{pg}{directories}{root}, # ditto
+	  tmpl => $ce->{courseDirs}{templates}, # ditto
+	};
 	
 	# variables for interpreting capa problems and other things to be
         # seen in a pg file
