@@ -40,22 +40,18 @@ sub fullyQualifiedPackageName($) {
 
 sub getUsers($) {
 	my $self = shift;
-	my @password_users, @permissions_users, @keys_users;
+	my %all_users;
 	if ($self->{password_db}->connect("ro")) {
-		@password_users = keys %{$self->{password_db}->hashRef};
+		$all_users{$_}++ foreach keys %{$self->{password_db}->hashRef};
 		$self->{password_db}->disconnect;
 	}
 	if ($self->{permissions_db}->connect("ro")) {
-		@permissions_users = keys %{$self->{permissions_db}->hashRef};
+		$all_users{$_}++ foreach keys %{$self->{permissions_db}->hashRef};
 		$self->{permissions_db}->disconnect;
 	}
 	if ($self->{keys_db}->connect("ro")) {
-		@keys_users = keys %{$self->{keys_db}->hashRef};
+		$all_users{$_}++ foreach keys %{$self->{keys_db}->hashRef};
 		$self->{keys_db}->disconnect;
-	}
-	my %all_users;
-	foreach (@password_users, @permissions_users, @keys_users) {
-		$all_users{$_}++;
 	}
 	return keys %all_users;
 }
