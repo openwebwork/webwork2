@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.48 2004/05/13 16:02:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.49 2004/05/23 18:51:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -145,11 +145,13 @@ sub body {
 		#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
 	    # $set->published("1") unless $set->published("1") eq "0";
 	    # don't show unpublished sets to students
-	    unless ( defined($set->published) ) {
+	    unless ( defined($set->published) and $set->published ne "") {
 	    	my $globalSet = $db->getGlobalSet($set->set_id);
-	    	$globalSet->published("1") unless defined ($globalSet->published);
+		if ($globalSet) {
+		    	$globalSet->published("1") unless defined ($globalSet->published) and $globalSet->published eq "0";
 			$db->putGlobalSet($globalSet);
 			$set->published("1");  # refresh
+		}
 	    }
 	    warn "undefined published button".$set->set_id unless defined($set->published);
 		if ($set->published || $permissionLevel == 10) {
@@ -209,7 +211,6 @@ sub setListRow {
 		$control = CGI::checkbox(
 			-name=>"hcSet",
 			-value=>$name,
-			-style=>"color: red;",
 			-label=>"",
 		);
 	} else {
