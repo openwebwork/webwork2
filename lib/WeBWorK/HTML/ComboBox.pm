@@ -57,7 +57,7 @@ sub comboBox {
 	my $multiple = $options{multiple};
 	$multiple = 0 unless defined $multiple;
 
-	my $value = $r->param($name) || "";
+	my $value = $r->param($name) || $default || "";
 	
 	my @values = ref $options{values} eq "ARRAY" ? @{ $options{values} } : ();
 	my %labels = ref $options{labels} eq "HASH" ? %{ $options{labels} } : map { $_ => $_ } @values;
@@ -111,7 +111,7 @@ sub comboBox {
 				for (var i = 0; (i < select.options.length) && (select.options[i].value.indexOf(textboxValue) != 0); i++) {}
 				select.selectedIndex = i;
 			}",
-			"changeText('$name');",
+#			"changeText('$name');",
 		)),
 	);
 
