@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.5 2004/10/21 01:06:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.6 2004/12/23 02:15:17 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -373,7 +373,8 @@ sub Save {
 	my $pwd = $self->{pwd};
 	if ($filename) {
 		$pwd = substr($filename,length($self->{courseRoot})+1);
-		$pwd =~ s!/([^/]*)$!!; $filename = $1;
+		$pwd =~ s!(/|^)([^/]*)$!!; $filename = $2;
+                $pwd = '.' if $pwd eq '';
 	} else {
 		$filename = $self->getFile("save"); return unless $filename;
 	}
@@ -776,6 +777,7 @@ sub checkName {
 #
 sub uniqueName {
 	my $dir = shift; my $name = shift;
+	return $name unless (-e "$dir/$name");
 	my $type = ""; my $n = -1;
 	$type = $1 if ($name =~ s/(\.[^.]*)$//);
 	$n = $1 if ($name =~ s/(\d+)$//);
