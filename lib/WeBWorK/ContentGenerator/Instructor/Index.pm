@@ -168,16 +168,9 @@ sub pre_header_initialize {
 		}
 	};
 	
-	defined param $r "edit_set_for_user" and do {
-		if ($nusers == 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetEditor";
-			$args{setID} = $firstSetID;
-			$params{editForUser} = $firstUserID;
-		} else {
-			push @error, E_ONE_USER unless $nusers == 1;
-			push @error, E_ONE_SET unless $nsets == 1;
-			
-		}
+	defined param $r "add_users" and do {
+		$module = "${ipfx}::AddUsers";
+
 	};
 
 	push @error, "You are not allowed to act as a student." 
@@ -187,7 +180,7 @@ sub pre_header_initialize {
 	push @error, "You are not allowed to assign problem sets."
 		if ((defined param $r "sets_assigned_to_user" or defined param $r "users_assigned_to_set") and not $authz->hasPermissions($userID, "assign_problem_sets"));
 	push @error, "You are not allowed to modify student data."
-		if ((defined param $r "edit_users" or defined param $r "user_options") and not $authz->hasPermissions($userID, "modify_student_data"));
+		if ((defined param $r "edit_users" or defined param $r "user_options" or defined param $r "user_options") and not $authz->hasPermissions($userID, "modify_student_data"));
 	push @error, "You are not allowed to score sets."
 		if (defined param $r "score_sets" and not $authz->hasPermissions($userID, "score_sets"));
 	
@@ -314,10 +307,9 @@ sub body {
 				CGI::submit("edit_set_for_user", "Edit"). " one <b>set</b> for one <b>user</b>",
 			),
 			CGI::td({colspan=>2,style=>'text-align:center'},
-				CGI::a({href=>"http://webwork3.math.rochester.edu:11002/webwork2/$courseName/instructor/add_users?".$self->url_authen_args},
-				"Add users",
-				),
+				CGI::submit("add_users", "Add"). " new users.",
 			),
+
 		]),
 	);
 	
