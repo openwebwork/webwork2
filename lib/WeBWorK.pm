@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.54 2004/03/23 01:04:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.55 2004/05/13 18:28:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,7 @@ use WeBWorK::Request;
 use WeBWorK::URLPath;
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
+use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
 #sub debug(@) { print STDERR "dispatch_new: ", join("", @_) };
 sub debug(@) {  };
@@ -191,7 +192,18 @@ sub dispatch($) {
 		debug("(here's the DB handle: $db)\n");
 		$r->db($db);
 		
-		debug("...and we can authenticate the remote user...\n");
+		debug("Now we check the database...\n");
+		debug("(we can detect if a hash-style database from WW1 has not be converted properly.)\n");
+		my ($dbOK, @dbMessages) = $db->hashDatabaseOK(0); # 0 == don't fix
+		if (not $dbOK) {
+			debug("hashDatabaseOK() returned $dbOK -- looks like trouble...\n");
+			$displayModule = FIXDB_MODULE;
+			debug("set displayModule to $displayModule\n");
+		} else {
+			debug("hashDatabaseOK() returned $dbOK -- leaving displayModule as-is\n");
+		}
+		
+		debug("...and now we can authenticate the remote user...\n");
 		my $authen = new WeBWorK::Authen($r);
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
