@@ -225,6 +225,7 @@ sub attemptResults {
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		my $resultString = $answerScore >= 1 ? "correct" :
 		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
@@ -241,7 +242,7 @@ sub attemptResults {
 		$row .= $showAttemptPreview ? CGI::td($self->nbsp($preview))       : "";
 		$row .= $showCorrectAnswers ? CGI::td($self->nbsp($correctAnswer)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
+		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -743,7 +744,7 @@ sub title {
 	my $setID = $self->r->urlpath->arg("setID");
 	my $problemID = $self->r->urlpath->arg("problemID");
 	
-	return "$setID : $problemID";
+	return "$setID: Problem $problemID";
 }
 
 sub body {
@@ -940,7 +941,7 @@ sub body {
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED  -- ",CGI::br(),"ANSWERS NOT RECORDED", CGI::br() );
+		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"), CGI::br();
 		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
 			# show attempt answers
 			# show correct answers if asked
@@ -948,7 +949,7 @@ sub body {
 			# show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- ANSWERS NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
