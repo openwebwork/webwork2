@@ -152,6 +152,26 @@ sub read_scoring_file    { # used in SendMail and ....?
      }
      return \%assocArray;
 }
+
+################################################################################
+# routines for listing various types of files
+################################################################################
+
+# list classlist files
+sub getCSVList {
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my $dir = $ce->{courseDirs}->{templates};
+	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
+}
+
+sub getDefList {
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my $dir = $ce->{courseDirs}->{templates};
+	return $self->read_dir($dir, qr/.*\.def/);
+}
+
 ## Template Escapes ##
 
 sub links {
