@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.30 2004/03/15 20:17:35 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.31 2004/09/08 15:49:24 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -273,7 +273,7 @@ sub verify($) {
 			$userRecord-> status('C');
 			#warn "Setting status for user $user to C.  It was previously undefined.";
 		}
-		if ($ce->siteDefaults{$userRecord->status} eq "Drop") {
+		if ($ce->{siteDefaults}->{status}->{$userRecord->status} eq "Drop") {
 			$error  = "The user $user has been dropped from this course. ";
 			last VERIFY;
 		}
