@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.107 2004/06/21 20:11:58 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.108 2004/06/24 17:22:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,44 +50,27 @@ use URI::Escape;
 use WeBWorK::Template qw(template);
 
 ################################################################################
-# perl 5.6 doesn't seem to allow multiple definitions of constants??
-use constant 
-	REPORT_BUGS_URL => "http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl";
-use constant 
-	PROBLEM_SETS   => "Homework&nbsp;Sets";
-use constant 
-	OPTIONS   => "Password/Email";
-use constant 
-	GRADES   => "Grades";
-use constant 
-	LOG_OUT   => "Logout";
 
-use constant  
-	ADD_USERS => "Add&nbsp;Users";
-use constant
-	USER_LIST => "Class&nbsp;List&nbsp;Editor";
-use constant
-	SET_LIST  => "Hmwk&nbsp;Sets&nbsp;Editor";
-use constant
-	SET_MAKER => "Library&nbsp;Browser";
-use constant
-	ASSIGNER => "Set&nbsp;Assigner";
-use constant
-	MAIL => "Email";
-use constant
-	SCORING => "Scoring tools";
-use constant
-	STATS         => "Statistics";
-use constant  
-	PROGRESS =>"Student&nbsp;Progress";
-use constant
-	FILE_TRANSFER    => "File&nbsp;Transfer";
+use constant PROBLEM_SETS => "Homework&nbsp;Sets";
+use constant OPTIONS      => "Password/Email";
+use constant GRADES       => "Grades";
+use constant LOG_OUT      => "Logout";
 
+use constant ADD_USERS     => "Add&nbsp;Users";
+use constant USER_LIST     => "Class&nbsp;List&nbsp;Editor";
+use constant SET_LIST      => "Hmwk&nbsp;Sets&nbsp;Editor";
+use constant SET_MAKER     => "Library&nbsp;Browser";
+use constant ASSIGNER      => "Set&nbsp;Assigner";
+use constant MAIL          => "Email";
+use constant SCORING       => "Scoring tools";
+use constant STATS         => "Statistics";
+use constant PROGRESS      =>"Student&nbsp;Progress";
+use constant FILE_TRANSFER => "File&nbsp;Transfer";
 
-
-
+# Note: Perl 5.6 doesn't seem to allow multiple definitions of constants.
 
 ###############################################################################
+
 =head1 CONSTRUCTOR
 
 =over
@@ -238,7 +221,6 @@ sub do_reply_with_file {
 	open my $fh, "<", $source or return SERVER_ERROR;
 	
 	# send our custom HTTP header
-	$r->status(OK);
 	$r->content_type($type);
 	$r->header_out("Content-Disposition" => "attachment; filename=\"$name\"");
 	$r->send_http_header;
