@@ -46,11 +46,11 @@ sub dispatch($) {
 	# It's for figuring out the basepath. I may change this up if I find a
 	# better way to do it.
 	my $path_info = $r->path_info || "";
+	$path_info =~ s!/+!/!g; # strip multiple forward slashes
 	my $current_uri = $r->uri;
 	my $args = $r->args;
 	
-	$current_uri =~ m/^(.*)$path_info/;
-	my $urlRoot = $1;
+	my $urlRoot = $current_uri =~ m/^(.*)$path_info/;
 	
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
