@@ -2,7 +2,7 @@ package WeBWorK::ContentGenerator;
 
 use strict;
 use warnings;
-use CGI qw(-compile :html :form);
+use CGI ();
 use Apache::Constants qw(:common);
 
 # Send 'die' message to the browser window
@@ -32,7 +32,6 @@ sub new($$$) {
 # In it's current incarnation, it should be called from subclasses only,
 # by saying $self->print_form_data.  Of course, you could construct a
 # hashref with ->{r} being an Apache::Request, I suppose.
-
 sub print_form_data {
 	my ($self, $begin, $middle, $end, $qr_omit) = @_;
 	my $return_string = "";
@@ -56,6 +55,7 @@ sub print_form_data {
 	
 	return $return_string;
 }
+# P.S. This function is beat, but I use it in places.  We'll kill it eventually, I guess.
 
 sub hidden_authen_fields {
 	my $self = shift;
@@ -65,7 +65,7 @@ sub hidden_authen_fields {
 	
 	foreach my $param ("user","effectiveUser","key") {
 		my $value = $r->param($param);
-		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
+		$html .= CGI::input({-type=>"hidden",-name=>"$param",-value=>"$value"});
 	}
 	return $html;
 }
@@ -85,7 +85,7 @@ sub hidden_fields($;@) {
 	
 	foreach my $param (@fields) {
 		my $value = $r->param($param);
-		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
+		$html .= CGI::input({-type=>"hidden",-name=>"$param",-value=>"$value"});
 	}
 	return $html;
 }
