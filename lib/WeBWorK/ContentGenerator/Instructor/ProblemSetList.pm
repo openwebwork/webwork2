@@ -1226,7 +1226,7 @@ sub duplicate_handler {
 	my $db = $r->db;
 	
 	my $oldSetID = $self->{selectedSetIDs}->[0];
-	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;	
+	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless defined($oldSetID) and $oldSetID =~ /\S/;	
 	my $newSetID = $actionParams->{"action.duplicate.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set name specified!") unless $newSetID =~ /\S/;		
 	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: set $newSetID already exists!") if defined $db->getGlobalSet($newSetID);
