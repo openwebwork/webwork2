@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.37 2004/05/23 23:18:27 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.38 2004/05/23 23:27:30 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -195,10 +195,9 @@ sub body {
 	# Define parameters for textarea
 	# FIXME 
 	# Should the seed be set from some particular user instance??
-	# The mode list should be obtained from global.conf ultimately
 	my $rows = 20;
 	my $columns = 80;
-	my $mode_list = ['plainText','formattedText','images'];
+	my $mode_list = $ce->{pg}->{displayModes};
 	my $displayMode = $self->{displayMode};
 	my $problemSeed = $self->{problemSeed};	
 	my $uri = $r->uri;
