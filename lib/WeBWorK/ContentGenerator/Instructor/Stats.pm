@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.16 2004/01/31 04:08:57 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.17 2004/01/31 14:47:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -386,14 +386,27 @@ sub displayStudents {
 	    my $totalRight = 0;
 	    my $total      = 0;
 		my $num_of_attempts = 0;
-		my @problems = sort {$a <=> $b } $db->listUserProblems($studentName, $setName);
-		my $num_of_problems  = @problems;
-		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
-		# construct header
-		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
+		
+		# an old, slow way to do it:
+		#my @problems = sort {$a <=> $b } $db->listUserProblems($studentName, $setName);
+		#my $num_of_problems  = @problems;
+		#$max_problems = $num_of_problems if $num_of_problems > $max_problems;
+		#
+		#$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
 		#my @problemRecords = $db->getUserProblems( map {[$studentName, $setName,$_]}  @problems);
+		#$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
+		
+		# a new, faster way to do it:
+		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
 		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
 		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
+		
+		my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
+		my $num_of_problems  = @problems;
+		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
+		
+		# construct header
+		
 		foreach my $problemRecord (@problemRecords) {
 			my $prob = $problemRecord->problem_id;
 		#foreach my $prob (@problems) {
