@@ -63,7 +63,7 @@ sub readStandardCSV {
 	my @result = ();
 	my @rows = split m/\n/, readFile($fileName);
 	foreach my $row (@rows) {
-		push @result, [$self->splitQuote($row)];
+		push @result, [$self->splitQuoted($row)];
 	}
 	return @result;
 }
@@ -72,8 +72,8 @@ sub writeStandardCSV {
 	my ($self, $filename, @csv) = @_;
 	open my $fh, ">", $filename;
 	foreach my $row (@csv) {
-		print (join ",", map {$self->quote($_)} @$row);
-		print "\n";
+		print $fh (join ",", map {$self->quote($_)} @$row);
+		print $fh "\n";
 	}
 	close $fh;
 }
@@ -99,22 +99,24 @@ sub splitQuoted {
 	my @result = ();
 	my $continue = 1;
 	while ($continue) {
-		$string =~ m/\G(\s*)/;
+		$string =~ m/\G(\s*)/gc;
 		$leadingSpace = $1;
-		$string =~ m/\G([^",]*)/;
+		$string =~ m/\G([^",]*)/gc;
 		$preText = $1;
-		if ($string =~ m/\G"((?:[^"]|"")*)"/) {
+		if ($string =~ m/\G"((?:[^"]|"")*)"/gc) {
 			$quoted = $1;
 		}
-		$string =~ m/\G([^,]*?)(\s*)(,?)/;
+		$string =~ m/\G([^,]*?)(\s*)(,?)/gc;
 		($postText, $trailingSpace, $continue) = ($1, $2, $3);
-		if (defined $quoted and (not defined $preText and not defined $postText)) {
-				$quoted = s/""/"/;
+
+		$preText = "" unless defined $preText;
+		$postText = "" unless defined $postText;
+		$quoted = "" unless defined $quoted;
+
+		if ($quoted and (not $preText and not $postText)) {
+				$quoted =~ s/""/"/;
 				$result = $quoted;
 		} else {
-			$preText = "" unless defined $preText;
-			$postText = "" unless defined $postText;
-			$quoted = "" unless defined $quoted;
 			$result = "$preText$quoted$postText";
 		}
 		push @result, $result;
@@ -126,7 +128,6 @@ sub splitQuoted {
 sub quote {
 	my ($self, $string) = @_;
 	if ($string =~ m/[", ]/) {
-		warn "needs quoting\n";
 		$string =~ s/"/""/;
 		$string = "\"$string\"";
 	}
