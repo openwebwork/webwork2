@@ -1,0 +1,195 @@
+#!/usr/bin/env perl
+
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id: addcourse,v 1.1 2003-12-04 06:03:25 sh002i Exp $
+################################################################################
+
+=head1 NAME
+
+addcourse - add a course
+
+=head1 SYNOPSIS
+
+ addcourse [B<--users>=I<FILE> [B<--professors>=I<USERID>[,I<USERID>]...] ]
+ [B<--templates>=I<DIR>] I<COURSEID>
+
+=head1 DESCRIPTION
+
+Add a course to the courses directory. The required directories will be
+created. Optionally, a database can be populated with users and the
+F<templates> directory can be populated with the contents of another directory.
+Also, one or more users can be granted professor privileges.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--users>=I<FILE>
+
+The users listed in the comma-separated text file I<FILE> will be added to the
+user list of the new course.
+
+=item B<--professors>=I<USERID>[,I<USERID>]...
+
+Each I<USERID>, if it is present in the new course's user list, will be granted
+professor privileges (i.e. a permission level of 10). Requires B<--users>.
+
+=item B<--templates>=I<DIR>
+
+The contents of the directory I<DIR> will be copied to the F<templates>
+directory of the new course.
+
+=item I<COURSEID>
+
+The name of the course to create.
+
+=cut
+
+use strict;
+use warnings;
+use FindBin;
+use Getopt::Long;
+use lib "$FindBin::Bin/../lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
+use WeBWorK::Utils qw/readFile/;
+
+sub usage {
+	print STDERR "$0 [--users=FILE [--professors=USERID[,USERID]...] ]\n";
+	print STDERR "[--templates=DIR] COURSEID\n";
+	exit;
+}
+
+my $users = "";
+my @professors = ();
+my $templates = "";
+
+GetOptions(
+	"users=s" => \$users,
+	"professors=s" => \@professors,
+	"templates=s" => \$templates,
+);
+my %professors = map { $_ => 1 } map { split /,/ } @professors;
+my $courseID = shift;
+
+#print "users=$users\n";
+#print "professors=@professors\n";
+#print "templates=$templates\n";
+#print "courseID=$courseID\n";
+
+unless ($ENV{WEBWORK_ROOT}) {
+	die "WEBWORK_ROOT not found in environment.\n";
+}
+
+unless ($courseID) {
+	print STDERR "$0: must specify COURSEID.\n";
+	usage();
+};
+
+if (@professors and not $users) {
+	print STDERR "$0: can't specify --professors without also specifying --users.\n";
+	usage();
+}
+
+# bring up a minimal course environment
+my $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "FAKE_URL_ROOT",
+	"FAKE_PG_ROOT", $courseID);
+
+# collect some data
+my $coursesDir = $ce->{webworkDirs}->{courses};
+my $courseDir = "$coursesDir/$courseID";
+
+# create course directory
+#print "mkdir $courseDir\n";
+#mkdir $courseDir or die "Failed to create course directory: $!\n";
+
+# populate it with some subdirectories
+my @subDirs = sort values %{ $ce->{courseDirs} };
+foreach my $subDir (@subDirs) {
+	print "mkdir $subDir\n";
+	mkdir "$subDir"
+		or die "Failed to create course directory $subDir: $!\n";
+}
+
+if ($users) {
+	# import users - much of this code is burgled from UserList.pm
+	
+	my $db = WeBWorK::DB->new($ce);
+	my @contents = split /\n/, readFile($users);
+	
+	foreach my $string (@contents) {
+		$string =~ s/^\s+//;
+		$string =~ s/\s+$//;
+		my (
+			$student_id, $last_name, $first_name, $status, $comment,
+			$section, $recitation, $email_address, $user_id
+		) = split /\s*,\s*/, $string;
+		
+		my $User = $db->newUser;
+		$User->user_id($user_id);
+		$User->first_name($first_name);
+		$User->last_name($last_name);
+		$User->email_address($email_address);
+		$User->student_id($student_id);
+		$User->status($status);
+		$User->section($section);
+		$User->recitation($recitation);
+		$User->comment($comment);
+		
+		my $PermissionLevel = $db->newPermissionLevel;
+		$PermissionLevel->user_id($user_id);
+		if (exists $professors{$user_id}) {
+			$PermissionLevel->permission(10);
+		} else {
+			$PermissionLevel->permission(0);
+		}
+		
+		my $Password = $db->newPassword;
+		$Password->user_id($user_id);
+		$Password->password($student_id);
+		
+		$db->addUser($User);
+		$db->addPermissionLevel($PermissionLevel);
+		$db->addPassword($Password);
+		
+		if (exists $professors{$user_id}) {
+			print "add professor $user_id\n";
+			delete $professors{$user_id};
+		} else {
+			print "add user $user_id\n";
+		}
+	}
+	
+	if (my @ids = keys %professors) {
+		print STDERR "warning: @ids not in imported user list.\n";
+	}
+}
+
+if ($templates) {
+	unless (-d "$courseDir/templates") {
+		warn "$courseDir/templates: not found, creating:\n";
+		print "mkdir $courseDir/templates\n";
+		mkdir "$courseDir/templates"
+			or die "Failed to mkdir $courseDir/templates: $!\n";
+	}
+	print "copy $templates/* -> $courseDir/templates\n";
+	system "/bin/cp -r $templates/* $courseDir/templates/"
+		and die "Failed to copy $templates/* to $courseDir/templates: $!\n";
+}
+
+=head1 BUGS
+
+Databases are created using the database layout specified in the global
+configuration file (F<global.conf>), which requires users to temporarily modify
+their system's configuration in order to create a course with a nonstandard
+database layout.
+
+Also, some database drivers are unable to create storage for their data. The
+GDBM backend can do this, but the SQL backend cannot (currently).
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, hathaway at users.sourceforge.net.
+
+=cut
