@@ -995,7 +995,7 @@ sub body {
 #			"Data",
 			"Display&nbsp;Mode:&nbsp;" . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => "Refresh"}),
+			CGI::input({type => "submit", name => "refresh", value => "Refresh Display"}),
 		]));
 
 		my %header_html;
@@ -1074,7 +1074,7 @@ sub body {
 			"Data",
 			"Display&nbsp;Mode:&nbsp;" . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => "Refresh"}),
+			CGI::input({type => "submit", name => "refresh", value => "Refresh Display"}),
 		]));
 		
 		my %shownYet;
