@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.25 2004/05/05 01:53:51 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.30 2004/05/11 19:56:27 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -301,14 +301,14 @@ sub initialize {
 	    	rename("$emailDirectory/$default_msg_file","$emailDirectory/$old_default_msg_file") or 
 	    	       die "Can't rename $emailDirectory/$default_msg_file to $emailDirectory/$old_default_msg_file ",
 	    	           "Check permissions for webserver on directory $emailDirectory. $!";
-	    	$self->{message} .= "Backup file <code>$emailDirectory/$old_default_msg_file</code> created.".CGI::br();
+	    	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Backup file <code>$emailDirectory/$old_default_msg_file</code> created.".CGI::br())));
 	    }
 	    #################################################################
 	    # Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" ) unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || not $output_file =~ m|\.msg$|);
 		unless ( $self->{submit_message} or not -w "${emailDirectory}/$output_file" )  {  # if there are no errors report success
-			$self->{message}         .= "Message saved to file <code>${emailDirectory}/$output_file</code>.";
+			$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>.")));
 		}    
 
 	} elsif ($action eq 'Preview message') {
@@ -386,6 +386,7 @@ sub body {
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif (($response eq 'send_email')){
+		$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, CGI::p("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.")));
 		$self->{message} .= CGI::i("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.");
 		$self->print_form($setID);
 	} else {
