@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.42 2004/03/15 03:50:05 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.43 2004/03/19 21:56:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -112,18 +112,25 @@ sub info {
 	return "" unless $self->{isOpen};
 	
 	my $courseID = $urlpath->arg("courseID");
-	my $setName = $r->urlpath->arg("setID");
+	my $setID = $r->urlpath->arg("setID");
+	my $userID = $r->param("user");
+	my $eUserID = $r->param("effectiveUser");
 	
-	my $effectiveUser = $db->getUser($r->param("effectiveUser")); # checked 
-	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName); # checked
+	my $effectiveUser = $db->getUser($eUserID); # checked 
+	my $set  = $db->getMergedSet($eUserID, $setID); # checked
 	
-	die "effective user ".$r->param("effectiveUser")." not found. One 'acts as' the effective user."  unless $effectiveUser;
-	die "set $setName for effectiveUser ".$effectiveUser->user_id." not found." unless $set;
+	die "effective user $eUserID not found. One 'acts as' the effective user." unless $effectiveUser;
+	die "set $setID for effectiveUser $eUserID not found." unless $set;
 	
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $displayMode     = $ce->{pg}->{options}->{displayMode};
+	
+	if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
+		$screenSetHeader = "$screenSetHeader.$userID.tmp";
+		$displayMode = $r->param("displayMode") if $r->param("displayMode");
+	}
 	
 	return "" unless defined $screenSetHeader and $screenSetHeader;
 	
