@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.113 2004/08/16 11:35:15 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.114 2004/09/13 19:29:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -526,7 +526,7 @@ sub links {
 		
 		# set list links
 		my $setList       = $urlpath->newFromModule("${ipfx}ProblemSetList", %args);
-		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetEditor", %args, setID => $setID);
+		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetDetail", %args, setID => $setID);
 		my $problemEditor = $urlpath->newFromModule("${ipfx}PGProblemEditor", %args, setID => $setID, problemID => $problemID);
 		
 		my $maker = $urlpath->newFromModule("${ipfx}SetMaker", %args);
@@ -819,7 +819,6 @@ associated with the current request.
 sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
-	
 	
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
 	print $r->urlpath->name;
