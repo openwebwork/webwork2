@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.2 2004/03/04 21:05:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Template.pm,v 1.1 2004/03/10 02:31:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -100,6 +100,7 @@ Several predicate functions are defined in WeBWorK::ContentGenerator.
 
 use strict;
 use warnings;
+use WeBWorK::Utils qw(readFile);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -148,7 +149,7 @@ sub template {
 				pop @ifstack;
 			} elsif ($ifstack[-1]) {
 				if ($cg->can($function)) {
-					my @result = $cg->$function(@_, {@args});
+					my @result = $cg->$function({@args});
 					if (@result) {
 						print @result;
 					} else {
