@@ -6,487 +6,103 @@
                     Copyright 2000-2004, The WeBWorK Project                    
                               All rights reserved.                              
 
-The contents of this file were pulled from the WeBWorK wiki on 04-January-2004.
-The latest version is available at http://devel.webwork.rochester.edu/. In this
-document:
-
-	DESCRIPTION
-	SYSTEM REQUIREMENTS
-	INSTALLATION
-	APACHE CONFIGURATION
-	WEBWORK CONFIGURATION
-	COURSE CREATION
-
-____DESCRIPTION_________________________________________________________________
-
-   WeBWorK is a Perl-based system for delivering individualized homework
-   problems over the web. By providing students with immediate feedback as to
-   the correctness of their answers, students are encouraged to make multiple
-   attempts until they succeed. By individualizing problems, cheating is
-   discouraged. By providing instructors with real-time statistics, lesson
-   plans can be customized to better serve students.
-
-____SYSTEM REQUIREMENTS_________________________________________________________
-
-   Here are the software packages required by WeBWorK 2. Most OS vendors
-   precompiled binaries of these packages. The version requirements given
-   below are somewhat imprecise.
-
-+-----------------------------------------------------------------------------------+
-|  Package  |  Required For  |                    Source                    |Version|
-|-----------+----------------+----------------------------------------------+-------|
-|Perl       |basic operation |http://perl.org/                              |>= 5.6 |
-|-----------+----------------+----------------------------------------------+-------|
-|Apache     |basic operation |http://httpd.apache.org/                      |1.3.x  |
-|-----------+----------------+----------------------------------------------+-------|
-|mod_perl   |basic operation |http://perl.apache.org/                       |1.x    |
-|-----------+----------------+----------------------------------------------+-------|
-|LaTeX      |basic operation |http://www.tug.org/tetex/                     |       |
-|-----------+----------------+----------------------------------------------|       |
-|netpbm     |basic operation |http://netpbm.sf.net/                         |       |
-|-----------+----------------+----------------------------------------------+-------|
-|dvipng     |"images" display|http://sourceforge.net/projects/preview-latex/|>= 0.8 |
-|           |mode            |                                              |       |
-|-----------+----------------+----------------------------------------------+-------|
-|preview.sty|"images" display|http://sourceforge.net/projects/preview-latex/|       |
-|           |mode            |                                              |       |
-|-----------+----------------+----------------------------------------------|       |
-|tth        |"formatted-text"|http://hutchinson.belmont.ma.us/tth/          |       |
-|           |display mode    |                                              |       |
-|-----------+----------------+----------------------------------------------|       |
-|libgdbm    |GDBM database   |http://www.gnu.org/software/gdbm/gdbm.html    |       |
-|           |backend         |                                              |       |
-+-----------------------------------------------------------------------------------+
-
-   Perl must be compiled with GDBM support to use GDBM databases. (WeBWorK
-   1.x databases are usually GDBM.) Most OS vendors compile their perl
-   packages with this option on.
-
-   Also, some perl modules are required. All are available in CPAN, and many
-   OS vendors provide packages of these modules.
-
-     * For WeBWorK 2
-
-          * Bundle::Apache
-          * DBI and the DBD:: module of your choice (required if you wish to
-            use an SQL database backend)
-          * Data::UUID
-          * Date::Format and Date::Parse
-          * Mail::Sender
-          * SOAP::Lite (required if you wish to use a remote renderer)
-
-     * For PG (required if you wish to use a local renderer)
-
-          * GD
-
-____INSTALLATION________________________________________________________________
-
-Unpacking from CVS
-
-   A WeBWorK installation currently consists of two directory trees, a
-   webwork tree and a pg tree. These trees are stored as the CVS modules
-   webwork-modperl and pg, respectively. To check out from CVS, follow the
-   instructions in the WeBWorKCVS topic. After installing the SSH key, check
-   out the webwork-modperl and pg modules:
-
-    $ cvs checkout -P webwork-modperl
-    $ cvs checkout -P pg
-
-Unpacking from tarballs
-
-   First, download the two tarballs: webwork-X.X.tar.bz2 and pg-X.X.tar.bz2.
-   ("X.X" represents the version number, i.e. "2.0pr2".) These files are
-   available from our SourceForge project page:
-   http://sourceforge.net/project/showfiles.php?group_id=93112
-
-   Untar them somewhere (like your home directory).
-
-    $ tar -xjf webwork-2.0pr2.tar.bz2
-    $ tar -xjf pg-2.0pr2.tar.bz2
-
-   Then, become root and move the directories to the your installation
-   directory. I prefer to use /opt.
-
-    # cp -r webwork-2.0pr2 /opt
-    # cp -r pg-2.0pr2 /opt
-
-System permissions
-
-   Some directories must be writeable by the web server:
-
-   +---------------------------+
-   |         directory         |
-   |---------------------------|
-   |webwork-2.0pr2/DATA        |
-   |---------------------------|
-   |webwork-2.0pr2/DATA/uploads|
-   |---------------------------|
-   |webwork-2.0pr2/htdocs/tmp  |
-   +---------------------------+
-
-   Assuming that your web server runs as the user www, you can achieve this
-   by running:
-
-    # chown www webwork-2.0pr2/DATA
-    # chown www webwork-2.0pr2/DATA/uploads
-    # chwon www webwork-2.0pr2/htdocs/tmp
-
-____APACHE CONFIGURATION________________________________________________________
-
-   WeBWorK requires Apache 1.3 and mod_perl 1.0 to run. For instructions on
-   how to compile, install, and test mod_perl, consult the mod_perl
-   Installation Guide.
-
-   Once Apache and mod_perl are installed, Apache must be configured to
-   handle requests for WeBWorK. Apache needs to know about three locations:
-
-     * The location that is handled by the Apache::WeBWorK module, usually
-       /webwork2.
-     * The location of system-wide resources, usually /webwork2_files.
-     * The location of course-specific resources, usually /webwork2_courses.
-
-   In the following examples, I'm assuming that you unpacked the WeBWorK 2
-   distribution to /opt/webwork2, and the PG distribution to /opt/pg. If your
-   Apache configuration is sufficiently paranoid, you may need to add the
-   following to the Location and Directory stanzas below, to permit access:
-
-    Order allow,deny
-    Allow from all
-    # or "Allow from yourschool.edu"
-
-Examples
-
-     * Example 1: Standard setup
-     * Example 2: Virtual host setup
-
-  Example 1: Standard setup
-
-   You'll probably want this one.
-
-    # Define the location that is handled by the Apache::WeBWorK module, and tell
-    # perl where to find the libraries Apache::WeBWorK will need to run:
-    #
-    <Location /webwork2>
-       PerlSetVar webwork_root /opt/webwork2
-       PerlSetVar pg_root /opt/pg
-       <Perl>
-          use lib "/opt/webwork2/lib"
-          use lib "/opt/pg/lib"
-       </Perl>
-       SetHandler perl-script
-       PerlHandler Apache::WeBWorK
-    </Location>
-   
-    # Provide access to system-wide resources:
-    #
-    Alias /webwork2_files /opt/webwork2/htdocs
-    <Directory /opt/webwork2/htdocs>
-       Options None
-       AllowOverride None
-    </Directory>
-   
-    # Provide access to course-specific resources:
-    #
-    AliasMatch /webwork2_courses/([^/]*)/(.*) /opt/webwork2/courses/$1/html/$2
-    <Directory /opt/webwork2/courses/*/html>
-       Options FollowSymLinks
-       AllowOverride None
-    </Directory>
-
-  Example 2: Virtual host setup
-
-   This setup configures the root location (/) on a particular name-based
-   virtual host to be handled by Apache::WeBWorK. Please note that in this
-   setup, you would not be able to name a course files or courses. (Not that
-   you'd want to.)
-
-    NameVirtualHost *
-   
-    <VirtualHost *>
-      
-       ServerName webwork2.yourschool.edu
-      
-       # Define the location that is handled by the Apache::WeBWorK module, and tell
-       # perl where to find the libraries Apache::WeBWorK will need to run:
-       #
-       <Location />
-          PerlSetVar webwork_root /opt/webwork2
-          PerlSetVar pg_root /opt/pg
-          <Perl>
-             use lib "/opt/webwork2/lib"
-             use lib "/opt/pg/lib"
-          </Perl>
-          SetHandler perl-script
-          PerlHandler Apache::WeBWorK
-       </Location>
-      
-       # Provide access to system-wide resources:
-       #
-       Alias /files /opt/webwork2/htdocs
-       <Directory /opt/webwork2/htdocs>
-          Options None
-          AllowOverride None
-       </Directory>
-      
-       # Provide access to course-specific resources:
-       #
-       AliasMatch /courses/([^/]*)/(.*) /opt/webwork2/courses/$1/html/$2
-       <Directory /opt/webwork2/courses/*/html>
-          Options FollowSymLinks
-          AllowOverride None
-       </Directory>
-      
-    </VirtualHost>
-
-____WEBWORK CONFIGURATION_______________________________________________________
-
-   There are two sources of configuration information for a WeBWorK
-   installation. The global.conf file provides defaults for the entire
-   system, while the optional course.conf file overrides those values for a
-   particular course. Both of these files contain nested Perl data structures
-   which define the locations of files and directories, URLs, paths to
-   external programs, and other settings.
-
-   The configuration files are evaluated every time a request is made, so
-   configuration parameters can depend on certain properties of the request.
-   The following variables are made available in the configuration files:
-
-   +------------------------------------------------------------------------+
-   |  variable  |                        description                        |
-   |------------+-----------------------------------------------------------|
-   |$webworkRoot|The base directory of the WeBWorK installation (i.e.       |
-   |            |/opt/webwork2)                                             |
-   |------------+-----------------------------------------------------------|
-   |$webworkURL |The base URL handled by the Apache::WeBWorK mod_perl       |
-   |            |handler (i.e. /webwork2)                                   |
-   |------------+-----------------------------------------------------------|
-   |$pgRoot     |The base directory of the PG installation (i.e. /opt/pg)   |
-   |------------+-----------------------------------------------------------|
-   |$courseName |The name of the course currently being requested (i.e.     |
-   |            |mth143)                                                    |
-   +------------------------------------------------------------------------+
-
-Overriding values in course.conf
-
-   Any value defined in global.conf can be overriddden on a per-course basis
-   in the file course.conf, located in each course's directory. This file is
-   optional, it can be empty or nonexistent. It has the same format as
-   global.conf. This is commonly used for overriding the database layout for
-   a course, and values like pg : specialPGEnvironmentVars :
-   PRINT_FILE_NAMES_FOR that depend on user IDs specific to a course.
-
-   To override some value in a course.conf file, change only the particular
-   hash key. For example, to override the PRINT_FILE_NAMES_FOR setting, put
-   the following in course.conf:
-
-    $pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR} = ["new", "list", "of", "names"];
-
-   Since the value of PRINT_FILE_NAMES_FOR is a list, you could also append a
-   value to it using the following perl construction:
-
-    push @{ $pg->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR} }, "new";
-
-   It might be helpful to consult Chapter 9, Data Structures, of the third
-   edition of the Camel Book for more information about nested data
-   structures. (The chapter is also illictly available on the web.)
-
-Commonly modified global.conf values
-
-   Most values defined in global.conf need not be changed from their
-   defaults. Some values of interest include:
-
-   +------------------------------------------------------------------------+
-   |             value             |              description               |
-   |-------------------------------+----------------------------------------|
-   |                               |The path to the courses directory. You  |
-   |                               |might want to change this if you're     |
-   |webworkDirs : courses          |sharing courses with a WW1 installation,|
-   |                               |or if you wish to keep your courses     |
-   |                               |somewhere else. (i.e.                   |
-   |                               |/var/lib/webwork/courses)               |
-   |-------------------------------+----------------------------------------|
-   |                               |The URL of WeBWorK documentation, used  |
-   |webworkURLs : docs             |for the "Help" link. You may wish to    |
-   |                               |change this if you have local           |
-   |                               |documentation.                          |
-   |-------------------------------+----------------------------------------|
-   |                               |The URL of a WW1 profLogin.pl script,   |
-   |                               |used for the "WeBWorK 1.x Instructor    |
-   |                               |Tools" link. The script referenced      |
-   |webworkURLs : oldProf          |should have access to the same courses  |
-   |                               |as this system. The user ID and session |
-   |                               |key of the current user are added to    |
-   |                               |this URL to provide a seamless          |
-   |                               |transition.                             |
-   |-------------------------------+----------------------------------------|
-   |mail : smtpServer              |The SMTP server to use when sending     |
-   |                               |email. Use an SMTP server at your site. |
-   |-------------------------------+----------------------------------------|
-   |                               |The "sender" address to pass to the SMTP|
-   |mail : smtpSender              |server. This differs from the "from"    |
-   |                               |address. Set this to some administrative|
-   |                               |address.                                |
-   |-------------------------------+----------------------------------------|
-   |                               |The full paths to external programs used|
-   |externalPrograms               |by the system. Set the values in this   |
-   |                               |hash to the paths appropriate fro your  |
-   |                               |site.                                   |
-   |-------------------------------+----------------------------------------|
-   |                               |The HTML template to use for arranging  |
-   |templates : system             |elements on generated pages. If you     |
-   |                               |create your own site-specific template, |
-   |                               |specify the path to it here.            |
-   |-------------------------------+----------------------------------------|
-   |permissionLevels               |Use this hash to map capabilities to    |
-   |                               |permission levels.                      |
-   |-------------------------------+----------------------------------------|
-   |pg : renderer                  |Set this to WeBWorK::PG::Remote to use a|
-   |                               |remote "renderd" renderer.              |
-   |-------------------------------+----------------------------------------|
-   |pg : options                   |Use this hash to change the default PG  |
-   |                               |options.                                |
-   |-------------------------------+----------------------------------------|
-   |pg : options : displayMode     |Can be images, formattedText, or        |
-   |                               |plainText                               |
-   |-------------------------------+----------------------------------------|
-   |pg : specialPGEnvironmentVars :|List the user IDs of users who should   |
-   |PRINT_FILE_NAMES_FOR           |get PG source file names in their       |
-   |                               |rendered problems.                      |
-   +------------------------------------------------------------------------+
-
-Database options
-
-   The database configuration is controlled by the dbLayout hash. Various
-   versions of this hash are defined in separate configuration files, which
-   may be included using the include function. The database configuration
-   files are as follows:
-
-   +------------------------------------------------------------------------+
-   |  file   |                         description                          |
-   |---------+--------------------------------------------------------------|
-   |         |Defines dbLayout to use GDBM databases stored in the DATA     |
-   |gdbm.conf|subdirectory of each course's directory. Suitable for courses |
-   |         |that were created under WW1, or course that are to be shared  |
-   |         |between WW1 and WW2.                                          |
-   |---------+--------------------------------------------------------------|
-   |sql.conf |Defines dbLayout to use a database on an SQL server. Suitable |
-   |         |for courses that will only be used under WW2.                 |
-   +------------------------------------------------------------------------+
-
-   What database layout configuration file you chose for the global default
-   (i.e. include into global.conf) depends on what database backend your
-   courses will usually use. Courses with a different database layout will
-   require a different configuration file to be included into that course's
-   course.conf file.
-
-   Please note: support for GDBM databases are provided only for backwards
-   compatability with courses used under WeBWorK 1.x and will be dropped in a
-   future version of WeBWorK 2 (as will all non-SQL database support).
-
-____COURSE CREATION_____________________________________________________________
-
-Database layouts
-
-     * The sql database layout specifies that all WeBWorK tables will be
-       stored as tables in an SQL database. Access is through the DBI module,
-       so (theoretically) any DBD:: module can be used. The sql layout
-       provides the fastest and most scalable performance. However, it
-       requires access to an SQL server.
-     * The gdbm database layout specifies that all WeBWorK tables will be
-       stored in a manner compatible with WeBWorK 1.x. That is, the data will
-       be stored in several GDBM databases within the course directory
-       itself. This layout provides compatability with WW1, but is
-       significantly slower and relies on fragile hacks to make it work. This
-       layout will not be supported in future releases of WeBWorK.
-
-   We suggest using the sql layout for new courses, unless compatability with
-   WW1 is necessary.
-
-   The default database layout for the system is stored in global.conf. It
-   can be changed on a per-course basis in that course's course.conf file. A
-   full discussion of this feature is available in the database.conf and
-   global.conf files in your distribution.
-
-Database creation (SQL courses only)
-
-   For SQL courses, use the mksqldb utility to generate SQL statements that,
-   when executed, will create a course database. The output of mksqldb can be
-   piped directly to your SQL console. For example:
-
-    mksqldb myCourseName | mysql -u root -p
-
-   The mksqldb utility has some internal documentation that you may want to
-   consult.
-
-  Access privileges
-
-   You must also grant access privileges to two SQL accounts, webworkRead and
-   webworkWrite. webworkRead should have permission to SELECT. webworkWrite
-   should have permission to SELECT, INSERT, UPDATE, and DELETE. The
-   passwords for these accounts are defined in database.conf, and are blank
-   by default. This is because passwords entered here are both readable by
-   the web server and added to the course environment. Although we don't know
-   of any way that these values could "leak" out, one might exist.
-
-   If you have a dedicated machine for WeBWorK (with it's own IP address), it
-   is "safe" to leave those passwords blank and instead rely on IP-based
-   authentication. For example, at Rochester we grant access this way:
-
-    GRANT SELECT on webwork_myCourseName.* to webworkRead.localhost;
-    GRANT SELECT, INSERT, UPDATE, DELETE on webwork_myCourseName.* to webworkWrite.localhost;
-
-   Further discussion at SecurityIssues.
-
-Course creation
-
-   Use the addcourse utility to create a new course directory, populate it
-   with problem templates (PG files), fill the database with users, and mark
-   some users as professors. The syntax of the utility is as follows:
-
-    addcourse [--templates=DIR] [--db-layout=LAYOUT]
-       [--users=FILE [--professors=USERID[,USERID]...] ]
-       COURSEID
-
-   All options are optional. Heh.
-
-   --templates=DIR
-           The contents of the directory DIR will be copied to the templates
-           directory of the new course.
-
-   --db-layout=LAYOUT
-           The specified database layout will be used in place of the default
-           specified in global.conf.
-
-   --users=FILE
-           The users listed in the comma-separated text file FILE will be
-           added to the user list of the new course. The format of this file
-           is the same as user lists exported from WeBWorK.
-
-   --professors=USERID[,USERID]...
-           Each USERID, if it is present in the new course's user list, will
-           be granted professor privileges (i.e. a permission level of 10).
-           Requires --users.
-
-   If you use --db-layout to override the default layout, you will need to
-   manually create a course.conf file in the new course's directory after
-   creating the course. The file should contain the following line:
-
-    *dbLayout = $dbLayouts{layoutName};
-
-   This is described in greater detail in the global.conf and database.conf
-   files.
-
-   A default classlist file named defaultClasslist.lst is provided in the
-   courses directory. Templates can be obtained from various problem
-   libraries.
-
-   For example, I just created a course using the following commands:
-
-    $ cd /opt/webwork2
-    $ mysql -u root -p
-    mysql> GRANT SELECT on webwork_sqltest.* to webworkRead.localhost;
-    mysql> GRANT SELECT, INSERT, UPDATE, DELETE on webwork_sqltest.* to webworkWrite.localhost;
-    mysql> ^D
-    $ bin/mksqldb sqltest | mysql -u root -p
-    $ bin/addcourse --templates=/opt/problibs/rochester_problib --db-layout=sql \
-    > --users=courses/defaultClasslist.lst --professors=professor
+     * [1]Introduction
+     * [2]Availability
+     * [3]Installation
+     * [4]Help
+     * [5]Bug Reports & Feature Requests
+     * [6]Patches
+
+Introduction
+
+   The [7]WeBWorK Team is pleased to announce the release of [8]WeBWorK
+   2.0 Preview Release 3. While it is intended primarily for testing,
+   development, and evaluation of the new system, it is also suitable for
+   use in live courses.
+
+   This release includes almost all of the functionality of WeBWorK 1.9,
+   and contains new functionality beyond what it possible with 1.9. New
+   features since [9]PreviewRelease2 include:
+
+     * improvements in speed and efficiency
+     * many user interface enhancements
+     * improved course creation procedure
+     * "remember me" cookie actually works
+     * installation documentation improvements
+     * many bug fixes
+
+Availability
+
+   The complete system is distributed as two tarballs. One for the
+   WeBWorK system itself, and one for the PG system, including a standard
+   set of PG modules and macro files.
+
+   Files are available below and on our SourceForge project page:
+   [10]http://sourceforge.net/project/showfiles.php?group_id=93112
+
+Installation
+
+   Documentation on installing and configuring WeBWorK is available on
+   this wiki. The relevant wiki topics are as follows:
+
+     * Installing Webwork
+          + Step 1: [11]SystemRequirements - satisfy system requirements.
+          + Step 2: [12]DirectorySetup - download and unpack the WeBWorK
+            distribution.
+          + Step 3: [13]ApacheSetup - configure apache.
+          + Step 4: [14]TestCourse - create a test course to verify your
+            installation.
+          + Step 5: [15]SystemConfig - customize your system
+            configuration.
+          + Step 6: [16]MiscConfig - customize miscellaneous
+            system-dependant settings.
+     * Creating and Upgrading Courses
+          + [17]CourseCreation - creating a new course.
+          + [18]CourseUpgrade - preparing a course from WeBWorK 1.x for
+            use under WeBWorK 2.0.
+
+Help
+
+   If you need help installing or using [19]WeBWorK 2.0, visit the
+   [20]WeBWorK discussion group and post your question there. The
+   developers monitor this forum.
+
+Bug Reports & Feature Requests
+
+   Submit bug reports and feature requests at
+   [21]http://bugs.webwork.rochester.edu/. We can't fix bugs and add
+   features if you don't tell us about them!
+
+Patches
+
+   While we welcome patches of any sort, by patching against the latest
+   CVS code, you save us and yourself time. A bug in Preview Release 3
+   may be fixed in CVS, and we can more easily handle patches against the
+   latest code. Check out the latest development version from CVS and
+   patch against that. Consult the [22]WeBWorKCVS topic for more
+   information.
+
+References
+
+   1. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Introduction
+   2. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Availability
+   3. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Installation
+   4. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Help
+   5. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Bug_Reports_Feature_Requests
+   6. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease3#Patches
+   7. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
+   8. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
+   9. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PreviewRelease2
+  10. http://sourceforge.net/project/showfiles.php?group_id=93112
+  11. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemRequirements
+  12. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DirectorySetup
+  13. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/ApacheSetup
+  14. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/TestCourse
+  15. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/SystemConfig
+  16. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/MiscConfig
+  17. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseCreation
+  18. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/CourseUpgrade
+  19. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorK
+  20. http://webhost.math.rochester.edu/webworkdocs/discuss/
+  21. http://bugs.webwork.rochester.edu/
+  22. http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS
