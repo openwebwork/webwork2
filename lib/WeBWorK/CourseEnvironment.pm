@@ -3,7 +3,8 @@ package WeBWorK::CourseEnvironment;
 use Safe;
 
 sub new {
-	my $class = shift;
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
 	my $webworkRoot = shift;
 	my $courseName = shift;
 	
