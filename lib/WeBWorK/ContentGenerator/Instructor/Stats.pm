@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.35 2004/04/25 01:20:40 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.36 2004/05/08 02:03:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -209,6 +209,7 @@ sub determine_percentiles {
 	my $num_students      = $#list_of_scores;
 	foreach my $percentage (@{$percent_brackets}) {
 		$percentiles{$percentage} = @list_of_scores[int( (100-$percentage)*$num_students/100)];
+		$percentiles{$percentage} =0 unless defined($percentiles{$percentage});  #in case no students have tried this question
 	}
 	# for example
 	# $percentiles{75}  = @list_of_scores[int( 25*$num_students/100)]; 
