@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.124 2004/11/03 19:54:25 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.125 2004/11/18 16:04:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -907,8 +907,6 @@ sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
 	
-	# remove this comment on the next line if they get left in by accident
-	print "HEAD ";
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
 	print $r->urlpath->name;
 	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
