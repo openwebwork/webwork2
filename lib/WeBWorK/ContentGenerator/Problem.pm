@@ -211,17 +211,28 @@ sub pre_header_initialize {
 			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
 		checkAnswers       => canCheckAnswers($permissionLevel, $set->answer_date),
 	);
+	#########################################################
 	# more complicated logic for showing check answer button:
+	#########################################################
 	# checkAnswers button shows up after due date -- once a student can't record anymore
 	# checkAnswers button always shows up when an instructor or TA is acting
 	# as someone else (the $user and $effectiveUserName aren't the same).
 	$can{checkAnswers} =  ($can{checkAnswers}    &&   not $can{recordAnswers}           ) ||
-	                      ( $permissionLevel >= 5  and 
-	                        defined($userName) and defined($effectiveUserName) and 
+	                      ( defined($userName) and defined($effectiveUserName) and 
 	                        ($userName ne $effectiveUserName)
 	                       ); 
-	                     
+	#########################################################
+	# more complicated logif for showing "submit answer" button
+	#########################################################                     
+	# We hide the submit answer button if someone is acting as a student
+	# This prevents errors where you accidently submit the answer for a student
+	# Not sure whether this a feature or a bug
 	
+	$can{recordAnswers} = ($can{recordAnswers} and not
+	                          (   defined($userName) and defined($effectiveUserName) and 
+	                              ($userName ne $effectiveUserName)
+	                          )
+	                      );
 	# final values for options
 	my %will;
 	foreach (keys %must) {
