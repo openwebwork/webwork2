@@ -20,9 +20,9 @@ sub body {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param('user');
 	
-	print startform({-method=>"POST", -action=>$r->uri."set4/"});
+	print startform({-method=>"POST", -action=>$r->uri."set0/"});
 	print $self->hidden_authen_fields;
-	print input({-type=>"submit", -value=>"Do Set 4"});
+	print input({-type=>"submit", -value=>"Do Set 0"});
 	print endform;
 	"";
 }

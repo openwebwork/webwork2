@@ -10,7 +10,7 @@ use Apache::Request;
 use Apache::Constants qw(:common);
 use WeBWorK::ContentGenerator;
 
-use CGI::Carp qw(fatalsToBrowser);
+#use CGI::Carp qw(fatalsToBrowser);
 
 our @ISA = qw(WeBWorK::ContentGenerator);
 

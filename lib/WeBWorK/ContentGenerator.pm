@@ -4,7 +4,7 @@ use CGI qw(-compile :html :form);
 use Apache::Constants qw(:common);
 
 # Send 'die' message to the browser window
-use CGI::Carp qw(fatalsToBrowser);
+#use CGI::Carp qw(fatalsToBrowser);
 
 
 # This is a superclass for Apache::WeBWorK's content generators.
