@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.5 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.6 2003/12/12 02:24:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -71,7 +71,7 @@ sub pre_header_initialize {
 		##### get and save permission levels #####
 		
 	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
-	die "permission level for $userName not found." unless $permissionLevel;
+		die "permission level for $userName not found." unless defined($permissionLevel);
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -197,7 +197,7 @@ sub initialize {
 	die "set $setName for effectiveUser $effectiveUserName not found." unless $set;
 	
 	my $permissionLevel = $db->getPermissionLevel($userName)->permission(); # checked
-	die "permission level undefined for $userName. " unless $permissionLevel;
+	die "permission level undefined for $userName. " unless defined($permissionLevel);
 	
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
