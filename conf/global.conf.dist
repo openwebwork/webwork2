@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.89 2004/07/12 16:20:41 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.90 2004/07/12 22:15:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,6 +33,63 @@
 #     $webwork_courses_dir    The path to the WeBWorK courses directory.
 # 
 # In addition, the $courseName variable holds the name of the current course.
+
+################################################################################
+# Paths to external programs 
+################################################################################
+
+$externalPrograms{mkdir}    = "/bin/mkdir";
+$externalPrograms{mysql}    = "/usr/local/bin/mysql";
+
+$externalPrograms{latex}    = "/usr/local/bin/latex";
+$externalPrograms{pdflatex} = "/usr/local/bin/pdflatex";
+$externalPrograms{dvipng}   = "/usr/local/bin/dvipng";
+$externalPrograms{tth}      = "/usr/local/bin/tth";
+
+################################################################################
+# Mail settings
+################################################################################
+
+# Mail sent by the PG system and the mail merge and feedback modules will be
+# sent via this SMTP server.
+$mail{smtpServer}            = 'mail.yourschool.edu';
+
+# When connecting to the above server, WeBWorK will send this address in the
+# MAIL FROM command. This has nothing to do with the "From" address on the mail
+# message. It can really be anything, but some mail servers require it contain
+# a valid mail domain, or at least be well-formed.
+$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+	
+# AllowedRecipients defines addresses that the PG system is allowed to send mail
+# to. this prevents subtle PG exploits. This should be set in course.conf to the
+# addresses of professors of each course. Sending mail from the PG system (i.e.
+# questionaires, essay questions) will fail if this is not set somewhere (either
+# here or in course.conf).
+$mail{allowedRecipients}     = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+	
+# If defined, feedbackRecipients overrides the list of recipients for feedback
+# email. It's appropriate to set this in the course.conf for specific courses,
+# but probably not in global.conf. if not defined, mail is sent to all
+# professors and TAs for a given course
+$mail{feedbackRecipients}    = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+	
+# feedbackVerbosity:
+#  0: send only the feedback comment and context link
+#  1: as in 0, plus user, set, problem, and PG data
+#  2: as in 1, plus the problem environment (debugging data)
+$mail{feedbackVerbosity}     = 1;
+	
+# Defines the size of the Mail Merge editor window
+# FIXME: should this be here? it's UI, not mail
+# FIXME: replace this with the auto-size method that TWiki uses
+$mail{editor_window_rows}    = 15;
+$mail{editor_window_columns} = 100;
 
 ################################################################################
 # System-wide locations (directories and URLs)
@@ -216,113 +273,6 @@ $courseFiles{login_info}  = "login_info.txt";
 $courseFiles{problibs}    = {};
 
 ################################################################################
-# Logs
-################################################################################
-
-# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
-# top-level hash.
-
-# Logs data about how long it takes to process problems. (Do not confuse this
-# with the /other/ timing log which can be set by WeBWorK::Timing and is used
-# for benchmarking system performance in general. At some point, this timing
-# mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
-$webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
-
-# The transaction log contains data from each recorded answer submission. This
-# is useful if the database becomes corrupted.
-$webworkFiles{logs}{transaction}    = "$courseDirs{logs}/transaction.log";
-
-# The answer log stores a history of all users' submitted answers.
-$courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
-
-################################################################################
-# Mail settings
-################################################################################
-
-# Mail sent by the PG system and the mail merge and feedback modules will be
-# sent via this SMTP server.
-$mail{smtpServer}            = 'mail.yourschool.edu';
-
-# When connecting to the above server, WeBWorK will send this address in the
-# MAIL FROM command. This has nothing to do with the "From" address on the mail
-# message. It can really be anything, but some mail servers require it contain
-# a valid mail domain, or at least be well-formed.
-$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-	
-# AllowedRecipients defines addresses that the PG system is allowed to send mail
-# to. this prevents subtle PG exploits. This should be set in course.conf to the
-# addresses of professors of each course. Sending mail from the PG system (i.e.
-# questionaires, essay questions) will fail if this is not set somewhere (either
-# here or in course.conf).
-$mail{allowedRecipients}     = [
-	#'prof1@yourserver.yourdomain.edu',
-	#'prof2@yourserver.yourdomain.edu',
-];
-	
-# If defined, feedbackRecipients overrides the list of recipients for feedback
-# email. It's appropriate to set this in the course.conf for specific courses,
-# but probably not in global.conf. if not defined, mail is sent to all
-# professors and TAs for a given course
-$mail{feedbackRecipients}    = [
-	#'prof1@yourserver.yourdomain.edu',
-	#'prof2@yourserver.yourdomain.edu',
-];
-	
-# feedbackVerbosity:
-#  0: send only the feedback comment and context link
-#  1: as in 0, plus user, set, problem, and PG data
-#  2: as in 1, plus the problem environment (debugging data)
-$mail{feedbackVerbosity}     = 1;
-	
-# Defines the size of the Mail Merge editor window
-# FIXME: should this be here? it's UI, not mail
-# FIXME: replace this with the auto-size method that TWiki uses
-$mail{editor_window_rows}    = 15;
-$mail{editor_window_columns} = 100;
-
-################################################################################
-# Paths to external programs 
-################################################################################
-
-$externalPrograms{mkdir}    = "/bin/mkdir";
-$externalPrograms{mysql}    = "/usr/local/bin/mysql";
-
-$externalPrograms{latex}    = "/usr/local/bin/latex";
-$externalPrograms{pdflatex} = "/usr/local/bin/pdflatex";
-$externalPrograms{dvipng}   = "/usr/local/bin/dvipng";
-$externalPrograms{tth}      = "/usr/local/bin/tth";
-
-# These image conversion utilities are included in the WeBWorK distribution.
-$externalPrograms{gif2eps}  = "$webworkDirs{bin}/gif2eps";
-$externalPrograms{png2eps}  = "$webworkDirs{bin}/png2eps";
-$externalPrograms{gif2png}  = "$webworkDirs{bin}/gif2png";
-
-################################################################################
-# Site defaults (FIXME: what other things could be "site defaults"?)
-################################################################################
-
-# Status strings -- lists valid status values and their names. If your site uses
-# additional values, add them here.
-$siteDefaults{status} = {
-	A        => "Audit",
-	audit    => "Audit",
-	D        => "Drop",
-	drop     => "Drop",
-	withdraw => "Drop",
-	C        => "Enrolled",
-	current  => "Enrolled",
-	enrolled => "Enrolled",
-};
-
-################################################################################
-# Frontend options 
-################################################################################
-
-%templates = (
-	system => "$webworkDirs{conf}/templates/ur.template",
-);
-
-################################################################################
 # Database options
 ################################################################################
 
@@ -356,6 +306,60 @@ $problemLibrary{userSQL}     = "webworkRead";
 
 # The password to use when connecting to the problem library database
 $problemLibrary{passwordSQL} = "";
+
+################################################################################
+# Logs
+################################################################################
+
+# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
+# top-level hash.
+
+# Logs data about how long it takes to process problems. (Do not confuse this
+# with the /other/ timing log which can be set by WeBWorK::Timing and is used
+# for benchmarking system performance in general. At some point, this timing
+# mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
+$webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
+
+# The transaction log contains data from each recorded answer submission. This
+# is useful if the database becomes corrupted.
+$webworkFiles{logs}{transaction}    = "$courseDirs{logs}/transaction.log";
+
+# The answer log stores a history of all users' submitted answers.
+$courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
+
+################################################################################
+# More paths to external programs 
+################################################################################
+
+# These image conversion utilities are included in the WeBWorK distribution.
+$externalPrograms{gif2eps}  = "$webworkDirs{bin}/gif2eps";
+$externalPrograms{png2eps}  = "$webworkDirs{bin}/png2eps";
+$externalPrograms{gif2png}  = "$webworkDirs{bin}/gif2png";
+
+################################################################################
+# Site defaults (FIXME: what other things could be "site defaults"?)
+################################################################################
+
+# Status strings -- lists valid status values and their names. If your site uses
+# additional values, add them here.
+$siteDefaults{status} = {
+	A        => "Audit",
+	audit    => "Audit",
+	D        => "Drop",
+	drop     => "Drop",
+	withdraw => "Drop",
+	C        => "Enrolled",
+	current  => "Enrolled",
+	enrolled => "Enrolled",
+};
+
+################################################################################
+# Frontend options 
+################################################################################
+
+%templates = (
+	system => "$webworkDirs{conf}/templates/ur.template",
+);
 
 ################################################################################
 # Authorization system
