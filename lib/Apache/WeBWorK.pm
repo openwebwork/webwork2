@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.61 2003/12/09 01:12:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,12 +33,12 @@ your httpd.conf file to achieve this:
  		SetHandler perl-script
  		PerlHandler Apache::WeBWorK
  	
- 		PerlSetVar webwork_root WEBWORK_DIR/webwork-modperl
- 		PerlSetVar pg_root /WEBWORK_DIR/pg
+ 		PerlSetVar webwork_root /path/to/webwork2
+ 		PerlSetVar pg_root /path/to/pg
  		
  		<Perl>
- 			use lib 'WEBWORK_DIR/webwork-modperl/lib';
- 			use lib 'WEBWORK_DIR/pg/lib';
+ 			use lib '/path/to/webwork2/lib';
+ 			use lib '/path/to/pg/lib';
  		</Perl>
  	</Location>
  </IfModule>

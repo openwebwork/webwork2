@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/conf/httpd-wwmp-header.conf.dist,v 1.4 2003/12/09 01:12:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,8 +15,8 @@
 ################################################################################
 
 # This file contains apache configuration directives that should be suitable for
-# any WeBWorK 2 development installation. http-wwmp.conf.dist expects to find
-# this file at /path/to/webwork-modperl/conf/httpd-wwmp-header.conf. Simply
+# any WeBWorK 2 development installation. By default, http-wwmp.conf expects to
+# find this file at /path/to/webwork2/conf/httpd-wwmp-header.conf. Simply
 # copying this file to that location should suffice.
 
 ### Section 1: Global Environment
