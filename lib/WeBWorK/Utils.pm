@@ -18,6 +18,7 @@ use Apache::DB;
 use Date::Format;
 use Date::Parse;
 use Errno;
+use File::Path qw(rmtree);
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -26,13 +27,13 @@ our @EXPORT_OK = qw(
 	runtime_use
 	backtrace
 	readFile
+	readDirectory
 	formatDateTime
 	parseDateTime
 	writeLog
 	writeTimingLogEntry
 	list2hash
 	max
-	readDirectory
 	dbDecode
 	dbEncode
 	decodeAnswers
@@ -40,6 +41,7 @@ our @EXPORT_OK = qw(
 	ref2string
 	sortByName
 	makeTempDirectory
+	removeTempDirectory
 	pretty_print_rh
 );
 
@@ -67,22 +69,21 @@ sub backtrace {
 
 sub readFile($) {
 	my $fileName = shift;
-	local *INPUTFILE;
-	open INPUTFILE, "<", $fileName
-		or die "Failed to read $fileName: $!";
-	local $/ = undef;
-	my $result = <INPUTFILE>;
-	close INPUTFILE;
+	local $/ = undef; # slurp the whole thing into one string
+	open my $dh, "<", $fileName
+		or die "failed to read file $fileName: $!";
+	my $result = <$dh>;
+	close $dh;
 	return $result;
 }
 
 sub readDirectory($) {
-	my ($dirname) = @_;
-	
-	opendir my $dirhandle, $dirname or die "couldn't open directory $dirname: $!";
-	my @contents = readdir $dirhandle;
-	closedir $dirhandle;
-	return @contents;
+	my $dirName = shift;
+	opendir my $dh, $dirName
+		or die "failed to read directory $dirName: $!";
+	my @result = readdir $dh;
+	close $dh;
+	return @result;
 }
 
 sub formatDateTime($) {
@@ -284,6 +285,11 @@ sub makeTempDirectory($$) {
 	die "Failed to create directory $fullPath: $!"
 		unless $success;
 	return $fullPath;
+}
+
+sub removeTempDirectory($) {
+	my ($dir) = @_;
+	rmtree($dir, 0, 0);
 }
 
 sub pretty_print_rh {
