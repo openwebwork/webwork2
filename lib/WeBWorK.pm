@@ -29,6 +29,7 @@ use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
+use WeBWorK::ContentGenerator::Instructor::Scoring;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -141,6 +142,8 @@ sub dispatch($) {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
 				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
+			} elsif ($instructorArgument eq "scoring") {
+				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "users") {
 				$result = WeBWorK::ContentGenerator::Instructor::UserList->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "sets") {
