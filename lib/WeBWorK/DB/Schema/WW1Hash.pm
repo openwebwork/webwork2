@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.28 2004/09/08 01:07:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.29 2004/10/07 01:40:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,12 +38,14 @@ use constant SET_PREFIX   => "set<>";
 use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
 
 ################################################################################
-# table access functions
-################################################################################
 
-=head1 ADDITIONAL METHODS
+=head1 TABLE ACCESS METHODS
+
+See descriptions in L<WeBWorK::DB::Schema>.
 
 =over
+
+=item count(@keyparts)
 
 =cut
 
@@ -64,9 +66,11 @@ sub count {
 		@matchingPSVNs = $self->getPSVN($matchUserID, $matchSetID);
 	} else {
 		# we need all PSVNs, so we have to do this ourselves.
-		@matchingPSVNs =
-			grep { m/^\d+$/ }
-				keys %{ $self->{driver}->hash() };
+		#@matchingPSVNs =
+		#	grep { m/^\d+$/ }
+		#		keys %{ $self->{driver}->hash() };
+		# ok, we no longer have to do this ourselves
+		@matchingPSVNs = $self->getAllPSVNs;
 	}
 	
 	my $result = 0;
@@ -98,6 +102,10 @@ sub count {
 	return $result;
 }
 
+=item list(@keyparts)
+
+=cut
+
 sub list {
 	my ($self, @keyparts) = @_;
 	my ($matchUserID, $matchSetID) = @keyparts[0 .. 1];
@@ -115,9 +123,11 @@ sub list {
 		@matchingPSVNs = $self->getPSVN($matchUserID, $matchSetID);
 	} else {
 		# we need all PSVNs, so we have to do this ourselves.
-		@matchingPSVNs =
-			grep { m/^\d+$/ }
-				keys %{ $self->{driver}->hash() };
+		#@matchingPSVNs =
+		#	grep { m/^\d+$/ }
+		#		keys %{ $self->{driver}->hash() };
+		# ok, we no longer have to do this ourselves
+		@matchingPSVNs = $self->getAllPSVNs;
 	}
 	
 	# retrieve the strings associated with those PSVNs and retrieve the
@@ -160,6 +170,10 @@ sub list {
 	return @result;
 }
 
+=item exists(@keyparts)
+
+=cut
+
 sub exists {
 	my ($self, @keyparts) = @_;
 	my ($userID, $setID) = @keyparts[0 .. 1];
@@ -176,9 +190,11 @@ sub exists {
 		@matchingPSVNs = $self->getPSVN($userID, $setID);
 	} else {
 		# we need all PSVNs, so we have to do this ourselves.
-		@matchingPSVNs =
-			grep { m/^\d+$/ }
-				keys %{ $self->{driver}->hash() };
+		#@matchingPSVNs =
+		#	grep { m/^\d+$/ }
+		#		keys %{ $self->{driver}->hash() };
+		# ok, we no longer have to do this ourselves
+		@matchingPSVNs = $self->getAllPSVNs;
 	}
 	
 	my $result = 0;
@@ -211,6 +227,10 @@ sub exists {
 	$self->{driver}->disconnect();
 	return $result;
 }
+
+=item add($Record)
+
+=cut
 
 sub add {
 	my ($self, $Record) = @_;
@@ -269,18 +289,26 @@ sub add {
 	return $result;
 }
 
+=item get(@keyparts)
+
+=cut
+
 sub get {
 	my ($self, @keyparts) = @_;
 	
 	return ( $self->gets(\@keyparts) )[0];
 }
 
+=item gets(@keypartsRefs)
+
+=cut
+
 sub gets {
-	my ($self, @keypartsRefList) = @_;
+	my ($self, @keypartsRefs) = @_;
 	
 	my @records;
 	$self->{driver}->connect("ro");
-	foreach my $keypartsRef (@keypartsRefList) {
+	foreach my $keypartsRef (@keypartsRefs) {
 		my @keyparts = @$keypartsRef;
 		my $UserSet = $self->get1(@keyparts);
 		push @records, $UserSet;
@@ -289,6 +317,118 @@ sub gets {
 	
 	return @records;
 }
+
+=item put($Record)
+
+=cut
+
+sub put {
+	my ($self, $Record) = @_;
+	my $userID = $Record->user_id();
+	my $setID = $Record->set_id();
+	my $db = $self->{db};
+	my $table = $self->{table};
+	$table =~ m/^(.*)_user$/;
+	my $globalSchema = $db->{$1};
+	
+	return 0 unless $self->{driver}->connect("rw");
+	
+	my $PSVN = $self->getPSVN($userID, $setID);
+	
+	unless (defined $PSVN) {
+		$self->{driver}->disconnect();
+		die "($userID, $setID): UserSet not found.\n";
+	}
+	
+	my $string = $self->fetchString($PSVN);
+	
+	my $result;
+	if (defined $string) {
+		my ($Set, @Problems) = $self->string2records($string);
+		if ($self->{table} eq "set_user") {
+			$self->{driver}->disconnect();
+			# This call makes database connections, so we
+			# have to release our control on it.
+			my $globalSet = $globalSchema->get($setID);
+			$self->{driver}->connect("rw");
+	 		$self->copyOverrides($globalSet, $Record);
+			$string = $self->records2string($Record, @Problems);
+		} elsif ($self->{table} eq "problem_user") {
+			my $problemID = $Record->problem_id();
+			$self->{driver}->disconnect();
+			my $globalProblem = $globalSchema->get($setID, $problemID);
+			$self->{driver}->connect("rw");
+			$self->copyOverrides($globalProblem, $Record);
+			my $found = 0;
+			foreach (@Problems) {
+				if ($_->problem_id() eq $problemID) {
+					$found = 1;
+					$_ = $Record;
+				}
+			}
+			unless ($found) {
+				$self->{driver}->disconnect();
+				die "($userID, $setID, $problemID): UserProblem not found.\n";
+			}
+			$string = $self->records2string($Set, @Problems);
+		}
+		$self->storeString($PSVN, $string);
+		$result = 1;
+	} else {
+		$result = 0;
+	}
+	
+	$self->{driver}->disconnect();
+	return $result;
+}
+
+=item delete(@keyparts)
+
+=cut
+
+sub delete {
+	my ($self, $userID, $setID, $problemID) = @_;
+	
+	return 0 unless $self->{driver}->connect("rw");
+	
+	# get a list of PSVNs that match the userID and setID given
+	my @matchingPSVNs;
+	if (defined $userID and not defined $setID) {
+		@matchingPSVNs = $self->getPSVNsForUser($userID);
+	} elsif (defined $setID and not defined $userID) {
+		@matchingPSVNs = $self->getPSVNsForSet($setID);
+	} elsif (defined $userID and defined $setID) {
+		@matchingPSVNs = $self->getPSVN($userID, $setID);
+	} else {
+		# we need all PSVNs, so we have to do this ourselves.
+		#@matchingPSVNs =
+		#	grep { m/^\d+$/ }
+		#		keys %{ $self->{driver}->hash() };
+		# ok, we no longer have to do this ourselves
+		@matchingPSVNs = $self->getAllPSVNs;
+	}
+	
+	if (@matchingPSVNs) {
+		foreach my $PSVN (@matchingPSVNs) {
+			$self->delete1($PSVN, $problemID);
+		}
+	}
+	
+	$self->{driver}->disconnect();
+	return 1;
+}
+
+=back
+
+=cut
+
+################################################################################
+
+=head1 PRIVATE TABLE ACCESS METHODS
+
+These are helper methods used by the L<TABLE ACCESS METHODS>.
+
+=over
 
 =item get1(@keyparts)
 
@@ -324,18 +464,18 @@ sub get1 {
 	return $UserRecord;
 }
 
-=item getsNoFilter(@keypartsRefList)
+=item getsNoFilter(@keypartsRefs)
 
 Similar to gets(), but does not remove values that match global defaults.
 
 =cut
 
 sub getsNoFilter {
-	my ($self, @keypartsRefList) = @_;
+	my ($self, @keypartsRefs) = @_;
 	
 	my @records;
 	$self->{driver}->connect("ro");
-	foreach my $keypartsRef (@keypartsRefList) {
+	foreach my $keypartsRef (@keypartsRefs) {
 		my @keyparts = @$keypartsRef;
 		my $UserSet = $self->get1NoFilter(@keyparts);
 		push @records, $UserSet;
@@ -351,7 +491,7 @@ sub getsNoFilter {
 =item get1NoFilter(@keyparts)
 
 Similar to get1(), but does not remove values that match global defaults. Used
-by getsNoFilter() and several methods in GlobalTableEmulator.
+by get1() and getsNoFilter() and several methods in GlobalTableEmulator.
 
 =cut
 
@@ -460,96 +600,6 @@ sub getAllNoFilter {
 	return @UserProblems;
 }
 
-sub put {
-	my ($self, $Record) = @_;
-	my $userID = $Record->user_id();
-	my $setID = $Record->set_id();
-	my $db = $self->{db};
-	my $table = $self->{table};
-	$table =~ m/^(.*)_user$/;
-	my $globalSchema = $db->{$1};
-	
-	return 0 unless $self->{driver}->connect("rw");
-	
-	my $PSVN = $self->getPSVN($userID, $setID);
-	
-	unless (defined $PSVN) {
-		$self->{driver}->disconnect();
-		die "($userID, $setID): UserSet not found.\n";
-	}
-	
-	my $string = $self->fetchString($PSVN);
-	
-	my $result;
-	if (defined $string) {
-		my ($Set, @Problems) = $self->string2records($string);
-		if ($self->{table} eq "set_user") {
-			$self->{driver}->disconnect();
-			# This call makes database connections, so we
-			# have to release our control on it.
-			my $globalSet = $globalSchema->get($setID);
-			$self->{driver}->connect("rw");
-	 		$self->copyOverrides($globalSet, $Record);
-			$string = $self->records2string($Record, @Problems);
-		} elsif ($self->{table} eq "problem_user") {
-			my $problemID = $Record->problem_id();
-			$self->{driver}->disconnect();
-			my $globalProblem = $globalSchema->get($setID, $problemID);
-			$self->{driver}->connect("rw");
-			$self->copyOverrides($globalProblem, $Record);
-			my $found = 0;
-			foreach (@Problems) {
-				if ($_->problem_id() eq $problemID) {
-					$found = 1;
-					$_ = $Record;
-				}
-			}
-			unless ($found) {
-				$self->{driver}->disconnect();
-				die "($userID, $setID, $problemID): UserProblem not found.\n";
-			}
-			$string = $self->records2string($Set, @Problems);
-		}
-		$self->storeString($PSVN, $string);
-		$result = 1;
-	} else {
-		$result = 0;
-	}
-	
-	$self->{driver}->disconnect();
-	return $result;
-}
-
-sub delete {
-	my ($self, $userID, $setID, $problemID) = @_;
-	
-	return 0 unless $self->{driver}->connect("rw");
-	
-	# get a list of PSVNs that match the userID and setID given
-	my @matchingPSVNs;
-	if (defined $userID and not defined $setID) {
-		@matchingPSVNs = $self->getPSVNsForUser($userID);
-	} elsif (defined $setID and not defined $userID) {
-		@matchingPSVNs = $self->getPSVNsForSet($setID);
-	} elsif (defined $userID and defined $setID) {
-		@matchingPSVNs = $self->getPSVN($userID, $setID);
-	} else {
-		# we need all PSVNs, so we have to do this ourselves.
-		@matchingPSVNs =
-			grep { m/^\d+$/ }
-				keys %{ $self->{driver}->hash() };
-	}
-	
-	if (@matchingPSVNs) {
-		foreach my $PSVN (@matchingPSVNs) {
-			$self->delete1($PSVN, $problemID);
-		}
-	}
-	
-	$self->{driver}->disconnect();
-	return 1;
-}
-
 =item delete1($PSVN, $problemID)
 
 for the set_user table,  ignore $problemID and deletes the set with the
@@ -596,8 +646,17 @@ sub delete1 {
 =cut
 
 ################################################################################
-# add/put override copy helper
-################################################################################
+
+=head1 UTILITIES
+
+=over
+
+=item copyOverrides($GlobalRecord, $UserRecord)
+
+Copies global values from $GlobalRecord into the correponding fields in
+$UserRecord.
+
+=cut
 
 sub copyOverrides {
 	my ($self, $globalRecord, $userRecord) = @_;
@@ -617,24 +676,229 @@ sub copyOverrides {
 	                    # Nevertheless, it is common courtesy.
 }
 
+=item reindex()
+
+Destroy and rebuild the internal set-PSVN and user-PSVN indices to eliminate any
+inconsistancies.
+
+=cut
+
+sub reindex {
+	my ($self) = @_;
+	
+	my @results;
+	
+	# keep track of the userIDs and setIDs that are actually mentioned in PSVN records.
+	my %userIDsMentioned;
+	my %setIDsMentioned;
+	
+	# current indices (to figure out which indices to delete altogether)
+	my %userIndices;
+	my %setIndices;
+	
+	# new indices
+	my %newUserIndices;
+	my %newSetIndices;
+	
+	# will contain orphan indices to be deleted
+	my @userIndicesToDelete;
+	my @setIndicesToDelete;
+	
+	# get an exclusive lock
+	$self->{driver}->connect("rw");
+	
+	# get existing user indices
+	foreach my $userID ($self->listPSVNIndices(LOGIN_PREFIX)) {
+		my %userIndex = $self->fetchPSVNIndex(LOGIN_PREFIX, $userID);
+		#push @results, "[fetching user index $userID, contains sets " . join(" ", keys %userIndex) . "]";
+		$userIndices{$userID} = \%userIndex;
+	}
+	
+	# get existing set indices
+	foreach my $setID ($self->listPSVNIndices(SET_PREFIX)) {
+		my %setIndex = $self->fetchPSVNIndex(SET_PREFIX, $setID);
+		#push @results, "[fetching set index $setID, contains users " . join(" ", keys %setIndex) . "]";
+		$setIndices{$setID} = \%setIndex;
+	}
+	
+	# look at all actually-existing records (by PSVN)
+	my @PSVNs = sort { $a <=> $b } $self->getAllPSVNs;
+	foreach my $PSVN (@PSVNs) {
+		# get the record, determine the user and set IDs
+		my $string = $self->fetchString($PSVN);
+		next unless defined $string;
+		my ($userID, $setID) = $self->string2IDs($string);
+		
+		# see if there is another PSVN for this user/set pair (we only have to check
+		# one index, because the "new" indices are guaranteed to be consistent.)
+		if (exists $newUserIndices{$userID}{$setID}) {
+			my $existingPSVN = $newUserIndices{$userID}{$setID};
+			#push @results, "WARNING -- PSVN '$PSVN' and already encountered PSVN '$existingPSVN' both have user '$userID', set '$setID'. New index entry will overwrite existing, making '$existingPSVN' inaccessible by ID.";
+			push @results, "WARNING -- PSVN '$PSVN' will not be indexed, because an index entry already exists for user '$userID', set '$setID' (PSVN '$existingPSVN'). You will not be able to access it by ID.";
+			next;
+		}
+		
+		# report problems with the existing user index entry for this user/set pair
+		if (defined $userIndices{$userID}{$setID}) {
+			if ($userIndices{$userID}{$setID} == $PSVN) {
+				# index entry correct
+			} else {
+				my $wrongInfo;
+				my $wrongString = $self->fetchString($PSVN);
+				if (defined $string) {
+					my ($wrongUserID, $wrongSetID) = $self->string2IDs($wrongString);
+					$wrongInfo = "which has user '$wrongUserID', set '$wrongSetID'";
+				} else {
+					$wrongInfo = "which does not exist"
+				}
+				push @results, "User index entry for user '$userID', set '$setID' contains incorrect PSVN '$userIndices{$userID}{$setID}', $wrongInfo. Should contain PSVN '$PSVN' -- FIXED.";
+			}
+		} else {
+			push @results, "No user index entry for user '$userID', set '$setID' -- ADDED.";
+		}
+		
+		# report problems with the existing set index entry for this user/set pair
+		if (defined $setIndices{$setID}{$userID}) {
+			if ($setIndices{$setID}{$userID} == $PSVN) {
+				# index entry correct
+			} else {
+				my $wrongInfo;
+				my $wrongString = $self->fetchString($PSVN);
+				if (defined $string) {
+					my ($wrongUserID, $wrongSetID) = $self->string2IDs($wrongString);
+					$wrongInfo = "which has user '$wrongUserID', set '$wrongSetID'";
+				} else {
+					$wrongInfo = "which does not exist"
+				}
+				push @results, "Set index entry for user '$userID', set '$setID' contains incorrect PSVN '$setIndices{$setID}{$userID}', $wrongInfo. Should contain PSVN '$PSVN' -- FIXED.";
+			}
+		} else {
+			push @results, "No set index entry for user '$userID', set '$setID' -- ADDED.";
+		}
+		
+		# create the proper new index entries
+		$newUserIndices{$userID}{$setID} = $newSetIndices{$setID}{$userID} = $PSVN;
+	}
+	
+	# report user index entries that do no correspond to a real PSVN record
+	foreach my $userID (keys %userIndices) {
+		if (exists $newUserIndices{$userID}) {
+			my %newUserIndex = %{$newUserIndices{$userID}};
+			foreach my $setID (keys %newUserIndex) {
+				if (exists $newUserIndex{$setID}) {
+					# should exist
+				} else {
+					push @results, "Orphaned user index entry for user '$userID', set '$setID' (PSVN '$newUserIndex{$setID}') -- DELETED.\n";
+					# don't worry, it'll be deleted when we replace this index with the new one
+				}
+			}
+		} else {
+			push @results, "Orphaned user index for user '$userID' -- DELETED.";
+			push @userIndicesToDelete, $userID;
+		}
+	}
+	
+	# report set index entries that do no correspond to a real PSVN record
+	foreach my $setID (keys %setIndices) {
+		if (exists $newSetIndices{$setID}) {
+			my %newSetIndex = %{$newSetIndices{$setID}};
+			foreach my $userID (keys %newSetIndex) {
+				if (exists $newSetIndex{$userID}) {
+					# should exist
+				} else {
+					push @results, "Orphaned set index entry for user '$userID', set '$setID' (PSVN '$newSetIndex{$userID}') -- DELETED.\n";
+					# don't worry, it'll be deleted when we replace this index with the new one
+				}
+			}
+		} else {
+			push @results, "Orphaned set index for set '$setID' -- DELETED.";
+			push @setIndicesToDelete, $setID;
+		}
+	}
+	
+	# store new user indices
+	foreach my $userID (keys %newUserIndices) {
+		my %userIndex = %{$newUserIndices{$userID}};
+		#push @results, "[storing user index $userID, contains sets " . join(" ", keys %userIndex) . "]";
+		$self->storePSVNIndex(LOGIN_PREFIX, $userID, %userIndex);
+	}
+	
+	# store new set indices
+	foreach my $setID (keys %newSetIndices) {
+		my %setIndex = %{$newSetIndices{$setID}};
+		#push @results, "[storing set index $setID, contains users " . join(" ", keys %setIndex) . "]";
+		$self->storePSVNIndex(SET_PREFIX, $setID, %setIndex);
+	}
+	
+	# delete orphaned user indices
+	foreach my $userID (@userIndicesToDelete) {
+		#push @results, "[deleting user index $userID]";
+		$self->deletePSVNIndex(LOGIN_PREFIX, $userID);
+	}
+	
+	# delete orphaned set indices
+	foreach my $setID (@setIndicesToDelete) {
+		#push @results, "[deleting set index $setID]";
+		$self->deletePSVNIndex(SET_PREFIX, $setID);
+	}
+	
+	$self->{driver}->disconnect;
+	
+	return @results;
+}
+
+=for comment
+
+		# mark down that we've seen these IDs in a "real" PSVN record
+		$userIDsMentioned{$userID} = 1;
+		$setIDsMentioned{$setID} = 1;
+		
+
+=cut
+
+=back
+
+=cut
+
 ################################################################################
-# string <-> data conversion functions
-################################################################################
+
+=head1 STRING CONVERSION METHODS
+
+These methods use string2hash() and the L<TABLE MULTIPLEXING METHODS> to convert
+between strings and IDs/records.
+
+=over
+
+=item ($userID, $setID, @problemIDs) = string2IDs($string)
+
+=cut
 
 sub string2IDs {
 	my ($self, $string) = @_;
 	return $self->hash2IDs(string2hash($string));
 }
+
+=item $Set = string2set($string)
+
+=cut
  
 sub string2set {
 	my ($self, $string) = @_;
 	return $self->hash2set(string2hash($string));
 }
 
+=item $Problem = string2problem($string, $problemID)
+
+=cut
+
 sub string2problem {
 	my ($self, $string, $problemID) = @_;
 	return $self->hash2problem($problemID, string2hash($string));
 }
+
+=item @Problems = string2problems($string)
+
+=cut
 
 sub string2problems {
 	my ($self, $string) = @_;
@@ -645,6 +909,10 @@ sub string2problems {
 	}
 	return @Problems;
 }
+
+=item ($Set, @Problems) = string2records($string)
+
+=cut
 
 sub string2records {
 	my ($self, $string) = @_;
@@ -658,6 +926,10 @@ sub string2records {
 	return @Records;
 }
 
+=item records2string($Set, @Problems)
+
+=cut
+
 sub records2string {
 	my ($self, $Set, @Problems) = @_;
 	my @hashArray = $self->set2hash($Set);
@@ -668,12 +940,23 @@ sub records2string {
 	return hash2string(%hash);
 }
 
+=back
+
+=cut
+
 ################################################################################
-# table multiplexing functions
-#  both the set_user and problem_user tables are stored in one hash, keyed by
-#  PSVN. we need to be able to split a hash value into two records, and combine
-#  two records into a single hash value.
-################################################################################
+
+=head1 TABLE MULTIPLEXING METHODS
+
+Both the set_user and problem_user tables are stored in one hash, keyed by PSVN.
+These methods split a hash value into multiple records, and combine multiple
+records into a single hash value.
+
+=over
+
+=item ($userID, $setID, @problemIDs) = hash2IDs(%hash)
+
+=cut
 
 sub hash2IDs {
 	my ($self, %hash) = @_;
@@ -682,6 +965,10 @@ sub hash2IDs {
 	my @problemIDs = grep { s/^pfn// } keys %hash;
 	return $userID, $setID, @problemIDs;
 }
+
+=item $Set = hash2set(%hash)
+
+=cut
 
 sub hash2set {
 	my ($self, %hash) = @_;
@@ -696,6 +983,10 @@ sub hash2set {
 		published      => defined $hash{publ} ? $hash{publ} : "",
 	);
 }
+
+=item $Problem = hash2problem($problemID, %hash)
+
+=cut
 
 sub hash2problem {
 	my ($self, $n, %hash) = @_;
@@ -722,6 +1013,10 @@ sub hash2problem {
 	);
 }
 
+=item %hash = set2hash($Set)
+
+=cut
+
 sub set2hash {
 	my ($self, $Set) = @_;
 	return (
@@ -735,6 +1030,10 @@ sub set2hash {
 		publ => $Set->published,
 	);
 }
+
+=item %hash = problem2hash($Problem)
+
+=cut
 
 sub problem2hash {
 	my ($self, $Problem) = @_;
@@ -754,51 +1053,26 @@ sub problem2hash {
 	);
 }
 
+=back
+
+=cut
+
 ################################################################################
-# PSVN and index functions
+
+=head1 ID-KEYED PSVN ACCESS/MODIFICATION METHODS
+
 #  the PSVN pseudo-table and the set and user indexes are not visible to the
 #  API, but we need to be able to update them to remain compatible with WWDBv1.
-################################################################################
 
-# list user IDs for which PSVN indices exist
-sub listPSVNUserIndices {
-	my ($self) = @_;
-	my $login_prefix = LOGIN_PREFIX;
-	return map { /^$login_prefix(.*)$/ ? $1 : () } keys %{ $self->{driver}->hash() };
-}
+=over
 
-# list set IDs for which PSVN indices exist
-sub listPSVNSetIndices {
-	my ($self) = @_;
-	my $set_prefix = SET_PREFIX;
-	return map { /^$set_prefix(.*)$/ ? $1 : () } keys %{ $self->{driver}->hash() };
-}
+=item $PSVN = getPSVN($userID, $setID)
 
-# retrieves a list of existing PSVNs from the user PSVN index
-sub getPSVNsForUser {
-	my ($self, $userID) = @_;
-	my $setsForUser = $self->fetchString(LOGIN_PREFIX.$userID);
-	return unless defined $setsForUser;
-	my %sets = string2hash($setsForUser);
-	return values %sets;
-}
+Retrieves an existing PSVN from the PSVN indices given a user ID and set ID. If
+no PSVN for that user/set pair exists, an undefined value is returned.
 
-# retrieves a list of existing PSVNs from the set PSVN index
-sub getPSVNsForSet {
-	my ($self, $setID) = @_;
-	my $usersForSet = $self->fetchString(SET_PREFIX.$setID);
-	return unless defined $usersForSet;
-	my %users = string2hash($usersForSet);
-	return values %users;
-}
+=cut
 
-# retrieves a list of existing PSVNs from the set PSVN index
-sub getAllPSVNs {
-	my ($self) = @_;
-	return grep { m/^\d+$/ } keys %{ $self->{driver}->hash() };
-}
-
-# retrieves an existing PSVN from the PSVN indexes
 sub getPSVN {
 	my ($self, $userID, $setID) = @_;
 	my $setsForUser = $self->{driver}->hash()->{LOGIN_PREFIX.$userID};
@@ -829,8 +1103,36 @@ sub getPSVN {
 	return $sets{$setID};
 }
 
-# generates a new PSVN, updates the PSVN indexes, returns the PSVN
-# if there is already a PSVN for this pair, reuse it
+# This is a new version of getPSVN that uses fetchPSVNIndex. It is buggy and
+# additionally was causing SIGSEGV under mod_perl. Watch out!
+#
+#sub getPSVN {
+#	my ($self, $userID, $setID) = @_;
+#	
+#	my %setsForUser = $self->fetchPSVNIndex(LOGIN_PREFIX, $userID);
+#	my %usersForSet = $self->fetchPSVNIndex(SET_PREFIX, $setID);
+#	
+#	if (defined $setsForUser{$setID} and defined $usersForSet{$userID}) {
+#		if ($setsForUser{$setID} == $usersForSet{$userID}) {
+#			return $setsForUser{$setID};
+#		} else {
+#			die "User and set indices contain non-matching PSVNs for user '$userID' set '$setID'. Set index reports '$usersForSet{$userID}'. User index reports '$usersForSet{$userID}'. Reindexing required.";
+#		}
+#	} elsif (defined $setsForUser{$setID}) {
+#		die "PSVN '$setsForUser{$setID}' for user '$userID', set '$setID' exists in user index, but not in set index. Reindexing required.\n";
+#	} elsif (defined $usersForSet{$userID}) {
+#		die "PSVN '$usersForSet{$userID}' for user '$userID', set '$setID' exists in set index, but not in user index. Reindexing required.\n";
+#	}
+#}
+
+=item $PSVN = setPSVN($userID, $setID)
+
+Retrieves an existing PSVN from the PSVN indices given a user ID and set ID. If
+no PSVN for that user/set pair exists, a new one is generated, added to the
+indices, and returned.
+
+=cut
+
 sub setPSVN {
 	my ($self, $userID, $setID) = @_;
 	my $PSVN = $self->getPSVN($userID, $setID);
@@ -864,7 +1166,46 @@ sub setPSVN {
 	return $PSVN;
 }
 
-# remove an existing PSVN from the PSVN indexes
+# This is a new version of setPSVN that uses fetchPSVNIndex and storePSVNIndex.
+# It is buggy and additionally was causing SIGSEGV under mod_perl. Watch out!
+#
+#sub setPSVN {
+#	my ($self, $userID, $setID) = @_;
+#	
+#	my $PSVN = $self->getPSVN($userID, $setID);
+#	
+#	unless (defined $PSVN) {
+#		# yeah, create a new PSVN here
+#		my $min_psvn = 10**($self->{params}->{psvnLength} - 1);
+#		my $max_psvn = 10**$self->{params}->{psvnLength} - 1;
+#		my $attempts = 0;
+#		do {
+#			if (++$attempts > MAX_PSVN_GENERATION_ATTEMPTS) {
+#				die "failed to find an unused PSVN within ",
+#				    MAX_PSVN_GENERATION_ATTEMPTS, " attempts.";
+#			}
+#			$PSVN = int(rand($max_psvn-$min_psvn+1)) + $min_psvn;
+#		} while ($self->fetchString($PSVN));
+#		
+#		my %setsForUser = $self->fetchPSVNIndex(LOGIN_PREFIX, $userID);
+#		$setsForUser{$setID} = $PSVN;
+#		$self->storePSVNIndex(LOGIN_PREFIX, $userID, %setsForUser);
+#		
+#		my %usersForSet = $self->fetchPSVNIndex(SET_PREFIX, $setID);
+#		$usersForSet{$userID} = $PSVN;
+#		$self->storePSVNIndex(ST_PREFIX, $setID, %usersForSet);
+#	};
+#	
+#	return $PSVN;
+#}
+
+=item deletePSVN($userID, $setID)
+
+Remove an existing PSVN from the PSVN indexes, given the user ID and set ID for
+that PSVN.
+
+=cut
+
 sub deletePSVN {
 	my ($self, $userID, $setID) = @_;
 	my $PSVN = $self->getPSVN($userID, $setID);
@@ -890,9 +1231,161 @@ sub deletePSVN {
 	return 1;
 }
 
+# This is a new version of deletePSVN that uses fetchPSVNIndex, storePSVNIndex,
+# and deletePSVNIndex. It is buggy and additionally was causing SIGSEGV under
+# mod_perl. Watch out!
+#
+#sub deletePSVN {
+#	my ($self, $userID, $setID) = @_;
+#	
+#	my $PSVN = $self->getPSVN($userID, $setID);
+#	return unless defined $PSVN;
+#	
+#	my %setsForUser = $self->fetchPSVNIndex(LOGIN_PREFIX, $userID);
+#	delete $setsForUser{$setID};
+#	if (%setsForUser) {
+#		$self->storePSVNIndex(LOGIN_PREFIX, $userID, %setsForUser);
+#	} else {
+#		$self->deletePSVNIndex(LOGIN_PREFIX, $userID);
+#	}
+#	
+#	my %usersForSet = $self->fetchPSVNIndex(SET_PREFIX, $setID);
+#	delete $usersForSet{$userID}
+#	if (%usersForSet) {
+#		$self->storePSVNIndex(SET_PREFIX, $setID, %usersForSet);
+#	} else {
+#		$self->deletePSVNIndex(SET_PREFIX, $setID);
+#	}
+#	
+#	return 1;
+#}
+
+=back
+
+=cut
+
 ################################################################################
-# hash string interface
+
+=head1 PSVN LISTING METHODS
+
+=over
+
+=item @PSVNs = getAllPSVNs()
+
+Retrieves a list of all existing PSVNs.
+
+=cut
+
+sub getAllPSVNs {
+	my ($self) = @_;
+	return grep { m/^\d+$/ } keys %{ $self->{driver}->hash() };
+}
+
+=item @PSVNs = getPSVNsForUser($userID)
+
+Retrieves a list of PSVNs for a user from the user PSVN index.
+
+=cut
+
+sub getPSVNsForUser {
+	my ($self, $userID) = @_;
+	#my $setsForUser = $self->fetchString(LOGIN_PREFIX.$userID);
+	#return unless defined $setsForUser;
+	#my %sets = string2hash($setsForUser);
+	my %sets = $self->fetchPSVNIndex(LOGIN_PREFIX, $userID);
+	return values %sets;
+}
+
+=item @PSVNs = getPSVNsForSet($setID)
+
+Retrieves a list of PSVNs for a set from the set PSVN index.
+
+=cut
+
+sub getPSVNsForSet {
+	my ($self, $setID) = @_;
+	#my $usersForSet = $self->fetchString(SET_PREFIX.$setID);
+	#return unless defined $usersForSet;
+	#my %users = string2hash($usersForSet);
+	my %users = $self->fetchPSVNIndex(SET_PREFIX, $setID);
+	return values %users;
+}
+
+=back
+
+=cut
+
 ################################################################################
+
+=head1 PSVN INDEX ACCESS/MODIFICATION METHODS
+
+These methods store and fetch PSVN indexes as hashes. The $prefix argument is
+the prefix on the hash keys that make up the index, which are set as constants
+in this module (i.e. LOGIN_PREFIX or SET_PREFIX).
+
+=over
+
+=item @ids = listPSVNIndices($prefix)
+
+list IDs for which PSVN indices exist given a prefix.
+
+=cut
+
+sub listPSVNIndices {
+	my ($self, $prefix) = @_;
+	return map { /^$prefix(.*)$/ ? $1 : () } keys %{ $self->{driver}->hash() };
+}
+
+=item %PSVNIndex = fetchPSVNIndex($prefix, $id)
+
+Return the PSVN index identified by the given prefix and ID as a hash.
+
+=cut
+
+sub fetchPSVNIndex {
+	my ($self, $prefix, $id) = @_;
+	my $indexString = $self->fetchString("$prefix$id");
+	return () unless defined $indexString;
+	return string2hash($indexString);
+}
+
+=item storePSVNIndex($prefix, $id, %PSVNIndex)
+
+Store the data in %PSVNIndex in the PSVN index identified by the given prefix
+and ID.
+
+=cut
+
+sub storePSVNIndex {
+	my ($self, $prefix, $id, %hash) = @_;
+	my $indexString = hash2string(%hash);
+	$self->storeString("$prefix$id", $indexString);
+}
+
+=item deletePSVNIndex($prefix, $id)
+
+Delete the PSVN index identified by the given prefix and ID.
+
+=cut
+
+sub deletePSVNIndex {
+	my ($self, $prefix, $id) = @_;
+	$self->deleteString("$prefix$id");
+}
+
+=back
+
+=cut
+
+################################################################################
+
+=head1 HASH STRING ACCESS/MODIFICATION METHODS
+
+=over
+
+=item $string = fetchString($PSVN)
+
+=cut
 
 sub fetchString {
 	my ($self, $PSVN) = @_;
@@ -900,16 +1393,29 @@ sub fetchString {
 	return $string;
 }
 
+=item storeString($PSVN, $string)
+
+=cut
 
 sub storeString {
 	my ($self, $PSVN, $string) = @_;
 	$self->{driver}->hash()->{$PSVN} = $string;
 }
 
+=item deleteString($PSVN)
+
+=cut
+
 sub deleteString {
 	my ($self, $PSVN) = @_;
 	delete $self->{driver}->hash()->{$PSVN};
 }
+
+=back
+
+=cut
+
+################################################################################
 
 1;
 
