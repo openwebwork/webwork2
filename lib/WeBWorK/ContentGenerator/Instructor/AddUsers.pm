@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.5 2004/01/15 22:45:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.6 2004/01/16 00:42:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,12 +40,14 @@ sub initialize {
 		$self->{submitError} = "You are not authorized to modify student data";
 		return;
 	}
-
+	
 	if (defined($r->param('addStudents'))) {
+		my @userIDs;
 		my $numberOfStudents    = $r->param('number_of_students');
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
 		foreach my $i (1..$numberOfStudents) {
 		    my $new_user_id        =   $r->param("new_user_id_$i");
+			push @userIDs, $new_user_id;
 		    next unless defined($new_user_id) and $new_user_id;
 		    
 			my $newUser            = $db->newUser;
@@ -64,16 +66,34 @@ sub initialize {
 			$newUser->status('C');
 			$newPermissionLevel->permission(0);
 			#FIXME  handle errors if user exists already
-			$db->addUser($newUser);
-			$db->addPermissionLevel($newPermissionLevel);
-			$db->addPassword($newPassword);
-			$self->{studentEntryReport} .= join("",
-				CGI::b("Entered student: "), $newUser->last_name, ", ",$newUser->first_name,
-				CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
-				CGI::b(", email: "), $newUser->email_address,
-				CGI::b(", section: "), $newUser->section,CGI::hr(),CGI::br(),
-			   
-			);
+			eval { $db->addUser($newUser) };
+			if ($@) {
+				my $addError = $@;
+				$self->{studentEntryReport} .= join("",
+					CGI::b("Failed to enter student: "), $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", email: "), $newUser->email_address,
+					CGI::b(", section: "), $newUser->section,
+					CGI::br(), CGI::b("Error message: "), $addError,
+					CGI::hr(),CGI::br(),
+				);
+			} else {
+				$db->addPermissionLevel($newPermissionLevel);
+				$db->addPassword($newPassword);
+				$self->{studentEntryReport} .= join("",
+					CGI::b("Entered student: "), $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", email: "), $newUser->email_address,
+					CGI::b(", section: "), $newUser->section,CGI::hr(),CGI::br(),
+
+				);
+			}
+		}
+		if (defined $r->param("assignSets")) {
+			my @setIDs = $r->param("assignSets");
+			if (@setIDs) {
+				$self->assignSetsToUsers(\@setIDs, \@userIDs);
+			}
 		}
 	}
 }
@@ -88,7 +108,8 @@ sub path {
 	return $self->pathMacro($args,
 		"Home"             => "$root",
 		$courseName        => "$root/$courseName",
-		'Instructor Tools' => '',
+		"Instructor Tools" => "$root/$courseName/instructor",
+		"Add Users"        => "", # "$root/$courseName/instructor/add_users/",
 	);
 }
 
@@ -135,8 +156,10 @@ sub body {
 }
 
 sub addStudentForm {
-	my $self            = shift;
-	my $r               = $self->{r};
+	my $self = shift;
+	my $r = $self->{r};
+	my $db = $self->{db};
+	
 	my $numberOfStudents   = $r->param("number_of_students") || 5;
 	# Add a student form
 	
@@ -170,14 +193,23 @@ sub addStudentForm {
 		),
 		@entryLines,
 		CGI::end_table(),
-		CGI::submit({name=>"addStudents", value=>"Add Students"}),
+		CGI::p("Select sets below to assign them to the newly-created users."),
+		CGI::popup_menu(
+			-name     => "assignSets",
+			-values   => [ $db->listGlobalSets ],
+			-size     => 10,
+			-multiple => "true",
+		),
+		CGI::p(
+			CGI::submit({name=>"addStudents", value=>"Add Students"}),
+		),
 		CGI::end_form(),
-		qq{ <div style="color:red"> After entering new students you will still 
-		need to assign sets to them.  This is done from the "set list" page. <br> 
-		Click on the entry "xx users" in 
-		the "assigned to" column at the far right. <br> Then click either "assign to all"  
-		or check individual users and click "save" at the bottom.  </div>
-		Soon ( real soon -- honest!!! :-)  ) you will also be able to assign sets to the students as they are entered from this page. }
+		#qq{ <div style="color:red"> After entering new students you will still 
+		#need to assign sets to them.  This is done from the "set list" page. <br> 
+		#Click on the entry "xx users" in 
+		#the "assigned to" column at the far right. <br> Then click either "assign to all"  
+		#or check individual users and click "save" at the bottom.  </div>
+		#Soon ( real soon -- honest!!! :-)  ) you will also be able to assign sets to the students as they are entered from this page. }
 	);
 }
 
