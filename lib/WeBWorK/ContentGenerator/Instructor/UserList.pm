@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.59 2004/10/20 23:29:50 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.60 2004/10/26 00:04:28 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -68,7 +68,7 @@ use WeBWorK::Authen qw(checkKey);
 use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
 use constant HIDE_USERS_THRESHHOLD => 50;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter edit import export add delete)];
+use constant VIEW_FORMS => [qw(filter sort edit import export add delete)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
@@ -86,7 +86,7 @@ use constant FIELD_PERMS => {
 		sets	=> "assign_problem_sets",
 };
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode sortField)];
+use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode primarySortField secondarySortField)];
 
 use constant SORT_SUBS => {
 	user_id       => \&byUserID,
@@ -295,6 +295,7 @@ sub body {
 		"Perm. Level"
 	);
 	
+	$self->{prettyFieldNames} = \%prettyFieldNames;
 	########## set initial values for state fields
 	
 	my @allUserIDs = $db->listUsers;
@@ -327,7 +328,8 @@ sub body {
 		if $self->{editMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 	
-	$self->{sortField} = $r->param("sortField") || "last_name";
+	$self->{primarySortField} = $r->param("primarySortField") || "last_name";
+	$self->{secondarySortField} = $r->param("secondarySortField") || "first_name";
 	
 	my @allUsers = $db->getUsers(@allUserIDs);
 	my (%sections, %recitations);
@@ -373,7 +375,8 @@ sub body {
 	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
 	my @selectedUserIDs = @{ $self->{selectedUserIDs} };
 	my $editMode = $self->{editMode};
-	my $sortField = $self->{sortField};
+	my $primarySortField = $self->{primarySortField};
+	my $secondarySortField = $self->{secondarySortField};
 	
 	#warn "visibleUserIDs=@visibleUserIDs\n";
 	#warn "prevVisibleUserIDs=@prevVisibleUserIDs\n";
@@ -383,12 +386,15 @@ sub body {
 	########## get required users
 		
 	my @Users = grep { defined $_ } @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
-	
-	# presort users
+
 	my %sortSubs = %{ SORT_SUBS() };
-	my $sortSub = $sortSubs{$sortField};
-	#@Users = sort $sortSub @Users;
-	@Users = sort byLnFnUid @Users;
+	my $primarySortSub = $sortSubs{$primarySortField};
+	my $secondarySortSub = $sortSubs{$secondarySortField};	
+	
+	# don't forget to sort in opposite order of importance
+	@Users = sort $secondarySortSub @Users;
+	@Users = sort $primarySortSub @Users;
+	#@Users = sort byLnFnUid @Users;
 		
 	my @PermissionLevels;
 	
@@ -435,7 +441,8 @@ sub body {
 	
 	print CGI::hidden(-name=>"editMode", -value=>$editMode);
 	
-	print CGI::hidden(-name=>"sortField", -value=>$sortField);
+	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
+	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);	
 	
 	print "\n<!-- state data here -->\n";
 	
@@ -529,19 +536,23 @@ sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
 	#return CGI::table({}, CGI::Tr({-valign=>"top"},
 	#	CGI::td({}, 
+	
+	my %prettyFieldNames = %{ $self->{prettyFieldNames} };
+	
 	return join("", 
 			"Show ",
 			CGI::popup_menu(
 				-name => "action.filter.scope",
-				-values => [qw(all none selected match_ids match_section match_recitation)],
-				-default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
+				-values => [qw(all none selected match_regex)],
+				-default => $actionParams{"action.filter.scope"}->[0] || "match_regex",
 				-labels => {
 					all => "all users",
 					none => "no users",
 					selected => "users checked below",
-					match_ids => "users with matching user IDs:",
-					match_section => "users in selected section",
-					match_recitation => "users in selected recitation",
+#					match_ids => "users with matching user IDs:",
+					match_regex => "users who match:", 
+#					match_section => "users in selected section",
+#					match_recitation => "users in selected recitation",
 				},
 				-onchange => $onChange,
 			),
@@ -552,22 +563,30 @@ sub filter_form {
 				-width => "50",
 				-onchange => $onChange,
 			),
-			" (separate multiple IDs with commas)",
-			CGI::br(),
-			"sections: ",
+#			" (separate multiple IDs with commas)",
+#			CGI::br(),
+#			"sections: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.section",
+#				-values => [ keys %{ $self->{sections} } ],
+#				-default => $actionParams{"action.filter.section"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{sections}) },
+#				-onchange => $onChange,
+#			),
+#			" recitations: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.recitation",
+#				-values => [ keys %{ $self->{recitations} } ],
+#				-default => $actionParams{"action.filter.recitation"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{recitations}) },
+#				-onchange => $onChange,
+#			),
+			" in their ",
 			CGI::popup_menu(
-				-name => "action.filter.section",
-				-values => [ keys %{ $self->{sections} } ],
-				-default => $actionParams{"action.filter.section"}->[0] || "",
-				-labels => { $self->menuLabels($self->{sections}) },
-				-onchange => $onChange,
-			),
-			" recitations: ",
-			CGI::popup_menu(
-				-name => "action.filter.recitation",
-				-values => [ keys %{ $self->{recitations} } ],
-				-default => $actionParams{"action.filter.recitation"}->[0] || "",
-				-labels => { $self->menuLabels($self->{recitations}) },
+				-name => "action.filter.field",
+				-value => [ keys %{ FIELD_PROPERTIES() } ],
+				-default => $actionParams{"action.filter.field"}->[0] || "user_id",
+				-labels => \%prettyFieldNames,
 				-onchange => $onChange,
 			),
 	);
@@ -579,6 +598,9 @@ sub filter_form {
 # of the "action.filter.scope" parameter and the "selected_users" 
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $r = $self->r;
+	my $db = $r->db;
 	
 	my $result;
 	
@@ -592,6 +614,17 @@ sub filter_handler {
 	} elsif ($scope eq "selected") {
 		$result = "showing selected users";
 		$self->{visibleUserIDs} = $genericParams->{selected_users}; # an arrayref
+	} elsif ($scope eq "match_regex") {
+		$result = "showing matching users";
+		my $regex = $actionParams->{"action.filter.user_ids"}->[0];
+		my $field = $actionParams->{"action.filter.field"}->[0];
+		my @userRecords = $db->getUsers(@{$self->{allUserIDs}});
+		my @userIDs;
+		foreach my $record (@userRecords) {
+			next unless $record;
+			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
+		}
+		$self->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq "match_ids") {
 		my @userIDs = split /\s*,\s*/, $actionParams->{"action.filter.user_ids"}->[0];
 		$self->{visibleUserIDs} = \@userIDs;
@@ -604,6 +637,76 @@ sub filter_handler {
 	}
 	
 	return $result;
+}
+
+sub sort_form {
+	my ($self, $onChange, %actionParams) = @_;
+	return join ("",
+		"Primary sort: ",
+		CGI::popup_menu(
+			-name => "action.sort.primary",
+			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+			-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
+			-labels => {
+				user_id		=> "Login Name",
+				first_name	=> "First Name",
+				last_name	=> "Last Name",
+				email_address	=> "Email address",
+				student_id	=> "Student ID",
+				status		=> "Enrollment Status",
+				section		=> "Section",
+				recitation	=> "Recitation",
+				comment		=> "Comment",
+				permission	=> "Perm. Level"
+			},
+			-onchange => $onChange,
+		),
+		" Secondary sort: ",
+		CGI::popup_menu(
+			-name => "action.sort.secondary",
+			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+			-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
+			-labels => {
+				user_id		=> "Login Name",
+				first_name	=> "First Name",
+				last_name	=> "Last Name",
+				email_address	=> "Email address",
+				student_id	=> "Student ID",
+				status		=> "Enrollment Status",
+				section		=> "Section",
+				recitation	=> "Recitation",
+				comment		=> "Comment",
+				permission	=> "Perm. Level"
+			},
+			-onchange => $onChange,
+		),
+		".",
+	);
+}
+
+sub sort_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	
+	my $primary = $actionParams->{"action.sort.primary"}->[0];
+	my $secondary = $actionParams->{"action.sort.secondary"}->[0];
+	
+	$self->{primarySortField} = $primary;
+	$self->{secondarySortField} = $secondary;
+
+	my %names = (
+				user_id		=> "Login Name",
+				first_name	=> "First Name",
+				last_name	=> "Last Name",
+				email_address	=> "Email address",
+				student_id	=> "Student ID",
+				status		=> "Enrollment Status",
+				section		=> "Section",
+				recitation	=> "Recitation",
+				comment		=> "Comment",
+				permission	=> "Perm. Level"
+	);
+	
+	return "Users sorted by $names{$primary} and then by $names{$secondary}.";
 }
 
 sub edit_form {
@@ -791,7 +894,8 @@ sub import_handler {
 	
 	return $numReplaced . " user" . ($numReplaced == 1 ? "" : "s") . " replaced, "
 		. $numAdded . " user" . ($numAdded == 1 ? "" : "s") . " added, "
-		. $numSkipped . " user" . ($numSkipped == 1 ? "" : "s") . " skipped.";
+		. $numSkipped . " user" . ($numSkipped == 1 ? "" : "s") . " skipped"
+		. " (" . join (", ", @$skipped) . ") ";
 }
 
 sub export_form {
@@ -934,8 +1038,8 @@ sub saveEdit_handler {
 ################################################################################
 
 sub byUserID       { lc $a->user_id       cmp lc $b->user_id       }
-sub byFirstName    { (defined $a->first_name && defined $b->first_name) ? lc $a->first_name cmp lc $b->first_name : 0 }
-sub byLastName     { (defined $a->last_name  && defined $b->last_name ) ? lc $a->last_name  cmp lc $b->last_name  : 0 }
+sub byFirstName    {  (defined $a->first_name && defined $b->first_name) ?  lc $a->first_name cmp lc $b->first_name  : 0;  }
+sub byLastName     {  (defined $a->last_name  && defined $b->last_name ) ?  lc $a->last_name  cmp lc $b->last_name   : 0;  }
 sub byEmailAddress { lc $a->email_address cmp lc $b->email_address }
 sub byStudentID    { lc $a->student_id    cmp lc $b->student_id    }
 sub byStatus       { lc $a->status        cmp lc $b->status        }
