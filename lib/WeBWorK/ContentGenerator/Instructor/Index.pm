@@ -34,7 +34,12 @@ sub body {
 	my $full_url = "$prof_url?course=$courseName&$authen_args";
 	my $userEditorURL = "users/?" . $self->url_args;
 	my $problemSetEditorURL = "sets/?" . $self->url_args;
-
+	################### debug code
+#     my $permissonLevel =  $self->{db}->getPermissionLevel($user)->permission();
+#     
+#     my $courseEnvironmentLevels = $self->{ce}->{permissionLevels};
+#     return CGI::em(" user $permissonLevel permlevels ".join("<>",%$courseEnvironmentLevels));
+    ################### debug code
 	return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	return 

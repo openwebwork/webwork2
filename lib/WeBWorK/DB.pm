@@ -576,4 +576,6 @@ sub dumpDB($$) {
 
 Written by Sam Hathaway, sh002i (at) math.rochester.edu.
 
+=cut 
+
 1;
