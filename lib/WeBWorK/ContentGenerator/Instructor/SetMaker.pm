@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: $
+# $CVSHeader:$ 
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -244,19 +244,19 @@ sub browse_library_panel {
 							-default=> $section_selected
 						       ))),
 
-			CGI::Tr(
-				CGI::td("Textbook:"),
-				CGI::td({-colspan=>2},
-					CGI::popup_menu(-name=> 'library_textbooks', 
-							-values=>\@textbooks,
-							#						 -default=> $section_selected
-						       ))),
+# 			CGI::Tr(
+# 				CGI::td("Textbook:"),
+# 				CGI::td({-colspan=>2},
+# 					CGI::popup_menu(-name=> 'library_textbooks', 
+# 							-values=>\@textbooks,
+# 							#						 -default=> $section_selected
+# 						       ))),
 
-			CGI::Tr(
-				CGI::td("Keywords:"),
-                                CGI::td({-colspan=>2}, CGI::textfield(-name=>"keywords",
-								      -default=>"Keywords not implemented yet",
-								      -override=>1, -size=>60))),
+# 			CGI::Tr(
+# 				CGI::td("Keywords:"),
+#                                 CGI::td({-colspan=>2}, CGI::textfield(-name=>"keywords",
+# 								      -default=>"Keywords not implemented yet",
+# 								      -override=>1, -size=>60))),
 			CGI::Tr(CGI::td({-colspan=>3},CGI::submit(-name=>"lib_view", -value=>"View Problems"))),
 			CGI::end_table(),
 			$libstr 
@@ -347,7 +347,8 @@ sub make_data_row {
 
   my $urlpath = $self->r->urlpath;
   my $problem_output = $pg->{flags}->{error_flag} ?
-    CGI::em("This problem produced an error") : CGI::div({class=>"RenderSolo"}, $pg->{body_text});
+    CGI::em("This problem produced an error") 
+    : CGI::div({class=>"RenderSolo"}, $pg->{body_text});
 
 
   my $edit_link =  CGI::a({href=>$self->systemLink( 
@@ -361,14 +362,16 @@ sub make_data_row {
 								args=>{courseID =>$urlpath->arg("courseID"),
 								       setID=>"Undefined_Set", problemID=>"1"}
 							       ),
-						  params =>{effectiveUser => $self->r->param('user'), editMode => "temporaryFile", sourceFilePath => $self->r->ce->{courseDirs}->{templates}."/$sourceFileName"}  )}, "Try it");
+						  params =>{effectiveUser => $self->r->param('user'), 
+							    editMode => "temporaryFile", 
+							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
 
       
 
   print CGI::Tr({-align=>"left"}, CGI::td(
 
 					  CGI::div({-style=>"background-color: #DDDDDD"},"File name: $sourceFileName ", 
-						   # $edit_link, " ", $try_link
+						   $edit_link, " ", $try_link
 						  ),
 
 
