@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.6 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,29 @@ use warnings;
 use DBI;
 
 use constant STYLE => "dbi";
+
+=head1 SOURCE FORMAT
+
+The C<source> entry for tables handled by this driver should consist of a DBI
+data source.
+
+=head1 SUPPORTED PARAMS
+
+This driver pays attention to the following items in the C<params> entry.
+
+=over
+
+=item usernameRO, passwordRO
+
+Username and password for read-only access to SQL database.
+
+=item usernameRW, passwordRW
+
+Username and password for read-write access to SQL database.
+
+=back
+
+=cut
 
 ################################################################################
 # constructor
