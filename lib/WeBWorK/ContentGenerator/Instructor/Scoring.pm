@@ -302,8 +302,8 @@ sub scoreSet {
 		push @scoringData, [];
 	}
 	
-	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION", "LOGIN");
-	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation", "user_id");
+	my @userInfoColumnHeadings = ("STUDENT ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
+	my @userInfoFields = ("student_id", "last_name", "first_name", "section", "recitation");
 	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
