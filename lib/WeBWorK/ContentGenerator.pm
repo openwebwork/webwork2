@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.74 2003/12/18 23:15:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.75 2004/01/17 16:29:52 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -495,12 +495,22 @@ sub header {
 sub loginstatus {
 	my $self = shift;
 	my $r = $self->{r};
+	my $ce = $self->{ce};
+	
 	my $user = $r->param("user");
 	my $eUser = $r->param("effectiveUser");
 	my $key = $r->param("key");
+	
 	return "" unless $key;
+	
 	my $exitURL = $r->uri() . "?user=$user&key=$key";
+	
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseID = $ce->{courseName};
+	my $logout = "$root/$courseID/logout/?" . $self->url_authen_args();
+	
 	print CGI::small("User:", "$user");
+	
 	if ($user ne $eUser) {
 		print CGI::br(), CGI::font({-color=>'red'},
 				CGI::small("Acting as:", "$eUser")
@@ -509,6 +519,9 @@ sub loginstatus {
 				CGI::small("Stop Acting")
 			);
 	}
+	
+	print CGI::br(), CGI::a({-href=>$logout}, CGI::small("Log Out"));
+	
 	return "";
 }
 
@@ -548,7 +561,7 @@ sub links {
 		), 
 		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
 		CGI::a({-href=>$help,-target=>'_help_'}, "Help"), CGI::br(),
-		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+		#CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
 		($permLevel > 0
 			? $self->instructor_links(@components) : ""
 		),
