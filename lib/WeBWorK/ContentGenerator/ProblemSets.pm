@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.43 2004/03/06 18:50:31 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.44 2004/03/09 15:50:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,62 +28,95 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile formatDateTime sortByName);
 
-#sub path {
-#	my ($self, $args) = @_;
-#	
-#	my $ce = $self->{ce};
-#	my $root = $ce->{webworkURLs}->{root};
-#	my $courseName = $ce->{courseName};
-#	return $self->pathMacro($args,
-#		"Home" => "$root",
-#		$courseName => "",
-#	);
-#}
-
-#sub title {
-#	my $self        = shift;
-#	my $r           = $self ->{r};
-#	my $db          = $self ->{db};
-#	my $userName    = ($r-> param("effectiveUser")) ? $r-> param("effectiveUser"): $r-> param("user");
-#	my $courseName  = $self ->{ce} -> {courseName};
-#	
-#	return "WeBWorK welcomes student $userName to $courseName" ;
-#}
+sub info {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param("user");
+	
+	my $course_info = $ce->{courseFiles}->{course_info};
+	
+	if (defined $course_info and $course_info) {
+		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
+		
+		my $PermissionLevel = $db->getPermissionLevel($userID);
+		my $level = $PermissionLevel ? $PermissionLevel->permission() : 0;
+		
+		# deal with instructor crap
+		if ($level > 0) {
+			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
+				$course_info_path .= ".$userID.tmp"; # this gets a big FIXME for obvious reasons
+			}
+			
+			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
+			my $editorURL = $self->systemLink($editorPage, values=>{file_type=>"course_info"});
+			
+			print CGI::p(CGI::b("Course Info"), " ",
+				CGI::a({href=>$editorURL}, "[edit]"));
+		} else {
+			print CGI::p(CGI::b("Course Info"));
+		}
+		
+		if (-f $course_info_path) {
+			my $text = eval { readFile($course_info_path) };
+			if ($@) {
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("$@"),
+				);
+			} else {
+				print $text;
+			}
+		}
+		
+		return "";
+	}
+}
 
 sub body {
-	my $self            = shift;
-	my $r               = $self->{r};
-	my $ce              = $self->{ce};
-	my $db              = $self->{db};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
 	my $user            = $r->param("user");
 	my $effectiveUser   = $r->param("effectiveUser");
 	my $sort            = $r->param("sort") || "status";
-	my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
+	
+	my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked
 	$permissionLevel    = 0 unless defined $permissionLevel;
-	my $root            = $ce->{webworkURLs}->{root};
-	my $courseName      = $ce->{courseName};
+	
+	my $courseName      = $urlpath->arg("courseID");
 	
 	# Print link to instructor page for instructors
-	if ($permissionLevel >= 10 ) {
-
-		my $instructorLink = "$root/$courseName/instructor/?" . $self->url_authen_args();
+	if ($permissionLevel >= 10) {
+		my $instructorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", courseID => $courseName);
+		my $instructorLink = $self->systemLink($instructorPage);
 		print CGI::p({-align=>'center'},CGI::a({-href=>$instructorLink},'Instructor Tools'));
 	}
+	
+	# I think this is deprecated!
 	# Print message of the day (motd)
-	if (defined $ce->{courseFiles}->{motd}
-		and $ce->{courseFiles}->{motd}) {
-		my $motd = eval { readFile($ce->{courseFiles}->{motd}) };
-		$@ or print $motd;
-	}
+	#if (defined $ce->{courseFiles}->{motd}
+	#	and $ce->{courseFiles}->{motd}) {
+	#	my $motd = eval { readFile($ce->{courseFiles}->{motd}) };
+	#	$@ or print $motd;
+	#}
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
-	my $baseURL = $r->uri . "?" . $self->url_authen_args();
-	my $nameHeader = ($sort eq "name") ? CGI::u("Name") : CGI::a({-href=>"$baseURL&sort=name"}, "Name");
-	my $statusHeader = ($sort eq "status") ? CGI::u("Status") : CGI::a({-href=>"$baseURL&sort=status"}, "Status");
+	my $nameHeader = $sort eq "name"
+		? CGI::a({href=>$self->systemLink($urlpath, values=>{sort=>"name"})}, "Name")
+		: CGI::u("Name");
+	my $statusHeader = $sort eq "status"
+		? CGI::a({href=>$self->systemLink($urlpath, values=>{sort=>"status"})}, "Status")
+		: CGI::u("Status");
+	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
+	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 	
-	my $actionURL    = $r->uri;     #FIXME Hack Hack
-	$actionURL =~ s|/$||;
-	$actionURL .= "/hardcopy/";
 	print CGI::startform(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields;
 	print CGI::start_table();
@@ -91,7 +124,6 @@ sub body {
 		CGI::th("Sel."),
 		CGI::th($nameHeader),
 		CGI::th($statusHeader),
-		#CGI::th("Hardcopy"),
 	);
 	
 	my @setIDs = $db->listUserSets($effectiveUser);
@@ -117,7 +149,8 @@ sub body {
 	print CGI::endform();
 	
 	# feedback form url
-	my $feedbackURL = "$root/$courseName/feedback/";
+	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseName);
+	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
 	
 	#print feedback form
 	print
@@ -126,7 +159,7 @@ sub body {
 		CGI::hidden("module",             __PACKAGE__),"\n",
 		CGI::hidden("set",                ''),"\n",
 		CGI::hidden("problem",            ''),"\n",
-		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+		CGI::hidden("displayMode",        ''),"\n",
 		CGI::hidden("showOldAnswers",     ''),"\n",
 		CGI::hidden("showCorrectAnswers", ''),"\n",
 		CGI::hidden("showHints",          ''),"\n",
@@ -139,22 +172,22 @@ sub body {
 	return "";
 }
 
-sub setListRow($$$) {
+sub setListRow {
 	my ($self, $set, $multiSet, $preOpenSets) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
 	
 	my $name = $set->set_id;
-	my $ce              = $self->{ce};
-	my $root            = $ce->{webworkURLs}->{root};
-	my $courseName      = $ce->{courseName};
-	# FIXME  -- better way to find the path
-	my $interactiveURL = "$root/$courseName/$name/?" . $self->url_authen_args;
-	#my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
+	my $courseName      = $urlpath->arg("courseID");
+	
+	my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+		courseID => $courseName, setID => $name);
+	my $interactiveURL = $self->systemLink($problemSetPage);
 	
 	my $openDate = formatDateTime($set->open_date);
 	my $dueDate = formatDateTime($set->due_date);
 	my $answerDate = formatDateTime($set->answer_date);
-	
-	#my $checkbox = CGI::checkbox(-name=>"hcSet", -value=>$set->set_id, -label=>"");
 	
 	my $control = "";
 	if ($multiSet) {
@@ -193,51 +226,7 @@ sub setListRow($$$) {
 		$status,
 	]));
 }
-sub info {
-	my $self       = shift;
-	my $r          = $self->{r};
-	my $ce         = $self->{ce};
-	my $db         = $self->{db};
-	my $user       = $r->param("user");
-	my $root       = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	###########################################################
-	# The course information and problems are located in the course templates directory.
-	# Course information has the name  defined by courseFiles->{course_info}
-	# 
-	# Only files under the template directory ( or linked to this location) can be edited.
-	#
-	# editMode = temporaryFile    (view the temp file defined by course_info.txt.user_name.tmp
-	#                              instead of the file course_info.txt)
-	# The editFileSuffix is "user_name.tmp" by default.  It's definition should be moved to Instructor.pm #FIXME                              
-	###########################################################
-	if (defined $ce->{courseFiles}->{course_info}
-		and $ce->{courseFiles}->{course_info})     {
-		my $course_info_path  = $ce->{courseDirs}->{templates}
-		                     .'/'. $ce->{courseFiles}->{course_info};
-		my $editFileSuffix			=	$user.'.tmp';  #FIXME -- this could be moved to Instructor.pm
-		$course_info_path    .= ".$editFileSuffix" if defined($r->param("editMode")) and $r->param("editMode") eq 'temporaryFile';
-		
-		my $course_info = eval { readFile($course_info_path) };
-		$@ or print $course_info;
-		my $user            = $r->param("user");
-		my $permissionLevel = $db->getPermissionLevel($user)->permission(); # checked???
-		$permissionLevel    = 0 unless defined $permissionLevel;
- 	    if ($permissionLevel>=10) {
-			my $editURL = "$root/$courseName/instructor/pgProblemEditor/?"
-						  .$self->url_authen_args
-						  ."&file_type=course_info"
-			;
-			my $editText      = "Edit message file";
-			$editText         = "Edit temporary message file" if defined($r->param("editMode")) and $r->param("editMode") eq 'temporaryFile';
-			print CGI::br(), CGI::a({-href=>$editURL}, $editText);
-	    }
-	    
-	}
-	
-	
-	'';
-}
+
 sub byname { $a->set_id cmp $b->set_id; }
 sub byduedate { $a->due_date <=> $b->due_date; }
 
