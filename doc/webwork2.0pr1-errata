@@ -1,0 +1,10 @@
+The location of the documentation about what to add to your Apache config is
+non-obvious.  It is located in lib/Apache/WeBWorK.pm.
+
+The Apache config documentation is missing the line
+	use lib '/opt/webwork/pglib';
+which should immediately follow the line
+	use lib '/opt/webwork/lib';
+	
+Line 86 of the file lib/WeBWorK/ContentGenerator/ProblemSet.pm should read
+	my $effectiveUser = $cldb->getUser($r->param("effectiveUser"));
