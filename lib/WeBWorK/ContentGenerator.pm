@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.80 2004/03/06 21:49:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.82 2004/03/10 02:30:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,6 @@ use URI::Escape;
 use WeBWorK::Authz;
 use WeBWorK::DB;
 use WeBWorK::Template qw(template);
-use WeBWorK::Utils qw(readFile);
 
 # This is a very unruly file, so I'm going to use very large comments to divide
 # it into logical sections.
