@@ -76,7 +76,6 @@ sub title {
 }
 
 sub info {
-	# NOTE: info doesn't # uhhh... doesn't what, dude?
 	my ($self, $setName) = @_;
 	
 	my $r = $self->{r};
@@ -88,7 +87,7 @@ sub info {
 	my $set  = $wwdb->getSet($user->id, $setName);
 	my $psvn = $wwdb->getPSVN($user->id, $setName);
 	
-	my $screenSetHeader = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $screenSetHeader = $set->problem_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $displayMode     = $ce->{pg}->{options}->{displayMode};
 	
 	return "" unless defined $screenSetHeader and $screenSetHeader;
