@@ -459,11 +459,11 @@ sub links {
 	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
 	
 	return
-		CGI::a({-href=>$probSets}, "Problem Sets"). CGI::br().
-		CGI::a({-href=>$prefs}, "User Options"). CGI::br().
+		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"). CGI::br().
 		($permLevel > 0
 			? CGI::a({-href=>$instructor}, "Instructor") . CGI::br()
 			: "").
+		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"). CGI::br().
 		CGI::a({-href=>$help}, "Help"). CGI::br().
 		CGI::a({-href=>$logout}, "Log Out"). CGI::br()
 	;
