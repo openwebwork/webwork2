@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.154 2004/07/12 22:15:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.155 2004/07/12 23:38:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -134,9 +134,9 @@ sub can_recordAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->close_date)) {
+	} elsif (between($Set->due_date, $Set->answer_date)) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_due_date");
-	} elsif (after($Set->close_date)) {
+	} elsif (after($Set->answer_date)) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_answer_date");
 	}
 }
@@ -155,9 +155,9 @@ sub can_checkAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->close_date)) {
+	} elsif (between($Set->due_date, $Set->answer_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
-	} elsif (after($Set->close_date)) {
+	} elsif (after($Set->answer_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
 	}
 }
