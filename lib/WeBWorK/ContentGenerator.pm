@@ -505,7 +505,8 @@ sub instructor_links {
 	my $args       = pop(@components);  # get hash of option arguments
 	my $courseName = $self->{ce}->{courseName};
 	my $root       = $self->{ce}->{webworkURLs}->{root};
-	my $userName = $self->{r}->param("user");
+	my $userName = $self->{r}->param("effectiveUser");
+	$userName    = $self->{r}->param("user") unless defined $userName;
 	my ($set, $prob) = @components;
 	my $instructor = "$root/$courseName/instructor/?" . $self->url_authen_args();
 	my $sets       = "$root/$courseName/instructor/sets/?" . $self->url_authen_args();
