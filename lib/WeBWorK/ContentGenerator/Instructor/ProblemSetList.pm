@@ -434,6 +434,10 @@ sub body {
 	
 	########## print table
 	
+	########## first adjust heading if in editMode
+	$prettyFieldNames{set_id} = "Edit All <br> Set Data" if $editMode;
+	
+	
 	print CGI::p("Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
 	
 	$self->printTableHTML(\@Sets, \%prettyFieldNames,
@@ -1671,8 +1675,12 @@ sub recordEditHTML {
 	my @tableCells;
 	my %fakeRecord;
 	my $set_id = $Set->set_id;
+
 	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $set_id, -checked => $setSelected, -label => "", );
-	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $set_id) . ($editMode ? "" : $imageLink);
+#	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $set_id) . ($editMode ? "" : $imageLink);
+	$fakeRecord{set_id} = $editMode 
+					? CGI::a({href=>$problemListURL}, "$set_id") 
+					: CGI::font({class=>$publishedClass}, $set_id) . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 					? "$problems"
 					: CGI::a({href=>$problemListURL}, "$problems");
@@ -1696,7 +1704,11 @@ sub recordEditHTML {
 	}
 	
 	# Set ID
+	if ($editMode) {
+		push @tableCells, CGI::a({href=>$problemListURL}, "$set_id");
+	} else {		
 	push @tableCells, CGI::font({class=>$publishedClass}, $set_id . $imageLink);
+	}
 
 	# Problems link
 	if ($editMode) {
