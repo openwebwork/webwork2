@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.3 2004/04/29 22:22:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.4 2004/05/05 22:02:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -295,7 +295,8 @@ sub add_course_form {
 		my $source;
 		if (keys %sources > 1) {
 			foreach my $curr (keys %sources) {
-				$source = $curr if @{ $sources{$curr} } > @{ $sources{$source} };
+				$source = $curr if not defined $source or 
+					$sources{$curr} > $sources{$source};
 			}
 		} else {
 			($source) = keys %sources;
