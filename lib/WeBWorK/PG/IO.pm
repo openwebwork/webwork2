@@ -1,5 +1,5 @@
 ################################################################################
-# WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
+# WeBWorK mod-perl (c) 2000-2002 WeBWorK Project
 # $Id$
 ################################################################################
 
@@ -7,6 +7,7 @@ package WeBWorK::PG::IO;
 
 use strict;
 use warnings;
+use Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -28,6 +29,7 @@ our @EXPORT = qw(
 
 
 =head2 Private functions (not methods) used by PGtranslator for file IO.
+
 =cut
 
 our $REMOTE_HOST = (defined( $ENV{'REMOTE_HOST'} ) ) ? $ENV{'REMOTE_HOST'}: 'unknown host';
