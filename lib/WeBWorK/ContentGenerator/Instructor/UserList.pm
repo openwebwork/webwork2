@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.41 2004/01/25 19:46:11 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.42 2004/02/06 17:37:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -179,6 +179,15 @@ sub header {
 	$r->send_http_header();
 	return OK;
 }
+
+#FIXME -- this should probably be moved up to instructor or contentgenerator as well
+sub nbsp {
+	my $str = shift;  
+        ($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
+                                            # tricky cases:   $str =0;
+                                            #  $str is a complex number
+}
+
 sub initialize {
 	my ($self) = @_;
 	my $r      = $self->{r};
@@ -1131,6 +1140,7 @@ sub recordEditHTML {
 		my $fieldValue = $User->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
+		$fieldValue = nbsp($fieldValue) unless $editMode;
 		push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
 	}
 	
@@ -1140,6 +1150,7 @@ sub recordEditHTML {
 		my $fieldValue = $PermissionLevel->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
+		$fieldValue = nbsp($fieldValue) unless $editMode;
 		push @tableCells, $self->fieldEditHTML($fieldName, $fieldValue, \%properties);
 	}
 	
