@@ -71,6 +71,44 @@ sub new {
 	return $self;
 }
 
+sub hash2string {
+	my $hr = shift;
+	my $indent = shift || 0;
+	my $result;
+	foreach (keys %$hr) {
+		$result .= "\t"x$indent . "{$_} =";
+		if (ref $hr->{$_} eq 'HASH') {
+			$result .= "\n";
+			$result .= hash2string($hr->{$_}, $indent+1);
+		} elsif (ref $hr->{$_} eq 'ARRAY') {
+			$result .= "\n";
+			$result .= array2string($hr->{$_}, $indent+1);
+		} else {
+			$result .= " " . $hr->{$_} . "\n";
+		}
+	}
+	return $result;
+}
+
+sub array2string {
+	my $ar = shift;
+	my $indent = shift || 0;
+	my $result;
+	foreach (0 .. @$ar-1) {
+		$result .= "\t"x$indent . "[$_] =";
+		if (ref $ar->[$_] eq 'HASH') {
+			$result .= "\n";
+			$result .= hash2string($ar->[$_], $indent+1);
+		} elsif (ref $ar->[$_] eq 'ARRAY') {
+			$result .= "\n";
+			$result .= array2string($ar->[$_], $indent+1);
+		} else {
+			$result .= " " . $ar->[$_] . "\n";
+		}
+	}
+	return $result;
+}
+
 # ----- utils -----
 
 sub readFile {
