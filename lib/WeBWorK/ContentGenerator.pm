@@ -462,16 +462,17 @@ sub links {
 	
 	return join("",
 		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"), CGI::br(),
-		($permLevel > 0
-			? join("",
-				CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
-			  	CGI::a({-href=>$sets}, "&nbsp;&nbsp;SetList") , CGI::br(),
-			  	CGI::a({-href=>$users}, "&nbsp;&nbsp;ClassList") , CGI::br(),)
-			: ""
-		),
 		CGI::a({-href=>$prefs}, "User&nbsp;Prefs"), CGI::br(),
 		CGI::a({-href=>$help}, "Help"), CGI::br(),
 		CGI::a({-href=>$logout}, "Log Out"), CGI::br(),
+		($permLevel > 0
+			? join("",
+				CGI::hr(),
+				CGI::a({-href=>$instructor}, "Instructor") , CGI::br(),
+			  	'&nbsp;&nbsp;',CGI::a({-href=>$sets}, "Set&nbsp;List") , CGI::br(),
+			  	'&nbsp;&nbsp;',CGI::a({-href=>$users}, "Class&nbsp;List") , CGI::br(),)
+			: ""
+		),
 	);
 }
 
