@@ -105,12 +105,12 @@ sub initialize {
 			if ($forOneUser) {
 				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
 				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
+					warn "$field\n";
 					my $paramName = "problem.${problem}.${field}";
 					if (defined($r->param($paramName))) {
 						$userProblemRecord->$field($r->param($paramName));
 					}
 				}
-				$userProblemRecord->attempted($userProblemRecord->num_correct + $userProblemRecord->num_incorrect);
 				foreach my $field (@{PROBLEM_FIELDS()}) {
 					my $paramName = "problem.${problem}.${field}";
 					if (defined($r->param("${paramName}.override"))) {
@@ -120,8 +120,8 @@ sub initialize {
 							$userProblemRecord->$field(undef);
 						}
 						
-						$db->putUserProblem($userProblemRecord);
 					}
+					$db->putUserProblem($userProblemRecord);
 				}
 				
 			}
