@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.10 2004/05/22 01:08:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.11 2004/05/23 23:40:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -300,8 +300,13 @@ sub deleteCourse {
 	
 	##### step 1: delete course directory structure #####
 	
-	my $courseDir = $ce->{courseDirs}->{root};
-	rmtree($courseDir, 0, 0);
+	# my $courseDir = $ce->{courseDirs}->{root};
+	# the tmp file might be in a different tree
+	my @courseDirs = keys %{ $ce->{courseDirs} };
+	foreach my $key (@courseDirs) {
+	    my $courseDir = $ce->{courseDirs}->{$key};
+		rmtree($courseDir, 0, 0) if -e $courseDir;
+	};
 		
 	##### step 2: delete course database (if necessary) #####
 	
