@@ -326,7 +326,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
 	
 	# Other things...
-	
+	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX};	#used by quizzes
 	$envir{PROBLEM_GRADER_TO_USE}    = $courseEnv->{pg}->{options}->{grader};
 	
 	$envir{PRINT_FILE_NAMES_FOR}     = $courseEnv->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
