@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.41 2004/01/03 20:07:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.42 2004/01/23 16:49:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,7 @@ C<WeBWorK::ContentGenerator> to call.
 =cut
 
 BEGIN { $main::VERSION = "2.0"; }
+
 
 my $timingON = 1;
 
@@ -291,6 +292,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 		elsif ($arg eq "quiz_mode" ) {
 			$contentGenerator = "WeBWorK::ContentGenerator::GatewayQuiz";
 			@arguments = @components;
+	    }
+	    elsif ($arg eq "equation" ) {
+	    	$contentGenerator = "WeBWorK::ContentGenerator::EquationDisplay";
+	    	@arguments = @components;
 		}
 		elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
@@ -414,7 +419,7 @@ Instantiate the selected subclass of content generator and call its C<&go> metho
 	if ($contentGenerator) {
 		runtime_use($contentGenerator);
 		my $cg = $contentGenerator->new($r, $ce, $db);
-		
+		@arguments = () unless  @arguments;
 		$WeBWorK::timer = WeBWorK::Timing->new("${contentGenerator}::go(@arguments)") if $timingON == 1;
 		$WeBWorK::timer->start if $timingON == 1;
 		
