@@ -8,7 +8,8 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::ProblemList - List and edit problems in a set
+WeBWorK::ContentGenerator::Instructor::Stats - Display statistics by user or
+problem set.
 
 =cut
 
@@ -324,25 +325,16 @@ sub displayStudents {
 	"Section: ", $studentRecord->section, CGI::br(),
 	"Recitation: ", $studentRecord->recitation,CGI::br(),
 	CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
-###############################################################
-#  Print table
-###############################################################
+	
+	###############################################################
+	#  Print table
+	###############################################################
 
-	print
-		CGI::start_table({-border=>5}),
-		CGI::Tr(
-			CGI::th({ -align=>'center',},'Set'),
-			CGI::th({ -align=>'center', },'Score'),
-			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
-			CGI::th({ -align=>'center', },'Ind'),
-			CGI::th({ -align=>'center', },'Problems'),
-			#CGI::th({ -align=>'center', },'Section'),
-			#CGI::th({ -align=>'center', },'Recitation'),
-			#CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		);
 	# FIXME I'm assuming the problems are all the same
-
+	# FIXME what does this mean?
+	
+	my @rows;
+	my $max_problems;
 	
 	foreach my $setName (@setIDs)   {
 	    my $status = 0;
@@ -355,12 +347,8 @@ sub displayStudents {
 		my $num_of_attempts = 0;
 		my @problems = sort {$a <=> $b } $db->listUserProblems($studentName, $setName);
 		my $num_of_problems  = @problems;
+		$max_problems = $num_of_problems if $num_of_problems > $max_problems;
 		# construct header
-		my $problem_header = '';
-		my $i=1;
-		foreach (@problems) {
-			$problem_header .= &threeSpaceFill($i++);
-		}
 		foreach my $prob (@problems) {
 			my $problemRecord      = $db->getUserProblem($studentName, $setName, $prob);
 			
@@ -409,7 +397,7 @@ sub displayStudents {
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
-		print CGI::Tr(
+		push @rows, CGI::Tr(
 			CGI::td($setName),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
@@ -422,10 +410,30 @@ sub displayStudents {
 		);
 	
 	}
+	
+	my $problem_header = "";
+	foreach (1 .. $max_problems) {
+		$problem_header .= &threeSpaceFill($_);
+	}
+	
+	my $table_header = join("\n",
+		CGI::start_table({-border=>5}),
+		CGI::Tr(
+			CGI::th({ -align=>'center',},'Set'),
+			CGI::th({ -align=>'center', },'Score'),
+			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
+			CGI::th({ -align=>'center', },'Ind'),
+			CGI::th({ -align=>'center', },'Problems'.CGI::br().CGI::pre($problem_header)),
+			#CGI::th({ -align=>'center', },'Section'),
+			#CGI::th({ -align=>'center', },'Recitation'),
+			#CGI::th({ -align=>'center', },'login_name'),
+			#CGI::th({ -align=>'center', },'ID'),
+		)
+	);
+	
+	print $table_header;
+	print @rows;
 	print CGI::end_table();
-			
-			
-
 			
 	return "";
 }
