@@ -7,11 +7,13 @@ package WeBWorK::DB::WW;
 
 use strict;
 use warnings;
+use Carp;
 use WeBWorK::Set;
 use WeBWorK::Problem;
 
 use constant LOGIN_PREFIX => "login<>";
 use constant SET_PREFIX => "set<>";
+use constant MAX_PSVN_GENERATION_ATTEMPTS => 200;
 
 # there should be a `use' line for each database type
 use WeBWorK::DB::GDBM;
@@ -26,6 +28,7 @@ sub new($$) {
 	my $dbModule = fullyQualifiedPackageName($courseEnv->{dbInfo}->{wwdb_type});
 	my $self = {
 		webwork_file => $courseEnv->{dbInfo}->{wwdb_file},
+		psvn_digits => $courseEnv->{dbInfo}->{psvn_digits},
 	};
 	$self->{webwork_db} = $dbModule->new($self->{webwork_file});
 	bless $self, $class;
@@ -41,6 +44,28 @@ sub fullyQualifiedPackageName($) {
 
 # -----
 
+sub fixMyMistakes($) { # ***
+	my $self = shift;
+	my $userID = "practice1";
+	my $setID = "dummy";
+	my $PSVN = 95540;
+	$self->{webwork_db}->connect("rw");
+	delete $self->{webwork_db}->hashRef->{$PSVN};
+	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
+	my %sets = decode($setsForUser);  # sets built for user $userID
+	my %users = decode($usersForSet); # users for which set $setID has been built
+	delete $sets{$setID};
+	delete $users{$userID};
+	$setsForUser = encode(%sets);
+	$usersForSet = encode(%users);
+	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
+	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
+	$self->{webwork_db}->disconnect;
+}
+
+# -----
+
 # getSets($userID) - returns a list of sets in the current database for the
 #                    specified user
 # $userID - the user ID (a.k.a. login name) of the user to get sets for
@@ -51,7 +76,8 @@ sub getSets($$) {
 	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 	$self->{webwork_db}->disconnect;
 	return unless defined $result;
-	return keys %{decode($result)};
+	my %record = decode($result);
+	return keys %record;
 }
 
 # -----
@@ -64,9 +90,9 @@ sub getSet($$$) {
 	my $self = shift;
 	my $userID = shift;
 	my $setID = shift;
-	my $PSVN = getPSVN($userID, $setID);
+	my $PSVN = $self->getPSVN($userID, $setID);
 	return unless $PSVN;
-	return hash2set($self->fetchRcord($PSVN));
+	return hash2set($self->fetchRecord($PSVN));
 }
 
 # setSet($set) - if a set with the same ID for the specified user
@@ -76,26 +102,29 @@ sub getSet($$$) {
 sub setSet($$) {
 	my $self = shift;
 	my $set = shift;
-	my $PSVN = getPSVN($set->login_id, $set->id);
+	my $PSVN = $self->getPSVN($set->login_id, $set->id);
 	my %record = (
 		$PSVN ? $self->fetchRecord($PSVN) : (),
 		set2hash($set),
 	);
+	$PSVN = $self->setPSVN($set->login_id, $set->id) unless ($PSVN);
 	return $self->storeRecord($PSVN, %record);
 }
 
 # deleteSet($userID, $setID) - removes the set with the specified userID and
-#                              setID. Returns true on success, undef on failure.
+#                              setID. Also removes all problems in set.
+#                              Returns true on success, undef on failure.
 # $userID - the user ID (a.k.a. login name) of the set to delete
 # $setID - the ID (a.k.a. name) of the set to delete
 sub deleteSet($$$) {
 	my $self = shift;
 	my $userID = shift;
 	my $setID = shift;
-	my $PSVN = getPSVN($userID, $setID);
-	$self->{classlist_db}->connect("rw");
-	delete $self->{classlist_db}->hashRef->{$userID};
-	$self->{classlist_db}->disconnect;
+	my $PSVN = $self->getPSVN($userID, $setID);
+	$self->{webwork_db}->connect("rw");
+	delete $self->{webwork_db}->hashRef->{$PSVN};
+	$self->{webwork_db}->disconnect;
+	$self->deletePSVN($userID, $setID);
 	return 1;
 }
 
@@ -121,8 +150,9 @@ sub getProblems($$$) {
 	my $self = shift;
 	my $userID = shift;
 	my $setID = shift;
-	my $PSVN = getPSVN($userID, $setID);
+	my $PSVN = $self->getPSVN($userID, $setID);
 	my %record = $self->fetchRecord($PSVN);
+	return unless %record;
 	my @result;
 	my $i = 1;
 	while (exists $record{"pse".$i}) {
@@ -144,9 +174,9 @@ sub getProblem($$$$) {
 	my $userID = shift;
 	my $setID = shift;
 	my $problemNumber = shift;
-	my $PSVN = getPSVN($userID, $setID);
+	my $PSVN = $self->getPSVN($userID, $setID);
 	return unless $PSVN;
-	return hash2problem($problemNumber, fetchRecord($PSVN));
+	return hash2problem($problemNumber, $self->fetchRecord($PSVN));
 }
 
 # setProblem($problem) - if a problem with the same ID for the specified user
@@ -156,9 +186,11 @@ sub getProblem($$$$) {
 sub setProblem($$) {
 	my $self = shift;
 	my $problem = shift;
-	my $PSVN = getPSVN($problem->login_id, $problem->set_id);
+	my $PSVN = $self->getPSVN($problem->login_id, $problem->set_id);
+	die "failed to add problem: set ", $problem->set_id, " does not exist."
+		unless $PSVN;
 	my %record = (
-		$PSVN ? $self->fetchRecord($PSVN) : (),
+		$self->fetchRecord($PSVN),
 		problem2hash($problem),
 	);
 	return $self->storeRecord($PSVN, %record);
@@ -174,7 +206,7 @@ sub deleteProblem($$$$) {
 	my $userID = shift;
 	my $setID = shift;
 	my $n = shift;
-	my $PSVN = getPSVN($userID, $setID);
+	my $PSVN = $self->getPSVN($userID, $setID);
 	my %record = $self->fetchRecord($PSVN);
 	return unless %record;
 	delete $record{"pfn$n"}  if exists $record{"pfn$n"};
@@ -209,6 +241,21 @@ sub deleteProblem($$$$) {
 
 # -----
 
+# getPSVNs($userID) - get a list of PSVNs for a user
+# $userID - the user
+sub getPSVNs($$) {
+	my $self = shift;
+	my $userID = shift;
+	return unless $self->{webwork_db}->connect("ro");
+	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	$self->{webwork_db}->disconnect;
+	return unless defined $setsForUser;
+	my %sets = decode($setsForUser);
+	return values %sets;
+}
+
+# -----
+
 # getPSVN($userID, $setID) - look up a PSVN given a user ID and set ID (PSVN
 #                            stands for Problem Set Version Number and
 #                            uniquely identifies a user's version of a set.)
@@ -219,11 +266,97 @@ sub getPSVN($$$) {
 	my $userID = shift;
 	my $setID = shift;
 	return unless $self->{webwork_db}->connect("ro");
-	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
 	$self->{webwork_db}->disconnect;
-	return unless $result;
-	my %sets = decode($result);
+	# * if setsForUser is non-empty, then there are sets built for
+	#   this user.
+	# * if usersForSet is non-empty, then this set has been built for
+	#   at least one user.
+	# * if either are empty, it is guaranteed that this set has not
+	#   been built for this user.
+	return unless defined $setsForUser and defined $usersForSet;
+	return unless $setsForUser and $usersForSet;
+	my %sets = decode($setsForUser);
+	my %users = decode($usersForSet);
+	# more sanity checks: the following should never happen.
+	# if they do, run screaming for the hills.
+	if (defined $sets{$setID} and not defined $users{$userID}) {
+		die "PSVN indexes inconsistent: set exists in user index ",
+			"but user does not exist in set index.";
+	} elsif (not defined $sets{$setID} and defined $users{$userID}) {
+		die "PSVN indexes inconsistent: user exists in set index ",
+			"but set does not exist in user index.";
+	} elsif ($sets{$setID} != $users{$userID}) {
+		die "PSVN indexes inconsistent: user index and set index ",
+			"gave different PSVN values.";
+	}
 	return $sets{$setID};
+}
+
+# setPSVN($userID, $setID) - adds a new PSVN to the PSVN indexesfor the given
+#                            user ID and set ID, if it doesn't exist. Returns
+#                            the PSVN.
+# $userID - the user ID to use
+# $serID - the set ID to use
+sub setPSVN($$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $PSVN = $self->getPSVN($userID, $setID);
+	unless ($PSVN) {
+		# yeah, create a new PSVN here
+		my $min_psvn = 10**($self->{psvn_digits} - 1);
+		my $max_psvn = 10**$self->{psvn_digits} - 1;
+		my $attempts = 0;
+		do {
+			if (++$attempts > MAX_PSVN_GENERATION_ATTEMPTS) {
+				die "failed to find an unused PSVN.";
+			}
+			$PSVN = int(rand($max_psvn-$min_psvn+1)) + $min_psvn;
+		} while ($self->fetchRecord($PSVN));
+		$self->{webwork_db}->connect("rw"); # open "rw" to lock
+		# get current PSVN indexes
+		my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+		my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
+		my %sets = decode($setsForUser);  # sets built for user $userID
+		my %users = decode($usersForSet); # users for which set $setID has been built
+		# insert new PSVN into each hash
+		$sets{$setID} = $PSVN;
+		$users{$userID} = $PSVN;
+		# re-encode the hashes
+		$setsForUser = encode(%sets);
+		$usersForSet = encode(%users);
+		# store 'em in the database
+		$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
+		$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
+		$self->{webwork_db}->disconnect;
+	};
+	return $PSVN;
+}
+
+# deletePSVN($userID, $setID) - remove an entry from the PSVN indexes.
+# $userID - the user to remove
+# $setID - the set to remove
+sub deletePSVN($$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $PSVN = $self->getPSVN($userID, $setID);
+	return unless $PSVN;
+	$self->{webwork_db}->connect("rw"); # open "rw" to lock
+	my $setsForUser = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	my $usersForSet = $self->{webwork_db}->hashRef->{SET_PREFIX.$setID};
+	my %sets = decode($setsForUser);  # sets built for user $userID
+	my %users = decode($usersForSet); # users for which set $setID has been built
+	delete $sets{$setID};
+	delete $users{$userID};
+	$setsForUser = encode(%sets);
+	$usersForSet = encode(%users);
+	$self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID} = $setsForUser;
+	$self->{webwork_db}->hashRef->{SET_PREFIX.$setID} = $usersForSet;
+	$self->{webwork_db}->disconnect;
+	return 1;
 }
 
 # -----
@@ -273,10 +406,11 @@ sub encode(%) {
 	my %hash = @_;
 	my $string;
 	foreach (keys %hash) {
+		$hash{$_} = "" unless defined $hash{$_}; # promote undef to ""
 		$hash{$_} =~ s/(=|&)/\\$1/; # escape & and =
 		$string .= "$_=$hash{$_}&";
 	}
-	chop $string; # remove final '&' from string for old code :p
+	chop $string if $string; # remove final '&' from string for old code :p
 	return $string;
 }
 
@@ -303,14 +437,15 @@ sub hash2set(%) {
 # $set - a WeBWorK::Set object.
 sub set2hash($) {
 	my $set = shift;
-	my %hash;
-	$hash{stnm} = $set->id             if defined $set->id;
-	$hash{stlg} = $set->login_id       if defined $set->login_id;
-	$hash{shfn} = $set->set_header     if defined $set->set_header;
-	$hash{phfn} = $set->problem_header if defined $set->problem_header;
-	$hash{opdt} = $set->open_date      if defined $set->open_date;
-	$hash{dudt} = $set->due_date       if defined $set->due_date;
-	$hash{andt} = $set->answer_date    if defined $set->answer_date;
+	return (
+		stnm => $set->id,
+		stlg => $set->login_id,
+		shfn => $set->set_header,
+		phfn => $set->problem_header,
+		opdt => $set->open_date,
+		dudt => $set->due_date,
+		andt => $set->answer_date,
+	);
 }
 
 # hash@problem($n, %hash) - places selected fields from a webwork
@@ -333,7 +468,7 @@ sub hash2problem($%) {
 	$problem->last_answer   ( $hash{"pan$n"} ) if defined $hash{"pan$n"};
 	$problem->num_correct   ( $hash{"pca$n"} ) if defined $hash{"pca$n"};
 	$problem->num_incorrect ( $hash{"pia$n"} ) if defined $hash{"pia$n"};
-	
+	return $problem;
 }
 
 # problem2hash($problem) - unpacks a WeBWorK::Problem object and returns PART
@@ -343,19 +478,33 @@ sub hash2problem($%) {
 sub problem2hash($) {
 	my $problem = shift;
 	my $n = $problem->id;
-	my %hash;
-	$hash{stnm}    = $problem->set_id        if defined $problem->set_id;
-	$hash{stlg}    = $problem->login_id      if defined $problem->login_id;
-	$hash{"pfn$n"} = $problem->source_file   if defined $problem->source_file;
-	$hash{"pva$n"} = $problem->value         if defined $problem->value;
-	$hash{"pmia$n"}= $problem->max_attempts  if defined $problem->max_attempts;
-	$hash{"pse$n"} = $problem->problem_seed  if defined $problem->problem_seed;
-	$hash{"pst$n"} = $problem->status        if defined $problem->status;
-	$hash{"pat$n"} = $problem->attempted     if defined $problem->attempted;
-	$hash{"pan$n"} = $problem->last_answer   if defined $problem->last_answer;
-	$hash{"pca$n"} = $problem->num_correct   if defined $problem->num_correct;
-	$hash{"pia$n"} = $problem->num_incorrect if defined $problem->num_incorrect;
-	return %hash;
+#	my %hash;
+#	$hash{stnm}    = $problem->set_id        if defined $problem->set_id;
+#	$hash{stlg}    = $problem->login_id      if defined $problem->login_id;
+#	$hash{"pfn$n"} = $problem->source_file   if defined $problem->source_file;
+#	$hash{"pva$n"} = $problem->value         if defined $problem->value;
+#	$hash{"pmia$n"}= $problem->max_attempts  if defined $problem->max_attempts;
+#	$hash{"pse$n"} = $problem->problem_seed  if defined $problem->problem_seed;
+#	$hash{"pst$n"} = $problem->status        if defined $problem->status;
+#	$hash{"pat$n"} = $problem->attempted     if defined $problem->attempted;
+#	$hash{"pan$n"} = $problem->last_answer   if defined $problem->last_answer;
+#	$hash{"pca$n"} = $problem->num_correct   if defined $problem->num_correct;
+#	$hash{"pia$n"} = $problem->num_incorrect if defined $problem->num_incorrect;
+#	return %hash;
+	return (
+		stnm     => $problem->set_id,
+		stlg     => $problem->login_id,
+		"pfn$n"  => $problem->source_file,
+		"pva$n"  => $problem->value,
+		"pmia$n" => $problem->max_attempts,
+		"pse$n"  => $problem->problem_seed,
+		"pst$n"  => $problem->status,
+		"pat$n"  => $problem->attempted,
+		"pan$n"  => $problem->last_answer,
+		"pca$n"  => $problem->num_correct,
+		"pia$n"  => $problem->num_incorrect,
+
+	);
 }
 
 1;
