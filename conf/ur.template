@@ -115,6 +115,9 @@
       <tr valign="top">
        <td>
         <h1 style="font-size: 14pt"><!--#title--></h1>
+	<!--#if submiterror="1"-->
+	 <p><em style="color: red"><!--#submiterror--></em></p>
+	<!--#endif-->
         <!--#body-->
        </td>
        <td>

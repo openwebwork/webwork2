@@ -25,13 +25,17 @@ sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
+	my $authz = $self->{authz};
 	my $courseName = $ce->{courseName};
 	my $authen_args = $self->url_authen_args();
-
+	my $user = $r->param('user');
 	my $prof_url = $ce->{webworkURLs}->{oldProf};
 	my $full_url = "$prof_url?course=$courseName&$authen_args";
 	my $userEditorURL = "users/?" . $self->url_args;
 	my $problemSetEditorURL = "sets/?" . $self->url_args;
+
+	return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	return 
 		CGI::p("\n".

@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.18 2003-04-23 06:35:06 sh002i Exp $
+# $Id: global.conf.dist,v 1.19 2003-06-04 23:47:33 malsyned Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -222,6 +222,10 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # student to perform an action (almost never what you want).
 %permissionLevels = (
 	"become_student" => 10,
+	"access_instructor_tools" => $ta,
+	"create_and_delete_problem_sets" => $professor,
+	"modify_problem_sets" => $professor,
+	"assign_problem_sets" => $professor,
 );
 
 # $sessionKeyTimeout defines seconds of inactivity before a key expires

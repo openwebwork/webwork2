@@ -18,7 +18,14 @@ sub initialize {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
 	my $courseName = $ce->{courseName};
+	my $user = $r->param('user');
+	
+	unless ($authz->hasPermissions($user, "create_and_delete_problem_sets")) {
+		$self->{submitError} = "You aren't authorized to create or delete problems";
+		return;
+	}
 	
 	if (defined($r->param('deleteSelected'))) {
 		foreach my $wannaDelete ($r->param('selectedSet')) {
@@ -35,7 +42,6 @@ sub initialize {
 		$newSetRecord->answer_date("0");
 		$db->addGlobalSet($newSetRecord) unless $db->getGlobalSet($newSetName);
 	}
-
 }
 
 sub title {
@@ -48,6 +54,7 @@ sub body {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $user = $r->param('user');
@@ -56,9 +63,10 @@ sub body {
 	my $URL = $r->uri;
 	my $instructorBaseURL = "$root/$courseName/instructor";
 	my $importURL = "$instructorBaseURL/problemSetImport/";
-	my $addURL = "$instructorBaseURL/problemSetAdd/";
 	my $sort = $r->param('sort') ? $r->param('sort') : "due_date";
 	
+	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
+
 	# Slurp each set record for this course in @sets
 	# Gather data from the database
 	my @users = $db->listUsers;

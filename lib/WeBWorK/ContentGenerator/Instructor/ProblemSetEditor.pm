@@ -69,6 +69,8 @@ sub initialize {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
@@ -79,6 +81,11 @@ sub initialize {
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
 	
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		$self->{submitError} = "You are not authorized to modify problem sets";
+		return;
+	}
+
 	# The set form was submitted
 	if (defined($r->param('submit_set_changes'))) {
 		foreach (@{SET_FIELDS()}) {
@@ -119,6 +126,8 @@ sub body {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
 	my $setName = $self->getSetName(@components);
 	my $setRecord = $db->getGlobalSet($setName);
@@ -126,7 +135,9 @@ sub body {
 	# some useful booleans
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
-	
+
+        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+
 	## Set Form ##
 	my $userSetRecord;
 	my %overrideArgs;

@@ -18,6 +18,7 @@ use CGI qw();
 use URI::Escape;
 use WeBWorK::DB;
 use WeBWorK::Utils qw(readFile);
+use WeBWorK::Authz;
 
 ################################################################################
 # This is a very unruly file, so I'm going to use very large comments to divide
@@ -40,6 +41,7 @@ sub new($$$$) {
 		r  => $r,
 		ce => $ce,
 		db => $db,
+		authz => WeBWorK::Authz->new($r, $ce, $db)
 	};
 	bless $self, $class;
 	return $self;
@@ -125,7 +127,11 @@ sub template {
 				pop @ifstack;
 			} elsif ($ifstack[-1]) {
 				if ($self->can($function)) {
-					print $self->$function(@_, {@args});
+					my $result = $self->$function(@_, {@args});
+					unless (defined $result) {
+						warn "Template escape $function returned an undefined value.";
+					}
+					print $result;
 				}
 			}
 		}
@@ -458,6 +464,18 @@ sub links {
 	;
 }
 
+sub submiterror {
+	warn "submiterror\n";
+	my ($self) = @_;
+	if (exists $self->{submitError}) {
+		warn "returning ".$self->{submitError}."\n";
+		return $self->{submitError};
+	} else {
+		warn "returning \"\"\n";
+		return "";
+	}
+}
+
 # &if_can will return 1 if the current object->can("do $_[1]")
 sub if_can ($$) {
 	my ($self, $arg) = (@_);
@@ -474,6 +492,18 @@ sub if_loggedin($$) {
 	my ($self, $arg) = (@_);
 	
 	return $arg;
+}
+
+sub if_submiterror($$) {
+	warn "if_submiterror\n";
+	my ($self, $arg) = @_;
+	if (exists $self->{submitError}) {
+		warn "returning $arg\n";
+		return $arg;
+	} else {
+		warn "returning ".!$arg."\n";
+		return !$arg;
+	}
 }
 
 1;

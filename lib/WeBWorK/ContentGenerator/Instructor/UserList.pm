@@ -14,6 +14,14 @@ use CGI qw();
 sub initialize {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
+	
+	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
+		$self->{submitError} = "You are not authorized to assign problem sets";
+		return;
+	}
+	
 	if (defined $r->param('assignToAll')) {
 		$self->assignSetToAllUsers($setID);
 	}
@@ -22,6 +30,12 @@ sub initialize {
 sub body {
 	my ($self, $setID) = @_;
 	my $r = $self->{r};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
+	
+        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	
 	print CGI::start_form({method=>"post", action=>$r->uri});
 	print $self->hidden_authen_fields;
 	print CGI::submit({name=>"assignToAll", value=>"Assign to All Users"});

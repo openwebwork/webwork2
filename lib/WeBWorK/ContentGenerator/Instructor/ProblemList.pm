@@ -72,11 +72,18 @@ sub initialize {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
 	# some useful booleans
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
+
+	unless ($authz->hasPermissions($user, "modify_problem_sets")) {
+		$self->{submitError} = "You are not authorized to modify problem sets";
+		return;
+	}
 
 	# build a quick lookup table
 	my %overrides = list2hash $r->param('override');
@@ -175,6 +182,8 @@ sub body {
 	my $r = $self->{r};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
 	my $courseName = $ce->{courseName};
 	my $setRecord = $db->getGlobalSet($setName);
 	my @editForUser = $r->param('editForUser');
@@ -182,6 +191,8 @@ sub body {
 	my $forUsers = scalar(@editForUser);
 	my $forOneUser = $forUsers == 1;
 
+        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+	
 	## Problems Form ##
 	my @problemList = $db->listGlobalProblems($setName);
 	print CGI::a({name=>"problems"});
