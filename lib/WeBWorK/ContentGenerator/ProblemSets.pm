@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.39 2004/01/25 15:53:07 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.41 2004/01/25 20:04:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -81,7 +81,10 @@ sub body {
 	my $nameHeader = ($sort eq "name") ? CGI::u("Name") : CGI::a({-href=>"$baseURL&sort=name"}, "Name");
 	my $statusHeader = ($sort eq "status") ? CGI::u("Status") : CGI::a({-href=>"$baseURL&sort=status"}, "Status");
 	
-	print CGI::startform(-method=>"POST", -action=>$r->uri."hardcopy/");
+	my $actionURL    = $r->uri;     #FIXME Hack Hack
+	$actionURL =~ s|/$||;
+	$actionURL .= "/hardcopy/";
+	print CGI::startform(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields;
 	print CGI::start_table();
 	print CGI::Tr(
@@ -140,8 +143,11 @@ sub setListRow($$$) {
 	my ($self, $set, $multiSet, $preOpenSets) = @_;
 	
 	my $name = $set->set_id;
-	
-	my $interactiveURL = "$name/?" . $self->url_authen_args;
+	my $ce              = $self->{ce};
+	my $root            = $ce->{webworkURLs}->{root};
+	my $courseName      = $ce->{courseName};
+	# FIXME  -- better way to find the path
+	my $interactiveURL = "$root/$courseName/$name/?" . $self->url_authen_args;
 	#my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
 	
 	my $openDate = formatDateTime($set->open_date);
