@@ -1,0 +1,47 @@
+package WeBWorK::ContentGenerator::Instructor::Assigner;
+use base qw(WeBWorK::ContentGenerator::Instructor);
+
+=head1 NAME
+
+WeBWorK::ContentGenerator::Instructor::Assigner - Assign problem sets to users
+
+=cut
+
+use strict;
+use warnings;
+use CGI qw();
+
+sub initialize {
+	my ($self, $setID) = @_;
+	my $r = $self->{r};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
+	
+	unless ($authz->hasPermissions($user, "assign_problem_sets")) {
+		$self->{submitError} = "You are not authorized to assign problem sets";
+		return;
+	}
+	
+	if (defined $r->param('assignToAll')) {
+		$self->assignSetToAllUsers($setID);
+	}
+}
+
+sub body {
+	my ($self, $setID) = @_;
+	my $r = $self->{r};
+	my $authz = $self->{authz};
+	my $user = $r->param('user');
+	
+        return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	
+	print CGI::start_form({method=>"post", action=>$r->uri});
+	print $self->hidden_authen_fields;
+	print CGI::submit({name=>"assignToAll", value=>"Assign to All Users"});
+	print CGI::end_form();
+	
+	return "";
+}
+
+1;
