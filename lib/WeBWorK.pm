@@ -22,6 +22,7 @@ use WeBWorK::ContentGenerator::GatewayQuiz;
 use WeBWorK::ContentGenerator::Hardcopy;
 use WeBWorK::ContentGenerator::Instructor::Assigner;
 use WeBWorK::ContentGenerator::Instructor::Index;
+use WeBWorK::ContentGenerator::Instructor::Index2;
 use WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
@@ -141,6 +142,11 @@ sub dispatch($) {
 			$WeBWorK::timer1 ->stop;
 			$WeBWorK::timer1 ->save;
 			return $result;
+		} elsif ($arg eq "instructor2") {  
+			my $instructorArgument = shift @components;
+			if (!defined $instructorArgument) {
+				$result = WeBWorK::ContentGenerator::Instructor::Index2->new($r, $ce, $db)->go;
+			}
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
 			if (!defined $instructorArgument) {
