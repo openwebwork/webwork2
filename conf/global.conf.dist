@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.80 2004/06/26 20:40:17 jj Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.81 2004/07/01 20:31:13 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,181 +27,300 @@
 #         $courseName     name of the course being used
 
 ################################################################################
-# WeBWorK settings
+# System-wide locations (directories and URLs)
 ################################################################################
 
-%webworkDirs = (
-	root          => "$webworkRoot",
-	DATA          => "$webworkRoot/DATA",
-	uploadCache   => "$webworkRoot/DATA/uploads",
-	bin           => "$webworkRoot/bin",
-	conf          => "$webworkRoot/conf",
-	courses       => "$webworkRoot/courses",
-	htdocs        => "$webworkRoot/htdocs",
-	htdocs_temp   => "$webworkRoot/htdocs/tmp",
-	equationCache => "$webworkRoot/htdocs/tmp/equations",
-	local_help    => "$webworkRoot/htdocs/helpFiles",
-	lib           => "$webworkRoot/lib",
-	logs          => "$webworkRoot/logs",
-	macros        => "$pgRoot/macros",
-	tmp           => "$webworkRoot/tmp",
-);
+# The root directory, set by webwork_root variable in Apache configuration.
+$webworkDirs{root}          = "$webworkRoot";
 
-%webworkFiles = (
-	environment        => "$webworkDirs{conf}/global.conf",
-	hardcopySnippets   => {
-		preamble       => "$webworkDirs{conf}/snippets/hardcopyPreamble.tex",
-		setHeader      => "$webworkDirs{conf}/snippets/setHeader.pg",  # hardcopySetHeader.pg",
-		problemDivider => "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex",
-		setFooter      => "$webworkDirs{conf}/snippets/hardcopySetFooter.pg",
-		setDivider     => "$webworkDirs{conf}/snippets/hardcopySetDivider.tex",
-		userDivider    => "$webworkDirs{conf}/snippets/hardcopyUserDivider.tex",
-		postamble      => "$webworkDirs{conf}/snippets/hardcopyPostamble.tex",
-	},
-	screenSnippets => {
-		setHeader => "$webworkDirs{conf}/snippets/setHeader.pg",       # screenSetHeader.pg",
-	},
-	logs => {
-		timing         => "$webworkDirs{logs}/timing.log",
-	},
-	# Set this to "" if you don't want to use the equation cache file
-	equationCacheDB => "$webworkDirs{DATA}/equationcache",
-);
+# Location of system-wide data files.
+$webworkDirs{DATA}          = "$webworkDirs{root}/DATA";
 
-%webworkURLs = (
-	root          => "$webworkURLRoot",
-	home          => "/webwork2_files/index.html",
-	htdocs        => "/webwork2_files",
-	htdocs_temp   => "/webwork2_files/tmp",
-	equationCache => "/webwork2_files/tmp/equations",
-	docs          => "http://webhost.math.rochester.edu/webworkdocs/docs",
-	local_help    => "/webwork2_files/helpFiles",
-	oldProf       => "/webwork1/profLogin.pl",
-	bugReporter   => "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=WeBWorK%20mod_perl",
-	jsMath        => "/webwork2_files/jsMath/jsMath.js",
-	asciimath     => "/webwork2_files/ASCIIMathML/ASCIIMathML.js",
-);
+# Used for temporary storage of uploaded files.
+$webworkDirs{uploadCache}   = "$webworkDirs{DATA}/uploads";
+
+# Location of utility programs.
+$webworkDirs{bin}           = "$webworkDirs{root}/bin";
+
+# Location of configuration files, templates, snippets, etc.
+$webworkDirs{conf}          = "$webworkDirs{root}/conf";
+
+# Location of course directories.
+$webworkDirs{courses}       = "$webworkDirs{root}/courses";
+
+# Contains the WeBWorK libraries. (FIXME: not used)
+#$webworkDirs{lib}           = "$webworkDirs{root}/lib";
+
+# Contains log files.
+$webworkDirs{logs}          = "$webworkDirs{root}/logs";
+
+# Location of PG macros. (FIXME: not used)
+#$webworkDirs{macros}        = "$pgRoot/macros";
+
+# Contains non-web-accessible temporary files, such as TeX working directories.
+$webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
+
+##### The following locations are web-accessible.
+
+# The root URL (usually /webwork2), set by <Location> in Apache configuration.
+$webworkURLs{root}          = "$webworkURLRoot";
+
+# Location of system-wide web-accessible files, such as equation images, and
+# help files.
+$webworkDirs{htdocs}        = "$webworkDirs{root}/htdocs";
+$webworkURLs{htdocs}        = "/webwork2_files";
+
+# The URL of the static WeBWorK home page (FIXME: not used)
+#$webworkURLs{home}          = "$webworkURLs{htdocs}/index.html";
+
+# Location of web-accessible temporary files, such as equation images.
+$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+
+# Location of cached equation images.
+$webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
+$webworkURLs{equationCache} = "$webworkURLs{htdocs_temp}/equations";
+
+# Contains context-sensitive help files.
+$webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
+$webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
+
+# URL of general WeBWorK documentation.
+$webworkURLs{docs}          = "http://webhost.math.rochester.edu/webworkdocs/docs";
+
+# URL of WeBWorK 1.x profLogin.pl script, for access to old professor pages.
+# Note that both systems must share a single "courses" directory for this to be
+# useful. Leave this blank to disable 
+$webworkURLs{oldProf}       = "/webwork1/profLogin.pl";
+
+# URL of WeBWorK Bugzilla database.
+$webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=WeBWorK%20mod_perl";
+
+# Location of jsMath script, used for the jsMath display mode.
+$webworkURLs{jsMath}        = "$webworkURLs{root}/jsMath/jsMath.js";
+
+# Location of ASCIIMathML script, used for the asciimath display mode.
+$webworkURLs{asciimath}     = "$webworkURLs{root}/ASCIIMathML/ASCIIMathML.js";
 
 ################################################################################
-# Default course-specific settings
+# Defaults for course-specific locations (directories and URLs)
 ################################################################################
 
-my $courseRoot = "$webworkDirs{courses}/$courseName";
-%courseDirs = (
-	root        => "$courseRoot",
-	DATA        => "$courseRoot/DATA",
-	auth_DATA   => "$courseRoot/DATA/.auth",
-	html        => "$courseRoot/html",
-	html_images => "$courseRoot/html/images",
-	html_temp   => "$courseRoot/html/tmp",
-	logs        => "$courseRoot/logs",
-	scoring     => "$courseRoot/scoring",
-	templates   => "$courseRoot/templates",
-	macros      => "$courseRoot/templates/macros",
-	email       => "$courseRoot/templates/email",
-);
+# The root directory of the current course. (The ID of the current course is
+# available in $courseName.)
+$courseDirs{root}        = "$webworkDirs{courses}/$courseName";
 
-%courseFiles = (
-	environment => "$courseDirs{root}/course.conf",
-	motd        => "$courseDirs{templates}/motd.txt",
-	logs => {
-		answer_log  => "$courseDirs{logs}/answer_log",
-	},	
-	course_info => "course_info.txt",  # path relative to templates directory
-	login_info  => "login_info.txt",   # path relative to templates directory
-);
+# Location of course-specific data files, such as WW1 (GDBM) database files.
+$courseDirs{DATA}        = "$courseDirs{root}/DATA";
 
-#
-#  Additional library buttons can be added to the Library Browser (SetMaker.pm)
-#  by adding the libraries you want to the following line.  For each key=>value
-#  in the list, if a directory (or link to a directory) with name 'key' appears
-#  in the templates directory, then a button with name 'value' will be placed at
-#  the top of the problem browser.  (No button will appear if there is no directory
-#  or link with the given name in the templates directory.)  For example,
-#
-#    $courseFiles{problibs} = {rochester => "Rochester", asu => "ASU"};
-#
-#  would add two buttons, one for the Rochester library and one for the ASU
-#  library, provided templates/rochester and templates/asu exists.
-#  
+# Location of authentication data files when using a WW1 (GDBM) database.
+$courseDirs{auth_DATA}   = "$courseDirs{DATA}/.auth";
+
+# Location of course HTML files, passed to PG.
+$courseDirs{html}        = "$courseDirs{root}/html";
+$courseURLs{html}        = "/webwork2_course_files/$courseName";
+#$courseURLs{root}        = $courseURLs{html}; # FIXME: not used
+
+# Location of course image files, passed to PG.
+$courseDirs{html_images} = "$courseDirs{html}/images";
+
+# Location of web-accessible, course-specific temporary files, like static and
+# dynamically-generated PG graphics.
+$courseDirs{html_temp}   = "$courseDirs{html}/tmp";
+$courseURLs{html_temp}   = "$courseURLs{html}/tmp";
+
+# Location of course-specific logs, like the transaction log.
+$courseDirs{logs}        = "$courseDirs{root}/logs";
+
+# Location of scoring files.
+$courseDirs{scoring}     = "$courseDirs{root}/scoring";
+
+# Location of PG templates and set definition files.
+$courseDirs{templates}   = "$courseDirs{root}/templates";
+
+# Location of course-specific macro files.
+$courseDirs{macros}      = "$courseDirs{templates}/macros";
+
+# Location of mail-merge templates.
+$courseDirs{email}       = "$courseDirs{templates}/email";
+
+################################################################################
+# System-wide files
+################################################################################
+
+# Location of this file.
+$webworkFiles{environment}                      = "$webworkDirs{conf}/global.conf";
+
+# Flat-file database used to protect against MD5 hash collisions. TeX equations
+# are hashed to determine the name of the image file. There is a tiny chance of
+# a collision between two TeX strings. This file allows for that. However, this
+# is slow, so most people chose not to worry about it. Set this to "" if you
+# don't want to use the equation cache file.
+$webworkFiles{equationCacheDB}                  = ""; # "$webworkDirs{DATA}/equationcache";
+
+##### Hardcopy snippets are used in constructing a TeX file for hardcopy output.
+##### They should contain TeX code unless otherwise noted.
+
+# The preamble is the first thing in the TeX file.
+$webworkFiles{hardcopySnippets}{preamble}       = "$webworkDirs{conf}/snippets/hardcopyPreamble.tex";
+
+# The setHeader preceeds each set. It is a PG file.
+$webworkFiles{hardcopySnippets}{setHeader}      = "$webworkDirs{conf}/snippets/setHeader.pg";
+
+# The problem divider goes between problems.
+$webworkFiles{hardcopySnippets}{problemDivider} = "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex";
+
+# The set footer goes after each set. Is is a PG file.
+$webworkFiles{hardcopySnippets}{setFooter}      = "$webworkDirs{conf}/snippets/hardcopySetFooter.pg";
+
+# The set divider goes between sets (in multiset output).
+$webworkFiles{hardcopySnippets}{setDivider}     = "$webworkDirs{conf}/snippets/hardcopySetDivider.tex";
+
+# The user divider does between users (in multiuser output).
+$webworkFiles{hardcopySnippets}{userDivider}    = "$webworkDirs{conf}/snippets/hardcopyUserDivider.tex";
+
+# The postabmle is the last thing in the TeX file.
+$webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/hardcopyPostamble.tex";
+
+##### Screen snippets are used when displaying problem sets on the screen.
+
+# The set header is displayed on the problem set page. It is a PG file.
+$webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg";
+
+################################################################################
+# Course-specific files
+################################################################################
+
+# The course configuration file.
+$courseFiles{environment} = "$courseDirs{root}/course.conf";
+
+# The message of the day, displayed after login. (FIXME: not used)
+#$courseFiles{motd}        = "$courseDirs{templates}/motd.txt";
+
+# File contents are displayed after login, on the problem sets page. Path given
+# here is relative to the templates directory.
+$courseFiles{course_info} = "course_info.txt";
+
+# File contents are displayed on the login page. Path given here is relative to
+# the templates directory.
+$courseFiles{login_info}  = "login_info.txt";
+
+# Additional library buttons can be added to the Library Browser (SetMaker.pm)
+# by adding the libraries you want to the following line.  For each key=>value
+# in the list, if a directory (or link to a directory) with name 'key' appears
+# in the templates directory, then a button with name 'value' will be placed at
+# the top of the problem browser.  (No button will appear if there is no
+# directory or link with the given name in the templates directory.)  For
+# example,
+# 
+#     $courseFiles{problibs} = {rochester => "Rochester", asu => "ASU"};
+# 
+# would add two buttons, one for the Rochester library and one for the ASU
+# library, provided templates/rochester and templates/asu exists.
+# 
 $courseFiles{problibs} = {};
 
-
-# quick hack to fix transaction logging. blah.
-$webworkFiles{logs}->{transaction}    = "$courseDirs{logs}/transaction.log";
-$webworkFiles{logs}->{pastAnswerList} = "$courseDirs{logs}/past_answers.log";
-
-my $courseURLRoot = "/webwork2_course_files/$courseName";
-%courseURLs = (
-	root      => "$courseURLRoot",
-	html      => "$courseURLRoot",
-	html_temp => "$courseURLRoot/tmp",
-);
-
 ################################################################################
-# Other site-specific options
+# Logs
 ################################################################################
 
-%mail = (
-	smtpServer => "mail.math.rochester.edu",
-	smtpSender => "webwork\@math.rochester.edu",
-	
-	# allowedRecipients defines addresses that the PG system is allowed to
-	# send mail to. this prevents subtle PG exploits. This should be set
-	# in course.conf to the addresses of professors of each course. Sending
-	# mail from the PG system (i.e. questionaires, essay questions) will
-	# fail if this is not set somewhere (either here or in course.conf).
-	#allowedRecipients => [
-	#	'prof1@host.yourdomain.edu',
-	#	'prof2@host.yourdomain.edu',
-	#],
-	
-	# if defined, feedbackRecipients overrides the list of recipients for
-	# feedback email. It's appropriate to set this in the course.conf for
-	# specific courses, but probably not in global.conf. if not defined,
-	# mail is sent to all professors and TAs for a given course
-	#feedbackRecipients => [
-	#	'prof1@host.yourdomain.edu',
-	#	'prof2@host.yourdomain.edu',
-	#],
-	
-	# feedbackVerbosity:
-	#  0: send only the feedback comment and context link
-	#  1: as in 0, plus user, set, problem, and PG data
-	#  2: as in 1, plus the problem environment (debugging data)
-	feedbackVerbosity => 1,
-	
-	# defines the size of the Mail Merge editor window
-	# FIXME: should this be here? it's UI, not mail
-	# FIXME: replace this with the auto-size method that TWiki uses
-	editor_window_rows    => 15,
-	editor_window_columns => 100,
-);
+# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
+# top-level hash.
 
-%externalPrograms = (
-	mkdir    => "/bin/mkdir",
-	tth      => "/usr/local/bin/tth",
-	pdflatex => "/usr/local/bin/pdflatex",
-	latex    => "/usr/local/bin/latex",
-	dvipng   => "/usr/local/bin/dvipng",
-	gif2eps  => "$webworkDirs{bin}/gif2eps",
-	png2eps  => "$webworkDirs{bin}/png2eps",
-	gif2png  => "$webworkDirs{bin}/gif2png",
-	mysql    => "/usr/local/bin/mysql",
-);
+# Logs data about how long it takes to process problems. (Do not confuse this
+# with the /other/ timing log which can be set by WeBWorK::Timing and is used
+# for benchmarking system performance in general. At some point, this timing
+# mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
+$webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
 
-%siteDefaults = (
-	status => {
-			audit	=> "Audit",
-			A	=> "Audit",
-			drop	=> "Drop",
-			D	=> "Drop",
-			withdraw => "Drop",
-			current	=> "Enrolled",
-			C	=> "Enrolled",
-			enrolled => "Enrolled",
-	},
-);
+# The transaction log contains data from each recorded answer submission. This
+# is useful if the database becomes corrupted.
+$webworkFiles{logs}{transaction}    = "$courseDirs{logs}/transaction.log";
+
+# The past answer list stores a history of all users' submitted answers. (FIXME: not used)
+$webworkFiles{logs}{pastAnswerList} = "$courseDirs{logs}/past_answers.log";
+
+# The answer log stores a history of all users' submitted answers.
+$courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
+
+################################################################################
+# Mail settings
+################################################################################
+
+# Mail sent by the PG system and the mail merge and feedback modules will be
+# sent via this SMTP server.
+$mail{smtpServer} = 'mail.yourschool.edu';
+
+# When connecting to the above server, WeBWorK will send this address in the
+# MAIL FROM command. This has nothing to do with the "From" address on the mail
+# message. It can really be anything, but some mail servers require it contain
+# a valid mail domain, or at least be well-formed.
+$mail{smtpSender} = 'webwork@yourserver.yourschool.edu';
+	
+# AllowedRecipients defines addresses that the PG system is allowed to send mail
+# to. this prevents subtle PG exploits. This should be set in course.conf to the
+# addresses of professors of each course. Sending mail from the PG system (i.e.
+# questionaires, essay questions) will fail if this is not set somewhere (either
+# here or in course.conf).
+$mail{allowedRecipients} = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+	
+# If defined, feedbackRecipients overrides the list of recipients for feedback
+# email. It's appropriate to set this in the course.conf for specific courses,
+# but probably not in global.conf. if not defined, mail is sent to all
+# professors and TAs for a given course
+$mail{feedbackRecipients} = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+	
+# feedbackVerbosity:
+#  0: send only the feedback comment and context link
+#  1: as in 0, plus user, set, problem, and PG data
+#  2: as in 1, plus the problem environment (debugging data)
+$mail{feedbackVerbosity} = 1;
+	
+# Defines the size of the Mail Merge editor window
+# FIXME: should this be here? it's UI, not mail
+# FIXME: replace this with the auto-size method that TWiki uses
+$mail{editor_window_rows}    = 15;
+$mail{editor_window_columns} = 100;
+
+################################################################################
+# Paths to external programs 
+################################################################################
+
+$externalPrograms{mkdir}    = "/bin/mkdir";
+$externalPrograms{mysql}    = "/usr/local/bin/mysql";
+
+$externalPrograms{latex}    = "/usr/local/bin/latex";
+$externalPrograms{pdflatex} = "/usr/local/bin/pdflatex";
+$externalPrograms{dvipng}   = "/usr/local/bin/dvipng";
+$externalPrograms{tth}      = "/usr/local/bin/tth";
+
+# These image conversion utilities are included in the WeBWorK distribution.
+$externalPrograms{gif2eps}  = "$webworkDirs{bin}/gif2eps";
+$externalPrograms{png2eps}  = "$webworkDirs{bin}/png2eps";
+$externalPrograms{gif2png}  = "$webworkDirs{bin}/gif2png";
+
+################################################################################
+# Site defaults (FIXME: what other things could be "site defaults"?)
+################################################################################
+
+# Status strings -- lists valid status values and their names. If your site uses
+# additional values, add them here.
+$siteDefaults{status} = {
+	A        => "Audit",
+	audit    => "Audit",
+	D        => "Drop",
+	drop     => "Drop",
+	withdraw => "Drop",
+	C        => "Enrolled",
+	current  => "Enrolled",
+	enrolled => "Enrolled",
+};
 
 ################################################################################
 # Frontend options 
@@ -220,22 +339,31 @@ my $courseURLRoot = "/webwork2_course_files/$courseName";
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
-# file of a particular course.
-#$dbLayoutName = "sql";
-$dbLayoutName = "gdbm";
+# file of a particular course. If you choose "gdbm", WeBWorK will be able to
+# use courses from WeBWorK 1 without first adding course.conf files to them.
+# However, the recommended database layout for new courses is "sql". This can
+# be set when creating a course.
+$dbLayoutName = "sql"; # or: "gdbm"
 
+# This sets the symbol "dbLayout" as an alias for the selected database layout.
 *dbLayout = $dbLayouts{$dbLayoutName};
 
 ################################################################################
 # Problem library options
 ################################################################################
 
-%problemLibrary = (
-	root => "", # set to the top of the problem library, if its installed
-	sourceSQL   => "ProblemLibrary",
-	userSQL     => "webworkRead",
-	passwordSQL => "",
-);
+# The directory containing the problem library files. Set to "" if no problem
+# library is installed.
+$problemLibrary{root}        = "";
+
+# The name of the SQL database containing problem metadata
+$problemLibrary{sourceSQL}   = "ProblemLibrary";
+
+# The user name to use when connecting to the problem library database
+$problemLibrary{userSQL}    = "webworkRead";
+
+# The password to use when connecting to the problem library database
+$problemLibrary{passwordSQL} = "";
 
 ################################################################################
 # Authorization system
@@ -245,9 +373,11 @@ $dbLayoutName = "gdbm";
 # actions.  In the current system, >=10 will allow a professor to perform the
 # action, >=5 will allow a TA to, and >=0 will allow a student to perform an
 # action (almost never what you want).
+
 my $student = 0;
 my $ta = 5;
 my $professor = 10;
+
 %permissionLevels = (
 	report_bugs                    => $student,
 	view_multiple_sets             => $ta,
@@ -293,117 +423,157 @@ $practiceUserPrefix = "practice";
 #$debugPracticeUser = "practice666";
 
 ################################################################################
-# PG translation options
+# PG subsystem options
 ################################################################################
 
-%pg = (
-	# available display modes
-	displayModes => [ qw(plainText formattedText images jsMath asciimath) ],
-	# pg options
-	options => {
-		# default translation options
-		displayMode        => "images",
-		showOldAnswers     => 1,
-		showCorrectAnswers => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		catchWarnings      => 0, # there's a global warning catcher now
-		# default grader
-		grader => "avg_problem_grader",
-	},
-	# options for various renderers
-	renderers => {
-		"WeBWorK::PG::Remote" => {
-			proxy => "http://localhost:21000/RenderD"
-		},
+# List of enabled display modes. Comment out any modes you don't wish to make
+# available for use.
+$pg{displayModes} = [
+	"plainText",     # display raw TeX for math expressions
+	"formattedText", # format math expressions using TtH
+	"images",        # display math expressions as images generated by dvipng
+	"jsMath",        # render TeX math expressions on the client side using jsMath
+	"asciimath",     # render TeX math expressions on the client side using ASCIIMathML
+];
 
-		# next can be baseline, absmiddle, or mysql
-		dvipng_align => 'baseline', 
+#### Default settings for the PG translator
 
-		# if we choose mysql, we need information on connecting
-		# to the database.  Whatever you use here, you have to
-		# create the database and grant read/write priveleges to
-		# the user listed here
-		# To create the database in mysql, as root use:
+# Default display mode. Should be listed above.
+$pg{options}{displayMode}        = "images";
 
-		# create database DvipngDepths;
-		# use  DvipngDepths;
-		# create table depths ( md5 char(33) not null, depth smallint, PRIMARY KEY (md5)) ;
-		# grant ALL on DvipngDepths.* to webworkWrite;
+# The default grader to use, if a problem doesn't specify.
+$pg{options}{grader}             = "avg_problem_grader";
 
-		# In the last statement, "webworkWrite" should match the
-		# user below
+# Fill in answer blanks with the student's last answer by default?
+$pg{options}{showOldAnswers}     = 1;
 
-		dvipng_depth_db => {
-			dbsource => 'dbi:mysql:DvipngDepths',
-                        user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
-                        passwd   => $dbLayouts{sql}->{password}->{params}->{passwordRW},
-		}
+# Show correct answers (when allowed) by default?
+$pg{options}{showCorrectAnswers} = 0;
+
+# Show hints (when allowed) by default?
+$pg{options}{showHints}          = 0;
+
+# Show solutions (when allowed) by default?
+$pg{options}{showSolutions}      = 0;
+
+# Catch translation warnings internally by default? (We no longer need to do
+# this, since there is a global warnings handler. So this should be off.)
+$pg{options}{catchWarnings}      = 0;
+
+##### Currently-selected renderer
+
+# Only the local renderer is supported in this version.
+$pg{renderer} = "WeBWorK::PG::Local";
+
+# The remote renderer connects to an XML-RPC PG rendering server.
+#$pg{renderer} = "WeBWorK::PG::Remote"'
+
+##### Renderer-dependent options
+
+# The remote renderer has one option:
+$pg{renderers}{"WeBWorK::PG::Remote"} = {
+	# The "proxy" server to connect to for remote rendering.
+	proxy => "http://localhost:21000/RenderD",
+};
+
+##### Settings for various display modes
+
+# "images" mode has several settings:
+$pg{displayModeOptions}{images} = {
+	# Determines the method used to align images in output. Can be
+	# "baseline", "absmiddle", or "mysql".
+	dvipng_align => 'baseline', 
+
+	# If we choose mysql, we need information on connecting to the
+	# database. Whatever you use here, you have to create the database
+	# and grant read/write priveleges to the user listed here. To create
+	# the database in mysql, as root use:
+	# 
+	#     CREATE DATABASE DvipngDepths;
+	#     USE DvipngDepths;
+	#     CREATE TABLE depths (md5 CHAR(33) NOT NULL, depth SMALLINT, PRIMARY KEY (md5));
+	#     GRANT ALL ON DvipngDepths.* TO webworkWrite;
+	# 
+	# In the last statement, "webworkWrite" should match the user below.
+	dvipng_depth_db => {
+		dbsource => 'dbi:mysql:DvipngDepths',
+		user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
+		passwd   => $dbLayouts{sql}->{password}->{params}->{passwordRW},
 	},
-	# currently selected renderer
-	renderer => "WeBWorK::PG::Local",
-	#renderer => "WeBWorK::PG::Remote",
-	# directories used by PG
-	directories => {
-		# directories used only by PG
-		root   => "$pgRoot",
-		lib    => "$pgRoot/lib",
-		macros => "$pgRoot/macros",
-	},
-	# this can be customized in the course.conf file
-	specialPGEnvironmentVars => {
-		PRINT_FILE_NAMES_FOR   => [ qw(professor) ],
-		CAPA_Tools             => "$courseDirs{macros}/CAPA_Tools/", 
-		CAPA_MCTools           => "$courseDirs{macros}/CAPA_MCTools/",  
-		CAPA_Graphics_URL      => "$courseURLs{html}/CAPA_Graphics/",   
-		CAPA_GraphicsDirectory => "$courseDirs{html}/CAPA_Graphics/", 
-		onTheFlyImageSize  => 400,
-	},
-	# modules lists module names and the packages each contains
-	modules => [
-		[qw(DynaLoader)],
-		[qw(Exporter)],
-		[qw(GD)],
-		
-		[qw(AlgParser AlgParserWithImplicitExpand Expr ExprWithImplicitExpand)],
-		[qw(AnswerHash AnswerEvaluator)],
-		[qw(WWPlot)], # required by Circle (and others)
-		[qw(Circle)],
-		[qw(Complex)],
-		[qw(Complex1)],
-		[qw(Distributions)],
-		[qw(Fraction)],
-		[qw(Fun)],
-		[qw(Hermite)],
-		[qw(Label)],
-		[qw(List)],
-		[qw(Match)],
-		[qw(MatrixReal1)], # required by Matrix
-		[qw(Matrix)],
-		[qw(Multiple)],
-		[qw(PGrandom)],
-		[qw(Regression)],
-		[qw(Select)],
-		[qw(Units)],
-		[qw(VectorField)],
-	],
-	# defaults used by answer evaluators
-	ansEvalDefaults => {
-		functAbsTolDefault            => .001,
-		functLLimitDefault            => .0000001,
-		functMaxConstantOfIntegration => 1E8,
-		functNumOfPoints              => 3,
-		functRelPercentTolDefault     => .1,
-		functULimitDefault            => .9999999,
-		functVarDefault               => "x",
-		functZeroLevelDefault         => 1E-14,
-		functZeroLevelTolDefault      => 1E-12,
-		numAbsTolDefault              => .001,
-		numFormatDefault              => "",
-		numRelPercentTolDefault       => .1,
-		numZeroLevelDefault           => 1E-14,
-		numZeroLevelTolDefault        => 1E-12,
-		useBaseTenLog                 => 0,
-		defaultDisplayMatrixStyle     => "[s]",
-	},
-);
+};
+
+##### Directories used by PG
+
+# The root of the PG directory tree (from pg_root in Apache config).
+$pg{directories}{root}   = "$pgRoot";
+$pg{directories}{lib}    = "$pg{directories}{root}/lib";
+$pg{directories}{macros} = "$pg{directories}{root}/macros";
+
+##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
+
+# Users for whom to print the file name of the PG file being processed.
+$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ "professor", ];
+
+# Locations of CAPA resources. (Only necessary if you need to use converted CAPA
+# problems.)
+$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{macros}/CAPA_Tools/", 
+$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{macros}/CAPA_MCTools/",  
+$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{html}/CAPA_Graphics/", 
+$pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$courseURLs{html}/CAPA_Graphics/",   
+
+# Size in pixels of dynamically-generated images, i.e. graphs.
+$pg{specialPGEnvironmentVars}{onTheFlyImageSize}      = 400,
+
+##### PG modules to load
+
+# The first item of each list is the module to load. The remaining items are
+# additional packages to import.
+
+${pg}{modules} = [
+	[qw(DynaLoader)],
+	[qw(Exporter)],
+	[qw(GD)],
+	
+	[qw(AlgParser AlgParserWithImplicitExpand Expr ExprWithImplicitExpand)],
+	[qw(AnswerHash AnswerEvaluator)],
+	[qw(WWPlot)], # required by Circle (and others)
+	[qw(Circle)],
+	[qw(Complex)],
+	[qw(Complex1)],
+	[qw(Distributions)],
+	[qw(Fraction)],
+	[qw(Fun)],
+	[qw(Hermite)],
+	[qw(Label)],
+	[qw(List)],
+	[qw(Match)],
+	[qw(MatrixReal1)], # required by Matrix
+	[qw(Matrix)],
+	[qw(Multiple)],
+	[qw(PGrandom)],
+	[qw(Regression)],
+	[qw(Select)],
+	[qw(Units)],
+	[qw(VectorField)],
+];
+
+##### Answer evaluatior defaults
+
+$pg{ansEvalDefaults} = {
+	functAbsTolDefault            => .001,
+	functLLimitDefault            => .0000001,
+	functMaxConstantOfIntegration => 1E8,
+	functNumOfPoints              => 3,
+	functRelPercentTolDefault     => .1,
+	functULimitDefault            => .9999999,
+	functVarDefault               => "x",
+	functZeroLevelDefault         => 1E-14,
+	functZeroLevelTolDefault      => 1E-12,
+	numAbsTolDefault              => .001,
+	numFormatDefault              => "",
+	numRelPercentTolDefault       => .1,
+	numZeroLevelDefault           => 1E-14,
+	numZeroLevelTolDefault        => 1E-12,
+	useBaseTenLog                 => 0,
+	defaultDisplayMatrixStyle     => "[s]",
+};
