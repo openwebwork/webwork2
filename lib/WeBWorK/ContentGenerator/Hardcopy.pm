@@ -5,7 +5,7 @@
 
 package WeBWorK::ContentGenerator::Hardcopy;
 use base qw(WeBWorK::ContentGenerator);
-my $timer1_ON = 0;
+my $timer1_ON = 1;
 
 =head1 NAME
 
@@ -90,45 +90,7 @@ sub go {
 			    # information for redirect
  				$r->header_out(Location => $pdfFileURL );
  				return REDIRECT;
-# 				my $hardcopyFilePath = $self->{hardcopyFilePath};
-#			    warn "uri is ". $r->uri;
-# 				my $hostname 		= 	$r->hostname();
-# 				my $port     		= 	$r->get_server_port();
-# 				my $uri		 		= 	$r->uri;
-# 				my $courseName		=	$self->{ce}->{courseName};
-# 				my $viewURL  		= 	"http://$hostname:$port";
-# 				$viewURL		   .= 	$ce->{webworkURLs}->{root}."/$courseName/$setName/$problemNumber/?";
-# 				$viewURL		   .=	$self->url_authen_args;
-# 				$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
-# 				$viewURL		   .=	"&editMode=temporaryFile";
-# 				$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
-# 				$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
-# 				$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 
-# 				my $filePath = "$tempDir/$fileName"; 
-# 				# FIXME this is taking up server time
-# 				# why not move the file to the tempDir and let the browser pick it up on redirect?
-# 				# my $hardcopyFilePath     =  $self->{hardcopyFilePath};
-# 				# my $hardcopyFileURL      =  $self->{hardcopyFileURL};
-# 
-# 					$r->content_type("application/x-pdf");
-# 					# as per RFC2183:
-# 					$r->header_out("Content-Disposition", "attachment; filename=$fileName");
-# 					$r->send_http_header();
-# 	
-# 					local *INPUTFILE;
-# 					open INPUTFILE, "<", $filePath
-# 						or die "Failed to read $filePath: $!";
-# 					my $buf;
-# 					while (read INPUTFILE, $buf, 16384) {
-# 						print $buf;
-# 					}
-# 					close INPUTFILE;
-# 	
-# 					rmtree($tempDir);
-# 
-# 
-# 				return;
 				
 			}
 		}
@@ -246,7 +208,14 @@ sub displayForm($) {
 	
 	my $download_texQ = $self->{permissionLevel} > 0;
 	
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	#  ##########construct action URL #################
+	my $ce         = $self->{ce};
+	my $root       = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my $actionURL  = "$root/$courseName/hardcopy/";
+	#  ################################################
+	
+	print CGI::start_form(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields();
 	print CGI::h3("Options");
 	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available to privileged users or after the answer date of the problem set.");
@@ -615,8 +584,8 @@ sub getSetTeX {
 		$db->listUserProblems($effectiveUserName, $setName);
 	
 	# get header and footer
-	my $setHeader = $db->getMergedSet($effectiveUserName, $setName)->set_header
-		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
+	my $set       = $db->getMergedSet($effectiveUserName, $setName);
+	my $setHeader = (ref($set)) ? $set->set_header : $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
 	#my $setFooter = $wwdb->getMergedSet($effectiveUserName, $setName)->set_footer
 	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
@@ -658,6 +627,16 @@ sub getProblemTeX {
 	# $effectiveUser = $self->{effectiveUser} unless defined($effectiveUser);
 	my $permissionLevel = $self->{permissionLevel};
 	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
+	unless (ref($set) )  {  # return error if no set is defined
+		push(@{$self->{warnings}}, 
+			   setName => $setName, 
+			   problem => 0,
+			   message => "No set $setName exists for ".$effectiveUser->first_name.' '.
+	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )'
+	    );
+	    return "No set $setName for ".$effectiveUser->user_id;
+	}
+
 	my $psvn = $set->psvn();
 	
 	# decide what to do about problem number
