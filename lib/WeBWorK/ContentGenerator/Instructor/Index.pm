@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.32 2004/05/06 22:17:36 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.33 2004/05/11 16:27:20 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use Apache::Constants qw(:response);
 use CGI qw();
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+#use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
 
 use constant E_NO_USERS     => "Please do not select any users.";
 use constant E_NO_SETS      => "Please do not select any sets.";
@@ -200,6 +201,7 @@ sub body {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	
 	return CGI::em("You are not authorized to access the Instructor tools.")
@@ -213,7 +215,25 @@ sub body {
 	
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
-	
+
+## Mark's Edits for filtering
+	my @myUsers;
+	my $user = $r->param("user");
+	my @viewable_sections = @{$ce->{viewable_sections}->{$user}};
+	my @viewable_recitations = @{$ce->{viewable_recitations}->{$user}};
+	foreach my $student (@Users){
+		my $keep = 0;
+		foreach my $sec (@viewable_sections){
+			if ($student->section() eq $sec){$keep = 1;}
+		}
+		foreach my $rec (@viewable_recitations){
+			if ($student->section() eq $rec){$keep = 1;}
+		}
+		if ($keep) {push @myUsers, $student;}
+	}
+	@Users = @myUsers;
+## End Mark's Edits
+
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	
@@ -225,6 +245,7 @@ sub body {
 			request => $r,
 			default_sort => "lnfn",
 			default_format => "lnfn_uid",
+			default_filters => ["all"],
 			size => 10,
 			multiple => 1,
 		}, @Users);
@@ -234,6 +255,7 @@ sub body {
 		request => $r,
 		default_sort => "set_id",
 		default_format => "set_id",
+		default_filters => ["all"],
 		size => 10,
 		multiple => 1,
 	}, @GlobalSets);
