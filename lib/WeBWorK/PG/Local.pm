@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.12 2004/01/05 01:02:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.13 2004/06/07 02:13:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -227,6 +227,7 @@ EOF
 	
 	# HTML_dpng, on the other hand, uses an ImageGenerator. We have to
 	# render the queued equations.
+	my $body_text_ref  = $translator->r_text;
 	if ($envir->{imagegen}) {
 		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
 		my %mtimeOption = -e $sourceFile
@@ -236,6 +237,7 @@ EOF
 		$envir->{imagegen}->render(
 			refresh => $translationOptions->{refreshMath2img},
 			%mtimeOption,
+			body_text => $body_text_ref,
 		);
 	}
 	
@@ -295,7 +297,7 @@ EOF
 	return bless {
 		translator => $translator,
 		head_text  => ${ $translator->r_header },
-		body_text  => ${ $translator->r_text   },
+		body_text  => ${ $body_text_ref },
 		answers    => $translator->rh_evaluated_answers,
 		result     => $result,
 		state      => $state,
