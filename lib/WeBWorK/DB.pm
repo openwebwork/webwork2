@@ -243,8 +243,8 @@ Returns a new, empty password object.
 =cut 
 
 sub newPassword {
-	my ($self) = @_;
-	return $self->{password}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{password}->{record}->new($prototype);
 }
 
 =item listPasswords()
@@ -370,8 +370,8 @@ Returns a new, empty permission level object.
 =cut 
 
 sub newPermissionLevel {
-	my ($self) = @_;
-	return $self->{permission}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{permission}->{record}->new($prototype);
 }
 
 =item listPermissionLevels()
@@ -493,8 +493,8 @@ Returns a new, empty key object.
 =cut 
 
 sub newKey {
-	my ($self) = @_;
-	return $self->{key}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{key}->{record}->new($prototype);
 }
 
 =item listKeys()
@@ -615,8 +615,8 @@ Returns a new, empty user object.
 =cut 
 
 sub newUser {
-	my ($self) = @_;
-	return $self->{user}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{user}->{record}->new($prototype);
 }
 
 =item listUsers()
@@ -732,8 +732,8 @@ sub deleteUser($$) {
 ################################################################################
 
 sub newGlobalSet {
-	my ($self) = @_;
-	return $self->{set}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{set}->{record}->new($prototype);
 }
 
 sub listGlobalSets($) {
@@ -809,8 +809,8 @@ sub deleteGlobalSet($$) {
 ################################################################################
 
 sub newUserSet {
-	my ($self) = @_;
-	return $self->{set_user}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{set_user}->{record}->new($prototype);
 }
 
 sub listSetUsers($$) {
@@ -909,8 +909,8 @@ sub deleteUserSet($$$) {
 ################################################################################
 
 sub newGlobalProblem {
-	my ($self) = @_;
-	return $self->{problem}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{problem}->{record}->new($prototype);
 }
 
 sub listGlobalProblems($$) {
@@ -993,8 +993,8 @@ sub deleteGlobalProblem($$$) {
 ################################################################################
 
 sub newUserProblem {
-	my ($self) = @_;
-	return $self->{problem_user}->{record}->new;
+	my ($self, $prototype) = @_;
+	return $self->{problem_user}->{record}->new($prototype);
 }
 
 sub listProblemUsers($$$) {
