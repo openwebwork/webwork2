@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.115 2004/09/21 19:51:45 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.116 2004/09/29 16:49:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -481,13 +481,20 @@ sub links {
 	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
+	
 	# only users with appropriate permissions can report bugs
-	print CGI::p(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs")),CGI::hr() if $authz->hasPermissions($user, "report_bugs");
+	if ($authz->hasPermissions($user, "report_bugs")) {
+		print CGI::p(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs")),CGI::hr();
+	}
 	
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::li(CGI::span({style=>"font-size:larger"},
 		CGI::a({href=>$self->systemLink($sets)}, sp2nbsp($sets->name))));
-	print CGI::li(CGI::a({href=>$self->systemLink($options)}, sp2nbsp($options->name)));
+	
+	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
+		print CGI::li(CGI::a({href=>$self->systemLink($options)}, sp2nbsp($options->name)));
+	}
+	
 	print CGI::li(CGI::a({href=>$self->systemLink($grades)},  sp2nbsp($grades->name)));
 	print CGI::li(CGI::a({href=>$self->systemLink($logout)},  sp2nbsp($logout->name)));
 	

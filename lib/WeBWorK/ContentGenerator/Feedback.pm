@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.22 2004/07/12 00:49:04 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.23 2004/09/02 22:52:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,6 +144,11 @@ sub body {
 		$returnURL = "";
 	}
 	
+	unless ($authz->hasPermissions($userName, "submit_feedback")) {
+		$self->feedbackNotAllowed($returnURL);
+		return "";
+	}
+	
 	if (defined $r->param("sendFeedback")) {
 		# get verbosity level
 		my $verbosity = $ce->{mail}->{feedbackVerbosity};
@@ -274,6 +279,13 @@ sub body {
 	return "";
 }
 
+sub feedbackNotAllowed {
+	my ($self, $returnURL) = @_;
+	
+	print CGI::p("You are not allowed to send feedback.");
+	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback")) if $returnURL;
+}
+
 sub feedbackForm {
 	my ($self, $user, $returnURL, $message) = @_;
 	my $r = $self->r;
@@ -301,7 +313,7 @@ sub feedbackForm {
 	);
 	print CGI::submit("sendFeedback", "Send Feedback");
 	print CGI::end_form();
-	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback"));
+	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback")) if $returnURL;
 }
 
 1;
