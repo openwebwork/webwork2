@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader:$ 
+# $CVSHeader: $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -363,7 +363,7 @@ sub make_data_row {
 								       setID=>"Undefined_Set", problemID=>"1"}
 							       ),
 						  params =>{effectiveUser => $self->r->param('user'), 
-							    editMode => "temporaryFile", 
+							    editMode => "SetMaker", 
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
 
       
@@ -371,7 +371,8 @@ sub make_data_row {
   print CGI::Tr({-align=>"left"}, CGI::td(
 
 					  CGI::div({-style=>"background-color: #DDDDDD"},"File name: $sourceFileName ", 
-						   $edit_link, " ", $try_link
+						   #$edit_link, " ", 
+						$try_link
 						  ),
 
 
