@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.37 2004/03/23 01:10:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.38 2004/05/05 00:53:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -160,16 +160,22 @@ If any assignments fail, a list of failure messages is returned.
 sub assignSetToAllUsers {
 	my ($self, $setID) = @_;
 	my $db = $self->{db};
-	
 	my @userIDs = $db->listUsers;
+
+	$WeBWorK::timer->continue("$setID: getting user list") if defined $WeBWorK::timer;
+	my @userRecords = $db->getUsers(@userIDs);
+	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+	
 	$WeBWorK::timer->continue("$setID: getting problem list") if defined $WeBWorK::timer;
 	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
 	
 	my @results;
 	
-	foreach my $userID (@userIDs) {
+	foreach my $User (@userRecords) {
+		next if grep /$User->{status}/, @{$self->{r}->{ce}->{siteDefaults}->{statusDrop}};
 		my $UserSet = $db->newUserSet;
+		my $userID = $User->user_id;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
 		$WeBWorK::timer->continue("$setID: adding UserSet for $userID") if defined $WeBWorK::timer;
