@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.30 2004/06/04 19:10:30 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.31 2004/06/14 21:41:15 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -421,7 +421,7 @@ sub body {
 				$userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem); # checked
 				die "problem $problem for set $setName and user $editForUser[0] not found. " unless $userProblemRecord;
 				foreach my $field (@{PROBLEM_FIELDS()}) {
-					$problemOverrideArgs{$field} = [defined $userProblemRecord->$field, $userProblemRecord->$field];
+					$problemOverrideArgs{$field} = [defined $userProblemRecord->$field && $userProblemRecord->$field ne '', $userProblemRecord->$field];
 				}
 				@problem_html = renderProblems(r=> $r, 
 				                      user => $db->getUser($editForUser[0]),
