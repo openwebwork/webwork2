@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf,v 1.33 2002-11-08 22:14:16 sh002i Exp $
+# $Id: global.conf.dist,v 1.1 2002-11-25 08:23:29 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -19,7 +19,7 @@
 	root    => "$webworkRoot",
 	bin     => "$webworkRoot/bin",
 	conf    => "$webworkRoot/conf",
-	courses => "/ww/webwork/courses", #"$webworkRoot/courses",
+	courses => "/webwork/shared-courses", #"$webworkRoot/courses",
 	lib     => "$webworkRoot/lib",
 	logs    => "$webworkRoot/logs",
 	macros  => "$webworkRoot/macros",
@@ -63,7 +63,7 @@ my $courseRoot = "$webworkDirs{courses}/$courseName";
 	environment       => "$courseDirs{root}/course.conf",
 );
 
-my $webworkURLRoot = "/modperl-sam";
+my $webworkURLRoot = "/webwork";
 %webworkURLs = (
 	root   => "$webworkURLRoot",
 	htdocs => "/webwork_files",
