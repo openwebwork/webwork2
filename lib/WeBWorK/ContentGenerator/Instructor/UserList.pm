@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.38 2004/01/16 00:42:38 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.39 2004/01/22 00:25:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1121,7 +1121,7 @@ sub recordEditHTML {
 		push @tableCells, $User->user_id;
 	} else {
 		# "edit sets assigned to user" link
-		push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit");
+		push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit set");
 	}
 	
 	# User Fields
