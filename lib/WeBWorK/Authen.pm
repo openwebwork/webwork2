@@ -13,30 +13,76 @@ WeBWorK::Authen - Check user identity, manage session keys.
 
 use strict;
 use warnings;
-use WeBWorK::DB::Auth;
 
 sub new($$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
-	($self->{r}, $self->{ce}) = @_;
+	($self->{r}, $self->{ce}, $self->{db}) = @_;
 	bless $self, $class;
 	return $self;
 }
 
-sub generate_key {
-	# Package constants.  These should never be changed in other places ever
-	my $key_length = 40;			# number of chars in each key
-	my @key_chars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
+# um, this isn't used. move it to Utils?
+#sub generatePassword($$$) {
+#	my ($self, $userID, $clearPassword) = @_;
+#	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+#	my $cryptPassword = crypt($clearPassword, $salt);
+#	return WeBWorK::DB::Record::Password->new(user_id=>$userID, password=>$password);
+#}
 
-	my $i = $key_length;
-	my $key = '';
+sub checkPassword($$$) {
+	my ($self, $userID, $possibleClearPassword) = @_;
+	my $Password = $self->{db}->getPassword($userID);
+	return 0 unless $Password;
+	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
+	return $possibleCryptPassword eq $Password->password();
+}
+
+sub generateKey($$) {
+	my ($self, $userID) = @_;
+	my @chars = @{ $self->{ce}->{sessionKeyChars} };
+	my $length = $self->{ce}->{sessionKeyLength};
 	srand;
-	while($i) {
-		$key .= $key_chars[rand(@key_chars)];
-		$i--;
+	my $key = join ("", @chars[map rand(@chars), 1 .. $length]);
+	return WeBWorK::DB::Record::Key->new(user_id=>$userID, key=>$key, timestamp=>time);
+}
+
+sub checkKey($$$) {
+	my ($self, $userID, $possibleKey) = @_;
+	my $Key = $self->{db}->getKey($userID);
+	return 0 unless $Key;
+	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
+		if ($possibleKey eq $Key->key()) {
+			# unexpired and matches -- update timestamp
+			$Key->timestamp(time);
+			$self->{db}->putKey($Key);
+			return 1;
+		} else {
+			# unexpired but doesn't match -- leave timestamp alone
+			# we do this to keep an attacker from keeping someone's session
+			# alive. (yeah, we don't match IPs.)
+			return 0;
+		}
+	} else {
+		# expired -- delete key
+		$self->{db}->deleteKey($userID);
+		return 0;
 	}
-	return $key;
+}
+
+sub unexpiredKeyExists($$) {
+	my ($self, $userID) = @_;
+	my $Key = $self->{db}->getKey($userID);
+	return 0 unless $Key;
+	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
+		# unexpired, but leave timestamp alone
+		return 1;
+	} else {
+		# expired -- delete key
+		$self->{db}->deleteKey($userID);
+		return 0;
+	}
 }
 
 # verify will return 1 if the person is who they say the are.
@@ -48,87 +94,133 @@ sub generate_key {
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
-	my $course_env = $self->{ce};
+	my $ce = $self->{ce};
+	my $db = $self->{db};
+	
+	my $practiceUserPrefix = $ce->{practiceUserPrefix};
+	my $debugPracticeUser = $ce->{debugPracticeUser};
 	
 	my $user = $r->param('user');
 	my $passwd = $r->param('passwd');
 	my $key = $r->param('key');
-	my $time = time;
-	
-	# I wanted to get rid of that passwd up here for security reasons,
-	# but usability dictates that we not clear out invalid passwords.
-	#$r->param('passwd',undef);
 	
 	my $error;
-	my $return;
+	my $failWithoutError = 0;
 	
-	my $auth = WeBWorK::DB::Auth->new($course_env);
-	
-	# The first part of this big conditional checks to make that we have
-	# all of the form info that we need. It's pretty boring.  The kooky
-	# authen stuff comes after that.
-	if (!defined $user && !defined $passwd && !defined $key) {
-		# The user hasn't even had a chance to say who he is, so we
-		# can't hold it against him that we don't know.
-		undef $error;
-		$return = 0;
-	} elsif (!$user) {
-		$error = "You must specify a username";
-		$return = 0;
-	} elsif (!$passwd && !$key) {
-		$error = "You must enter a password";
-		$return = 0;
-	}
-	# OK, we're done with the trivia.  Now lets authenticate.
-	elsif ($passwd) {
-		# A bit of extra logic for practice users
-		# Practice users are different because:
-		# - They aren't allowed to log in if an active key exists
-		#   (except for $debugPracticeUser)
-		# - They are allowed to log in with any password
-		my $practiceUserPrefix = $course_env->{"practiceUserPrefix"};
-		my $debugPracticeUser = $course_env->{"debugPracticeUser"};
+	VERIFY: {
+		# This block is here so we can "last" out of it when we've
+		# decided whether we're going to succeed or fail.
+		
+		# no authentication data was given. this is OK.
+		unless (defined $user or defined $passwd or defined $key) {
+			$failWithoutError = 1;
+			last VERIFY;
+		}
+		
+		# no user was supplied.
+		unless ($user) {
+			$error = "You must specify a username.";
+			last VERIFY;
+		}
+		
+		# it's a practice user.
 		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
-			if (!$auth->getPassword($user)) { # the only way DB::Auth provides for checking the existence of a user
-				$error = "That practice account does not exist";
-				$return = 0;
-			} elsif ($auth->getKey($user) and $user ne $debugPracticeUser) {
-				$error = "That practice account is in use";
-				$return = 0;
+			# we're not interested in a practice user's password
+			$r->param("passwd", "");
+			
+			# it's a practice user that doesn't exist.
+			unless ($db->getUser($user)) {
+				$error = "That practice account does not exist.";
+				last VERIFY;
+			}
+			
+			# we've got a key.
+			if ($key) {
+				if ($self->checkKey($user, $key)) {
+					# they key was valid.
+					last VERIFY;
+				} else {
+					# the key was invalid.
+					$error = "Your session has expired. You must login again.";
+					last VERIFY;
+				}
+			}
+			
+			# -- here we know that a key was not supplied. --
+			
+			# it's the debug user.
+			if ($debugPracticeUser and $user eq $debugPracticeUser) {
+				# clobber any existing session, valid or not.
+				my $Key = $self->generateKey($user);
+				$db->deleteKey($user);
+				$db->addKey($Key);
+				$r->param("key", $Key->key());
+				last VERIFY;
+			}
+			
+			# an unexpired key exists -- the account is in use.
+			if ($self->unexpiredKeyExists($user)) {
+				$error = "That practice account is in use.";
+				last VERIFY;
+			}
+			
+			# here we know the account is not in use, so we
+			# generate a new  session key (unexpiredKeyExists
+			# deleted any expired key) and succeed!
+			my $Key = $self->generateKey($user);
+			$db->addKey($Key);
+			$r->param("key", $Key->key());
+			last VERIFY;
+		}
+		
+		# -- here we know it's a regular user. --
+		
+		# a key was supplied.
+		if ($key) {
+			# we're not interested in a user's password if they're
+			# supplying a key
+			$r->param("passwd", "");
+			
+			if ($self->checkKey($user, $key)) {
+				# valid key, so succeed.
+				last VERIFY;
 			} else {
-				$key = generate_key;
-				$auth->setKey($user, $key);
-				$r->param('key',$key);
-				$return = 1;
+				# invalid key. the login page doesn't propogate the key,
+				# so we know this is an expired session.
+				$error = "Your session has expired. You must login again.";
+				last VERIFY;
 			}
 		}
-		# Not a practice user.  Do normal authentication.
-		elsif ($auth->verifyPassword($user, $passwd)) {
-			# Remove the passwd field from subsequent requests.
-			$r->param('passwd',"");
-			$key = $auth->getKey($user) || generate_key;
-			$auth->setKey($user, $key);
-			$r->param('key',$key);
-			$return = 1;
-		} else {
-			$error = "Incorrect username or password";
-			$return = 0;
+		
+		# a password was supplied.
+		if ($passwd) {
+			if ($self->checkPassword($user, $passwd)) {
+				# valid password, so create a new session. (we don't want
+				# to reuse an old one, duh.)
+				my $Key = $self->generateKey($user);
+				$db->deleteKey($user);
+				$db->addKey($Key);
+				$r->param("key", $Key->key());
+				# also delete the password
+				$r->param("passwd", "");
+				last VERIFY;
+			} else {
+				# incorrect password. fail.
+				$error = "Incorrect username or password.";
+				last VERIFY;
+			}
 		}
-	} elsif ($key) {
-		# The timestamp gets updated by verifyKey
-		if ($auth->verifyKey($user, $key)) {
-			$return = 1;
-		} else {
-			$error = "Your session has expired.  You must login again";
-			$return = 0;
-		}
-	} else {
-		$error = "Unexpected authentication error!";
-		$return = 0;
+		
+		# neither a key or a password were supplied.
+		$error = "You must enter a password."
 	}
-
-	$r->notes("authen_error",$error) if defined($error);
-	return $return;
+	
+	if (defined $error) {
+		$r->notes("authen_error",$error);
+		return 0;
+	} else {
+		return not $failWithoutError;
+	}
 	
 	# Whatever you do, don't delete this!
 	critical($r);
@@ -140,6 +232,6 @@ __END__
 
 =head1 AUTHOR
 
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu
+Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu, and Sam Hathaway, sh002i (at) math.rochester.edu.
 
 =cut

@@ -16,16 +16,15 @@ use warnings;
 use Apache::Constants qw(:common);
 use CGI qw();
 use URI::Escape;
-use WeBWorK::DB::Auth;
+use WeBWorK::DB;
 use WeBWorK::Utils qw(readFile);
-use Carp qw(cluck);
 
 ################################################################################
 # This is a very unruly file, so I'm going to use very large comments to divide
 # it into logical sections.
 ################################################################################
 
-# new(Apache::Request, WeBWorK::CourseEnvironment) -  create a new instance of a
+# new(Apache::Request, WeBWorK::CourseEnvironment) - create a new instance of a
 # content generator. Usually only called by the dispatcher, although one might
 # be able to use it for things like "sub-requests". Uh... uh... I have to think
 # about that one. The dispatcher uses this idiom:
@@ -40,6 +39,7 @@ sub new($$$) {
 	my $self = {
 		r  => $r,
 		ce => $ce,
+		db => WeBWorK::DB->new($ce),
 	};
 	bless $self, $class;
 	return $self;
@@ -432,11 +432,12 @@ sub loginstatus {
 sub links {
 	my $self = shift;
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	my $userName = $self->{r}->param("user");
 	my $courseName = $ce->{courseName};
 	my $root = $ce->{webworkURLs}->{root};
-	my $permLevel = WeBWorK::DB::Auth->new($ce)->getPermissions($userName);
-	my $key = WeBWorK::DB::Auth->new($ce)->getKey($userName);
+	my $permLevel = $db->getPermissionLevel($userName)->permission();
+	my $key = $db->getKey($userName)->key();
 	return "" unless defined $key;
 	
 	# URLs to parts of the system

@@ -30,13 +30,13 @@ sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $self->{ce};
+	my $db = $self->{db};
 	
-	my $authdb = WeBWorK::DB::Auth->new($ce);
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $userName = $r->param("user");
 	
-	eval { $authdb->deleteKey($userName) };
+	eval { $db->deleteKey($userName) };
 	if ($@) {
 		print CGI::p("Something went wrong while logging out of WeBWorK: $@");
 	}

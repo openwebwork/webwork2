@@ -13,13 +13,12 @@ WeBWorK::Authz - check user permissions.
 
 use strict;
 use warnings;
-use WeBWorK::DB::Auth;
 
-sub new($$$) {
+sub new($$$$) {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
-	($self->{r}, $self->{ce}) = @_;
+	($self->{r}, $self->{ce}, $self->{db}) = @_;
 	bless $self, $class;
 	return $self;
 }
@@ -31,13 +30,14 @@ sub hasPermissions {
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{ce};
 	my $permissionLevels = $courseEnvironment->{permissionLevels};
-	my $auth = WeBWorK::DB::Auth->new($courseEnvironment);
 	
-	my $permissionLevel = $auth->getPermissions($user);
+	my $permissionLevel = $self->{db}->getPermissionLevel($user)->permission();
 	if (defined $permissionLevels->{$activity}
 	    and $permissionLevel >= $permissionLevels->{$activity}) {
 		return 1;
-	} else {return 0;}
+	} else {
+		return 0;
+	}
 }
 
 1;
