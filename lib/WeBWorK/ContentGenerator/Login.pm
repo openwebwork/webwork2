@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.16 2003/12/23 06:03:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.17 2003/12/24 00:59:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,11 @@ use warnings;
 use CGI qw();
 
 sub title {
-	return "Login";
+	my  $self   = shift;
+	my  $r      = $self->{r};
+	my  $ce     = $self->{ce};
+	my  $courseName  = $ce->{courseName};
+	return "Login to $courseName";
 }
 
 sub links {
