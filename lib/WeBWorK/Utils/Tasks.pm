@@ -95,6 +95,7 @@ sub fake_problem {
   $problem = global2user($db->{problem_user}->{record}, $problem); 
   $problem->set_id(fakeSetName); 
   $problem->value(""); 
+  $problem->published(0); 
   $problem->max_attempts("-1"); 
  
   $problem->problem_seed(0); 
