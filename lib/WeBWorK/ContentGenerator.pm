@@ -18,7 +18,7 @@ use CGI qw();
 use URI::Escape;
 use WeBWorK::DB::Auth;
 use WeBWorK::Utils qw(readFile);
-#use CGI::Carp qw(fatalsToBrowser);
+use Carp qw(cluck);
 
 ################################################################################
 # This is a very unruly file, so I'm going to use very large comments to divide
@@ -105,17 +105,16 @@ sub template {
 	my @template = split /\n/, readFile($templateFile);
 	
 	foreach my $line (@template) {
-		#warn "foo: $line\n";
 		# This is incremental regex processing.
 		# the /c is so that pos($line) doesn't die when the regex fails.
 		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
 			my ($before, $function, $raw_args) = ($1, $2, $3);
-			# $args here will be a hashref
-			my @args = $raw_args =~ /\S/ ? cook_args($raw_args) : {};
+			my @args = ($raw_args =~ /\S/) ? cook_args($raw_args) : ();
+			
 			if ($ifstack[-1]) {
 				print $before;
 			}
-
+			
 			if ($self->can($function)) {
 				if ($function eq "if") {
 					push @ifstack, $self->$function(@_, [@args]);
@@ -308,6 +307,7 @@ sub print_form_data {
 
 # Reminder: here are the template functions currently defined:
 # 
+# head
 # path
 # 	style = text|image
 # 	image = URL of image

@@ -43,10 +43,6 @@ sub pre_header_initialize {
 	my $r = $self->{r};
 	my $userName = $r->param('user');
 	
-	# fix format of setName and problem
-	$setName =~ s/^set//;
-	$problemNumber =~ s/^prob//;
-	
 	##### database setup #####
 	
 	my $cldb   = WeBWorK::DB::Classlist->new($courseEnv);
@@ -158,9 +154,11 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
-#sub header {
-#	# *** we need to print $pg->{header_text} here!
-#}
+sub header {
+	my $self = shift;
+	
+	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
+}
 
 sub path {
 	my $self = shift;
@@ -174,7 +172,7 @@ sub path {
 	return $self->pathMacro($args,
 		"Home" => "$root",
 		$courseName => "$root/$courseName",
-		$setName => "$root/$courseName/set$setName",
+		$setName => "$root/$courseName/$setName",
 		"Problem $problemNumber" => "",
 	);
 }
@@ -214,14 +212,16 @@ sub nav {
 	my $wwdb = $self->{wwdb};
 	my $user = $self->{r}->param("user");
 	
-	my @links = ("Problem List" => "$root/$courseName/set$setName");
+	my @links = ("Problem List" => "$root/$courseName/$setName");
 	
 	my $prevProblem = $wwdb->getProblem($user, $setName, $problemNumber-1);
 	my $nextProblem = $wwdb->getProblem($user, $setName, $problemNumber+1);
-	unshift @links, "Previous Problem" => "$root/$courseName/set$setName/prob".$prevProblem->id
-		if $prevProblem;
-	push @links, "Next Problem" => "$root/$courseName/set$setName/prob".$nextProblem->id
-		if $nextProblem;
+	unshift @links, "Previous Problem" => $prevProblem
+		? "$root/$courseName/$setName/".$prevProblem->id
+		: "";
+	push @links, "Next Problem" => $nextProblem
+		? "$root/$courseName/$setName/".$nextProblem->id
+		: "";
 	
 	return $self->navMacro($args, @links);
 }
@@ -332,10 +332,10 @@ sub body {
 	print
 		CGI::startform("POST", $r->uri),
 		$self->hidden_authen_fields,
+		$self->viewOptions,
 		CGI::p(CGI::i($pg->{result}->{msg})),
 		CGI::p($pg->{body_text}),
 		CGI::p(CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers")),
-		$self->viewOptions,
 		CGI::endform();
 	
 	# debugging stuff
@@ -396,7 +396,11 @@ sub attemptResults($$$) {
 		my $answerMessage = $showAttemptAnswers ? $answerResult->{ans_message} : "";
 		
 		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore ? "correct :^)" : "incorrect >:(";
+		my $resultString = $answerScore ? "correct" : "incorrect";
+		
+		# get rid of the goofy prefix on the answer names (supposedly, the format
+		# of the answer names is changeable. this only fixes
+		$name =~ s/^AnSwEr//;
 		
 		my $row = CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td($studentAnswer) : "";

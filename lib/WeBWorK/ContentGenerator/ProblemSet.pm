@@ -35,7 +35,6 @@ sub initialize {
 
 sub path {
 	my ($self, $setName, $args) = @_;
-	$setName =~ s/^set//;
 	
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
@@ -49,7 +48,6 @@ sub path {
 
 sub siblings {
 	my ($self, $setName) = @_;
-	$setName =~ s/^set//;
 	
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
@@ -73,15 +71,13 @@ sub siblings {
 
 sub title {
 	my ($self, $setName) = @_;
-	$setName =~ s/^set//;
 	
 	return $setName;
 }
 
 sub info {
-	# NOTE: info doesn't 
+	# NOTE: info doesn't # uhhh... doesn't what, dude?
 	my ($self, $setName) = @_;
-	$setName =~ s/^set//;
 	
 	my $r = $self->{r};
 	my $ce = $self->{courseEnvironment};
@@ -133,7 +129,6 @@ sub info {
 
 sub body {
 	my ($self, $setName) = @_;
-	$setName =~ s/^set//;
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $user = $r->param('user');
@@ -142,7 +137,7 @@ sub body {
 	my $hardcopyURL =
 		$courseEnvironment->{webworkURLs}->{root} . "/"
 		. $courseEnvironment->{courseName} . "/"
-		. "hardcopy/set$setName/?" . $self->url_authen_args;
+		. "hardcopy/$setName/?" . $self->url_authen_args;
 	print CGI::p(CGI::a({-href=>$hardcopyURL}, "Download a hardcopy"),
 		"of this problem set.");
 	
@@ -172,7 +167,7 @@ sub problemListRow($$$) {
 	my $problem = shift;
 	
 	my $name = $problem->id;
-	my $interactiveURL = "prob$name/?" . $self->url_authen_args;
+	my $interactiveURL = "$name/?" . $self->url_authen_args;
 	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $name");
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = $problem->max_attempts < 0

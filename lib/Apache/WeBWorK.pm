@@ -110,9 +110,9 @@ sub handler() {
 			my $hardcopyArgument = shift @components || "";
 			return WeBWorK::ContentGenerator::Hardcopy->new($r, $course_env)->go($hardcopyArgument);
 		} elsif ($arg eq "prof") {
-			###
+			# ***
 		} elsif ($arg eq "prefs") {
-			###
+			# ***
 		} elsif ($arg eq "test") {
 			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
 		} else { # We've got the name of a problem set.

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.10 2002-09-13 20:54:59 sh002i Exp $
+# $Id: TODO,v 1.11 2002-09-18 19:25:40 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -38,7 +38,7 @@ DONE	New interface to PG.pm
 	Hardcopy generation
 	DONE	- ad-hoc version of &latex2png in Hardcopy.pm (move later)
 	DONE	- fix code (heh heh)
-		- fix hardcopySetHeader
+	DONE	- fix hardcopySetHeader
 	
 	Integration of dvipng method of image generation
 	N/A	- choice between writing to a temporary TeX file from within
@@ -59,24 +59,26 @@ DONE	New interface to PG.pm
 	
 DONE	display of screen set header in ProblemSet.pm (easy)
 DONE	add <!--#if can="blah" warning="1" error="1"-->
+DONE	fix alignment of displaymath images
 	time and transaction logging
+	branch mechanism (friday)
+DONE	print $pg->{header_text} in head of Problem.pm
 	make "enter" on the problem form trigger "submit answer", not "redisplay"
-	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
-	remove webwork-dvipng-xxxxx temp directories when finished with them
+DONE	remove "set" and "prob" from URL generation, remove s/^(set|prob)//;
+DONE	remove webwork-dvipng-xxxxx temp directories when finished with them
 	have logout button invalidate key
 	handling of PG warnings (?!?!?!?!)
+	Pretty die messages (from outside of the translator)
+	Feedback (or link to old system)
+		- need nice modular way of sending email
 	Options
 		- email address and password
 		- or link to old system
-	Feedback (or link to old system)
-		- need nice modular way of sending email
-	Pretty die messages (from outside of the translator)
-	GD not compiling
-	
-	
+
+
 --------------------------------------------------------------------------------
-	
-	
+
+
 	Calling LaTeX/dvipng and PDFLaTeX in a nice way
 		- create LaTeX.pm (?)
 		- &latex2pdf

@@ -13,6 +13,7 @@ WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API.
 
 use strict;
 use warnings;
+use File::Path qw(rmtree);
 use File::Temp qw(tempdir);
 use WeBWorK::DB::Classlist;
 use WeBWorK::DB::WW;
@@ -94,7 +95,7 @@ sub new($$$$$$$$) {
 	
 	# set the environment (from defineProblemEnvir)
 	warn "PG: setting the environment (from defineProblemEnvir)\n";
-	$translator->environment(defineProblemEnvir(
+	my $envir = defineProblemEnvir(
 		$courseEnv,
 		$user,
 		$key,
@@ -103,7 +104,8 @@ sub new($$$$$$$$) {
 		$psvn,
 		$formFields,
 		$translationOptions,
-	));
+	);
+	$translator->environment($envir);
 	
 	# initialize the Translator
 	warn "PG: initializing the Translator\n";
@@ -155,6 +157,13 @@ EOF
 	# translate the PG source into text
 	warn "PG: translating the PG source into text\n";
 	$translator->translate();
+	
+	# after we're done translating, we may have to clean up after the translator.
+	# for example, 'images' mode uses a tempdir for dvipng's temp files. We have
+	# to remove it.
+	if ($translationOptions->{displayMode} eq 'images' && $envir->{dvipngTempDir}) {
+		rmtree($envir->{dvipngTempDir}, 0, 1);
+	}
 	
 	my ($result, $state); # we'll need these on the other side of the if block!
 	if ($translationOptions->{processAnswers}) {
@@ -312,7 +321,9 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp};
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs};
-	$envir{dvipngTempDir}          = tempdir("webwork-dvipng-XXXXXXXX", TMPDIR => 1);
+	$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
+		? tempdir("webwork-dvipng-XXXXXXXX", TMPDIR => 1)
+		: undef;
 	
 	# Default values for evaluating answers
 	

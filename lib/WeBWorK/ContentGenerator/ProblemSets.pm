@@ -86,8 +86,8 @@ sub setListRow($$) {
 	
 	my $name = $set->id;
 	
-	my $interactiveURL = "set$name/?" . $self->url_authen_args;
-	my $hardcopyURL = "hardcopy/set$name/?" . $self->url_authen_args;
+	my $interactiveURL = "$name/?" . $self->url_authen_args;
+	my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
 	
 	my $openDate = formatDateTime($set->open_date);
 	my $dueDate = formatDateTime($set->due_date);
@@ -95,7 +95,7 @@ sub setListRow($$) {
 	
 	my $checkbox = CGI::checkbox(-name=>"set", -value=>$set->id, -label=>"");
 	my $interactive = CGI::a({-href=>$interactiveURL}, $name);
-	my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download hardcopy");
+	my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download");
 	
 	my $status;
 	if (time < $set->open_date) {

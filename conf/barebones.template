@@ -6,6 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
  <head>
   <title>WeBWorK - <!--#title--></title>
+  <!--#head-->
  </head>
  <body>
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
