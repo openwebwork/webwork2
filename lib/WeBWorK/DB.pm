@@ -7,7 +7,93 @@ package WeBWorK::DB;
 
 =head1 NAME
 
-WeBWorK::DB - interface with the WeBWorK databases (WWDBv2).
+WeBWorK::DB - interface with the WeBWorK databases.
+
+=head1 DESCRIPTION
+
+WeBWorK::DB provides a consistent interface to a number of database backends.
+Access and modification functions are provided for each logical table used by
+the webwork system. The particular backend ("schema" and "driver"), record
+class, data source, and additional parameters are specified by the %dbLayout
+hash in the course environment.
+
+=head1 ARCHITECTURE
+
+The new database system uses a three-tier architecture to insulate each layer
+from the adjacent layers.
+
+=head2 Top Layer: DB
+
+The top layer of the architecture is the DB module. It provides the methods
+listed below, and uses schema modules (via tables) to implement those methods.
+
+               / list* exists* add* get* put* delete* \               <- api
+ +------------------------------------------------------------------+
+ |                                DB                                |
+ +------------------------------------------------------------------+
+  \ password permission key user set set_user problem problem_user /  <- tables
+
+=head2 Middle Layer: Schemas
+
+The middle layer of the architecture is provided by one or more schema modules.
+They are called "schema" modules because they control the structure of the data
+for a table. This includes odd things like the way multiple tables are encoded
+in a single hash in the WWHash schema, and the encoding scheme used.
+
+The schema modules provide an API that matches the requirements of the DB
+layer, on a per-table basis. Each schema module has a style that determines
+which drivers it can interface with. For example, WW1Hash is a "hash" style
+schema. SQL is a "dbi" style schema.
+
+=head3 Examples
+
+Both WeBWorK 1.x and 2.x courses use:
+
+  / password  permission  key \        / user \      <- tables provided
+ +-----------------------------+  +----------------+
+ |          Auth1Hash          |  | Classlist1Hash |
+ +-----------------------------+  +----------------+
+             \ hash /                  \ hash /      <- driver style required
+
+WeBWorK 1.x courses also use:
+
+  / set_user problem_user \       / set problem \    
+ +-------------------------+  +---------------------+
+ |         WW1Hash         |  | GlobalTableEmulator |
+ +-------------------------+  +---------------------+
+           \ hash /                   \ null /       
+
+The GlobalTableEmulator schema emulates the global set and problem tables using
+data from the set_user and problem_user tables.
+
+WeBWorK 2.x courses also use:
+
+  / set set_user problem problem_user \ 
+ +-------------------------------------+
+ |               WW2Hash               |
+ +-------------------------------------+
+                 \ hash /               
+
+=head2 Bottom Layer: Drivers
+
+Driver modules implement a style for a schema. They provide physical access to
+a data source containing the data for a table. The style of a driver determines
+what methods it provides. All drivers provide connect(MODE) and disconnect()
+methods. A hash style driver provides a hash() method which returns the tied
+hash. A dbi style driver provides a handle() method which returns the DBI
+handle.
+
+=head3 Examples
+
+  / hash \    / hash \    / hash \  <- style
+ +--------+  +--------+  +--------+
+ |   DB   |  |  GDBM  |  |   DB3  |
+ +--------+  +--------+  +--------+
+
+  / dbi \    / ldap \ 
+ +-------+  +--------+
+ |  SQL  |  |  LDAP  |
+ +-------+  +--------+
 
 =cut
 
@@ -21,6 +107,16 @@ use constant TABLES => qw(password permission key user set set_user problem prob
 ################################################################################
 # constructor
 ################################################################################
+
+=head1 CONSTRUCTOR
+=over
+=item new (ENVIRONMENT)
+
+The C<new> method creates a DB object and brings up the underlying schema/driver
+structure according to the C<%dbLayout> hash in the ENVIRONMENT. Environment is
+a C<WeBWorK::CourseEnvironment> object.
+
+=cut
 
 sub new($$) {
 	my ($invocant, $ce) = @_;
