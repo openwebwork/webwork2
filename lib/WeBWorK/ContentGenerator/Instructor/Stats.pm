@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.13 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.14 2003/12/18 23:15:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -197,6 +197,7 @@ sub displaySets {
 
  	my @augmentedUserRecords    = ();
 	foreach my $studentRecord (@userRecords)   {
+		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next if $studentRecord->status !~/C/;              # don't show dropped students FIXME
@@ -216,6 +217,7 @@ sub displaySets {
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 
 		foreach my $problemRecord (@problemRecords) {
+			next unless ref($problemRecord);
 			my $prob = $problemRecord->problem_id;
 		#foreach my $prob (@problems) {
 			#my $problemRecord   = $db->getUserProblem($student, $setName, $prob);
