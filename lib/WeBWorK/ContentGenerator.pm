@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.110 2004/06/25 00:08:46 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.111 2004/07/10 21:45:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -550,7 +550,6 @@ sub links {
 		print CGI::hr();
 		print CGI::start_li();
 		print CGI::span({style=>"font-size:larger"},
-		                 $self->helpMacro('instructor_links'),
 		                 CGI::a({href=>$self->systemLink($instr)},  space2nbsp($instr->name))
 		);
 		print CGI::start_ul();
@@ -591,24 +590,24 @@ sub links {
 	## Added Link for Student Progress	
 	    print CGI::li(CGI::a({href=>$self->systemLink($progress)}, PROGRESS));
 		print CGI::start_li();
-		
-		if (defined $userID and $userID ne "") {
-			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
-			);
-		}
-		if (defined $setID and $setID ne "") {
-			print CGI::ul(
-				CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, space2nbsp($setID)))
-			);
-		}
+			if (defined $userID and $userID ne "") {
+				print CGI::ul(
+					CGI::li(CGI::a({href=>$self->systemLink($userProgress)}, $userID))
+				);
+			}
+			if (defined $setID and $setID ne "") {
+				print CGI::ul(
+					CGI::li(CGI::a({href=>$self->systemLink($setProgress)}, space2nbsp($setID)))
+				);
+			}
 		print CGI::end_li();
 		
 		print CGI::li(CGI::a({href=>$self->systemLink($scoring)}, SCORING)) if $authz->hasPermissions($user, "score_sets");
 		print CGI::li(CGI::a({href=>$self->systemLink($mail)}, MAIL)) if $authz->hasPermissions($user, "send_mail");
 		print CGI::li(CGI::a({href=>$self->systemLink($files)}, FILE_TRANSFER));
+		print CGI::li( $self->helpMacro('instructor_links'));
 		print CGI::end_ul();
-		print CGI::end_li();
+
 	}
 	
 	print CGI::end_ul();
