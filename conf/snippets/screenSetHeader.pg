@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/conf/snippets/screenSetHeader.pg,v 1.3 2003/12/09 01:12:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,14 +31,18 @@ $showPartialCorrectAnswers = 0;
 BEGIN_TEXT
 $BR
 
-Give 4 or 5  significant digits for (floating point) numerical answers.For most
-problems when entering numerical answers, you can if you wish enter elementary
-expressions such as 2^3 instead of 8, sin(3pi/2) instead of -1, e^(ln(2))
-instead of 2, (2+tan(3))*(4-sin(5))^6-7/8 instead of 27620.3413, etc. Here's
-the
-\{ htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
-which WeBWorK understands.
 
+Give 4 or 5  significant digits for (floating point) numerical answers.
+For most problems when entering numerical answers, you can if you wish
+enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2)
+\)instead
+of -1, \( e\wedge (ln(2)) \) instead of 2,
+\( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
+
+Here's the 
+\{
+htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
+which WeBWorK understands.
 $PAR
 END_TEXT
 
