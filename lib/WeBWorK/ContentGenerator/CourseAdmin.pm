@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.2 2004/03/15 21:13:06 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.2 2004/04/09 20:19:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,18 +27,35 @@ use strict;
 use warnings;
 use CGI::Pretty qw();
 use Data::Dumper;
+use File::Temp qw/tempfile/;
 use WeBWorK::Utils qw(cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
+use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
 # SKEL: If you need to do any processing before the HTTP header is sent, do it
 # in this method:
 # 
-#sub pre_header_initialize {
-#	my ($self) = @_;
-#	
-#	# Do your processing here! Don't print or return anything -- store data in
-#	# the self hash for later retrieveal.
-#}
+sub pre_header_initialize {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	if (defined $r->param("download_exported_database")) {
+		my $courseID = $r->param("export_courseID");
+		my $random_chars = $r->param("download_exported_database");
+		
+		die "courseID not specified" unless defined $courseID;
+		die "invalid file specification" unless $random_chars =~ m/^\w+$/;
+		
+		my $tempdir = $ce->{webworkDirs}->{tmp};
+		my $export_file = "$tempdir/db_export_$random_chars";
+		
+		$self->reply_with_file("text/xml", $export_file, "${courseID}_database.xml", 0);
+	}
+}
 
 # SKEL: To emit your own HTTP header, uncomment this:
 # 
@@ -135,6 +152,10 @@ sub body {
 		#CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
+		" | ",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
+		" | ",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
 	);
 	
 	print CGI::hr();
@@ -190,10 +211,51 @@ sub body {
 			}
 		}
 		
+		elsif ($subDisplay eq "export_database") {
+			if (defined $r->param("export_database")) {
+				my @errors = $self->export_database_validate;
+				if (@errors) {
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Please correct the following errors and try again:"),
+						CGI::ul(CGI::li(\@errors)),
+					);
+					$self->export_database_form;
+				} else {
+					$self->do_export_database;
+				}
+			} else {
+				$self->export_database_form;
+			}
+		}
+		
+		elsif ($subDisplay eq "import_database") {
+			if (defined $r->param("import_database")) {
+				my @errors = $self->import_database_validate;
+				if (@errors) {
+					print CGI::div({class=>"ResultsWithError"},
+						CGI::p("Please correct the following errors and try again:"),
+						CGI::ul(CGI::li(\@errors)),
+					);
+					$self->import_database_form;
+				} else {
+					$self->do_import_database;
+				}
+			} else {
+				$self->import_database_form;
+			}
+		}
+		
+		else {
+			print CGI::div({class=>"ResultsWithError"}, 
+				"Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.");
+		}
+		
 	}
 	
 	return "";
 }
+
+################################################################################
 
 sub add_course_form {
 	my ($self) = @_;
@@ -598,19 +660,6 @@ sub delete_course_validate {
 	my $delete_sql_password = $r->param("delete_sql_password") || "";
 	my $delete_sql_database = $r->param("delete_sql_database") || "";
 	
-	my @courseIDs = listCourses($ce);
-	
-	my %courseLabels; # records... heh.
-	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
-		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
-	}
-	
 	my @errors;
 	
 	if ($delete_courseID eq "") {
@@ -752,6 +801,330 @@ sub do_delete_course {
 		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_delete_course", "OK"),);
 		
 		print CGI::end_form();
+	}
+}
+
+################################################################################
+
+sub export_database_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my @tables = keys %{$ce->{dbLayout}};
+	
+	my $export_courseID = $r->param("export_courseID") || "";
+	my @export_tables   = $r->param("export_tables");
+	
+	@export_tables = @tables unless @export_tables;
+	
+	my @courseIDs = listCourses($ce);
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	print CGI::h2("Export Database");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select a course to export the course's database.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "export_courseID",
+					-values => \@courseIDs,
+					-default => $export_courseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Tables to Export:"),
+			CGI::td(
+				CGI::checkbox_group(
+					-name => "export_tables",
+					-values => \@tables,
+					-default => \@export_tables,
+					-linebreak => 1,
+				),
+			),
+		),
+	);
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("export_database", "Export Database"));
+	
+	print CGI::end_form();
+}
+
+sub export_database_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	#my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $export_courseID = $r->param("export_courseID") || "";
+	my @export_tables   = $r->param("export_tables");
+	
+	my @errors;
+	
+	if ($export_courseID eq "") {
+		push @errors, "You must specify a course name.";
+	}
+	
+	unless (@export_tables) {
+		push @errors, "You must specify at least one table to export.";
+	}
+	
+	return @errors;
+}
+
+sub do_export_database {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $export_courseID = $r->param("export_courseID");
+	my @export_tables   = $r->param("export_tables");
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$export_courseID,
+	);
+	
+	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
+	
+	my ($fh, $export_file) = tempfile("db_export_XXXXXX", DIR => $ce->{webworkDirs}->{tmp});
+	my ($random_chars) = $export_file =~ m/db_export_(\w+)$/;
+	
+	my @errors;
+	
+	eval {
+		@errors = dbExport(
+			db => $db2,
+			xml => $fh,
+			tables => \@export_tables,
+		);
+	};
+	
+	push @errors, "Fatal exception: $@" if $@;
+	
+	if (@errors) {
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while exporting the database of course $export_courseID:"),
+			CGI::ul(CGI::li(\@errors)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Export succeeded."),
+		);
+		
+		print CGI::div({style=>"text-align: center"},
+			CGI::a({href=>$self->systemLink($urlpath, params=>{download_exported_database=>$random_chars, export_courseID=>undef})}, "Download Exported Database"),
+		);
+	}
+}
+
+################################################################################
+
+sub import_database_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my @tables = keys %{$ce->{dbLayout}};
+	
+	my $import_file     = $r->param("import_file")     || "";
+	my $import_courseID = $r->param("import_courseID") || "";
+	my @import_tables   = $r->param("import_tables");
+	my $import_conflict = $r->param("import_conflict") || "skip";
+	
+	@import_tables = @tables unless @import_tables;
+	
+	my @courseIDs = listCourses($ce);
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	print CGI::h2("Import Database");
+	
+	print CGI::start_form("POST", $r->uri, &CGI::MULTIPART);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Database XML File:"),
+			CGI::td(
+				CGI::filefield(
+					-name => "import_file",
+					-size => 50,
+				),
+			),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Tables to Import:"),
+			CGI::td(
+				CGI::checkbox_group(
+					-name => "import_tables",
+					-values => \@tables,
+					-default => \@import_tables,
+					-linebreak => 1,
+				),
+			),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Import into Course:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "import_courseID",
+					-values => \@courseIDs,
+					-default => $import_courseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Conflicts:"),
+			CGI::td(
+				CGI::radio_group(
+					-name => "import_conflict",
+					-values => [qw/skip replace/],
+					-default => $import_conflict,
+					-linebreak=>'true',
+					-labels => {
+						skip => "Skip duplicate records",
+						replace => "Replace duplicate records",
+					},
+				),
+			),
+		),
+	);
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("import_database", "Import Database"));
+	
+	print CGI::end_form();
+}
+
+sub import_database_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	#my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $import_file     = $r->param("import_file")     || "";
+	my $import_courseID = $r->param("import_courseID") || "";
+	my @import_tables   = $r->param("import_tables");
+	#my $import_conflict = $r->param("import_conflict") || "skip"; # not checked
+	
+	my @errors;
+	
+	if ($import_file eq "") {
+		push @errors, "You must specify a database file to upload.";
+	}
+	
+	if ($import_courseID eq "") {
+		push @errors, "You must specify a course name.";
+	}
+	
+	unless (@import_tables) {
+		push @errors, "You must specify at least one table to import.";
+	}
+	
+	return @errors;
+}
+
+sub do_import_database {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $import_file     = $r->param("import_file");
+	my $import_courseID = $r->param("import_courseID");
+	my @import_tables   = $r->param("import_tables");
+	my $import_conflict = $r->param("import_conflict") || "skip"; # need default -- not checked above
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$import_courseID,
+	);
+	
+	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
+	
+	# retrieve upload from upload cache
+	my ($id, $hash) = split /\s+/, $import_file;
+	my $upload = WeBWorK::Upload->retrieve($id, $hash,
+		dir => $ce->{webworkDirs}->{uploadCache}
+	);
+	
+	my @errors;
+	
+	eval {
+		@errors = dbImport(
+			db => $db2,
+			xml => $upload->fileHandle,
+			tables => \@import_tables,
+			conflict => $import_conflict,
+		);
+	};
+	
+	$upload->dispose;
+	
+	push @errors, "Fatal exception: $@" if $@;
+	
+	if (@errors) {
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while importing the database of course $import_courseID:"),
+			CGI::ul(CGI::li(\@errors)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Import succeeded."),
+		);
 	}
 }
 
