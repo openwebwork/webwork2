@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.14 2003-03-06 19:12:37 sh002i Exp $
+# $Id: global.conf.dist,v 1.15 2003-03-07 02:22:40 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -165,39 +165,44 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # note: schema and driver must have the same interface.
 %dbLayout = (
 	password => {
-		schema => "WeBWorK::DB::Schema::WW1Hash",
+		schema => "WeBWorK::DB::Schema::PasswordHash",
 		driver => "WeBWorK::DB::Driver::GDBM",
 		source => "$courseDirs{auth_DATA}/$courseName\_password_DB",
 	},
 	permission => {
-		schema => "WeBWorK::DB::Schema::WW1Hash",
+		schema => "WeBWorK::DB::Schema::PermissionHash",
 		driver => "WeBWorK::DB::Driver::GDBM",
 		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_permissions_DB",
 	},
-	user => {
-		schema => "WeBWorK::DB::Schema::WW1Hash",
+	key => {
+		schema => "WeBWorK::DB::Schema::KeyHash",
 		driver => "WeBWorK::DB::Driver::GDBM",
 		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+	user => {
+		schema => "WeBWorK::DB::Schema::ClasslistHash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_classlist_DB",
 	},
 	set => {
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "gdbm:$courseDirs{auth_DATA}/keys",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_webwork_DB",
 	},
 	set_user => {
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "gdbm:$courseDirs{auth_DATA}/keys",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_webwork_DB",
 	},
 	problem => {
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "gdbm:$courseDirs{auth_DATA}/keys",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_webwork_DB",
 	},
 	problem_user => {
 		schema => "WeBWorK::DB::Schema::WW1Hash",
 		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "gdbm:$courseDirs{auth_DATA}/keys",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_webwork_DB",
 	},
 );
 
