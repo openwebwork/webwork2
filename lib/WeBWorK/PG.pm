@@ -174,7 +174,7 @@ sub defineProblemEnvir($$$$$$$) {
 	# any changes are noted by "ADDED:" or "REMOVED:"
 	
 	# Vital state information
-	# ADDED: displayHintsQ, displaySolutionsQ, externalTTHPath
+	# ADDED: displayHintsQ, displaySolutionsQ
 	
 	$envir{psvn}              = $psvn;			 
 	$envir{psvnNumber}        = $envir{psvn};		 
@@ -188,6 +188,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{outputMode}        = $envir{displayMode};	 
 	$envir{displayHintsQ}     = $options->{hints};	 
 	$envir{displaySolutionsQ} = $options->{solutions};
+	$envir{refreshMath2img}   = $options->{refreshMath2img};
 	
 	# Problem Information
 	# ADDED: courseName
@@ -216,11 +217,12 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{studentID}        = $user->student_id;
 	
 	# Answer Information
-	# REMOVED: refSubmittedAnswers (alledgedly unused, causes errors)
+	# REMOVED: refSubmittedAnswers
 	
-	$envir{inputs_ref}          = $formFields;
+	$envir{inputs_ref} = $formFields;
 	
 	# External Programs
+	
 	$envir{externalTTHPath}      = $courseEnv->{externalPrograms}->{tth};
 	$envir{externalMath2imgPath} = $courseEnv->{externalPrograms}->{math2img};
 	

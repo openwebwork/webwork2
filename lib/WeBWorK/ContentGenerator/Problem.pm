@@ -33,7 +33,6 @@ sub title {
 #    (use $PRIV = $mustPRIV || ($canPRIV && $wantPRIV) -- cool syntax!)
 # :) if answers were not submitted and there are student answers in the DB,
 #    decode them and put them into $formFields for the translator
-# 3. Latex2HTML massaging code
 # :) store submitted answers hash in database for sticky answers
 # :) deal with the results of answer evaluation and grading :p
 # :) introduce a recordAnswers option, which works on the same principle as
@@ -125,11 +124,12 @@ sub body {
 		$setName,
 		$problemNumber,
 		{ # translation options
-			displayMode    => $displayMode,
-			showHints      => $will{showHints},
-			showSolutions  => $will{showSolutions},
+			displayMode     => $displayMode,
+			showHints       => $will{showHints},
+			showSolutions   => $will{showSolutions},
+			refreshMath2img => $will{showHints} || $will{showSolutions},
 			# try leaving processAnswers on all the time?
-			processAnswers => 1, #$submitAnswers ? 1 : 0,
+			processAnswers  => 1, #$submitAnswers ? 1 : 0,
 		},
 		$formFields
 	);
@@ -143,8 +143,6 @@ sub body {
 		
 		return "";
 	}
-	
-	# massage LaTeX2HTML [TODO #3]
 	
 	##### answer processing #####
 	
