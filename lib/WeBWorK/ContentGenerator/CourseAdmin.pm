@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.10 2004/05/13 20:49:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.11 2004/05/21 20:55:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -207,6 +207,7 @@ sub add_course_form {
 	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
 	my $add_initial_userID    = $r->param("add_initial_userID") || "";
 	my $add_initial_password  = $r->param("add_initial_password") || "";
+	my $add_templates_course  = $r->param("add_templates_course") || "";
 	
 	my @dbLayouts = sort keys %{ $ce->{dbLayouts} };
 	
@@ -234,6 +235,8 @@ sub add_course_form {
 		}
 		$source;
 	};
+	
+	my @existingCourses = listCourses($ce);
 	
 	print CGI::h2("Add Course");
 	
@@ -348,6 +351,25 @@ sub add_course_form {
 		),
 	);
 	
+	print CGI::p("Select an existing course from which to copy templates:");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Copy templates from:"),
+			CGI::td(
+				CGI::popup_menu(
+					-name => "add_templates_course",
+					-values => [ "", @existingCourses ],
+					-default => $add_templates_course,
+					#-size => 10,
+					#-multiple => 0,
+					#-labels => \%courseLabels,
+				),
+
+			),
+		),
+	);
+	
 	print CGI::p({style=>"text-align: center"}, CGI::submit("add_course", "Add Course"));
 	
 	print CGI::end_form();
@@ -372,6 +394,7 @@ sub add_course_validate {
 	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
 	my $add_initial_userID    = $r->param("add_initial_userID") || "";
 	my $add_initial_password  = $r->param("add_initial_password") || "";
+	my $add_templates_course  = $r->param("add_templates_course") || "";
 	
 	my @errors;
 	
@@ -422,6 +445,7 @@ sub do_add_course {
 	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
 	my $add_initial_userID    = $r->param("add_initial_userID") || "";
 	my $add_initial_password  = $r->param("add_initial_password") || "";
+	my $add_templates_course  = $r->param("add_templates_course") || "";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -462,6 +486,11 @@ sub do_add_course {
 		push @users, [ $User, $Password, $PermissionLevel ];
 	}
 	
+	my %optional_arguments;
+	if ($add_templates_course ne "") {
+		$optional_arguments{templatesFrom} = $add_templates_course;
+	}
+	
 	eval {
 		addCourse(
 			courseID      => $add_courseID,
@@ -469,6 +498,7 @@ sub do_add_course {
 			courseOptions => \%courseOptions,
 			dbOptions     => \%dbOptions,
 			users         => \@users,
+			%optional_arguments,
 		);
 	};
 	

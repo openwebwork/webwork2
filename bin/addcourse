@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/bin/addcourse,v 1.11 2004/05/05 22:02:50 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/addcourse,v 1.12 2004/05/16 23:31:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -99,6 +99,11 @@ exported from WeBWorK.
 Each I<USERID>, if it is present in the new course's user list, will be granted
 professor privileges (i.e. a permission level of 10). Requires B<--users>.
 
+=item B<--templates-from>=I<COURSEID>
+
+If specified, the contents of the specified course's templates directory are
+used to populate the new course's templates directory.
+
 =item I<COURSEID>
 
 The name of the course to create.
@@ -156,6 +161,7 @@ my $sql_wwhost = "";
 my $globalUserID = "";
 my $users = "";
 my @professors = ();
+my $templates_from = "";
 
 ##### get command-line options #####
 
@@ -170,6 +176,7 @@ GetOptions(
 	"global-user=s" => \$globalUserID,
 	"users=s" => \$users,
 	"professors=s" => \@professors,
+	"templates-from=s" => \$templates_from,
 );
 my %professors = map { $_ => 1 } map { split /,/ } @professors;
 my $courseID = shift;
@@ -275,6 +282,11 @@ if ($users) {
 	}
 }
 
+my %optional_arguments;
+if ($templates_from ne "") {
+	$optional_arguments{templatesFrom} = $templates_from;
+}
+
 ##### call addCourse(), handle errors #####
 
 eval {
@@ -284,6 +296,7 @@ eval {
 		courseOptions => \%courseOptions,
 		dbOptions     => \%dbOptions,
 		users         => \@users,
+		%optional_arguments,
 	);
 };
 

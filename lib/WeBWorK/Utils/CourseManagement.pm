@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.8 2004/05/13 21:14:56 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.9 2004/05/17 16:41:07 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 use Carp;
 use DBI;
 use File::Path qw(rmtree);
+use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw(dequote runtime_use undefstr readDirectory);
 
 our @EXPORT    = ();
@@ -57,13 +58,17 @@ use constant DELETE_HELPERS => {
 
 =item addCourse(%options)
 
-Options must contain:
+%options must contain:
 
  courseID => $courseID,
  ce => $ce,
  courseOptions => $courseOptions, 
  dbOptions => $dbOptions,
  users => $users
+
+%options may contain:
+
+ templatesFrom => $templatesCourseID,
 
 Create a new course named $courseID.
 
@@ -107,6 +112,9 @@ PermissionLevel record for a single user:
  $users = [ $User, $Password, $PermissionLevel ]
 
 These users are added to the course.
+
+$templatesCourseID indicates the ID of a course from which the contents of the
+templates directory will be copied to the new course.
 
 =cut
 
@@ -192,6 +200,30 @@ sub addCourse {
 		or die "failed to open $courseEnvFile for writing.\n";
 	writeCourseConf($fh, $ce, %courseOptions);
 	close $fh;
+	
+	##### step 5: copy templates #####
+	
+	if (exists $options{templatesFrom}) {
+		my $sourceCourse = $options{templatesFrom};
+		my $sourceCE = new WeBWorK::CourseEnvironment(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$sourceCourse,
+		);
+		my $sourceDir = $sourceCE->{courseDirs}->{templates};
+		
+		if (-d $sourceDir) {
+			my $destDir = $ce->{courseDirs}->{templates};
+			my $errno = system "/bin/cp -r $sourceDir/* $destDir";
+			if ($errno) {
+				warn "Failed to copy templates from course '$sourceCourse' (errno=$errno): $!\n";
+			}
+		} else {
+			warn "Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
+		}
+	}
+	
 }
 
 =item renameCourse($webworkRoot, $oldCourseID, $newCourseID)
