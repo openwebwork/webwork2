@@ -24,6 +24,8 @@ sub new($$$) {
 	return $self;
 }
 
+# This currently only uses two of it's arguments, but it accepts any number, in
+# case in the future calculating certain permissions requires more information.
 sub hasPermissions {
 	my ($self, $user, $activity) = @_;
 	my $r = $self->{r};
