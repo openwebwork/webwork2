@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.49 2004/05/14 18:26:11 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.50 2004/05/21 20:48:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -615,11 +615,11 @@ sub edit_handler {
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
 	return join("",
-	    qq!\n<div style="background-color:red">!,
+	    	CGI::div({class=>"ResultsWithError"},
 		"Delete ",
 		CGI::popup_menu(
 			-name => "action.delete.scope",
-			-values => [qw(none visible selected)],
+			-values => [qw(none selected)],
 			-default => $actionParams{"action.delete.scope"}->[0] || "none",
 			-labels => {
 			    none     => "no users.",
@@ -629,7 +629,7 @@ sub delete_form {
 			-onchange => $onChange,
 		),
 		CGI::em(" Deletion destroys all user-related data and is not undoable!"),
-		"</div>\n",
+		),
 	);
 }
 
