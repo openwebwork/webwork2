@@ -16,7 +16,6 @@ package Apache::WeBWorK;
 use strict;
 use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
-use Data::UUID;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
@@ -24,11 +23,7 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::ProblemSet;
-use WeBWorK::ContentGenerator::Problem;
-use WeBWorK::Constants qw(SECRET);
-
-# Yes, this is supposed to be in the global namespace.  We're only setting it if 
-my $SECRET;
+#use WeBWorK::ContentGenerator::Problem;
 
 # Sets up the common environment needed for every subsystem and then dispatches
 # the page request to the appropriate content generator.
@@ -37,7 +32,7 @@ my $SECRET;
 # call it a quirk of my coding style.  I think it makes it easier to read in this case.
 
 sub handler() {
-	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data ,and sift through it for the key.  So use Apache::Request
+	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data, and sift through it for the key.  So use Apache::Request
 
 	# This stuff is pretty much copied out of the O'Reilly mod_perl book.
 	# It's for figuring out the basepath.  I may change this up if I
@@ -73,8 +68,6 @@ sub handler() {
 		return DECLINED;
 	}
 	
-	
-	
 	### Begin dispatching ###
 	
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
@@ -90,7 +83,7 @@ sub handler() {
 		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
 		# This hoary statement has the effect of forcing effectiveUser to equal user unless
 		# the user is otherwise authorized.
-		if (!defined $effectiveUser || !($user ne $effectiveUser && $su_authorized)) {
+		if (!($user ne $effectiveUser && $su_authorized) || !defined $effectiveUser) {
 			$r->param("effectiveUser",$user);
 		}
 		
@@ -116,7 +109,7 @@ sub handler() {
 			else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
-				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
+#				return WeBWorK::ContentGenerator::Problem->new($r, $course_env)->go($problem_set, $problem);
 			}
 		}
 		
