@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.33 2004/03/28 03:25:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.34 2004/04/04 04:00:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -235,7 +235,7 @@ sub displaySets {
    	my @index_list                           = ();  # list of all student index 
 	my @score_list                           = ();  # list of all student total percentage scores 
     my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
-    my %number_ofstudents_attempting_problem = ();  # the number of students attempting this problem.
+    my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
     my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
 	my $sort_method = sub {
 		my ($a,$b) = @_;
@@ -335,7 +335,7 @@ sub displaySets {
 			$correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
 			 # add on the scores for this problem
 			if (defined($attempted) and $attempted) {
-				$number_ofstudents_attempting_problem{$probID}++;
+				$number_of_students_attempting_problem{$probID}++;
 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_correct + $num_incorrect);
 				$correct_answers_for_problem{$probID} += $status;
 			}
@@ -393,6 +393,7 @@ sub displaySets {
 #####################################################################################
 # Table showing the percentage of students with correct answers for each problems
 #####################################################################################
+
 print  
 
 	   CGI::p('The percentage of active students with correct answers for each problem'),
@@ -401,7 +402,9 @@ print
 			['Problem #', @problemIDs]
 		)),
 		CGI::Tr(CGI::td(
-			[ '% correct',map { sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_ofstudents_attempting_problem{$_}) }
+			[ '% correct',map {($number_of_students_attempting_problem{$_})
+			                      ? sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_students_attempting_problem{$_})
+			                      : '-'}			                   
 			                       @problemIDs 
 			]
 		)),
