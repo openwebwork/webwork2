@@ -33,10 +33,10 @@ sub new($$$) {
 	my ($proto, $source, $params) = @_;
 	my $class = ref($proto) || $proto;
 	
-	my $handleRO = DBI->connect($source, $params->{usernameRO}, $params->{passwordRO});
+	my $handleRO = DBI->connect_cached($source, $params->{usernameRO}, $params->{passwordRO});
 	return 0 unless defined $handleRO;
 	
-	my $handleRW = DBI->connect($source, $params->{usernameRW}, $params->{passwordRW});
+	my $handleRW = DBI->connect_cached($source, $params->{usernameRW}, $params->{passwordRW});
 	return 0 unless defined $handleRW;
 	
 	my $self = {

@@ -36,13 +36,14 @@ sub style() {
 ################################################################################
 
 sub new($$$) {
-	my ($proto, $driver, $table, $record, $params) = @_;
+	my ($proto, $db, $driver, $table, $record, $params) = @_;
 	my $class = ref($proto) || $proto;
 	die "$table: unsupported table"
 		unless grep { $_ eq $table } $proto->tables();
 	die $driver->style(), ": style mismatch"
 		unless $driver->style() eq $proto->style();
 	my $self = {
+		db     => $db,
 		driver => $driver,
 		table  => $table,
 		record => $record,

@@ -26,11 +26,12 @@ sub new($$) {
 	my ($invocant, $ce) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
+	bless $self, $class; # bless this here so we can pass it to the schema
 	
 	# load the modules required to handle each table, and create driver
 	foreach my $table (TABLES) {
 		unless (defined $ce->{dbLayout}->{$table}) {
-			#warn "ignoring table $table: layout not specified in dbLayout"; # ***
+			warn "ignoring table $table: layout not specified in dbLayout"; # ***
 			next;
 		}
 		
@@ -44,10 +45,15 @@ sub new($$) {
 		runtime_use($record);
 		runtime_use($schema);
 		runtime_use($driver);
-		$self->{$table} = $schema->new($driver->new($source, $params), $table, $record, $params);
+		$self->{$table} = $schema->new(
+			$self,
+			$driver->new($source, $params),
+			$table,
+			$record,
+			$params
+		);
 	}
 	
-	bless $self, $class;
 	return $self;
 }
 

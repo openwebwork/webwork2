@@ -24,8 +24,6 @@ The middle layer of the architecture is provided by one or more schema modules. 
 
 The schema modules provide an API that matches the requirements of the DB layer, on a per-table basis. Each schema module has a style that determines which drivers it can interface with. For example, WWHash is a "hash" style schema. SQL is a "dbi" style schema.
 
-The null schema, "0", can handle all tables, but merely returns a false value for any method call. The null schema has no style.
-
 Both WeBWorK 1.x and 2.x courses use:
 
  / password  permission  key \        / user \      <- tables
@@ -36,13 +34,13 @@ Both WeBWorK 1.x and 2.x courses use:
 
 WeBWorK 1.x courses also use:
 
- / set_user problem_user \    / *  \ 
-+-------------------------+  +------+
-|         WW1Hash         |  | Null |
-+-------------------------+  +------+
-          \ hash /            \null/ 
+ / set_user problem_user \       / set problem \    
++-------------------------+  +---------------------+
+|         WW1Hash         |  | GlobalTableEmulator |
++-------------------------+  +---------------------+
+          \ hash /                   \ null /       
 
-The null schema provides the set and problem tables.
+The GlobalTableEmulator schema emulates the global set and problem tables using data from the set_user and problem_user tables.
 
 WeBWorK 2.x courses also use:
 
@@ -89,11 +87,13 @@ $record   - an object representing a record in the table
 $style = style()
 	returns the required driver style.
 
-$handle = new($driver, $table, $record, $params)
+$handle = new($db, $driver, $table, $record, $params)
 	creates a schema interface for $table, using the driver interface
 	provided by $driver and using the record class named in $record. dies
 	if the $driver does not support the driver style needed by the schema.
-	$params contains extra information needed by the schema.
+	$params contains extra information needed by the schema. $db is provided
+	so that schemas can query other schemas. (This is used by the
+	GlobalTableEmulator schema.)
 
 @keys = $handle->list(@keyparts)
 	returns a list containing the key of each record in the table that
