@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.35 2004/06/24 18:08:43 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.36 2004/09/14 18:55:58 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -686,7 +686,7 @@ sub print_form {
         if ($@ and $merge_file ne 'None') {
 			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
         } else {
-			print CGI::pre("",data_format(0..($#tmp2)),"<br>", data_format2(@tmp2));
+			print CGI::pre("",data_format(1..($#tmp2+1)),"<br>", data_format2(@tmp2));
 		}
 #create a textbox with the subject and a textarea with the message
 #print actual body of message
@@ -836,7 +836,7 @@ sub process_message {
  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
 # 	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;  ## Perl handles negative indexes correctly, so there is no need to do this
-	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge if defined($COL[1]);  # prevents extraneous error messages.   
+	$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge if defined($COL[1]);  # prevents extraneous error messages.   
 
  	$msg =~ s/\r//g;
 	
