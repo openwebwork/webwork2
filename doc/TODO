@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.27 2002-12-09 18:40:02 sh002i Exp $
+# $Id: TODO,v 1.28 2002-12-09 19:57:33 malsyned Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -101,6 +101,8 @@ DONE	Professor - redirect to the old system
 		don't show messages unless there are some
 	make displayMode sticky (for nav and siblings)
 	hardcopy - allow hardcopy with correct answers
+	write a template escape for printing $user, $effectiveUser, &c. nicely 
+	add a "check answers" button if the user has the apropriate permissions
 
 >>>>> FOR JANUARY PREVIEW RELEASE <<<<<
 
