@@ -1,8 +1,7 @@
 #!/bin/sh
 
 # Set the following values to correspond to your local configuration
-HTTPD=httpd
-WEBWORKUSER=yourname
+HTTPD=/usr/local/sbin/httpd
 WEBWORKROOT=/home/yourname/webwork-modperl
 
 CONFIG=$WEBWORKROOT/conf/httpd-wwmp.conf
