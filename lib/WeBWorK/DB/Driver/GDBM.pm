@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Driver/GDBM.pm,v 1.7 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/GDBM.pm,v 1.8 2004/01/23 22:04:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,6 +25,7 @@ WeBWorK::DB::Driver::GDBM - hash style interface to GDBM databases.
 
 use strict;
 use warnings;
+use File::Spec;
 use GDBM_File;
 
 use constant STYLE => "hash";
@@ -54,27 +55,48 @@ sub new($$$) {
 
 sub connect($$) {
 	my ($self, $mode) = @_;
+	$mode = lc $mode;
 	my $hash = $self->{hash};
 	my $source = $self->{source};
 	
-	return 1 if tied %$hash; # already tied!
-	if (lc $mode eq "ro" and not -e $source) {
-		$self->connect("rw");
+	# if we're already tied, say so
+	return 1 if tied %$hash;
+	
+	# file exists, but it's not readable
+	die "GDBM file '$source' exists but is not readable.\n"
+		if -e $source and not -r $source;
+	
+	# we're connecting read/write, file exists, but it's not writeable
+	die "GDBM file '$source' exists but is not writeable.\n"
+		if $mode eq "rw" and -e $source and not -w $source;
+	
+	# if we're trying to read and the file doesn't exist, quickly connect
+	# read/write and disconnect to create it.
+	if ($mode eq "ro" and not -e $source) {
+		eval { $self->connectOnce("rw") };
+		$@ and die "GDBM file '$source' does not exist and creation failed: $@\n";
 		$self->disconnect;
 	}
-	my $flags = lc $mode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
+	
+	# what flags are we going to pass to GDBM_File?
+	my $flags = $mode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
+	
 	my $error_message;
+	
 	foreach (1 .. MAX_TIE_ATTEMPTS) {
-		return 1 if tie %$hash,
-			"GDBM_File",    # class
-			$source,        # file name
-			$flags,         # I/O flags
-			TIE_PERMISSION; # access mode
-		#warn __PACKAGE__, ": tie failed with error $!, (attempt $_)\n";
-		$error_message    =  ": tie failed with error $!, (attempt $_)\n";
+		# Try connecting once, return if successful
+		return 1 if eval { $self->connectOnce($mode) };
+		
+		# if there was an exception, store it as the error message
+		$error_message = $@ if $@;
+		
+		# Wait before we try again
 		sleep TIE_RETRY_DELAY;
 	}
-	die "$source: connection failed.  $error_message";
+	
+	# If we're here, it means we ran out of attempts without connecting
+	# successfully. Bail! Bail!
+	die "failed to connect($mode) to GDBM file '$source': $error_message";
 }
 
 sub disconnect($) {
@@ -86,6 +108,25 @@ sub disconnect($) {
 ################################################################################
 # hash-style methods
 ################################################################################
+
+# Attempt to connect once. Throw exception on failure. Assumes we are not
+# already connected, $mode has already been downcased, etc.
+sub connectOnce {
+	my ($self, $mode) = @_;
+	
+	my $hash = $self->{hash};
+	my $source = $self->{source};
+	my $flags = $mode eq "rw" ? GDBM_WRCREAT() : GDBM_READER();
+	
+	return 1 if tie %$hash,
+		"GDBM_File",    # class
+		$source,        # file name
+		$flags,         # I/O flags
+		TIE_PERMISSION; # access mode
+	
+	# still here? bail out!
+	die $!;
+}
 
 sub hash($) {
 	my ($self) = @_;
