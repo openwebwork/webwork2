@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.17 2004/05/31 02:20:27 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.18 2004/06/06 21:03:54 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -359,6 +359,7 @@ sub make_top_row {
     unshift @{$list_of_local_sets}, SELECT_SET_STRING;
     $set_selected = SELECT_SET_STRING;
   }
+  my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
 
   print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Adding Problems to ",
   			CGI::b("Target Set: "),
@@ -366,10 +367,11 @@ sub make_top_row {
 					-values=>$list_of_local_sets, 
 					-default=> $set_selected),
 			CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
+			CGI::hidden(-name=>"selfassign", -default=>[0]).
 			CGI::br(), 
 			CGI::br(), 
 			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-			#-onclick=>$myjs
+			-onclick=>$myjs
 			),
 			"  ",
 			CGI::textfield(-name=>"new_set_name", 
@@ -640,6 +642,13 @@ sub pre_header_initialize {
 	$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 	$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
 	eval {$db->addGlobalSet($newSetRecord)};
+	$self->addgoodmessage("Set $newSetName has been created.");
+	my $selfassign = $r->param('selfassign') || "";
+	$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
+	if($selfassign) {
+	  $self->assignSetToUser($userName, $newSetRecord);
+	  $self->addgoodmessage("Set $newSetName was assigned to $userName.");
+        }
       }
     }
 
@@ -787,7 +796,7 @@ sub body {
                    displayMode => $r->param('mydisplayMode')) : ();
 
   ##########  Top part
-  print CGI::startform({-method=>"POST", -action=>$r->uri}),
+  print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
     $self->hidden_authen_fields,
       '<div align="center">',
 	CGI::start_table({-border=>2});
