@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.100 2004/09/02 22:30:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.101 2004/09/02 22:51:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -442,6 +442,8 @@ my $nobody    = undef;
 	record_answers_after_open_date_without_attempts => $nobody,
 	record_answers_after_due_date                   => $nobody,
 	record_answers_after_answer_date                => $nobody,
+
+	dont_log_past_answers				=> $professor,
 );
 
 ################################################################################

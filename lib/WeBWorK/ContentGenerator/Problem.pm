@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.158 2004/08/17 18:51:46 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.159 2004/08/26 01:34:30 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -938,8 +938,8 @@ sub body {
 
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers ) {
-			my $answerString = "";
+		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+		        my $answerString = ""; my $scores = "";
 			my %answerHash = %{ $pg->{answers} };
 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
 			# The fact that it is not defined is probably due to an error in some answer evaluator.
@@ -947,7 +947,8 @@ sub body {
 			foreach (sort keys %answerHash) {
 				my $orig_ans = $answerHash{$_}->{original_student_ans};
 				my $student_ans = defined $orig_ans ? $orig_ans : '';
-				$answerString  .= $student_ans."\t"	 
+				$answerString  .= $student_ans."\t";
+				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
 			}
 			$answerString = '' unless defined($answerString); # insure string is defined.
 			writeCourseLog($self->{ce}, "answer_log",
@@ -955,7 +956,7 @@ sub body {
 						'|', $problem->user_id,
 						'|', $problem->set_id,
 						'|', $problem->problem_id,
-						'|',"\t",
+						'|', $scores, "\t",
 						time(),"\t",
 						$answerString,
 					),
