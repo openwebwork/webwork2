@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.51 2004/03/15 02:25:11 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.52 2004/03/15 20:17:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -151,7 +151,7 @@ sub dispatch($) {
 		debug("\t\t$_\n") foreach $r->param($key);
 	}
 	
-	mungeParams($r);
+	#mungeParams($r);
 	
 	debug("The munged params:\n");
 	foreach my $key ($r->param) {
