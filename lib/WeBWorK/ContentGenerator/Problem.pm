@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.119 2004/04/05 20:21:48 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.121 2004/04/07 22:18:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -609,10 +609,17 @@ sub body {
 		if ($editMode eq "temporaryFile") {
 			print CGI::p(CGI::i("Editing temporary file: ", $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
-			print CGI::p(CGI::i("Problem saved to: ", $problem->source_file));
+			if ( defined($r->param('submiterror')) and $r->param('submiterror') ) {
+			    # FIXME  The following line doesn't work because the submiterror hook has already been called.
+			    # The actions below should take place during the initialization phase.
+				$self->{submiterror} .= $r->param('submiterror');
+				print CGI::p(CGI::div({class=>'ResultsWithError'},$self->{submiterror}));
+			} else {
+				print CGI::p(CGI::div({ class=>'ResultsWithoutError'}, "Problem saved to: ", $problem->source_file));
+			}
 		}
 	}
-	
+	#FIXME  we need error messages here if the problem was really not saved.
 	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
@@ -1062,4 +1069,10 @@ sub mustRecordAnswers($) {
 	return $permissionLevel == 0;
 }
 
+
+sub submiterror  {
+	my $self = shift;
+	my $submiterror = (defined($self->{submiterror}) ) ? $self->{submiterror} : '';
+	$submiterror;
+}
 1;
