@@ -16,11 +16,15 @@ table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	user_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	permission
+)}
+
+sub FIELDS {qw(
 	user_id
 	permission
 )}

@@ -15,11 +15,15 @@ WeBWorK::DB::Record::Password - represent a record from the password table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	user_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	password
+)}
+
+sub FIELDS {qw(
 	user_id
 	password
 )}

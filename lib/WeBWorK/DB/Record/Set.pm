@@ -15,11 +15,19 @@ WeBWorK::DB::Record::Set - represent a record from the set table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	set_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	set_header
+	problem_header
+	open_date
+	due_date
+	answer_date
+)}
+
+sub FIELDS {qw(
 	set_id
 	set_header
 	problem_header

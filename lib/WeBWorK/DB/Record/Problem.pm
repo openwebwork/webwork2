@@ -15,12 +15,18 @@ WeBWorK::DB::Record::Problem - represent a record from the problem table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	set_id
 	problem_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	source_file
+	value
+	max_attempts
+)}
+
+sub FIELDS {qw(
 	set_id
 	problem_id
 	source_file

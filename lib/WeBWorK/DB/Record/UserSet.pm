@@ -15,12 +15,21 @@ WeBWorK::DB::Record::UserSet - represent a record from the set_user table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	user_id
 	set_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	psvn
+	set_header
+	problem_header
+	open_date
+	due_date
+	answer_date
+)}
+
+sub FIELDS {qw(
 	user_id
 	set_id
 	psvn

@@ -16,13 +16,25 @@ table.
 use strict;
 use warnings;
 
-sub KEYFIELDS($) {qw(
+sub KEYFIELDS {qw(
 	user_id
 	set_id
 	problem_id
 )}
 
-sub FIELDS($) {qw(
+sub NONKEYFIELDS {qw(
+	source_file
+	value
+	max_attempts
+	problem_seed
+	status
+	attempted
+	last_answer
+	num_correct
+	num_incorrect
+)}
+
+sub FIELDS {qw(
 	user_id
 	set_id
 	problem_id
