@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.23 2004/06/14 19:51:09 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.24 2004/07/07 22:45:40 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,8 +55,8 @@ sub body {
 		unless $authz->hasPermissions($r->param("user"), "assign_problem_sets");
 
 	
-	print CGI::p("Select one or more sets and one or more users below to assign"
-		. " each selected set to all selected users.");
+	print CGI::p("Select one or more sets and one or more users below to assign/unassign"
+		. " each selected set to/from all selected users.");
 	
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
@@ -92,9 +92,11 @@ sub body {
 	my @selected_users = $r->param("selected_users");
 	my @selected_sets = $r->param("selected_sets");
 	
-	if (defined $r->param("assign")) {
+	if (defined $r->param("assign") || defined $r->param("assign")) {
 		if  (@selected_users && @selected_sets) {
-			my @results = $self->assignSetsToUsers(\@selected_sets, \@selected_users);
+			my @results;
+			$self->assignSetsToUsers(\@selected_sets, \@selected_users) if defined $r->param("assign");
+			$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if defined $r->param("unassign");
 			
 			if (@results) {
 				print CGI::div({class=>"ResultsWithError"},
@@ -115,14 +117,14 @@ sub body {
 	}
 	
 	my $scrolling_user_list = scrollingRecordList({
-			name => "selected_users",
-			request => $r,
-			default_sort => "lnfn",
-			default_format => "lnfn_uid",
-			default_filters => ["all"],
-			size => 20,
-			multiple => 1,
-		}, @Users);
+		name => "selected_users",
+		request => $r,
+		default_sort => "lnfn",
+		default_format => "lnfn_uid",
+		default_filters => ["all"],
+		size => 20,
+		multiple => 1,
+	}, @Users);
 	
 	my $scrolling_set_list = scrollingRecordList({
 		name => "selected_sets",
@@ -154,6 +156,24 @@ sub body {
 				),
 			),
 		),
+		CGI::Tr(
+			CGI::td({colspan=>2, class=>"ButtonRow"},
+				CGI::submit(
+					-name => "unassign",
+					-value => "Unassign selected sets from selected users",
+				),
+			),
+		),
+	);
+
+	
+	print CGI::div({-style=>"color:red"}, "Do not unassign students unless you know what you are doing.", CGI::br(),
+						"There is NO undo for unassigning students. ");
+
+	print CGI::p("When you unassign a student's name, you destroy all
+			of the data for that problem set for that student. You will then need to
+			reassign the set(s) to these students and they will receive new versions of the problems.
+			Make sure this is what you want to do before unassigning students."
 	);
 	
 	print CGI::end_form();
