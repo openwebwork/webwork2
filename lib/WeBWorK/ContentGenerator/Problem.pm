@@ -324,6 +324,32 @@ sub body {
 #  End the"body" routine for the Problem object.
 
 
+sub safetyFilter {
+	    my $answer = shift;  # accepts one answer and checks it
+	    my $submittedAnswer = $answer;
+		$answer = '' unless defined $answer;
+		my ($errorno);
+		$answer =~ tr/\000-\037/ /;
+   #### Return if answer field is empty ########
+		unless ($answer =~ /\S/) {
+#			$errorno = "<BR>No answer was submitted.";
+            $errorno = 0;  ## don't report blank answer as error
+
+			return ($answer,$errorno);
+			}
+   ######### replace ^ with **    (for exponentiation)
+   # 	$answer =~ s/\^/**/g;
+   ######### Return if  forbidden characters are found
+		unless ($answer =~ /^[a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)]+$/ )  {
+			$answer =~ tr/a-zA-Z0-9_\-\+ \t\/@%\*\.\n^\(\)/#/c;
+			$errorno = "<BR>There are forbidden characters in your answer: $submittedAnswer<BR>";
+
+			return ($answer,$errorno);
+			}
+
+		$errorno = 0;
+		return($answer, $errorno);
+}
 
 
 
