@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.52 2004/05/27 01:34:22 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.53 2004/06/21 19:07:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,20 +36,6 @@ use constant DISPLAY_MODES => {
 	images        => "HTML_dpng",
 	jsMath	      => "HTML_jsMath",
 	asciimath     => "HTML_asciimath",
-};
-
-use constant DISPLAY_MODE_FAILOVER => {
-	TeX            => [],
-	HTML           => [],
-	HTML_tth       => [ "HTML", ],
-	HTML_dpng      => [ "HTML_tth", "HTML", ],
-	HTML_jsMath    => [ "HTML_dpng", "HTML_tth", "HTML", ],
-	HTML_asciimath => [ "HTML_dpng", "HTML_tth", "HTML", ],
-	# legacy modes -- these are not supported, but some problems might try to
-	# set the display mode to one of these values manually and some macros may
-	# provide rendered versions for these modes but not the one we want.
-	Latex2HTML  => [ "TeX", "HTML", ],
-	HTML_img    => [ "HTML_dpng", "HTML_tth", "HTML", ],
 };
 
 sub new {
@@ -99,7 +85,6 @@ sub defineProblemEnvir {
 	$envir{displayMode}         = translateDisplayModeNames($options->{displayMode});
 	$envir{languageMode}        = $envir{displayMode};	 
 	$envir{outputMode}          = $envir{displayMode};	 
-	$envir{displayModeFailover} = DISPLAY_MODE_FAILOVER();
 	$envir{displayHintsQ}       = $options->{showHints};	 
 	$envir{displaySolutionsQ}   = $options->{showSolutions};
 	$envir{texDisposition}      = "pdf"; # in webwork2, we use pdflatex
