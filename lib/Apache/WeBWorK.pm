@@ -42,7 +42,7 @@ use WeBWorK::Timing;
 sub handler($) {
 	my ($r) = @_;
 	
-	my $timer = WeBWorK::Timing->new(__PACKAGE__."::handler call to WeBWorK::dispatch");
+	#my $timer = WeBWorK::Timing->new(__PACKAGE__."::handler call to WeBWorK::dispatch");
 	
 	my $result;
 	{ # limit the scope of signal localization
@@ -64,9 +64,9 @@ sub handler($) {
 			die $error;
 		};
 		
-		$timer->start;
+		#$timer->start;
 		$result = eval { WeBWorK::dispatch($r) };
-		$timer->stop;
+		#$timer->stop;
 	}
 	
 	if ($@) {
@@ -151,7 +151,7 @@ sub message($$) {
   <tr><td>Method</td><td>$method</td></tr>
   <tr><td>URI</td><td>$uri</td></tr>
   <tr><td>HTTP Headers</td><td>
-   <table>
+   <table width="90%">
     $headers
    </table>
   </td></tr>
