@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.13 2003/12/12 02:24:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.14 2003/12/18 02:18:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -345,7 +345,7 @@ sub initialize {
 
 sub title {
 	my $self = shift;
-	return 'Send mail to ' .$self->{ce}->{courseName};
+	return 'Mail Merge';
 }
 
 sub path {
@@ -356,10 +356,10 @@ sub path {
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	return $self->pathMacro($args,
-		"Home"          => "$root",
-		$courseName     => "$root/$courseName",
-		'instructor'    => "$root/$courseName/instructor",
-		"Send Mail to: $courseName"      => '',
+		"Home"             => "$root",
+		$courseName        => "$root/$courseName",
+		'Instructor Tools' => "$root/$courseName/instructor",
+		"Mail Merge"       => '', # "$root/$courseName/instructor/send_mail",
 	);
 }
 

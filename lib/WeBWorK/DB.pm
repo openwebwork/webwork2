@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.42 2003/12/12 20:23:26 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.43 2003/12/17 20:21:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,8 +224,7 @@ sub new($$) {
 		
 		runtime_use($schema);
 		my $schemaObject = eval { $schema->new(
-			$self, $driver->new($source, $params),
-			$table, $record, $params) };
+			$self, $driverObject, $table, $record, $params) };
 		croak "error instantiating DB schema $schema for table $table: $@"
 			if $@;
 		
