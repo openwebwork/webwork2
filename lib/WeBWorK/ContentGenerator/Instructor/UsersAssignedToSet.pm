@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.9 2004/05/08 19:27:32 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.10 2004/05/11 21:03:09 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,7 +55,7 @@ sub initialize {
 
 	if (defined $r->param('assignToAll')) {
 		$WeBWorK::timer->continue("assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all students."));
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all current users."));
 		$self->assignSetToAllUsers($setID);
 		$WeBWorK::timer->continue("done assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
@@ -63,7 +63,7 @@ sub initialize {
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for all students have been unassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for selected students have been reassigned."));
+	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
 	} else {
 	   # no action taken
@@ -115,7 +115,7 @@ sub body {
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	print CGI::p(
-		    CGI::submit({name=>"assignToAll", value => "Assign to All Users"}), CGI::i("This action can take a long time if there are many students.")
+		    CGI::submit({name=>"assignToAll", value => "Assign to All Current Users"}), CGI::i("This action can take a long time if there are many students.")
 		  ),
 		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
 	           "There is NO undo for unassigning students. "),
@@ -143,6 +143,9 @@ sub body {
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 
 	foreach my $userRecord (@userRecords) {
+
+		my $statusClass = $ce->{siteDefaults}->{status}->{$userRecord->{status}} || "";
+
 		my $user = $userRecord->user_id;
 		my $userSetRecord = $db->getUserSet($user, $setID); #checked
 		# don't need to check here, undefined values are handled below
@@ -160,7 +163,7 @@ sub body {
 						type=>"checkbox",
 						name=>"selected",
 						checked=>(
-							defined $userSetRecord
+							defined($userSetRecord) # && $statusClass ne "Drop"
 							? "on"
 							: ""
 						),
@@ -168,7 +171,7 @@ sub body {
 						label=>"",
 					})
 				),
-				$user,
+				CGI::div({class=>$statusClass}, $user),
 				"($prettyName)", " ", $userRecord->section, " ",
 				(
 					defined $userSetRecord
