@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.52 2004/05/18 18:22:25 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.53 2004/05/18 18:39:40 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -138,11 +138,14 @@ sub initialize {
 						$setRecord->$_(parseDateTime($r->param($_)));
 					} else {
 						$setRecord->$_($r->param($_)) unless ($_ eq 'set_header' and $r->param($_) eq "Use System Default");
+
 						if($_ eq 'set_header') {
-						# be nice and copy the default file here if it doesn't exist yet
-						# empty set headers lead to trouble
-							my $newheaderpath = $r->{ce}->{courseDirs}->{templates} . '/'. $r->param('set_header');
-							unless(($r->param('set_header') !~ /\S/) or -e $newheaderpath) {
+							# be nice and copy the default file here if it doesn't exist yet
+							# empty set headers lead to trouble
+							my $set_header = ($r->param($_) eq "Use System Default") ? $setRecord->set_header : $r->param($_);
+							
+							my $newheaderpath = $r->{ce}->{courseDirs}->{templates} . '/'. $set_header;
+							unless(($set_header !~ /\S/) or -e $newheaderpath) {
 								my $default_header = $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 								File::Copy::copy($default_header, $newheaderpath);
 							}
@@ -432,12 +435,10 @@ sub saveProblem {
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
 	open (PROBLEM, ">$probFileName") ||
-		$self->submission_error("Could not open $probFileName for writing.
-		Check that the  permissions for this problem are 660 (-rw-rw----)");
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("Could not open $probFileName for writing. Check that the  permissions for this problem are 660 (-rw-rw----)")));
 	print PROBLEM $body;
 	close PROBLEM;
 	chmod 0660, "$probFileName" ||
-	             $self->submission_error("
-	                    CAN'T CHANGE PERMISSIONS ON FILE $probFileName");
+		$self->addmessage(CGI::div({class=>"ResultsWithError"}, CGI::p("CAN'T CHANGE PERMISSIONS ON FILE $probFileName")));
 }
 1;
