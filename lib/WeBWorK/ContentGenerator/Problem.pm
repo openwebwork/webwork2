@@ -7,7 +7,7 @@ package WeBWorK::ContentGenerator::Problem;
 use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
-
+ 
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
