@@ -33,10 +33,8 @@ head1 SYNOPSIS
  sub_task(2);
  $timer2->stop;
  $timer0->stop;
- 
- $timer0->save;
- $timer1->save;
- $timer2->save;
+
+ # timing data is saved when objects go out of scope
 
 =cut
 
@@ -64,6 +62,7 @@ sub new {
 		id    => $TASK_COUNT++,
 		task  => $task,
 		ctime => scalar gettimeofday(),
+		saved => 0,
 	};
 	return bless $self, ref $invocant || $invocant
 }
@@ -113,12 +112,14 @@ sub end    { shift->stop(@_); }
 
 =item save()
 
-Writes the timing data for this task to the standard error stream.
+Writes the timing data for this task to the standard error stream. If save is
+not called explicitly, it is called when the object goes out of scope.
 
 =cut
 
 sub save {
 	my ($self) = @_;
+	
 	my $id = $self->{id};
 	my $task = $self->{task};
 	my $now = gettimeofday();
@@ -147,6 +148,14 @@ sub save {
 		$now = sprintf("%.6f", $now);
 		print STDERR "TIMING $$ $id $now $task: END (assumed)\n";
 	}
+	
+	$self->{saved} = 1;
+}
+
+sub DESTROY {
+	my ($self) = shift;
+	
+	$self->save unless $self->{saved};
 }
 
 =head1 AUTHOR
