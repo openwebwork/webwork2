@@ -90,14 +90,11 @@ sub initialize {
 
 	# the Problem form was submitted
 	if (defined($r->param('submit_problem_changes'))) {
-		foreach my $problem ($r->param('deleteProblem')) {
-			$db->deleteGlobalProblem($setName, $problem);
-		}
 		my @problemList = $db->listGlobalProblems($setName);
 		foreach my $problem (@problemList) {
 			my $problemRecord = $db->getGlobalProblem($setName, $problem);
 			foreach my $field (@{PROBLEM_FIELDS()}) {
-				my $paramName = "problem_${problem}_${field}";
+				my $paramName = "problem.${problem}.${field}";
 				if (defined($r->param($paramName))) {
 					$problemRecord->$field($r->param($paramName));
 				}
@@ -107,17 +104,17 @@ sub initialize {
 			if ($forOneUser) {
 				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
 				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
-					my $paramName = "problem_${problem}_${field}";
+					my $paramName = "problem.${problem}.${field}";
 					if (defined($r->param($paramName))) {
 						$userProblemRecord->$field($r->param($paramName));
 					}
 				}
 				$userProblemRecord->attempted($userProblemRecord->num_correct + $userProblemRecord->num_incorrect);
 				foreach my $field (@{PROBLEM_FIELDS()}) {
-					my $paramName = "problem_${problem}_${field}";
-					if (defined($r->param("${paramName}_override"))) {
+					my $paramName = "problem.${problem}.${field}";
+					if (defined($r->param("${paramName}.override"))) {
 						if (exists $overrides{$paramName}) {
-							$userProblemRecord->$field($r->param("${paramName}_override"));
+							$userProblemRecord->$field($r->param("${paramName}.override"));
 						} else {
 							$userProblemRecord->$field(undef);
 						}
@@ -127,6 +124,9 @@ sub initialize {
 				}
 				
 			}
+		}
+		foreach my $problem ($r->param('deleteProblem')) {
+			$db->deleteGlobalProblem($setName, $problem);
 		}
 	# The file list field was submitted
 	} elsif (defined $r->param('fileBrowsing')) {
@@ -233,15 +233,15 @@ sub body {
 					($forUsers ? () : (CGI::input({type=>"checkbox", name=>"deleteProblem", value=>$problemID}))),
 					CGI::a({href=>$ce->{webworkURLs}->{root}."/$courseName/instructor/pgProblemEditor/".$setName.'/'.$problemID.'?'.$self->url_authen_args}, $problemID),
 					($forUsers ? (
-						problemElementHTML("problem_${problemID}_status", $userProblemRecord->status, "7"),
-						problemElementHTML("problem_${problemID}_problem_seed", $userProblemRecord->problem_seed, "7"),
+						problemElementHTML("problem.${problemID}.status", $userProblemRecord->status, "7"),
+						problemElementHTML("problem.${problemID}.problem_seed", $userProblemRecord->problem_seed, "7"),
 					) : ()),
-					problemElementHTML("problem_${problemID}_source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
-					problemElementHTML("problem_${problemID}_max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
-					problemElementHTML("problem_${problemID}_value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
+					problemElementHTML("problem.${problemID}.source_file", $problemRecord->source_file, "40", @{$problemOverrideArgs{source_file}}),
+					problemElementHTML("problem.${problemID}.max_attempts",$problemRecord->max_attempts,"7", @{$problemOverrideArgs{max_attempts}}),
+					problemElementHTML("problem.${problemID}.value",$problemRecord->value,"7", @{$problemOverrideArgs{value}}),
 					($forUsers ? (
-						problemElementHTML("problem_${problemID}_num_correct", $userProblemRecord->num_correct, "7"),
-						problemElementHTML("problem_${problemID}_num_incorrect", $userProblemRecord->num_incorrect, "7")
+						problemElementHTML("problem.${problemID}.num_correct", $userProblemRecord->num_correct, "7"),
+						problemElementHTML("problem.${problemID}.num_incorrect", $userProblemRecord->num_incorrect, "7")
 					) : ())
 				])
 
