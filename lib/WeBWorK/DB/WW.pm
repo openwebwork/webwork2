@@ -3,7 +3,7 @@
 # $Id$
 ################################################################################
 
-package WeBWorK::DB::Webwork;
+package WeBWorK::DB::WW;
 
 use strict;
 use warnings;
@@ -51,7 +51,7 @@ sub getSets($$) {
 	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
 	$self->{webwork_db}->disconnect;
 	return unless defined $result;
-	return keys decode $result;
+	return keys %{decode($result)};
 }
 
 # -----
@@ -121,10 +121,11 @@ sub getProblems($$$) {
 	my $self = shift;
 	my $userID = shift;
 	my $setID = shift;
+	my $PSVN = getPSVN($userID, $setID);
 	my %record = $self->fetchRecord($PSVN);
 	my @result;
 	my $i = 1;
-	while (exists %record{"pse".$i}) {
+	while (exists $record{"pse".$i}) {
 		push @result, $i++;
 	}
 	return @result;
@@ -155,14 +156,12 @@ sub getProblem($$$$) {
 sub setProblem($$) {
 	my $self = shift;
 	my $problem = shift;
-	my $set = getSet(
 	my $PSVN = getPSVN($problem->login_id, $problem->set_id);
 	my %record = (
 		$PSVN ? $self->fetchRecord($PSVN) : (),
-		set2hash($set),
+		problem2hash($problem),
 	);
 	return $self->storeRecord($PSVN, %record);
-
 }
 
 # deleteProblem($userID, $setID, $problemNumber) - removes a problem with the
@@ -170,6 +169,25 @@ sub setProblem($$) {
 # $userID - the user ID of the problem to delete
 # $setID - the ID of the problem's set
 # $problemNumber - the problem number of the problem to delete
+sub deleteProblem($$$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	my $n = shift;
+	my $PSVN = getPSVN($userID, $setID);
+	my %record = $self->fetchRecord($PSVN);
+	return unless %record;
+	delete $record{"pfn$n"}  if exists $record{"pfn$n"};
+	delete $record{"pva$n"}  if exists $record{"pva$n"};
+	delete $record{"pmia$n"} if exists $record{"pmia$n"};
+	delete $record{"pse$n"}  if exists $record{"pse$n"};
+	delete $record{"pst$n"}  if exists $record{"pst$n"};
+	delete $record{"pat$n"}  if exists $record{"pat$n"};
+	delete $record{"pan$n"}  if exists $record{"pan$n"};
+	delete $record{"pca$n"}  if exists $record{"pca$n"};
+	delete $record{"pia$n"}  if exists $record{"pia$n"};
+	return $self->storeRecord($PSVN, %record);
+}
 
 # -----
 
@@ -196,6 +214,17 @@ sub setProblem($$) {
 #                            uniquely identifies a user's version of a set.)
 # $userID - the user ID to lookup
 # $serID - the set ID to lookup
+sub getPSVN($$$) {
+	my $self = shift;
+	my $userID = shift;
+	my $setID = shift;
+	return unless $self->{webwork_db}->connect("ro");
+	my $result = $self->{webwork_db}->hashRef->{LOGIN_PREFIX.$userID};
+	$self->{webwork_db}->disconnect;
+	return unless $result;
+	my %sets = decode($result);
+	return $sets{$setID};
+}
 
 # -----
 
@@ -207,7 +236,7 @@ sub fetchRecord($$) {
 	return unless $self->{webwork_db}->connect("ro");
 	my $result = $self->{webwork_db}->hashRef->{$PSVN};
 	$self->{webwork_db}->disconnect;
-	return decode $result;
+	return decode($result);
 }
 
 # storeRecord($PSVN, %record) - store the given record with the PSVN as a key
@@ -218,7 +247,7 @@ sub storeRecord($$%) {
 	my $PSVN = shift;
 	my %record = @_;
 	$self->{webwork_db}->connect("rw");
-	$self->{webwork_db}->hashRef->{$PSVN} = encode %record;
+	$self->{webwork_db}->hashRef->{$PSVN} = encode(%record);
 	$self->{webwork_db}->disconnect;
 	return 1;
 }
@@ -294,6 +323,7 @@ sub hash2problem($%) {
 	my %hash = @_;
 	my $problem = WeBWorK::Problem->new(id => $n);
 	$problem->set_id        ( $hash{stnm}    ) if defined $hash{stnm};
+	$problem->login_id      ( $hash{stlg}    ) if defined $hash{stlg};
 	$problem->source_file   ( $hash{"pfn$n"} ) if defined $hash{"pfn$n"};
 	$problem->value         ( $hash{"pva$n"} ) if defined $hash{"pva$n"};
 	$problem->max_attempts  ( $hash{"pmia$n"}) if defined $hash{"pmia$n"};
@@ -313,7 +343,9 @@ sub hash2problem($%) {
 sub problem2hash($) {
 	my $problem = shift;
 	my $n = $problem->id;
+	my %hash;
 	$hash{stnm}    = $problem->set_id        if defined $problem->set_id;
+	$hash{stlg}    = $problem->login_id      if defined $problem->login_id;
 	$hash{"pfn$n"} = $problem->source_file   if defined $problem->source_file;
 	$hash{"pva$n"} = $problem->value         if defined $problem->value;
 	$hash{"pmia$n"}= $problem->max_attempts  if defined $problem->max_attempts;
