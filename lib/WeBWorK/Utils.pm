@@ -265,4 +265,10 @@ sub sortByName {
 	} @items;
 }
 
+sub pretty_print_rh {
+	my $rh = shift;
+	foreach my $key (sort keys %{$rh})  {
+		warn "  $key => ",$rh->{$key},"\n";
+	}
+}
 1;
