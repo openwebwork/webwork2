@@ -32,9 +32,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 BEGIN { $main::VERSION = "2.0"; }
 
-
-my $timingON     = 0;
-
+my $timingON = 0;
 
 use strict;
 use warnings;
