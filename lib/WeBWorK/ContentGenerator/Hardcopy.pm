@@ -161,16 +161,18 @@ sub body {
 sub multiErrorOutput($@) {
 	my ($self, @errors) = @_;
 	
-	print CGI::h2("Software Errors");
+	print CGI::h2("Compile Errors");
 	print CGI::p(<<EOF);
-WeBWorK has encountered one or more software errors while attempting to process
+WeBWorK has encountered one or more  errors while attempting to process
 these problem sets. It is likely that there are errors in the problems
 themselves. If you are a student, contact your professor to have the errors
-corrected. If you are a professor, please consut the error output below for
-more informaiton.
+corrected. If you are a professor, please consult the error output below for
+more information.
 EOF
 	foreach my $error (@errors) {
-		print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem});
+	    my $user = $error->{user};
+	    my $userName = $user->user_id . ' ('.$user->first_name.' '.$user->last_name. ')';
+		print CGI::h3("Set: ", $error->{set}, ", Problem: ", $error->{problem}, "for $userName");
 		print CGI::h4("Error messages"), CGI::blockquote(CGI::pre($error->{message}));
 		print CGI::h4("Error context"), CGI::blockquote(CGI::pre($error->{context}));
 	}
@@ -652,7 +654,18 @@ sub getProblemTeX {
 			# the rest of Problem's fields are not needed, i think
 		);
 	}
-	
+	unless (ref($problem) )  {  # return error if no set is defined
+	    $problemNumber = 'undefined problem number' unless defined($problemNumber);
+	    $setName       = 'undefined set Name' unless defined($setName);
+		push(@{$self->{warnings}}, 
+			   setName => $setName, 
+			   problem => $problemNumber,
+			   message => "No problem $setName/$problemNumber exists for ".
+			              $effectiveUser->first_name.' '.
+	                      $effectiveUser->last_name.' ('.$effectiveUser->user_id.' )'
+	    );
+	    return "No problem $setName/$problemNumber for ".$effectiveUser->user_id;
+	}
 	# figure out if we're allowed to get solutions and call PG->new accordingly.
 	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
 	my $showHints          = $r->param("showHints") || 0;
@@ -690,12 +703,13 @@ sub getProblemTeX {
 		push @{$self->{errors}}, {
 			set     => $setName,
 			problem => $problemNumber,
+			user    => $effectiveUser,
 			message => $pg->{errors},
 			context => $pg->{body_text},
 		};
 		# if there was an error, body_text contains
-		# the error context, not TeX code
-		$pg->{body_text} = undef;
+		# the error context, not TeX code FIXME (should this error context be used?)
+		$pg->{body_text} = ''; #   FIXME using undef causes error unless it is caught undef;
 	} else {
 		# append list of correct answers to body text
 		if ($showCorrectAnswers && $problemNumber != 0) {
