@@ -127,11 +127,12 @@ sub template {
 				pop @ifstack;
 			} elsif ($ifstack[-1]) {
 				if ($self->can($function)) {
-					my $result = $self->$function(@_, {@args});
-					unless (defined $result) {
-						warn "Template escape $function returned an undefined value.";
+					my @result = $self->$function(@_, {@args});
+					if (@result) {
+						print @result;
+					} else {
+						warn "Template escape $function returned an empty list.";
 					}
-					print $result;
 				}
 			}
 		}
