@@ -9,6 +9,7 @@ package WeBWorK;
 
 WeBWorK - Dispatch requests to the appropriate content generator.
 
+
 =head1 SYNOPSIS
 
  my $r = Apache->request;
@@ -28,9 +29,12 @@ C<WeBWorK::ContentGenerator> to call.
 
 =cut
 
+
 BEGIN { $main::VERSION = "2.0"; }
 
-my $timingON = 0;
+
+my $timingON     = 0;
+
 
 use strict;
 use warnings;
@@ -296,10 +300,10 @@ The dispatcher implements a virtual heirarchy that looks like this:
 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::Scoring";
 				@arguments = ();
 			}
-			elsif ($instructorArgument eq "scoring_totals") {
-				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ScoringTotals";
-				@arguments = ();
-			}
+# 			elsif ($instructorArgument eq "scoring_totals") {
+# 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ScoringTotals";
+# 				@arguments = ();
+# 			}
 			elsif ($instructorArgument eq "scoringDownload") {
 				$contentGenerator = "WeBWorK::ContentGenerator::Instructor::ScoringDownload";
 				@arguments = ();
@@ -400,13 +404,13 @@ Instantiate the selected subclass of content generator and call its C<&go> metho
 		runtime_use($contentGenerator);
 		my $cg = $contentGenerator->new($r, $ce, $db);
 		
-		my $timer = WeBWorK::Timing->new("${contentGenerator}::go(@arguments)") if $timingON == 1;
-		$timer->start if $timingON == 1;
+		$WeBWorK::timer = WeBWorK::Timing->new("${contentGenerator}::go(@arguments)") if $timingON == 1;
+		$WeBWorK::timer->start if $timingON == 1;
 		
 		$result = $cg->go(@arguments);
 		
-		$timer->stop if $timingON == 1;
-		$timer->save if $timingON == 1;
+		$WeBWorK::timer->stop if $timingON == 1;
+		$WeBWorK::timer->save if $timingON == 1;
 	} else {
 		return NOT_FOUND;
 	}
