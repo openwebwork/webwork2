@@ -231,18 +231,22 @@ sub dvipng($$$$$) {
 		$targetPath # location of resulting image file
 	) = @_;
 	
+	my $dvipngBroken = 0;
+	
 	my $texFile  = "$wd/equation.tex";
 	my $dviFile  = "$wd/equation.dvi";
-	#my $dviFile2 = "$wd/equationequation.dvi"; # this work around is no longer needed -- see below.
+	my $dviFile2 = "$wd/equationequation.dvi";
 	my $dviCall  = "equation";
 	my $pngFile  = "$wd/equation1.png";
 	
-	die "dvipng working directory $wd doesn't exist -- caller should have created it for us!\n"
-		unless -e $wd;
+	unless (-e $wd) {
+		die "dvipng working directory $wd doesn't exist -- caller should have created it for us!\n";
+		return 0;
+	}
 	
 	# write the tex file
 	local *TEX;
-	open TEX, ">", $texFile;
+	open TEX, ">", $texFile or warn "Failed to create $texFile: $!";
 	print TEX <<'EOF';
 % BEGIN HEADER
 \batchmode
@@ -263,21 +267,33 @@ EOF
 	close TEX;
 	
 	# call latex
-	system "cd $wd && $latex $texFile";
+	system "cd $wd && $latex $texFile"
+		and warn "Failed to call $latex with $texFile: $!";
 	
-	return 0 unless -e $dviFile;
+	unless (-e $dviFile) {
+		warn "Failed to generate DVI file $dviFile";
+		return 0;
+	}
 	
-	# change the name of the DVI file to get around dvipng's crackheadedness
-	# This is no longer needed with the newest version of dvipng (10 something)
-	#system "/bin/mv", $dviFile, $dviFile2;
+	if ($dvipngBroken) {
+		# change the name of the DVI file to get around dvipng's
+		# crackheadedness. This is no longer needed with the newest
+		# version of dvipng (10 something)
+		system "/bin/mv", $dviFile, $dviFile2;
+	}
 	
-	# call dvipng  -- using warn instead of die passes some extra information back to the user
-	# the complete warning is still printed in the apache error log and a simple message (mth2image failed) is returned
-	# to the webpage.
+	# call dvipng -- using warn instead of die passes some extra information
+	# back to the user the complete warning is still printed in the apache
+	# error log and a simple message (math2img failed) is returned to the
+	# webpage.
 	my $cmdout;
-	$cmdout = system "cd $wd && $dvipng $dviCall" and warn "dvipng:dvipng call cd $wd && $dvipng $dviCall failed: $! with signal $cmdout";
+	$cmdout = system "cd $wd && $dvipng $dviCall"
+		and warn "Failed to call$dvipng with $dviCall: $! with signal $cmdout";
 	
-	return 0 unless -e $pngFile;
+	unless (-e $pngFile) {
+		warn "Failed to create PNG file $pngFile";
+		return 0;
+	}
 	
 	$cmdout = system "/bin/mv", $pngFile, $targetPath and warn "Failed to mv: /bin/mv  $pngFile $targetPath $!. Call returned $cmdout. \n";
 }
