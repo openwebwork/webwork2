@@ -9,6 +9,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
+  "parserTables.pl",
 );
 
 TEXT(beginproblem());
@@ -56,10 +57,6 @@ Context()->operators->add(
   }
 );
 
-#
-#  Something about Context() requires this to be loaded here (FIXME)
-#
-loadMacros("parserTables.pl");
 
 ###########################################################
 #

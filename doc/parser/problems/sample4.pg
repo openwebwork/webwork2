@@ -13,9 +13,8 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "PGgraphmacros.pl",
-  "unionImage.pl",
-  "unionTables.pl",
   "Parser.pl",
+  "parserUtils.pl",
 );
 
 TEXT(&beginproblem);

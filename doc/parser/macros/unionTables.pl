@@ -1,6 +1,3 @@
-$bHTML = '\begin{rawhtml}';
-$eHTML = '\end{rawhtml}';
-
 ######################################################################
 ##
 ##  Functions for creating tables of various kinds

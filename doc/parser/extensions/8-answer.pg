@@ -10,6 +10,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
+  "parserUtils.pl",
 );
 
 TEXT(beginproblem());
@@ -53,7 +54,6 @@ sub vector_cmp_check {
     if (Value::isValue($V) && $V->type eq 'Vector') {
       #
       #  Let the overloaded == do the check
-      #    (should really make it do fuzzy checking)
       #
       $ans->score(1) if ($V == $v);
     } else {
@@ -71,9 +71,11 @@ sub vector_cmp_check {
       my $string = $context->{error}{string};
       my ($s,$e) = @{$context->{error}{pos}};
       $message =~ s/; see.*//;  # remove the position from the message
-      $ans->{student_ans} = substr($string,0,$s) .
-                 '<SPAN CLASS="parsehilight">' . substr($string,$s,$e-$s) . '</SPAN>' .
-                 substr($string,$e);
+      $ans->{student_ans} = protectHTML(substr($string,0,$s)) .
+                 '<SPAN CLASS="parsehilight">' . 
+                    protectHTML(substr($string,$s,$e-$s)) .
+                 '</SPAN>' .
+                 protectHTML(substr($string,$e));
     }
     $ans->{ans_message} = $ans->{error_message} = $message;
   }

@@ -9,6 +9,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
+  "ParserTables.pl",
 );
 
 TEXT(beginproblem());
@@ -47,10 +48,7 @@ Context()->functions->add(
   log2 => {class => 'MyFunction1', TeX => '\log_2'},  # fancier TeX output
 );
 
-#
-#  Something about Context() requires this to be loaded here (FIXME)
-#
-loadMacros("parserTables.pl");
+$x = Formula('x');
 
 ###########################################################
 #

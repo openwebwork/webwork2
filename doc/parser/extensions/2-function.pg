@@ -9,6 +9,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
+  "parserTables.pl",
 );
 
 TEXT(beginproblem());
@@ -47,10 +48,7 @@ sub C {Parser::Function->call('C',@_)}
 
 Context()->functions->add(C => {class => 'MyFunction2'});
 
-#
-#  Something about Context() requires this to be loaded here (FIXME)
-#
-loadMacros("parserTables.pl");
+$x = Formula('x');
 
 ###########################################################
 #

@@ -9,6 +9,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
+  "parserTables.pl",
 );
 
 TEXT(beginproblem());
@@ -73,11 +74,6 @@ package main;
 
 Context()->lists->add(Choose => {class => 'MyChoose'});
 Context()->parens->replace('[' => {close => ']', type => 'Choose'});
-
-#
-#  Something about Context() requires this to be loaded here (FIXME)
-#
-loadMacros("parserTables.pl");
 
 ###########################################################
 #
