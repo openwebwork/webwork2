@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.65 2004/03/15 02:25:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/Apache/WeBWorK.pm,v 1.66 2004/04/07 01:17:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,21 +27,16 @@ This module should be installed as a Handler for the location selected for
 WeBWorK on your webserver. Here is an example of a stanza that can be added to
 your httpd.conf file to achieve this:
 
- <IfModule mod_perl.c>
- 	PerlFreshRestart On
- 	<Location /webwork2>
- 		SetHandler perl-script
- 		PerlHandler Apache::WeBWorK
- 	
- 		PerlSetVar webwork_root /path/to/webwork2
- 		PerlSetVar pg_root /path/to/pg
- 		
- 		<Perl>
- 			use lib '/path/to/webwork2/lib';
- 			use lib '/path/to/pg/lib';
- 		</Perl>
- 	</Location>
- </IfModule>
+ <Location /webwork2>
+	PerlSetVar webwork_root /opt/webwork2
+	PerlSetVar pg_root /opt/pg
+	<Perl>
+	   use lib "/opt/webwork2/lib";
+	   use lib "/opt/pg/lib";
+	</Perl>
+	SetHandler perl-script
+	PerlHandler Apache::WeBWorK
+ </Location>
 
 =cut
 
@@ -138,30 +133,18 @@ sub message($$) {
 	};
 	
 	return <<EOF;
-<div align="left">
- <hr>
- <p>An error has occured while trying to process your request. </p>
- 
- <h3>Error message</h3>
- <div style="color:blue; ">
- <ul><tt>$exception</tt></ul>
- </div>
- <!--<h2>Call stack</h2>
- <ul>$context</ul>-->
- <hr>
- <h3>Additonal warnings</h3>
+<div style="text-align:left">
+ <h2>WeBWorK error</h2>
+ <p>An error occured while processing your request. For help, please send mail
+ to this site's webmaster $admin giving as much information as you can about the
+ error and the date and time that the error occured.</p>
+ <h3>Warning messages</h3>
  <ul>$warnings</ul>
-<p>
-For help, please
- send mail to this site's webmaster $admin giving as much information
- as you can about the error and the date and time that the error occured. Some hints:</p>
- <ul>
-  <li>An error about an <tt>undefined value</tt> often means that you asked for
-  an object (like a user, problem set, or problem) that does not exist, and the
-  we (the programmers) were negligent in checking for that.</li>
-  <li>An error about <tt>permission denied</tt> might suggest that the web
-  server does not have permission to read or write a file or directory.</li>
- </ul>
+ <h3>Error messages</h3>
+ <blockquote style="color:red"><tt>$exception</tt></blockquote>
+ <!--<h2>Call stack</h2>-->
+ <!--<ul>$context</ul>-->
+ <hr />
  <h2>Request information</h2>
  <table border="1">
   <tr><td>Method</td><td>$method</td></tr>
