@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.13 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.14 2004/09/21 20:05:16 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -72,13 +72,17 @@ sub initialize {
 		my $setRecord = $db->getGlobalSet($setID); #checked
 		die "Unable to get global set record for $setID " unless $setRecord;
 		
+		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
 		foreach my $selectedUser (@users) {
 			if (exists $selectedUsers{$selectedUser}) {
-				$WeBWorK::timer->continue("assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
-				$self->assignSetToUser($selectedUser, $setRecord);
-				$WeBWorK::timer->continue("done assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+				unless ($setUsers{$selectedUser}) {	# skip users already in the set
+					$WeBWorK::timer->continue("assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+					$self->assignSetToUser($selectedUser, $setRecord);
+					$WeBWorK::timer->continue("done assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+				}
 			} else {
 				next if $selectedUser eq $globalUserID;
+				next unless $setUsers{$selectedUser};	# skip users not in the set
 				$db->deleteUserSet($selectedUser, $setID);
 			}
 		}

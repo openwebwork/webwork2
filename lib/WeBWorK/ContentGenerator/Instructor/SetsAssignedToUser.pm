@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.16 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.17 2004/09/21 20:05:16 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,6 +60,7 @@ sub initialize {
 	} elsif (defined $r->param('assignToSelected')) {
 		# get list of all sets and a hash for checking selectedness
 		my @setIDs = $db->listGlobalSets;
+		my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
 		my %selectedSets = map { $_ => 1 } $r->param("selected");
 		
 		# get current user
@@ -69,20 +70,22 @@ sub initialize {
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User's sets have been reassigned."));
 		
 		unless ($User->user_id eq $globalUserID) {
+		
+			my %userSets = map { $_ => 1 } $db->listUserSets($userID);
+			
 			# go through each possible set
-			foreach my $setID (@setIDs) {
+			foreach my $setRecord (@setRecords) {
+				my $setID = $setRecord->set_id;
 				# does the user want it to be assigned to the selected user
 				if (exists $selectedSets{$setID}) {
-					# user asked to have the set assigned to the selected user
-					my $Set = $db->getGlobalSet($setID); #checked
-					if ($Set) {
-						$self->assignSetToUser($userID, $Set);
-					} else {
-						warn "global set $setID appeared in listGlobalSets() but does not exist.\n"
+					unless ($userSets{$setID}) {	# skip users already in the set
+						$WeBWorK::timer->continue("assignSetToUser($userID, $setID)") if defined $WeBWorK::timer;
+						$self->assignSetToUser($userID, $setRecord);
+						$WeBWorK::timer->continue("done assignSetToUser($userID, $setID)") if defined $WeBWorK::timer;
 					}
 				} else {
 					# user asked to NOT have the set assigned to the selected user
-					# this will unassign it if it is assigned
+					next unless $userSets{$setID};	# skip users not in the set
 					$db->deleteUserSet($userID, $setID);
 				}
 			}
