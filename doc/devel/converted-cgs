@@ -18,22 +18,17 @@
 	lib/WeBWorK/ContentGenerator/Problem.pm
 	lib/WeBWorK/ContentGenerator/ProblemSet.pm
 	lib/WeBWorK/ContentGenerator/ProblemSets.pm
-
+	
 3 => 2 + GET PATH DATA FROM URLPath INSTEAD OF FROM $self->r
 (this has to be done before we can take advantage of path/param munging.)
 	lib/WeBWorK/ContentGenerator/GatewayQuiz.pm
 		- delaying path generation changes until major cleanup
 	lib/WeBWorK/ContentGenerator/Hardcopy.pm
 		- delaying path generation changes until major cleanup
-
-2 => 1 + GET $ce, $db, $authz FROM $self->r INSTEAD OF FROM $self
-(this has to be done before we can remove ce/db/authz from $self.)
-
-1 => REMOVE DEPENDANCY ON DATA FROM @_ (get from URLPath instead)
-(this has to be done before things will work.)
+		
 	lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm
 	lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm
-	lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm
+	lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm	
 	lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm
 	lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm
 	lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm
@@ -42,6 +37,17 @@
 	lib/WeBWorK/ContentGenerator/Instructor/Stats.pm
 	lib/WeBWorK/ContentGenerator/Instructor/UserList.pm
 	lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm
+	
+2 => 1 + GET $ce, $db, $authz FROM $self->r INSTEAD OF FROM $self
+(this has to be done before we can remove ce/db/authz from $self.)
+
+
+1 => REMOVE DEPENDANCY ON DATA FROM @_ (get from URLPath instead)
+(this has to be done before things will work.)
+	
+	
+	
+
 
 0 => NONE OF THE ABOVE DONE
 
