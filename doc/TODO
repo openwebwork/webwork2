@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.36 2003-01-31 22:30:41 sh002i Exp $
+# $Id: TODO,v 1.37 2003-02-18 07:04:11 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -84,15 +84,15 @@ DONE	Options - email address and password
 DONE	Feedback - need nice modular way of sending email
 DONE		customize reciever, make object dumps prettier, link to context
 DONE	Professor - redirect to the old system
-NO	pretty die messages (from outside of the translator)
+	pretty die messages (from outside of the translator)
 DONE	make sure students can't look at not-yet-open problem sets
 DONE	make answer previews use $displayMode
 DONE	make preview-on-submit optional
-NO	Increase border size on images by a couple pixels
+	Increase border size on images by a couple pixels
 DONE	effectiveUser for at least Problem.pm
 DONE	add a "check answers" button if the user has the apropriate permissions
 DONE	write a template escape for printing $user, $effectiveUser, &c. nicely 
-NO	calling logout requires valid key -- doesn't make sense.
+	calling logout requires valid key -- doesn't make sense.
 --->	hardcopy - allow hardcopy with correct answers (BRANCH)
 DONE	sort problems by due date
 DONE	disable "show hint/solution" when there's no hint/solution
@@ -102,6 +102,15 @@ DONE		don't show messages unless there are some
 DONE	make displayMode sticky (for nav and siblings)
 DONE	check TTH mode character encodings on mac
 	grep for "***" in source, address all issues (hah!)
+
+mike wants:
+	problem credit indicator (graphical?)
+	answers/solutions in hardcopy
+	turn off verbose debugging in feedback mail
+	URL on feedback from any module
+	email address change notification by email
+arnie wants:
+	parse errors in student answers hilited more strongly
 
 >>>>> FOR SPRING RELEASE <<<<<
 

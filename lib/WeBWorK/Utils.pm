@@ -65,7 +65,7 @@ sub formatDateTime($) {
 
 sub parseDateTime($) {
 	my $string = shift;
-	return str2time $string;
+	return str2time($string);
 }
 
 sub writeLog($$@) {

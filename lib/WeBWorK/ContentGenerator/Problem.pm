@@ -283,7 +283,7 @@ sub body {
 	##### translation errors? #####
 	
 	if ($pg->{flags}->{error_flag}) {
-		return translationError($pg->{errors}, $pg->{body_text});
+		return $self->errorOutput($pg->{errors}, $pg->{body_text});
 	}
 	
 	##### answer processing #####
@@ -426,7 +426,7 @@ sub body {
 	
 	# warning output
 	if ($pg->{warnings} ne "") {
-		print CGI::hr(), warningOutput($pg->{warnings});
+		print CGI::hr(), $self->warningOutput($pg->{warnings});
 	}
 	
 	# debugging stuff
@@ -448,38 +448,6 @@ sub body {
 }
 
 ##### output utilities #####
-
-# this is used by ProblemSet.pm too, so don't fuck it up
-sub translationError($$) {
-	my ($error, $details) = @_;
-	return
-		CGI::h2("Software Error"),
-		CGI::p(<<EOF),
-WeBWorK has encountered a software error while attempting to process this problem.
-It is likely that there is an error in the problem itself.
-If you are a student, contact your professor to have the error corrected.
-If you are a professor, please consut the error output below for more informaiton.
-EOF
-		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
-		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
-}
-
-# this is used by ProblemSet.pm too, so don't fuck it up
-sub warningOutput($) {
-	my $warnings = shift;
-	
-	return
-		CGI::h2("Software Warnings"),
-		CGI::p(<<EOF),
-WeBWorK has encountered warnings while attempting to process this problem.
-It is likely that this indicates an error or ambiguity in the problem itself.
-If you are a student, contact your professor to have the problem corrected.
-If you are a professor, please consut the error output below for more informaiton.
-EOF
-		CGI::h3("Warning messages"),
-		CGI::blockquote(CGI::pre($warnings)),
-	;
-}
 
 sub attemptResults($$$$$) {
 	my $self = shift;
@@ -601,14 +569,15 @@ sub previewAnswer($$) {
 	
 	my $tex = $answerResult->{preview_latex_string};
 	
+	return "" unless $tex;
+	
 	if ($displayMode eq "plainText") {
 		return $tex;
 	} elsif ($displayMode eq "formattedText") {
 		my $tthCommand = $ce->{externalPrograms}->{tth}
 			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. "\\($tex\\)\n"
+			. "\\(".$tex."\\)\n"
 			. "END_OF_INPUT\n";
-		
 		
 		# call tth
 		my $result = `$tthCommand`;

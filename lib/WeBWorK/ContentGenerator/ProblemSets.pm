@@ -18,6 +18,7 @@ use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;
 use WeBWorK::DB::WW;
+use WeBWorK::DB::Auth;
 use WeBWorK::Utils qw(readFile formatDateTime);
 
 sub initialize {
@@ -27,8 +28,8 @@ sub initialize {
 	# Open a database connection that we can use for the rest of
 	# the content generation.
 	
-	my $wwdb = new WeBWorK::DB::WW $courseEnvironment;
-	$self->{wwdb} = $wwdb;
+	$self->{wwdb} = new WeBWorK::DB::WW $courseEnvironment;
+	$self->{authdb} = new WeBWorK::DB::Auth $courseEnvironment;
 }
 
 sub path {
@@ -58,6 +59,8 @@ sub body {
 	my $effectiveUser = $r->param("effectiveUser");
 	my $sort = $r->param("sort") || "status";
 	my $wwdb = $self->{wwdb};
+	my $authdb = $self->{authdb};
+	my $permissionLevel = $authdb->getPermissions($user);
 	
 	if (defined $courseEnvironment->{courseFiles}->{motd}
 		and $courseEnvironment->{courseFiles}->{motd}) {
@@ -67,8 +70,8 @@ sub body {
 	
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 	my $baseURL = $r->uri . "?" . $self->url_authen_args();
-	my $nameHeader = ($sort eq "name") ? "Name" : CGI::a({-href=>"$baseURL&sort=name"}, "Name");
-	my $statusHeader = ($sort eq "status") ? "Status" : CGI::a({-href=>"$baseURL&sort=status"}, "Status");
+	my $nameHeader = ($sort eq "name") ? CGI::u("Name") : CGI::a({-href=>"$baseURL&sort=name"}, "Name");
+	my $statusHeader = ($sort eq "status") ? CGI::u("Status") : CGI::a({-href=>"$baseURL&sort=status"}, "Status");
 	
 	print CGI::startform(-method=>"POST", -action=>$r->uri."hardcopy/");
 	print $self->hidden_authen_fields;
@@ -77,7 +80,7 @@ sub body {
 		CGI::th("Sel."),
 		CGI::th($nameHeader),
 		CGI::th($statusHeader),
-		CGI::th("Hardcopy"),
+		#CGI::th("Hardcopy"),
 	);
 	
 	my @sets;
@@ -85,11 +88,12 @@ sub body {
 	@sets = sort byname @sets if $sort eq "name";
 	@sets = sort byduedate @sets if $sort eq "status";
 	foreach my $set (@sets) {
-		print $self->setListRow($set);
+		print $self->setListRow($set, ($permissionLevel > 0));
 	}
 	
 	print CGI::end_table();
-	print CGI::p(CGI::submit("hardcopy", "Download Harcopy for Selected Sets"));
+	my $pl = ($permissionLevel > 0 ? "s" : "");
+	print CGI::p(CGI::submit("hardcopy", "Download Harcopy for Selected Set$pl"));
 	print CGI::endform();
 	
 	# feedback form
@@ -109,29 +113,45 @@ sub body {
 	return "";
 }
 
-sub setListRow($$) {
-	my $self = shift;
-	my $set = shift;
+sub setListRow($$$) {
+	my ($self, $set, $multiSet) = @_;
 	
 	my $name = $set->id;
 	
 	my $interactiveURL = "$name/?" . $self->url_authen_args;
-	my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
+	#my $hardcopyURL = "hardcopy/$name/?" . $self->url_authen_args;
 	
 	my $openDate = formatDateTime($set->open_date);
 	my $dueDate = formatDateTime($set->due_date);
 	my $answerDate = formatDateTime($set->answer_date);
 	
-	my $checkbox = CGI::checkbox(-name=>"set", -value=>$set->id, -label=>"");
+	#my $checkbox = CGI::checkbox(-name=>"hcSet", -value=>$set->id, -label=>"");
+	
+	my $control = "";
+	if ($multiSet) {
+		$control = CGI::checkbox(
+			-name=>"hcSet",
+			-value=>$name,
+			-label=>"",
+		);
+	} else {
+		$control = CGI::radio_group(
+			-name=>"hcSet",
+			-values=>[$name],
+			-default=>"-",
+			-labels=>{$name => ""},
+		);
+	}
+	
 	my $interactive = CGI::a({-href=>$interactiveURL}, $name);
-	my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download");
+	#my $hardcopy = CGI::a({-href=>$hardcopyURL}, "download");
 	
 	my $status;
 	if (time < $set->open_date) {
 		$status = "opens at $openDate";
-		$checkbox = "";
+		$control = "";
 		$interactive = $name;
-		$hardcopy = "";
+		#$hardcopy = "";
 	} elsif (time < $set->due_date) {
 		$status = "open, due at $dueDate";
 	} elsif (time < $set->answer_date) {
@@ -141,10 +161,10 @@ sub setListRow($$) {
 	}
 	
 	return CGI::Tr(CGI::td([
-		$checkbox,
+		$control,
 		$interactive,
 		$status,
-		$hardcopy,
+		#$hardcopy,
 	]));
 }
 

@@ -333,6 +333,36 @@ sub print_form_data {
 	return $return_string;
 }
 
+sub errorOutput($$$) {
+	my ($self, $error, $details) = @_;
+	return
+		CGI::h2("Software Error"),
+		CGI::p(<<EOF),
+WeBWorK has encountered a software error while attempting to process this problem.
+It is likely that there is an error in the problem itself.
+If you are a student, contact your professor to have the error corrected.
+If you are a professor, please consut the error output below for more informaiton.
+EOF
+		CGI::h3("Error messages"), CGI::blockquote(CGI::pre($error)),
+		CGI::h3("Error context"), CGI::blockquote(CGI::pre($details));
+}
+
+sub warningOutput($$) {
+	my ($self, $warnings) = @_;
+	
+	return
+		CGI::h2("Software Warnings"),
+		CGI::p(<<EOF),
+WeBWorK has encountered warnings while attempting to process this problem.
+It is likely that this indicates an error or ambiguity in the problem itself.
+If you are a student, contact your professor to have the problem corrected.
+If you are a professor, please consut the error output below for more informaiton.
+EOF
+		CGI::h3("Warning messages"),
+		CGI::blockquote(CGI::pre($warnings)),
+	;
+}
+
 ################################################################################
 # Generic versions of template escapes
 ################################################################################

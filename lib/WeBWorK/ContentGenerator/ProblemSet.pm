@@ -18,7 +18,6 @@ use base qw(WeBWorK::ContentGenerator);
 use Apache::Constants qw(:common);
 use CGI qw();
 use WeBWorK::ContentGenerator;
-use WeBWorK::ContentGenerator::Problem;
 use WeBWorK::DB::WW;
 use WeBWorK::DB::Classlist;
 
@@ -83,7 +82,7 @@ sub info {
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
-	my $effectiveUser = $cldb->geteffectiveUser($r->param("effectiveUser"));
+	my $effectiveUser = $cldb->getUser($r->param("effectiveUser"));
 	my $set  = $wwdb->getSet($effectiveUser->id, $setName);
 	my $psvn = $wwdb->getPSVN($effectiveUser->id, $setName);
 	
@@ -119,8 +118,7 @@ sub info {
 	
 	# handle translation errors
 	if ($pg->{flags}->{error_flag}) {
-		return WeBWorK::ContentGenerator::Problem::translationError(
-			$pg->{errors}, $pg->{body_text});
+		return $self->errorOutput($pg->{errors}, $pg->{body_text});
 	} else {
 		return $pg->{body_text};
 	}
