@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.49 2004/02/21 10:15:58 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.1 2004/03/05 04:16:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,10 @@ sub new {
 	my $class = ref $invocant || $invocant;
 	return bless { r => Apache::Request->new(@args) }, $class;
 }
+
+=back
+
+=cut
 
 =head1 METHODS
 

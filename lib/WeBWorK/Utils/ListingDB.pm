@@ -310,6 +310,8 @@ success, 1 is returned, 0 is returned on failure. The %listing_data
 hash has the following format:
 =cut
 
+=back
+
 =head1 AUTHOR
 
 Written by Bill Ziemer.

@@ -171,6 +171,10 @@ sub renderProblems {
   return(@output); 
 } 
 
+=back
+
+=cut
+
 =head1 AUTHOR
 
 Written by John Jones, jj (at) asu.edu.

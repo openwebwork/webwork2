@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/delcourse,v 1.3 2004/09/23 16:53:25 sh002i Exp $
+# $CVSHeader: webwork2/bin/sql2sql_single,v 1.1 2004/09/27 19:28:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ Convert a course database using the C<sql> database layout to use the
 course database into the single database used by the C<sql_single> database
 layout. For this to work, both layouts must be using the same database server.
 
-NEWDBNAME gives the name of the database used by C<sql_single. This is usually
+NEWDBNAME gives the name of the database used by C<sql_single>. This is usually
 "webwork". DBADMIN and DBPASS are respectively the username and password of an
 administrative account on the SQL server.
 

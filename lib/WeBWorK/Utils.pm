@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.57 2004/10/11 13:30:09 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.58 2004/10/11 19:36:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,6 +77,10 @@ our @EXPORT_OK = qw(
 	sortByName
 );
 
+=head1 FUNCTIONS
+
+=cut
+
 ################################################################################
 # Lowlevel thingies
 ################################################################################
@@ -106,6 +110,12 @@ sub runtime_use($) {
 ################################################################################
 # Filesystem interaction
 ################################################################################
+
+=head2 Filesystem interaction
+
+=over
+
+=cut
 
 # Convert Windows and Mac (classic) line endings to UNIX line endings in a string.
 # Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
@@ -258,6 +268,10 @@ sub removeTempDirectory($) {
 	my ($dir) = @_;
 	rmtree($dir, 0, 0);
 }
+
+=back
+
+=cut
 
 ################################################################################
 # Date/time processing
