@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+ <head>
+  <title>WeBWorK - <!--#title--></title>
+ </head>
+ <body>
+  <table width="100%" cellpadding="10" cellspacing="0" border="1">
+   <tr valign="middle">
+    <td align="center">
+     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" />
+    </td>
+    <td>
+     <h1>WeBWorK <em>mod_perl</em></h1>
+     <!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "-->
+    </td>
+   </tr>
+   <tr valign="top">
+    <td>
+     <div>
+      <small>
+       <strong>Quick Links</strong><br />
+       <!--#quicklinks-->
+      </small>
+     </div>
+     <hr />
+     <div>
+      <small>
+       <strong>Siblings</strong><br />
+       <!--#siblings-->
+      </small>
+     </div>
+    </td>
+    <td>
+     <div align="center">
+      <!--#nav style="image" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
+     </div>
+     <h1><!--#title--></h1>
+     <!--#body-->
+    </td>
+   </tr>
+  </table>
+ </body>
+</html>
