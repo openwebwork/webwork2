@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.24 2004/07/07 22:45:40 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.25 2004/08/10 15:52:05 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,13 +46,15 @@ sub body {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $ce = $r->ce;
-
+	
+	my $user = $r->param('user');
+	
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
-		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
+		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to assign problem sets.")
-		unless $authz->hasPermissions($r->param("user"), "assign_problem_sets");
+		unless $authz->hasPermissions($user, "assign_problem_sets");
 
 	
 	print CGI::p("Select one or more sets and one or more users below to assign/unassign"
