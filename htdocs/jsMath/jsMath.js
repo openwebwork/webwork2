@@ -2,7 +2,7 @@
  * 
  *  jsMath: Mathematics on the Web
  *  
- *  Version: 1.0
+ *  Version: 1.0ww
  *  
  *  This jsMath package makes it possible to display mathematics in HTML pages
  *  that are viewable by a wide range of browsers on both the Mac and the IBM PC,
@@ -40,24 +40,44 @@
 if (window.jsMath) {
   /*
    *  We've been loaded a second time, so we want to do asynchronous
-   *  processing instead.  First, make ProcessBeforeShowing() do nothing,
-   *  and save a copy of the original ProcessComplete().   Now,
-   *  make ProcessComplete() do the old version then check if there
-   *  are more items to be processed, and if so, do them.
-   *  Finally, start a Process() after a little bit.
-   *  (New math may show up while this is occuring, which is why we
-   *  need to keep looking.  Fragile, but OK for now).
+   *  processing instead.
+   *
+   *  First, mark that we have made the patches, and that we aren't
+   *  processing math at the moment.
+   *  Save a copy of the original ProcessComplete function,
+   *   and replace ProcessComplete with on that does the old
+   *   function, then looks for more math to process.  If there
+   *   is some, continue processing, otherwise say we are done.
+   *
+   *  Now make ProcessBeforeShowing check to see if we
+   *    are already processing (in which case, we'll keep doing so
+   *    until there is no more math), otherwise,
+   *    start processing the math.
    */
   if (!jsMath.WW_patched) {
     jsMath.WW_patched = 1;
-    jsMath.ProcessBeforeShowing = function () {};
+    jsMath.isProcessing = 0;
+
     jsMath.OldProcessComplete = jsMath.ProcessComplete;
+
     jsMath.ProcessComplete = function () {
       jsMath.OldProcessComplete();
       jsMath.element = jsMath.GetMathElements();
-      if (jsMath.element.length > 0) {jsMath.Process()}
+      if (jsMath.element.length > 0) {
+        window.status = 'Processing Math...';
+	setTimeout('jsMath.ProcessElements(0)',jsMath.delay);
+      } else {
+        jsMath.isProcessing = 0;
+      }
     }
-    setTimeout('jsMath.Process()',100);
+
+    jsMath.ProcessBeforeShowing = function () {
+      if (!jsMath.isProcessing) {
+        jsMath.isProcessing = 1;
+	jsMath.Process();
+      }
+    }
+
   }
 } else {
 
