@@ -49,7 +49,7 @@ MaxRequestsPerChild 100
 # This DocumentRoot doesn't actually make a lot of sense.  In a
 # WeBWorK mod_perl system, there is no static document root, but the
 # DocumentRoot does have to exist, and not have a subdirectory
-# named "webwork".  It suffices.
+# named "webwork2".  It suffices.
 DocumentRoot "!WEBWORK_ROOT!/htdocs"
 
 # This alias, however, is important.
