@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.5 2004/05/13 19:58:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.6 2004/05/17 15:39:35 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,7 @@ use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 sub loginstatus { "" }
 sub links { "" }
+sub options { "" };
 
 sub body {
 	my ($self) = @_;
