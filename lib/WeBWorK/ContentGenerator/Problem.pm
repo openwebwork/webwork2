@@ -222,22 +222,22 @@ sub body {
 		p($pg->{body_text}),
 		p(submit(-name=>"submitAnswers", -label=>"Submit Answers")),
 		viewOptions($displayMode, \%must, \%can, \%will),
-		endform(),
-		hr();
+		endform();
 	
 	# debugging stuff
-	print
-		h2("debugging information"),
-		h3("form fields"),
-		ref2string($formFields),
-		h3("user object"),
-		ref2string($user),
-		h3("set object"),
-		ref2string($set),
-		h3("problem object"),
-		ref2string($problem),
-		h3("PG object"),
-		ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	#print
+	#	hr(),
+	#	h2("debugging information"),
+	#	h3("form fields"),
+	#	ref2string($formFields),
+	#	h3("user object"),
+	#	ref2string($user),
+	#	h3("set object"),
+	#	ref2string($set),
+	#	h3("problem object"),
+	#	ref2string($problem),
+	#	h3("PG object"),
+	#	ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	
 	return "";
 }
