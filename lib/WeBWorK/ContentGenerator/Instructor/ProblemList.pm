@@ -105,7 +105,6 @@ sub initialize {
 			if ($forOneUser) {
 				my $userProblemRecord = $db->getUserProblem($editForUser[0], $setName, $problem);
 				foreach my $field (@{PROBLEM_USER_FIELDS()}) {
-					warn "$field\n";
 					my $paramName = "problem.${problem}.${field}";
 					if (defined($r->param($paramName))) {
 						$userProblemRecord->$field($r->param($paramName));
