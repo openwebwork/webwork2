@@ -220,6 +220,16 @@ sub body {
 
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 	
+	my $userCount = $db->listUsers();
+	my $setUserCount = $db->listSetUsers($setName);
+	my $userCountMessage = "This set is assigned to " . $self->userCountMessage($setUserCount, $userCount) . ".";
+
+	if (@editForUser) {
+		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
+	} else {
+		print CGI::p($userCountMessage);
+	}
+	
 	## Problems Form ##
 	my @problemList = $db->listGlobalProblems($setName);
 	print CGI::a({name=>"problems"});
