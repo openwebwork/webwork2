@@ -621,10 +621,11 @@ sub body {
 	
 	# arguments for answer inspection button
 	my $prof_url = $ce->{webworkURLs}->{oldProf};
+	my $webworkURL = $ce->{webworkURLs}->{root};
 	my $cgi_url = $prof_url;
 	$cgi_url=~ s|/[^/]*$||;  # clip profLogin.pl
 	my $authen_args = $self->url_authen_args();
-	my $showPastAnswersURL = "$cgi_url/showPastAnswers.pl";
+	my $showPastAnswersURL = "$webworkURL/$courseName/instructor/show_answers/";
 	
 	# print answer inspection button
 	if ($self->{permissionLevel} > 0) {
@@ -632,9 +633,9 @@ sub body {
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"information"),"\n",
 			$self->hidden_authen_fields,"\n",
 			CGI::hidden(-name => 'course',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'probNum', -value=>$problem->problem_id), "\n",
-			CGI::hidden(-name => 'setNum',  -value=>$problem->set_id), "\n",
-			CGI::hidden(-name => 'User',    -value=>$problem->user_id), "\n",
+			CGI::hidden(-name => 'problemNumber', -value=>$problem->problem_id), "\n",
+			CGI::hidden(-name => 'setName',  -value=>$problem->set_id), "\n",
+			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
 			CGI::p( {-align=>"left"},
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 			), "\n",
