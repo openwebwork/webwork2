@@ -22,7 +22,7 @@ sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my (
-		$courseEnv,
+		$ce,
 		$user,
 		$key,
 		$set,
@@ -35,14 +35,14 @@ sub new {
 	) = @_;
 	
 	# write timing log entry
-	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
-		"user=".$user->user_id.",problem=".$courseEnv->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
+	writeTimingLogEntry($ce, "WeBWorK::PG::new",
+		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
 		"begin");
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
 	local $SIG{__WARN__} = sub { $warnings .= shift }
-		if $courseEnv->{pg}->{options}->{catchWarnings};
+		if $ce->{pg}->{options}->{catchWarnings};
 	
 	# create a Translator
 	#warn "PG: creating a Translator\n";
@@ -51,15 +51,15 @@ sub new {
 	# set the directory hash
 	#warn "PG: setting the directory hash\n";
 	$translator->rh_directories({
-		courseScriptsDirectory => $courseEnv->{webworkDirs}->{macros},
-		macroDirectory         => $courseEnv->{courseDirs}->{macros},
-		templateDirectory      => $courseEnv->{courseDirs}->{templates},
-		tempDirectory          => $courseEnv->{courseDirs}->{html_temp},
+		courseScriptsDirectory => $ce->{pg}->{directories}->{macros},
+		macroDirectory         => $ce->{courseDirs}->{macros},
+		templateDirectory      => $ce->{courseDirs}->{templates},
+		tempDirectory          => $ce->{courseDirs}->{html_temp},
 	});
 	
 	# evaluate modules and "extra packages"
 	#warn "PG: evaluating modules and \"extra packages\"\n";
-	my @modules = @{ $courseEnv->{pg}->{modules} };
+	my @modules = @{ $ce->{pg}->{modules} };
 	foreach my $module_packages_ref (@modules) {
 		my ($module, @extra_packages) = @$module_packages_ref;
 		# the first item is the main package
@@ -71,7 +71,7 @@ sub new {
 	# set the environment (from defineProblemEnvir)
 	#warn "PG: setting the environment (from defineProblemEnvir)\n";
 	my $envir = defineProblemEnvir(
-		$courseEnv,
+		$ce,
 		$user,
 		$key,
 		$set,
@@ -91,7 +91,7 @@ sub new {
 	# that the module loading does -- have a list of macros to load unrestrictedly.
 	#warn "PG: loading IO.pl, PG.pl, and dangerousMacros.pl using unrestricted_load\n";
 	foreach (qw(IO.pl PG.pl dangerousMacros.pl)) {
-		my $macroPath = $courseEnv->{webworkDirs}->{macros} . "/$_";
+		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
 		warn "Error while loading $macroPath: $err" if $err;
 	}
@@ -103,7 +103,7 @@ sub new {
 	# store the problem source
 	#warn "PG: storing the problem source\n";
 	my $sourceFile = $problem->source_file;
-	$sourceFile = $courseEnv->{courseDirs}->{templates}."/".$sourceFile
+	$sourceFile = $ce->{courseDirs}->{templates}."/".$sourceFile
 		unless ($sourceFile =~ /^\//);
 	eval { $translator->source_string(readFile($sourceFile)) };
 	if ($@) {
@@ -129,7 +129,7 @@ EOF
 	$translator->rf_safety_filter(\&safetyFilter);
 	
 	# write timing log entry -- the translator is now all set up
-	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new",
+	writeTimingLogEntry($ce, "WeBWorK::PG::new",
 		"initialized",
 		"intermediate");
 	
@@ -149,7 +149,7 @@ EOF
 	# HTML_dpng, on the other hand, uses an ImageGenerator. We have to
 	# render the queued equations.
 	if ($envir->{imagegen}) {
-		my $sourceFile = $courseEnv->{courseDirs}->{templates} . "/" . $problem->source_file;
+		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
 		my %mtimeOption = -e $sourceFile
 			? (mtime => (stat $sourceFile)[9])
 			: ();
@@ -189,7 +189,7 @@ EOF
 		# reference code when it would be difficult.)
 		#warn "PG: installing a grader\n";
 		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
-			|| $courseEnv->{pg}->{options}->{grader};
+			|| $ce->{pg}->{options}->{grader};
 		$grader = $translator->rf_std_problem_grader
 			if $grader eq "std_problem_grader";
 		$grader = $translator->rf_avg_problem_grader
@@ -208,7 +208,7 @@ EOF
 	}
 	
 	# write timing log entry
-	writeTimingLogEntry($courseEnv, "WeBWorK::PG::new", "", "end");
+	writeTimingLogEntry($ce, "WeBWorK::PG::new", "", "end");
 	
 	# return an object which contains the translator and the results of
 	# the translation process. this is DIFFERENT from the "format expected
@@ -230,7 +230,7 @@ EOF
 
 sub defineProblemEnvir {
 	my (
-		$courseEnv,
+		$ce,
 		$user,
 		$key,
 		$set,
@@ -281,7 +281,7 @@ sub defineProblemEnvir {
 	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
-	$envir{courseName}          = $courseEnv->{courseName};
+	$envir{courseName}          = $ce->{courseName};
 	
 	# Student Information
 	# ADDED: studentID
@@ -304,12 +304,12 @@ sub defineProblemEnvir {
 	# ADDED: externalLaTeXPath, externalDvipngPath,
 	#        externalGif2EpsPath, externalPng2EpsPath
 	
-	$envir{externalTTHPath}      = $courseEnv->{externalPrograms}->{tth};
-	$envir{externalLaTeXPath}    = $courseEnv->{externalPrograms}->{latex};
-	$envir{externalDvipngPath}   = $courseEnv->{externalPrograms}->{dvipng};
-	$envir{externalGif2EpsPath}  = $courseEnv->{externalPrograms}->{gif2eps};
-	$envir{externalPng2EpsPath}  = $courseEnv->{externalPrograms}->{png2eps};
-	$envir{externalGif2PngPath}  = $courseEnv->{externalPrograms}->{gif2png};
+	$envir{externalTTHPath}      = $ce->{externalPrograms}->{tth};
+	$envir{externalLaTeXPath}    = $ce->{externalPrograms}->{latex};
+	$envir{externalDvipngPath}   = $ce->{externalPrograms}->{dvipng};
+	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
+	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
+	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	
 	# Directories and URLs
 	# REMOVED: courseName
@@ -318,15 +318,15 @@ sub defineProblemEnvir {
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
 	$envir{classDirectory}         = undef;
-	$envir{courseScriptsDirectory} = $courseEnv->{webworkDirs}->{macros}."/";
-	$envir{htmlDirectory}          = $courseEnv->{courseDirs}->{html}."/";
-	$envir{htmlURL}                = $courseEnv->{courseURLs}->{html}."/";
-	$envir{macroDirectory}         = $courseEnv->{courseDirs}->{macros}."/";
-	$envir{templateDirectory}      = $courseEnv->{courseDirs}->{templates}."/";
-	$envir{tempDirectory}          = $courseEnv->{courseDirs}->{html_temp}."/";
-	$envir{tempURL}                = $courseEnv->{courseURLs}->{html_temp}."/";
+	$envir{courseScriptsDirectory} = $ce->{pg}->{directories}->{macros}."/";
+	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
+	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
+	$envir{macroDirectory}         = $ce->{courseDirs}->{macros}."/";
+	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";
+	$envir{tempDirectory}          = $ce->{courseDirs}->{html_temp}."/";
+	$envir{tempURL}                = $ce->{courseURLs}->{html_temp}."/";
 	$envir{scriptDirectory}        = undef;
-	$envir{webworkDocsURL}         = $courseEnv->{webworkURLs}->{docs}."/";
+	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
 	# FIXME: this is HTML_img mode-specific
 	#$envir{dvipngTempDir}          = $options->{displayMode} eq 'images'
 	#	? makeTempDirectory($envir{tempDirectory}, "webwork-dvipng")
@@ -334,13 +334,13 @@ sub defineProblemEnvir {
 	
 	# Information for sending mail
 	
-	$envir{mailSmtpServer} = $courseEnv->{mail}->{smtpServer};
-	$envir{mailSmtpSender} = $courseEnv->{mail}->{smtpSender};
-	$envir{ALLOW_MAIL_TO}  = $courseEnv->{mail}->{allowedRecipients};
+	$envir{mailSmtpServer} = $ce->{mail}->{smtpServer};
+	$envir{mailSmtpSender} = $ce->{mail}->{smtpSender};
+	$envir{ALLOW_MAIL_TO}  = $ce->{mail}->{allowedRecipients};
 	
 	# Default values for evaluating answers
 	
-	my $ansEvalDefaults = $courseEnv->{pg}->{ansEvalDefaults};
+	my $ansEvalDefaults = $ce->{pg}->{ansEvalDefaults};
 	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
 	
 	# ----------------------------------------------------------------------
@@ -350,7 +350,7 @@ sub defineProblemEnvir {
 		
 	# Object for generating equation images
 	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
-		tempDir  => $courseEnv->{webworkDirs}->{tmp}, # global temp dir
+		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
 		dir	 => $envir{tempDirectory},
 		url	 => $envir{tempURL},
 		basename => $basename,
@@ -360,14 +360,14 @@ sub defineProblemEnvir {
 	
 	# Other things...
 	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
-	$envir{PROBLEM_GRADER_TO_USE}    = $courseEnv->{pg}->{options}->{grader};
-	$envir{PRINT_FILE_NAMES_FOR}     = $courseEnv->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
+	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
+	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
 	
 	# variables for interpreting capa problems.
-	$envir{CAPA_Tools}               = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
-	$envir{CAPA_MCTools}             = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
-	$envir{CAPA_Graphics_URL}        = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
-	$envir{CAPA_GraphicsDirectory}   = $courseEnv->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
+	$envir{CAPA_Tools}               = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Tools};
+	$envir{CAPA_MCTools}             = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_MCTools};
+	$envir{CAPA_Graphics_URL}        = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_Graphics_URL};
+	$envir{CAPA_GraphicsDirectory}   = $ce->{pg}->{specialPGEnvironmentVars}->{CAPA_GraphicsDirectory};
 	
 	return \%envir;
 }
@@ -413,7 +413,7 @@ __END__
 =head1 SYNOPSIS
 
  $pg = WeBWorK::PG->new(
-	 $courseEnv,  # a WeBWorK::CourseEnvironment object
+	 $ce,         # a WeBWorK::CourseEnvironment object
 	 $user,       # a WeBWorK::DB::Record::User object
 	 $sessionKey,
 	 $set,        # a WeBWorK::DB::Record::UserSet object
