@@ -63,10 +63,11 @@ sub dispatch($) {
 	# Create the @components array, which contains the path specified in the URL
 	my($junk, @components) = split "/", $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
+	my $pg_root = $r->dir_config('pg_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
 	
 	# Try to get the course environment.
-	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $course);};
+	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $pg_root, $course);};
 	if ($@) { # If there was an error getting the requested course
 		# TODO: display an error page.  For now, 404 it.
 		warn $@;

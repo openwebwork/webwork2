@@ -29,6 +29,7 @@ PerlFreshRestart On
     PerlHandler Apache::WeBWorK
 
     PerlSetVar webwork_root !WEBWORK_ROOT!
+    PerlSetVar pg_root !PG_ROOT!
     <Perl>
 	use lib '!WEBWORK_ROOT!/lib';
 	use lib '!PG_ROOT!/lib';

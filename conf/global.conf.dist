@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.21 2003-06-05 20:48:39 sh002i Exp $
+# $Id: global.conf.dist,v 1.22 2003-06-06 21:47:23 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -12,6 +12,7 @@
 #
 #         $webworkRoot    directory that contains the WeBWorK distribution
 #         $webworkURL     base URL handled by Apache::WeBWorK
+#         $pgRoot         directory that contains the PG distribution
 #         $courseName     name of the course being used
 
 ################################################################################
@@ -25,7 +26,7 @@
 	courses => "$webworkRoot/courses",
 	lib     => "$webworkRoot/lib",
 	logs    => "$webworkRoot/logs",
-	macros  => "$webworkRoot/macros",
+	macros  => "$pgRoot/macros",
 	tmp     => "$webworkRoot/tmp",
 );
 

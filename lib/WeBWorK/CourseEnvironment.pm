@@ -17,22 +17,25 @@ use warnings;
 use Safe;
 use WeBWorK::Utils qw(readFile);
 
-# new($invocant, $webworkRoot, $courseName)
-# $invocant		implicitly set by caller
-# $webworkRoot		directory that contains the WeBWorK distribution
-# $webworkURLRoot	URL that points to the WeBWorK system
+# new($invocant, $webworkRoot, $webworkURLRoot, $pgRoot, $courseName)
+# $invocant             implicitly set by caller
+# $webworkRoot          directory that contains the WeBWorK distribution
+# $webworkURLRoot       URL that points to the WeBWorK system
+# $pgRoot               directory that contains the PG distribution
 # $courseName		name of the course being used
 sub new {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
 	my $webworkRoot = shift;
 	my $webworkURLRoot = shift;
+	my $pgRoot = shift;
 	my $courseName = shift || "";
 	my $safe = Safe->new;
 	
 	# set up some defaults that the environment files will need
 	$safe->reval("\$webworkRoot = '$webworkRoot'");
 	$safe->reval("\$webworkURLRoot = '$webworkURLRoot'");
+	$safe->reval("\$pgRoot = '$pgRoot'");
 	$safe->reval("\$courseName = '$courseName'");
 	
 	# determine location of globalEnvironmentFile

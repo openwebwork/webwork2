@@ -21,6 +21,7 @@ your httpd.conf file to achieve this:
  		SetHandler perl-script
  		PerlHandler Apache::WeBWorK
  		PerlSetVar webwork_root /path/to/webwork-modperl
+ 		PerlSetVar pg_root /path/to/pg
  		<Perl>
  			use lib '/path/to/webwork-modperl/lib';
  			use lib '/path/to/pg/lib';
