@@ -1,9 +1,12 @@
 #!/bin/sh
+
+# Set the following values to correspond to your local configuration
 HTTPD=httpd
+WEBWORKUSER=yourname
 WEBWORKROOT=/home/yourname/webwork-modperl
 
-CONFIG=${WEBWORKROOT}/conf/httpd-wwmp-malsyned.conf
-PID=${WEBWORKROOT}/logs/httpd.pid
+CONFIG=$WEBWORKROOT/conf/httpd-wwmp-$WEBWORKUSER.conf
+PID=$WEBWORKROOT/logs/httpd.pid
 
 usage() {
 	echo "$0 { start | stop | restart }"
