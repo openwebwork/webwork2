@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.57 2004/06/08 17:07:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.59 2004/06/17 18:12:56 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,7 @@ use WeBWorK::Utils qw(readFile formatDateTime parseDateTime list2hash readDirect
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
 
-use constant SET_FIELDS => [qw(open_date due_date answer_date set_header problem_header published)];
+use constant SET_FIELDS => [qw(open_date due_date answer_date set_header hardcopy_header published)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -345,10 +345,10 @@ sub body {
 #						@{$overrideArgs{set_header}})."\n",
 # FIXME  we're not using this right at the moment as far as I know.  There may someday be a use for it, so don't take this out yet.
 # 			setRowHTML( "Problem Header:", 
-# 						"problem_header", 
-# 						$setRecord->problem_header, 
+# 						"hardcopy_header", 
+# 						$setRecord->hardcopy_header, 
 # 						undef, 
-# 						@{$overrideArgs{problem_header}})."\n",
+# 						@{$overrideArgs{hardcopy_header}})."\n",
 			CGI::td({}, [	"Set Header:" , 
 					($forOneUser) 
 						? $setRecord->set_header || "None selected."

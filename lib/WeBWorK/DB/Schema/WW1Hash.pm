@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.24 2004/03/25 00:28:04 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.25 2004/06/17 20:10:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -689,7 +689,7 @@ sub hash2set {
 		user_id        => defined $hash{stlg} ? $hash{stlg} : "",
 		set_id         => defined $hash{stnm} ? $hash{stnm} : "",
 		set_header     => defined $hash{shfn} ? $hash{shfn} : "",
-		problem_header => defined $hash{phfn} ? $hash{phfn} : "",
+		hardcopy_header => defined $hash{phfn} ? $hash{phfn} : "",
 		open_date      => defined $hash{opdt} ? $hash{opdt} : "",
 		due_date       => defined $hash{dudt} ? $hash{dudt} : "",
 		answer_date    => defined $hash{andt} ? $hash{andt} : "",
@@ -721,7 +721,7 @@ sub set2hash {
 		stlg => $Set->user_id,
 		stnm => $Set->set_id,
 		shfn => $Set->set_header,
-		phfn => $Set->problem_header,
+		phfn => $Set->hardcopy_header,
 		opdt => $Set->open_date,
 		dudt => $Set->due_date,
 		andt => $Set->answer_date,

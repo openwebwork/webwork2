@@ -89,8 +89,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header problem_header) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header problem_header) ];
+use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date set_header hardcopy_header) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date set_header hardcopy_header) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -117,7 +117,7 @@ use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_
 use constant SORT_SUBS => {
 	set_id		=> \&bySetID,
 	set_header	=> \&bySetHeader,
-	problem_header	=> \&byProblemHeader,
+	hardcopy_header	=> \&byHardcopyHeader,
 	open_date	=> \&byOpenDate,
 	due_date	=> \&byDueDate,
 	answer_date	=> \&byAnswerDate,
@@ -136,7 +136,7 @@ use constant  FIELD_PROPERTIES => {
 		size => 10,
 		access => "readwrite",
 	},
-	problem_header => {
+	hardcopy_header => {
 		type => "filelist",
 		size => 10,
 		access => "readwrite",
@@ -234,7 +234,7 @@ sub body {
 		filename
 		set_id
 		set_header
-		problem_header
+		hardcopy_header
 		open_date
 		due_date
 		answer_date
@@ -246,7 +246,7 @@ sub body {
 		"Set Definition Filename",
 		"Set Name", 
 		"Set Header", 
-		"Paper Header", 
+		"Hardcopy Header", 
 		"Open Date", 
 		"Due Date", 
 		"Answer Date", 
@@ -585,12 +585,12 @@ sub sort_form {
 		"Primary sort: ",
 		CGI::popup_menu(
 			-name => "action.sort.primary",
-			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
+			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date published)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 			-labels => {
 				set_id		=> "Set Name",
 				set_header 	=> "Set Header",
-				problem_header	=> "Paper Header",
+				hardcopy_header	=> "Hardcopy Header",
 				open_date	=> "Open Date",
 				due_date	=> "Due Date",
 				answer_date	=> "Answer Date",
@@ -601,12 +601,12 @@ sub sort_form {
 		" Secondary sort: ",
 		CGI::popup_menu(
 			-name => "action.sort.secondary",
-			-values => [qw(set_id set_header problem_header open_date due_date answer_date published)],
+			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date published)],
 			-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 			-labels => {
 				set_id		=> "Set Name",
 				set_header 	=> "Set Header",
-				problem_header	=> "Paper Header",
+				hardcopy_header	=> "Hardcopy Header",
 				open_date	=> "Open Date",
 				due_date	=> "Due Date",
 				answer_date	=> "Answer Date",
@@ -630,7 +630,7 @@ sub sort_handler {
 	my %names = (
 		set_id		=> "Set Name",
 		set_header	=> "Set Header",
-		problem_header	=> "Paper Header",
+		hardcopy_header	=> "Hardcopy Header",
 		open_date	=> "Open Date",
 		due_date	=> "Due Date",
 		answer_date	=> "Answer Date",
@@ -886,7 +886,7 @@ sub create_handler {
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetName =~ /\S/;
 	$newSetRecord->set_id($newSetName);
 	$newSetRecord->set_header("");
-	$newSetRecord->problem_header("");
+	$newSetRecord->hardcopy_header("");
 	$newSetRecord->open_date("0");
 	$newSetRecord->due_date("0");
 	$newSetRecord->answer_date("0");
@@ -1170,7 +1170,7 @@ sub saveEdit_handler {
 
 sub bySetID         { $a->set_id         cmp $b->set_id         }
 sub bySetHeader     { $a->set_header     cmp $b->set_header     }
-sub byProblemHeader { $a->problem_header cmp $b->problem_header }
+sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
 sub byOpenDate      { $a->open_date      <=> $b->open_date      }
 sub byDueDate       { $a->due_date       <=> $b->due_date       }
 sub byAnswerDate    { $a->answer_date    <=> $b->answer_date    }
@@ -1245,7 +1245,7 @@ sub importSetsFromDef {
 		my $newSetRecord = $db->newGlobalSet;
 		$newSetRecord->set_id($setName);
 		$newSetRecord->set_header($screenHeaderFile);
-		$newSetRecord->problem_header($paperHeaderFile);
+		$newSetRecord->hardcopy_header($paperHeaderFile);
 		$newSetRecord->open_date($openDate);
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Utils.pm,v 1.12 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Utils.pm,v 1.13 2004/06/15 18:47:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,7 @@ use constant RECORDHASH => {
 #		['stlg', "user_id"       ],
 #		['stnm', "set_id"        ],
 #		['shfn', "set_header"    ],
-#		['phfn', "problem_header"],
+#		['phfn', "hardcopy_header"],
 #		['opdt', "open_date"     ],
 #		['dudt', "due_date"      ],
 #		['andt', "answer_date"   ],
