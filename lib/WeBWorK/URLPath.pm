@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.14 2004/05/28 15:54:25 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.15 2004/06/01 14:44:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,8 +58,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
- instructor_problem_list             /$courseID/instructor/sets/$setID/problems/
- [instructor_problem_detail]         /$courseID/instructor/sets/$setID/problems/$problemID/
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users/
  
  instructor_add_users                /$courseID/instructor/add_users/
@@ -264,22 +262,13 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
 	instructor_set_detail => {
-		name    => '$setID',
+		name    => 'Set Detail for set $setID',
 		parent  => 'instructor_set_list',
-		kids    => [ qw/instructor_problem_list instructor_users_assigned_to_set/ ],
+		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetEditor',
-	},
-	instructor_problem_list => {
-		name    => 'Problems',
-		parent  => 'instructor_set_detail',
-		kids    => [ qw// ],
-		match   => qr|^problems/|,
-		capture => [ qw// ],
-		produce => 'problems/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemList',
+		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',
 	},
 	instructor_users_assigned_to_set => {
 		name    => 'Users Assigned to Set',
