@@ -35,7 +35,7 @@ sub go {
 	
 		$self->initialize($setName,$problemNumber);  # write the necessary files
 													 # return file path for viewing problem
-													 # in $self->{ce}->{currentSourceFilePath}
+													 # in $self->{currentSourceFilePath}
 		#redirect to view the problem
 		
 		my $hostname 		= 	$r->hostname();
@@ -51,8 +51,8 @@ sub go {
 		$viewURL		   .=	$self->url_authen_args;
 		$viewURL		   .=   "&displayMode=$displayMode&problemSeed=$problemSeed";   # optional displayMode and problemSeed overrides
 		$viewURL		   .=	"&editMode=temporaryFile";
-		$viewURL		   .=	'&sourceFilePath='.$self->{ce}->{currentSourceFilePath}; # path to pg text for viewing
-		$viewURL		   .=	"&submit_button=$submit_button";                         # allows Problem.pg to recognize state
+		$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
+		$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
 		$viewURL		   .=   '&editErrors='.$self->{ce}->{editErrors};																				 # of problem being viewed.
 		$r->header_out(Location => $viewURL );
 		return REDIRECT;
@@ -102,28 +102,28 @@ sub initialize {
 	if (not defined($submit_button) ) {
 		# this is a fresh editing job
 		# copy the pg file to a new file with the same name with .tmp added
-		# store this name in the $ce->currentSourceFilePath for use in body 
+		# store this name in the $self->currentSourceFilePath for use in body 
 		
 		eval { $problemContents			=	WeBWorK::Utils::readFile($problemPath)  
 		};  # try to read file
 		$problemContents = $@ if $@;
 		$currentSourceFilePath			=	"$problemPath.$editFileSuffix"; 
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath; 
+		$self->{currentSourceFilePath}	=	$currentSourceFilePath; 
 	} elsif ($submit_button	eq 'Refresh' ) {
-		# grab the problemContents from the form and save it to the tmp file
-		# store tmp file name in the $ce->currentSourceFilePath for use in body 
+		# grab the problemContents from the form in order to save it to the tmp file
+		# store tmp file name in the $self->currentSourceFilePath for use in body 
 		
 		$problemContents				=	$r->param('problemContents');
 		$currentSourceFilePath			=	"$problemPath.$editFileSuffix";	
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;
+		$self->{currentSourceFilePath}	=	$currentSourceFilePath;
 	} elsif ($submit_button eq 'Save') {
-		# grab the problemContents from the form and save it to the permanent file
-		# unlink (delete) the temporary file
-		# store the permanent file name in the $ce->problemContents for use in body 
+		# grab the problemContents from the form in order to save it to the permanent file
+		# later we will unlink (delete) the temporary file
+	 	# store permanent file name in the $self->currentSourceFilePath for use in body 
 		
 		$problemContents				=	$r->param('problemContents');
 		$currentSourceFilePath			=	"$problemPath"; 		
-		$ce->{currentSourceFilePath}	=	$currentSourceFilePath;		
+		$self->{currentSourceFilePath}	=	$currentSourceFilePath;		
 	} else {
 		# give a warning
 		die "Unrecognized submit command $submit_button";
@@ -138,25 +138,26 @@ sub initialize {
 		print OUTPUTFILE $problemContents;
 		close OUTPUTFILE;
 	};
+	# record an error string for later use if there was a difficulty in writing to the file
+	# FIXME is this string every inspected?
 	my $errors = $@ if $@;
 	if (  $errors)   {
 	
-		$ce->{editErrors}	= "Unable to write to $currentSourceFilePath: $errors";
+		$self->{editErrors}	= "Unable to write to $currentSourceFilePath: $errors";
 		
-	} else {	# unlink the temporary file if there are no errors.
-		$ce->{editErrors}	=	'';
-		unlink("$problemPath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';
 		
+	} else {	
+		# unlink the temporary file if there are no errors and the save button has been pushed
+	    
+		$self->{editErrors}	=	'';
+		unlink("$problemPath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';		
 	};
 	
 		
-	# return values.  FIXME  -- is this the right way to pass the values to body??
-	# Should temporary results be passed in self or in ce??
-	# $ce->{viewProblemURL}	=	$viewProblemURL;
-	$ce->{problemPath} 		= 	$problemPath;
-	$self->{displayMode}	=	$displayMode;
-	$self->{problemSeed}	=	$problemSeed;
-#	$ce->{path_components}	=	join("/",$setID,$problemNumber);
+	# return values for use in the body subroutine
+	$self->{problemPath}    =   $problemPath;
+	$self->{displayMode}    =   $displayMode;
+	$self->{problemSeed}    =   $problemSeed;
 	
 	# FIXME  there is no way to edit in a temporary file -- all editing takes place on disk!!!
 
@@ -168,11 +169,11 @@ sub body {
 	my $self = shift;
 	
 	# test area
-	my $r 		= 	$self->{r};
-	my $db 		= 	$self->{db};
-	my $ce		=	$self->{ce};
-	my $user 	= 	$r->param('user');
-	my $key 	= 	$db->getKey($user)->key();
+	my $r       =   $self->{r};
+	my $db      =   $self->{db};
+	my $ce      =   $self->{ce};
+	my $user    =   $r->param('user');
+	my $key     =   $db->getKey($user)->key();
 	
 	
 	################
@@ -181,10 +182,8 @@ sub body {
 	#     $problemPath  -- 
 	#     $formURL -- given by $r->uri
 	#     $tmpProblemPath 
-	#my ($problemPath,$formURL,$tmpProblemPath) = $self->initialize();
-	my $problemPath 	= 	$ce->{problemPath};
+	my $problemPath 	= 	$self->{problemPath};
 
-	#my $tmpProblemPath	=	$ce->{tmpProblemPath};
 	
 	
 
