@@ -56,13 +56,15 @@ sub body {
 	
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
+	# This code will require changing if the permission and user tables ever have different keys.
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action=>$r->uri()});
 	print CGI::start_table({});
 	print CGI::Tr({},
-		CGI::td({}, [
-			$db->{user}->{record}->FIELDS(),
-			grep {! m/^user_id$/} $db->{permission}->{record}->FIELDS(),
+		CGI::th({}, [
+			$db->{user}->{record}->KEYFIELDS(),
+			$db->{user}->{record}->NONKEYFIELDS(),
+			$db->{permission}->{record}->NONKEYFIELDS(),
 		])
 	);
 	
@@ -72,8 +74,9 @@ sub body {
 		
 		print CGI::Tr({},
 			CGI::td({}, [
-				(map {CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})} $userRecord->FIELDS()), 
-				(map {CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})} grep {! m/^user_id$/} $permissionLevel->FIELDS()),
+				(map {$userRecord->$_} $userRecord->KEYFIELDS),
+				(map {CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})} $userRecord->NONKEYFIELDS()), 
+				(map {CGI::input({type=>"text", size=>"8", name => "permission.".$permissionLevel->user_id().".".$_, value=>$permissionLevel->$_})} $permissionLevel->NONKEYFIELDS()),
 			])
 		);
 		
