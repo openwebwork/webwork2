@@ -13,7 +13,7 @@ WeBWorK - Dispatch requests to the appropriate ContentGenerator.
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common REDIRECT);
+use Apache::Constants qw(:common REDIRECT DONE);
 use Apache::Request;
 use WeBWorK::Authen;
 use WeBWorK::Authz;
@@ -27,7 +27,7 @@ use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
 use WeBWorK::ContentGenerator::Instructor::UserList;
-use WeBWorK::ContentGenerator::Instructor::UserList;
+use WeBWorK::ContentGenerator::Instructor::SendMail;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -69,7 +69,7 @@ sub dispatch($) {
 		return REDIRECT;
 		# *** any post data gets lost here -- fix that.
 		# (actually, it's not a problem, since all URLs generated
-		# from within the system have trailing slashes, and we don't 
+		# from within the system have trailing slashes, and we don't  
 		# need POST data from outside the system anyway!)
 	}
 	
@@ -128,12 +128,13 @@ sub dispatch($) {
 		} elsif ($arg eq "hardcopy") {
 			
 			my $hardcopyArgument = shift @components;
-			#$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
-			#$WeBWorK::timer1->start;
 			$hardcopyArgument = "" unless defined $hardcopyArgument;
+			$WeBWorK::timer1 = WeBWorK::Timing->new("hardcopy: $hardcopyArgument");
+			$WeBWorK::timer1->start;
+			
 			my $result = WeBWorK::ContentGenerator::Hardcopy->new($r, $ce, $db)->go($hardcopyArgument);
-			#$WeBWorK::timer1 ->stop;
-			#$WeBWorK::timer1 ->save;
+			$WeBWorK::timer1 ->stop;
+			$WeBWorK::timer1 ->save;
 			return $result;
 		} elsif ($arg eq "instructor") {
 			my $instructorArgument = shift @components;
@@ -157,6 +158,8 @@ sub dispatch($) {
 				}
 			} elsif ($instructorArgument eq "pgProblemEditor") {
 				$result = WeBWorK::ContentGenerator::Instructor::PGProblemEditor->new($r, $ce, $db)->go(@components);
+			} elsif ($instructorArgument eq "send_mail") {
+				$result = WeBWorK::ContentGenerator::Instructor::SendMail->new($r, $ce, $db)->go(@components);
 			}
 		} elsif ($arg eq "options") {
 			$result = WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
@@ -175,14 +178,31 @@ sub dispatch($) {
 
 			if (!defined $ps_arg) {
 				# list the problems in the problem set
+				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set");
+				$WeBWorK::timer0->start;
 				$result = WeBWorK::ContentGenerator::ProblemSet->new($r, $ce, $db)->go($problem_set);
+				$WeBWorK::timer0->continue("problem set listing is done");
+				$WeBWorK::timer0->stop;
+				$WeBWorK::timer0->save;
 			} else {
 				# We've got the name of a problem
 				my $problem = $ps_arg;
 
 				$WeBWorK::timer0 = WeBWorK::Timing->new("Problem $course:$problem_set/$problem");
 				$WeBWorK::timer0->start;
-				my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
+				my $pid = fork();
+#				if ($pid) {
+#					wait;
+#				} else {
+					my $result = WeBWorK::ContentGenerator::Problem->new($r, $ce, $db)->go($problem_set, $problem);
+#					$WeBWorK::timer0->continue("Exiting child process");
+#					#$WeBWorK::timer0->stop;
+#				    #$WeBWorK::timer0->save;
+#					eval{ APACHE::exit(0);} || warn "Error in leaving child |$@|";
+#					#  We REALLY REALLY want this grandchild to exit. But not the child.  How to do this
+#					# cleanly???? FIXME
+#				}
+				$WeBWorK::timer0->continue("Parent done waiting (teenagers!!! -- sigh)");
 				$WeBWorK::timer0->stop;
 				$WeBWorK::timer0->save;
 				return $result;
