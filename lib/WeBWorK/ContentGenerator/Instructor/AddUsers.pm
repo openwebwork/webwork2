@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.2 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.3 2003/12/12 02:24:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,34 +41,40 @@ sub initialize {
 		return;
 	}
 
-	if (defined($r->param('addStudent'))) {
-		my $newUser = $db->newUser;
-		my $newPermissionLevel = $db->newPermissionLevel;
-		my $newPassword = $db->newPassword;
-		$newUser->user_id($r->param('new_user_id'));
-		$newPermissionLevel->user_id($r->param('new_user_id'));
-		$newPassword->user_id($r->param('new_user_id'));
-		$newUser->last_name($r->param('last_name'));
-		$newUser->first_name($r->param('first_name'));
-		$newUser->student_id($r->param('student_id'));
-		$newUser->email_address($r->param('email_address'));
-		$newUser->section($r->param('section'));
-		$newUser->recitation($r->param('recitation'));
-		$newUser->comment($r->param('comment'));
-		$newUser->status('C');
-		$newPermissionLevel->permission(0);
-		#FIXME  handle errors if user exists already
-		$db->addUser($newUser);
-		$db->addPermissionLevel($newPermissionLevel);
-		$db->addPassword($newPassword);
-	 	$self->{studentEntryReport} = join("",
-	 		"Entered student", CGI::br(), 
-	        "Name: ", $newUser->last_name, ", ",$newUser->first_name,CGI::br(),
-	        " login/studentID: ", $newUser->user_id, "/",$newUser->student_id,CGI::br(),
-	        " email: ", $newUser->email_address,CGI::br(),
-	        " section: ", $newUser->section,CGI::br(),
-	       
-	    );
+	if (defined($r->param('addStudents'))) {
+		my $numberOfStudents    = $r->param('number_of_students');
+		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
+		foreach my $i (1..$numberOfStudents) {
+		    my $new_user_id        =   $r->param("new_user_id_$i");
+		    next unless defined($new_user_id) and $new_user_id;
+		    
+			my $newUser            = $db->newUser;
+			my $newPermissionLevel = $db->newPermissionLevel;
+			my $newPassword        = $db->newPassword;
+			$newUser->user_id($new_user_id);
+			$newPermissionLevel->user_id($new_user_id);
+			$newPassword->user_id($new_user_id);
+			$newUser->last_name($r->param("last_name_$i"));
+			$newUser->first_name($r->param("first_name_$i"));
+			$newUser->student_id($r->param("student_id_$i"));
+			$newUser->email_address($r->param("email_address_$i"));
+			$newUser->section($r->param("section_$i"));
+			$newUser->recitation($r->param("recitation_$i"));
+			$newUser->comment($r->param("comment_$i"));
+			$newUser->status('C');
+			$newPermissionLevel->permission(0);
+			#FIXME  handle errors if user exists already
+			$db->addUser($newUser);
+			$db->addPermissionLevel($newPermissionLevel);
+			$db->addPassword($newPassword);
+			$self->{studentEntryReport} .= join("",
+				CGI::b("Entered student: "), $newUser->last_name, ", ",$newUser->first_name,
+				CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
+				CGI::b(", email: "), $newUser->email_address,
+				CGI::b(", section: "), $newUser->section,CGI::hr(),CGI::br(),
+			   
+			);
+		}
 	}
 }
 
@@ -88,7 +94,7 @@ sub path {
 
 sub title {
 	my $self = shift;
-	return "Instructor Tools";
+	return "Add students";
 }
 
 sub body {
@@ -117,33 +123,7 @@ sub body {
 		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	return join("", 
-		CGI::start_table({-border=>2,-cellpadding=>20}),
-		CGI::Tr({-align=>'center'},
-			CGI::td(
-				CGI::a({href=>$userEditorURL}, "Edit $courseName class list")  ,
-			),
-			CGI::td(
-				CGI::a({href=>$problemSetEditorURL}, "Edit $courseName problem sets"),
-					
-			),
-			"\n",
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td([
-				CGI::a({-href=>$emailURL}, "Send e-mail to $courseName"),
-				CGI::a({-href=>$statsURL}, "Statistics for $courseName"),
-			]),
-			"\n",
-		),
-		CGI::Tr({ -align=>'center'},
-			CGI::td([
-				'WeBWorK 1.9 Instructor '.CGI::a({-href=>$full_url}, 'Tools'),
-				'Open WeBWorK 1.9 Instructor '.CGI::a({-href=>$full_url, -target=>'_new'}, 'Tools').' in new window',
-			]),
-			"\n",
-		),
-		
-		CGI::end_table(),
+	
 		CGI::hr(),
 		CGI::p(
 			defined($self->{studentEntryReport})
@@ -155,37 +135,42 @@ sub body {
 }
 
 sub addStudentForm {
-	my $self = shift;
-	my $r = $self->{r};
-	
+	my $self            = shift;
+	my $r               = $self->{r};
+	my $numberOfStudents   = 5;
 	# Add a student form
+	
+	my @entryLines = ();
+	foreach my $i (1..$numberOfStudents) {
+		push( @entryLines, 		
+			CGI::Tr({},
+				CGI::td({},
+					[ CGI::input({name=>"last_name_$i"}),
+					  CGI::input({name=>"first_name_$i"}),
+					  CGI::input({name=>"student_id_$i",size=>"16"}),
+					  CGI::input({name=>"new_user_id_$i",size=>"10"}),
+					  CGI::input({name=>"email_address_$i"}),
+					  CGI::input({name=>"section_$i",size=>"10"}),
+					  CGI::input({name=>"recitation_$i",size=>"10"}),
+					  CGI::input({name=>"comment_$i"}),
+					]
+				)
+			),"\n",
+		);
+	}
 	return join("",
-		CGI::p("Add new students"),	
 		CGI::start_form({method=>"post", action=>$r->uri()}),
 		$self->hidden_authen_fields(),
+		CGI::input({type=>'hidden', name => "number_of_students", value => $numberOfStudents}),
 		CGI::start_table({border=>'1', cellpadding=>'2'}),
 		CGI::Tr({},
 			CGI::th({},
 				['Last Name', 'First Name', 'Student ID', 'Login Name', 'Email Address', 'Section','Recitation', 'Comment']
 			)
 		),
-		CGI::Tr({},
-			CGI::td({},
-				[ CGI::input({name=>'last_name'}),
-				  CGI::input({name=>'first_name'}),
-				  CGI::input({name=>'student_id',size=>'16'}),
-				  CGI::input({name=>'new_user_id',size=>'10'}),
-				  CGI::input({name=>'email_address'}),
-				  CGI::input({name=>'section',size=>'10'}),
-				  CGI::input({name=>'recitation',size=>'10'}),
-				  CGI::input({name=>'comment'}),
-				
-				
-				]
-			)
-		),
+		@entryLines,
 		CGI::end_table(),
-		CGI::submit({name=>"addStudent", value=>"Add Student"}),
+		CGI::submit({name=>"addStudents", value=>"Add Students"}),
 		CGI::end_form(),
 	);
 }
