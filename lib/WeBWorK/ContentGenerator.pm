@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.119 2004/10/10 20:53:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.121 2004/10/12 20:27:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,7 @@ use strict;
 use warnings;
 use Apache::Constants qw(:response);
 use Carp;
-use CGI::Pretty qw(*ul *li);
+use CGI::Pretty qw(*ul *li escapeHTML);
 use Date::Format;
 use URI::Escape;
 use WeBWorK::Template qw(template);
@@ -1426,45 +1426,93 @@ sub space2nbsp {
 
 =item errorOutput($error, $details)
 
+Used by Problem, ProblemSet, and Hardcopy to report errors encountered during
+problem rendering.
+
 =cut
 
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
+	my $r = $self->{r};
+	
+	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
+	my $method = $r->method;
+	my $uri = $r->uri;
+	my $headers = do {
+		my %headers = $r->headers_in;
+		join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
+	};
+	
 	return
-		CGI::h3("Software Error"),
-		CGI::p("[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$self->r->uri,"] ",),
+		CGI::h2("WeBWorK Error"),
 		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this
-problem. It is likely that there is an error in the problem itself. If you are
-a student, contact your professor to have the error corrected. If you are a
-professor, please consult the error output below for more information.
+problem. It is likely that there is an error in the problem itself. If you are a
+student, report this error message to your professor to have it corrected. If
+you are a professor, please consult the error output below for more information.
 EOF
-		# FIXME: this message shouldn't refer the the "problem" since it is for general error reporting
-		CGI::h3("Error messages"), CGI::p(CGI::tt($error)),
-		CGI::h3("Error context"), CGI::p(CGI::tt($details));
+		CGI::h3("Error messages"),
+		CGI::p(CGI::code($error)),
+		CGI::h3("Error details"),
+		CGI::p(CGI::code($details)),
+		CGI::h3("Request information"),
+		CGI::table({border=>"1"},
+			CGI::Tr(CGI::td("Time"), CGI::td($time)),
+			CGI::Tr(CGI::td("Method"), CGI::td($method)),
+			CGI::Tr(CGI::td("URI"), CGI::td($uri)),
+			CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
+				CGI::table($headers),
+			)),
+		);
 }
 
 =item warningOutput($warnings)
+
+Used by warnings() in this class to report warnings caught during dispatching
+and content generation.
 
 =cut
 
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
+	my $r = $self->{r};
 	
 	my @warnings = split m/\n+/, $warnings;
+	foreach my $warning (@warnings) {
+		$warning = escapeHTML($warning);
+		$warning = CGI::li(CGI::code($warning));
+	}
+	$warnings = join("", @warnings);
+	
+	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
+	my $method = $r->method;
+	my $uri = $r->uri;
+	#my $headers = do {
+	#	my %headers = $r->headers_in;
+	#	join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
+	#};
 	
 	return
-		CGI::h3("Software Warnings"),
-		CGI::p("[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$self->r->uri,"] ",),
+		CGI::h2("WeBWorK Warnings"),
 		CGI::p(<<EOF),
-WeBWorK has encountered warnings while attempting to process this problem. It
-is likely that this indicates an error or ambiguity in the problem itself. If
-you are a student, contact your professor to have the problem corrected. If you
-are a professor, please consult the warning output below for more information.
+WeBWorK has encountered warnings while processing your request. If this occured
+when viewing a problem, it was likely caused by an error or ambiguity in that
+problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If
+you are a student, reprot these warnings to your professor to have them
+corrected. If you are a professor, please consult the warning output below for
+more information.
 EOF
-		# FIXME: this message shouldn't refer the the "problem" since it is for general warning reporting
 		CGI::h3("Warning messages"),
-		CGI::ul(CGI::li(\@warnings));
+		CGI::ul($warnings),
+		CGI::h3("Request information"),
+		CGI::table({border=>"1"},
+			CGI::Tr(CGI::td("Time"), CGI::td($time)),
+			CGI::Tr(CGI::td("Method"), CGI::td($method)),
+			CGI::Tr(CGI::td("URI"), CGI::td($uri)),
+			#CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
+			#	CGI::table($headers),
+			#)),
+		);
 }
 
 =item $dateTime = parseDateTime($string, $display_tz)
