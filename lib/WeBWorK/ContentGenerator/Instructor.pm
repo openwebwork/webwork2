@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.39 2004/05/14 18:23:21 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.40 2004/06/09 02:51:30 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -364,27 +364,33 @@ sub assignProblemToAllSetUsers {
 =cut
 
 sub addProblemToSet {
-  my ($self, %args) = @_;
-  my $db = $self->r->db;
-  my $setName = $args{setName} or 
-    die "addProblemToSet called without specifying the set name.";
-  my $sourceFile = $args{sourceFile} or 
-    die "addProblemToSet called without specifying the sourceFile.";
-  # The rest of the arguments are optional
-  my $value = $args{value} || 1;
-  my $maxAttempts = $args{maxAttempts} || -1;
-  my $problemID = $args{problemID};
-  unless ($problemID) {
-    $problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
-  }
-  my $problemRecord = $db->newGlobalProblem;
-  $problemRecord->problem_id($problemID);
-  $problemRecord->set_id($setName);
-  $problemRecord->source_file($sourceFile);
-  $problemRecord->value($value);
-  $problemRecord->max_attempts($maxAttempts);
-  $db->addGlobalProblem($problemRecord);
-  return($problemRecord);
+	my ($self, %args) = @_;
+	my $db = $self->r->db;
+
+	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
+	my $setName = $args{setName};
+
+	my $sourceFile = $args{sourceFile} or 
+		die "addProblemToSet called without specifying the sourceFile.";
+
+	# The rest of the arguments are optional
+	my $value = $args{value} || 1;
+	my $maxAttempts = $args{maxAttempts} || -1;
+	my $problemID = $args{problemID};
+
+	unless ($problemID) {
+		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
+	}
+
+	my $problemRecord = $db->newGlobalProblem;
+	$problemRecord->problem_id($problemID);
+	$problemRecord->set_id($setName);
+	$problemRecord->source_file($sourceFile);
+	$problemRecord->value($value);
+	$problemRecord->max_attempts($maxAttempts);
+	$db->addGlobalProblem($problemRecord);
+
+	return $problemRecord;
 }
 
 ################################################################################
