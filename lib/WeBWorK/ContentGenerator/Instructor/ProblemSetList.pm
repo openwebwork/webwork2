@@ -9,8 +9,26 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetList - Entry point for Problem 
 
 use strict;
 use warnings;
+use Apache::Constants qw(REDIRECT);
 use CGI qw();
 use WeBWorK::Utils qw(formatDateTime);
+
+sub header {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $self->{ce};
+	my $courseName = $ce->{courseName};
+	my $root = $ce->{webworkURLs}->{root};
+	
+	if (defined $r->param('scoreSelected')) {
+		warn "scoreSelected\n";
+		$r->header_out(Location => "$root/$courseName/instructor/scoring?".$self->url_args);
+		$self->{noContent} = 1;
+		return REDIRECT;
+	}
+	$r->content_type("text/html");
+	$r->send_http_header();
+}
 
 sub initialize {
 	my $self = shift;
