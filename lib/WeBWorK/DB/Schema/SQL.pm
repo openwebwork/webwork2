@@ -206,8 +206,8 @@ sub put($$) {
 sub delete($@) {
 	my ($self, @keyparts) = @_;
 	
-	croak "(" . join(", ", @keyparts) . "): not found"
-		unless $self->exists(@keyparts);
+	#croak "(" . join(", ", @keyparts) . "): not found"
+	return 0 unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
 	my @keynames = $self->sqlKeynames();

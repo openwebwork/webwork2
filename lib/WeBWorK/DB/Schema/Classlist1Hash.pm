@@ -110,7 +110,8 @@ sub delete($$) {
 	my ($self, $userID) = @_;
 	$self->{driver}->connect("rw");
 	my $hash = $self->{driver}->hash();
-	die "$userID: user not found" unless exists $hash->{$userID};
+	#die "$userID: user not found"
+	return 0 unless exists $hash->{$userID};
 	delete $hash->{$userID};
 	$self->{driver}->disconnect();
 }
