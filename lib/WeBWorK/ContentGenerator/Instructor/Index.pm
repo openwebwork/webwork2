@@ -31,7 +31,7 @@ sub body {
 	my $prof_url = $ce->{webworkURLs}->{oldProf};
 	my $full_url = "$prof_url?course=$courseName&$authen_args";
 	my $userEditorURL = "users/?" . $self->url_args;
-	my $problemSetEditorURL = "set/?" . $self->url_args;
+	my $problemSetEditorURL = "sets/?" . $self->url_args;
 
 	return 
 		CGI::p("\n".
