@@ -67,6 +67,19 @@ sub path {
 	);
 }
 
+sub nav {
+	my ($self, $setName, $args) = @_;
+	
+	my $ce = $self->{courseEnvironment};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
+	my @links = ("Problem Sets" => "$root/$courseName");
+	my $tail = "";
+	
+	return $self->navMacro($args, $tail, @links);
+}
+	
+
 sub siblings {
 	my ($self, $setName) = @_;
 	
