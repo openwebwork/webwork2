@@ -2,7 +2,6 @@
 # Place something like the following in your Apache configuration to load the
 # WeBWorK module and install it as a handler for the WeBWorK system
 
-# PerlModule Apache::WeBWorK
 # PerlRequire /path/to/webwork/conf/init.pl
 # PerlSetVar webwork_root /path/to/webwork
 # <Location /webwork>
