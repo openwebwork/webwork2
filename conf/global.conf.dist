@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.78 2004/06/25 16:29:20 jj Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.79 2004/06/25 23:56:56 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -308,6 +308,16 @@ $practiceUserPrefix = "practice";
 		# to the database.  Whatever you use here, you have to
 		# create the database and grant read/write priveleges to
 		# the user listed here
+		# To create the database in mysql, as root use:
+
+		# create database DvipngDepths;
+		# use  DvipngDepths;
+		# create table depths ( md5 char(33) not null, depth smallint, PRIMARY KEY (md5)) ;
+		# grant ALL on DvipngDepths.* to webworkWrite;
+
+		# In the last statement, "webworkWrite" should match the
+		# user below
+
 		dvipng_depth_db => {
 			dbsource => 'dbi:mysql:DvipngDepths',
                         user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
