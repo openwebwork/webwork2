@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.14 2003/12/09 01:12:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -84,17 +84,21 @@ sub body {
 				# possibly do some format checking?
 				eval { $db->putPassword($passwordRecord) };
 				if ($@) {
-					print CGI::p("Couldn't change your
-					password: $@");
+					print CGI::div({style=>'color:red'},
+					                CGI::p("Couldn't change your password: $@")
+					);
 				} else {
-					print CGI::p("Your password has been
-					changed.");
+					print CGI::div({style=>'color:green'},
+					               CGI::p("Your password has been changed.")
+					);
 				}
 			} else {
-				print CGI::p("The passwords you entered in the
-				New Password and Confirm Password fields don't
-				match. Please retype your new password and try
-				again.");
+				print print CGI::div({style=>'color:red'},
+					CGI::p("The passwords you entered in the
+					New Password and Confirm Password fields don't
+					match. Please retype your new password and try
+					again.")
+				);
 			}
 		}
 	}
