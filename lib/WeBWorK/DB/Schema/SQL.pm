@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.19 2004/06/15 18:53:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.20 2004/08/10 23:55:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -57,8 +57,11 @@ sub new {
 	my ($proto, $db, $driver, $table, $record, $params) = @_;
 	my $self = $proto->SUPER::new($db, $driver, $table, $record, $params);
 	
-	# override table name if tableOverride param is given
-	$self->{table} = $params->{tableOverride} if $params->{tableOverride};
+	## override table name if tableOverride param is given
+	#$self->{table} = $params->{tableOverride} if $params->{tableOverride};
+	
+	# add sqlTable field
+	$self->{sqlTable} = $params->{tableOverride} || $self->{table};
 	
 	return $self;
 }
@@ -71,12 +74,13 @@ sub count {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @keynames = $self->sqlKeynames();
 	
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM `$table` ";
+	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-count: $stmt\n");
 	
@@ -91,13 +95,14 @@ sub list($@) {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @keynames = $self->sqlKeynames();
 	my $keynames = join(", ", @keynames);
 	
 	croak "too many keyparts for table $table (need at most: @keynames)"
 		if @keyparts > @keynames;
 	
-	my $stmt = "SELECT $keynames FROM `$table` ";
+	my $stmt = "SELECT $keynames FROM `$sqlTable` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-list: $stmt\n");
 	
@@ -112,12 +117,13 @@ sub exists($@) {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @keynames = $self->sqlKeynames();
 	
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "SELECT COUNT(*) FROM `$table` ";
+	my $stmt = "SELECT COUNT(*) FROM `$sqlTable` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-exists: $stmt\n");
 	
@@ -137,6 +143,7 @@ sub add($$) {
 		if $self->exists(@keyparts);
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @fieldnames = $self->sqlFieldnames();
 	my $fieldnames = join(", ", @fieldnames);
 	my $marks = join(", ", map { "?" } @fieldnames);
@@ -144,7 +151,7 @@ sub add($$) {
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
-	my $stmt = "INSERT INTO `$table` ($fieldnames) VALUES ($marks)";
+	my $stmt = "INSERT INTO `$sqlTable` ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
 	
 	$self->{driver}->connect("rw");
@@ -171,6 +178,7 @@ sub gets($@) {
 	my ($self, @keypartsRefList) = @_;
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @keynames = $self->sqlKeynames();
 	
 	my @records;
@@ -181,7 +189,7 @@ sub gets($@) {
 		croak "wrong number of keyparts for table $table (needs: @keynames)"
 			unless @keyparts == @keynames;
 		
-		my $stmt = "SELECT * FROM `$table` ";
+		my $stmt = "SELECT * FROM `$sqlTable` ";
 		$stmt .= $self->makeWhereClause(@keyparts);
 		$self->debug("SQL-gets: $stmt\n");
 		my $result = $self->{driver}->dbi()->selectrow_arrayref($stmt);
@@ -215,6 +223,7 @@ problem_user tables.
 sub getAll {
 	my ($self, @keyparts) = @_;
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	
 	croak "getAll: only supported for the problem_user table"
 		unless $table eq "problem" or $table eq "problem_user";
@@ -222,7 +231,7 @@ sub getAll {
 	my @keynames = $self->sqlKeynames();
 	pop @keynames; # get rid of problem_id
 	
-	my $stmt = "SELECT * FROM `$table` ";
+	my $stmt = "SELECT * FROM `$sqlTable` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-getAll: $stmt\n");
 	
@@ -258,6 +267,7 @@ sub put($$) {
 		unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @fieldnames = $self->sqlFieldnames();
 	my $fieldnames = join(", ", @fieldnames);
 	my $marks = join(", ", map { "?" } @fieldnames);
@@ -265,7 +275,7 @@ sub put($$) {
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
 	
-	my $stmt = "UPDATE `$table` SET";
+	my $stmt = "UPDATE `$sqlTable` SET";
 	while (@fieldnames) {
 		$stmt .= " " . (shift @fieldnames) . "=?";
 		$stmt .= "," if @fieldnames;
@@ -292,12 +302,13 @@ sub delete($@) {
 	return 0 unless $self->exists(@keyparts);
 	
 	my $table = $self->{table};
+	my $sqlTable = $self->{sqlTable};
 	my @keynames = $self->sqlKeynames();
 	
 	croak "wrong number of keyparts for table $table (needs: @keynames)"
 		unless @keyparts == @keynames;
 	
-	my $stmt = "DELETE FROM `$table` ";
+	my $stmt = "DELETE FROM `$sqlTable` ";
 	$stmt .= $self->makeWhereClause(@keyparts);
 	$self->debug("SQL-delete: $stmt\n");
 	
