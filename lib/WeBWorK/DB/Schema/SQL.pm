@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.16 2003/12/13 01:44:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.18 2004/02/03 00:49:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,7 +172,9 @@ sub gets($@) {
 			my $Record = $self->{record}->new();
 			my @realFieldnames = $self->{record}->FIELDS();
 			foreach (@realFieldnames) {
-				$Record->$_(shift @record);
+				my $value = shift @record;
+				$value = "" unless defined $value; # promote undef to ""
+				$Record->$_($value);
 			}
 			push @records, $Record;
 		} else {
@@ -216,7 +218,9 @@ sub getAll {
 			my $Record = $self->{record}->new();
 			my @realFieldnames = $self->{record}->FIELDS();
 			foreach (@realFieldnames) {
-				$Record->$_(shift @record);
+				my $value = shift @record;
+				$value = "" unless defined $value; # promote undef to ""
+				$Record->$_($value);
 			}
 			push @records, $Record;
 		}
