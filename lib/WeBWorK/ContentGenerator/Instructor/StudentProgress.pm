@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.7 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.8 2004/09/17 15:35:55 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,9 @@ use CGI qw();
 use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::DB::Record::Set;
 use WeBWorK::ContentGenerator::Grades;
+use WeBWorK::Utils::SortRecords qw/sortRecords/;
+
+
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
 	my $self     = shift; 
@@ -208,6 +211,10 @@ sub index {
 #	@studentList = @myUsers;
 	}
 	else {@myUsers = @studentList;}
+	
+	my @studentRecords = $db->getUsers(@myUsers);
+	my @sortedStudentRecords = sortRecords({fields=>[qw/last_name first_name user_id/]}, @studentRecords);
+		
 	my @setLinks      = ();
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {
@@ -219,18 +226,19 @@ sub index {
 		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) },"set $set" );	
 	}
 	
-	foreach my $student (@myUsers) {
-	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
+	foreach my $studentRecord (@sortedStudentRecords) {
+		my $first_name = $studentRecord->first_name;
+		my $last_name = $studentRecord->last_name;
+		my $user_id = $studentRecord->user_id;
+		my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
 	                                                      courseID => $courseName,
 	                                                      statType => 'student',
-	                                                      userID   => $student
+	                                                      userID   => $user_id
 	    );
-	    my $studentRecord = $db->getUser($student);
-	    my $first_name = $studentRecord->first_name;
-	    my $last_name = $studentRecord->last_name;
+
 		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
-		                                                     prams=>{effectiveUser => $student}
-		                                                     )},"  $first_name $last_name ($student)" ),;	
+		                                                     prams=>{effectiveUser => $studentRecord->user_id}
+		                                                     )},"  $first_name $last_name ($user_id)" ),;	
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
