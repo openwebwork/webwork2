@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.43 2004/01/25 19:56:09 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.47 2004/02/12 19:23:43 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -125,18 +125,21 @@ See also L<WeBWorK::CourseEnvironment>.
 		die "Failed to read course environment for $course: $@";
 	}
 
-=item If no course was given, go to the site home page
+=item If no course was given, load the Home ContentGenerator
 
-If the URI did not include the name of a course, a redirection is issued to the
-site home page, given but the course environemnt variable
-C<$ce-E<gt>{webworkURLs}-E<gt>{home}>.
+If the URI did not include the name of a course, we load the Home
+ContentGenerator.
 
 =cut
 
-	# If no course was specified, redirect to the home URL
+	# If no course was specified, we 
 	unless (defined $course) {
-		$r->header_out(Location => $ce->{webworkURLs}->{home});
-		return REDIRECT;
+		my $contentGenerator = "WeBWorK::ContentGenerator::Home";
+		
+		runtime_use($contentGenerator);
+		my $cg = $contentGenerator->new($r, $ce, undef);
+		my $result = $cg->go();
+		return $result;
 	}
 
 =item If the given course does not exist, fail
