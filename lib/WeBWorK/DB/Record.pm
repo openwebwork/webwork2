@@ -15,12 +15,12 @@ use strict;
 use warnings;
 use Carp;
 
-sub new($@) {
+sub new {
 	my ($invocant, %fields) = @_;
 	my $class = ref($invocant) || $invocant;
 	my $self = {};
 	
-	foreach ($invocant->FIELDS()) {
+	foreach ($invocant->FIELDS) {
 		$self->{$_} = $fields{$_} if exists $fields{$_};
 	}
 	
@@ -28,17 +28,17 @@ sub new($@) {
 	return $self;
 }
 
-sub can($$) {
+sub can {
 	my ($self, $function) = @_;
-	return grep { $_ eq $function } $self->FIELDS();
+	return grep { $_ eq $function } $self->FIELDS;
 }
 
-sub AUTOLOAD($;@) {
+sub AUTOLOAD {
 	my ($self, @args) = @_;
 	our $AUTOLOAD;
 	my ($package, $function) = $AUTOLOAD =~ m/^(.*)::(.*)$/;
 	return if $function eq "DESTROY";
-	if (grep { $_ eq $function } $self->FIELDS()) {
+	if (grep { $_ eq $function } $self->FIELDS) {
 		$self->{$function} = $args[0] if @args;
 		return $self->{$function};
 	} else {
@@ -46,10 +46,10 @@ sub AUTOLOAD($;@) {
 	}
 }
 
-sub toString($) {
+sub toString {
 	my $self = shift;
 	my $result;
-	foreach ($self->FIELDS()) {
+	foreach ($self->FIELDS) {
 		$result .= "$_ => ";
 		$result .= defined $self->$_() ? $self->$_() : "";
 		$result .= "\n";
