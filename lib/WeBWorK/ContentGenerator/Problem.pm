@@ -50,64 +50,85 @@ sub pre_header_initialize {
 	my $db                   = $self->{db};
 	my $userName             = $r->param('user');
 	my $effectiveUserName    = $r->param('effectiveUser');
-	my $key					 = $r->param('key');
+	my $key                  = $r->param('key');
 	my $user                 = $db->getUser($userName);
 	my $effectiveUser        = $db->getUser($effectiveUserName);
-
-	# obtain the effective user set, or if that is not yet defined obtain global set
-	my $set                  = $db->getMergedSet($effectiveUserName, $setName);
-	unless (defined $set) {
-		my $userSetClass     = $courseEnv->{dbLayout}->{set_user}->{record};
-		$set                 = global2user($userSetClass, $db->getGlobalSet($setName));
-		$set->psvn('000');
+	my $permissionLevel      = $db->getPermissionLevel($userName)->permission();
+	
+	# obtain the merged set for $effectiveUser
+	my $set = $db->getMergedSet($effectiveUserName, $setName);
+	
+	# obtain the merged problem for $effectiveUser
+	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
+	
+	my $editMode = $r->param("editMode");
+	
+	if ($permissionLevel > 0 and defined $editMode) {
+		# professors are allowed to fabricate sets and problems not
+		# assigned to them (or anyone). this allows them to use the
+		# editor to 
+		
+		# if that is not yet defined obtain the global set, convert
+		# it to a user set, and add fake user data
+		unless (defined $set) {
+			my $userSetClass = $db->{set_user}->{record};
+			$set = global2user($userSetClass,
+				$db->getGlobalSet($setName));
+			die "Set $setName does not exist"
+				unless defined $set;
+			$set->psvn(0);
+		}
+		
+		# if that is not yet defined obtain the global problem,
+		# convert it to a user problem, and add fake user data
+		unless (defined $problem) {
+			my $userProblemClass = $db->{problem_user}->{record};
+			$problem = global2user($userProblemClass,
+				$db->getGlobalProblem($setName,$problemNumber));
+			die "Problem $problemNumber in set $setName does not exist"
+				unless defined $problem;
+			$problem->user_id($effectiveUserName);
+			$problem->problem_seed(0);
+			$problem->status(0);
+			$problem->attempted(0);
+			$problem->last_answer("");
+			$problem->num_correct(0);
+			$problem->num_incorrect(0);
+		}
+		
+		# now we're sure we have valid UserSet and UserProblem objects
+		# yay!
+		
+		# now deal with possible editor overrides:
+		
+		# if the caller is asking to override the source file, and
+		# editMode calls for a temporary file, do so
+		my $sourceFilePath = $r->param("sourceFilePath");
+		if (defined $sourceFilePath and $editMode eq "temporaryFile") {
+			$problem->source_file($sourceFilePath);
+		}
+		
+		# if the caller is asking to override the problem seed, do so
+		my $problemSeed = $r->param("problemSeed");
+		if (defined $problemSeed) {
+			$problem->problem_seed($problemSeed);
+		}
+	} else {
+		# students can't view problems not assigned to them
+		die "Set $setName is not assigned to $effectiveUserName"
+			unless defined $set;
+		die "Problem $problemNumber in set $setName is not assigned to $effectiveUserName"
+			unless defined $problem;
 	}
-	my	$psvn                = $set->psvn();
 	
-	# obtain the effective user problem, or if that is not yet defined obtain global problem
-	my $problem              = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
-	unless (defined $problem) {
-		my $userProblemClass = $courseEnv->{dbLayout}->{problem_user}->{record};
-		$problem             = global2user($userProblemClass, $db->getGlobalProblem($setName,$problemNumber));
-
-#		$problem->max_attempts(-1);   # default is infinite number of attempts
-#		$problem->value;
-#		$problem->problem_seed;
-#		$problem->source_file;
-		$problem->user_id($userName);    # is this the right value for this unassigned problem? FIXME
-		$problem->status(0);
-		$problem->attempted(0);
-		$problem->num_correct(0);
-		$problem->num_incorrect(0);
-		$problem->last_answer(' ');		
-	}
-	#$problem            = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem);
-	# FIXME  
-	# a better solution at this point would be to take set and problem, convert them to global_user type
-	# so that they have the right methods.
-	# Stuff the local copy of $set and $problem with default data where it won't have been defined 
-	# Make sure that nothing bad is stored back in the database. 
-	# It would be nice to store lastAnswer somewhere -- perhaps that could be done as a special case.
-	
-	
-	# This supplies a psvn if $set doesn't have it.  Unfortunately the problem is called on to provide
-	# data in many places and it might not even have methods defined.
-	
-	# global sets will not have a defined psvn
-# 	my $psvn;
-# 	if ($set->can('psvn') ) {
-# 		$psvn           = $set->psvn();
-# 	} else {            # we are viewing an unassigned problem set, psvn's are irrelevant
-# 		$psvn           = '0000';
-# 	}
-	
-	my $permissionLevel = $db->getPermissionLevel($userName)->permission();
-	
-	$self->{userName}        = $userName;
-	$self->{user}            = $user;
-	$self->{effectiveUser}   = $effectiveUser;
-	$self->{set}             = $set;
-	$self->{problem}         = $problem;
-	$self->{permissionLevel} = $permissionLevel;
+	$self->{userName}          = $userName;
+	$self->{effectiveUserName} = $effectiveUserName;
+	$self->{user}              = $user;
+	$self->{effectiveUser}     = $effectiveUser;
+	$self->{permissionLevel}   = $permissionLevel;
+	$self->{set}               = $set;
+	$self->{problem}           = $problem;
+	$self->{editMode}          = $editMode;
 	
 	##### form processing #####
 	
@@ -119,25 +140,24 @@ sub pre_header_initialize {
 	my $previewAnswers     = $r->param("previewAnswers");
 	
 	# fields which may be defined when using Problem Editor
-	my $override_seed		   = ($permissionLevel>=10) ? $r->param('problemSeed') : undef;
-	my $override_problem_source = ($permissionLevel>=10) ? $r->param('sourceFilePath') : undef;
-	my $editMode = undef;
-	my $submit_button = $r->param('submit_button');
-	if ( defined($submit_button ) ) {
-		$editMode = "temporaryFile" if $submit_button eq 'Refresh';
-		$editMode = 'savedFile'     if $submit_button eq 'Save';
-	}	
+	#my $override_seed = ($permissionLevel>=10) ? $r->param('problemSeed') : undef;
+	#my $override_problem_source = ($permissionLevel>=10) ? $r->param('sourceFilePath') : undef;
+	#my $editMode = undef;
+	#my $submit_button = $r->param('submit_button');
+	#if ( defined($submit_button ) ) {
+	#	$editMode = "temporaryFile" if $submit_button eq 'Refresh';
+	#	$editMode = 'savedFile'     if $submit_button eq 'Save';
+	#}
+	#
+	##override using the source file data from the form field
+	#$problem->source_file($override_problem_source) if defined($override_problem_source);
+	#$problem->problem_seed($override_seed)          if defined($override_seed);
+	#
+	## store path to source file for title.
+	#$self->{problem_source_name}    =  $problem->source_file;
+	#$self->{edit_mode}		=	$editMode;
+	#$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
 	
-	#override using the source file data from the form field
-	$problem->source_file($override_problem_source) if defined($override_problem_source);
-	$problem->problem_seed($override_seed)          if defined($override_seed);
-	
-	# store path to source file for title.
-	$self->{problem_source_name}    =  $problem->source_file;
-	$self->{edit_mode}		=	$editMode;
-# 	$self->{current_problem_source} 	=	(defined($override_problem_source) ) ?
-# 									 		$override_problem_source :
-# 											$problem->source_file;
 	# coerce form fields into CGI::Vars format
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
@@ -148,7 +168,6 @@ sub pre_header_initialize {
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 	
-
 	##### permissions #####
 	
 	# are we allowed to view this problem?
@@ -209,12 +228,10 @@ sub pre_header_initialize {
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$set->psvn, # FIXME: this field should be removed
 		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
-			override_seed	=> $override_seed, 
-			override_problem_source	=>$override_problem_source,
 			showHints       => $will{showHints},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
@@ -331,6 +348,7 @@ sub nav {
 	
 	my @links = ("Problem List" , "$root/$courseName/$setName", "navProbList");
 	
+	# FIXME: this could be faster
 	my $prevProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber-1);
 	my $nextProblem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber+1);
 	unshift @links, "Previous Problem" , ($prevProblem
@@ -346,17 +364,7 @@ sub nav {
 sub title {
 	my $self = shift;
 	my $setName = $self->{set}->set_id;
-	
-	my $file_action;
-	my $edit_mode = $self->{edit_mode};
-	if ( not defined($edit_mode) ) {
-		$file_action = '';
-	} elsif (  $edit_mode eq 'temporaryFile') {
-		$file_action 	.=	 'Editing temporary file : '. CGI::br() . $self->{problem_source_name};
-	} elsif ( $edit_mode eq 'savedFile' ){
-		$file_action 	.=	 'Problem saved to : '. CGI::br()  . $self->{problem_source_name};
-	}
-	my $problemNumber = $self->{problem}->problem_id . " : " . $file_action;
+	my $problemNumber = $self->{problem}->problem_id;
 	
 	return "$setName : Problem $problemNumber";
 }
@@ -372,12 +380,13 @@ sub body {
 	my $db              = $self->{db};
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
+	my $editMode        = $self->{editMode};
 	my $permissionLevel = $self->{permissionLevel};
 	my $submitAnswers   = $self->{submitAnswers};
 	my $checkAnswers    = $self->{checkAnswers};
 	my $previewAnswers  = $self->{previewAnswers};
 	my %want            = %{ $self->{want} };
-	my %can             = %{ $self->{can} };
+	my %can             = %{ $self->{can}  };
 	my %must            = %{ $self->{must} };
 	my %will            = %{ $self->{will} };
 	my $pg              = $self->{pg};
@@ -472,6 +481,15 @@ sub body {
 	##### output #####
 	
 	print CGI::start_div({class=>"problemHeader"});
+	
+	# custom message for editor
+	if ($permissionLevel >= 10 and defined $editMode) {
+		if ($editMode eq "temporaryFile") {
+			print CGI::p(CGI::i("Editing temporary file: ", $problem->source_file));
+		} elsif ($editMode eq "savedFile") {
+			print CGI::p(CGI::i("Problem saved to: ", $problem->source_file));
+		}
+	}
 	
 	# attempt summary
 	if ($submitAnswers or $will{showCorrectAnswers}) {
