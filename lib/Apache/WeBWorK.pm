@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.70 2004/10/06 21:00:19 gage Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.71 2004/10/07 23:08:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,143 +15,146 @@
 ################################################################################
 
 package Apache::WeBWorK;
-#use base qw(DB);
 
 =head1 NAME
 
-Apache::WeBWorK - mod_perl handler for WeBWorK.
+Apache::WeBWorK - mod_perl handler for WeBWorK 2.
 
 =head1 CONFIGURATION
 
 This module should be installed as a Handler for the location selected for
-WeBWorK on your webserver. Here is an example of a stanza that can be added to
-your httpd.conf file to achieve this:
-
- <Location /webwork2>
-	PerlSetVar webwork_root /opt/webwork2
-	PerlSetVar pg_root /opt/pg
-	<Perl>
-	   use lib "/opt/webwork2/lib";
-	   use lib "/opt/pg/lib";
-	</Perl>
-	SetHandler perl-script
-	PerlHandler Apache::WeBWorK
- </Location>
+WeBWorK on your webserver. Refer to the file F<conf/webwork.apache-config> for
+details.
 
 =cut
 
 use strict;
 use warnings;
+use Apache::Log;
 use HTML::Entities;
 use Date::Format;
 use WeBWorK;
 
-#
-#  Produce a stack-frame traceback for the calls up through
-#  the ones in Apache::WeBWorK.
-#
-sub traceback {
-  my $frame = 2;
-  my $trace = '';
-  while (my ($pkg,$file,$line,$subname) = caller($frame++)) {
-    return $trace if $pkg eq 'Apache::WeBWorK';
-    $trace .= "---  in $subname called at line $line of $file\n";
-  }
-  return $trace;
-}
+################################################################################
+
+=head1 APACHE REQUEST HANDLER
+
+=over
+
+=item handler($r)
+
+=cut
 
 sub handler($) {
 	my ($r) = @_;
+	my $log = $r->log;
 	
-	my $result;
-	{ # limit the scope of signal localization
-		# the __WARN__ handler stores warnings for later retrieval
-		local $SIG{__WARN__} = sub {
-			my ($warning) = @_;
-			my $warnings = $r->notes("warnings");
-			$warnings .= "$warning\n";
-			$r->notes("warnings" => $warnings);
-			warn $warning; # send it to the log
-		};
+	# *** FIXME: ContentGenerator is still checking $r->notes("warnings").
+	# how can we give it access to this warning list?
+	
+	# the warning handler accumulates warnings in $r->notes("warnings") for
+	# later cumulative reporting
+	#my @warnings;
+	my $warning_handler = sub {
+		my ($warning) = @_;
+		my $warnings = $r->notes("warnings");
+		$warnings .= "$warning\n";
+		$r->notes("warnings", $warnings);
+		warn $warning;
+	};
+	
+	# the exception handler generates a backtrace when catching an exception
+	my @backtrace;
+	my $exception_handler = sub {
+		@backtrace = backtrace();
+		die @_;
+	};
+	
+	my $result = do {
+		local $SIG{__WARN__} = $warning_handler;
+		local $SIG{__DIE__} = $exception_handler;
 		
-		# the __DIE__ handler stores the call stack at the time of an error
-		local $SIG{__DIE__} = sub {
-			my ($error) = @_;
-			die $error if ref($error); # return if it's not a string
-			#
-			#  Add traceback unless it already has been added.  It looks like traps
-			#  are in effect from 5 or 6 places, and all of them end up here, with
-			#  the additional error messages already appended.
-			#
-			$error .= "\nCall Stack:   The information below can help experts locate the source of an error which is due to WeBWorK.
-                       \n".
-           traceback()."--------------------------------------\n"
-			  unless $error =~ m/-------------\n/;
-			# Traces are still causing problems
-			#my $trace = join "\n", Apache::WeBWorK->backtrace();
-			#$r->notes("lastCallStack" => $trace);
-			die $error;
-		};
-		
-		$result = eval { WeBWorK::dispatch($r) };
-	}
+		eval { WeBWorK::dispatch($r) };
+	};
 	
 	if ($@) {
-	    print STDERR "[", time2str("%a %b %d %H:%M:%S %Y", time), "] [",$r->uri,"]\n ", "Uncaught exception in Apache::WeBWorK::handler: $@\n";
-		#print STDERR "uncaught exception in Apache::WeBWorK::handler: $@";
+		my $exception = $@;
 		
-		my $message = message($r, $@);
+		my $warnings = $r->notes("warnings");
+		my $message = message($r, $warnings, $exception, @backtrace);
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
 			$r->send_http_header;
 			$message = "<html><body>$message</body></html>";
 		}
 		$r->print($message);
-		$r->exit;
+		
+		# log the error to the apache error log
+		my $time = time2str("%a %b %d %H:%M:%S %Y", time);
+		my $uri = $r->uri;
+		$log->error("[$uri] $exception");
 	}
 	
 	return $result;
 }
 
-sub htmlBacktrace(@) {
-	foreach (@_) {
-		s/\</&lt;/g;
-		s/\>/&gt;/g;
-		$_ = "<li><tt>$_</tt></li>";
-	}
-	return join "\n", @_;
-}
+=back
 
-sub htmlWarningsList(@) {
-	foreach (@_) {
-		next unless m/\S/;
-		s/\</&lt;/g;
-		s/\>/&gt;/g;
-		$_ = "<li><tt>$_</tt></li>";
-	}
-	return join "\n", @_;
-}
+=cut
 
-sub htmlEscape($) {
-	my ($s) = @_;
-	$s = encode_entities($s);
-	$s =~ s/\n/<br>/g;
-	return $s;
-}
+################################################################################
 
-sub message($$) {
-	my ($r, $exception) = @_;
+=head1 ERROR HANDLING ROUTINES
+
+=over
+
+=item backtrace()
+
+Produce a stack-frame traceback for the calls up through the ones in
+Apache::WeBWorK.
+
+=cut
+
+sub backtrace {
+	my $frame = 2;
+	my @trace;
 	
+	while (my ($pkg, $file, $line, $subname) = caller($frame++)) {
+		last if $pkg eq "Apache::WeBWorK";
+		push @trace, "in $subname called at line $line of $file";
+	}
+	
+	return @trace;
+}
+
+=back
+
+=cut
+
+################################################################################
+
+=head1 ERROR OUTPUT FUNCTIONS
+
+=over
+
+=item message($r, $warnings, $exception, @backtrace)
+
+Format a message reporting an exception, backtrace, and any associated warnings.
+
+=cut
+
+sub message($$$@) {
+	my ($r, $warnings, $exception, @backtrace) = @_;
+	
+	my @warnings = split m/\n+/, $warnings;
+	$warnings = htmlWarningsList(@warnings);
 	$exception = htmlEscape($exception);
+	my $backtrace = htmlBacktrace(@backtrace);
+	
 	my $admin = ($ENV{SERVER_ADMIN}
-		? "(<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
+		? " (<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
 		: "");
-	my $context = $r->notes("lastCallStack")
-		? htmlBacktrace(split m/\n/, $r->notes("lastCallStack"))
-		: "";
-	my $warnings = $r->notes("warnings")
-		? htmlWarningsList(split m/\n/, $r->notes("warnings"))
-		: "";
+	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
 	my $uri = $r->uri;
 	my $headers = do {
@@ -163,18 +166,17 @@ sub message($$) {
 <div style="text-align:left">
  <h2>WeBWorK error</h2>
  <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster $admin giving as much information as you can about the
- error and the date and time that the error occured.</p>
+ to this site's webmaster$admin, including all of the following information as
+ well as what what you were doing when the error occured.</p>
+ <p>$time</p>
  <h3>Warning messages</h3>
  <ul>$warnings</ul>
  <h3>Error messages</h3>
- <blockquote style="color:red"><tt>$exception</tt></blockquote>
- <!-- <h4>Call stack</h4>
-   <p>The information below can help experts locate the source of the problem.</p>
-   <ul>$context</ul>
- -->
- <hr />
- <h2>Request information</h2>
+ <blockquote style="color:red"><code>$exception</code></blockquote>
+ <h3>Call stack</h3>
+   <p>The information below can help locate the source of the problem.</p>
+   <ul>$backtrace</ul>
+ <h3>Request information</h3>
  <table border="1">
   <tr><td>Method</td><td>$method</td></tr>
   <tr><td>URI</td><td>$uri</td></tr>
@@ -188,4 +190,76 @@ sub message($$) {
 EOF
 }
 
+=item htmlBacktrace(@frames)
+
+Formats a list of stack frames in a backtrace as list items for HTML output.
+
+=cut
+
+sub htmlBacktrace(@) {
+	my (@frames) = @_;
+	foreach my $frame (@frames) {
+		$frame = htmlEscape($frame);
+		$frame = "<li><code>$frame</code></li>";
+	}
+	return join "\n", @frames;
+}
+
+=item htmlWarningsList(@warnings)
+
+Formats a list of warning strings as list items for HTML output.
+
+=cut
+
+sub htmlWarningsList(@) {
+	my (@warnings) = @_;
+	foreach my $warning (@warnings) {
+		$warning = htmlEscape($warning);
+		$warning = "<li><code>$warning</code></li>";
+	}
+	return join "\n", @warnings;
+}
+
+=item htmlEscape($string)
+
+Protect characters that would be interpreted as HTML entities using the CGI.pm
+escapeHTML() routine. Then, replace line breaks with HTML "<br />" tags.
+
+=cut
+
+sub htmlEscape($) {
+	my ($string) = @_;
+	$string = encode_entities($string);
+	$string =~ s|\n|<br />|g;
+	return $string;
+}
+
+=back
+
+=cut
+
 1;
+
+__END__
+
+		local $SIG{__DIE__} = sub {
+			my ($error) = @_;
+			print STDERR "\n***** \$SIG{__DIE__} called with error: >>>>>$error<<<<<\n\n";
+			
+			# NEW STACK TRACE HOOK ADDED BY DPVC
+			# Add traceback unless it already has been added. It looks like
+			# traps are in effect from 5 or 6 places, and all of them end up here,
+			# with the additional error messages already appended.
+			#die $error if ref($error); # return if it's not a string
+			#unless ($error =~ m/-------------\n/) {
+			#	$error .= "\nCall Stack: The information below can help experts locate the source of an error which is due to WeBWorK.\n"
+			#		. traceback() . "--------------------------------------\n";
+			#}
+			my @backtrace = backtrace();
+			$r->notes(lastCallStack => \@backtrace);
+			
+			print STDERR "\n***** \$SIG{__DIE__} about to rethrow: >>>>>$error<<<<<\n\n";
+			
+			die $error;
+		};
+		
