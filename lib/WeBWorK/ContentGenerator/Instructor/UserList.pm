@@ -105,6 +105,9 @@ sub body {
 	my $authz = $self->{authz};
 	my $user = $r->param('user');
 	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $root = $ce->{webworkURLs}->{root};
+	my $courseName = $ce->{courseName};
 
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");
 
@@ -228,7 +231,12 @@ sub body {
 		print CGI::Tr({},
 			CGI::td({}, [
 				CGI::input({type=>"checkbox", name=>"deleteUser", value=>$currentUser}),
-				(map {$userRecord->$_} $userRecord->KEYFIELDS),
+				(
+					map {
+						my $changeEUserURL = "$root/$courseName?user=".$r->param("user")."&effectiveUser=".$userRecord->user_id()."&key=".$r->param("key");
+						CGI::a({href=>$changeEUserURL}, $userRecord->$_)
+					} $userRecord->KEYFIELDS
+				),
 				(map {
 #					CGI::input({type=>"text", size=>"8", name=> "user.".$userRecord->user_id().".".$_, value=>$userRecord->$_})
 					$self->fieldEditHTML("user.".$userRecord->user_id().".".$_, $userRecord->$_, $fieldProperties{$_});
