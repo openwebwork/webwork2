@@ -276,7 +276,7 @@ sub FieldHTML {
 	if ($edit) {
 		$inputType = CGI::input({
 				name => "$recordType.$recordID.$field",
-				value => $forUsers ? $userValue : $globalValue,
+				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
 		});
 	} elsif ($choose) {
@@ -287,7 +287,7 @@ sub FieldHTML {
 				name => "$recordType.$recordID.$field",
 				values => $properties{choices},
 				labels => \%labels,
-				default => $forUsers ? $userRecord->$field : $globalRecord->$field,
+				default => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userRecord->$field : $globalRecord->$field),
 		});
 	}
 	
@@ -296,7 +296,7 @@ sub FieldHTML {
 				name => "$recordType.$recordID.$field.override",
 				label => "",
 				value => $field,
-				checked => ($userValue ne "" ? 1 : 0),
+				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne "" ? 1 : 0),
 		}) : "",
 		$properties{name},
 		$inputType,
@@ -642,17 +642,26 @@ sub initialize {
 				}
 			}
 		}
-
+		
 		# Delete all problems marked for deletion
 		foreach my $problemID ($r->param('deleteProblem')) {
 			$db->deleteGlobalProblem($setID, $problemID);
 		}
 		
-		# "Deleting" a header means setting it to "" so that the default header is used instead.
-		foreach my $header ($r->param('deleteHeader')) {
+		# Sets the specified header to "" so that the default file will get used.
+		foreach my $header ($r->param('defaultHeader')) {
 			$setRecord->$header("");
 		}
-
+	} elsif (defined $r->param('undo_changes')) {
+		
+		# reset all the parameters dealing with set/problem/header information
+		# if the current naming scheme is changed/broken, this could reek havoc
+		# on all kinds of things
+		foreach my $param ($r->param) {
+			$r->param($param, "") if $param =~ /^(set|problem|header)\./;
+		}
+	}
+	
 # Leftover code from when there were up/down buttons
 
 #	} else {
@@ -672,7 +681,8 @@ sub initialize {
 #			}
 #			$index++;
 #		}
-	}
+#	}
+
 	
 
 	# handle renumbering of problems if necessary
@@ -706,12 +716,12 @@ sub changed ($$) {
 
 	return "def/undef" if defined $first and not defined $second;
 	return "undef/def" if not defined $first and defined $second;
-	return 0 if not defined $first and not defined $second;
+	return "" if not defined $first and not defined $second;
 	return "ne" if $first ne $second;
-	return 0;	# if they're equal, there's no change
+	return "";	# if they're equal, there's no change
 }
 
-# helper method that determines if a given 
+# helper method that determines for how many users at a time a field can be changed
 # 	none means it can't be changed for anyone
 # 	any means it can be changed for anyone
 # 	one means it can ONLY be changed for one at a time. (eg problem_seed)
@@ -729,6 +739,25 @@ sub canChange ($$) {
 	return 1 if $howManyCan eq "one" && $forOneUser;
 	return 1 if $howManyCan eq "all" && !$forUsers;
 	return 0;	# FIXME: maybe it should default to 1?
+}
+
+# helper method that determines if a file is valid and returns a pretty error message
+sub checkFile ($) {
+	my ($self, $file) = @_;
+
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	return "No source file specified" unless $file;
+	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|;
+
+	my $text = "This source file ";
+	my $fileError;
+	return "" if -e $file && -f $file && -r $file;
+	return $text . "is not readable!" if -e $file && -f $file;
+	return $text . "is a directory!" if -d $file;
+	return $text . "does not exist!" unless -e $file;
+	return $text . "is not a plain file!";
 }
 
 # Creates two separate tables, first of the headers, and the of the problems in a given set
@@ -845,8 +874,11 @@ sub body {
 	}
 
 	print CGI::start_form({method=>"POST", action=>$setDetailURL});
+	print $self->hiddenEditForUserFields(@editForUser);
+	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
-	
+	print CGI::input({type=>"submit", name=>"undo_changes", value => "Reset Form"});
+
 	# spacing
 	print CGI::p();
 	
@@ -872,7 +904,8 @@ sub body {
 	# Display header information
 	#####################################################################
 	my @headers = @{ HEADER_ORDER() };
-	my %headerModules = (set_header => 'problem_list', 'hardcopy_header' => 'hardcopy_preselect_set');
+	my %headerModules = (set_header => 'problem_list', hardcopy_header => 'hardcopy_preselect_set');
+	my %headerDefaults = (set_header => $ce->{webworkFiles}->{screenSnippets}->{setHeader}, hardcopy_header => $ce->{webworkFiles}->{hardcopySnippets}->{setHeader});
 	my @headerFiles = map { $setRecord->{$_} } @headers;
 	if (scalar @headers and not $forUsers) {
 
@@ -887,15 +920,21 @@ sub body {
 
 		my %header_html;
 		
+		my %error;
 		foreach my $header (@headers) {
-			my @temp = renderProblems(	r=> $r, 
-							user => $db->getUser($userToShow),
-							displayMode=> $default_header_mode,
-							problem_number=> 0,
-							this_set => $db->getMergedSet($userToShow, $setID),
-							problem_list => [$setRecord->{$header}],
-			);
-			$header_html{$header} = $temp[0];
+			my $headerFile = $r->param("set.$setID.$header") || $setRecord->{$header} || $headerDefaults{$header};
+
+			$error{$header} = $self->checkFile($headerFile);
+			unless ($error{$header}) {
+				my @temp = renderProblems(	r=> $r, 
+								user => $db->getUser($userToShow),
+								displayMode=> $default_header_mode,
+								problem_number=> 0,
+								this_set => $db->getMergedSet($userToShow, $setID),
+								problem_list => [$headerFile],
+				);
+				$header_html{$header} = $temp[0];
+			}
 		}
 		
 		foreach my $header (@headers) {
@@ -911,7 +950,7 @@ sub body {
 					CGI::Tr({}, CGI::td({}, $properties{$header}->{name})) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink}, "Edit it"))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink}, "View it"))) .
-					CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "defaultHeader", value => $header, label => "Use Default"}))) .
+#					CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "defaultHeader", value => $header, label => "Use Default"}))) .
 				CGI::end_table(),
 #				"",
 #				CGI::input({ name => "set.$setID.$header", value => $setRecord->{$header}, size => 50}) .
@@ -921,12 +960,15 @@ sub body {
 				comboBox({
 					name => "set.$setID.$header",
 					request => $r,
-					default => $setRecord->{$header},
+					default => $r->param("set.$setID.$header") || $setRecord->{$header},
 					multiple => 0,
 					values => ["", @headerFileList],
 					labels => { "" => "Use Default Header File" },
 				}) .
-			        CGI::div({class=> "RenderSolo"}, $header_html{$header}->{body_text}),
+				($error{$header} ? 
+					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$header}) 
+					: CGI::div({class=> "RenderSolo"}, $header_html{$header}->{body_text})
+				),
 			]));
 		}
 		
@@ -957,6 +999,8 @@ sub body {
 			CGI::input({type => "submit", name => "refresh", value => "Refresh"}),
 		]));
 		
+		my %shownYet;
+		my $repeatFile;
 		foreach my $problemID (@problemIDList) {
 		
 			my $problemRecord;
@@ -976,14 +1020,27 @@ sub body {
 			my @fields = @{ PROBLEM_FIELDS() };
 			push @fields, @{ USER_PROBLEM_FIELDS() } if $forOneUser;
 
-			my @problem_html = renderProblems(	r=> $r, 
+			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
+
+			# warn of repeat problems
+			if (defined $shownYet{$problemFile}) {
+				$repeatFile = "This problem uses the same source file as number " . $shownYet{$problemFile} . ".";
+			} else {
+				$shownYet{$problemFile} = $problemID;
+			}
+			
+			my $error = $self->checkFile($problemFile);
+			my @problem_html;
+			unless ($error) {
+				@problem_html = renderProblems(	r=> $r, 
 								user => $db->getUser($userToShow),
 								displayMode=> $default_problem_mode,
 								problem_number=> $problemID,
 								this_set => $db->getMergedSet($userToShow, $setID),
 								problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
 								problem_list => [$problemRecord->source_file],
-			);
+				);
+			}
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 1}) .
@@ -1004,13 +1061,16 @@ sub body {
 #				}) .
 				
 				join ("\n", $self->FieldHTML($userToShow, $setID, $problemID, "source_file")) .
-			        	CGI::br() . CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text}),
+			        	CGI::br() . 
+					($error ? 
+						CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) 
+						: CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
+					) .
+					($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : ''),
 			]));
 		}
 
 		print CGI::end_table();
-		print $self->hiddenEditForUserFields(@editForUser);
-		print $self->hidden_authen_fields;
 		print CGI::checkbox({
 				  label=> "Force problems to be numbered consecutively from one",
 				  name=>"force_renumber", value=>"1"}),
