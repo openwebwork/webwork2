@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.99 2004/08/28 01:30:03 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.100 2004/09/02 22:30:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -406,6 +406,7 @@ my $nobody    = undef;
 	access_instructor_tools        => $ta,
 	score_sets                     => $professor,
 	send_mail                      => $professor,
+	receive_feedback               => $ta,
 	
 	create_and_delete_problem_sets => $professor,
 	assign_problem_sets            => $professor,

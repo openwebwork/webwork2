@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.21 2004/03/15 04:10:36 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.22 2004/07/12 00:49:04 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,6 +61,7 @@ sub body {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	
 	# get form fields 
 	my $key                = $r->param("key");
@@ -159,9 +160,7 @@ sub body {
 		} else {
 			# send to all professors and TAs
 			foreach my $rcptName ($db->listUsers()) {
-				my $rcptPerm = $db->getPermissionLevel($rcptName); # checked
-				next unless $rcptPerm;
-				if ($rcptPerm->permission() == 5 or $rcptPerm->permission() == 10) {
+				if ($authz->hasPermissions($rcptName, "receive_feedback")) {
 					my $rcpt = $db->getUser($rcptName); # checked
 					if ($rcpt and $rcpt->email_address) {
 						push @recipients, $rcpt->email_address;

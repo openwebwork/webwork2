@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.15 2004/07/12 22:15:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.16 2004/07/12 23:37:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,6 +46,7 @@ sub hasPermissions {
 	my $Permission = $db->getPermissionLevel($user); # checked
 	return 0 unless defined $Permission;
 	my $permissionLevel = $Permission->permission();
+	return 0 unless defined $permissionLevel and $permissionLevel ne "";
 	
 	my $permissionLevels = $ce->{permissionLevels};
 	if (exists $permissionLevels->{$activity}) {
