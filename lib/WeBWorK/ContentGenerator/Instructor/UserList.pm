@@ -11,4 +11,14 @@ use strict;
 use warnings;
 use CGI qw();
 
+sub body {
+	my ($self) = @_;
+	my $r = $self->{r};
+	print CGI::start_form({method=>"post", action=>$r->uri});
+	print CGI::submit({name=>"assignToAll", value=>"Assign to All Users"});
+	print CGI::end_form();
+	
+	return "";
+}
+
 1;

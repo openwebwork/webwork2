@@ -43,7 +43,7 @@ sub userCountMessage {
 sub assignProblemToUser {
 	my ($self, $user, $globalProblem) = @_;
 	my $db = $self->{db};
-	my $userProblem = db->{problem_user}->{record}->new;
+	my $userProblem = $db->{problem_user}->{record}->new;
 	# Set up the key
 	$userProblem->user_id($user);
 	$userProblem->set_id($globalProblem->set_id);
@@ -63,11 +63,11 @@ sub assignProblemToUser {
 sub assignSetToUser {
 	my ($self, $user, $globalSet) = @_;
 	my $db = $self->{db};
-	my $userSet = db->{set_user}->{record}->new;
+	my $userSet = $db->{set_user}->{record}->new;
 	my $setID = $globalSet->set_id;
 
 	$userSet->user_id($user);
-	$userSet->set_id($setId);
+	$userSet->set_id($setID);
 	$db->addUserSet($userSet);
 	
 	foreach my $problemID ($db->listGlobalProblems) {
