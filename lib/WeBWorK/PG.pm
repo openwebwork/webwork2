@@ -1,7 +1,9 @@
-package WeBWorK::PG;
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
 
-# hide PG::* from the not-yet-insane.
-# "PG Render" or something
+package WeBWorK::PG;
 
 use strict;
 use warnings;
@@ -130,8 +132,8 @@ sub new($$$$$$$$) {
 		unless ref $grader eq "CODE";
 	$translator->rf_problem_grader($grader);
 	
-	# grading the problem
-	warn "PG: grade the problem\n";
+	# grade the problem
+	warn "PG: grading the problem\n";
 	my ($result, $state) = $translator->grade_problem(
 		answers_submitted  => $translationOptions->{processAnswers},
 		ANSWER_ENTRY_ORDER => \@answerOrder,
@@ -288,3 +290,251 @@ sub safetyFilter {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+WeBWorK::PG - Wrap the action of the PG Translator in an easy-to-use API
+
+=head1 SYNOPSIS
+
+ $pg = WeBWorK::PG->new(
+	 $courseEnv, # a WeBWorK::CourseEnvironment object
+	 $userName,
+	 $sessionKey,
+	 $setName,
+	 $problemNumber,
+	 { # translation options
+		 displayMode     => "images", # (plainText|formattedText|images)
+		 showHints       => 1,        # (0|1)
+		 showSolutions   => 0,        # (0|1)
+		 refreshMath2img => 0,        # (0|1)
+		 processAnswers  => 1,        # (0|1)
+	 },
+	 $formFields # in WeBWorK::Form::Vars format
+ );
+
+ $translator = $pg->{translator}; # WeBWorK::PG::Translator
+ $body       = $pg->{body_text};  # text string
+ $header     = $pg->{head_text};  # text string
+ $answerHash = $pg->{answers};    # WeBWorK::PG::AnswerHash
+ $result     = $pg->{result};     # hash reference
+ $state      = $pg->{state};      # hash reference
+ $errors     = $pg->{errors};     # text string
+ $warnings   = $pg->{warnings};   # text string
+ $flags      = $pg->{flags};      # hash reference
+
+=head1 DESCRIPTION
+
+WeBWorK::PG encapsulates the PG translation process, making multiple calls to
+WeBWorK::PG::Translator. Much of the flexibility of the Translator is hidden,
+instead making choices that are appropriate for the webwork-modperl system.
+
+=head1 CONSTRUCTION
+
+=over
+
+=item new (ENVIRONMENT, USER, KEY, SET, PROBLEM, OPTIONS, FIELDS)
+
+The C<new> method creates a translator, initializes it using the parameters
+specified, translates a PG file, and processes answers. It returns a reference
+to a blessed hash containing the results of the translation process.
+
+=back
+
+=head2 Parameters
+
+=over
+
+=item ENVIRONMENT
+
+a WeBWorK::CourseEnvironment object
+
+=item USER
+
+the name of the user for whom to render
+
+=item KEY
+
+the session key of the current session
+
+=item SET
+
+the name of the problem set from which to get the problem
+
+=item PROBLEM
+
+the number of the problem to render
+
+=item OPTIONS
+
+a reference to a hash containing the following data:
+
+=over
+
+=item displayMode 
+
+one of "plainText", "formattedText", or "images"
+
+=item showHints
+
+boolean, render hints
+
+=item showSolutions
+
+boolean, render solutions
+
+=item refreshMath2img
+
+boolean, force images created by math2img (in "images" mode) to be recreated,
+even if the PG source has not been updated.
+
+=item processAnswers
+
+boolean, call answer evaluators and graders
+
+=back
+
+=item FIELDS
+
+a reference to a hash (as returned by &WeBWorK::Form::Vars) containing form
+fields submitted by a problem processor. The translator will look for fields
+like "AnSwEr[0-9]" containing submitted student answers.
+
+=back
+
+=head2 RETURN VALUE
+
+The C<new> method returns a blessed hash reference containing the following
+fields. More information can be found in the documentation for
+WeBWorK::PG::Translator.
+
+=over
+
+=item translator
+
+The WeBWorK::PG::Translator object used to render the problem.
+
+=item head_text
+
+HTML code for the E<lt>headE<gt> block of an resulting web page. Used for
+JavaScript features.
+
+=item body_text
+
+HTML code for the E<lt>bodyE<gt> block of an resulting web page.
+
+=item answers
+
+An C<AnswerHash> object containing submitted answers, and results of answer
+evaluation.
+
+=item result
+
+A hash containing the results of grading the problem.
+
+=item state
+
+A hash containing the new problem state.
+
+=item errors
+
+A string containing any errors encountered while rendering the problem.
+
+=item warnings
+
+A string containing any warnings encountered while rendering the problem.
+
+=item flags
+
+A hash containing PG_flags (see the Translator docs).
+
+=back
+
+=head1 OPERATION
+
+WeBWorK::PG goes through the following operations when constructed:
+
+=over
+
+=item Get database information
+
+Retrieve information about the current user, set, and problem from the
+database.
+
+=item Create a translator
+
+Instantiate a WeBWorK::PG::Translator object.
+
+=item Set the directory hash
+
+Set the translator's directory hash (courseScripts, macros, templates, and temp
+directories) from the course environment.
+
+=item Evaluate PG modules
+
+Using the module list from the course environment (pg->modules), perform a
+"use"-like operation to evaluate modules at runtime.
+
+=item Set the problem environment
+
+Use data from the user, set, and problem, as well as the course environemnt and
+translation options, to set the problem environment.
+
+=item Initialize the translator
+
+Call &WeBWorK::PG::Translator::initialize. What more do you want?
+
+=item Load PG.pl and dangerousMacros.pl
+
+These macros must be loaded without opcode masking, so they are loaded here.
+
+=item Set the opcode mask
+
+Set the opcode mask to the default specified by WeBWorK::PG::Translator.
+
+=item Load the problem source
+
+Give the problem source to the translator.
+
+=item Install a safety filter
+
+The safety filter is used to preprocess student input before evaluation. The
+default safety filter, &WeBWorK::PG::safetyFilter, is used.
+
+=item Translate the problem source
+
+Call &WeBWorK::PG::Translator::translate to render the problem source into the
+format given by the display mode.
+
+=item Process student answers
+
+Use form field inputs to evaluate student answers.
+
+=item Load the problem state
+
+Use values from the database to initialize the problem state, so that the
+grader will have a point of reference.
+
+=item Determine an entry order
+
+Use the ANSWER_ENTRY_ORDER flag to determine the order of answers in the
+problem. This is important for problems with dependancies among parts.
+
+=item Install a grader
+
+Use the PROBLEM_GRADER_TO_USE flag, or a default from the course environment,
+to install a grader.
+
+=item Grade the problem
+
+Use the selected grader to grade the problem.
+
+=back
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, sh002i (at) math.rochester.edu.
+
+=cut

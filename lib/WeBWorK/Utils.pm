@@ -1,8 +1,13 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::Utils;
-use base qw(Exporter);
 
 use strict;
 use warnings;
+use base qw(Exporter);
 use Date::Format;
 use Date::Parse;
 

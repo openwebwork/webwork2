@@ -1,3 +1,8 @@
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
+
 package WeBWorK::CourseEnvironment;
 
 use strict;
@@ -73,3 +78,55 @@ sub new {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+WeBWorK::CourseEnvironment - Read configuration information from global.conf
+and course.conf files
+
+=head1 SYNOPSIS
+
+	use WeBWorK::CourseEnvironment;
+	$courseEnv = WeBWorK::CourseEnvironment->new($webworkRoot, $courseName);
+	
+	$timeout = $courseEnv->{sessionKeyTimeout};
+	$mode    = $courseEnv->{pg}->{options}->{displayMode};
+	# etc...
+
+=head1 DESCRIPTION
+
+The WeBWorK::CourseEnvironment module reads the system-wide F<global.conf> and
+course-specific F<course.conf> files used by WeBWorK to calculate and store
+settings needed throughout the system. The F<.conf> files are perl source files
+that can contain any code allowed under the default safe compartment opset.
+After evaluation of both files, any package variables are copied out of the
+safe compartment into a hash. This hash becomes the course environment.
+
+=head1 CONSTRUCTION
+
+=over
+
+=item new (ROOT, COURSE)
+
+The C<new> method finds the file F<conf/global.conf> relative to the given ROOT
+directory. After reading this file, it uses the C<$courseFiles{environment}>
+variable, if present, to locate the course environment file. If found, the file
+is read and added to the environment.
+
+=back
+
+=head1 ACCESS
+
+There are no formal accessor methods. However, since the course environemnt is
+a hash of hashes and arrays, is exists as the self hash of an instance
+variable:
+
+	$courseEnvironment->{someKey}->{someOtherKey};
+
+=head1 AUTHOR
+
+Written by Sam Hathaway, sh002i (at) math.rochester.edu.
+
+=cut
