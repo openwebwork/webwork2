@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.9 2004/09/05 00:54:31 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.10 2004/09/05 01:03:13 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,7 +19,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::howAnswers.pm  -- display past answers of students
+WeBWorK::ContentGenerator::Instructor::ShowAnswers.pm  -- display past answers of students
 
 =cut
 
@@ -38,8 +38,8 @@ sub initialize {
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
 	
-	unless ($authz->hasPermissions($user, "access_instructor_tools")) {
-		$self->{submitError} = "You aren't authorized to create or delete problems";
+	unless ($authz->hasPermissions($user, "view_answers")) {
+		$self->{submitError} = "You aren't authorized to view past answers";
 		return;
 	}
 }
@@ -61,6 +61,7 @@ sub body {
 	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
 	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
@@ -111,8 +112,8 @@ sub body {
 		  print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
 		  print "No entries for $studentUser set $setName, problem $problemNumber" unless @lines;
 		  foreach $line (sort(@lines)) {$self->tableRow(split("\t",substr($line,27),-1))}
-		  print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))),
-                        CGI::end_table() if ($self->{lastn});
+		  print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))) if ($self->{lastn});
+		  print CGI::end_table();
 		} else {
 		  print "<B>Can't open the access log $answer_log</B>";
 		}
