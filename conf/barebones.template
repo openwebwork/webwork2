@@ -37,22 +37,10 @@
  </head>
  <body>
   <table width="100%" cellpadding="10" cellspacing="0" border="1">
-   <tr valign="middle">
-    <td align="center">
-     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" />
-    </td>
-    <td>
-     <h1>WeBWorK <em>mod_perl</em></h1>
-     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
-    </td>
-    <!--#if loggedin="1"-->
-     <td valign="bottom">
-     <!--#loginstatus-->
-    </td>
-    <!--#endif-->
-   </tr>
    <tr valign="top">
-    <td>
+    <td align="left" rowspan="2" nowrap>
+     <img src="/webwork_files/images/webwork_square.gif" height="64" width="66" /><br />
+     <hr />
      <div>
       <small>
        <!--#links-->
@@ -68,7 +56,20 @@
        <!--#siblings-->
       </small>
      </div>
+
     </td>
+    <!--#if can="path"-->
+    <td valign="bottom" style="border-right: none">
+     <!--#path style="text" image="/webwork_files/images/right_arrow.png" text=" > "-->
+    </td>
+    <!--#endif-->
+    <!--#if loggedin="1"-->
+     <td valign="bottom" align="right" style="border-left: none">
+     <!--#loginstatus-->
+    </td>
+    <!--#endif-->
+   </tr>
+   <tr valign="top">
 <!--#if warnings="1"-->
     <td 
     <!--#if loggedin="1"-->
@@ -85,10 +86,10 @@
      <div align="center">
       <!--#nav style="text" imageprefix="/webwork_files/images/nav" imagesuffix=".png" separator=" | "-->
      </div>
-     <h1><!--#title--></h1>
      <table width="100%" cellpadding="10" cellspacing="0" border="0">
       <tr valign="top">
        <td>
+        <h1 style="font-size: 14pt"><!--#title--></h1>
         <!--#body-->
        </td>
        <td>

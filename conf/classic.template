@@ -19,10 +19,6 @@
 		float: left
 	}
 	
-	table.attemptResults tr {
-		margin: 100px;
-	}
-	
 	table.attemptResults td,table.attemptResults th {
 		border-style: solid; 
 		border-width: 1px; 
@@ -36,8 +32,6 @@
 	
 	div.problem {
 		clear: both; 
-		border-width: 1px 0px 0px; 
-		//border-style: solid
 	}
    //-->
   </style>
