@@ -211,6 +211,16 @@ sub pre_header_initialize {
 			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
 		checkAnswers       => canCheckAnswers($permissionLevel, $set->answer_date),
 	);
+	# more complicated logic for showing check answer button:
+	# checkAnswers button shows up after due date -- once a student can't record anymore
+	# checkAnswers button always shows up when an instructor or TA is acting
+	# as someone else (the $user and $effectiveUserName aren't the same).
+	$can{checkAnswers} =  ($can{checkAnswers}    &&   not $can{recordAnswers}           ) ||
+	                      ( $permissionLevel >= 5  and 
+	                        defined($userName) and defined($effectiveUserName) and 
+	                        ($userName ne $effectiveUserName)
+	                       ); 
+	                     
 	
 	# final values for options
 	my %will;
@@ -520,6 +530,7 @@ sub body {
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
+		print "ANSWERS ONLY CHECKED  -- ",CGI::br(),"ANSWERS NOT RECORDED", CGI::br();
 		print $self->attemptResults($pg, 1, 0, 1, 1, 1);
 			# show attempt answers
 			# don't show correct answers
@@ -572,7 +583,7 @@ sub body {
 				? CGI::submit(-name=>"submitAnswers",
 					-label=>"Submit Answers")
 				: ""),
-			( ($can{checkAnswers} and not $can{recordAnswers})
+			( $can{checkAnswers}
 				? CGI::submit(-name=>"checkAnswers",
 					-label=>"Check Answers")
 				: ""),
