@@ -74,7 +74,7 @@ Alias /webwork2_files/ !WEBWORK_ROOT!/htdocs/
 #<Location />
 #	AuthType Basic
 #	AuthName "!WEBWORK_USER!'s WeBWorK development system"
-#	AuthUserFile /home/!WEBWORK_USER!/webwork-modperl/conf/htpasswd
+#	AuthUserFile !WEBWORK_ROOT!/conf/htpasswd
 #	Require valid-user
 #</Location>
 
