@@ -129,6 +129,7 @@ use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
+use WeBWorK::Timing;
 use WeBWorK::Utils qw(runtime_use);
 
 ################################################################################
@@ -1104,6 +1105,8 @@ sub getGlobalUserSet {
 sub getMergedSet {
 	my ($self, $userID, $setID) = @_;
 	
+	#my $timer = WeBWorK::Timing->new("getMergedSet");
+	
 	croak "getGlobalUserSet: requires 2 arguments"
 		unless @_ == 3;
 	croak "getGlobalUserSet: argument 1 must contain a user_id"
@@ -1111,9 +1114,12 @@ sub getMergedSet {
 	croak "getGlobalUserSet: argument 2 must contain a set_id"
 		unless defined $setID;
 	
+	#$timer->start;
 	my $UserSet = $self->getUserSet($userID, $setID);
+	#$timer->continue("got user set");
 	return unless $UserSet;
 	my $GlobalSet = $self->getGlobalSet($setID);
+	#$timer->continue("got global set");
 	if ($GlobalSet) {
 		foreach ($UserSet->FIELDS()) {
 			next unless $GlobalSet->can($_);
@@ -1121,6 +1127,8 @@ sub getMergedSet {
 			$UserSet->$_($GlobalSet->$_());
 		}
 	}
+	#$timer->continue("merged records");
+	#$timer->stop;
 	return $UserSet;
 }
 
@@ -1136,6 +1144,8 @@ sub getGlobalUserProblem {
 sub getMergedProblem {
 	my ($self, $userID, $setID, $problemID) = @_;
 	
+	#my $timer = WeBWorK::Timing->new("getMergedSet");
+	
 	croak "getGlobalUserSet: requires 3 arguments"
 		unless @_ == 4;
 	croak "getGlobalUserSet: argument 1 must contain a user_id"
@@ -1145,9 +1155,12 @@ sub getMergedProblem {
 	croak "getGlobalUserSet: argument 3 must contain a problem_id"
 		unless defined $problemID;
 	
+	#$timer->start;
 	my $UserProblem = $self->getUserProblem($userID, $setID, $problemID);
+	#$timer->continue("got user problem");
 	return unless $UserProblem;
 	my $GlobalProblem = $self->getGlobalProblem($setID, $problemID);
+	#$timer->continue("got global problem");
 	if ($GlobalProblem) {
 		foreach ($UserProblem->FIELDS()) {
 			next unless $GlobalProblem->can($_);
@@ -1155,6 +1168,8 @@ sub getMergedProblem {
 			$UserProblem->$_($GlobalProblem->$_());
 		}
 	}
+	#$timer->continue("merged records");
+	#$timer->stop;
 	return $UserProblem;
 }
 
@@ -1174,8 +1189,17 @@ sub dumpDB($$) {
 sub checkKeyfields($) {
 	my ($Record) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
-		croak "checkKeyfields: invalid character in $keyfield field (valid characters are [A-Za-z0-9_])"
-			unless $Record->$keyfield =~ m/^\w*$/;
+		my $value = $Record->$keyfield;
+		croak "checkKeyfields: $keyfield is empty"
+			unless defined $value and $value ne "";
+			
+		if ($keyfield eq "problem_id") {
+			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
+				unless $value =~ m/^\d*$/;
+		} else {
+			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_])"
+				unless $value =~ m/^\w*$/;
+		}
 	}
 }
 
