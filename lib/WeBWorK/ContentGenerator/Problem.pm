@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.150 2004/07/02 20:39:12 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.151 2004/07/03 17:29:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1030,7 +1030,7 @@ sub viewOptions {
 	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
 		$modeLine,
 		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Save Options"),
+		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
 	);
 }
 
