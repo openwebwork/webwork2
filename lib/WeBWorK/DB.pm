@@ -1435,12 +1435,9 @@ sub getMergedSets {
 	}
 	
 	# a horrible, terrible hack ;)
-	warn $self->{set_user};
-	warn $self->{set};
 	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
-			and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator")
-	{
-		warn __PACKAGE__.": using a terrible hack.\n";
+			and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
+		#warn __PACKAGE__.": using a terrible hack.\n";
 		$WeBWorK::timer->continue("DB: getsNoFilter start") if defined($WeBWorK::timer);
 		my @MergedSets = $self->{set_user}->getsNoFilter(@userSetIDs);
 		$WeBWorK::timer->continue("DB: getsNoFilter end") if defined($WeBWorK::timer);
