@@ -53,7 +53,7 @@ sub go {
 		$viewURL		   .=	"&editMode=temporaryFile";
 		$viewURL		   .=	'&sourceFilePath='. $self->{currentSourceFilePath}; # path to pg text for viewing
 		$viewURL		   .=	"&submit_button=$submit_button";                   # allows Problem.pg to recognize state
-		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
+#		$viewURL		   .=   '&editErrors='.$self->{editErrors};																				 # of problem being viewed.
 		$r->header_out(Location => $viewURL );
 		return REDIRECT;
 	} else {
@@ -77,7 +77,7 @@ sub initialize {
 	my $courseName				=	$ce->{courseName};
 
 #   FIXME -- sometimes this doesn't find a set	
-#	my $set            			= 	$db->getGlobalUserSet($effectiveUserName, $setName);
+#	my $set            			= 	$db->getMergedSet($effectiveUserName, $setName);
 #	my $setID					=	$set->set_id;
 	
 	# Find URL for viewing problem
@@ -86,7 +86,7 @@ sub initialize {
 	# FIXME  there is a discrepancy in the way that the problems are found.
 	# FIXME  more error checking is needed in case the problem doesn't exist.
 	# my $problem_record		=	$db->getUserProblem($user,$setID,1);
-	my $problem_record			=	$db->getGlobalUserProblem($effectiveUserName, $setName, $problemNumber);
+	my $problem_record			=	$db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 	# If there is no global_user defined problem, (i.e. the sets haven't been assigned yet), then look for a global version of the problem.
 	$problem_record			    =	$db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record);
 	die "Cannot find a problem record for set $setName / problem $problemNumber" 
@@ -159,13 +159,15 @@ sub initialize {
 	};
 	# record an error string for later use if there was a difficulty in writing to the file
 	# FIXME is this string every inspected?
-	$editErrors .= $@ if $@;
-	if (  $editErrors)   {
+	
+	my $openTempFileErrors = $@ if $@;
+	
+	if (  $openTempFileErrors)   {
 	    
-		$self->{editErrors}	= "Unable to write to $currentSourceFilePath: $editErrors";
+		$self->{openTempFileErrors}	= "Unable to write to $currentSourceFilePath: $openTempFileErrors";
 		#diagnose errors:
-		warn "Editing errors: $editErrors\n";
-		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath;
+		warn "Editing errors: $openTempFileErrors\n";
+		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath; #FIXME 
 		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
 		warn "The file $currentSourceFilePath does not have write permissions. \n"
 		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
@@ -175,7 +177,7 @@ sub initialize {
 	} else {	
 		# unlink the temporary file if there are no errors and the save button has been pushed
 	    
-		$self->{editErrors}	=	'';
+		$self->{openTempFileErrors}	=	'';
 		unlink("$problemPath.$editFileSuffix") if defined($submit_button) and $submit_button eq 'Save';		
 	};
 	
@@ -249,7 +251,7 @@ sub body {
 	#########################################################################
 
 	
-
+	warn "Errors in the problem ".$self->{editErrors} if $self->{editErrors};
 
 			   
 	return CGI::p($header),
