@@ -166,6 +166,11 @@ sub body {
 				"No recipients specified.");
 			return "";
 		}
+		unless ($feedback) {
+			$self->feedbackForm($user, $returnURL,
+				"Message was blank.");
+			return "";
+		}
 		
 		# get some network settings
 		my $hostname = $r->hostname();
@@ -276,14 +281,14 @@ sub body {
 		print CGI::p( wrap("", "", $feedback) );
 	} else {
 		# just print the feedback form, with no message
-		$self->feedbackForm($returnURL,  $user, "",);
+		$self->feedbackForm(  $user, $returnURL,"",);
 	}
 	
 	return "";
 }
 
 sub feedbackForm($;$$$) {
-	my ($self, $returnURL, $user, $message, ) = @_;
+	my ($self, $user,$returnURL,  $message, ) = @_;
 	my $r = $self->{r};
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
