@@ -39,9 +39,10 @@ use WeBWorK::Authz;
 use WeBWorK::ContentGenerator::Feedback;
 use WeBWorK::ContentGenerator::GatewayQuiz;
 use WeBWorK::ContentGenerator::Hardcopy;
+use WeBWorK::ContentGenerator::Instructor::AddUsers;
 use WeBWorK::ContentGenerator::Instructor::Assigner;
 use WeBWorK::ContentGenerator::Instructor::Index;
-use WeBWorK::ContentGenerator::Instructor::Index2;
+#use WeBWorK::ContentGenerator::Instructor::Index2;
 use WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
@@ -247,6 +248,8 @@ The dispatcher logic currently looks like this:
 				$result = WeBWorK::ContentGenerator::Instructor::Index->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "scoring") {
 				$result = WeBWorK::ContentGenerator::Instructor::Scoring->new($r, $ce, $db)->go; #FIXME!!!!
+			} elsif ($instructorArgument eq "add_users") {
+				$result = WeBWorK::ContentGenerator::Instructor::AddUsers->new($r, $ce, $db)->go; #FIXME!!!!
 			} elsif ($instructorArgument eq "scoringDownload") {
 				$result = WeBWorK::ContentGenerator::Instructor::ScoringDownload->new($r, $ce, $db)->go;
 			} elsif ($instructorArgument eq "scoring_totals") {
