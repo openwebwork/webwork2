@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.26 2004/09/04 23:31:46 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.27 2004/09/21 19:55:48 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -474,12 +474,14 @@ sub make_data_row {
 
   my $edit_link =  '';
   #if($self->{r}->param('browse_which') ne 'browse_library') {
+  my $problem_seed = $self->{r}->param('problem_seed') || 0;
   if($sourceFileName !~ /^Library\//) {
     $edit_link = CGI::a({href=>$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 						courseID =>$urlpath->arg("courseID"),
 						setID=>"Undefined_Set",
 						problemID=>"1"),
-						params=>{sourceFilePath => "$sourceFileName"}
+						params=>{sourceFilePath => "$sourceFileName",
+						         problemSeed=> $problem_seed}
 						  )}, "Edit it" );
   }
 
@@ -489,6 +491,7 @@ sub make_data_row {
 						problemID=>"1"),
 						  params =>{effectiveUser => $self->r->param('user'), 
 							    editMode => "SetMaker", 
+						            problemSeed=> $problem_seed,
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
 
   my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add this problem to the current set on the next update");
