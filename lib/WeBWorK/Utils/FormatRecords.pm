@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.37 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/FormatRecords.pm,v 1.3 2004/03/01 06:33:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,6 +59,7 @@ of field names and an sprintf format string.
 use strict;
 use warnings;
 use Carp;
+use WeBWorK::Utils qw/formatDateTime/;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -97,6 +98,27 @@ use constant PRESET_FORMATS => {
 			name => "last_name, first_name (email_address)",
 			field_order => [ qw/last_name first_name email_address/ ],
 			format_string => "%s, %s (%s)",
+		},
+	},
+	WeBWorK::DB::Record::Set => {
+		"sid" => {
+			name => "set_id",
+			field_order => [ qw/set_id/ ],
+		},
+		"sid_open" => {
+			name => "set_id (open_date)",
+			field_order => [ qw/set_id open_date/ ],
+			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
+		},
+		"sid_due" => {
+			name => "set_id (due_date)",
+			field_order => [ qw/set_id due_date/ ],
+			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
+		},
+		"sid_answer" => {
+			name => "set_id (answer_date)",
+			field_order => [ qw/set_id answer_date/ ],
+			format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
 		},
 	},
 };
@@ -146,7 +168,7 @@ strings.
 The keys of the %Records hash are not used by formatRecords() They are a
 convenience for you.
 
-%options can consist of either:
+%options can consist of:
 
  preset => the name of a preset format listed by getFormatsForClass()
 
@@ -155,9 +177,18 @@ or:
  field_order   => a reference to a list of fields in the records' class
  format_string => an sprintf format string corresponding to the fields listed above
 
+or:
+
+ field_order     => a reference to a list of fields in the records' class
+ format_function => a coderef to which to pass the contents of the fields in field_order
+
 If C<preset> is given, and its value does not match any known preset but I<is>
 the name of a field in the record class, the format is assumed to consist of
 that single field.
+
+If C<format_function> is given, the subroutine referenced is passed to contents
+of each field listed in C<field_order>. The subroutine should return a formatted
+string.
 
 The return value is suitable for passing to the C<-labels> parameter of several
 CGI module methods, i.e. popup_menu(), scrolling_list(), checkbox_group(), and
@@ -199,17 +230,28 @@ sub formatRecords {
 	my @field_order = @{ $options{field_order} };
 	croak "field_order is empty -- no fields to display" unless @field_order;
 	
+	my $format_function;
+	if (exists $options{format_function}) {
+		croak "format_function is not a coderef" unless ref $options{format_function} eq "CODE";
+		$format_function = $options{format_function};
+	}
+	
 	# default format_string is "%s %s %s ... %s".
 	my $format_string = $options{format_string} || "%s " x (@field_order-1) . "%s";
 	
-	foreach my $value (values %Records) {
-		# $value is initially a record, and is then replaced with a formatted string
-		#warn "value=$value\n";
-		$value = sprintf($format_string, map { $value->$_ } @field_order);
-		#warn "value=$value\n";
+	if ($format_function) {
+		# if we were passed format_function, call it on each record
+		foreach my $value (values %Records) {
+			# $value is initially a record, and is then replaced with a formatted string
+			$value = $format_function->(map { $value->$_ } @field_order);
+		}
+	} else {
+		# otherwise, use sprintf and format_string
+		foreach my $value (values %Records) {
+			# $value is initially a record, and is then replaced with a formatted string
+			$value = sprintf($format_string, map { $value->$_ } @field_order);
+		}
 	}
-	
-	#warn join("\n", values %Records), "\n";
 	
 	return %Records;
 }
@@ -218,8 +260,6 @@ sub formatRecords {
 
 The calling semantics of formatRecords is somewhat inflexible. We shouldn't make
 the user pass a hash if a list is sufficient for their use.
-
-No provision for programmatic formats, which are required for formatting dates.
 
 =back
 
