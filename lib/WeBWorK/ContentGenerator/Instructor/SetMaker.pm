@@ -370,7 +370,8 @@ sub make_data_row {
 
 
   my $edit_link =  '';
-  if($self->{r}->param('browse_which') ne 'browse_library') {
+  #if($self->{r}->param('browse_which') ne 'browse_library') {
+  if($sourceFileName !~ /^Library\//) {
     $edit_link = CGI::a({href=>$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 						courseID =>$urlpath->arg("courseID"),
 						setID=>"Undefined_Set",
