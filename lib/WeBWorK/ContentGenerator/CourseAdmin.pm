@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.31 2004/10/10 21:04:47 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.31 2004/10/10 21:04:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,7 +30,7 @@ use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw(cryptPassword writeLog);
-use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
+use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
 # put the following database layouts at the top of the list, in this order
@@ -57,10 +57,6 @@ sub pre_header_initialize {
 		return;
 	}
 	
-	# get result and send to message
-	my $status_message = $r->param("status_message");
-	$self->addmessage(CGI::p("$status_message")) if $status_message;
-
 	## if the user is asking for the downloaded database...
 	#if (defined $r->param("download_exported_database")) {
 	#	my $courseID = $r->param("export_courseID");
@@ -95,6 +91,19 @@ sub pre_header_initialize {
 				}
 			} else {
 				$method_to_call = "add_course_form";
+			}
+		}
+		
+		elsif ($subDisplay eq "rename_course") {
+			if (defined $r->param("rename_course")) {
+				@errors = $self->rename_course_validate;
+				if (@errors) {
+					$method_to_call = "rename_course_form";
+				} else {
+					$method_to_call = "do_rename_course";
+				}
+			} else {
+				$method_to_call = "rename_course_form";
 			}
 		}
 		
@@ -211,6 +220,8 @@ sub body {
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
+		" | ",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
 		" | ",
@@ -656,7 +667,7 @@ sub do_add_course {
 	if ($add_admin_users ne "") {
 		foreach my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
-				$self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
+				warn "User '$userID' will not be copied from admin course as it is the initial instructor.";
 				next;
 			}
 			my $User            = $db->getUser($userID);
@@ -746,6 +757,256 @@ sub do_add_course {
 	}
 
 	
+}
+
+################################################################################
+
+sub rename_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
+	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
+	
+	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
+	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
+	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
+	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
+	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
+	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
+	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
+	
+	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort @courseIDs;
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	print CGI::h2("Rename Course");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select a course to rename.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "rename_oldCourseID",
+					-values => \@courseIDs,
+					-default => $rename_oldCourseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "New Name:"),
+			CGI::td(CGI::textfield("rename_newCourseID", $rename_newCourseID, 25)),
+		),
+	);
+	
+	print CGI::p(
+		"If the course's database layout (indicated in parentheses above) is "
+		. CGI::b("sql") . ", supply the SQL connections information requested below."
+	);
+	
+	print CGI::start_table({class=>"FormLayout"});
+	print CGI::Tr(CGI::td({colspan=>2}, 
+			"Enter the user ID and password for an SQL account with sufficient permissions to create and delete databases."
+		)
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+		CGI::td(CGI::textfield("rename_sql_username", $rename_sql_username, 25)),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+		CGI::td(CGI::password_field("rename_sql_password", $rename_sql_password, 25)),
+	);
+	
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+		CGI::td(
+			CGI::textfield("rename_sql_host", $rename_sql_host, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default host."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+		CGI::td(
+			CGI::textfield("rename_sql_port", $rename_sql_port, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the default port."),
+		),
+	);
+
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL Current Database Name:"),
+		CGI::td(
+			CGI::textfield("rename_sql_database", $rename_sql_oldDatabase, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "SQL New Database Name:"),
+		CGI::td(
+			CGI::textfield("rename_sql_database", $rename_sql_newDatabase, 25),
+			CGI::br(),
+			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+		),
+	);
+	print CGI::Tr(
+		CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
+		CGI::td(
+			CGI::textfield("rename_sql_wwhost", $rename_sql_wwhost || "localhost", 25),
+			CGI::br(),
+			CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
+		),
+	);
+	print CGI::end_table();
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("rename_course", "Rename Course"));
+	
+	print CGI::end_form();
+}
+
+sub rename_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
+	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
+	
+	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
+	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
+	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
+	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
+	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
+	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
+	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
+	
+	my @errors;
+	
+	if ($rename_oldCourseID eq "") {
+		push @errors, "You must select a course to rename.";
+	}
+	if ($rename_newCourseID eq "") {
+		push @errors, "You must specify a new name for the course.";
+	}
+	if ($rename_oldCourseID eq $rename_newCourseID) {
+		push @errors, "Can't rename to the same name.";
+	}
+	unless ($rename_newCourseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
+		push @errors, "Course ID may only contain letters, numbers, hyphens, and underscores.";
+	}
+	if (grep { $rename_newCourseID eq $_ } listCourses($ce)) {
+		push @errors, "A course with ID $rename_newCourseID already exists.";
+	}
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$rename_oldCourseID,
+	);
+	
+	if ($ce2->{dbLayoutName} eq "sql") {
+		push @errors, "You must specify the SQL admin username." if $rename_sql_username eq "";
+		#push @errors, "You must specify the SQL admin password." if $rename_sql_password eq "";
+		#push @errors, "You must specify the current SQL database name." if $rename_sql_oldDatabase eq "";
+		#push @errors, "You must specify the new SQL database name." if $rename_sql_newDatabase eq "";
+	}
+	
+	return @errors;
+}
+
+sub do_rename_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
+	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
+	
+	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
+	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
+	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
+	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
+	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
+	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
+	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
+
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$rename_oldCourseID,
+	);
+	
+	my $dbLayoutName = $ce->{dbLayoutName};
+	
+	my %dbOptions;
+	if ($dbLayoutName eq "sql") {
+		$dbOptions{host}         = $rename_sql_host if $rename_sql_host ne "";
+		$dbOptions{port}         = $rename_sql_port if $rename_sql_port ne "";
+		$dbOptions{username}     = $rename_sql_username;
+		$dbOptions{password}     = $rename_sql_password;
+		$dbOptions{old_database} = $rename_sql_oldDatabase || "webwork_$rename_oldCourseID";
+		$dbOptions{new_database} = $rename_sql_newDatabase || "webwork_$rename_newCourseID";
+		$dbOptions{wwhost}       = $rename_sql_wwhost;
+	}
+	
+	eval {
+		renameCourse(
+			courseID      => $rename_oldCourseID,
+			ce            => $ce2,
+			dbOptions     => \%dbOptions,
+			newCourseID   => $rename_newCourseID,
+		);
+	};
+	if ($@) {
+		my $error = $@;
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while renaming the course $rename_oldCourseID to $rename_newCourseID:"),
+			CGI::tt(CGI::escapeHTML($error)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
+		);
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+			courseID => $rename_newCourseID);
+		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
+		print CGI::div({style=>"text-align: center"},
+			CGI::a({href=>$newCourseURL}, "Log into $rename_newCourseID"),
+		);
+	}
 }
 
 ################################################################################
