@@ -14,125 +14,161 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::ContentGenerator::Instructor::Assigner;
-use base qw(WeBWorK::ContentGenerator::Instructor);
+# SKEL: Welcome to the ContentGenerator skeleton!
+# 
+# This module is designed to help you in creating subclasses of
+# WeBWorK::ContentGenerator. Follow the instructions marked "SKEL" below to
+# create your very own module.
+# 
+# When you've finished, I recommend you do some cleanup. These modules are much
+# easier to maintain if they doesn't contain "vestigal" garbage code. Remove the
+# "SKEL" comments and anything else that that you're not using in your module.
+
+# SKEL: Declare the name and superclass of your module here:
+package WeBWorK::ContentGenerator::Skeleton;
+use base qw(WeBWorK::ContentGenerator);
+
+# SKEL: change the name of the module below and provide a short description. Add
+# additional POD documentation as you see fit.
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::Assigner - Assign problem sets to users.
+WeBWorK::ContentGenerator::Skeleton - Template for creating subclasses of
+WeBWorK::ContentGenerator.
 
 =cut
 
 use strict;
 use warnings;
-use CGI qw();
-use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
-#sub path {
-#	my $self          = shift;
-#	my $args          = $_[-1];
-#	
-#	my $ce = $self->{ce};
-#	my $root = $ce->{webworkURLs}->{root};
-#	my $courseName = $ce->{courseName};
-#	
-#	return $self->pathMacro($args,
-#		"Home"             => "$root",
-#		$courseName        => "$root/$courseName",
-#		"Instructor Tools" => "$root/$courseName/instructor",
-#		"Set Assigner"     => ""
-#	);
-#}
+# SKEL: Add "use" lines for libraries you will be using here. Note that you only
+# need to add a "use" line here if you will be instantiating now objects or
+# calling free functions. If you have an existing instance (like $self->r) you
+# can use it without a corresponding "use" line. Sample lines are given below:
+# 
+# You'll probably want to generate HTML code:
+#use CGI::Pretty qw();
+# 
+# You might need some utility functions:
+#use WeBWorK::Utils qw(function1 function2);
 
-#sub title {
+# SKEL: If you need to do any processing before the HTTP header is sent, do it
+# in this method:
+# 
+#sub pre_header_initialize {
 #	my ($self) = @_;
-#	return "Set Assigner"
+#	
+#	# Do your processing here! Don't print or return anything -- store data in
+#	# the self hash for later retrieveal.
 #}
 
+# SKEL: To emit your own HTTP header, uncomment this:
+# 
+#sub header {
+#	my ($self) = @_;
+#	
+#	# Generate your HTTP header here.
+#	
+#	# If you return something, it will be used as the HTTP status code for this
+#	# request. The Apache::Constants module might be useful for gerating status
+#	# codes. If you don't return anything, the status code "OK" will be used.
+#	return "";
+#}
+
+# SKEL: If you need to do any processing after the HTTP header is sent, but before
+# any template processing occurs, or you need to calculate values that will be
+# used in multiple methods, do it in this method:
+# 
+#sub initialize {
+#	my ($self) = @_;
+#	
+#	# Do your processing here! Don't print or return anything -- store data in
+#	# the self hash for later retrieveal.
+#}
+
+# SKEL: If you need to add tags to the document <HEAD>, uncomment this method:
+# 
+#sub head {
+#	my ($self) = @_;
+#	
+#	# You can print head tags here, like <META>, <SCRIPT>, etc.
+#	
+#	return "";
+#}
+
+# SKEL: To fill in the "info" box (to the right of the main body), use this
+# method:
+# 
+#sub info {
+#	my ($self) = @_;
+#	
+#	# Print HTML here.
+#	
+#	return "";
+#}
+
+# SKEL: To provide navigation links, use this method:
+# 
+#sub nav {
+#	my ($self, $args) = @_;
+#	
+#	# See the documentation of path() and pathMacro() in
+#	# WeBWorK::ContentGenerator for more information.
+#	
+#	return "";
+#}
+
+# SKEL: For a little box for display options, etc., use this method:
+# 
+#sub options {
+#	my ($self) = @_;
+#	
+#	# Print HTML here.
+#	
+#	return "";
+#}
+
+# SKEL: For a list of sibling objects, use this method:
+# 
+#sub siblings {
+#	my ($self, $args) = @_;
+#	
+#	# See the documentation of siblings() and siblingsMacro() in
+#	# WeBWorK::ContentGenerator for more information.
+#	# 
+#	# Refer to implementations in ProblemSet and Problem.
+#	
+#	return "";
+#}
+
+# SKEL: Okay, here's the body. Most of your stuff will go here:
+# 
 sub body {
 	my ($self) = @_;
-	my $r = $self->{r};
-	my $db = $self->{db};
 	
-	print CGI::p("Select one or more sets and one or more users below to assign"
-		. "each selected set to all selected users.");
+	# SKEL: Useful things from the superclass:
+	# 
+	# The WeBWorK::Request object. Good for accessing request params and so on.
+	#my $r = $self->r;
+	# 
+	# Do you need data from the course environment?
+	#my $ce = $r->ce;
+	# 
+	# Will you be accessing the database?
+	#my $db = $r->db;
+	# 
+	# Query authorization:
+	#my $authz = $r->authz;
+	# 
+	# The WeBWorK::URLPath object. Necessary for getting/generating URL data:
+	#my $urlpath = $r->urlpath;
 	
-	my @userIDs = $db->listUsers;
-	my @Users = $db->getUsers(@userIDs);
+	# FIXME: Add more examples of common idioms, mention WeBWorK::HTML::*
+	# classes, refer to superclass methods.
 	
-	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	# SKEL: Print your content here!
 	
-	my @selected_users = $r->param("selected_users");
-	my @selected_sets = $r->param("selected_sets");
-	
-	if (defined $r->param("assign")) {
-		if  (@selected_users && @selected_sets) {
-			my @results = $self->assignSetsToUsers(\@selected_sets, \@selected_users);
-			
-			if (@results) {
-				print CGI::div({class=>"ResultsWithError"},
-					CGI::p("The following error(s) occured while assigning:"),
-					CGI::ul(CGI::li(\@results)),
-				);
-			} else {
-				print CGI::div({class=>"ResultsWithoutError"},
-					CGI::p("All assignments were made successfully."),
-				);
-			}
-		} else {
-			print CGI::div({class=>"ResultsWithError"},
-				@selected_users ? () : CGI::p("You must select one or more users below."),
-				@selected_sets ? () : CGI::p("You must select one or more sets below."),
-			);
-		}
-	}
-	
-	my $scrolling_user_list = scrollingRecordList({
-			name => "selected_users",
-			request => $r,
-			default_sort => "lnfn",
-			default_format => "lnfn_uid",
-			size => 20,
-			multiple => 1,
-		}, @Users);
-	
-	my $scrolling_set_list = scrollingRecordList({
-		name => "selected_sets",
-		request => $r,
-		default_sort => "set_id",
-		default_format => "set_id",
-		size => 20,
-		multiple => 1,
-	}, @GlobalSets);
-	
-	print CGI::start_form({method=>"post", action=>$r->uri()});
-	print $self->hidden_authen_fields();
-	
-	print CGI::div({class=>"FormLayout"},
-		CGI::table(
-			CGI::Tr(
-				CGI::th("Users"),
-				CGI::th("Sets"),
-			),
-			CGI::Tr(
-				CGI::td($scrolling_user_list),
-				CGI::td($scrolling_set_list),
-			),
-			CGI::Tr(
-				CGI::td({colspan=>2, align=>"center"},
-					CGI::submit(
-						-name => "assign",
-						-value => "Assign selected sets to selected users",
-					),
-				),
-			),
-		),
-	);
-	
-	print CGI::end_form();
-	
-	return "";
+	return "";	
 }
 
 1;
