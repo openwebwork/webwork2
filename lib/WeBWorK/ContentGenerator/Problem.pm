@@ -50,9 +50,6 @@ sub pre_header_initialize {
 	$setName =~ s/^set//;
 	$problemNumber =~ s/^prob//;
 	
-	# make sure $problemNumber is numeric (see PG.pm)
-	die "Problem must be numeric!\n" unless $problemNumber =~ /^\d+$/;
-	
 	##### database setup #####
 	
 	my $cldb   = WeBWorK::DB::Classlist->new($courseEnv);
@@ -62,6 +59,7 @@ sub pre_header_initialize {
 	my $user            = $cldb->getUser($userName);
 	my $set             = $wwdb->getSet($userName, $setName);
 	my $problem         = $wwdb->getProblem($userName, $setName, $problemNumber);
+	my $psvn            = $wwdb->getPSVN($userName, $setName);
 	my $permissionLevel = $authdb->getPermissions($userName);
 	
 	##### form processing #####
@@ -123,10 +121,12 @@ sub pre_header_initialize {
 	
 	my $pg = WeBWorK::PG->new(
 		$courseEnv,
-		$r->param('user'),
+		$user,
 		$r->param('key'),
-		$setName,
-		$problemNumber,
+		$set,
+		$problem,
+		$psvn,
+		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
 			showHints       => $will{showHints},
@@ -135,7 +135,6 @@ sub pre_header_initialize {
 			# try leaving processAnswers on all the time?
 			processAnswers  => 1, #$submitAnswers ? 1 : 0,
 		},
-		$formFields
 	);
 	
 	##### store fields #####

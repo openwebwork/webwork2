@@ -16,3 +16,9 @@ Image generation alternatives:
 global.conf:
 	- the "root" of the modperl handler should be sent in from outside
 	- right now, it's in $webworkURLs{root}
+
+fun Apache::* modules:
+	Apache::PerlVINC
+	Apache::SubProcess - output of subprocesses goes to client
+
+also: http://perl.apache.org/docs/general/perl_reference/perl_reference.html#Exception_Handling_for_mod_perl

@@ -24,47 +24,48 @@ sub new($$$$$$$$) {
 	my $class = ref($invocant) || $invocant;
 	my (
 		$courseEnv,
-		$userName,
+		$user,
 		$key,
-		$setName,
-		$problemNumber,
+		$set,
+		$problem,
+		$psvn,
+		$formFields, # in CGI::Vars format
 		$translationOptions, # hashref containing options for the
 		                     # translator, such as whether to show
 				     # hints and the display mode to use
-		$formFields, # in CGI::Vars format
 	) = @_;
 	
-	# get database information
-	my $classlist = WeBWorK::DB::Classlist->new($courseEnv);
-	my $wwdb = WeBWorK::DB::WW->new($courseEnv);
-	my $user = $classlist->getUser($userName);
-	my $set = $wwdb->getSet($userName, $setName);
-	my $psvn = $wwdb->getPSVN($userName, $setName);
-	
-	my $problem;
-	if ($problemNumber =~ /^\d+$/) {
-		$problem = $wwdb->getProblem($userName, $setName, $problemNumber);
-	} else {
-		# This is the fun part: if $problemNumber is NON-NUMERIC, the
-		# user wants to specify a PG file directly. We manufacture a
-		# Problem object using fake data and the specified source file.
-		# This is potentially dangerous since an untrusted user is
-		# allowed to specifiy an arbitrary file to be evaluated as PG.
-		# A user of PG.pm MUST MAKE SURE that if $problemNumber is
-		# supplied by an untrusted source (i.e. the Apache request),
-		# it is numberic. A simple
-		# 
-		# 	die unless $problemNumber =~ /^\d+$/;
-		# 
-		# should suffice.
-		$problem = WeBWorK::Problem->new(
-			id => 0,
-			set_id => $set->id,
-			login_id => $user->id,
-			source_file => $problemNumber,
-			# the rest of Problem's fields are not needed
-		);
-	}
+#	# get database information
+#	my $classlist = WeBWorK::DB::Classlist->new($courseEnv);
+#	my $wwdb = WeBWorK::DB::WW->new($courseEnv);
+#	my $user = $classlist->getUser($userName);
+#	my $set = $wwdb->getSet($userName, $setName);
+#	my $psvn = $wwdb->getPSVN($userName, $setName);
+#	
+#	my $problem;
+#	if ($problemNumber =~ /^\d+$/) {
+#		$problem = $wwdb->getProblem($userName, $setName, $problemNumber);
+#	} else {
+#		# This is the fun part: if $problemNumber is NON-NUMERIC, the
+#		# user wants to specify a PG file directly. We manufacture a
+#		# Problem object using fake data and the specified source file.
+#		# This is potentially dangerous since an untrusted user is
+#		# allowed to specifiy an arbitrary file to be evaluated as PG.
+#		# A user of PG.pm MUST MAKE SURE that if $problemNumber is
+#		# supplied by an untrusted source (i.e. the Apache request),
+#		# it is numberic. A simple
+#		# 
+#		# 	die unless $problemNumber =~ /^\d+$/;
+#		# 
+#		# should suffice.
+#		$problem = WeBWorK::Problem->new(
+#			id => 0,
+#			set_id => $set->id,
+#			login_id => $user->id,
+#			source_file => $problemNumber,
+#			# the rest of Problem's fields are not needed
+#		);
+#	}
 	
 	# create a Translator
 	warn "PG: creating a Translator\n";
@@ -93,7 +94,15 @@ sub new($$$$$$$$) {
 	# set the environment (from defineProblemEnvir)
 	warn "PG: setting the environment (from defineProblemEnvir)\n";
 	$translator->environment(defineProblemEnvir(
-		$courseEnv, $user, $key, $set, $problem, $psvn, $formFields, $translationOptions));
+		$courseEnv,
+		$user,
+		$key,
+		$set,
+		$problem,
+		$psvn,
+		$formFields,
+		$translationOptions,
+	));
 	
 	# initialize the Translator
 	warn "PG: initializing the Translator\n";
@@ -334,11 +343,13 @@ __END__
 =head1 SYNOPSIS
 
  $pg = WeBWorK::PG->new(
-	 $courseEnv, # a WeBWorK::CourseEnvironment object
-	 $userName,
+	 $courseEnv,  # a WeBWorK::CourseEnvironment object
+	 $user,       # a WeBWorK::User object
 	 $sessionKey,
-	 $setName,
-	 $problemNumber,
+	 $set,        # a WeBWorK::Set object
+	 $problem,    # a WeBWorK::Problem object
+	 $psvn,
+	 $formFields  # in &WeBWorK::Form::Vars format
 	 { # translation options
 		 displayMode     => "images", # (plainText|formattedText|images)
 		 showHints       => 1,        # (0|1)
@@ -346,7 +357,6 @@ __END__
 		 refreshMath2img => 0,        # (0|1)
 		 processAnswers  => 1,        # (0|1)
 	 },
-	 $formFields # in WeBWorK::Form::Vars format
  );
 
  $translator = $pg->{translator}; # WeBWorK::PG::Translator
@@ -369,7 +379,7 @@ instead making choices that are appropriate for the webwork-modperl system.
 
 =over
 
-=item new (ENVIRONMENT, USER, KEY, SET, PROBLEM, OPTIONS, FIELDS)
+=item new (ENVIRONMENT, USER, KEY, SET, PROBLEM, PSVN, FIELDS, OPTIONS)
 
 The C<new> method creates a translator, initializes it using the parameters
 specified, translates a PG file, and processes answers. It returns a reference
@@ -387,7 +397,7 @@ a WeBWorK::CourseEnvironment object
 
 =item USER
 
-the name of the user for whom to render
+a WeBWorK::User object
 
 =item KEY
 
@@ -395,11 +405,21 @@ the session key of the current session
 
 =item SET
 
-the name of the problem set from which to get the problem
+a WeBWorK::Set object
 
 =item PROBLEM
 
-the number of the problem to render
+a WeBWorK::Problem object
+
+=item PSVN
+
+the problem set version number
+
+=item FIELDS
+
+a reference to a hash (as returned by &WeBWorK::Form::Vars) containing form
+fields submitted by a problem processor. The translator will look for fields
+like "AnSwEr[0-9]" containing submitted student answers.
 
 =item OPTIONS
 
@@ -429,12 +449,6 @@ even if the PG source has not been updated.
 boolean, call answer evaluators and graders
 
 =back
-
-=item FIELDS
-
-a reference to a hash (as returned by &WeBWorK::Form::Vars) containing form
-fields submitted by a problem processor. The translator will look for fields
-like "AnSwEr[0-9]" containing submitted student answers.
 
 =back
 
