@@ -176,9 +176,10 @@ EOF
 		}, $class;
 	}
 	
-	# install a safety filter (&safetyFilter)
+	# install a safety filter
 	#warn "PG: installing a safety filter\n";
-	$translator->rf_safety_filter(\&safetyFilter);
+	#$translator->rf_safety_filter(\&oldSafetyFilter);
+	$translator->rf_safety_filter(\&nullSafetyFilter);
 	
 	# write timing log entry -- the translator is now all set up
 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
@@ -435,7 +436,7 @@ sub translateDisplayModeNames($) {
 	}->{$name};
 }
 
-sub safetyFilter {
+sub oldSafetyFilter {
 	my $answer = shift; # accepts one answer and checks it
 	my $submittedAnswer = $answer;
 	$answer = '' unless defined $answer;
@@ -457,6 +458,10 @@ sub safetyFilter {
 	}
 	$errorno = 0;
 	return($answer, $errorno);
+}
+
+sub nullSafetyFilter {
+	return shift, 0; # no errors
 }
 
 1;
