@@ -109,6 +109,7 @@ sub initialize {
 	
 	my $problemContents	= '';
 	my $currentSourceFilePath	=	'';
+	my $editErrors = '';
 	# update the .pg and .pg.tmp files in the directory
 	if (not defined($submit_button) ) {
 		# this is a fresh editing job
@@ -118,6 +119,7 @@ sub initialize {
 		eval { $problemContents			=	WeBWorK::Utils::readFile($problemPath)  
 		};  # try to read file
 		$problemContents = $@ if $@;
+		$editErrors .= $problemContents;
 		$currentSourceFilePath			=	"$problemPath.$editFileSuffix"; 
 		$self->{currentSourceFilePath}	=	$currentSourceFilePath; 
 	} elsif ($submit_button	eq 'Refresh' ) {
@@ -139,9 +141,15 @@ sub initialize {
 		# give a warning
 		die "Unrecognized submit command $submit_button";
 	}
+	
+	# Handle the problem of line endings.  Make sure that all of the line endings.  Convert \r\n to \n
+	$problemContents    =~    s/\r\n/\n/g;
+	$problemContents    =~    s/\r/\n/g;
+	
 	# print changed pg files
 	# FIXME  make sure that the permissions are set correctly!!!
 	# Make sure that the warning is being transmitted properly.
+	
 	eval {
 		local *OUTPUTFILE;
 		open OUTPUTFILE, ">", $currentSourceFilePath
@@ -151,10 +159,17 @@ sub initialize {
 	};
 	# record an error string for later use if there was a difficulty in writing to the file
 	# FIXME is this string every inspected?
-	my $errors = $@ if $@;
-	if (  $errors)   {
-	
-		$self->{editErrors}	= "Unable to write to $currentSourceFilePath: $errors";
+	$editErrors .= $@ if $@;
+	if (  $editErrors)   {
+	    
+		$self->{editErrors}	= "Unable to write to $currentSourceFilePath: $editErrors";
+		#diagnose errors:
+		warn "Editing errors: $editErrors\n";
+		warn "The file $currentSourceFilePath exists. \n " if -e $currentSourceFilePath;
+		warn "The file $currentSourceFilePath cannot be found. \n " unless -e $currentSourceFilePath;
+		warn "The file $currentSourceFilePath does not have write permissions. \n"
+		                 if -e $currentSourceFilePath and not -w $currentSourceFilePath;
+		
 		
 		
 	} else {	
@@ -208,28 +223,9 @@ sub body {
 	# or in the original file in the template directory
 	#########################################################################
 	my $problemContents = '';
-# 	my $editMode		= (defined($r->param('problemContents')))? 
-# 								'tmpMode':'startMode';
-# 	
-# 	if ( $editMode eq 'tmpMode') {
-# 		$problemContents	=	$r->param('problemContents');
-# 
-# 	} else{
+
 	eval { $problemContents	=	WeBWorK::Utils::readFile($problemPath)  };  # try to read file
 	$problemContents = $@ if $@;
-#	} 
-		
-	#  save Action  FIXME  -- is this the write place for this?
-# 	my $actionString = '';
-# 	if ($r->param('submit') eq 'Save') {
-# 		$actionString = "File saved to $problemPath";
-# 		#FIXME  it would be MUCH better to work with temporary files
-# 		open(FILE,">$problemPath") or die "Can't open $problemPath";
-# 		print FILE $problemContents;
-# 		close(FILE);
-# 		
-#	}
-
 	
 			
 			
@@ -301,80 +297,5 @@ sub body {
 }
 
 
-# sub gatherProblemList {   #workaround for obtaining the definition of a problem set (awaiting implementation of db function)
-# 	my $self = shift;
-# 	my $setName = shift;
-# 	my $output = "";
-# 	if ( defined($setName) and $setName ne "" ) {
-# 		my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
-# 		my $fileName = "$templateDirectory/$setName.def";
-# 		my @output =  split("\n",WeBWorK::Utils::readFile($fileName) );
-# 		@output = grep  /\.pg/,   @output;     # only get the .pg files
-# 		@output = grep  !/Header/, @output;   # eliminate header files
-# 		$output = join("\n",@output);
-# 	} else {
-# 		$output = "No set name |$setName| is defined";
-# 	}
-# 	
-# 	
-# 	return  $output
-# 
-# 
-# 
-# 
-# }
-# sub fetchSetDirectories {
-# 
-# 	my $self = shift;
-# 	my $defaultChoice = shift;
-# 	my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
-# 	opendir SETDEFDIR, $templateDirectory 
-# 		or return "Can't open directory $templateDirectory";
-# 	
-# 	my @allFiles = grep !/^\./, readdir SETDEFDIR;
-# 	closedir  SETDEFDIR;
-# 
-# 	## filter to find only the set directories 
-# 	## -- it is assumed that these directories don't contain a period in their names
-# 	## and that all other files do.  Directories names must also begin with "set".
-# 	## A better plan would be to read only the names of directories, not files.
-# 	
-# 	## sort the directories
-# 	my @setDefFiles = grep /^set[^\.]*$/, @allFiles;
-# 	my @sortedNames = sort @setDefFiles;
-# 
-# 	return "$libraryName/" . CGI::br(). CGI::popup_menu(-name=>'setDirectory', -size=>$rowheight,
-# 	 -values=>\@sortedNames, -default=>$defaultChoice ) .CGI::br() ;
-# }
-# 
-# sub fetchPGproblems {
-# 
-# 	my $self = shift;
-# 	my $setDirectory = shift;
-# 	
-# 	# Handle default for setDirectory  
-# 	# fix me -- this is not bullet proof
-# 	$setDirectory = "set0" unless defined($setDirectory);
-# 	my $templateDirectory = $self->{ce}->{courseDirs}->{templates};
-# 	
-# 	## 
-# 	opendir SETDEFDIR, "$templateDirectory/$setDirectory" 
-# 		or return "Can't open directory $templateDirectory/$setDirectory";
-# 	
-# 	my @allFiles = grep !/^\./, readdir SETDEFDIR;
-# 	closedir  SETDEFDIR;
-# 
-# 	## filter to find only pg problems 
-# 	## Some problems are themselves in directories (if they have auxiliary
-# 	## .png's for example.  This eventuallity needs to be handled.
-# 	
-# 	## sort the directories
-# 	my @pgFiles = grep /\.pg$/, @allFiles;
-# 	my @sortedNames = sort @pgFiles;
-# 
-# 	return "$setDirectory ". CGI::br() . 
-# 	CGI::popup_menu(-name=>'pgProblem', -size=>$rowheight, -multiple=>undef, -values=>\@sortedNames,  ) . 
-# 	CGI::br() ;
-# }
 
 1;
