@@ -32,7 +32,7 @@ sub hasPermissions {
 	my $courseEnvironment = $self->{ce};
 	my $permissionLevels = $courseEnvironment->{permissionLevels};
 	
-	my $Permission = $self->{db}->getPermissionLevel($user);
+	my $Permission = $self->{db}->getPermissionLevel($user); # checked
 	return 0 unless defined $Permission;
 	my $permissionLevel = $Permission->permission();
 	if (defined $permissionLevels->{$activity}

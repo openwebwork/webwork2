@@ -512,15 +512,25 @@ sub links {
 	my $userName = $self->{r}->param("user");
 	my $courseName = $ce->{courseName};
 	my $root = $ce->{webworkURLs}->{root};
-	my $permLevel = $db->getPermissionLevel($userName)->permission();
-	my $key = $db->getKey($userName)->key();
-	return "" unless defined $key;
+	
+	#my $Key = $db->getKey($userName); # checked
+	#my $key = (defiend $key
+	#	? $Key->key()
+	#	: "");
+	#
+	#return "" unless defined $key;
+	# This has been replaced by using "#if loggedin" in ur.template.
 	
 	# URLs to parts of the system
 	my $probSets   = "$root/$courseName/?"            . $self->url_authen_args();
 	my $prefs      = "$root/$courseName/options/?"    . $self->url_authen_args();
 	my $help       = "$ce->{webworkURLs}->{docs}?"    . $self->url_authen_args();
 	my $logout     = "$root/$courseName/logout/?"     . $self->url_authen_args();
+	
+	my $PermissionLevel = $db->getPermissionLevel($userName); # checked
+	my $permLevel = (defined $PermissionLevel
+		? $PermissionLevel->permission()
+		: 0);
 	
 	return join("",
 		CGI::a({-href=>$probSets}, "Problem&nbsp;Sets"), CGI::br(),

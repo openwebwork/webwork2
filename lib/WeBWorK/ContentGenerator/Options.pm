@@ -23,7 +23,9 @@ sub initialize {
 	my $ce = $self->{ce};
 	my $db = $self->{db};
 	
-	$self->{effectiveUser} = $db->getUser($r->param('effectiveUser'));
+	$self->{effectiveUser} = $db->getUser($r->param('effectiveUser')); # checked
+	die "record not found for user ", $r->param('effectiveUser'), " (effective user)."
+		unless defined $self->{effectiveUser};
 }
 
 sub path {
@@ -63,7 +65,7 @@ sub body {
 	if ($changeOptions) {
 		if ($newP or $confirmP) {
 			if ($newP eq $confirmP) {
-				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)};
+				my $passwordRecord = eval {$db->getPassword($effectiveUser->user_id)}; # checked
 				warn "Can't get password for user |$effectiveUser| $@" if $@ or not defined($passwordRecord);
 				my $cryptedPassword = cryptPassword($newP);
 				$passwordRecord->password($cryptedPassword);

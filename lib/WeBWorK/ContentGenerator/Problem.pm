@@ -49,6 +49,7 @@ my $timer0_ON=0;  # times pg translation phase
 #
 ############################################################
 
+# FIXME: what is this?
 sub templateName {
 	"problem";
 }
@@ -61,15 +62,25 @@ sub pre_header_initialize {
 	my $userName             = $r->param('user');
 	my $effectiveUserName    = $r->param('effectiveUser');
 	my $key                  = $r->param('key');
-	my $user                 = $db->getUser($userName);
-	my $effectiveUser        = $db->getUser($effectiveUserName);
-	my $permissionLevel      = $db->getPermissionLevel($userName)->permission();
+	
+	my $user = $db->getUser($userName); # checked
+	die "record for user $userName (real user) does not exist."
+		unless defined $user;
+	
+	my $effectiveUser = $db->getUser($effectiveUserName); # checked
+	die "record for user $effectiveUserName (effective user) does not exist."
+		unless defined $effectiveUser;
+	
+	my $PermissionLevel = $db->getPermissionLevel($userName); # checked
+	die "permission level record for user $userName does not exist (but the user does? odd...)"
+		unless defined $PermissionLevel;
+	my $permissionLevel = $PermissionLevel->permission;
 	
 	# obtain the merged set for $effectiveUser
-	my $set = $db->getMergedSet($effectiveUserName, $setName);
+	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
 	
 	# obtain the merged problem for $effectiveUser
-	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
+	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
 	
 	my $editMode = $r->param("editMode");
 	
@@ -82,10 +93,11 @@ sub pre_header_initialize {
 		# it to a user set, and add fake user data
 		unless (defined $set) {
 			my $userSetClass = $db->{set_user}->{record};
-			$set = global2user($userSetClass,
-				$db->getGlobalSet($setName));
+			my $globalSet = $db->getGlobalSet($setName); # checked
+			# if the global set doesn't exist either, bail!
 			die "Set $setName does not exist"
 				unless defined $set;
+			$set = global2user($userSetClass, $globalSet);
 			$set->psvn(0);
 		}
 		
@@ -93,10 +105,11 @@ sub pre_header_initialize {
 		# convert it to a user problem, and add fake user data
 		unless (defined $problem) {
 			my $userProblemClass = $db->{problem_user}->{record};
-			$problem = global2user($userProblemClass,
-				$db->getGlobalProblem($setName,$problemNumber));
+			my $globalProblem = $db->getGlobalProblem($setName, $problemNumber); # checked
+			# if the global problem doesn't exist either, bail!
 			die "Problem $problemNumber in set $setName does not exist"
 				unless defined $problem;
+			$problem = global2user($userProblemClass, $globalProblem);
 			$problem->user_id($effectiveUserName);
 			$problem->problem_seed(0);
 			$problem->status(0);
@@ -452,7 +465,7 @@ sub body {
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
 		# this will be undefined if the problem has not been assigned to this user
-		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id);
+		my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
@@ -855,10 +868,14 @@ sub attemptResults($$$$$$) {
 			 }
 	}
 	#FIXME  there must be a better way to force refresh.
-	my $refresh_warning = 'Hold down shift and click "refresh" or "reload" to update answer preview images.';
-	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . 
-	CGI::div({style=>'color:red; font-size:10pt'},$refresh_warning) . 
-	($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+	#my $refresh_warning = 'Hold down shift and click "refresh" or "reload" to update answer preview images.';
+	#return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . 
+	#CGI::div({style=>'color:red; font-size:10pt'},$refresh_warning) . 
+	#($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+	# ... this has been fixed by equation caching.
+	return
+		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
+		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 sub nbsp {
 	my $str = shift;

@@ -82,52 +82,53 @@ sub body {
 	my $from               = $r->param("from");
 	my $feedback           = $r->param("feedback");
 	
-	my $permissionLevel = ($userName
-		? $db->getPermissionLevel($userName)->permission()
-		: undef);
-	my $user = (defined $userName && $userName ne ""
-		? $db->getUser($userName)
-		: undef);
-	my $set = (defined $setName && $setName ne ""
-		? $db->getMergedSet($userName, $setName)
-		: undef);
-	my $problem = (defined $setName && $setName ne ""
-	               && defined $problemNumber && $problemNumber ne ""
-		? $db->getMergedProblem($userName, $setName, $problemNumber)
-		: undef);
+	my ($user, $set, $problem);
+	$user = $db->getUser($userName) # checked
+		if defined $userName and $userName ne "";
+	if (defined $user) {
+		$set = $db->getMergedSet($userName, $setName) # checked
+			if defined $setName and $setName ne "";
+		$problem = $db->getMergedProblem($userName, $setName, $problemNumber) # checked
+			if defined $set and defined $problemNumber && $problemNumber ne "";
+	} else {
+		$set = $db->getGlobalSet($setName) # checked
+			if defined $setName and $setName ne "";
+		$problem = $db->getGlobalProblem($setName, $problemNumber) # checked
+			if defined $set and defined $problemNumber && $problemNumber ne "";
+	}
 	
-		# get some network settings
-		my $hostname = $r->hostname();
-		my $port     = $r->get_server_port();
-		my $remoteIdent = $r->get_remote_logname() || "UNKNOWN";
-		my $remoteHost = $r->get_remote_host();
-		
-		# generate context URL
-		my $URL;
-		my $emailableURL;
-		my $returnURL;
-		if ($user) {
-			$URL = "http://$hostname:$port"
-				. $ce->{webworkURLs}->{root}
-				. "/" . $ce->{courseName}
-				. ($set 
-					? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
-					: "")
-				. "/?" 
-				. ($problem 
-					? "&displayMode=$displayMode" 
-					. "&showOldAnswers=$showOldAnswers"
-					. "&showCorrectAnswers=$showCorrectAnswers"
-					. "&showHints=$showHints"
-					. "&showSolutions=$showSolutions" 
-					: "" );
-			$emailableURL = $URL . "&effectiveUser=$userName";
-			$returnURL = $URL . '&'. $self->url_authen_args;
-		} else {
-			$URL = $emailableURL = "(not available)";
-			$returnURL = "";
-		}
-		
+	# get some network settings
+	my $hostname = $r->hostname();
+	my $port     = $r->get_server_port();
+	my $remoteIdent = $r->get_remote_logname() || "UNKNOWN";
+	my $remoteHost = $r->get_remote_host();
+	
+	# generate context URL
+	my $URL;
+	my $emailableURL;
+	my $returnURL;
+	if ($user) {
+		$URL = "http://$hostname:$port"
+			. $ce->{webworkURLs}->{root}
+			. "/" . $ce->{courseName}
+			. ($set 
+				? "/".$set->set_id . ($problem ? "/".$problem->problem_id : "")
+				: "")
+			. "/?" 
+			. ($problem 
+				? "&displayMode=$displayMode" 
+				. "&showOldAnswers=$showOldAnswers"
+				. "&showCorrectAnswers=$showCorrectAnswers"
+				. "&showHints=$showHints"
+				. "&showSolutions=$showSolutions" 
+				: "" );
+		$emailableURL = $URL . "&effectiveUser=$userName";
+		$returnURL = $URL . '&'. $self->url_authen_args;
+	} else {
+		$URL = $emailableURL = "(not available)";
+		$returnURL = "";
+	}
+	
 	if (defined $r->param("sendFeedback")) {
 		# get verbosity level
 		my $verbosity = $ce->{mail}->{feedbackVerbosity};
@@ -144,11 +145,11 @@ sub body {
 		} else {
 			# send to all professors and TAs
 			foreach my $rcptName ($db->listUsers()) {
-				my $rcptPerm = $db->getPermissionLevel($rcptName);
+				my $rcptPerm = $db->getPermissionLevel($rcptName); # checked
 				next unless $rcptPerm;
 				if ($rcptPerm->permission() == 5 or $rcptPerm->permission() == 10) {
-					my $rcpt = $db->getUser($rcptName);
-					if ($rcpt->email_address) {
+					my $rcpt = $db->getUser($rcptName); # checked
+					if ($rcpt and $rcpt->email_address) {
 						push @recipients, $rcpt->email_address;
 					}
 				}

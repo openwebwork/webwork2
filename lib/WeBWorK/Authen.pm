@@ -33,8 +33,8 @@ sub new($$$) {
 
 sub checkPassword($$$) {
 	my ($self, $userID, $possibleClearPassword) = @_;
-	my $Password = $self->{db}->getPassword($userID);
-	return 0 unless $Password;
+	my $Password = $self->{db}->getPassword($userID); # checked
+	return 0 unless defined $Password;
 	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
 	return $possibleCryptPassword eq $Password->password();
 }
@@ -50,8 +50,8 @@ sub generateKey($$) {
 
 sub checkKey($$$) {
 	my ($self, $userID, $possibleKey) = @_;
-	my $Key = $self->{db}->getKey($userID);
-	return 0 unless $Key;
+	my $Key = $self->{db}->getKey($userID); # checked
+	return 0 unless defined $Key;
 	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
 		if ($possibleKey eq $Key->key()) {
 			# unexpired and matches -- update timestamp
@@ -73,8 +73,8 @@ sub checkKey($$$) {
 
 sub unexpiredKeyExists($$) {
 	my ($self, $userID) = @_;
-	my $Key = $self->{db}->getKey($userID);
-	return 0 unless $Key;
+	my $Key = $self->{db}->getKey($userID); # checked
+	return 0 unless defined $Key;
 	if (time <= $Key->timestamp()+$self->{ce}->{sessionKeyTimeout}) {
 		# unexpired, but leave timestamp alone
 		return 1;
@@ -135,7 +135,7 @@ sub verify($) {
 			$r->param("passwd", "");
 			
 			# it's a practice user that doesn't exist.
-			unless ($db->getUser($user)) {
+			unless (defined $db->getUser($user)) { # checked
 				$error = "That practice account does not exist.";
 				last VERIFY;
 			}

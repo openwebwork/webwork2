@@ -71,7 +71,11 @@ sub assignSetToUser {
 	warn $@ if $@ and not $@ =~ m/user set exists/;
 	
 	foreach my $problemID ($db->listGlobalProblems($setID)) {
-		my $problemRecord = $db->getGlobalProblem($setID, $problemID);
+		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
+		if (not defined $problemRecord) {
+			warn "no record found for problem $problemID -- skipping.";
+			next;
+		}
 		$self->assignProblemToUser($userID, $problemRecord);
 	}
 }
@@ -99,7 +103,9 @@ sub assignSetToAllUsers {
 	my $db = $self->{db};
 	my @problems = ();
 	my @users = $db->listUsers;
-	my @problemRecords = map {$db->getGlobalProblem($setID, $_)} $db->listGlobalProblems($setID);
+	my @problemRecords = map { $db->getGlobalProblem($setID, $_) } # checked
+		$db->listGlobalProblems($setID);
+	@problemRecords = grep { defiend $_ } @problemRecords;
 	
 	foreach my $user (@users) {
 		# FIXME: Create a UserSet record for the user!!!!
@@ -172,35 +178,13 @@ sub getDefList {
 	return $self->read_dir($dir, qr/.*\.def/);
 }
 
-## Template Escapes ##
+################################################################################
+# template escapes
+################################################################################
 
 sub links {
- 	my $self 		= shift;
-#  	FIXME these links are being placed in ContentGenerator.pm
-#  	
-#  	my $pathString 	= "";
-#  	
-# 	
-# 	my $ce = $self->{ce};
-# 	my $db = $self->{db};
-# 	my $userName = $self->{r}->param("user");
-# 	my $courseName = $ce->{courseName};
-# 	my $root = $ce->{webworkURLs}->{root};
-# 	my $permLevel = $db->getPermissionLevel($userName)->permission();
-# 	my $key = $db->getKey($userName)->key();
-# 	return "" unless defined $key;
-# 	
-# 	# new URLS
-# 	my $classList	= "$root/$courseName/instructor/users/?". $self->url_authen_args();
-# 	my $addStudent  = "$root/$courseName/instructor/addStudent/?". $self->url_authen_args();
-# 	my $problemSetList = "$root/$courseName/instructor/sets/?". $self->url_authen_args();
-# 	
-# 	if ($permLevel > 0 ) {
-# 		$pathString .="<hr>";
-# 		$pathString .=  CGI::a({-href=>$classList}, "Class&nbsp;editor") . CGI::br();
-# 		$pathString .= CGI::a({-href=>$problemSetList}, "Set editor") . CGI::br();
-# 	}
-	return $self->SUPER::links(); # . $pathString;
+ 	my $self = shift;
+	return $self->SUPER::links();
 }
 
 1;

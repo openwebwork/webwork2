@@ -19,6 +19,7 @@ use warnings;
 use CGI qw();
 use File::Path qw(rmtree);
 use WeBWorK::Form;
+use WeBWorK::PG;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
 
@@ -44,14 +45,27 @@ sub pre_header_initialize {
 		unshift @users, $r->param("effectiveUser");
 	}
 	
-	$self->{user}            = $db->getUser($r->param("user"));
-	$self->{permissionLevel} = $db->getPermissionLevel($r->param("user"))->permission();
-	$self->{effectiveUser}   = $db->getUser($r->param("effectiveUser"));
+	$self->{user}            = $db->getUser($r->param("user")); # checked
+	die "user ", $r->param("user"), " (real user) not found."
+		unless $self->{user};
+	
+	$self->{effectiveUser}   = $db->getUser($r->param("effectiveUser")); # checked
+	die "user ", $r->param("effectiveUser"), " (effective user) not found."
+		unless $self->{effectiveUser};
+	
+	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
+	if ($PermissionLevel) {
+		$self->{permissionLevel} = $PermissionLevel->permission();
+	} else {
+		die "permission level for user ", $r->param("user"), " (real user) not found.";
+	}
+	
 	$self->{sets}            = \@sets;
 	$self->{users}           = \@users;
 	$self->{hardcopy_format} = $hardcopy_format;
 	$self->{errors}          = [];
 	$self->{warnings}        = [];
+	
 	
 	# security checks
 	my $multiSet    = $self->{permissionLevel} > 0;
@@ -251,7 +265,8 @@ sub displayForm($) {
 	my $preOpenSets       = $self->{permissionLevel} > 0;
 	my $effectiveUserName = $self->{effectiveUser}->user_id;	
 	my @setNames     = $db->listUserSets($effectiveUserName);
-	my @sets         = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames );
+	my @sets         = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames ); # checked
+	@sets = grep { defined $_ } @sets;
 	@sets            = sort { $a->set_id cmp $b->set_id } @sets;
 	@setNames        = map( {$_->set_id } @sets );  # get sorted version of setNames
 	my %setLabels    = map( {($_->set_id, "set ".$_->set_id )} @sets );
@@ -259,7 +274,8 @@ sub displayForm($) {
 	
 	if ($multiUser) {
 		@userNames    = $self->{db}->listUsers();
-		@users        = $self->{db}->getUsers(@userNames);
+		@users        = $self->{db}->getUsers(@userNames); # checked
+		@users = grep { defined $_ } @users;
 		@users        = sort { $a->last_name cmp $b->last_name } @users;
 		@userNames    = map( {$_->user_id} @users );  # get sorted version of user names
 		%userLabels   = map( {($_->user_id , $_->last_name .", ". $_->first_name ." --- ". $_->user_id   ) } @users ); 
@@ -554,7 +570,7 @@ sub getMultiSetTeX {
 }
 
 sub getSetTeX {
-	my ($self, $effectiveUserName,$setName) = @_;
+	my ($self, $effectiveUserName, $setName) = @_;
 	my $ce = $self->{ce};
 	my $db = $self->{db};
 	
@@ -563,13 +579,15 @@ sub getSetTeX {
 	
 	# FIXME We could define a default for the effective user if no correct name is passed in.
 	# I'm not sure that it is wise.
-	my $effectiveUser = $db->getUser($effectiveUserName);
+	my $effectiveUser = $db->getUser($effectiveUserName); # checked
+	die "effective user ($effectiveUserName) does not exist."
+		unless defined $effectiveUser;
 	
 	my @problemNumbers = sort { $a <=> $b }
 		$db->listUserProblems($effectiveUserName, $setName);
 	
 	# get header and footer
-	my $set       = $db->getMergedSet($effectiveUserName, $setName);
+	my $set       = $db->getMergedSet($effectiveUserName, $setName); # checked
 	my $setHeader = (ref($set) && $set->set_header) ? $set->set_header : $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
 	#my $setFooter = $wwdb->getMergedSet($effectiveUserName, $setName)->set_footer
@@ -611,7 +629,7 @@ sub getProblemTeX {
 	
 	# $effectiveUser = $self->{effectiveUser} unless defined($effectiveUser);
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName);
+	my $set  = $db->getMergedSet($effectiveUser->user_id, $setName); # checked
 	unless (ref($set) )  {  # return error if no set is defined
 		push(@{$self->{warnings}}, 
 			   setName => $setName, 
@@ -627,7 +645,7 @@ sub getProblemTeX {
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {  # problem number defined and not zero
-		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber);
+		$problem = $db->getMergedProblem($effectiveUser->user_id, $setName, $problemNumber); # checked
 	} elsif ($pgFile) {
 		$problem = WeBWorK::DB::Record::UserProblem->new(
 			set_id => $set->set_id,
