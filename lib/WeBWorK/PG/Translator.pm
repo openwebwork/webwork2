@@ -538,10 +538,13 @@ sub unrestricted_load {
 	$macro_file_name =~s/\.pl//;  # trim off the extenstion
 	my $export_subroutine_name = "_${macro_file_name}_export";
 	my $init_subroutine_name = "_${macro_file_name}_init";
-	my $macro_file_loaded;
 	my $local_errors = "";
 	no strict;
-	$macro_file_loaded	= defined(&{"${safe_cmpt_package_name}::$init_subroutine_name"} );
+	#  warn "dangerousMacros main:: contains <br>\n  ".join("<br>\n ", %main::) if $debugON;
+	my $init_subroutine  = eval { \&{"${safe_cmpt_package_name}::$init_subroutine_name"} };
+	use strict;
+    my $macro_file_loaded = defined(&$init_subroutine);
+
 	#print STDERR "$macro_file_name   has not yet been loaded\n" unless $macro_file_loaded;	
 	unless ($macro_file_loaded) {
 		## load the $filePath file
@@ -561,7 +564,14 @@ sub unrestricted_load {
 		$safe_cmpt -> mask($store_mask);
 		
 	}
-	$macro_file_loaded	= defined(&{"${safe_cmpt_package_name}::$init_subroutine_name"} );
+	# try again to define the initization subroutine
+	$init_subroutine  = eval { \&{"${safe_cmpt_package_name}::$init_subroutine_name"} };
+	$macro_file_loaded	= defined(&$init_subroutine );
+	if ( $macro_file_loaded ) {
+
+	#	    warn "unrestricted load:  initializing $macro_file_name  $init_subroutine" ;
+		    &$init_subroutine();
+	}
 	$local_errors .= "\nUnknown error.  Unable to load $filePath\n" if ($local_errors eq '' and not $macro_file_loaded);
 	#print STDERR "$filePath is properly loaded\n\n" if $macro_file_loaded;
 	$local_errors;
