@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.65 2004/10/15 20:35:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.66 2004/10/17 03:11:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,15 +122,15 @@ sub dispatch($) {
 	my $displayModule = $urlPath->module;
 	my %displayArgs = $urlPath->args;
 	
+	unless ($displayModule) {
+		debug("The display module is empty, so we can DECLINE here.\n");
+		die "No display module found for path '$path'.";
+	}
+	
 	debug("The display module for this path is: $displayModule\n");
 	debug("...and here are the arguments we'll pass to it:\n");
 	foreach my $key (keys %displayArgs) {
 		debug("\t$key => $displayArgs{$key}\n");
-	}
-	
-	unless ($displayModule) {
-		debug("The display module is empty, so we can DECLINE here.\n");
-		die "No display module found for this path.";
 	}
 	
 	my $selfPath = $urlPath->path;
