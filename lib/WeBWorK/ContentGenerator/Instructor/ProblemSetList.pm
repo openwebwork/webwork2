@@ -158,19 +158,19 @@ sub body {
 	my %counts;
 	my %problemCounts;
 	
-	$WeBWorK::timer2->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin obtaining problem info on sets") if defined $WeBWorK::timer;
 	foreach my $set_id (@set_IDs) {
 		$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
 	#	$counts{$set_id} = $db->listSetUsers($set_id);
 	}
-	$WeBWorK::timer2->continue("End obtaining problem on sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End obtaining problem on sets") if defined $WeBWorK::timer;
 	
-	$WeBWorK::timer2->continue("Begin obtaining assigned user info on sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("Begin obtaining assigned user info on sets") if defined $WeBWorK::timer;
 	foreach my $set_id (@set_IDs) {
 	#	$problemCounts{$set_id} = scalar($db->listGlobalProblems($set_id));
 		$counts{$set_id} = $db->listSetUsers($set_id);
 	}	
-	$WeBWorK::timer2->continue("End obtaining assigned user info on sets") if defined $WeBWorK::timer2;
+	$WeBWorK::timer->continue("End obtaining assigned user info on sets") if defined $WeBWorK::timer;
 
 	# Sort @sets based on the sort parameter
 	# Invalid sort types will just cause an unpredictable ordering, which is no big deal.
