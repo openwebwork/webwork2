@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.159 2004/08/26 01:34:30 jj Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -392,6 +392,19 @@ sub pre_header_initialize {
 	
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
+
+	# Database fix (in case of undefined published values)
+	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
+	# make sure published is set to 0 or 1
+	if ( $set and $set->published ne "0" and $set->published ne "1") {
+		my $globalSet = $db->getGlobalSet($set->set_id);
+		$globalSet->published("1");	# defaults to published
+		$db->putGlobalSet($globalSet);
+		$set = $db->getMergedSet($effectiveUserName, $setName);
+	} else {
+		# don't do anything just yet, maybe we're a professor and we're
+		# fabricating a set or haven't assigned it to ourselves just yet
+	}
 	
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
@@ -402,24 +415,20 @@ sub pre_header_initialize {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
 		# editor to 
-		
-		# if that is not yet defined obtain the global set, convert
-		# it to a user set, and add fake user data
+
+		# if a User Set does not exist for this user and this set
+		# then we check the Global Set
+		# if that does not exist we create a fake set
+		# if it does, we add fake user data
 		unless (defined $set) {
 			my $userSetClass = $db->{set_user}->{record};
 			my $globalSet = $db->getGlobalSet($setName); # checked
-			# if the global set doesn't exist either, bail!
-			if(not defined $globalSet) {
+
+			if (not defined $globalSet) {
 				$set = fake_set($db);
 			} else {
 				$set = global2user($userSetClass, $globalSet);
 				$set->psvn(0);
-
-				# FIXME: This is a temporary fix to fill in the database
-				#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
-				#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
-				$globalSet->published("1") unless $globalSet->published eq "0";
-				$db->putGlobalSet($globalSet);
 			}
 		}
 		
@@ -478,16 +487,10 @@ sub pre_header_initialize {
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
 	} else {
 	
-		# students can't view problems not assigned to them
-
 		# A set is valid if it exists and if it is either published or the user is privileged.
-		$self->{invalidSet} = ((grep /^$setName/, $db->listUserSets($effectiveUserName)) == 0)
-					|| not defined $set
-					|| !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
-		$self->{invalidProblem} = ((grep /^$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0)
-					|| not defined $problem
-					|| !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
-
+		$self->{invalidSet} = !(defined $set and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
+		$self->{invalidProblem} = !(defined $problem and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
+		
 		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value and not $self->{invalidProblem};
 	}
 
