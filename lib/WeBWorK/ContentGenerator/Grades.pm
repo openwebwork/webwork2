@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.10 2004/11/11 15:52:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.11 2004/12/18 20:41:26 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -295,16 +295,15 @@ sub displayStudentStats {
 				$longStatus 	= 'X  ';
 			}
 
-			my $incorrect     = $problemRecord->num_incorrect;
 			$string          .=  $longStatus;
-			$twoString       .= threeSpaceFill($incorrect);
+			$twoString       .= threeSpaceFill($num_correct);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
 			$totalRight      += round_score($status*$probValue) if $valid_status;
 		}
 		
-		
+
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
