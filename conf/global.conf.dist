@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.10 2003-01-21 20:24:03 sh002i Exp $
+# $Id: global.conf.dist,v 1.11 2003-01-21 20:25:51 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -101,9 +101,9 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	# in course.conf to the addresses of professors of each course. Sending
 	# mail from the PG system (i.e. questionaires, essay questions) will
 	# fail if this is not set somewhere (either here or in course.conf).
-	allowedRecipients => [
-		"yourname\@host.yourdomain.edu",
-	],
+	#allowedRecipients => [
+	#	"yourname\@host.yourdomain.edu",
+	#],
 	# if defined, feedbackRecipients overrides the list of recipients for
 	# feedback email. It's appropriate to set this in the course.conf for
 	# specific courses, but probably not in global.conf. if not defined,
