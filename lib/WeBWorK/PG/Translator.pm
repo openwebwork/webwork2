@@ -1,4 +1,8 @@
 package WeBWorK::PG::Translator;
+################################################################################
+# WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
+# $Id$
+################################################################################
 
 use strict;
 use warnings;
@@ -11,9 +15,9 @@ use WeBWorK::PG::IO;
 # loading GD within the Safe compartment has occasionally caused infinite recursion
 # Putting these use statements here seems to avoid this problem
 # It is not clear that this is essential once things are working properly.
-use Exporter;
-use DynaLoader;
-#use GD;
+#use Exporter;
+#use DynaLoader;
+
 
 =head1 NAME
 
