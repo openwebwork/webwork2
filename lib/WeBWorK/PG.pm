@@ -45,6 +45,7 @@ sub new($$$$$$$$) {
 	# install a local warn handler to collect warnings
 	my $warnings = "";
 	if ($courseEnv->{pg}->{options}->{catchWarnings}) {
+		warn "PG: about to install a warnings handler...\n"; # ***
 		local $SIG{__WARN__} = sub { $warnings .= shift };
 	}
 	
@@ -90,19 +91,24 @@ sub new($$$$$$$$) {
 	#warn "PG: initializing the Translator\n";
 	$translator->initialize();
 	
-	# load PG.pl and dangerousMacros.pl using unrestricted_load
+	# load IO.pl, PG.pl, and dangerousMacros.pl using unrestricted_load
 	# i'd like to change this at some point to have the same sort of interface to global.conf
 	# that the module loading does -- have a list of macros to load unrestrictedly.
-	#warn "PG: loading PG.pl and dangerousMacros.pl using unrestricted_load\n";
-	my $pg_pl = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
-	my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
-	my $io_pl = $courseEnv->{webworkDirs}->{macros} . "/IO.pl";
-	my $err = $translator->unrestricted_load($pg_pl);
-	warn "Error while loading $pg_pl: $err" if $err;
-	$err = $translator->unrestricted_load($dangerousMacros_pl);
-	warn "Error while loading $dangerousMacros_pl: $err" if $err;
-	$err = $translator->unrestricted_load($io_pl);
-	warn "Error while loading $io_pl: $err" if $err;
+	#warn "PG: loading IO.pl, PG.pl, and dangerousMacros.pl using unrestricted_load\n";
+	foreach (qw(IO.pl PG.pl dangerousMacros.pl)) {
+		my $macroPath = $courseEnv->{webworkDirs}->{macros} . "/$_";
+		my $err = $translator->unrestricted_load($macroPath);
+		warn "Error while loading $macroPath: $err" if $err;
+	}
+	#my $pg_pl              = $courseEnv->{webworkDirs}->{macros} . "/PG.pl";
+	#my $dangerousMacros_pl = $courseEnv->{webworkDirs}->{macros} . "/dangerousMacros.pl";
+	#my $io_pl              = $courseEnv->{webworkDirs}->{macros} . "/IO.pl";
+	#my $err = $translator->unrestricted_load($pg_pl);
+	#warn "Error while loading $pg_pl: $err" if $err;
+	#$err = $translator->unrestricted_load($dangerousMacros_pl);
+	#warn "Error while loading $dangerousMacros_pl: $err" if $err;
+	#$err = $translator->unrestricted_load($io_pl);
+	#warn "Error while loading $io_pl: $err" if $err;
 	
 	# set the opcode mask (using default values)
 	#warn "PG: setting the opcode mask (using default values)\n";
@@ -234,7 +240,8 @@ sub defineProblemEnvir($$$$$$$) {
 	# any changes are noted by "ADDED:" or "REMOVED:"
 	
 	# Vital state information
-	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img
+	# ADDED: displayHintsQ, displaySolutionsQ, refreshMath2img,
+	#        texDisposition
 	
 	$envir{psvn}              = $psvn;			 
 	$envir{psvnNumber}        = $envir{psvn};		 
@@ -249,6 +256,7 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{displayHintsQ}     = $options->{hints};	 
 	$envir{displaySolutionsQ} = $options->{solutions};
 	$envir{refreshMath2img}   = $options->{refreshMath2img};
+	$envir{texDisposition}    = "pdf"; # in webwork-modperl, we use pdflatex
 	
 	# Problem Information
 	# ADDED: courseName
@@ -290,11 +298,11 @@ sub defineProblemEnvir($$$$$$$) {
 	$envir{externalDvipngPath}   = $courseEnv->{externalPrograms}->{dvipng};
 	$envir{externalGif2EpsPath}  = $courseEnv->{externalPrograms}->{gif2eps};
 	$envir{externalPng2EpsPath}  = $courseEnv->{externalPrograms}->{png2eps};
+	$envir{externalGif2PngPath}  = $courseEnv->{externalPrograms}->{gif2png};
 	
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir
-	
 	
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
