@@ -148,6 +148,7 @@ sub verifyKey($$$$$) {
 	my $timestamp = shift;
 	
 	my ($real_key, $real_timestamp) = $self->getKey($user);
+	return unless defined $real_key and defined $real_timestamp;
 	if ($key eq $real_key and $timestamp <= $real_timestamp+$self->{key_timeout}) {
 		$self->setKey($user, $key, $timestamp);
 		return 1;
