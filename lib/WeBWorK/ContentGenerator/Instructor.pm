@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.40 2004/06/09 02:51:30 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.41 2004/06/11 14:38:58 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -506,6 +506,33 @@ sub getScoringFileList {
 	my $ce = $self->{ce};
 	my $dir = $ce->{courseDirs}->{scoring};
 	return $self->read_dir($dir, qr/.*\.csv/);
+}
+
+sub getTemplateFileList {  # find all .pg files under the template tree (time consuming)
+	my ($self) = shift;
+	my $subDir = shift;
+	my $ce = $self->{ce};
+	$subDir = '' unless defined $subDir;
+	my $dir = $ce->{courseDirs}->{templates}."/$subDir";
+	return $self->read_dir($dir, qr/.*\.pg$/);
+}
+sub getTemplateDirList {  # find all .pg files under the template tree (time consuming)
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my $dir = $ce->{courseDirs}->{templates};
+	my @list = ();
+	my $wanted = sub { if (-d $_ ) { 
+	                        my $current = $_;
+	                        return if $current =~/CVS/;
+	                        return if -l $current;   # don't list links
+	                        my $name = $File::Find::name;
+	                        $name = " Top" if $current =/^\./; #  top directory
+							$name =~ s/^$dir\///;
+							push @list, $name
+					   }
+	};
+	File::Find::find($wanted, $dir);
+	return sort @list;
 }
 
 =back

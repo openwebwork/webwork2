@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.6 2004/05/11 20:47:44 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.7 2004/06/14 20:23:32 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,6 +47,10 @@ sub pre_header_initialize {
 	if (defined $r->param("deleteScoringFile"))   { $type = "scoringFile"; $action = "delete";   }
 	if (defined $r->param("downloadScoringFile")) { $type = "scoringFile"; $action = "download"; }
 	if (defined $r->param("uploadScoringFile"))   { $type = "scoringFile"; $action = "upload";   }
+	if (defined $r->param("deleteTemplateFile"))  { $type = "templateFile"; $action = "delete";   }
+	if (defined $r->param("downloadTemplateFile")){ $type = "templateFile"; $action = "download"; }
+	if (defined $r->param("uploadTemplateFile"))  { $type = "templateFile"; $action = "upload";   }
+
 	
 	# make sure we have permission to do what we want to do
 	if ($type eq "def") {
@@ -62,6 +66,11 @@ sub pre_header_initialize {
 	} elsif ($type eq "scoringFile") {
 		unless ($authz->hasPermissions($userID, "modify_scoring_files")) {
 			$self->addbadmessage(CGI::p("You are not authorized to modify the list of scoring files."));
+			return;
+		}
+	} elsif ($type eq "templateFile") {
+		unless ($authz->hasPermissions($userID, "modify_problem_template_files")) {
+			$self->addbadmessage(CGI::p("You are not authorized to modify the list of problem template files."));
 			return;
 		}
 	}
@@ -94,6 +103,11 @@ sub handleDelete {
 		@fileList = $self->getScoringFileList;
 		$selectParam = "scoringFile";
 		$dir = $ce->{courseDirs}->{scoring};
+	} elsif ($type eq "templateFile") {
+	    my $templateSubDir    = $r->param("templateSubDir");
+		@fileList = $self->getTemplateFileList($templateSubDir);
+		$selectParam = "templateFile";
+		$dir = $ce->{courseDirs}->{templates}."/$templateSubDir";
 	} else {
 		die "handleDelete() doesn't know what to do with file type $type!";
 	}
@@ -120,6 +134,7 @@ sub handleDelete {
 	
 	# delete it
 	unlink "$dir/$fileToDelete";
+	$self->addgoodmessage("$dir/$fileToDelete has been deleted.");
 }
 
 sub handleDownload {
@@ -140,6 +155,12 @@ sub handleDownload {
 		@fileList = $self->getScoringFileList;
 		$selectParam = "scoringFile";
 		$dir = $ce->{courseDirs}->{scoring};
+	} elsif ($type eq "templateFile") {
+	    my $templateSubDir    = $r->param("templateSubDir");
+		@fileList = $self->getTemplateFileList($templateSubDir);
+		$selectParam = "templateFile";
+		$dir = $ce->{courseDirs}->{templates};
+		$dir = $ce->{courseDirs}->{templates}."/$templateSubDir";
 	} else {
 		die "handleDownload() doesn't know what to do with file type $type!";
 	}
@@ -185,6 +206,13 @@ sub handleUpload {
 		$uploadNameParam = "newScoringFileName";
 		$ext = ".csv";
 		$destDir = $ce->{courseDirs}->{scoring};
+	} elsif ($type eq "templateFile") {
+	    my $templateSubDir    = $r->param("templateSubDir");
+		@fileList = $self->getTemplateFileList($templateSubDir);
+		$uploadParam = "newTemplateFile";
+		$uploadNameParam = "newTemplateFileName";
+		$ext = ".pg";
+		$destDir = $ce->{courseDirs}->{templates}."/$templateSubDir";
 	}
 	
 	# get upload ID and hash
@@ -220,6 +248,7 @@ sub handleUpload {
 	}
 	
 	$upload->disposeTo("$destDir/$fileName");
+	$self->addgoodmessage("$destDir/$fileName has been uploaded.");
 }
 
 sub body {
@@ -236,9 +265,15 @@ sub body {
 	# otherwise, get them from the filesystem
 	#my $classlistsRef = $self->{classlists} || [ $self->getCSVList ];
 	#my $setDefsRef    = $self->{setDefs}    || [ $self->getDefList ];
+	
+	my $templateSubDir    = $r->param("templateSubDir");
 	my $classlistsRef     = [ $self->getCSVList         ];
 	my $setDefsRef        = [ $self->getDefList         ];
 	my $scoringFileRef    = [ $self->getScoringFileList ];
+	my $templateDirRef    = [ $self->getTemplateDirList ];
+	my $templateFileRef   = [ $self->getTemplateFileList($templateSubDir) ];
+	
+	
 	
 	print CGI::p(<<EOT);
 Use the tools below to modify course files. Set definition files and classlist
@@ -273,57 +308,90 @@ EOT
 				CGI::endform(),
 			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of set definition files."))),
 			$authz->hasPermissions($userID, "modify_classlist_files") ?
-			CGI::td({},
-				CGI::p("Classlist Files"),
-				CGI::startform("POST", $r->uri, "multipart/form-data"),
-				$self->hidden_authen_fields,
-				CGI::scrolling_list(
-					-name => "classlist",
-					-values => $classlistsRef,
-					-size => 8,
-					-multiple => 0,
-				), CGI::br(),
-				CGI::submit("deleteClasslist", "Delete"),
-				CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
-				CGI::br(),
-				CGI::submit("downloadClasslist", "Download"), CGI::br(),
-				CGI::p("Upload New Classlist File:"),
-				CGI::filefield(
-					-name => "newClasslist",
-					-size => 30,
-				), CGI::br(),
-				"Use name:", CGI::textfield("newClasslistName", "", 30), CGI::br(),
-				CGI::submit("uploadClasslist", "Upload Classlist File"),
-				CGI::endform(),
-			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of classlist files."))),
+				CGI::td({},
+					CGI::p("Classlist Files"),
+					CGI::startform("POST", $r->uri, "multipart/form-data"),
+					$self->hidden_authen_fields,
+					CGI::scrolling_list(
+						-name => "classlist",
+						-values => $classlistsRef,
+						-size => 8,
+						-multiple => 0,
+					), CGI::br(),
+					CGI::submit("deleteClasslist", "Delete"),
+					CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
+					CGI::br(),
+					CGI::submit("downloadClasslist", "Download"), CGI::br(),
+					CGI::p("Upload New Classlist File:"),
+					CGI::filefield(
+						-name => "newClasslist",
+						-size => 30,
+					), CGI::br(),
+					"Use name:", CGI::textfield("newClasslistName", "", 30), CGI::br(),
+					CGI::submit("uploadClasslist", "Upload Classlist File"),
+					CGI::endform(),
+				) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of classlist files."))),
 		),
 		CGI::Tr({-valign=>"top"},
 			$authz->hasPermissions($userID, "modify_scoring_files") ?
-			CGI::td({},
-				CGI::p("Scoring Files"),
-				CGI::startform("POST", $r->uri, "multipart/form-data"),
-				$self->hidden_authen_fields,
-				CGI::scrolling_list(
-					-name => "scoringFile",
-					-values => $scoringFileRef,
-					-size => 8,
-					-multiple => 0,
-				), CGI::br(),
-				CGI::submit("deleteScoringFile", "Delete"),
-				CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
-				CGI::br(),
-				CGI::submit("downloadScoringFile", "Download"),
-				CGI::br(),
-				CGI::p("Upload New Scoring File:"),
-				CGI::filefield(
-					-name => "newScoringFile",
-					-size => 30,
-				), CGI::br(),
-				"Use name:", CGI::textfield("newScoringFileName", "", 30), CGI::br(),
-				CGI::submit("uploadScoringFile", "Upload Scoring File"),
-				CGI::endform(),
-			) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of scoring files."))),
+				CGI::td({},
+					CGI::p("Scoring Files"),
+					CGI::startform("POST", $r->uri, "multipart/form-data"),
+					$self->hidden_authen_fields,
+					CGI::scrolling_list(
+						-name => "scoringFile",
+						-values => $scoringFileRef,
+						-size => 8,
+						-multiple => 0,
+					), CGI::br(),
+					CGI::submit("deleteScoringFile", "Delete"),
+					CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
+					CGI::br(),
+					CGI::submit("downloadScoringFile", "Download"),
+					CGI::br(),
+					CGI::p("Upload New Scoring File:"),
+					CGI::filefield(
+						-name => "newScoringFile",
+						-size => 30,
+					), CGI::br(),
+					"Use name:", CGI::textfield("newScoringFileName", "", 30), CGI::br(),
+					CGI::submit("uploadScoringFile", "Upload Scoring File"),
+					CGI::endform(),
+				) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of scoring files."))),
+			 $authz->hasPermissions($userID, "modify_problem_template_files") ?
+				CGI::td({},
+					CGI::p("Problem Template Files"),
+					CGI::startform("POST", $r->uri, "multipart/form-data"),
+					$self->hidden_authen_fields,
+					CGI::popup_menu(
+						-name => "templateSubDir",
+						-values => $templateDirRef,
+						-default => ( defined($templateSubDir) )?  $templateSubDir:' Top',
+					),CGI::br(),
+					CGI::submit('UpdateList','Update List'),CGI::br(),
+					CGI::scrolling_list(
+						-name => "templateFile",
+						-values => $templateFileRef,
+						-size => 8,
+						-multiple => 0,
+					), CGI::br(),
+					CGI::submit("deleteTemplateFile", "Delete"),
+					CGI::font({-color=>"red"}, CGI::em("Delete is not undoable!")),
+					CGI::br(),
+					CGI::submit("downloadTemplateFile", "Download"),
+					CGI::br(),
+					CGI::p("Upload New Problem Template File:"),
+					CGI::filefield(
+						-name => "newTemplateFile",
+						-size => 30,
+					), CGI::br(),
+					"Use name:", CGI::textfield("newTemplateFileName", "", 30), CGI::br(),
+					CGI::submit("uploadTemplateFile", "Upload Problem Template File"),
+					CGI::endform(),
+				) : CGI::td({}, CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify the list of problem template files."))),
+
 		),
+			
 	);
 	
 	return "";
