@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Options.pm,v 1.16 2004/03/17 08:17:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.17 2004/09/10 21:03:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -143,11 +143,11 @@ sub body {
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
-			CGI::td("$e_user_name's Current Address"),
+			CGI::td("$e_user_name\'s Current Address"),
 			CGI::td($EUser->email_address),
 		),
 		CGI::Tr(
-			CGI::td("$e_user_name's New Address"),
+			CGI::td("$e_user_name\'s New Address"),
 			CGI::td(CGI::textfield("newAddress", $newA)),
 		),
 	);
