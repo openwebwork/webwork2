@@ -23,7 +23,7 @@ Context("Interval");
 
 $a = non_zero_random(-5,5,1);
 $f = Formula("(x^2+1)/(x-$a)")->reduce;
-$R = Formula("(-inf,$a),($a,inf)")->eval;
+$R = Compute("(-inf,$a),($a,inf)");
 
 ##########################################################
 #
