@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.5 2004/06/08 00:04:45 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.6 2004/09/10 22:15:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,6 +80,8 @@ sub scrollingRecordList {
 	
 	my @ids = ();
 	my %labels = ();
+	
+	my $refresh_button_name    = defined($options{refresh_button_name}) ? $options{refresh_button_name}:"Change Display Settings";
 	
 	my @selected_records = $r->param("$name");
 
@@ -166,7 +168,7 @@ sub scrollingRecordList {
 		   CGI::td(CGI::scrolling_list(%filter_options)),
 		 ]),
 	       ),
-	       CGI::submit("$name!refresh", "Change Display Settings"), CGI::br(),
+	       CGI::submit("$name!refresh", $refresh_button_name), CGI::br(),
 	       CGI::scrolling_list(%list_options),
        );
 }
