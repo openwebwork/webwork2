@@ -38,16 +38,6 @@ END_TEXT
 BEGIN_TEXT
 $PAR
 
-There are two problems on material from section 10.2.
-If you would like to try graphing some parametric equations for yourself use 
-\{htmlLink(qq!http://cs.jsu.edu/mcis/faculty/leathrum/Mathlets/parametric.html!,"this link.")\}
-
-
-
-This has material on polar coordinates from Chapter 10.4
-
-Here is a \{ htmlLink(qq!http://cs.jsu.edu/mcis/faculty/leathrum/Mathlets/polar.html!,
-"plotter for polar coordinates.") \}   Have fun.
 
 
 $PAR
