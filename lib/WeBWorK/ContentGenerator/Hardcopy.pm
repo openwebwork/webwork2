@@ -246,47 +246,64 @@ sub displayForm($) {
 	);
 	print CGI::start_table({-width=>"100%"}), CGI::start_Tr({-valign=>"top"});
 	
-	my $multiSet = $self->{permissionLevel} > 0;
-	my $multiUser = $self->{permissionLevel} > 0;
-	my $preOpenSets = $self->{permissionLevel} > 0;
+	my $multiSet          = $self->{permissionLevel} > 0;
+	my $multiUser         = $self->{permissionLevel} > 0;
+	my $preOpenSets       = $self->{permissionLevel} > 0;
+	my $effectiveUserName = $self->{effectiveUser}->user_id;	
+	my @setNames     = $db->listUserSets($effectiveUserName);
+	my @sets         = $db->getMergedSets( map { [$effectiveUserName, $_] }  @setNames );
+	@sets            = sort { $a->set_id cmp $b->set_id } @sets;
+	@setNames        = map( {$_->set_id } @sets );  # get sorted version of setNames
+	my %setLabels    = map( {($_->set_id, "set ".$_->set_id )} @sets );
+	my (@users, @userNames,%userLabels);
 	
+	if ($multiUser) {
+		@userNames    = $self->{db}->listUsers();
+		@users        = $self->{db}->getUsers(@userNames);
+		@users        = sort { $a->last_name cmp $b->last_name } @users;
+		@userNames    = map( {$_->user_id} @users );  # get sorted version of user names
+		%userLabels   = map( {($_->user_id , $_->last_name .", ". $_->first_name ." --- ". $_->user_id   ) } @users ); 
+	}
 	# set selection menu
 	{
 		print CGI::start_td();
 		print CGI::h3("Sets");
-		print CGI::start_table();
-		my @sets;
-		push @sets, $db->getMergedSet($self->{effectiveUser}->user_id, $_)
-			foreach ($db->listUserSets($self->{effectiveUser}->user_id));
-		@sets = sort { $a->set_id cmp $b->set_id } @sets;
-		foreach my $set (@sets) {
-			my $checked = grep { $_ eq $set->set_id } @{$self->{sets}};
-			my $control;
-			if (time < $set->open_date and not $preOpenSets) {
-				$control = "";
-			} else {
-				if ($multiSet) {
-					$control = CGI::checkbox(
-						-name=>"hcSet",
-						-value=>$set->set_id,
-						-label=>"",
-						-checked=>$checked
-					);
-				} else {
-					$control = CGI::radio_group(
-						-name=>"hcSet",
-						-values=>[$set->set_id],
-						-default=>($checked ? $set->set_id : "-"),
-						-labels=>{$set->set_id => ""}
-					);
-				}
-			}
-			print CGI::Tr(CGI::td([
-				$control,
-				$set->set_id,
-			]));
-		}
-		print CGI::end_table();
+# 		print CGI::start_table();
+# 		foreach my $set (@sets) {
+# 			my $checked = grep { $_ eq $set->set_id } @{$self->{sets}};
+# 			my $control;
+# 			if (time < $set->open_date and not $preOpenSets) {
+# 				$control = "";
+# 			} else {
+# 				if ($multiSet) {
+# 					$control = CGI::checkbox(
+# 						-name=>"hcSet",
+# 						-value=>$set->set_id,
+# 						-label=>"",
+# 						-checked=>$checked
+# 					);
+# 				} else {
+# 					$control = CGI::radio_group(
+# 						-name=>"hcSet",
+# 						-values=>[$set->set_id],
+# 						-default=>($checked ? $set->set_id : "-"),
+# 						-labels=>{$set->set_id => ""}
+# 					);
+# 				}
+# 			}
+# 			print CGI::Tr(CGI::td([
+# 				$control,
+# 				$set->set_id,
+# 			]));
+# 		}
+# 		print CGI::end_table();
+		print CGI::scrolling_list(-name=>'hcSet',
+							   -values=>\@setNames,
+							   -labels=>\%setLabels,
+							   -size  => 10,
+							   -multiple => $multiSet,
+							   -defaults => $self->{sets},					 
+		);	 
 		print CGI::end_td();
 	}
 	
@@ -294,27 +311,31 @@ sub displayForm($) {
 	if ($multiUser) {
 		print CGI::start_td();
 		print CGI::h3("Users");
-		print CGI::start_table();
+		#print CGI::start_table();
 		#print CGI::Tr(
 		#	CGI::td(CGI::checkbox(-name=>"hcAllUsers", -value=>"1", -label=>"")),
 		#	CGI::td({-colspan=>"2"}, "All Users"),
 		#);
 		#print CGI::Tr(CGI::td({-colspan=>"3"}, "&nbsp;"));
 
-		my @users;
-		push @users, $self->{db}->getUser($_)
-			foreach ($self->{db}->listUsers());
-		@users = sort { $a->last_name cmp $b->last_name } @users;
-		foreach my $user (@users) {
-			my $checked = grep { $_ eq $user->user_id } @{$self->{users}};
-			print CGI::Tr(CGI::td([
-				CGI::checkbox(-name=>"hcUser", -value=>$user->user_id, -label=>"", -checked=>$checked),
-				$user->user_id,
-				$user->last_name.", ".$user->first_name,
-			]));
-		}
 
-		print CGI::end_table();
+		# foreach my $user (@users) {
+# 			my $checked = grep { $_ eq $user->user_id } @{$self->{users}};
+# 			print CGI::Tr(CGI::td([
+# 				CGI::checkbox(-name=>"hcUser", -value=>$user->user_id, -label=>"", -checked=>$checked),
+# 				$user->user_id,
+# 				$user->last_name.", ".$user->first_name,
+# 			]));
+# 		}
+# 
+# 		print CGI::end_table();
+		print CGI::scrolling_list(-name=>'hcUser',
+							   -values=>\@userNames,
+							   -labels=>\%userLabels,
+							   -size  => 10,
+							   -multiple => 'true',
+							   -defaults => $self->{users},
+		);
 		print CGI::end_td();
 	}
 	
