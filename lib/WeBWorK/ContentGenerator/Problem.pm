@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.145 2004/06/25 00:09:18 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.146 2004/06/26 00:00:01 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,7 @@ use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2st
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
 
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem print_dvipng_script);
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ############################################################
 # 
@@ -734,11 +734,6 @@ sub body {
 		);
 	print CGI::end_div();
 
-	# if the mode is not dvipng, this won't do anything
-	my $dvipng_align = $ce->{pg}->{renderers}->{dvipng_align};
-	print_dvipng_script($pg->{translator}->{envir}->{imagegen})
-	   if ($dvipng_align and $dvipng_align eq 'mysql');
-	
 	print CGI::start_div({class=>"scoreSummary"});
 	
 	# score summary
@@ -909,6 +904,8 @@ sub attemptResults {
 		cacheDir => $ce->{webworkDirs}->{equationCache},
 		cacheURL => $ce->{webworkURLs}->{equationCache},
 		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
+		dvipng_align => $ce->{pg}->{renderers}->{dvipng_align},
+                dvipng_depth_db => $ce->{pg}->{renderers}->{dvipng_depth_db},
 	);
 	
 	my $header;
