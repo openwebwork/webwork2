@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK mod_perl (c) 2000-2002 WeBWorK Project
-# $Id: TODO,v 1.38 2003-02-21 21:16:47 sh002i Exp $
+# $Id: TODO,v 1.39 2003-02-22 01:32:35 sh002i Exp $
 ################################################################################
 
 Son of WeBWorK - TODO list
@@ -106,8 +106,8 @@ DONE	check TTH mode character encodings on mac
 mike wants:
 	problem credit indicator (graphical?)
 DONE	answers/solutions in hardcopy
-	turn off verbose debugging in feedback mail
-	URL on feedback from any module
+DONE	turn off verbose debugging in feedback mail
+DONE	URL on feedback from any module
 	email address change notification by email
 arnie wants:
 	parse errors in student answers hilited more strongly

@@ -1,0 +1,83 @@
+--------------------------------------------------------------------------------
+Current interface
+--------------------------------------------------------------------------------
+
+Classlist.pm
+	user
+		id
+		first_name
+		last_name
+		email_address
+		student_id
+		status
+		section
+		recitation
+		comment
+
+Auth.pm
+	password
+		id
+		password
+	permissions
+		id
+		permissions
+	key
+		id
+		key
+
+WW.pm
+	set
+		id
+		login_id
+		set_header
+		problem_header
+		open_date
+		due_date
+		answer_date
+	problem
+		id
+		set_id
+		login_id
+		source_file
+		value
+		max_attempts
+		problem_seed
+		status
+		attempted
+		last_answer
+		num_correct
+		num_incorrect
+
+--------------------------------------------------------------------------------
+Additional functionality needed
+--------------------------------------------------------------------------------
+
+Separate several types of data that are currently stored in the set and problem tables:
+	global static data - data that's the same for all users
+	student-specific static data - overrides global static data for student
+	student-specific dynamic data - data added as student solves problems
+
+Need to be able to impose order on sets and problems.
+
+***
+
+--------------------------------------------------------------------------------
+New interface
+--------------------------------------------------------------------------------
+
+WW.pm
+	set
+		id
+		set_header
+		problem_header
+		open_date
+		due_date
+		answer_date
+	problem
+		id
+		set_id
+		source_file
+		value
+		max_attempts
+	
+
