@@ -48,85 +48,94 @@ DB.pm
 
 password
 
-	getPasswords()
+	listPasswords()
+	newPassword($Password)
 	getPassword($userID)
-	getPassword($userID, $password)
-?	verifyPassword($userID, $password)
+	putPassword($Password)
 	deletePassword($userID)
 
-permission_level
+permission
 
-	getPermissionLevels()
+	listPermissionLevels()
+	newPermissionLevel($PermissionLevel)
 	getPermissionLevel($userID)
-	setPermissionLevel($userID, $permissions)
+	putPermissionLevel($PermissionLevel)
 	deletePermissionLevel($userID)
 
 key
 
-	getKeys()
+	listKeys()
+	newKey($Key)
 	getKey($userID)
-	setKey($userID, $key)
-?	verifyKey($userID, $key)
+	putKey($Key)
 	deleteKey($userID)
 
 user
 
-	getUsers()
+	listUsers()
+	newUser($User)
 	getUser($userID)
-	setUser($user)
+	putUser($User)
 	deleteUser($userID)
 
 set
 
-	getGlobalSets()
+	listGlobalSets()
+	newGlobalSet($Set)
 	getGlobalSet($setID)
-	setGlobalSet($set)
+	putGlobalSet($Set)
 	deleteGlobalSet($setID)
+		=>deleteGlobalProblem($setID, *)
+		=>deleteUserSet(*, $setID)
 
 set_user
 
-	getUserSets($userID)
+	listUserSets($userID)
+	newUserSet($Set)
 	getUserSet($userID, $setID)
-	setUserSet($userSet)
+	putUserSet($Set)
 	deleteUserSet($userID, $setID)
+		=> deleteUserProblem($userID, $setID, *)
 
 problem
 
-	getGlobalProblems()
+	listGlobalProblems($setID)
+	newGlobalProblem($Problem)
 	getGlobalProblem($setID, $problemID)
-	setGlobalProblem($problem)
+	putGlobalProblem($Problem)
 	deleteGlobalProblem($setID, $problemID)
+		=> deleteUserProblem(*, $setID, $problemID)
 
 problem_user
 
-	getUserProblems($userID, $setID)
+	listUserProblems($userID, $setID)
+	newUserProblem($Problem)
 	getUserProblem($userID, $setID, $problemID)
-	setUserProblem($userProblem)
+	putUserProblem($Problem)
 	deleteUserProblem($userID, $setID, $problemID)
 
 set+set_user
 
-	assignedSets($userID)
-	assignSet($userID, $setID)
-	unassignSet($userID, $setID)
+	getGlobalUserSet($userID, $setID)
+		=> getGlobalSet($setID)
+		=> getUserSet($userID, $setID)
 
 problem+problem_user
 
-	assignedProblems($userID, $setID)
-	assignProblem($userID, $setID, $problemID)
-	unassignProblem($userID, $setID, $problemID)
+	getGlobalUserProblem($userID, $setID, $problemID)
+		=> getGlobalProblem($setID, $problemID)
+		=> getUserProblem($userID, $setID, $problemID)
 
-[emulated]
 
-	getSet($userID, $setID)
-	setSet($set)
-	deleteSet($userID, $setID)
 
-	getProblem($userID, $setID, $problemID)
-	setProblem($problem)
-	deleteProblem($userID, $setID, $problemID)
 
-[aliased]
 
-	getSets($userID)		=> getUserSets($userID)
-	getProblems($userID, $setID)	=> getUserProblems($userID, $setID)
+
+
+
+
+
+
+
+
+

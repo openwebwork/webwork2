@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.13 2003-02-21 21:16:47 sh002i Exp $
+# $Id: global.conf.dist,v 1.14 2003-03-06 19:12:37 sh002i Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -138,23 +138,13 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	system => "$webworkDirs{conf}/barebones.template",
 );
 
-# $sessionKeyTimeout defines seconds of inactivity before a key expires
-$sessionKeyTimeout = 60*30;
-
-# Practice users are users who's names start with $practiceUser
-# (you can comment this out to remove practice user support)
-$practiceUserPrefix = "practice";
-
-# There is a practice user who can be logged in multiple times.  He's
-# commented out by default, though, so you don't hurt yourself.  It is
-# kindof a backdoor to the practice user system, since he doesn't have a
-# password.  Come to think of it, why do we even have this?!
-#$debugPracticeUser = "practice666";
-
 ################################################################################
 # Database and session 
 ################################################################################
 
+# dbInfo records some data for the "old" WW/Classlist/Auth.pm database system
+# {auth,wwdb,cldb}_type = database type: GDBM currently implemented
+# {auth_passwd,auth_perm,auth_keys,wwdb,cldb}_file = path to database file
 %dbInfo = (
 	auth_type        => "GDBM",
 	auth_passwd_file => "$courseDirs{auth_DATA}/$courseName\_password_DB",
@@ -167,6 +157,50 @@ $practiceUserPrefix = "practice";
 	psvn_digits      => 5,
 );
 
+# dbLayout records the schema and source for each table in the "new" DB.pm
+# database system. consult DB.pm for the authoritative list of tables.
+# schema = perl module to use for access to the table
+# driver = perl module to use for access to the data source
+# source = location of data source (i.e. path, url, DBI spec)
+# note: schema and driver must have the same interface.
+%dbLayout = (
+	password => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "$courseDirs{auth_DATA}/$courseName\_password_DB",
+	},
+	permission => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/$courseName\_permissions_DB",
+	},
+	user => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+	set => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+	set_user => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+	problem => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+	problem_user => {
+		schema => "WeBWorK::DB::Schema::WW1Hash",
+		driver => "WeBWorK::DB::Driver::GDBM",
+		source => "gdbm:$courseDirs{auth_DATA}/keys",
+	},
+);
+
 # This lets you specify a minimum permission level needed to perform
 # certain actions.  In the current system, >=10 will allow a professor
 # to perform the action, >=5 will allow a TA to, and >=0 will allow a
@@ -174,6 +208,19 @@ $practiceUserPrefix = "practice";
 %permissionLevels = (
 	"become_student" => 10,
 );
+
+# $sessionKeyTimeout defines seconds of inactivity before a key expires
+$sessionKeyTimeout = 60*30;
+
+# Practice users are users who's names start with $practiceUser
+# (you can comment this out to remove practice user support)
+$practiceUserPrefix = "practice";
+
+# There is a practice user who can be logged in multiple times.  He's
+# commented out by default, though, so you don't hurt yourself.  It is
+# kindof a backdoor to the practice user system, since he doesn't have a
+# password.  Come to think of it, why do we even have this?!
+#$debugPracticeUser = "practice666";
 
 ################################################################################
 # PG translation options
