@@ -4,7 +4,7 @@
 #	!WEBWORK_USER! -> your user name
 #	!WEBWORK_PORT! -> the port on which you want to run this server
 #	                  (please use 10000 + your UID)
-#	|PG_ROOT! -> the root of your personal pg tree
+#	!PG_ROOT! -> the root of your personal pg tree
 
 Include /usr/local/etc/apache/httpd-wwmp-header.conf
 
