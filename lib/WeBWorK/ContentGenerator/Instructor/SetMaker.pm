@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.21 2004/07/01 20:31:13 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.22 2004/07/07 14:37:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -457,7 +457,7 @@ sub make_data_row {
 							    editMode => "SetMaker", 
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
 
-  my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add me to the current set on the next update");
+  my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add this problem to the current set on the next update");
   if($mark & SUCCESS) {
     $add_box_data{ -label } .= " (just added this problem)";
   } elsif($mark & ADDED) {
@@ -474,7 +474,7 @@ CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_lin
 
 
 
-					  CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show me on the next update"),
+					  CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update"),
 					  CGI::br(),
 					  CGI::checkbox((%add_box_data)),
 					  CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName]).
@@ -765,10 +765,6 @@ sub pre_header_initialize {
   ############# List of local sets
 
   my @all_set_defs = $db->listGlobalSets;
-  for ($j=0; $j<scalar(@all_set_defs); $j++) {
-    $all_set_defs[$j] =~ s|^set||;
-    $all_set_defs[$j] =~ s|\.def||;
-  }
 
   if ($use_previous_problems) {
     @pg_files = @all_past_list;
