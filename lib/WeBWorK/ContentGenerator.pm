@@ -41,7 +41,8 @@ sub new($$$$) {
 		r  => $r,
 		ce => $ce,
 		db => $db,
-		authz => WeBWorK::Authz->new($r, $ce, $db)
+		authz => WeBWorK::Authz->new($r, $ce, $db),
+		noContent => undef, # false
 	};
 	bless $self, $class;
 	return $self;
@@ -61,24 +62,42 @@ sub new($$$$) {
 # 	* &header - this class provides a standard HTTP header with Content-Type
 # 	  text/html. Subclasses are welcome to overload this for things like
 # 	  an image-creation content generator or a PDF generator.
+#	  In addition, if &header returns a value, that will be the value
+#         returned by the entire PerlHandler.
 # 	* &initialize - let subclasses do post-header initialization.
 # 	* any "template escapes" defined in the system template and supported by
-# 	  the subclass. Generic implementations of &title and &body are provided.
-# 
+# 	  the subclass.
+#         (if &content exists on a content generator, it is called
+#         and no template processing occurs.)
+#
+# If &pre_header_initialize or &header sets $self->{noContent} to a true value,
+# &initialize will not be run and the content or template processing code
+# will not be executed.  This is probably only desirable if a redirect has been
+# issued.
 sub go {
 	my $self = shift;
 	
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{ce};
+	my $returnValue = OK;
 	
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
-	$self->header(@_);
-	return OK if $r->header_only;
+	my $headerReturn = $self->header(@_);
+	$returnValue = $headerReturn if defined $headerReturn;
+	return $returnValue if $r->header_only or $self->{noContent};
 	
 	$self->initialize(@_) if $self->can("initialize");
-	$self->template($courseEnvironment->{templates}->{system}, @_);
 	
-	return OK;
+	# A content generator will have a "content" method if it does not
+	# wish to be passed through template processing, but wishes to be
+	# completely responsible for it's own output.
+	if ($self->can("content")) {
+		$self->content(@_);
+	} else {
+		$self->template($courseEnvironment->{templates}->{system}, @_);
+	}
+	
+	return $returnValue;
 }
 
 # template(STRING, @otherArguments) - parse a template, looking for escapes of
@@ -415,6 +434,7 @@ sub header {
 	my $r = $self->{r};
 	$r->content_type('text/html');
 	$r->send_http_header();
+	return OK;
 }
 
 sub loginstatus {
