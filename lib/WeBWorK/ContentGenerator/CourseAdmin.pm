@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.14 2004/06/02 18:21:38 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.16 2004/06/06 00:20:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,7 +210,8 @@ sub add_course_form {
 	my $add_initial_password_confirm     = $r->param("add_initial_password_confirm") || "";
 	my $add_feedback_email               = $r->param("add_feedback_email") || "";
 	my $add_templates_course             = $r->param("add_templates_course") || "";
-	my $add_contact_person               = $r->param("add_contact_person") || "";
+	my $add_contact_first_name           = $r->param("add_contact_first_name") || "";
+	my $add_contact_last_name            = $r->param("add_contact_last_name") || "";
 	my $add_contact_institution          = $r->param("add_contact_institution") || "";
 	my $add_course_title                 = $r->param("add_course_title") || "";
 	my $add_contact_email                = $r->param("add_contact_email") || "";
@@ -281,14 +282,24 @@ sub add_course_form {
 		),
 		
 		CGI::Tr(
-			CGI::th({class=>"CenterHeader"}, "Contact name"),
-			CGI::th({class=>"CenterHeader"}, "Contact institution"),
-			CGI::th({class=>"CenterHeader"}, "Contact e-mail"),
+			CGI::th({class=>"CenterHeader"}, "First name"),
+			CGI::th({class=>"CenterHeader"}, "Last name"),
+			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
 		),
 		CGI::Tr(
-			CGI::td(CGI::textfield("add_contact_person", $add_contact_person, 35)),
+			CGI::td(CGI::textfield("add_contact_first_name", $add_contact_first_name, 20)),
+			CGI::td(CGI::textfield("add_contact_last_name", $add_contact_last_name, 20)),
+			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
+		),
+		CGI::Tr(
+			CGI::th({class=>"CenterHeader"}, "Contact institution"),
+			CGI::th({class=>"CenterHeader"}, "Contact e-mail"),
+			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
+		),
+		CGI::Tr(
 			CGI::td(CGI::textfield("add_contact_institution", $add_contact_institution, 35)),
 			CGI::td(CGI::textfield("add_contact_email", $add_contact_email, 35)),
+			CGI::th({class=>"CenterHeader"}, "&nbsp;"),
 		),
 		CGI::Tr(
 			CGI::th({class=>"CenterHeader"}, "Administrator ID"),
@@ -300,6 +311,7 @@ sub add_course_form {
 			CGI::td(CGI::textfield("add_admin_userID", $add_admin_userID, 25)),
 			CGI::td(CGI::password_field("add_admin_password", $add_admin_password, 25)),
 			CGI::td(CGI::textfield("add_feedback_email", $add_feedback_email, 25)),
+			
 		),
 	);
 	
@@ -446,7 +458,8 @@ sub add_course_validate {
 	my $add_initial_password             = $r->param("add_initial_password") || "";
 	my $add_initial_password_confirm     = $r->param("add_initial_password_confirm") || "";
 	my $add_templates_course             = $r->param("add_templates_course") || "";
-	my $add_contact_person               = $r->param("add_contact_person") || "";
+	my $add_contact_first_name           = $r->param("add_contact_first_name") || "";
+	my $add_contact_last_name            = $r->param("add_contact_last_name") || "";
 	my $add_contact_institution          = $r->param("add_contact_institution") || "";
 	my $add_contact_email                = $r->param("add_contact_email")  || "";
 	my $add_course_title                 = $r->param("add_course_title") || "";
@@ -461,7 +474,7 @@ sub add_course_validate {
 	if ($add_contact_institution eq "") {
 		push @errors, "You must specify a contact institution." ;
 	}
-	if ($add_contact_person eq "") {
+	if ($add_contact_last_name eq "") {
 		push @errors, "You must specify a contact person.";
 	}
 	if ($add_contact_email eq "") {
@@ -510,24 +523,25 @@ sub do_add_course {
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $add_courseID          = $r->param("add_courseID") || "";
-	my $add_dbLayout          = $r->param("add_dbLayout") || "";
-	my $add_sql_host          = $r->param("add_sql_host") || "";
-	my $add_sql_port          = $r->param("add_sql_port") || "";
-	my $add_sql_username      = $r->param("add_sql_username") || "";
-	my $add_sql_password      = $r->param("add_sql_password") || "";
-	my $add_sql_database      = $r->param("add_sql_database") || "";
-	my $add_sql_wwhost        = $r->param("add_sql_wwhost") || "";
-	my $add_gdbm_globalUserID = $r->param("add_gdbm_globalUserID") || "";
-	my $add_initial_userID    = $r->param("add_initial_userID") || "";
-	my $add_initial_password  = $r->param("add_initial_password") || "";
-	my $add_templates_course  = $r->param("add_templates_course") || "";
-	my $add_contact_person      = $r->param("add_contact_person") || "";
-	my $add_contact_institution = $r->param("add_contact_institution") || "";
-	my $add_contact_email       = $r->param("add_contact_email") || "";
-	my $add_course_title        = $r->param("add_course_title") || "";
-	my $add_admin_userID        = $r->param("add_admin_userID") || $r->param("user") || "";
-	my $add_admin_password      = $r->param("add_admin_password") || "";
+	my $add_courseID               = $r->param("add_courseID") || "";
+	my $add_dbLayout               = $r->param("add_dbLayout") || "";
+	my $add_sql_host               = $r->param("add_sql_host") || "";
+	my $add_sql_port               = $r->param("add_sql_port") || "";
+	my $add_sql_username           = $r->param("add_sql_username") || "";
+	my $add_sql_password           = $r->param("add_sql_password") || "";
+	my $add_sql_database           = $r->param("add_sql_database") || "";
+	my $add_sql_wwhost             = $r->param("add_sql_wwhost") || "";
+	my $add_gdbm_globalUserID      = $r->param("add_gdbm_globalUserID") || "";
+	my $add_initial_userID         = $r->param("add_initial_userID") || "";
+	my $add_initial_password       = $r->param("add_initial_password") || "";
+	my $add_templates_course       = $r->param("add_templates_course") || "";
+	my $add_contact_first_name     = $r->param("add_contact_first_name") || "";
+	my $add_contact_last_name      = $r->param("add_contact_last_name") || "";
+	my $add_contact_institution    = $r->param("add_contact_institution") || "";
+	my $add_contact_email          = $r->param("add_contact_email") || "";
+	my $add_course_title           = $r->param("add_course_title") || "";
+	my $add_admin_userID           = $r->param("add_admin_userID") || $r->param("user") || "";
+	my $add_admin_password         = $r->param("add_admin_password") || "";
 
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -622,7 +636,8 @@ sub do_add_course {
 	    	$add_contact_institution,
 	    	$add_course_title,
 	    	$add_courseID,
-	    	$add_contact_person,
+	    	$add_contact_first_name,
+	    	$add_contact_last_name,
 	  		$add_contact_email,
 	    ));
 	    # add contact to admin course as student?
@@ -637,6 +652,7 @@ sub do_add_course {
 			CGI::a({href=>$newCourseURL}, "Log into $add_courseID"),
 		);
 	}
+	
 }
 
 ################################################################################
