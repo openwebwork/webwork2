@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.15 2004/05/22 16:46:03 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.16 2004/05/28 23:15:44 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -125,7 +125,7 @@ sub add_selected {
       $problemRecord->max_attempts("-1");
       $db->addGlobalProblem($problemRecord);
       $self->assignProblemToAllSetUsers($problemRecord);
-      $selected->[1] &= SUCCESS;
+      $selected->[1] |= SUCCESS;
       $addedcount++;
     }
   }
@@ -194,7 +194,7 @@ sub browse_local_panel {
     }
   }
   my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
-  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Local Problems: ",
+  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Local Problems: ",
 			CGI::popup_menu(-name=> 'library_sets', 
 					-values=>$list_of_prob_dirs, 
 					-default=> $library_selected),
@@ -218,7 +218,7 @@ sub browse_mysets_panel {
   } 
 
   my $view_problem_line = view_problems_line('view_mysets_set', 'View Problems', $self->r);
-  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Browse from: ",
+  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Browse from: ",
 			CGI::popup_menu(-name=> 'library_sets', 
 					-values=>$list_of_local_sets, 
 					-default=> $library_selected),
@@ -278,7 +278,7 @@ HERE
   my $section_selected =  $r->param('library_sections') || $default_sect;
   my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
 
-  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, 
+  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 			CGI::start_table(),
                         CGI::Tr(
 				CGI::td(["Chapter:",
@@ -360,7 +360,7 @@ sub make_top_row {
     $set_selected = SELECT_SET_STRING;
   }
 
-  print CGI::Tr(CGI::td({-class=>"InfoPanel"}, "Adding Problems to ",
+  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Adding Problems to ",
   			CGI::b("Current Set: "),
 			CGI::popup_menu(-name=> 'local_sets', 
 					-values=>$list_of_local_sets, 
@@ -368,7 +368,9 @@ sub make_top_row {
 			CGI::submit(-name=>"edit_local", -value=>"Edit Current Set"),
 			CGI::br(), 
 			CGI::br(), 
-			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:"),
+			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
+			#-onclick=>$myjs
+			),
 			"  ",
 			CGI::textfield(-name=>"new_set_name", 
 				       -default=>"Name for new set here",
@@ -379,14 +381,24 @@ sub make_top_row {
   print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
   print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-			CGI::submit(-name=>"update", -style=>$these_widths,
-				    -value=>"Act on Marked Problems"),
-			CGI::submit(-name=>"rerandomize", 
+                        CGI::start_table({-border=>"0"}),
+                        CGI::Tr( CGI::td({ -align=>"center"},
+			  CGI::submit(-name=>"select_all", -style=>$these_widths,
+				    -value=>"Mark All For Adding"),
+			  CGI::submit(-name=>"select_none", -style=>$these_widths,
+				    -value=>"Clear All Marks"),
+                        )), 
+                        CGI::Tr( CGI::td(
+			  CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
+				    -value=>"Update"),
+			  CGI::submit(-name=>"rerandomize", 
 				    -style=>$these_widths,
 				    -value=>"Rerandomize"),
-			CGI::submit(-name=>"cleardisplay", 
+			  CGI::submit(-name=>"cleardisplay", 
 				    -style=>$these_widths,
-				    -value=>"Clear Problem Display")));
+				    -value=>"Clear Problem Display")
+                        )), 
+                        CGI::end_table()));
 
 }
 
@@ -395,6 +407,7 @@ sub make_data_row {
   my $sourceFileName = shift;
   my $pg = shift;
   my $cnt = shift;
+  my $mark = shift || 0;
 
   $sourceFileName =~ s|^./||; # clean up top ugliness
 
@@ -423,7 +436,12 @@ sub make_data_row {
 							    editMode => "SetMaker", 
 							    sourceFilePath => "$sourceFileName"}  )}, "Try it");
 
-      
+  my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add me to the current set on the next update");
+  if($mark & SUCCESS) {
+    $add_box_data{ -label } .= " (just added this problem)";
+  } elsif($mark & ADDED) {
+    $add_box_data{ -checked } = 1;
+  }
 
   print CGI::Tr({-align=>"left"}, CGI::td(
 
@@ -437,7 +455,7 @@ CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_lin
 
 					  CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show me on the next update"),
 					  CGI::br(),
-					  CGI::checkbox(-name=>"trial$cnt",-value=>1,-label=>"Add me to the current set on the next update"),
+					  CGI::checkbox((%add_box_data)),
 					  CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName]).
 					  CGI::p($problem_output),
 					 ));
@@ -484,6 +502,9 @@ sub pre_header_initialize {
   ############# List of problems we have already printed
 
   $self->{past_problems} = get_past_problem_files($r);
+  # if we don't end up reusing problems, this will be wiped out
+  # if we do redisplay the same problems, we must adjust this accordingly
+  my @past_marks = map {$_->[1]} @{$self->{past_problems}};
   my $none_shown = scalar(@{$self->{past_problems}})==0;
   my @pg_files=();
   my $use_previous_problems = 1;
@@ -573,7 +594,7 @@ sub pre_header_initialize {
     ##### View whole chapter from the library
     ## This will change somewhat later
  
-  } elsif ($r->param('lib_view')) { 
+  } elsif ($r->param('lib_view')) {
  
     @pg_files=();
     my $chap = $r->param('library_chapters') || "";
@@ -632,9 +653,10 @@ sub pre_header_initialize {
     @selected = map {$_->[0]} @pg_files;
 
     my @action_files = grep {$_->[1] > 0 } @{$self->{past_problems}};
-    if(scalar(@action_files) == 0) {
-      $self->addbadmessage('Act on marked problems requested, but no problems were marked.');
-    }
+    # There are now good reasons to do an update without selecting anything.
+    #if(scalar(@action_files) == 0) {
+    #  $self->addbadmessage('Update requested, but no problems were marked.');
+    #}
 
     if (scalar(@selected)>0) {	# if some are to be added, they need a place to go
       $localSet = $r->param('local_sets');
@@ -659,6 +681,7 @@ sub pre_header_initialize {
 
     ## only keep the ones which are not hidden
     @pg_files = grep {($_->[1] & HIDDEN) ==0 } @{$self->{past_problems}};
+    @past_marks = map {$_->[1]} @pg_files;
     @pg_files = map {$_->[0]} @pg_files;
     @all_past_list = (@all_past_list[0..($first_shown-1)],
 		      @pg_files,
@@ -666,20 +689,22 @@ sub pre_header_initialize {
     $last_shown = $first_shown+$maxShown -1;
     $last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
 
-    ## FIXME: you should say something if no problems are selected
-    ##        maybe the add button should be disabled if there are no problems
-    ##        showing
-
-
   } elsif ($r->param('next_page')) {
     $first_shown = $last_shown+1;
     $last_shown = $first_shown+$maxShown-1;
     $last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
+    @past_marks = ();
   } elsif ($r->param('prev_page')) {
     $last_shown = $first_shown-1;
     $first_shown = $last_shown - $maxShown+1;
 
     $first_shown = 0 if($first_shown<0);
+    @past_marks = ();
+
+  } elsif ($r->param('select_all')) {
+    @past_marks = map {1} @past_marks;
+  } elsif ($r->param('select_none')) {
+    @past_marks = ();
 
     ##### No action requested, probably our first time here
 
@@ -704,6 +729,7 @@ sub pre_header_initialize {
     $first_shown = 0;
     $last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown;
     $last_shown--;		# to make it an array index
+    @past_marks = ();
   }
   ############# Now store data in self for retreival by body
   $self->{first_shown} = $first_shown;
@@ -711,6 +737,7 @@ sub pre_header_initialize {
   $self->{browse_which} = $browse_which;
   $self->{problem_seed} = $problem_seed;
   $self->{pg_files} = \@pg_files;
+  $self->{past_marks} = \@past_marks;
   $self->{all_set_defs} = \@all_set_defs;
 
 }
@@ -780,7 +807,7 @@ sub body {
   my $jj;
   for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
     $pg_files[$jj] =~ s|^$ce->{courseDirs}->{templates}/?||;
-    $self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1);
+    $self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1, $self->{past_marks}->[$jj]);
   }
 
   ########## Finish things off
