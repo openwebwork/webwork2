@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.10 2004/09/05 01:03:13 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.3 2004/10/11 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -711,11 +711,13 @@ sub directoryListing {
 	my $dir = $root.'/'.$pwd;
 	my (@values,%labels,$size,$data);
 
-	return unless -d $dir;
+	return unless -d $dir and not -l $dir;  #FIXME -- don't follow links
 	my @names = sortByName(undef,grep(/^[^.]/,readDirectory($dir)));
 	foreach my $name(@names) {
-		push(@values,$name); $labels{$name} = $name;
-		$labels{$name} .= '/' if (-d $dir.'/'.$name);
+	    unless ( $name eq 'DATA') {   #FIXME don't view the DATA directory
+			push(@values,$name); $labels{$name} = $name;
+			$labels{$name} .= '/' if (-d $dir.'/'.$name);
+		}
 	}
 	return (\@values,\%labels);
 }
