@@ -67,7 +67,7 @@ sub body {
 	
 	STUFF: {
 		my $courseName = $self->{courseEnvironment}->{courseName};
-		my $userName = $self->{r}->param("effectiveUser");
+		my $effectiveUserName = $self->{r}->param("effectiveUser");
 		my @sets = @{$self->{sets}};
 
 		unless (@sets) {
@@ -93,13 +93,13 @@ sub body {
 		my $fileName;
 		if (@sets > 1) {
 			# multiset output
-			$fileName = "$courseName.$userName.multiset.pdf"
+			$fileName = "$courseName.$effectiveUserName.multiset.pdf"
 		} elsif (@sets == 1) {
 			# only one set
 			my $setName = $sets[0];
-			$fileName = "$courseName.$userName.$setName.pdf";
+			$fileName = "$courseName.$effectiveUserName.$setName.pdf";
 		} else {
-			$fileName = "$courseName.$userName.pdf";
+			$fileName = "$courseName.$effectiveUserName.pdf";
 		}
 
 		# determine full URL
@@ -239,14 +239,14 @@ sub getSetTeX {
 	my ($self, $setName) = @_;
 	my $ce = $self->{courseEnvironment};
 	my $wwdb = $self->{wwdb};
-	my $user = $self->{r}->param("user");
-	my @problemNumbers = sort { $a <=> $b } $wwdb->getProblems($user, $setName);
+	my $effectiveUserName = $self->{r}->param("effectiveUser");
+	my @problemNumbers = sort { $a <=> $b } $wwdb->getProblems($effectiveUserName, $setName);
 	
 	# get header and footer
-	my $setHeader = $wwdb->getSet($user, $setName)->set_header
+	my $setHeader = $wwdb->getSet($effectiveUserName, $setName)->set_header
 		|| $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
 	# database doesn't support the following yet :(
-	#my $setFooter = $wwdb->getSet($user, $setName)->set_footer
+	#my $setFooter = $wwdb->getSet($effectiveUserName, $setName)->set_footer
 	#	|| $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
 	# so we don't allow per-set customization, which is probably okay :)
 	my $setFooter = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
@@ -281,19 +281,19 @@ sub getProblemTeX {
 	
 	my $wwdb = $self->{wwdb};
 	my $cldb = $self->{cldb};
-	my $user = $cldb->getUser($r->param("effectiveUser"));
-	my $set  = $wwdb->getSet($user->id, $setName);
-	my $psvn = $wwdb->getPSVN($user->id, $setName);
+	my $effectiveUser = $cldb->getUser($r->param("effectiveUser"));
+	my $set  = $wwdb->getSet($effectiveUser->id, $setName);
+	my $psvn = $wwdb->getPSVN($effectiveUser->id, $setName);
 	
 	# decide what to do about problem number
 	my $problem;
 	if ($problemNumber) {
-		$problem = $wwdb->getProblem($user->id, $setName, $problemNumber);
+		$problem = $wwdb->getProblem($effectiveUser->id, $setName, $problemNumber);
 	} elsif ($pgFile) {
 		$problem = WeBWorK::Problem->new(
 			id => 0,
 			set_id => $set->id,
-			login_id => $user->id,
+			login_id => $effectiveUser->id,
 			source_file => $pgFile,
 			# the rest of Problem's fields are not needed, i think
 		);
@@ -301,7 +301,7 @@ sub getProblemTeX {
 	
 	my $pg = WeBWorK::PG->new(
 		$ce,
-		$user,
+		$effectiveUser,
 		$r->param('key'),
 		$set,
 		$problem,
