@@ -122,12 +122,10 @@ sub pre_header_initialize {
 		showCorrectAnswers => canShowCorrectAnswers($permissionLevel, $set->answer_date),
 		showHints          => 1,
 		showSolutions      => canShowSolutions($permissionLevel, $set->answer_date),
-		# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
 		recordAnswers      => canRecordAnswers($permissionLevel, $set->open_date, $set->due_date,
 			$problem->max_attempts, $problem->num_correct + $problem->num_incorrect + 1),
-		checkAnswers       => canCheckAnswers($permissionLevel, $set->open_date,
-			$set->due_date, $set->answer_date, $problem->max_attempts,
-			$problem->num_correct + $problem->num_incorrect + 1),
+			# attempts=num_correct+num_incorrect+1, as this happens before updating $problem
+		checkAnswers       => canCheckAnswers($permissionLevel, $set->answer_date),
 	);
 	
 	# final values for options
@@ -417,7 +415,6 @@ sub body {
 		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
 	
-		
 	print
 		$self->viewOptions(),
 		CGI::endform();
@@ -665,9 +662,12 @@ sub canRecordAnswers($$$$$) {
 	return $recordAnswers;
 }
 
-sub canCheckAnswers($$$$$) {
-	my ($permissionLevel, $openDate, $dueDate, $answerDate, $maxAttempts, $attempts) = @_;
-	return time >= $answerDate or canRecordAnswers($permissionLevel, $openDate, $dueDate, $maxAttempts, $attempts);
+sub canCheckAnswers($$) {
+	my ($permissionLevel, $answerDate) = @_;
+	my $permHigh = $permissionLevel > 0;
+	my $timeOK = time >= $answerDate;
+	my $recordAnswers = $permHigh || $timeOK;
+	return $recordAnswers;
 }
 
 sub mustRecordAnswers($) {
