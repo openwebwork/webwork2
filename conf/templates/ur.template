@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.26 2004/05/08 18:02:21 gage Exp $
+# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.27 2004/05/14 18:29:35 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,10 +47,10 @@ td.TopPanel { background-color: #003366; color: white; height: 1;}
 td.TopPanel a:link,
 td.TopPanel a:visited { color: #FF9933; }
 
-div.LoginStatus { text-align: right; font-size: small; }
+*.LoginStatus { text-align: right; font-size: small; }
 td.Timestamp   { text-align: left;  font-size: small; font-style: italic; }
 
-div.Path {  }
+span.Path {  }
 
 /* main content panel, contains body */
 td.ContentPanel { background-color: white; color: black; }
@@ -146,13 +146,15 @@ div.problem { clear: both; }
 <body>
 <table width="100%" cellpadding="10" cellspacing="0" border="0">
 	<tr valign="top">
-		<td align="left" rowspan="2" class="LeftPanel">
+		<td align="left" valign="top" rowspan="2" class="LeftPanel">
 			<img src="/webwork2_files/images/webwork_square.gif" alt="WeBWorK" height="64" width="66" />
 			<br />
 			<hr />
 			<div class="Logo">
+				
 				<a href="http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl" target="bugzillaPage">Report bugs</a>
 			</div>
+			
 			<!--#if loggedin="1"-->
 			<hr />
 			<div class="Links">
@@ -176,8 +178,15 @@ div.problem { clear: both; }
 		<!--#if can="info"-->
 		<td class="TopPanel" colspan="2">
 		<!--#else-->
-		<td class="TopPanel">
+		<td class="TopPanel" >
 		<!--#endif-->
+		    
+		    <!--#if can="path"-->
+			<div class="Path">
+				<!--#help-->&nbsp;<!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
+			</div>
+			<!--#endif-->
+			
 			<!--#if loggedin="1"-->
 			<!--#if can="loginstatus"-->
 			<div class="LoginStatus">
@@ -185,11 +194,7 @@ div.problem { clear: both; }
 			</div>
 			<!--#endif-->
 			<!--#endif-->
-			<!--#if can="path"-->
-			<div class="Path">
-				<!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
-			</div>
-			<!--#endif-->
+			
 		</td>
 	</tr>
 	<tr valign="top">
