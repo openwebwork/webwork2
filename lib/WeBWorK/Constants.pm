@@ -1,6 +1,6 @@
 package WeBWorK::Constants;
 
-our @ISA       = qw(Exporter);
+use base qw(Exporter);
 our @EXPORT    = ();
 our @EXPORT_OK = qw(SECRET);
 
