@@ -250,16 +250,16 @@ sub nav {
 	my $effectiveUser = $self->{r}->param("effectiveUser");
 	my $tail = "&displayMode=".$self->{displayMode};
 	
-	my @links = ("Problem List" => "$root/$courseName/$setName");
+	my @links = ("Problem List" , "$root/$courseName/$setName", "ProbList");
 	
 	my $prevProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber-1);
 	my $nextProblem = $wwdb->getProblem($effectiveUser, $setName, $problemNumber+1);
-	unshift @links, "Previous Problem" => $prevProblem
+	unshift @links, "Previous Problem" , ($prevProblem
 		? "$root/$courseName/$setName/".$prevProblem->id
-		: "";
-	push @links, "Next Problem" => $nextProblem
+		: "") , "Prev";
+	push @links, "Next Problem" , ($nextProblem
 		? "$root/$courseName/$setName/".$nextProblem->id
-		: "";
+		: "") , "Next";
 	
 	return $self->navMacro($args, $tail, @links);
 }
@@ -339,29 +339,51 @@ sub body {
 	}
 	
 	##### output #####
-	
+	print CGI::start_div({class=>"problemHeader"});
 	# attempt summary
 	if ($submitAnswers or $will{showCorrectAnswers}) {
 		# print this if user submitted answers OR requested correct answers
 		print $self->attemptResults($pg, $submitAnswers,
 			$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 0);
+			$pg->{flags}->{showPartialCorrectAnswers}, 1, 0);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
-		print $self->attemptResults($pg, 1, 0, 1, 0);
+		print $self->attemptResults($pg, 1, 0, 1, 1, 0);
 			# show attempt answers
 			# don't show correct answers
 			# show attempt results (correctness)
 			# don't show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print $self->attemptResults($pg, 1, 0, 0, 1);
+		print $self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
 			# show attempt previews
 	}
 	
+	print CGI::end_div();
+	
+	print CGI::start_div({class=>"problem"});
+	#print CGI::hr();
+	# main form
+	print
+		CGI::startform("POST", $r->uri),
+		$self->hidden_authen_fields,
+		CGI::p($pg->{body_text}),
+		CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", CGI::i($pg->{result}->{msg})),
+		CGI::p(
+			($can{recordAnswers}
+				? CGI::submit(-name=>"submitAnswers",
+					-label=>"Submit Answers")
+				: ""),
+			($can{checkAnswers}
+				? CGI::submit(-name=>"checkAnswers",
+					-label=>"Check Answers")
+				: ""),
+			CGI::submit(-name=>"previewAnswers",
+				-label=>"Preview Answers"),
+		);
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $attemptsNoun = $attempts != 1 ? "times" : "time";
@@ -375,8 +397,11 @@ sub body {
 		$attemptsLeft = $problem->max_attempts - $attempts;
 		$attemptsLeftNoun = $attemptsLeft == 1 ? "attempt" : "attempts";
 	}
+	
+	my $setClosed = 0;
 	my $setClosedMessage;
 	if (time < $set->open_date or time > $set->due_date) {
+		$setClosed = 1;
 		$setClosedMessage = "This problem set is closed.";
 		if ($permissionLevel > 0) {
 			$setClosedMessage .= " Since you are a privileged user, additional attempts will be recorded.";
@@ -389,33 +414,15 @@ sub body {
 		$problem->attempted
 			? "Your recorded score is $lastScore." . CGI::br()
 			: "",
-		"You have $attemptsLeft $attemptsLeftNoun remaining.", CGI::br(),
-		$setClosedMessage,
+		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
 	);
 	
-	print CGI::hr();
-	
-	# main form
+		
 	print
-		CGI::startform("POST", $r->uri),
-		$self->hidden_authen_fields,
-		CGI::p(CGI::i($pg->{result}->{msg})),
-		CGI::p($pg->{body_text}),
-		CGI::p(
-			($can{recordAnswers}
-				? CGI::submit(-name=>"submitAnswers",
-					-label=>"Submit Answers")
-				: ""),
-			($can{checkAnswers}
-				? CGI::submit(-name=>"checkAnswers",
-					-label=>"Check Answers")
-				: ""),
-			CGI::submit(-name=>"previewAnswers",
-				-label=>"Preview Answers"),
-		),
 		$self->viewOptions(),
 		CGI::endform();
-	
+		
+	print CGI::end_div();
 	# feedback form
 	my $ce = $self->{courseEnvironment};
 	my $root = $ce->{webworkURLs}->{root};
@@ -464,23 +471,24 @@ sub body {
 
 ##### output utilities #####
 
-sub attemptResults($$$$$) {
+sub attemptResults($$$$$$) {
 	my $self = shift;
 	my $pg = shift;
 	my $showAttemptAnswers = shift;
 	my $showCorrectAnswers = shift;
 	my $showAttemptResults = $showAttemptAnswers && shift;
+	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
-	my $header = CGI::th("part");
-	$header .= $showAttemptAnswers ? CGI::th("entered")  : "";
-	$header .= $showAttemptPreview ? CGI::th("preview")  : "";
-	$header .= $showCorrectAnswers ? CGI::th("correct")  : "";
-	$header .= $showAttemptResults ? CGI::th("result")   : "";
+	my $header = CGI::th("Part");
+	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
+	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
+	$header .= $showAttemptResults ? CGI::th("Result")   : "";
 	$header .= $showMessages       ? CGI::th("messages") : "";
 	my @tableRows = ( $header );
 	my $numCorrect;
@@ -510,11 +518,11 @@ sub attemptResults($$$$$) {
 		push @tableRows, $row;
 	}
 	
-	my $numCorrectNoun = $numCorrect == 1 ? "question" : "questions";
+	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = int ($problemResult->{score} * 100) . "\%";
-	my $summary = "On this attempt, you answered $numCorrect $numCorrectNoun out of "
-		. scalar @answerNames . " correct, for a score of $scorePercent.";
-	return CGI::table({-border=>1}, CGI::Tr(\@tableRows)) . CGI::p($summary);
+	my $summary = "On this attempt, you answered $numCorrect out of "
+		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
+	return CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) . ($showSummary ? CGI::p($summary) : "");
 }
 
 sub viewOptions($) {
@@ -618,6 +626,7 @@ sub previewAnswer($$) {
 		my $targetURL = $ce->{courseURLs}->{html_temp} . $targetPathCommon;
 
 		# call dvipng to generate a preview
+		warn $tex;
 		dvipng($wd, $latex, $dvipng, $tex, $targetPath);
 		if (-e $targetPath) {
 			return "<img src=\"$targetURL\" alt=\"$tex\" />";
