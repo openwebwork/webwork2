@@ -104,7 +104,7 @@ sub assignSetToAllUsers {
 	my @users = $db->listUsers;
 	my @problemRecords = map { $db->getGlobalProblem($setID, $_) } # checked
 		$db->listGlobalProblems($setID);
-	@problemRecords = grep { defiend $_ } @problemRecords;
+	@problemRecords = grep { defined $_ } @problemRecords;
 	
 	foreach my $user (@users) {
 		# FIXME: Create a UserSet record for the user!!!!
