@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.55 2004/06/25 00:09:18 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.56.2.1 2004/09/03 20:50:12 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,25 +41,34 @@ sub initialize {
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
-	
+
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
 	
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
-	
-	# A set is valid if it is defined and if it is either published or the user is privileged.
-	$self->{invalidSet} = !(defined $set && ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
-	return if $self->{invalidSet};
 
-	# FIXME: This is a temporary fix to fill in the database
-	#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
-	#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
-	my $globalSet = $db->getGlobalSet($setName);
-	$globalSet->published("1") if defined $globalSet and defined($globalSet->published) and $globalSet->published ne "0";
-	$set->published("1") if defined $set and defined($set->published) and $set->published ne "0";
-	$db->putGlobalSet($globalSet);
+	# FIXME: some day it would be nice to take out this code and consolidate the two checks
+
+	# because of the database fix, we have to split our invalidSet check into two parts
+	# First, if $set is undefined then $setName was never valid
+	$self->{invalidSet} = not defined $set;
+	return if $self->{invalidSet};
+	
+	# Database fix (in case of undefined published values)
+	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
+	# make sure published is set to 0 or 1
+	if ($set->published ne "0" and $set->published ne "1") {
+		my $globalSet = $db->getGlobalSet($set->set_id);
+		$globalSet->published("1");	# defaults to published
+		$db->putGlobalSet($globalSet);
+		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
+	}
+	
+	# Second, a set is invalid if it is still unpublished and the user does not have the right permissions
+	$self->{invalidSet} = !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
+	return if $self->{invalidSet};
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";

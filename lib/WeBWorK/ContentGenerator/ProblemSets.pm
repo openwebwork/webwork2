@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.52 2004/07/10 18:11:00 gage Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -129,6 +129,24 @@ sub body {
 	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
 	$WeBWorK::timer->continue("Begin collecting merged sets") if defined($WeBWorK::timer);
 	my @sets = $db->getMergedSets( @userSetIDs );
+	
+	$WeBWorK::timer->continue("Begin fixing merged sets") if defined($WeBWorK::timer);
+	
+	# Database fix (in case of undefined published values)
+	# this may take some extra time the first time but should NEVER need to be run twice
+	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
+	foreach my $set (@sets) {
+		# make sure published is set to 0 or 1
+		if ( $set and $set->published ne "0" and $set->published ne "1") {
+			my $globalSet = $db->getGlobalSet($set->set_id);
+			$globalSet->published("1");	# defaults to published
+			$db->putGlobalSet($globalSet);
+			$set = $db->getMergedSet($effectiveUser, $set->set_id);
+		} else {
+			die "set $set not defined" unless $set;
+		}
+	}
+	
 	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
 	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
@@ -139,20 +157,6 @@ sub body {
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 		
-		# FIXME: This is a temporary fix to fill in the database
-		#	 We want the published field to contain either 1 or 0 so if it has not been set to 0, default to 1
-		#	this will fill in all the empty fields but not change anything that has been specifically set to 1 or 0
-	    # $set->published("1") unless $set->published("1") eq "0";
-	    # don't show unpublished sets to students
-	    unless ( defined($set->published) and $set->published ne "") {
-	    	my $globalSet = $db->getGlobalSet($set->set_id);
-		if ($globalSet) {
-		    	$globalSet->published("1") unless defined ($globalSet->published) and $globalSet->published eq "0";
-			$db->putGlobalSet($globalSet);
-			$set->published("1");  # refresh
-		}
-	    }
-	    warn "undefined published button".$set->set_id unless defined($set->published);
 		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"));
 		}
