@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.102 2004/05/28 15:32:35 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.103 2004/06/06 00:21:26 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -823,8 +823,10 @@ helpFiles  directory.  Currently the link is made to the file $name.html
 sub helpMacro {
     my $self = shift;
 	my $name = shift;
-	$name = 'NoHelp' unless defined $name;
 	my $ce   = $self->r->ce;
+	my $basePath = $ce->{webworkDirs}->{local_help};
+	$name        = 'no_help' unless -e "$basePath/$name.html";
+	my $path     = "$basePath/$name.html";
 	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
 	return CGI::a({href      => $url,
@@ -837,6 +839,8 @@ sub help {
 	my $self = shift;
 	my $args = shift;
 	my $name = $args->{name};
+	$name = lc($self->r->urlpath->name) unless defined($name);
+	$name =~ s/\s/_/g;
 	$self->helpMacro($name);
 }
 
