@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.17 2004/06/13 01:29:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.18 2004/06/16 01:58:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -472,6 +472,9 @@ sub add_course_validate {
 	if ($add_courseID eq "") {
 		push @errors, "You must specify a course name.";
 	}
+	if (grep { $add_courseID eq $_ } listCourses($ce)) {
+		push @errors, "A course named $add_courseID already exists." ;
+	}
 	if ($add_contact_institution eq "") {
 		push @errors, "You must specify a contact institution." ;
 	}
@@ -511,7 +514,6 @@ sub add_course_validate {
 	if ($add_admin_userID ne "") {
 		push @errors, "You must specify an admin password for $add_admin_userID." if $add_admin_password eq "";
 	}
-
 	
 	return @errors;
 }
