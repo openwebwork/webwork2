@@ -1,0 +1,89 @@
+##########################################################
+#
+#  Example showing how to add a new two-variable function to the Parser
+#
+
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+  "PGbasicmacros.pl",
+  "PGanswermacros.pl",
+  "Parser.pl",
+);
+
+TEXT(beginproblem());
+
+###########################################################
+#
+#   Use  standard numeric mode
+#
+Context('Numeric');
+
+#############################################
+#
+#   Create a ''Combinations" function
+#
+
+package MyFunction2;
+our @ISA = qw(Parser::Function::numeric2); # this is what makes it R^2 -> R
+
+sub C {
+  shift; my ($n,$r) = @_;
+  $r = $n-$r if ($r > $n - $r); # find the smaller of the two
+  my $m = $n - $r; my $C = 1;
+  #
+  #  We compute this so that the value never gets too large
+  #
+  while ($n > $m) {$C = $C*$n/$r; $n--; $r-- if $r > 1}
+  while ($r > 1) {$C /= $r; $r--}
+  return $C
+}
+
+package main;
+
+#
+#  Make it work on formulas as well as numbers
+#
+sub C {Parser::Function->call('C',@_)}
+
+#
+#  Add the new functions into the Parser
+#
+
+Context()->functions->add(C => {class => 'MyFunction2'},
+);
+
+#
+#  Something about Context() requires this to be loaded here (FIXME)
+#
+loadMacros("parserTables.pl");
+
+###########################################################
+#
+#  The problem text
+#
+BEGIN_TEXT
+
+In this problem, we have added a new function to the Parser: ${BTT}C(n,r)${ETT}.
+(Edit the code to see how this is done).
+$PAR
+Assuming that ${BTT}${DOLLAR}x = Formula('x')${ETT}, they can be used as follows:
+$PAR
+
+\{ParserTable(
+     'Formula("C(x,3)")',
+     'C(6,2)',
+     'C($x,3)',
+     'Formula("C(x,3)")->eval(x=>6)',
+     '(C($x,2))->eval(x=>6)',
+     'Formula("C(x)")',
+     'Formula("C(1,2,3)")',
+     'C(1)',
+     'C(1,2,3)',
+  )\}
+
+END_TEXT
+
+###########################################################
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.

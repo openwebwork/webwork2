@@ -1,0 +1,113 @@
+##########################################################
+#
+#  Example showing how to add a new list-type object
+#
+
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+  "PGbasicmacros.pl",
+  "PGanswermacros.pl",
+  "Parser.pl",
+);
+
+TEXT(beginproblem());
+
+##########################################################
+#
+#  Define our own [n,r] notation for n choose r
+#
+
+package MyChoose;
+our @ISA = qw(Parser::List); # subclass of List
+
+#
+#  Check that two numbers are given
+#
+sub _check {
+  my $self = shift;
+  $self->{type}{list} = 0;  # our result is a single number, not really a list
+  $self->Error("You need two numbers within '[' and ']'")
+    if ($self->{type}{length} < 2);
+  $self->Error("Only two numbers can appear within '[' and ']'")
+    if ($self->{type}{length} > 2);
+  my ($n,$r) = @{$self->{coords}};
+  $self->Error("The arguments for '[n,r]' must be numbers")
+    unless ($n->type eq 'Number' && $r->type eq 'Number');
+  $self->{type} = $Value::Type{number};
+}
+
+#
+#  Compute n choose r
+#
+sub _eval {
+  shift; my ($n,$r) = @_;
+  $r = $n-$r if ($r > $n - $r); # find the smaller of the two
+  my $m = $n - $r; my $C = 1;
+  #
+  #  We compute this so that the value never gets too large
+  #
+  while ($n > $m) {$C = $C*$n/$r; $n--; $r-- if $r > 1}
+  while ($r > 1) {$C /= $r; $r--}
+  return $C;
+}
+
+#
+#  Non-standard TeX output
+#
+sub TeX {
+  my $self = shift; 
+  return '{'.$self->{coords}[0]->TeX.' \choose '.$self->{coords}[1]->TeX.'}';
+}
+
+#
+#  Non-standard perl output
+#
+sub perl {
+  my $self = shift;
+  return '(MyChoose->_eval('.$self->{coords}[0]->perl.','.$self->{coords}[1]->perl.'))';
+}
+
+
+package main;
+
+##########################################################
+#
+#  Add the new list to the context
+#
+
+Context()->lists->add(Choose => {class => 'MyChoose'});
+Context()->parens->replace('[' => {close => ']', type => 'Choose'});
+
+#
+#  Something about Context() requires this to be loaded here (FIXME)
+#
+loadMacros("parserTables.pl");
+
+###########################################################
+#
+#  The problem text
+#
+BEGIN_TEXT
+
+In this problem, we have added a new list to the Parser: ${BTT}[n,r]${ETT}, 
+which returns \(n\choose r\).
+$PAR
+
+\{ParserTable(
+    'Formula("[x,3]")',
+    'Formula("[5,3]")',
+    'Formula("[x,3]")->eval(x=>5)',
+    '$C = Formula("[x,y]"); $C->substitute(x=>5)',
+    'Formula("[x,y]")->perlFunction("C"); C(5,3)',
+    'Formula("[x,y,3]")',
+    'Formula("[x]")',
+    'Formula("[x,[y,2]]")',
+    'Formula("[x,<1,2>]")',
+  )\}
+
+END_TEXT
+
+###########################################################
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.
