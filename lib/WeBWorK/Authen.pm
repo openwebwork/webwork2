@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.20 2003/12/09 01:12:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.22 2003/12/23 06:03:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -135,13 +135,33 @@ sub verify($) {
 	my $passwd = $r->param('passwd');
 	my $key = $r->param('key');
 	my $force_passwd_authen = $r->param('force_passwd_authen');
-	
+	my $login_practice_user = $r->param('login_practice_user');
+	my $send_cookie = $r->param("send_cookie");
 	my $error;
 	my $failWithoutError = 0;
 	
 	VERIFY: {
 		# This block is here so we can "last" out of it when we've
 		# decided whether we're going to succeed or fail.
+		
+		if ($login_practice_user) {
+			# ignore everything else, find an unused practice user
+			my $found = 0;
+			foreach my $userID (sort grep m/^$practiceUserPrefix/, $db->listUsers) {
+				if (not $self->unexpiredKeyExists($userID)) {
+					my $Key = $self->generateKey($userID);
+					$db->addKey($Key);
+					$r->param("user", $userID);
+					$r->param("key", $Key->key);
+					$found = 1;
+					last;
+				}
+			}
+			unless ($found) {
+				$error = "No practice users are available. Please try again in a few minutes.";
+			}
+			last VERIFY;
+		}
 		
 		# no authentication data was given. this is OK.
 		unless (defined $user or defined $passwd or defined $key) {
@@ -150,10 +170,10 @@ sub verify($) {
 			# cookie is only used if no credentials are sent as parameters.
 			my ($cookieUser, $cookieKey) = $self->checkCookie;
 			if ($cookieUser and $cookieKey) {
-				$r->param("user", $cookieUser);
-				$r->param("key", $cookieKey);
 				$user = $cookieUser;
 				$key = $cookieKey;
+				$r->param("user", $user);
+				$r->param("key", $key);
 			} else {
 				$failWithoutError = 1;
 				last VERIFY;
@@ -273,7 +293,7 @@ sub verify($) {
 	} else {
 		# autentication succeeded!
 		# send a cookie with the user and key that were accepted.
-		if ($r->param("send_cookie")) {
+		if ($send_cookie and not $login_practice_user) {
 			$self->sendCookie($r->param("user"), $r->param("key"));
 		}
 		return 1;

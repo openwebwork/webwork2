@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.15 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.16 2003/12/23 06:03:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,21 +39,35 @@ sub body {
 	my $self = shift;
 	my $r = $self->{r};
 	my $course_env = $self->{ce};
+	my $db = $self->{db};
 	# get some stuff together
 	my $user = $r->param("user") || "";
 	my $key = $r->param("key");
 	my $passwd = $r->param("passwd") || "";
 	my $course = $course_env->{"courseName"};
+	my $practiceUserPrefix = $course_env->{practiceUserPrefix};
+	
+	# don't fill in the user ID for practice users
+	# (they should use the "Guest Login" button)
+	$user = "" if $user =~ m/^$practiceUserPrefix/;
 	
 	# WeBWorK::Authen::verify will set the note "authen_error" 
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	if ($r->notes("authen_error")) {
-		print CGI::font({-color => 'red'}, CGI::b($r->notes("authen_error"))),CGI::br();
+		print CGI::p(CGI::font({-color => 'red'},
+			CGI::b($r->notes("authen_error"))));
 	}
 	
 	print CGI::p("Please enter your username and password for ",CGI::b($course)," below:");
+	print CGI::p(
+		"If you check \"Remember Me\", your session key will be stored in a"
+		. " browser cookie for later use. This feature is not safe for public"
+		. " workstations, untrusted machines, and machines over which you do"
+		. " not have direct control."
+	);
+	
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
 
 	# write out the form data posted to the requested URI
@@ -64,11 +78,11 @@ sub body {
 		  CGI::Tr([
 		    CGI::td([
 		      "Username:",
-		      CGI::input({-type=>"textfield", -name=>"user", -value=>"$user"}),CGI::br(),
+		      CGI::input({-type=>"textfield", -name=>"user", -value=>"$user"}),
 		    ]),
 		    CGI::td([
 		      "Password:",
-		      CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}) . CGI::i("(Will not be echoed)"),
+		      CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
 		    ]),
 		    CGI::td([
 		      "",
@@ -82,9 +96,16 @@ sub body {
 	;
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
-	print CGI::p(), "Many courses allow guest logins.", CGI::p(),
-	  "Use practice1, practice2, practice3, etc.",CGI::br(),
-	  "No password is required";
+	
+	if (grep m/^$practiceUserPrefix/, $db->listUsers) {
+		print CGI::p(
+			"This course supports guest logins. Click " . CGI::b("Guest Login")
+			. " to log into this course as a guest.",
+			CGI::br(),
+			CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"}),
+		);
+	}
+	
 	print CGI::endform();
 	
 	return "";
