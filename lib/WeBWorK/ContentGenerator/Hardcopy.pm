@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.42 2004/03/04 21:05:54 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.43 2004/03/13 05:09:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,16 +36,14 @@ use Apache::Constants qw(:common REDIRECT);
 
 sub pre_header_initialize {
 	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
-	my $r               = $self->{r};
-	#my $singleSet = $r->urlpath->args("setID");
-	my $singleSet;  #FIXME trace down how sets are being passed to hardcopy.
-	my $ce              = $self->{ce};
-	my $db              = $self->{db};
+	my $singleSet       = $r->urlpath->arg("setID");
 	my @sets            = $r->param("hcSet");
 	my @users           = $r->param("hcUser");
 	my $hardcopy_format = $r->param('hardcopy_format') ? $r->param('hardcopy_format') : '';
-	
 
 	# add singleSet to the list of sets
 	if (defined $singleSet and $singleSet ne "") {
@@ -96,26 +94,24 @@ sub pre_header_initialize {
 	
 	unless ($self->{generationError}) {
 		if ($r->param("generateHardcopy")) {
-#			my ($tempDir, $fileName) = eval { $self->generateHardcopy() };
+			#my ($tempDir, $fileName) = eval { $self->generateHardcopy() };
 			my ($pdfFileURL) = eval { $self->generateHardcopy() };
 			
 			$self->{generationError} = $@ if $@;
-# 			warn "pdfFileURL is $pdfFileURL";
-# 			warn "generation error is ".$self->{generationError};
-# 			warn "hardcopy_format is ".$self->{hardcopy_format};
-			if ( $self->{generationError}  ) {
-				
+ 			#warn "pdfFileURL is $pdfFileURL";
+ 			#warn "generation error is ".$self->{generationError};
+ 			#warn "hardcopy_format is ".$self->{hardcopy_format};
+			if ($self->{generationError}) {
 				# In this case no correct pdf file was generated.
 				# throw the error up higher.
 				# The error is reported in body.
 				# the tempDir was removed in generateHardcopy
 			} elsif ( $self->{hardcopy_format} eq 'tex')   {
-				# Only tex output was asked for, proceed to have the tex output handled by the subroutine
-				# "body".
-				
+				# Only tex output was asked for, proceed to have the tex output
+				# handled by the subroutine "body".
 			} else {
-			    # information for redirect
-			    	$self->{pdfFileURL} = $pdfFileURL;
+				# information for redirect
+				$self->{pdfFileURL} = $pdfFileURL;
 			}
 		}
 	}
@@ -123,7 +119,7 @@ sub pre_header_initialize {
 
 sub header {
 	my ($self) = @_;
-	my $r = $self->{r};
+	my $r = $self->r;
 	
 	if (exists $self->{pdfFileURL}) {
  		$r->header_out(Location => $self->{pdfFileURL} );
@@ -136,25 +132,25 @@ sub header {
 
 # -----
 
-sub path {
-	my ($self, $args) = @_;
-	
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	return $self->pathMacro($args,
-		"Home" => "$root",
-		$courseName => "$root/$courseName",
-		"Hardcopy Generator" => "",
-	);
-}
-
-sub title {
-	return "Hardcopy Generator";
-}
+#sub path {
+#	my ($self, $args) = @_;
+#	
+#	my $ce = $self->{ce};
+#	my $root = $ce->{webworkURLs}->{root};
+#	my $courseName = $ce->{courseName};
+#	return $self->pathMacro($args,
+#		"Home" => "$root",
+#		$courseName => "$root/$courseName",
+#		"Hardcopy Generator" => "",
+#	);
+#}
+#
+#sub title {
+#	return "Hardcopy Generator";
+#}
 
 sub body {
-	my $self = shift;
+	my ($self) = @_;
 	
 	if ($self->{generationError}) {
 		if (ref $self->{generationError} eq "ARRAY") {
@@ -182,11 +178,8 @@ sub body {
 		$self->multiWarningOutput(@{$self->{warnings}});
 	}
 	if ($self->{hardcopy_format} eq 'tex') {
-	
 		my $r_tex_content = $self->{r_tex_content};
 		return $$r_tex_content;
-	
-	
 	}
 	$self->displayForm();
 }
@@ -231,9 +224,9 @@ EOF
 # -----
 
 sub displayForm($) {
-	my $self = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
 	
 	print CGI::start_p(), "Select the problem sets for which to generate hardcopy versions.";
 	if ($self->{permissionLevel} > 0) {
@@ -244,7 +237,7 @@ sub displayForm($) {
 	my $download_texQ = $self->{permissionLevel} > 0;
 	
 	#  ##########construct action URL #################
-	my $ce         = $self->{ce};
+	my $ce         = $r->ce;
 	my $root       = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
 	my $actionURL  = "$root/$courseName/hardcopy/";
@@ -286,8 +279,8 @@ sub displayForm($) {
 	my (@users, @userNames,%userLabels);
 	
 	if ($multiUser) {
-		@userNames    = $self->{db}->listUsers();
-		@users        = $self->{db}->getUsers(@userNames); # checked
+		@userNames    = $db->listUsers();
+		@users        = $db->getUsers(@userNames); # checked
 		@users = grep { defined $_ } @users;
 		@users        = sort { $a->last_name cmp $b->last_name } @users;
 		@userNames    = map( {$_->user_id} @users );  # get sorted version of user names
@@ -345,8 +338,10 @@ sub displayForm($) {
 }
 
 sub generateHardcopy($) {
-	my $self = shift;
-	my $ce = $self->{ce};
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
 	my @sets = @{$self->{sets}};
 	my @users = @{$self->{users}};
 	my $multiSet = $self->{permissionLevel} > 0;
@@ -363,7 +358,7 @@ sub generateHardcopy($) {
 	my $tempDir = makeTempDirectory($ce->{webworkDirs}->{tmp}, "webwork-hardcopy");
 	
 	# determine name of PDF file  #FIXME it might be best to have the effective user in here somewhere
-	my $courseName = $self->{ce}->{courseName};
+	my $courseName = $ce->{courseName};
 	my $fileNameSet = (@sets > 1 ? "multiset" : $sets[0]);
 	my $fileNameUser = (@users > 1 ? "multiuser" : $users[0]);
 	my $fileName = "$courseName.$fileNameUser.$fileNameSet.pdf";
@@ -372,18 +367,18 @@ sub generateHardcopy($) {
 	my $tex;
 	#
 	# the document tex preamble
-	$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{preamble});
+	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{preamble});
 	# separate users by page break, or something
 	foreach my $user (@users) {
 		$tex .=  $self->getMultiSetTeX($user, @sets);
 	    if (@users) {
 			# separate users, but not after the last set
-			$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{userDivider});
+			$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{userDivider});
 		}
 		
 	}
 	# the document postamble
-	$tex .= $self->texInclude($self->{ce}->{webworkFiles}->{hardcopySnippets}->{postamble});
+	$tex .= $self->texInclude($ce->{webworkFiles}->{hardcopySnippets}->{postamble});
 	
 	# deal with PG errors
 	if (@{$self->{errors}}) {
@@ -437,8 +432,10 @@ sub latex2pdf {
 	# this is a little ad-hoc function which I will replace with a LaTeX
 	# module at some point (or put it in Utils).
 	my ($self, $tex, $tempDir, $fileName) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
 	my $finalFile = "$tempDir/$fileName";
-	my $ce = $self->{ce};
 	
 	# Location for hardcopy file to be downloaded
 	# FIXME  this should use surePathToTmpFile
@@ -564,7 +561,7 @@ sub texBlockComment(@) { return "\n".("%"x80)."\n%% ".join("", @_)."\n".("%"x80)
 
 sub getMultiSetTeX {
 	my ($self, $effectiveUserName,@sets) = @_;
-	my $ce = $self->{ce};
+	my $ce = $self->r->ce;
 	my $tex = "";
 	
 	
@@ -584,8 +581,9 @@ sub getMultiSetTeX {
 
 sub getSetTeX {
 	my ($self, $effectiveUserName, $setName) = @_;
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
 	# FIXME (debug code line next)
 	# print STDERR "Creating set $setName for $effectiveUserName \n";
@@ -634,9 +632,9 @@ sub getSetTeX {
 sub getProblemTeX {
     $WeBWorK::timer1 ->continue("hardcopy: begin processing problem") if defined($WeBWorK::timer1);
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
-	my $r = $self->{r};
-	my $ce = $self->{ce};
-	my $db = $self->{db};
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	
 	# Should we provide a default user ? I think not FIXME
 	
