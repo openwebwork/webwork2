@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.2 2004/05/23 01:09:48 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.3 2004/05/24 01:49:26 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -175,8 +175,33 @@ sub index {
 	
 	my @studentList   = sort $db->listUsers;
 	my @setList       = sort  $db->listGlobalSets;
+
+## Edit to filter out students you aren't allowed to see
+#
+	my @myUsers;
+	my @studentRecords = $db->getUsers;
+	my $user = $r->param("user");
 	
-	
+	my (@viewable_sections, @viewable_recitations);
+	if (defined @{$ce->{viewable_sections}->{$user}})
+		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
+	if (defined @{$ce->{viewable_recitations}->{$user}})
+		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
+	if (@viewable_sections or @viewable_recitations){
+		foreach my $studentL (@studentList){
+			my $keep = 0;
+			my $student = $db->getUser($studentL);
+			foreach my $sec (@viewable_sections){
+				if ($student->section() eq $sec){$keep = 1; last;}
+			}
+			foreach my $rec (@viewable_recitations){
+				if ($student->recitation() eq $rec){$keep = 1; last;}
+			}
+			if ($keep) {push @myUsers, $studentL;}		
+		}
+#	@studentList = @myUsers;
+	}
+	else {@myUsers = @studentList;}
 	my @setLinks      = ();
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {
@@ -188,7 +213,7 @@ sub index {
 		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) },"set $set" );	
 	}
 	
-	foreach my $student (@studentList) {
+	foreach my $student (@myUsers) {
 	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
 	                                                      courseID => $courseName,
 	                                                      statType => 'student',
@@ -266,8 +291,30 @@ sub displaySets {
     $WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
  	my @augmentedUserRecords    = ();
  	my $number_of_active_students;
-    
-	foreach my $studentRecord (@userRecords)   {
+
+## Edit to filter out students
+#
+	my @myUsers;
+	my $ActiveUser = $r->param("user");
+	my (@viewable_sections, @viewable_recitations);
+	if (defined @{$ce->{viewable_sections}->{$user}})
+		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
+	if (defined @{$ce->{viewable_recitations}->{$user}})
+		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
+	if (@viewable_sections or @viewable_recitations){
+		foreach my $student (@userRecords){
+			my $keep = 0;
+			foreach my $sec (@viewable_sections){
+				if ($student->section() eq $sec){$keep = 1; last;}
+			}
+			foreach my $rec (@viewable_recitations){
+				if ($student->recitation() eq $rec){$keep = 1; last;}
+			}
+			if ($keep) {push @myUsers, $student;}		
+		}
+	}
+	else {@myUsers = @userRecords;}
+	foreach my $studentRecord (@myUsers)   {
 		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
