@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.82 2004/07/03 17:21:27 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.83 2004/07/03 17:29:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,10 +97,10 @@ $webworkURLs{oldProf}       = "/webwork1/profLogin.pl";
 $webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=WeBWorK%20mod_perl";
 
 # Location of jsMath script, used for the jsMath display mode.
-$webworkURLs{jsMath}        = "$webworkURLs{root}/jsMath/jsMath.js";
+$webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath.js";
 
 # Location of ASCIIMathML script, used for the asciimath display mode.
-$webworkURLs{asciimath}     = "$webworkURLs{root}/ASCIIMathML/ASCIIMathML.js";
+$webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
 
 ################################################################################
 # Defaults for course-specific locations (directories and URLs)
