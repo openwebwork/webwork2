@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Test.pm,v 1.13 2003/12/09 01:12:31 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.1 2004/02/14 00:54:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,44 +19,24 @@ use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Home - display debugging information.
+WeBWorK::ContentGenerator::Home - display a list of courses.
 
 =cut
 
 use strict;
 use warnings;
-use CGI ();
+use CGI::Pretty qw();
 use WeBWorK::Utils qw/readDirectory/;
 
 sub loginstatus { "" }
 sub links { "" }
 
-sub path {
-	my $self = shift;
-	my $args = $_[-1];
-	return $self->pathMacro($args, Home => "");
-}
-
-#sub siblings {
-#	my $self = shift;
-#	return $self->siblingsMacro(Test2 => "blah/", "Test Three" => "spoo");
-#}
-
-#sub nav {
-#	my $self = shift;
-#	my $args = $_[-1];
-#	return $self->navMacro($args, "", TestMinus1 => "-1/", TestPlusOne => "+1/");
-#}
-
-sub title {
-	return "WeBWorK";
-}
-
 sub body {
-	my $self = shift;
-	my $ce = $self->{ce};
-	my $coursesDir = $ce->{webworkDirs}->{courses};
-	my $coursesURL = $ce->{webworkURLs}->{root};
+	my ($self) = @_;
+	my $r = $self->r;
+	
+	my $coursesDir = $r->ce->{webworkDirs}->{courses};
+	my $coursesURL = $r->ce->{webworkURLs}->{root};
 	
 	my @courseIDs = grep { $_ ne "." and $_ ne ".." and -d "$coursesDir/$_" } readDirectory($coursesDir);
 	
@@ -67,7 +47,8 @@ sub body {
 	print CGI::start_ul();
 	
 	foreach my $courseID (@courseIDs) {
-		print CGI::li(CGI::a({href=>"$coursesURL/$courseID/"}, $courseID));
+		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
 	}
 	
 	print CGI::end_ul();
