@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.79 2004/03/06 18:50:00 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.80 2004/03/06 21:49:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,7 @@ FIXME: write this
 use strict;
 use warnings;
 use Apache::Constants qw(:common);
-use CGI qw();
+use CGI qw(*ul *li);
 use URI::Escape;
 use WeBWorK::Authz;
 use WeBWorK::DB;
@@ -585,6 +585,58 @@ EOF
 	;
 }
 
+=item systemLink($urlpath, %options)
+
+Generate a link to another part of the system. $urlpath is WeBWorK::URLPath
+object from which the base path will be taken. %options can consist of:
+
+=over
+
+=item authen
+
+Boolen, whether to include authentication information in the resulting URL. If
+not given, a true value is assumed.
+
+=item realUserID
+
+If C<authen> is true, the current real user ID is replaced with this value.
+
+=item sessionKey
+
+If C<authen> is true, the current session key is replaced with this value.
+
+=item effectiveUserID
+
+If C<authen> is true, the current effective user ID is replaced with this value.
+
+=back
+
+=cut
+
+sub systemLink {
+	my ($self, $urlpath, %options) = @_;
+	my $r = $self->{r};
+	
+	my $authen = $options{authen} || 1;
+	
+	my $url = $r->location . $urlpath->path;
+	
+	if ($authen) {
+		my $realUserID      = $options{realUserID}      || $r->param("user");
+		my $sessionKey      = $options{sessionKey}      || $r->param("key");
+		my $effectiveUserID = $options{effectiveUserID} || $r->param("effectiveUser");
+		
+		my @params;
+		defined $realUserID      and push @params, "user=$realUserID";
+		defined $sessionKey      and push @params, "key=$sessionKey";
+		defined $effectiveUserID and push @params, "effectiveUser=$effectiveUserID";
+		
+		$url .= "?" . join("&", @params) if @params;
+	}
+	
+	return $url;
+}
+
 =back
 
 =cut
@@ -651,10 +703,107 @@ default.
 
 =cut
 
+sub links {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	
+	# we're linking to other places in the same course, so grab the courseID from the current path
+	my $courseID = $urlpath->arg("courseID");
+	
+	# to make things more concise
+	my %args = ( courseID => $courseID );
+	my $pfx = "WeBWorK::ContentGenerator::";
+	
+	my $PermissionLevel = $db->getPermissionLevel($r->param("user")); # checked
+	my $permLevel = $PermissionLevel ? $PermissionLevel->permission : 0;
+	
+	my $iResult = "";
+	
+	if ($permLevel > 0) {
+		my $ipfx = "${pfx}Instructor::";
+		
+		my $userID    = $r->param("effectiveUser");
+		my $setID     = $urlpath->arg("setID");
+		my $problemID = $urlpath->arg("problemID");
+		
+		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
+		my $userList = $urlpath->newFromModule("${ipfx}UserList", %args);
+		
+		# set list links
+		my $setList       = $urlpath->newFromModule("${ipfx}ProblemSetList", %args);
+		my $setDetail     = $urlpath->newFromModule("${ipfx}ProblemSetEditor", %args, setID => $setID);
+		my $problemEditor = $urlpath->newFromModule("${ipfx}PGProblemEditor", %args, setID => $setID, problemID => $problemID);
+		
+		my $mail     = $urlpath->newFromModule("${ipfx}SendMail", %args);
+		my $scoring  = $urlpath->newFromModule("${ipfx}Scoring", %args);
+		
+		# statistics links
+		my $stats     = $urlpath->newFromModule("${ipfx}Stats", %args);
+		my $userStats = $urlpath->newFromModule("${ipfx}Stats", %args, statType => "student", userID => $userID);
+		my $setStats  = $urlpath->newFromModule("${ipfx}Stats", %args, statType => "set", setID => $setID);
+		
+		my $files = $urlpath->newFromModule("${ipfx}FileXfer", %args);
+		
+		$iResult .= CGI::start_li();
+		$iResult .= CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($instr)}, $instr->name));
+		$iResult .= CGI::start_ul();
+		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($userList)}, $userList->name));
+		$iResult .= CGI::start_li();
+		$iResult .= CGI::a({href=>$self->systemLink($setList)}, $setList->name);
+		if ($setID ne "") {
+			$iResult .= CGI::start_ul();
+			$iResult .= CGI::start_li();
+			$iResult .= CGI::a({href=>$self->systemLink($setDetail)}, $setID);
+			if ($problemID ne "") {
+				$iResult .= CGI::ul(
+					CGI::li(CGI::a({href=>$self->systemLink($problemEditor)}, $problemID))
+				);
+			}
+			$iResult .= CGI::end_li();
+			$iResult .= CGI::end_ul();
+		}
+		$iResult .= CGI::end_li();
+		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($mail)}, $mail->name));
+		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($scoring)}, $scoring->name));
+		$iResult .= CGI::start_li();
+		$iResult .= CGI::a({href=>$self->systemLink($stats)}, $stats->name);
+		if ($userID ne "") {
+			$iResult .= CGI::ul(
+				CGI::li(CGI::a({href=>$self->systemLink($userStats)}, $userID))
+			);
+		}
+		if ($setID ne "") {
+			$iResult .= CGI::ul(
+				CGI::li(CGI::a({href=>$self->systemLink($setStats)}, $setID))
+			);
+		}
+		$iResult .= CGI::end_li();
+		$iResult .= CGI::li(CGI::a({href=>$self->systemLink($files)}, $files->name));
+		$iResult .= CGI::end_ul();
+		$iResult .= CGI::end_li();
+	}
+	
+	my $sets    = $urlpath->newFromModule("${pfx}ProblemSets", %args);
+	my $options = $urlpath->newFromModule("${pfx}Options", %args);
+	my $grades  = $urlpath->newFromModule("${pfx}Grades", %args);
+	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
+	
+	return CGI::ul({class=>"LinkMenu"},
+		CGI::li(CGI::span({style=>"font-size:larger"},
+			CGI::a({href=>$self->systemLink($sets)}, "Problem Sets"))),
+		CGI::li(CGI::a({href=>$self->systemLink($options)}, $options->name)),
+		CGI::li(CGI::a({href=>$self->systemLink($grades)},  $grades->name)),
+		CGI::li(CGI::a({href=>$self->systemLink($logout)},  $logout->name)),
+		$iResult,
+	);
+}
+
 # FIXME: drunk code. rewrite.
 # also, this should be structured s.t. subclasses can add items to the links
 # area, i.e. "stacking"
-sub links {
+sub links_crap {
 	my $self = shift;
 	my @components = @_;
 	my $ce = $self->{ce};
