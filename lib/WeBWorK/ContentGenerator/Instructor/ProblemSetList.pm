@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.38 2004/01/05 00:48:33 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm,v 1.39 2004/01/18 00:12:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -352,22 +352,31 @@ sub readSetDef {
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
 			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
-			if ($1 eq 'setNumber') {
+			
+			######################
+			# sanity check entries
+			######################
+			my $item = $1;
+			$item    = '' unless defined $item;
+			my $value = $2;
+			$value    = '' unless defined $value;
+			
+			if ($item eq 'setNumber') {
 				next;
-			} elsif ($1 eq 'paperHeaderFile') {
-				$paperHeaderFile = $2;
-			} elsif ($1 eq 'screenHeaderFile') {
-				$screenHeaderFile = $2;
-			} elsif ($1 eq 'dueDate') {
-				$dueDate = $2;
-			} elsif ($1 eq 'openDate') {
-				$openDate = $2;
+			} elsif ($item eq 'paperHeaderFile') {
+				$paperHeaderFile = $value;
+			} elsif ($item eq 'screenHeaderFile') {
+				$screenHeaderFile = $value;
+			} elsif ($item eq 'dueDate') {
+				$dueDate = $value;
+			} elsif ($item eq 'openDate') {
+				$openDate = $value;
 			} elsif ($1 eq 'answerDate') {
-				$answerDate = $2;
-			} elsif ($1 eq 'problemList') {
+				$answerDate = $value;
+			} elsif ($item eq 'problemList') {
 				last;
 			} else {
-				warn "readSetDef error, can't read the line: $line";
+				warn "readSetDef error, can't read the line: ||$line||";
 			}
 		}
 	#####################################################################
