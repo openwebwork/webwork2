@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.3 2004/10/11 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.4 2004/10/12 18:13:58 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -10,7 +10,7 @@
 # 
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
+# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
 
@@ -24,7 +24,7 @@ use File::Copy;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::FileManager.pm	 -- simple directory manager for WW files
+WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manager for WW files
 
 =cut
 
@@ -34,14 +34,14 @@ use CGI;
 
 ##################################################
 #
-#	 Check that the user is authorized, and then
-#		 see if there is a download to perform.
+# Check that the user is authorized, and then
+# see if there is a download to perform.
 #
 sub pre_header_initialize {
-	my $self			 = shift;
-	my $r					 = $self->r;
-	my $authz			 = $r->authz;
-	my $user			 = $r->param('user');
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "access_instructor_tools")) {
 		$self->addbadmessage("You aren't authorized to manage course files");
@@ -56,7 +56,7 @@ sub pre_header_initialize {
 
 ##################################################
 #
-#	 Download a given file
+# Download a given file
 #
 sub downloadFile {
 	my $self = shift;
@@ -74,27 +74,27 @@ sub downloadFile {
 	}
 	my $type = "application/octet-stream";
 	$type = "text/plain" if $file =~ m/\.(pg|pl|pm|txt|def|csv|lst)/;
-	$type = "image/gif"	 if $file =~ m/\.gif/;
+	$type = "image/gif"  if $file =~ m/\.gif/;
 	$type = "image/jpeg" if $file =~ m/\.(jpg|jpeg)/;
-	$type = "image/png"	 if $file =~ m/\.png/;
+	$type = "image/png"  if $file =~ m/\.png/;
 	$self->reply_with_file($type, "$pwd/$file", $file, 0);
 }
 
 ##################################################
 #
-#	 The main body of the page
+# The main body of the page
 #
 sub body {
-	my $self					= shift;
-	my $r							= $self->r;
-	my $urlpath				= $r->urlpath;
-	my $db						= $r->db;
-	my $ce						= $r->ce;
-	my $authz					= $r->authz;
-	my $courseRoot		= $ce->{courseDirs}{root};
-	my $courseName		= $urlpath->arg('courseID');	
-	my $user					= $r->param('user');
-	my $key						= $r->param('key');
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $db         = $r->db;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $courseRoot = $ce->{courseDirs}{root};
+	my $courseName = $urlpath->arg('courseID');
+	my $user       = $r->param('user');
+	my $key        = $r->param('key');
 	
 	return CGI::em("You are not authorized to access the instructor tools")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -103,7 +103,7 @@ sub body {
 	return CGI::em("You have specified an illegal working directory!") unless defined $self->{pwd};
 
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
-	my $fileManagerURL	= $self->systemLink($fileManagerPage, authen => 0);
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 
 	print CGI::start_multipart_form(
 		-method=>"POST",
@@ -119,23 +119,23 @@ sub body {
 	my $action = $r->param('action') || $r->param('formAction') || 'Refresh';
 
 	for ($action) {
-		/^Refresh/i				and do {$self->Refresh; last};
-		/^Cancel/i				and do {$self->Refresh; last};
-		/^\^/i						and do {$self->ParentDir; last};
-		/^Directory/i			and do {$self->Go; last};
-		/^Go/i						and do {$self->Go; last};
-		/^View/i					and do {$self->View; last};
-		/^Edit/i					and do {$self->Edit; last};
-		/^Download/i			and do {$self->Refresh; last};
-		/^Copy/i					and do {$self->Copy; last};
-		/^Rename/i				and do {$self->Rename; last};
-		/^Delete/i				and do {$self->Delete; last};
-		/^New Folder/i		and do {$self->NewFolder; last};
-		/^New File/i			and do {$self->NewFile; last};
-		/^Upload/i				and do {$self->Upload; last};
-		/^Revert/i				and do {$self->Edit; last};
-		/^Save As/i				and do {$self->SaveAs; last};
-		/^Save/i					and do {$self->Save; last};
+		/^Refresh/i    and do {$self->Refresh; last};
+		/^Cancel/i     and do {$self->Refresh; last};
+		/^\^/i         and do {$self->ParentDir; last};
+		/^Directory/i  and do {$self->Go; last};
+		/^Go/i         and do {$self->Go; last};
+		/^View/i       and do {$self->View; last};
+		/^Edit/i       and do {$self->Edit; last};
+		/^Download/i   and do {$self->Refresh; last};
+		/^Copy/i       and do {$self->Copy; last};
+		/^Rename/i     and do {$self->Rename; last};
+		/^Delete/i     and do {$self->Delete; last};
+		/^New Folder/i and do {$self->NewFolder; last};
+		/^New File/i   and do {$self->NewFile; last};
+		/^Upload/i     and do {$self->Upload; last};
+		/^Revert/i     and do {$self->Edit; last};
+		/^Save As/i    and do {$self->SaveAs; last};
+		/^Save/i       and do {$self->Save; last};
 		$self->addbadmessage("Unknown action.");
 		$self->Refresh;
 	}
@@ -150,7 +150,7 @@ sub body {
 
 ##################################################
 #
-#	 Display the directory listing and associated buttons
+# Display the directory listing and associated buttons
 #
 sub Refresh {
 	my $self = shift;
@@ -166,7 +166,7 @@ sub Refresh {
 	}
 
 	#
-	#	 Some JavaScript to make things easier for the user
+	# Some JavaScript to make things easier for the user
 	#
 	print CGI::script(<<EOF);
 		function doForm(action) {
@@ -196,35 +196,42 @@ sub Refresh {
 EOF
 
 	#
-	#	 Start the table
+	# Start the table
 	#
 	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>10, style=>"margin:1em 0 0 3em"});
 
 	#
-	#	 Directory menu
+	# Directory menu
 	#
 	print CGI::Tr(
 		CGI::td({colspan=>3},
-						CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
-			CGI::popup_menu(-name		=> "directory",
-					-values => $dirs, -labels => $dirlabels,
-					-style	=> "width:25em",
-					-onChange => "doForm('Go')"),
+			CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
+			CGI::popup_menu(
+				-name => "directory",
+				-values => $dirs,
+				-labels => $dirlabels,
+				-style => "width:25em",
+				-onChange => "doForm('Go')"
+			),
 			CGI::noscript(CGI::input({type=>"submit",name=>"action",value=>"Go"}))
 		)
-				);
+	);
 
 	#
-	#	 Directory Listing
+	# Directory Listing
 	#
 	my %button = (type=>"submit",name=>"action",style=>"width:10em");
 	print CGI::Tr({valign=>"middle"},
-		CGI::td(CGI::scrolling_list(-name => "files", id => "files",
-							-style => "font-family:monospace; width:30em; height:100%",
-							-size => 15, -multiple => 1,
-							-values => $files, -labels => $filelabels,
-							-onDblClick => "doForm('View')",
-							-onChange => "checkFiles()")),
+		CGI::td(CGI::scrolling_list(
+			-name => "files", id => "files",
+			-style => "font-family:monospace; width:30em; height:100%",
+			-size => 15,
+			-multiple => 1,
+			-values => $files,
+			-labels => $filelabels,
+			-onDblClick => "doForm('View')",
+			-onChange => "checkFiles()"
+		)),
 		CGI::td({width=>3}),
 		CGI::td(
 			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
@@ -245,7 +252,7 @@ EOF
 	);
 
 	#
-	#	 Upload button
+	# Upload button
 	#
 	print CGI::Tr([
 		CGI::td(),
@@ -256,15 +263,15 @@ EOF
 	]);
 
 	#
-	#	 End the table
-	#							 
+	# End the table
+	# 
 	print CGI::end_table();
 	print CGI::script("checkFiles(); checkFile();");
 }
 
 ##################################################
 #
-#	 Move to the parent directory
+# Move to the parent directory
 #
 sub ParentDir {
 	my $self = shift;
@@ -274,7 +281,7 @@ sub ParentDir {
 
 ##################################################
 #
-#	 Move to the parent directory
+# Move to the parent directory
 #
 sub Go {
 	my $self = shift;
@@ -284,7 +291,7 @@ sub Go {
 
 ##################################################
 #
-#	 Open a directory or view a file
+# Open a directory or view a file
 #
 sub View {
 	my $self = shift; my $pwd = $self->{pwd};
@@ -292,7 +299,7 @@ sub View {
 	my $name = "$pwd/$filename"; $name =~ s!^\./?!!;
 
 	#
-	#	 Handle directories by making them the working directory
+	# Handle directories by making them the working directory
 	#
 	my $file = "$self->{courseRoot}/$pwd/$filename";
 	if (-d $file) {
@@ -306,19 +313,19 @@ sub View {
 	}
 
 	#
-	#	 Include a download link
+	# Include a download link
 	#
 	my $urlpath = $self->r->urlpath;
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $self->{courseName});
-	my $fileManagerURL	= $self->systemLink($fileManagerPage, params => {download => $filename, pwd => $pwd});
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $filename, pwd => $pwd});
 	print CGI::div({style=>"float:right"},
 		 CGI::a({href=>$fileManagerURL},"Download"));
 	print CGI::p(),CGI::b($name),CGI::p();
 	print CGI::hr();
 
 	#
-	#	 For files, display the file, if possible.
-	#	 If the file is an image, display it as an image.
+	# For files, display the file, if possible.
+	# If the file is an image, display it as an image.
 	#
 	my $data = readFile($file);
 	if (isText($data)) {
@@ -333,7 +340,7 @@ sub View {
 
 ##################################################
 #
-#	 Edit a file
+# Edit a file
 #
 sub Edit {
 	my $self = shift;
@@ -359,7 +366,7 @@ sub Edit {
 
 ##################################################
 #
-#	 Save the edited file
+# Save the edited file
 #
 sub Save {
 	my $self = shift; my $filename = shift;
@@ -376,9 +383,9 @@ sub Save {
 	if (defined($data)) {
 		if (open(OUTFILE,">$file")) {
 			eval {print OUTFILE $data; close(OUTFILE)};
-			if ($@) {$self->addbadmessage("Failed to save:	$@")}
+			if ($@) {$self->addbadmessage("Failed to save: $@")}
 				 else {$self->addgoodmessage("File saved")}
-		} else {$self->addbadmessage("Can't write to file:	$!")}
+		} else {$self->addbadmessage("Can't write to file: $!")}
 	} else {$data = ""; $self->addbadmessage("Error: no file data was submitted!")}
 
 	$self->{pwd} = $pwd;
@@ -387,7 +394,7 @@ sub Save {
 
 ##################################################
 #
-#	 Save the edited file under a new name
+# Save the edited file under a new name
 #
 sub SaveAs {
 	my $self = shift;
@@ -401,7 +408,7 @@ sub SaveAs {
 
 ##################################################
 #
-#	 Display the Edit page
+# Display the Edit page
 #
 sub RefreshEdit {
 	my $self = shift; my $data = shift; my $file = shift;
@@ -429,7 +436,7 @@ sub RefreshEdit {
 
 ##################################################
 #
-#	 Copy a file
+# Copy a file
 #
 sub Copy {
 	my $self = shift;
@@ -438,7 +445,7 @@ sub Copy {
 	$oldfile = "$self->{courseRoot}/$self->{pwd}/$oldfile";
 
 	if (-d $oldfile) {
-		## FIXME:	 need to do recursive directory copy
+		# FIXME: need to do recursive directory copy
 		$self->addbadmessage("Directory copies are not yet implemented");
 		$self->Refresh;
 		return;
@@ -460,7 +467,7 @@ sub Copy {
 
 ##################################################
 #
-#	 Rename a file
+# Rename a file
 #
 sub Rename {
 	my $self = shift;
@@ -484,7 +491,7 @@ sub Rename {
 
 ##################################################
 #
-#	 Delete a file
+# Delete a file
 #
 sub Delete {
 	my $self = shift;
@@ -499,14 +506,14 @@ sub Delete {
 	if ($self->r->param('confirmed')) {
 
 		#
-		#	 If confirmed, go ahead and delete the files
+		# If confirmed, go ahead and delete the files
 		#
 		foreach my $file (@files) {
 			if (defined checkPWD("$pwd/$file",1)) {
 	if (-d "$dir/$file") {
 		my $removed = eval {rmtree("$dir/$file",0,1)};
 		if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
-			else {$self->addbadmessage("Directory '$file' not removed:	$!")}
+			else {$self->addbadmessage("Directory '$file' not removed: $!")}
 	} else {
 		if (unlink("$dir/$file")) {$self->addgoodmessage("File '$file' successfully removed")}
 			else {$self->addbadmessage("File '$file' not removed: $!")}
@@ -518,7 +525,7 @@ sub Delete {
 	} else {
 
 		#
-		#	 Put up the confirmation dialog box
+		# Put up the confirmation dialog box
 		#
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
@@ -526,8 +533,8 @@ sub Delete {
 				CGI::b("Warning:")," You have requested that the following items be deleted\n",
 				CGI::ul(CGI::li(\@files)),
 				((grep { -d "$dir/$_" } @files)?
-		 CGI::p({style=>"width:500"},"Some of these files are directories.	",
-												"Only delete directories if you really know what you are doing.	 ",
+		 CGI::p({style=>"width:500"},"Some of these files are directories. ",
+												"Only delete directories if you really know what you are doing. ",
 												"You can seriously damage your course if you delete the wrong thing."): ""),
 				CGI::p({style=>"color:red"},"There is no undo for deleting files or directories!"),
 				CGI::p("Really delete the items listed above?"),
@@ -546,7 +553,7 @@ sub Delete {
 
 ##################################################
 #
-#	 Make a new file and edit it
+# Make a new file and edit it
 #
 sub NewFile {
 	my $self = shift;
@@ -567,7 +574,7 @@ sub NewFile {
 
 ##################################################
 #
-#	 Make a new directory
+# Make a new directory
 #
 sub NewFolder {
 	my $self = shift;
@@ -587,7 +594,7 @@ sub NewFolder {
 
 ##################################################
 #
-#	 Download a file
+# Download a file
 #
 sub Download {
 	my $self = shift;
@@ -604,7 +611,7 @@ sub Download {
 
 ##################################################
 #
-#	 Upload a file to the server
+# Upload a file to the server
 #
 sub Upload {
 	my $self = shift;
@@ -635,7 +642,7 @@ sub Upload {
 ##################################################
 ##################################################
 #
-#	 Print a confirmation dialog box
+# Print a confirmation dialog box
 #
 sub Confirm {
 	my $message = shift;
@@ -649,7 +656,7 @@ sub Confirm {
 				CGI::input({type=>"text",name=>"name",size=>50}),
 				CGI::p(),
 				CGI::div({style=>"float:right; padding-right:3ex"},
-		CGI::input({type=>"submit",name=>"action",value=>$button})),	# this will be the default
+		CGI::input({type=>"submit",name=>"action",value=>$button})), # this will be the default
 				CGI::div({style=>"float:left; padding-left:3ex"},
 		CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
 			),
@@ -661,7 +668,7 @@ sub Confirm {
 
 ##################################################
 #
-#	 Check that there is exactly one vailid file
+# Check that there is exactly one vailid file
 #
 sub getFile {
 	my $self = shift; my $action = shift;
@@ -684,11 +691,11 @@ sub getFile {
 
 ##################################################
 #
-#	 Get the entries for the directory menu
+# Get the entries for the directory menu
 #
 sub directoryMenu {
 	my $course = shift;
-	my $dir	 = shift; $dir =~ s!^\.(/|$)!!;
+	my $dir  = shift; $dir =~ s!^\.(/|$)!!;
 	my @dirs = split('/',$dir);
 	my $menu = ""; my $pwd;
 	
@@ -704,7 +711,7 @@ sub directoryMenu {
 
 ##################################################
 #
-#	 Get the directory listing
+# Get the directory listing
 #
 sub directoryListing {
 	my $root = shift; my $pwd = shift;
@@ -724,24 +731,26 @@ sub directoryListing {
 
 ##################################################
 #
-#	 Normalize the working directory and check if it is OK.
+# Normalize the working directory and check if it is OK.
 #
 sub checkPWD {
 	my $pwd = shift;
 	my $renameError = shift;
 
-	$pwd =~ s!//+!/!g;												# remove duplicate slashes
-	$pwd =~ s!(^|/)~!$1_!g;										# remove ~user references
-	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;						# remove dot directories
-																						# remove dir/.. constructions
+	$pwd =~ s!//+!/!g;              # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;         # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g; # remove dot directories
+	
+	# remove dir/.. constructions
 	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
-	$pwd =~ s!/$!!;														# remove trailing /
-	return if ($pwd =~ m!(^|/)\.\.(/|$)!);		# Error if outside the root
+	
+	$pwd =~ s!/$!!;                        # remove trailing /
+	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
 
 	my $original = $pwd;
-	$pwd =~ s!(^|/)\.!$1_!g;									# don't enter hidden directories
-	$pwd =~ s!^/!!;														# remove leading /
-	$pwd =~ s![^-_./a-zA-Z0-9 ]!_!g;					# no illegal characters
+	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
+	$pwd =~ s!^/!!;                  # remove leading /
+	$pwd =~ s![^-_./a-zA-Z0-9 ]!_!g; # no illegal characters
 	return if $renameError && $original ne $pwd;
 
 	$pwd = '.' if $pwd eq '';
@@ -750,20 +759,20 @@ sub checkPWD {
 
 ##################################################
 #
-#	 Check a name for bad characters, etc.
+# Check a name for bad characters, etc.
 #
 sub checkName {
 	my $file = shift;
-	$file =~ s!.*[/\\]!!;											#	 remove directory
-	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;					#	 no illegal characters
-	$file = "newfile.txt" unless $file;				#	 no blank names
-	$file =~ s/^\./_/;												#	 no initial dot
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file = "newfile.txt" unless $file; # no blank names
+	$file =~ s/^\./_/;                  # no initial dot
 	return $file;
 }
 
 ##################################################
 #
-#	 Get a unique name (in case it already exists)
+# Get a unique name (in case it already exists)
 #
 sub uniqueName {
 	my $dir = shift; my $name = shift;
@@ -776,8 +785,8 @@ sub uniqueName {
 
 ##################################################
 #
-#	 Verify that a name can be added tot he current
-#	 directory.
+# Verify that a name can be added tot he current
+# directory.
 #
 sub verifyName {
 	my $self = shift; my $name = shift; my $object = shift;
@@ -797,7 +806,7 @@ sub verifyName {
 
 ##################################################
 #
-#	 Verify that a file path is valid
+# Verify that a file path is valid
 #
 sub verifyPath {
 	my $self = shift; my $path = shift; my $name = shift;
@@ -820,7 +829,7 @@ sub verifyPath {
 
 ##################################################
 #
-#	 Make HTML symbols printable
+# Make HTML symbols printable
 #
 sub showHTML {
 		my $string = shift;
@@ -833,9 +842,9 @@ sub showHTML {
 
 ##################################################
 #
-#	 Check if a string is plain text
-#		 (i.e., doesn't contain three non-regular
-#			characters in a row.)
+# Check if a string is plain text
+# (i.e., doesn't contain three non-regular
+# characters in a row.)
 #
 sub isText {
 	my $string = shift;
