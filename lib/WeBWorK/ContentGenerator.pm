@@ -3,11 +3,14 @@ package WeBWorK::ContentGenerator;
 use CGI qw(-compile :html :form);
 use Apache::Constants qw(:common);
 
+# Send 'die' message to the browser window
+use CGI::Carp qw(fatalsToBrowser);
+
+
 # This is a superclass for Apache::WeBWorK's content generators.
 # You are /definitely/ encouraged to read this file, since there are
 # "abstract" functions here which show aproximately what form you would
-# want over-ridden sub-classes to follow.  go() is a particularly pertinent
-# example.
+# want over-ridden sub-classes to follow.
 
 # new(Apache::Request, WeBWorK::CourseEnvironment)
 sub new($$$) {
@@ -51,12 +54,26 @@ sub hidden_authen_fields {
 	my $courseEnvironment = $self->{courseEnvironment};
 	my $html = "";
 	
-	foreach $param ("user","key") {
+	foreach $param ("user","effectiveUser","key") {
 		my $value = $r->param($param);
 		$html .= input({-type=>"hidden",-name=>"$param",-value=>"$value"});
 	}
 	return $html;
 }
+
+### Functions that subclasses /should/ override under most circumstances
+
+sub title {
+	return "Superclass";
+}
+
+sub body {
+	print "Generated content";
+	"";
+}
+
+### Functions that subclasses /may/ want to override, if they've got something
+### special to say
 
 sub pre_header_initialize {}
 
@@ -69,14 +86,8 @@ sub header {
 
 sub initialize {}
 
-sub title {
-	return "Superclass";
-}
-
-sub body {
-	print "Generated content";
-	"";
-}
+### Content-generating functions that should probably not be overridden
+### by most subclasses
 
 sub logo {
 	my $self = shift;
@@ -88,6 +99,62 @@ sub htdocs_base {
 	return $self->{courseEnvironment}->{urls}->{base};
 }
 
+sub test_args {
+	my %args = %{$_[-1]};
+
+	print "<pre>";
+	print "$_ => $args{$_}\n" foreach (keys %args);
+	print "</pre>";
+	"";
+}
+
+# Used by &go to parse the argument fields of the template escapes
+sub cook_args($) {
+	my ($raw_args) = @_;
+	my $args = {};
+	#my $quotable_string = qr/(?:".*?(?<![^\\](?:\\\\)*\\)"|\W*)/;
+	#my $quotable_string = qr/(?:".*?(?<!\\)"|\W*)/;
+	#my $test_string = '"hel \" lo" hello';
+	
+	#warn $test_string =~ m/($quotable_string)/ ? $1 : "false";
+	
+	while ($raw_args =~ m/\G\s*(\w*)="(.*?)"/g) {
+	#while ($raw_args =~ m/\G\s*($quotable_string)=($quotable_string)/g) {
+		$args->{$1} = $2;
+	}
+	
+	return $args;
+}
+
+# Perform substitution in a template file and print it.  This should be called
+# for all content generators that are creating HTML output, and is called by
+# default by the &go method.
+sub template {
+	my ($self, $templateFile) = @_;
+	my $r = $self->{r};
+	my $courseEnvironment = $self->{courseEnvironment};
+	
+	open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
+	my @template = <TEMPLATE>;
+	close TEMPLATE;
+	
+	foreach my $line (@template) {
+		# This is incremental regex processing.
+		# the /c is so that pos($line) doesn't die when the regex fails.
+		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
+			my ($before, $function, $raw_args) = ($1, $2, $3);
+			# $args here will be a hashref
+			my $args = cook_args $raw_args if $raw_args =~ /\S/;
+			print $before;
+			print $self->$function(@_, $args) if $self->can($function);
+		}
+		print substr $line, pos($line);
+	}
+}
+
+# Do whatever needs to be done in order to get a page to the client.  You
+# probably don't want to override this unless you're not making a web page
+# with the template.
 sub go {
 	my $self = shift;
 	my $r = $self->{r};
@@ -97,23 +164,8 @@ sub go {
 	$self->header(@_); return OK if $r->header_only;
 	$self->initialize(@_);
 	
-	my $templateFile = $courseEnvironment->{templates}->{system};
-	
-	open(TEMPLATE, $templateFile) or die "Couldn't open template $templateFile";
-	my @template = <TEMPLATE>;
-	close TEMPLATE;
-	
-	foreach my $line (@template) {
-		# This is incremental regex processing.
-		# the /c is so that pos($line) doesn't die when the regex fails.
-		while ($line =~ m/\G(.*?)<!--#(.*?)\s*-->/gc) {
-			print "$1";
-			print $self->$2(@_) if $self->can($2);
-		}
-		# I thought I could use pos($line) here, but /noooooo/
-		print substr $line, pos($line);
-	}
-	
+	$self->template($courseEnvironment->{templates}->{system});
+		
 	return OK;
 }
 

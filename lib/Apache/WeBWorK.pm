@@ -17,16 +17,26 @@ package Apache::WeBWorK;
 use strict;
 use Apache::Constants qw(:common REDIRECT);
 use Apache::Request;
+use Data::UUID;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Authen;
+use WeBWorK::Authz;
 use WeBWorK::ContentGenerator::Test;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::ProblemSets;
 use WeBWorK::ContentGenerator::ProblemSet;
 use WeBWorK::ContentGenerator::Problem;
+use WeBWorK::Constants qw(SECRET);
+
+# Yes, this is supposed to be in the global namespace.  We're only setting it if 
+my $SECRET;
 
 # Sets up the common environment needed for every subsystem and then dispatches
 # the page request to the appropriate content generator.
+
+# This function has MANY MANY points of exit (return statements)!  woo!
+# call it a quirk of my coding style.  I think it makes it easier to read in this case.
+
 sub handler() {
 	my $r = Apache::Request->new(shift); # have to deal with unpredictable GET or POST data ,and sift through it for the key.  So use Apache::Request
 
@@ -45,25 +55,46 @@ sub handler() {
 		return REDIRECT;
 	}
 	
-	return OK if $r->header_only;
-
+	# Create the @components array, which contains the path specified in the URL
 	my($junk, @components) = split "/", $path_info;
 	my $webwork_root = $r->dir_config('webwork_root'); # From a PerlSetVar in httpd.conf
 	my $course = shift @components;
 	
 	# Try to get the course environment.
 	my $course_env = eval {WeBWorK::CourseEnvironment->new($webwork_root, $course);};
-	if ($@) { # If no course exists matching the requested course
+	if ($@) { # If there was an error getting the requested course
 		# TODO: display an error page.  For now, 404 it.
 		warn $@;
 		return DECLINED;
 	}
+
+	# Freak out if the requested course doesn't exist.  For now, this is just a
+	# check to see if the course directory exists.
+	if (!-e $course_env->{webworkDirs}->{courses} . "/$course") {
+		return DECLINED;
+	}
+	
+	
+	
+	### Begin dispatching ###
 	
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $course_env)->verify) {
 		return WeBWorK::ContentGenerator::Login->new($r, $course_env)->go;
 	} else {
+		# After we are authenticated, there are some things that need to be
+		# sorted out, Authorization-wize, before we start dispatching to individual
+		# content generators.
+		my $effectiveUser = $r->param("effectiveUser");
+		my $user = $r->param("user");
+		my $su_authorized = WeBWorK::Authz->new($r, $course_env)->hasPermissions($user, "become_student", $effectiveUser);
+		# This hoary statement has the effect of forcing effectiveUser to equal user unless
+		# the user is otherwise authorized.
+		if (!defined $effectiveUser || !($user ne $effectiveUser && $su_authorized)) {
+			$r->param("effectiveUser",$user);
+		}
+		
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
 			return WeBWorK::ContentGenerator::ProblemSets->new($r, $course_env)->go;
@@ -90,9 +121,6 @@ sub handler() {
 			}
 		}
 		
-		if (1) {
-			return WeBWorK::ContentGenerator::Test->new($r, $course_env)->go;
-		}
 	}
 
 	# If the dispatcher doesn't know any modules that want to handle

@@ -21,6 +21,7 @@ sub new($$) {
 		permissions_file => $courseEnv->{dbInfo}->{auth_perm_file},
 		keys_file        => $courseEnv->{dbInfo}->{auth_keys_file},
 		key_timeout      => $courseEnv->{sessionKeyTimeout},
+		permission_hash  => $courseEnv->{permissionLevels},
 	};
 	$self->{password_db}    = $dbModule->new($self->{password_file});
 	$self->{permissions_db} = $dbModule->new($self->{permissions_file});
