@@ -89,6 +89,8 @@ sub template {
 	my ($self, $templateFile) = (shift, shift);
 	my $r = $self->{r};
 	my $courseEnvironment = $self->{courseEnvironment};
+	my @ifstack = (1); # Start off in printing mode
+		# say $ifstack[-1] to get the result of the last <#!--if-->
 	
 	# so even though the variable $/ APPEARS to contain a newline,
 	# <TEMPLATE> is slurping the whole file into the first element of
@@ -99,7 +101,6 @@ sub template {
 	#close TEMPLATE;
 	#
 	# Let's try something else instead:
-	local $/="\n";
 	my @template = split /\n/, readFile($templateFile);
 	
 	foreach my $line (@template) {
@@ -109,24 +110,36 @@ sub template {
 		while ($line =~ m/\G(.*?)<!--#(\w*)((?:\s+.*?)?)-->/gc) {
 			my ($before, $function, $raw_args) = ($1, $2, $3);
 			# $args here will be a hashref
-			my $args = $raw_args =~ /\S/ ? cook_args($raw_args) : {};
-			print $before;
-			
+			my @args = $raw_args =~ /\S/ ? cook_args($raw_args) : {};
+			if ($ifstack[-1]) {
+				print $before;
+			}
+
 			if ($self->can($function)) {
-				print $self->$function(@_, $args);
+				if ($function eq "if") {
+					push @ifstack, $self->$function(@_, [@args]);
+				} elsif ($function eq "else" and @ifstack > 1) {
+					$ifstack[-1] = not $ifstack[-1];
+				} elsif ($function eq "endif" and @ifstack > 1) {
+					pop $ifstack;
+				} elsif ($ifstack[-1]) {
+					print $self->$function(@_, {@args});
+				}
 			}
 		}
 		
-		print substr $line, (defined pos $line) ? pos $line : 0);
+		if ($ifstack[-1]) {
+			print substr $line, (defined pos $line) ? pos $line : 0);
+		}
 	}
 }
 
 # cook_args(STRING) - parses a string of the form ARG1="FOO" ARG2="BAR". Returns
-# a reference to a hash containing the parsed arguments.
+# a list which pairs into key/values and fits nicely in {}s.
 # 
 sub cook_args($) {
 	my ($raw_args) = @_;
-	my $args = {};
+	my @args = ();
 	
 	# Boy I love m//g in scalar context!  Go read the camel book, heathen.
 	# First, get the whole token with the quotes on both ends...
@@ -134,10 +147,10 @@ sub cook_args($) {
 		my ($key, $value) = ($1, $2);
 		# ... then, rip out all the protecty backspaces
 		$value =~ s/\(.)/$1/g;
-		$args->{$key} = $value;
+		push @args, $key => $value;
 	}
 	
-	return $args;
+	return @args;
 }
 
 ################################################################################
@@ -332,12 +345,31 @@ sub links {
 	;
 }
 
-sub title {
-	return "WeBWorK";
-}
+# This is different.  It probably should print anything (except in debugging cases)
+# and it should return a boolean, not a string.  &if is called in a nonstandard way
+# by &template, with $args as an arrayref instead of a hashref.  this is a hack!  yay!
+sub if {
+	my ($self, $args) = @_[0,-1];
+	# A single if "or"s it's components.  Nesting produces "and".
+	
+	my @args = @$args; # Hahahahaha, get it?!
+	
+	if (@args % 2 != 0) {
+		# flip out and kill people, but do not commit seppuku
+		print '<!--&if recieved an uneven number of arguments.  This shouldn\'t happen, but I\'ll let it slide.-->\n';
+	}
+	
+	while (@args > 1) {
+		my ($key, $value) = (shift @args, shift @args);
+		
+		if ($key eq "can" and $self->can($value)) {
+			return 1;
+		}
 
-sub body {
-	return "Generated content";
+		# Other conditions go here, friend.
+	}
+	
+	return 0;
 }
 
 1;
