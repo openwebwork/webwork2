@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.24 2003/12/25 04:17:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.25 2004/01/03 17:12:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,7 +224,11 @@ sub verify($) {
 				$error = "That practice account does not exist.";
 				last VERIFY;
 			}
+			unless ($db->getUser($user)->status eq 'C') {
+				$error  = "The user $user has been dropped from this course. ";
+				last VERIFY;
 			
+			}
 			# we've got a key.
 			if ($key) {
 				if ($self->checkKey($user, $key)) {
@@ -285,6 +289,13 @@ sub verify($) {
 		
 		# a password was supplied.
 		if ($passwd) {
+			# if user has been dropped from the course fail with error message
+			unless ($db->getUser($user)->status eq 'C') {
+				$error  = "The user $user has been dropped from this course. Please contact
+				your instructor if this is an error.";
+				last VERIFY;
+			
+			}
 			if ($self->checkPassword($user, $passwd)) {
 				# valid password, so create a new session. (we don't want
 				# to reuse an old one, duh.)
