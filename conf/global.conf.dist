@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK mod_perl (c) 1995-2002 WeBWorK Team, Univeristy of Rochester
-# $Id: global.conf.dist,v 1.24 2003-06-09 21:10:03 gage Exp $
+# $Id: global.conf.dist,v 1.25 2003-06-09 23:41:43 gage Exp $
 ################################################################################
 
 # This file is used to set up the default WeBWorK course environment for all
@@ -120,6 +120,8 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 	feedbackVerbosity => 1,
 );
 
+
+
 %externalPrograms = (
 	mkdir    => "/bin/mkdir",
 	tth      => "/usr/local/bin/tth",
@@ -142,13 +144,6 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 ################################################################################
 # Database and session 
 ################################################################################
-# temporary values needed for using both GDBM  databases. 
-# Use  auser name for which all problems have been built, and none have
-# been specifically reassigned.
-#FIXME   !!!! what hack!!!!!!
-
-	$dbLayout{set}->{params}->{globalUserID} = "practice1";
-	$dbLayout{problem}->{params}->{globalUserID} = "practice1";
 	
 # dbInfo records some data for the "old" WW/Classlist/Auth.pm database system
 # {auth,wwdb,cldb}_type = database type: GDBM currently implemented
@@ -228,6 +223,7 @@ my $courseURLRoot = "$webworkURLs{htdocs}/courses/$courseName";
 # If you are using the GlobalTableEmulator, you need these to be set to
 # a user that will exist.  Professors will probably want to override this
 # in their course's course.conf, using their own user name instead of "professor".
+
 $dbLayout{set}->{params}->{globalUserID} = "professor";
 $dbLayout{problem}->{params}->{globalUserID} = "professor";
 
@@ -281,6 +277,14 @@ $practiceUserPrefix = "practice";
 		# default grader
 		grader => "avg_problem_grader",
 	},
+	# this will be customized in the course.conf file
+	specialPGEnvironmentVars => {
+		PRINT_FILE_NAMES_FOR      =>    ['gage','apizer','voloshin','lr003k','professor'],
+		CAPA_Tools                =>    "$courseDirs{macros}/CAPA_Tools/", 
+		CAPA_MCTools              =>    "$courseDirs{macros}/CAPA_MCTools/",  
+		CAPA_Graphics_URL         =>    "$courseDirs{html}/CAPA_Graphics/",   
+		CAPA_GraphicsDirectory    =>    "$courseDirs{html}CAPA_Graphics/", 
+    },
 	# modules lists module names and the packages each contains
 	modules => [
 		[qw(DynaLoader)],
