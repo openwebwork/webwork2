@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.37 2003/12/09 01:12:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,6 +55,7 @@ our @EXPORT_OK = qw(
 	removeTempDirectory
 	pretty_print_rh
 	cryptPassword
+	dequote
 );
 
 sub runtime_use($) {
@@ -336,6 +337,19 @@ sub cryptPassword {
 	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
 	my $cryptPassword = crypt($clearPassword, $salt);
 	return $cryptPassword;
+}
+
+# from the Perl Cookbook, first edition, page 25:
+sub dequote($) {
+	local $_ = shift;
+	my ($white, $leader); # common whitespace and common leading string
+	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
+		($white, $leader) = ($2, quotemeta($1));
+	} else {
+		($white, $leader) = (/^(\s+)/, '');
+	}
+	s/^\s*?$leader(?:$white)?//gm;
+	return $_;
 }
 
 1;
