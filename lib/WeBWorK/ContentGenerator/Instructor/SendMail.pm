@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.20 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.21 2004/04/05 19:33:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -754,10 +754,15 @@ sub process_message {
 
 	return $msg, $preview_header;
 }
+
+
+# Ê sub data_format {
+# 
+# Ê Ê Ê Ê Êmap {$_ =~s/\s/\./g;$_} Ê Ê map {sprintf('%-8.8s',$_);} Ê@_;
  sub data_format {
- 	    map {"COL[$_]".'&nbsp;'x(4-length($_));}  @_;
+ 	    map {"COL[$_]".'&nbsp;'x(3-length($_));}  @_;  # problems if $_ has length bigger than 4
  }
   sub data_format2 {
-    map { $_ . '&nbsp;'x(9-length($_));}  @_;
+    map {$_ =~s/\s/&nbsp;/g;$_}  map {sprintf('%-8.8s',$_);} @_;
  }
 1;
