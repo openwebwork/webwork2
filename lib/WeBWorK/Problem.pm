@@ -12,6 +12,7 @@ use Class::Struct;
 struct map { $_ => '$' } our @FIELDS = qw(
 	id
 	set_id
+	login_id
 	source_file
 	value
 	max_attempts
