@@ -44,19 +44,20 @@ use WeBWorK::ContentGenerator::GatewayQuiz;
 use WeBWorK::ContentGenerator::Hardcopy;
 use WeBWorK::ContentGenerator::Instructor::AddUsers;
 use WeBWorK::ContentGenerator::Instructor::Assigner;
+use WeBWorK::ContentGenerator::Instructor::FileXfer;
 use WeBWorK::ContentGenerator::Instructor::Index;
 #use WeBWorK::ContentGenerator::Instructor::Index2;
 use WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemList;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetEditor;
 use WeBWorK::ContentGenerator::Instructor::ProblemSetList;
-use WeBWorK::ContentGenerator::Instructor::UserList;
-use WeBWorK::ContentGenerator::Instructor::SendMail;
-use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
 use WeBWorK::ContentGenerator::Instructor::Scoring;
 use WeBWorK::ContentGenerator::Instructor::ScoringDownload;
 use WeBWorK::ContentGenerator::Instructor::ScoringTotals;
+use WeBWorK::ContentGenerator::Instructor::SendMail;
+use WeBWorK::ContentGenerator::Instructor::ShowAnswers;
 use WeBWorK::ContentGenerator::Instructor::Stats;
+use WeBWorK::ContentGenerator::Instructor::UserList;
 use WeBWorK::ContentGenerator::Login;
 use WeBWorK::ContentGenerator::Logout;
 use WeBWorK::ContentGenerator::Options;
@@ -67,6 +68,7 @@ use WeBWorK::ContentGenerator::Test;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Timing;
+use WeBWorK::Upload;
 
 =head1 THE C<&dispatch> FUNCTION
 
@@ -101,7 +103,7 @@ discard any POST data associated with the request, so it is essential that all
 POST requests include a "/" at the end of the URI.
 
 =cut
-	
+
 	# If it's a valid WeBWorK URI, it ends in a /.  This is assumed
 	# alllll over the place.
 	unless (substr($current_uri,-1) eq '/') {
@@ -130,7 +132,7 @@ this point.
 See also L<WeBWorK::CourseEnvironment>.
 
 =cut
-	
+
 	# Try to get the course environment.
 	my $ce = eval {WeBWorK::CourseEnvironment->new($webwork_root, $urlRoot, $pg_root, $course);};
 	if ($@) { # If there was an error getting the requested course
@@ -144,7 +146,7 @@ site home page, given but the course environemnt variable
 C<$ce-E<gt>{webworkURLs}-E<gt>{home}>.
 
 =cut
-	
+
 	# If no course was specified, redirect to the home URL
 	unless (defined $course) {
 		$r->header_out(Location => $ce->{webworkURLs}->{home});
@@ -157,7 +159,7 @@ If the URI did include the name of a course, but the course directory was not
 found, an exception is thrown.
 
 =cut
-	
+
 	# Freak out if the requested course doesn't exist.  For now, this is just a
 	# check to see if the course directory exists.
 	my $courseDir = $ce->{webworkDirs}->{courses} . "/$course";
@@ -172,17 +174,33 @@ A C<WeBWorK::DB> object is created from the current course environment.
 See also L<WeBWorK::DB>.
 
 =cut
-	
+
 	# Bring up a connection to the database (for Authen/Authz, and eventually
 	# to be passed to content generators, when we clean this file up).
 	my $db = WeBWorK::DB->new($ce);
-	
-	### Begin dispatching ###
-	
-	#my $dispatchTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch");
-	#$dispatchTimer->start;
-	
-	my $result;
+
+=item Capture any uploads
+
+Before checking authentication, we store any uploads sent by the client
+and replace them with parameters referencing the stored uploads.
+
+=cut
+
+	my @uploads = $r->upload;
+	foreach my $u (@uploads) {
+		# make sure it's a "real" upload
+		next unless $u->filename;
+		
+		# store the upload
+		my $upload = WeBWorK::Upload->store($u,
+			dir => $ce->{webworkDirs}->{uploadCache}
+		);
+		
+		# store the upload ID and hash in the file upload field
+		my $id = $upload->id;
+		my $hash = $upload->hash;
+		$r->param($u->name => "$id $hash");
+	}
 
 =item Check authentication
 
@@ -191,7 +209,14 @@ Use C<WeBWorK::Authen> to verify that the remote user has authenticated.
 See also L<WeBWorK::Authen>.
 
 =cut
+
+	### Begin dispatching ###
 	
+	#my $dispatchTimer = WeBWorK::Timing->new(__PACKAGE__."::dispatch");
+	#$dispatchTimer->start;
+	
+	my $result;
+
 	# WeBWorK::Authen::verify erases the passwd field and sets the key field
 	# if login is successful.
 	if (!WeBWorK::Authen->new($r, $ce, $db)->verify) {
@@ -207,7 +232,7 @@ user name if no value is supplied). If not, set it to the real user name.
 See also L<WeBWorK::Authz>.
 
 =cut
-	
+
 		# After we are authenticated, there are some things that need to be
 		# sorted out, Authorization-wize, before we start dispatching to individual
 		# content generators.
@@ -225,7 +250,7 @@ The dispatcher logic currently looks like this:
  for now, consult the code
 
 =cut
-		
+
 		my $arg = shift @components;
 		if (!defined $arg) { # We want the list of problem sets
 			$result = WeBWorK::ContentGenerator::ProblemSets->new($r, $ce, $db)->go;
@@ -292,6 +317,8 @@ The dispatcher logic currently looks like this:
 				$result = WeBWorK::ContentGenerator::Instructor::ShowAnswers->new($r, $ce, $db)->go(@components);
 			} elsif ($instructorArgument eq "stats") {
 				$result = WeBWorK::ContentGenerator::Instructor::Stats->new($r, $ce, $db)->go(@components);
+			}elsif ($instructorArgument eq "files") {
+				$result = WeBWorK::ContentGenerator::Instructor::FileXfer->new($r, $ce, $db)->go(@components);
 			}
 		} elsif ($arg eq "options") {
 			$result = WeBWorK::ContentGenerator::Options->new($r, $ce, $db)->go;
@@ -351,7 +378,7 @@ The dispatcher logic currently looks like this:
 The return value of the content generator's C<&go> function is returned.
 
 =cut
-	
+
 	return $result;
 }
 
@@ -359,7 +386,8 @@ The return value of the content generator's C<&go> function is returned.
 
 =head1 AUTHOR
 
-Written by Dennis Lambe, malsyned at math.rochester.edu.
+Written by Dennis Lambe, malsyned at math.rochester.edu. Modified by Sam
+Hathaway, sh002i at math.rochester.edu.
 
 =cut
 
