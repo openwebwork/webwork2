@@ -147,7 +147,7 @@ sub dispatch($) {
 			return WeBWorK::ContentGenerator::Logout->new($r, $ce, $db)->go;
 		} elsif ($arg eq "test") {
 			return WeBWorK::ContentGenerator::Test->new($r, $ce, $db)->go;
-		} elsif ($arg eq "quiz" ) {
+		} elsif ($arg eq "quiz_mode" ) {
 			# Gateway quiz capability -- very similar to problem set (initially)
 			return WeBWorK::ContentGenerator::GatewayQuiz->new($r, $ce, $db)->go(@components);
 		} else { # We've got the name of a problem set.
