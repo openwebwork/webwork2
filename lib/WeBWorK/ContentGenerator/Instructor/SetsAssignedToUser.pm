@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.5 2003/12/18 23:15:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.6 2004/01/28 03:31:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -165,10 +165,15 @@ sub body {
 	
 	foreach my $Set (@Sets) {
 		my $setID = $Set->set_id;
-		my $prettyName = formatDateTime($Set->due_date);
 		
 		# this is true if $Set is assigned to the selected user
-		my $currentlyAssigned = defined $db->getUserSet($userID, $setID); # checked
+		my $UserSet = $db->getUserSet($userID, $setID); # checked
+		my $currentlyAssigned = defined $UserSet;
+		
+		my $prettyDate = formatDateTime($Set->due_date);
+		if ($currentlyAssigned and $UserSet->due_date) {
+			$prettyDate = formatDateTime($UserSet->due_date);
+		}
 		
 		# URL to edit user-specific set data
 		my $url = $ce->{webworkURLs}->{root}
@@ -188,7 +193,7 @@ sub body {
 					})
 				),
 				$setID,
-				"($prettyName)",
+				"($prettyDate)",
 				" ",
 				$currentlyAssigned
 					? CGI::a({href=>$url}, "Edit user-specific set data")
