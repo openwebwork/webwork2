@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.36 2004/05/08 02:03:19 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.37 2004/05/08 02:20:59 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -452,7 +452,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage1 of active students with no more than the indicated number of total attempts'),
+	    	CGI::p('The percentage of active students with no more than the indicated number of total attempts'),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
