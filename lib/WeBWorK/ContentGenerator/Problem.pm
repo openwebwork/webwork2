@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.121 2004/04/07 22:18:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.122 2004/04/28 15:51:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -152,10 +152,14 @@ sub pre_header_initialize {
 		}
 	} else {
 		# students can't view problems not assigned to them
-		die "Set $setName is not assigned to $effectiveUserName"
-			unless defined $set;
-		die "Problem $problemNumber in set $setName is not assigned to $effectiveUserName"
-			unless defined $problem;
+		# die "Set $setName is not assigned to $effectiveUserName" unless defined $set;
+		# die "Problem $problemNumber in set $setName is not assigned to $effectiveUserName" unless defined $problem;
+
+		# We don't want to die if this set does not exist or isn't defined for this user
+		# we'll just return a page with nothing but an error on it.
+		$self->{invalidSet} = (grep /$setName/, $db->listUserSets($effectiveUserName)) == 0;
+		$self->{invalidProblem} = (grep /$problemNumber/, $db->listUserProblems($effectiveUserName, $setName)) == 0;
+
 	}
 	
 	$self->{userName}          = $userName;
@@ -184,6 +188,9 @@ sub pre_header_initialize {
 	$self->{checkAnswers}   = $checkAnswers;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
+
+	# now that we've set all the necessary variables quit out if the set or problem is invalid
+	return if $self->{invalidSet} || $self->{invalidProblem};
 	
 	##### permissions #####
 	
@@ -332,6 +339,8 @@ sub head {
 sub options {
 	my ($self) = @_;
 	
+	return "" if $self->{invalidProblem};
+	
 	return join("",
 		CGI::start_form("POST", $self->{r}->uri),
 		$self->hidden_authen_fields,
@@ -366,6 +375,9 @@ sub siblings {
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 	
+	# can't show sibling problems if the set is invalid
+	return "" if $self->{invalidSet};
+	
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
@@ -396,22 +408,24 @@ sub nav {
 	my $urlpath = $r->urlpath;
 	
 	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id;
-	my $problemID = $self->{problem}->problem_id;
+	my $setID = $self->{set}->set_id if !($self->{invalidSet});
+	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 	my $eUserID = $r->param("effectiveUser");
 	
 	my ($prevID, $nextID);
-	
-	my @problemIDs = $db->listUserProblems($eUserID, $setID);
-	foreach my $id (@problemIDs) {
-		$prevID = $id if $id < $problemID
-			and (not defined $prevID or $id > $prevID);
-		$nextID = $id if $id > $problemID
-			and (not defined $nextID or $id < $nextID);
+
+	if (!$self->{invalidProblem}) {	
+		my @problemIDs = $db->listUserProblems($eUserID, $setID);
+		foreach my $id (@problemIDs) {
+			$prevID = $id if $id < $problemID
+				and (not defined $prevID or $id > $prevID);
+			$nextID = $id if $id > $problemID
+				and (not defined $nextID or $id < $nextID);
+		}
 	}
-	
+
 	my @links;
-	
+
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $prevID);
@@ -419,9 +433,9 @@ sub nav {
 	} else {
 		push @links, "Previous Problem", "", "navPrev";
 	}
-	
+
 	push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
-	
+
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $nextID);
@@ -429,16 +443,20 @@ sub nav {
 	} else {
 		push @links, "Next Problem", "", "navNext";
 	}
-	
+
 	my $tail = "&displayMode=".$self->{displayMode};
 	return $self->navMacro($args, $tail, @links);
 }
 
 sub title {
 	my ($self) = @_;
+
+	# using the url arguments won't break if the set/problem are invalid
+	my $setID = $self->r->urlpath->arg("setID");
+	my $problemID = $self->r->urlpath->arg("problemID");
 	
-	my $setID = $self->{set}->set_id;
-	my $problemID = $self->{problem}->problem_id;
+	#my $setID = $self->{set}->set_id;
+	#my $problemID = $self->{problem}->problem_id;
 	
 	return "$setID : $problemID";
 }
@@ -449,7 +467,17 @@ sub body {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+
+	if ($self->{invalidSet}) {
+		return CGI::div({class=>"ResultsWithError"},
+			CGI::p("The selected problem set (" . $urlpath->arg("setID") . ") is not a valid set for " . $r->param("effectiveUser") . "."));
+	}	
 	
+	if ($self->{invalidProblem}) {
+		return CGI::div({class=>"ResultsWithError"},
+			CGI::p("The selected problem (" . $urlpath->arg("problemID") . ") is not a valid problem for set " . $self->{set}->set_id . "."));
+	}	
+
 	unless ($self->{isOpen}) {
 		return CGI::div({class=>"ResultsWithError"},
 			CGI::p("This problem is not available because the problem set that contains it is not yet open."));
