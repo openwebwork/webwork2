@@ -67,9 +67,9 @@ sub body {
 	
 	my @setIDs = $db->listUserSets($effectiveUser);
 	
-
+	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
 	$WeBWorK::timer->continue("Begin collecting merged sets") if defined($WeBWorK::timer);
-	my @sets = $db->getMergedSets( map {[$effectiveUser, $_]} @setIDs );
+	my @sets = $db->getMergedSets( @userSetIDs );
 	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
 	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
