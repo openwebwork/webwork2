@@ -4,6 +4,7 @@
 ################################################################################
 
 package Apache::WeBWorK;
+#use base qw(DB);
 
 =head1 NAME
 
@@ -35,7 +36,6 @@ your httpd.conf file to achieve this:
 
 use strict;
 use warnings;
-#use Apache::DB;
 use WeBWorK;
 use WeBWorK::Timing;
 
@@ -59,7 +59,7 @@ sub handler($) {
 		local $SIG{__DIE__} = sub {
 			my ($error) = @_;
 			# Traces are still causing problems
-			#my $trace = join "\n", Apache::DB->backtrace();
+			#my $trace = join "\n", Apache::WeBWorK->backtrace();
 			#$r->notes("lastCallStack" => $trace);
 			die $error;
 		};
