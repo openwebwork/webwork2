@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.21 2004/03/04 21:05:58 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.31 2004/03/06 17:36:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,8 +29,8 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readDirectory list2hash max);
 use WeBWorK::DB::Record::Set;
-
-
+use WeBWorK::ContentGenerator::Grades;
+# The table format has been borrowed from the Grades.pm module
 sub initialize {
 	my $self     = shift; 
 	# FIXME  are there args here?
@@ -104,8 +104,30 @@ sub body {
 	my $self       = shift;
 	my $args       = pop(@_);
 	my $type       = $self->{type};
+	
 	if ($type eq 'student') {
-		$self->displayStudentStats($self->{studentName});
+		my $studentName  = $self->{studentName};
+		my $r = $self->{r};
+		my $db = $self->{db};
+		my $ce = $self->{ce};
+		my $courseName = $ce->{courseName};
+		my $studentRecord = $db->getUser($studentName); # checked
+			die "record for user $studentName not found" unless $studentRecord;
+		my $root = $ce->{webworkURLs}->{root};
+		
+		my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+	    my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
+			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+		my $email    = $studentRecord->email_address;
+		print  
+			CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
+			"Section: ", $studentRecord->section, CGI::br(),
+			"Recitation: ", $studentRecord->recitation,CGI::br(),
+			'Act as: ',
+			CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
+		WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
+		
+		# The table format has been borrowed from the Grades.pm module
 	} elsif( $type eq 'set') {
 		my $setName = $self->{setName};
 		$self->displaySets($self->{setName});
@@ -470,147 +492,148 @@ print
 			
 	return "";
 }
-sub displayStudentStats {
-	my $self     = shift;
-	my $studentName  = shift;
-	my $r = $self->{r};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
-	my $courseName = $ce->{courseName};
-	my $studentRecord = $db->getUser($studentName); # checked
-	die "record for user $studentName not found" unless $studentRecord;
-	my $root = $ce->{webworkURLs}->{root};
-	
-	my @setIDs    = sort $db->listUserSets($studentName);
-	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
-	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
-			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
-
-	my $email    = $studentRecord->email_address;
-	print CGI::h3($fullName ), 
-	CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
-	"Section: ", $studentRecord->section, CGI::br(),
-	"Recitation: ", $studentRecord->recitation,CGI::br(),
-	CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
-	
-	###############################################################
-	#  Print table
-	###############################################################
-
-	# FIXME I'm assuming the problems are all the same
-	# FIXME what does this mean?
-	
-	my @rows;
-	my $max_problems=0;
-	
-	foreach my $setName (@setIDs)   {
-	    my $status = 0;
-	    my $attempted = 0;
-	    my $longStatus = '';
-	    my $string     = '';
-	    my $twoString  = '';
-	    my $totalRight = 0;
-	    my $total      = 0;
-		my $num_of_attempts = 0;
-	
-		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
-		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
-		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
-		
-		# FIXME the following line doesn't sort the problemRecords
-		#my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
-		$WeBWorK::timer->continue("Begin sorting problems for set $setName") if defined($WeBWorK::timer);
-		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
-		$WeBWorK::timer->continue("End sorting problems for set $setName") if defined($WeBWorK::timer);
-		my $num_of_problems  = @problemRecords;
-		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
-		
-		# construct header
-		
-		foreach my $problemRecord (@problemRecords) {
-			my $prob = $problemRecord->problem_id;
-			
-			my $valid_status    = 0;
-			unless (defined($problemRecord) ){
-				# warn "Can't find record for problem $prob in set $setName for $student";
-				# FIXME check the legitimate reasons why a student record might not be defined
-				next;
-			}
-	    	$status             = $problemRecord->status || 0;
-	        $attempted          = $problemRecord->attempted;
-			if (!$attempted){
-				$longStatus     = '.  ';
-			}
-			elsif   ($status >= 0 and $status <=1 ) {
-				$valid_status   = 1;
-				$longStatus     = int(100*$status+.5);
-				if ($longStatus == 100) {
-					$longStatus = 'C  ';
-				}
-				else {
-					$longStatus = &threeSpaceFill($longStatus);
-				}
-			}
-			else	{
-				$longStatus 	= 'X  ';
-			}
-
-			my $incorrect     = $problemRecord->num_incorrect;
-			$string          .=  $longStatus;
-			$twoString       .= threeSpaceFill($incorrect);
-			my $probValue     = $problemRecord->value;
-			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
-			$total           += $probValue;
-			$totalRight      += round_score($status*$probValue) if $valid_status;
-			my $num_correct   = $problemRecord->num_incorrect || 0;
-			my $num_incorrect = $problemRecord->num_correct   || 0;
-			$num_of_attempts += $num_correct + $num_incorrect;
-		}
-		
-		
-		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
-		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-	
-		push @rows, CGI::Tr(
-			CGI::td($setName),
-			CGI::td(sprintf("%0.2f",$totalRight)), # score
-			CGI::td($total), # out of 
-			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
-			CGI::td("<pre>$string\n$twoString</pre>"), # problems
-			#CGI::td($studentRecord->section),
-			#CGI::td($studentRecord->recitation),
-			#CGI::td($studentRecord->user_id),			
-			
-		);
-	
-	}
-	
-	my $problem_header = "";
-	foreach (1 .. $max_problems) {
-		$problem_header .= &threeSpaceFill($_);
-	}
-	
-	my $table_header = join("\n",
-		CGI::start_table({-border=>5}),
-		CGI::Tr(
-			CGI::th({ -align=>'center',},'Set'),
-			CGI::th({ -align=>'center', },'Score'),
-			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
-			CGI::th({ -align=>'center', },'Ind'),
-			CGI::th({ -align=>'center', },'Problems'.CGI::br().CGI::pre($problem_header)),
-			#CGI::th({ -align=>'center', },'Section'),
-			#CGI::th({ -align=>'center', },'Recitation'),
-			#CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		)
-	);
-	
-	print $table_header;
-	print @rows;
-	print CGI::end_table();
-			
-	return "";
-}
+# The student stat table format has been borrowed from the Grades.pm module instead of using this.
+# sub displayStudentStats {
+# 	my $self     = shift;
+# 	my $studentName  = shift;
+# 	my $r = $self->{r};
+# 	my $db = $self->{db};
+# 	my $ce = $self->{ce};
+# 	my $courseName = $ce->{courseName};
+# 	my $studentRecord = $db->getUser($studentName); # checked
+# 	die "record for user $studentName not found" unless $studentRecord;
+# 	my $root = $ce->{webworkURLs}->{root};
+# 	
+# 	my @setIDs    = sort $db->listUserSets($studentName);
+# 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+# 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
+# 			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+# 
+# 	my $email    = $studentRecord->email_address;
+# 	print CGI::h3($fullName ), 
+# 	CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
+# 	"Section: ", $studentRecord->section, CGI::br(),
+# 	"Recitation: ", $studentRecord->recitation,CGI::br(),
+# 	CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
+# 	
+# 	###############################################################
+# 	#  Print table
+# 	###############################################################
+# 
+# 	# FIXME I'm assuming the problems are all the same
+# 	# FIXME what does this mean?
+# 	
+# 	my @rows;
+# 	my $max_problems=0;
+# 	
+# 	foreach my $setName (@setIDs)   {
+# 	    my $status = 0;
+# 	    my $attempted = 0;
+# 	    my $longStatus = '';
+# 	    my $string     = '';
+# 	    my $twoString  = '';
+# 	    my $totalRight = 0;
+# 	    my $total      = 0;
+# 		my $num_of_attempts = 0;
+# 	
+# 		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
+# 		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
+# 		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
+# 		
+# 		# FIXME the following line doesn't sort the problemRecords
+# 		#my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
+# 		$WeBWorK::timer->continue("Begin sorting problems for set $setName") if defined($WeBWorK::timer);
+# 		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
+# 		$WeBWorK::timer->continue("End sorting problems for set $setName") if defined($WeBWorK::timer);
+# 		my $num_of_problems  = @problemRecords;
+# 		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
+# 		
+# 		# construct header
+# 		
+# 		foreach my $problemRecord (@problemRecords) {
+# 			my $prob = $problemRecord->problem_id;
+# 			
+# 			my $valid_status    = 0;
+# 			unless (defined($problemRecord) ){
+# 				# warn "Can't find record for problem $prob in set $setName for $student";
+# 				# FIXME check the legitimate reasons why a student record might not be defined
+# 				next;
+# 			}
+# 	    	$status             = $problemRecord->status || 0;
+# 	        $attempted          = $problemRecord->attempted;
+# 			if (!$attempted){
+# 				$longStatus     = '.  ';
+# 			}
+# 			elsif   ($status >= 0 and $status <=1 ) {
+# 				$valid_status   = 1;
+# 				$longStatus     = int(100*$status+.5);
+# 				if ($longStatus == 100) {
+# 					$longStatus = 'C  ';
+# 				}
+# 				else {
+# 					$longStatus = &threeSpaceFill($longStatus);
+# 				}
+# 			}
+# 			else	{
+# 				$longStatus 	= 'X  ';
+# 			}
+# 
+# 			my $incorrect     = $problemRecord->num_incorrect;
+# 			$string          .=  $longStatus;
+# 			$twoString       .= threeSpaceFill($incorrect);
+# 			my $probValue     = $problemRecord->value;
+# 			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
+# 			$total           += $probValue;
+# 			$totalRight      += round_score($status*$probValue) if $valid_status;
+# 			my $num_correct   = $problemRecord->num_incorrect || 0;
+# 			my $num_incorrect = $problemRecord->num_correct   || 0;
+# 			$num_of_attempts += $num_correct + $num_incorrect;
+# 		}
+# 		
+# 		
+# 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
+# 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+# 	
+# 		push @rows, CGI::Tr(
+# 			CGI::td($setName),
+# 			CGI::td(sprintf("%0.2f",$totalRight)), # score
+# 			CGI::td($total), # out of 
+# 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
+# 			CGI::td("<pre>$string\n$twoString</pre>"), # problems
+# 			#CGI::td($studentRecord->section),
+# 			#CGI::td($studentRecord->recitation),
+# 			#CGI::td($studentRecord->user_id),			
+# 			
+# 		);
+# 	
+# 	}
+# 	
+# 	my $problem_header = "";
+# 	foreach (1 .. $max_problems) {
+# 		$problem_header .= &threeSpaceFill($_);
+# 	}
+# 	
+# 	my $table_header = join("\n",
+# 		CGI::start_table({-border=>5}),
+# 		CGI::Tr(
+# 			CGI::th({ -align=>'center',},'Set'),
+# 			CGI::th({ -align=>'center', },'Score'),
+# 			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
+# 			CGI::th({ -align=>'center', },'Ind'),
+# 			CGI::th({ -align=>'center', },'Problems'.CGI::br().CGI::pre($problem_header)),
+# 			#CGI::th({ -align=>'center', },'Section'),
+# 			#CGI::th({ -align=>'center', },'Recitation'),
+# 			#CGI::th({ -align=>'center', },'login_name'),
+# 			#CGI::th({ -align=>'center', },'ID'),
+# 		)
+# 	);
+# 	
+# 	print $table_header;
+# 	print @rows;
+# 	print CGI::end_table();
+# 			
+# 	return "";
+# }
 
 #################################
 # Utility function NOT a method
