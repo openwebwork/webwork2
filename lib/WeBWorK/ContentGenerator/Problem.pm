@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.110 2003/12/10 18:50:36 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.111 2004/01/23 13:13:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -851,7 +851,7 @@ sub attemptResults($$$$$$) {
 		$row .= $showAttemptPreview ? CGI::td(nbsp($preview))       : "";
 		$row .= $showCorrectAnswers ? CGI::td(nbsp($correctAnswer)) : "";
 		$row .= $showAttemptResults ? CGI::td(nbsp($resultString))  : "";
-		$row .= $answerMessage      ? CGI::td(nbsp($answerMessage)) : "";
+		$row .= $showMessages      ? CGI::td(nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
