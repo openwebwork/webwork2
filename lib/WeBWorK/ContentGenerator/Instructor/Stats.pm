@@ -186,10 +186,11 @@ sub displaySets {
 	my $sort_method_name = $r->param('sort');  
 	my @studentList   = $db->listUsers;
 
-   	my @index_list                      = ();  # list of all student index 
-	my @score_list                      = ();  # list of all student total percentage scores 
-    my %attempts_list_for_problem       = ();  # a list of the number of attempts for each problem
-    my %correct_answers_for_problem     = ();  # roughly the number of students correctly answering this problem
+   	my @index_list                           = ();  # list of all student index 
+	my @score_list                           = ();  # list of all student total percentage scores 
+    my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
+    my %number_ofstudents_attempting_problem = ();  # the number of students attempting this problem.
+    my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
 	my $sort_method = sub {
 		my ($a,$b) = @_;
 		return 0 unless defined($sort_method_name);
@@ -205,7 +206,7 @@ sub displaySets {
 	};
 
 ###############################################################
-#  Print table
+#  Print tables
 ###############################################################
 	
 	my $max_num_problems  = 0;
@@ -283,9 +284,15 @@ sub displaySets {
 			my $num_correct   = $problemRecord->num_incorrect || 0;
 			my $num_incorrect = $problemRecord->num_correct   || 0;
 			$num_of_attempts += $num_correct + $num_incorrect;
-			push( @{ $attempts_list_for_problem{$probID} } ,     $num_correct + $num_incorrect);
+			
 			$correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
-			$correct_answers_for_problem{$probID} += $status;    # add on the 
+			 # add on the scores for this problem
+			if (defined($attempted) and $attempted) {
+				$number_ofstudents_attempting_problem{$probID}++;
+				push( @{ $attempts_list_for_problem{$probID} } ,     $num_correct + $num_incorrect);
+				$correct_answers_for_problem{$probID} += $status;
+			}
+				
 		}
 		
 		
@@ -340,13 +347,15 @@ sub displaySets {
 #####################################################################################
 print  
 
-	   CGI::p('The percentage of students with correct answers for each problem'),
+	   CGI::p('The percentage of active students with correct answers for each problem'),
 		CGI::start_table({-border=>1}),
 		CGI::Tr(CGI::td(
 			['Problem #', @problemIDs]
 		)),
 		CGI::Tr(CGI::td(
-			[ '% correct',map { sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_active_students) } @problemIDs ]
+			[ '% correct',map { sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_ofstudents_attempting_problem{$_}) }
+			                       @problemIDs 
+			]
 		)),
 		CGI::end_table();
 
@@ -355,7 +364,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage of students whose percentage scores and success indices are greater than the given values.'),
+	    	CGI::p('The percentage of active students whose percentage scores and success indices are greater than the given values.'),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
@@ -367,7 +376,7 @@ print
 				CGI::Tr(
 					CGI::td( [
 						'Score',
-						(map { '&gt; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets),
+						(map { '&ge; '.sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -375,7 +384,7 @@ print
 				CGI::Tr(
 					CGI::td( [
 						'Success Index',
-						(map { '&gt; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets),
+						(map { '&ge; '.sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets),
 						sprintf("%0.0f",100),
 						]
 					)
@@ -391,7 +400,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p('The percentage of students with no more than the indicated number of total attempts'),
+	    	CGI::p('The percentage of active students with no more than the indicated number of total attempts'),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% students',
@@ -548,9 +557,8 @@ sub displayStudentStats {
 			}
 
 			my $incorrect     = $problemRecord->num_incorrect;
-			$incorrect        = ($incorrect < 99) ? $incorrect: 99;  # take min
 			$string          .=  $longStatus;
-			$twoString       .= threeSpaceFill($incorrect);
+			$twoString       .= ($incorrect < 99) ? threeSpaceFill($incorrect) :threeSpaceFill('##') ;
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue);  # FIXME?? set defaults here?
 			$total           += $probValue;
