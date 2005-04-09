@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.115 2004/12/28 04:56:04 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.116 2005/01/28 21:24:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -637,7 +637,7 @@ ${pg}{modules} = [
 	[qw(Exporter)],
 	[qw(GD)],
 	
-	[qw(AlgParser AlgParserWithImplicitExpand Expr ExprWithImplicitExpand)],
+	[qw(AlgParser AlgParserWithImplicitExpand Expr ExprWithImplicitExpand utf8)],
 	[qw(AnswerHash AnswerEvaluator)],
 	[qw(WWPlot)], # required by Circle (and others)
 	[qw(Circle)],
