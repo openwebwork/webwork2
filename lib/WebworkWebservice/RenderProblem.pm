@@ -42,7 +42,7 @@ our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
-our $HOSTURL      ="http://$HOST_NAME:11002"; #FIXME
+our $HOSTURL      ="http://$HOST_NAME:8002"; #FIXME
 our $ce           =$WebworkWebservice::SeedCE;
 # create a local course environment for some course
     $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
@@ -270,6 +270,7 @@ sub renderProblem {
   		$problem_source = decode_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
+		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
   	}
@@ -397,11 +398,13 @@ sub new {
 	my ($ce, $user, $key, $set, $problem, $psvn, $formFields,
 		$translationOptions) = @_;
 	
-	my $renderer = 'WeBWorK::PG::Local';
+	#my $renderer = 'WeBWorK::PG::Local';
+	my $renderer = $ce->{pg}->{renderer};
 	
 	runtime_use $renderer;
 	# the idea is to have Local call back to the defineProblemEnvir below.
-	return WeBWorK::PG::Local::new($renderer,@_);
+	#return WeBWorK::PG::Local::new($renderer,@_);
+	return $renderer->new(@_);
 }
 
 
