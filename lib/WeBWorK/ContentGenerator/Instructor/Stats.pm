@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.49 2005/02/05 01:34:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.50 2005/02/06 20:47:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -307,6 +307,17 @@ sub displaySets {
  	my @augmentedUserRecords    = ();
  	my $number_of_active_students;
     
+    ########################################
+    # Notes for factoring this calculation
+    #
+    # Inputs include:
+    # $user
+    # $setName
+    # @userRecords
+    #               @problemRecords  these are fetched for each student in @userRecords
+    #
+    ###################################
+   
 	foreach my $studentRecord (@userRecords)   {
 		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
@@ -320,7 +331,7 @@ sub displaySets {
 	    my $twoString       = '';
 	    my $totalRight      = 0;
 	    my $total           = 0;
-		my $num_of_attempts = 0;
+		my $total_num_of_attempts_for_set = 0;
 		my %h_problemData   = ();
 		my $probNum         = 0;
 		
@@ -330,9 +341,31 @@ sub displaySets {
 		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
 		my $num_of_problems = @problemRecords;
 		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
-
+	   ########################################
+		# Notes for factoring the calculation in this loop.
+		#
+		# Inputs include:
+		# 
+		#
+		# @problemRecords  
+		# returns
+		#       $num_of_attempts
+		#       $status
+		# updates
+		#     	$number_of_students_attempting_problem{$probID}++;
+		# 		@{ $attempts_list_for_problem{$probID} }   
+		# 		$number_of_attempts_for_problem{$probID}          
+		# 		$total_num_of_attempts_for_set                    
+		# 		$correct_answers_for_problem{$probID}   
+		#    
+		#       $string (formatting output)
+		#       $total
+		#       $totalRight
+		###################################
+   
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
+			my $num_of_attempts = 0;
 			my $probID = $problemRecord->problem_id;
 			
 			
@@ -382,6 +415,7 @@ sub displaySets {
 				$number_of_students_attempting_problem{$probID}++;
 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+				$total_num_of_attempts_for_set                       += $num_of_attempts;
 				$correct_answers_for_problem{$probID}                += $status;
 			}
 			
@@ -394,7 +428,7 @@ sub displaySets {
 		my $email              = $studentRecord->email_address;
 		# FIXME  this needs formatting
 		
-		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
+		my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 		
 		my $temp_hash         = {         user_id        => $studentRecord->user_id,
