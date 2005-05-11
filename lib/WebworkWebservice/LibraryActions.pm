@@ -125,8 +125,8 @@ sub listLib {
 	 
 	my $command = $rh->{command};
 	$command = 'all' unless defined($command);
-			$command eq 'all' &&    do {#print "$dirPath\n\n";
-										find($wanted, $dirPath);
+			$command eq 'all' &&    do {
+										find({wanted=>$wanted,follow=>1 }, $dirPath);
 										@outListLib = sort @outListLib;
 										$out->{ra_out} = \@outListLib;
 										$out->{text} = join("\n", @outListLib);
@@ -139,7 +139,9 @@ sub listLib {
 													push(@fileList,$file) if -d "$dirPath/$file";
 													
 												}
-												$out->{text} = join("\n",sort @fileList);
+												@fileList = sort @fileList;
+												$out->{text} = join("\n",@fileList);
+												$out->{ra_out} = \@fileList;
 												closedir(DIR);
 											} else {
 												$out->{error}= "Can't open directory $dirPath";
@@ -153,7 +155,9 @@ sub listLib {
 			 							 
 			 							 if ( -e $dirPath2) {
 											 find($wanted, $dirPath2);
-											 $out ->{text} = join("\n", sort @outListLib );
+											 @outListLib = sort @outListLib;
+											 $out ->{text} = join("\n", @outListLib );
+											 $out->{ra_out} = \@outListLib;
 										 } else {
 										   $out->{error} = "Can't open directory  $dirPath2";
 										 }
