@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.59 2004/10/22 22:59:49 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.60 2004/12/16 02:25:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,7 @@ use DateTime;
 use Date::Parse;
 use Date::Format;
 use Time::Zone;
+use MIME::Base64;
 #use Date::Manip;
 #use DateTime::Format::DateManip;
 use Errno;
@@ -652,6 +653,7 @@ sub ref2string($;$) {
 
 sub decodeAnswers($) {
 	my $string = shift;
+	$string = decode_base64($string);
 	return unless defined $string and $string;
 	my @array = split m/##/, $string;
 	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
@@ -679,6 +681,7 @@ sub encodeAnswers(\%\@) {
 		$string .= "$name##$value##"; # this is also not my fault
 	}
 	$string =~ s/##$//; # remove last pair of hashs
+	$string = encode_base64($string);
 	return $string;
 }
 
