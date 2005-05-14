@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.116 2005/01/28 21:24:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.117 2005/04/09 15:36:26 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -611,6 +611,16 @@ $pg{displayModeOptions}{jsMath} = {
 $pg{directories}{root}   = "$pg_dir";
 $pg{directories}{lib}    = "$pg{directories}{root}/lib";
 $pg{directories}{macros} = "$pg{directories}{root}/macros";
+
+#
+#  The macro file search path.  Each directory in this list is seached
+#  (in this order) by loadMacros() when it looks for a .pl file.
+#
+$pg{directories}{macrosPath} = [
+   ".",                     # search the problem file's directory
+   $courseDirs{macros},
+   $pg{directories}{macros},
+];
 
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 
