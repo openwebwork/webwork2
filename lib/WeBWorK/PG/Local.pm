@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.15 2004/10/15 20:33:04 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.16 2005/01/01 22:35:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -95,8 +95,7 @@ sub new_helper {
 	# set the directory hash
 	#warn "PG: setting the directory hash\n";
 	$translator->rh_directories({
-		courseScriptsDirectory => $ce->{pg}->{directories}->{macros},
-		macroDirectory         => $ce->{courseDirs}->{macros},
+		macrosPath             => $ce->{courseDirs}->{macrosPath},
 		templateDirectory      => $ce->{courseDirs}->{templates},
 		tempDirectory          => $ce->{courseDirs}->{html_temp},
 	});

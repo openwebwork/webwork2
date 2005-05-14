@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.58 2004/09/13 19:29:55 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.59 2004/11/03 22:00:10 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -137,21 +137,22 @@ sub defineProblemEnvir {
 	# ADDED: dvipngTempDir
 	# ADDED: jsMathURL
 	# ADDED: asciimathURL
+        # ADDED: macrosPath
+        # REMOVED: macrosDirectory, courseScriptsDirectory
 	
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
 	$envir{classDirectory}         = undef;
-	$envir{courseScriptsDirectory} = $ce->{pg}->{directories}->{macros}."/";
+        $envir{macrosPath}             = $ce->{pg}->{directories}{macrosPath};
 	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
 	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
-	$envir{macroDirectory}         = $ce->{courseDirs}->{macros}."/";
 	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";
 	$envir{tempDirectory}          = $ce->{courseDirs}->{html_temp}."/";
 	$envir{tempURL}                = $ce->{courseURLs}->{html_temp}."/";
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
 	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
-	$envir{jsMathURL}	           = $ce->{webworkURLs}->{jsMath};
+	$envir{jsMathURL}              = $ce->{webworkURLs}->{jsMath};
 	$envir{asciimathURL}	       = $ce->{webworkURLs}->{asciimath};
 	
 	# Information for sending mail
