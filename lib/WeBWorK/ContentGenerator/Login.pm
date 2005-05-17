@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.23 2004/07/08 21:38:09 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.24 2005/01/28 01:04:06 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -96,7 +96,7 @@ sub body {
 	
 	print CGI::p("Please enter your username and password for ",CGI::b($course)," below:");
 	print CGI::p(dequote <<"	EOT");
-		If you check ${\( CGI::b("Remember Me") )} your login information will
+		If you check ${\( CGI::b("Remember Me") )} &nbsp;your login information will
 		be remembered by the browser you are using, allowing you to visit
 		WeBWorK pages without typing your user name and password (until your
 		session expires). This feature is not safe for public workstations,
@@ -150,7 +150,7 @@ sub body {
 		
 		print CGI::p(dequote <<"		EOT");
 			This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
-			to log into this course as a guest.
+			&nbsp;to log into this course as a guest.
 		EOT
 		print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
 	    
