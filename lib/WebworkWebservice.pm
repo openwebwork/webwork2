@@ -22,7 +22,6 @@ BEGIN {
 	$WebworkWebservice::SeedCE       = $ce;
 	$WebworkWebservice::HOST_NAME     = Apache->server->server_hostname;
 	$WebworkWebservice::HOST_PORT     = Apache->server->port;
-	#$WebworkWebservice::HOST_PATH    = Apache->server->path();
 	$WebworkWebservice::PASSWORD      = 'geometry';
 	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
 
