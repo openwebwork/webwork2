@@ -324,9 +324,6 @@ sub displaySets {
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next if $studentRecord->status !~/C/;              # don't show dropped students FIXME
 		$number_of_active_students++;
-	    my $status          = 0;
-	    my $attempted       = 0;
-	    my $longStatus      = '';
 	    my $string          = '';
 	    my $twoString       = '';
 	    my $totalRight      = 0;
@@ -359,62 +356,72 @@ sub displaySets {
 		# 		$correct_answers_for_problem{$probID}   
 		#    
 		#       $string (formatting output)
+		#       $twoString (more formatted output)
 		#       $total
 		#       $totalRight
 		###################################
    
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
-			my $num_of_attempts = 0;
-			my $probID = $problemRecord->problem_id;
-			
-			
-			my $valid_status    = 0;
-			unless (defined($problemRecord) ){
 				# warn "Can't find record for problem $prob in set $setName for $student";
 				# FIXME check the legitimate reasons why a student record might not be defined
-				next;
-			}
-	    	$status             = $problemRecord->status || 0;
-	        $attempted          = $problemRecord->attempted;
+			####################################################################
+			# Grab data from the database
+			####################################################################
+			# It's possible that $problemRecord->num_correct or $problemRecord->num_correct
+			# or $problemRecord->status is an empty 
+			# or blank string instead of 0.  The || clause fixes this and prevents 
+			# warning messages in the comparisons below.
+			
+			my $probID             = $problemRecord->problem_id;
+			my $attempted          = $problemRecord->attempted;
+			my $num_correct        = $problemRecord->num_correct     || 0;
+			my $num_incorrect      = $problemRecord->num_incorrect   || 0;
+			my $num_of_attempts    = $num_correct + $num_incorrect;
+			
+		    # initialize the number of correct answers for this problem 
+		    # if the value has not been defined.
+	        $correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
+		
+	        
+			my $probValue          = $problemRecord->value;
+			# set default problem value here
+			$probValue             = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
+			
+			my $status             = $problemRecord->status          || 0;
+			# sanity check that the status (score) is between 0 and 1
+	        my $valid_status       = ($status >= 0 and $status <=1 ) ? 1 : 0;
+	        
+	        ###################################################################
+	        # Determine the string $longStatus which will display the student's current score
+	        ###################################################################
+	        my $longStatus = '';
 			if (!$attempted){
-				$longStatus     = '.  ';
-			}
-			elsif   ($status >= 0 and $status <=1 ) {
-				$valid_status   = 1;
+				$longStatus     = '.';
+			} elsif   ($valid_status) {
 				$longStatus     = int(100*$status+.5);
-				if ($longStatus == 100) {
-					$longStatus = 'C  ';
-				}
-				else {
-					$longStatus = &threeSpaceFill($longStatus);
-				}
-			}
-			else	{
-				$longStatus 	= 'X  ';
+				$longStatus     = ($longStatus == 100) ? 'C' : $longStatus;
+			} else	{
+				$longStatus 	= 'X';
 			}
 			
-			my $num_correct   = $problemRecord->num_correct || 0;
-			my $num_incorrect = $problemRecord->num_incorrect   || 0;
-			# It's possible that $incorrect is an empty or blank string instead of 0  the || clause fixes this and prevents 
-			# warning messages in the comparison below.
-			$string          .=  $longStatus;
+			$string          .=  threeSpaceFill($longStatus);
 			$twoString       .= threeSpaceFill($num_incorrect);
-			my $probValue     = $problemRecord->value;
-			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
+
 			$total           += $probValue;
 			$totalRight      += round_score($status*$probValue) if $valid_status;
 
-			$num_of_attempts += $num_correct + $num_incorrect;
 			
-			$h_problemData{$probID} = $num_incorrect;
 			
-			$correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
+			
+			
+			
 			 # add on the scores for this problem
 			if (defined($attempted) and $attempted) {
 				$number_of_students_attempting_problem{$probID}++;
 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+				$h_problemData{$probID}                               = $num_incorrect;
 				$total_num_of_attempts_for_set                       += $num_of_attempts;
 				$correct_answers_for_problem{$probID}                += $status;
 			}
@@ -458,7 +465,7 @@ sub displaySets {
 							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
 	
 	# sort the problem IDs
-	my @problemIDs   = sort {$a<=>$b} keys %correct_answers_for_problem;
+	my @problemIDs         = sort {$a<=>$b} keys %correct_answers_for_problem;
 	# determine index quartiles
     my @brackets1          = (90,80,70,60,50,40,30,20,10);  #% students having scores or indices above this cutoff value
     my @brackets2          = (95, 75,50,25,5,1);       # % students having this many incorrect attempts or more  
