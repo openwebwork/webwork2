@@ -1,7 +1,12 @@
-Minimal commands to make this client work:
+These test clients will process these two commands:
 
-./xmlrpc_client4.pl renderProblem  input.txt >foo.txt
+./webwork_xmlrpc_client.pl renderProblem  input.txt >foo.txt
+./webwork_xmlrpc_client.pl listLibraries
+or
 
-You may need to adjust some hardwired parameters in xmlrpc_client4. :-)
+./webwork_soap_client.pl renderProblem  input.txt >foo.txt
+./webwork_soap_client.pl listLibraries
 
-The
+
+You may need to adjust some hardwired parameters in the scripts. :-)
+

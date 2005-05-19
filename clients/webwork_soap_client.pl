@@ -1,10 +1,15 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 
+use SOAP::Lite;
+	
 #  configuration section
 use constant  HOSTURL  =>  'devel.webwork.rochester.edu'; 
 use constant  HOSTPORT =>  8002;
+use constant  TRANSPORT_METHOD => 'SOAP::Lite';
+use constant  REQUEST_CLASS =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
+use constant  REQUEST_URI   =>'mod_soap';
 
-my @COMMANDS = qw( listLibraries   renderProblem  ); #listLib tex2pdf
+my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf
 
 # $pg{displayModes} = [
 # 	"plainText",     # display raw TeX for math expressions
@@ -19,14 +24,6 @@ use constant DISPLAYMODE   => 'images';
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 
-# -- SOAP::Lite -- soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
-
-# use XMLRPC::Lite;
-# 
-# print XMLRPC::Lite
-#   -> proxy('http://devel.webwork.rochester.edu:11002/mod_xmlrpc')
-#   -> call('Demo:bye', 25)
-#   -> result;
 print STDERR "inputs are ", join (" | ", @ARGV), "\n";
 our $source;
 
@@ -40,30 +37,29 @@ if (@ARGV) {
 
 } else {
 
-	print STDERR "Useage: .xmlrpc_client4.pl command   file_name\n";
-	print STDERR "For example: .xmlrpc_client4.pl renderProblem   input.txt\n";
+	print STDERR "Useage: ./webwork_soap_client.pl command   inputs\n";
+	print STDERR "For example: ./webwork_soap_client renderProblem   input.txt\n";
+	print STDERR "For example: ./webwork_soap_client listLibraries   \n";
 	print STDERR "Commands are: ", join(" ", @COMMANDS), "\n";
 	
 }
 
 
 
-
-
-
 sub xmlrpcCall {
 	my $command = shift;
 	$command   = 'listLibraries' unless $command;
-	use XMLRPC::Lite;
-	  my $xmlrpc = XMLRPC::Lite
-	   # ->uri('http://webwork-db.math.rochester.edu/Demo/')
-			-> proxy('http://'.HOSTURL.':'.HOSTPORT.'/mod_xmlrpc');
+
+	  my $requestResult = TRANSPORT_METHOD
+	        ->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
+			-> proxy('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 		
 	  my $test = [3,4,5,6];     
 	  my $input = setInputTable();
 	  print "displayMode=",$input->{envir}->{displayMode},"\n";
 	  local( $result);
-	  eval { $result = $xmlrpc->call("WebworkXMLRPC.$command",$input) };
+	  # use eval to catch errors
+	  eval { $result = $requestResult->call("$command",$input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 	
@@ -97,6 +93,8 @@ sub pretty_print_rh {
 	} elsif (! defined($rh )) {
 		$out .= " type = UNDEFINED; ";
 	}
+	return $out." " unless defined($rh);
+	
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
 	    $out .= "{\n";
 	    $indent++;
