@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.60 2004/12/16 02:25:47 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.61 2005/05/11 14:32:58 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,8 +31,6 @@ use Date::Parse;
 use Date::Format;
 use Time::Zone;
 use MIME::Base64;
-#use Date::Manip;
-#use DateTime::Format::DateManip;
 use Errno;
 use File::Path qw(rmtree);
 use Carp;
@@ -650,11 +648,15 @@ sub ref2string($;$) {
 		$result .= defined $ref ? $ref : '<font color="red">undef</font>';
 	}	
 }
-
+use constant BASE64_ENCODED => 'base64_encoded:';
 sub decodeAnswers($) {
 	my $string = shift;
-	$string = decode_base64($string);
 	return unless defined $string and $string;
+	if ($string =~/^BASE64_ENCODED/) {
+		$string =~ s/^BASE64_ENCODED//;
+		$string = decode_base64($string);
+	}
+
 	my @array = split m/##/, $string;
 	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
 	push @array, "" if @array%2;
@@ -681,7 +683,9 @@ sub encodeAnswers(\%\@) {
 		$string .= "$name##$value##"; # this is also not my fault
 	}
 	$string =~ s/##$//; # remove last pair of hashs
-	$string = encode_base64($string);
+
+	$string = BASE64_ENCODED.encode_base64($string);
+
 	return $string;
 }
 
