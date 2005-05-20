@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.4 2004/07/10 16:07:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/DBImportExport.pm,v 1.5 2004/10/22 22:59:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -152,7 +152,7 @@ sub dbExport {
 	@tables = @TABLE_ORDER unless @tables;
 	my %tables;
 	@tables{@tables} = ();
-	
+
 	my $writer = new XML::Writer(OUTPUT => $options{xml}, NEWLINES => 0, DATA_MODE => 1);
 	$writer->startTag("webwork", version => $DB_VERSION);
 	
