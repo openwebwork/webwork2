@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.31 2004/10/10 21:04:47 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.33 2004/12/21 04:40:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,8 @@ use CGI::Pretty qw();
 use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw(cryptPassword writeLog);
+use IO::File;
+use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
@@ -173,15 +174,15 @@ sub pre_header_initialize {
 sub header {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
-	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		my $r = $self->r;
-		my $courseID = $r->param("export_courseID");
-		$r->content_type("application/octet-stream");
-		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
-		$r->send_http_header;
-	} else {
+# 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
+# 		my $r = $self->r;
+# 		my $courseID = $r->param("export_courseID");
+# 		$r->content_type("application/octet-stream");
+# 		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
+# 		$r->send_http_header;
+# 	} else {
 		$self->SUPER::header;
-	}
+#	}
 }
 
 # sends:
@@ -197,7 +198,8 @@ sub content {
 	my ($self) = @_;
 	my $method_to_call = $self->{method_to_call};
 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		$self->do_export_database;
+		#$self->do_export_database;
+		$self->SUPER::content;
 	} else {
 		$self->SUPER::content;
 	}
@@ -217,6 +219,19 @@ sub body {
 	unless ($authz->hasPermissions($user, "create_and_delete_courses")) {
 		return "";
 	}
+	my $method_to_call = $self->{method_to_call};
+	my $methodMessage ="";
+	
+	(defined($method_to_call) and $method_to_call eq "do_export_database") && do {
+	    my @export_courseID = $r->param("export_courseID");
+	    my $course_ids = join(", ", @export_courseID);
+		$methodMessage  = CGI::p("Exporting database for course(s) $course_ids").
+		CGI::p(".... please wait.... 
+		If your browser times out you will
+		still be able to download the exported database using the 
+		file manager.").CGI::hr();
+	};
+	
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
@@ -228,12 +243,18 @@ sub body {
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
+		CGI::hr(),
+		$methodMessage,
+		
 	);
 	
-	print CGI::hr();
+	print CGI::p("The ability to import and to export databases is still under development.
+	 It seems to work but it is <b>VERY</b> slow on large courses.  You may prefer to 
+	 use webwork2/bin/wwdb  or the mysql dump facility for archiving large courses.
+	 Please send bug reports if you find errors.  ");
 	
 	my @errors = @{$self->{errors}};
-	my $method_to_call = $self->{method_to_call};
+	
 	
 	if (@errors) {
 		print CGI::div({class=>"ResultsWithError"},
@@ -1299,7 +1320,7 @@ sub export_database_form {
 	
 	my $export_courseID = $r->param("export_courseID") || "";
 	my @export_tables   = $r->param("export_tables");
-	
+
 	@export_tables = @tables unless @export_tables;
 	
 	my @courseIDs = listCourses($ce);
@@ -1336,7 +1357,7 @@ sub export_database_form {
 					-values => \@courseIDs,
 					-default => $export_courseID,
 					-size => 10,
-					-multiple => 0,
+					-multiple => 1,
 					-labels => \%courseLabels,
 				),
 			),
@@ -1367,13 +1388,13 @@ sub export_database_validate {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
-	my $export_courseID = $r->param("export_courseID") || "";
+	my @export_courseID = $r->param("export_courseID") || ();
 	my @export_tables   = $r->param("export_tables");
-	
+
 	my @errors;
-	
-	if ($export_courseID eq "") {
-		push @errors, "You must specify a course name.";
+
+	unless ( @export_courseID) {
+		push @errors, "You must specify at least one course name.";
 	}
 	
 	unless (@export_tables) {
@@ -1391,32 +1412,64 @@ sub do_export_database {
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $export_courseID = $r->param("export_courseID");
+	my @export_courseID = $r->param("export_courseID");
 	my @export_tables   = $r->param("export_tables");
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$export_courseID,
-	);
-	
-	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
-	
-	#my ($fh, $export_file) = tempfile("db_export_XXXXXX", DIR => $ce->{webworkDirs}->{tmp});
-	#my ($random_chars) = $export_file =~ m/db_export_(\w+)$/;
-	
-	my @errors;
-	
-	eval {
-		@errors = dbExport(
-			db => $db2,
-			#xml => $fh,
-			xml => *STDOUT,
-			tables => \@export_tables,
+	foreach my $export_courseID (@export_courseID) {
+
+		my $ce2 = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$export_courseID,
 		);
-	};
+		
+		my $db2 = new WeBWorK::DB($ce2->{dbLayout});
+		
+		#my ($fh, $export_file) = tempfile("db_export_XXXXXX", DIR => $ce->{webworkDirs}->{tmp});
+		#my ($random_chars) = $export_file =~ m/db_export_(\w+)$/;
+		# export to the admin/templates directory
+		my $exportFileName = "$export_courseID.exported.xml";
+		my $exportFilePath = $ce->{courseDirs}->{templates}."/$exportFileName";
+		# get a unique name
+		my $number =1;
+		while (-e "$exportFilePath.$number.gz") {
+			$number++;
+			last if $number>9;
+		}
+		if ($number<=9 ) {
+			$exportFilePath = "$exportFilePath.$number";
+			$exportFileName = "$exportFileName.$number";
+		} else {
+			$self->addbadmessage(CGI::p("There are more than 9 exported files for this course! Please
+			remove some of these files."));
+			$exportFilePath = "$exportFilePath.999";
+			$exportFileName = "$exportFileName.999";
+		}
 	
+		my $outputFileHandle = new IO::File(">$exportFilePath") or warn "Unable to create $exportFilePath";
+	
+		my @errors;
+		eval {
+			@errors = dbExport(
+				db => $db2,
+				#xml => $fh,
+				xml => $outputFileHandle,
+				tables => \@export_tables,
+			);
+		};
+		
+		$outputFileHandle->close();
+	
+		my $gzipMessage = system( 'gzip', $exportFilePath);
+		if ( !$gzipMessage ) {
+			$self->addgoodmessage(CGI::p( "Database saved to templates/$exportFileName.gzip.  
+			You may download it with the file manager."));
+		} else {
+			$self->addbadmessage(CGI::p( "Failed to gzip file $exportFilePath"));
+		}
+		unlink $exportFilePath;
+	} # end export of one course
 	#push @errors, "Fatal exception: $@" if $@;
 	#
 	#if (@errors) {
@@ -1469,6 +1522,23 @@ sub import_database_form {
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
+	# find databases:
+	my $templatesDir = $ce->{courseDirs}->{templates};
+	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
+	my $exempt_dirs = join("|", keys %probLibs);
+
+	my @databaseFiles = listFilesRecursive(
+		$templatesDir,
+		qr/.\.exported\.xml\.\d*\.gz$/, # match these files  #FIXME this is too restricive!!
+		qr/^(?:$exempt_dirs|CVS)$/, # prune these directories
+		0, # match against file name only
+		1, # prune against path relative to $templatesDir
+	);
+
+	my %databaseLabels = map { ($_ => $_) } @databaseFiles;
+	
+	#######
+	
 	print CGI::h2("Import Database");
 	
 	print CGI::start_form("POST", $r->uri, &CGI::MULTIPART);
@@ -1478,12 +1548,23 @@ sub import_database_form {
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Database XML File:"),
+# 			CGI::td(
+# 				CGI::filefield(
+# 					-name => "import_file",
+# 					-size => 50,
+# 				),
+# 			),
 			CGI::td(
-				CGI::filefield(
+				CGI::scrolling_list(
 					-name => "import_file",
-					-size => 50,
+					-values => \@databaseFiles,
+					-default => undef,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%databaseLabels,
 				),
-			),
+			
+			)
 		),
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Tables to Import:"),
@@ -1547,7 +1628,7 @@ sub import_database_validate {
 	my @errors;
 	
 	if ($import_file eq "") {
-		push @errors, "You must specify a database file to upload.";
+		push @errors, "You must specify a database file to import.";
 	}
 	
 	if ($import_courseID eq "") {
@@ -1583,26 +1664,36 @@ sub do_import_database {
 	
 	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
 	
+	# locate file
+	my $templateDir = $ce->{courseDirs}->{templates};
+	my $filePath = "$templateDir/$import_file";
+	
+	my $gunzipMessage = system( 'gunzip', $filePath);
+	#FIXME
+	#warn "gunzip ", $gunzipMessage;
+	$filePath =~ s/\.gz$//;
+	#warn "new file path is $filePath";
+	my $fileHandle = new IO::File("<$filePath");
 	# retrieve upload from upload cache
-	my ($id, $hash) = split /\s+/, $import_file;
-	my $upload = WeBWorK::Upload->retrieve($id, $hash,
-		dir => $ce->{webworkDirs}->{uploadCache}
-	);
+# 	my ($id, $hash) = split /\s+/, $import_file;
+# 	my $upload = WeBWorK::Upload->retrieve($id, $hash,
+# 		dir => $ce->{webworkDirs}->{uploadCache}
+# 	);
 	
 	my @errors;
 	
 	eval {
 		@errors = dbImport(
 			db => $db2,
-			xml => $upload->fileHandle,
+			# xml => $upload->fileHandle,
+			xml => $fileHandle,
 			tables => \@import_tables,
 			conflict => $import_conflict,
 		);
 	};
 	
-	$upload->dispose;
-	
 	push @errors, "Fatal exception: $@" if $@;
+	push @errors, $gunzipMessage if $gunzipMessage;
 	
 	if (@errors) {
 		print CGI::div({class=>"ResultsWithError"},
