@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.24 2005/01/28 01:04:06 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.25 2005/05/17 18:40:12 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,31 @@ sub info {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
+	
+	my $site_info = $ce->{webworkFiles}->{site_info};
+	
+	if (defined $site_info and $site_info) {
+		my $site_info_path = $site_info;
+		
+		# deal with previewing a temporary file
+		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
+				and defined $r->param("editFileSuffix")) {
+			$site_info_path .= $r->param("editFileSuffix");
+		}
+		
+		if (-f $site_info_path) {
+			my $text = eval { readFile($site_info_path) };
+			if ($@) {
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("$@"),
+				);
+			} else {
+				print CGI::p(CGI::b("Important Message")), $text,CGI::hr();
+			}
+		}
+		
+		
+	}
 	my $login_info = $ce->{courseFiles}->{login_info};
 	
 	if (defined $login_info and $login_info) {
@@ -62,8 +87,11 @@ sub info {
 			}
 		}
 		
-		return "";
+		
 	}
+	
+	
+	return "";
 }
 
 sub body {
