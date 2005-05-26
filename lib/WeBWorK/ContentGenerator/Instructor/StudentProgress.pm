@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.10 2004/10/26 03:14:01 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.11 2005/05/19 20:53:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -283,6 +283,9 @@ sub displaySets {
 	my $sort_method = sub {
 		my ($a,$b) = @_;
 		return 0 unless defined($sort_method_name);
+		return 	lc($a->{last_name}) cmp lc($b->{last_name}) if $sort_method_name eq 'last_name';
+		return 	lc($a->{first_name}) cmp lc($b->{first_name}) if $sort_method_name eq 'first_name';
+		return 	lc($a->{email_address}) cmp lc($b->{email_address}) if $sort_method_name eq 'email_address';
 		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
 		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
 		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
@@ -473,9 +476,16 @@ sub displaySets {
 	}	
 	$WeBWorK::timer->continue("end mainloop") if defined($WeBWorK::timer);
 	
-	@augmentedUserRecords = sort {           &$sort_method($a,$b)
-												||
-							lc($a->{last_name}) cmp lc($b->{last_name} ) } @augmentedUserRecords;
+	@augmentedUserRecords = sort {
+		&$sort_method($a,$b)
+			||
+		lc($a->{last_name}) cmp lc($b->{last_name})
+			||
+		lc($a->{first_name}) cmp lc($b->{first_name})
+			||
+		$a->{user_id} cmp $b->{user_id}	
+		} 
+		@augmentedUserRecords;
 	
 
 	# construct header
@@ -497,22 +507,24 @@ sub displaySets {
 		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
-		"Click on student's name to see the student's version of the problem set;  
+		"Click on student's name to see the student's version of the problem set. &nbsp; &nbsp;&nbsp;
 		Click heading to sort table. ",
 		CGI::br(),
 		CGI::br(),
-		defined($sort_method_name) ?" sort method is $sort_method_name":"",
+		defined($sort_method_name) ?" Entries are sorted by $sort_method_name":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
-			[CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'name' })},'Name'),
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
-			 'Out'.CGI::br().'Of',
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
-			 'Problems'.CGI::br().$problem_header,
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'recitation'})},'Recitation'),
-			 CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'user_id'})},'Login Name'),
-			 ])
+			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'first_name' })},'First').
+			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'last_name' })},'Last').CGI::br().
+			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'email_address' })},'Email'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
+			'Out'.CGI::br().'Of',
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
+			'Problems'.CGI::br().$problem_header,
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'recitation'})},'Recitation'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'user_id'})},'Login Name'),
+			])
 
 		);
 								
