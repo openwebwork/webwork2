@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.59 2004/11/18 16:00:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.60 2004/12/17 16:57:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -278,6 +278,7 @@ sub body {
 		CGI::th("Name"),
 		CGI::th("Attempts"),
 		CGI::th("Remaining"),
+		CGI::th("Worth"),
 		CGI::th("Status"),
 	);
 	
@@ -365,14 +366,17 @@ sub problemListRow($$$) {
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
 	                                  # FIXME  -- this may not cover all cases.
 	
-	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+#	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	
-	return CGI::Tr(CGI::td({-nowrap=>1, -align=>"center"}, [
-		$interactive,
-		$attempts,
-		$remaining,
-		$status . " " . $msg,
-	]));
+	return CGI::Tr(
+		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
+		CGI::td({-nowrap=>1, -align=>"center"},
+	 		[
+				$attempts,
+				$remaining,
+				$problem->value,
+				$status,
+			]));
 }
 
 1;
