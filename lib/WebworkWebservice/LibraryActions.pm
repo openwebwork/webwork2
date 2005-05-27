@@ -116,8 +116,7 @@ sub listLib {
 		my $name = $File::Find::name;
 		my @out=();
 		if ($name =~/\S/ ) {
-			$name =~ s|^$dirPath/*||o;  # cut the first directory
-            # $name =~ s|^\w*\/||;     # cut the set name
+			$name =~ s|^$dirPath/*||;  # cut the first directory
 			push(@outListLib, "$name") if $name =~/\.pg/;
 
 		}
