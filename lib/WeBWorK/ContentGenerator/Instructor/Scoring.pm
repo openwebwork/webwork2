@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.39 2005/02/04 20:03:59 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.40 2005/02/05 01:47:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,7 +64,13 @@ sub initialize {
 			next unless $User;
 			$Users{$User->user_id} = $User;
 		}
-		my @sortedUserIDs = sort { $Users{$a}->last_name cmp $Users{$b}->last_name }
+		my @sortedUserIDs = sort { 
+			lc($Users{$a}->last_name) cmp lc($Users{$b}->last_name) 
+				||
+			lc($Users{$a}->first_name) cmp lc($Users{$b}->first_name)
+				||
+			lc($Users{$a}->user_id) cmp lc($Users{$b}->user_id)
+			}
 			keys %Users;
 		#my @userInfo = (\%Users, \@sortedUserIDs);
 		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
