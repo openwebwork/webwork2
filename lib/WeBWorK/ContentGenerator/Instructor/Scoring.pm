@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.40 2005/02/05 01:47:49 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.41 2005/05/27 16:34:29 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -691,7 +691,8 @@ sub pad {
 	my ($self, $string, $padTo) = @_;
 	$string = '' unless defined $string;
 	my $spaces = $padTo - length $string;
-	return " "x$spaces.$string;
+#	return " "x$spaces.$string;
+	return $string." "x$spaces;
 }
 
 sub maxLength {
