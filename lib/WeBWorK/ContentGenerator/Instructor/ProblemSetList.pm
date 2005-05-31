@@ -82,7 +82,7 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
 
-use constant HIDE_SETS_THRESHOLD => 50;
+use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_PUBLISHED_STATE => 1;
 use constant ONE_WEEK => 60*60*24*7;  
 
@@ -1395,7 +1395,7 @@ sub readSetDef {
 
 	my $setName = '';
 
-	if ($fileName =~ m|^set([\w-]+)\.def$|) {
+	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
 		$setName = $1;
 	} else {
 		warn qq{The setDefinition file name must begin with   <CODE>set</CODE>},
