@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.11 2005/05/19 20:53:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.12 2005/05/26 18:18:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -298,7 +298,16 @@ sub displaySets {
 		}
 
 	};
-
+	my %display_sort_method_name = (
+		last_name => 'last name',
+		first_name => 'first name',
+		email_address => 'email address',
+		score => 'score',
+		index => 'success indicator',
+		section => 'section',
+		recitation => 'recitation',
+		user_id => 'login name',
+	);				
 ###############################################################
 #  Print tables
 ###############################################################
@@ -511,7 +520,7 @@ sub displaySets {
 		Click heading to sort table. ",
 		CGI::br(),
 		CGI::br(),
-		defined($sort_method_name) ?" Entries are sorted by $sort_method_name":"",
+		defined($sort_method_name) ?" Entries are sorted by $display_sort_method_name{$sort_method_name}.":"",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
 			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'first_name' })},'First').
