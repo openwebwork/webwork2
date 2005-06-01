@@ -271,7 +271,10 @@ sub displaySets {
 	my $root             = $ce->{webworkURLs}->{root};
 	
 	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
-	my $sort_method_name = $r->param('sort');  
+	my $primary_sort_method_name = $r->param('primary_sort');
+	my $secondary_sort_method_name = $r->param('secondary_sort'); 
+	my $ternary_sort_method_name = $r->param('ternary_sort');  
+
 	my @studentList      = $db->listUsers;
     
    	my @index_list                           = ();  # list of all student index 
@@ -281,7 +284,7 @@ sub displaySets {
     my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
     my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
 	my $sort_method = sub {
-		my ($a,$b) = @_;
+		my ($a,$b,$sort_method_name) = @_;
 		return 0 unless defined($sort_method_name);
 		return 	lc($a->{last_name}) cmp lc($b->{last_name}) if $sort_method_name eq 'last_name';
 		return 	lc($a->{first_name}) cmp lc($b->{first_name}) if $sort_method_name eq 'first_name';
@@ -486,8 +489,12 @@ sub displaySets {
 	$WeBWorK::timer->continue("end mainloop") if defined($WeBWorK::timer);
 	
 	@augmentedUserRecords = sort {
-		&$sort_method($a,$b)
+		&$sort_method($a,$b,$primary_sort_method_name)
 			||
+		&$sort_method($a,$b,$secondary_sort_method_name)
+			||
+		&$sort_method($a,$b,$ternary_sort_method_name)
+			||			
 		lc($a->{last_name}) cmp lc($b->{last_name})
 			||
 		lc($a->{first_name}) cmp lc($b->{first_name})
@@ -520,22 +527,34 @@ sub displaySets {
 		Click heading to sort table. ",
 		CGI::br(),
 		CGI::br(),
-		defined($sort_method_name) ?" Entries are sorted by $display_sort_method_name{$sort_method_name}.":"",
+		defined($primary_sort_method_name) ?" Entries are sorted by $display_sort_method_name{$primary_sort_method_name}":'',
+		defined($secondary_sort_method_name) ?", then by $display_sort_method_name{$secondary_sort_method_name}":'',
+		defined($ternary_sort_method_name) ?", then by $display_sort_method_name{$ternary_sort_method_name}":'',
+		defined($primary_sort_method_name) ?'.':'',
+	;
+	# calculate secondary and ternary sort methods parameters if appropiate
+	my %past_sort_methods = ();		
+	%past_sort_methods = (secondary_sort => "$primary_sort_method_name",) if defined($primary_sort_method_name);
+	%past_sort_methods = (%past_sort_methods, ternary_sort => "$secondary_sort_method_name",) if defined($secondary_sort_method_name);
+
+	# continue with outputing of table
+	print
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
-			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'first_name' })},'First').
-			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'last_name' })},'Last').CGI::br().
-			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'email_address' })},'Email'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'score'})},'Score'),
+			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},'First').
+			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},'Last').CGI::br().
+			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},'Score'),
 			'Out'.CGI::br().'Of',
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'index'})},'Ind'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
 			'Problems'.CGI::br().$problem_header,
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'section'})},'Section'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'recitation'})},'Recitation'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{sort=>'user_id'})},'Login Name'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},'Section'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},'Recitation'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name'),
 			])
 
-		);
+		),
+	;
 								
 	foreach my $rec (@augmentedUserRecords) {
 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
@@ -555,10 +574,7 @@ sub displaySets {
 	}
 
 	print CGI::end_table();
-			
-			
 
-			
 	return "";
 }
 
