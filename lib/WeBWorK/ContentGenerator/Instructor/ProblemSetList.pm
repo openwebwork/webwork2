@@ -398,6 +398,8 @@ sub body {
 	
 	########## print action forms
 	
+	print CGI::p(CGI::b("Any changes made below will be reflected in the set for ALL students.")) if $editMode;
+
 	print CGI::start_table({});
 	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
 	
