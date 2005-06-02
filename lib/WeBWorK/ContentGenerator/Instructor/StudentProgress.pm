@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.12 2005/05/26 18:18:40 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.14 2005/06/01 15:05:17 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -291,9 +291,9 @@ sub displaySets {
 		return 	lc($a->{email_address}) cmp lc($b->{email_address}) if $sort_method_name eq 'email_address';
 		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
 		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
-		return $a->{section} cmp $b->{section} if $sort_method_name eq 'section';
-		return $a->{recitation} cmp $b->{recitation} if $sort_method_name eq 'recitation';
-		return $a->{user_id} cmp $b->{user_id} if $sort_method_name eq 'user_id';
+		return lc($a->{section}) cmp lc($b->{section}) if $sort_method_name eq 'section';
+		return lc($a->{recitation}) cmp lc($b->{recitation}) if $sort_method_name eq 'recitation';
+		return lc($a->{user_id}) cmp lc($b->{user_id}) if $sort_method_name eq 'user_id';
 		if ($sort_method_name =~/p(\d+)/) {
 		    my $left  =  $b->{problemData}->{$1} ||0;
 		    my $right =  $a->{problemData}->{$1} ||0;
@@ -412,7 +412,7 @@ sub displaySets {
 	        $correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
 		
 	        
-			my $probValue          = $problemRecord->value;
+			my $probValue          = $problemRecord->value;   ## This doesn't work - Fix it
 			# set default problem value here
 			$probValue             = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			
@@ -499,7 +499,7 @@ sub displaySets {
 			||
 		lc($a->{first_name}) cmp lc($b->{first_name})
 			||
-		$a->{user_id} cmp $b->{user_id}	
+		lc($a->{user_id}) cmp lc($b->{user_id})	
 		} 
 		@augmentedUserRecords;
 	
@@ -532,7 +532,7 @@ sub displaySets {
 		defined($ternary_sort_method_name) ?", then by $display_sort_method_name{$ternary_sort_method_name}":'',
 		defined($primary_sort_method_name) ?'.':'',
 	;
-	# calculate secondary and ternary sort methods parameters if appropiate
+	# calculate secondary and ternary sort methods parameters if appropriate
 	my %past_sort_methods = ();		
 	%past_sort_methods = (secondary_sort => "$primary_sort_method_name",) if defined($primary_sort_method_name);
 	%past_sort_methods = (%past_sort_methods, ternary_sort => "$secondary_sort_method_name",) if defined($secondary_sort_method_name);
