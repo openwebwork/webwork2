@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.41 2005/05/27 16:34:29 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.42 2005/05/27 17:41:27 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -465,8 +465,8 @@ sub scoreSet {
 			$scoringData[6][$totalsColumn+1]  = "index" ;
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
-			$scoringData[7+$user][$totalsColumn] = sprintf("%4.1f",$userStatusTotals{$user});
-			$scoringData[7+$user][$totalsColumn+1] = sprintf("%4.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
+			$scoringData[7+$user][$totalsColumn] = sprintf("%.1f",$userStatusTotals{$user});
+			$scoringData[7+$user][$totalsColumn+1] = sprintf("%.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
 		}
 	}
 	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
@@ -502,8 +502,8 @@ sub sumScores {    # Create a totals column for each student
 			$studentTotal += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
 			
 		}
-		$scoringData[$i][0] =sprintf("%4.1f",$studentTotal);
-		$scoringData[$i][1] =($totalPoints) ?sprintf("%4.1f",100*$studentTotal/$totalPoints) : 0;
+		$scoringData[$i][0] =sprintf("%.1f",$studentTotal);
+		$scoringData[$i][1] =($totalPoints) ?sprintf("%.1f",100*$studentTotal/$totalPoints) : 0;
     }
     $scoringData[0]      = ['',''];
     $scoringData[1]      = ['summary', '%score'];
@@ -595,6 +595,18 @@ sub writeCSV {
 		}
 	}
 	
+	# Before writing a new totals file, we back up an existing totals file keeping any previous backups.
+	# We do not backup any other type of scoring files (e.g. ful or scr).
+	
+	if (($filename =~ m|(.*)/(.*_totals)\.csv$|) and (-e $filename)) {
+		my $scoringDir = $1;
+		my $short_filename = $2;
+		my $i=1;
+		while(-e "${scoringDir}/${short_filename}_bak$i.csv") {$i++;}      #don't overwrite existing backups
+		my $bakFileName ="${scoringDir}/${short_filename}_bak$i.csv";
+		rename $filename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
+	}
+
 	open my $fh, ">", $filename or warn "Unable to open $filename for writing";
 	foreach my $row (@csv) {
 		my @rowPadded = ();
