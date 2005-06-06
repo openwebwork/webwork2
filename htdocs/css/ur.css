@@ -122,6 +122,14 @@ table.attemptResults th {
 	padding: 2px 5px 2px 5px;
 	background-color: #DDDDDD;
 }
+/*
+ * override above settings in tables used to display ans_array results
+ */
+table.ArrayLayout td {
+	border-style: none; 
+	border-width: 0px; 
+	padding: 0px;
+}
 table.attemptResults td.Message {
    text-align: left; 
    padding: 2px 5px 2px 5px;
