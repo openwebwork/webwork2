@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.134 2005/02/06 20:45:39 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.135 2005/02/27 04:05:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -495,6 +495,7 @@ sub links {
 	if ($authz->hasPermissions($user, "report_bugs")) {
 		print CGI::p(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs")),CGI::hr();
 	}
+
 	my %displayOptions = (displayMode    => $self->{displayMode},
 	                      showOldAnswers => $self->{will}->{showOldAnswers}
 	);
@@ -528,6 +529,7 @@ sub links {
 	}
 	print CGI::end_li();    
 
+
 	
 	if ($authz->hasPermissions($user, "change_password") or $authz->hasPermissions($user, "change_email_address")) {
 		print CGI::li(CGI::a({href=>$self->systemLink($options,
@@ -545,7 +547,9 @@ sub links {
 	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		my $ipfx = "${pfx}Instructor::";
 		
+
 		# instructor tools link
+
 		my $instr = $urlpath->newFromModule("${ipfx}Index", %args);
 		# Class list editor
 		my $userList = $urlpath->newFromModule("${ipfx}UserList", %args);
@@ -598,6 +602,7 @@ sub links {
 			print CGI::end_ul();
 		}
 		print CGI::end_li();
+
 	## Library browser
 		print CGI::li(CGI::a({href=>$self->systemLink($maker,params=>{  %displayOptions,})}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
 		print CGI::li(CGI::a({href=>$self->systemLink($assigner,params=>{  %displayOptions,})}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
@@ -615,13 +620,17 @@ sub links {
 		print CGI::end_li();
 	## Student Progress	
 	    print CGI::li(CGI::a({href=>$self->systemLink($progress,params=>{  %displayOptions,})}, sp2nbsp($progress->name)));
+
 		print CGI::start_li();
 			print CGI::start_ul();
 			if (defined $userID and $userID ne "") {
 				print  CGI::li(CGI::a({href=>$self->systemLink($userProgress,params=>{  %displayOptions,})}, $userID));
+
 			}
 			if (defined $setID and $setID ne "") {
+
 				print CGI::li(CGI::a({href=>$self->systemLink($setProgress,params=>{  %displayOptions,})}, sp2nbsp($setID)));
+
 			}
 			print CGI::end_ul();
 		print CGI::end_li();

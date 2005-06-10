@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.43 2005/06/02 15:18:50 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.44 2005/06/10 15:59:52 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -518,8 +518,9 @@ sub sumScores {    # Create a totals column for each student
 
 
 	return @scoringData;
-
 }
+
+
 # Often it's more efficient to just get everything out of the database
 # and then pick out what you want later.  Hence, these "everything2*" functions
 sub everything2info {
