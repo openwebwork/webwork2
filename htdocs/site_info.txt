@@ -1,0 +1,3 @@
+System wide message in file .... webwork2/htdocs/site_info.txt
+
+The file name and location  can be customized in global.conf.
