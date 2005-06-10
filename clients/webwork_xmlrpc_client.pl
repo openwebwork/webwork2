@@ -36,9 +36,9 @@ if (@ARGV) {
 
 } else {
 
-	print STDERR "Useage: .xmlrpc_client4.pl command   file_name\n";
-	print STDERR "For example: .xmlrpc_client4.pl renderProblem   input.txt\n";
-	print STDERR "For example: .xmlrpc_client4.pl listLibraries   \n";
+	print STDERR "Useage: ./webwork_xmlrpc_client.pl command   [file_name]\n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl renderProblem   input.txt\n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl  listLibraries   \n";
 	print STDERR "Commands are: ", join(" ", @COMMANDS), "\n";
 	
 }
