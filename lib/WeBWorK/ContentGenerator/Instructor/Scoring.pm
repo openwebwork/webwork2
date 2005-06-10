@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.42 2005/05/27 17:41:27 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.43 2005/06/02 15:18:50 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -71,6 +71,7 @@ sub initialize {
 				||
 			lc($Users{$a}->user_id) cmp lc($Users{$b}->user_id)
 			}
+
 			keys %Users;
 		#my @userInfo = (\%Users, \@sortedUserIDs);
 		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
@@ -465,13 +466,16 @@ sub scoreSet {
 			$scoringData[6][$totalsColumn+1]  = "index" ;
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
+
 			$scoringData[7+$user][$totalsColumn] = sprintf("%.1f",$userStatusTotals{$user});
 			$scoringData[7+$user][$totalsColumn+1] = sprintf("%.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
+
 		}
 	}
 	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
 	return @scoringData;
 }
+
 sub sumScores {    # Create a totals column for each student
 	my $self        = shift;
 	my $r_totals    = shift;
@@ -703,6 +707,7 @@ sub pad {
 	my ($self, $string, $padTo) = @_;
 	$string = '' unless defined $string;
 	my $spaces = $padTo - length $string;
+
 #	return " "x$spaces.$string;
 	return $string." "x$spaces;
 }
