@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.50 2005/02/06 20:47:20 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.52 2005/05/19 20:53:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -363,6 +363,7 @@ sub displaySets {
    
 		foreach my $problemRecord (@problemRecords) {
 			next unless ref($problemRecord);
+
 				# warn "Can't find record for problem $prob in set $setName for $student";
 				# FIXME check the legitimate reasons why a student record might not be defined
 			####################################################################
@@ -476,9 +477,11 @@ sub displaySets {
     foreach my $probID (@problemIDs) {
     	$attempts_percentiles_for_problem{$probID} =   {
     		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
+
     	}; 
     	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID => $courseName, setID => $setName, problemID => $probID);
+
     }
  
 #####################################################################################

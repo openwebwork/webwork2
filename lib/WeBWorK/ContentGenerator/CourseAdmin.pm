@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.33 2004/12/21 04:40:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.34 2005/05/20 16:28:25 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,10 @@ sub pre_header_initialize {
 		return;
 	}
 	
+	# get result and send to message
+	my $status_message = $r->param("status_message");
+	$self->addmessage(CGI::p("$status_message")) if $status_message;
+
 	## if the user is asking for the downloaded database...
 	#if (defined $r->param("download_exported_database")) {
 	#	my $courseID = $r->param("export_courseID");
@@ -688,7 +692,7 @@ sub do_add_course {
 	if ($add_admin_users ne "") {
 		foreach my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
-				warn "User '$userID' will not be copied from admin course as it is the initial instructor.";
+				$self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
 				next;
 			}
 			my $User            = $db->getUser($userID);
