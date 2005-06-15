@@ -63,7 +63,7 @@ sub pretty_print_rh {
 	if (defined($type) and $type) {
 		$out .= " type = $type; ";
 	} elsif ($rh == undef) {
-		$out .= " type = UNDEFINED; ";
+		$out .= " type = scalar; ";
 	}
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
 	    $out .= "{\n";
@@ -238,14 +238,6 @@ sub readFile {
 # }
 
 package Filter;
-
-
-
-
-
-
-
-
 
 
 sub is_hash_ref {
