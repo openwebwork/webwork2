@@ -33,9 +33,6 @@ use constant DEBUG =>0;
     ################
     my %args_hash = $r->args;
    if (exists $args_hash{wsdl}) {
-    	my $wsdl = `cat /home/gage/rqp.wsdl`;
-    	$r->content_type('application/wsdl+xml');
-    	$r->send_http_header;
     	$r->print( $wsdl);
     	print DEBUGLOG "----------start-------------\n";
     	print DEBUGLOG "handle wsdl request\n";

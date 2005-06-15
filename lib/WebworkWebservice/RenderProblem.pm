@@ -8,6 +8,8 @@ package WebworkWebservice::RenderProblem;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
 
+my $debugXmlCode=1;  # turns on the filter for debugging XMLRPC and SOAP code
+local(*DEBUGCODE);
 
 BEGIN { 
 	$main::VERSION = "2.1"; 
@@ -48,7 +50,7 @@ our $ce           =$WebworkWebservice::SeedCE;
     $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
 #print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
 
-print "webwork is really ready\n\n";
+
 #other services
 # File variables
 #our $WARNINGS='';
@@ -100,6 +102,7 @@ sub renderProblem {
 
     my $rh = shift;
 
+
 ###########################################
 # Grab the course name, if this request is going to depend on 
 # some course other than the default course
@@ -121,7 +124,8 @@ sub renderProblem {
 	# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
 	};
-	$ce->{pg}->{options}->{catchWarnings};
+	# $ce->{pg}->{options}->{catchWarnings}=1;  #FIXME warnings aren't automatically caught 
+	# when using xmlrpc -- turn this on in the daemon2_course.
 	#^FIXME  need better way of determining whether the course actually exists.
 	if ($@) {
 		$ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
@@ -361,27 +365,68 @@ sub renderProblem {
 	
 	
 	};
-	# Hack to filter out CODE references
-	foreach my $ans (keys %{$out2->{answers}}) {
-		foreach my $item (keys %{$out2->{answers}->{$ans}}) {
-		    my $contents = $out2->{answers}->{$ans}->{$item};
-			if (ref($contents) =~ /CODE/ ) {
-				#warn "removing code at $ans $item ";
-			     $out2->{answers}->{$ans}->{$item} = undef;
-			}
-		}
-	
+	# Filter out bad reference types
+	###################
+	# DEBUGGING CODE
+	###################
+	if ($debugXmlCode) {
+		my $logDirectory =$ce->{courseDirs}->{logs};
+		my $xmlDebugLog  = "$logDirectory/xml_debug.txt";
+		warn "Opening debug log $xmlDebugLog\n" ;
+		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open $xmlDebugLog";
+		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
+	xml_filter($out2->{answers});
+	
+	##################
+	close(DEBUGCODE) if $debugXmlCode;
+	###################
+	
 	$out2->{PG_flag}->{PROBLEM_GRADER_TO_USE} = undef;
 	my $endTime = new Benchmark;
 	$out2->{compute_time} = logTimingInfo($beginTime, $endTime);
 	# warn "flags are" , WebworkWebservice::pretty_print_rh($pg->{flags});
+	
 	$out2;
 	         
 }
 
 
-
+sub xml_filter {
+	my $input = shift;
+	my $level = shift || 0;
+	my $space="  ";
+	# Hack to filter out CODE references
+		my $type = ref($input);
+	if (!defined($type) or !$type ) {
+		print DEBUGCODE $space x $level." : scalar -- not converted\n" if $debugXmlCode;
+	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
+		print DEBUGCODE "HASH reference with ".%{$input}." elements will be investigated\n" if $debugXmlCode;
+		$level++;
+		foreach my $item (keys %{$input}) {
+			print DEBUGCODE "  "x$level."$item is " if $debugXmlCode;
+		    $input->{$item} = xml_filter($input->{$item},$level);   
+		}
+		$level--;
+		print DEBUGCODE "  "x$level."HASH reference completed \n" if $debugXmlCode;
+	} elsif( $type=~/ARRAY/i or "$input"=~/ARRAY/i) {
+		print DEBUGCODE "  "x$level."ARRAY reference with ".@{$input}." elements will be investigated\n" if $debugXmlCode;
+		$level++;
+		foreach my $item (@{$input}) {
+			$item = xml_filter($item,$level);
+		}
+		$level--;
+		print DEBUGCODE "  "x$level."ARRAY reference completed \n" if $debugXmlCode;
+	} elsif($type =~ /CODE/i or "$input" =~/CODE/i) {
+		$input = "CODE reference";
+		print DEBUGCODE "  "x$level."CODE reference, converted $input\n" if $debugXmlCode;
+	} else {
+		print DEBUGCODE  "  "x$level." $type and was  converted to string\n" if $debugXmlCode;
+		$input = "$type reference";
+	}
+	$input;
+	
+}
 
 
 sub logTimingInfo{

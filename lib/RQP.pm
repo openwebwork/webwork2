@@ -13,6 +13,20 @@ package RQP;
 @ISA =   (SOAP::Server::Parameters);
 local(*MYLOG);
 
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use RQP::Render;
+
+our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
+our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
+our $COURSENAME   = $WebworkWebservice::COURSENAME;
+our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
+our $HOSTURL      ="http://$HOST_NAME:8002"; #FIXME
+our $ce           =$WebworkWebservice::SeedCE;
+# create a local course environment for some course
+    $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
+#print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
+our $db = WeBWorK::DB->new($ce->{dbLayout});
+
 #print MYLOG "restarting server\n\n";
 sub test {
 	open MYLOG, ">>/home/gage/debug_info.txt" ;
@@ -93,10 +107,12 @@ sub RQP_SessionInformation {
 	local(*DEBUGLOG);
     open DEBUGLOG, ">>/home/gage/debug_info.txt" || die "can't open debug file";
 	print DEBUGLOG "--RQP_SessionInformation\n";
-	my $templateVars = [];
+	my $templatevars = $rh_params->{templatevars};
+	$templatevars->{seed}=4321;
 	my $correctResponses = [];
 	$rh_out = {
-		'templateVars'     => $templateVars,
+		'outcomevars'      => {id=>45},
+		'templatevars'     => $templatevars,
 		'correctResponses' => $correctResponses,
 		input              => '<hr>'.WebworkWebservice::pretty_print_rh($rh_params).'<hr>',
 	};
@@ -106,29 +122,7 @@ sub RQP_SessionInformation {
 
 
 sub RQP_Render  {
-	my $class = shift;
-	my $soap_som = pop;
-	my $rh_params= $soap_som->method;
-	local(*DEBUGLOG);
-    open DEBUGLOG, ">>/home/gage/debug_info.txt" || die "can't open debug file";
-	print DEBUGLOG "--RQP_Render\n";
-	#my $output = WebworkWebservice::pretty_print_rh(\%parameters);
-	my $source = $rh_params->{source};
-	$source =~s/</&lt;/g;
-	$source =~s/>/&gt;/g;
-	my $output = "the first element is ". $self. " and the last ". ref($envelope)."\n\n";
-	$output .= WebworkWebservice::pretty_print_rh($rh_params);
-	my $rh_out = {
-		templateVars     => [],
-		persistentData   => '',
-		outcomeVars      => [],
-		output           => $output,
-		source           => $source,
-		input            => '<hr>'.WebworkWebservice::pretty_print_rh($rh_params).'<hr>',
-	
-	};
-	close(DEBUGLOG);
-	return $rh_out;
+	RQP::Render::RQP_Render(@_);
 
 }
 
