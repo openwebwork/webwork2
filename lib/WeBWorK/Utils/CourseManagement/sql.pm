@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql.pm,v 1.1 2004/08/10 23:57:24 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql.pm,v 1.2 2004/08/24 16:53:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -71,6 +71,8 @@ sub addCourseHelper {
 		debug("$table: WeBWorK field names: @fields\n");
 		my @keyfields = $recordClass->KEYFIELDS;
 		debug("$table: WeBWorK keyfield names: @keyfields\n");
+		my @fieldtypes = $recordClass->SQL_TYPES;
+                debug("$table: WeBWorK field types: @fieldtypes\n");
 		
 		if (exists $params{fieldOverride}) {
 			my %fieldOverride = %{ $params{fieldOverride} };
@@ -80,20 +82,19 @@ sub addCourseHelper {
 			debug("$table: SQL field names: @fields\n");
 		}
 		
+		my %fieldtypehash =();
+                for my $cnt (0..(scalar(@fields)-1)) {
+                        $fieldtypehash{$fields[$cnt]} = $fieldtypes[$cnt];
+                }
 		# generate table creation statement
 		
 		my @fieldList;
 		foreach my $field (@fields) {
-			# a stupid hack to make PSVNs numeric and auto-increment
-			if ($field eq "psvn") {
-				push @fieldList, "`$field` INT NOT NULL PRIMARY KEY AUTO_INCREMENT";
-			} else {
-				push @fieldList, "`$field` TEXT";
-			}
+			push @fieldList, "`$field` $fieldtypehash{$field}";
 		}
 		foreach my $start (0 .. $#keyfields) {
 			my $line = "INDEX ( ";
-			$line .= join(", ", map { "`$_`(16)" } @keyfields[$start .. $#keyfields]);
+			$line .= join(", ", map { "`$_`". (($fieldtypehash{$_} = /int/i) ? "" : "(16)") } @keyfields[$start .. $#keyfields]);
 			$line .= " )";
 			push @fieldList, $line;
 		}
