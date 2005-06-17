@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.62 2005/01/14 03:15:33 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.63 2005/06/10 18:02:24 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,7 +106,7 @@ use constant SORT_SUBS => {
 	section       => \&bySection,
 	recitation    => \&byRecitation,
 	comment       => \&byComment,
-#	permission    => \&byPermission,
+	permission    => \&byPermission,
 };
 
 use constant  FIELD_PROPERTIES => {
@@ -301,7 +301,7 @@ sub body {
 		"Section", 
 		"Recitation", 
 		"Comment", 
-		"Perm. Level"
+		"Permission Level"
 	);
 	
 	$self->{prettyFieldNames} = \%prettyFieldNames;
@@ -401,6 +401,7 @@ sub body {
 	#warn "selectedUserIDs=@selectedUserIDs\n";
 	#warn "editMode=$editMode\n";
 	#warn "passwordMode=$passwordMode\n";
+	#warn "primarySortField=$primarySortField\n";
 	
 	########## get required users
 		
@@ -410,6 +411,15 @@ sub body {
 	my $primarySortSub = $sortSubs{$primarySortField};
 	my $secondarySortSub = $sortSubs{$secondarySortField};
 	my $ternarySortSub = $sortSubs{$ternarySortField};
+	
+	# add permission level to user record hash so we can sort it if necessary
+	if ($primarySortField eq 'permission' or $secondarySortField eq 'permission' or $ternarySortField eq 'permission') {
+		foreach my $User (@Users) {
+			next unless $User;
+			my $permissionLevel = $db->getPermissionLevel($User->user_id);
+        	                $User->{permission} = $permissionLevel->permission;
+		}
+	}
 		
 	
 #	# don't forget to sort in opposite order of importance
@@ -696,8 +706,7 @@ sub sort_form {
 		"Sort by ",
 		CGI::popup_menu(
 			-name => "action.sort.primary",
-#			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)], ## This isn't defined and I don't have time to fix it right now AKP
-			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment)],
+			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
 			-labels => {
 				user_id		=> "Login Name",
@@ -709,15 +718,14 @@ sub sort_form {
 				section		=> "Section",
 				recitation	=> "Recitation",
 				comment		=> "Comment",
-#				permission	=> "Perm. Level"  ## This isn't defined and I don't have time to fix it right now AKP
+				permission	=> "Permission Level"
 			},
 			-onchange => $onChange,
 		),
 		", then by ",
 		CGI::popup_menu(
 			-name => "action.sort.secondary",
-#			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)], ## This isn't defined and I don't have time to fix it right now AKP
-			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment)],
+			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
 			-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
 			-labels => {
 				user_id		=> "Login Name",
@@ -729,15 +737,14 @@ sub sort_form {
 				section		=> "Section",
 				recitation	=> "Recitation",
 				comment		=> "Comment",
-#				permission	=> "Perm. Level"
+				permission	=> "Permission Level"
 			},
 			-onchange => $onChange,
 		),
 		", then by ",
 		CGI::popup_menu(
 			-name => "action.sort.ternary",
-#			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)], ## This isn't defined and I don't have time to fix it right now AKP
-			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment)],
+			-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
 			-default => $actionParams{"action.sort.ternary"}->[0] || "user_id",
 			-labels => {
 				user_id		=> "Login Name",
@@ -749,7 +756,7 @@ sub sort_form {
 				section		=> "Section",
 				recitation	=> "Recitation",
 				comment		=> "Comment",
-#				permission	=> "Perm. Level"
+				permission	=> "Permission Level"
 			},
 			-onchange => $onChange,
 		),
@@ -779,7 +786,7 @@ sub sort_handler {
 				section		=> "Section",
 				recitation	=> "Recitation",
 				comment		=> "Comment",
-				permission	=> "Perm. Level"
+				permission	=> "Permission Level"
 	);
 	
 	return "Users sorted by $names{$primary}, then by $names{$secondary}, then by $names{$ternary}.";
@@ -1224,7 +1231,7 @@ sub byStatus       { lc $a->status        cmp lc $b->status        }
 sub bySection      { lc $a->section       cmp lc $b->section       }
 sub byRecitation   { lc $a->recitation    cmp lc $b->recitation    }
 sub byComment      { lc $a->comment       cmp lc $b->comment       }
-#sub byPermission   { $a->permission        <=> $b->permission        }
+sub byPermission   { $a->{permission}    <=>  $b->{permission}     }  ## permission level is added to user record hash so we can sort it if necessary
 
 # sub byLnFnUid { &byLastName || &byFirstName || &byUserID }
 
@@ -1526,7 +1533,7 @@ sub printTableHTML {
 	my $editMode                = $options{editMode};
 	my $passwordMode            = $options{passwordMode};
 	my %selectedUserIDs         = map { $_ => 1 } @{ $options{selectedUserIDs} };
-	my $currentSort             = $options{currentSort};
+#	my $currentSort             = $options{currentSort};
 	
 	# names of headings:
 	my @realFieldNames = (
@@ -1535,7 +1542,7 @@ sub printTableHTML {
 			$permissionLevelTemplate->NONKEYFIELDS,
 	);
 	
-	my %sortSubs = %{ SORT_SUBS() };
+#	my %sortSubs = %{ SORT_SUBS() };
 	#my @stateParams = @{ STATE_PARAMS() };
 	#my $hrefPrefix = $r->uri . "?" . $self->url_args(@stateParams); # $self->url_authen_args
 	my @tableHeadings;
