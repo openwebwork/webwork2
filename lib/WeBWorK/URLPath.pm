@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.21 2004/10/22 22:59:49 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.22 2004/11/02 19:58:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
+ instructor_compare                  /$courseID/instructor/compare/
  
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
@@ -210,7 +211,7 @@ our %pathTypes = (
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
 			instructor_set_assigner instructor_file_transfer instructor_file_manager
-			instructor_problem_editor instructor_set_maker
+			instructor_problem_editor instructor_set_maker instructor_compare
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
 			instructor_progress			
@@ -300,6 +301,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'assigner/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
+	},
+	instructor_compare => {
+		name    => 'File Compare',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^compare/|,
+		capture => [ qw// ],
+		produce => 'comp/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Compare',
 	},
 	instructor_set_maker => {
 		name    => 'Library Browser',
