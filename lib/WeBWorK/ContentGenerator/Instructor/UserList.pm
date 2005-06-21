@@ -94,7 +94,7 @@ use constant FIELD_PERMS => {
 		sets	=> "assign_problem_sets",
 };
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField)];
+use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)];
 
 use constant SORT_SUBS => {
 	user_id       => \&byUserID,
@@ -295,7 +295,7 @@ sub body {
 		"Login Name", 
 		"First Name", 
 		"Last Name", 
-		"E-mail", 
+		"Email Address", 
 		"Student ID", 
 		"Status", 
 		"Section", 
@@ -342,10 +342,16 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify student data"))
 		if $self->{passwordMode} and not $authz->hasPermissions($user, "modify_student_data");
 
-	
-	$self->{primarySortField} = $r->param("primarySortField") || "last_name";
-	$self->{secondarySortField} = $r->param("secondarySortField") || "first_name";
-	$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
+	if (defined $r->param("labelSortMethod")) {
+		$self->{primarySortField} = $r->param("labelSortMethod");
+		$self->{secondarySortField} = $r->param("primarySortField");
+		$self->{ternarySortField} = $r->param("secondarySortField");
+	}
+	else {			
+		$self->{primarySortField} = $r->param("primarySortField") || "last_name";
+		$self->{secondarySortField} = $r->param("secondarySortField") || "first_name";
+		$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
+	}
 	
 	my @allUsers = $db->getUsers(@allUserIDs);
 	my (%sections, %recitations);
@@ -402,7 +408,9 @@ sub body {
 	#warn "editMode=$editMode\n";
 	#warn "passwordMode=$passwordMode\n";
 	#warn "primarySortField=$primarySortField\n";
-	
+	#warn "secondarySortField=$secondarySortField\n";
+	#warn "ternarySortField=$ternarySortField\n";
+
 	########## get required users
 		
 	my @Users = grep { defined $_ } @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
@@ -541,6 +549,9 @@ sub body {
 		editMode => $editMode,
 		passwordMode => $passwordMode,
 		selectedUserIDs => \@selectedUserIDs,
+		primarySortField => $primarySortField,
+		secondarySortField => $secondarySortField,
+		visableUserIDs => \@visibleUserIDs,
 	);
 	
 	
@@ -603,7 +614,7 @@ sub filter_form {
 				-labels => {
 					all => "all users",
 					none => "no users",
-					selected => "users checked below",
+					selected => "selected users",
 #					match_ids => "users with matching user IDs:",
 					match_regex => "users who match:", 
 #					match_section => "users in selected section",
@@ -712,7 +723,7 @@ sub sort_form {
 				user_id		=> "Login Name",
 				first_name	=> "First Name",
 				last_name	=> "Last Name",
-				email_address	=> "Email address",
+				email_address	=> "Email Address",
 				student_id	=> "Student ID",
 				status		=> "Enrollment Status",
 				section		=> "Section",
@@ -731,7 +742,7 @@ sub sort_form {
 				user_id		=> "Login Name",
 				first_name	=> "First Name",
 				last_name	=> "Last Name",
-				email_address	=> "Email address",
+				email_address	=> "Email Address",
 				student_id	=> "Student ID",
 				status		=> "Enrollment Status",
 				section		=> "Section",
@@ -750,7 +761,7 @@ sub sort_form {
 				user_id		=> "Login Name",
 				first_name	=> "First Name",
 				last_name	=> "Last Name",
-				email_address	=> "Email address",
+				email_address	=> "Email Address",
 				student_id	=> "Student ID",
 				status		=> "Enrollment Status",
 				section		=> "Section",
@@ -780,7 +791,7 @@ sub sort_handler {
 				user_id		=> "Login Name",
 				first_name	=> "First Name",
 				last_name	=> "Last Name",
-				email_address	=> "Email address",
+				email_address	=> "Email Address",
 				student_id	=> "Student ID",
 				status		=> "Enrollment Status",
 				section		=> "Section",
@@ -1524,6 +1535,8 @@ sub recordEditHTML {
 sub printTableHTML {
 	my ($self, $UsersRef, $PermissionLevelsRef, $fieldNamesRef, %options) = @_;
 	my $r                       = $self->r;
+	my $urlpath     = $r->urlpath;
+	my $courseName  = $urlpath->arg("courseID");
 	my $userTemplate            = $self->{userTemplate};
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
 	my @Users                   = @$UsersRef;
@@ -1534,7 +1547,10 @@ sub printTableHTML {
 	my $passwordMode            = $options{passwordMode};
 	my %selectedUserIDs         = map { $_ => 1 } @{ $options{selectedUserIDs} };
 #	my $currentSort             = $options{currentSort};
-	
+	my $primarySortField        = $options{primarySortField};
+	my $secondarySortField      = $options{secondarySortField};	
+	my @visableUserIDs          = @{ $options{visableUserIDs} };	
+		
 	# names of headings:
 	my @realFieldNames = (
 			$userTemplate->KEYFIELDS,
@@ -1553,9 +1569,38 @@ sub printTableHTML {
 	
 	# prepend selection checkbox? only if we're NOT editing!
 	unless($editMode or $passwordMode) {
-		shift @tableHeadings; # Remove user id	
-		unshift @tableHeadings, "Select", "Act As", "Login Status", "Assigned Sets";
-        }
+
+		#warn "line 1573 visibleUserIDs=@visableUserIDs \n";
+		my %current_state =();
+		if (@visableUserIDs) {		
+		%current_state = (
+			primarySortField => "$primarySortField", 
+			secondarySortField => "$secondarySortField",
+			visible_users => \@visableUserIDs
+		);
+	} else {
+			%current_state = (
+			primarySortField => "$primarySortField", 
+			secondarySortField => "$secondarySortField",
+			no_visible_users => "1"
+		);
+	}
+		@tableHeadings = (
+			"Select",
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, 'Login Name'),
+			"Login Status", 
+			"Assigned Sets",
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, 'First Name'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, 'Last Name'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'email_address', %current_state})}, 'Email Address'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, 'Student ID'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, 'Status'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, 'Section'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'recitation', %current_state})}, 'Recitation'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'comment', %current_state})}, 'Comment'),
+			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'permission', %current_state})}, 'Permission Level'),
+		)	
+	}
  	if($passwordMode) {	
 		unshift @tableHeadings, "New Password";
         }       
