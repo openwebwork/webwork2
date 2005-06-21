@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.63 2005/06/10 18:02:24 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.65 2005/06/21 02:13:06 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1070,10 +1070,16 @@ sub export_form {
 
 sub export_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $dir     = $ce->{courseDirs}->{templates};
 	
 	my $scope = $actionParams->{"action.export.scope"}->[0];
 	my $target = $actionParams->{"action.export.target"}->[0];
 	my $new = $actionParams->{"action.export.new"}->[0];
+	
+	#get name of templates directory as it appears in file manager
+	$dir =~ s|.*/||;
 	
 	my $fileName;
 	if ($target eq "new") {
@@ -1095,7 +1101,7 @@ sub export_handler {
 	
 	$self->exportUsersToCSV($fileName, @userIDsToExport);
 	
-	return scalar @userIDsToExport . " users exported";
+	return scalar @userIDsToExport . " users exported to file &nbsp;&nbsp; $dir/$fileName";
 }
 
 sub cancelEdit_form {
