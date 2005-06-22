@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.135 2005/02/27 04:05:48 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.136 2005/06/10 16:06:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -721,6 +721,7 @@ For example:
 
 =item options()
 
+Default is defined in this package.
 
 Print an auxiliary options form, related to the content displayed in the
 C<body>.
