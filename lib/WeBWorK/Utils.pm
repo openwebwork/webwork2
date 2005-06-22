@@ -545,6 +545,7 @@ sub writeLog($$@) {
 		return;
 	}
 	my $logFile = $ce->{webworkFiles}->{logs}->{$facility};
+	surePathToFile($ce->{webworkDirs}->{root}, $logFile);
 	local *LOG;
 	if (open LOG, ">>", $logFile) {
 		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
@@ -561,6 +562,7 @@ sub writeCourseLog($$@) {
 		return;
 	}
 	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
+	surePathToFile($ce->{courseDirs}->{root}, $logFile);
 	local *LOG;
 	if (open LOG, ">>", $logFile) {
 		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
@@ -580,7 +582,6 @@ sub writeCourseLog($$@) {
 # [formatted date & time ] processID unixTime BeginEnd $function  $details
 sub writeTimingLogEntry($$$$) {
 	my ($ce, $function, $details, $beginEnd) = @_;
-	return unless defined $ce->{webworkFiles}->{logs}->{timing};
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
 	writeLog($ce, "timing", "$$ ".time." $beginEnd $function [$details]");
 }
