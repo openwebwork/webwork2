@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.69 2004/11/19 19:13:20 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.70 2004/12/20 21:08:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -268,8 +268,11 @@ sub dispatch($) {
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
 	
-	my $localStartTime = time;
-	
+	# The "production timer" uses a finer grained HiRes timing module
+	# rather than the standard unix "time".
+	#my $localStartTime = time;
+	my $productionTimer = WeBWorK::Timing->new($label);
+	$productionTimer->start();
 	runtime_use($displayModule);
 	
 	debug("...instantiate it...\n");
@@ -288,9 +291,11 @@ sub dispatch($) {
 	#$WeBWorK::timer->stop();
 	#$WeBWorK::timer->save();
 	
-	my $localStopTime = time;
-	my $timeDiff = $localStopTime - $localStartTime;
-	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("runTime = %.1f sec", $timeDiff)." ".$ce->{dbLayoutName},"" );
+	#my $localStopTime = time;
+	$productionTimer->stop();
+	#my $timeDiff = $localStopTime - $localStartTime;
+	my $productionTimeDiff    = $productionTimer->{stop} - $productionTimer->{start}; 
+	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("runTime = %.3f sec", $productionTimeDiff)." ".$ce->{dbLayoutName},"" );
 	return $result;
 	
 }
