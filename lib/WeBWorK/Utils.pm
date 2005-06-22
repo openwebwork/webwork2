@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.61 2005/05/11 14:32:58 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.62 2005/05/19 16:17:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -576,6 +576,8 @@ sub writeCourseLog($$@) {
 # $beginEnd - the string "begin", "intermediate", or "end"
 # use the intermediate step begun or completed for INTERMEDIATE
 # use an empty string for $details when calling for END
+# Information printed in format:
+# [formatted date & time ] processID unixTime BeginEnd $function  $details
 sub writeTimingLogEntry($$$$) {
 	my ($ce, $function, $details, $beginEnd) = @_;
 	return unless defined $ce->{webworkFiles}->{logs}->{timing};
