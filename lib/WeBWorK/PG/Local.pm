@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.16 2005/01/01 22:35:00 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.17 2005/05/14 01:32:19 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,12 +37,13 @@ the WeBWorK::PG module for information about the API.
 
 use strict;
 use warnings;
+use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 
 # Problem processing will time out after this number of seconds.
-use constant TIMEOUT => 5*60;
+use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
 
 BEGIN {
 	# This safe compartment is used to read the large macro files such as
@@ -54,7 +55,7 @@ BEGIN {
 
 sub new {
 	my $invocant = shift;
-	local $SIG{ALRM} = sub { die "Timeout after processing this problem for ", TIMEOUT, " seconds. Check for infinite loops in problem source.\n" };
+	local $SIG{ALRM} = \&alarm_handler;
 	alarm TIMEOUT;
 	my $result = eval { $invocant->new_helper(@_) };
 	alarm 0;
@@ -62,6 +63,12 @@ sub new {
 	return $result;
 }
 
+sub alarm_handler {
+	my $msg = "Timeout after processing this problem for ". TIMEOUT. " seconds. Check for infinite loops in problem source.\n";
+	warn $msg;
+	die $msg;
+
+}
 sub new_helper {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;

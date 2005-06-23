@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.25 2005/06/15 22:17:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.26 2005/06/22 15:21:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,6 +63,14 @@ $WeBWorK::Timing::Logfile = "";
 # If true, don't delete temporary files
 # 
 $WeBWorK::ContentGenerator::Hardcopy::PreserveTempFiles = 0;
+
+################################################################################
+# WeBWorK::PG::Local
+################################################################################
+# The maximum amount of time (in seconds) to work on a single problem.
+# At the end of this time a timeout message is sent to the browser.
+
+$WeBWorK::PG::Local::TIMEOUT = 60;
 
 ################################################################################
 # WeBWorK::PG::ImageGenerator
