@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.65 2005/06/21 02:13:06 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.67 2005/06/21 19:43:59 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,10 +94,7 @@ use constant FIELD_PERMS => {
 		sets	=> "assign_problem_sets",
 };
 
-# Use param v_u in place of visible_users to shorten URL's in GET methods around line 1600 below.
-# This is a hack to get around: Maximum URL Length Is 2,083 Characters in Internet Explorer.
-# v_u appears 6 times in the code.  Maybe we should replace the GET method by POST --- AKP
-use constant STATE_PARAMS => [qw(user effectiveUser key v_u no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)];
+use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)];
 
 use constant SORT_SUBS => {
 	user_id       => \&byUserID,
@@ -314,8 +311,11 @@ sub body {
 	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
 	$self->{allUserIDs} = \@allUserIDs;
 	
-	if (defined $r->param("v_u")) {
-		$self->{visibleUserIDs} = [ $r->param("v_u") ];
+	if (defined $r->param("visable_user_string")) {
+		my @visableUserIDs = split /:/, $r->param("visable_user_string");
+		$self->{visibleUserIDs} = [ @visableUserIDs ];
+	} elsif (defined $r->param("visible_users")) {
+		$self->{visibleUserIDs} = [ $r->param("visible_users") ];
 	} elsif (defined $r->param("no_visible_users")) {
 		$self->{visibleUserIDs} = [];
 	} else {
@@ -486,7 +486,7 @@ sub body {
 	print "\n<!-- state data here -->\n";
 	
 	if (@visibleUserIDs) {
-		print CGI::hidden(-name=>"v_u", -value=>\@visibleUserIDs);
+		print CGI::hidden(-name=>"visible_users", -value=>\@visibleUserIDs);
 	} else {
 		print CGI::hidden(-name=>"no_visible_users", -value=>"1");
 	}
@@ -1453,7 +1453,7 @@ sub recordEditHTML {
 										   params => {effectiveUser => $User->user_id}
 	);
 
-	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName} )) . "&editMode=1&v_u=" . $User->user_id;
+	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
         my $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0}));
@@ -1579,24 +1579,20 @@ sub printTableHTML {
 	# prepend selection checkbox? only if we're NOT editing!
 	unless($editMode or $passwordMode) {
 
-		#warn "line 1573 visibleUserIDs=@visableUserIDs \n";
+		#warn "line 1582 visibleUserIDs=@visableUserIDs \n";
 		my %current_state =();
 		if (@visableUserIDs) {
 			# This is a hack to get around: Maximum URL Length Is 2,083 Characters in Internet Explorer.
-			# Without passing visable users the URL is about 270 characters. If the total URL is under the limit
+			# Without passing visable users the URL is about 250 characters. If the total URL is under the limit
 			# we will pass visable users. If it is over, we will not pass any and all users will be displayed.
-			# Maybe we should replace the GET method by POST --- AKP
+			# Maybe we should replace the GET method by POST (but this doesn't look good) --- AKP
 
-			# calculate number of visableUserIDs and total length
-			my $number_of_visableUserIDs = scalar(@visableUserIDs);
-			my $total_length = 0;
-			foreach (@visableUserIDs) {$total_length += length}
-			# warn ("Number of visable users is $number_of_visableUserIDs. Total length of ids is $total_length\n");
-			if ($total_length + 9*$number_of_visableUserIDs < 1800) {
+			my $visableUserIDsString = join ':', @visableUserIDs;
+			if (length($visableUserIDsString) < 1830) {
 				%current_state = (
 					primarySortField => "$primarySortField", 
 					secondarySortField => "$secondarySortField",
-					v_u => \@visableUserIDs
+					visable_user_string => "$visableUserIDsString"
 				);
 			} else {
 				%current_state = (
