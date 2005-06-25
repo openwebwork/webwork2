@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.52 2005/01/29 01:23:57 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.53 2005/02/17 17:42:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -296,7 +296,7 @@ sub pre_header_initialize {
     # FIXME: even with an error we still open a new page because of the target specified in the form
 	
 
-	# Some cases do not need a redirect: revert,  fresh_edit
+	# Some cases do not need a redirect: save, refresh, save_as, add_problem_to_set, add_header_to_set
 	my $action = $self->{action};
 
     return unless $action eq 'save' 
@@ -673,13 +673,6 @@ sub body {
 ################################################################################
 # Utilities
 ################################################################################
-
-# saveFileChanges does most of the work. it is a separate method so that it can
-# be called from either pre_header_initialize() or initilize(), depending on
-# whether a redirect is needed or not.
-# 
-# it actually does a lot more than save changes to the file being edited, and
-# sometimes less.
 sub getFilePaths {
 	my ($self, $setName, $problemNumber, $file_type, $TEMPFILESUFFIX) = @_;
 	my $r = $self->r;
@@ -823,6 +816,15 @@ sub getFilePaths {
 	$self->{inputFilePath}  = (-r "$editFilePath.$TEMPFILESUFFIX") ? $tempFilePath : $editFilePath;
 
 }
+
+################################################################################
+# saveFileChanges does most of the work. it is a separate method so that it can
+# be called from either pre_header_initialize() or initilize(), depending on
+# whether a redirect is needed or not.
+# 
+# it actually does a lot more than save changes to the file being edited, and
+# sometimes less.
+################################################################################
 sub saveFileChanges {
 	my ($self, $setName, $problemNumber, $file_type, $TEMPFILESUFFIX) = @_;
 	my $r = $self->r;
@@ -881,6 +883,7 @@ sub saveFileChanges {
 			$outputFilePath = undef; 
 			$self->addgoodmessage("Reverting to original file $editFilePath");
 			$self->{problemPath} = $editFilePath;
+			$self->{inputFilePath}=$editFilePath;
 			last ACTION_CASES;
 		};
 		
