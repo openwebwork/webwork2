@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.25 2005/05/17 18:40:12 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.26 2005/05/20 16:31:33 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,7 +139,11 @@ sub body {
 	my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
 	
 	#FIXME:  This next line can be removed in time.  MEG 1/27/2005
-	warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
+	# warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
+	# the above test was an attempt to discover why "user" was being multiply defined.
+	# We caught that error, but this warning causes trouble with UserList.pm which now has 
+	# fields visible_users and prev_visible_users
+	
 	
 	# Important note. If hidden_fields is passed an empty array it prints ALL parameters as hidden fields.
 	# That is not what we want in this case, so we don't print at all if @fields_to_print is empty.
