@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/devel.apache-config.dist,v 1.5 2004/12/28 04:59:52 gage Exp $
+# $CVSHeader: webwork2/conf/devel.apache-config.dist,v 1.6 2005/03/16 02:46:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,8 +58,9 @@ my $host_name  = Apache->server->server_hostname;
 $User  = $user_name;
 $Group = $group_name;
 
-# It will listen on a port equal to the UID of the user who starts it + 10000.
-$Port  = $> + 7000;  # effectively picks a port between 8000 and 8999 since uid's are 1000+
+# It will listen on a port equal to the UID of the user who starts it +7000.
+# This effectively picks a port between 8000 and 8999 since UID's are >=1000.
+$Port  = $> + 7000;
 
 # Email address of server administator.
 $ServerAdmin = "$user_name\@$host_name";
