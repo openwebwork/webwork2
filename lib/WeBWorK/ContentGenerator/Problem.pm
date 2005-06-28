@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.169 2004/12/17 16:59:48 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.170 2004/12/19 22:41:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -992,13 +992,21 @@ sub body {
 	my $setClosedMessage;
 	if (before($set->open_date) or after($set->due_date)) {
 		$setClosed = 1;
-		$setClosedMessage = "This problem set is closed.";
-		if ($authz->hasPermissions($user, "view_answers")) {
-			$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
-		} else {
-			$setClosedMessage .= " Additional attempts will not be recorded.";
+		if (before($set->open_date)) {
+			$setClosedMessage = "This problem set is not yet open.";
+		} elsif (after($set->due_date)) {
+			$setClosedMessage = "This problem set is closed.";
 		}
 	}
+	#if (before($set->open_date) or after($set->due_date)) {
+	#	$setClosed = 1;
+	#	$setClosedMessage = "This problem set is closed.";
+	#	if ($authz->hasPermissions($user, "view_answers")) {
+	#		$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
+	#	} else {
+	#		$setClosedMessage .= " Additional attempts will not be recorded.";
+	#	}
+	#}
 	
 	my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	print CGI::p(
