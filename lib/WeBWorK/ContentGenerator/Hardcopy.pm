@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.52 2004/10/12 02:30:14 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.53 2004/10/20 16:45:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -780,14 +780,15 @@ sub getProblemTeX {
 	    return $msg;
 	}
 	# figure out if we're allowed to get solutions and call PG->new accordingly.
-	my $showCorrectAnswers = $r->param("showCorrectAnswers") || 0;
-	my $showHints          = $r->param("showHints") || 0;
-	my $showSolutions      = $r->param("showSolutions") || 0;
+	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
+	my $showHints           = $r->param("showHints")          || 0;
+	my $showSolutions       = $r->param("showSolutions")      || 0;
 	unless ($authz->hasPermissions($userID, "view_answers") or time > $set->answer_date) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
-	
+	##FIXME -- there can be a problem if the $siteDefaults{timezone} is not defined?  Why is this?
+	# why does it only occur with hardcopy?
 	my $pg = WeBWorK::PG->new(
 		$ce,
 		$effectiveUser,
@@ -798,9 +799,9 @@ sub getProblemTeX {
 		{}, # no form fields!
 		{ # translation options
 			displayMode     => "tex",
-			showHints       => $showHints,
-			showSolutions   => $showSolutions,
-			processAnswers  => $showCorrectAnswers,
+			showHints       => ($showHints)? 1:0, # insure that this value is numeric
+			showSolutions   => ($showSolutions)? 1:0,
+			processAnswers  => ($showCorrectAnswers)? 1:0,
 		},
 	);
 	
