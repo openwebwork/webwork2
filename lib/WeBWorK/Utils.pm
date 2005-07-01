@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.62 2005/05/19 16:17:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.64 2005/06/22 15:54:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -651,12 +651,16 @@ sub ref2string($;$) {
 		$result .= defined $ref ? $ref : '<font color="red">undef</font>';
 	}	
 }
-use constant BASE64_ENCODED => 'base64_encoded:';
+our $BASE64_ENCODED = 'base64_encoded:';  
+#  use constant BASE64_ENCODED = 'base64_encoded;
+#  was not evaluated in the matching and substitution
+#  statements
 sub decodeAnswers($) {
 	my $string = shift;
 	return unless defined $string and $string;
-	if ($string =~/^BASE64_ENCODED/) {
-		$string =~ s/^BASE64_ENCODED//;
+	
+	if ($string =~/^$BASE64_ENCODED/o) {
+		$string =~ s/^$BASE64_ENCODED//o;
 		$string = decode_base64($string);
 	}
 
@@ -687,7 +691,7 @@ sub encodeAnswers(\%\@) {
 	}
 	$string =~ s/##$//; # remove last pair of hashs
 
-	$string = BASE64_ENCODED.encode_base64($string);
+	$string = $BASE64_ENCODED.encode_base64($string);
 
 	return $string;
 }
