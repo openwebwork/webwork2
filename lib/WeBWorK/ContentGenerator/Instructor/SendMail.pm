@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.38 2004/09/16 19:44:44 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.39 2004/12/18 16:09:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 use CGI qw();
 #use HTML::Entities;
 use Mail::Sender;
+use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
@@ -262,7 +263,7 @@ sub initialize {
 		$from              =    $r->param('from');
 		$replyTo           =    $r->param('replyTo');
 		$subject           =    $r->param('subject');
-		my $body              =    $r->param('body');
+		my $body           =    $r->param('body');
 		# Sanity check: body must contain non-white space
 		$self->addbadmessage(CGI::p('You didn\'t enter any message.')) unless ($r->param('body') =~ /\S/);
 		$r_text               =    \$body;
@@ -367,10 +368,11 @@ sub initialize {
 	
 	} elsif ($action eq 'Send Email') {
 		$self->{response}         = 'send_email';
-
+	    
+	    # check that recipients have been selected.
 		my @recipients            = @{$self->{ra_send_to}};
 		$self->addbadmessage(CGI::p("No recipients selected ")) unless @recipients;
-		#  get merge file
+		#  check merge file
 		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
 		my $delimiter       = ',';
 		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
@@ -379,40 +381,48 @@ sub initialize {
 			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
 			return;
 		} ;
-		
-		
-		foreach my $recipient (@recipients) {
-			#warn "FIXME sending email to $recipient";
-			my $ur      = $self->{db}->getUser($recipient); #checked
-			die "record for user $recipient not found" unless $ur;
-			unless ($ur->email_address) {
-				$self->addbadmessage(CGI::p("user $recipient does not have an email address -- skipping"));
-				next;
-			}
-			my ($msg, $preview_header);
-			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
-			$self->addbadmessage(CGI::p("There were errors in processing user $ur, merge file $merge_file. $@")) if $@;
-			my $mailer = Mail::Sender->new({
-				from    =>   $from,
-				to      =>   $ur->email_address,
-				smtp    =>   $ce->{mail}->{smtpServer},
-				subject =>   $subject,
-				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
-			});
-			unless (ref $mailer) {
-				$self->addbadmessage(CGI::p("Failed to create a mailer for user $recipient: $Mail::Sender::Error"));
-				next;
-			}
-			unless (ref $mailer->Open()) {
-				$self->addbadmessage(CGI::p("Failed to open the mailer for user $recipient: $Mail::Sender::Error"));
-				next;
-			}
-			my $MAIL = $mailer->GetHandle() or $self->addbadmessage(CGI::p("Couldn't get handle"));
-			print $MAIL  $msg || $self->addbadmessage(CGI::p("Couldn't print to $MAIL"));
-			close $MAIL || $self->addbadmessage(CGI::p("Couldn't close $MAIL"));
-		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
-			 
-		} 
+		if (@recipients) {
+			$self->{rh_merge_data} = $rh_merge_data;
+			$self->{smtpServer}    = $ce->{mail}->{smtpServer};
+			my $post_connection_action = sub {
+				my $r = shift; 
+				my $result_message = $self->mail_message_to_recipients();
+				$self->email_notification($result_message);
+			};
+			$r->post_connection($post_connection_action) ;
+		}
+# 		foreach my $recipient (@recipients) {
+# 			#warn "FIXME sending email to $recipient";
+# 			my $ur      = $self->{db}->getUser($recipient); #checked
+# 			die "record for user $recipient not found" unless $ur;
+# 			unless ($ur->email_address) {
+# 				$self->addbadmessage(CGI::p("user $recipient does not have an email address -- skipping"));
+# 				next;
+# 			}
+# 			my ($msg, $preview_header);
+# 			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
+# 			$self->addbadmessage(CGI::p("There were errors in processing user $ur, merge file $merge_file. $@")) if $@;
+# 			my $mailer = Mail::Sender->new({
+# 				from    =>   $from,
+# 				to      =>   $ur->email_address,
+# 				smtp    =>   $ce->{mail}->{smtpServer},
+# 				subject =>   $subject,
+# 				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
+# 			});
+# 			unless (ref $mailer) {
+# 				$self->addbadmessage(CGI::p("Failed to create a mailer for user $recipient: $Mail::Sender::Error"));
+# 				next;
+# 			}
+# 			unless (ref $mailer->Open()) {
+# 				$self->addbadmessage(CGI::p("Failed to open the mailer for user $recipient: $Mail::Sender::Error"));
+# 				next;
+# 			}
+# 			my $MAIL = $mailer->GetHandle() or $self->addbadmessage(CGI::p("Couldn't get handle"));
+# 			print $MAIL  $msg || $self->addbadmessage(CGI::p("Couldn't print to $MAIL"));
+# 			close $MAIL || $self->addbadmessage(CGI::p("Couldn't close $MAIL"));
+# 		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
+# 			 
+# 		} 
 			
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
@@ -445,8 +455,12 @@ sub body {
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif (($response eq 'send_email')){
-		$self->addgoodmessage(CGI::p("Email sent to ".  scalar(@{$self->{ra_send_to}})." students."));
-		$self->{message} .= CGI::i("Email sent to ".  scalar(@{$self->{ra_send_to}})." students.");
+		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
+		             ." when the task is completed.  This may take several minutes if the class is large."
+		);
+		$self->addgoodmessage($message);
+		$self->{message} .= $message;
+		
 		$self->print_form($setID);
 	} else {
 		$self->print_form($setID);
@@ -803,7 +817,100 @@ sub get_merge_file_names   {
 	return 'None', $self->read_dir($self->{ce}->{courseDirs}->{scoring}, '\\.csv$'); #FIXME ? check that only readable files are listed.
 }
 
+sub mail_message_to_recipients {
+	my $self                  = shift;
+	my $subject               = $self->{subject};
+	my $from                  = $self->{from};
+	my @recipients            = @{$self->{ra_send_to}};
+	my $rh_merge_data         = $self->{rh_merge_data};
+	my $merge_file            = $self->{merge_file};  
+	my $result_message        = '';
+	my $failed_messages        = 0;
+	foreach my $recipient (@recipients) {
+			# warn "FIXME sending email to $recipient";
+			my $error_messages = '';
+			my $ur      = $self->{db}->getUser($recipient); #checked
+			unless ($ur) {
+				$error_messages .= "Record for user $recipient not found\n";
+				next;
+			}
+			unless ($ur->email_address) {
+				$error_messages .="User $recipient does not have an email address -- skipping\n";
+				next;
+			}
+			my ($msg, $preview_header);
+			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
+			$error_messages .= "There were errors in processing user $ur, merge file $merge_file. \n$@\n" if $@;
+			my $mailer = Mail::Sender->new({
+				from    =>   $from,
+				to      =>   $ur->email_address,
+				smtp    =>   $self->{smtpServer},
+				subject =>   $subject,
+				headers =>   "X-Remote-Host: ".$self->r->get_remote_host(),
+			});
+			unless (ref $mailer) {
+				$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n";
+				next;
+			}
+			unless (ref $mailer->Open()) {
+				$error_messages .= "Failed to open the mailer for user $recipient: $Mail::Sender::Error\n";
+				next;
+			}
+			my $MAIL         = $mailer->GetHandle() || ($error_messages .= "Couldn't get mailer handle \n");
+			print $MAIL        $msg                 || ($error_messages .= "Couldn't print to $MAIL");
+			close $MAIL                             || ($error_messages .= "Couldn't close $MAIL");
+		    #warn "FIXME mailed to $recipient: ", $ur->email_address, " from $from subject $subject Errors: $error_messages";
+		    $failed_messages++ if $error_messages;
+		    $result_message .= $error_messages;			 
+		} 
+		my $courseName = $self->r->urlpath->arg("courseID");
+		my $number_of_recipients = scalar(@recipients) - $failed_messages;
+		$result_message = <<EndText.$result_message;
+		
+			A message with the subject line 
+			             $subject 
+			has been sent to 
+			$number_of_recipients recipient(s) in the class $courseName. 
+			There were $failed_messages message(s) that could not be delivered. 
+		
+EndText
 
+}
+sub email_notification {
+	my $self = shift;
+	my $result_message = shift;
+	# find info on mailer and sender
+	# use the defaultFrom address.
+
+	# find info on instructor recipient and message
+	my $subject="WeBWorK email sent";
+	
+	my $mailing_errors = "";
+	# open MAIL handle
+	my $mailer = Mail::Sender->new({
+		from => $self->{defaultFrom},
+		to   => $self->{defaultFrom},
+		smtp    => $self->{smtpServer},
+		subject => $subject,
+		headers => "X-Remote-Host: ".$self->r->get_remote_host(),
+	});
+	unless (ref $mailer) {
+		$mailing_errors .= "Failed to create a mailer: $Mail::Sender::Error";
+		return "";
+	}
+	unless (ref $mailer->Open()) {
+		$mailing_errors .= "Failed to open the mailer: $Mail::Sender::Error";
+		return "";
+	}
+	my $MAIL = $mailer->GetHandle();
+	# print message
+	print $MAIL $result_message;
+	# clean up
+	close $MAIL;
+	
+    warn "instructor message sent to ", $self->{defaultFrom};
+
+}
 sub getRecord {
 	my $self    = shift;
 	my $line    = shift;
