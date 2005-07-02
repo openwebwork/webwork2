@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.7 2005/01/08 16:42:10 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.8 2005/01/27 04:26:37 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -21,6 +21,7 @@ use WeBWorK::Utils qw(readDirectory readFile sortByName);
 use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
+use File::Spec;
 
 =head1 NAME
 
@@ -73,7 +74,7 @@ sub pre_header_initialize {
 sub downloadFile {
 	my $self = shift;
 	my $file = checkName(shift);
-	my $pwd = checkPWD(shift || $self->r->param('pwd') || '.');
+	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || '.');
 	return unless $pwd;
 	$pwd = $self->{ce}{courseDirs}{root} . '/' . $pwd;
 	unless (-e "$pwd/$file") {
@@ -111,7 +112,7 @@ sub body {
 	return CGI::em("You are not authorized to access the instructor tools")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	$self->{pwd} = checkPWD($r->param('pwd') || '.');
+	$self->{pwd} = $self->checkPWD($r->param('pwd') || '.');
 	return CGI::em("You have specified an illegal working directory!") unless defined $self->{pwd};
 
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
@@ -128,7 +129,7 @@ sub body {
 	$self->{courseRoot} = $courseRoot;
 	$self->{courseName} = $courseName;
 
-	my $action = $r->param('action') || $r->param('formAction') || 'Refresh';
+	my $action = $r->param('action') || $r->param('formAction') || 'Init';
 
 	for ($action) {
 		/^Refresh/i    and do {$self->Refresh; last};
@@ -142,12 +143,15 @@ sub body {
 		/^Copy/i       and do {$self->Copy; last};
 		/^Rename/i     and do {$self->Rename; last};
 		/^Delete/i     and do {$self->Delete; last};
+		/^GZIP/i       and do {$self->GZIP; last};
+		/^UNGZIP/i     and do {$self->UNGZIP; last};
 		/^New Folder/i and do {$self->NewFolder; last};
 		/^New File/i   and do {$self->NewFile; last};
 		/^Upload/i     and do {$self->Upload; last};
 		/^Revert/i     and do {$self->Edit; last};
 		/^Save As/i    and do {$self->SaveAs; last};
 		/^Save/i       and do {$self->Save; last};
+		/^Init/i       and do {$self->Init; last};
 		$self->addbadmessage("Unknown action.");
 		$self->Refresh;
 	}
@@ -162,15 +166,36 @@ sub body {
 
 ##################################################
 #
+#  First time through
+#
+sub Init {
+	my $self = shift;
+	$self->r->param('unpack',1);
+	$self->r->param('autodelete',1);
+	$self->r->param('format','Automatic');
+	$self->Refresh;
+}
+
+sub HiddenFlags {
+	my $self = shift;
+	print CGI::hidden({name=>"dates",     value=>$self->getFlag('dates')});
+	print CGI::hidden({name=>"overwrite", value=>$self->getFlag('overwrite')});
+	print CGI::hidden({name=>"unpack",    value=>$self->getFlag('unpack')});
+	print CGI::hidden({name=>"autodelete",value=>$self->getFlag('autodelete')});
+	print CGI::hidden({name=>"format",    value=>$self->getFlag('format','Automatic')});
+}
+
+##################################################
+#
 # Display the directory listing and associated buttons
 #
 sub Refresh {
-	my $self = shift;
+ 	my $self = shift;
 	my $pwd = shift || $self->{pwd};
 	my $isTop = $pwd eq '.' || $pwd eq '';
 
 	my ($dirs,$dirlabels) = directoryMenu($self->{courseName},$pwd);
-	my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd);
+	my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
 
 	unless ($files) {
 		$self->addbadmessage("The directory you specified doesn't exist");
@@ -199,24 +224,35 @@ sub Refresh {
 			disableButton('Rename',state);
 			disableButton('Copy',state);
 			disableButton('Delete',state);
+			disableButton('GZIP',state);
+			checkGZIP(files,state);
 		}
 		function checkFile() {
 			var file = window.document.getElementById('file');
 			var state = (file.value == "");
 			disableButton('Upload',state);
 		}
+		function checkGZIP(files,disabled) {
+			var gzip = document.getElementById('GZIP');
+			gzip.value = 'GZIP';
+			if (disabled) return;
+			if (!files.childNodes[files.selectedIndex].value.match(/\\.tgz\$/)) return;
+			for (var i = files.selectedIndex+1; i < files.length; i++)
+			  {if (files.childNodes[i].selected) return}
+			gzip.value = 'UNGZIP';
+		}
 EOF
 
 	#
 	# Start the table
 	#
-	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>10, style=>"margin:1em 0 0 3em"});
+	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:1em 0 0 3em"});
 
 	#
-	# Directory menu
+	# Directory menu and date/size checkbox
 	#
 	print CGI::Tr(
-		CGI::td({colspan=>3},
+		CGI::td({colspan=>2},
 			CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
 			CGI::popup_menu(
 				-name => "directory",
@@ -226,25 +262,33 @@ EOF
 				-onChange => "doForm('Go')"
 			),
 			CGI::noscript(CGI::input({type=>"submit",name=>"action",value=>"Go"}))
-		)
+		),
+		CGI::td(CGI::small(CGI::checkbox(
+			-name => 'dates',
+			-checked => $self->getFlag('dates'),
+			-value => 1,
+			-label => 'Show Date & Size',
+			-onClick => 'doForm("Refresh")',
+		))),
 	);
 
 	#
-	# Directory Listing
+	# Directory Listing and column of buttons
 	#
 	my %button = (type=>"submit",name=>"action",style=>"width:10em");
+	my $width = ($self->getFlag('dates') && scalar(@{$files}) > 0) ? "": " width:30em";
 	print CGI::Tr({valign=>"middle"},
-		CGI::td(CGI::scrolling_list(
+		fixSpaces(CGI::td(CGI::scrolling_list(
 			-name => "files", id => "files",
-			-style => "font-family:monospace; width:30em",
-			-size => 15,
+			-style => "font-family:monospace; $width",
+			-size => 17,
 			-multiple => 1,
 			-values => $files,
 			-labels => $filelabels,
 			-onDblClick => "doForm('View')",
 			-onChange => "checkFiles()"
-		)),
-		CGI::td({width=>3}),
+		))),
+		CGI::td({width=>15}),
 		CGI::td(
 			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
 			CGI::Tr([
@@ -254,6 +298,7 @@ EOF
 				CGI::td(CGI::input({%button,value=>"Rename",id=>"Rename"})),
 				CGI::td(CGI::input({%button,value=>"Copy",id=>"Copy"})),
 				CGI::td(CGI::input({%button,value=>"Delete",id=>"Delete"})),
+				CGI::td(CGI::input({%button,value=>"GZIP",id=>"GZIP"})),
 				CGI::td({height=>10}),
 				CGI::td(CGI::input({%button,value=>"New File"})),
 				CGI::td(CGI::input({%button,value=>"New Folder"})),
@@ -264,7 +309,7 @@ EOF
 	);
 
 	#
-	# Upload button
+	# Upload button and checkboxes
 	#
 	print CGI::Tr([
 		CGI::td(),
@@ -273,7 +318,20 @@ EOF
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
 		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group('format',['Text','Binary','Automatic'],'Automatic'))),
+		    CGI::radio_group('format',['Text','Binary','Automatic'],
+				     $self->getFlag('format','Automatic')))),
+		),
+	]);
+	print CGI::Tr([
+		CGI::td(),
+		CGI::td({colspan=>3},
+		  CGI::small(CGI::checkbox('overwrite',$self->getFlag('overwrite'),1,
+					   'Overwrite existing files silently')),
+		  CGI::br(),
+		  CGI::small(CGI::checkbox('unpack',$self->getFlag('unpack'),1,
+					   'Unpack archives automatically')),
+		  CGI::small(CGI::checkbox('autodelete',$self->getFlag('autodelete'),1,
+					   'then delete them')),
 		),
 	]);
 
@@ -312,11 +370,19 @@ sub View {
 	my $self = shift; my $pwd = $self->{pwd};
 	my $filename = $self->getFile("view"); return unless $filename;
 	my $name = "$pwd/$filename"; $name =~ s!^\./?!!;
+	my $file = "$self->{courseRoot}/$pwd/$filename";
+
+	#
+	# Don't follow symbolic links
+	#
+	if ($self->isSymLink($file)) {
+	  $self->addbadmessage("That symbolic link takes you outside your course directory");
+	  $self->Refresh; return;
+	}
 
 	#
 	# Handle directories by making them the working directory
 	#
-	my $file = "$self->{courseRoot}/$pwd/$filename";
 	if (-d $file) {
 		$self->{pwd} .= '/'.$filename;
 		$self->Refresh; return;
@@ -447,7 +513,8 @@ sub RefreshEdit {
 		),
 	]);
 	print CGI::end_table();
-	print CGI::hidden({name=>"files",value=>$file});
+	print CGI::hidden({name=>"files",     value=>$file});
+	$self->SaveHiddenFlags;
 }
 
 ##################################################
@@ -456,9 +523,9 @@ sub RefreshEdit {
 #
 sub Copy {
 	my $self = shift;
-	my $oldfile = $self->getFile('copy'); return unless $oldfile;
-	my $original = $oldfile;
-	$oldfile = "$self->{courseRoot}/$self->{pwd}/$oldfile";
+        my $dir = "$self->{courseRoot}/$self->{pwd}";
+	my $original = $self->getFile('copy'); return unless $original;
+	my $oldfile = "$dir/$original";
 
 	if (-d $oldfile) {
 		# FIXME: need to do recursive directory copy
@@ -477,7 +544,7 @@ sub Copy {
 		}
 	}
 
-	Confirm("Copy file as:","Copy");
+	$self->Confirm("Copy file as:",$original,"Copy");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -487,21 +554,21 @@ sub Copy {
 #
 sub Rename {
 	my $self = shift;
-	my $oldfile = $self->getFile('rename'); return unless $oldfile;
-	my $original = $oldfile;
-	$oldfile = "$self->{courseRoot}/$self->{pwd}/$oldfile";
+        my $dir = "$self->{courseRoot}/$self->{pwd}";
+	my $original = $self->getFile('rename'); return unless $original;
+	my $oldfile = "$dir/$original";
 
 	if ($self->r->param('confirmed')) {
 		my $newfile = $self->r->param('name');
 		if ($newfile = $self->verifyPath($newfile,$original)) {
 			if (rename $oldfile, $newfile) {
-	$self->addgoodmessage("File successfully renamed");
-	$self->Refresh; return;
+				$self->addgoodmessage("File successfully renamed");
+				$self->Refresh; return;
 			} else {$self->addbadmessage("Can't rename file: $!")}
 		}
 	}
 
-	Confirm("Rename file as:","Rename");
+	$self->Confirm("Rename file as:",uniqueName($dir,$original),"Rename");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -525,7 +592,7 @@ sub Delete {
 		# If confirmed, go ahead and delete the files
 		#
 		foreach my $file (@files) {
-			if (defined checkPWD("$pwd/$file",1)) {
+			if (defined $self->checkPWD("$pwd/$file",1)) {
 				if (-d "$dir/$file") {
 					my $removed = eval {rmtree("$dir/$file",0,1)};
 					if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
@@ -564,6 +631,66 @@ sub Delete {
 
 		print CGI::hidden({name=>"confirmed",value=>1});
 		foreach my $file (@files) {print CGI::hidden({name=>"files",value=>$file})}
+		$self->HiddenFlags;
+	}
+}
+
+##################################################
+#
+# Make a gzipped tar archive
+#
+sub GZIP {
+	my $self = shift;
+	my @files = $self->r->param('files');
+	if (scalar(@files) == 0) {
+		$self->addbadmessage("You must select at least one file to GZIP");
+		$self->Refresh; return;
+	}
+
+	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
+	my $archive = uniqueName($dir,(scalar(@files) == 1)?
+				 $files[0].".tgz": $self->{courseName}.".tgz");
+	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -czf $archive ";
+	my $files = `$tar`; chomp($files);
+	if ($? == 0) {
+		my @files = split(/\n/,$files);
+		my $n = scalar(@files); my $s = ($n == 1? "": "s");
+		$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
+	} else {
+		$self->addbadmessage("Can't create archive '$archive': comand returned ".systemError($?));
+	}
+	$self->Refresh;
+}
+
+##################################################
+#
+# Unpack a gzipped tar archive
+#
+sub UNGZIP {
+	my $self = shift;
+	my $archive = $self->getFile("UNGZIP"); return unless $archive;
+	if ($archive !~ m/\.tgz$/) {
+		$self->addbadmessage("You can only unpack files ending in '.tgz'");
+	} else {
+		$self->ungzip($archive);
+	}
+	$self->Refresh;
+}
+
+sub ungzip {
+	my $self = shift;
+	my $archive = shift;
+	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
+	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -vxzf $archive";
+               my $files = `$tar`; chomp($files);
+	if ($? == 0) {
+		my @files = split(/\n/,$files);
+		my $n = scalar(@files); my $s = ($n == 1? "": "s");
+		$self->addgoodmessage("$n file$s unpacked successfully");
+		return 1;
+	} else {
+		$self->addbadmessage("Can't unpack '$archive': command returned ".systemError($?));
+		return 0;
 	}
 }
 
@@ -585,7 +712,7 @@ sub NewFile {
 		}
 	}
 
-	Confirm("New file name:","New File");
+	$self->Confirm("New file name:","","New File");
 }
 
 ##################################################
@@ -605,7 +732,7 @@ sub NewFolder {
 		}
 	}
 
-	Confirm("New folder name:","New Folder");
+	$self->Confirm("New folder name:","","New Folder");
 }
 
 ##################################################
@@ -614,9 +741,9 @@ sub NewFolder {
 #
 sub Download {
 	my $self = shift;
-	my $filename = $self->getFile("download"); return unless $filename;
-	my $pwd = checkPWD($self->r->param('pwd') || '.');
+	my $pwd = $self->checkPWD($self->r->param('pwd') || '.');
 	return unless $pwd;
+	my $filename = $self->getFile("download"); return unless $filename;
 	my $file = $self->{ce}{courseDirs}{root}.'/'.$pwd.'/'.$filename;
 
 	if (-d $file) {$self->addbadmessage("You can't download directories"); return}
@@ -642,16 +769,30 @@ sub Upload {
 	my ($id,$hash) = split(/\s+/,$fileIDhash);
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 
-	my $name = uniqueName($dir,checkName($upload->filename));
+	my $name = checkName($upload->filename);
+	my $action = $self->r->param("formAction") || "Cancel";
+	if ($self->r->param("confirmed")) {
+		if ($action eq "Cancel") {
+			$upload->dispose;
+			$self->Refresh;
+			return;
+		}
+		$name = checkName($self->r->param('name')) if ($action eq "Rename");
+	}
+
 	if (-e "$dir/$name") {
-		$self->addbadmessage("A file with that name already exists");
-		$self->Refresh;
-		$upload->dispose;
-		return;
+		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
+			$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".
+				       CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			print CGI::hidden({name=>"action",value=>"Upload"});
+			print CGI::hidden({name=>"file",value=>$fileIDhash});
+			return;
+		}
 	}
 	$self->checkFileLocation($name,$self->{pwd});
 
-	my $type = $self->r->param('format') || 'automatic';
+	my $file = "$dir/$name";
+	my $type = $self->getFlag('format','Automatic');
 	my $data;
 	
 	#
@@ -663,15 +804,24 @@ sub Upload {
 		if ($type eq 'Automatic') {$type = isText($data) ? 'Text' : 'Binary'}
 	}
 	if ($type eq 'Text') {
+		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
-		open(UPLOAD,">$dir/$name") || $self->addbadmessage("Can't create file '$name'");
+		open(UPLOAD,">$file") || $self->addbadmessage("Can't create file '$name'");
 		print UPLOAD $data; close(UPLOAD);
-		$upload->dispose();
 	} else {
-		$upload->disposeTo("$dir/$name");
+		$upload->disposeTo($file);
 	}
 
-	$self->addgoodmessage("$type file '$name' uploaded successfully");
+	if (-e $file) {
+	  $self->addgoodmessage("$type file '$name' uploaded successfully");
+	  if ($name =~ m/\.tgz$/ && $self->getFlag('unpack')) {
+	    if ($self->ungzip($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
 	$self->Refresh;
 }
 
@@ -681,30 +831,35 @@ sub Upload {
 # Print a confirmation dialog box
 #
 sub Confirm {
-	my $message = shift;
-	my $button = shift;
+	my $self = shift;
+	my $message = shift; my $value = shift;
+	my $button = shift; my $button2 = shift;
 
 	print CGI::p();
 	print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 3em"});
 	print CGI::Tr(
-		CGI::td(
+		CGI::td({align=>"CENTER"},
 		  $message,
-		  CGI::input({type=>"text",name=>"name",size=>50}),
-		  CGI::p(),
-		  CGI::div({style=>"float:right; padding-right:3ex"},
-		    CGI::input({type=>"submit",name=>"action",value=>$button})), # this will be the default
-		  CGI::div({style=>"float:left; padding-left:3ex"},
-		  CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
-	       ),
-	     );
+		  CGI::input({type=>"text",name=>"name",size=>50,value=>$value}),
+		  CGI::p(), CGI::center(
+		    CGI::div({style=>"float:right; padding-right:3ex"},
+		      CGI::input({type=>"submit",name=>"formAction",value=>$button})), # this will be the default
+		    CGI::div({style=>"float:left; padding-left:3ex"},
+		    CGI::input({type=>"submit",name=>"formAction",value=>"Cancel"})),
+		    ($button2 ? CGI::input({type=>"submit",name=>"formAction",value=>$button2}): ()),
+		  ),
+		),
+	      );
 	print CGI::end_table();
-	print CGI::hidden({name=>"confirmed",value=>1});
+	print CGI::hidden({name=>"confirmed", value=>1});
+	$self->HiddenFlags;
 	print CGI::script("window.document.FileManager.name.focus()");
 }
 
 ##################################################
+##################################################
 #
-# Check that there is exactly one vailid file
+# Check that there is exactly one valid file
 #
 sub getFile {
 	my $self = shift; my $action = shift;
@@ -719,9 +874,17 @@ sub getFile {
 		$self->Refresh unless $action eq 'download';
 		return;
 	}
-	my $pwd = checkPWD($self->{pwd} || $self->r->param('pwd') || '.') || '.';
-	$self->addbadmessage("You have specified an illegal file")
-		unless checkPWD($pwd.'/'.$files[0],1);
+	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || '.') || '.';
+	if ($self->isSymLink($pwd.'/'.$files[0])) {
+		$self->addbadmessage("That symbolic link takes you outside your course directory");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	unless ($self->checkPWD($pwd.'/'.$files[0],1)) {
+		$self->addbadmessage("You have specified an illegal file");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
 	return $files[0];
 }
 
@@ -750,19 +913,84 @@ sub directoryMenu {
 # Get the directory listing
 #
 sub directoryListing {
-	my $root = shift; my $pwd = shift;
+	my $root = shift; my $pwd = shift; my $showdates = shift;
 	my $dir = $root.'/'.$pwd;
 	my (@values,%labels,$size,$data);
 
-	return unless -d $dir and not -l $dir;  #FIXME -- don't follow links
+	return unless -d $dir;
+        my $len = 24;
 	my @names = sortByName(undef,grep(/^[^.]/,readDirectory($dir)));
-	foreach my $name(@names) {
-	    unless ( $name eq 'DATA') {   #FIXME don't view the DATA directory
+	foreach my $name (@names) {
+		unless ($name eq 'DATA') {   #FIXME don't view the DATA directory
+			my $file = "$dir/$name";
 			push(@values,$name); $labels{$name} = $name;
-			$labels{$name} .= '/' if (-d $dir.'/'.$name);
+			$labels{$name} .= '@' if (-l $file);
+			$labels{$name} .= '/' if (-d $file && !-l $file);
+			$len = length($labels{$name}) if length($labels{$name}) > $len;
+		}
+	}
+	if ($showdates) {
+		$len += 3;
+		foreach my $name (@values) {
+			my $file = "$dir/$name";
+			my ($size,$date) = (lstat($file))[7,9];
+			$labels{$name} = sprintf("%-${len}s%-16s%10s",$labels{$name},
+						 ((-d $file)? ("",""):
+						  (getDate($date),getSize($size))));
 		}
 	}
 	return (\@values,\%labels);
+}
+
+sub getDate {
+  my ($sec,$min,$hour,$day,$month,$year) = localtime(shift);
+  sprintf("%02d-%02d-%04d %02d:%02d",$month+1,$day,$year+1900,$hour,$min);
+}
+
+sub getSize {
+  my $size = shift;
+  return $size." B "                        if $size < 1024;
+  return sprintf("%.1f KB",$size/1024)      if $size < 1024*100;
+  return sprintf("%d KB",int($size/1024))   if $size < 1024*1024;
+  return sprintf("%.1f MB",$size/1024/1024) if $size < 1024*1024*100;
+  return sprintf("%d MB",$size/1024/1024);
+}
+
+##################################################
+#
+#  Check if a file is a symbolic link that we
+#  are not allowed to follow.
+#
+sub isSymLink {
+	my $self = shift; my $file = shift;
+	return 0 unless -l $file;
+
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	$courseRoot = readlink($courseRoot) if -l $courseRoot;
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || '.';
+	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
+	#
+	# Remove /./ and dir/../ constructs
+	#
+	$link =~ s!(^|/)(\.(/|$))+!$1!g;
+	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+
+	#
+	# Link is OK if it is in the course directory
+	#
+	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
+
+	#
+	# Look through the list of valid paths to see if this link is OK
+	#
+	my $valid = $self->{ce}{webworkDirs}{valid_symlinks};
+	if (defined $valid && $valid) {
+		foreach my $path (@{$valid}) {
+			return 0 if substr($link,0,length($path)) eq $path;
+		}
+	}
+
+	return 1;
 }
 
 ##################################################
@@ -770,18 +998,28 @@ sub directoryListing {
 # Normalize the working directory and check if it is OK.
 #
 sub checkPWD {
+	my $self = shift;
 	my $pwd = shift;
 	my $renameError = shift;
 
-	$pwd =~ s!//+!/!g;              # remove duplicate slashes
-	$pwd =~ s!(^|/)~!$1_!g;         # remove ~user references
-	$pwd =~ s!(^|/)(\.(/|$))+!$1!g; # remove dot directories
+	$pwd =~ s!//+!/!g;               # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
 	
 	# remove dir/.. constructions
 	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
 	
 	$pwd =~ s!/$!!;                        # remove trailing /
 	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
+
+	# check for bad symbolic links
+	my @dirs = split('/',$pwd);
+	pop(@dirs) if $renameError;      # don't check file iteself in this case
+	my @path = ($self->{ce}{courseDirs}{root});
+	foreach my $dir (@dirs) {
+		push @path,$dir;
+		return if ($self->isSymLink(join('/',@path)));
+	}
 
 	my $original = $pwd;
 	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
@@ -795,19 +1033,6 @@ sub checkPWD {
 
 ##################################################
 #
-# Check a name for bad characters, etc.
-#
-sub checkName {
-	my $file = shift;
-	$file =~ s!.*[/\\]!!;               # remove directory
-	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
-	$file = "newfile.txt" unless $file; # no blank names
-	$file =~ s/^\./_/;                  # no initial dot
-	return $file;
-}
-
-##################################################
-#
 # Check that a file is uploaded to the correct directory
 #
 sub checkFileLocation {
@@ -816,8 +1041,21 @@ sub checkFileLocation {
 	my $dir = shift;
 	return unless defined($uploadDir{$extension});
 	return if $dir =~ m/^$uploadDir{$extension}$/;
-	$dir = $uploadDir{$extension}; $dir =~ s!/.*!!;
+	$dir = $uploadDir{$extension}; $dir =~ s!/\.\*!!;
 	$self->addbadmessage("Files with extension '.$extension' usually belong in '$dir'");
+}
+
+##################################################
+#
+# Check a name for bad characters, etc.
+#
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
 }
 
 ##################################################
@@ -827,11 +1065,11 @@ sub checkFileLocation {
 sub uniqueName {
 	my $dir = shift; my $name = shift;
 	return $name unless (-e "$dir/$name");
-	my $type = ""; my $n = -1;
+	my $type = ""; my $n = 1;
 	$type = $1 if ($name =~ s/(\.[^.]*)$//);
-	$n = $1 if ($name =~ s/(\d+)$//);
-	while (-e "$dir/$name$n$type") {if ($n < 0) {$n--} else {$n++}}
-	return "$name$n$type";
+	$n = $1 if ($name =~ s/_(\d+)$/_/);
+	while (-e "$dir/${name}_$n$type") {$n++}
+	return "${name}_$n$type";
 }
 
 ##################################################
@@ -865,7 +1103,7 @@ sub verifyPath {
 	if ($path) {
 		unless ($path =~ m![^-_.a-zA-Z0-9 /]!) {
 			unless ($path =~ m!^/!) {
-				$path = checkPWD($self->{pwd}.'/'.$path,1);
+				$path = $self->checkPWD($self->{pwd}.'/'.$path,1);
 				if ($path) {
 					$path = $self->{courseRoot}.'/'.$path;
 					$path .= '/'.$name if -d $path && $name;
@@ -876,6 +1114,18 @@ sub verifyPath {
 		} else {$self->addbadmessage("Your file name contains illegal characters")}
 	} else {$self->addbadmessage("You must specify a file name")}
 	return
+}
+
+##################################################
+#
+# Get the value of a parameter flag
+#
+sub getFlag {
+  my $self = shift; my $flag = shift;
+  my $default = shift; $default = 0 unless defined $default;
+  my $value = $self->r->param($flag);
+  $value = $default unless defined $value;
+  return $value;
 }
 
 ##################################################
@@ -900,6 +1150,43 @@ sub showHTML {
 sub isText {
 	my $string = shift;
 	return $string !~ m/[^\s\x20-\x7E]{3,}/;
+}
+
+##################################################
+#
+#  Convert spaces to &nbsp;, but only REAL spaces
+#
+sub sp2nbsp {
+	my $s = shift;
+	$s =~ s/ /\&nbsp;/g;
+	return $s;
+}
+
+##################################################
+#
+#  Hack to convert multiple spaces in the file
+#  selection box into &nbsp; so that the columns
+#  will allign properly in fixed-width fonts.
+#  We have to do it agter the fact, since CGI::
+#  is being "helpful" by turning & in the labels
+#  into &amp; for us.  So we have to convert
+#  after the <SELECT> is created (ugh).
+#
+sub fixSpaces {
+	my $s = shift;
+	$s =~ s!(<option[^>]*>)(.*?)(</option>)!$1.sp2nbsp($2).$3!gei;
+	return $s;
+}
+
+##################################################
+#
+#  Interpret command return errors
+#
+sub systemError {
+  my $status = shift;
+  return "error: $!" if $status == 0xFF00;
+  return "exit status ".($status >> 8) if ($status & 0xFF) == 0;
+  return "signal ".($status &= ~0x80);
 }
 
 ##################################################
