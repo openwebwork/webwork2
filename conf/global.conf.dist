@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.118 2005/05/14 01:32:18 dpvc Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.119 2005/05/20 16:34:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,6 +56,8 @@ $externalPrograms{latex}    = "/usr/local/bin/latex";
 $externalPrograms{pdflatex} = "/usr/local/bin/pdflatex --shell-escape"; # allows pdflatex to handle .eps files
 $externalPrograms{dvipng}   = "/usr/local/bin/dvipng";
 $externalPrograms{tth}      = "/usr/local/bin/tth";
+
+$externalPrograms{tar}      = "/usr/bin/tar";
 
 ################################################################################
 # Mail settings
@@ -129,6 +131,12 @@ $webworkDirs{logs}          = "$webworkDirs{root}/logs";
 
 # Contains non-web-accessible temporary files, such as TeX working directories.
 $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
+
+# The (absolute) destinations of symbolic links that are OK for the FileManager to follow.
+#   (any subdirectory of these is a valid target for a symbolic link.)
+# For example:
+#    $webworkDirs{valid_symlinks} = ["$webworkDirs{courses}/modelCourse/templates","/ww2/common/sets"];
+$webworkDirs{valid_symlinks}   = [];
 
 ##### The following locations are web-accessible.
 
