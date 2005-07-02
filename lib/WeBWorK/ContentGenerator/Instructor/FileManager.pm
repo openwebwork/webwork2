@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.8 2005/01/27 04:26:37 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.9 2005/07/02 16:52:31 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -650,7 +650,8 @@ sub GZIP {
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
 	my $archive = uniqueName($dir,(scalar(@files) == 1)?
 				 $files[0].".tgz": $self->{courseName}.".tgz");
-	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -czf $archive ";
+	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -cvzf $archive ";
+	$tar .= join(" ",@files);
 	my $files = `$tar`; chomp($files);
 	if ($? == 0) {
 		my @files = split(/\n/,$files);
