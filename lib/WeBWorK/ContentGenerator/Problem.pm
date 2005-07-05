@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.171 2005/06/28 00:16:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.172 2005/07/04 13:18:47 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Timing;
 use URI::Escape;
@@ -217,11 +217,12 @@ sub attemptResults {
 	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
+	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
 		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
+		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
 		                    	: "");
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
@@ -277,7 +278,7 @@ sub attemptResults {
 
 
 sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
+	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
 	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -296,9 +297,30 @@ sub previewAnswer {
 	if ($displayMode eq "plainText") {
 		return $tex;
 	} elsif ($displayMode eq "formattedText") {
+		
+		# read the TTH preamble, or use the cached copy passed in from the caller
+		my $tthPreamble;
+		if (defined $$tthPreambleCache) {
+			$tthPreamble = $$tthPreambleCache;
+		} else {
+			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
+			if (-r $tthPreambleFile) {
+				$tthPreamble = readFile($tthPreambleFile);
+				# thanks to Jim Martino. each line in the definition file should end with
+				#a % to prevent adding supurious paragraphs to output:
+				$tthPreamble =~ s/(.)\n/$1%\n/g;
+				# solves the problem if the file doesn't end with a return:
+				$tthPreamble .="%\n";
+				# store preamble in cache:
+				$$tthPreambleCache = $tthPreamble;
+			} else {
+			}
+		}
+		
+		# construct TTH command line
 		my $tthCommand = $ce->{externalPrograms}->{tth}
 			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. "\\(".$tex."\\)\n"
+			. $tthPreamble . "\\(" . $tex . "\\)\n"
 			. "END_OF_INPUT\n";
 		
 		# call tth
@@ -308,6 +330,7 @@ sub previewAnswer {
 		} else {
 			return $result;
 		}
+		
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "jsMath") {
