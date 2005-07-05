@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.62 2004/09/10 02:35:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.63 2004/09/13 19:35:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -274,7 +274,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 	
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problem sets.")
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify homework sets.")
 		unless $authz->hasPermissions($r->param("user"), "modify_problem_sets");
 
 

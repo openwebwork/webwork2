@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.33 2004/10/25 22:37:32 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.34 2004/10/25 22:40:19 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -254,7 +254,7 @@ sub browse_mysets_panel {
 	my $self = shift;
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
-	my $default_value = "Select a Problem Set";
+	my $default_value = "Select a Homework Set";
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
@@ -414,7 +414,7 @@ sub make_top_row {
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
 	} elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
-		if ($list_of_local_sets->[0] eq "Select a Problem Set") {
+		if ($list_of_local_sets->[0] eq "Select a Homework Set") {
 			shift @{$list_of_local_sets};
 		}
 		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
@@ -658,7 +658,7 @@ sub pre_header_initialize {
 
 		my $set_to_display = $r->param('library_sets');
 		if (not defined($set_to_display) 
-				or $set_to_display eq "Select a Problem Set"
+				or $set_to_display eq "Select a Homework Set"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
 			$self->addbadmessage("You need to select a set from this course to view.");
 		} else {
@@ -831,7 +831,7 @@ sub pre_header_initialize {
 
 
 sub title {
-	return "Problem Set Maker";
+	return "Homework Set Maker";
 }
 
 sub body {

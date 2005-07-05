@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.24 2004/09/29 21:38:06 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.25 2005/01/29 01:21:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -255,7 +255,7 @@ sub body {
 		}
 		if ($set and $verbosity >= 1) {
 			print $MAIL
-				"***** Data about the problem set: *****\n\n",
+				"***** Data about the homework set: *****\n\n",
 				$set->toString(), "\n\n";
 		
 		}

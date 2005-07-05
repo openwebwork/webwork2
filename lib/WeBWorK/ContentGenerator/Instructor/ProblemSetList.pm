@@ -283,7 +283,7 @@ sub body {
 	
 	$self->{editMode} = $r->param("editMode") || 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify problem sets."))
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to modify homework sets."))
 		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
 	
 	$self->{exportMode} = $r->param("exportMode") || 0;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.14 2004/09/21 20:05:16 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.15 2004/11/10 21:17:38 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ use CGI qw();
 sub initialize {
 	my ($self)     = @_;
 	my $r          = $self->r;
-    	my $urlpath    = $r->urlpath;
+	my $urlpath    = $r->urlpath;
 	my $authz      = $r->authz;
 	my $db         = $r->db;	
 	my $setID      = $urlpath->arg("setID");
@@ -113,7 +113,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 		
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets."))
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign homework sets."))
 		unless $authz->hasPermissions($user, "assign_problem_sets");	
 	
 	my @users = $db->listUsers;
@@ -126,7 +126,7 @@ sub body {
 	           "There is NO undo for unassigning students. "),
 	      CGI::p("When you unassign
 				        by unchecking a student's name, you destroy all
-				        of the data for problem set $setID for this student. You will then need to
+				        of the data for homework set $setID for this student. You will then need to
 				        reassign the set to these students and they will receive new versions of the problems.
 				        Make sure this is what you want to do before unchecking students."
 	);
@@ -210,7 +210,7 @@ sub body {
 						"There is NO undo for this function.  
 				        Do not use it unless you know what you are doing!  When you unassign
 				        a student using this button, or by unchecking their name, you destroy all
-				        of the data for problem set $setID for this student.",
+				        of the data for homework set $setID for this student.",
 						CGI::br(),
 						CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
 						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
