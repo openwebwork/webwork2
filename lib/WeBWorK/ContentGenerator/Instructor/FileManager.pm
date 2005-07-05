@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.9 2005/07/02 16:52:31 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.10 2005/07/02 17:04:31 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -513,8 +513,8 @@ sub RefreshEdit {
 		),
 	]);
 	print CGI::end_table();
-	print CGI::hidden({name=>"files",     value=>$file});
-	$self->SaveHiddenFlags;
+	print CGI::hidden({name=>"files", value=>$file});
+	$self->HiddenFlags;
 }
 
 ##################################################
