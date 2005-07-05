@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.59 2004/11/03 22:00:10 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.60 2005/05/14 01:32:19 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -137,8 +137,8 @@ sub defineProblemEnvir {
 	# ADDED: dvipngTempDir
 	# ADDED: jsMathURL
 	# ADDED: asciimathURL
-        # ADDED: macrosPath
-        # REMOVED: macrosDirectory, courseScriptsDirectory
+	# ADDED: macrosPath
+	# REMOVED: macrosDirectory, courseScriptsDirectory
 	
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
