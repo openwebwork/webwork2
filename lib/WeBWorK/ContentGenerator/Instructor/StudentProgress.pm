@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.14 2005/06/01 15:05:17 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.15 2005/06/02 18:22:58 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -523,7 +523,7 @@ sub displaySets {
 		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
-		"Click on student's name to see the student's version of the problem set. &nbsp; &nbsp;&nbsp;
+		"Click on student's name to see the student's version of the homework set. &nbsp; &nbsp;&nbsp;
 		Click heading to sort table. ",
 		CGI::br(),
 		CGI::br(),
