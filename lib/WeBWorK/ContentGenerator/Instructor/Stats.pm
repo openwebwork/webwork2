@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.52 2005/05/19 20:53:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.53 2005/06/10 15:59:52 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::Stats - Display statistics by user or
-problem set.
+homework set.
 
 =cut
 
