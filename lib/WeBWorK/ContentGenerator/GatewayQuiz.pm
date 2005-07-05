@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.8 2004/03/04 21:05:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.9 2004/03/11 03:27:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -220,7 +220,7 @@ sub nav {
 	my $ce = $self->{ce};
 	my $root = $ce->{webworkURLs}->{root};
 	my $courseName = $ce->{courseName};
-	my @links = ("Problem Sets" , "$root/$courseName", "navUp");
+	my @links = ("Homework Sets" , "$root/$courseName", "navUp");
 	my $tail = "";
 	
 	return $self->navMacro($args, $tail, @links);
@@ -229,7 +229,7 @@ sub nav {
 sub body {
 	my ($self)			= @_;
 	
-		return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the problem set that contains it is not yet open."))
+		return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
 		unless $self->{isOpen};
 	
 	# unpack some useful variables
@@ -249,7 +249,7 @@ sub body {
 
 	# coerce form fields into CGI::Vars format
 	
-	return CGI::p(CGI::font({-color=>"red"}, "This problem set is not available because it is not yet open."))
+	return CGI::p(CGI::font({-color=>"red"}, "This homework set is not available because it is not yet open."))
 		unless ($self->{isOpen});
 
 	print CGI::h3("This is an experimental gateway quiz format");

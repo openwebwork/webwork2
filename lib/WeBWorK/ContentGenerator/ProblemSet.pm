@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.60 2004/12/17 16:57:53 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.61 2005/05/26 15:12:36 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,7 +98,7 @@ sub nav {
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
 	
-	my @links = ("Problem Sets" , $r->location . $problemSetsPage->path, "navUp");
+	my @links = ("Homework Sets" , $r->location . $problemSetsPage->path, "navUp");
 	my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
 }
@@ -123,7 +123,7 @@ sub siblings {
 	}
 	print CGI::start_ul({class=>"LinksMenu"});
 	print CGI::start_li();
-	print CGI::span({style=>"font-size:larger"}, "Problem Sets");
+	print CGI::span({style=>"font-size:larger"}, "Homework Sets");
 	print CGI::start_ul();
 
 	# FIXME: setIDs contain no info on published/unpublished so unpublished sets are still printed
@@ -254,12 +254,12 @@ sub body {
 
 	if ($self->{invalidSet}) {
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem set ($setName) is not a valid set for $effectiveUser."));
+			CGI::p("The selected homework set ($setName) is not a valid set for $effectiveUser."));
 	}
 	
 	unless ($self->{isOpen}) {
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("This problem set is not available because it is not yet open."));
+			CGI::p("This homework set is not available because it is not yet open."));
 	}
 	
 	#my $hardcopyURL =
@@ -271,7 +271,7 @@ sub body {
 		courseID => $courseID, setID => $setName);
 	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
-	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this problem set."));
+	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
 	
 	print CGI::start_table();
 	print CGI::Tr(

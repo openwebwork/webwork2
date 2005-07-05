@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.46 2004/10/14 16:56:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.47 2004/10/15 19:25:24 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -258,9 +258,9 @@ sub pre_header_initialize {
 
 	push @error, "You are not allowed to act as a student." 
 		if (defined param $r "act_as_user" and not $authz->hasPermissions($userID, "become_student"));
-	push @error, "You are not allowed to modify problem sets." 
+	push @error, "You are not allowed to modify homework sets." 
 		if ((defined param $r "edit_sets" or defined param $r "edit_set_for_users") and not $authz->hasPermissions($userID, "modify_problem_sets"));
-	push @error, "You are not allowed to assign problem sets."
+	push @error, "You are not allowed to assign homework sets."
 		if ((defined param $r "sets_assigned_to_user" or defined param $r "users_assigned_to_set") and not $authz->hasPermissions($userID, "assign_problem_sets"));
 	push @error, "You are not allowed to modify student data."
 		if ((defined param $r "edit_users" or defined param $r "user_options" or defined param $r "user_options") and not $authz->hasPermissions($userID, "modify_student_data"));

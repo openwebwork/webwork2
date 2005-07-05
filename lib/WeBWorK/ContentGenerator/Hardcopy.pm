@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.53 2004/10/20 16:45:34 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.54 2005/06/29 02:46:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -223,7 +223,7 @@ sub multiErrorOutput($@) {
 	print CGI::h2("Compile Errors");
 	print CGI::p(<<EOF);
 WeBWorK has encountered one or more  errors while attempting to process
-these problem sets. It is likely that there are errors in the problems
+these homework sets. It is likely that there are errors in the problems
 themselves. If you are a student, contact your professor to have the errors
 corrected. If you are a professor, please consult the error output below for
 more information.
@@ -243,7 +243,7 @@ sub multiWarningOutput($@) {
 	print CGI::h2("Software Warnings");
 	print CGI::p(<<EOF);
 WeBWorK has encountered one or more warnings while attempting to process these
-problem sets. It is likely that this indicates errors or ambiguitiees in the
+homework sets. It is likely that this indicates errors or ambiguitiees in the
 problems themselves. If you are a student, contact your professor to have the
 problems corrected. If you are a professor, please consut the warning output
 below for more informaiton.
@@ -269,7 +269,7 @@ sub displayForm($) {
 		$aa= ' ';
 	}	
 	
-	print CGI::start_p(), "Select the problem set$ss for which to generate${aa}hardcopy version$ss.";
+	print CGI::start_p(), "Select the homework set$ss for which to generate${aa}hardcopy version$ss.";
 	if ($authz->hasPermissions($userID, "download_hardcopy_multiuser")) {
 		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
 	}
@@ -290,7 +290,7 @@ sub displayForm($) {
 	print CGI::start_form(-method=>"POST", -action=>$actionURL);
 	print $self->hidden_authen_fields();
 	print CGI::h3("Options");
-	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available $phrase_for_privileged_users after the answer date of the problem set.");
+	print CGI::p("You may choose to show any of the following data. Correct answers and solutions are only available $phrase_for_privileged_users after the answer date of the homework set.");
 	print CGI::p(
 		CGI::checkbox(
 			-name    => "showCorrectAnswers",

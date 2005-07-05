@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.26 2004/12/18 22:35:00 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.27 2004/12/20 16:21:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to assign problem sets.")
+	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to assign homework sets.")
 		unless $authz->hasPermissions($user, "assign_problem_sets");
 
 	
@@ -173,7 +173,7 @@ sub body {
 						"There is NO undo for unassigning students. ");
 
 	print CGI::p("When you unassign a student's name, you destroy all
-			of the data for that problem set for that student. You will then need to
+			of the data for that homework set for that student. You will then need to
 			reassign the set(s) to these students and they will receive new versions of the problems.
 			Make sure this is what you want to do before unassigning students."
 	);

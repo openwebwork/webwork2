@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.172 2005/07/04 13:18:47 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.173 2005/07/05 18:20:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -740,7 +740,7 @@ sub body {
 
 	if ($self->{invalidSet}) {
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem set (" . $urlpath->arg("setID") . ") is not a valid set for " . $r->param("effectiveUser") . "."));
+			CGI::p("The selected homework set (" . $urlpath->arg("setID") . ") is not a valid set for " . $r->param("effectiveUser") . "."));
 	}	
 	
 	if ($self->{invalidProblem}) {
@@ -750,7 +750,7 @@ sub body {
 
 	unless ($self->{isOpen}) {
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("This problem is not available because the problem set that contains it is not yet open."));
+			CGI::p("This problem is not available because the homework set that contains it is not yet open."));
 	}
 	# unpack some useful variables
 	my $set             = $self->{set};
@@ -854,7 +854,7 @@ sub body {
 				);
 			} else {
 				if (before($set->open_date) or after($set->due_date)) {
-					$scoreRecordedMessage = "Your score was not recorded because this problem set is closed.";
+					$scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";
 				} else {
 					$scoreRecordedMessage = "Your score was not recorded.";
 				}
@@ -1016,14 +1016,14 @@ sub body {
 	if (before($set->open_date) or after($set->due_date)) {
 		$setClosed = 1;
 		if (before($set->open_date)) {
-			$setClosedMessage = "This problem set is not yet open.";
+			$setClosedMessage = "This homework set is not yet open.";
 		} elsif (after($set->due_date)) {
-			$setClosedMessage = "This problem set is closed.";
+			$setClosedMessage = "This homework set is closed.";
 		}
 	}
 	#if (before($set->open_date) or after($set->due_date)) {
 	#	$setClosed = 1;
-	#	$setClosedMessage = "This problem set is closed.";
+	#	$setClosedMessage = "This homework set is closed.";
 	#	if ($authz->hasPermissions($user, "view_answers")) {
 	#		$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
 	#	} else {

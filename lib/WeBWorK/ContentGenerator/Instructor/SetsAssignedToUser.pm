@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.18 2004/11/10 21:17:38 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.19 2005/01/19 21:54:34 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -130,7 +130,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access the Instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign problem sets."))
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign homework sets."))
 		unless $authz->hasPermissions($user, "assign_problem_sets");
 	
 	# get list of sets
@@ -166,7 +166,7 @@ sub body {
 		       "Do not uncheck a set unless you know what you are doing.", CGI::br(),
 		       "There is NO undo for unassigning a set.");
 
-	print CGI::p("When you uncheck a problem set (and save the changes), you destroy all
+	print CGI::p("When you uncheck a homework set (and save the changes), you destroy all
 		      of the data for that set for this student.   If You then need to
 		      reassign the set and the student will receive new versions of the problems.
 		      Make sure this is what you want to do before unchecking sets."
