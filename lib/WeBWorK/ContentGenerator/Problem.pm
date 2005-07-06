@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.173 2005/07/05 18:20:24 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.174 2005/07/05 18:56:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -319,8 +319,8 @@ sub previewAnswer {
 		
 		# construct TTH command line
 		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. $tthPreamble . "\\(" . $tex . "\\)\n"
+			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+			. $tthPreamble . "\\[" . $tex . "\\]\n"
 			. "END_OF_INPUT\n";
 		
 		# call tth
@@ -328,6 +328,9 @@ sub previewAnswer {
 		if ($?) {
 			return "<b>[tth failed: $? $@]</b>";
 		} else {
+			#  avoid border problems in tables and remove unneeded initial <br>
+			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
+			$result =~ s!\s*<br clear="all" />!!;
 			return $result;
 		}
 		
