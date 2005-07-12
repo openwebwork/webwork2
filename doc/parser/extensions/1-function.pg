@@ -9,7 +9,7 @@ loadMacros(
   "PGbasicmacros.pl",
   "PGanswermacros.pl",
   "Parser.pl",
-  "ParserTables.pl",
+  "parserTables.pl",
 );
 
 TEXT(beginproblem());
