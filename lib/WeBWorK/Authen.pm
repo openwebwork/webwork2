@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.37 2004/11/19 19:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.38 2005/01/29 01:18:33 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ use strict;
 use warnings;
 use Apache::Cookie;
 use Date::Format;
+use WeBWorK::Utils qw(writeCourseLog);
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 
@@ -46,8 +47,62 @@ sub checkPassword($$$) {
 	my $Password = $db->getPassword($userID); # checked
 	return 0 unless defined $Password;
 	
+	# check against WW password database
 	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
-	return $possibleCryptPassword eq $Password->password();
+	return 1 if $possibleCryptPassword eq $Password->password;
+	
+	# check site-specific verification method
+	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
+	
+	# fail by default
+	return 0;
+}
+
+# Site-specific password checking
+# 
+# The site_checkPassword routine can be used to provide a hook to your institution's
+# authentication system. If authentication against the  course's password database, the
+# method $self->site_checkPassword($userID, $clearTextPassword) is called. If this
+# method returns a true value, authentication succeeds.
+# 
+# Here is an example site_checkPassword which checks the password against the Ohio State
+# popmail server:
+# 	sub site_checkPassword($$) {
+# 		my ($self, $userID, $clearTextPassword) = @_;
+# 		use Net::POP3;
+# 		my $pop = Net::POP3->new('pop.service.ohio-state.edu', Timeout => 60);
+# 		if ($pop->login($userID, $clearTextPassword)) {
+# 			return 1;
+# 		}
+# 		return 0;
+# 	}
+# 
+# Since you have access to the WeBWorK::Authen object, the possibilities are limitless!
+# This example checks the password against the system password database and updates the
+# user's password in the course database if it succeeds:
+# 	sub site_checkPassword {
+# 		my ($self, $userID, $clearTextPassword) = @_;
+# 		my $realCryptPassword = (getpwnam $userID)[1] or return 0;
+# 		my $possibleCryptPassword = crypt($possibleClearPassword, $realCryptPassword); # user real PW as salt
+# 		if ($possibleCryptPassword eq $realCryptPassword) {
+# 			# update WeBWorK password
+# 			use WeBWorK::Utils qw(cryptPassword);
+# 			my $db = $self->{r}->db;
+# 			my $Password = $db->getPassword($userID);
+# 			my $pass = cryptPassword($clearTextPassword);
+# 			$Password->password($pass);
+# 			$db->putPassword($Password);
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	}
+# 
+# 
+# The default site_checkPassword always fails:
+sub site_checkPassword {
+	my ($self, $userID, $clearTextPassword) = @_;
+	return 0;
 }
 
 sub generateKey($$) {
@@ -177,6 +232,17 @@ sub killCookie {
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
+sub record_login($$) {
+	my ($self, $userID) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $timestamp = localtime;
+	($timestamp) = $timestamp =~ /^\w+\s(.*)\s/;
+	my $remote_host = $r->connection->remote_host;
+	my $user_agent = $r->header_in("User-Agent");
+	writeCourseLog($ce, "login_log", "$userID on $remote_host ($user_agent)");
+}
+
 # verify will return 1 if the person is who they say the are. If the
 # verification failed because of of invalid authentication data, a note will be
 # written in the request explaining why it failed. If the request failed because
@@ -223,6 +289,7 @@ sub verify($) {
 					$r->param("user", $userID);
 					$r->param("key", $Key->key);
 					$found = 1;
+					$self->record_login($userID);
 					last;
 				}
 			}
@@ -375,6 +442,7 @@ sub verify($) {
 				$r->param("key", $Key->key());
 				# also delete the password
 				$r->param("passwd", "");
+				$self->record_login($user); 
 				last VERIFY;
 			} else {
 				# incorrect password. fail.
