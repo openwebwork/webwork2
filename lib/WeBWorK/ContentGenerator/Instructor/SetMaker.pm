@@ -47,7 +47,6 @@ use constant ADDED => 1;
 use constant HIDDEN => (1 << 1);
 use constant SUCCESS => (1 << 2);
 
-<<<<<<< SetMaker.pm
 ##	for additional problib buttons
 my %problib;	## filled in in global.conf
 my %ignoredir = (
@@ -56,12 +55,6 @@ my %ignoredir = (
 );
 
 ##
-=======
-##  for additional problib buttons
-my %problib;  ## filled in in global.conf
-my %ignoredir = ('.' => 1, '..' => 1, 'Library' => 1);
-
->>>>>>> 1.20.2.2
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
 ## item is the number of pg files in the directory.	 The second is a
@@ -83,7 +76,6 @@ my %ignoredir = ('.' => 1, '..' => 1, 'Library' => 1);
 ##
 
 sub get_library_sets {
-<<<<<<< SetMaker.pm
 	my $top = shift; my $dir =	shift;
 	# ignore directories that give us an error
 	my @lis = eval { readDirectory($dir) };
@@ -127,42 +119,13 @@ sub get_library_pgs {
 
 	return () unless $top || (scalar(@pgs) == 1 && $others) || grep /^=library-combine-up$/, @lis;
 	return (map {"$dir/$_"} @pgs);
-=======
-  my $amtop = shift;
-  my $topdir =  shift;
-  my @lis = readDirectory($topdir);
-  my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg/) and -f "$topdir/$_"} @lis;
-  my $havepg = scalar(@pgs)>0 ? 1 : 0;
-  my @mdirs = grep {!defined($ignoredir{$_}) and -d "$topdir/$_"} @lis;
-  if ($amtop) {@mdirs = grep {!defined($problib{$_})} @mdirs}
-  my ($adir, @results, @thisresult);
-  for $adir (@mdirs) {
-    @results = get_library_sets(0, "$topdir/$adir");
-    my $isadirok = shift @results;
-    @thisresult = (@thisresult, @results);
-    if ($isadirok) {
-      @thisresult = ("$topdir/$adir", @thisresult);
-    }
-  }
-  return(($havepg, @thisresult));
->>>>>>> 1.20.2.2
 }
 
 sub list_pg_files {
-<<<<<<< SetMaker.pm
 	my ($templates,$dir) = @_;
 	my $top = ($dir eq '.')? 1 : 2;
 	my @pgs = get_library_pgs($top,$templates,$dir);
 	return sortByName(undef,@pgs);
-=======
-  my $templatedir = shift;
-  my $topdir = shift;
-
-  my @lis = readDirectory("$templatedir/$topdir");
-  my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg/) and -f "$templatedir/$topdir/$_"} @lis;
-  @pgs = map { "$topdir/$_" } @pgs;
-  return(@pgs);
->>>>>>> 1.20.2.2
 }
 
 ## go through past page getting a list of identifiers for the problems
@@ -213,7 +176,6 @@ sub add_selected {
 ############# List of sets of problems in templates directory
 
 sub get_problem_directories {
-<<<<<<< SetMaker.pm
 	my $ce = shift;
 	my $lib = shift;
 	my $source = $ce->{courseDirs}{templates};
@@ -228,22 +190,6 @@ sub get_problem_directories {
 	@all_problem_directories = sortByName(undef, @all_problem_directories);
 	unshift @all_problem_directories, $main if($includetop);
 	return (\@all_problem_directories);
-=======
-  my $ce = shift;
-  my $lib = shift;
-  my $source = $ce->{courseDirs}{templates};
-  my $main = MY_PROBLEMS; my $isTop = 1;
-  if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 0}
-  my @all_problem_directories = get_library_sets($isTop, $source);
-  my $includetop = shift @all_problem_directories;
-  my $j;
-  for ($j=0; $j<scalar(@all_problem_directories); $j++) {
-    $all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
-  }
-  @all_problem_directories = sort @all_problem_directories;
-  unshift @all_problem_directories, $main if($includetop);
-  return (\@all_problem_directories);
->>>>>>> 1.20.2.2
 }
 
 ############# Everyone has a view problems line.	Abstract it
@@ -277,7 +223,6 @@ sub view_problems_line {
 ### The browsing panel has three versions
 #####	 Version 1 is local problems
 sub browse_local_panel {
-<<<<<<< SetMaker.pm
 	my $self = shift;
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
@@ -302,32 +247,6 @@ sub browse_local_panel {
 		CGI::br(), 
 		$view_problem_line,
 	));
-=======
-  my $self = shift;
-  my $library_selected = shift;
-  my $lib = shift || ''; $lib =~ s/^browse_//;
-  my $name = ($lib eq '')? 'Local' : $problib{$lib};
-
-  my $list_of_prob_dirs= get_problem_directories($self->r->ce,$lib);
-  if(scalar(@$list_of_prob_dirs) == 0) {
-    $library_selected = "Found no directories containing problems";
-    unshift @{$list_of_prob_dirs}, $library_selected;
-  } else {
-    my $default_value = SELECT_LOCAL_STRING;
-    if (not $library_selected or $library_selected eq $default_value) {
-      unshift @{$list_of_prob_dirs},  $default_value;
-      $library_selected = $default_value;
-    }
-  }
-  my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
-  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "$name Problems: ",
-			CGI::popup_menu(-name=> 'library_sets', 
-					-values=>$list_of_prob_dirs, 
-					-default=> $library_selected),
-			CGI::br(), 
-			$view_problem_line,
-		       ));
->>>>>>> 1.20.2.2
 }
 
 #####	 Version 2 is local problem sets
@@ -444,7 +363,6 @@ HERE
 }
 
 sub make_top_row {
-<<<<<<< SetMaker.pm
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -544,108 +462,6 @@ sub make_top_row {
 		            -value=>"Clear Problem Display")
 	)), 
 	CGI::end_table()));
-=======
-  my $self = shift;
-  my $r = $self->r;
-  my $ce = $r->ce;
-  my %data = @_;
-
-  my $list_of_local_sets = $data{all_set_defs};
-  my $have_local_sets = scalar(@$list_of_local_sets);
-  my $browse_which = $data{browse_which};
-  my $library_selected = $r->param('library_sets');
-  my $set_selected = $r->param('local_sets');
-
-  my ($dis1, $dis2, $dis3) = ("","","");
-  $dis1 =  '-disabled' if($browse_which eq 'browse_library');  
-  $dis2 =  '-disabled' if($browse_which eq 'browse_local');
-  $dis3 =  '-disabled' if($browse_which eq 'browse_mysets');
-
-  ##  Make buttons for additional problem libraries
-  my $libs = '';
-  foreach my $lib (sort(keys(%problib))) {
-    $libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>$problib{$lib},
-                                 ($browse_which eq "browse_$lib")? '-disabled': '')
-      if (-d "$ce->{courseDirs}{templates}/$lib");
-  }
-  $libs = CGI::br()."or Problems from".$libs if $libs ne '';
-
-  my $these_widths = "width: 20ex";
-  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-			"Browse ",
-			CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, $dis1),
-			CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, $dis2),
-			CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, $dis3),
-			$libs,
-		       ));
-
-  print CGI::Tr(CGI::td({-bgcolor=>"black"}));
-
-  if ($browse_which eq 'browse_local') {
-    $self->browse_local_panel($library_selected);
-  } elsif ($browse_which eq 'browse_mysets') {
-    $self->browse_mysets_panel($library_selected, $list_of_local_sets);
-  } elsif ($browse_which eq 'browse_library') {
-    $self->browse_library_panel();
-  } else { ## handle other problem libraries
-    $self->browse_local_panel($library_selected,$browse_which);
-  }
-
-  print CGI::Tr(CGI::td({-bgcolor=>"black"}));
-
-  if($have_local_sets ==0) {
-    $list_of_local_sets = [NO_LOCAL_SET_STRING];
-  } elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
-    if ($list_of_local_sets->[0] eq "Select a Problem Set") {
-      shift @{$list_of_local_sets};
-    }
-    unshift @{$list_of_local_sets}, SELECT_SET_STRING;
-    $set_selected = SELECT_SET_STRING;
-  }
-  my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
-
-  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Adding Problems to ",
-  			CGI::b("Target Set: "),
-			CGI::popup_menu(-name=> 'local_sets', 
-					-values=>$list_of_local_sets, 
-					-default=> $set_selected),
-			CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
-			CGI::hidden(-name=>"selfassign", -default=>[0]).
-			CGI::br(), 
-			CGI::br(), 
-			CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-			-onclick=>$myjs
-			),
-			"  ",
-			CGI::textfield(-name=>"new_set_name", 
-				       -default=>"Name for new set here",
-				       -override=>1, -size=>30),
-			CGI::br(),
-		       ));
-
-  print CGI::Tr(CGI::td({-bgcolor=>"black"}));
-
-  print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-                        CGI::start_table({-border=>"0"}),
-                        CGI::Tr( CGI::td({ -align=>"center"},
-			  CGI::submit(-name=>"select_all", -style=>$these_widths,
-				    -value=>"Mark All For Adding"),
-			  CGI::submit(-name=>"select_none", -style=>$these_widths,
-				    -value=>"Clear All Marks"),
-                        )), 
-                        CGI::Tr( CGI::td(
-			  CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
-				    -value=>"Update"),
-			  CGI::submit(-name=>"rerandomize", 
-				    -style=>$these_widths,
-				    -value=>"Rerandomize"),
-			  CGI::submit(-name=>"cleardisplay", 
-				    -style=>$these_widths,
-				    -value=>"Clear Problem Display")
-                        )), 
-                        CGI::end_table()));
->>>>>>> 1.20.2.2
-
 }
 
 sub make_data_row {
@@ -788,7 +604,6 @@ sub pre_header_initialize {
 
 	########### Start the logic through if elsif elsif ...
 
-<<<<<<< SetMaker.pm
 	##### Asked to browse certain problems
 	if ($browse_lib ne '') {
 		$browse_which = $browse_lib;
@@ -832,129 +647,6 @@ sub pre_header_initialize {
 			$set_to_display = '.' if $set_to_display eq MY_PROBLEMS;
 			$set_to_display = substr($browse_which,7) if $set_to_display eq MAIN_PROBLEMS;
 			@pg_files = list_pg_files($ce->{courseDirs}->{templates},
-=======
-sub pre_header_initialize {
-  my ($self) = @_;
-  my $r = $self->r;
-  ## For all cases, lets set some things
-  $self->{error}=0;
-  my $ce = $r->ce;
-  my $db = $r->db;
-  my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-  $maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
-
-  ##  These directories will have individual buttons
-  %problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
-
-  my $userName = $r->param('user');
-  my $user = $db->getUser($userName); # checked 
-  die "record for user $userName (real user) does not exist." 
-    unless defined $user;
-  my $authz = $r->authz;
-  unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-    return(""); # Error message already produced in the body
-  }
-
-  ## Now one action we have to deal with here
-  if ($r->param('edit_local')) {
-    my $urlpath = $r->urlpath;
-    my $db = $r->db;
-    my $checkset = $db->getGlobalSet($r->param('local_sets'));
-    if (not defined($checkset)) {
-      $self->{error} = 1;
-      $self->addbadmessage('You need to select a "Target Set" before you can edit it.');
-    } else {
-      my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetEditor', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
-      my $url = $self->systemLink($page);
-      $self->reply_with_redirect($url);
-    }
-  }
-
-  ## Next, lots of set up so that errors can be reported with message()
-
-  ############# List of problems we have already printed
-
-  $self->{past_problems} = get_past_problem_files($r);
-  # if we don't end up reusing problems, this will be wiped out
-  # if we do redisplay the same problems, we must adjust this accordingly
-  my @past_marks = map {$_->[1]} @{$self->{past_problems}};
-  my $none_shown = scalar(@{$self->{past_problems}})==0;
-  my @pg_files=();
-  my $use_previous_problems = 1;
-  my $first_shown = $r->param('first_shown') || 0;
-  my $last_shown = $r->param('last_shown');
-  if (not defined($last_shown)) {
-    $last_shown = -1;
-  }
-  my @all_past_list = ();	# these are include requested, but not shown
-  my $j = 0;
-  while (defined($r->param("all_past_list$j"))) {
-    push @all_past_list, $r->param("all_past_list$j");
-    $j++;
-  }
-
-  ############# Default of which problem selector to display
-
-  my $browse_which = $r->param('browse_which') || 'browse_local';
-
-  my $problem_seed = $r->param('problem_seed') || 0;
-  $r->param('problem_seed', $problem_seed); # if it wasn't defined before
-
-  ## check for problem lib buttons
-  my $browse_lib = '';
-  foreach my $lib (keys %problib) {
-    if ($r->param("browse_$lib")) {
-      $browse_lib = "browse_$lib";
-      last;
-    }
-  }
-
-  ########### Start the logic through if elsif elsif ...
-
-  ##### Asked to browse certain problems
-  if ($browse_lib ne '') {
-    $browse_which = $browse_lib;
-    $r->param('library_sets', "");
-    $use_previous_problems = 0; @pg_files = (); ## clear old problems
-  } elsif ($r->param('browse_library')) {
-    $browse_which = 'browse_library';
-    $r->param('library_sets', "");
-    $use_previous_problems = 0; @pg_files = (); ## clear old problems
-  } elsif ($r->param('browse_local')) {
-    $browse_which = 'browse_local';
-    $r->param('library_sets', "");
-    $use_previous_problems = 0; @pg_files = (); ## clear old problems
-  } elsif ($r->param('browse_mysets')) {
-    $browse_which = 'browse_mysets';
-    $r->param('library_sets', "");
-    $use_previous_problems = 0; @pg_files = (); ## clear old problems
-
-    ##### Change the seed value
-
-  } elsif ($r->param('rerandomize')) {
-    $problem_seed++;
-    $r->param('problem_seed', $problem_seed);
-    $self->addbadmessage('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
-
-    ##### Clear the display
-
-  } elsif ($r->param('cleardisplay')) {
-    @pg_files = ();
-    $use_previous_problems=0;
-    $self->addbadmessage('The display was already cleared.') if $none_shown;
-
-    ##### View problems selected from the local list
-
-  } elsif ($r->param('view_local_set')) {
-
-    my $set_to_display = $r->param('library_sets');
-    if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
-      $self->addbadmessage('You need to select a set to view.');
-    } else {
-      $set_to_display = '.' if $set_to_display eq MY_PROBLEMS;
-      $set_to_display = substr($browse_which,7) if $set_to_display eq MAIN_PROBLEMS;
-      @pg_files = list_pg_files($ce->{courseDirs}->{templates},
->>>>>>> 1.20.2.2
 				"$set_to_display");
 			$use_previous_problems=0;
 		}
