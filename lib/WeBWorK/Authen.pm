@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.38 2005/01/29 01:18:33 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.40 2005/07/14 13:15:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -238,7 +238,7 @@ sub record_login($$) {
 	my $ce = $r->ce;
 	my $timestamp = localtime;
 	($timestamp) = $timestamp =~ /^\w+\s(.*)\s/;
-	my $remote_host = $r->connection->remote_host;
+	my $remote_host = $r->connection->remote_host || "(cannot get host)";
 	my $user_agent = $r->header_in("User-Agent");
 	writeCourseLog($ce, "login_log", "$userID on $remote_host ($user_agent)");
 }
