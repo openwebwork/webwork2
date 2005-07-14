@@ -36,14 +36,20 @@ use WeBWorK::Debug;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
 use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts attempted last_answer num_correct num_incorrect)];
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published)];
+
+# we exclude the gateway set fields from the set field order, because they
+# are only displayed for sets that are gateways.  this results in a bit of 
+# convoluted logic below, but it saves burdening people who are only using 
+# homework assignments with all of the gateway parameters
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published assignment_type)];
+use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -118,6 +124,51 @@ use constant  FIELD_PROPERTIES => {
 				1 => "Yes",
 				0 => "No",
 		},
+	},
+	assignment_type => {
+		name      => "Assignment type",
+		type      => "choose",
+		override  => "all",
+		choices   => [qw( default gateway proctored_gateway )],
+		labels    => {	default => "homework",
+				gateway => "gateway/quiz",
+				proctored_gateway => "proctored gateway/quiz",
+		},
+	},
+	attempts_per_version => {
+		name      => "Attempts per Version (untested for &gt; 1)",
+		type      => "edit",
+		size      => "3",
+		override  => "all",
+#		labels    => {	"" => 1 },
+	},
+	version_time_limit => {
+		name      => "Test Time Limit (sec)",
+		type      => "edit",
+		size      => "4",
+		override  => "all",
+		labels    => {	"" => 0 },  # I'm not sure this is quite right
+	},
+	time_interval => {
+		name      => "Time Interval for New Versions (sec)",
+		type      => "edit",
+                size      => "5",
+		override  => "all",
+		labels    => {	"" => 0 },
+	},
+	versions_per_interval => {
+		name      => "Number of New Versions per Time Interval (0=infty)",
+		type      => "edit",
+                size      => "3",
+		override  => "all",
+#		labels    => {	"" => 1 },
+	},
+	problem_randorder => {
+		name      => "Order Problems Randomly",
+		type      => "choose",
+		choices   => [qw( 0 1 )],
+		override  => "all",
+		labels    => {	0 => "No", 1 => "Yes" },
 	},
 	# Problem information
 	source_file => {
@@ -198,10 +249,20 @@ sub FieldTable {
 	my $forOneUser  = $forUsers == 1;
 
 	my @fieldOrder;
+	my $gwoutput = '';
 	if (defined $problemID) {
 		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
+
+    # gateway data fields are included only if the set is a gateway
+		if ( $globalRecord->assignment_type() =~ /gateway/ ) {
+			$gwoutput = "\n<!-- begin gwoutput table -->\n" . CGI::start_table({border => 0, cellpadding => 1});
+			foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
+				$gwoutput .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $gwfield)]));
+		    	}
+		    	$gwoutput .= CGI::end_table() . "\n<!-- end gwoutput table -->\n";
+		}
 	}
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
@@ -216,8 +277,13 @@ sub FieldTable {
 	foreach my $field (@fieldOrder) {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		unless ($properties{type} eq "hidden") {
-			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)]));
+			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
+  # this is a rather artifical addition to include gateway fields, which we 
+  # only want to show for gateways
+		$output .= CGI::Tr({}, CGI::td({colspan => '4'}, $gwoutput)) . "\n"
+		    if ( $field eq 'assignment_type' &&
+			 $globalRecord->assignment_type() =~ /gateway/ );
 	} 
 
 	if (defined $problemID) {

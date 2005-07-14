@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.136 2005/06/10 16:06:55 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.137 2005/06/22 16:13:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1404,6 +1404,22 @@ sub hidden_authen_fields {
 	my ($self) = @_;
 	
 	return $self->hidden_fields("user", "effectiveUser", "key");
+}
+
+=item hidden_proctor_authen_fields()
+
+Use hidden_fields to return hidden <INPUT> tags for request fields used in
+proctor authentication.
+
+=cut
+
+sub hidden_proctor_authen_fields {
+    my $self = shift;
+    if ( $self->r->param('proctor_user') ) {
+	return $self->hidden_fields("proctor_user", "proctor_key");
+    } else {
+	return '';
+    }
 }
 
 =item url_args(@fields)

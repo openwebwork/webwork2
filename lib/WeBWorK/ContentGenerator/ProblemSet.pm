@@ -60,7 +60,13 @@ sub initialize {
 	# First, if $set is undefined then $setName was never valid
 	$self->{invalidSet} = not defined $set;
 	return if $self->{invalidSet};
-	
+
+# now that the set is valid, make sure that GatewayQuiz assignments don't get 
+# entered through this module
+	die "set $setName is a GatewayQuiz.  Enter through the GatewayQuiz " .
+	    "module." if ( defined( $set->assignment_type() ) &&
+			   $set->assignment_type() =~ /gateway/ );
+
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
 	# make sure published is set to 0 or 1
@@ -115,10 +121,17 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
-	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
-	# do not show unpublished siblings unless user is allowed to view unpublished sets
+	my @allsetIDs = sortByName(undef, $db->listUserSets($eUserID));
+ # exclude versioned set IDs from the listing of global sets
+	my @setIDs = grep { $_ !~ /,v\d+$/ } @allsetIDs;
+	
+	# do not show unpublished siblings unless user is allowed to view unpublished sets, and 
+        # exclude gateway tests 
 	unless ($authz->hasPermissions($user, "view_unpublished_sets") ) {
-		@setIDs    = grep {my $visible = $db->getGlobalSet( $_)->published; (defined($visible))? $visible : 1} 
+#		@setIDs    = grep {my $visible = $db->getGlobalSet( $_)->published; (defined($visible))? $visible : 1}
+		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
+					$gs->assignment_type() !~ /gateway/ && 
+					    ( defined($gs->published()) ? $gs->published() : 1 )}
 	                     @setIDs;
 	}
 	print CGI::start_ul({class=>"LinksMenu"});

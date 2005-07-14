@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.22 2004/11/02 19:58:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.23 2005/06/20 22:40:34 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,6 +44,8 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  equation_display                    /$courseID/equation/
  feedback                            /$courseID/feedback/
  gateway_quiz                        /$courseID/quiz_mode/$setID/
+ proctored_gateway_quiz              /$courseID/proctored_quiz_mode/$setID/
+ proctored_gateway_proctor_login     /$courseID/proctored_quiz_mode/$setID/proctor_login/
  grades                              /$courseID/grades/
  hardcopy                            /$courseID/hardcopy/
  hardcopy_preselect_set              /$courseID/hardcopy/$setID/
@@ -120,7 +122,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz grades hardcopy
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -157,6 +159,24 @@ our %pathTypes = (
 		capture => [ qw/setID/ ],
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+	},
+	proctored_gateway_quiz => {
+		name    => 'Proctored Gateway Quiz $setID',
+		parent  => 'set_list',
+		kids    => [ qw/proctored_gateway_proctor_login/ ],
+		match   => qr|^proctored_quiz_mode/([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => 'proctored_quiz_mode/$setID/',
+		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+	},
+	proctored_gateway_proctor_login => {
+		name    => 'Proctored Gateway Quiz $setID Proctor Login',
+		parent  => 'proctored_gateway_quiz',
+		kids    => [ qw// ],
+		match   => qr|^proctored_quiz_mode/([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => 'proctored_quiz_mode/$setID/proctor_login',
+		display => 'WeBWorK::ContentGenerator::LoginProctor',
 	},
 	grades => {
 		name    => 'Grades',

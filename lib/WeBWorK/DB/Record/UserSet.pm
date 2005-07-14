@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/UserSet.pm,v 1.7 2004/07/07 14:37:32 gage Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,6 +39,14 @@ sub NONKEYFIELDS {qw(
 	due_date
 	answer_date
 	published
+        assignment_type
+	attempts_per_version
+	time_interval
+        versions_per_interval
+        version_time_limit
+        version_creation_time
+        problem_randorder
+        version_last_attempt_time
 )}
 
 sub FIELDS {qw(
@@ -51,6 +59,14 @@ sub FIELDS {qw(
 	due_date
 	answer_date
 	published
+        assignment_type
+	attempts_per_version
+	time_interval
+        versions_per_interval
+        version_time_limit
+        version_creation_time
+        problem_randorder
+        version_last_attempt_time
 )}
 
 sub SQL_TYPES {(
@@ -62,7 +78,15 @@ sub SQL_TYPES {(
 	"BIGINT",
 	"BIGINT",
 	"BIGINT",
-	"INT"
+	"INT",
+	"TEXT",
+        "INT",
+        "INT",
+        "INT",
+        "INT",
+        "BIGINT",
+        "INT",
+        "BIGINT"
 )}
 
 1;

@@ -33,9 +33,15 @@ use WeBWorK::Utils qw(readFile list2hash listFilesRecursive max);
 our $rowheight = 20;  #controls the length of the popup menus.  
 our $libraryName;  #library directory name
 
-use constant SET_FIELDS => [qw(open_date due_date answer_date set_header hardcopy_header published)];
+# added gateway fields here: everything after published
+use constant SET_FIELDS => [qw(open_date due_date answer_date set_header hardcopy_header published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
+
+# This defines allowed values for the assignment_type field in the set 
+# definition.  Ideally we should probably have this imported from some 
+# global file (global.conf?)
+use constant ASSIGNMENT_TYPES => [ qw(default gateway proctored_gateway) ];
 
 sub getSetName {
 	my ($self, $pathSetName) = @_;
@@ -113,6 +119,31 @@ sub initialize {
 
 		if (!$forUsers) {
 			foreach (@{SET_FIELDS()}) {
+            # this is an unnecessary logical division: we deal with gateway 
+	    #   fields separately from the rest, for no particular reason other
+            #   than it makes life somewhat easier for those who don't care  
+            #   about gateways
+			    if ( /(assignment_type)|(attempts_per_version)|(version_time_limit)|(versions_per_interval)|(time_interval)|(problem_randorder)/ ) {
+				if (defined($r->param($_))) {
+				    if ( /assignment_type/ && 
+					 $r->param($_) =~ /default/i ) {
+					$setRecord->$_(undef);
+				    } else {
+					
+					if ( m/time/ ) {
+                    # times are input as minutes, not seconds, so multiply by 60
+					    $setRecord->$_( 60*($r->param($_)) );
+					} else {
+					    $setRecord->$_( $r->param($_) );
+					}
+				    }
+
+				} elsif ( m/assignment_type/ ) {
+				    $setRecord->$_(undef);
+				}
+
+            # we now return you to your regularly scheduled programming
+			    } else {
 				if (defined($r->param($_))) {
 					if (m/_date$/) {
 						$setRecord->$_($self->parseDateTime($r->param($_)));
@@ -136,7 +167,8 @@ sub initialize {
 						$setRecord->$_(0);
 					}
 				}
-			}
+			  }
+		    }
 		
 
 		
@@ -347,9 +379,74 @@ sub body {
 							-values=>\@headers, 
 							-default=>0) .
 						"(currently: " . ($setRecord->set_header || "None selected.") . ")" . "\n",
+#
+# assignment type added for gateway compatibility
+                       CGI::td({}, [ "Assignment Type:", 
+                                     ($forOneUser) ? 
+                                         $setRecord->assignment_type || "Default." :
+                                         CGI::popup_menu( -name=>'assignment_type',
+                                                          -values=>ASSIGNMENT_TYPES,
+                                                          -default=>($setRecord->assignment_type || "default.") ) .
+                                         " (currently: " . 
+                                         ( $setRecord->assignment_type || "default." ) .
+                                         ")\n" ]) . "\n",
 				])
 		])
 	);
+
+# add input fields for gateway tests, if we're dealing with that type of assignment
+        if ( defined($setRecord->assignment_type) && 
+             $setRecord->assignment_type =~ /gateway/ ) {
+            print "Gateway parameters:", CGI::br(), "\n";
+            my $versionTimeLimit = ( defined( $setRecord->version_time_limit ) && 
+                                     $setRecord->version_time_limit ) ? 
+                                     int(($setRecord->version_time_limit() + 0.5)/60) : 
+                                     0;
+            my $timeInterval = ( defined( $setRecord->time_interval ) && 
+                                     $setRecord->time_interval ne '' ) ? 
+                                     int(($setRecord->time_interval() + 0.5)/60) : 
+                                     720;  # default is 12 hours
+            print CGI::table( {}, 
+                    CGI::Tr( {}, [ 
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Attempts per test version",
+                                               "attempts_per_version",
+                                               $setRecord->attempts_per_version ? 
+                                                 $setRecord->attempts_per_version : 1,
+                                               3,
+                                               @{$overrideArgs{attempts_per_version}}) .
+                                      "\n" ),
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Time limit for test (min)",
+                                               "version_time_limit", 
+                                               $versionTimeLimit, 3,
+                                               @{$overrideArgs{version_time_limit}}) .
+                                      "\n" ),
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Versions per time interval (0=infty)",
+                                               "versions_per_interval",
+                                               $setRecord->versions_per_interval ne '' ? 
+                                                 $setRecord->versions_per_interval : 1,
+                                               3,
+                                               @{$overrideArgs{versions_per_interval}}).
+                                      "\n" ),
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Time interval (min)",
+                                               "time_interval", $timeInterval, 4, 
+                                               @{$overrideArgs{time_interval}}) .
+                                      "\n" ),
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Order problems randomly in set (0|1)",
+                                               "problem_randorder",
+                                               $setRecord->problem_randorder ne '' ? 
+                                                 $setRecord->problem_randorder : 1,
+                                               3,
+                                               @{$overrideArgs{problem_randorder}}) .
+                                      "\n" )
+                    ] )
+                 ), "\n";
+        }
+
 
 	if (@editForUser) {
 		my $publishedClass = ($setRecord->published) ? "Published" : "Unpublished";

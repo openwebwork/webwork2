@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.174 2005/07/05 18:56:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.173 2005/07/05 18:20:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -84,6 +84,10 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # called with the following arguments:
 # 
 #     ($self, $User, $EffectiveUser, $Set, $Problem)
+
+# Note that significant parts of the "can" methods are lifted into the 
+# GatewayQuiz module.  It isn't direct, however, because of the necessity
+# of dealing with versioning there.
 
 sub can_showOldAnswers {
 	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
@@ -173,6 +177,9 @@ sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
 ################################################################################
 # output utilities
 ################################################################################
+
+# Note: the substance of attemptResults is lifted into GatewayQuiz.pm,
+# with some changes to the output format
 
 sub attemptResults {
 	my $self = shift;
@@ -277,6 +284,8 @@ sub attemptResults {
 }
 
 
+# Note: previewAnswer is lifted into GatewayQuiz.pm
+
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
 	my $ce            = $self->r->ce;
@@ -370,6 +379,14 @@ sub pre_header_initialize {
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
 
+# gateway check here: we want to be sure that someone isn't trying to take 
+# a GatewayQuiz through the regular problem/homework mechanism, thereby 
+# circumventing the versioning, time limits, etc.
+	die('Invalid access attempt: the Problem ContentGenerator was called ' .
+	    'for a GatewayQuiz assignment.') 
+	    if ( defined($set) && defined( $set->assignment_type() ) && 
+		 $set->assignment_type() =~ /gateway/ );
+	
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
 	# make sure published is set to 0 or 1
@@ -387,7 +404,7 @@ sub pre_header_initialize {
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
 
 	my $editMode = $r->param("editMode");
-	
+
 	if ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
@@ -462,8 +479,9 @@ sub pre_header_initialize {
 		my $publishedClass = ($set->published) ? "Published" : "Unpublished";
 		my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
-	} else {
-	
+
+  # test for additional set validity if it's not already invalid
+        } else {
 		# A set is valid if it exists and if it is either published or the user is privileged.
 		$self->{invalidSet} = !(defined $set and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
 		$self->{invalidProblem} = !(defined $problem and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));

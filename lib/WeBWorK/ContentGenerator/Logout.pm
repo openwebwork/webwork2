@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.8 2003/12/23 06:03:33 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,6 +70,26 @@ sub body {
 		print CGI::div({class=>"ResultsWithError"},
 			CGI::p("Something went wrong while logging out of WeBWorK: $@")
 		);
+	}
+
+# also check to see if there is a proctor key associated with this login.  if
+#    there is a proctor user, then we must have a proctored test, so we try 
+#    and delete the key
+	my $proctorID = defined($r->param("proctor_user")) ? 
+	    $r->param("proctor_user") : '';
+	if ( $proctorID ) {
+	    eval { $db->deleteKey( "$userID,$proctorID" ); };
+	    if ( $@ ) {
+		print CGI::div({ class=> "ResultsWithError" }, 
+			       CGI::p("Error when clearing proctor key: $@"));
+	    }
+# we may also have a proctor key from grading the test
+	    eval { $db->deleteKey( "$userID,$proctorID,g" ); };
+	    if ( $@ ) {
+		print CGI::div({ class=> "ResultsWithError" }, 
+			       CGI::p("Error when clearing proctor grading " .
+				      "key: $@"));
+	    }
 	}
 	
 	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
