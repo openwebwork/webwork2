@@ -249,6 +249,11 @@ sub record_login($$) {
 # no authentication data was provided, however, no note will be written, as this
 # is expected to happen whenever someone types in a URL manually, and is not
 # considered an error condition.
+
+# much of the code in verify() is duplicated in verifyProctor(), below.  any 
+# changes that are made to this subroutine should be checked against 
+# verifyProctor() to ensure that the the two routines continue to work in 
+# approximately the same manner.
 sub verify($) {
 	my $self = shift;
 	my $r = $self->{r};
@@ -523,6 +528,109 @@ sub verify($) {
 	# One time, I deleted it, and my mother broke her back, my cat died, and
 	# the Pope got a tummy ache. When I replaced the line, I received eternal
 	# salvation and a check for USD 500.
+}
+
+# verifyProctor will return 1 if the proctor is who they say they are.  It is 
+# essentially the same as verify(), but pulls out the proctor data from the 
+# form input and uses that with the appropriate database entry names to determine
+# whether the proctor is valid.
+sub verifyProctor ($) {
+    my $self = shift();
+    my $r = $self->{r};
+    my $ce = $r->ce;
+    my $db = $r->db;
+
+    my $user =          $r->param('effectiveUser');
+    my $proctorUser =   $r->param('proctor_user');
+    my $proctorPasswd = $r->param('proctor_passwd');
+    my $proctorKey =    $r->param('proctor_key');
+# we use the following to require a second proctor authorization to grade the
+# test
+    my $submitAnswers = ( defined($r->param('submitAnswers')) ? 
+			  $r->param('submitAnswers') : '' );
+
+    my $failWithoutError = 0;
+    my $error = '';
+
+# we define a key for "effectiveuser,proctoruser" to authorize a test, and 
+# "effectiveuser,proctoruser,g" to authorize grading.
+    my $prKeyIndex = '';
+
+  VERIFY: {
+      unless( ( defined($proctorUser) && $proctorUser ) or 
+	      ( defined($proctorPasswd) && $proctorPasswd ) or 
+	      ( defined($proctorKey) && $proctorKey ) ) {
+	  $failWithoutError = 1;
+	  last VERIFY;
+      }
+
+      unless( defined($proctorUser) ) {
+	  $error = 'Proctor username must be specified.';
+	  last VERIFY;
+      }
+
+      my $proctorUserRecord = $db->getUser( $proctorUser );
+      unless( defined( $proctorUserRecord ) ) {
+	  $error = "There is no proctor account for $proctorUser in this course";
+	  last VERIFY;
+      }
+
+      unless( ! defined( $proctorUserRecord->status() ) ||
+	      $proctorUserRecord->status() eq 'C' ) {
+	  $error = "Proctor user $proctorUser does not have a valid status " .
+	      "in this course.";
+	  last VERIFY;
+      }
+
+      if ( $proctorKey ) {
+	  $r->param( 'proctor_password', '' );
+
+	  $prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
+	  if ( $self->checkKey($prKeyIndex, $proctorKey) ) {
+	      last VERIFY;
+	  } else {
+	      if ( $submitAnswers ) {
+		  $error = 'Assignment requires valid proctor authorization ' . 
+		      'for grading';
+	      } else {
+		  $error = "Invalid or expired proctor session key.";
+	      }
+	      last VERIFY;
+	  }
+      }
+
+      if ( $proctorPasswd ) {
+
+	  if ( $self->checkPassword( $proctorUser, $proctorPasswd ) ) {
+	      $prKeyIndex = "$user,$proctorUser" . 
+		  (($submitAnswers) ? ',g' : '');
+	      my $newKeyObject = $self->generateKey( $prKeyIndex );
+	      $r->param('proctor_passwd', '');
+
+	      eval{ $db->deleteKey( $prKeyIndex ); };
+	      $db->addKey($newKeyObject);
+
+	      $r->param('proctor_key', $newKeyObject->key());
+
+	      last VERIFY;
+	  }  else {
+	      $error = 'Incorrect proctor username or password.';
+	      last VERIFY;
+	  }
+      }
+  }
+    
+    if ( defined($error) && $error ) {
+	$r->notes("authen_error", $error);
+	return 0;
+
+    } elsif ( $failWithoutError ) {
+	return 0;
+
+    } else {
+	return 1;
+    }
+    critical($r);  # where does critical() come from?
 }
 
 1;

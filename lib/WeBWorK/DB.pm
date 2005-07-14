@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.62 2004/12/20 15:24:16 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.63 2005/06/10 15:59:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -842,6 +842,10 @@ the same user ID does not already exist. If one does exist, an exception is
 thrown. To add a key, a user with a matching user ID must exist in the user
 table.
 
+We also allow user IDs to match userID1,userID2 where both userIDs are valid,
+to allow for proctored tests, where the second userID is the ID of the 
+proctor.
+
 =cut
 
 sub addKey($$) {
@@ -852,12 +856,20 @@ sub addKey($$) {
 	croak "addKey: argument 1 must be of type ", $self->{key}->{record}
 		unless ref $Key eq $self->{key}->{record};
 	
-	checkKeyfields($Key);
+	checkKeyfields($Key, 1); # 1 flags that we can have a comma
 	
 	croak "addKey: key exists (perhaps you meant to use putKey?)"
 		if $self->{key}->exists($Key->user_id);
-	croak "addKey: user ", $Key->user_id, " not found"
+	if ( $Key->user_id !~ /,/ ) {
+	    croak "addKey: user ", $Key->user_id, " not found"
 		unless $self->{user}->exists($Key->user_id);
+	} else {
+	    my ( $userID, $proctorID ) = split(/,/, $Key->user_id);
+	    croak "addKey: user $userID not found"
+		unless $self->{user}->exists($userID);
+	    croak "addKey: proctor $proctorID not found"
+		unless $self->{user}->exists($proctorID);
+	}
 	
 	return $self->{key}->add($Key);
 }
@@ -918,7 +930,7 @@ sub putKey($$) {
 	croak "putKey: argument 1 must be of type ", $self->{key}->{record}
 		unless ref $Key eq $self->{key}->{record};
 	
-	checkKeyfields($Key);
+	checkKeyfields($Key, 1);  # 1 allows commas for versioned sets
 	
 	croak "putKey: key not found (perhaps you meant to use addKey?)"
 		unless $self->{key}->exists($Key->user_id);
@@ -1303,6 +1315,9 @@ sub listUserSets {
 		$self->{set_user}->list($userID, undef);
 }
 
+# the code from addUserSet() is duplicated in large part following in 
+# addVersionedUserSet; changes here should accordingly be propagated down there
+
 sub addUserSet {
 	my ($self, $UserSet) = @_;
 	
@@ -1321,6 +1336,37 @@ sub addUserSet {
 		unless $self->{set}->exists($UserSet->set_id);
 	
 	return $self->{set_user}->add($UserSet);
+}
+
+sub addVersionedUserSet {
+    my ($self, $UserSet) = @_;
+
+# this is the same as addUserSet,allowing for set names of the form setID,vN
+	
+    croak "addVersionedUserSet: requires 1 argument"
+	unless @_ == 2;
+    croak "addVersionedUserSet: argument 1 must be of type ", 
+        $self->{set_user}->{record} 
+	unless ref $UserSet eq $self->{set_user}->{record};
+	
+# $versioned is a flag that we send in to allow commas in the set name 
+#    for versioned sets
+    my $versioned = 1;
+    checkKeyfields($UserSet, $versioned);
+    my ($nonVersionedSetName) = ($UserSet->set_id =~ /^(.*),v\d+$/);
+	
+    croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)"
+	if $self->{set_user}->exists($UserSet->user_id, $UserSet->set_id);
+    croak "addUserSet: user ", $UserSet->user_id, " not found"
+	unless $self->{user}->exists($UserSet->user_id);
+#	croak "addUserSet: set ", $UserSet->set_id, " not found"
+#		unless $self->{set}->exists($UserSet->set_id);
+# here the appropriate check is whether a global set of the nonversioned set
+#    name exists
+    croak "addVersionedUserSet: set ", $nonVersionedSetName, " not found"
+	unless $self->{set}->exists( $nonVersionedSetName );
+	
+    return $self->{set_user}->add($UserSet);
 }
 
 sub getUserSet {
@@ -1363,6 +1409,27 @@ sub getUserSets {
 	return $self->{set_user}->gets(@userSetIDs);
 }
 
+sub getUserSetVersions {
+    my ( $self, $uid, $sid, $versionNum ) = @_;
+# in:  $uid is a userID, $sid is a setID, and $versionNum is a version number
+#      userID has set versions 1 through $versionNum defined
+# out: an array of user set objects is returned for the indicated version 
+#      numbers
+
+    croak "getUserSetVersions: requires three arguments, userID, setID, and " .
+	"versionNum" if ( @_ < 3 );
+
+    my @userSetIDs = ();
+    foreach my $i ( 1 .. $versionNum ) {
+	push( @userSetIDs, [ $uid, "$sid,v$i" ] );
+    }
+
+    return $self->getUserSets( @userSetIDs );
+}
+
+# the code from putUserSet() is duplicated in large part in the following
+# putVersionedUserSet; c.f. that routine
+
 sub putUserSet {
 	my ($self, $UserSet) = @_;
 	
@@ -1383,8 +1450,36 @@ sub putUserSet {
 	return $self->{set_user}->put($UserSet);
 }
 
+sub putVersionedUserSet {
+    my ($self, $UserSet) = @_;
+# this exists separate from putUserSet only so that we can make it harder
+#   for anyone else to use commas in setIDs
+	
+    croak "putUserSet: requires 1 argument"
+	unless @_ == 2;
+    croak "putUserSet: argument 1 must be of type ", $self->{set_user}->{record}
+	unless ref $UserSet eq $self->{set_user}->{record};
+	
+    # versioned allows us to have a wacked out setID
+    my $versioned = 1;
+    checkKeyfields($UserSet, $versioned);
+	
+    my $nonVersionedSetID = $UserSet->set_id;
+    $nonVersionedSetID =~ s/,v\d+$//;
+#    my ($nonVersionedSetID) = ($UserSet->set_id =~ /^(.*)(,v\d+)?$/);
+    croak "putVersionedUserSet: user set not found (perhaps you meant " .
+        "to use addUserSet?)"
+	unless $self->{set_user}->exists($UserSet->user_id, $UserSet->set_id);
+    croak "putVersionedUserSet: user ", $UserSet->user_id, " not found"
+	unless $self->{user}->exists($UserSet->user_id);
+    croak "putVersionedUserSet: set $nonVersionedSetID not found"
+	unless $self->{set}->exists($nonVersionedSetID);
+	
+    return $self->{set_user}->put($UserSet);
+}
+
 sub deleteUserSet {
-	my ($self, $userID, $setID) = @_;
+	my ($self, $userID, $setID, $skipVersionDel) = @_;
 	
 	croak "getUserSet: requires 2 arguments"
 		unless @_ == 3;
@@ -1393,8 +1488,70 @@ sub deleteUserSet {
 	croak "getUserSet: argument 2 must contain a set_id"
 		unless defined $userID or caller eq __PACKAGE__;
 	
+	$self->deleteUserSetVersions( $userID, $setID ) 
+	    if ( defined($setID) && ! ( defined($skipVersionDel) && 
+		 $skipVersionDel ) );
 	$self->deleteUserProblem($userID, $setID, undef);
 	return $self->{set_user}->delete($userID, $setID);
+}
+
+sub deleteUserSetVersions {
+    my ($self, $userID, $setID) = @_;
+
+# this only gets called from deleteUserSet, so we don't worry about $setID
+#    not being defined 
+
+# make a list of all users to delete set versions for.  if we have a userID, 
+#    then just delete versions for that user
+    my @allUsers = ();
+    if ( defined( $userID ) ) {
+	push( @allUsers, $userID );
+    } else {
+# otherwise, get a list of all users to whom the set is assigned, and delete
+#    all versions for all of them
+	@allUsers = $self->listSetUsers( $setID );
+    }
+
+# skip version deletion when calling deleteUserSet from here
+    my $skipVersionDel = 1;
+
+# go through each userID and delete all versions of the set for each
+    foreach my $uid ( @allUsers ) {
+	my $setVersionNumber = $self->getUserSetVersionNumber($uid, $setID);
+	if ( $setVersionNumber ) {
+	    for ( my $i=1; $i<=$setVersionNumber; $i++ ) {
+		eval { $self->deleteUserSet( $uid, "$setID,v$i",
+					     $skipVersionDel ) };
+		return $@ if ( $@ );
+	    }
+	}
+    }
+}
+
+sub getUserSetVersionNumber {
+    my ( $self, $uid, $sid ) = @_;
+# in:  uid and sid are user and set ids.  the setID is the 'global' setID
+#      for the user, not a versioned value
+# out: the latest version number of the set that has been assigned to the
+#      user is returned.
+
+    croak "getUserSetVersionNumber: requires 2 arguments, a user and set ID"
+	unless @_ == 3 && defined $uid && defined $sid;
+
+# we just get all sets for the user and figure out which of them 
+#    look like the sid.
+    my @allSetIDs = $self->listUserSets( $uid );
+    my @setIDs = sort( grep { /^$sid,v\d+$/ } @allSetIDs );
+    my $lastSetID = $setIDs[-1];
+# I think this should be defined, unless the set hasn't been assigned to 
+#    the user at all, which we hope wouldn't have happened at this juncture
+    if ( not defined($lastSetID) ) {
+	return 0;
+    } else {
+  # we have to deal with the fact that 10 sorts to precede 2 (etc.)
+	my @vNums = map { /^$sid,v(\d+)$/ } @setIDs;
+	return ( ( sort {$a<=>$b} @vNums )[-1] );
+    }
 }
 
 =back
@@ -1619,15 +1776,22 @@ sub addUserProblem {
 		unless @_ == 2;
 	croak "addUserProblem: argument 1 must be of type ", $self->{problem_user}->{record}
 		unless ref $UserProblem eq $self->{problem_user}->{record};
-	
-	checkKeyfields($UserProblem);
+
+# catch versioned sets here and check them allowing commas in some fields
+	my $setID = $UserProblem->set_id;
+	if ( $setID =~ /^(.*),v\d+/ ) {  # then it's a versioned set
+	    $setID = $1;
+	    checkKeyfields($UserProblem, 1);
+	} else {
+	    checkKeyfields($UserProblem);
+	}
 	
 	croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)"
 		if $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
-		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
+		unless $self->{set_user}->exists($UserProblem->user_id, $setID);
 	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
-		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
+		unless $self->{problem}->exists($setID, $UserProblem->problem_id);
 	
 	return $self->{problem_user}->add($UserProblem);
 }
@@ -1702,21 +1866,29 @@ sub getAllUserProblems {
 }
 
 sub putUserProblem {
-	my ($self, $UserProblem) = @_;
+	my ($self, $UserProblem, $versioned) = @_;
+# $versioned is an optional argument which lets us slip versioned setIDs
+#    through checkKeyfields.  this makes the first croak message a little 
+#    disingenuous, of course.
 	
 	croak "putUserProblem: requires 1 argument"
-		unless @_ == 2;
+		unless @_ == 2 or @_ == 3;
 	croak "putUserProblem: argument 1 must be of type ", $self->{problem_user}->{record}
 		unless ref $UserProblem eq $self->{problem_user}->{record};
 	
-	checkKeyfields($UserProblem);
+	checkKeyfields($UserProblem, $versioned);
 	
 	croak "putUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
 	croak "putUserProblem: user problem not found (perhaps you meant to use addUserProblem?)"
 		unless $self->{problem_user}->exists($UserProblem->user_id, $UserProblem->set_id, $UserProblem->problem_id);
+
+# allow versioned set names when $versioned is defined and true
+	my $unversionedSetID = $UserProblem->set_id;
+	$unversionedSetID =~ s/,v\d+$// if ( defined($versioned) && $versioned );
+
 	croak "putUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
-		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
+		unless $self->{problem}->exists($unversionedSetID, $UserProblem->problem_id);
 	
 	return $self->{problem_user}->put($UserProblem);
 }
@@ -1779,7 +1951,59 @@ sub getMergedSet {
 	return ( $self->getMergedSets([$userID, $setID]) )[0];
 }
 
-=item getMegedSets(@userSetIDs)
+=item getMergedVersionedSet($userID, $setID, $versionNum)
+
+Returns a merged set record associated with the record IDs given, for 
+versioned sets.  If versionNum is supplied, the that version of the set 
+is returned; otherwise, the latest version is returned.  If there is no
+record associated with a given record ID, the undefined value is returned.
+
+Note that sid can be setid,vN, thereby specifying the version number
+explicitly.  If this is the case, any specified versionNum is ignored.
+
+=cut
+
+sub getMergedVersionedSet {
+    my ( $self, $userID, $setID, $versionNum ) = @_;
+#
+# getMergedVersionedSet( self, uid, sid [, versionNum] )
+#    in:  userID uid, setID sid, and optionally version number versionNum
+#    out: the merged set version for the user; if versionNum is specified,
+#         return that set version and otherwise the latest version.  if 
+#         no versioned set exists for the user, return undef.
+#    note that sid can be setid,vN, thereby specifying the version number
+#      explicitly.  if this is the case, any specified versionNum is ignored
+# we'd like to use getMergedSet to do the dirty work here, but that runs 
+#    into problems because we want to merge with both the template set
+#    (that is, the userSet setID) and the global set 
+
+    croak "getMergedVersionedSet: requires at least two arguments, a userID " .
+	"and setID (missing setID)" if ( @_ < 3 || ! defined( $setID ) );
+
+    my $versionedSetID = $setID;
+
+    if ( ( ! defined($versionNum) || ! $versionNum ) && $setID !~ /,v\d+$/ ) {
+	$versionNum = $self->getUserSetVersionNumber( $userID, $setID );
+
+	if ( ! $versionNum ) {
+	    return undef;
+	} else {
+	    $versionedSetID .= ",v$versionNum";
+	}
+    } elsif ( defined($versionNum) && $versionNum ) {
+	$versionedSetID = ($setID =~ /,v\d+$/ ? $setID : "$setID,v$versionNum");
+    } else {  # the last case is that $setID =~ /,v\d+$/
+	$setID =~ s/,v\d+//;
+    }
+
+    croak "getMergedVersionedSet: requires at least two arguments, a userID " .
+	"and setID (missing userID)" if ( ! defined( $userID ) );
+
+    return ( $self->getMergedVersionedSets( [$userID, $setID, 
+					     $versionedSetID] ) )[0];
+}
+
+=item getMergedSets(@userSetIDs)
 
 Return a list of merged set records associated with the record IDs given. If
 there is no record associated with a given record ID, that element of the list
@@ -1787,6 +2011,9 @@ will be undefined. @userSetIDs consists of references to arrays in which the
 first element is the user_id and the second element is the set_id.
 
 =cut
+
+# a significant amount of getMergedSets is duplicated in getMergedVersionedSets
+# below
 
 sub getMergedSets {
 	my ($self, @userSetIDs) = @_;
@@ -1841,6 +2068,86 @@ sub getMergedSets {
 	return @UserSets;
 }
 
+sub getMergedVersionedSets {
+    my ($self, @userSetIDs) = @_;
+	
+    foreach my $i (0 .. $#userSetIDs) {
+	croak "getMergedSets: element $i of argument list must contain a " .
+	    "<user_id, set_id, versioned_set_id> triple"
+	    unless( defined $userSetIDs[$i]
+		    and ref $userSetIDs[$i] eq "ARRAY"
+		    and @{$userSetIDs[$i]} == 3
+		    and defined $userSetIDs[$i]->[0]
+		    and defined $userSetIDs[$i]->[1]
+		    and defined $userSetIDs[$i]->[2] );
+    }
+
+# these are [user_id, set_id] pairs
+    my @nonversionedUserSetIDs = map { [$_->[0], $_->[1]] } @userSetIDs;
+# these are [user_id, versioned_set_id] pairs
+    my @versionedUserSetIDs = map { [$_->[0], $_->[2]] } @userSetIDs;
+
+# the following has never been tested, and probably doesn't actually work
+# will anyone every try and do gateways on a GDBM install of WeBWorK2?
+  # a horrible, terrible hack ;)
+    if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
+	and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
+    #warn __PACKAGE__.": using a terrible hack.\n";
+#	$WeBWorK::timer->continue("DB: getsNoFilter start") 
+#	    if defined($WeBWorK::timer);
+#	my @MergedSets = $self->{set_user}->getsNoFilter(@versionedUserSetIDs);
+#	$WeBWorK::timer->continue("DB: getsNoFilter end") 
+#	    if defined($WeBWorK::timer);
+#	return @MergedSets;
+	croak 'getMergedVersionedSets: using WW1Hash DB Schema!  Versioned ' .
+	    'sets are not supported in this context.';
+    }
+
+# we merge the nonversioned ("template") user sets (user_id, set_id) and
+#    the global data into the versioned user sets	
+    $WeBWorK::timer->continue("DB: getUserSets start (nonversioned)") 
+	if defined($WeBWorK::timer);
+    my @TemplateUserSets = $self->getUserSets(@nonversionedUserSetIDs);
+    $WeBWorK::timer->continue("DB: getUserSets start (versioned)") 
+	if defined($WeBWorK::timer);
+# these are the actual user sets that we want to use
+    my @versionedUserSets = $self->getUserSets(@versionedUserSetIDs);
+	
+    $WeBWorK::timer->continue("DB: pull out set IDs start") 
+	if defined($WeBWorK::timer);
+    my @globalSetIDs = map { $_->[1] } @userSetIDs;
+    $WeBWorK::timer->continue("DB: getGlobalSets start") 
+	if defined($WeBWorK::timer);
+    my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
+	
+    $WeBWorK::timer->continue("DB: calc common fields start") 
+	if defined($WeBWorK::timer);
+    my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
+    my @commonFields = 
+	grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
+	
+    $WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+    for (my $i = 0; $i < @TemplateUserSets; $i++) {
+	next unless( defined $versionedUserSets[$i] and 
+		     (defined $TemplateUserSets[$i] or
+		      defined $GlobalSets[$i]) );
+	foreach my $field (@commonFields) {
+	    next if ( defined( $versionedUserSets[$i]->$field ) && 
+		      $versionedUserSets[$i]->$field ne '' );
+	    $versionedUserSets[$i]->$field($GlobalSets[$i]->$field) if 
+		(defined($GlobalSets[$i]->$field) && 
+		 $GlobalSets[$i]->$field ne '');
+	    $versionedUserSets[$i]->$field($TemplateUserSets[$i]->$field)
+		if (defined($TemplateUserSets[$i]) &&
+		    defined($TemplateUserSets[$i]->$field) &&
+		    $TemplateUserSets[$i]->$field ne '');
+	}
+    }
+    $WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+	
+    return @versionedUserSets;
+}
+
 =back
 
 =cut
@@ -1885,6 +2192,35 @@ sub getMergedProblem {
 		unless defined $problemID;
 	
 	return ( $self->getMergedProblems([$userID, $setID, $problemID]) )[0];
+}
+
+=item getMergedVersionedProblem($userID, $setID, $setVersionID, $problemID)
+
+Returns a merged problem record associated with the record IDs given, for 
+versioned problem sets.  If there is no record associated with a given 
+record ID, the undefined value is returned.
+
+=cut
+
+sub getMergedVersionedProblem {
+    my ($self, $userID, $setID, $setVersionID, $problemID) = @_;
+
+# this exists distinct from getMergedProblem only to be able to include the
+#    setVersionID
+    
+    croak "getGlobalUserSet: requires 4 arguments"
+	unless @_ == 5;
+    croak "getGlobalUserSet: argument 1 must contain a user_id"
+	unless defined $userID;
+    croak "getGlobalUserSet: argument 2 must contain a set_id"
+	unless defined $setID;
+    croak "getGlobalUserSet: argument 3 must contain a versioned set_id"
+	unless defined $setVersionID;
+    croak "getGlobalUserSet: argument 4 must contain a problem_id"
+	unless defined $problemID;
+	
+    return ($self->getMergedVersionedProblems([$userID, $setID, $setVersionID,
+					       $problemID]))[0];
 }
 
 =item getMergedProblems(@userProblemIDs)
@@ -1944,6 +2280,77 @@ sub getMergedProblems {
 	return @UserProblems;
 }
 
+sub getMergedVersionedProblems {
+    my ($self, @userProblemIDs) = @_;
+	
+    foreach my $i (0 .. $#userProblemIDs) {
+	croak "getMergedProblems: element $i of argument list must contain a " .
+	    "<user_id, set_id, versioned_set_id, problem_id> quadruple"
+	    unless( defined $userProblemIDs[$i]
+		    and ref $userProblemIDs[$i] eq "ARRAY"
+		    and @{$userProblemIDs[$i]} == 4
+		    and defined $userProblemIDs[$i]->[0]
+		    and defined $userProblemIDs[$i]->[1]
+		    and defined $userProblemIDs[$i]->[2]
+		    and defined $userProblemIDs[$i]->[3] );
+    }
+	
+    $WeBWorK::timer->continue("DB: getUserProblems start") 
+	if defined($WeBWorK::timer);
+
+# these are triples [user_id, set_id, problem_id]
+    my @nonversionedProblemIDs = map {[$_->[0],$_->[1],$_->[3]]} @userProblemIDs;
+# these are triples [user_id, versioned_set_id, problem_id]
+    my @versionedProblemIDs = map {[$_->[0],$_->[2],$_->[3]]} @userProblemIDs;
+
+# these are the actual user problems for the version
+    my @versionUserProblems = $self->getUserProblems(@versionedProblemIDs);
+
+# get global problems (no user_id, set_id = nonversioned set_id) and 
+#    template problems (user_id, set_id = nonversioned set_id); we merge with
+#    both of these, replacing global values with template values and not 
+#    taking either in the event that the versioned problem already has a 
+#    value for the field in question
+    $WeBWorK::timer->continue("DB: pull out set/problem IDs start") 
+	if defined($WeBWorK::timer);
+    my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @nonversionedProblemIDs;
+    $WeBWorK::timer->continue("DB: getGlobalProblems start") 
+	if defined($WeBWorK::timer);
+    my @GlobalProblems = $self->getGlobalProblems( @globalProblemIDs );
+    $WeBWorK::timer->continue("DB: getTemplateProblems start") 
+	if defined($WeBWorK::timer);
+    my @TemplateProblems = $self->getUserProblems( @nonversionedProblemIDs );
+	
+    $WeBWorK::timer->continue("DB: calc common fields start") 
+	if defined($WeBWorK::timer);
+
+    my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
+    my @commonFields = 
+	grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
+	
+    $WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+    for (my $i = 0; $i < @versionUserProblems; $i++) {
+	my $UserProblem = $versionUserProblems[$i];
+	my $GlobalProblem = $GlobalProblems[$i];
+	my $TemplateProblem = $TemplateProblems[$i];
+	next unless defined $UserProblem and ( defined $GlobalProblem or
+					       defined $TemplateProblem );
+	foreach my $field (@commonFields) {
+	    next if defined $UserProblem->$field && $UserProblem->$field ne '';
+	    $UserProblem->$field($GlobalProblem->$field) 
+		if ( defined($GlobalProblem) && defined($GlobalProblem->$field)
+		     && $GlobalProblem->$field ne '' );
+	    $UserProblem->$field($TemplateProblem->$field)
+		if ( defined($TemplateProblem) && 
+		     defined($TemplateProblem->$field) &&
+		     $TemplateProblem->$field ne '' );
+	}
+    }
+    $WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+
+    return @versionUserProblems;
+}
+
 =back
 
 =cut
@@ -1961,8 +2368,13 @@ sub getMergedProblems {
 # utilities
 ################################################################################
 
-sub checkKeyfields($) {
-	my ($Record) = @_;
+# the (optional) second argument to checkKeyfields is to support versioned
+# (gateway) sets, which may include commas in certain fields (in particular,
+# set names (e.g., setDerivativeGateway,v1) and user names (e.g., 
+# username,proctorname)
+
+sub checkKeyfields($;$) {
+	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
 		my $value = $Record->$keyfield;
 		croak "checkKeyfields: $keyfield is empty"
@@ -1973,7 +2385,13 @@ sub checkKeyfields($) {
 				unless $value =~ m/^\d*$/;
 		} else {
 			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_.])"
-				unless $value =~ m/^[.\w\-]*$/;
+#				unless $value =~ m/^[.\w\-]*$/;
+				unless ( $value =~ m/^[\w-]*$/ ||
+					 ( $value =~ m/^[\w,-]*$/ &&
+					   (defined($versioned) && $versioned) 
+					   &&
+					   ($keyfield eq "set_id" ||
+					    $keyfield eq "user_id") ) );
 		}
 	}
 }

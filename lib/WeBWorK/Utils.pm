@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.64 2005/06/22 15:54:16 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.65 2005/07/01 12:14:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,6 +61,7 @@ our @EXPORT_OK = qw(
 	parseDateTime
 	textDateTime
 	intDateTime
+	timeToSec
 	writeLog
 	writeCourseLog
 	writeTimingLogEntry
@@ -528,6 +529,41 @@ Accepts a UNIX datetime or a formatted string, returns a UNIX datetime.
 
 sub intDateTime($) {
 	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
+}
+
+=item $timeinsec = timeToSec($time)
+
+Makes a stab at converting a time (with a possible unit) into a number of 
+seconds.  
+
+=cut
+
+sub timeToSec($) {
+    my $t = shift();
+    if ( $t =~ /^(\d+)\s+(\S+)\s*$/ ) {
+	my ( $val, $unit ) = ( $1, $2 );
+	if ( $unit =~ /month/i || $unit =~ /mon/i ) {
+	    $val *= 18144000;  # this assumes 30 days/month
+	} elsif ( $unit =~ /week/i || $unit =~ /wk/i ) {
+	    $val *= 604800;
+	} elsif ( $unit =~ /day/i || $unit =~ /dy/i ) {
+	    $val *= 86400;
+	} elsif ( $unit =~ /hour/i || $unit =~ /hr/i ) {
+	    $val *= 3600;
+	} elsif ( $unit =~ /minute/i || $unit =~ /min/i ) {
+	    $val *= 60;
+	} elsif ( $unit =~ /second/i || $unit =~ /sec/i || $unit =~ /^s$/i ) {
+	    # do nothing
+	} else {
+	    warn("Unrecognized time unit $unit.\nAssuming seconds.\n");
+	}
+	return $val;
+    } elsif ( $t =~ /^(\d+)$/ ) {
+	return $t;
+    } else {
+	warn("Unrecognized time interval: $t\n");
+	return 0;
+    }
 }
 
 =back

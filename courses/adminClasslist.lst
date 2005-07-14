@@ -1,4 +1,4 @@
-# $Id: adminClasslist.lst,v 1.4 2004-11-22 17:21:09 sh002i Exp $
+# $Id: adminClasslist.lst,v 1.5 2005-07-14 13:15:23 glarose Exp $
 # Field order: student_id,last_name,first_name,status,comment,section,recitation,email_address,user_id,password,permission
 global_user,GlobalUser,,D,,,,,global_user,,0
 admin,Administrator,,C,,,,,admin,.bxpcera4I/bg,10

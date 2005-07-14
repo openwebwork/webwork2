@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.46 2004/09/21 20:01:18 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.47 2004/10/22 22:59:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -82,6 +82,64 @@ sub assignSetToUser {
 	return @results;
 }
 
+sub assignSetVersionToUser {
+    my ( $self, $userID, $GlobalSet ) = @_;
+# in:  ($self,) $userID = the userID of the user to which to assign the set,
+#      $GlobalSet = the global set object.
+# out: a new set version is assigned to the user.
+# note: we assume that the global set and user are well defined.  I think this
+#    is a safe assumption.  it would be nice to just call assignSetToUser,
+#    but we run into trouble doing that because of the distinction between
+#    the setID and the setVersionID
+
+    my $setID = $GlobalSet->set_id;
+    my $db = $self->{db};
+
+# figure out what version we're on, reset setID, get a new user set
+    my $setVersionNum = $db->getUserSetVersionNumber( $userID, $setID );
+    $setVersionNum++;
+    my $setVersionID = "$setID,v$setVersionNum";
+    my $userSet = $db->newUserSet;
+    $userSet->user_id( $userID );
+    $userSet->set_id( $setVersionID );
+
+    my @results = ();
+    my $set_assigned = 0;
+
+# add the set to the database
+    eval( $db->addVersionedUserSet( $userSet ) );
+    if ( $@ ) {
+	if ( $@ =~ m/user set exists/ ) {
+	    push( @results, "set $setVersionID is already assigned to user " .
+		  "$userID" );
+	    $set_assigned = 1;
+	} else {
+	    die $@;
+	}
+    }
+
+# populate set with problems
+    my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+
+    foreach my $GlobalProblem ( @GlobalProblems ) {
+	$GlobalProblem->set_id( $setVersionID );
+# this is getting called from within ContentGenerator, so that $self
+#    isn't an Instructor object---therefore, calling $self->assign... 
+#    doesn't work.  the following is an ugly workaround that works b/c
+#    both Instructor and ContentGenerator objects have $self->{db}
+# FIXME  it would be nice to have a better solution to this
+#	my @result = 
+#	    $self->assignProblemToUser( $userID, $GlobalProblem );
+	my @result = 
+	    assignProblemToUserSetVersion( $self, $userID, $userSet,
+	    			           $GlobalProblem );
+	push( @results, @result ) if ( @result && not $set_assigned );
+    }
+
+    return @results;
+}
+
+
 =item unassignSetFromUser($userID, $setID, $problemID)
 
 Unassigns the given set and all problems therein from the given user.
@@ -124,6 +182,70 @@ sub assignProblemToUser {
 	}
 	
 	return ();
+}
+
+sub assignProblemToUserSetVersion {
+	my ($self, $userID, $userSet, $GlobalProblem) = @_;
+	my $db = $self->{db};
+	
+# conditional to allow selection of problems from a group of problems, 
+# defined in a set.  
+	my %groupProblems = ();  # list of which problem groups are in use
+
+    # problem groups are indicated by source files "group:problemGroupName"
+	if ( $GlobalProblem->source_file() =~ /^group:(.+)$/ ) {
+	    my $problemGroupName = $1;  
+
+    # get list of problems in group
+	    my @problemList = $db->listGlobalProblems($problemGroupName);
+	    my $nProb = @problemList;
+	    my $whichProblem = int(rand($nProb));
+
+    # we allow selection of multiple problems from a group, but want them to
+    #   be different.  there's probably a better way to do this
+	    if ( defined( $groupProblems{$problemGroupName} ) &&
+		 $problemGroupName =~ /\b$whichProblem\b/ ) {
+		my $nAvail = $nProb - 
+		    ( $groupProblems{$problemGroupName} =~ tr/,// ) - 1;
+
+		die("Too many problems selected from group.") if ( ! $nAvail );
+
+		$whichProblem = int(rand($nProb));
+		while ( $problemGroupName =~ /\b$whichProblem\b/ ) {
+		    $whichProblem = ( $whichProblem + 1 )%$nProb;
+		}
+	    }
+	    if ( defined( $groupProblems{$problemGroupName} ) ) {
+		$groupProblems{$problemGroupName} .= ",$whichProblem";
+	    } else {
+		$groupProblems{$problemGroupName} = "$whichProblem";
+	    }
+
+	    my $prob = $db->getGlobalProblem($problemGroupName,
+					     $problemList[$whichProblem]);
+	    $GlobalProblem->source_file($prob->source_file());
+	}
+	
+# all set; do problem assignment
+	my $UserProblem = $db->newUserProblem;
+	$UserProblem->user_id($userID);
+	$UserProblem->set_id($userSet->set_id);
+	$UserProblem->problem_id($GlobalProblem->problem_id);
+	$UserProblem->source_file($GlobalProblem->source_file);
+	initializeUserProblem($UserProblem);
+	
+	eval { $db->addUserProblem($UserProblem) };
+	if ($@) {
+		if ($@ =~ m/user problem exists/) {
+			return "problem " . $GlobalProblem->problem_id
+				. " in set " . $GlobalProblem->set_id
+				. " is already assigned to user $userID.";
+		} else {
+			die $@;
+		}
+	}
+
+	return();
 }
 
 =item unassignProblemFromUser($userID, $setID, $problemID)

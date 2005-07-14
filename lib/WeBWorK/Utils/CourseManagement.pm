@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.20 2004/09/27 19:21:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.21 2004/12/21 04:41:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

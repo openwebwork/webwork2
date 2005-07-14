@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK.pm,v 1.70 2004/12/20 21:08:06 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.71 2005/06/22 15:18:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,7 @@ use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use Date::Format;
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
+use constant PROCTOR_AUTHEN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
 our %SeedCE;
@@ -249,6 +250,33 @@ sub dispatch($) {
 				$eUserID = $userID;
 			}
 			$r->param("effectiveUser" => $eUserID);
+       # if we're doing a proctored test, after the user has been authenticated
+       #    we need to also check on the proctor.  note that in the gateway quiz
+       #    module we double check this, to be sure that someone isn't taking a 
+       #    proctored quiz but calling the unproctored ContentGenerator
+			my $urlProducedPath = $urlPath->path();
+
+			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
+			    my $procAuthOK = $authen->verifyProctor();
+
+			    if ( $procAuthOK ) {
+				my $proctorUserID = $r->param("proctor_user");
+				my $proctor_authorized = 
+				    $authz->hasPermissions($proctorUserID,
+							   "proctor_quiz", $userID);
+				if ( ! $proctor_authorized ) {
+				    $r->notes("authen_error", 
+					      "Proctor $proctorUserID is not " .
+					      "authorized to proctor tests in " .
+					      "this course.");
+				    $displayModule = PROCTOR_AUTHEN_MODULE;
+				}
+
+			    } else {
+				$displayModule = PROCTOR_AUTHEN_MODULE;
+			    }
+			}
+
 		} else {
 			debug("Bad news: authentication failed!\n");
 			$displayModule = AUTHEN_MODULE;

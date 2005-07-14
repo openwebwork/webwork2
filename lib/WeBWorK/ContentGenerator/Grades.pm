@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.11 2004/12/18 20:41:26 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.12 2005/02/05 01:32:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -212,8 +212,9 @@ sub displayStudentStats {
 	
 	my @setIDs    = sort $db->listUserSets($studentName);
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+	my $effectiveUser = $studentRecord->user_id();
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
-			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
 	print CGI::h3($fullName ), 
 
@@ -230,7 +231,31 @@ sub displayStudentStats {
 	
 	foreach my $setName (@setIDs)   {
 	    my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
-			"&effectiveUser=".$studentRecord->user_id()."&key=".$r->param("key");
+			"&effectiveUser=$effectiveUser&key=".$r->param("key");
+
+       # get the set from the database so that we know if it's a gateway
+       # and if it's versioned, which determines how we display it.
+	    my $set;
+	    if ( $setName =~ /,v\d+$/ ) { # then it's versioned
+		$set = $db->getMergedVersionedSet( $effectiveUser, $setName );
+	    } else {
+		$set = $db->getMergedSet( $effectiveUser, $setName );
+	    }
+
+	    if ( defined( $set->assignment_type() ) && 
+		 $set->assignment_type() =~ /gateway/ ) {
+       # skip template sets
+		next if ( $setName !~ /,v\d+$/ );
+       # reset the URL for gateways
+		if ( $set->assignment_type() eq 'proctored_gateway' ) {
+		    $act_as_student_set_url =~ 
+			s/($courseName)\//$1\/proctored_quiz_mode\//;
+		} else {
+		    $act_as_student_set_url =~ 
+			s/($courseName)\//$1\/quiz_mode\//;
+		}
+	    }
+
 	    my $status = 0;
 	    my $attempted = 0;
 	    my $longStatus = '';

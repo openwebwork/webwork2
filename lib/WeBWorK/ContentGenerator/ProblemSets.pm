@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.57 2004/11/18 16:00:37 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.58 2004/12/17 17:02:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -129,24 +129,8 @@ sub body {
 		print CGI::p({-align=>'center'},CGI::a({-href=>$instructorLink},'Instructor Tools'));
 	}
 	
-	$sort = "status" unless $sort eq "status" or $sort eq "name";
-	my $nameHeader = $sort eq "name"
-		? CGI::u("Name")
-		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name");
-	my $statusHeader = $sort eq "status"
-		? CGI::u("Status")
-		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status");
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
-	
-	print CGI::startform(-method=>"POST", -action=>$actionURL);
-	print $self->hidden_authen_fields;
-	print CGI::start_table();
-	print CGI::Tr(
-		CGI::th("Sel."),
-		CGI::th($nameHeader),
-		CGI::th($statusHeader),
-	);
 	
 	my @setIDs = $db->listUserSets($effectiveUser);
 	
@@ -170,7 +154,48 @@ sub body {
 			die "set $set not defined" unless $set;
 		}
 	}
-	
+
+# gateways/versioned sets require dealing with output data slightly 
+# differently, so check for those here	
+	$WeBWorK::timer->continue("Begin set-type check") if defined($WeBWorK::timer);
+	my $existVersions = 0;
+	foreach ( @sets ) {
+	    if ( defined( $_->assignment_type() ) && 
+		 $_->assignment_type() =~ /gateway/ ) {
+		$existVersions = 1; 
+		last;
+	    }
+	}
+# for gateways we change the default sort order if it isn't sent in
+	$sort = 'name' if ( $existVersions && ! $r->param("sort") );
+	$sort = "status" unless $sort eq "status" or $sort eq "name";
+
+# now set the headers for the table
+	my $nameHeader = $sort eq "name"
+		? CGI::u("Name")
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name");
+	my $statusHeader = $sort eq "status"
+		? CGI::u("Status")
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status");
+
+# and send the start of the table 
+	print CGI::start_table();
+	if ( ! $existVersions ) {
+	    print CGI::Tr(
+		    CGI::th("Sel."),
+		    CGI::th($nameHeader),
+		    CGI::th($statusHeader),
+	        );
+	} else {
+	    print CGI::Tr(
+		    CGI::th("Sel."),
+		    CGI::th($nameHeader),
+		    CGI::th("Score"),
+		    CGI::th("Date"),
+		    CGI::th($statusHeader),
+	        );
+	}
+
 	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
 	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
@@ -182,7 +207,7 @@ sub body {
 		die "set $set not defined" unless $set;
 		
 		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
-			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"));
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
 		}
 	}
 	
@@ -216,7 +241,7 @@ sub body {
 }
 
 sub setListRow {
-	my ($self, $set, $multiSet, $preOpenSets) = @_;
+	my ($self, $set, $multiSet, $preOpenSets, $existVersions, $db) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
@@ -224,13 +249,31 @@ sub setListRow {
 	my $name = $set->set_id;
 	my $courseName      = $urlpath->arg("courseID");
 	
-	my $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
-		courseID => $courseName, setID => $name);
+	my $problemSetPage;
+
+	if ( ! defined( $set->assignment_type() ) || 
+	     $set->assignment_type() !~ /gateway/ ) {
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+				      courseID => $courseName, setID => $name);
+	} elsif( $set->assignment_type() !~ /proctored/ ) {
+
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+				      courseID => $courseName, setID => $name);
+	} else {
+
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+				      courseID => $courseName, setID => $name);
+	}
+
 	my $interactiveURL = $self->systemLink($problemSetPage,
 	                                       params=>{  displayMode => $self->{displayMode}, 
 													  showOldAnswers => $self->{will}->{showOldAnswers}
 										   }
 	);
+  # the conditional here should be redundant.  ah well.
+	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
+	    ( defined( $set->assignment_type() ) && 
+	      $set->assignment_type() eq 'proctored_gateway' );
 	
 	my $openDate = $self->formatDateTime($set->open_date);
 	my $dueDate = $self->formatDateTime($set->due_date);
@@ -254,14 +297,52 @@ sub setListRow {
 	
 	$name =~ s/_/&nbsp;/g;
 	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
+# edit this a bit for gateways 
+	if ( defined( $set->assignment_type() ) && 
+	     $set->assignment_type() =~ /gateway/ ) {
+	    if ( $name =~ /,v\d+$/ ) {
+		my $sname = $name;
+		$sname =~ s/,v(\d+)$//;
+		$interactive = CGI::a({-href=>$interactiveURL}, 
+				      "$sname (test$1)");
+	    } else {  # this is the case of a template URL
+		$interactive = CGI::a({-href=>$interactiveURL}, 
+				      "Take new $name test");
+	    }
+	}
 	
+# for gateways, we aren't as verbose about open/closed status, because 
+#    there's only one attempt and we default to showing answers once the 
+#    test is done.
 	my $status;
-	if (time < $set->open_date) {
+	if ( defined($set->assignment_type()) && 
+	     $set->assignment_type() =~ /gateway/ ) {
+	    if ( $set->set_id() =~ /,v\d+$/ ) {
+		$status = ' ';  # for g/w, we only give one attempt per version,
+                                #    so by the time we're here it's closed
+	    } else {            
+		my $t = time();
+		if ( $t < $set->open_date() ) {
+		    $status = "will open on $openDate";
+		    $control = "" unless $preOpenSets;
+		    $interactive = $name unless $preOpenSets;
+		} elsif ( $t < $set->due_date() ) {
+		    $status = "open, due $dueDate";
+		} else {
+		    $status = "closed";
+		}
+	    }
+# old conditional
+	} elsif (time < $set->open_date) {
 		$status = "will open on $openDate";
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-		$status = "now open, due $dueDate";
+           if ( $set->set_id() !~ /,v\d+$/ ) {
+	        $status = "now open, due $dueDate";
+	    } else {
+		$status = "now open (if version attempts remain), due $dueDate";
+	    }
 	} elsif (time < $set->answer_date) {
 		$status = "closed, answers on $answerDate";
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
@@ -274,11 +355,47 @@ sub setListRow {
 
 	$status = CGI::font({class=>$publishedClass}, $status) if $preOpenSets;
 	
-	return CGI::Tr(CGI::td([
-		$control,
-		$interactive,
-		$status,
-	]));
+# check to see if we need to return a score and a date column
+	if ( ! $existVersions ) {
+	    return CGI::Tr(CGI::td([
+			     $control,
+                             $interactive,
+		             $status,
+	    ]));
+	} else {
+	    my ( $startTime, $score );
+
+	    if ( defined( $set->assignment_type() ) && 
+		 $set->assignment_type() =~ /gateway/ &&
+		 $set->set_id() =~ /,v\d+$/ ) {
+		$startTime = localtime( $set->version_creation_time() );
+
+        # find score
+		my @problemRecords = $db->getAllUserProblems( $set->user_id(),
+							      $set->set_id() );
+		my $possible = 0;
+		$score = 0;
+		foreach my $pRec ( @problemRecords ) {
+		    if ( defined( $pRec ) && $score ne 'undef' ) {
+			$score += $pRec->status() || 0;
+		    } else {
+			$score = 'undef';
+		    }
+		    $possible++;
+		}
+		$score = "$score/$possible";
+	    } else {
+		$startTime = '&nbsp;';
+		$score = $startTime;
+	    }
+	    return CGI::Tr(CGI::td([
+                             $control,
+                             $interactive,
+                             $score,
+                             $startTime,
+                             $status,
+            ]));
+	}
 }
 
 sub byname { $a->set_id cmp $b->set_id; }

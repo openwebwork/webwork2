@@ -448,6 +448,7 @@ $siteDefaults{timezone} = "";
 
 my $guest     = -1;
 my $student   = 0;
+my $proctor   = 2;
 my $ta        = 5;
 my $professor = 10;
 my $nobody    = undef;
@@ -458,6 +459,8 @@ my $nobody    = undef;
 	submit_feedback                => $student,
 	change_password                => $student,
 	change_email_address           => $student,
+
+	proctor_quiz                   => $proctor,
 	
 	view_multiple_sets             => $ta,
 	view_unopened_sets             => $ta,

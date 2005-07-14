@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.8 2004/07/08 14:53:47 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileXfer.pm,v 1.9 2004/08/19 15:45:52 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

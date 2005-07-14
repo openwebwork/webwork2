@@ -80,7 +80,7 @@ Delete sets:
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile listFilesRecursive cryptPassword sortByName);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_PUBLISHED_STATE => 1;
@@ -161,6 +161,46 @@ use constant  FIELD_PROPERTIES => {
 		type => "checked",
 		size => 4,
 		access => "readwrite",
+	},	
+	assignment_type => {
+		type => "text",
+		size => 20,
+		access => "readwrite",
+	},	
+	attempts_per_version => {
+		type => "text",
+		size => 4,
+		access => "readwrite",
+	},	
+	time_interval => {
+		type => "text",
+		size => 10,
+		access => "readwrite",
+	},	
+	versions_per_interval => {
+		type => "text",
+		size => 4,
+		access => "readwrite",
+	},	
+	version_time_limit => {
+		type => "text",
+		size => 10,
+		access => "readwrite",
+	},	
+	problem_randorder => {
+		type => "text",
+		size => 4,
+		access => "readwrite",
+	},	
+	version_creation_time => {
+		type => "text",
+		size => 10,
+		access => "readonly",
+	},	
+	version_last_attempt_time => {
+		type => "text",
+		size => 10,
+		access => "readonly",
 	},	
 };
 
@@ -833,7 +873,7 @@ sub delete_form {
 				-default => $actionParams{"action.delete.scope"}->[0] || "none",
 				-labels => {
 					none => "no sets.",
-					#visble => "visible sets.",
+					#visible => "visible sets.",
 					selected => "selected sets.",
 				},
 				-onchange => $onChange,
@@ -1337,7 +1377,7 @@ sub importSetsFromDef {
 
 		$WeBWorK::timer->continue("$set_definition_file: reading set definition file") if defined $WeBWorK::timer;
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1363,6 +1403,17 @@ sub importSetsFromDef {
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);
+
+	# gateway/version data.  I'm not sure why I'm bothering to put these 
+        #   in a conditional.  in that we return '' for missing gateway data, 
+        #   it should just keep all of these values null for non-versioned/
+        #   non-gateway sets
+		$newSetRecord->assignment_type($assignmentType) if ( $assignmentType );
+		$newSetRecord->attempts_per_version($attemptsPerVersion) if ( $attemptsPerVersion );
+		$newSetRecord->time_interval($timeInterval) if ( $timeInterval );
+		$newSetRecord->versions_per_interval($versionsPerInterval) if ( $versionsPerInterval );
+		$newSetRecord->version_time_limit($versionTimeLimit) if ( $versionTimeLimit );
+		$newSetRecord->problem_randorder($problemRandOrder) if ( $problemRandOrder );
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
@@ -1414,6 +1465,10 @@ sub readSetDef {
 	my ($dueDate, $openDate, $answerDate);
 	my @problemData;	
 
+# added fields for gateway test/versioned set definitions:
+	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
+	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder ) = 
+		 ('')x6;  # initialize these to ''
 
 	my %setInfo;
 	if ( open (SETFILENAME, "$filePath") )    {
@@ -1448,6 +1503,18 @@ sub readSetDef {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
 				$answerDate = $value;
+			} elsif ($item eq 'assignmentType') {
+				$assignmentType = $value;
+			} elsif ($item eq 'attemptsPerVersion') {
+				$attemptsPerVersion = $value;
+			} elsif ($item eq 'timeInterval') {
+				$timeInterval = $value;
+			} elsif ($item eq 'versionsPerInterval') {
+				$versionsPerInterval = $value;
+			} elsif ($item eq 'versionTimeLimit') {
+				$versionTimeLimit = $value;
+			} elsif ($item eq 'problemRandOrder') {
+				$problemRandOrder = $value;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -1468,6 +1535,22 @@ sub readSetDef {
 		$paperHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 	
+                #####################################################################
+                # Gateway/version variable cleanup
+
+		$assignmentType      =~ s/(.*?)\s*/$1/;  # remove trailing 
+		$attemptsPerVersion  =~ s/(.*?)\s*/$1/;  #   white space
+		$timeInterval        =~ s/(.*?)\s*/$1/;
+		$versionsPerInterval =~ s/(.*?)\s*/$1/;
+		$versionTimeLimit    =~ s/(.*?)\s*/$1/;
+		$problemRandOrder    =~ s/(.*?)\s*/$1/;
+
+                # convert times into seconds
+		$timeInterval = WeBWorK::Utils::timeToSec( $timeInterval )
+		    if ( $timeInterval );
+		$versionTimeLimit = WeBWorK::Utils::timeToSec( $versionTimeLimit )
+		    if ( $versionTimeLimit );
+
 		#####################################################################
 		# Read and check list of problems for the set
 		#####################################################################
@@ -1503,6 +1586,8 @@ sub readSetDef {
 		 $time2,
 		 $time3,
 		 \@problemData,
+		 $assignmentType, $attemptsPerVersion, $timeInterval, 
+		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 		);
 	} else {
 		warn "Can't open file $filePath\n";
