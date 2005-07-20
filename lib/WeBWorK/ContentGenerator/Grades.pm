@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.12 2005/02/05 01:32:56 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.13 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,6 +127,7 @@ sub scoring_info {
 	my $ce = $r->ce;
 	
 	my $userName          = $r->param('effectiveUser') || $r->param('user');
+	my $userID              = $r->param('user');
     my $ur                = $db->getUser($userName);
 	my $emailDirectory    = $ce->{courseDirs}->{email};
 	my $filePath          = "$emailDirectory/report_grades.msg";
@@ -173,7 +174,7 @@ sub scoring_info {
  	$msg =~ s/\$EMAIL/$EMAIL/ge;
  	$msg =~ s/\$LOGIN/$LOGIN/ge;
 	if (defined($COL[1])) {		# prevents extraneous error messages.  
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1] if defined($COL[$1])/ge
 	}
 	else {						# prevents extraneous $COL's in email message 
 		$msg =~ s/\$COL\[(\-?\d+)\]//g
@@ -192,10 +193,12 @@ sub scoring_info {
 #  	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
  	
  	$msg =~ s/\r//g;
+ 	$msg = "<pre>$msg</pre>";
+ 	$msg = qq!More scoring information goes here in [TMPL]/email/report_grades.msg. It
+		is merged with the file [Scoring]/report_grades_data.csv. <br>These files can be edited 
+		using the "Email" link and the "Scoring Tools" link in the left margin.<p>!.$msg if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
 	return CGI::div(
-		{style =>"background-color:#DDDDDD"}, "More scoring information goes here in \$emailDirectory/report_grades.msg. It
-		is merged with the file \$scoringDirectory/report_grades_data.csv. <p>
-		<pre>$msg</pre>"
+		{style =>"background-color:#DDDDDD"}, $msg
 	);
 }
 
