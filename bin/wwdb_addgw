@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/bin/wwdb_addgw,v 1.1 2005/07/18 23:10:35 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -171,7 +171,8 @@ sub getCourses {
 	my $rowRef = $st->fetchall_arrayref();
 	foreach my $r ( @$rowRef ) {
 	    $_ = $r->[0];
-	    my ($crs, $tbl) = ( /^([^_]+)_(.*)$/ );
+	    #my ($crs, $tbl) = ( /^([^_]+)_(.*)$/ );  # this fails on courses with underscores in their names
+	    my  ($crs) = (/^(.*)_key$/);  # match the key table
 	    $courses{$crs} = 1 if ( defined( $crs ) );
 	}
 	die("Error: found now sql_single WeBWorK courses\n") if ( ! %courses );
@@ -252,13 +253,13 @@ sub updateCourses {
 
 # give some sense of progress
     select STDOUT; $| = 1;    # unbuffer output
-    print "doing update.";
+    print "doing update for $dbtype databases.\n";
 
 # list of added fields to check for classes that don't need updating
     my @newFields = keys( %addFields );
 
     foreach my $crs ( @$crsRef ) {
-	print ".";
+	print "updating $crs.\n";
 	my $colRef;
 
 	if ( $dbtype eq 'sql' ) {
@@ -276,7 +277,8 @@ sub updateCourses {
 	} else {
     # for sql_single we already have a database handle; get the set table
     # columns and proceed
-	    my $cmd = "show columns from ${crs}_set";
+	    my $cmd = "show columns from `${crs}_set`";
+	    print "$cmd\n";
 	    my $st = $dbh->prepare( $cmd ) or die( $dbh->errstr() );
 	    $st->execute();
 	    $colRef = $st->fetchall_arrayref();
@@ -301,17 +303,19 @@ sub updateCourses {
 		$cmd1 = 'alter table set_not_a_keyword add column';
 		$cmd2 = 'alter table set_user add column';
 	    } else {
-		$cmd1 = "alter table ${crs}_set add column";
-		$cmd2 = "alter table ${crs}_set_user add column";
+		$cmd1 = "alter table `${crs}_set` add column";
+		$cmd2 = "alter table `${crs}_set_user` add column";
 	    }
 
 	    foreach my $f ( keys %addFields ) {
+	    print "$cmd1 $f $addFields{$f}\n";
 		my $st = $dbh->prepare( "$cmd1 $f $addFields{$f}" ) or 
                     die( $dbh->errstr() );
 		$st->execute() or die( $st->errstr() );
 	    }
 
 	    foreach my $f ( keys %addFields ) {
+	    print "$cmd2 $f $addFields{$f}\n";
 		my $st = $dbh->prepare( "$cmd2 $f $addFields{$f}" ) or 
 		    die( $dbh->errstr() );
 		$st->execute() or die( $st->errstr() );
