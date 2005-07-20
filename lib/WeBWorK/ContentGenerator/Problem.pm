@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.173 2005/07/05 18:20:24 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.176 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -224,6 +224,7 @@ sub attemptResults {
 	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
+	my $numBlanks  =0;
 	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
@@ -236,6 +237,7 @@ sub attemptResults {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
+		$numBlanks++ unless $studentAnswer =~/\S/;   # unless student answer contains entry
 		my $resultString = $answerScore >= 1 ? "correct" :
 		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
                                                        "incorrect";
@@ -264,20 +266,28 @@ sub attemptResults {
 #	my $summary = "On this attempt, you answered $numCorrect out of "
 #		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 	my $summary = ""; 
-	if (scalar @answerNames == 1) {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT ${fully}correct.");
-			 }
+	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
+		if (scalar @answerNames == 1) {  #default messages
+				if ($numCorrect == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
+				 } else {
+					 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT ${fully}correct.");
+				 }
+		} else {
+				if ($numCorrect == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
+				 } 
+				 unless ($numCorrect + $numBlanks == scalar( @answerNames)) {
+					$summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT ${fully}correct.");
+				 }
+				 if ($numBlanks) {
+					my $s = ($numBlanks>1)?'':'s';
+					$summary .= CGI::div({class=>"ResultsAlert"},"$numBlanks of the questions remain$s unanswered.");
+				 }
+		}
 	} else {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT ${fully}correct.");
-			 }
+		$summary = $problemResult->{summary};   # summary has been defined by grader
 	}
-	
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
@@ -1051,16 +1061,20 @@ sub body {
 	#		$setClosedMessage .= " Additional attempts will not be recorded.";
 	#	}
 	#}
-	
-	my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
-	print CGI::p(
-		$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-		"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
-		$problem->attempted
-			? "Your recorded score is $lastScore.  $notCountedMessage" . CGI::br()
-			: "",
-		$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
-	);
+	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
+		my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+		print CGI::p(
+			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
+			"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
+			$submitAnswers ?"You received a score of ".sprintf("%.0f%%", $pg->{result}->{score} * 100)." for this attempt.".CGI::br():'',
+			$problem->attempted
+				? "Your overall recorded score is $lastScore.  $notCountedMessage" . CGI::br()
+				: "",
+			$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
+		);
+	}else {
+		print CGI::p($pg->{state}->{state_summary_msg});
+	}
 	print CGI::end_div();
 		
 	# save state for viewOptions
