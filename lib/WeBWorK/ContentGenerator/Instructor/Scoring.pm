@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.45 2005/06/10 16:06:55 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.46 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,13 +44,19 @@ sub initialize {
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
-
+    
 	# Check permission
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "score_sets");
 	
 	my @selected = $r->param('selectedSet');
 	my $scoreSelected = $r->param('scoreSelected');
+	my $scoringFileName = $r->param('scoringFileName') || "${courseName}_totals";
+	$scoringFileName =~ s/\.csv\s*$//; $scoringFileName .='.csv';  # must end in .csv
+	$self->{scoringFileName}=$scoringFileName;
+	
+	$self->{padFields}  = defined($r->param('padFields') ) ? 1 : 0; 
+	
 	if (defined $scoreSelected && @selected) {
 
 		my @totals                 = ();
@@ -80,7 +86,8 @@ sub initialize {
 		my (@everything, @normal,@full,@info,@totalsColumn);
 		@info             = $self->scoreSet($selected[0], "info", undef, \%Users, \@sortedUserIDs) if defined($selected[0]);
 		@totals           = @info;
-		my $showIndex     = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0;  
+		my $showIndex     = defined($r->param('includeIndex')) ? defined($r->param('includeIndex')) : 0; 
+		
      
 		foreach my $setID (@selected) {
 		    next unless defined $setID;
@@ -100,7 +107,7 @@ sub initialize {
 		}
 		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs);
 		$self->appendColumns( \@totals,\@sum_scores);
-		$self->writeCSV("$scoringDir/${courseName}_totals.csv", @totals);
+		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
 	} elsif (defined $scoreSelected) {
 		$self->addbadmessage("You must select one or more sets for scoring");
@@ -138,6 +145,8 @@ sub body {
 	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", 
 	                                      courseID => $courseName
 	);
+	
+	my $scoringFileName = $self->{scoringFileName};
 	
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
@@ -182,10 +191,19 @@ sub body {
 									  },
 									 'Record Scores for Single Sets'
 						),
+						CGI::br(),
+						CGI::checkbox({ -name=>'padFields',
+										-value=>1,
+										-label=>'Pad Fields',
+										-checked=>1,
+									  },
+									 'Pad Fields'
+						),
 					),
 				),
 				CGI::Tr(CGI::td({colspan =>2,align=>'center'},
-					CGI::input({type=>'submit',value=>'Score selected set(s)...',name=>'score-sets'}),
+					CGI::input({type=>'submit',value=>'Score selected set(s) and save to: ',name=>'score-sets'}),
+					CGI::input({type=>'text', name=>'scoringFileName', size=>'40',value=>"$scoringFileName"})
 				)),
 			
 		   CGI::end_table(),
@@ -216,13 +234,13 @@ sub body {
 				print CGI::hr();
 			}
 		}
-		if (-f "$scoringDir/${courseName}_totals.csv") {
+		if (-f "$scoringDir/$scoringFileName") {
 			print CGI::h2("Totals");
 			#print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
 			print CGI::a({href=>$self->systemLink($scoringDownloadPage,
-					               params=>{getFile => "${courseName}_totals.csv" } )}, "${courseName}_totals.csv");
+					               params=>{getFile => "$scoringFileName" } )}, "$scoringFileName");
 			print CGI::hr();
-			print CGI::pre({style=>'font-size:smaller'},WeBWorK::Utils::readFile("$scoringDir/${courseName}_totals.csv"));
+			print CGI::pre({style=>'font-size:smaller'},WeBWorK::Utils::readFile("$scoringDir/$scoringFileName"));
 		}
 	}
 	
@@ -466,8 +484,8 @@ sub scoreSet {
 			$scoringData[6][$totalsColumn+1]  = "index" ;
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
-
-			$scoringData[7+$user][$totalsColumn] = sprintf("%.1f",$userStatusTotals{$user});
+            $userStatusTotals{$user} =$userStatusTotals{$user} ||0;
+			$scoringData[7+$user][$totalsColumn] = sprintf("%.1f",$userStatusTotals{$user}) if $scoringItems->{setTotals};
 			$scoringData[7+$user][$totalsColumn+1] = sprintf("%.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
 
 		}
@@ -707,6 +725,7 @@ sub quote {
 sub pad {
 	my ($self, $string, $padTo) = @_;
 	$string = '' unless defined $string;
+	return $string unless $self->{padFields}==1;
 	my $spaces = $padTo - length $string;
 
 #	return " "x$spaces.$string;
