@@ -51,6 +51,7 @@ div.Warnings {  }
 /* background colors for success and failure messages */
 div.ResultsWithoutError { background-color: #66ff99 } /* light green */
 div.ResultsWithError    { background-color: #ffcccc } /* light red */
+div.ResultsAlert    { background-color: yellow } /* yellow */
 
 div.NoFontMessage {padding: 10; border-style: solid; border-width:3;
 		   border-color: #DD0000; background-color: #FFF8F8;
