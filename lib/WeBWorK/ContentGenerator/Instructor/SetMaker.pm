@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.37 2005/07/14 16:23:11 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.38 2005/07/22 22:34:53 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -705,30 +705,35 @@ sub pre_header_initialize {
 		##### Make a new local problem set
 
 	} elsif ($r->param('new_local_set')) {
-		if ($r->param('new_set_name') !~ /^[\w.-]*$/) {
+		if ($r->param('new_set_name') !~ /^[\w .-]*$/) {
 			$self->addbadmessage("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
 		} else {
 			my $newSetName = $r->param('new_set_name');
 			# if we want to munge the input set name, do it here
+			$newSetName =~ s/\s/_/g;
 			$r->param('local_sets',$newSetName);
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
 	$self->addbadmessage("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
-	$newSetRecord = $db->{set}->{record}->new();
-	$newSetRecord->set_id($newSetName);
-	$newSetRecord->set_header("");
-	$newSetRecord->hardcopy_header("");
-	$newSetRecord->open_date(time()+60*60*24*7); # in one week
-	$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
-	$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
-	eval {$db->addGlobalSet($newSetRecord)};
-	$self->addgoodmessage("Set $newSetName has been created.");
-	my $selfassign = $r->param('selfassign') || "";
-	$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
-	if($selfassign) {
-		$self->assignSetToUser($userName, $newSetRecord);
-		$self->addgoodmessage("Set $newSetName was assigned to $userName.");
+				$newSetRecord = $db->{set}->{record}->new();
+				$newSetRecord->set_id($newSetName);
+				$newSetRecord->set_header("");
+				$newSetRecord->hardcopy_header("");
+				$newSetRecord->open_date(time()+60*60*24*7); # in one week
+				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
+				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				eval {$db->addGlobalSet($newSetRecord)};
+				if ($@) {
+					$self->addbadmessage("Problem creating set $newSetName<br> $@");
+				} else {
+					$self->addgoodmessage("Set $newSetName has been created.");
+					my $selfassign = $r->param('selfassign') || "";
+					$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
+					if($selfassign) {
+						$self->assignSetToUser($userName, $newSetRecord);
+						$self->addgoodmessage("Set $newSetName was assigned to $userName.");
+					}
 				}
 			}
 		}
