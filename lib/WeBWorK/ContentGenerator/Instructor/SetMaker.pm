@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.37 2005/07/14 16:23:11 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,11 +35,12 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 require WeBWorK::Utils::ListingDB;
 
 use constant MAX_SHOW_DEFAULT => 20;
-use constant NO_LOCAL_SET_STRING => 'There are no local sets yet';
+use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
 use constant SELECT_SET_STRING => 'Select a Set for This Course';
 use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
 use constant MY_PROBLEMS => '  My Problems  ';
 use constant MAIN_PROBLEMS => '  Main Problems  ';
+use constant CREATE_SET_BUTTON => 'Create New Set';
 
 ## Flags for operations on files
 
@@ -388,7 +389,39 @@ sub make_top_row {
 	}
 	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
 
-	my $these_widths = "width: 20ex";
+	my $these_widths = "width: 23ex";
+
+	if($have_local_sets ==0) {
+		$list_of_local_sets = [NO_LOCAL_SET_STRING];
+	} elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
+		if ($list_of_local_sets->[0] eq "Select a Homework Set") {
+			shift @{$list_of_local_sets};
+		}
+		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
+		$set_selected = SELECT_SET_STRING;
+	}
+	my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
+
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Add problems to ",
+		CGI::b("Target Set: "),
+		CGI::popup_menu(-name=> 'local_sets', 
+						-values=>$list_of_local_sets, 
+						-default=> $set_selected),
+		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
+		CGI::hidden(-name=>"selfassign", -default=>[0]).
+		CGI::br(), 
+		CGI::br(), 
+		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
+		-onclick=>$myjs
+		),
+		"  ",
+		CGI::textfield(-name=>"new_set_name", 
+					   -default=>"Name for new set here",
+					   -override=>1, -size=>30),
+	));
+
+	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
+
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
 		CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, $dis1),
@@ -411,38 +444,6 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
-	if($have_local_sets ==0) {
-		$list_of_local_sets = [NO_LOCAL_SET_STRING];
-	} elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
-		if ($list_of_local_sets->[0] eq "Select a Homework Set") {
-			shift @{$list_of_local_sets};
-		}
-		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
-		$set_selected = SELECT_SET_STRING;
-	}
-	my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
-
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Adding Problems to ",
-		CGI::b("Target Set: "),
-		CGI::popup_menu(-name=> 'local_sets', 
-						-values=>$list_of_local_sets, 
-						-default=> $set_selected),
-		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
-		CGI::hidden(-name=>"selfassign", -default=>[0]).
-		CGI::br(), 
-		CGI::br(), 
-		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-		-onclick=>$myjs
-		),
-		"  ",
-		CGI::textfield(-name=>"new_set_name", 
-					   -default=>"Name for new set here",
-					   -override=>1, -size=>30),
-		CGI::br(),
-	));
-
-	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
-
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		CGI::start_table({-border=>"0"}),
 		CGI::Tr( CGI::td({ -align=>"center"},
@@ -453,7 +454,7 @@ sub make_top_row {
 		)), 
 		CGI::Tr(CGI::td(
 			CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
-			            -value=>"Update"),
+			            -value=>"Update Set"),
 		CGI::submit(-name=>"rerandomize", 
 		            -style=>$these_widths,
 		            -value=>"Rerandomize"),
@@ -830,7 +831,7 @@ sub pre_header_initialize {
 
 
 sub title {
-	return "Homework Set Maker";
+	return "Library Browser";
 }
 
 sub body {
