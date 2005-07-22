@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.25 2005/03/21 19:41:15 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.26 2005/07/14 20:20:15 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -297,7 +297,7 @@ sub put($$) {
 	
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
-	@fieldvalues = map { $_ eq "" ? undef : $_ } @fieldvalues;
+	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues;
 	
 	my ($where, @where_args) = $self->makeWhereClause(map { $Record->$_() } @realKeynames);
 	
