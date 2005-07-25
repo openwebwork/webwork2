@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.38 2005/07/22 22:34:53 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.39 2005/07/22 22:54:57 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,12 +31,13 @@ use CGI::Pretty qw();
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use File::Find;
 
 require WeBWorK::Utils::ListingDB;
 
 use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
-use constant SELECT_SET_STRING => 'Select a Set for This Course';
+use constant SELECT_SET_STRING => 'Select a Set from this Course';
 use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
 use constant MY_PROBLEMS => '  My Problems  ';
 use constant MAIN_PROBLEMS => '  Main Problems  ';
@@ -127,6 +128,83 @@ sub list_pg_files {
 	my $top = ($dir eq '.')? 1 : 2;
 	my @pgs = get_library_pgs($top,$templates,$dir);
 	return sortByName(undef,@pgs);
+}
+
+## Search for set definition files
+
+# initialize global variable for search
+my @found_set_defs = ();
+
+sub get_set_defs_wanted {
+	my $fn = $_;
+	my $fdir = $File::Find::dir;
+	return() if($fn !~ /^set.*\.def$/);
+	#return() if(not -T $fn);
+	push @found_set_defs, "$fdir/$fn";
+}
+
+sub get_set_defs {
+	my $topdir = shift;
+	@found_set_defs = ();
+	find({ wanted => \&get_set_defs_wanted, follow_fast=>1}, $topdir);
+	map { $_ =~ s|^$topdir/?|| } @found_set_defs;
+	return @found_set_defs;
+}
+
+## Try to make reading of set defs more flexible.  Additional strategies
+## for fixing a path can be added here.
+
+sub munge_pg_file_path {
+	my $self = shift;
+	my $pg_path = shift;
+	my $path_to_set_def = shift;
+	my $end_path = $pg_path;
+	# if the path is ok, don't fix it
+	return($pg_path) if(-e $self->r->ce->{courseDirs}{templates}."/$pg_path");
+	# if we have followed a link into a self contained course to get
+	# to the set.def file, we need to insert the start of the path to
+	# the set.def file
+	$end_path = "$path_to_set_def/$pg_path";
+	return($end_path) if(-e $self->r->ce->{courseDirs}{templates}."/$end_path");
+	# if we got this far, this path is bad, but we let it produce
+	# an error so the user knows there is a troublesome path in the
+	# set.def file.
+	return($pg_path);
+}
+
+## Read a set definition file.  This could be abstracted since it happens
+## elsewhere.  Here we don't have to process so much of the file.
+
+sub read_set_def {
+	my $self = shift;
+	my $r = $self->r;
+	my $filePathOrig = shift;
+	my $filePath = $r->ce->{courseDirs}{templates}."/$filePathOrig";
+	$filePathOrig =~ s/set.*\.def$//;
+	$filePathOrig =~ s|/$||;
+	$filePathOrig = "." if ($filePathOrig !~ /\S/);
+	my @pg_files = ();
+	my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
+	if ( open (SETFILENAME, "$filePath") )    {
+		while($line = <SETFILENAME>) {
+			chomp($line);
+			$line =~ s|(#.*)||; # don't read past comments
+			if($got_to_pgs) {
+				unless ($line =~ /\S/) {next;} # skip blank lines
+				($name,@rest) = split (/\s*,\s*/,$line);
+				$name =~ s/\s*//g;
+				push @pg_files, $name;
+			} else {
+				$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+			}
+		}
+	} else {
+		$self->addbadmessage("Cannot open $filePath");
+	}
+	# This is where we would potentially munge the pg file paths
+	# One possibility
+	@pg_files = map { $self->munge_pg_file_path($_, $filePathOrig) } @pg_files;
+	return(@pg_files);
 }
 
 ## go through past page getting a list of identifiers for the problems
@@ -363,22 +441,51 @@ HERE
 		));
 }
 
+#####	 Version 4 is the set definition file panel
+
+sub browse_setdef_panel {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $library_selected = shift;
+	my $default_value = "Select a Set Definition File";
+	my @list_of_set_defs = get_set_defs($ce->{courseDirs}{templates});
+	if(scalar(@list_of_set_defs) == 0) {
+		@list_of_set_defs = (NO_LOCAL_SET_STRING);
+	} elsif (not $library_selected or $library_selected eq $default_value) { 
+		unshift @list_of_set_defs, $default_value; 
+		$library_selected = $default_value; 
+	}
+	my $view_problem_line = view_problems_line('view_setdef_set', 'View Problems', $self->r);
+	my $popupetc = CGI::popup_menu(-name=> 'library_sets',
+                                -values=>\@list_of_set_defs,
+                                -default=> $library_selected).
+		CGI::br().  $view_problem_line;
+	if($list_of_set_defs[0] eq NO_LOCAL_SET_STRING) {
+		$popupetc = "there are no set definition files in this course to look at."
+	}
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Browse from: ",
+		$popupetc
+	));
+}
+
 sub make_top_row {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my %data = @_;
 
-	my $list_of_local_sets = $data{all_set_defs};
+	my $list_of_local_sets = $data{all_db_sets};
 	my $have_local_sets = scalar(@$list_of_local_sets);
 	my $browse_which = $data{browse_which};
 	my $library_selected = $r->param('library_sets');
 	my $set_selected = $r->param('local_sets');
 
-	my ($dis1, $dis2, $dis3) = ("","","");
+	my ($dis1, $dis2, $dis3, $dis4) = ("","","", "");
 	$dis1 =	 '-disabled' if($browse_which eq 'browse_library');	 
 	$dis2 =	 '-disabled' if($browse_which eq 'browse_local');
 	$dis3 =	 '-disabled' if($browse_which eq 'browse_mysets');
+	$dis4 =	 '-disabled' if($browse_which eq 'browse_setdefs');
 
 	##	Make buttons for additional problem libraries
 	my $libs = '';
@@ -394,9 +501,6 @@ sub make_top_row {
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
 	} elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
-		if ($list_of_local_sets->[0] eq "Select a Homework Set") {
-			shift @{$list_of_local_sets};
-		}
 		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
 		$set_selected = SELECT_SET_STRING;
 	}
@@ -422,11 +526,17 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
+	# Tidy this list up since it is used in two different places
+	if ($list_of_local_sets->[0] eq SELECT_SET_STRING) {
+		shift @{$list_of_local_sets};
+	}
+
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
 		CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, $dis1),
 		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, $dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, $dis3),
+		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, $dis4),
 		$libs,
 	));
 
@@ -438,6 +548,8 @@ sub make_top_row {
 		$self->browse_mysets_panel($library_selected, $list_of_local_sets);
 	} elsif ($browse_which eq 'browse_library') {
 		$self->browse_library_panel();
+	} elsif ($browse_which eq 'browse_setdefs') {
+		$self->browse_setdef_panel($library_selected);
 	} else { ## handle other problem libraries
 		$self->browse_local_panel($library_selected,$browse_which);
 	}
@@ -622,6 +734,10 @@ sub pre_header_initialize {
 		$browse_which = 'browse_mysets';
 		$r->param('library_sets', "");
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
+	} elsif ($r->param('browse_setdefs')) {
+		$browse_which = 'browse_setdefs';
+		$r->param('library_sets', "");
+		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 
 		##### Change the seed value
 
@@ -666,10 +782,10 @@ sub pre_header_initialize {
 			my $problem;
 			@pg_files=();
 			for $problem (@problemList) {
-	my $problemRecord = $db->getGlobalProblem($set_to_display, $problem); # checked
-	die "global $problem for set $set_to_display not found." unless
-		$problemRecord;
-	push @pg_files, $problemRecord->source_file;
+				my $problemRecord = $db->getGlobalProblem($set_to_display, $problem); # checked
+				die "global $problem for set $set_to_display not found." unless
+					$problemRecord;
+				push @pg_files, $problemRecord->source_file;
 
 			}
 			$use_previous_problems=0;
@@ -692,6 +808,20 @@ sub pre_header_initialize {
 			
 			## Too clunky!!!!
 			push @pg_files, $tolibpath;
+		}
+		$use_previous_problems=0; 
+
+		##### View a set from a set*.def
+
+	} elsif ($r->param('view_setdef_set')) {
+
+		my $set_to_display = $r->param('library_sets');
+		if (not defined($set_to_display) 
+				or $set_to_display eq "Select a Set Definition File"
+				or $set_to_display eq NO_LOCAL_SET_STRING) {
+			$self->addbadmessage("You need to select a set from this course to view.");
+		} else {
+			@pg_files= $self->read_set_def($set_to_display);
 		}
 		$use_previous_problems=0; 
 
@@ -812,8 +942,8 @@ sub pre_header_initialize {
 
 	############# List of local sets
 
-	my @all_set_defs = $db->listGlobalSets;
-	@all_set_defs = sortByName(undef, @all_set_defs);
+	my @all_db_sets = $db->listGlobalSets;
+	@all_db_sets = sortByName(undef, @all_db_sets);
 
 	if ($use_previous_problems) {
 		@pg_files = @all_past_list;
@@ -830,7 +960,7 @@ sub pre_header_initialize {
 	$self->{problem_seed} = $problem_seed;
 	$self->{pg_files} = \@pg_files;
 	$self->{past_marks} = \@past_marks;
-	$self->{all_set_defs} = \@all_set_defs;
+	$self->{all_db_sets} = \@all_db_sets;
 
 }
 
@@ -870,7 +1000,7 @@ sub body {
 	my $browse_which = $self->{browse_which};
 	my $problem_seed = $self->{problem_seed};
 	my @pg_files = @{$self->{pg_files}};
-	my @all_set_defs = @{$self->{all_set_defs}};
+	my @all_db_sets = @{$self->{all_db_sets}};
 
 	my @pg_html=($last_shown>=$first_shown) ?
 		renderProblems(r=> $r,
@@ -883,7 +1013,7 @@ sub body {
 		$self->hidden_authen_fields,
 			'<div align="center">',
 	CGI::start_table({-border=>2});
-	$self->make_top_row('all_set_defs'=>\@all_set_defs, 
+	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
 	print CGI::hidden(-name=>'browse_which', -default=>[$browse_which]),
 		CGI::hidden(-name=>'problem_seed', -default=>[$problem_seed]);
