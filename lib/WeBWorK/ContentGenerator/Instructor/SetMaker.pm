@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.39 2005/07/22 22:54:57 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.40 2005/07/25 17:29:31 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -540,7 +540,8 @@ sub make_top_row {
 		$libs,
 	));
 
-	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
+	#print CGI::Tr(CGI::td({-bgcolor=>"black"}));
+	print CGI::hr();
 
 	if ($browse_which eq 'browse_local') {
 		$self->browse_local_panel($library_selected);
