@@ -335,10 +335,11 @@ sub getAllListings {
 # if section is omitted, get all from the chapter
 sub getSectionListings	{
 	#print STDERR "ListingDB::getSectionListings(chapter,section)\n";
-
 	my $ce = shift;
 	my $chap = shift;
 	my $sec = shift;
+	my $version = $ce->{problemLibrary}->{version} || 1;
+	if($version == 2) { return(getDBsectionListings($ce, $chap, $sec))}
 
 
 	my $chapstring = '';
