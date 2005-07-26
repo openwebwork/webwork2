@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.40 2005/07/25 17:29:31 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.41 2005/07/26 17:39:22 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,7 +56,6 @@ my %ignoredir = (
 	'headers' => 1, 'macros' => 1, 'email' => 1,
 );
 
-##
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
 ## item is the number of pg files in the directory.	 The second is a
@@ -75,7 +74,6 @@ my %ignoredir = (
 ## menu).	 If it has a file called "=library-no-combine" then it is
 ## always listed as a separate directory even if it contains only one
 ## pg file.
-##
 
 sub get_library_sets {
 	my $top = shift; my $dir =	shift;
@@ -360,10 +358,11 @@ sub browse_mysets_panel {
 #
 # Incoming data - current chapter, current section
 sub browse_library_panel {
-	my $self = shift;
+	my $self=shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
+	
+	# See if the problem library is installed
 	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
 
 	unless($libraryRoot) {
@@ -371,7 +370,7 @@ sub browse_library_panel {
 			"The problem library has not been installed.")));
 		return;
 	}
-	# Test if the Library directory exists.	 If not, try to make it
+	# Test if the Library directory link exists.  If not, try to make it
 	unless(-d "$ce->{courseDirs}->{templates}/Library") {
 		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
 			my $msg =	 <<"HERE";
@@ -385,6 +384,25 @@ HERE
 		}
 	}
 
+
+	# Now check what version we are supposed to use
+	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
+	if($libraryVersion == 1) {
+		return $self->browse_library_panel1;
+	} elsif($libraryVersion == 2) {
+		return $self->browse_library_panel2;
+	} else {
+		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
+			"The problem library version is set to an illegal value.")));
+		return;
+	}
+}
+
+sub browse_library_panel1 {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
 	my $default_chap = "All Chapters";
 	my $default_sect = "All Sections";
 
@@ -440,6 +458,51 @@ HERE
 			CGI::end_table(),
 		));
 }
+
+sub browse_library_panel2 {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $default_chap = "All Chapters";
+	my $default_sect = "All Sections";
+
+	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($ce);
+	unshift @chaps, $default_chap;
+	my $chapter_selected = $r->param('library_chapters') || $default_chap;
+
+	my @sects=();
+	if ($chapter_selected ne $default_chap) {
+		@sects = WeBWorK::Utils::ListingDB::getAllDBsections($ce, $chapter_selected);
+	}
+	unshift @sects, $default_sect;
+	my $section_selected =	$r->param('library_sections') || $default_sect;
+	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
+
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
+		CGI::start_table(),
+		CGI::Tr(
+			CGI::td(["Chapter:",
+				CGI::popup_menu(-name=> 'library_chapters', 
+					            -values=>\@chaps,
+					            -default=> $chapter_selected,
+					             -onchange=>"submit();return true"
+				),
+				CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
+		CGI::Tr(
+			CGI::td("Section:"),
+			CGI::td({-colspan=>2},
+			CGI::popup_menu(-name=> 'library_sections', 
+					        -values=>\@sects,
+					        -default=> $section_selected
+		 ))),
+		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+		 CGI::end_table(),
+	 ));
+
+	
+}
+
 
 #####	 Version 4 is the set definition file panel
 
