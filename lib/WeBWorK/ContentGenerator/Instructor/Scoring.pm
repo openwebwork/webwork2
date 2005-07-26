@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.46 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -380,10 +380,40 @@ sub scoreSet {
 	# pre-fetch user problems
 	$WeBWorK::timer->continue("pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
 	my %UserProblems; # $UserProblems{$userID}{$problemID}
-	foreach my $userID (@sortedUserIDs) {
-		my %CurrUserProblems = map { $_->problem_id => $_ }
-			$db->getAllUserProblems($userID, $setID);
-		$UserProblems{$userID} = \%CurrUserProblems;
+
+  # Gateway change here: for non-gateway (non-versioned) sets, we just get each user's
+  # problems.  For gateway (versioned) sets, we get the user's best version and return
+  # that
+	if ( ! defined( $setRecord->assignment_type() ) ||
+	     $setRecord->assignment_type() !~ /gateway/ ) {
+		foreach my $userID (@sortedUserIDs) {
+			my %CurrUserProblems = map { $_->problem_id => $_ }
+				$db->getAllUserProblems($userID, $setID);
+			$UserProblems{$userID} = \%CurrUserProblems;
+		}
+	} else {  # versioned sets; get the problems for the best version 
+
+		foreach my $userID (@sortedUserIDs) {
+			my %CurrUserProblems;
+			my $numVersions = $db->getUserSetVersionNumber( $userID, $setID );
+			my $bestScore = -1;
+
+			for ( my $i=1; $i<=$numVersions; $i++ ) {
+				my %versionUserProblems = map { $_->problem_id => $_ }
+					$db->getAllUserProblems( $userID, "$setID,v$i" );
+				my $score = 0;
+				foreach ( values ( %versionUserProblems ) ) {
+					my $status = $_->status || 0;
+					my $value = $_->value || 1;
+					$score += $status*$value;
+				}
+				if ( $score > $bestScore ) {
+					%CurrUserProblems = %versionUserProblems;
+					$bestScore = $score;
+				}
+			}
+			$UserProblems{$userID} = \%CurrUserProblems;
+		}
 	}
 	$WeBWorK::timer->continue("done pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
 	
