@@ -26,9 +26,10 @@ BEGIN
 	$VERSION		=1.0;
 	@ISA		=qw(Exporter);
 	@EXPORT	=qw(
-	&createListing &updateListing &deleteListing &getAllChapters &getAllSections
-	&searchListings &getAllListings &getSectionListings
-	&getAllDBchapters &getAllDBsections &getDBsectionListings
+	&createListing &updateListing &deleteListing &getAllChapters
+	&getAllSections &searchListings &getAllListings &getSectionListings
+	&getAllDBsubjects &getAllDBchapters &getAllDBsections
+	&getDBsectionListings
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -45,6 +46,31 @@ sub getDB {
 	return($dbh);
 }
 
+=item getAllDBsubjects($ce)                                                     
+Returns an array of DBsubject names                                             
+                                                                                
+$ce is a WeBWorK::CourseEnvironment object that describes the problem library.  
+                                                                                
+=cut                                                                            
+
+sub getAllDBsubjects {
+	my $ce = shift;
+	my @results=();
+	my ($row,$listing);
+	my $query = "SELECT DISTINCT name FROM DBsubject";
+	my $dbh = getDB($ce);
+	my $sth = $dbh->prepare($query);
+	$sth->execute();
+	while (1) {
+		$row = $sth->fetchrow_array;
+		last if (!defined($row));
+		my $listing = $row;
+		push @results, $listing;
+	}
+	return @results;
+}
+
+
 =item getAllDBchapters($ce)                                                     
 Returns an array of DBchapter names                                             
                                                                                 
@@ -54,24 +80,25 @@ $ce is a WeBWorK::CourseEnvironment object that describes the problem library.
 
 sub getAllDBchapters {
 	my $ce = shift;
+	my $subject = shift;
 	my @results=();
 	my ($row,$listing);
-	my $query = "SELECT DISTINCT name FROM DBchapter";
+	my $where = "";
 	my $dbh = getDB($ce);
+	if($subject) {
+		my $subject_id = "";
+		my $query = "SELECT DBsubject_id FROM DBsubject WHERE name = \"$subject\"";
+		my $subject_id = $dbh->selectrow_array($query);  
+		$where = " WHERE DBsubject_id=\"$subject_id\" ";
+	}
+	my $query = "SELECT DISTINCT name FROM DBchapter $where ";
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
-	while (1)
-	{
+	while (1) {
 		$row = $sth->fetchrow_array;
-		if (!defined($row))
-		{
-			last;
-		}
-		else
-		{
-			my $listing = $row;
-			push @results, $listing;
-		}
+		last if (!defined($row));
+		my $listing = $row;
+		push @results, $listing;
 	}
 	return @results;
 }
@@ -92,7 +119,7 @@ sub getAllDBsections {
 	my ($row,$listing);
 	my $dbh = getDB($ce);
 	my $query = "SELECT DBchapter_id FROM DBchapter
-								WHERE name = \"$chapter\" ";
+					WHERE name = \"$chapter\" ";
 	my $chapter_id = $dbh->selectrow_array($query);
 	die "ERROR - no such chapter: $chapter\n" unless(defined $chapter_id);
 	$query = "SELECT DISTINCT name FROM DBsection
