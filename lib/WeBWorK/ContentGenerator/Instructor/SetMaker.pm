@@ -493,15 +493,14 @@ sub browse_library_panel2 {
 					            -default=> $subject_selected,
 					             -onchange=>"submit();return true"
 				),
-				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter List")])),
+				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists")])),
 		CGI::Tr(
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
 					            -default=> $chapter_selected,
 					             -onchange=>"submit();return true"
-				),
-				CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
+		)])),
 		CGI::Tr(
 			CGI::td("Section:"),
 			CGI::td({-colspan=>2},
@@ -871,11 +870,7 @@ sub pre_header_initialize {
 	} elsif ($r->param('lib_view')) {
  
 		@pg_files=();
-		my $chap = $r->param('library_chapters') || "";
-		$chap = "" if($chap eq "All Chapters");
-		my $sect = $r->param('library_sections') || "";
-		$sect = "" if($sect eq "All Sections");
-		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r->{ce}, "$chap", "$sect");
+		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r, subject_default => 'All Subjects', chapter_default => 'All Chapters', section_default=>'All Sections');
 		my ($result, $tolibpath);
 		for $result (@dbsearch) {
 			$tolibpath = "Library/$result->{path}/$result->{filename}";
