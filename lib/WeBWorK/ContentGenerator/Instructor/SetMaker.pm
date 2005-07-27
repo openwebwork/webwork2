@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.41 2005/07/26 17:39:22 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.42 2005/07/26 22:28:56 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -464,10 +464,15 @@ sub browse_library_panel2 {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
+	my $default_subj = "All Subjects";
 	my $default_chap = "All Chapters";
 	my $default_sect = "All Sections";
 
-	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($ce);
+	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($ce);
+	unshift @subjs, $default_subj;
+	my $subject_selected = $r->param('library_subjects') || $default_subj;
+
+	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($ce, $subject_selected);
 	unshift @chaps, $default_chap;
 	my $chapter_selected = $r->param('library_chapters') || $default_chap;
 
@@ -481,6 +486,14 @@ sub browse_library_panel2 {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::start_table(),
+		CGI::Tr(
+			CGI::td(["Subject:",
+				CGI::popup_menu(-name=> 'library_subjects', 
+					            -values=>\@subjs,
+					            -default=> $subject_selected,
+					             -onchange=>"submit();return true"
+				),
+				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter List")])),
 		CGI::Tr(
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
@@ -656,18 +669,15 @@ sub make_data_row {
 		: CGI::div({class=>"RenderSolo"}, $pg->{body_text});
 
 
-	my $edit_link =	 '';
 	#if($self->{r}->param('browse_which') ne 'browse_library') {
 	my $problem_seed = $self->{r}->param('problem_seed') || 0;
-	if($sourceFileName !~ /^Library\//) {
-		$edit_link = CGI::a({href=>$self->systemLink(
-			$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
-				courseID =>$urlpath->arg("courseID"),
-				setID=>"Undefined_Set",
-				problemID=>"1"),
-				params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-			)}, "Edit it" );
-	}
+	my $edit_link = CGI::a({href=>$self->systemLink(
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			  courseID =>$urlpath->arg("courseID"),
+			  setID=>"Undefined_Set",
+			  problemID=>"1"),
+			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
+		  )}, "Edit it" );
 
 	my $try_link = CGI::a({href=>$self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
@@ -1119,90 +1129,10 @@ sub body {
 	return "";	
 }
 
-############################################## End of Body
-
-# SKEL: To emit your own HTTP header, uncomment this:
-# 
-#sub header {
-# my ($self) = @_;
-# 
-# # Generate your HTTP header here.
-# 
-# # If you return something, it will be used as the HTTP status code for this
-# # request. The Apache::Constants module might be useful for gerating status
-# # codes. If you don't return anything, the status code "OK" will be used.
-# return "";
-#}
-
-# SKEL: If you need to do any processing after the HTTP header is sent, but before
-# any template processing occurs, or you need to calculate values that will be
-# used in multiple methods, do it in this method:
-# 
-#sub initialize {
-#my ($self) = @_;
-#}
-
-# SKEL: If you need to add tags to the document <HEAD>, uncomment this method:
-# 
-#sub head {
-# my ($self) = @_;
-# 
-# # You can print head tags here, like <META>, <SCRIPT>, etc.
-# 
-# return "";
-#}
-
-# SKEL: To fill in the "info" box (to the right of the main body), use this
-# method:
-# 
-#sub info {
-# my ($self) = @_;
-# 
-# # Print HTML here.
-# 
-# return "";
-#}
-
-# SKEL: To provide navigation links, use this method:
-# 
-#sub nav {
-# my ($self, $args) = @_;
-# 
-# # See the documentation of path() and pathMacro() in
-# # WeBWorK::ContentGenerator for more information.
-# 
-# return "";
-#}
-
-# SKEL: For a little box for display options, etc., use this method:
-# 
-#sub options {
-# my ($self) = @_;
-# 
-# # Print HTML here.
-# 
-# return "";
-#}
-
-# SKEL: For a list of sibling objects, use this method:
-# 
-#sub siblings {
-# my ($self, $args) = @_;
-# 
-# # See the documentation of siblings() and siblingsMacro() in
-# # WeBWorK::ContentGenerator for more information.
-# # 
-# # Refer to implementations in ProblemSet and Problem.
-# 
-# return "";
-#}
-
 =head1 AUTHOR
 
 Written by John Jones, jj (at) asu.edu.
 
 =cut
-
-
 
 1;
