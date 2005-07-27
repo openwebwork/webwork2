@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.15 2004/11/10 21:17:38 toenail Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.16 2005/07/05 18:56:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -132,7 +132,7 @@ sub body {
 	);
 				        
 	print CGI::start_table({});
-	print CGI::Tr(CGI::th(["Assigned","ID","&nbsp;","Student Name","&nbsp;","Section","&nbsp;","Due Date"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th(["Assigned","Login Name","&nbsp;","Student Name","&nbsp;","Section","&nbsp;","Due Date"]));
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
