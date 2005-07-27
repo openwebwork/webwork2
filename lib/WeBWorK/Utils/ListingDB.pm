@@ -148,6 +148,7 @@ $section is a DBsection name
 sub getDBsectionListings {
 
 	my $ce = shift;
+	my $subj = shift;
 	my $chap = shift;
 	my $sec = shift;
 
@@ -362,12 +363,17 @@ sub getAllListings {
 # if section is omitted, get all from the chapter
 sub getSectionListings	{
 	#print STDERR "ListingDB::getSectionListings(chapter,section)\n";
-	my $ce = shift;
-	my $chap = shift;
-	my $sec = shift;
+	my $r = shift;
+	my %defaults = @_;
+	my $ce = $r->ce;
+	my $subj = $r->param('library_subjects') || "";
+	my $chap = $r->param('library_chapters') || "";
+	my $sec = $r->param('library_sections') || "";
+	$subj = '' if ($subj eq $defaults{subject_default});
+	$chap = '' if ($chap eq $defaults{chapter_default});
+	$sec = '' if ($sec eq $defaults{section_default});
 	my $version = $ce->{problemLibrary}->{version} || 1;
-	if($version == 2) { return(getDBsectionListings($ce, $chap, $sec))}
-
+	if($version == 2) { return(getDBsectionListings($ce, $subj, $chap, $sec))}
 
 	my $chapstring = '';
 	if($chap) {
