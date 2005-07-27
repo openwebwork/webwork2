@@ -154,39 +154,43 @@ sub getDBsectionListings {
 
 	my $dbh = getDB($ce);
 
+	my $subjstring = '';
+	if($subj) {
+		$subj =~ s/'/\\'/g;
+		$subjstring = " AND t.name=\"$subj\" ";
+	}
 	my $chapstring = '';
 	if($chap) {
 		$chap =~ s/'/\\'/g;
-		$chap = '"'.$chap.'"';
+		$chapstring = " AND c.name=\"$chap\" ";
 	}
 	my $secstring = '';
 	if($sec) {
 		$sec =~ s/'/\\'/g;
-		$sec = '"'.$sec.'"';
+		$secstring = " AND s.name=\"$sec\" ";
 	}
 
 	my $query = "SELECT DBsection_id 
-				FROM DBsection s, DBchapter c 
-				WHERE c.name = $chap AND s.name = $sec";
-	my $section_id = $dbh->selectrow_array($query);
-	die "getDBSectionListings - no such section: $chap $sec\n" unless(defined $section_id);
-
+				FROM DBsection s, DBchapter c, DBsubject t 
+				WHERE t.DBsubject_id = c.DBsubject_id 
+                and s.DBchapter_id = c.DBchapter_id 
+                $subjstring $chapstring $secstring";
+	my $section_id_ref = $dbh->selectall_arrayref($query);
+	die "getDBSectionListings - no such section: $chap $sec\n" unless(defined $section_id_ref);
+	my @section_ids = @{$section_id_ref};
+	@section_ids = map { "DBsection_id = ". $_->[0] } @section_ids;
 	my @results; #returned
 	$query = "SELECT path_id, filename
-		FROM pgfile
-		WHERE DBsection_id = $section_id";
+		FROM pgfile WHERE ". join(" OR ", @section_ids);
 	my $sth = $dbh->prepare($query);
 
 	$sth->execute();
 	while (1){
 		my ($path_id, $pgfile) = $sth->fetchrow_array();
-		if (!defined($pgfile)){
-			last;
-		}else{
-			my $path = $dbh->selectrow_array("SELECT path FROM path 
+		last if (!defined($pgfile));
+		my $path = $dbh->selectrow_array("SELECT path FROM path 
 						WHERE path_id = $path_id");
-			push @results, {"path" => $path, "filename" => $pgfile};
-		}
+		push @results, {"path" => $path, "filename" => $pgfile};
 	}
 	return @results;
 }
