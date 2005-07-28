@@ -28,8 +28,8 @@ BEGIN
 	@EXPORT	=qw(
 	&createListing &updateListing &deleteListing &getAllChapters
 	&getAllSections &searchListings &getAllListings &getSectionListings
-	&getAllDBsubjects &getAllDBchapters &getAllDBsections
-	&getDBsectionListings
+	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
+	&getDBListings
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -46,151 +46,172 @@ sub getDB {
 	return($dbh);
 }
 
-=item getAllDBsubjects($ce)                                                     
+=item getDBTextbooks($r)                                                     
+Returns an array of Textbook names consistent with the subject, chapter,
+section selected
+                                                                                
+$r is a Apache request object so we can extract whatever parameters we want
+                                                                                
+=cut                                                                            
+
+sub getDBTextbooks {
+	my $r = shift;
+	my $dbh = getDB($r->ce);
+	# there aren't many, so first get a list of all texts, and then remove
+	# the ones which aren't ok
+	my ($sectstring, $chapstring, $subjstring) = ('','','');
+	my $subj = $r->param('library_subjects') || "";
+	my $chap = $r->param('library_chapters') || "";
+	my $sec = $r->param('library_sections') || "";
+	if($subj) {
+		$subj =~ s/'/\\'/g;
+		$subjstring = " AND t.name = \'$subj\'\n";
+	}
+	if($chap) {
+		$chap =~ s/'/\\'/g;
+		$chapstring = " AND c.name = \'$chap\' AND c.DBsubject_id=t.DBsubject_id\n";
+	}
+	if($sec) {
+		$sec =~ s/'/\\'/g;
+		$sectstring = " AND s.name = \'$sec\' AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
+	}
+	my $query = "SELECT DISTINCT tbk.textbook_id,tbk.title,tbk.author,
+          tbk.edition
+          FROM textbook tbk, problem p, pgfile_problem pg, pgfile pgf,
+            DBsection s, DBchapter c, DBsubject t
+          WHERE tbk.textbook_id=p.textbook_id AND p.problem_id=pg.problem_id AND
+            s.DBchapter_id=c.DBchapter_id AND c.DBsubject_id=t.DBsubject_id
+            AND pgf.DBsection_id=s.DBsection_id AND pgf.pgfile_id=pg.pgfile_id
+            $chapstring $subjstring $sectstring ";
+	my $text_ref = $dbh->selectall_arrayref($query);
+	my @texts = @{$text_ref};
+	#@texts = grep { $_->[1] =~ /\S/ } @texts;
+	return(\@texts);
+}
+
+=item getAllDBsubjects($r)
 Returns an array of DBsubject names                                             
                                                                                 
-$ce is a WeBWorK::CourseEnvironment object that describes the problem library.  
+$r is the Apache request object
                                                                                 
 =cut                                                                            
 
 sub getAllDBsubjects {
-	my $ce = shift;
+	my $r = shift;
 	my @results=();
-	my ($row,$listing);
+	my $row;
 	my $query = "SELECT DISTINCT name FROM DBsubject";
-	my $dbh = getDB($ce);
+	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
-	while (1) {
-		$row = $sth->fetchrow_array;
-		last if (!defined($row));
-		my $listing = $row;
-		push @results, $listing;
+	while ($row = $sth->fetchrow_array()) {
+		push @results, $row;
 	}
 	return @results;
 }
 
 
-=item getAllDBchapters($ce)                                                     
+=item getAllDBchapters($r)
 Returns an array of DBchapter names                                             
                                                                                 
-$ce is a WeBWorK::CourseEnvironment object that describes the problem library.  
+$r is the Apache request object
                                                                                 
 =cut                                                                            
 
 sub getAllDBchapters {
-	my $ce = shift;
-	my $subject = shift;
-	my @results=();
-	my ($row,$listing);
-	my $where = "";
-	my $dbh = getDB($ce);
-	if($subject) {
-		my $subject_id = "";
-		my $query = "SELECT DBsubject_id FROM DBsubject WHERE name = \"$subject\"";
-		my $subject_id = $dbh->selectrow_array($query);  
-		$where = " WHERE DBsubject_id=\"$subject_id\" ";
-	}
-	my $query = "SELECT DISTINCT name FROM DBchapter $where ";
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	while (1) {
-		$row = $sth->fetchrow_array;
-		last if (!defined($row));
-		my $listing = $row;
-		push @results, $listing;
-	}
+	my $r = shift;
+	my $subject = $r->param('library_subjects');
+	return () unless($subject);
+	my $dbh = getDB($r->ce);
+	my $query = "SELECT DISTINCT c.name FROM DBchapter c, DBsubject t
+                 WHERE c.DBsubject_id = t.DBsubject_id AND
+                 t.name = \"$subject\"";
+	my $all_chaps_ref = $dbh->selectall_arrayref($query);
+	my @results = map { $_->[0] } @{$all_chaps_ref};
 	return @results;
 }
 
-=item getAllDBsections($ce,$chapter)                                            
+=item getAllDBsections($r)                                            
 Returns an array of DBsection names                                             
                                                                                 
-$ce is a WeBWorK::CourseEnvironment object that describes the problem library.  
-$chapter is an DBchapter name                                                   
-                                                                                
+$r is the Apache request object
+
 =cut                                                                            
 
 sub getAllDBsections {
-	my $ce = shift;
-	my $chapter = shift;
-	# $chapter = '"'.$chapter.'"'; # \'$chapter\' or \"$chapter\" does not work in $query anymore! wth?
-	my @results=();
-	my ($row,$listing);
-	my $dbh = getDB($ce);
-	my $query = "SELECT DBchapter_id FROM DBchapter
-					WHERE name = \"$chapter\" ";
-	my $chapter_id = $dbh->selectrow_array($query);
-	die "ERROR - no such chapter: $chapter\n" unless(defined $chapter_id);
-	$query = "SELECT DISTINCT name FROM DBsection
-								WHERE DBchapter_id = $chapter_id";
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	while (1)
-	{
-		$row = $sth->fetchrow_array;
-		last if (!defined($row));
-		my $listing = $row;
-		push @results, $listing;
-	}
+	my $r = shift;
+	my $subject = $r->param('library_subjects');
+	return () unless($subject);
+	my $chapter = $r->param('library_chapters');
+	return () unless($chapter);
+	my $dbh = getDB($r->ce);
+	my $query = "SELECT DISTINCT s.name FROM DBsection, DBsection s,
+                 DBchapter c, DBsubject t
+                 WHERE s.DBchapter_id = c.DBchapter_id AND
+                 c.DBsubject_id = t.DBsubject_id AND
+                 t.name = \"$subject\" AND c.name = \"$chapter\"";
+	my $all_sections_ref = $dbh->selectall_arrayref($query);
+	my @results = map { $_->[0] } @{$all_sections_ref};
 	return @results;
 }
 
-=item getDBSectionListings($ce, $chapter, $section)                             
+=item getDBSectionListings($r)                             
 Returns an array of hash references with the keys: path, filename.              
                                                                                 
-$ce is a WeBWorK::CourseEnvironment object that describes the problem library.  
-$chapter is an DBchapter name                                                   
-$section is a DBsection name                                                    
+$r is an Apache request object that has all needed data inside of it
+
+Here, we search on all known fields out of r
                                                                                 
 =cut                                                                            
 
-sub getDBsectionListings {
-
-	my $ce = shift;
-	my $subj = shift;
-	my $chap = shift;
-	my $sec = shift;
+sub getDBListings {
+	my $r = shift;
+	my $ce = $r->ce;
+	my $subj = $r->param('library_subjects') || "";
+	my $chap = $r->param('library_chapters') || "";
+	my $sec = $r->param('library_sections') || "";
+	my $text = $r->param('library_textbook') || "";
+	my $textchap = $r->param('library_textbook_chapter') || "";
+	my $textsec = $r->param('library_textbook_section') || "";
 
 	my $dbh = getDB($ce);
 
-	my $subjstring = '';
+	my $extrawhere = '';
 	if($subj) {
 		$subj =~ s/'/\\'/g;
-		$subjstring = " AND t.name=\"$subj\" ";
+		$extrawhere .= " AND dbsj.name=\"$subj\" ";
 	}
-	my $chapstring = '';
 	if($chap) {
 		$chap =~ s/'/\\'/g;
-		$chapstring = " AND c.name=\"$chap\" ";
+		$extrawhere .= " AND dbc.name=\"$chap\" ";
 	}
-	my $secstring = '';
 	if($sec) {
 		$sec =~ s/'/\\'/g;
-		$secstring = " AND s.name=\"$sec\" ";
+		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+	}
+	if($text) {
+		$text =~ s/'/\\'/g;
+		$extrawhere .= " AND t.textbook_id=\"$text\" ";
 	}
 
-	my $query = "SELECT DBsection_id 
-				FROM DBsection s, DBchapter c, DBsubject t 
-				WHERE t.DBsubject_id = c.DBsubject_id 
-                and s.DBchapter_id = c.DBchapter_id 
-                $subjstring $chapstring $secstring";
-	my $section_id_ref = $dbh->selectall_arrayref($query);
-	die "getDBSectionListings - no such section: $chap $sec\n" unless(defined $section_id_ref);
-	my @section_ids = @{$section_id_ref};
-	@section_ids = map { "DBsection_id = ". $_->[0] } @section_ids;
-	my @results; #returned
-	$query = "SELECT path_id, filename
-		FROM pgfile WHERE ". join(" OR ", @section_ids);
-	my $sth = $dbh->prepare($query);
-
-	$sth->execute();
-	while (1){
-		my ($path_id, $pgfile) = $sth->fetchrow_array();
-		last if (!defined($pgfile));
-		my $path = $dbh->selectrow_array("SELECT path FROM path 
-						WHERE path_id = $path_id");
-		push @results, {"path" => $path, "filename" => $pgfile};
+	my $query = "SELECT DISTINCT pgf.pgfile_id from pgfile pgf, 
+         DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
+         problem p, textbook t 
+        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+              dbc.DBchapter_id = dbsc.DBchapter_id AND
+              dbsc.DBsection_id = pgf.DBsection_id AND
+              pgf.pgfile_id = pgp.pgfile_id AND
+              pgp.problem_id = p.problem_id AND
+              p.textbook_id = t.textbook_id \n $extrawhere";
+	my $pg_id_ref = $dbh->selectall_arrayref($query);
+	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
+	my @results=();
+	for my $pgid (@pg_ids) {
+		$query = "SELECT path, filename FROM pgfile pgf, path p 
+          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
+		my $row = $dbh->selectrow_arrayref($query);
+		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
+		
 	}
 	return @results;
 }
@@ -368,16 +389,12 @@ sub getAllListings {
 sub getSectionListings	{
 	#print STDERR "ListingDB::getSectionListings(chapter,section)\n";
 	my $r = shift;
-	my %defaults = @_;
 	my $ce = $r->ce;
+	my $version = $ce->{problemLibrary}->{version} || 1;
+	if($version == 2) { return(getDBListings($r))}
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
-	$subj = '' if ($subj eq $defaults{subject_default});
-	$chap = '' if ($chap eq $defaults{chapter_default});
-	$sec = '' if ($sec eq $defaults{section_default});
-	my $version = $ce->{problemLibrary}->{version} || 1;
-	if($version == 2) { return(getDBsectionListings($ce, $subj, $chap, $sec))}
 
 	my $chapstring = '';
 	if($chap) {

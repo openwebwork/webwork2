@@ -42,6 +42,10 @@ use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
 use constant MY_PROBLEMS => '  My Problems  ';
 use constant MAIN_PROBLEMS => '  Main Problems  ';
 use constant CREATE_SET_BUTTON => 'Create New Set';
+use constant ALL_CHAPTERS => 'All Chapters';
+use constant ALL_SUBJECTS => 'All Subjects';
+use constant ALL_SECTIONS => 'All Sections';
+use constant ALL_TEXTBOOKS => 'All Textbooks';
 
 ## Flags for operations on files
 
@@ -351,17 +355,16 @@ sub browse_mysets_panel {
 }
 
 #####	 Version 3 is the problem library
+# 
+# This comes in 3 forms, problem library version 1, and for version 2 there
+# is the basic, and the advanced interfaces.  This function checks what we are
+# supposed to do, or aborts if the problem library has not been installed.
 
-
-# There a different levels, and you can pick a new chapter,
-# pick a new section, pick all from chapter, pick all from section
-#
-# Incoming data - current chapter, current section
 sub browse_library_panel {
 	my $self=shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	
+
 	# See if the problem library is installed
 	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
 
@@ -384,13 +387,13 @@ HERE
 		}
 	}
 
-
 	# Now check what version we are supposed to use
 	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
 	} elsif($libraryVersion == 2) {
-		return $self->browse_library_panel2;
+		return $self->browse_library_panel2	if($self->{library_basic}==1);
+		return $self->browse_library_panel2adv;
 	} else {
 		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
 			"The problem library version is set to an illegal value.")));
@@ -403,22 +406,17 @@ sub browse_library_panel1 {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $default_chap = "All Chapters";
-	my $default_sect = "All Sections";
-
 	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
-	unshift @chaps, $default_chap;
-	my $chapter_selected = $r->param('library_chapters') || $default_chap;
+	unshift @chaps, ALL_CHAPTERS;
+	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
 
 	my @sects=();
-	if ($chapter_selected ne $default_chap) {
+	if ($chapter_selected ne ALL_CHAPTERS) {
 		@sects = WeBWorK::Utils::ListingDB::getAllSections($r->{ce}, $chapter_selected);
 	}
 
-	my @textbooks = ('Textbook info not ready');
-
-	unshift @sects, $default_sect;
-	my $section_selected =	$r->param('library_sections') || $default_sect;
+	unshift @sects, ALL_SECTIONS;
+	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
 	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
@@ -439,6 +437,141 @@ sub browse_library_panel1 {
 					                -default=> $section_selected
 			))),
 
+			CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+			CGI::end_table(),
+		));
+}
+
+sub browse_library_panel2 {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
+	unshift @subjs, ALL_SUBJECTS;
+
+	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
+	unshift @chaps, ALL_CHAPTERS;
+
+	my @sects=();
+	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
+	unshift @sects, ALL_SECTIONS;
+
+	my $subject_selected = $r->param('library_subjects') || ALL_SUBJECTS;
+	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
+	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
+
+	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
+
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
+		CGI::hidden(-name=>"library_is_basic", -default=>[1]),
+		CGI::start_table({-width=>"100%"}),
+		CGI::Tr(
+			CGI::td(["Subject:",
+				CGI::popup_menu(-name=> 'library_subjects', 
+					            -values=>\@subjs,
+					            -default=> $subject_selected,
+					             -onchange=>"submit();return true"
+				)]),
+			CGI::td({-colspan=>2, -align=>"right"},
+				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
+		),
+		CGI::Tr(
+			CGI::td(["Chapter:",
+				CGI::popup_menu(-name=> 'library_chapters', 
+					            -values=>\@chaps,
+					            -default=> $chapter_selected,
+					             -onchange=>"submit();return true"
+		    )]),
+			CGI::td({-colspan=>2, -align=>"right"},
+					CGI::submit(-name=>"library_advanced", -value=>"Advanced Search"))
+		),
+		CGI::Tr(
+			CGI::td(["Section:",
+			CGI::popup_menu(-name=> 'library_sections', 
+					        -values=>\@sects,
+					        -default=> $section_selected
+		    )]),
+		 ),
+		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+		 CGI::end_table(),
+	 ));
+	
+}
+
+sub browse_library_panel2adv {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
+	unshift @subjs, ALL_SUBJECTS;
+
+	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
+	unshift @chaps, ALL_CHAPTERS;
+
+	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
+	unshift @sects, ALL_SECTIONS;
+
+	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
+	#my @textarray = map { $_->[1]." by ".$_->[2] }  @{$texts};
+	my @textarray = map { $_->[0] }  @{$texts};
+	my %textlabels = ();
+	for my $ta (@{$texts}) {
+		$textlabels{$ta->[0]} = $ta->[1]." by ".$ta->[2]." (edition ".$ta->[3].")";
+	}
+	unshift @textarray, ALL_TEXTBOOKS;
+	my $atb = ALL_TEXTBOOKS; $textlabels{$atb} = ALL_TEXTBOOKS;
+
+	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
+	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
+	my $subject_selected = $r->param('library_subjects') || ALL_SUBJECTS;
+	my $textbook_selected = $r->param('library_textbook') || ALL_TEXTBOOKS;
+
+	my $text_popup = CGI::popup_menu(-name => 'library_textbook',
+									 -values =>\@textarray,
+									 -labels => \%textlabels,
+									 -default=>$textbook_selected);
+	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
+
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"},
+		CGI::hidden(-name=>"library_is_basic", -default=>[2]),
+		CGI::start_table({-width=>"100%"}),
+		# Html done by hand since it is temporary
+		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, 'All Selected Constraints Joined by "And"')),
+		CGI::Tr(
+			CGI::td(["Subject:",
+				CGI::popup_menu(-name=> 'library_subjects', 
+					            -values=>\@subjs,
+					            -default=> $subject_selected,
+					             -onchange=>"submit();return true"
+				)]),
+			CGI::td({-colspan=>2, -align=>"right"},
+				CGI::submit(-name=>"lib_select_subject", -value=>"Update Lists"))),
+		CGI::Tr(
+			CGI::td(["Chapter:",
+				CGI::popup_menu(-name=> 'library_chapters', 
+					            -values=>\@chaps,
+					            -default=> $chapter_selected,
+					             -onchange=>"submit();return true"
+		    )]),
+			CGI::td({-colspan=>2, -align=>"right"},
+					CGI::submit(-name=>"library_basic", -value=>"Basic Search"))
+		),
+		CGI::Tr(
+			CGI::td(["Section:",
+			CGI::popup_menu(-name=> 'library_sections', 
+					        -values=>\@sects,
+					        -default=> $section_selected,
+							-onchange=>"submit();return true"
+		    )]),
+		 ),
+		 CGI::Tr(
+			CGI::td(["Textbook:", $text_popup]),
+		 ),
+		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+		 CGI::end_table(),
+	 ));
 			#CGI::Tr(
 			#	CGI::td("Textbook:"),
 			#	CGI::td({-colspan=>2},
@@ -454,64 +587,6 @@ sub browse_library_panel1 {
 			#		                   -default=>"Keywords not implemented yet",
 			#			               -override=>1, -size=>60
 			#))),
-			CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-			CGI::end_table(),
-		));
-}
-
-sub browse_library_panel2 {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $default_subj = "All Subjects";
-	my $default_chap = "All Chapters";
-	my $default_sect = "All Sections";
-
-	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($ce);
-	unshift @subjs, $default_subj;
-	my $subject_selected = $r->param('library_subjects') || $default_subj;
-
-	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($ce, $subject_selected);
-	unshift @chaps, $default_chap;
-	my $chapter_selected = $r->param('library_chapters') || $default_chap;
-
-	my @sects=();
-	if ($chapter_selected ne $default_chap) {
-		@sects = WeBWorK::Utils::ListingDB::getAllDBsections($ce, $chapter_selected);
-	}
-	unshift @sects, $default_sect;
-	my $section_selected =	$r->param('library_sections') || $default_sect;
-	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
-
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
-		CGI::start_table(),
-		CGI::Tr(
-			CGI::td(["Subject:",
-				CGI::popup_menu(-name=> 'library_subjects', 
-					            -values=>\@subjs,
-					            -default=> $subject_selected,
-					             -onchange=>"submit();return true"
-				),
-				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists")])),
-		CGI::Tr(
-			CGI::td(["Chapter:",
-				CGI::popup_menu(-name=> 'library_chapters', 
-					            -values=>\@chaps,
-					            -default=> $chapter_selected,
-					             -onchange=>"submit();return true"
-		)])),
-		CGI::Tr(
-			CGI::td("Section:"),
-			CGI::td({-colspan=>2},
-			CGI::popup_menu(-name=> 'library_sections', 
-					        -values=>\@sects,
-					        -default=> $section_selected
-		 ))),
-		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-		 CGI::end_table(),
-	 ));
-
 	
 }
 
@@ -721,6 +796,13 @@ sub pre_header_initialize {
 	my $db = $r->db;
 	my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
+	my $library_basic = $r->param('library_is_basic') || 1;
+
+	## Fix some parameters
+	$r->param('library_subjects', '') if($r->param('library_subjects') eq ALL_SUBJECTS);
+	$r->param('library_chapters', '') if($r->param('library_chapters') eq ALL_CHAPTERS);
+	$r->param('library_sections', '') if($r->param('library_sections') eq ALL_SECTIONS);
+	$r->param('library_textbook', '') if($r->param('library_textbook') eq ALL_TEXTBOOKS);
 
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
@@ -864,13 +946,12 @@ sub pre_header_initialize {
 			$use_previous_problems=0;
 		}
 
-		##### View whole chapter from the library
-		## This will change somewhat later
+		##### View from the library database
  
 	} elsif ($r->param('lib_view')) {
  
 		@pg_files=();
-		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r, subject_default => 'All Subjects', chapter_default => 'All Chapters', section_default=>'All Sections');
+		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		my ($result, $tolibpath);
 		for $result (@dbsearch) {
 			$tolibpath = "Library/$result->{path}/$result->{filename}";
@@ -997,6 +1078,10 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('select_all')) {
 		@past_marks = map {1} @past_marks;
+	} elsif ($r->param('library_basic')) {
+		$library_basic = 1;
+	} elsif ($r->param('library_advanced')) {
+		$library_basic = 2;
 	} elsif ($r->param('select_none')) {
 		@past_marks = ();
 
@@ -1030,7 +1115,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{past_marks} = \@past_marks;
 	$self->{all_db_sets} = \@all_db_sets;
-
+	$self->{library_basic} = $library_basic;
 }
 
 
