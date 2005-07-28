@@ -85,7 +85,7 @@ sub getDBTextbooks {
             $chapstring $subjstring $sectstring ";
 	my $text_ref = $dbh->selectall_arrayref($query);
 	my @texts = @{$text_ref};
-	#@texts = grep { $_->[1] =~ /\S/ } @texts;
+	@texts = grep { $_->[1] =~ /\S/ } @texts;
 	return(\@texts);
 }
 
