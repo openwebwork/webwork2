@@ -1,0 +1,86 @@
+DOCUMENT();
+
+loadMacros(
+	"PGbasicmacros.pl",
+	"PGchoicemacros.pl",
+	"PGanswermacros.pl"
+);
+
+TEXT(&beginproblem);
+$showPartialCorrectAnswers = 1;
+ 
+BEGIN_TEXT
+ This problem demonstrates how you can write your own procedure to check answers.  
+ The procedure is embedded right in the problem. If you wanted to use it for several 
+ problems, you could put it in a file similar to "PGanswermacros.pl" and load it into
+ the problem.
+ 
+ This problem asks you to enter a palindrome, a word, number, or phrase that is the same 
+ when read backwards or forward.  For example, madam or Hannah.  For us a standard
+ palindrome will ignore spaces and case, but a strict palindrome will not. So e.g. Hannah
+ is a standard but not a strict palindrome.  We will write a test for both types.  $BR $BR
+ Enter a standard palindrome such as "Hannah", "1234321", or "Mom". $BR
+ This uses std${US}palindrome${US}test $BR
+ \{ans_rule(60) \}
+END_TEXT
+
+ 
+$std_palindrome_test = sub {
+    my $in = shift @_;
+    my $normalizedCorrectAnswer =  "There are many correct answers, e.g. Hannah";
+    $in =~ s|~~s+||g;      # remove all spaces       
+                          ## use ~~ inplace of perl's backslash in problems
+    $in = uc $in;          # Make letters uppercase  
+                          ## use ~~ inplace of perl's backslash in problems
+    my $reverse = reverse $in;
+    my $correctQ = ($in eq $reverse) ? 1: 0;
+    my $ansMsg = '';
+    unless ($in =~ m|~~S|) {
+        $correctQ = 0;
+        $ansMsg = 'An empty string is not accepted as a palindrome';
+    }    
+    my $rh_answer = new AnswerHash( score  => $correctQ,
+	     correct_ans  	=> 	$normalizedCorrectAnswer,
+	     student_ans  	=> 	$in,
+	     ans_message   	=> 	$ansMsg,
+		 type		   	=> 	'custom'
+    );
+    $rh_answer;
+   
+};
+
+ANS($std_palindrome_test);
+
+
+BEGIN_TEXT;
+$PAR
+Now enter a strict palindrome such as "1234321", or "mom". $BR
+This uses strict${US}palindrome${US}test $BR
+\{ans_rule(60) \}
+END_TEXT
+
+$strict_palindrome_test = sub {
+    my $in = shift @_;
+    my $normalizedCorrectAnswer =  "There are many correct answers, e.g. HannaH";
+    $in =~ s/~~s*$//;        # remove trailing whitespace ## use ~~ inplace of perl's backslash in problems
+    $in =~ s/^~~s*//;        # remove initial spaces      ## use ~~ inplace of perl's backslash in problems
+    my $reverse = reverse $in;
+    my $correctQ = ($in eq $reverse) ? 1: 0;
+    my $ansMsg = '';
+    unless ($in =~ m|~~S|) {
+        $correctQ = 0;
+        $ansMsg = 'An empty string is not accepted as a palindrome';
+    }    
+    
+    my $rh_answer = {score  => $correctQ,
+     correct_ans  => $normalizedCorrectAnswer,
+     student_ans  => $in,
+     ans_message   => $ansMsg,
+	type		   => 'custom'
+    };
+    $rh_answer;
+};
+    
+ANS($strict_palindrome_test);
+
+ENDDOCUMENT();
