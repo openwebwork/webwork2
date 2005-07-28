@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.58 2004/12/17 17:02:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.59 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,7 +177,11 @@ sub body {
 	my $statusHeader = $sort eq "status"
 		? CGI::u("Status")
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status");
+# print the start of the form
 
+    print CGI::start_form(-method=>"POST",-action=>$actionURL),
+          $self->hidden_authen_fields;
+    
 # and send the start of the table 
 	print CGI::start_table();
 	if ( ! $existVersions ) {
