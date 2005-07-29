@@ -29,7 +29,7 @@ BEGIN
 	&createListing &updateListing &deleteListing &getAllChapters
 	&getAllSections &searchListings &getAllListings &getSectionListings
 	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-	&getDBListings
+	&getDBListings &countDBListings
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -214,6 +214,50 @@ sub getDBListings {
 		
 	}
 	return @results;
+}
+
+
+sub countDBListings {
+	my $r = shift;
+	my $ce = $r->ce;
+	my $subj = $r->param('library_subjects') || "";
+	my $chap = $r->param('library_chapters') || "";
+	my $sec = $r->param('library_sections') || "";
+	my $text = $r->param('library_textbook') || "";
+	my $textchap = $r->param('library_textbook_chapter') || "";
+	my $textsec = $r->param('library_textbook_section') || "";
+
+	my $dbh = getDB($ce);
+
+	my $extrawhere = '';
+	if($subj) {
+		$subj =~ s/'/\\'/g;
+		$extrawhere .= " AND dbsj.name=\"$subj\" ";
+	}
+	if($chap) {
+		$chap =~ s/'/\\'/g;
+		$extrawhere .= " AND dbc.name=\"$chap\" ";
+	}
+	if($sec) {
+		$sec =~ s/'/\\'/g;
+		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+	}
+	if($text) {
+		$text =~ s/'/\\'/g;
+		$extrawhere .= " AND t.textbook_id=\"$text\" ";
+	}
+
+	my $query = "SELECT COUNT(DISTINCT pgf.pgfile_id) from pgfile pgf, 
+         DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
+         problem p, textbook t 
+        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+              dbc.DBchapter_id = dbsc.DBchapter_id AND
+              dbsc.DBsection_id = pgf.DBsection_id AND
+              pgf.pgfile_id = pgp.pgfile_id AND
+              pgp.problem_id = p.problem_id AND
+              p.textbook_id = t.textbook_id \n $extrawhere";
+	my $pg_id_ref = $dbh->selectrow_arrayref($query);
+	return($pg_id_ref->[0])
 }
 
 ##############################################################################
