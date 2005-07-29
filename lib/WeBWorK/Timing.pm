@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.9 2004/05/13 18:28:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Timing.pm,v 1.10 2004/06/23 00:33:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,6 +170,7 @@ sub save {
 	my ($self) = @_;
 	
 	if ($Enabled) {
+	    local($|=1); #flush after each print
 		my $fh;
 		if ($Logfile ne "") { 
 			if (open my $tmpFH, ">>", $Logfile) {
