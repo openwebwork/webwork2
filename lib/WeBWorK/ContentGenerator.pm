@@ -1671,17 +1671,8 @@ sub errorOutput($$$) {
 		my %headers = $r->headers_in;
 		join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	};
-	# dereference details, 
-	# if it is a long report pass details by reference rather than by value
-	my @expandedDetails;
-	if (ref($details) =~ /SCALAR/i) {
-		push @expandedDetails, ${$details};
-	} elsif (ref($details) =~/ARRAY/i) {
-		push @expandedDetails, @{ $details };	
-	} else {
-	 push @expandedDetails, $details;
-	}
-	return join("",
+	
+	return
 		CGI::h2("WeBWorK Error"),
 		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this
@@ -1692,7 +1683,7 @@ EOF
 		CGI::h3("Error messages"),
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
-		CGI::code(CGI::p(@expandedDetails)),
+		CGI::code(CGI::p($details)),
 		CGI::h3("Request information"),
 		CGI::table({border=>"1"},
 			CGI::Tr(CGI::td("Time"), CGI::td($time)),
@@ -1701,8 +1692,7 @@ EOF
 			CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 				CGI::table($headers),
 			)),
-		),
-	);
+		);
 }
 
 =item warningOutput($warnings)
