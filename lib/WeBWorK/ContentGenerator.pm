@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.137 2005/06/22 16:13:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.138 2005/07/14 13:15:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1671,8 +1671,17 @@ sub errorOutput($$$) {
 		my %headers = $r->headers_in;
 		join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	};
-	
-	return
+	# dereference details, 
+	# if it is a long report pass details by reference rather than by value
+	my @expandedDetails;
+	if (ref($details) =~ /SCALAR/i) {
+		push @expandedDetails, ${$details};
+	} elsif (ref($details) =~/ARRAY/i) {
+		push @expandedDetails, @{ $details };	
+	} else {
+	 push @expandedDetails, $details;
+	}
+	return join("",
 		CGI::h2("WeBWorK Error"),
 		CGI::p(<<EOF),
 WeBWorK has encountered a software error while attempting to process this
@@ -1683,7 +1692,7 @@ EOF
 		CGI::h3("Error messages"),
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
-		CGI::p(CGI::code($details)),
+		CGI::code(CGI::p(@expandedDetails)),
 		CGI::h3("Request information"),
 		CGI::table({border=>"1"},
 			CGI::Tr(CGI::td("Time"), CGI::td($time)),
@@ -1692,7 +1701,8 @@ EOF
 			CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 				CGI::table($headers),
 			)),
-		);
+		),
+	);
 }
 
 =item warningOutput($warnings)
