@@ -503,6 +503,7 @@ sub browse_library_panel2adv {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
+	my $right_button_style = "width: 18ex";
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
 	unshift @subjs, ALL_SUBJECTS;
@@ -514,7 +515,6 @@ sub browse_library_panel2adv {
 	unshift @sects, ALL_SECTIONS;
 
 	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
-	#my @textarray = map { $_->[1]." by ".$_->[2] }  @{$texts};
 	my @textarray = map { $_->[0] }  @{$texts};
 	my %textlabels = ();
 	for my $ta (@{$texts}) {
@@ -531,8 +531,19 @@ sub browse_library_panel2adv {
 	my $text_popup = CGI::popup_menu(-name => 'library_textbook',
 									 -values =>\@textarray,
 									 -labels => \%textlabels,
-									 -default=>$textbook_selected);
+									 -default=>$textbook_selected,
+									 -onchange=>"submit();return true");
+	
+	my $library_keywords = $r->param('library_keywords') || '';
+
 	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
+
+	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
+	if($count_line==0) {
+		$count_line = "There are no matching pg files";
+	} else {
+		$count_line = "There are $count_line matching WeBWorK problem files";
+	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"},
 		CGI::hidden(-name=>"library_is_basic", -default=>[2]),
@@ -547,7 +558,8 @@ sub browse_library_panel2adv {
 					             -onchange=>"submit();return true"
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
-				CGI::submit(-name=>"lib_select_subject", -value=>"Update Lists"))),
+				CGI::submit(-name=>"lib_select_subject", -value=>"Update Menus",
+					-style=> $right_button_style))),
 		CGI::Tr(
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
@@ -556,7 +568,8 @@ sub browse_library_panel2adv {
 					             -onchange=>"submit();return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
-					CGI::submit(-name=>"library_basic", -value=>"Basic Search"))
+					CGI::submit(-name=>"library_reset", -value=>"Reset",
+					-style=>$right_button_style))
 		),
 		CGI::Tr(
 			CGI::td(["Section:",
@@ -565,28 +578,22 @@ sub browse_library_panel2adv {
 					        -default=> $section_selected,
 							-onchange=>"submit();return true"
 		    )]),
+			CGI::td({-colspan=>2, -align=>"right"},
+					CGI::submit(-name=>"library_basic", -value=>"Basic Search",
+					-style=>$right_button_style))
 		 ),
 		 CGI::Tr(
 			CGI::td(["Textbook:", $text_popup]),
 		 ),
+		 CGI::Tr(CGI::td("Keywords:"),CGI::td({-colspan=>2},
+			 CGI::textfield(-name=>"library_keywords",
+							-default=>$library_keywords,
+							-override=>1,
+							-size=>40))),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center"}, $count_line)),
 		 CGI::end_table(),
 	 ));
-			#CGI::Tr(
-			#	CGI::td("Textbook:"),
-			#	CGI::td({-colspan=>2},
-			#		CGI::popup_menu(-name=> 'library_textbooks', 
-			#		                -values=>\@textbooks,
-			#		                #-default=> $section_selected
-			#))),
-
-			#CGI::Tr(
-			#	CGI::td("Keywords:"),
-			#		CGI::td({-colspan=>2},
-			#			CGI::textfield(-name=>"keywords",
-			#		                   -default=>"Keywords not implemented yet",
-			#			               -override=>1, -size=>60
-			#))),
 	
 }
 
