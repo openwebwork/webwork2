@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.42 2005/07/26 22:28:56 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.46 2005/07/29 20:45:38 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,6 +46,13 @@ use constant ALL_CHAPTERS => 'All Chapters';
 use constant ALL_SUBJECTS => 'All Subjects';
 use constant ALL_SECTIONS => 'All Sections';
 use constant ALL_TEXTBOOKS => 'All Textbooks';
+
+#use constant LIB2_DATA => [
+  #[qw(dbchapter library_chapters), ALL_CHAPTERS],
+  #[qw(dbsection library_sections), ALL_SECTIONS],
+  #[qw(dbsubject library_subjects), ALL_SUBJECT],
+  #[qw(textbook library_textbook), ALL_TEXTBOOKS],
+  #];
 
 ## Flags for operations on files
 
@@ -506,12 +513,21 @@ sub browse_library_panel2adv {
 	my $right_button_style = "width: 18ex";
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
+	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
+		$r->param('library_subjects', '');
+	}
 	unshift @subjs, ALL_SUBJECTS;
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
+	if(! grep { $_ eq $r->param('library_chapters') } @chaps) {
+		$r->param('library_chapters', '');
+	}
 	unshift @chaps, ALL_CHAPTERS;
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
+	if(! grep { $_ eq $r->param('library_sections') } @sects) {
+		$r->param('library_sections', '');
+	}
 	unshift @sects, ALL_SECTIONS;
 
 	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
@@ -519,6 +535,9 @@ sub browse_library_panel2adv {
 	my %textlabels = ();
 	for my $ta (@{$texts}) {
 		$textlabels{$ta->[0]} = $ta->[1]." by ".$ta->[2]." (edition ".$ta->[3].")";
+	}
+	if(! grep { $_ eq $r->param('library_textbook') } @textarray) {
+		$r->param('library_textbook', '');
 	}
 	unshift @textarray, ALL_TEXTBOOKS;
 	my $atb = ALL_TEXTBOOKS; $textlabels{$atb} = ALL_TEXTBOOKS;
@@ -793,6 +812,14 @@ sub make_data_row {
 	));
 }
 
+sub clear_default {
+	my $r = shift;
+	my $param = shift;
+	my $default = shift;
+	my $newvalue = $r->param($param) || '';
+	$newvalue = '' if($newvalue eq $default);
+	$r->param($param, $newvalue);
+}
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -806,10 +833,10 @@ sub pre_header_initialize {
 	my $library_basic = $r->param('library_is_basic') || 1;
 
 	## Fix some parameters
-	$r->param('library_subjects', '') if($r->param('library_subjects') eq ALL_SUBJECTS);
-	$r->param('library_chapters', '') if($r->param('library_chapters') eq ALL_CHAPTERS);
-	$r->param('library_sections', '') if($r->param('library_sections') eq ALL_SECTIONS);
-	$r->param('library_textbook', '') if($r->param('library_textbook') eq ALL_TEXTBOOKS);
+	clear_default($r,'library_subjects', ALL_SUBJECTS);
+	clear_default($r,'library_chapters', ALL_CHAPTERS);
+	clear_default($r,'library_sections', ALL_SECTIONS);
+	clear_default($r,'library_textbook', ALL_TEXTBOOKS);
 
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
