@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.54 2005/06/29 02:46:08 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.56 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,6 +47,8 @@ use WeBWorK::PG;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
 
+our $HardcopyTimer = new WeBWorK::Timing if $WeBWorK::Timing::Enabled;
+
 =head1 CONFIGURATION VARIABLES
 
 =over
@@ -71,6 +73,7 @@ sub pre_header_initialize {
 	my $authz = $r->authz;
 	my $userID  = $r->param("user");
 	
+	$HardcopyTimer->start if $WeBWorK::Timing::Enabled;;
 	my $singleSet       = $r->urlpath->arg("setID");
 	my @sets            = $r->param("hcSet");
 	my @users           = $r->param("hcUser");
@@ -185,14 +188,19 @@ sub header {
 sub body {
 	my ($self) = @_;
 	
+	$HardcopyTimer->continue("Hardcopy: printing generation errors") if defined($HardcopyTimer);
 	if ($self->{generationError}) {
 		if (ref $self->{generationError} eq "ARRAY") {
 			my ($disposition, @rest) = @{$self->{generationError}};
 			if ($disposition eq "PGFAIL") {
 				$self->multiErrorOutput(@{$self->{errors}});
+				$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
+	            $HardcopyTimer->save if defined($HardcopyTimer);
 				return "";
 			} elsif ($disposition eq "FAIL") {
 				print $self->errorOutput(@rest);
+				$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
+	            $HardcopyTimer->save if defined($HardcopyTimer);
 				return "";
 			} elsif ($disposition eq "RETRY") {
 				print $self->errorOutput(@rest);
@@ -201,9 +209,14 @@ sub body {
 			}
 		} else {
 			# not something we were expecting...
+			$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
+	        $HardcopyTimer->save if defined($HardcopyTimer);
 			die $self->{generationError};
 		}
 	}
+	$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
+	$HardcopyTimer->save if defined($HardcopyTimer);
+
 	if (@{$self->{warnings}}) {
 		# FIXME: this code will only be reached if there was also a
 		# generation error, because otherwise the module will send
@@ -441,7 +454,9 @@ sub generateHardcopy($) {
 	my $pdfFileURL = undef;
 	if ($self->{hardcopy_format} eq 'pdf' ) {
 		my $errors = '';
+		$HardcopyTimer->continue("begin latex2pdf") if defined($HardcopyTimer);
 		$pdfFileURL = eval { $self->latex2pdf($tex, $tempDir, $fileName) };
+		$HardcopyTimer->continue("end latex2pdf") if defined($HardcopyTimer);
 		if ($@) {
 			$errors = $@;
 			#$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
@@ -546,30 +561,43 @@ sub latex2pdf {
 	# Alert the world that the tex file did not process perfectly.
 	if ($pdflatexResult) {
 		# something bad happened
-		my $textErrorMessage = "Call to $pdflatex failed: $!\n".CGI::br();
-		
+		my @textErrorMessage = ();
+		push @textErrorMessage , "Call to $pdflatex failed: $!\n",CGI::br();
+		if (-e $wd) {
+			push @textErrorMessage , "Working directory preserved at '$wd'.\n",
+			CGI::p("Investigating the contents of the working directory can be useful for debugging ",
+			 "errors which arise while processing the tex file, but it requires direct access to the server.\n"
+			);
+		} else {
+			push @textErrorMessage,  "Working directory $wd was not created.\n",CGI::br() ;
+		}
 		if (-e $hardcopyFilePath ) {
 			 # FIXME  Misuse of html tags!!!
-			$textErrorMessage.= "<h4>Some pdf output was produced and is available ". CGI::a({-href=>$hardcopyFileURL},"here.</h4>").CGI::hr();
+			push @textErrorMessage, CGI::h4("<h4>Some pdf output was produced and is available ",
+			     CGI::a({-href=>$hardcopyFileURL},"here.  ")),CGI::p("Looking at these
+			     fragments of typeset output can help with debugging."), CGI::hr();
 		}
 		# report logfile
 		if (-e $logFile) {
-			$textErrorMessage .= "pdflatex ran, but did not succeed. This suggests an error in the TeX\n".CGI::br();
-			$textErrorMessage .= "version of one of the problems, or a problem with the pdflatex system.\n".CGI::br();
+			push @textErrorMessage , "pdflatex ran, but did not succeed. This suggests an error in the TeX\n", CGI::br();
+			push @textErrorMessage , "version of one of the problems, or a problem with the pdflatex system.\n",CGI::br();
+			$HardcopyTimer->continue("Hardcopy: read log file") if defined($HardcopyTimer);
 			my $logFileContents = eval { readTexErrorLog($logFile) };
 			$logFileContents    .=  CGI::hr().CGI::hr();
+			$HardcopyTimer->continue("Hardcopy: format log file") if defined($HardcopyTimer);
 			$logFileContents    .= eval { formatTexFile($texFile)     };
+			$HardcopyTimer->continue("Hardcopy: end processing log file") if defined($HardcopyTimer);
 			if ($@) {
-				$textErrorMessage .= "Additionally, the pdflatex log file could not be read, though it exists.\n".CGI::br();
+				push @textErrorMessage, "Additionally, the pdflatex log file could not be read, though it exists.\n", CGI::br();
 			} else {
-				$textErrorMessage .= "The essential contents of the TeX log are as follows:\n".CGI::hr().CGI::br();
-				$textErrorMessage .= "$logFileContents\n".CGI::br().CGI::br();
+				push @textErrorMessage, "The essential contents of the TeX log are as follows:\n",CGI::hr(),CGI::br();
+				push @textErrorMessage, $logFileContents, CGI::br(), CGI::br();
 			}
 		} else {
-			$textErrorMessage .= "No log file was created, suggesting that pdflatex never ran. Check the WeBWorK\n".CGI::br();
-			$textErrorMessage .= "configuration to ensure that the path to pdflatex is correct.\n".CGI::br();
+			push @textErrorMessage, "No log file was created, suggesting that pdflatex never ran. Check the WeBWorK\n",CGI::br();
+			push @textErrorMessage, "configuration to ensure that the path to pdflatex is correct.\n", CGI::br();
 		}
-		die $textErrorMessage;
+		die \@textErrorMessage;
 	}
 	
 
@@ -717,7 +745,7 @@ sub getSetTeX {
 }
 
 sub getProblemTeX {
-    $WeBWorK::timer1 ->continue("hardcopy: begin processing problem") if defined($WeBWorK::timer1);
+    $HardcopyTimer ->continue("hardcopy: begin processing problem") if defined($HardcopyTimer);
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -852,7 +880,7 @@ sub getProblemTeX {
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
-	$WeBWorK::timer1 ->continue("hardcopy: end processing problem") if defined($WeBWorK::timer1);
+	$HardcopyTimer ->continue("hardcopy: end processing problem") if defined($HardcopyTimer);
 	return $pg->{body_text};
 }
 

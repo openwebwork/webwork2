@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.138 2005/07/14 13:15:24 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.139 2005/07/29 21:27:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1671,7 +1671,18 @@ sub errorOutput($$$) {
 		my %headers = $r->headers_in;
 		join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	};
-	
+
+	# if it is a long report pass details by reference rather than by value
+	# for consistency we automatically convert all forms of $details into
+	# a reference to an array.
+
+	if (ref($details) =~ /SCALAR/i) {
+		$details = [$$details];
+	} elsif (ref($details) =~/ARRAY/i) {
+		# no change needed	
+	} else {
+	   $details = [$details];
+	}
 	return
 		CGI::h2("WeBWorK Error"),
 		CGI::p(<<EOF),
@@ -1681,9 +1692,16 @@ student, report this error message to your professor to have it corrected. If
 you are a professor, please consult the error output below for more information.
 EOF
 		CGI::h3("Error messages"),
+
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
-		CGI::code(CGI::p($details)),
+		
+		CGI::start_code(), CGI::start_p(),
+		@{ $details },
+		#CGI::code(CGI::p(@expandedDetails)), 
+		# not using inclusive CGI calls here saves about 30Meg of memory!
+		CGI::end_p(),CGI::end_code(),
+		
 		CGI::h3("Request information"),
 		CGI::table({border=>"1"},
 			CGI::Tr(CGI::td("Time"), CGI::td($time)),
@@ -1692,7 +1710,9 @@ EOF
 			CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 				CGI::table($headers),
 			)),
-		);
+		),
+	;  
+	
 }
 
 =item warningOutput($warnings)
