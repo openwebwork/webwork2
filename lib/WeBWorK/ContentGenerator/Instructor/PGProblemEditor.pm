@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.54 2005/06/25 16:21:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.55 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -646,8 +646,14 @@ sub body {
 			'Mode: ',
 			CGI::popup_menu(-name=>'displayMode', -values=>$mode_list, -default=>$displayMode),
 			CGI::a({-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
-				'Manpages',
-			)
+				'&nbsp;Manpages&nbsp;',
+			),
+			CGI::a({-href=>'http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile',-target=>"manpage_window"},
+				'&nbsp;macro list&nbsp;',
+			),
+			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"manpage_window"},
+				'&nbsp;pod docs&nbsp;',
+			),
 		),
 		CGI::p(
 			CGI::textarea(
