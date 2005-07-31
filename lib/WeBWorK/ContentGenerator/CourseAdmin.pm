@@ -38,8 +38,8 @@ use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 our @DB_LAYOUT_ORDER = qw/sql_single gdbm sql/;
 
 our %DB_LAYOUT_DESCRIPTIONS = (
-	gdbm => "Deprecated. Uses GDBM databases to record WeBWorK data. Use this layout if the course must be used with WeBWorK 1.x.",
-	sql => "Deprecated. Uses a separate SQL database to record WeBWorK data for each course.",
+	gdbm => CGI::i("Deprecated. Uses GDBM databases to record WeBWorK data. Use this layout if the course must be used with WeBWorK 1.x."),
+	sql => CGI::i("Deprecated. Uses a separate SQL database to record WeBWorK data for each course."),
 	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
 );
 
@@ -238,7 +238,12 @@ sub body {
 	
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course"})}, "Add Course"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"add_course",add_admin_users=>1,
+		           add_dbLayout=>'sql_single', 
+		           add_templates_course => $ce->{siteDefaults}->{default_templates_course} ||""}
+		           )}, 
+		           "Add Course"
+		),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
 		" | ",
@@ -405,8 +410,8 @@ sub add_course_form {
 	);
 	
 	print CGI::p("To add the WeBWorK administrators to the new course (as instructors) check the box below.");
-	
-	print CGI::p(CGI::checkbox("add_admin_users", $add_admin_users, "on", "Add WeBWorK administrators to new course"));
+	my $checked = ($add_admin_users) ?"checked": "";  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
+	print CGI::p(CGI::input({-type=>'checkbox', -name=>"add_admin_users", $checked=>'' }, "Add WeBWorK administrators to new course"));
 	
 	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, and underscores.");
 	
@@ -487,7 +492,10 @@ sub add_course_form {
 		print CGI::td(); # for indentation :(
 		print CGI::start_td();
 		
+		
 		if ($dbLayout eq "sql") {
+		    
+		    print CGI::p({style=>'font-style:italic'},"The following information is only required for the deprecated sql database format:");
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(CGI::td({colspan=>2}, 
 					"Enter the user ID and password for an SQL account with sufficient permissions to create a new database."
@@ -543,6 +551,7 @@ sub add_course_form {
 			);
 			print CGI::end_table();
 		} elsif ($dbLayout eq "gdbm") {
+			print CGI::p({style=>"font-style: italic"},"The following information is only required for the deprecated gdbm database format:");
 			print CGI::start_table({class=>"FormLayout"});
 			print CGI::Tr(
 				CGI::th({class=>"LeftHeader"}, "GDBM Global User ID:"),
