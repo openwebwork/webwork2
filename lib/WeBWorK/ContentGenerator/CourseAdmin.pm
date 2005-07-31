@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.35 2005/06/10 15:59:52 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.36 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -269,8 +269,34 @@ sub body {
 	
 	if (defined $method_to_call and $method_to_call ne "") {
 		$self->$method_to_call;
-	}
+	} else {
 	
+		print CGI::h2("Courses");
+	
+		print CGI::start_ul();
+		
+		my @courseIDs = listCourses($ce);
+		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
+			next if $courseID eq "admin"; # done already above
+			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+			my $tempCE = WeBWorK::CourseEnvironment->new(
+				$ce->{webworkDirs}->{root},
+				$ce->{webworkURLs}->{root},
+				$ce->{pg}->{directories}->{root},
+				$courseID,
+			);
+			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
+				CGI::code(
+					$tempCE->{dbLayoutName},
+				),
+				(-r $tempCE->{courseFiles}->{environment}) ? "" : CGI::i(", missing course.conf"),
+			
+			);
+			 
+		}
+		
+		print CGI::end_ul();
+	}
 	return "";
 }
 
@@ -353,7 +379,7 @@ sub add_course_form {
 	};
 	
 	my @existingCourses = listCourses($ce);
-	@existingCourses = sort @existingCourses;
+	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
 	
 	print CGI::h2("Add Course");
 	
@@ -806,7 +832,7 @@ sub rename_course_form {
 	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
 	
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort @courseIDs;
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs;
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
@@ -1052,7 +1078,7 @@ sub delete_course_form {
 	my $delete_sql_database = $r->param("delete_sql_database")    || "";
 	
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort @courseIDs;
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
@@ -1328,7 +1354,7 @@ sub export_database_form {
 	@export_tables = @tables unless @export_tables;
 	
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort @courseIDs;
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
@@ -1512,7 +1538,7 @@ sub import_database_form {
 	@import_tables = @tables unless @import_tables;
 	
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort @courseIDs;
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
 
 	
 	my %courseLabels; # records... heh.
