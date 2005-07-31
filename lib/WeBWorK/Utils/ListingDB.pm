@@ -78,10 +78,11 @@ sub getDBTextbooks {
 	my $query = "SELECT DISTINCT tbk.textbook_id,tbk.title,tbk.author,
           tbk.edition
           FROM textbook tbk, problem p, pgfile_problem pg, pgfile pgf,
-            DBsection s, DBchapter c, DBsubject t
-          WHERE tbk.textbook_id=p.textbook_id AND p.problem_id=pg.problem_id AND
+            DBsection s, DBchapter c, DBsubject t, chapter cc, section ss
+          WHERE ss.section_id=p.section_id AND p.problem_id=pg.problem_id AND
             s.DBchapter_id=c.DBchapter_id AND c.DBsubject_id=t.DBsubject_id
             AND pgf.DBsection_id=s.DBsection_id AND pgf.pgfile_id=pg.pgfile_id
+	    AND ss.chapter_id=cc.chapter_id AND cc.textbook_id=tbk.textbook_id
             $chapstring $subjstring $sectstring ";
 	my $text_ref = $dbh->selectall_arrayref($query);
 	my @texts = @{$text_ref};
@@ -166,6 +167,7 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
+	my $amcounter = shift;
 	my $ce = $r->ce;
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
@@ -194,17 +196,25 @@ sub getDBListings {
 		$extrawhere .= " AND t.textbook_id=\"$text\" ";
 	}
 
-	my $query = "SELECT DISTINCT pgf.pgfile_id from pgfile pgf, 
+	my $selectwhat = 'DISTINCT pgf.pgfile_id';
+	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
+
+	my $query = "SELECT $selectwhat from pgfile pgf, 
          DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
-         problem p, textbook t 
+         problem p, textbook t , chapter cc, section ss
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id AND
               pgf.pgfile_id = pgp.pgfile_id AND
               pgp.problem_id = p.problem_id AND
-              p.textbook_id = t.textbook_id \n $extrawhere";
+              cc.textbook_id = t.textbook_id AND
+              ss.chapter_id = cc.chapter_id AND
+              p.section_id = ss.section_id \n $extrawhere";
 	my $pg_id_ref = $dbh->selectall_arrayref($query);
 	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
+	if($amcounter) {
+		return(@pg_ids[0]);
+	}
 	my @results=();
 	for my $pgid (@pg_ids) {
 		$query = "SELECT path, filename FROM pgfile pgf, path p 
@@ -216,48 +226,9 @@ sub getDBListings {
 	return @results;
 }
 
-
 sub countDBListings {
 	my $r = shift;
-	my $ce = $r->ce;
-	my $subj = $r->param('library_subjects') || "";
-	my $chap = $r->param('library_chapters') || "";
-	my $sec = $r->param('library_sections') || "";
-	my $text = $r->param('library_textbook') || "";
-	my $textchap = $r->param('library_textbook_chapter') || "";
-	my $textsec = $r->param('library_textbook_section') || "";
-
-	my $dbh = getDB($ce);
-
-	my $extrawhere = '';
-	if($subj) {
-		$subj =~ s/'/\\'/g;
-		$extrawhere .= " AND dbsj.name=\"$subj\" ";
-	}
-	if($chap) {
-		$chap =~ s/'/\\'/g;
-		$extrawhere .= " AND dbc.name=\"$chap\" ";
-	}
-	if($sec) {
-		$sec =~ s/'/\\'/g;
-		$extrawhere .= " AND dbsc.name=\"$sec\" ";
-	}
-	if($text) {
-		$text =~ s/'/\\'/g;
-		$extrawhere .= " AND t.textbook_id=\"$text\" ";
-	}
-
-	my $query = "SELECT COUNT(DISTINCT pgf.pgfile_id) from pgfile pgf, 
-         DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
-         problem p, textbook t 
-        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-              dbc.DBchapter_id = dbsc.DBchapter_id AND
-              dbsc.DBsection_id = pgf.DBsection_id AND
-              pgf.pgfile_id = pgp.pgfile_id AND
-              pgp.problem_id = p.problem_id AND
-              p.textbook_id = t.textbook_id \n $extrawhere";
-	my $pg_id_ref = $dbh->selectrow_arrayref($query);
-	return($pg_id_ref->[0])
+	return (getDBListings($r,1));
 }
 
 ##############################################################################
@@ -435,7 +406,7 @@ sub getSectionListings	{
 	my $r = shift;
 	my $ce = $r->ce;
 	my $version = $ce->{problemLibrary}->{version} || 1;
-	if($version == 2) { return(getDBListings($r))}
+	if($version == 2) { return(getDBListings($r, 0))}
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
