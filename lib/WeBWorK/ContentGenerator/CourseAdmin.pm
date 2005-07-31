@@ -273,7 +273,7 @@ sub body {
 	
 		print CGI::h2("Courses");
 	
-		print CGI::start_ul();
+		print CGI::start_ol();
 		
 		my @courseIDs = listCourses($ce);
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
@@ -295,7 +295,7 @@ sub body {
 			 
 		}
 		
-		print CGI::end_ul();
+		print CGI::end_ol();
 	}
 	return "";
 }
