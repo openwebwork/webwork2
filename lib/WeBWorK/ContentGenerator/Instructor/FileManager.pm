@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.10 2005/07/02 17:04:31 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.11 2005/07/05 17:54:39 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,7 +122,8 @@ sub body {
 		-method=>"POST",
 		-action=>$fileManagerURL,
 		-id=>"FileManager",
-		-name=>"FileManager"
+		-name=>"FileManager",
+                -style=>"margin:0",
 	);
 	print $self->hidden_authen_fields;
 
@@ -229,6 +230,11 @@ sub Refresh {
 		}
 		function checkFile() {
 			var file = window.document.getElementById('file');
+			if (navigator.vendor && navigator.vendorSub && navigator.vendor == "Netscape") {
+			  if (navigator.vendorSub.match(/(\\d+)\.(\\d+)/)) {
+			    if (RegExp.\$1 < 7 || (RegExp.\$1 == 7 && RegExp.\$2 < 2)) return;
+			  }
+			}
 			var state = (file.value == "");
 			disableButton('Upload',state);
 		}
@@ -307,6 +313,25 @@ EOF
 			CGI::end_table(),
 		),
 	);
+
+	print CGI::end_table();
+	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
+	print CGI::hidden({name=>'formAction'});
+	print CGI::end_multipart_form();
+
+	my $fileManagerPage = $self->r->urlpath->newFromModule($self->r->urlpath->module, courseID => $self->{courseName});
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
+
+	print CGI::start_multipart_form(
+		-method=>"POST",
+		-action=>$fileManagerURL,
+		-id=>"FileManager",
+		-name=>"FileManager",
+		-style=>"margin:0",
+	);
+	print $self->hidden_authen_fields;
+
+	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:0 0 0 3em"});
 
 	#
 	# Upload button and checkboxes
