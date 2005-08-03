@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.46 2005/07/29 20:45:38 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.47 2005/07/30 00:13:44 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,12 +47,15 @@ use constant ALL_SUBJECTS => 'All Subjects';
 use constant ALL_SECTIONS => 'All Sections';
 use constant ALL_TEXTBOOKS => 'All Textbooks';
 
-#use constant LIB2_DATA => [
-  #[qw(dbchapter library_chapters), ALL_CHAPTERS],
-  #[qw(dbsection library_sections), ALL_SECTIONS],
-  #[qw(dbsubject library_subjects), ALL_SUBJECT],
-  #[qw(textbook library_textbook), ALL_TEXTBOOKS],
-  #];
+use constant LIB2_DATA => {
+  'dbchapter' => {name => 'library_chapters', all => 'All Chapters'},
+  'dbsection' =>  {name => 'library_sections', all =>'All Sections' },
+  'dbsubject' =>  {name => 'library_subjects', all => 'All Subjects' },
+  'textbook' =>  {name => 'library_textbook', all =>  'All Textbooks'},
+  'textchapter' => {name => 'library_textchapter', all => 'All Chapters'},
+  'textsection' => {name => 'library_textsection', all => 'All Sections'},
+  'keywords' =>  {name => 'library_keywords', all => '' },
+  };
 
 ## Flags for operations on files
 
@@ -414,16 +417,17 @@ sub browse_library_panel1 {
 	my $ce = $r->ce;
 	
 	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
-	unshift @chaps, ALL_CHAPTERS;
-	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}->{all};
 
 	my @sects=();
-	if ($chapter_selected ne ALL_CHAPTERS) {
+	if ($chapter_selected ne LIB2_DATA->{dbchapter}{all}) {
 		@sects = WeBWorK::Utils::ListingDB::getAllSections($r->{ce}, $chapter_selected);
 	}
 
 	unshift @sects, ALL_SECTIONS;
-	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
+	my $section_selected =	$r->param('library_sections') || LIB2_DATA->{dbsection}{all};
+
 	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
@@ -455,20 +459,27 @@ sub browse_library_panel2 {
 	my $ce = $r->ce;
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
-	unshift @subjs, ALL_SUBJECTS;
+	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
-	unshift @chaps, ALL_CHAPTERS;
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
 	my @sects=();
 	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
-	unshift @sects, ALL_SECTIONS;
+	unshift @sects, LIB2_DATA->{dbsection}{all};
 
-	my $subject_selected = $r->param('library_subjects') || ALL_SUBJECTS;
-	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
-	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
+	my $subject_selected = $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all};
+	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all};
+	my $section_selected =	$r->param('library_sections') || LIB2_DATA->{dbsection}{all};
 
 	my $view_problem_line = view_problems_line('lib_view', 'View Problems', $self->r);
+
+	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
+	if($count_line==0) {
+		$count_line = "There are no matching pg files";
+	} else {
+		$count_line = "There are $count_line matching WeBWorK problem files";
+	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::hidden(-name=>"library_is_basic", -default=>[1]),
@@ -497,10 +508,12 @@ sub browse_library_panel2 {
 			CGI::td(["Section:",
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
-					        -default=> $section_selected
+					        -default=> $section_selected,
+							-onchange=>"submit();return true"
 		    )]),
 		 ),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
+		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center"}, $count_line)),
 		 CGI::end_table(),
 	 ));
 	
@@ -516,19 +529,19 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
 		$r->param('library_subjects', '');
 	}
-	unshift @subjs, ALL_SUBJECTS;
+	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
 	if(! grep { $_ eq $r->param('library_chapters') } @chaps) {
 		$r->param('library_chapters', '');
 	}
-	unshift @chaps, ALL_CHAPTERS;
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
 	if(! grep { $_ eq $r->param('library_sections') } @sects) {
 		$r->param('library_sections', '');
 	}
-	unshift @sects, ALL_SECTIONS;
+	unshift @sects, LIB2_DATA->{dbsection}{all};
 
 	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
 	my @textarray = map { $_->[0] }  @{$texts};
@@ -539,19 +552,34 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_textbook') } @textarray) {
 		$r->param('library_textbook', '');
 	}
-	unshift @textarray, ALL_TEXTBOOKS;
-	my $atb = ALL_TEXTBOOKS; $textlabels{$atb} = ALL_TEXTBOOKS;
+	unshift @textarray, LIB2_DATA->{textbook}{all};
+	my $atb = LIB2_DATA->{textbook}{all}; $textlabels{$atb} = LIB2_DATA->{textbook}{all};
 
-	my $section_selected =	$r->param('library_sections') || ALL_SECTIONS;
-	my $chapter_selected = $r->param('library_chapters') || ALL_CHAPTERS;
-	my $subject_selected = $r->param('library_subjects') || ALL_SUBJECTS;
-	my $textbook_selected = $r->param('library_textbook') || ALL_TEXTBOOKS;
+	my $textchap_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
+	my @textchaps = map { $_->[0] } @{$textchap_ref};
+	if(! grep { $_ eq $r->param('library_textchapter') } @textchaps) {
+		$r->param('library_textchapter', '');
+	}
+	unshift @textchaps, LIB2_DATA->{textchapter}{all};
+
+	my $textsec_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
+	my @textsecs = map { $_->[0] } @{$textsec_ref};
+	if(! grep { $_ eq $r->param('library_textsection') } @textsecs) {
+		$r->param('library_textsection', '');
+	}
+	unshift @textsecs, LIB2_DATA->{textsection}{all};
+
+	my %selected = ();
+	for my $j (qw( dbsection dbchapter dbsubject textbook textchapter textsection )) {
+		$selected{$j} = $r->param(LIB2_DATA->{$j}{name}) || LIB2_DATA->{$j}{all};
+	}
 
 	my $text_popup = CGI::popup_menu(-name => 'library_textbook',
 									 -values =>\@textarray,
 									 -labels => \%textlabels,
-									 -default=>$textbook_selected,
+									 -default=>$selected{textbook},
 									 -onchange=>"submit();return true");
+
 	
 	my $library_keywords = $r->param('library_keywords') || '';
 
@@ -573,7 +601,7 @@ sub browse_library_panel2adv {
 			CGI::td(["Subject:",
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
-					            -default=> $subject_selected,
+					            -default=> $selected{dbsubject},
 					             -onchange=>"submit();return true"
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
@@ -583,7 +611,7 @@ sub browse_library_panel2adv {
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
-					            -default=> $chapter_selected,
+					            -default=> $selected{dbchapter},
 					             -onchange=>"submit();return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
@@ -594,7 +622,7 @@ sub browse_library_panel2adv {
 			CGI::td(["Section:",
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
-					        -default=> $section_selected,
+					        -default=> $selected{dbsection},
 							-onchange=>"submit();return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
@@ -603,6 +631,22 @@ sub browse_library_panel2adv {
 		 ),
 		 CGI::Tr(
 			CGI::td(["Textbook:", $text_popup]),
+		 ),
+		 CGI::Tr(
+			CGI::td(["Text chapter:",
+			CGI::popup_menu(-name=> 'library_textchapter', 
+					        -values=>\@textchaps,
+					        -default=> $selected{textchapter},
+							-onchange=>"submit();return true"
+		    )]),
+		 ),
+		 CGI::Tr(
+			CGI::td(["Text section:",
+			CGI::popup_menu(-name=> 'library_textsection', 
+					        -values=>\@textsecs,
+					        -default=> $selected{textsection},
+							-onchange=>"submit();return true"
+		    )]),
 		 ),
 		 CGI::Tr(CGI::td("Keywords:"),CGI::td({-colspan=>2},
 			 CGI::textfield(-name=>"library_keywords",
@@ -1114,8 +1158,15 @@ sub pre_header_initialize {
 		@past_marks = map {1} @past_marks;
 	} elsif ($r->param('library_basic')) {
 		$library_basic = 1;
+		for my $jj (qw(textchapter textsection textbook)) {
+			$r->param('library_'.$jj,'');
+		}
 	} elsif ($r->param('library_advanced')) {
 		$library_basic = 2;
+	} elsif ($r->param('library_reset')) {
+		for my $jj (qw(chapters sections subjects textbook keywords)) {
+			$r->param('library_'.$jj,'');
+		}
 	} elsif ($r->param('select_none')) {
 		@past_marks = ();
 
