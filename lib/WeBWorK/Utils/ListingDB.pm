@@ -18,6 +18,16 @@ package WeBWorK::Utils::ListingDB;
 use strict;
 use DBI;
 
+use constant LIBRARY_STRUCTURE => {
+	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
+	name => 'library_textbook', where => 'tbk.textbook_id'},
+	textchapter => { select => 'tc.name', name=>'library_textchapter',
+	where => 'tc.name'},
+	textsection => { select => 'ts.name', name=>'library_textsection',
+	where => 'ts.name'},
+	problem => { select => 'prob.name' },
+	};
+
 BEGIN
 {
 	require Exporter;
@@ -46,48 +56,110 @@ sub getDB {
 	return($dbh);
 }
 
-=item getDBTextbooks($r)                                                     
-Returns an array of Textbook names consistent with the subject, chapter,
-section selected
+=item kwtidy($s) and keywordcleaner($s)
+Both take a string and perform utility functions related to keywords.
+keywordcleaner splits a string, and uses kwtidy to regularize punctuation
+and case for an individual entry.
+                                                                                
+=cut                                                                            
+
+sub kwtidy {
+        my $s = shift;
+        $s =~ s/\'//g;
+        $s =~ s/\"//g;
+        $s =~ s/\#//g;
+        $s = lc($s);
+        return($s);
+}
+
+sub keywordCleaner {
+        my $string = shift;
+        my @spl1 = split /\s*,\s*/, $string;
+        my @spl2 = map(kwtidy($_), @spl1);
+        return(@spl2);
+}
+
+sub makeKeywordWhere {
+	my $kwstring = shift;
+	my @kwlist = keywordCleaner($kwstring);
+	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
+	my $where = join(" OR ", @kwlist);
+	return "AND ( $where )";
+}
+
+
+=item getDBTextbooks($r)                                                    
+Returns textbook dependent entries.
                                                                                 
 $r is a Apache request object so we can extract whatever parameters we want
-                                                                                
+
+$thing is a string of either 'textbook', 'textchapter', or 'textsection' to
+specify what to return.
+
+If we are to return textbooks, then return an array of textbook names
+consistent with the DB subject, chapter, section selected.
+
 =cut                                                                            
 
 sub getDBTextbooks {
 	my $r = shift;
+	my $thing = shift || 'textbook';
 	my $dbh = getDB($r->ce);
-	# there aren't many, so first get a list of all texts, and then remove
-	# the ones which aren't ok
-	my ($sectstring, $chapstring, $subjstring) = ('','','');
+	my $extrawhere = '';
+	# Handle DB* restrictions
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
 	if($subj) {
 		$subj =~ s/'/\\'/g;
-		$subjstring = " AND t.name = \'$subj\'\n";
+		$extrawhere .= " AND t.name = \'$subj\'\n";
 	}
 	if($chap) {
 		$chap =~ s/'/\\'/g;
-		$chapstring = " AND c.name = \'$chap\' AND c.DBsubject_id=t.DBsubject_id\n";
+		$extrawhere .= " AND c.name = \'$chap\' AND c.DBsubject_id=t.DBsubject_id\n";
 	}
 	if($sec) {
 		$sec =~ s/'/\\'/g;
-		$sectstring = " AND s.name = \'$sec\' AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
+		$extrawhere .= " AND s.name = \'$sec\' AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
 	}
-	my $query = "SELECT DISTINCT tbk.textbook_id,tbk.title,tbk.author,
-          tbk.edition
-          FROM textbook tbk, problem p, pgfile_problem pg, pgfile pgf,
-            DBsection s, DBchapter c, DBsubject t, chapter cc, section ss
-          WHERE ss.section_id=p.section_id AND p.problem_id=pg.problem_id AND
-            s.DBchapter_id=c.DBchapter_id AND c.DBsubject_id=t.DBsubject_id
-            AND pgf.DBsection_id=s.DBsection_id AND pgf.pgfile_id=pg.pgfile_id
-	    AND ss.chapter_id=cc.chapter_id AND cc.textbook_id=tbk.textbook_id
-            $chapstring $subjstring $sectstring ";
+	my $textextrawhere = '';
+	my $textid = $r->param('library_textbook') || '';
+	if($textid and $thing ne 'textbook') {
+		$textextrawhere .= " AND tbk.textbook_id=\"$textid\" ";
+	} else {
+		return([]) if($thing ne 'textbook');
+	}
+
+	my $textchap = $r->param('library_textchapter') || '';
+	if($textchap and $thing eq 'textsection') {
+		$textextrawhere .= " AND tc.name=\"$textchap\" ";
+	} else {
+		return([]) if($thing eq 'textsection');
+	}
+
+	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
+	
+	my $query = "SELECT DISTINCT $selectwhat
+          FROM textbook tbk, problem prob, pgfile_problem pg, pgfile pgf,
+            DBsection s, DBchapter c, DBsubject t, chapter tc, section ts
+          WHERE ts.section_id=prob.section_id AND 
+            prob.problem_id=pg.problem_id AND
+            s.DBchapter_id=c.DBchapter_id AND 
+            c.DBsubject_id=t.DBsubject_id AND
+            pgf.DBsection_id=s.DBsection_id AND
+            pgf.pgfile_id=pg.pgfile_id AND
+            ts.chapter_id=tc.chapter_id AND
+            tc.textbook_id=tbk.textbook_id
+            $extrawhere $textextrawhere ";
 	my $text_ref = $dbh->selectall_arrayref($query);
 	my @texts = @{$text_ref};
-	@texts = grep { $_->[1] =~ /\S/ } @texts;
-	return(\@texts);
+	if( $thing eq 'textbook') {
+		@texts = grep { $_->[1] =~ /\S/ } @texts;
+		return(\@texts);
+	} else {
+		@texts = grep { $_->[0] =~ /\S/ } @texts;
+		return(\@texts);
+	}
 }
 
 =item getAllDBsubjects($r)
@@ -172,9 +244,15 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
-	my $text = $r->param('library_textbook') || "";
-	my $textchap = $r->param('library_textbook_chapter') || "";
-	my $textsec = $r->param('library_textbook_section') || "";
+	my $keywords = $r->param('library_keywords') || "";
+	my ($kw1, $kw2) = ('','');
+	if($keywords) {
+		$kw1 = ", keyword kw, pgfile_keyword pgkey";
+		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
+			 pgkey.pgfile_id=pgf.pgfile_id ". 
+			makeKeywordWhere($keywords)
+			;
+	}
 
 	my $dbh = getDB($ce);
 
@@ -191,9 +269,13 @@ sub getDBListings {
 		$sec =~ s/'/\\'/g;
 		$extrawhere .= " AND dbsc.name=\"$sec\" ";
 	}
-	if($text) {
-		$text =~ s/'/\\'/g;
-		$extrawhere .= " AND t.textbook_id=\"$text\" ";
+	my $textextrawhere = '';
+	for my $j (qw( textbook textchapter textsection )) {
+		my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+		if($foo) {
+			$foo =~ s/'/\\'/g;
+			$textextrawhere .= " AND ".LIBRARY_STRUCTURE->{$j}{where}."=\"$foo\" ";
+		}
 	}
 
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
@@ -201,15 +283,18 @@ sub getDBListings {
 
 	my $query = "SELECT $selectwhat from pgfile pgf, 
          DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
-         problem p, textbook t , chapter cc, section ss
+         problem prob, textbook tbk , chapter tc, section ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id AND
               pgf.pgfile_id = pgp.pgfile_id AND
-              pgp.problem_id = p.problem_id AND
-              cc.textbook_id = t.textbook_id AND
-              ss.chapter_id = cc.chapter_id AND
-              p.section_id = ss.section_id \n $extrawhere";
+              pgp.problem_id = prob.problem_id AND
+              tc.textbook_id = tbk.textbook_id AND
+              ts.chapter_id = tc.chapter_id AND
+              prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
+              $kw2";
+#$query =~ s/\n/ /g;
+#warn $query;
 	my $pg_id_ref = $dbh->selectall_arrayref($query);
 	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
 	if($amcounter) {
