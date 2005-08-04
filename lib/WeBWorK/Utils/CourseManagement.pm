@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.21 2004/12/21 04:41:00 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.22 2005/07/14 13:15:27 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -383,7 +383,7 @@ sub renameCourse {
 		delete $deleteDBOptions{old_database};
 	}
 	
-	my $deleteHelperResult = deleteCourseHelper($oldCourseID, $newCE, $dbLayoutName, %dbOptions);
+	my $deleteHelperResult = deleteCourseHelper($oldCourseID, $oldCE, $dbLayoutName, %dbOptions);
 	die "$oldCourseID: course database creation failed.\n" unless $deleteHelperResult;
 }
 
