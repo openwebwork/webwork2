@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/webwork.apache-config.dist,v 1.7 2005/05/19 01:07:29 gage Exp $
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.8 2005/06/02 16:37:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,15 +43,6 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
 my $webwork_courses_url = $ce->{webwork_courses_url};
 my $webwork_courses_dir = $ce->{webwork_courses_dir};
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
-
-##########################################
-# allows Webservice access to WeBWorK
-##########################################
-
-eval "use WebworkWebservice";die $@ if $@;        #FIXME, is there another way to initialize this?
-eval "use RQP"; die $@ if $@;
-
-##########################################
 
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
@@ -102,42 +93,56 @@ AliasMatch $webwork_courses_url/([^/]*)/(.*) $webwork_courses_dir/\$1/html/\$2
 	AllowOverride None
 </Directory>
 
- ########## XMLRPC installation ##########
-<Location /mod_xmlrpc>
-               SetHandler perl-script
-               PerlHandler Apache::XMLRPC::Lite
-               PerlSetVar dispatch_to "WebworkXMLRPC"
-               PerlSetVar options "compress_threshold => 10000"
-               Order Allow,Deny
-               Allow from All
-</Location>
- ########## RQP installation ##########
- 
-#<Location /rqp>
-#			   SetHandler perl-script
-#			   PerlHandler Apache::SOAP
-#			   PerlSetVar dispatch_to "RQP"
-#			   PerlSetVar options "compress_threshold => 10000"
-#			   Order Allow,Deny
-#               Allow from All
+EOF
+
+# The following stanzas can be uncommented to enable various experimental
+# WeBWorK web services. These are still in testing and have not been audited
+# for security.
+
+# load packages necessary for WeBWorK web services
+#eval "use WebworkWebservice";die $@ if $@;
+#eval "use RQP"; die $@ if $@;
+
+$PerlConfig .= <<EOF;
+
+# XMLRPC installation
+# 
+#<Location /mod_xmlrpc>
+#	SetHandler perl-script
+#	PerlHandler Apache::XMLRPC::Lite
+#	PerlSetVar dispatch_to "WebworkXMLRPC"
+#	PerlSetVar options "compress_threshold => 10000"
+#	Order Allow,Deny
+#	Allow from All
 #</Location>
 
-<Location /rqp>
-    SetHandler perl-script
-    PerlHandler MySOAP
-	Order Allow,Deny
-    Allow from All
-</Location>
+# RQP installation
+# 
+##<Location /rqp>
+##	SetHandler perl-script
+##	PerlHandler Apache::SOAP
+##	PerlSetVar dispatch_to "RQP"
+##	PerlSetVar options "compress_threshold => 10000"
+##	Order Allow,Deny
+##	Allow from All
+##</Location>
+#<Location /rqp>
+#	SetHandler perl-script
+#	PerlHandler MySOAP
+#	Order Allow,Deny
+#	Allow from All
+#</Location>
 
-##########  SOAP installation ############
-<Location /mod_soap>
-			   SetHandler perl-script
-			   PerlHandler Apache::SOAP
-			   PerlSetVar dispatch_to "WebworkXMLRPC" 
-			   PerlSetVar options "compress_threshold => 10000"
-			   Order Allow,Deny
-               Allow from All
-</Location>
+# SOAP installation
+# 
+#<Location /mod_soap>
+#	SetHandler perl-script
+#	PerlHandler Apache::SOAP
+#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar options "compress_threshold => 10000"
+#	Order Allow,Deny
+#	Allow from All
+#</Location>
 
 EOF
 
