@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.61 2005/05/26 15:12:36 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.63 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -286,23 +286,28 @@ sub body {
 	
 	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
 	
-	print CGI::start_table();
-	print CGI::Tr(
-		CGI::th("Name"),
-		CGI::th("Attempts"),
-		CGI::th("Remaining"),
-		CGI::th("Worth"),
-		CGI::th("Status"),
-	);
-	
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
-	foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
-		my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
-		die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
-		print $self->problemListRow($set, $problem);
-	}
 	
-	print CGI::end_table();
+	if (@problemNumbers) {
+		print CGI::start_table();
+		print CGI::Tr(
+			CGI::th("Name"),
+			CGI::th("Attempts"),
+			CGI::th("Remaining"),
+			CGI::th("Worth"),
+			CGI::th("Status"),
+		);
+		
+		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
+			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
+			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
+			print $self->problemListRow($set, $problem);
+		}
+		
+		print CGI::end_table();
+	} else {
+		print CGI::p("This homework set contains no problems.");
+	}
 	
 	## feedback form
 	#my $ce = $self->{ce};
