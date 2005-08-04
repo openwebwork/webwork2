@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.11 2005/07/05 17:54:39 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.12 2005/08/01 19:23:58 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -313,25 +313,6 @@ EOF
 			CGI::end_table(),
 		),
 	);
-
-	print CGI::end_table();
-	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
-	print CGI::hidden({name=>'formAction'});
-	print CGI::end_multipart_form();
-
-	my $fileManagerPage = $self->r->urlpath->newFromModule($self->r->urlpath->module, courseID => $self->{courseName});
-	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
-
-	print CGI::start_multipart_form(
-		-method=>"POST",
-		-action=>$fileManagerURL,
-		-id=>"FileManager",
-		-name=>"FileManager",
-		-style=>"margin:0",
-	);
-	print $self->hidden_authen_fields;
-
-	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:0 0 0 3em"});
 
 	#
 	# Upload button and checkboxes
