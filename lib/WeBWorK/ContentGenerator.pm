@@ -489,6 +489,22 @@ sub links {
 	my $grades  = $urlpath->newFromModule("${pfx}Grades", %args);
 	my $logout  = $urlpath->newFromModule("${pfx}Logout", %args);
 	
+	# experimental subroutine for generating links, to clean up the rest of the
+	# code. ignore for now. (this is a closure over $self and $urlpath.)
+	#my $makelink = sub {
+	#	my ($module, $args, $name) = @_;
+	#	
+	#	defined $args or $args = {};
+	#	my $new_urlpath = $urlpath->newFromModule($module, %$args);
+	#	
+	#	defined $name or $name = $new_urlpath->name;
+	#	$name = sp2nbsp($name); # i don't like it, but that's what we do...
+	#	
+	#	return CGI::a({href => $self->systemLink($new_urlpath)}, $name);
+	#};
+	#
+	#my $home_link = &$makelink("${pfx}Home");
+	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::links -->\n";
 	
 	# only users with appropriate permissions can report bugs
@@ -1422,6 +1438,23 @@ sub hidden_proctor_authen_fields {
 	}
 }
 
+=item hidden_state_fields()
+
+Use hidden_fields to return hidden <INPUT> tags for request fields used to
+maintain state. Currently includes authentication fields and display option
+fields.
+
+=cut
+
+sub hidden_state_fields {
+	my ($self) = @_;
+	
+	return $self->hidden_authen_fields();
+	
+	# other things that may be state data:
+	#$self->hidden_fields("displayMode", "showOldAnswers", "showCorrectAnswers", "showHints", "showSolutions");
+}
+
 =item url_args(@fields)
 
 Return a URL query string (without the leading `?') containing values for each
@@ -1460,49 +1493,69 @@ sub url_authen_args {
 	return $self->url_args("user", "effectiveUser", "key");
 }
 
-=item url_display_args()
+=item url_state_args()
 
-Use url_args to return a URL query string for request fields used in
-authentication.
+Use url_args to return a URL query string for request fields used to maintain
+state. Currently includes authentication fields and display option fields.
 
 =cut
 
-sub url_display_args {
+sub url_state_args {
 	my ($self) = @_;
 	
-	return $self->url_args("displayMode", "showOldAnswer");
+	return $self->url_authen_args;
+	
+	# other things that may be state data:
+	#$self->url_args("displayMode", "showOldAnswers", "showCorrectAnswers", "showHints", "showSolutions");
 }
 
-=item print_form_data($begin, $middle, $end, $omit)
+# This method is not used anywhere! --sam(1-Aug-05)
+#
+#=item url_display_args()
+#
+#Use url_args to return a URL query string for request fields used in
+#authentication.
+#
+#=cut
+#
+#sub url_display_args {
+#	my ($self) = @_;
+#	
+#	return $self->url_args("displayMode", "showOldAnswer");
+#}
 
-Return a string containing every request field not matched by the quoted reguar
-expression $omit, placing $begin before each field name, $middle between each
-field name and its value, and $end after each value. Values are taken from the
-current request.
-
-=cut
-
-sub print_form_data {
-	my ($self, $begin, $middle, $end, $qr_omit) = @_;
-	my $r=$self->r;
-	my @form_data = $r->param;
-	
-	my $return_string = "";
-	foreach my $name (@form_data) {
-		next if ($qr_omit and $name =~ /$qr_omit/);
-		my @values = $r->param($name);
-		foreach my $variable (qw(begin name middle value end)) {
-			# FIXME: can this loop be moved out of the enclosing loop?
-			no strict 'refs';
-			${$variable} = "" unless defined ${$variable};
-		}
-		foreach my $value (@values) {
-			$return_string .= "$begin$name$middle$value$end";
-		}
-	}
-	
-	return $return_string;
-}
+# This method is not used anywhere! --sam(1-Aug-05)
+#
+#=item print_form_data($begin, $middle, $end, $omit)
+#
+#Return a string containing every request field not matched by the quoted reguar
+#expression $omit, placing $begin before each field name, $middle between each
+#field name and its value, and $end after each value. Values are taken from the
+#current request.
+#
+#=cut
+#
+#sub print_form_data {
+#	my ($self, $begin, $middle, $end, $qr_omit) = @_;
+#	my $r=$self->r;
+#	my @form_data = $r->param;
+#	
+#	my $return_string = "";
+#	foreach my $name (@form_data) {
+#		next if ($qr_omit and $name =~ /$qr_omit/);
+#		my @values = $r->param($name);
+#		foreach my $variable (qw(begin name middle value end)) {
+#			# FIXME: can this loop be moved out of the enclosing loop?
+#			no strict 'refs';
+#			${$variable} = "" unless defined ${$variable};
+#		}
+#		foreach my $value (@values) {
+#			$return_string .= "$begin$name$middle$value$end";
+#		}
+#	}
+#	
+#	return $return_string;
+#}
 
 =back
 
