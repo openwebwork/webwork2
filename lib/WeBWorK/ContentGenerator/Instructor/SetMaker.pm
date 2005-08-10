@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.47 2005/07/30 00:13:44 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.48 2005/08/03 22:19:59 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,21 +144,18 @@ sub list_pg_files {
 
 ## Search for set definition files
 
-# initialize global variable for search
-my @found_set_defs = ();
-
-sub get_set_defs_wanted {
-	my $fn = $_;
-	my $fdir = $File::Find::dir;
-	return() if($fn !~ /^set.*\.def$/);
-	#return() if(not -T $fn);
-	push @found_set_defs, "$fdir/$fn";
-}
-
 sub get_set_defs {
 	my $topdir = shift;
-	@found_set_defs = ();
-	find({ wanted => \&get_set_defs_wanted, follow_fast=>1}, $topdir);
+	my @found_set_defs;
+	# get_set_defs_wanted is a closure over @found_set_defs
+	my $get_set_defs_wanted = sub {
+		my $fn = $_;
+		my $fdir = $File::Find::dir;
+		return() if($fn !~ /^set.*\.def$/);
+		#return() if(not -T $fn);
+		push @found_set_defs, "$fdir/$fn";
+	};
+	find({ wanted => $get_set_defs_wanted, follow_fast=>1}, $topdir);
 	map { $_ =~ s|^$topdir/?|| } @found_set_defs;
 	return @found_set_defs;
 }
