@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.141 2005/07/30 01:49:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.143 2005/08/09 22:22:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -737,105 +737,14 @@ For example:
 
 =item options()
 
-Default is defined in this package.
+Not defined in this package.
 
-Print an auxiliary options form, related to the content displayed in the
-C<body>.
+View options related to the content displayed in the body or info areas. See also
+optionsMacro().
 
 =cut
 
-sub options {
-	my ($self) = @_;
-
-	return "" if $self->{invalidProblem};
-	my $sourceFilePathfield = '';
-        if($self->r->param("sourceFilePath")) {
-		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
-                                                   -value => $self->r->param("sourceFilePath"));
-	}
-	
-	my $r  = $self->{r};
-	my $ce = $self->{ce};
-	# insure that certain defaults are defined
-	$self->{must}          = {} unless defined $self->{must};
-	$self->{can}           = {} unless defined $self->{can};
-	$self->{will}          = {} unless defined $self->{will};
-	
-	# displayMode
-	my $displayMode        = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
-	$self->{displayMode}   = $displayMode unless defined $self->{displayMode};
-	
-	# showOldAnswers
-	my $want_to_showOldAnswers = defined($r->param("showOldAnswers")) ? 
-	        $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers};
-	$self->{can}->{showOldAnswers} = 1;
-	$self->{will}->{showOldAnswers} = $self->{can}->{showOldAnswers} && $want_to_showOldAnswers;
-	
-	return join("",
-		CGI::start_form("POST", $self->{r}->uri),
-		$self->hidden_authen_fields,
-		$sourceFilePathfield,
-		CGI::hr(), 
-		CGI::start_div({class=>"viewOptions"}),
-		$self->viewOptions(),
-		CGI::end_div(),
-		CGI::end_form()
-	);
-}
-
-sub viewOptions {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
-
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	#return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %must = %{ $self->{must} };
-	my %can  = %{ $self->{can}  };
-	my %will = %{ $self->{will} };
-	
-	my $optionLine;
-	$can{showOldAnswers} and $optionLine .= join "",
-		"Show&nbsp;saved&nbsp;answers?".CGI::br(),
-		CGI::radio_group(
-			-name    => "showOldAnswers",
-			-values  => [1,0],
-			-default => $will{showOldAnswers},
-			-labels   => {
-							0 => 'No',
-							1 => 'Yes',	
-			},
-		), .CGI::br();
-
-	$optionLine and $optionLine .= join "", CGI::br();
-	
-	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	my @active_modes = grep { exists $display_modes{$_} }
-			@{$ce->{pg}->{displayModes}};
-	my $modeLine = (scalar(@active_modes) > 1) ?
-		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
-		CGI::radio_group(
-			-name    => "displayMode",
-			-values  => \@active_modes,
-			-default => $displayMode,
-			-linebreak=>'true',
-			-labels  => {
-				plainText     => "plain",
-				formattedText => "formatted",
-				images        => "images",
-				jsMath	      => "jsMath",
-				asciimath     => "asciimath",
-			},
-		). CGI::br().CGI::hr() : '';
-	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-		$modeLine,
-		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
-	);
-}
+#sub options {  }
 
 =item path($args)
 
@@ -1373,6 +1282,75 @@ sub helpMacro {
 	               target    => 'ww_help',
 	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=on')"},
 	               CGI::img({src=>$imageURL}));
+}
+
+=item optionsMacro(options_to_show => \@options_to_show, extra_params => \@extra_params)
+
+Helper macro for displaying the View Options panel.
+
+@options_to_show lists the options to show, from among this list "displayMode",
+"showOldAnswers", "showHints", "showSolutions". If no options are given,
+"displayMode" is assumed.
+
+@extraParams is dereferenced and passed to the hidden_fields() method. Use this
+to preserve state from the content generator calling optionsMacro().
+
+This macro is intended to be called from an implementation of the options()
+method. The simplest way to to this is:
+
+ sub options { shift->optionsMacro }
+
+=cut
+
+sub optionsMacro {
+	my ($self, %options) = @_;
+	
+	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
+	@options_to_show = "displayMode" unless @options_to_show;
+	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
+	my @extra_params = @{$options{extra_params}} if exists $options{extra_params};
+	
+	my $result = CGI::start_form("POST", $self->r->uri);
+	$result .= $self->hidden_authen_fields;
+	$result .= $self->hidden_fields(@extra_params) if @extra_params;
+	$result .= CGI::start_div({class=>"viewOptions"});
+	
+	if (exists $options_to_show{displayMode}) {
+		my $curr_displayMode = $self->r->param("displayMode") || $self->r->ce->{pg}->{options}->{displayMode};
+		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
+		if (@active_modes > 1) {
+			$result .= "View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;";
+			$result .= CGI::br();
+			$result .= CGI::radio_group(
+				-name => "displayMode",
+				-values => \@active_modes,
+				-default => $curr_displayMode,
+				-linebreak=>'true',
+			);
+			$result .= CGI::br();
+		}
+	}
+	
+	if (exists $options_to_show{showOldAnswers}) {
+		my $curr_showOldAnswers = $self->r->param("showOldAnswers");
+		$result .= "Show&nbsp;saved&nbsp;answers?";
+		$result .= CGI::br();
+		$result .= CGI::radio_group(
+			-name => "showOldAnswers",
+			-values => [1,0],
+			-default => $curr_showOldAnswers,
+			-labels => { 0=>'No', 1=>'Yes' },
+		);
+		$result .= CGI::br();
+	}
+	
+	$result .= CGI::br();
+	$result .= CGI::submit(-name=>"redisplay", -label=>"Apply Options");
+	$result .= CGI::end_div();
+	$result .= CGI::end_form();
+	
+	return $result;
 }
 
 =back
