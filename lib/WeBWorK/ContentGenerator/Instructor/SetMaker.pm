@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.49 2005/08/10 18:02:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.50 2005/08/11 20:27:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -294,10 +294,10 @@ sub view_problems_line {
 	push @active_modes, 'None';
 	# We have our own displayMode since its value may be None, which is illegal
 	# in other modules.
-	my $displayMode = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
-	$result .= '&nbsp;Display&nbsp;Mode:&nbsp;'.CGI::popup_menu(-name=> 'displayMode',
+	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
+	$result .= '&nbsp;Display&nbsp;Mode:&nbsp;'.CGI::popup_menu(-name=> 'mydisplayMode',
 	                                                            -values=>\@active_modes,
-	                                                            -default=> $displayMode);
+	                                                            -default=> $mydisplayMode);
 	# Now we give a choice of the number of problems to show
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$result .= '&nbsp;Max. Shown:&nbsp'.
@@ -821,7 +821,7 @@ sub make_data_row {
 			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
 		  )}, "Edit it" );
 	
-	my $displayMode = $self->r->param("displayMode");
+	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
 	my $try_link = CGI::a({href=>$self->systemLink(
@@ -1252,7 +1252,7 @@ sub body {
 		renderProblems(r=> $r,
 									 user => $user,
 									 problem_list => [@pg_files[$first_shown..$last_shown]],
-									 displayMode => $r->param('displayMode')) : ();
+									 displayMode => $r->param('mydisplayMode')) : ();
 
 	##########	Top part
 	print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
