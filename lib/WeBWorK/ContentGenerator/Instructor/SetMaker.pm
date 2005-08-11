@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.48 2005/08/03 22:19:59 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.49 2005/08/10 18:02:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use strict;
 use warnings;
 
 use CGI::Pretty qw();
+use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
@@ -293,10 +294,10 @@ sub view_problems_line {
 	push @active_modes, 'None';
 	# We have our own displayMode since its value may be None, which is illegal
 	# in other modules.
-	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
-	$result .= '&nbsp;Display&nbsp;Mode:&nbsp;'.CGI::popup_menu(-name=> 'mydisplayMode',
+	my $displayMode = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
+	$result .= '&nbsp;Display&nbsp;Mode:&nbsp;'.CGI::popup_menu(-name=> 'displayMode',
 	                                                            -values=>\@active_modes,
-	                                                            -default=> $mydisplayMode);
+	                                                            -default=> $displayMode);
 	# Now we give a choice of the number of problems to show
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$result .= '&nbsp;Max. Shown:&nbsp'.
@@ -819,19 +820,23 @@ sub make_data_row {
 			  problemID=>"1"),
 			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
 		  )}, "Edit it" );
-
+	
+	my $displayMode = $self->r->param("displayMode");
+	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
+		if not defined $displayMode or $displayMode eq "None";
 	my $try_link = CGI::a({href=>$self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID =>$urlpath->arg("courseID"),
 			setID=>"Undefined_Set",
 			problemID=>"1"),
-			params =>{
-				effectiveUser => scalar($self->r->param('user')),
-				editMode => "SetMaker",
-				problemSeed=> $problem_seed,
-				sourceFilePath => "$sourceFileName"
-			}
-		)}, "Try it");
+		params =>{
+			effectiveUser => scalar($self->r->param('user')),
+			editMode => "SetMaker",
+			problemSeed=> $problem_seed,
+			sourceFilePath => "$sourceFileName",
+			displayMode => $displayMode,
+		}
+	)}, "Try it");
 
 	my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add this problem to the current set on the next update");
 	if($mark & SUCCESS) {
@@ -1205,6 +1210,11 @@ sub title {
 	return "Library Browser";
 }
 
+# hide view options panel since it distracts from SetMaker's built-in view options
+sub options {
+	return "";
+}
+
 sub body {
 	my ($self) = @_;
 
@@ -1242,7 +1252,7 @@ sub body {
 		renderProblems(r=> $r,
 									 user => $user,
 									 problem_list => [@pg_files[$first_shown..$last_shown]],
-									 displayMode => $r->param('mydisplayMode')) : ();
+									 displayMode => $r->param('displayMode')) : ();
 
 	##########	Top part
 	print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
