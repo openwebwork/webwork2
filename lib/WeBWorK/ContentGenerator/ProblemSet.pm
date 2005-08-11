@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.63 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.64 2005/08/04 23:30:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -105,10 +105,17 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 	
 	my @links = ("Homework Sets" , $r->location . $problemSetsPage->path, "navUp");
-	my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
+	# CRAP ALERT: this line relies on the hacky options() implementation in ContentGenerator.
+	# we need to find a better way to do this -- long range dependencies like this are dangerous!
+	#my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
+	# here is a hack to get some functionality back, but I don't even think it's that important to
+	# have this, since there are SO MANY PLACES where we lose the displayMode, etc.
+	# (oh boy, do we need a session table in the database!)
+	my $displayMode = $r->param("displayMode") || "";
+	my $showOldAnswers = $r->param("showOldAnswers") || "";
+	my $tail = "&displayMode=$displayMode&showOldAnswers=$showOldAnswers";
 	return $self->navMacro($args, $tail, @links);
 }
-
 
 sub siblings {
 	my ($self) = @_;
@@ -195,7 +202,7 @@ sub info {
 	my $psvn = $set->psvn();
 	
 	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $displayMode     = $ce->{pg}->{options}->{displayMode};
+	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	
 	if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
 		$screenSetHeader = "$screenSetHeader.$userID.tmp";
@@ -249,6 +256,8 @@ sub info {
 	
 	return "";
 }
+
+sub options { shift->optionsMacro }
 
 sub body {
 	my ($self) = @_;
