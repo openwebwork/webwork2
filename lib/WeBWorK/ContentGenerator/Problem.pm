@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.176 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.177 2005/07/20 18:14:58 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -644,27 +644,27 @@ sub head {
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
-# sub options {
-# 	my ($self) = @_;
-# 	warn "doing options in Problem";
-# 	return "" if $self->{invalidProblem};
-# 	my $sourceFilePathfield = '';
-#         if($self->r->param("sourceFilePath")) {
-# 		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
-#                                                    -value => $self->r->param("sourceFilePath"));
-# 	}
-# 	
-# 	return join("",
-# 		CGI::start_form("POST", $self->{r}->uri),
-# 		$self->hidden_authen_fields,
-# 		$sourceFilePathfield,
-# 		CGI::hr(), 
-# 		CGI::start_div({class=>"viewOptions"}),
-# 		$self->viewOptions(),
-# 		CGI::end_div(),
-# 		CGI::end_form()
-# 	);
-# }
+sub options {
+	my ($self) = @_;
+	#warn "doing options in Problem";
+	
+	# don't show options if we don't have anything to show
+	return if $self->{invalidSet} or $self->{invalidProblem};
+	return unless $self->{isOpen};
+	
+	my $displayMode = $self->{displayMode};
+	my %can = %{ $self->{can} };
+	
+	my @options_to_show = "displayMode";
+	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
+	push @options_to_show, "showHints" if $can{showHints};
+	push @options_to_show, "showSolutions" if $can{showSolutions};
+	
+	return $self->optionsMacro(
+		options_to_show => \@options_to_show,
+		extra_params => ["editMode", "sourceFilePath"],
+	);
+}
 
 sub siblings {
 	my ($self) = @_;
