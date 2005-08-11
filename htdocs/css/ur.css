@@ -47,6 +47,7 @@ div.SubmitError { color: red; font-style: italic; }
 div.Message { font-style: italic; }
 div.Body {  }
 div.Warnings {  }
+div.viewOptions { border: thin groove; padding: 1ex; margin: 2ex align: left; }
 
 /* background colors for success and failure messages */
 div.ResultsWithoutError { background-color: #66ff99 } /* light green */
