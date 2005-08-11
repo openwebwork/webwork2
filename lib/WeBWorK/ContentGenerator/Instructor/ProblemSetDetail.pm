@@ -889,6 +889,11 @@ sub checkFile ($) {
 	return $text . "is not a plain file!";
 }
 
+# don't show view options -- we provide display mode controls for headers/problems separately
+sub options {
+	return "";
+}
+
 # Creates two separate tables, first of the headers, and the of the problems in a given set
 # If one or more users are specified in the "editForUser" param, only the data for those users
 # becomes editable, not all the data
