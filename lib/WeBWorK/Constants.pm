@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.27 2005/06/23 02:32:36 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.28 2005/08/12 02:47:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,9 +41,9 @@ $WeBWorK::Debug::Logfile = "";
 # logging.
 # 
 # For example, this pattern prevents the dispatch() function from logging:
-#     $WeBWorK::Debug::QuellSubroutineOutput = qr/^WeBWorK::dispatch$/;
+#     $WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 # 
-$WeBWorK::Debug::QuellSubroutineOutput = undef;
+$WeBWorK::Debug::DenySubroutineOutput = undef;
 
 # If defined, allow only subroutines matching the following regular expression
 # to log.
