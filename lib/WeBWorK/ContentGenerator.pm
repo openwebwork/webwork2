@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.144 2005/08/11 22:10:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.145 2005/08/12 02:47:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -878,7 +878,7 @@ sub title {
 	my $r = $self->r;
 	
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
-	print $r->urlpath->name;
+	print underscore2nbsp($r->urlpath->name);
 	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	
 	return "";
@@ -1666,24 +1666,23 @@ C<&nbsp;> entity.
 sub sp2nbsp {
 	my ($str) = @_;
 	return unless defined $str;
-	#$str =~ s/ /&nbsp;/g;
 	$str =~ s/\s/&nbsp;/g;
 	return $str;
 }
 
-# FIXME -- I don't think we need both this and the one above.  
-# Remove this comment block  after some time.(2/6/05)
-# =item space2nbsp($string)
-# 
-# Replace spaces in the string with html non-breaking spaces.
-# 
-# =cut
-# 
-# sub space2nbsp {
-# 	my $str = shift;
-# 	$str =~ s/\s/&nbsp;/g;
-# 	return($str);
-# }
+=item underscore2nbsp($string)
+
+A copy of $string is returned with each underscore character replaced by the
+C<&nbsp;> entity.
+
+=cut
+
+sub underscore2nbsp {
+	my ($str) = @_;
+	return unless defined $str;
+	$str =~ s/_/&nbsp;/g;
+	return $str;
+}
 
 =item errorOutput($error, $details)
 
