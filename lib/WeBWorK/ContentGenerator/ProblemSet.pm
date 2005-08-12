@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.64 2005/08/04 23:30:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.65 2005/08/11 22:11:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,8 +28,8 @@ use strict;
 use warnings;
 use CGI qw(*ul *li);
 use WeBWorK::PG;
-use WeBWorK::Timing;
 use URI::Escape;
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(sortByName);
 
 sub initialize {
@@ -147,7 +147,7 @@ sub siblings {
 	print CGI::start_ul();
 
 	# FIXME: setIDs contain no info on published/unpublished so unpublished sets are still printed
-	$WeBWorK::timer->continue("Begin printing sets from listUserSets()") if defined $WeBWorK::timer;
+	debug("Begin printing sets from listUserSets()");
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
@@ -157,17 +157,17 @@ sub siblings {
 									}}, $setID)
 	    ) ;
 	}
-	$WeBWorK::timer->continue("End printing sets from listUserSets()") if defined $WeBWorK::timer;
+	debug("End printing sets from listUserSets()");
 
 	# FIXME: when database calls are faster, this will get rid of unpublished sibling links
-	#$WeBWorK::timer->continue("Begin printing sets from getMergedSets()") if defined $WeBWorK::timer;	
+	#debug("Begin printing sets from getMergedSets()");	
 	#my @userSetIDs = map {[$eUserID, $_]} @setIDs;
 	#my @sets = $db->getMergedSets(@userSetIDs);
 	#foreach my $set (@sets) {
 	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", courseID => $courseID, setID => $set->set_id);
 	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $authz->hasPermissions($user, "view_unpublished_sets"));
 	#}
-	#$WeBWorK::timer->continue("Begin printing sets from getMergedSets()") if defined $WeBWorK::timer;
+	#debug("Begin printing sets from getMergedSets()");
 	
 	print CGI::end_ul();
 	print CGI::end_li();

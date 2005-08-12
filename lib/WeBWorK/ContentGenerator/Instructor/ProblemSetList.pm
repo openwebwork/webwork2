@@ -80,6 +80,7 @@ Delete sets:
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 500;
@@ -1375,7 +1376,7 @@ sub importSetsFromDef {
 
 	foreach my $set_definition_file (@setDefFiles) {
 
-		$WeBWorK::timer->continue("$set_definition_file: reading set definition file") if defined $WeBWorK::timer;
+		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
 		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
@@ -1393,7 +1394,7 @@ sub importSetsFromDef {
 			push @added, $setName;
 		}
 
-		$WeBWorK::timer->continue("$set_definition_file: adding set") if defined $WeBWorK::timer;
+		debug("$set_definition_file: adding set");
 		# add the data to the set record
 		my $newSetRecord = $db->newGlobalSet;
 		$newSetRecord->set_id($setName);
@@ -1419,7 +1420,7 @@ sub importSetsFromDef {
 		eval {$db->addGlobalSet($newSetRecord)};
 		die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
 
-		$WeBWorK::timer->continue("$set_definition_file: adding problems to database") if defined $WeBWorK::timer;
+		debug("$set_definition_file: adding problems to database");
 		# add problems
 		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 		foreach my $rh_problem (@problemList) {

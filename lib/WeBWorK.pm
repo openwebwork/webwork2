@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.71 2005/06/22 15:18:32 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.72 2005/07/14 13:15:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,10 +51,9 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Debug;
 use WeBWorK::Request;
-use WeBWorK::Timing;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
-use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
+use WeBWorK::Utils qw(runtime_use);
 use Date::Format;
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
@@ -163,13 +162,6 @@ sub dispatch($) {
 	}
 	
 	debug(("-" x 80) . "\n");
-	
-	# create a package-global timing object
-	# FIXME: this is used by other modules!
-	# FIXME: this is not thread-safe!
-	my $label = defined $displayArgs{courseID} ? $displayArgs{courseID} : "ROOT";
-	$WeBWorK::timer = WeBWorK::Timing->new($label);
-	$WeBWorK::timer->start;
 	
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = eval { new WeBWorK::CourseEnvironment({
@@ -296,11 +288,6 @@ sub dispatch($) {
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
 	
-	# The "production timer" uses a finer grained HiRes timing module
-	# rather than the standard unix "time".
-	#my $localStartTime = time;
-	my $productionTimer = WeBWorK::Timing->new($label);
-	$productionTimer->start();
 	runtime_use($displayModule);
 	
 	debug("...instantiate it...\n");
@@ -315,17 +302,8 @@ sub dispatch($) {
 	debug("-------------------- call to ${displayModule}::go\n");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
-	#$WeBWorK::timer->continue("[" . time2str("%a %b %d %H:%M:%S %Y", time) . "]" . "[" . $r->uri . "]");
-	#$WeBWorK::timer->stop();
-	#$WeBWorK::timer->save();
 	
-	#my $localStopTime = time;
-	$productionTimer->stop();
-	#my $timeDiff = $localStopTime - $localStartTime;
-	my $productionTimeDiff    = $productionTimer->{stop} - $productionTimer->{start}; 
-	writeTimingLogEntry($ce,"[".$r->uri."]", sprintf("runTime = %.3f sec", $productionTimeDiff)." ".$ce->{dbLayoutName},"" );
 	return $result;
-	
 }
 
 sub mungeParams {

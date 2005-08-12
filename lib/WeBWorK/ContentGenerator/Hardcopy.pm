@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.56 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.57 2005/07/30 01:49:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,11 +43,10 @@ use warnings;
 use CGI qw();
 use File::Path qw(rmtree);
 use WeBWorK::Form;
+use WeBWorK::Debug;
 use WeBWorK::PG;
 use WeBWorK::Utils qw(readFile makeTempDirectory);
 use Apache::Constants qw(:common REDIRECT);
-
-our $HardcopyTimer = new WeBWorK::Timing if $WeBWorK::Timing::Enabled;
 
 =head1 CONFIGURATION VARIABLES
 
@@ -73,7 +72,8 @@ sub pre_header_initialize {
 	my $authz = $r->authz;
 	my $userID  = $r->param("user");
 	
-	$HardcopyTimer->start if $WeBWorK::Timing::Enabled;;
+	debug("begin hardcopy processing");
+	
 	my $singleSet       = $r->urlpath->arg("setID");
 	my @sets            = $r->param("hcSet");
 	my @users           = $r->param("hcUser");
@@ -188,19 +188,18 @@ sub header {
 sub body {
 	my ($self) = @_;
 	
-	$HardcopyTimer->continue("Hardcopy: printing generation errors") if defined($HardcopyTimer);
+	debug("Hardcopy: printing generation errors");
+	
 	if ($self->{generationError}) {
 		if (ref $self->{generationError} eq "ARRAY") {
 			my ($disposition, @rest) = @{$self->{generationError}};
 			if ($disposition eq "PGFAIL") {
 				$self->multiErrorOutput(@{$self->{errors}});
-				$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
-	            $HardcopyTimer->save if defined($HardcopyTimer);
+				debug("Hardcopy: end printing generation errors");
 				return "";
 			} elsif ($disposition eq "FAIL") {
 				print $self->errorOutput(@rest);
-				$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
-	            $HardcopyTimer->save if defined($HardcopyTimer);
+				debug("Hardcopy: end printing generation errors");
 				return "";
 			} elsif ($disposition eq "RETRY") {
 				print $self->errorOutput(@rest);
@@ -209,13 +208,11 @@ sub body {
 			}
 		} else {
 			# not something we were expecting...
-			$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
-	        $HardcopyTimer->save if defined($HardcopyTimer);
+			debug("Hardcopy: end printing generation errors");
 			die $self->{generationError};
 		}
 	}
-	$HardcopyTimer->continue("Hardcopy: end printing generation errors") if defined($HardcopyTimer);
-	$HardcopyTimer->save if defined($HardcopyTimer);
+	debug("Hardcopy: end printing generation errors");
 
 	if (@{$self->{warnings}}) {
 		# FIXME: this code will only be reached if there was also a
@@ -454,9 +451,9 @@ sub generateHardcopy($) {
 	my $pdfFileURL = undef;
 	if ($self->{hardcopy_format} eq 'pdf' ) {
 		my $errors = '';
-		$HardcopyTimer->continue("begin latex2pdf") if defined($HardcopyTimer);
+		debug("Hardcopy: format log file");
 		$pdfFileURL = eval { $self->latex2pdf($tex, $tempDir, $fileName) };
-		$HardcopyTimer->continue("end latex2pdf") if defined($HardcopyTimer);
+		debug("end latex2pdf");
 		if ($@) {
 			$errors = $@;
 			#$errors =~ s/\n/<br>/g;  # make this readable on HTML FIXME make this a Utils. filter (Error2HTML)
@@ -581,12 +578,12 @@ sub latex2pdf {
 		if (-e $logFile) {
 			push @textErrorMessage , "pdflatex ran, but did not succeed. This suggests an error in the TeX\n", CGI::br();
 			push @textErrorMessage , "version of one of the problems, or a problem with the pdflatex system.\n",CGI::br();
-			$HardcopyTimer->continue("Hardcopy: read log file") if defined($HardcopyTimer);
+			debug("Hardcopy: read log file");
 			my $logFileContents = eval { readTexErrorLog($logFile) };
 			$logFileContents    .=  CGI::hr().CGI::hr();
-			$HardcopyTimer->continue("Hardcopy: format log file") if defined($HardcopyTimer);
+			debug("Hardcopy: format log file");
 			$logFileContents    .= eval { formatTexFile($texFile)     };
-			$HardcopyTimer->continue("Hardcopy: end processing log file") if defined($HardcopyTimer);
+			debug("Hardcopy: end processing log file");
 			if ($@) {
 				push @textErrorMessage, "Additionally, the pdflatex log file could not be read, though it exists.\n", CGI::br();
 			} else {
@@ -745,7 +742,7 @@ sub getSetTeX {
 }
 
 sub getProblemTeX {
-    $HardcopyTimer ->continue("hardcopy: begin processing problem") if defined($HardcopyTimer);
+    debug("hardcopy: begin processing problem");
 	my ($self, $effectiveUser, $setName, $problemNumber, $pgFile) = @_;
 	my $r      = $self->r;
 	my $ce     = $r->ce;
@@ -880,7 +877,7 @@ sub getProblemTeX {
 			$pg->{body_text} .= $correctTeX;
 		}
 	}
-	$HardcopyTimer ->continue("hardcopy: end processing problem") if defined($HardcopyTimer);
+	debug("hardcopy: end processing problem");
 	return $pg->{body_text};
 }
 

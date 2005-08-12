@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Debug.pm,v 1.3 2004/10/06 21:01:17 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Debug.pm,v 1.4 2004/10/08 18:30:32 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,7 @@ head1 SYNOPSIS
 
 use strict;
 use warnings;
+use Time::HiRes qw/gettimeofday/;
 
 ################################################################################
 
@@ -65,11 +66,21 @@ our $Logfile = "" unless defined $Logfile;
 
 =item $QuellSubroutineOutput
 
-Prevent subroutines matching the following regular expression from logging.
+If defined, prevent subroutines matching the following regular expression from
+logging.
 
 =cut
 
 our $QuellSubroutineOutput;
+
+=item $AllowSubroutineOutput
+
+If defined, allow only subroutines matching the following regular expression to
+log.
+
+=cut
+
+our $AllowSubroutineOutput;
 
 =back
 
@@ -92,11 +103,14 @@ sub debug {
 	
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);
+		return if defined $AllowSubroutineOutput and not $subroutine =~ m/$AllowSubroutineOutput/;
 		return if defined $QuellSubroutineOutput and $subroutine =~ m/$QuellSubroutineOutput/;
 		
-		my $finalMessage = "$subroutine: " . join("", @message);
+		my ($sec, $msec) = gettimeofday;
+		my $date = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
+		my $finalMessage = "[$date] $subroutine: " . join("", @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
-		$finalMessage = "[" . time2str("%a %b %d %H:%M:%S %Y", time) . "] " .$finalMessage;
+		
 		if ($WeBWorK::Debug::Logfile ne "") {
 			if (open my $fh, ">>", $Logfile) {
 				print $fh $finalMessage;

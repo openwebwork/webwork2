@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.15 2005/06/02 18:22:58 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.17 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,9 +26,10 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
-use WeBWorK::DB::Record::Set;
+use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
+use WeBWorK::DB::Record::Set;
+use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 
 
@@ -350,10 +351,10 @@ sub displaySets {
 	
 	my $max_num_problems  = 0;
 	# get user records
-	$WeBWorK::timer->continue("Begin obtaining user records for set $setName") if defined($WeBWorK::timer);
+	debug("Begin obtaining user records for set $setName");
 	my @userRecords  = $db->getUsers(@studentList);
-	$WeBWorK::timer->continue("End obtaining user records for set $setName") if defined($WeBWorK::timer);
-    $WeBWorK::timer->continue("begin main loop") if defined($WeBWorK::timer);
+	debug("End obtaining user records for set $setName");
+    debug("begin main loop");
  	my @augmentedUserRecords    = ();
  	my $number_of_active_students;
 
@@ -417,10 +418,10 @@ sub displaySets {
 		my %h_problemData   = ();
 		my $probNum         = 0;
 		
-		$WeBWorK::timer->continue("Begin obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
+		debug("Begin obtaining problem records for user $student set $setName");
 		
 		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $sN );
-		$WeBWorK::timer->continue("End obtaining problem records for user $student set $setName") if defined($WeBWorK::timer);
+		debug("End obtaining problem records for user $student set $setName");
 		my $num_of_problems = @problemRecords;
 		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
 	   ########################################
@@ -628,7 +629,7 @@ sub displaySets {
 
         } # this closes the loop through all student records
 	
-	$WeBWorK::timer->continue("end mainloop") if defined($WeBWorK::timer);
+	debug("end mainloop");
 	
 	@augmentedUserRecords = sort {
 		&$sort_method($a,$b,$primary_sort_method_name)

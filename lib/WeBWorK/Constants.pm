@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.26 2005/06/22 15:21:43 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.27 2005/06/23 02:32:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,24 +37,21 @@ $WeBWorK::Debug::Enabled = 0;
 # 
 $WeBWorK::Debug::Logfile = "";
 
-# Prevent subroutines matching the following regular expression from logging.
+# If defined, prevent subroutines matching the following regular expression from
+# logging.
 # 
 # For example, this pattern prevents the dispatch() function from logging:
 #     $WeBWorK::Debug::QuellSubroutineOutput = qr/^WeBWorK::dispatch$/;
 # 
 $WeBWorK::Debug::QuellSubroutineOutput = undef;
 
-################################################################################
-# WeBWorK::Timing
-################################################################################
-
-# If true, WeBWorK::Timing will print timing data.
+# If defined, allow only subroutines matching the following regular expression
+# to log.
 # 
-$WeBWorK::Timing::Enabled = 0;
-
-# If non-empty, timing data will be sent to the file named rather than STDERR.
+# For example, this pattern allow only some function being worked on to log:
+#     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
 # 
-$WeBWorK::Timing::Logfile = "";
+$WeBWorK::Debug::AllowSubroutineOutput = undef;
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy

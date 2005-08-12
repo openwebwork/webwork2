@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.19 2005/01/19 21:54:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.20 2005/07/05 18:56:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ sets are assigned to a given user.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Debug;
 
 sub initialize {
 	my ($self)     = @_;
@@ -49,9 +50,9 @@ sub initialize {
 	
 	if (defined $r->param("assignToAll")) {
 		$self->assignAllSetsToUser($userID);
-		$WeBWorK::timer->continue("assignAllSetsToUser($userID)") if defined $WeBWorK::timer;
+		debug("assignAllSetsToUser($userID)");
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been assigned to all current sets."));
-		$WeBWorK::timer->continue("done assignAllSetsToUsers($userID)") if defined $WeBWorK::timer;
+		debug("done assignAllSetsToUsers($userID)");
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		if ($userID ne $globalUserID) {
 		  $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been unassigned from all sets."));
@@ -79,9 +80,9 @@ sub initialize {
 				# does the user want it to be assigned to the selected user
 				if (exists $selectedSets{$setID}) {
 					unless ($userSets{$setID}) {	# skip users already in the set
-						$WeBWorK::timer->continue("assignSetToUser($userID, $setID)") if defined $WeBWorK::timer;
+						debug("assignSetToUser($userID, $setID)");
 						$self->assignSetToUser($userID, $setRecord);
-						$WeBWorK::timer->continue("done assignSetToUser($userID, $setID)") if defined $WeBWorK::timer;
+						debug("done assignSetToUser($userID, $setID)");
 					}
 				} else {
 					# user asked to NOT have the set assigned to the selected user

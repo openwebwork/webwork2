@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.143 2005/08/09 22:22:46 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.144 2005/08/11 22:10:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,8 +48,9 @@ use Carp;
 use CGI::Pretty qw(*ul *li escapeHTML);
 use Date::Format;
 use URI::Escape;
-use WeBWorK::Template qw(template);
+use WeBWorK::Debug;
 use WeBWorK::PG;
+use WeBWorK::Template qw(template);
 
 ###############################################################################
 
@@ -1304,7 +1305,7 @@ method. The simplest way to to this is:
 
 sub optionsMacro {
 	my ($self, %options) = @_;
-	
+	debug("HELLO WORLD!");
 	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
 	@options_to_show = "displayMode" unless @options_to_show;
 	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
