@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.9.4.2 2004/07/16 20:06:03 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.11 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,6 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
-use WeBWorK::Timing;
 
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 
@@ -1016,8 +1015,7 @@ sub body {
 # answer processing
 ####################################
 
-    $WeBWorK::timer->continue("begin answer processing") 
-	if defined($WeBWorK::timer);
+    debug("begin answer processing"); 
 
     my @scoreRecordedMessage = ('') x scalar(@problems);
 
@@ -1165,8 +1163,7 @@ sub body {
 # warn("in submitanswers conditional\n");
 
     } # end if submitAnswers conditional
-    $WeBWorK::timer->continue("end answer processing") 
-	if defined( $WeBWorK::timer );
+    debug("end answer processing");
 
 # additional set-level database manipulation: this is all for versioned 
 #    sets/gateway tests

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.177 2005/07/20 18:14:58 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.178 2005/08/11 22:11:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,13 +27,13 @@ use strict;
 use warnings;
 use CGI qw();
 use File::Path qw(rmtree);
+use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
-use WeBWorK::Timing;
 use URI::Escape;
 
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
@@ -592,7 +592,7 @@ sub pre_header_initialize {
 	
 	##### translation #####
 
-	$WeBWorK::timer->continue("begin pg processing") if defined($WeBWorK::timer);
+	debug("begin pg processing");
 	my $pg = WeBWorK::PG->new(
 		$ce,
 		$effectiveUser,
@@ -610,7 +610,7 @@ sub pre_header_initialize {
 		},
 	);
 	
-	$WeBWorK::timer->continue("end pg processing") if defined($WeBWorK::timer);
+	debug("end pg processing");
 	
 	##### fix hint/solution options #####
 	
@@ -822,7 +822,7 @@ sub body {
 	}
 	
 	##### answer processing #####
-	$WeBWorK::timer->continue("begin answer processing") if defined($WeBWorK::timer);
+	debug("begin answer processing");
 	# if answers were submitted:
 	my $scoreRecordedMessage;
 	my $pureProblem;
@@ -926,7 +926,7 @@ sub body {
 		}
 	}
 	
-	$WeBWorK::timer->continue("end answer processing") if defined($WeBWorK::timer);
+	debug("end answer processing");
 	
 	##### output #####
 	# custom message for editor

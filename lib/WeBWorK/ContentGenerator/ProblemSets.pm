@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.59 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.60 2005/07/28 15:24:27 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile sortByName);
 
 # what do we consider a "recent" problem set?
@@ -135,10 +136,10 @@ sub body {
 	my @setIDs = $db->listUserSets($effectiveUser);
 	
 	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
-	$WeBWorK::timer->continue("Begin collecting merged sets") if defined($WeBWorK::timer);
+	debug("Begin collecting merged sets");
 	my @sets = $db->getMergedSets( @userSetIDs );
 	
-	$WeBWorK::timer->continue("Begin fixing merged sets") if defined($WeBWorK::timer);
+	debug("Begin fixing merged sets");
 	
 	# Database fix (in case of undefined published values)
 	# this may take some extra time the first time but should NEVER need to be run twice
@@ -157,7 +158,7 @@ sub body {
 
 # gateways/versioned sets require dealing with output data slightly 
 # differently, so check for those here	
-	$WeBWorK::timer->continue("Begin set-type check") if defined($WeBWorK::timer);
+	debug("Begin set-type check");
 	my $existVersions = 0;
 	foreach ( @sets ) {
 	    if ( defined( $_->assignment_type() ) && 
@@ -200,12 +201,12 @@ sub body {
 	        );
 	}
 
-	$WeBWorK::timer->continue("Begin sorting merged sets") if defined($WeBWorK::timer);
+	debug("Begin sorting merged sets");
 	
 	@sets = sortByName("set_id", @sets) if $sort eq "name";
 	@sets = sort byUrgency @sets if $sort eq "status";
 	
-	$WeBWorK::timer->continue("End preparing merged sets") if defined($WeBWorK::timer);
+	debug("End preparing merged sets");
 	
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;

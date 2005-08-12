@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.47 2004/10/22 22:59:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.48 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use CGI qw();
 use File::Find;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
+use WeBWorK::Debug;
 use WeBWorK::Utils;
 
 =head1 METHODS
@@ -286,13 +287,13 @@ sub assignSetToAllUsers {
 	my $db = $self->{db};
 	my @userIDs = $db->listUsers;
 
-	$WeBWorK::timer->continue("$setID: getting user list") if defined $WeBWorK::timer;
+	debug("$setID: getting user list");
 	my @userRecords = $db->getUsers(@userIDs);
-	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+	debug("$setID: (done with that)");
 	
-	$WeBWorK::timer->continue("$setID: getting problem list") if defined $WeBWorK::timer;
+	debug("$setID: getting problem list");
 	my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
-	$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+	debug("$setID: (done with that)");
 	
 	my @results;
 	
@@ -302,20 +303,20 @@ sub assignSetToAllUsers {
 		my $userID = $User->user_id;
 		$UserSet->user_id($userID);
 		$UserSet->set_id($setID);
-		$WeBWorK::timer->continue("$setID: adding UserSet for $userID") if defined $WeBWorK::timer;
+		debug("$setID: adding UserSet for $userID");
 		eval { $db->addUserSet($UserSet) };
 		if ($@) {
 			next if $@ =~ m/user set exists/;
 			die $@;
 		}
-		$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+		debug("$setID: (done with that)");
 		
-		$WeBWorK::timer->continue("$setID: adding UserProblems for $userID") if defined $WeBWorK::timer;
+		debug("$setID: adding UserProblems for $userID");
 		foreach my $GlobalProblem (@GlobalProblems) {
 			my @result = $self->assignProblemToUser($userID, $GlobalProblem);
 			push @results, @result if @result;
 		}
-		$WeBWorK::timer->continue("$setID: (done with that)") if defined $WeBWorK::timer;
+		debug("$setID: (done with that)");
 	}
 	
 	return @results;

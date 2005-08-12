@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.23 2005/06/20 22:40:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.24 2005/07/14 13:15:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,12 +24,17 @@ WeBWorK::URLPath - the WeBWorK virtual URL heirarchy.
 
 use strict;
 use warnings;
+use WeBWorK::Debug;
 
-sub debug {
-#	my ($label, $indent, @message) = @_;
-#	print STDERR " "x$indent;
-#	print STDERR "$label: " if $label ne "";
-#	print STDERR @message;
+{
+	no warnings "redefine";
+	
+	sub debug {
+		my ($label, $indent, @message) = @_;
+		my $header = " "x$indent;
+		$header .= "$label: " if $label ne "";
+		WeBWorK::Debug::debug($header, @message);
+	}
 }
 
 =head1 VIRTUAL HEIRARCHY
@@ -897,10 +902,10 @@ sub visitPathTypeNode($$$$);
 
 sub visitPathTypeNode($$$$) {
 	my ($nodeID, $path, $argsRef, $indent) = @_;
-	debug("visitPathTypeNode", $indent, "visiting node $nodeID with path $path\n");
+	debug("visitPathTypeNode", $indent, "visiting node $nodeID with path $path");
 	
 	unless (exists $pathTypes{$nodeID}) {
-		debug("visitPathTypeNode", $indent, "node $nodeID doesn't exist in node list: failed\n");
+		debug("visitPathTypeNode", $indent, "node $nodeID doesn't exist in node list: failed");
 		die "node $nodeID doesn't exist in node list: failed";
 	}
 	
@@ -913,7 +918,7 @@ sub visitPathTypeNode($$$$) {
 	if ($path =~ s/($match)//) {
 		# it matches! store captured strings in $argsRef and remove the matched
 		# characters from $path. waste a lot of lines on sanity checking... ;)
-		debug("", 0, "success!\n");
+		debug("", 0, "success!");
 		my @capture_values = $1 =~ m/$match/;
 		if (@capture_names) {
 			my $nexpected = @capture_names;
@@ -935,13 +940,13 @@ sub visitPathTypeNode($$$$) {
 					my $old = $argsRef->{$name};
 					warn "encountered argument $name again, old value: $old new value: $value -- replacing.";
 				}
-				debug("visitPathTypeNode", $indent, "setting argument $name => $value.\n");
+				debug("visitPathTypeNode", $indent, "setting argument $name => $value.");
 				$argsRef->{$name} = $value;
 			}
 		}
 	} else {
 		# it doesn't match. bail out now with return value 0
-		debug("", 0, "failed.\n");
+		debug("", 0, "failed.");
 		return 0;
 	}
 	
@@ -949,16 +954,16 @@ sub visitPathTypeNode($$$$) {
 	
 	# if there's no more path left, then this node is the one! return $nodeID
 	if ($path eq "") {
-		debug("visitPathTypeNode", $indent, "no path left, type is $nodeID\n");
+		debug("visitPathTypeNode", $indent, "no path left, type is $nodeID");
 		return $nodeID;
 	}
 	
 	# otherwise, we have to send the remaining path to the node's children
-	debug("visitPathTypeNode", $indent, "but path remains: $path\n");
+	debug("visitPathTypeNode", $indent, "but path remains: $path");
 	my @kids = @{ $node{kids} };
 	if (@kids) {
 		foreach my $kid (@kids) {
-			debug("visitPathTypeNode", $indent, "trying child $kid:\n");
+			debug("visitPathTypeNode", $indent, "trying child $kid:");
 			my $result = visitPathTypeNode($kid, $path, $argsRef, $indent+1);
 			# we return in two situations:
 			# if $result is -1, then the kid matched but couldn't consume the rest of the path
@@ -966,9 +971,9 @@ sub visitPathTypeNode($$$$) {
 			# these are all true values (assuming that "0" isn't a valid node ID), so we say:
 			return $result if $result;
 		}
-		debug("visitPathTypeNode", $indent, "no children claimed the remaining path: failed.\n");
+		debug("visitPathTypeNode", $indent, "no children claimed the remaining path: failed.");
 	} else {
-		debug("visitPathTypeNode", $indent, "no children to claim the remaining path: failed.\n");
+		debug("visitPathTypeNode", $indent, "no children to claim the remaining path: failed.");
 	}
 	
 	# in both of the above cases, we matched but couldn't provide children that

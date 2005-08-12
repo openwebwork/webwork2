@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.64 2005/07/14 13:15:24 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.65 2005/07/22 22:48:28 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -140,7 +140,7 @@ use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
-use WeBWorK::Timing;
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
 
 ################################################################################
@@ -328,7 +328,7 @@ sub hashDatabaseOK {
 	# 
 	# yay!
 	
-	$WeBWorK::timer->continue(__PACKAGE__ . "::hashDatabaseOK: about to get orphaned UserSets") if defined $WeBWorK::timer;
+	debug(__PACKAGE__ . "::hashDatabaseOK: about to get orphaned UserSets");
 	
 	# ... so instead, we're going to do things manually
 	
@@ -344,7 +344,7 @@ sub hashDatabaseOK {
 			or return 0, @results, "Failed to connect to set_user database.";
 		
 
-		# get PSVNs for global user (ÔN)
+		# get PSVNs for global user (‘N)
 		# this reads from "login<>global_user"
 		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
 		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
@@ -360,7 +360,7 @@ sub hashDatabaseOK {
 		}
 		
 
-		# get PSVNs for each setID (ÔN*M)
+		# get PSVNs for each setID (‘N*M)
 		# this reads from "set<>$_"
 		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
 		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
@@ -407,7 +407,7 @@ sub hashDatabaseOK {
 		}
 	}
 	
-	$WeBWorK::timer->continue(__PACKAGE__ . "::hashDatabaseOK: done getting orphaned UserSets") if defined $WeBWorK::timer;
+	debug(__PACKAGE__ . "::hashDatabaseOK: done getting orphaned UserSets");
 	
 	if (keys %orphanUserSets) {
 		foreach my $setID (keys %orphanUserSets) {
@@ -2033,25 +2033,25 @@ sub getMergedSets {
 	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
 			and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
 		#warn __PACKAGE__.": using a terrible hack.\n";
-		$WeBWorK::timer->continue("DB: getsNoFilter start") if defined($WeBWorK::timer);
+		debug("DB: getsNoFilter start");
 		my @MergedSets = $self->{set_user}->getsNoFilter(@userSetIDs);
-		$WeBWorK::timer->continue("DB: getsNoFilter end") if defined($WeBWorK::timer);
+		debug("DB: getsNoFilter end");
 		return @MergedSets;
 	}
 	
-	$WeBWorK::timer->continue("DB: getUserSets start") if defined($WeBWorK::timer);
+	debug("DB: getUserSets start");
 	my @UserSets = $self->getUserSets(@userSetIDs); # checked
 	
-	$WeBWorK::timer->continue("DB: pull out set IDs start") if defined($WeBWorK::timer);
+	debug("DB: pull out set IDs start");
 	my @globalSetIDs = map { $_->[1] } @userSetIDs;
-	$WeBWorK::timer->continue("DB: getGlobalSets start") if defined($WeBWorK::timer);
+	debug("DB: getGlobalSets start");
 	my @GlobalSets = $self->getGlobalSets(@globalSetIDs); # checked
 	
-	$WeBWorK::timer->continue("DB: calc common fields start") if defined($WeBWorK::timer);
+	debug("DB: calc common fields start");
 	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
 	my @commonFields = grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
 	
-	$WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+	debug("DB: merge start");
 	for (my $i = 0; $i < @UserSets; $i++) {
 		my $UserSet = $UserSets[$i];
 		my $GlobalSet = $GlobalSets[$i];
@@ -2063,7 +2063,7 @@ sub getMergedSets {
 			$UserSet->$field($GlobalSet->$field);
 		}
 	}
-	$WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+	debug("DB: merge done!");
 	
 	return @UserSets;
 }
@@ -2093,11 +2093,9 @@ sub getMergedVersionedSets {
     if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
 	and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
     #warn __PACKAGE__.": using a terrible hack.\n";
-#	$WeBWorK::timer->continue("DB: getsNoFilter start") 
-#	    if defined($WeBWorK::timer);
+#	debug("DB: getsNoFilter start");
 #	my @MergedSets = $self->{set_user}->getsNoFilter(@versionedUserSetIDs);
-#	$WeBWorK::timer->continue("DB: getsNoFilter end") 
-#	    if defined($WeBWorK::timer);
+#	debug("DB: getsNoFilter end");
 #	return @MergedSets;
 	croak 'getMergedVersionedSets: using WW1Hash DB Schema!  Versioned ' .
 	    'sets are not supported in this context.';
@@ -2105,28 +2103,23 @@ sub getMergedVersionedSets {
 
 # we merge the nonversioned ("template") user sets (user_id, set_id) and
 #    the global data into the versioned user sets	
-    $WeBWorK::timer->continue("DB: getUserSets start (nonversioned)") 
-	if defined($WeBWorK::timer);
+    debug("DB: getUserSets start (nonversioned)");
     my @TemplateUserSets = $self->getUserSets(@nonversionedUserSetIDs);
-    $WeBWorK::timer->continue("DB: getUserSets start (versioned)") 
-	if defined($WeBWorK::timer);
+    debug("DB: getUserSets start (versioned)");
 # these are the actual user sets that we want to use
     my @versionedUserSets = $self->getUserSets(@versionedUserSetIDs);
 	
-    $WeBWorK::timer->continue("DB: pull out set IDs start") 
-	if defined($WeBWorK::timer);
+    debug("DB: pull out set IDs start");
     my @globalSetIDs = map { $_->[1] } @userSetIDs;
-    $WeBWorK::timer->continue("DB: getGlobalSets start") 
-	if defined($WeBWorK::timer);
+    debug("DB: getGlobalSets start");
     my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
 	
-    $WeBWorK::timer->continue("DB: calc common fields start") 
-	if defined($WeBWorK::timer);
+    debug("DB: calc common fields start");
     my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
     my @commonFields = 
 	grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
 	
-    $WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+    debug("DB: merge start");
     for (my $i = 0; $i < @TemplateUserSets; $i++) {
 	next unless( defined $versionedUserSets[$i] and 
 		     (defined $TemplateUserSets[$i] or
@@ -2143,7 +2136,7 @@ sub getMergedVersionedSets {
 		    $TemplateUserSets[$i]->$field ne '');
 	}
     }
-    $WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+    debug("DB: merge done!");
 	
     return @versionedUserSets;
 }
@@ -2248,19 +2241,19 @@ sub getMergedProblems {
 			       and defined $userProblemIDs[$i]->[2];
 	}
 	
-	$WeBWorK::timer->continue("DB: getUserProblems start") if defined($WeBWorK::timer);
+	debug("DB: getUserProblems start");
 	my @UserProblems = $self->getUserProblems(@userProblemIDs); # checked
 	
-	$WeBWorK::timer->continue("DB: pull out set/problem IDs start") if defined($WeBWorK::timer);
+	debug("DB: pull out set/problem IDs start");
 	my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @userProblemIDs;
-	$WeBWorK::timer->continue("DB: getGlobalProblems start") if defined($WeBWorK::timer);
+	debug("DB: getGlobalProblems start");
 	my @GlobalProblems = $self->getGlobalProblems(@globalProblemIDs); # checked
 	
-	$WeBWorK::timer->continue("DB: calc common fields start") if defined($WeBWorK::timer);
+	debug("DB: calc common fields start");
 	my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
 	my @commonFields = grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
 	
-	$WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+	debug("DB: merge start");
 	for (my $i = 0; $i < @UserProblems; $i++) {
 		my $UserProblem = $UserProblems[$i];
 		my $GlobalProblem = $GlobalProblems[$i];
@@ -2275,7 +2268,7 @@ sub getMergedProblems {
 			$UserProblem->$field($GlobalProblem->$field);
 		}
 	}
-	$WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+	debug("DB: merge done!");
 	
 	return @UserProblems;
 }
@@ -2295,8 +2288,7 @@ sub getMergedVersionedProblems {
 		    and defined $userProblemIDs[$i]->[3] );
     }
 	
-    $WeBWorK::timer->continue("DB: getUserProblems start") 
-	if defined($WeBWorK::timer);
+    debug("DB: getUserProblems start");
 
 # these are triples [user_id, set_id, problem_id]
     my @nonversionedProblemIDs = map {[$_->[0],$_->[1],$_->[3]]} @userProblemIDs;
@@ -2311,24 +2303,20 @@ sub getMergedVersionedProblems {
 #    both of these, replacing global values with template values and not 
 #    taking either in the event that the versioned problem already has a 
 #    value for the field in question
-    $WeBWorK::timer->continue("DB: pull out set/problem IDs start") 
-	if defined($WeBWorK::timer);
+    debug("DB: pull out set/problem IDs start");
     my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @nonversionedProblemIDs;
-    $WeBWorK::timer->continue("DB: getGlobalProblems start") 
-	if defined($WeBWorK::timer);
+    debug("DB: getGlobalProblems start");
     my @GlobalProblems = $self->getGlobalProblems( @globalProblemIDs );
-    $WeBWorK::timer->continue("DB: getTemplateProblems start") 
-	if defined($WeBWorK::timer);
+    debug("DB: getTemplateProblems start");
     my @TemplateProblems = $self->getUserProblems( @nonversionedProblemIDs );
 	
-    $WeBWorK::timer->continue("DB: calc common fields start") 
-	if defined($WeBWorK::timer);
+    debug("DB: calc common fields start");
 
     my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
     my @commonFields = 
 	grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
 	
-    $WeBWorK::timer->continue("DB: merge start") if defined($WeBWorK::timer);
+    debug("DB: merge start");
     for (my $i = 0; $i < @versionUserProblems; $i++) {
 	my $UserProblem = $versionUserProblems[$i];
 	my $GlobalProblem = $GlobalProblems[$i];
@@ -2346,7 +2334,7 @@ sub getMergedVersionedProblems {
 		     $TemplateProblem->$field ne '' );
 	}
     }
-    $WeBWorK::timer->continue("DB: merge done!") if defined($WeBWorK::timer);
+    debug("DB: merge done!");
 
     return @versionUserProblems;
 }

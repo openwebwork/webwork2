@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.13 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.14 2005/07/20 23:56:30 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,9 +27,9 @@ problem set.
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readDirectory list2hash max);
+use WeBWorK::Debug;
 use WeBWorK::DB::Record::Set;
-
+use WeBWorK::Utils qw(readDirectory list2hash max);
 
 sub initialize {
 	my ($self) = @_;
@@ -268,15 +268,15 @@ sub displayStudentStats {
 	    my $total      = 0;
 		my $num_of_attempts = 0;
 	
-		$WeBWorK::timer->continue("Begin collecting problems for set $setName") if defined($WeBWorK::timer);
+		debug("Begin collecting problems for set $setName");
 		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
-		$WeBWorK::timer->continue("End collecting problems for set $setName") if defined($WeBWorK::timer);
+		debug("End collecting problems for set $setName");
 		
 		# FIXME the following line doesn't sort the problemRecords
 		#my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
-		$WeBWorK::timer->continue("Begin sorting problems for set $setName") if defined($WeBWorK::timer);
+		debug("Begin sorting problems for set $setName");
 		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
-		$WeBWorK::timer->continue("End sorting problems for set $setName") if defined($WeBWorK::timer);
+		debug("End sorting problems for set $setName");
 		my $num_of_problems  = @problemRecords;
 		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
 		

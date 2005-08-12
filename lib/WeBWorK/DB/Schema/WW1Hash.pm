@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.30 2004/10/10 17:06:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/WW1Hash.pm,v 1.31 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,6 @@ use strict;
 use warnings;
 use Carp;
 use WeBWorK::DB::Utils qw(hash2string string2hash);
-use WeBWorK::Timing;
 
 use constant TABLES => qw(set_user problem_user);
 use constant STYLE  => "hash";

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.16 2005/07/05 18:56:12 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.17 2005/07/27 17:04:53 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ users to which sets are assigned.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Debug;
 
 sub initialize {
 	my ($self)     = @_;
@@ -52,10 +53,10 @@ sub initialize {
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 
 	if (defined $r->param('assignToAll')) {
-		$WeBWorK::timer->continue("assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
+		debug("assignSetToAllUsers($setID)");
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all current users."));
 		$self->assignSetToAllUsers($setID);
-		$WeBWorK::timer->continue("done assignSetToAllUsers($setID)") if defined $WeBWorK::timer;
+		debug("done assignSetToAllUsers($setID)");
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		%selectedUsers = ( $globalUserID => 1 );
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for all students have been unassigned."));
@@ -76,9 +77,9 @@ sub initialize {
 		foreach my $selectedUser (@users) {
 			if (exists $selectedUsers{$selectedUser}) {
 				unless ($setUsers{$selectedUser}) {	# skip users already in the set
-					$WeBWorK::timer->continue("assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+					debug("assignSetToUser($selectedUser, ...)");
 					$self->assignSetToUser($selectedUser, $setRecord);
-					$WeBWorK::timer->continue("done assignSetToUser($selectedUser, ...)") if defined $WeBWorK::timer;
+					debug("done assignSetToUser($selectedUser, ...)");
 				}
 			} else {
 				next if $selectedUser eq $globalUserID;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.48 2005/07/26 20:49:09 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,10 +26,9 @@ WeBWorK::ContentGenerator::Instructor::Scoring - Generate scoring data files
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Timing;
-
 
 our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
@@ -63,7 +62,7 @@ sub initialize {
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
 		
 		# pre-fetch users
-		$WeBWorK::timer->continue("pre-fetching users") if defined($WeBWorK::timer);
+		debug("pre-fetching users");
 		my @Users = $db->getUsers($db->listUsers);
 		my %Users;
 		foreach my $User (@Users) {
@@ -80,7 +79,7 @@ sub initialize {
 
 			keys %Users;
 		#my @userInfo = (\%Users, \@sortedUserIDs);
-		$WeBWorK::timer->continue("done pre-fetching users") if defined($WeBWorK::timer);
+		debug("done pre-fetching users");
 		
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
 		my (@everything, @normal,@full,@info,@totalsColumn);
@@ -114,13 +113,9 @@ sub initialize {
 	} 
 	
 	# Obtaining list of sets:
-	#$WeBWorK::timer->continue("Begin listing sets") if defined $WeBWorK::timer;
 	my @setNames =  $db->listGlobalSets();
-	#$WeBWorK::timer->continue("End listing sets") if defined $WeBWorK::timer;
 	my @set_records = ();
-	#$WeBWorK::timer->continue("Begin obtaining sets") if defined $WeBWorK::timer;
 	@set_records = $db->getGlobalSets( @setNames); 
-	#$WeBWorK::timer->continue("End obtaining sets: ".@set_records) if defined $WeBWorK::timer;
 	
 	
 	# store data
@@ -275,7 +270,6 @@ sub scoreSet {
 	die "global set $setID not found. " unless $setRecord;
 	#my %users;
 	#my %userStudentID=();
-	#$WeBWorK::timer->continue("Begin getting users for set $setID") if defined($WeBWorK::timer);
 	#foreach my $userID ($db->listUsers()) {
 	#	my $userRecord = $db->getUser($userID); # checked
 	#	die "user record for $userID not found" unless $userID;
@@ -285,7 +279,6 @@ sub scoreSet {
 	#	$users{$userRecord->student_id} = $userRecord;
 	#	$userStudentID{$userID} = $userRecord->student_id;
 	#}
-	#$WeBWorK::timer->continue("End getting users for set $setID") if defined($WeBWorK::timer);	
 	
 	my %Users = %$UsersRef; # user objects hashed on user ID
 	my @sortedUserIDs = @$sortedUserIDsRef; # user IDs sorted by student ID
@@ -372,13 +365,13 @@ sub scoreSet {
 	return @scoringData if $format eq "info";
 	
 	# pre-fetch global problems
-	$WeBWorK::timer->continue("pre-fetching global problems for set $setID") if defined($WeBWorK::timer);
+	debug("pre-fetching global problems for set $setID");
 	my %GlobalProblems = map { $_->problem_id => $_ }
 		$db->getAllGlobalProblems($setID);
-	$WeBWorK::timer->continue("done pre-fetching global problems for set $setID") if defined($WeBWorK::timer);
+	debug("done pre-fetching global problems for set $setID");
 	
 	# pre-fetch user problems
-	$WeBWorK::timer->continue("pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
+	debug("pre-fetching user problems for set $setID");
 	my %UserProblems; # $UserProblems{$userID}{$problemID}
 
   # Gateway change here: for non-gateway (non-versioned) sets, we just get each user's
@@ -415,7 +408,7 @@ sub scoreSet {
 			$UserProblems{$userID} = \%CurrUserProblems;
 		}
 	}
-	$WeBWorK::timer->continue("done pre-fetching user problems for set $setID") if defined($WeBWorK::timer);
+	debug("done pre-fetching user problems for set $setID");
 	
 	# Write the problem data
 	my $dueDateString = $self->formatDateTime($setRecord->due_date);
@@ -520,7 +513,7 @@ sub scoreSet {
 
 		}
 	}
-	$WeBWorK::timer->continue("End  set $setID") if defined($WeBWorK::timer);
+	debug("End  set $setID");
 	return @scoringData;
 }
 

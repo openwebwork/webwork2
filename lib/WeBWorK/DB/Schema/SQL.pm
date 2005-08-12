@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.26 2005/07/14 20:20:15 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.27 2005/07/22 21:20:07 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,9 +26,19 @@ WeBWorK::DB::Schema::SQL - support SQL access to all tables.
 use strict;
 use warnings;
 use Carp qw(croak);
+use WeBWorK::Debug;
 
 use constant TABLES => qw(*);
 use constant STYLE  => "dbi";
+
+{
+	no warnings 'redefine';
+	
+	sub debug {
+		my ($self, @string) = @_;
+		WeBWorK::Debug::debug(@string) if $self->{params}->{debug};
+	}
+}
 
 =head1 SUPPORTED PARAMS
 
@@ -394,14 +404,6 @@ sub sqlFieldnames($) {
 	my ($self) = @_;
 	my @keynames = $self->{record}->FIELDS();
 	return map { "`$_`" } map { $self->{params}->{fieldOverride}->{$_} || $_ } @keynames;
-}
-
-sub debug($@) {
-	my ($self, @string) = @_;
-	
-	if ($self->{params}->{debug}) {
-		warn @string;
-	}
 }
 
 1;
