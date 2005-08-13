@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.50 2005/08/11 20:27:07 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.51 2005/08/11 21:40:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -809,6 +809,7 @@ sub make_data_row {
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
 		: CGI::div({class=>"RenderSolo"}, $pg->{body_text});
+	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 
 	#if($self->{r}->param('browse_which') ne 'browse_library') {
