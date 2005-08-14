@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.22 2005/07/14 13:15:27 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.23 2005/08/04 22:45:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,7 @@ our @EXPORT_OK = qw(
 	addCourse
 	renameCourse
 	deleteCourse
+	archiveCourse
 	dbLayoutSQLSources
 );
 
@@ -454,6 +455,125 @@ sub deleteCourse {
 	}
 }
 
+
+=item archiveCourse(%options)
+
+%options must contain:
+
+ courseID    => $courseID,
+ ce          => $ce,
+ dbOptions   => $dbOptions,
+ newCourseID => $newCourseID,
+
+Archive the course named $courseID  in the $webworkDirs{courses} directory
+as $webworkDirs{courses}/$courseID.tar.gz.  The data from the database is
+stored in several files at $courseID/DATA/$table_name.txt before the course's directories
+are tarred and gzipped.  The table names are $courseID_user, $courseID_set
+and so forth.  Only files and directories stored directly in the course directory
+are archived.  The contents of linked files is not archived although the symbolic links
+themselves are saved.
+
+$ce is a WeBWorK::CourseEnvironment object that describes the existing course's
+environment.
+
+# $dbOptions is a reference to a hash containing information required to create
+# the course's new database and delete the course's old database.
+# 
+#  if dbLayout == "sql":
+#  
+#  	host         => host to connect to
+#  	port         => port to connect to
+#  	username     => user to connect as (must have CREATE, DELETE, FILE, INSERT,
+#  	                SELECT, UPDATE privileges, WITH GRANT OPTION.)
+#  	password     => password to supply
+#  	old_database => the name of the database to delete
+#  	new_database => the name of the database to create
+#  	wwhost       => the host from which the webwork database users will be allowed
+#  	                to connect. (if host is set to localhost, this should be set to
+#  	                localhost too.)
+# 
+# The name of the course's directory is changed to $newCourseID.
+
+If the course's database layout is C<sql_single>, the contents of 
+the courses database tables are exported to text files using the sql database's
+export facility.  Then the tables are deleted from the database.
+
+# If the course's database layout is C<sql>, a new database is created, course
+# data is copied from the old database to the new database, and the old database
+# is deleted.
+# 
+# If the course's database layout is C<gdbm>, the DBM files are simply renamed on
+# disk.
+
+If the course's database layout is something else, no database changes are made.
+
+Any errors encountered while renaming the course are returned.
+
+=cut
+
+sub archiveCourse {
+	my (%options) = @_;
+	
+	# renameCourseHelper needs:
+	#    $fromCourseID ($oldCourseID)
+	#    $fromCE ($ce)
+	#    $toCourseID ($newCourseID)
+	#    $toCE (construct from $ce)
+	#    $dbLayoutName ($ce->{dbLayoutName})
+	#    %options ($dbOptions)
+	
+	my $courseID = $options{courseID};
+	my $ce = $options{ce};
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+
+	
+	# get the database layout out of the options hash
+	my $dbLayoutName = $ce->{dbLayoutName};
+	
+	die "I happen to know that renameCourse() will only succeed for sql_single courses. Bug Mike to write support for gdbm and sql courses.\n"
+		unless $dbLayoutName eq "sql_single";
+	
+	# collect some data
+	my $coursesDir  = $ce->{webworkDirs}->{courses};
+	my $courseDir   = "$coursesDir/$courseID";
+	my $dataDir     = "$courseDir/DATA";
+	my $archivePath = "$coursesDir/$courseID.tar.gz";
+	
+	# create DATA directory if it does not exist.
+	unless (-e $dataDir) {
+		mkdir "$dataDir" or die "Failed to create course directory $dataDir";
+	}
+	# fail if the target file already exists
+	if (-e $archivePath) {
+		croak "The course $courseID has already been archived at $archivePath";
+	}
+	
+	# fail if the source course does not exist
+	unless (-e $courseDir) {
+		croak "$courseID: course not found";
+	}
+	
+	$dbOptions{archiveDatabasePath}   =  "$dataDir/${courseID}_mysql.database";
+	##### step 1: export database contents ######
+	# munge DB options to move new_database => database
+
+	
+	my $archiveHelperResult = archiveCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+	die "$courseID: course database dump failed.\n" unless $archiveHelperResult;
+		
+	##### step 2: tar and gzip course directory #####
+	
+	# archive top-level course directory
+	#FIXME (check) don't follow links
+	my $tarCmd = $ce->{externalPrograms}->{tar};
+	debug("archiving course dir: $tarCmd $archivePath $courseDir \n");
+	my $tarStatement = "$tarCmd  -zcf   $archivePath  $courseDir";
+	my $tarResult = system $tarStatement ;
+	$tarResult and die "failed to tar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
+	
+}
+
+
 =item dbLayoutSQLSources($dbLayout)
 
 Retrun a hash of database sources for the sql and sql_single database layouts.
@@ -540,6 +660,18 @@ Perform database-layout specific operations for adding a course.
 sub addCourseHelper {
 	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	my $result = callHelperIfExists("addCourseHelper", $dbLayoutName, @_);
+	return $result;
+}
+
+=item archiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
+
+Perform database-layout specific operations for archiving the data in a course.
+
+=cut
+
+sub archiveCourseHelper {
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	my $result = callHelperIfExists("archiveCourseHelper", $dbLayoutName, @_);
 	return $result;
 }
 

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.4 2004/12/21 04:41:03 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.5 2005/06/15 21:46:12 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -171,7 +171,7 @@ sub addCourseHelper {
 	return 1;
 }
 
-=item renameCourseHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
+=item copyCourseHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
 
 Uses addCourseHelper() to create a new course database on the same server.
 Copies the data from the old course database to the new one. Uses
@@ -286,6 +286,89 @@ sub copyCourseDataHelper {
 	}
 	
 	$dbh->disconnect;
+	
+	return 1;
+}
+
+=item archiveCourseHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
+
+Dumps the data from the  course database to text files in the courseID/DATA directory. Uses
+deleteCourseHelper() to delete the old course database.
+
+=cut
+
+sub archiveCourseHelper {
+	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
+	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
+	
+	##### get list of tables to archive #####
+	
+	my $dbLayout    = $ce->{dbLayouts}->{$dbLayoutName};
+	debug("dbLayout=$dbLayout\n");
+	my %sources     = dbLayoutSQLSources($dbLayout);
+	debug("fSources: ", Dumper(\%sources));
+	my $source    = mostPopularSource(%sources);
+	debug("source=$source\n");
+	my %source = %{ $sources{$source} };
+	my @tables = @{ $source{tables} };
+	my $username = $source{username};
+	my $password = $source{password};
+	my $archiveDatabasePath = $options{archiveDatabasePath};
+	
+	##### construct SQL statements to copy the data in each table #####
+	
+	my @stmts;
+	my @dataTables = ();
+	foreach my $table (@tables) {
+		debug("Table: $table\n");
+		my $table = do {
+			my $paramsRef = $dbLayout->{$table}->{params};
+			if ($paramsRef) {
+				if (exists $paramsRef->{tableOverride}) {
+					$paramsRef->{tableOverride}
+				} else {
+					""; # no override
+				}
+			} else {
+				""; # no params
+			}
+		} || $table;
+		debug("sql \"real\" table name: $table\n");
+		
+       
+        # this method would be mysql specific but it's a start
+		# mysqldump  --user=$username   --password=$password database   tables
+#		my $stmt = "DUMP SELECT * FROM `$fromTable`";
+#		debug("stmt = $stmt\n");
+#		push @stmts, $stmt;
+	    push @dataTables, $table;
+	}
+	debug("Database tables to export are ",join(" ", @dataTables));
+	# this method would be mysql specific but it's a start
+	my $exportStatement = " mysqldump  --user=$username  ".
+	"--password=$password " .
+	" webwork   ".
+	join(" ", @dataTables).
+	"   >$archiveDatabasePath";
+	debug($exportStatement);
+	my $exportResult = system $exportStatement;
+	$exportResult and die "failed to tar course directory with command: '$exportResult ' (errno: $exportResult): $!\n";
+
+	##### issue SQL statements #####
+	
+# 	my $dbh = DBI->connect($source, $username, $password);
+# 	unless (defined $dbh) {
+# 		die "sql_single: failed to connect to DBI source '$source': $DBI::errstr\n";
+# 	}
+# 	
+# 	foreach my $stmt (@stmts) {
+# 		my $rows = $dbh->do($stmt);
+# 		unless (defined $rows) {
+# 			die "sql_single: failed to execute SQL statement '$stmt': $DBI::errstr\n";
+# 		}
+# 	}
+# 	
+# 	$dbh->disconnect;
 	
 	return 1;
 }
