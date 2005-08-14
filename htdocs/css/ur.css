@@ -128,6 +128,8 @@ table.attemptResults th {
 /*
  * override above settings in tables used to display ans_array results
  */
+table.attemptResults td td,
+table.attemptResults td th,
 table.ArrayLayout td {
 	border-style: none; 
 	border-width: 0px; 
