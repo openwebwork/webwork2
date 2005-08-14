@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.36 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.39 2005/07/31 17:27:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use IO::File;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
-use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses);
+use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
 # put the following database layouts at the top of the list, in this order
@@ -165,6 +165,29 @@ sub pre_header_initialize {
 			}
 		}
 		
+		elsif ($subDisplay eq "archive_course") {
+			if (defined $r->param("archive_course")) {
+				# validate or confirm
+				@errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "archive_course_confirm";
+				}
+			} elsif (defined $r->param("confirm_archive_course")) {
+				# validate and archive
+				@errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "do_archive_course";
+				}
+			} else {
+				# form only
+				$method_to_call = "archive_course_form";
+			}
+		}
+		
 		else {
 			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
 		}
@@ -252,6 +275,8 @@ sub body {
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
+		" | ",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, "Archive Course"),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -1745,5 +1770,284 @@ sub do_import_database {
 		);
 	}
 }
+##########################################################################
+sub archive_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $archive_courseID     = $r->param("archive_courseID")     || "";
+	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
+	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
+	my $archive_sql_username = $r->param("archive_sql_username") || "";
+	my $archive_sql_password = $r->param("archive_sql_password") || "";
+	my $archive_sql_database = $r->param("archive_sql_database")    || "";
+	
+	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+		my $tempCE = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+	}
+	
+	print CGI::h2("archive Course");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select a course to archive.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "archive_courseID",
+					-values => \@courseIDs,
+					-default => $archive_courseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+	);
+	
+	print CGI::p(
+		"Currently the archive facility is only available for mysql databases.
+		It depends on the mysqldump application."
+	);
+# 	print CGI::p(
+# 		"If the course's database layout (indicated in parentheses above) is "
+# 		. CGI::b("sql") . ", supply the SQL connections information requested below."
+# 	);
+	
+# 	print CGI::start_table({class=>"FormLayout"});
+# 	print CGI::Tr(CGI::td({colspan=>2}, 
+# 			"Enter the user ID and password for an SQL account with sufficient permissions to archive an existing database."
+# 		)
+# 	);
+# 	print CGI::Tr(
+# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+# 		CGI::td(CGI::textfield("archive_sql_username", $archive_sql_username, 25)),
+# 	);
+# 	print CGI::Tr(
+# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+# 		CGI::td(CGI::password_field("archive_sql_password", $archive_sql_password, 25)),
+# 	);
+# 	
+# 	#print CGI::Tr(CGI::td({colspan=>2},
+# 	#		"The optionial SQL settings you enter below must match the settings in the DBI source"
+# 	#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
+# 	#		. " with the course name you entered above."
+# 	#	)
+# 	#);
+# 	print CGI::Tr(
+# 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+# 		CGI::td(
+# 			CGI::textfield("archive_sql_host", $archive_sql_host, 25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the default host."),
+# 		),
+# 	);
+# 	print CGI::Tr(
+# 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+# 		CGI::td(
+# 			CGI::textfield("archive_sql_port", $archive_sql_port, 25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the default port."),
+# 		),
+# 	);
+# 
+# 	print CGI::Tr(
+# 		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+# 		CGI::td(
+# 			CGI::textfield("archive_sql_database", $archive_sql_database, 25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+# 		),
+# 	);
+# 	print CGI::end_table();
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("archive_course", "archive Course"));
+	
+	print CGI::end_form();
+}
 
+sub archive_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $archive_courseID     = $r->param("archive_courseID")     || "";
+	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
+	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
+	my $archive_sql_username = $r->param("archive_sql_username") || "";
+	my $archive_sql_password = $r->param("archive_sql_password") || "";
+	my $archive_sql_database = $r->param("archive_sql_database") || "";
+	
+	my @errors;
+	
+	if ($archive_courseID eq "") {
+		push @errors, "You must specify a course name.";
+	} elsif ($archive_courseID eq $urlpath->arg("courseID")) {
+		push @errors, "You cannot archive the course you are currently using.";
+	}
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$archive_courseID,
+	);
+	
+	if ($ce2->{dbLayoutName} eq "sql") {
+		push @errors, "You must specify the SQL admin username." if $archive_sql_username eq "";
+		#push @errors, "You must specify the SQL admin password." if $archive_sql_password eq "";
+		#push @errors, "You must specify the SQL database name." if $archive_sql_database eq "";
+	}
+	
+	return @errors;
+}
+
+sub archive_course_confirm {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	print CGI::h2("archive Course");
+	
+	my $archive_courseID     = $r->param("archive_courseID")     || "";
+	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
+	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
+	my $archive_sql_database = $r->param("archive_sql_database") || "";
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$archive_courseID,
+	);
+	
+	if ($ce2->{dbLayoutName} eq "sql") {
+		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
+		. "? All course files and data and the following database will be destroyed."
+		. " There is no undo available.");
+		
+		print CGI::table({class=>"FormLayout"},
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+				CGI::td($archive_sql_host || "system default"),
+			),
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+				CGI::td($archive_sql_port || "system default"),
+			),
+			CGI::Tr(
+				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
+				CGI::td($archive_sql_database || "webwork_$archive_courseID"),
+			),
+		);
+	} else {
+		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
+			. "? All course files and data will be destroyed. There is no undo available.");
+	}
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	print $self->hidden_fields(qw/archive_courseID archive_sql_host archive_sql_port archive_sql_username archive_sql_password archive_sql_database/);
+	
+	print CGI::p({style=>"text-align: center"},
+		CGI::submit("decline_archive_course", "Don't archive"),
+		"&nbsp;",
+		CGI::submit("confirm_archive_course", "archive"),
+	);
+	
+	print CGI::end_form();
+}
+
+sub do_archive_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $archive_courseID     = $r->param("archive_courseID")     || "";
+	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
+	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
+	my $archive_sql_username = $r->param("archive_sql_username") || "";
+	my $archive_sql_password = $r->param("archive_sql_password") || "";
+	my $archive_sql_database = $r->param("archive_sql_database") || "";
+	
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$archive_courseID,
+	);
+	
+	my %dbOptions;
+	if ($ce2->{dbLayoutName} eq "sql") {
+		$dbOptions{host}     = $archive_sql_host if $archive_sql_host ne "";
+		$dbOptions{port}     = $archive_sql_port if $archive_sql_port ne "";
+		$dbOptions{username} = $archive_sql_username;
+		$dbOptions{password} = $archive_sql_password;
+		$dbOptions{database} = $archive_sql_database || "webwork_$archive_courseID";
+	}
+	
+	eval {
+		archiveCourse(
+			courseID => $archive_courseID,
+			ce => $ce2,
+			dbOptions => \%dbOptions,
+		);
+	};
+	
+	if ($@) {
+		my $error = $@;
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while archiving the course $archive_courseID:"),
+			CGI::tt(CGI::escapeHTML($error)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Successfully archived the course $archive_courseID"),
+		);
+		 writeLog($ce, "hosted_courses", join("\t",
+	    	"\tarchived",
+	    	"",
+	    	"",
+	    	$archive_courseID,
+	    ));
+		print CGI::start_form("POST", $r->uri);
+		print $self->hidden_authen_fields;
+		print $self->hidden_fields("subDisplay");
+		
+		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "OK"),);
+		
+		print CGI::end_form();
+	}
+}
+
+################################################################################
 1;
