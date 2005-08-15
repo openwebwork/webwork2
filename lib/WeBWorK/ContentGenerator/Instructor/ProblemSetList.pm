@@ -1142,7 +1142,7 @@ sub cancelExport_handler {
 
 sub saveExport_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Export selected sets (This may take a long time.  Even if your browser times out, all the files will be exported).";
+	return "Export selected sets.";
 }
 
 sub saveExport_handler {
