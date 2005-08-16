@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.178 2005/08/11 22:11:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.179 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -753,7 +753,7 @@ sub title {
 	my ($self) = @_;
 
 	# using the url arguments won't break if the set/problem are invalid
-	my $setID = $self->r->urlpath->arg("setID");
+	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	my $problemID = $self->r->urlpath->arg("problemID");
 	
 	return "$setID: Problem $problemID";
