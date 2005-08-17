@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.72 2005/07/14 13:15:24 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.73 2005/08/12 02:47:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,6 +39,7 @@ BEGIN { $main::VERSION = "2.1"; }
 use strict;
 use warnings;
 use Apache::Constants qw(:common REDIRECT DONE);
+use Time::HiRes qw/time/;
 
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
@@ -53,8 +54,7 @@ use WeBWorK::Debug;
 use WeBWorK::Request;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
-use WeBWorK::Utils qw(runtime_use);
-use Date::Format;
+use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
 use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_AUTHEN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
@@ -285,6 +285,9 @@ sub dispatch($) {
 	#	die "An error occured while accessing '$displayArgs{courseID}': '", $ce->{'!'}, "'.\n";
 	#}
 	
+	# store the time before we invoke the content generator
+	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
+	
 	debug(("-" x 80) . "\n");
 	debug("Finally, we'll load the display module...\n");
 	
@@ -300,6 +303,10 @@ sub dispatch($) {
 	my $result = $instance->go();
 	
 	debug("-------------------- call to ${displayModule}::go\n");
+	
+	my $cg_end = time;
+	my $cg_duration = $cg_end - $cg_start;
+	writeTimingLogEntry($ce, "[".$r->uri."]", sprintf("runTime = %.3f sec", $cg_duration)." ".$ce->{dbLayoutName}, "");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
 	
