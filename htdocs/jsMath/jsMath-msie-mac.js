@@ -31,7 +31,7 @@
  *  possible.
  */
 
-jsMath.UpdateTeXfonts({
+jsMath.Update.TeXfonts({
 
   cmr10: {
     '3':  {c: '<FONT FACE="Symbol">L</FONT>', tclass: 'normal'},
