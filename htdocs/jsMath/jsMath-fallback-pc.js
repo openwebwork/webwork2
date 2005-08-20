@@ -594,140 +594,140 @@ jsMath.Add(jsMath.TeX,{
   
   cmti10: [
     // 00 - 0F
-    {c: '<I>&Gamma;</I>', tclass: 'greek', ic: 0.133},
+    {c: '<I>&Gamma;</I>', ic: 0.133, tclass: 'greek'},
     {c: '<I>&Delta;</I>', tclass: 'greek'},
-    {c: '<I>&Theta;</I>', tclass: 'greek', ic: 0.094},
+    {c: '<I>&Theta;</I>', ic: 0.094, tclass: 'greek'},
     {c: '<I>&Lambda;</I>', tclass: 'greek'},
-    {c: '<I>&Xi;</I>', tclass: 'greek', ic: 0.153},
-    {c: '<I>&Pi;</I>', tclass: 'greek', ic: 0.164},
-    {c: '<I>&Sigma;</I>', tclass: 'greek', ic: 0.12},
-    {c: '<I>&Upsilon;</I>', tclass: 'greek', ic: 0.111},
-    {c: '<I>&Phi;</I>', tclass: 'greek', ic: 0.0599},
-    {c: '<I>&Psi;</I>', tclass: 'greek', ic: 0.111},
-    {c: '<I>&Omega;</I>', tclass: 'greek', ic: 0.103},
-    {c: '<I>ff</I>', ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 14, '108': 15}, tclass: 'normal', ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 14, '108': 15}},
-    {c: '<I>fi</I>', tclass: 'normal', ic: 0.103},
-    {c: '<I>fl</I>', tclass: 'normal', ic: 0.103},
-    {c: '<I>ffi</I>', tclass: 'normal', ic: 0.103},
-    {c: '<I>ffl</I>', tclass: 'normal', ic: 0.103},
+    {c: '<I>&Xi;</I>', ic: 0.153, tclass: 'greek'},
+    {c: '<I>&Pi;</I>', ic: 0.164, tclass: 'greek'},
+    {c: '<I>&Sigma;</I>', ic: 0.12, tclass: 'greek'},
+    {c: '<I>&Upsilon;</I>', ic: 0.111, tclass: 'greek'},
+    {c: '<I>&Phi;</I>', ic: 0.0599, tclass: 'greek'},
+    {c: '<I>&Psi;</I>', ic: 0.111, tclass: 'greek'},
+    {c: '<I>&Omega;</I>', ic: 0.103, tclass: 'greek'},
+    {c: '<I>ff</I>', ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 14, '108': 15}, tclass: 'normal'},
+    {c: '<I>fi</I>', ic: 0.103, tclass: 'normal'},
+    {c: '<I>fl</I>', ic: 0.103, tclass: 'normal'},
+    {c: '<I>ffi</I>', ic: 0.103, tclass: 'normal'},
+    {c: '<I>ffl</I>', ic: 0.103, tclass: 'normal'},
     // 10 - 1F
-    {c: '<I>&#x131;</I>', a:0, tclass: 'normal', ic: 0.0767},
-    {c: '<I>j</I>', d:.2, tclass: 'normal', ic: 0.0374},
+    {c: '<I>&#x131;</I>', a:0, ic: 0.0767, tclass: 'normal'},
+    {c: '<I>j</I>', d:.2, ic: 0.0374, tclass: 'normal'},
     {c: '<I>&#x2CB;</I>', tclass: 'accent'},
-    {c: '<I>&#x2CA;</I>', tclass: 'accent', ic: 0.0969},
-    {c: '<I>&#x2C7;</I>', tclass: 'accent', ic: 0.083},
-    {c: '<I>&#x2D8;</I>', tclass: 'accent', ic: 0.108},
-    {c: '<I>&#x2C9;</I>', tclass: 'accent', ic: 0.103},
+    {c: '<I>&#x2CA;</I>', ic: 0.0969, tclass: 'accent'},
+    {c: '<I>&#x2C7;</I>', ic: 0.083, tclass: 'accent'},
+    {c: '<I>&#x2D8;</I>', ic: 0.108, tclass: 'accent'},
+    {c: '<I>&#x2C9;</I>', ic: 0.103, tclass: 'accent'},
     {c: '<I>&#x2DA;</I>', tclass: 'accent'},
-    {c: '<I>?</I>', tclass: 'normal', d: 0.17, w: 0.46},
-    {c: '<I>&#xDF;</I>', tclass: 'normal', ic: 0.105},
-    {c: '<I>&#xE6;</I>', a:0, tclass: 'normal', ic: 0.0751},
-    {c: '<I>&#x153;</I>', a:0, tclass: 'normal', ic: 0.0751},
-    {c: '<I>&#xF8;</I>', tclass: 'normal', ic: 0.0919},
-    {c: '<I>&#xC6;</I>', tclass: 'normal', ic: 0.12},
-    {c: '<I>&#x152;</I>', tclass: 'normal', ic: 0.12},
-    {c: '<I>&#xD8;</I>', tclass: 'normal', ic: 0.094},
+    {c: '<I>?</I>', d: 0.17, w: 0.46, tclass: 'normal'},
+    {c: '<I>&#xDF;</I>', ic: 0.105, tclass: 'normal'},
+    {c: '<I>&#xE6;</I>', a:0, ic: 0.0751, tclass: 'normal'},
+    {c: '<I>&#x153;</I>', a:0, ic: 0.0751, tclass: 'normal'},
+    {c: '<I>&#xF8;</I>', ic: 0.0919, tclass: 'normal'},
+    {c: '<I>&#xC6;</I>', ic: 0.12, tclass: 'normal'},
+    {c: '<I>&#x152;</I>', ic: 0.12, tclass: 'normal'},
+    {c: '<I>&#xD8;</I>', ic: 0.094, tclass: 'normal'},
     // 20 - 2F
-    {c: '<I>?</I>', krn: {'108': -0.278, '76': -0.319}, tclass: 'normal', krn: {'108': -0.256, '76': -0.321}},
-    {c: '<I>!</I>', lig: {'96': 60}, tclass: 'normal', ic: 0.124, lig: {'96': 60}},
-    {c: '<I>&#x201D;</I>', tclass: 'normal', ic: 0.0696},
-    {c: '<I>#</I>', tclass: 'normal', ic: 0.0662},
+    {c: '<I>?</I>', krn: {'108': -0.256, '76': -0.321}, tclass: 'normal'},
+    {c: '<I>!</I>', ic: 0.124, lig: {'96': 60}, tclass: 'normal'},
+    {c: '<I>&#x201D;</I>', ic: 0.0696, tclass: 'normal'},
+    {c: '<I>#</I>', ic: 0.0662, tclass: 'normal'},
     {c: '<I>$</I>', tclass: 'normal'},
-    {c: '<I>%</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>&amp;</I>', tclass: 'normal', ic: 0.0969},
-    {c: '<I>&#x2019;</I>', krn: {'63': 0.111, '33': 0.111}, lig: {'39': 34}, tclass: 'normal', ic: 0.124, krn: {'63': 0.102, '33': 0.102}, lig: {'39': 34}},
-    {c: '<I>(</I>', d:.2, tclass: 'normal', ic: 0.162},
-    {c: '<I>)</I>', d:.2, tclass: 'normal', ic: 0.0369},
-    {c: '<I>*</I>', tclass: 'normal', ic: 0.149},
-    {c: '<I>+</I>', a:.1, tclass: 'normal', ic: 0.0369},
+    {c: '<I>%</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>&amp;</I>', ic: 0.0969, tclass: 'normal'},
+    {c: '<I>&#x2019;</I>', ic: 0.124, krn: {'63': 0.102, '33': 0.102}, lig: {'39': 34}, tclass: 'normal'},
+    {c: '<I>(</I>', d:.2, ic: 0.162, tclass: 'normal'},
+    {c: '<I>)</I>', d:.2, ic: 0.0369, tclass: 'normal'},
+    {c: '<I>*</I>', ic: 0.149, tclass: 'normal'},
+    {c: '<I>+</I>', a:.1, ic: 0.0369, tclass: 'normal'},
     {c: '<I>,</I>', a:-.3, d:.2, w: 0.278, tclass: 'normal'},
-    {c: '<I>-</I>', a:0, lig: {'45': 123}, tclass: 'normal', ic: 0.0283, lig: {'45': 123}},
+    {c: '<I>-</I>', a:0, ic: 0.0283, lig: {'45': 123}, tclass: 'normal'},
     {c: '<I>.</I>', a:-.25, tclass: 'normal'},
-    {c: '<I>/</I>', tclass: 'normal', ic: 0.162},
+    {c: '<I>/</I>', ic: 0.162, tclass: 'normal'},
     // 30 - 3F
-    {c: '<I>0</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>1</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>2</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>3</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>4</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>5</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>6</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>7</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>8</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>9</I>', tclass: 'normal', ic: 0.136},
-    {c: '<I>:</I>', tclass: 'normal', ic: 0.0582},
-    {c: '<I>;</I>', tclass: 'normal', ic: 0.0582},
-    {c: '<I>&#xA1;</I>', tclass: 'normal', ic: 0.0756},
-    {c: '<I>=</I>', a:0, d:-.1, tclass: 'normal', ic: 0.0662},
+    {c: '<I>0</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>1</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>2</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>3</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>4</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>5</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>6</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>7</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>8</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>9</I>', ic: 0.136, tclass: 'normal'},
+    {c: '<I>:</I>', ic: 0.0582, tclass: 'normal'},
+    {c: '<I>;</I>', ic: 0.0582, tclass: 'normal'},
+    {c: '<I>&#xA1;</I>', ic: 0.0756, tclass: 'normal'},
+    {c: '<I>=</I>', a:0, d:-.1, ic: 0.0662, tclass: 'normal'},
     {c: '<I>&#xBF;</I>', tclass: 'normal'},
-    {c: '<I>?</I>', lig: {'96': 62}, tclass: 'normal', ic: 0.122, lig: {'96': 62}},
+    {c: '<I>?</I>', ic: 0.122, lig: {'96': 62}, tclass: 'normal'},
     // 40 - 4F
-    {c: '<I>@</I>', tclass: 'normal', ic: 0.096},
-    {c: '<I>A</I>', krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}, tclass: 'normal', krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>B</I>', tclass: 'normal', ic: 0.103},
-    {c: '<I>C</I>', tclass: 'normal', ic: 0.145},
-    {c: '<I>D</I>', krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}, tclass: 'normal', ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}},
-    {c: '<I>E</I>', tclass: 'normal', ic: 0.12},
-    {c: '<I>F</I>', krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}, tclass: 'normal', ic: 0.133, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: '<I>G</I>', tclass: 'normal', ic: 0.0872},
-    {c: '<I>H</I>', tclass: 'normal', ic: 0.164},
-    {c: '<I>I</I>', krn: {'73': 0.0278}, tclass: 'normal', ic: 0.158},
-    {c: '<I>J</I>', tclass: 'normal', ic: 0.14},
-    {c: '<I>K</I>', krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}, tclass: 'normal', ic: 0.145, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: '<I>L</I>', krn: {'84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}, tclass: 'normal', krn: {'84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>M</I>', tclass: 'normal', ic: 0.164},
-    {c: '<I>N</I>', tclass: 'normal', ic: 0.164},
-    {c: '<I>O</I>', krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}, tclass: 'normal', ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}},
+    {c: '<I>@</I>', ic: 0.096, tclass: 'normal'},
+    {c: '<I>A</I>', krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>B</I>', ic: 0.103, tclass: 'normal'},
+    {c: '<I>C</I>', ic: 0.145, tclass: 'normal'},
+    {c: '<I>D</I>', ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}, tclass: 'normal'},
+    {c: '<I>E</I>', ic: 0.12, tclass: 'normal'},
+    {c: '<I>F</I>', ic: 0.133, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}, tclass: 'normal'},
+    {c: '<I>G</I>', ic: 0.0872, tclass: 'normal'},
+    {c: '<I>H</I>', ic: 0.164, tclass: 'normal'},
+    {c: '<I>I</I>', ic: 0.158, tclass: 'normal'},
+    {c: '<I>J</I>', ic: 0.14, tclass: 'normal'},
+    {c: '<I>K</I>', ic: 0.145, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}, tclass: 'normal'},
+    {c: '<I>L</I>', krn: {'84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>M</I>', ic: 0.164, tclass: 'normal'},
+    {c: '<I>N</I>', ic: 0.164, tclass: 'normal'},
+    {c: '<I>O</I>', ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}, tclass: 'normal'},
     // 50 - 5F
-    {c: '<I>P</I>', krn: {'65': -0.0833, '111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'normal', ic: 0.103, krn: {'65': -0.0767}},
-    {c: '<I>Q</I>', d: 1, tclass: 'normal', ic: 0.094},
-    {c: '<I>R</I>', krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}, tclass: 'normal', ic: 0.0387, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>S</I>', tclass: 'normal', ic: 0.12},
-    {c: '<I>T</I>', krn: {'121': -0.0278, '101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}, tclass: 'normal', ic: 0.133, krn: {'121': -0.0767, '101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}},
-    {c: '<I>U</I>', tclass: 'normal', ic: 0.164},
-    {c: '<I>V</I>', ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}, tclass: 'normal', ic: 0.184, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: '<I>W</I>', ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}, tclass: 'normal', ic: 0.184, krn: {'65': -0.0767}},
-    {c: '<I>X</I>', krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}, tclass: 'normal', ic: 0.158, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: '<I>Y</I>', ic: 0.025, krn: {'101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}, tclass: 'normal', ic: 0.194, krn: {'101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}},
-    {c: '<I>Z</I>', tclass: 'normal', ic: 0.145},
-    {c: '<I>[</I>', d:.1, tclass: 'normal', ic: 0.188},
-    {c: '<I>&#x201C;</I>', tclass: 'normal', ic: 0.169},
-    {c: '<I>]</I>', d:.1, tclass: 'normal', ic: 0.105},
-    {c: '<I>&#x2C6;</I>', tclass: 'accent', ic: 0.0665},
-    {c: '<I>&#x2D9;</I>', tclass: 'accent', ic: 0.118},
+    {c: '<I>P</I>', ic: 0.103, krn: {'65': -0.0767}, tclass: 'normal'},
+    {c: '<I>Q</I>', d: 1, ic: 0.094, tclass: 'normal'},
+    {c: '<I>R</I>', ic: 0.0387, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>S</I>', ic: 0.12, tclass: 'normal'},
+    {c: '<I>T</I>', ic: 0.133, krn: {'121': -0.0767, '101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}, tclass: 'normal'},
+    {c: '<I>U</I>', ic: 0.164, tclass: 'normal'},
+    {c: '<I>V</I>', ic: 0.184, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}, tclass: 'normal'},
+    {c: '<I>W</I>', ic: 0.184, krn: {'65': -0.0767}, tclass: 'normal'},
+    {c: '<I>X</I>', ic: 0.158, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}, tclass: 'normal'},
+    {c: '<I>Y</I>', ic: 0.194, krn: {'101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}, tclass: 'normal'},
+    {c: '<I>Z</I>', ic: 0.145, tclass: 'normal'},
+    {c: '<I>[</I>', d:.1, ic: 0.188, tclass: 'normal'},
+    {c: '<I>&#x201C;</I>', ic: 0.169, tclass: 'normal'},
+    {c: '<I>]</I>', d:.1, ic: 0.105, tclass: 'normal'},
+    {c: '<I>&#x2C6;</I>', ic: 0.0665, tclass: 'accent'},
+    {c: '<I>&#x2D9;</I>', ic: 0.118, tclass: 'accent'},
     // 60 - 6F
-    {c: '<I>&#x2018;</I>', lig: {'96': 92}, tclass: 'normal', ic: 0.124, lig: {'96': 92}},
-    {c: '<I>a</I>', a:0, krn: {'118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0767},
-    {c: '<I>b</I>', krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>c</I>', a:0, krn: {'104': -0.0278, '107': -0.0278}, tclass: 'normal', ic: 0.0565, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>d</I>', tclass: 'normal', ic: 0.103, krn: {'108': 0.0511}},
-    {c: '<I>e</I>', a:0, tclass: 'normal', ic: 0.0751, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>f</I>', ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 12, '102': 11, '108': 13}, tclass: 'normal', ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 12, '102': 11, '108': 13}},
-    {c: '<I>g</I>', a:0, d:1, ic: 0.0139, krn: {'106': 0.0278}, tclass: 'normal', ic: 0.0885},
-    {c: '<I>h</I>', krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0767},
-    {c: '<I>i</I>', tclass: 'normal', ic: 0.102},
-    {c: '<I>j</I>', d:1, tclass: 'normal', ic: 0.145},
-    {c: '<I>k</I>', krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal', ic: 0.108},
-    {c: '<I>l</I>', tclass: 'normal', ic: 0.103, krn: {'108': 0.0511}},
-    {c: '<I>m</I>', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0767},
-    {c: '<I>n</I>', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0767, krn: {'39': -0.102}},
-    {c: '<I>o</I>', a:0, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
+    {c: '<I>&#x2018;</I>', ic: 0.124, lig: {'96': 92}, tclass: 'normal'},
+    {c: '<I>a</I>', a:0, ic: 0.0767, tclass: 'normal'},
+    {c: '<I>b</I>', ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>c</I>', a:0, ic: 0.0565, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>d</I>', ic: 0.103, krn: {'108': 0.0511}, tclass: 'normal'},
+    {c: '<I>e</I>', a:0, ic: 0.0751, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>f</I>', ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 12, '102': 11, '108': 13}, tclass: 'normal'},
+    {c: '<I>g</I>', a:0, d:1, ic: 0.0885, tclass: 'normal'},
+    {c: '<I>h</I>', ic: 0.0767, tclass: 'normal'},
+    {c: '<I>i</I>', ic: 0.102, tclass: 'normal'},
+    {c: '<I>j</I>', d:1, ic: 0.145, tclass: 'normal'},
+    {c: '<I>k</I>', ic: 0.108, tclass: 'normal'},
+    {c: '<I>l</I>', ic: 0.103, krn: {'108': 0.0511}, tclass: 'normal'},
+    {c: '<I>m</I>', a:0, ic: 0.0767, tclass: 'normal'},
+    {c: '<I>n</I>', a:0, ic: 0.0767, krn: {'39': -0.102}, tclass: 'normal'},
+    {c: '<I>o</I>', a:0, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
     // 70 - 7F
-    {c: '<I>p</I>', a:0, d:1, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>q</I>', a:0, d:1, tclass: 'normal', ic: 0.0885},
-    {c: '<I>r</I>', a:0, tclass: 'normal', ic: 0.108, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: '<I>s</I>', a:0, tclass: 'normal', ic: 0.0821},
-    {c: '<I>t</I>', krn: {'121': -0.0278, '119': -0.0278}, tclass: 'normal', ic: 0.0949},
-    {c: '<I>u</I>', a:0, krn: {'119': -0.0278}, tclass: 'normal', ic: 0.0767},
-    {c: '<I>v</I>', a:0, ic: 0.0139, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal', ic: 0.108},
-    {c: '<I>w</I>', a:0, ic: 0.0139, krn: {'101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal', ic: 0.108, krn: {'108': 0.0511}},
-    {c: '<I>x</I>', a:0, tclass: 'normal', ic: 0.12},
-    {c: '<I>y</I>', a:0, d:1, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'normal', ic: 0.0885},
-    {c: '<I>z</I>', a:0, tclass: 'normal', ic: 0.123},
-    {c: '<I>&#x2013;</I>', a:.1, ic: 0.0278, lig: {'45': 124}, tclass: 'normal', ic: 0.0921, lig: {'45': 124}},
-    {c: '<I>&#x2014;</I>', a:.1, ic: 0.0278, tclass: 'normal', ic: 0.0921},
-    {c: '<I>&#x2DD;</I>', tclass: 'accent', ic: 0.122},
-    {c: '<I>&#x2DC;</I>', tclass: 'accent', ic: 0.116},
+    {c: '<I>p</I>', a:0, d:1, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>q</I>', a:0, d:1, ic: 0.0885, tclass: 'normal'},
+    {c: '<I>r</I>', a:0, ic: 0.108, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'normal'},
+    {c: '<I>s</I>', a:0, ic: 0.0821, tclass: 'normal'},
+    {c: '<I>t</I>', ic: 0.0949, tclass: 'normal'},
+    {c: '<I>u</I>', a:0, ic: 0.0767, tclass: 'normal'},
+    {c: '<I>v</I>', a:0, ic: 0.108, tclass: 'normal'},
+    {c: '<I>w</I>', a:0, ic: 0.108, krn: {'108': 0.0511}, tclass: 'normal'},
+    {c: '<I>x</I>', a:0, ic: 0.12, tclass: 'normal'},
+    {c: '<I>y</I>', a:0, d:1, ic: 0.0885, tclass: 'normal'},
+    {c: '<I>z</I>', a:0, ic: 0.123, tclass: 'normal'},
+    {c: '<I>&#x2013;</I>', a:.1, ic: 0.0921, lig: {'45': 124}, tclass: 'normal'},
+    {c: '<I>&#x2014;</I>', a:.1, ic: 0.0921, tclass: 'normal'},
+    {c: '<I>&#x2DD;</I>', ic: 0.122, tclass: 'accent'},
+    {c: '<I>&#x2DC;</I>', ic: 0.116, tclass: 'accent'},
     {c: '<I>&#xA8;</I>', tclass: 'accent'}
   ],
   
@@ -879,9 +879,10 @@ jsMath.Add(jsMath.TeX,{
  */
 
 jsMath.Add(jsMath.Box,{
-  TeX: function (c,font,style,size) {
-    c = jsMath.TeX[font][c];
-    if (c.h != null) {c.a = c.h-1.1*jsMath.TeX.x_height; if (c.d == 1) {c.d += .0001}}
+  TeX: function (C,font,style,size) {
+    c = jsMath.TeX[font][C];
+    if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
+    if (c.img != null) this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
     var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
     var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
@@ -891,9 +892,9 @@ jsMath.Add(jsMath.Box,{
       var h = box.bd+box.bh;
       var ph = Math.round(h*jsMath.em);
       if (h > jsMath.hd) {
-        box.bd = c.bd = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)
-                          + '<IMG SRC="'+jsMath.blank+'" STYLE="'
-                          + 'width: 1; height: '+ph+'px">').h - h;
+        box.bd = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)
+                   + '<IMG SRC="'+jsMath.blank+'" STYLE="'
+                   + 'width: 1; height: '+ph+'px">').h - h;
         box.bh = h - box.bd;
       }
       c.bh = box.bh/scale;
@@ -909,55 +910,55 @@ jsMath.Add(jsMath.Box,{
   }
 });
 
-jsMath.UpdateStyles({
-    '.cmr10':          'font-family: serif',
-    '.lucida':         'font-family: lucida sans unicode',
-    '.arial':          'font-family: arial unicode MS',
-    '.cal':            'font-family: Script MT, Script MT Bold, cursive',
-    '.arrows':         'font-family: Arial unicode MS',
-    '.arrow1':         'font-family: Arial unicode MS',
-    '.arrow1a':        'font-family: Arial unicode MS; position:relative; top:.05em;left:-.15em; margin-right:-.15em',
-    '.arrow2':         'font-family: Arial unicode MS; position:relative; top:-.1em;',
-    '.arrow3':         'font-family: Arial unicode MS; margin:.1em',
-    '.symbol':         'font-family: Arial unicode MS',
-    '.symbol2':        'font-family: Arial unicode MS',
-    '.delim1':         'font-family: Times New Roman; font-size: 133%; position:relative; top:.7em',
-    '.delim1a':        'font-family: Lucida sans unicode; font-size: 133%; position:relative; top:.8em',
-    '.delim1b':        'font-family: Arial unicode MS; font-size: 133%; position:relative; top:.8em',
-    '.delim2':         'font-family: Times New Roman; font-size: 180%; position:relative; top:.75em',
-    '.delim2a':        'font-family: Lucida sans unicode; font-size: 180%; position:relative; top:.8em',
-    '.delim2b':        'font-family: Arial unicode MS; font-size: 180%; position:relative; top:.8em',
-    '.delim3':         'font-family: Times New Roman; font-size: 250%; position:relative; top:.725em',
-    '.delim3a':        'font-family: Lucida sans unicode; font-size: 250%; position:relative; top:.775em',
-    '.delim3b':        'font-family: Arial unicode MS; font-size: 250%; position:relative; top:.8em',
-    '.delim4':         'font-family: Times New Roman; font-size: 325%; position:relative; top:.7em',
-    '.delim4a':        'font-family: Lucida sans unicode; font-size: 325%; position:relative; top:.775em',
-    '.delim4b':        'font-family: Arial unicode MS; font-size: 325%; position:relative; top:.8em',
-    '.delimx':         'font-family: Symbol; position:relative; top:.2em',
-    '.greek':          'font-family: Times New Roman',
-    '.bigop1':         'font-family: Arial unicode MS; font-size: 130%; position: relative; top: .7em; margin:-.05em',
-    '.bigop1a':        'font-family: Arial unicode MS; font-size: 110%; position: relative; top: .85em;',
-    '.bigop1b':        'font-family: Arial unicode MS; font-size: 180%; position: relative; top: .6em',
-    '.bigop1c':        'font-family: Arial unicode MS; font-size: 85%; position: relative; top: 1em',
-    '.bigop2':         'font-family: Arial unicode MS; font-size: 230%; position: relative; top: .6em; margin:-.05em',
-    '.bigop2a':        'font-family: Arial unicode MS; font-size: 185%; position: relative; top: .75em',
-    '.bigop2b':        'font-family: Arial unicode MS; font-size: 275%; position: relative; top: .55em',
-    '.bigop2c':        'font-family: Arial unicode MS; font-size: 185%; position: relative; top: 1em; margin-right:-.1em',
-    '.wide1':          'font-size: 67%; position: relative; top:-.5em;',
-    '.wide2':          'font-size: 110%; position: relative; top:-.2em;',
-    '.wide3':          'font-size: 175%;',
-    '.wide1a':         'font-family: Times New Roman; font-size: 75%; position: relative; top:-.5em',
-    '.wide2a':         'font-family: Times New Roman; font-size: 133%; position: relative; top:-.2em',
-    '.wide3a':         'font-family: Times New Roman; font-size: 200%; position: relative; top:-.1em',
-    '.root':           'font-family: Arial unicode MS; margin-right:-.075em',
-    '.accent':         'font-family: Arial unicode MS; position:relative; top:.05em; left:.15em'
+jsMath.Update.Styles({
+    '.cmr10':          "font-family: serif",
+    '.lucida':         "font-family: 'lucida sans unicode'",
+    '.arial':          "font-family: 'arial unicode MS'",
+    '.cal':            "font-family: 'Script MT', 'Script MT Bold', cursive",
+    '.arrows':         "font-family: 'Arial unicode MS'",
+    '.arrow1':         "font-family: 'Arial unicode MS'",
+    '.arrow1a':        "font-family: 'Arial unicode MS'; position:relative; top:.05em;left:-.15em; margin-right:-.15em",
+    '.arrow2':         "font-family: 'Arial unicode MS'; position:relative; top:-.1em;",
+    '.arrow3':         "font-family: 'Arial unicode MS'; margin:.1em",
+    '.symbol':         "font-family: 'Arial unicode MS'",
+    '.symbol2':        "font-family: 'Arial unicode MS'",
+    '.delim1':         "font-family: 'Times New Roman'; font-size: 133%; position:relative; top:.7em",
+    '.delim1a':        "font-family: 'Lucida sans unicode'; font-size: 133%; position:relative; top:.8em",
+    '.delim1b':        "font-family: 'Arial unicode MS'; font-size: 133%; position:relative; top:.8em",
+    '.delim2':         "font-family: 'Times New Roman'; font-size: 180%; position:relative; top:.75em",
+    '.delim2a':        "font-family: 'Lucida sans unicode'; font-size: 180%; position:relative; top:.8em",
+    '.delim2b':        "font-family: 'Arial unicode MS'; font-size: 180%; position:relative; top:.8em",
+    '.delim3':         "font-family: 'Times New Roman'; font-size: 250%; position:relative; top:.725em",
+    '.delim3a':        "font-family: 'Lucida sans unicode'; font-size: 250%; position:relative; top:.775em",
+    '.delim3b':        "font-family: 'Arial unicode MS'; font-size: 250%; position:relative; top:.8em",
+    '.delim4':         "font-family: 'Times New Roman'; font-size: 325%; position:relative; top:.7em",
+    '.delim4a':        "font-family: 'Lucida sans unicode'; font-size: 325%; position:relative; top:.775em",
+    '.delim4b':        "font-family: 'Arial unicode MS'; font-size: 325%; position:relative; top:.8em",
+    '.delimx':         "font-family: Symbol; position:relative; top:.2em",
+    '.greek':          "font-family: 'Times New Roman'",
+    '.bigop1':         "font-family: 'Arial unicode MS'; font-size: 130%; position: relative; top: .7em; margin:-.05em",
+    '.bigop1a':        "font-family: 'Arial unicode MS'; font-size: 110%; position: relative; top: .85em;",
+    '.bigop1b':        "font-family: 'Arial unicode MS'; font-size: 180%; position: relative; top: .6em",
+    '.bigop1c':        "font-family: 'Arial unicode MS'; font-size: 85%; position: relative; top: 1em",
+    '.bigop2':         "font-family: 'Arial unicode MS'; font-size: 230%; position: relative; top: .6em; margin:-.05em",
+    '.bigop2a':        "font-family: 'Arial unicode MS'; font-size: 185%; position: relative; top: .75em",
+    '.bigop2b':        "font-family: 'Arial unicode MS'; font-size: 275%; position: relative; top: .55em",
+    '.bigop2c':        "font-family: 'Arial unicode MS'; font-size: 185%; position: relative; top: 1em; margin-right:-.1em",
+    '.wide1':          "font-size: 67%; position: relative; top:-.5em;",
+    '.wide2':          "font-size: 110%; position: relative; top:-.2em;'",
+    '.wide3':          "font-size: 175%;",
+    '.wide1a':         "font-family: 'Times New Roman'; font-size: 75%; position: relative; top:-.5em",
+    '.wide2a':         "font-family: 'Times New Roman'; font-size: 133%; position: relative; top:-.2em",
+    '.wide3a':         "font-family: 'Times New Roman'; font-size: 200%; position: relative; top:-.1em",
+    '.root':           "font-family: 'Arial unicode MS'; margin-right:-.075em",
+    '.accent':         "font-family: 'Arial unicode MS'; position:relative; top:.05em; left:.15em"
 });
 
 //
 // adjust for Mozilla
 //
 if (jsMath.hidden.ATTRIBUTE_NODE) {
-  jsMath.UpdateTeXfonts({
+  jsMath.Update.TeXfonts({
     cmex10: {
       '48': {c: '&#xF8EB;'},
       '49': {c: '&#xF8F6;'},
@@ -980,7 +981,7 @@ if (jsMath.hidden.ATTRIBUTE_NODE) {
       '67': {c: '&#xF8F7;'}
     }
   });
-  jsMath.UpdateStyles({
+  jsMath.Update.Styles({
       '.accent':  'font-family: Arial unicode MS; position:relative; top:.05em; left:.05em'
   });
 }
@@ -989,7 +990,7 @@ if (jsMath.hidden.ATTRIBUTE_NODE) {
 // adjust for MSIE
 //
 if (jsMath.browser == "MSIE") {
-  jsMath.UpdateTeXfonts({
+  jsMath.Update.TeXfonts({
     cmex10: {
       '63': {c: '<SPAN STYLE="position:relative; left:.125em; margin-right:.125em">|</SPAN>'},
       '119': {c: '<SPAN STYLE="position:relative; left:.02em; margin-right=.08em">|</SPAN><SPAN STYLE="margin-right:.125em">|</SPAN>'}
@@ -1002,8 +1003,8 @@ if (jsMath.browser == "MSIE") {
  *  Reinstall Styles and fonts
  */
 
-jsMath.InitStyles();
-jsMath.InitTeXfonts();
+jsMath.Setup.Styles();
+jsMath.Setup.TeXfonts();
 
 /*
  *  No access to TeX "not" character, so fake this

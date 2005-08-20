@@ -31,7 +31,7 @@
  *
  */
 
-jsMath.UpdateTeXfonts({
+jsMath.Update.TeXfonts({
   cmmi10: {
 //  '41':  // leftharpoondown
 //  '43':  // rightharpoondown    
@@ -80,22 +80,22 @@ jsMath.UpdateTeXfonts({
   
 });
 
-jsMath.UpdateStyles({
-  '.symbol':  'font-family: Osaka',
-  '.arrow1':  'font-family: Osaka; position: relative; top: .125em; margin: -1px',
-  '.arrow2':  'font-family: AppleGothic; font-size: 100%; position:relative; top: .11em; margin:-1px',
-  '.bigop1':  'font-family: AppleGothic; font-size: 110%; position:relative; top: .9em; margin:-.05em',
-  '.bigop1b': 'font-family: Osaka; font-size: 140%; position: relative; top: .8em; margin:-.1em',
-  '.bigop1c': 'font-family: AppleGothic; font-size: 125%; position:relative; top: .85em; margin:-.3em',
-  '.bigop1cx':'font-family: Apple Chancery; font-size: 125%; position:relative; top: .7em; margin:-.1em',
-  '.bigop2':  'font-family: AppleGothic; font-size: 175%; position:relative; top: .85em; margin:-.1em',
-  '.bigop2b': 'font-family: Osaka; font-size: 200%; position: relative; top: .75em; margin:-.15em',
-  '.bigop2c': 'font-family: AppleGothic; font-size: 300%; position:relative; top: .75em; margin:-.35em',
-  '.bigop2cx':'font-family: Apple Chancery; font-size: 250%; position:relative; top: .7em; margin-left:-.1em; margin-right:-.2em',
-  '.delim1b': 'font-family: Times; font-size: 150%; position:relative; top:.8em; margin:.01em',
-  '.delim2b': 'font-family: Times; font-size: 210%; position:relative; top:.8em; margin:.01em',
-  '.delim3b': 'font-family: Times; font-size: 300%; position:relative; top:.75em; margin:.01em',
-  '.delim4b': 'font-family: Times; font-size: 400%; position:relative; top:.725em; margin:.01em',
+jsMath.Update.Styles({
+  '.symbol':   "font-family: Osaka",
+  '.arrow1':   "font-family: Osaka; position: relative; top: .125em; margin: -1px",
+  '.arrow2':   "font-family: AppleGothic; font-size: 100%; position:relative; top: .11em; margin:-1px",
+  '.bigop1':   "font-family: AppleGothic; font-size: 110%; position:relative; top: .9em; margin:-.05em",
+  '.bigop1b':  "font-family: Osaka; font-size: 140%; position: relative; top: .8em; margin:-.1em",
+  '.bigop1c':  "font-family: AppleGothic; font-size: 125%; position:relative; top: .85em; margin:-.3em",
+  '.bigop1cx': "font-family: 'Apple Chancery'; font-size: 125%; position:relative; top: .7em; margin:-.1em",
+  '.bigop2':   "font-family: AppleGothic; font-size: 175%; position:relative; top: .85em; margin:-.1em",
+  '.bigop2b':  "font-family: Osaka; font-size: 200%; position: relative; top: .75em; margin:-.15em",
+  '.bigop2c':  "font-family: AppleGothic; font-size: 300%; position:relative; top: .75em; margin:-.35em",
+  '.bigop2cx': "font-family: 'Apple Chancery'; font-size: 250%; position:relative; top: .7em; margin-left:-.1em; margin-right:-.2em",
+  '.delim1b':  "font-family: Times; font-size: 150%; position:relative; top:.8em; margin:.01em",
+  '.delim2b':  "font-family: Times; font-size: 210%; position:relative; top:.8em; margin:.01em",
+  '.delim3b':  "font-family: Times; font-size: 300%; position:relative; top:.75em; margin:.01em",
+  '.delim4b':  "font-family: Times; font-size: 400%; position:relative; top:.725em; margin:.01em",
 });
 
 
@@ -111,5 +111,5 @@ jsMath.Macro('joinrel','\\mathrel{\\kern-3mu}');
  *  Reinstall the styles
  */
 
-jsMath.InitStyles();
+jsMath.Setup.Styles();
 

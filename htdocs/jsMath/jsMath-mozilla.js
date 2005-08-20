@@ -32,7 +32,7 @@
  *  font map to point to these
  */
 
-jsMath.UpdateTeXfontCodes({
+jsMath.Update.TeXfontCodes({
   cmr10: [
     '&#x0393;', '&#x0394;', '&#x0398;', '&#x039B;',
     '&#x039E;', '&#x03A0;', '&#x03A3;', '&#x03A5;',
@@ -187,7 +187,7 @@ jsMath.UpdateTeXfontCodes({
  *  Adjust a few other characters as well
  */
 
-jsMath.UpdateTeXfonts({
+jsMath.Update.TeXfonts({
   cmr10:  {'20': {c: '&#x02C7;', tclass: 'normal', w: .3}},
   cmmi10: {
     '20': {c: '<I>&kappa</I>', tclass: 'normal'},

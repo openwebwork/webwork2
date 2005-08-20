@@ -1,0 +1,300 @@
+<HTML>
+<HEAD>
+<!--
+ | jsMath-controls.html
+ |
+ | Part of the jsMath package for mathematics on the web.
+ | 
+ | This file handles the details of the jsMath control panels
+ | 
+ | ---------------------------------------------------------------------
+ | 
+ | jsMath is free software; you can redistribute it and/or modify
+ | it under the terms of the GNU General Public License as published by
+ | the Free Software Foundation; either version 2 of the License, or
+ | (at your option) any later version.
+ | 
+ | jsMath is distributed in the hope that it will be useful,
+ | but WITHOUT ANY WARRANTY; without even the implied warranty of
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ | GNU General Public License for more details.
+ | 
+ | You should have received a copy of the GNU General Public License
+ | along with jsMath; if not, write to the Free Software
+ | Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-->
+</HEAD>
+<BODY>
+
+<SCRIPT>
+while (!window.jsMath) {
+  try {
+    window.jsMath = window.parent.jsMath;
+    if (!window.jsMath) {error()}
+  } catch (err) {
+    var showWarning = 1;
+    if (document.domain.match(/\..*\./) &&
+        (navigator.appName != 'Microsoft Internet Explorer' ||
+         navigator.platform != 'MacPPC' || !navigator.userProfile || !document.all)) {
+      //
+      // MSIE on Mac can't change document.domain, and 'try' won't
+      //   catch the error (Grrr!) so don't even try for it
+      //
+      try {
+        document.domain = document.domain.replace(/^[^.]*\./,'');
+        showWarning = 0;
+      } catch(err) {}
+    }
+    if (showWarning) {
+      window.jsMath = {Add: function (x,y) {}};
+      alert(
+        "jsMath can't open the control panel, since jsMath was not " +
+        "obtained from a server that is in the same domain as the " +
+        "page that loaded it."
+      );
+    }
+  }
+}
+
+jsMath.Add(jsMath.Controls,{
+
+  loaded: 1,
+
+  Close: function () {
+    this.panel.style.display = "none";
+    jsMath.Element("jsMath").style.display = (this.cookie.button ? "block" : "none");
+    if (this.document.location.protocol == 'file:') return;
+    for (var id in {scale:1, scaleImg:1, font:1, print:1, autofont:1, alpha:1}) {
+      if (this.cookie[id] != this.oldCookie[id]) {
+        this.loaded = 0;
+        this.document.location.reload();
+        return;
+      }
+    }
+  },
+
+  Main: function () {
+    this.oldCookie = {}; jsMath.Add(this.oldCookie,this.cookie);
+    this.panel.innerHTML = ""; // for MSIE on the Mac
+    this.panel.innerHTML = document.getElementById("jsMath.panel").innerHTML;
+
+    jsMath.Element("fontType").innerHTML =
+      ({tex:"TeX",
+        image:"Image",
+        symbol:"Image symbol",
+        unicode:"Unicode"})[this.cookie.font];
+
+     jsMath.Element("mailto").href =
+       "mailto:dpvc@union.edu?subject=Bug Report for jsMath "
+           + jsMath.version + " (using " + jsMath.browser
+           + " in " + this.cookie.font + " mode)";
+
+    if (this.cookie.print ||
+       (this.cookie.font != 'image' && this.cookie.font != 'symbol'))
+         {jsMath.Element("resolution").disabled = true}
+
+    /*
+     *  Seems to be a bug in Safari that messes up the button names
+     *  when the page is reloaded after an option change
+     */
+    if (jsMath.browser == 'Safari') {
+      jsMath.Element("resolution").value = "Hi-Res Fonts for Printing";
+      jsMath.Element("opts").value = "Options";
+      jsMath.Element("done").value = "Done";
+    }
+
+    this.panel.style.display = "block";
+    this.openMain = 0;
+  },
+
+  Options: function () {
+    this.panel.innerHTML = ""; // for MSIE on the Mac
+    this.panel.innerHTML = document.getElementById("jsMath.options").innerHTML;
+    jsMath.Element("scale").value = this.cookie.scale;
+    jsMath.Element("keep").value = this.cookie.keep;
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1}) {
+      if (this.cookie[id]) {jsMath.Element(id).checked = true}
+    }
+    var font = this.document.getElementsByName("jsMath.font");
+    for (var i = 0; i < font.length; i++) {
+      if ((font[i].value == 'tex' && jsMath.nofonts) ||
+          ((font[i].value == 'symbol' || font[i].value == 'image') &&
+             jsMath.noImgFonts)) {
+        jsMath.Element(font[i].value+"Text").style.color = "#888888";
+        font[i].disabled = true;
+      }
+      else if (this.cookie.font == font[i].value) {font[i].checked = true}
+    }
+    if (jsMath.noImgFonts) {
+      jsMath.Element("alphaText").style.color = "#888888";
+      jsMath.Element("alpha").disabled = true;
+      jsMath.Element("scaleImg").disabled = true;
+    } else if (jsMath.Browser.imgScale != 1) {
+      jsMath.Element("alphaText").style.color = "#888888";
+      jsMath.Element("alpha").disabled = true;
+    }
+
+    /*
+     *  Seems to be a bug in Safari that messes up the button names
+     *  when the page is reloaded after an option change
+     */
+    if (jsMath.isSafari) {
+      jsMath.Element("back").value = "Back";
+      jsMath.Element("done").value = "Done";
+    }
+
+    this.panel.style.display = "block";
+  },
+
+  SaveOptions: function (close) {
+    this.cookie.scale = jsMath.Element("scale").value;
+    var font = this.document.getElementsByName("jsMath.font");
+    for (var i = 0; i < font.length; i++) 
+      {if (font[i].checked) {this.cookie.font = font[i].value}}
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1}) {
+      this.cookie[id] = jsMath.Element(id).checked ? 1: 0;
+    }
+    this.cookie.keep = jsMath.Element("keep").value;
+    this.SetCookie(1);
+    if (close) {this.Close()} else {this.Main()}
+  },
+
+  PrintResolution: function () {
+    this.cookie.print = 1;
+    this.SetCookie(1);
+    this.Close();
+  },
+
+  NoAuto: function () {jsMath.Element("autofont").checked = false}
+
+});
+
+</SCRIPT>
+
+<!------------------------------------------------------------>
+
+<DIV ID="jsMath.panel">
+<DIV STYLE="text-align:center">
+<B STYLE="font-size:large">jsMath
+<SCRIPT>document.write('v'+jsMath.version)</SCRIPT></B><BR>
+<SMALL>(<SPAN ID="jsMath.fontType">type</SPAN> fonts)</SMALL>
+<p>
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" STYLE="margin:0pt 1em">
+<TR><TD ALIGN="CENTER"><TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR><TD ALIGN="CENTER" COLSPAN="2">
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR><TD>
+<UL STYLE="text-align:left; margin:0pt 0pt; padding-left:1em; padding-bottom:1em">
+<LI><A TARGET="_blank" HREF="http://www.math.union.edu:/locate/jsMath/users/quickstart.html">Quick Start</A></LI>
+<LI><A TARGET="_blank" HREF="http://www.math.union.edu:/locate/jsMath">Home Page</A></LI>
+<LI><A TARGET="_blank" HREF="http://www.math.union.edu:/locate/jsMath/download/fonts.html">Download Fonts</A></LI>
+<LI><A TARGET="_blank" HREF="http://www.math.union.edu:/locate/jsMath/users/">Documentation</A></LI>
+<LI><A TARGET="_blank" HREF="http://www.math.union.edu:/locate/jsMath/bugs.html">Known Bugs</A></LI>
+<LI><A ID="jsMath.mailto" HREF="mailto:dpvc@union.edu?subject=jsMath Bug Report">Bug Reports</A></LI>
+</UL>
+</TD></TR>
+</TABLE>
+</TD></TR>
+<TR><TD ALIGN="CENTER" COLSPAN="2">
+<INPUT TYPE="BUTTON" ID="jsMath.resolution" VALUE="Hi-Res Fonts for Printing"
+       STYLE="width:17em" onClick="jsMath.Controls.PrintResolution()">
+</TD></TR>
+<TR><TD HEIGHT="5"></TD></TR>
+<TR><TD ALIGN="LEFT">
+<INPUT TYPE="BUTTON" VALUE="Options" ID="jsMath.opts" STYLE="width:8em" onClick="jsMath.Controls.Options()">
+&nbsp;
+</TD><TD ALIGN="RIGHT">
+<INPUT TYPE="BUTTON" VALUE="Done" ID="jsMath.done" STYLE="width:8em" onClick="jsMath.Controls.Close()">
+</TD></TR>
+</TABLE></TD></TR>
+<TR><TD HEIGHT="10"></TD></TR>
+<TR><TD ALIGN="CENTER" COLSPAN="2" STYLE="width:20em; font-size:x-small">
+<I>Click on the jsMath floating button or <NOBR>ALT-click</NOBR> on a
+mathematical expression to get this dialog at any time.</I>
+</TD></TR>
+</TABLE><p>
+</DIV>
+</DIV>
+
+<!------------------------------------------------------------>
+
+<DIV ID="jsMath.options">
+<DIV STYLE="text-align:center">
+<B STYLE="font-size:large">jsMath Options</B> <SMALL>[<A TARGET="_blank" HREF="http://www.math.union.edu/locate/jsMath/users/help.html">help</A>]</SMALL>
+<p>
+<FORM ACTION="javascript:" STYLE"margin:0">
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" STYLE="text-align:left">
+
+<TR><TD>Scale all mathematics to <INPUT TYPE="TEXT" ID="jsMath.scale" VALUE="100" SIZE="3">%</TD></TR>
+
+<TR><TD HEIGHT="5"></TD></TR>
+
+<TR><TD><INPUT TYPE="RADIO" NAME="jsMath.font" VALUE="tex" onClick="jsMath.Controls.NoAuto()">
+<SPAN ID="jsMath.texText">Use native TeX fonts</SPAN>
+<SMALL>(<A TARGET="_blank" HREF="http://www.math.union.edu/locate/jsMath/download/fonts.html">download</A>)</SMALL>
+</TD></TR>
+<TR><TD><INPUT TYPE="RADIO" NAME="jsMath.font" VALUE="image" onClick="jsMath.Controls.NoAuto()">
+<SPAN ID="jsMath.imageText">Use image fonts
+(<INPUT TYPE="CHECKBOX" ID="jsMath.scaleImg" VALUE="1"> scalable)</SPAN></TD></TR>
+<TR><TD><INPUT TYPE="RADIO" NAME="jsMath.font" VALUE="symbol" onClick="jsMath.Controls.NoAuto()">
+<SPAN ID="jsMath.symbolText">Use images for symbols only</SPAN></TD></TR>
+<TR><TD HEIGHT="2"></TD></TR>
+<TR><TD><INPUT TYPE="RADIO" NAME="jsMath.font" VALUE="unicode" onClick="jsMath.Controls.NoAuto()">
+Use native Unicode fonts</TD></TR>
+
+<TR><TD HEIGHT="8"></TD></TR>
+
+<TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.autofont" VALUE="1"> Autoselect best font</TD></TR>
+<TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.alpha" VALUE="1"> <SPAN ID="jsMath.alphaText">Use image alpha channels</SPAN></TD></TR>
+<TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.warn" VALUE="1"> Show font warnings</TD></TR>
+<TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.button" VALUE="1"> Show jsMath button</TD></TR>
+
+<TR><TD HEIGHT="8"></TD></TR>
+
+<TR><TD>Save settings for
+
+<SELECT ID="jsMath.keep">
+<OPTION VALUE="0D">this session only
+<OPTION VALUE="1D">1 day
+<OPTION VALUE="2D">2 days
+<OPTION VALUE="3D">3 days
+<OPTION VALUE="1W">1 week
+<OPTION VALUE="2W">2 weeks
+<OPTION VALUE="1M">1 month
+<OPTION VALUE="2M">2 months
+<OPTION VALUE="3M">3 months
+<OPTION VALUE="6M">6 months
+<OPTION VALUE="1Y">1 year
+<OPTION VALUE="5Y">5 years
+</SELECT>
+
+</TD></TR>
+
+<TR><TD HEIGHT="13"></TD></TR>
+
+<TR><TD ALIGN="CENTER">
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="100%">
+<TR>
+<TD ALIGN="Left">
+<INPUT TYPE="BUTTON" VALUE="Back" ID="jsMath.back" STYLE="width:8em" onClick="jsMath.Controls.SaveOptions(0)">
+&nbsp;&nbsp;
+</TD>
+<TD ALIGN="RIGHT">
+<INPUT TYPE="BUTTON" VALUE="Done" ID="jsMath.done" STYLE="width:8em" onClick="jsMath.Controls.SaveOptions(1)">
+</TD>
+</TR>
+</TABLE>
+</TD></TR>
+
+</TABLE>
+</FORM>
+</DIV>
+</DIV>
+
+<!------------------------------------------------------------>
+
+<SCRIPT>
+if (jsMath.Controls.openMain) {jsMath.Controls.Main()}
+</SCRIPT>
+</BODY>
+</HTML>

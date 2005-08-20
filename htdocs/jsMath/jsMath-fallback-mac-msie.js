@@ -31,7 +31,7 @@
  *
  */
 
-jsMath.UpdateTeXfonts({
+jsMath.Update.TeXfonts({
   cmr10: {
     '0':  {c: 'G', tclass: 'greek'},
     '1':  {c: 'D', tclass: 'greek'},
@@ -171,31 +171,31 @@ jsMath.UpdateTeXfonts({
 
 });
 
-jsMath.UpdateStyles({
-  '.arrow1':  'font-family: Osaka; position: relative; top: .125em; margin: -1px',
-  '.arrow2':  'font-family: Osaka; position: relative; top: .1em; margin:-1px',
-  '.bigop1':  'font-family: Symbol; font-size: 110%; position:relative; top: .8em; margin:-.05em',
-  '.bigop1b': 'font-family: Symbol; font-size: 140%; position: relative; top: .8em; margin:-.1em',
-  '.bigop1c': 'font-family: Osaka; font-size: 125%; position:relative; top: .85em; margin:-.3em',
-  '.bigop1cx':'font-family: Apple Chancery; font-size: 125%; position:relative; top: .7em; margin:-.1em',
-  '.bigop2':  'font-family: Symbol; font-size: 175%; position:relative; top: .8em; margin:-.07em',
-  '.bigop2a': 'font-family: Baskerville; font-size: 175%; position: relative; top: .65em',
-  '.bigop2b': 'font-family: Symbol; font-size: 175%; position: relative; top: .8em; margin:-.07em',
-  '.bigop2c': 'font-family: Osaka; font-size: 230%; position:relative; top: .85em; margin:-.35em',
-  '.bigop2cx':'font-family: Apple Chancery; font-size: 250%; position:relative; top: .6em; margin-left:-.1em; margin-right:-.2em',
-  '.delim1b': 'font-family: Times; font-size: 150%; position:relative; top:.8em',
-  '.delim2b': 'font-family: Times; font-size: 210%; position:relative; top:.75em;',
-  '.delim3b': 'font-family: Times; font-size: 300%; position:relative; top:.7em;',
-  '.delim4b': 'font-family: Times; font-size: 400%; position:relative; top:.65em;',
-  '.symbol3': 'font-family: Symbol',
-  '.wide1':   'font-size: 50%; position: relative; top:-1.1em',
-  '.wide2':   'font-size: 80%; position: relative; top:-.7em',
-  '.wide3':   'font-size: 125%; position: relative; top:-.5em',
-  '.wide1a':  'font-size: 75%; position: relative; top:-.5em',
-  '.wide2a':  'font-size: 133%; position: relative; top: -.15em',
-  '.wide3a':  'font-size: 200%; position: relative; top: -.05em',
-  '.greek':   'font-family: Symbol'
+jsMath.Update.Styles({
+  '.arrow1':   "font-family: Osaka; position: relative; top: .125em; margin: -1px",
+  '.arrow2':   "font-family: Osaka; position: relative; top: .1em; margin:-1px",
+  '.bigop1':   "font-family: Symbol; font-size: 110%; position:relative; top: .8em; margin:-.05em",
+  '.bigop1b':  "font-family: Symbol; font-size: 140%; position: relative; top: .8em; margin:-.1em",
+  '.bigop1c':  "font-family: Osaka; font-size: 125%; position:relative; top: .85em; margin:-.3em",
+  '.bigop1cx': "font-family: 'Apple Chancery'; font-size: 125%; position:relative; top: .7em; margin:-.1em",
+  '.bigop2':   "font-family: Symbol; font-size: 175%; position:relative; top: .8em; margin:-.07em",
+  '.bigop2a':  "font-family: Baskerville; font-size: 175%; position: relative; top: .65em",
+  '.bigop2b':  "font-family: Symbol; font-size: 175%; position: relative; top: .8em; margin:-.07em",
+  '.bigop2c':  "font-family: Osaka; font-size: 230%; position:relative; top: .85em; margin:-.35em",
+  '.bigop2cx': "font-family: 'Apple Chancery'; font-size: 250%; position:relative; top: .6em; margin-left:-.1em; margin-right:-.2em",
+  '.delim1b':  "font-family: Times; font-size: 150%; position:relative; top:.8em",
+  '.delim2b':  "font-family: Times; font-size: 210%; position:relative; top:.75em;",
+  '.delim3b':  "font-family: Times; font-size: 300%; position:relative; top:.7em;",
+  '.delim4b':  "font-family: Times; font-size: 400%; position:relative; top:.65em;",
+  '.symbol3':  "font-family: Symbol",
+  '.wide1':    "font-size: 50%; position: relative; top:-1.1em",
+  '.wide2':    "font-size: 80%; position: relative; top:-.7em",
+  '.wide3':    "font-size: 125%; position: relative; top:-.5em",
+  '.wide1a':   "font-size: 75%; position: relative; top:-.5em",
+  '.wide2a':   "font-size: 133%; position: relative; top: -.15em",
+  '.wide3a':   "font-size: 200%; position: relative; top: -.05em",
+  '.greek':    "font-family: Symbol"
 });
 
-jsMath.InitStyles();
+jsMath.Setup.Styles();
 
