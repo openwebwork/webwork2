@@ -66,7 +66,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 var jsMath = {
   
-  version: "2.1",  // change this if you edit the file
+  version: "2.1a",  // change this if you edit the file
   
   //
   //  Name of image files
@@ -333,6 +333,7 @@ jsMath.Setup = {
   Domain: function () {
     var jsDomain = ''; var pageDomain = document.domain;
     if (jsMath.root.match('://([^/]*)/')) {jsDomain = RegExp.$1}
+    jsDomain = jsDomain.replace(/:\d+$/,'');
     if (jsDomain == "" || jsDomain == pageDomain) return;
     //
     // MSIE on the Mac can't change document.domain and 'try' won't
