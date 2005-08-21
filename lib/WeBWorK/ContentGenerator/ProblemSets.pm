@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.60 2005/07/28 15:24:27 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.61 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -370,36 +370,36 @@ sub setListRow {
 	} else {
 	    my ( $startTime, $score );
 
-	    if ( defined( $set->assignment_type() ) && 
+		if ( defined( $set->assignment_type() ) && 
 		 $set->assignment_type() =~ /gateway/ &&
 		 $set->set_id() =~ /,v\d+$/ ) {
-		$startTime = localtime( $set->version_creation_time() );
+			$startTime = localtime( $set->version_creation_time() );
 
-        # find score
-		my @problemRecords = $db->getAllUserProblems( $set->user_id(),
+			# find score
+			my @problemRecords = $db->getAllUserProblems( $set->user_id(),
 							      $set->set_id() );
-		my $possible = 0;
-		$score = 0;
-		foreach my $pRec ( @problemRecords ) {
-		    if ( defined( $pRec ) && $score ne 'undef' ) {
-			$score += $pRec->status() || 0;
-		    } else {
-			$score = 'undef';
-		    }
-		    $possible++;
+			my $possible = 0;
+			$score = 0;
+			foreach my $pRec ( @problemRecords ) {
+				if ( defined( $pRec ) && $score ne 'undef' ) {
+					$score += $pRec->status() || 0;
+				} else {
+					$score = 'undef';
+				}
+				$possible++;
+			}
+			$score = "$score/$possible";
+		} else {
+			$startTime = '&nbsp;';
+			$score = $startTime;
 		}
-		$score = "$score/$possible";
-	    } else {
-		$startTime = '&nbsp;';
-		$score = $startTime;
-	    }
-	    return CGI::Tr(CGI::td([
-                             $control,
-                             $interactive,
-                             $score,
-                             $startTime,
-                             $status,
-            ]));
+		return CGI::Tr(CGI::td([
+		                     $control,
+		                     $interactive,
+		                     $score,
+		                     $startTime,
+		                     $status,
+		]));
 	}
 }
 
