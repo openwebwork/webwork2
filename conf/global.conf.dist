@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.125 2005/07/26 21:15:04 jj Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.126 2005/07/31 17:24:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -175,7 +175,7 @@ $webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/";
 $webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/ur.css";
 
 # Location of jsMath script, used for the jsMath display mode.
-$webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath.js";
+$webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
 
 # Location of ASCIIMathML script, used for the asciimath display mode.
 $webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
@@ -627,8 +627,9 @@ $pg{displayModeOptions}{images} = {
 };
 
 $pg{displayModeOptions}{jsMath} = {
-	reportMissingFonts => 1,       # set to 0 to prevent the missing font message
-	missingFontMessage => undef,   # set to an HTML string to use for the missing font message
+	reportMissingFonts => 0,       # set to 1 to allow the missing font message
+	missingFontMessage => undef,   # set to an HTML string to replace the missing font message
+	noImageFonts => 0,             # set to 1 if you didn't install the jsMath image fonts
 };
 
 ##### Directories used by PG
