@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.27 2004/12/20 16:21:50 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.30 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,20 +94,23 @@ sub body {
 	my @selected_users = $r->param("selected_users");
 	my @selected_sets = $r->param("selected_sets");
 	
-	if (defined $r->param("assign") || defined $r->param("assign")) {
+	if (defined $r->param("assign") || defined $r->param("unassign")) {
 		if  (@selected_users && @selected_sets) {
-			my @results;
+			my @results;  # This is not used?
 			$self->assignSetsToUsers(\@selected_sets, \@selected_users) if defined $r->param("assign");
 			$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if defined $r->param("unassign");
 			
-			if (@results) {
+			if (@results) { # Can't get here?
 				print CGI::div({class=>"ResultsWithError"},
 					CGI::p("The following error(s) occured while assigning:"),
 					CGI::ul(CGI::li(\@results)),
 				);
 			} else {
+				my $happymessage= 'All assignments were made successfully.';
+				$happymessage='All unassignments were made successfully.'
+					if defined $r->param("unassign");
 				print CGI::div({class=>"ResultsWithoutError"},
-					CGI::p("All assignments were made successfully."),
+					CGI::p($happymessage),
 				);
 			}
 		} else {
@@ -155,22 +158,28 @@ sub body {
 				CGI::submit(
 					-name => "assign",
 					-value => "Assign selected sets to selected users",
+					-style => "width: 45ex",
 				),
 			),
 		),
 		CGI::Tr(
-			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::submit(
-					-name => "unassign",
-					-value => "Unassign selected sets from selected users",
+			CGI::td({colspan=>2},
+				CGI::div({class=>'ResultsWithError', style=>'color:red'},
+					"Do not unassign students unless you know what you are doing.",
+					CGI::br(),
+					"There is NO undo for unassigning students. ",
+					CGI::br(),
+					CGI::submit(
+						-name => "unassign",
+						-value => "Unassign selected sets from selected users",
+						-style => "width: 45ex",
+					),
 				),
 			),
 		),
 	);
 
 	
-	print CGI::div({-style=>"color:red"}, "Do not unassign students unless you know what you are doing.", CGI::br(),
-						"There is NO undo for unassigning students. ");
 
 	print CGI::p("When you unassign a student's name, you destroy all
 			of the data for that homework set for that student. You will then need to
