@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.126 2005/07/31 17:24:50 gage Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.127 2005/08/21 00:03:38 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,29 @@ $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{tth}      = "/usr/bin/tth";
 
 $externalPrograms{tar}      = "/usr/bin/tar";
+
+# Basic image manipulation utilities
+#  Most sites only need to configure the first line
+$externalPrograms{netpbm} = "/usr/bin/"; # Really a prefix, rather than a program
+$externalPrograms{giftopnm} = $externalPrograms{netpbm}.'giftopnm';
+$externalPrograms{ppmtopgm} = $externalPrograms{netpbm}.'ppmtopgm';
+$externalPrograms{pnmtops}  = $externalPrograms{netpbm}.'pnmtops';
+$externalPrograms{pnmtopng} = $externalPrograms{netpbm}.'pnmtopng';
+$externalPrograms{pngtopnm} = $externalPrograms{netpbm}.'pngtopnm';
+
+# The following lines are the external scripts gif2eps, etc.
+#   The source file is input with cat, and the output is redirected to
+#   the desired file.
+
+$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm}| $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{png2eps}  = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
+
+# Note on these conversions:
+# we used to use `pnmdepth 1' instead of ppmtopgm as it creates a
+# monochrome image (1 bit) rather than a greyscale image (8 bits).
+# However, this was causing improper display of some sort in PDFs.
+
 
 ################################################################################
 # Mail settings
@@ -387,15 +410,6 @@ $courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
 
 # Log logins.
 $courseFiles{logs}{login_log}       = "$courseDirs{logs}/login.log";
-
-################################################################################
-# More paths to external programs 
-################################################################################
-
-# These image conversion utilities are included in the WeBWorK distribution.
-$externalPrograms{gif2eps}  = "$webworkDirs{bin}/gif2eps";
-$externalPrograms{png2eps}  = "$webworkDirs{bin}/png2eps";
-$externalPrograms{gif2png}  = "$webworkDirs{bin}/gif2png";
 
 ################################################################################
 # Site defaults (FIXME: what other things could be "site defaults"?)
