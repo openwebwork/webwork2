@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.12 2005/08/01 19:23:58 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.13 2005/08/04 00:58:39 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,6 +32,8 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 use strict;
 use warnings;
 use CGI;
+
+use constant HOME => 'templates';
 
 #
 #  The list of file extensions and the directories they usually go in.
@@ -74,7 +76,7 @@ sub pre_header_initialize {
 sub downloadFile {
 	my $self = shift;
 	my $file = checkName(shift);
-	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || '.');
+	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || HOME);
 	return unless $pwd;
 	$pwd = $self->{ce}{courseDirs}{root} . '/' . $pwd;
 	unless (-e "$pwd/$file") {
@@ -112,7 +114,7 @@ sub body {
 	return CGI::em("You are not authorized to access the instructor tools")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	$self->{pwd} = $self->checkPWD($r->param('pwd') || '.');
+	$self->{pwd} = $self->checkPWD($r->param('pwd') || HOME);
 	return CGI::em("You have specified an illegal working directory!") unless defined $self->{pwd};
 
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
@@ -144,8 +146,8 @@ sub body {
 		/^Copy/i       and do {$self->Copy; last};
 		/^Rename/i     and do {$self->Rename; last};
 		/^Delete/i     and do {$self->Delete; last};
-		/^GZIP/i       and do {$self->GZIP; last};
-		/^UNGZIP/i     and do {$self->UNGZIP; last};
+		/^Make/i       and do {$self->MakeArchive; last};
+		/^Unpack/i     and do {$self->UnpackArchive; last};
 		/^New Folder/i and do {$self->NewFolder; last};
 		/^New File/i   and do {$self->NewFile; last};
 		/^Upload/i     and do {$self->Upload; last};
@@ -225,8 +227,8 @@ sub Refresh {
 			disableButton('Rename',state);
 			disableButton('Copy',state);
 			disableButton('Delete',state);
-			disableButton('GZIP',state);
-			checkGZIP(files,state);
+			disableButton('MakeArchive',state);
+			checkArchive(files,state);
 		}
 		function checkFile() {
 			var file = window.document.getElementById('file');
@@ -238,14 +240,14 @@ sub Refresh {
 			var state = (file.value == "");
 			disableButton('Upload',state);
 		}
-		function checkGZIP(files,disabled) {
-			var gzip = document.getElementById('GZIP');
-			gzip.value = 'GZIP';
+		function checkArchive(files,disabled) {
+			var button = document.getElementById('MakeArchive');
+			button.value = 'Make Archive';
 			if (disabled) return;
 			if (!files.childNodes[files.selectedIndex].value.match(/\\.tgz\$/)) return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
 			  {if (files.childNodes[i].selected) return}
-			gzip.value = 'UNGZIP';
+			button.value = 'Unpack Archive';
 		}
 EOF
 
@@ -304,7 +306,7 @@ EOF
 				CGI::td(CGI::input({%button,value=>"Rename",id=>"Rename"})),
 				CGI::td(CGI::input({%button,value=>"Copy",id=>"Copy"})),
 				CGI::td(CGI::input({%button,value=>"Delete",id=>"Delete"})),
-				CGI::td(CGI::input({%button,value=>"GZIP",id=>"GZIP"})),
+				CGI::td(CGI::input({%button,value=>"Make Archive",id=>"MakeArchive"})),
 				CGI::td({height=>10}),
 				CGI::td(CGI::input({%button,value=>"New File"})),
 				CGI::td(CGI::input({%button,value=>"New Folder"})),
@@ -645,11 +647,11 @@ sub Delete {
 #
 # Make a gzipped tar archive
 #
-sub GZIP {
+sub MakeArchive {
 	my $self = shift;
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
-		$self->addbadmessage("You must select at least one file to GZIP");
+		$self->addbadmessage("You must select at least one file for the archive");
 		$self->Refresh; return;
 	}
 
@@ -673,18 +675,18 @@ sub GZIP {
 #
 # Unpack a gzipped tar archive
 #
-sub UNGZIP {
+sub UnpackArchive {
 	my $self = shift;
-	my $archive = $self->getFile("UNGZIP"); return unless $archive;
+	my $archive = $self->getFile("unpack"); return unless $archive;
 	if ($archive !~ m/\.tgz$/) {
 		$self->addbadmessage("You can only unpack files ending in '.tgz'");
 	} else {
-		$self->ungzip($archive);
+		$self->unpack($archive);
 	}
 	$self->Refresh;
 }
 
-sub ungzip {
+sub unpack {
 	my $self = shift;
 	my $archive = shift;
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
@@ -748,7 +750,7 @@ sub NewFolder {
 #
 sub Download {
 	my $self = shift;
-	my $pwd = $self->checkPWD($self->r->param('pwd') || '.');
+	my $pwd = $self->checkPWD($self->r->param('pwd') || HOME);
 	return unless $pwd;
 	my $filename = $self->getFile("download"); return unless $filename;
 	my $file = $self->{ce}{courseDirs}{root}.'/'.$pwd.'/'.$filename;
@@ -822,7 +824,7 @@ sub Upload {
 	if (-e $file) {
 	  $self->addgoodmessage("$type file '$name' uploaded successfully");
 	  if ($name =~ m/\.tgz$/ && $self->getFlag('unpack')) {
-	    if ($self->ungzip($name) && $self->getFlag('autodelete')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
 	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
 	    }
@@ -881,7 +883,7 @@ sub getFile {
 		$self->Refresh unless $action eq 'download';
 		return;
 	}
-	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || '.') || '.';
+	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
 	if ($self->isSymLink($pwd.'/'.$files[0])) {
 		$self->addbadmessage("That symbolic link takes you outside your course directory");
 		$self->Refresh unless $action eq 'download';
@@ -974,7 +976,7 @@ sub isSymLink {
 
 	my $courseRoot = $self->{ce}{courseDirs}{root};
 	$courseRoot = readlink($courseRoot) if -l $courseRoot;
-	my $pwd = $self->{pwd} || $self->r->param('pwd') || '.';
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
 	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
 	#
 	# Remove /./ and dir/../ constructs
