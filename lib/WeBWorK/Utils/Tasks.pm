@@ -132,6 +132,12 @@ sub renderProblems {
   my $displayMode = $args{displayMode} ||
     $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
   my $problemNumber= $args{'problem_number'} || 1;
+  $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble} = {
+	TeX=>'',
+	HTML=>''};
+  $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble} = {
+	TeX=>'',
+	HTML=>''};
 
   my @output = (); 
   my $onefile;
