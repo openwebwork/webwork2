@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.179 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.180 2005/08/16 17:58:38 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -173,6 +173,16 @@ sub can_checkAnswers {
 sub before  { return time <= $_[0] }
 sub after   { return time >= $_[0] }
 sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
+
+# Reset the default in some cases
+sub set_showOldAnswers_default {
+	my ($self, $ce, $userName, $authz, $set) = @_;
+	# this person should always default to 0
+	$ce->{pg}->{options}->{showOldAnswers} = 0
+		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
+	# we are after the due date, so default to not showing it
+	$ce->{pg}->{options}->{showOldAnswers} = 0 if after($set->{due_date});
+}
 
 ################################################################################
 # output utilities
@@ -389,6 +399,8 @@ sub pre_header_initialize {
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
 
+	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
+
 # gateway check here: we want to be sure that someone isn't trying to take 
 # a GatewayQuiz through the regular problem/homework mechanism, thereby 
 # circumventing the versioning, time limits, etc.
@@ -543,8 +555,10 @@ sub pre_header_initialize {
 	# there is no way to override this.  Probably this is ok for the last three options, but it was definitely not ok for showing
 	# saved answers which is normally on, but you want to be able to turn it off!  This section should be moved to ContentGenerator
 	# so that you can set these options anywhere.  We also need mechanisms for making them sticky.
+	# Note: ProblemSet and ProblemSets might set showOldAnswers to '', which
+	#       needs to be treated as if it is not set.
 	my %want = (
-		showOldAnswers     => defined($r->param("showOldAnswers")) ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
+		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
