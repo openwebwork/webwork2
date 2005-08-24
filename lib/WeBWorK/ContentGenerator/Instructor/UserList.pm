@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.68 2005/06/23 17:53:32 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.69 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -396,6 +396,7 @@ sub body {
 	########## retrieve possibly changed values for member fields
 	
 	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
+	@allUserIDs = $db->listUsers; # recompute value in case some were added
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
 	my @selectedUserIDs = @{ $self->{selectedUserIDs} };
