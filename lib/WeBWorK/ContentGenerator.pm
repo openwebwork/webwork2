@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.145 2005/08/12 02:47:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.146 2005/08/12 23:33:06 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1334,7 +1334,9 @@ sub optionsMacro {
 	}
 	
 	if (exists $options_to_show{showOldAnswers}) {
-		my $curr_showOldAnswers = $self->r->param("showOldAnswers");
+		# Note, 0 is a legal value, so we can't use || in setting this
+		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
+			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
 		$result .= "Show&nbsp;saved&nbsp;answers?";
 		$result .= CGI::br();
 		$result .= CGI::radio_group(
