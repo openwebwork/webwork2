@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.30 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.31 2005/08/22 19:55:40 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,20 +97,23 @@ sub body {
 	if (defined $r->param("assign") || defined $r->param("unassign")) {
 		if  (@selected_users && @selected_sets) {
 			my @results;  # This is not used?
-			$self->assignSetsToUsers(\@selected_sets, \@selected_users) if defined $r->param("assign");
-			$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if defined $r->param("unassign");
+			if(defined $r->param("assign")) {
+				$self->assignSetsToUsers(\@selected_sets, \@selected_users);
+				print CGI::div({class=>"ResultsWithoutError"},CGI::p('All assignments were made successfully.'));
+			}
+			if (defined $r->param("unassign")) {
+				if(defined $r->param('unassignFromAllSafety') and $r->param('unassignFromAllSafety')==1) {
+					$self->unassignSetsFromUsers(\@selected_sets, \@selected_users) if(defined $r->param("unassign"));
+					print CGI::div({class=>"ResultsWithoutError"},CGI::p('All unassignments were made successfully.'));
+				} else { # asked for unassign, but no safety radio toggle
+					print CGI::div({class=>"ResultsWithError"},CGI::p('Unassignments were not done.  You need to both click to "Allow unassign" and click on the Unassign button.'));
+				}
+			}
 			
 			if (@results) { # Can't get here?
 				print CGI::div({class=>"ResultsWithError"},
 					CGI::p("The following error(s) occured while assigning:"),
 					CGI::ul(CGI::li(\@results)),
-				);
-			} else {
-				my $happymessage= 'All assignments were made successfully.';
-				$happymessage='All unassignments were made successfully.'
-					if defined $r->param("unassign");
-				print CGI::div({class=>"ResultsWithoutError"},
-					CGI::p($happymessage),
 				);
 			}
 		} else {
@@ -174,6 +177,7 @@ sub body {
 						-value => "Unassign selected sets from selected users",
 						-style => "width: 45ex",
 					),
+					CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Assignments only', 1=>'Allow unassign'}),
 				),
 			),
 		),
