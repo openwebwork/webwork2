@@ -28,6 +28,14 @@ if (!jsMath || !jsMath.loaded) {
         src = src.replace(/jsMath-ww.js$/,'jsMath.js');
 	document.write('<SCRIPT SRC="'+src+'"></SCRIPT>');
       }
+    },
+
+    wwProcess: function () {
+      if (jsMath.browser == 'MSIE') {
+        window.onload = function () {jsMath.ProcessBeforeShowing()}
+      } else {
+        jsMath.ProcessBeforeShowing();
+      }
     }
 
   };
