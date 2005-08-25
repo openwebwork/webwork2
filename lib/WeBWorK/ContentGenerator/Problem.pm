@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.180 2005/08/16 17:58:38 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.181 2005/08/24 20:22:32 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -181,7 +181,7 @@ sub set_showOldAnswers_default {
 	$ce->{pg}->{options}->{showOldAnswers} = 0
 		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
 	# we are after the due date, so default to not showing it
-	$ce->{pg}->{options}->{showOldAnswers} = 0 if after($set->{due_date});
+	$ce->{pg}->{options}->{showOldAnswers} = 0 if $set->{due_date} && after($set->{due_date});
 }
 
 ################################################################################
