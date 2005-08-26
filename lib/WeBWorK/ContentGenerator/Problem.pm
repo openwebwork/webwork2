@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.183 2005/08/25 17:02:28 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,6 +177,9 @@ sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
+	# these people always use the system/course default, so don't
+	# override the value of ...->{showOldAnswers}
+	return if $authz->hasPermissions($userName, "can_always_use_show_old_answers_default");
 	# this person should always default to 0
 	$ce->{pg}->{options}->{showOldAnswers} = 0
 		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
