@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.65 2005/07/01 12:14:40 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.66 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -176,7 +176,24 @@ sub listFilesRecursiveHelper($$$$$$) {
 	
 	foreach my $dir_entry (@dir_contents) {
 		my $full_path = "$full_dir/$dir_entry";
-		if (-d $full_path or -l $full_path) {
+		
+		# determine whether the entry is a directory or a file, taking into account the 
+		my $is_dir;
+		my $is_file;
+		if (-l $full_path) {
+			my $link_target = "$full_dir/" . readlink $full_path;
+			if ($link_target) {
+				$is_dir = -d $link_target;
+				$is_file = !$is_dir && -f $link_target || -p $link_target || -S $link_target;
+			} else {
+				warn "Couldn't resolve symlink $full_path: $!";
+			}
+		} else {
+			$is_dir = -d $full_path;
+			$is_file = !$is_dir && -f $full_path || -p $full_path || -S $full_path;
+		}
+		
+		if ($is_dir) {
 			# standard things to skip
 			next if $dir_entry eq ".";
 			next if $dir_entry eq "..";
@@ -196,12 +213,15 @@ sub listFilesRecursiveHelper($$$$$$) {
 			
 			# everything looks good, time to recurse!
 			push @matches, listFilesRecursiveHelper($base_dir, $subdir, $match_qr, $prune_qr, $match_full, $prune_full);
-		} elsif (-f $full_path or -p $full_path or -S $full_path) {
+		} elsif ($is_file) {
 			my $file = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
 			my $match_string = $match_full ? $file : $dir_entry;
 			if (not defined $match_string or $match_string =~ m/$match_qr/) {
 				push @matches, $file;
 			}
+		} else {
+			# otherwise, it's a character device or a block device, and i don't
+			# suppose we want anything to do with those ;-)
 		}
 	}
 	
