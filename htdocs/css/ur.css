@@ -1,5 +1,6 @@
 /* hack to get around MSIE peekaboo bug */
-* {zoom: 1;} 
+/* this hack causes other problems and may no longer be needed for the peekaboo bug so we will comment it out */
+/* * {zoom: 1;} */
 
 /********************/
 /* template classes */
