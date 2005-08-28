@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.52 2005/08/13 21:35:56 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.53 2005/08/22 02:40:26 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,6 +70,13 @@ my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1,
 );
+
+sub prepare_activity_entry {
+	my $self=shift;
+	my $r = $self->r;
+	my $user = $self->r->param('user') || 'NO_USER';
+	return("In SetMaker as user $user");
+}
 
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 

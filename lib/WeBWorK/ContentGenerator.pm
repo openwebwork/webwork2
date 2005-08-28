@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.146 2005/08/12 23:33:06 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.147 2005/08/24 16:58:12 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,6 +144,14 @@ sub go {
 	
 	my $returnValue = OK;
 	
+	# We only write to the activity log if it has been defined and if
+	# we are in a specific course.  The latter check is to prevent attempts
+	# to write to a course log file when viewing the top-level list of
+	# courses page.
+	WeBWorK::Utils::writeCourseLog($ce, 'activity_log',
+		$self->prepare_activity_entry) if ( $r->urlpath->arg("courseID") and
+			$r->ce->{courseFiles}->{logs}->{activity_log});
+
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
 	
 	# send a file instead of a normal reply (reply_with_file() sets this field)
@@ -327,6 +335,23 @@ message() template escape handler.
 sub addbadmessage {
 	my ($self, $message) = @_;
 	$self->addmessage(CGI::div({class=>"ResultsWithError"}, $message));
+}
+
+=item prepare_activity_entry()
+                                                                                
+Prepare a string to be sent to the activity log, if it is turned on.
+This can be overriden by different modules.
+                                                                                
+=cut                                                                            
+
+
+sub prepare_activity_entry {
+    my $self = shift;
+	my $r = $self->r;
+	my $string = $r->urlpath->path . "  --->  ".
+		join("\t", (map { $_ eq 'key' || $_ eq 'passwd' ? '' : $_ ." => " . $r->param($_) } $r->param()));
+	$string =~ s/\t+/\t/g;
+	return($string);
 }
 
 =back
