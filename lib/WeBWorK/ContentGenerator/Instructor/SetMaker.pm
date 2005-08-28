@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.53 2005/08/22 02:40:26 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.54 2005/08/28 20:54:51 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -725,7 +725,8 @@ sub make_top_row {
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
-	} elsif (not $set_selected or $set_selected eq SELECT_SET_STRING) {
+	} elsif (not defined($set_selected) or $set_selected eq ""
+	  or $set_selected eq SELECT_SET_STRING) {
 		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
 		$set_selected = SELECT_SET_STRING;
 	}
