@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.57 2005/07/30 01:49:44 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.58 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -517,7 +517,7 @@ sub latex2pdf {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $finalFile = "$tempDir/$fileName";
+	#my $finalFile = "$tempDir/$fileName";
 	
 	# Location for hardcopy file to be downloaded
 	# FIXME  this should use surePathToTmpFile
@@ -607,7 +607,7 @@ sub latex2pdf {
 	}
 
 	
-	-e $hardcopyFilePath or die "Failed to create $finalFile for no apparent reason.\n";
+	-e $hardcopyFilePath or die "Failed to create $hardcopyFilePath for no apparent reason.\n";
 	# return hardcopyFilePath;
 	return $hardcopyFileURL;
 }
