@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.28 2005/08/12 02:47:28 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.29 2005/08/12 15:53:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,12 +75,19 @@ $WeBWorK::PG::Local::TIMEOUT = 60;
 
 # Arguments to pass to dvipng. This is dependant on the version of dvipng.
 # 
-# For dvipng < 1.0
+# For dvipng versions 0.x
 #     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-x4000.5 -bgTransparent -Q6 -mode toshiba -D180";
-# For dvipng >= 1.0
+# For dvipng versions 1.0 to 1.5
 #     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
 # 
-$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
+# For dvipng versions 1.6 (and probably above)
+#     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
+# Note: In 1.6 and later, bgTransparent gives alpha-channel transparency while 
+# bgtransparent gives single-bit transparency. If you use alpha-channel transparency,
+# the images will not be viewable with MSIE.  bgtransparent works for versions lower
+# than 1.6, but does not give transparent backgrounds.
+#
+$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
 # 
