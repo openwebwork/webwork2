@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.27 2005/07/22 21:20:07 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Schema/SQL.pm,v 1.28 2005/08/12 02:47:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,6 +177,7 @@ sub add($$) {
 	
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
+	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues;
 	
 	my $stmt = "INSERT INTO `$sqlTable` ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
