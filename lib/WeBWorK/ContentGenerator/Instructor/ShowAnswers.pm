@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.13 2004/10/20 21:52:06 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.14 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,24 +98,29 @@ sub body {
 		
 		my $pattern = "^[[^]]*]|$studentUser\\|$setName\\|$problemNumber\\|";
 		
-		if (open(LOG,"$answer_log")) {
-		  my $line;
-		  $self->{lastdate} = '';
-		  $self->{lasttime} = 0;
-		  $self->{lastID}   = '';
-		  $self->{lastn}    = 0;
-		  
-		  my @lines = grep(/$pattern/,<LOG>); close(LOG);
-		  chomp(@lines);
-		  foreach $line (@lines) {$line = substr($line,27)}; # remove datestamp
-		
-		  print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-		  print "No entries for $studentUser set $setName, problem $problemNumber" unless @lines;
-		  foreach $line (sort byData @lines) {$self->tableRow(split("\t",$line,-1))}
-		  print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))) if ($self->{lastn});
-		  print CGI::end_table();
+		if (-e $answer_log) {
+			if (open my $log, $answer_log) {
+				my $line;
+				$self->{lastdate} = '';
+				$self->{lasttime} = 0;
+				$self->{lastID}   = '';
+				$self->{lastn}    = 0;
+				
+				my @lines = grep(/$pattern/,<LOG>); close(LOG);
+				chomp(@lines);
+				foreach $line (@lines) {$line = substr($line,27)}; # remove datestamp
+				
+				print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+				print "No entries for $studentUser set $setName, problem $problemNumber" unless @lines;
+				foreach $line (sort byData @lines) {$self->tableRow(split("\t",$line,-1))}
+				print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))) if ($self->{lastn});
+				print CGI::end_table();
+			} else {
+				$self->addbadmessage("Failed to open the answer log '$answer_log': $!");
+			}
 		} else {
-		  print "<B>Can't open the access log $answer_log</B>";
+			# no answer log exists yet -- this is probably not an error
+			print "No answers have been logged. (Answer log '$answer_log' does not exist.)";
 		}
 	}
 		
