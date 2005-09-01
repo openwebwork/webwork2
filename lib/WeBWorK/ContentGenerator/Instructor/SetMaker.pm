@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.54 2005/08/28 20:54:51 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.55 2005/08/28 23:09:27 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,7 +41,7 @@ use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
 use constant SELECT_SET_STRING => 'Select a Set from this Course';
 use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
 use constant MY_PROBLEMS => '  My Problems  ';
-use constant MAIN_PROBLEMS => '  Main Problems  ';
+use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
 use constant CREATE_SET_BUTTON => 'Create New Set';
 use constant ALL_CHAPTERS => 'All Chapters';
 use constant ALL_SUBJECTS => 'All Subjects';
@@ -67,7 +67,7 @@ use constant SUCCESS => (1 << 2);
 ##	for additional problib buttons
 my %problib;	## filled in in global.conf
 my %ignoredir = (
-	'.' => 1, '..' => 1, 'Library' => 1,
+	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1,
 );
 
@@ -80,25 +80,25 @@ sub prepare_activity_entry {
 
 ## This is for searching the disk for directories containing pg files.
 ## to make the recursion work, this returns an array where the first 
-## item is the number of pg files in the directory.	 The second is a
+## item is the number of pg files in the directory.  The second is a
 ## list of directories which contain pg files.
 ##
-## If a directory contains only one pg file and at least one other
-## file, the directory is considered to be part of the parent
-## directory (it is probably in a separate directory only because
-## it has auxiliarly files that want to be kept together with the
-## pg file).
+## If a directory contains only one pg file and the directory name
+## is the same as the file name, then the directory is considered
+## to be part of the parent directory (it is probably in a separate
+## directory only because it has auxiliary files that want to be
+## kept together with the pg file).
 ##
 ## If a directory has a file named "=library-ignore", it is never
-## included in the directory menu.	If a directory contains a file
+## included in the directory menu.  If a directory contains a file
 ## called "=library-combine-up", then its pg are included with those
 ## in the parent directory (and the directory does not appear in the
-## menu).	 If it has a file called "=library-no-combine" then it is
+## menu).  If it has a file called "=library-no-combine" then it is
 ## always listed as a separate directory even if it contains only one
 ## pg file.
 
 sub get_library_sets {
-	my $top = shift; my $dir =	shift;
+	my $top = shift; my $dir = shift;
 	# ignore directories that give us an error
 	my @lis = eval { readDirectory($dir) };
 	if ($@) {
@@ -107,12 +107,12 @@ sub get_library_sets {
 	}
 	return (0) if grep /^=library-ignore$/, @lis;
 
-	my @pgdirs;
-	
-	my $pgcount = scalar(grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis);
-	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
-	                            !m/(\.(tmp|bak)|~)$/ && -f "$dir/$_" } @lis);
+	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis;
+	my $pgcount = scalar(@pgfiles);
+	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
+	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
 
+	my @pgdirs;
 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
 	foreach my $subdir (@dirs) {
@@ -120,13 +120,12 @@ sub get_library_sets {
 		$pgcount += shift @results; push(@pgdirs,@results);
 	}
 
-	return ($pgcount, @pgdirs) if $top || $pgcount == 0 || grep /^=library-combine-up$/, @lis;
-	return (0,@pgdirs,$dir) if $pgcount > 1 || $others == 0 || grep /^=library-no-combine$/, @lis;
-	return ($pgcount, @pgdirs);
+	return ($pgcount, @pgdirs) if $top || $combineUp || grep /^=library-combine-up$/, @lis;
+	return (0,@pgdirs,$dir);
 }
 
 sub get_library_pgs {
-	my $top = shift; my $base = shift; my $dir =	shift;
+	my $top = shift; my $base = shift; my $dir = shift;
 	my @lis = readDirectory("$base/$dir");
 	return () if grep /^=library-ignore$/, @lis;
 	return () if !$top && grep /^=library-no-combine$/, @lis;
