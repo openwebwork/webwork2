@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.55 2005/08/28 23:09:27 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.56 2005/09/01 01:10:35 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -887,10 +887,9 @@ sub pre_header_initialize {
 	my $library_basic = $r->param('library_is_basic') || 1;
 
 	## Fix some parameters
-	clear_default($r,'library_subjects', ALL_SUBJECTS);
-	clear_default($r,'library_chapters', ALL_CHAPTERS);
-	clear_default($r,'library_sections', ALL_SECTIONS);
-	clear_default($r,'library_textbook', ALL_TEXTBOOKS);
+	for my $key (keys(%{ LIB2_DATA() })) {
+		clear_default($r, LIB2_DATA->{$key}->{name}, LIB2_DATA->{$key}->{all} );
+	}
 
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
