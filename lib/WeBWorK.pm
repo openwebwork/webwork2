@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.73 2005/08/12 02:47:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.74 2005/08/17 16:05:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -234,7 +234,10 @@ sub dispatch($) {
 			debug("Now we deal with the effective user:\n");
 			my $eUserID = $r->param("effectiveUser") || $userID;
 			debug("userID=$userID eUserID=$eUserID\n");
-			my $su_authorized = $authz->hasPermissions($userID, "become_student", $eUserID);
+			# FIXME: hasPermissions does nothing with $eUserID, and lately we want it to
+			# only accept two arguments, so we're removing $eUserID from this call.
+			#my $su_authorized = $authz->hasPermissions($userID, "become_student", $eUserID);
+			my $su_authorized = $authz->hasPermissions($userID, "become_student");
 			if ($su_authorized) {
 				debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 			} else {
