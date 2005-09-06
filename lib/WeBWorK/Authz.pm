@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.20 2005/07/13 18:03:18 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.21 2005/09/05 23:43:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -143,7 +143,11 @@ assumes that the user does not have permission.
 # This currently only uses two of it's arguments, but it accepts any number, in
 # case in the future calculating certain permissions requires more information.
 sub hasPermissions {
-	die "hasPermissions called with != 2 arguments" unless @_ == 2;
+	if (@_ != 3) {
+		shift @_; # get rid of self
+		my $nargs = @_;
+		die "hasPermissions called with $nargs arguments instead of the expected 2: '@_'"
+	}
 	
 	my ($self, $userID, $activity) = @_;
 	my $r = $self->{r};
