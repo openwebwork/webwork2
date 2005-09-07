@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.66 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.67 2005/08/26 16:52:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -747,7 +747,10 @@ sub encodeAnswers(\%\@) {
 	}
 	$string =~ s/##$//; # remove last pair of hashs
 
-	$string = $BASE64_ENCODED.encode_base64($string);
+	$string = $BASE64_ENCODED.encode_base64($string, "");
+	# Empty string in second argument prevents end-of-line characters from being used.
+	# This is nice for examining database contents manually since it prevents newlines
+	# from being introduced into database records.
 
 	return $string;
 }
