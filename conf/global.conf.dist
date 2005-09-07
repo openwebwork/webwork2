@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.133 2005/08/26 18:03:39 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.134 2005/08/28 20:54:50 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,7 +60,10 @@ $externalPrograms{tth}      = "/usr/bin/tth";
 $externalPrograms{tar}      = "/usr/bin/tar";
 
 # Basic image manipulation utilities
+
+####################################################
 #  Most sites only need to configure the first line
+####################################################
 my $netpbm_prefix = "/usr/bin";
 $externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
 $externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
@@ -72,7 +75,7 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 #   The source file is input with cat, and the output is redirected to
 #   the desired file.
 
-$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm}| $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{gif2eps}  = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm}| $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{png2eps}  = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
 
@@ -82,13 +85,15 @@ $externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{p
 # However, this was causing improper display of some sort in PDFs.
 
 
+
+
 ################################################################################
 # Mail settings
 ################################################################################
 
 # Mail sent by the PG system and the mail merge and feedback modules will be
 # sent via this SMTP server.
-$mail{smtpServer}            = 'mail.yourschool.edu';
+$mail{smtpServer}            = 'mail.rochester.edu';
 
 # When connecting to the above server, WeBWorK will send this address in the
 # MAIL FROM command. This has nothing to do with the "From" address on the mail
