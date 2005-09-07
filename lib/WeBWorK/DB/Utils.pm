@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Utils.pm,v 1.13 2004/06/15 18:47:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.14 2004/07/07 14:37:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -134,7 +134,7 @@ sub hash2string(@) {
 sub string2hash($) {
 	my $string = shift;
 	return unless defined $string and $string;
-	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/g;
+	my %hash = $string =~ /(.*?)(?<!\\)=(.*?)(?:(?<!\\)&|$)/gs; # /s allows . to match \n
 	$hash{$_} =~ s/\\(&|=)/$1/g foreach keys %hash; # unescape & and =
 	return %hash;
 }
