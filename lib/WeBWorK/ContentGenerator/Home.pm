@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.7 2004/12/17 16:55:04 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.8 2005/07/31 18:13:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,13 +26,44 @@ WeBWorK::ContentGenerator::Home - display a list of courses.
 use strict;
 use warnings;
 use CGI::Pretty qw();
-use WeBWorK::Utils qw/readDirectory/;
+use WeBWorK::Utils qw(readFile readDirectory);
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 sub loginstatus { "" }
 sub links { "" }
 sub options { "" };
+sub info {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
 
+	my $site_info = $ce->{webworkFiles}->{site_info};
+	
+	if (defined $site_info and $site_info) {
+		my $site_info_path = $site_info;
+		
+		# deal with previewing a temporary file
+		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
+				and defined $r->param("editFileSuffix")) {
+			$site_info_path .= $r->param("editFileSuffix");
+		}
+		
+		if (-f $site_info_path) {
+			my $text = eval { readFile($site_info_path) };
+			if ($@) {
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("$@"),
+				);
+			} elsif ($text) {
+				print CGI::p(CGI::b("Important Message")), $text,CGI::hr();
+			}
+		}
+		
+		
+	}
+	return "";
+
+}
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
