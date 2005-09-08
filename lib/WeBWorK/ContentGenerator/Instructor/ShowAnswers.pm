@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.14 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.15 2005/08/30 13:11:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,7 +106,7 @@ sub body {
 				$self->{lastID}   = '';
 				$self->{lastn}    = 0;
 				
-				my @lines = grep(/$pattern/,<LOG>); close(LOG);
+				my @lines = grep(/$pattern/,<$log>); close($log);
 				chomp(@lines);
 				foreach $line (@lines) {$line = substr($line,27)}; # remove datestamp
 				
