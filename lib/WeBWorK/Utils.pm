@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.67 2005/08/26 16:52:57 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.68 2005/09/07 18:02:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -231,11 +231,11 @@ sub listFilesRecursiveHelper($$$$$$) {
 # A very useful macro for making sure that all of the directories to a file have
 # been constructed.
 sub surePathToFile($$) {
-	# constructs intermediate 
+	# constructs intermediate directories enroute to the file 
 	# the input path must be the path relative to this starting directory
 	my $start_directory = shift;
 	my $path = shift;
-	my $delim = "/"; #&getDirDelim();
+	my $delim = "/"; 
 	unless ($start_directory and $path ) {
 		warn "missing directory<br> surePathToFile  start_directory   path ";
 		return '';
@@ -246,7 +246,6 @@ sub surePathToFile($$) {
 	
 	# if the path starts with $start_directory (which is permitted but optional) remove this initial segment
 	$path =~ s|^$start_directory|| if $path =~ m|^$start_directory|;
-	#$path = convertPath($path);
 
 	
 	# find the nodes on the given path
@@ -255,7 +254,7 @@ sub surePathToFile($$) {
 	# create new path
 	$path = $start_directory; #convertPath("$tmpDirectory");
 	
-	while (@nodes>1) {
+	while (@nodes>1) {  # the last node is the file name
 		$path = $path . shift (@nodes) . "/"; #convertPath($path . shift (@nodes) . "/");
 		#FIXME  this make directory command may not be fool proof.
 		unless (-e $path) {
