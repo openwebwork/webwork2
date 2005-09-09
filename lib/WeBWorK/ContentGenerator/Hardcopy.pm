@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.58 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.59 2005/08/29 22:58:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,7 @@ use File::Path qw(rmtree);
 use WeBWorK::Form;
 use WeBWorK::Debug;
 use WeBWorK::PG;
-use WeBWorK::Utils qw(readFile makeTempDirectory);
+use WeBWorK::Utils qw(readFile makeTempDirectory surePathToFile);
 use Apache::Constants qw(:common REDIRECT);
 
 =head1 CONFIGURATION VARIABLES
@@ -472,9 +472,14 @@ sub generateHardcopy($) {
 	
 		# Location for hardcopy file to be downloaded
 		# FIXME  this should use surePathToTmpFile
-		my $hardcopyTempDirectory = $ce->{courseDirs}->{html_temp}."/hardcopy";
-		mkdir ($hardcopyTempDirectory)  or die "Unable to make $hardcopyTempDirectory" unless -e $hardcopyTempDirectory;
-		my $hardcopyFilePath        =  "$hardcopyTempDirectory/$TeXdownloadFileName";
+		# The html_temp directory might not have been created.
+		# But since the temp directory might be located anywhere we don't know what to use 
+		# for the start file. 
+		mkdir ($ce->{courseDirs}->{html_temp})  or die "Unable to make directory: ".$ce->{courseDirs}->{html_temp}
+					 unless -e $ce->{courseDirs}->{html_temp};
+		my $hardcopyTempDirectory   = $ce->{courseDirs}->{html_temp}."/hardcopy";
+		my $hardcopyFilePath        =  surePathToFile($ce->{courseDirs}->{html_temp}, "$hardcopyTempDirectory/$fileName");
+		
 		my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$TeXdownloadFileName";
 		$self->{hardcopyFilePath}   =  $hardcopyFilePath;
 		$self->{hardcopyFileURL}    =  $hardcopyFileURL;
@@ -517,13 +522,20 @@ sub latex2pdf {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
+	#FIXME is $tempDir used?
 	#my $finalFile = "$tempDir/$fileName";
 	
 	# Location for hardcopy file to be downloaded
 	# FIXME  this should use surePathToTmpFile
-	my $hardcopyTempDirectory = $ce->{courseDirs}->{html_temp}."/hardcopy";
-	mkdir ($hardcopyTempDirectory)  or die "Unable to make $hardcopyTempDirectory" unless -e $hardcopyTempDirectory;
-	my $hardcopyFilePath        =  "$hardcopyTempDirectory/$fileName";
+	# The html_temp directory might not have been created.
+	# But since the temp directory might be located anywhere we don't know what to use 
+	# for the start file. 
+	mkdir ($ce->{courseDirs}->{html_temp})  or die "Unable to make directory: ".$ce->{courseDirs}->{html_temp}
+	             unless -e $ce->{courseDirs}->{html_temp};
+	my $hardcopyTempDirectory   = $ce->{courseDirs}->{html_temp}."/hardcopy";
+	my $hardcopyFilePath        =  surePathToFile($ce->{courseDirs}->{html_temp}, "$hardcopyTempDirectory/$fileName");
+	
+	
 	my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$fileName";
 	$self->{hardcopyFilePath}   =  $hardcopyFilePath;
 	$self->{hardcopyFileURL}    =  $hardcopyFileURL;
