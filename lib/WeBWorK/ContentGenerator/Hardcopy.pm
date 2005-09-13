@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.59 2005/08/29 22:58:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.60 2005/09/09 20:51:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -478,7 +478,7 @@ sub generateHardcopy($) {
 		mkdir ($ce->{courseDirs}->{html_temp})  or die "Unable to make directory: ".$ce->{courseDirs}->{html_temp}
 					 unless -e $ce->{courseDirs}->{html_temp};
 		my $hardcopyTempDirectory   = $ce->{courseDirs}->{html_temp}."/hardcopy";
-		my $hardcopyFilePath        =  surePathToFile($ce->{courseDirs}->{html_temp}, "$hardcopyTempDirectory/$fileName");
+		my $hardcopyFilePath        =  surePathToFile($ce->{courseDirs}->{html_temp}, "$hardcopyTempDirectory/$TeXdownloadFileName");
 		
 		my $hardcopyFileURL         =  $ce->{courseURLs}->{html_temp}."/hardcopy/$TeXdownloadFileName";
 		$self->{hardcopyFilePath}   =  $hardcopyFilePath;
