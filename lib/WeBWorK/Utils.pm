@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.68 2005/09/07 18:02:06 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.69 2005/09/09 20:52:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -259,7 +259,7 @@ sub surePathToFile($$) {
 		#FIXME  this make directory command may not be fool proof.
 		unless (-e $path) {
 			mkdir($path, $perms)
-				or warn "Failed to create directory $path";
+				or warn "Failed to create directory $path with start directory $start_directory ";
 		}
 
 	}
