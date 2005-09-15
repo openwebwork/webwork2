@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.39 2005/07/31 17:27:21 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.40 2005/08/14 16:51:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1948,8 +1948,7 @@ sub archive_course_confirm {
 	
 	if ($ce2->{dbLayoutName} eq "sql") {
 		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
-		. "? All course files and data and the following database will be destroyed."
-		. " There is no undo available.");
+		. "? ");
 		
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr(
