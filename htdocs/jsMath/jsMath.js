@@ -66,13 +66,12 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 var jsMath = {
   
-  version: "2.1a",  // change this if you edit the file
+  version: "2.1d",  // change this if you edit the file
   
   //
   //  Name of image files
   //
   blank: "blank.gif",
-  black: "black.gif",
   
   defaultH: 0, // default height for characters with none specified
 
@@ -185,7 +184,7 @@ var jsMath = {
                       jsMath.Browser.hiddenSpace).w/5;
     }
     var h = this.BBoxFor('x').h;    // Line height and depth to baseline
-    var d = this.BBoxFor('x<IMG SRC="'+jsMath.black+'" HEIGHT="'+(h*jsMath.Browser.imgScale)+'" WIDTH="1">').h - h;
+    var d = this.BBoxFor('x<IMG SRC="'+jsMath.blank+'" HEIGHT="'+(h*jsMath.Browser.imgScale)+'" WIDTH="1">').h - h;
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
     this.ph = h-d; this.pd = d;
@@ -316,7 +315,6 @@ jsMath.Setup = {
           jsMath.root = src.replace(/jsMath.js$/,'');
           jsMath.Img.root = jsMath.root + "fonts/";
           jsMath.blank = jsMath.root + jsMath.blank;
-          jsMath.black = jsMath.root + jsMath.black;
           this.Domain();
           return;
         }
@@ -374,7 +372,7 @@ jsMath.Setup = {
     var WH = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+font[65].c+'</SPAN>');
     font.hd = WH.h;
     font.d = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+ font[65].c +
-      '<IMG SRC="'+jsMath.black+'" STYLE="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1"></SPAN>').h 
+      '<IMG SRC="'+jsMath.blank+'" STYLE="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1"></SPAN>').h 
       - font.hd;
     font.h = font.hd - font.d;
     font.dh = .05;
@@ -1942,6 +1940,15 @@ jsMath.Img = {
       this.update[font] = this.update[font].concat(change[font]);
     }
   },
+
+  /*
+   *  Called by the exta-font definition files to add an image font
+   *  into the mix
+   */
+  AddFont: function (size,def) {
+    if (!jsMath.Img[size]) {jsMath.Img[size] = {}};
+    jsMath.Add(jsMath.Img[size],def);
+  },
     
   /*
    *  Update font(s) to use image data rather than native fonts
@@ -1983,7 +1990,7 @@ jsMath.Img = {
   Scale: function () {
     if (!this.loaded) return;
     this.best = this.BestSize();
-    this.em = jsMath.Img.w[this.fonts[this.best]]    
+    this.em = jsMath.Img.w[this.fonts[this.best]];
     this.scale = (jsMath.em/this.em);
     if (Math.abs(this.scale - 1) < .12) {this.scale = 1}
   },
@@ -2064,11 +2071,11 @@ jsMath.HTML = {
              + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
              + 'width:' +this.Em(w*jsMath.Browser.imgScale)+'; '
              + 'height:'+this.Em(h*jsMath.Browser.imgScale)+'; '
-             + 'border-color: '+c+'; border-style: solid; border-width: 1px;">';
+             + 'border: 1px solid '+c+';">';
   },
 
   /*
-   *  Create a black rule line for fractions, etc.
+   *  Create a rule line for fractions, etc.
    *  Height is converted to pixels (with a minimum of 1), so that
    *    the line will not disappear at small font sizes.  This means that
    *    the thickness will not change if you change the font size, or
@@ -2078,13 +2085,14 @@ jsMath.HTML = {
     if (h == null) {h = jsMath.TeX.default_rule_thickness}
     if (w == 0 || h == 0) return;  // should make an invisible box?
     w *= jsMath.Browser.imgScale;
-    h = Math.round(h*jsMath.em)*jsMath.Browser.imgScale;
+    h = Math.round(h*jsMath.em*jsMath.Browser.imgScale+.25);
     if (h < 1) {h = 1};
-    return '<IMG SRC="'+jsMath.black+'" HSPACE="0" VSPACE="0" '
-              + 'STYLE="width:'+this.Em(w)+'; height:'+h+'px; '
-              + 'background-color: black">';
+    return '<IMG SRC="'+jsMath.blank+'" HSPACE="0" VSPACE="0" '
+              + 'STYLE="width:'+this.Em(w)+'; height:1px; '
+              + 'vertical-align:-1px; '
+              + 'border:0px none; border-top:'+h+'px solid">';
   },
-
+  
   /*
    *  Add a <SPAN> tag to activate a specific CSS class
    */
@@ -2250,13 +2258,14 @@ jsMath.Add(jsMath.Box,{
   TeXIMG: function (font,C,size) {
     var c = jsMath.TeX[font][C];
     if (c.img.size != null && c.img.size == size &&
-        c.img.scale != null && c.img.best == jsMath.Img.best) return;
-     var mustScale = (jsMath.Img.scale != 1 || jsMath.Img.forceScale);
+        c.img.best != null && c.img.best == jsMath.Img.best) return;
+    var mustScale = (jsMath.Img.scale != 1 || jsMath.Img.forceScale);
     var id = jsMath.Img.best + size - 4;
     if (id < 0) {id = 0; mustScale = 1} else
     if (id >= jsMath.Img.fonts.length) {id = jsMath.Img.fonts.length-1; mustScale = 1}
-    var imgFont = jsMath.Img[jsMath.Img.fonts[id]]; var img = imgFont[font][C];
-    var scale = jsMath.Img.scale/jsMath.Img.w[jsMath.Img.fonts[id]];
+    var imgFont = jsMath.Img[jsMath.Img.fonts[id]];
+    var img = imgFont[font][C];
+    var scale = 1/jsMath.Img.w[jsMath.Img.fonts[id]];
     if (id != jsMath.Img.best + size - 4) {
       if (c.w != null) {scale = c.w/img[0]} else {
         scale *= jsMath.Img.fonts[size]/jsMath.Img.fonts[4]
@@ -4228,7 +4237,7 @@ jsMath.Package(jsMath.Parser,{
     doteq:              ['Macro','\\buildrel\\textstyle.\\over='],
     ldots:              ['Macro','\\mathinner{\\ldotp\\ldotp\\ldotp}'],
     cdots:              ['Macro','\\mathinner{\\cdotp\\cdotp\\cdotp}'],
-    vdots:              ['Macro','\\mathinner{\\rlap{\\raise8pt{\\rule 0pt 6pt 0pt .}}\\rlap{\\raise4pt{.}}.}'],
+    vdots:              ['Macro','\\mathinner{\\rlap{\\raise8pt{.\\rule 0pt 6pt 0pt}}\\rlap{\\raise4pt{.}}.}'],
     ddots:              ['Macro','\\mathinner{\\kern1mu\\raise7pt{\\rule 0pt 7pt 0pt .}\\kern2mu\\raise4pt{.}\\kern2mu\\raise1pt{.}\\kern1mu}'],
     joinrel:            ['Macro','\\mathrel{\\kern-4mu}'],
     relbar:             ['Macro','\\mathrel{\\smash-}'], // \smash, because - has the same height as +
@@ -4270,7 +4279,7 @@ jsMath.Package(jsMath.Parser,{
     
     hskip:         'Hskip',
     kern:          'Hskip',
-    rule:          ['Rule','black'],
+    rule:          ['Rule','colored'],
     space:         ['Rule','blank'],
     
     big:        ['MakeBig','ord',0.85],
@@ -4500,11 +4509,20 @@ jsMath.Package(jsMath.Parser,{
    *  converted when typeset.
    */
   GetDimen: function (name,nomu) {
-    var rest = this.string.slice(this.i);
+    var rest; var advance = 0;
+    if (this.nextIsSpace()) {this.i++}
+    if (this.string.charAt(this.i) == '{') {
+      rest = this.GetArgument(name);
+    } else {
+      rest = this.string.slice(this.i);
+      advance = 1;
+    }
     var match = rest.match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)/);
     if (!match) {this.Error("Missing dimension or its units for "+name); return}
-    this.i += match[0].length;
-    if (this.nextIsSpace()) {this.i++}
+    if (advance) {
+      this.i += match[0].length;
+      if (this.nextIsSpace()) {this.i++}
+    }
     var d = match[1]-0;
     if (match[4] == 'px') {d /= jsMath.em}
     else if (match[4] == 'pt') {d /= 10}
@@ -4924,16 +4942,27 @@ jsMath.Package(jsMath.Parser,{
    *  This replaces \hrule and \vrule
    *  @@@ not a standard TeX command, and all three parameters must be given @@@
    */
-  Rule: function (name,gif) {
+  Rule: function (name,style) {
     var w = this.GetDimen(this.cmd+name,1); if (this.error) return;
     var h = this.GetDimen(this.cmd+name,1); if (this.error) return;
     var d = this.GetDimen(this.cmd+name,1); if (this.error) return;
-    h += d; 
+    h += d; var html;
     if (h != 0) {h = Math.max(1.05/jsMath.em,h)}
-    if (h == 0 || w == 0) {gif = "blank"}
-    var html = '<IMG SRC="'+jsMath[gif]+'" STYLE="'
+    if (h == 0 || w == 0) {style = "blank"}
+    if (w == 0) {
+      html = '<IMG SRC="'+jsMath.blank+'" STYLE="'
+                + 'border:0px none; width:1px; margin-right:-1px; '
+                + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+'">';
+    } else if (style == "blank") {
+      html = '<IMG SRC="'+jsMath.blank+'" STYLE="border:0px none; '
                 + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+'; '
                 + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'">';
+    } else {
+      html = '<IMG SRC="'+jsMath.blank+'" STYLE="'
+                + 'position: relative; top:1px; height:1px; border:0px none; '
+                + 'border-top:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+' solid; '
+                + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'">';
+    }
     if (d) {
       html = '<SPAN STYLE="vertical-align:'+jsMath.HTML.Em(-d)+'">'
            +  html + '</SPAN>';
@@ -5277,11 +5306,9 @@ jsMath.Package(jsMath.Parser,{
     if (box.format == 'null') {return ''};
 
     box.Styled().Remeasured(); var isSmall = 0; var isBig = 0;
-    var h = box.bh; var d = box.bd;
     if (box.bh > box.h && box.bh > jsMath.h+.001) {isSmall = 1}
     if (box.bd > box.d && box.bd > jsMath.d+.001) {isSmall = 1}
-    if (box.h > jsMath.h) {isBig = 1; h = box.h}
-    if (box.d > jsMath.d) {isBig = 1; d = box.d}
+    if (box.h > jsMath.h || box.d > jsMath.d) {isBig = 1}
 
     var html = box.html;
     if (isSmall) {// hide the extra size
@@ -5289,7 +5316,7 @@ jsMath.Package(jsMath.Parser,{
         var y = 0;
         if (jsMath.Browser.spanHeightVaries || box.bh > jsMath.h+.001) {y = (jsMath.h - box.bh)}
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y,jsMath.h);
-	isBig = 1; h = box.h; d = box.d; 
+	isBig = 1;
       } else if (!jsMath.Browser.valignBug) {
         // remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
@@ -5301,8 +5328,8 @@ jsMath.Package(jsMath.Parser,{
     if (isBig) {// add height and depth to the line (force a little
                 //    extra to separate lines if needed)
       html += '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD" STYLE="'
-               + 'height:'+jsMath.HTML.Em((h+d+.2)*jsMath.Browser.imgScale)+'; '
-               + 'vertical-align:'+jsMath.HTML.Em(-d-.1)+';">'
+               + 'height:'+jsMath.HTML.Em((box.h+box.d+.2)*jsMath.Browser.imgScale)+'; '
+               + 'vertical-align:'+jsMath.HTML.Em(-box.d-.1)+';">'
     }
     return '<NOBR><SPAN CLASS="jsM_scale">'+html+'</SPAN><NOBR>';
   }
