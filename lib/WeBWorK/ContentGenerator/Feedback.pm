@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.25 2005/01/29 01:21:19 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.26 2005/07/05 18:56:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,7 +78,6 @@ sub body {
 	my $feedback           = $r->param("feedback");
 	my $courseID           = $r->urlpath->arg("courseID");
 	
-	
 	my ($user, $set, $problem);
 	$user = $db->getUser($userName) # checked
 		if defined $userName and $userName ne "";
@@ -151,6 +150,14 @@ sub body {
 		return "";
 	}
 	
+	# determine the recipients of the email
+	my @recipients = $self->getFeedbackRecipients();
+	
+	unless (@recipients) {
+		$self->noRecipientsAvailable($returnURL);
+		return "";
+	}
+	
 	if (defined $r->param("sendFeedback")) {
 		# get verbosity level
 		my $verbosity = $ce->{mail}->{feedbackVerbosity};
@@ -160,31 +167,10 @@ sub body {
 			? $user->email_address
 			: $from);
 		
-		# determine the recipients of the email
-		my @recipients;
-		if (defined $ce->{mail}->{feedbackRecipients}) {
-			@recipients = @{$ce->{mail}->{feedbackRecipients}};
-		} else {
-			# send to all professors and TAs
-			foreach my $rcptName ($db->listUsers()) {
-				if ($authz->hasPermissions($rcptName, "receive_feedback")) {
-					my $rcpt = $db->getUser($rcptName); # checked
-					if ($rcpt and $rcpt->email_address) {
-						push @recipients, $rcpt->email_address;
-					}
-				}
-			}
-		}
-		
 		# sanity checks
 		unless ($sender) {
 			$self->feedbackForm($user, $returnURL,
 				"No Sender specified.");
-			return "";
-		}
-		unless (@recipients) {
-			$self->feedbackForm($user, $returnURL,
-				"No recipients specified.");
 			return "";
 		}
 		unless ($feedback) {
@@ -288,6 +274,13 @@ sub feedbackNotAllowed {
 	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback")) if $returnURL;
 }
 
+sub noRecipientsAvailable {
+	my ($self, $returnURL) = @_;
+	
+	print CGI::p("No feedback recipients are listed for this course.");
+	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback")) if $returnURL;
+}
+
 sub feedbackForm {
 	my ($self, $user, $returnURL, $message) = @_;
 	my $r = $self->r;
@@ -316,6 +309,30 @@ sub feedbackForm {
 	print CGI::submit("sendFeedback", "Send Feedback");
 	print CGI::end_form();
 	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel Feedback")) if $returnURL;
+}
+
+sub getFeedbackRecipients {
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+	my $db = $self->r->db;
+	my $authz = $self->r->authz;
+	
+	my @recipients;
+	if (defined $ce->{mail}->{feedbackRecipients}) {
+		@recipients = @{$ce->{mail}->{feedbackRecipients}};
+	} else {
+		# send to all users with permission to receive_feedback and an email address
+		foreach my $rcptName ($db->listUsers()) {
+			if ($authz->hasPermissions($rcptName, "receive_feedback")) {
+				my $rcpt = $db->getUser($rcptName); # checked
+				if ($rcpt and $rcpt->email_address) {
+					push @recipients, $rcpt->email_address;
+				}
+			}
+		}
+	}
+	
+	return @recipients;
 }
 
 1;
