@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.61 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.62 2005/08/21 16:02:42 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -221,26 +221,37 @@ sub body {
 	print CGI::p(CGI::submit("hardcopy", "Download Hardcopy for Selected Set$pl"));
 	print CGI::endform();
 	
-	# feedback form url
-	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseName);
-	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	## feedback form url
+	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseName);
+	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	#
+	##print feedback form
+	#print
+	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+	#	$self->hidden_authen_fields,"\n",
+	#	CGI::hidden("module",             __PACKAGE__),"\n",
+	#	CGI::hidden("set",                ''),"\n",
+	#	CGI::hidden("problem",            ''),"\n",
+	#	CGI::hidden("displayMode",        ''),"\n",
+	#	CGI::hidden("showOldAnswers",     ''),"\n",
+	#	CGI::hidden("showCorrectAnswers", ''),"\n",
+	#	CGI::hidden("showHints",          ''),"\n",
+	#	CGI::hidden("showSolutions",      ''),"\n",
+	#	CGI::p({-align=>"left"},
+	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
+	#	),
+	#	CGI::endform(),"\n";
 	
-	#print feedback form
-	print
-		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::hidden("module",             __PACKAGE__),"\n",
-		CGI::hidden("set",                ''),"\n",
-		CGI::hidden("problem",            ''),"\n",
-		CGI::hidden("displayMode",        ''),"\n",
-		CGI::hidden("showOldAnswers",     ''),"\n",
-		CGI::hidden("showCorrectAnswers", ''),"\n",
-		CGI::hidden("showHints",          ''),"\n",
-		CGI::hidden("showSolutions",      ''),"\n",
-		CGI::p({-align=>"left"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-		),
-		CGI::endform(),"\n";
+	print $self->feedbackMacro(
+		module => __PACKAGE__,
+		set => "",
+		problem => "",
+		displayMode => "",
+		showOldAnswers => "",
+		showCorrectAnswers => "",
+		showHints => "",
+		showSolutions => "",
+	);
 	
 	return "";
 }
