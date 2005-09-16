@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.26 2005/07/05 18:56:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.27 2005/09/16 18:47:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -318,18 +318,19 @@ sub getFeedbackRecipients {
 	my $authz = $self->r->authz;
 	
 	my @recipients;
-	if (defined $ce->{mail}->{feedbackRecipients}) {
-		@recipients = @{$ce->{mail}->{feedbackRecipients}};
-	} else {
-		# send to all users with permission to receive_feedback and an email address
-		foreach my $rcptName ($db->listUsers()) {
-			if ($authz->hasPermissions($rcptName, "receive_feedback")) {
-				my $rcpt = $db->getUser($rcptName); # checked
-				if ($rcpt and $rcpt->email_address) {
-					push @recipients, $rcpt->email_address;
-				}
+	
+	# send to all users with permission to receive_feedback and an email address
+	foreach my $rcptName ($db->listUsers()) {
+		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
+			my $rcpt = $db->getUser($rcptName); # checked
+			if ($rcpt and $rcpt->email_address) {
+				push @recipients, $rcpt->email_address;
 			}
 		}
+	}
+	
+	if (defined $ce->{mail}->{feedbackRecipients}) {
+		push @recipients, @{$ce->{mail}->{feedbackRecipients}};
 	}
 	
 	return @recipients;
