@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.135 2005/09/07 01:18:00 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.136 2005/09/13 17:08:46 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,22 +48,20 @@ $webwork_courses_dir = "$webwork_dir/courses";
 # Paths to external programs 
 ################################################################################
 
+# system utilties
 $externalPrograms{mkdir}    = "/bin/mkdir";
 $externalPrograms{mv}       = "/bin/mv";
 $externalPrograms{mysql}    = "/usr/bin/mysql";
+$externalPrograms{tar}      = "/usr/bin/tar";
 
+# equation rendering/hardcopy utiltiies
 $externalPrograms{latex}    = "/usr/bin/latex";
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape"; # allows pdflatex to handle .eps files
+$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape"; # --shell-escape allows pdflatex to handle .eps files
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{tth}      = "/usr/bin/tth";
 
-$externalPrograms{tar}      = "/usr/bin/tar";
-
-# Basic image manipulation utilities
-
-####################################################
-#  Most sites only need to configure the first line
-####################################################
+# NetPBM - basic image manipulation utilities
+# most sites only need to configure $netpbm_prefix.
 my $netpbm_prefix = "/usr/bin";
 $externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
 $externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
@@ -71,21 +69,16 @@ $externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
 $externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
 $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 
-# The following lines are the external scripts gif2eps, etc.
-#   The source file is input with cat, and the output is redirected to
-#   the desired file.
-
-$externalPrograms{gif2eps}  = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm}| $externalPrograms{pnmtops} -noturn 2>/dev/null";
+# image conversions utiltiies
+# the source file is given on stdin, and the output expected on stdout.
+# 
+# Note on conversions pipelines:
+#     we used to use `pnmdepth 1' instead of ppmtopgm as it creates a
+#     monochrome image (1 bit) rather than a greyscale image (8 bits).
+#     However, this was causing improper display of some sort in PDFs.
+$externalPrograms{gif2eps}  = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{png2eps}  = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
-
-# Note on these conversions:
-# we used to use `pnmdepth 1' instead of ppmtopgm as it creates a
-# monochrome image (1 bit) rather than a greyscale image (8 bits).
-# However, this was causing improper display of some sort in PDFs.
-
-
-
 
 ################################################################################
 # Mail settings
