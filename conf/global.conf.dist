@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.136 2005/09/13 17:08:46 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.137 2005/09/16 17:58:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -103,16 +103,26 @@ $mail{allowedRecipients}     = [
 	#'prof1@yourserver.yourdomain.edu',
 	#'prof2@yourserver.yourdomain.edu',
 ];
-	
-# If defined, feedbackRecipients overrides the list of recipients for feedback
-# email. It's appropriate to set this in the course.conf for specific courses,
-# but probably not in global.conf. if not defined, mail is sent to all
-# professors and TAs for a given course
-#$mail{feedbackRecipients}    = [
-#	'prof1@yourserver.yourdomain.edu',
-#	'prof2@yourserver.yourdomain.edu',
-#];
-	
+
+# By default, feeback is sent to all users who have permission to
+# receive_feedback. If this list is non-empty, feedback is also sent to the
+# addresses specified here.
+# 
+# * If you want to disable feedback altogether, leave this empty and set
+#   submit_feeback => $nobody in %permissionLevels below. This will cause the
+#   feedback button to go away as well.
+# 
+# * If you want to send email ONLY to addresses in this list, set
+#   receive_feedback => $nodoy in %permissionLevels below.
+# 
+# It's often useful to set this in the course.conf to change the behavior of
+# feedback for a specific course.
+# 
+$mail{feedbackRecipients}    = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+
 # feedbackVerbosity:
 #  0: send only the feedback comment and context link
 #  1: as in 0, plus user, set, problem, and PG data
