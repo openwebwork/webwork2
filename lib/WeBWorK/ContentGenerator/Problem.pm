@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.183 2005/08/25 17:02:28 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.184 2005/08/26 17:30:05 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -827,7 +827,7 @@ sub body {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::a({href=>$editorURL}, "Edit this problem");
+		$editorLink = CGI::p(CGI::a({href=>$editorURL}, "Edit this problem"));
 	}
 	
 	##### translation errors? #####
@@ -994,6 +994,7 @@ sub body {
 	print CGI::start_div({class=>"problem"});
 	print CGI::p($pg->{body_text});
 	print CGI::p(CGI::b("Note: "), CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
+	print $editorLink; # this is empty unless it is appropriate to have an editor link.
 	print CGI::end_div();
 	
 	print CGI::start_p();
@@ -1151,30 +1152,38 @@ sub body {
 			CGI::endform();
 	}
 	
-	# feedback form url
-	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
-		courseID => $courseName);
-	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	## feedback form url
+	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
+	#	courseID => $courseName);
+	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	#
+	##print feedback form
+	#print
+	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
+	#	$self->hidden_authen_fields,"\n",
+	#	CGI::hidden("module",             __PACKAGE__),"\n",
+	#	CGI::hidden("set",                $set->set_id),"\n",
+	#	CGI::hidden("problem",            $problem->problem_id),"\n",
+	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
+	#	CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
+	#	CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
+	#	CGI::hidden("showHints",          $will{showHints}),"\n",
+	#	CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
+	#	CGI::p({-align=>"left"},
+	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
+	#	),
+	#	CGI::endform(),"\n";
 	
-	#print feedback form
-	print
-		CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-		$self->hidden_authen_fields,"\n",
-		CGI::hidden("module",             __PACKAGE__),"\n",
-		CGI::hidden("set",                $set->set_id),"\n",
-		CGI::hidden("problem",            $problem->problem_id),"\n",
-		CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-		CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
-		CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
-		CGI::hidden("showHints",          $will{showHints}),"\n",
-		CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
-		CGI::p({-align=>"left"},
-			CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-		),
-		CGI::endform(),"\n";
-	
-	# FIXME print editor link
-	print $editorLink;   #empty unless it is appropriate to have an editor link.
+	print $self->feedbackMacro(
+		module             => __PACKAGE__,
+		set                => $self->{set}->set_id,
+		problem            => $problem->problem_id,
+		displayMode        => $self->{displayMode},
+		showOldAnswers     => $will{showOldAnswers},
+		showCorrectAnswers => $will{showCorrectAnswers},
+		showHints          => $will{showHints},
+		showSolutions      => $will{showSolutions},
+	);
 	
 	print CGI::end_div();
 	
