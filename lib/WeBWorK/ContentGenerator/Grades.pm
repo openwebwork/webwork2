@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.14 2005/07/20 23:56:30 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.15 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -336,7 +336,7 @@ sub displayStudentStats {
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
 		push @rows, CGI::Tr(
-			CGI::td(CGI::a({-href=>$act_as_student_set_url}, underscore2nbsp($setName))),
+			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
@@ -389,11 +389,5 @@ sub threeSpaceFill {
 sub round_score{
 	return shift;
 }
-
-sub underscore2nbsp {
-	my $str = shift;
-	$str =~ s/_/&nbsp;/g;
-	return($str);
-}                    
 
 1;

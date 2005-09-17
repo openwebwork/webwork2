@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.17 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.18 2005/08/12 02:47:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -111,7 +111,7 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",
 			courseID => $courseID, setID => $setID,statType => 'set',);
-		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, underscore2nbsp($setID)));
+		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, WeBWorK::ContentGenerator::underscore2nbsp($setID)));
 	}
 	
 	print CGI::end_ul();
@@ -224,7 +224,7 @@ sub index {
 	                                                      statType => 'set',
 	                                                      setID    => $set
 	    );
-		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, underscore2nbsp($set));
+		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, WeBWorK::ContentGenerator::underscore2nbsp($set));
 	}
 	
 	foreach my $studentRecord (@sortedStudentRecords) {
@@ -845,12 +845,6 @@ sub threeSpaceFill {
 }
 sub round_score{
 	return shift;
-}
-
-sub underscore2nbsp {
-	my $str = shift;
-	$str =~ s/_/&nbsp;/g;
-	return($str);
 }
 
 1;
