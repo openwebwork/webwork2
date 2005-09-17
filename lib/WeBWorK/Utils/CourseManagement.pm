@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.23 2005/08/04 22:45:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.24 2005/08/14 16:51:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -569,7 +569,7 @@ sub archiveCourse {
 	debug("archiving course dir: $tarCmd $archivePath $courseDir \n");
 	my $tarStatement = "$tarCmd  -zcf   $archivePath  $courseDir";
 	my $tarResult = system $tarStatement ;
-	$tarResult and die "failed to tar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
+	$tarResult and die "Failed to tar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
 	
 }
 

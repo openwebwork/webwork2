@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.5 2005/06/15 21:46:12 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.6 2005/08/14 16:52:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -352,7 +352,8 @@ sub archiveCourseHelper {
 	"   >$archiveDatabasePath";
 	debug($exportStatement);
 	my $exportResult = system $exportStatement;
-	$exportResult and die "failed to tar course directory with command: '$exportResult ' (errno: $exportResult): $!\n";
+	$exportResult and die "Failed to export database with command: '$exportStatement ' (errno: $exportResult): $!
+	\n\n Check server error log for more information.";
 
 	##### issue SQL statements #####
 	
