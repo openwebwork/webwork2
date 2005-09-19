@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.48 2005/07/26 20:49:09 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.49 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -381,7 +381,7 @@ sub scoreSet {
 	     $setRecord->assignment_type() !~ /gateway/ ) {
 		foreach my $userID (@sortedUserIDs) {
 			my %CurrUserProblems = map { $_->problem_id => $_ }
-				$db->getAllUserProblems($userID, $setID);
+				$db->getAllMergedUserProblems($userID, $setID);
 			$UserProblems{$userID} = \%CurrUserProblems;
 		}
 	} else {  # versioned sets; get the problems for the best version 
@@ -463,7 +463,7 @@ sub scoreSet {
 			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
 			my $user_problem_status          = ($userProblem->status =~/^[\d\.]+$/) ? $userProblem->status : 0; # ensure it's numeric
-			$userStatusTotals{$user}        += $user_problem_status * $globalProblem->value;	
+			$userStatusTotals{$user}        += $user_problem_status * $userProblem->value;	
 			if ($scoringItems->{successIndex})   {
 				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});
 				my $num_correct     = $userProblem->num_correct;
