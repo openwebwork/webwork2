@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.27 2005/09/16 18:47:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.28 2005/09/16 19:08:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,6 +32,7 @@ use Data::Dumper;
 use CGI::Pretty qw();
 use Mail::Sender;
 use Text::Wrap qw(wrap);
+use WeBWorK::Utils qw/formatDateTime decodeAnswers/;
 
 # request paramaters used
 # 
@@ -222,43 +223,48 @@ sub body {
 				"***** Data about the problem processor: *****\n\n",
 
 				"Display Mode:         $displayMode\n",
-				"Show Old Answers?     $showOldAnswers\n",
-				"Show Correct Answers? $showCorrectAnswers\n",
-				"Show Hints?           $showHints\n",
-				"Show Solutions?       $showSolutions\n\n",
+				"Show Old Answers:     " . ($showOldAnswers ? "yes" : "no") . "\n",
+				"Show Correct Answers: " . ($showCorrectAnswers ? "yes" : "no") . "\n",
+				"Show Hints:           " . ($showHints ? "yes" : "no") . "\n",
+				"Show Solutions:       " . ($showSolutions ? "yes" : "no") . "\n\n",
 		}
 		if ($user and $verbosity >= 1) {
 			print $MAIL
 				"***** Data about the user: *****\n\n",
-				$user->toString(), "\n\n";
-		
+				#$user->toString(), "\n\n";
+				$self->format_user($user), "\n";
 		}
 		if ($problem and $verbosity >= 1) {
 			print $MAIL
 				"***** Data about the problem: *****\n\n",
-				$problem->toString(), "\n\n";
-		
+				#$problem->toString(), "\n\n";
+				$self->format_userproblem($problem), "\n";
 		}
 		if ($set and $verbosity >= 1) {
 			print $MAIL
 				"***** Data about the homework set: *****\n\n",
-				$set->toString(), "\n\n";
-		
+				#$set->toString(), "\n\n";
+				$self->format_userset($set), "\n";
 		}
 		if ($ce and $verbosity >= 2) {
 			print $MAIL
 				"***** Data about the environment: *****\n\n",
 				Dumper($ce), "\n\n";
-		
 		}
 		
-		# end the message
-		close $MAIL;
+		# Close returns the mailer object on success, a negative value on failure,
+		# zero if mailer was not opened.
+		my $result = $mailer->Close;
 		
-		# print confirmation
-		print CGI::p("Your message was sent successfully.");
-		print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
-		print CGI::pre(wrap("", "", $feedback));
+		if (ref $result) {
+			# print confirmation
+			print CGI::p("Your message was sent successfully.");
+			print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
+			print CGI::pre(wrap("", "", $feedback));
+		} else {
+			$self->feedbackForm($user, $returnURL,
+				"Failed to send message ($result): $Mail::Sender::Error");
+		}
 	} else {
 		# just print the feedback form, with no message
 		$self->feedbackForm($user, $returnURL, "");
@@ -334,6 +340,80 @@ sub getFeedbackRecipients {
 	}
 	
 	return @recipients;
+}
+
+sub format_user {
+	my ($self, $User) = @_;
+	my $ce = $self->r->ce;
+	
+	my $result = "User ID:    " . $User->user_id . "\n";
+	$result .= "Name:       " . $User->first_name . " " . $User->last_name . "\n";
+	$result .= "Email:      " . $User->email_address . "\n";
+	$result .= "Student ID: " . $User->student_id . "\n";
+	
+	my %status = %{$ce->{siteDefaults}{status}};
+	$result .= "Status:     " . (exists $status{$User->status} ? $status{$User->status} : $User->status) . "\n";
+	
+	$result .= "Section:    " . $User->section . "\n";
+	$result .= "Recitation: " . $User->recitation . "\n";
+	$result .= "Comment:    " . $User->comment . "\n";
+	
+	return $result;
+}
+
+sub format_userset {
+	my ($self, $Set) = @_;
+	my $ce = $self->r->ce;
+	
+	my $result = "Set ID:                    " . $Set->set_id . "\n";
+	$result .= "Set header file:           " . $Set->set_header . "\n";
+	$result .= "Hardcopy header file:      " . $Set->hardcopy_header . "\n";
+	
+	my $tz = $ce->{siteDefaults}{timezone};
+	$result .= "Open date:                 " . formatDateTime($Set->open_date, $tz) . "\n";
+	$result .= "Due date:                  " . formatDateTime($Set->due_date, $tz) . "\n";
+	$result .= "Answer date:               " . formatDateTime($Set->answer_date, $tz) . "\n";
+	$result .= "Published:                 " . ($Set->published ? "yes" : "no") . "\n";
+	$result .= "Assignment type:           " . $Set->assignment_type . "\n";
+	if ($Set->assignment_type =~ /gateway/) {
+		$result .= "Attempts per version:      " . $Set->assignment_type . "\n";
+		$result .= "Time interval:             " . $Set->time_interval . "\n";
+		$result .= "Versions per interval:     " . $Set->versions_per_interval . "\n";
+		$result .= "Version time limit:        " . $Set->version_time_limit . "\n";
+		$result .= "Version creation time:     " . formatDateTime($Set->version_creation_time, $tz) . "\n";
+		$result .= "Problem randorder:         " . $Set->problem_randorder . "\n";
+		$result .= "Version last attempt time: " . $Set->version_last_attempt_time . "\n";
+	}
+	
+	return $result;
+}
+
+sub format_userproblem {
+	my ($self, $Problem) = @_;
+	my $ce = $self->r->ce;
+	
+	my $result = "Problem ID:                   " . $Problem->problem_id . "\n";
+	$result .= "Source file:                  " . $Problem->source_file . "\n";
+	$result .= "Value:                        " . $Problem->value . "\n";
+	$result .= "Max attempts                  " . ($Problem->max_attempts == -1 ? "unlimited" : $Problem->max_attempts) . "\n";
+	$result .= "Random seed:                  " . $Problem->problem_seed . "\n";
+	$result .= "Status:                       " . $Problem->status . "\n";
+	$result .= "Attempted:                    " . ($Problem->attempted ? "yes" : "no") . "\n";
+	
+	my %last_answer = decodeAnswers($Problem->last_answer);
+	if (%last_answer) {
+		$result .= "Last answer:\n";
+		foreach my $key (sort keys %last_answer) {
+			$result .= "\t$key: $last_answer{$key}\n";
+		}
+	} else {
+		$result .= "Last answer:                  none\n";
+	}
+	
+	$result .= "Number of correct attempts:   " . $Problem->num_correct . "\n";
+	$result .= "Number of incorrect attempts: " . $Problem->num_incorrect . "\n";
+	
+	return $result;
 }
 
 1;
