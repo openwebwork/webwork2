@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.18 2005/08/12 02:47:30 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.19 2005/09/17 16:32:43 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -420,7 +420,7 @@ sub displaySets {
 		
 		debug("Begin obtaining problem records for user $student set $setName");
 		
-		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $sN );
+		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedUserProblems( $student, $sN );
 		debug("End obtaining problem records for user $student set $setName");
 		my $num_of_problems = @problemRecords;
 		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;

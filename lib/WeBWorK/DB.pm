@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.65 2005/07/22 22:48:28 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.66 2005/08/12 02:47:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1863,6 +1863,29 @@ sub getAllUserProblems {
 		my @problemIDTriples = $self->{problem_user}->list($userID, $setID, undef);
 		return $self->{problem_user}->gets(@problemIDTriples);
 	}
+}
+
+=item getAllMergedUserProblems($userID, $setID)
+
+Returns a list of merged UserProblem objects representing all the problems
+in the given set.  Analogous to getAllUserProblems, except it returns
+merged problem records.
+
+=cut
+
+sub getAllMergedUserProblems {
+	my ($self, $userID, $setID) = @_;
+
+	croak "getAllMergedUserProblems: requires 2 arguments"
+		unless @_ == 3;
+	croak "getAllMergedUserProblems: argument 1 must contain a user_id"
+		unless defined $userID;
+	croak "getAllMergedUserProblems: argument 2 must contain a set_id"
+		unless defined $setID;
+
+	my @userProblemRecords = $self->getAllUserProblems( $userID, $setID );
+	my @userProblemIDs = map { [$userID, $setID, $_->problem_id] } @userProblemRecords;
+	return $self->getMergedProblems( @userProblemIDs );
 }
 
 sub putUserProblem {

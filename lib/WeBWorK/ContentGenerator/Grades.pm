@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.15 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.16 2005/09/17 16:32:43 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -269,7 +269,7 @@ sub displayStudentStats {
 		my $num_of_attempts = 0;
 	
 		debug("Begin collecting problems for set $setName");
-		my @problemRecords = $db->getAllUserProblems( $studentName, $setName );
+		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setName );
 		debug("End collecting problems for set $setName");
 		
 		# FIXME the following line doesn't sort the problemRecords
