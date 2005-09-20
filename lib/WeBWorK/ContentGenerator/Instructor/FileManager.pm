@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.13 2005/08/04 00:58:39 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.14 2005/08/22 03:27:59 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1047,11 +1047,12 @@ sub checkPWD {
 sub checkFileLocation {
   	my $self = shift;
 	my $extension = shift; $extension =~ s/.*\.//;
-	my $dir = shift;
-	return unless defined($uploadDir{$extension});
-	return if $dir =~ m/^$uploadDir{$extension}$/;
-	$dir = $uploadDir{$extension}; $dir =~ s!/\.\*!!;
-	$self->addbadmessage("Files with extension '.$extension' usually belong in '$dir'");
+	my $dir = shift; my $location = $uploadDir{$extension};
+	return unless defined($location);
+	return if $dir =~ m/^$location$/;
+	$location =~ s!/\.\*!!;
+	return if $dir =~ m/^$location$/;
+	$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
 }
 
 ##################################################
