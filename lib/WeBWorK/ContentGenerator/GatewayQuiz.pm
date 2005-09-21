@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.11 2005/07/14 13:15:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.12 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
-
+use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 
 # template method
