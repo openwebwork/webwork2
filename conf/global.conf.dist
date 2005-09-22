@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.138 2005/09/16 19:08:13 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.139 2005/09/21 20:26:29 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,7 +93,7 @@ $mail{smtpServer}            = 'mail.yourschool.edu';
 # message. It can really be anything, but some mail servers require it contain
 # a valid mail domain, or at least be well-formed.
 $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-	
+
 # AllowedRecipients defines addresses that the PG system is allowed to send mail
 # to. this prevents subtle PG exploits. This should be set in course.conf to the
 # addresses of professors of each course. Sending mail from the PG system (i.e.
@@ -123,12 +123,24 @@ $mail{feedbackRecipients}    = [
 	#'prof2@yourserver.yourdomain.edu',
 ];
 
+# Feedback subject line -- the following escape sequences are recognized:
+# 
+#   %c = course ID
+#   %u = user ID
+#   %s = set ID
+#   %p = problem ID
+#   %x = section
+#   %r = recitation
+#   %% = literal percent sign
+# 
+$mail{feedbackSubjectFormat} = "[WWfeedback] course:%c %% user:%u set:%s prob:%p sec:%x rec:%r";
+
 # feedbackVerbosity:
 #  0: send only the feedback comment and context link
 #  1: as in 0, plus user, set, problem, and PG data
 #  2: as in 1, plus the problem environment (debugging data)
 $mail{feedbackVerbosity}     = 1;
-	
+
 # Defines the size of the Mail Merge editor window
 # FIXME: should this be here? it's UI, not mail
 # FIXME: replace this with the auto-size method that TWiki uses
@@ -340,22 +352,7 @@ $courseFiles{problibs}    = {
 };
 
 ################################################################################
-# Database options (WWDBv3)
-################################################################################
-
-# The four arguments passed to the DBI::connect() method. See the DBI manual for
-# more information.
-$wwdbv3_settings{dsn}          = "dbi:mysql:wwdbv3";
-$wwdbv3_settings{user}         = "wwdbv3";
-$wwdbv3_settings{pass}         = "xyzzy";
-$wwdbv3_settings{attr}         = {};
-
-# WWDBv3 needs a lock file to prevent concurrent database upgrades. The file
-# will be locked with flock().
-$wwdbv3_settings{upgrade_lock} = "$webworkDirs{tmp}/wwdbv3_upgrade.lock";
-
-################################################################################
-# Database options (WWDBv2)
+# Database options
 ################################################################################
 
 # Several database are defined in the file conf/database.conf and stored in the

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.29 2005/09/19 16:25:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.30 2005/09/22 14:11:33 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -180,17 +180,26 @@ sub body {
 			return "";
 		}
 		
+		my %subject_map = (
+			'c' => $courseID,
+			'u' => $user    ? $user->user_id       : undef,
+			's' => $set     ? $set->set_id         : undef,
+			'p' => $problem ? $problem->problem_id : undef,
+			'x' => $user    ? $user->section       : undef,
+			'r' => $user    ? $user->recitation    : undef,
+			'%' => '%',
+		);
+		my $chars = join("", keys %subject_map);
+		my $subject = $ce->{mail}{feedbackSubjectFormat}
+			|| "WeBWorK feedback from %c: %u set %s/prob %p"; # default if not entered
+		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
+		
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
 			from => $sender,
 			to => join(",", @recipients),
-			# *** we might want to have a CE setting for
-			# "additional recipients"
 			smtp    => $ce->{mail}->{smtpServer},
-			subject => "WeBWorK feedback from $courseID (".$user->section.'-'.$user->recitation.'): '.$user->first_name.' '.$user->last_name. 
-			                (   ( defined($setName) && defined($problemNumber) ) ?
-			                				 " set$setName/prob$problemNumber" : ""
-			                ),
+			subject => $subject,
 			headers => "X-Remote-Host: ".$r->get_remote_host(),
 		});
 		unless (ref $mailer) {
