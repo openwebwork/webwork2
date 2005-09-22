@@ -1213,7 +1213,7 @@ sub saveEdit_handler {
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
 		my $Set = $db->getGlobalSet($setID); # checked
-# FIXME: we may not want to die on bad sets, they're not as bad as bad users
+		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
 		die "record for visible set $setID not found" unless $Set;
 
 		foreach my $field ($Set->NONKEYFIELDS()) {
@@ -1226,20 +1226,27 @@ sub saveEdit_handler {
 				}
 			}
 		}
-
-		###################################################
+		
+		# make sure the dates are not more than 10 years in the future
+		my $curr_time = time;
+		my $seconds_per_year = 31_556_926;
+		my $cutoff = $curr_time + $seconds_per_year*10;
+		return CGI::div({class=>'ResultsWithError'}, "Error: open date cannot be more than 10 years from now in set $setID")
+			if $Set->open_date > $cutoff;
+		return CGI::div({class=>'ResultsWithError'}, "Error: due date cannot be more than 10 years from now in set $setID")
+			if $Set->due_date > $cutoff;
+		return CGI::div({class=>'ResultsWithError'}, "Error: answer date cannot be more than 10 years from now in set $setID")
+			if $Set->answer_date > $cutoff;
+		
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
-		###################################################
 		if ($Set->open_date > $Set->due_date)  {
 			return CGI::div({class=>'ResultsWithError'}, "Error: Due date must come after open date in set $setID");
 		}
 		if ($Set->due_date > $Set->answer_date) {
 			return CGI::div({class=>'ResultsWithError'}, "Error: Answer date must come after due date in set $setID");
 		}
-		###################################################
-		# End date check section.
-		###################################################
+		
 		$db->putGlobalSet($Set);
 	}
 	
