@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.30 2005/09/22 14:11:33 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.31 2005/09/22 17:48:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -194,13 +194,24 @@ sub body {
 			|| "WeBWorK feedback from %c: %u set %s/prob %p"; # default if not entered
 		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 		
+		my $headers = "X-Remote-Host: ".$r->get_remote_host()."\n";
+		$headers .= "X-WeBWorK-Module: $module\n" if defined $module;
+		$headers .= "X-WeBWorK-Course: $courseID\n" if defined $courseID;
+		if ($user) {
+			$headers .= "X-WeBWorK-User: ".$user->user_id."\n";
+			$headers .= "X-WeBWorK-Section: ".$user->section."\n";
+			$headers .= "X-WeBWorK-Recitation: ".$user->recitation."\n";
+		}
+		$headers .= "X-WeBWorK-Set: ".$set->set_id."\n" if $set;
+		$headers .= "X-WeBWorK-Problem: ".$problem->problem_id."\n" if $problem;
+		
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
 			from => $sender,
 			to => join(",", @recipients),
 			smtp    => $ce->{mail}->{smtpServer},
 			subject => $subject,
-			headers => "X-Remote-Host: ".$r->get_remote_host(),
+			headers => $headers,
 		});
 		unless (ref $mailer) {
 			$self->feedbackForm($user, $returnURL,
