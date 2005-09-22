@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.28 2005/09/16 19:08:17 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.29 2005/09/19 16:25:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -187,7 +187,7 @@ sub body {
 			# *** we might want to have a CE setting for
 			# "additional recipients"
 			smtp    => $ce->{mail}->{smtpServer},
-			subject => "WeBWorK feedback from $courseID: ".$user->first_name." ".$user->last_name. 
+			subject => "WeBWorK feedback from $courseID (".$user->section.'-'.$user->recitation.'): '.$user->first_name.' '.$user->last_name. 
 			                (   ( defined($setName) && defined($problemNumber) ) ?
 			                				 " set$setName/prob$problemNumber" : ""
 			                ),
