@@ -604,12 +604,29 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 		
+		# make sure the dates are not more than 10 years in the future
+		my $curr_time = time;
+		my $seconds_per_year = 31_556_926;
+		my $cutoff = $curr_time + $seconds_per_year*10;
+		if ($open_date > $cutoff) {
+			$self->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
+			$error = $r->param('submit_changes');
+		}
+		if ($due_date > $cutoff) {
+			$self->addbadmessage("Error: due date cannot be more than 10 years from now in set $setID");
+			$error = $r->param('submit_changes');
+		}
+		if ($answer_date > $cutoff) {
+			$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
+			$error = $r->param('submit_changes');
+		}
+		
+		
 		if ($error) {
 			$self->addbadmessage("No changes were saved!");
 		}
 	}
-
-
+	
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
