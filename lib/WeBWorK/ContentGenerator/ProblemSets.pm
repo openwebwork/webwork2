@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.62 2005/08/21 16:02:42 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.63 2005/09/16 18:50:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -298,13 +298,13 @@ sub setListRow {
 	my $control = "";
 	if ($multiSet) {
 		$control = CGI::checkbox(
-			-name=>"hcSet",
+			-name=>"selected_sets",
 			-value=>$name,
 			-label=>"",
 		);
 	} else {
 		$control = CGI::radio_group(
-			-name=>"hcSet",
+			-name=>"selected_sets",
 			-values=>[$name],
 			-default=>"-",
 			-labels=>{$name => ""},
