@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.139 2005/09/21 20:26:29 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.140 2005/09/22 17:48:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -481,7 +481,7 @@ $siteDefaults{default_templates_course} ="modelCourse";
 # described by the key, the user must have a permission level greater than or
 # equal to the value.
 
-my $guest     = -1;
+my $guest     = -5;
 my $student   = 0;
 my $proctor   = 2;
 my $ta        = 5;
@@ -549,6 +549,7 @@ my $nobody    = undef;
 	
 	download_hardcopy_multiuser  => $ta,
 	download_hardcopy_multiset   => $ta,
+	download_hardcopy_format_pdf => $guest,
 	download_hardcopy_format_tex => $ta,
 );
 
