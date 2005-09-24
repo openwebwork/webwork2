@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.184 2005/08/26 17:30:05 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.185 2005/09/16 18:50:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -250,7 +250,7 @@ sub attemptResults {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numBlanks++ unless $studentAnswer =~/\S/;   # unless student answer contains entry
+		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
 		my $resultString = $answerScore >= 1 ? "correct" :
 		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
                                                        "incorrect";
