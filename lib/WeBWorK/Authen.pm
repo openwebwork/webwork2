@@ -517,12 +517,6 @@ sub verify($) {
 		}
 		return 1;
 	}
-	
-	# Whatever you do, don't delete this!
-	critical($r);
-	# One time, I deleted it, and my mother broke her back, my cat died, and
-	# the Pope got a tummy ache. When I replaced the line, I received eternal
-	# salvation and a check for USD 500.
 }
 
 # verifyProctor will return 1 if the proctor is who they say they are.  It is 
@@ -625,7 +619,6 @@ sub verifyProctor ($) {
     } else {
 	return 1;
     }
-    critical($r);  # where does critical() come from?
 }
 
 1;
