@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen.pm,v 1.41 2005/07/14 18:17:58 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.42 2005/07/14 20:37:35 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -433,9 +433,7 @@ sub verify($) {
 			}
 		}
 
-		#########################################################
 		# a password was supplied.
-		#########################################################
 		if ($passwd) {
 
 			if ($self->checkPassword($user, $passwd)) {
@@ -459,9 +457,8 @@ sub verify($) {
 		# neither a key or a password were supplied.
 		$error = "You must enter a password."
 	}
-	#############################################
-	# Check for multiply defined users
-	############################################
+	
+	# check for multiply defined users
 	my @test_users = $r->param("user");
 	if (@test_users>1)    {
 		warn "User has been multiply defined in Authen.pm ", join(" ", @test_users)  ;
@@ -469,12 +466,10 @@ sub verify($) {
 		@test_users = $r->param("user");
 		warn "New value of user is ", join(" ", @test_users);
 	}
-	##### end check ######################
-	
 	
 	if (defined $error) {
 		# authentication failed, store the error message
-		$r->notes("authen_error",$error);
+		$r->notes("authen_error", $error);
 		
 		# if we got a cookie, it probably has incorrect information in it. so
 		# we want to get rid of it
