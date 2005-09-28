@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.69 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.70 2005/08/24 19:41:59 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1391,6 +1391,14 @@ sub fieldEditHTML {
 	my $items = $properties->{items};
 	my $synonyms = $properties->{synonyms};
 	
+	if ($type eq "email") {
+		if ($value eq '&nbsp;') {
+			return $value;}
+		else {
+			return CGI::a({-href=>"mailto:$value"},$value);
+		}
+	}
+	
 	if ($access eq "readonly") {
 		return $value;
 	}
@@ -1398,7 +1406,7 @@ sub fieldEditHTML {
 	if ($type eq "number" or $type eq "text") {
 		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
 	}
-	
+		
 	if ($type eq "enumerable") {
 		my $matched = undef; # Whether a synonym match has occurred
 
@@ -1521,20 +1529,21 @@ sub recordEditHTML {
 
 	# User Fields
 	foreach my $field ($User->NONKEYFIELDS) {
-		my $fieldName = "user." . $User->user_id . "." . $field,
+		my $fieldName = 'user.' . $User->user_id . '.' . $field,
 		my $fieldValue = $User->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = "readonly" unless $editMode;
+		$properties{access} = 'readonly' unless $editMode;
+		$properties{type} = 'email' if ($field eq 'email_address' and !$editMode and !$passwordMode);
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
 	# PermissionLevel Fields
 	foreach my $field ($PermissionLevel->NONKEYFIELDS) {
-		my $fieldName = "permission." . $PermissionLevel->user_id . "." . $field,
+		my $fieldName = 'permission.' . $PermissionLevel->user_id . '.' . $field,
 		my $fieldValue = $PermissionLevel->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-		$properties{access} = "readonly" unless $editMode;
+		$properties{access} = 'readonly' unless $editMode;
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
