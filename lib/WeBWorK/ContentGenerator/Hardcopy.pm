@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.62 2005/09/23 23:26:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.63 2005/09/27 23:32:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use Apache::Constants qw/:common REDIRECT/;
 use CGI qw//;
 use String::ShellQuote;
+use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
@@ -58,16 +59,24 @@ our %HC_FORMATS = (
 );
 
 # custom fields used in $self hash
+# FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
 # 
 # final_file_url
 #   contains the URL of the final hardcopy file generated
 #   set by generate_hardcopy(), used by pre_header_initialize() and body()
+# 
 # temp_file_map
 #   reference to a hash mapping temporary file names to URL
 #   set by pre_header_initialize(), used by body()
+# 
 # hardcopy_errors
 #   reference to array containing HTML strings describing generation errors (and warnings)
 #   used by add_errors(), get_errors(), get_errors_ref()
+# 
+# at_least_one_problem_rendered_without_error
+#   set to a true value by write_problem_tex if it is able to sucessfully render
+#   a problem. checked by generate_hardcopy to determine whether to continue
+#   with the generation process.
 
 ################################################################################
 # UI subroutines
@@ -143,6 +152,9 @@ sub pre_header_initialize {
 		if (@userIDs and $userIDs[0] ne $eUserID and not $perm_multiuser) {
 			$self->addbadmessage("You are not permitted to generate hardcopy for other users.");
 			$validation_failed = 1;
+			# FIXME -- download_hardcopy_multiuser controls both whether a user can generate hardcopy
+			# that contains sets for multiple users AND whether she can generate hardcopy that contains
+			# sets for users other than herself. should these be separate permission levels?
 		}
 		
 		unless ($validation_failed) {
@@ -249,20 +261,27 @@ sub display_form {
 	}
 	
 	# get sets for selection
-	my @Sets;
+	my @GlobalSets;
 	if ($perm_multiuser) {
-		# if we're allowed to select sets for multiple users, get all sets
-		@Sets = $db->getGlobalSets($db->listGlobalSets);
+		# if we're allowed to select sets for multiple users, get all sets.
+		@GlobalSets = $db->getGlobalSets($db->listGlobalSets);
 	} else {
-		# otherwise, only get the sets assigned to the effective user
-		@Sets = $db->getMergedSets(map [$eUserID,$_], $db->listUserSets($eUserID));
+		# otherwise, only get the sets assigned to the effective user.
+		# note that we are getting GlobalSets, but using the list of UserSets assigned to the
+		# effective user. this is because if we pass UserSets  to ScrollingRecordList it will
+		# give us composite IDs back, which is a pain in the ass to deal with.
+		@GlobalSets = $db->getGlobalSets($db->listUserSets($eUserID));
 	}
 	
 	# filter out unwanted sets
-	foreach my $i (0 .. $#Sets) {
-		my $Set = $Sets[$i];
-		splice @Sets, $i, 1 unless $Set->open_date <= time or $perm_unopened;
-		splice @Sets, $i, 1 unless $Set->published or $perm_unpublished;
+	foreach my $i (0 .. $#GlobalSets) {
+		my $Set = $GlobalSets[$i];
+		unless (defined $Set) {
+			warn "\$GlobalSets[\$i] not defined -- skipping";
+			next;
+		}
+		splice @GlobalSets, $i, 1 unless $Set->open_date <= time or $perm_unopened;
+		splice @GlobalSets, $i, 1 unless $Set->published or $perm_unpublished;
 	}
 	
 	my $scrolling_user_list = scrollingRecordList({
@@ -283,7 +302,7 @@ sub display_form {
 		default_filters => ["all"],
 		size => 20,
 		multiple => $perm_multiset,
-	}, @Sets);
+	}, @GlobalSets);
 	
 	# we change the text a little bit depending on whether the user has multiuser privileges
 	my $ss = $perm_multiuser ? "s" : "";
@@ -383,23 +402,43 @@ sub generate_hardcopy {
 		return;
 	}
 	
-	my $tex_file_name = "hardcopy.tex";
-	my $tex_file_path = "$temp_dir_path/$tex_file_name";
-	
 	# do some error checking
-	unless (-w $temp_dir_path) {
-		$self->add_errors("Temporary directory '$temp_dir_path' is not writeable: $!");
+	unless (-e $temp_dir_path) {
+		$self->add_errors("Temporary directory '$temp_dir_path' does not exist, but creation didn't fail. This shouldn't happen.");
 		return;
 	}
+	unless (-w $temp_dir_path) {
+		$self->add_errors("Temporary directory '$temp_dir_path' is not writeable.");
+		$self->delete_temp_dir($temp_dir_path);
+		return;
+	}
+	
+	my $tex_file_name = "hardcopy.tex";
+	my $tex_file_path = "$temp_dir_path/$tex_file_name";
 	
 	# write TeX
 	my $open_result = open my $FH, ">", $tex_file_path;
 	unless ($open_result) {
 		$self->add_errors("Failed to open file '$tex_file_path' for writing: $!");
+		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
 	$self->write_multiuser_tex($FH, $userIDsRef, $setIDsRef);
 	close $FH;
+	
+	# if no problems got rendered successfully, we can't continue
+	unless ($self->{at_least_one_problem_rendered_without_error}) {
+		$self->add_errors("No problems rendered. Can't continue.");
+		$self->delete_temp_dir($temp_dir_path);
+		return;
+	}
+	
+	# if no hardcopy.tex file was generated, fail now
+	unless (-e "$temp_dir_path/hardcopy.tex") {
+		$self->add_errors("'hardcopy.tex' not written to temporary directory '$temp_dir_path'. Can't continue.");
+		$self->delete_temp_dir($temp_dir_path);
+		return;
+	}
 	
 	# determine base name of final file
 	my $final_file_user = @$userIDsRef > 1 ? "multiuser" : $userIDsRef->[0];
@@ -437,9 +476,11 @@ sub generate_hardcopy {
 	# try to move the hardcopy file out of the temp directory
 	# set $final_file_url accordingly
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = "/bin/mv " . shell_quote($final_file_path, $final_file_final_path);
-	if (system $mv_cmd) {
-		$self->add_errors("Failed to move hardcopy file '$final_file_name' from '$temp_dir_path' to '$temp_dir_parent_path': $!");
+	my $mv_cmd = "2>&1 /bin/mv " . shell_quote($final_file_path, $final_file_final_path);
+	my $mv_out = readpipe $mv_cmd;
+	if ($?) {
+		$self->add_errors("Failed to move hardcopy file '$final_file_name' from '$temp_dir_path' to '$temp_dir_parent_path':"
+			.CGI::br().CGI::pre($mv_out));
 		$final_file_url = "$temp_dir_url/$final_file_name";
 	} else {
 		$final_file_url = "$temp_dir_parent_url/$final_file_name";
@@ -447,15 +488,27 @@ sub generate_hardcopy {
 	
 	# remove the temp directory if there are no errors
 	unless ($self->get_errors or $PreserveTempFiles) {
-		my $rm_cmd = "/bin/rm -rf " . shell_quote($temp_dir_path);
-		if (system $rm_cmd) {
-			$self->add_errors("Failed to remove temp directory '$temp_dir_path': $!");
-		}
+		$self->delete_temp_dir($temp_dir_path);
 	}
 	
 	warn "Preserved temporary files in directory '$temp_dir_path'.\n" if $PreserveTempFiles;
 	
 	return $final_file_url, %temp_file_map;
+}
+
+# helper function to remove temp dirs
+sub delete_temp_dir {
+	my ($self, $temp_dir_path) = @_;
+	
+	my $rm_cmd = "2>&1 /bin/rm -rf " . shell_quote($temp_dir_path);
+	my $rm_out = readpipe $rm_cmd;
+	if ($?) {
+		$self->add_errors("Failed to remove temporary directory '$temp_dir_path':"
+			.CGI::br().CGI::pre($rm_out));
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 # format subroutines
@@ -475,9 +528,10 @@ sub generate_hardcopy_tex {
 	# try to rename tex file
 	my $src_name = "hardcopy.tex";
 	my $dest_name = "$final_file_basename.tex";
-	my $mv_cmd = "/bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	if (system $mv_cmd) {
-		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path': $!");
+	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
+	my $mv_out = readpipe $mv_cmd;
+	if ($?) {
+		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path':".CGI::br().CGI::pre($mv_out));
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
@@ -503,9 +557,10 @@ sub generate_hardcopy_pdf {
 	# try rename the pdf file
 	my $src_name = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
-	my $mv_cmd = "/bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	if (system $mv_cmd) {
-		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path': $!");
+	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
+	my $mv_out = readpipe $mv_cmd;
+	if ($?) {
+		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path':".CGI::br().CGI::pre($mv_out));
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
@@ -553,7 +608,7 @@ sub write_multiset_tex {
 	# get user record
 	my $TargetUser = $db->getUser($targetUserID); # checked
 	unless ($TargetUser) {
-		$self->add_errors("Can't generate hardcopy for user $targetUserID -- no such user exists.\n");
+		$self->add_errors("Can't generate hardcopy for user '$targetUserID' -- no such user exists.\n");
 		return;
 	}
 	
@@ -578,17 +633,17 @@ sub write_set_tex {
 	# get set record
 	my $MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
 	unless ($MergedSet) {
-		$self->add_errors("Can't generate hardcopy for set $setID for user ".$TargetUser->user_id." -- set is not assigned to that user.");
+		$self->add_errors("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set is not assigned to that user.");
 		return;
 	}
 	
 	# see if the *real* user is allowed to access this problem set
 	if ($MergedSet->open_date > time and not $authz->hasPermissions($userID, "view_unopened_sets")) {
-		$self->add_errors("Can't generate hardcopy for set $setID for user ".$TargetUser->user_id." -- set is not yet open.");
+		$self->add_errors("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set is not yet open.");
 		return;
 	}
 	if (not $MergedSet->published and not $authz->hasPermissions($userID, "view_unpublished_sets")) {
-		$self->addbadmessage("Can't generate hardcopy for set $setID for user ".$TargetUser->user_id." -- set has not been published.");
+		$self->addbadmessage("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set has not been published.");
 		return;
 	}
 	
@@ -633,7 +688,7 @@ sub write_problem_tex {
 		
 		# handle nonexistent problem
 		unless ($MergedProblem) {
-			$self->add_errors("Can't generate hardcopy for problem $problemID in set ".$MergedSet->set_id." for user ".$MergedSet->user_id." -- problem does not exist in that set or is not assigned to that user.");
+			$self->add_errors("Can't generate hardcopy for problem '$problemID' in set '".$MergedSet->set_id."' for user '".$MergedSet->user_id."' -- problem does not exist in that set or is not assigned to that user.");
 			return;
 		}
 	} elsif ($pgFile) {
@@ -705,14 +760,14 @@ sub write_problem_tex {
 		
 		if ($MergedProblem->problem_id == 0) {
 			$problem_name = "snippet";
-			$problem_desc = $problem_name." ".$MergedProblem->source_file
-				." for set ".$MergedProblem->set_id." and user "
-				.$MergedProblem->user_id;
+			$problem_desc = $problem_name." '".$MergedProblem->source_file
+				."' for set '".$MergedProblem->set_id."' and user '"
+				.$MergedProblem->user_id."'";
 		} else {
 			$problem_name = "problem";
-			$problem_desc = $problem_name." ".$MergedProblem->problem_id
-				." in set ".$MergedProblem->set_id." for user "
-				.$MergedProblem->user_id;
+			$problem_desc = $problem_name." '".$MergedProblem->problem_id
+				."' in set '".$MergedProblem->set_id."' for user '"
+				.$MergedProblem->user_id."'";
 		}
 	}
 		
@@ -733,6 +788,9 @@ sub write_problem_tex {
 		);
 		return;
 	}
+	
+	# if we got here, there were no errors (because errors cause a return above)
+	$self->{at_least_one_problem_rendered_without_error} = 1;
 	
 	print $FH $pg->{body_text};
 	
@@ -758,7 +816,7 @@ sub write_tex_file {
 	
 	my $tex = eval { readFile($file) };
 	if ($@) {
-		$self->add_errors("Failed to include TeX file $file: $@");
+		$self->add_errors("Failed to include TeX file '$file': $@");
 	} else {
 		print $FH $tex;
 	}
@@ -770,7 +828,6 @@ sub write_tex_file {
 
 sub add_errors {
 	my ($self, @errors) = @_;
-	#warn "add_errors(".join(", ", map("'$_'", @errors)).")";
 	push @{$self->{hardcopy_errors}}, @errors;
 }
 
