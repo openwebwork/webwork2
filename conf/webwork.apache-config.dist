@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.8 2005/06/02 16:37:11 gage Exp $
+# $CVSHeader: webwork-modperl/conf/webwork.apache-config.dist,v 1.9 2005/08/04 21:35:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,6 +44,15 @@ my $webwork_courses_url = $ce->{webwork_courses_url};
 my $webwork_courses_dir = $ce->{webwork_courses_dir};
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
+##########################################
+# allows Webservice access to WeBWorK
+##########################################
+
+# eval "use WebworkWebservice";die $@ if $@;        #FIXME, is there another way to initialize this?
+# eval "use RQP"; die $@ if $@;
+
+##########################################
+
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
 # Between the line below and the "EOF" line are the three configuration stanzas
@@ -68,6 +77,7 @@ $PerlConfig = <<EOF;
 # Define the location that is handled by the Apache::WeBWorK module, and tell
 # Perl where to find the libraries Apache::WeBWorK needs to run.
 # 
+
 <Location $webwork_url>
 	SetHandler perl-script
 	PerlHandler Apache::WeBWorK
@@ -105,7 +115,7 @@ EOF
 
 $PerlConfig .= <<EOF;
 
-# XMLRPC installation
+########## XMLRPC installation ##########
 # 
 #<Location /mod_xmlrpc>
 #	SetHandler perl-script
@@ -116,7 +126,7 @@ $PerlConfig .= <<EOF;
 #	Allow from All
 #</Location>
 
-# RQP installation
+##########  RQP installation ##########
 # 
 ##<Location /rqp>
 ##	SetHandler perl-script
