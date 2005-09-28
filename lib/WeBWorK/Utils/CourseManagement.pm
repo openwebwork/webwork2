@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.24 2005/08/14 16:51:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.25 2005/09/17 20:13:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -891,11 +891,20 @@ EOF
 	}
 	
 	print $fh <<'EOF';
-# Feedback Mail Recipients (global value typically not defined)
+# By default, feeback is sent to all users who have permission to
+# receive_feedback. If this list is non-empty, feedback is also sent to the
+# addresses specified here.
 # 
-# Defines recipients for feedback mail. If not defined, mail is sent to all
-# instructors and TAs.
+# * If you want to disable feedback altogether, leave this empty and set
+#   $permissionLevels{submit_feeback} = undef;
+#   This will cause the
+#   feedback button to go away as well.
 # 
+# * If you want to send email ONLY to addresses in this list, set
+#   $permissionLevels{receive_feedback} = undef; 
+# 
+# It's often useful to set this in the course.conf to change the behavior of
+# feedback for a specific course.
 # global.conf values:
 EOF
 	
