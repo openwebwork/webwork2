@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.55 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.56 2005/07/30 17:26:45 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -237,6 +237,10 @@ sub pre_header_initialize {
     		$self->{action} = 'add_problem_to_set';
     		last SUBMIT_CASE;
     	};
+    	($submit_button eq 'Make local copy at: ') and do {
+    		$self->{action} = 'make_local_copy';
+    		last SUBMIT_CASE;
+    	};
     	# else
     	die "Unrecognized submit command: |$submit_button|";
     	
@@ -296,13 +300,14 @@ sub pre_header_initialize {
     # FIXME: even with an error we still open a new page because of the target specified in the form
 	
 
-	# Some cases do not need a redirect: save, refresh, save_as, add_problem_to_set, add_header_to_set
+	# Some cases do not need a redirect: save, refresh, save_as, add_problem_to_set, add_header_to_set,make_local_copy
 	my $action = $self->{action};
 
     return unless $action eq 'save' 
 	           or $action eq 'refresh'
 	           or $action eq 'save_as'
 	           or $action eq 'add_problem_to_set'
+	           or $action eq 'make_local_copy'
 	           or $action eq 'add_set_header_to_set';
 	
 
@@ -360,6 +365,24 @@ sub pre_header_initialize {
 
 						}
 				);
+			} elsif ($action eq 'make_local_copy') { # redirect to myself
+				my $edit_level = $r->param("edit_level") || 0;
+				$edit_level++;
+				
+				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+					courseID => $courseName, setID => $setName, problemID => $problemNumber
+				);
+				$viewURL = $self->systemLink($problemPage, 
+				                             params=>{
+				                                 sourceFilePath     => $sourceFilePath, 
+				                                 edit_level         => $edit_level,
+				                                 file_type          => 'source_path_for_problem_file',
+												 status_message     => uri_escape($self->{status_message})
+
+				                             }
+				);
+
+			
 			} elsif ( $action eq 'add_set_header_to_set') {
 				my $targetSetName = $r->param('target_set');
 				my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
@@ -489,8 +512,12 @@ sub initialize  {
 	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
 	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
 	my $protected_file = (not -w $inputFilePath ) and -e $inputFilePath;  #FIXME -- let's try to insure that the input file always exists, even for revert.
+	
+	$self->addmessage($r->param('status_message') ||'');  # record status messages carried over if this is a redirect
 	$self->addbadmessage("Changes in this file have not yet been permanently saved.") if -r $tempFilePath;
-    $self->addbadmessage("This file |$inputFilePath| is protected! To edit this text you must first use 'Save As' to save it to another file.") if $protected_file;
+	
+    $self->addbadmessage("This file '$inputFilePath' is protected! ".CGI::br()."To edit this text you must either 'Make a local copy' of this problem, or 
+                           use 'Save As' to save it to another file.") if $protected_file;
 	
 }
 
@@ -624,7 +651,7 @@ sub body {
 		CGI::end_form();
 	# Prepare add to set  buttons
     my $add_files_to_set_buttons = '';
-	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file' ) {
+	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file' or $file_type eq 'blank_problem' ) {
 		$add_files_to_set_buttons .= CGI::submit(-value=>'Add problem to: ',-name=>'submit' ) ;
 	} 
 	if ($file_type eq 'set_header'      # set header or the problem number is not a regular positive number
@@ -632,7 +659,7 @@ sub body {
 		$add_files_to_set_buttons .=CGI::submit(-value=>'Make this the set header for: ',-name=>'submit' );
 	}
 	# Add pop-up menu for the target set if either of these buttons has been revealed.
-	$add_files_to_set_buttons .= CGI::popup_menu(-name=>'target_set',-values=>\@allSetNames) if $add_files_to_set_buttons;
+	$add_files_to_set_buttons .= CGI::popup_menu(-name=>'target_set',-values=>\@allSetNames, -default=>$setName) if $add_files_to_set_buttons;
 			
  
 	return CGI::p($header),
@@ -671,6 +698,11 @@ sub body {
 			CGI::textfield(-name=>'save_to_new_file', -size=>40, -value=>""),
 			
 		),
+		# allow one to make a local copy if the viewed file can't be edited.  #FIXME the method for determining the localfilePath needs work
+		(-w $editFilePath) ? "" : CGI::p(CGI::hr(),
+            CGI::submit(-value=>'Make local copy at: ',-name=>'submit'), "[TMPL]/".determineLocalFilePath($editFilePath),
+            CGI::hidden(-name=>'local_copy_file_path', -value=>determineLocalFilePath($editFilePath) )
+		),
 		CGI::end_form();
 		
 
@@ -679,6 +711,20 @@ sub body {
 ################################################################################
 # Utilities
 ################################################################################
+
+# determineLocalFilePath   constructs a local file path parallel to a library file path
+# This is a subroutine, not a method
+# 
+sub determineLocalFilePath {
+	my $path = shift;
+	if ($path =~ /Library/) {
+		$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
+	} else { # if its not in a library we'll just save it locally
+		$path = "new_problem_".rand(40);	#l hope there aren't any collisions.
+	}
+    $path;
+
+}
 sub getFilePaths {
 	my ($self, $setName, $problemNumber, $file_type, $TEMPFILESUFFIX) = @_;
 	my $r = $self->r;
@@ -736,8 +782,9 @@ sub getFilePaths {
 		
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-			$self->addbadmessage("$editFilePath is blank problem template file and cannot be edited directly.");
-			$self->addbadmessage("Any changes you make will have to be saved as another file.");
+			$self->addbadmessage("$editFilePath is blank problem template file and should not be edited directly. "
+			                     ."First use 'Save as' to make a local copy, then add the file to the current problem set, then edit the file."
+			);
 			last CASE;
 		};
 		
@@ -958,6 +1005,68 @@ sub saveFileChanges {
 				#$self->addgoodmessage("Saving to file $outputFilePath.");
 			}
 			$self->{problemPath} = $outputFilePath;
+			last ACTION_CASES;
+		};
+		($action eq 'make_local_copy') and do {
+			my $new_file_name =$r->param('local_copy_file_path') || '';
+			#################################################
+			#bail unless this new file name has been defined
+			#################################################
+			if ( $new_file_name !~ /\S/) { # need a non-blank file name
+					# setting $self->{failure} stops saving and any redirects
+					$do_not_save = 1;
+					warn "new file name is $new_file_name";
+					$self->addbadmessage(CGI::p("Please specify a file to save to."));
+					last ACTION_CASES;  #stop processing
+			}
+			#################################################
+			# grab the problemContents from the form in order to save it to a new permanent file
+			# later we will unlink (delete) the current temporary file
+			# store new permanent file name in the $self->problemPath for use in body 
+			#################################################
+			$problemContents = $r->param('problemContents');
+			
+			#################################################
+			# Rescue the user in case they forgot to end the file name with .pg
+			#################################################
+			if($self->{file_type} eq 'problem' 
+			  or $self->{file_type} eq 'blank_problem'
+			  or $self->{file_type} eq 'set_header') {
+					$new_file_name =~ s/\.pg$//; # remove it if it is there
+					$new_file_name .= '.pg'; # put it there
+					
+			}	
+		
+			#################################################
+			# check to prevent overwrites:
+			#################################################			
+			$outputFilePath = $ce->{courseDirs}->{templates} . '/' . 
+										 $new_file_name; 		
+
+			if (defined $outputFilePath and -e $outputFilePath) {
+				# setting $do_not_save stops saving and any redirects
+				$do_not_save = 1;
+				$self->addbadmessage(CGI::p("There is already a file at [TMPL]/$new_file_name.  File not saved."));
+			} else {
+				$self->addgoodmessage("A local copy of $editFilePath is being made...") ;
+			}
+			$self->{problemPath} = $outputFilePath;
+			#################################################
+			# if new file has been successfully saved change the file path name for the problem
+			#################################################	
+			unless ($do_not_save) {
+				my $problemRecord = $db->getGlobalProblem($setName,$problemNumber);
+				$problemRecord->source_file($new_file_name);
+				if  ( $db->putGlobalProblem($problemRecord)  ) {
+					$self->addgoodmessage("A local, editable, copy of $new_file_name has been made for problem $problemNumber.") ;
+					$self->{problemPath} = $outputFilePath;   # define the file path for redirect
+				} else {
+					$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
+				}
+			}
+			
+			
+			
 			last ACTION_CASES;
 		};
 		($action eq 'add_problem_to_set') and do {
