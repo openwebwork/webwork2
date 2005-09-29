@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.63 2005/09/27 23:32:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.64 2005/09/28 21:46:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -105,7 +105,7 @@ sub pre_header_initialize {
 		$self->{send_hardcopy} = 1;
 		return;
 	}
-	
+
 	# this should never happen, but apparently it did once (see bug #714), so we check for it
 	die "Parameter 'user' not defined -- this should never happen" unless defined $userID;
 	
@@ -309,26 +309,43 @@ sub display_form {
 	my $aa = $perm_multiuser ? " " : " a ";
 	my $phrase_for_privileged_users = $perm_multiuser ? "to privileged users or" : "";
 	
-	print CGI::start_p();
-	print "Select the homework set$ss for which to generate${aa}hardcopy version$ss.";
-	if ($authz->hasPermissions($userID, "download_hardcopy_multiuser")) {
-		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
-	}
-	print CGI::end_p();
+# 	print CGI::start_p();
+# 	print "Select the homework set$ss for which to generate${aa}hardcopy version$ss.";
+# 	if ($authz->hasPermissions($userID, "download_hardcopy_multiuser")) {
+# 		print "You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair.";
+# 	}
+# 	print CGI::end_p();
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
 	print CGI::hidden("in_hc_form", 1);
 	
+	if ($perm_multiuser and $perm_multiset) {
+		print CGI::p("Select the homework sets for which to generate hardcopy versions. You may"
+		      ." also select multiple users from the users list. You will receive hardcopy" 
+		      ." for each (set, user) pair.");
+		
+		print CGI::table({class=>"FormLayout"},
+			CGI::Tr(
+				CGI::th("Users"),
+				CGI::th("Sets"),
+			),
+			CGI::Tr(
+				CGI::td($scrolling_user_list),
+				CGI::td($scrolling_set_list),
+			),
+		);
+	} else { # single user mode
+		#FIXME -- do a better job of getting the set and the user when in the single set mode
+		my $selected_set_id = $r->param("selected_sets");
+		my $selected_user_id = $Users[0]->user_id;
+		print CGI::hidden("selected_sets",   $selected_set_id ),
+		      CGI::hidden( "selected_users", $selected_user_id);
+		
+		print CGI::p("Download hardcopy of set ", $selected_set_id, " for ", $Users[0]->first_name, " ",$Users[0]->last_name,"?");
+	
+	}
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
-			CGI::th("Users"),
-			CGI::th("Sets"),
-		),
-		CGI::Tr(
-			CGI::td($scrolling_user_list),
-			CGI::td($scrolling_set_list),
-		),
 		CGI::Tr(
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::small("You may choose to show any of the following data. Correct answers and solutions are only available $phrase_for_privileged_users after the answer date of the homework set."),
@@ -755,7 +772,7 @@ sub write_problem_tex {
 			);
 		} else {
 			# link for a real problem
-			$edit_url = CGI::a({href=>$self->systemLink($edit_urlpath)}, "Edit it");
+			$edit_url = $self->systemLink($edit_urlpath);
 		}
 		
 		if ($MergedProblem->problem_id == 0) {
