@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.64 2005/09/28 21:46:26 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.65 2005/09/29 01:25:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -308,6 +308,7 @@ sub display_form {
 	my $ss = $perm_multiuser ? "s" : "";
 	my $aa = $perm_multiuser ? " " : " a ";
 	my $phrase_for_privileged_users = $perm_multiuser ? "to privileged users or" : "";
+	my $button_label = $perm_multiuser ? "Generate hardcopy for selected sets and selected users" :"Generate hardcopy";
 	
 # 	print CGI::start_p();
 # 	print "Select the homework set$ss for which to generate${aa}hardcopy version$ss.";
@@ -383,7 +384,7 @@ sub display_form {
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::submit(
 					-name => "generate_hardcopy",
-					-value => "Generate hardcopy for selected sets and selected users",
+					-value => $button_label,
 					#-style => "width: 45ex",
 				),
 			),
