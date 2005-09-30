@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.14 2005/08/22 03:27:59 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.15 2005/09/20 23:42:22 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,11 +58,9 @@ sub pre_header_initialize {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-	unless ($authz->hasPermissions($user, "access_instructor_tools")) {
-		$self->addbadmessage("You aren't authorized to manage course files");
-		return;
-	}
-
+	# we don't need to return an error here, because body() will print an error for us :)
+	return unless $authz->hasPermissions($user, "manage_course_files");
+	
 	my $action = $r->param('action');
 	$self->Download if ($action && $action eq 'Download');
 	my $file = $r->param('download');
@@ -111,8 +109,8 @@ sub body {
 	my $user       = $r->param('user');
 	my $key        = $r->param('key');
 	
-	return CGI::em("You are not authorized to access the instructor tools")
-		unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::em("You are not authorized to manage course files")
+		unless $authz->hasPermissions($user, "manage_course_files");
 
 	$self->{pwd} = $self->checkPWD($r->param('pwd') || HOME);
 	return CGI::em("You have specified an illegal working directory!") unless defined $self->{pwd};
