@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.74 2005/08/17 16:05:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.75 2005/09/06 14:17:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -234,44 +234,41 @@ sub dispatch($) {
 			debug("Now we deal with the effective user:\n");
 			my $eUserID = $r->param("effectiveUser") || $userID;
 			debug("userID=$userID eUserID=$eUserID\n");
-			# FIXME: hasPermissions does nothing with $eUserID, and lately we want it to
-			# only accept two arguments, so we're removing $eUserID from this call.
-			#my $su_authorized = $authz->hasPermissions($userID, "become_student", $eUserID);
-			my $su_authorized = $authz->hasPermissions($userID, "become_student");
-			if ($su_authorized) {
-				debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
-			} else {
-				debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-				$eUserID = $userID;
+			if ($userID ne $eUserID) {
+				debug("userID and eUserID differ... seeing if userID has 'become_student' permission.\n");
+				my $su_authorized = $authz->hasPermissions($userID, "become_student");
+				if ($su_authorized) {
+					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
+				} else {
+					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
+					$eUserID = $userID;
+					$r->notes("authen_error" => "You do not have permission to become another user.");
+					$displayModule = AUTHEN_MODULE;
+				}
 			}
+			
+			# set effectiveUser in case it was changed or not set to begin with
 			$r->param("effectiveUser" => $eUserID);
-       # if we're doing a proctored test, after the user has been authenticated
-       #    we need to also check on the proctor.  note that in the gateway quiz
-       #    module we double check this, to be sure that someone isn't taking a 
-       #    proctored quiz but calling the unproctored ContentGenerator
+			
+			# if we're doing a proctored test, after the user has been authenticated
+			# we need to also check on the proctor.  note that in the gateway quiz
+			# module we double check this, to be sure that someone isn't taking a 
+			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
-
 			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
 			    my $procAuthOK = $authen->verifyProctor();
 
-			    if ( $procAuthOK ) {
-				my $proctorUserID = $r->param("proctor_user");
-				my $proctor_authorized = 
-				    $authz->hasPermissions($proctorUserID,
-							   "proctor_quiz", $userID);
-				if ( ! $proctor_authorized ) {
-				    $r->notes("authen_error", 
-					      "Proctor $proctorUserID is not " .
-					      "authorized to proctor tests in " .
-					      "this course.");
-				    $displayModule = PROCTOR_AUTHEN_MODULE;
+			    if ($procAuthOK) {
+					my $proctorUserID = $r->param("proctor_user");
+					my $proctor_authorized = $authz->hasPermissions($proctorUserID, "proctor_quiz");
+					unless ($proctor_authorized) {
+						$r->notes("authen_error", "User $proctorUserID is not authorized to proctor tests in this course.");
+					    $displayModule = PROCTOR_AUTHEN_MODULE;
+					}
+				} else {
+					$displayModule = PROCTOR_AUTHEN_MODULE;
 				}
-
-			    } else {
-				$displayModule = PROCTOR_AUTHEN_MODULE;
-			    }
 			}
-
 		} else {
 			debug("Bad news: authentication failed!\n");
 			$displayModule = AUTHEN_MODULE;
