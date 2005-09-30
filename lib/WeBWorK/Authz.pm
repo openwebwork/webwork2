@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.21 2005/09/05 23:43:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.22 2005/09/06 14:18:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,6 +59,7 @@ activity, regardless of their permission level.
 
 use strict;
 use warnings;
+use Carp qw/croak/;
 
 ################################################################################
 
@@ -146,7 +147,7 @@ sub hasPermissions {
 	if (@_ != 3) {
 		shift @_; # get rid of self
 		my $nargs = @_;
-		die "hasPermissions called with $nargs arguments instead of the expected 2: '@_'"
+		croak "hasPermissions called with $nargs arguments instead of the expected 2: '@_'"
 	}
 	
 	my ($self, $userID, $activity) = @_;
@@ -162,7 +163,7 @@ sub hasPermissions {
 		$PermissionLevel = $self->{PermissionLevel};
 	} else {
 		# a different user, or no user was defined before
-		my $prettyCachedUserID = defined $cachedUserID ? "'$cachedUserID'" : "undefined";
+		#my $prettyCachedUserID = defined $cachedUserID ? "'$cachedUserID'" : "undefined";
 		#warn "hasPermissions called with user '$userID', but cached user is $prettyCachedUserID. Accessing database.\n";
 		$PermissionLevel = $db->getPermissionLevel($userID); # checked
 	}
@@ -182,15 +183,29 @@ sub hasPermissions {
 		return 0;
 	}
 	
+	my $userRoles = $ce->{userRoles};
 	my $permissionLevels = $ce->{permissionLevels};
+	
 	if (exists $permissionLevels->{$activity}) {
-		if (defined $permissionLevels->{$activity}) {
-			return $permission_level >= $permissionLevels->{$activity};
+		my $activity_role = $permissionLevels->{$activity};
+		if (defined $activity_role) {
+			if (exists $userRoles->{$activity_role}) {
+				my $role_permlevel = $userRoles->{$activity_role};
+				if (defined $role_permlevel) {
+					return $permission_level >= $role_permlevel;
+				} else {
+					warn "Role '$activity_role' has undefined permisison level -- assuming no permission.\n";
+					return 0;
+				}
+			} else {
+				warn "Role '$activity_role' for activity '$activity' not found in \%userRoles -- assuming no permission.\n";
+				return 0;
+			}
 		} else {
-			return 0; # nobody has permission to do this
+			return 0; # undefiend $activity_role, no one has permission to perform $activity
 		}
 	} else {
-		warn "Activity '$activity' not found in %permissionLevels -- assuming no permission.\n";
+		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.\n";
 		return 0;
 	}
 }
