@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.25 2004/07/04 14:04:24 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.26 2004/07/12 02:30:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -84,15 +84,13 @@ sub new {
 			die "Included file $file has potentially insecure path: contains \"..\"";
 		} else {
 			local @INC = ();
-			unless (my $result = do $fullPath) {
-				# FIXME: "do" is misbehaving: if there's a syntax error, $@
-				# should be set to the error string, but it's not getting set.
-				# $! is set to an odd error message "Broken pipe" or something.
-				# On the command line, both $! and $@ are set in the case of a
-				# syntax error. This just means that errors will be confusing.
-				$! and die "Failed to read include file $fullPath: $! (has it been created from the corresponding .dist file?)";
-				$@ and die "Failed to compile include file $fullPath: $@";
-				die "Include file $fullPath did not return a true value.";
+			my $result = do $fullPath;
+			if ($!) {
+				warn "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
+			} elsif ($@) {
+				warn "Failed to compile include file $fullPath: $@";
+			} elsif (not $result) {
+				warn "Include file $fullPath did not return a true value.";
 			}
 		}
 	} ];
@@ -102,7 +100,7 @@ sub new {
 	$safe->reval($include);
 	$@ and die "Failed to reval include subroutine: $@";
 	$safe->mask($maskBackup);
-
+	
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
 	
