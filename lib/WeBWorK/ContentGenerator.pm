@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.148 2005/08/28 20:54:51 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.149 2005/09/16 18:49:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -646,8 +646,10 @@ sub links {
 		print CGI::end_li();
 
 	## Library browser
-		print CGI::li(CGI::a({href=>$self->systemLink($maker,params=>{  %displayOptions,})}, sp2nbsp($maker->name))) if $authz->hasPermissions($user, "modify_problem_sets");
-		print CGI::li(CGI::a({href=>$self->systemLink($assigner,params=>{  %displayOptions,})}, sp2nbsp($assigner->name))) if $authz->hasPermissions($user, "assign_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($maker,params=>{  %displayOptions,})}, sp2nbsp($maker->name)))
+			if $authz->hasPermissions($user, "modify_problem_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($assigner,params=>{  %displayOptions,})}, sp2nbsp($assigner->name)))
+			if $authz->hasPermissions($user, "assign_problem_sets");
 	## Stats	
 		print CGI::li(CGI::a({href=>$self->systemLink($stats,params=>{  %displayOptions,})}, sp2nbsp($stats->name)));
 		print CGI::start_li();
@@ -677,10 +679,13 @@ sub links {
 			print CGI::end_ul();
 		print CGI::end_li();
 	## Scoring tools
-		print CGI::li(CGI::a({href=>$self->systemLink($scoring,params=>{  %displayOptions,})}, sp2nbsp($scoring->name))) if $authz->hasPermissions($user, "score_sets");
+		print CGI::li(CGI::a({href=>$self->systemLink($scoring,params=>{  %displayOptions,})}, sp2nbsp($scoring->name)))
+			if $authz->hasPermissions($user, "score_sets");
 	## Email
-		print CGI::li(CGI::a({href=>$self->systemLink($mail,params=>{  %displayOptions,})}, sp2nbsp($mail->name))) if $authz->hasPermissions($user, "send_mail");
-		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr,params=>{  %displayOptions,})}, sp2nbsp($fileMgr->name)));
+		print CGI::li(CGI::a({href=>$self->systemLink($mail,params=>{  %displayOptions,})}, sp2nbsp($mail->name)))
+			if $authz->hasPermissions($user, "send_mail");
+		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr,params=>{  %displayOptions,})}, sp2nbsp($fileMgr->name)))
+			if $authz->hasPermissions($user, "manage_course_files");
 		#print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
 		print CGI::li( $self->helpMacro('instructor_links'));
 		print CGI::end_ul();

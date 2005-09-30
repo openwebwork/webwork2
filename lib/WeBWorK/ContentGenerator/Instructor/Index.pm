@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.47 2004/10/15 19:25:24 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.49 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -399,7 +399,10 @@ sub body {
 						CGI::td(CGI::submit("edit_set_for_users", "Edit"). " one <b>set</b> for  <b>users</b>"),
 						CGI::td({-height=>4}),
 						CGI::td(CGI::submit("email_users", "Email"). " your students"),
-						CGI::td(CGI::submit("transfer_files", "Transfer"). " course files"),
+						($authz->hasPermissions($user, "manage_course_files")
+							? CGI::td(CGI::submit("transfer_files", "Transfer"). " course files")
+							: ()
+						),
 					])
 				)
 			)
