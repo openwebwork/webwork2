@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.26 2004/07/12 02:30:32 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CourseEnvironment.pm,v 1.27 2005/09/30 19:32:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -112,17 +112,21 @@ sub new {
 	# we need a global environment!
 	$@ and die "Could not evaluate global environment file $globalEnvironmentFile: $@";
 	
-	# determine location of courseEnvironmentFile
+	# determine location of courseEnvironmentFile and simple configuration file
 	# pull it out of $safe's symbol table ad hoc
 	# (we don't want to do the hash conversion yet)
 	no strict 'refs';
 	my $courseEnvironmentFile = ${*{${$safe->root."::"}{courseFiles}}}{environment};
+	my $courseWebConfigFile = $seedVars{web_config_filename} ||
+		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
 	use strict 'refs';
 	
 	# read and evaluate the course environment file
 	# if readFile failed, we don't bother trying to reval
 	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
 	$@ or $safe->reval($courseFileContents);
+	my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+	$@ or $safe->reval($courseWebConfigContents);
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';

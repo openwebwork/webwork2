@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.149 2005/09/16 18:49:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.150 2005/09/30 19:36:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -620,6 +620,7 @@ sub links {
 		
 		
 		my $fileMgr = $urlpath->newFromModule("${ipfx}FileManager", %args);
+		my $courseConfig = $urlpath->newFromModule("${ipfx}Config", %args);
 		
 		print CGI::hr();
 		print CGI::start_li();
@@ -685,6 +686,8 @@ sub links {
 		print CGI::li(CGI::a({href=>$self->systemLink($mail,params=>{  %displayOptions,})}, sp2nbsp($mail->name)))
 			if $authz->hasPermissions($user, "send_mail");
 		print CGI::li(CGI::a({href=>$self->systemLink($fileMgr,params=>{  %displayOptions,})}, sp2nbsp($fileMgr->name)))
+			if $authz->hasPermissions($user, "manage_course_files");
+		print CGI::li(CGI::a({href=>$self->systemLink($courseConfig,params=>{  %displayOptions,})}, sp2nbsp($courseConfig->name)))
 			if $authz->hasPermissions($user, "manage_course_files");
 		#print CGI::li(CGI::a({href=>$self->systemLink($fileXfer)}, sp2nbsp($fileXfer->name)));
 		print CGI::li( $self->helpMacro('instructor_links'));
