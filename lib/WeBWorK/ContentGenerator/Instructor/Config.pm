@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.1 2005/10/02 19:51:45 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,6 +15,12 @@
 ################################################################################
 
 # TODO
+#  convert more html to CGI:: calls
+#  put some formatting in css and in ur.css
+#  add type to deal with boxes around problem text
+#  maybe add a type to deal with files like ur.css and templates (where
+#    a copy of the old file gets created for the course and then the
+#    user can modify it).
 
 # The main package starts lower down.  First we define different
 # types of config objects.
@@ -302,8 +308,8 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my @newvals = $self->convert_newval_source($newvalsource);
-	if(scalar(@newvals) == 0) {
-		$self->{Module}->addbadmessage("You need to select at least one display mode.");
+	if($self->{min} and (scalar(@newvals) < $self->{min})) {
+		$self->{Module}->addbadmessage("You need to select at least $self->{min} display mode.");
 		if($newvalsource =~ /widget/) {
 			return $self->save_string($oldval, 'current'); # try to return the old saved value
 		} else {
