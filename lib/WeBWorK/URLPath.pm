@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.24 2005/07/14 13:15:24 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.25 2005/08/12 02:47:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -72,6 +72,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
+ instructor_config                   /$courseID/instructor/config/
  instructor_compare                  /$courseID/instructor/compare/
  
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
@@ -237,6 +238,7 @@ our %pathTypes = (
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
 			instructor_set_assigner instructor_file_transfer instructor_file_manager
 			instructor_problem_editor instructor_set_maker instructor_compare
+			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
 			instructor_progress			
@@ -326,6 +328,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'assigner/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
+	},
+	instructor_config => {
+		name    => 'Course Configuration',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^config/|,
+		capture => [ qw// ],
+		produce => 'config/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Config',
 	},
 	instructor_compare => {
 		name    => 'File Compare',
