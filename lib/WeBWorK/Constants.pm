@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.32 2005/10/02 19:51:44 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.33 2005/10/03 04:32:08 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -221,6 +221,17 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 </ul>',
 		  width => 45,
 		  type => 'text'},
+		{ var => 'mail{feedbackVerbosity}',
+		  doc => 'E-mail verbosity level',
+		  doc2 => 'The e-mail verbosity level controls how much information is
+ automatically added to feedback e-mails.  Levels are
+<ol>
+<li value="0"> send only the feedback comment and context link
+<li value="1"> as in 0, plus user, set, problem, and PG data
+<li value="2"> as in 1, plus the problem environment (debugging data)
+</ol>',
+		  type => 'number'
+		},
 		{ var => 'mail{allowedRecipients}',
 		  doc => 'E-mail addresses which can recieve e-mail from a pg problem',
 		  doc2 => 'List of e-mail addresses to which e-mail can be sent by a problem. Professors need to be added to this list if questionaires are used, or other WeBWorK problems which send e-mail as part of their answer mechanism.',
