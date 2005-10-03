@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.31 2005/09/06 18:55:20 apizer Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.32 2005/10/02 19:51:44 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -160,23 +160,23 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		{ var => 'pg{displayModes}',
 		  doc => 'List of display modes made available to students',
 		  doc2 => 'When viewing a problem, users may choose different methods of rendering
-formulas via an options box in the left panel.  Here, you can adjust what display modes are
-listed.<p>
-Some display modes require other software to be installed on the server.  Be sure to check
-that all display modes selected here work from your server.<p>
-The display modes are <ul>
+ formulas via an options box in the left panel.  Here, you can adjust what display modes are
+ listed.<p>
+ Some display modes require other software to be installed on the server.  Be sure to check
+ that all display modes selected here work from your server.<p>
+ The display modes are <ul>
 <li> plainText: shows the raw LaTeX strings for formulas.
 <li> formattedText: formulas are passed through the external program <code>tth</code>,
-which produces an HTML version of them.  Some browsers do not display all of the fonts
-properly.
+ which produces an HTML version of them.  Some browsers do not display all of the fonts
+ properly.
 <li> images: produces images using the external programs LaTeX and dvipng.
 <li> jsMath: uses javascript to place symbols, which may come from fonts or images
-(the choice is configurable by the end user).
+ (the choice is configurable by the end user).
 <li> asciimath: renders formulas client side using ASCIIMathML
 </ul>
 <p>
 You must use at least one display mode.  If you select only one, then the options box will
-not give a choice of modes (since there will only be one active).',
+ not give a choice of modes (since there will only be one active).',
 		  min  => 1,
 		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath"],
 		  type => 'checkboxlist'},
@@ -195,14 +195,32 @@ not give a choice of modes (since there will only be one active).',
 		{ var => 'pg{ansEvalDefaults}{numRelPercentTolDefault}',
 		  doc => 'Allowed error, as a percentage, for numerical comparisons',
 		  doc2 => "When numerical answers are checked, most test if the student's answer
-is close enough to the programmed answer be computing the error as a percentage of
-the correct answer.  This value controls the default for how close the student answer
-has to be in order to be marked correct.
+ is close enough to the programmed answer be computing the error as a percentage of
+ the correct answer.  This value controls the default for how close the student answer
+ has to be in order to be marked correct.
 <p>
 A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'},
 	],
 	['E-Mail',
+		{ var => 'mail{feedbackSubjectFormat}',
+		  doc => 'Format for the subject line in feedback e-mails',
+		  doc2 => 'When students click the <em>Email Instructor</em> button 
+ to send feedback, WeBWorK fills in the subject line.  Here you can set the 
+ subject line.  In it, you can have various bits of information filled in 
+ with the following escape sequences.
+<p>
+<ul>
+<li> %c = course ID
+<li> %u = user ID  
+<li> %s = set ID
+<li> %p = problem ID
+<li> %x = section
+<li> %r = recitation
+<li> %% = literal percent sign
+</ul>',
+		  width => 45,
+		  type => 'text'},
 		{ var => 'mail{allowedRecipients}',
 		  doc => 'E-mail addresses which can recieve e-mail from a pg problem',
 		  doc2 => 'List of e-mail addresses to which e-mail can be sent by a problem. Professors need to be added to this list if questionaires are used, or other WeBWorK problems which send e-mail as part of their answer mechanism.',
