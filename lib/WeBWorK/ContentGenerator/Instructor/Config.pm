@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.1 2005/10/02 19:51:45 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.2 2005/10/02 20:40:30 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -228,7 +228,7 @@ package configlist;
 sub display_value {
 	my ($self, $val) = @_;
 	return '&nbsp;' if not defined($val);
-	my $str = join(',<br>', @{$val});
+	my $str = join(','.CGI::br(), @{$val});
 	$str = '&nbsp;' if $str !~  /\S/;
 	return $str;
 }
@@ -284,7 +284,7 @@ sub display_value {
 	my ($self, $val) = @_;
 	$val = [] if not defined($val);
 	my @vals = @$val;
-	return join(',<br>', @vals);
+	return join(CGI::br(), @vals);
 }
 
 # here r->param() returns an array, so we need a custom
@@ -539,17 +539,18 @@ is up to date.");
 	my $configTitle = shift @configSectionArray;
 	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
 
-	print '<table border="1">';
+	print CGI::start_table({-border=>"1"});
 	print '<tr>'.CGI::th('What'). CGI::th('Default') .CGI::th('Current');
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";
 		print $conobject->what_string;
-		print CGI::td($conobject->display_value(eval('$default_ce->'.inline_var($con->{var}))));
+		print CGI::td({-align=>"center"}, $conobject->display_value(eval('$default_ce->'.inline_var($con->{var}))));
 		print CGI::td($conobject->entry_widget("widget$widget_count", eval('$ce4->'.inline_var($con->{var}))));
+		print '</tr>';
 		$widget_count++;
 	}
-	print "</table>";
+	print CGI::end_table();
 	print CGI::p(CGI::submit(-name=>'make_changes', -value=>'Save Changes'));
 	print CGI::end_form();
 
