@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.2 2005/10/02 20:40:30 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.3 2005/10/03 00:52:02 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -83,10 +83,11 @@ sub save_string {
 # A widget to interact with the user
 sub entry_widget {
 	my ($self, $name, $default) = @_;
+	my $width = $self->{width} || 15;
 	return CGI::textfield(
 		-name => $name,
 		-value => $default,
-		-size => '15',
+		-size => $width,
 	);
 }
 
@@ -99,7 +100,7 @@ sub what_string {
 		CGI::a({href=>$self->{Module}->systemLink(
 			$r->urlpath->new(type=>'instructor_config',
 				args=>{courseID => $r->urlpath->arg("courseID")}),
-				params=>{show_long_doc=>$self->{doc2} || $self->{doc}, 
+				params=>{show_long_doc=>1,
 					var_name=>"$self->{var}"}),
 			target=>"_blank"},
 			CGI::img({src=>$r->{ce}->{webworkURLs}->{htdocs}.
@@ -501,9 +502,18 @@ sub body {
 	}
 
 	if ($r->param('show_long_doc')) {
+		my $docstring;
+		for my $consec (@$ConfigValues) {
+			my @configSectionArray = @$consec;
+			shift @configSectionArray;
+			for my $con (@configSectionArray) {
+				$docstring = $con->{doc2} || $con->{doc}
+					if($con->{var} eq $r->param('var_name'));
+			}
+		}
 		print CGI::h2("Variable Documentation: ". CGI::code('$'.$r->param('var_name'))),
 			CGI::p(),
-			CGI::blockquote( $r->param('show_long_doc'));
+			CGI::blockquote( $docstring );
 		return "";
 	}
 
