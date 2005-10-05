@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.17 2005/07/27 17:04:53 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.18 2005/08/12 02:47:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -153,7 +153,7 @@ sub body {
 
 	foreach my $userRecord (@userRecords) {
 
-		my $statusClass = $ce->{siteDefaults}->{status}->{$userRecord->{status}} || "";
+		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
 
 		my $user = $userRecord->user_id;
 		my $userSetRecord = $db->getUserSet($user, $setID); #checked

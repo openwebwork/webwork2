@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.42 2005/07/14 20:37:35 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.44 2005/09/27 21:46:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -334,25 +334,26 @@ sub verify($) {
 		}
 		
 		# Make sure user is in the database
-		my $userRecord = $db->getUser($user); # checked
-		unless (defined $userRecord) {
+		my $User = $db->getUser($user); # checked
+		unless (defined $User) {
 			# FIXME too much information!
 			$error = "There is no account for $user in this course.";
 			last VERIFY;
 		}
 		
 		# fix invalid status values (FIXME this should be in DB!)
-		unless (defined $userRecord->status and 
-		        defined($ce->{siteDefaults}->{status}->{$userRecord->status})
-		        ) {
-			$userRecord-> status('C');
-			# need to save this value to the database.
-			$db->putUser($userRecord);
-			warn "Setting status for user $user to C.  It was previously undefined or miss defined.";
+		if (not defined $User->status or not defined $ce->status_abbrev_to_name($User->status)) {
+			my $default_status = $ce->{default_status};
+			die "default_status not defined in course environment" unless defined $default_status;
+			my ($default_abbrev) = $ce->status_name_to_abbrevs($default_status);
+			die "default status has no abbrevs in course environment" unless defined $default_abbrev;
+			$User->status($default_abbrev);
+			$db->putUser($User);
+			warn "Setting status for user $user to '$default_abbrev'. It was previously unset or set to an invalid value.";
 		}
 		
-		# make sure the user hasn't been dropped from the course
-		if ($ce->{siteDefaults}->{status}->{$userRecord->status} eq "Drop") {
+		# make sure users with this user's status are allowed to access the course (jeez...)
+		unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 			# FIXME too much information!
 			$error = "The user $user has been dropped from this course.";
 			last VERIFY;
@@ -523,111 +524,109 @@ sub verify($) {
 # essentially the same as verify(), but pulls out the proctor data from the 
 # form input and uses that with the appropriate database entry names to determine
 # whether the proctor is valid.
-sub verifyProctor ($) {
-    my $self = shift();
-    my $r = $self->{r};
-    my $ce = $r->ce;
-    my $db = $r->db;
-
-    my $user =          $r->param('effectiveUser');
-    my $proctorUser =   $r->param('proctor_user');
-    my $proctorPasswd = $r->param('proctor_passwd');
-    my $proctorKey =    $r->param('proctor_key');
-# we use the following to require a second proctor authorization to grade the
-# test
-    my $submitAnswers = ( defined($r->param('submitAnswers')) ? 
-			  $r->param('submitAnswers') : '' );
-
-    my $failWithoutError = 0;
-    my $error = '';
-
-# we define a key for "effectiveuser,proctoruser" to authorize a test, and 
-# "effectiveuser,proctoruser,g" to authorize grading.
-    my $prKeyIndex = '';
-
-  VERIFY: {
-      unless( ( defined($proctorUser) && $proctorUser ) or 
-	      ( defined($proctorPasswd) && $proctorPasswd ) or 
-	      ( defined($proctorKey) && $proctorKey ) ) {
-	  $failWithoutError = 1;
-	  last VERIFY;
-      }
-
-      unless( defined($proctorUser) ) {
-	  $error = 'Proctor username must be specified.';
-	  last VERIFY;
-      }
-
-      my $proctorUserRecord = $db->getUser( $proctorUser );
-      unless( defined( $proctorUserRecord ) ) {
-	  $error = "There is no proctor account for $proctorUser in this course";
-	  last VERIFY;
-      }
-
-      unless( ! defined( $proctorUserRecord->status() ) ||
-	      $proctorUserRecord->status() eq 'C' ) {
-	  $error = "Proctor user $proctorUser does not have a valid status " .
-	      "in this course.";
-	  last VERIFY;
-      }
-
-      if ( $proctorKey ) {
-	  $r->param( 'proctor_password', '' );
-
-	  $prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
-	  if ( $self->checkKey($prKeyIndex, $proctorKey) ) {
-	      last VERIFY;
-	  } else {
-	      if ( $submitAnswers ) {
-		  $error = 'Assignment requires valid proctor authorization ' . 
-		      'for grading';
-	      } else {
-		  $error = "Invalid or expired proctor session key.";
-	      }
-	      last VERIFY;
-	  }
-      }
-
-      if ( $proctorPasswd ) {
-
-	  if ( $self->checkPassword( $proctorUser, $proctorPasswd ) ) {
-	      $prKeyIndex = "$user,$proctorUser" . 
-		  (($submitAnswers) ? ',g' : '');
-	      my $newKeyObject = $self->generateKey( $prKeyIndex );
-	      $r->param('proctor_passwd', '');
-
-	      eval{ $db->deleteKey( $prKeyIndex ); };
-	      $db->addKey($newKeyObject);
-
-	      $r->param('proctor_key', $newKeyObject->key());
-
-	      last VERIFY;
-	  }  else {
-	      $error = 'Incorrect proctor username or password.';
-	      last VERIFY;
-	  }
-      }
-  }
-    
-    if ( defined($error) && $error ) {
-	$r->notes("authen_error", $error);
-	return 0;
-
-    } elsif ( $failWithoutError ) {
-	return 0;
-
-    } else {
-	return 1;
-    }
+sub verifyProctor {
+	my $self = shift();
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+	my $user          = $r->param('effectiveUser');
+	my $proctorUser   = $r->param('proctor_user');
+	my $proctorPasswd = $r->param('proctor_passwd');
+	my $proctorKey    = $r->param('proctor_key');
+	
+	# we use the following to require a second proctor authorization to grade the test
+	my $submitAnswers = defined($r->param('submitAnswers'))
+		? $r->param('submitAnswers')
+		: '';
+	
+	my $failWithoutError = 0;
+	my $error = '';
+	
+	# we define a key for "effectiveuser,proctoruser" to authorize a test, and 
+	# "effectiveuser,proctoruser,g" to authorize grading.
+	my $prKeyIndex = '';
+	
+	VERIFY: {
+		unless(
+			defined $proctorUser && $proctorUser
+				or
+			defined $proctorPasswd && $proctorPasswd
+				or 
+			defined $proctorKey && $proctorKey
+		) {
+			$failWithoutError = 1;
+			last VERIFY;
+		}
+		
+		unless(defined $proctorUser) {
+			$error = 'Proctor username must be specified.';
+			last VERIFY;
+		}
+		
+		my $Proctor = $db->getUser($proctorUser);
+		unless(defined $Proctor) {
+			# FIXME too much information
+			$error = "There is no proctor account for $proctorUser in this course";
+			last VERIFY;
+		}
+		
+		unless( !defined($Proctor->status) or $Proctor->status() eq 'C' ) {
+			# FIXME too much information
+			$error = "Proctor user $proctorUser does not have a valid status in this course.";
+			last VERIFY;
+		}
+		
+		# make sure proctor has valid status
+		unless($ce->status_abbrev_has_behavior($Proctor->status, "allow_course_access")) {
+			# FIXME too much information
+			$error = "Proctor user $proctorUser does not have a valid status in this course.";
+			last VERIFY;
+		}
+		
+		if ($proctorKey) {
+			$r->param('proctor_password', '');
+			
+			$prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
+			if ($self->checkKey($prKeyIndex, $proctorKey)) {
+				last VERIFY;
+			} else {
+				if ($submitAnswers) {
+					$error = 'Assignment requires valid proctor authorization for grading';
+				} else {
+					$error = "Invalid or expired proctor session key.";
+				}
+				last VERIFY;
+			}
+		}
+		
+		if ($proctorPasswd) {
+			if ($self->checkPassword($proctorUser, $proctorPasswd)) {
+				$prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
+				my $newKeyObject = $self->generateKey( $prKeyIndex );
+				$r->param('proctor_passwd', '');
+				
+				eval{ $db->deleteKey($prKeyIndex); };
+				$db->addKey($newKeyObject);
+				
+				$r->param('proctor_key', $newKeyObject->key);
+				
+				last VERIFY;
+			}  else {
+				$error = 'Incorrect proctor username or password.';
+				last VERIFY;
+			}
+		}
+	}
+	
+	if (defined $error and $error) {
+		$r->notes("authen_error", $error);
+		return 0;
+	} elsif ($failWithoutError) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 1;
-
-__END__
-
-=head1 AUTHOR
-
-Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu, and Sam
-Hathaway, sh002i (at) math.rochester.edu.
-
-=cut

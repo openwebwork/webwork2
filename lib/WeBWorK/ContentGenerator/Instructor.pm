@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.49 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.50 2005/08/22 19:22:31 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -298,7 +298,7 @@ sub assignSetToAllUsers {
 	my @results;
 	
 	foreach my $User (@userRecords) {
-		next if grep /$User->{status}/, @{$self->{r}->{ce}->{siteDefaults}->{statusDrop}};
+		next unless $self->r->ce->status_abbrev_has_behavior($User->status, "include_in_assignment");
 		my $UserSet = $db->newUserSet;
 		my $userID = $User->user_id;
 		$UserSet->user_id($userID);
