@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.70 2005/08/24 19:41:59 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.71 2005/09/28 01:07:59 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1446,7 +1446,7 @@ sub recordEditHTML {
 	my $passwordMode = $options{passwordMode};
 	my $userSelected = $options{userSelected};
 
-	my $statusClass = $ce->{siteDefaults}->{status}->{$User->{status}};
+	my $statusClass = $ce->status_abbrev_to_name($User->status);
 
 	my $sets = $db->countUserSets($User->user_id);
 	my $totalSets = $self->{totalSets};

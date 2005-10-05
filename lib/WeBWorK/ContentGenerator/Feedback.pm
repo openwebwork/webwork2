@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.32 2005/09/22 18:06:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.33 2005/09/22 18:58:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -373,8 +373,11 @@ sub format_user {
 	$result .= "Email:      " . $User->email_address . "\n";
 	$result .= "Student ID: " . $User->student_id . "\n";
 	
-	my %status = %{$ce->{siteDefaults}{status}};
-	$result .= "Status:     " . (exists $status{$User->status} ? $status{$User->status} : $User->status) . "\n";
+	my $status_name = $ce->status_abbrev_to_name($User->status);
+	my $status_string = defined $status_name
+		? "$status_name ('" . $User->status . "')"
+		: $User->status . " (unknown status abbreviation)";
+	$result .= "Status:     $status_string\n";
 	
 	$result .= "Section:    " . $User->section . "\n";
 	$result .= "Recitation: " . $User->recitation . "\n";
