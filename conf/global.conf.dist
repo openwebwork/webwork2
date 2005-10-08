@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.145 2005/10/02 19:44:44 jj Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.146 2005/10/05 18:16:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -489,7 +489,7 @@ $siteDefaults{default_templates_course} ="modelCourse";
 	submit_feedback                => "student",
 	change_password                => "student",
 	change_email_address           => "student",
-
+	
 	proctor_quiz                   => "proctor",
 	
 	view_multiple_sets             => "ta",
@@ -553,6 +553,10 @@ $siteDefaults{default_templates_course} ="modelCourse";
 # Status system
 ################################################################################
 
+# This is the default status given to new students and students with invalid
+# or missing statuses.
+$default_status = "Enrolled";
+
 # The first abbreviation in the abbreviations list is the canonical
 # abbreviation, and will be used when setting the status value in a user record
 # or an exported classlist file.
@@ -563,26 +567,25 @@ $siteDefaults{default_templates_course} ="modelCourse";
 #   allow_course_access   => is this user allowed to log in?
 #   include_in_assignment => is this user included when assigning as set to "all" users?
 #   include_in_stats      => is this user included in statistical reports?
+#   include_in_email      => is this user included in emails sent to the class?
 #   include_in_scoring    => is this user included in score reports?
 
 %statuses = (
 	Enrolled => {
 		abbrevs => [qw/ C c current enrolled /],
-		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats include_in_scoring /],
+		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats
+			include_in_email include_in_scoring /],
 	},
 	Audit => {
 		abbrevs => [qw/ A a audit /],
-		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats /],
+		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats
+			include_in_email /],
 	},
 	Drop => {
 		abbrevs => [qw/ D d drop withdraw /],
 		behaviors => [qw/  /],
 	},
 );
-
-# This is the default status given to new students and students with invalid
-# or missing statuses.
-$default_status = "Enrolled";
 
 ################################################################################
 # Session options
