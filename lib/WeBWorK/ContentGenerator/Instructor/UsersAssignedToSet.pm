@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.18 2005/08/12 02:47:30 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.19 2005/10/05 18:16:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,7 +98,6 @@ sub getSetName {
 	return $pathSetName;
 }
 
-
 sub body {
 	my ($self)         = @_;
 	my $r              = $self->r;
@@ -127,7 +126,7 @@ sub body {
 	           "There is NO undo for unassigning students. "),
 	      CGI::p("When you unassign
 				        by unchecking a student's name, you destroy all
-				        of the data for homework set $setID for this student. You will then need to
+				        of the data for homework set ".CGI::b($setID)." for this student. You will then need to
 				        reassign the set to these students and they will receive new versions of the problems.
 				        Make sure this is what you want to do before unchecking students."
 	);
