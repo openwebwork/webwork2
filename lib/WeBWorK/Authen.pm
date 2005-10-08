@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.44 2005/09/27 21:46:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.45 2005/10/05 18:16:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -287,7 +287,14 @@ sub verify($) {
 		if ($login_practice_user) {
 			# ignore everything else, find an unused practice user
 			my $found = 0;
-			foreach my $userID (sort grep m/^$practiceUserPrefix/, $db->listUsers) {
+			
+			# figure out if there are any valid practice users
+			my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
+			my @GuestUsers = $db->getUsers(@guestUserIDs);
+			my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
+			my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
+			
+			foreach my $userID (@allowedGestUserIDs) {
 				if (not $self->unexpiredKeyExists($userID)) {
 					my $Key = $self->generateKey($userID);
 					$db->addKey($Key);
