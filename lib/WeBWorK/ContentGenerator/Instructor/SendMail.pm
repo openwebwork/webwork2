@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.40 2005/07/01 23:52:12 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.42 2005/09/10 18:21:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -165,7 +165,9 @@ sub initialize {
 #
 
 		foreach my $ur (@user_records) {
-			push(@send_to,$ur->user_id) if $ur->status eq 'C' and not($ur->user_id =~ /practice/);
+			push(@send_to,$ur->user_id)
+				if $ce->status_abbrev_has_behavior($ur->status, "include_in_email")
+					and not $ur->user_id =~ /practice/;
 		}
 	} elsif (defined($recipients) and $recipients eq 'studentID' ) {
 		@send_to                   = $r->param('classList');
@@ -938,13 +940,17 @@ sub process_message {
 	my $text          = defined($self->{r_text}) ? ${ $self->{r_text} }:
 	                        'FIXME no text was produced by initialization!!';	
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';  
+	
+	my $status_name = $self->r->ce->status_abbrev_to_name($ur->status);
+	$status_name = $ur->status unless defined $status_name;
+	
 	#user macros that can be used in the email message
 	my $SID           = $ur->student_id;
 	my $FN            = $ur->first_name;
 	my $LN            = $ur->last_name;
 	my $SECTION       = $ur->section;
 	my $RECITATION    = $ur->recitation;
-	my $STATUS        = $ur->status;
+	my $STATUS        = $status_name;
 	my $EMAIL         = $ur->email_address;
 	my $LOGIN         = $ur->user_id;
 	
@@ -984,9 +990,9 @@ sub process_message {
 }
 
 
-# Ê sub data_format {
+# Ý sub data_format {
 # 
-# Ê Ê Ê Ê Êmap {$_ =~s/\s/\./g;$_} Ê Ê map {sprintf('%-8.8s',$_);} Ê@_;
+# Ý Ý Ý Ý Ýmap {$_ =~s/\s/\./g;$_} Ý Ý map {sprintf('%-8.8s',$_);} Ý@_;
  sub data_format {
  	    map {"COL[$_]".'&nbsp;'x(3-length($_));}  @_;  # problems if $_ has length bigger than 4
  }

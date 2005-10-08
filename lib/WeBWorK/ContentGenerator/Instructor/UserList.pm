@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.71 2005/09/28 01:07:59 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.72 2005/10/05 18:16:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -136,20 +136,21 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	},
 	status => {
-		type => "enumerable",
+		#type => "enumerable",
+		type => "status",
 		size => 4,
 		access => "readwrite",
-		items => {
-			"C" => "Enrolled",
-			"D" => "Drop",
-			"A" => "Audit",
-		},
-		synonyms => {
-			qr/^[ce]/i => "C",
-			qr/^[dw]/i => "D",
-			qr/^a/i => "A",
-			"*" => "C",
-		}
+		#items => {
+		#	"C" => "Enrolled",
+		#	"D" => "Drop",
+		#	"A" => "Audit",
+		#},
+		#synonyms => {
+		#	qr/^[ce]/i => "C",
+		#	qr/^[dw]/i => "D",
+		#	qr/^a/i => "A",
+		#	"*" => "C",
+		#}
 	},
 	section => {
 		type => "text",
@@ -1385,6 +1386,7 @@ sub exportUsersToCSV {
 
 sub fieldEditHTML {
 	my ($self, $fieldName, $value, $properties) = @_;
+	my $ce = $self->r->ce;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -1400,6 +1402,13 @@ sub fieldEditHTML {
 	}
 	
 	if ($access eq "readonly") {
+		# hack for status
+		if ($type eq "status") {
+			my $status_name = $ce->status_abbrev_to_name($value);
+			if (defined $status_name) {
+				$value = "$status_name ($value)";
+			}
+		}
 		return $value;
 	}
 	
@@ -1427,6 +1436,31 @@ sub fieldEditHTML {
 			values => [keys %$items],
 			default => $value,
 			labels => $items,
+		});
+	}
+	
+	if ($type eq "status") {
+		# we used to surreptitously map synonyms to a canonical value...
+		# so should we continue to do that?
+		my $status_name = $ce->status_abbrev_to_name($value);
+		if (defined $status_name) {
+			$value = ($ce->status_name_to_abbrevs($status_name))[0];
+		}
+		
+		my (@values, %labels);
+		while (my ($k, $v) = each %{$ce->{statuses}}) {
+			my @abbrevs = @{$v->{abbrevs}};
+			push @values, $abbrevs[0];
+			foreach my $abbrev (@abbrevs) {
+				$labels{$abbrev} = $k;
+			}
+		}
+		
+		return CGI::popup_menu({
+			name => $fieldName, 
+			values => \@values,
+			default => $value,
+			labels => \%labels,
 		});
 	}
 }

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.16 2005/09/17 16:32:43 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.17 2005/09/19 17:11:26 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -148,12 +148,15 @@ sub scoring_info {
 	$text = join( '', <FILE>);
 	close(FILE);
 	
+	my $status_name = $ce->status_abbrev_to_name($ur->status);
+	$status_name = $ur->status unless defined $status_name;
+	
 	my $SID           = $ur->student_id;
 	my $FN            = $ur->first_name;
 	my $LN            = $ur->last_name;
 	my $SECTION       = $ur->section;
 	my $RECITATION    = $ur->recitation;
-	my $STATUS        = $ur->status;
+	my $STATUS        = $status_name;
 	my $EMAIL         = $ur->email_address;
 	my $LOGIN         = $ur->user_id;
 	my @COL           = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
@@ -161,6 +164,7 @@ sub scoring_info {
 
 	my $endCol        = @COL;
 	# for safety, only evaluate special variables
+	# FIXME /e is not required for simple variable interpolation
 	my $msg = $text; 
 	$msg =~ s/(\$PAR)/<p>/ge;
 	$msg =~ s/(\$BR)/<br>/ge;
