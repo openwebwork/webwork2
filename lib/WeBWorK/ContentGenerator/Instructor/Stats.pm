@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.57 2005/08/29 22:56:07 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.58 2005/09/17 16:32:43 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -324,7 +324,7 @@ sub displaySets {
 		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
-		next if $studentRecord->status !~/C/;              # don't show dropped students FIXME
+		next unless $ce->status_abbrev_has_behavior($studentRecord->status, "include_in_stats");
 		$number_of_active_students++;
 	    my $string          = '';
 	    my $twoString       = '';

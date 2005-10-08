@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.17 2005/01/29 01:29:41 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.18 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -66,7 +66,7 @@ sub initialize {
 			$newUser->section(trim_spaces($r->param("section_$i")));
 			$newUser->recitation(trim_spaces($r->param("recitation_$i")));
 			$newUser->comment(trim_spaces($r->param("comment_$i")));
-			$newUser->status('C');
+			$newUser->status($ce->status_name_to_abbrev($ce->{default_status}));
 			$newPermissionLevel->permission(0);
 			#FIXME  handle errors if user exists already
 			eval { $db->addUser($newUser) };
