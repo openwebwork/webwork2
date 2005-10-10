@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB/Record/User.pm,v 1.5 2003/12/09 01:12:32 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.6 2005/03/29 21:23:34 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,5 +64,39 @@ sub SQL_TYPES {qw(
 	TEXT
 	TEXT
 )}
+
+sub full_name {
+	my ($self) = @_;
+	
+	my $first = $self->first_name;
+	my $last = $self->last_name;
+	
+	if (defined $first and $first ne "" and defined $last and $last ne "") {
+		return "$first $last";
+	} elsif (defined $first and $first ne "") {
+		return $first;
+	} elsif (defined $last and $last ne "") {
+		return $last;
+	} else {
+		return "";
+	}
+}
+
+sub rfc822_mailbox {
+	my ($self) = @_;
+	
+	my $full_name = $self->full_name;
+	my $address = $self->email_address;
+	
+	if (defined $address and $address ne "") {
+		if (defined $full_name and $full_name ne "") {
+			return "$full_name <$address>";
+		} else {
+			return $address;
+		}
+	} else {
+		return "";
+	}
+}
 
 1;
