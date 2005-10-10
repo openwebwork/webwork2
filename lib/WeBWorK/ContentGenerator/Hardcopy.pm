@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.65 2005/09/29 01:25:20 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.66 2005/09/29 17:41:09 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -813,11 +813,12 @@ sub write_problem_tex {
 	print $FH $pg->{body_text};
 	
 	# write the list of correct answers is appropriate
-	if ($showCorrectAnswers && $MergedProblem->problem_id != 0) {
+	my @ans_entry_order = @{$pg->{flags}->{ANSWER_ENTRY_ORDER}};
+	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
 		my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
 			. "\\vspace{-\\parskip}\\begin{itemize}\n";
 		
-		foreach my $ansName (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}) {
+		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
 			$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
 			# FIXME: What about vectors (where TeX will complain about < and > outside of math mode)?
