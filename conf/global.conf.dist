@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.147 2005/10/08 21:56:46 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.148 2005/10/10 22:02:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -117,6 +117,11 @@ $mail{allowedRecipients}     = [
 # 
 # It's often useful to set this in the course.conf to change the behavior of
 # feedback for a specific course.
+# 
+# Items in this list may be bare addresses, or RFC822 mailboxes, like:
+#   'Joe User <joe.user@example.com>'
+# The advantage of this form is that the resulting email will include the name
+# of the recipient in the "To" field of the email.
 # 
 $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',

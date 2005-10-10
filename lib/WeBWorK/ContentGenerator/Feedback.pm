@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.33 2005/09/22 18:58:12 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.34 2005/10/05 18:16:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -164,9 +164,20 @@ sub body {
 		my $verbosity = $ce->{mail}->{feedbackVerbosity};
 		
 		# determine the sender of the email
-		my $sender = ($user && $user->email_address
-			? $user->email_address
-			: $from);
+		my $sender;
+		if ($user) {
+			if ($user->email_address) {
+				$sender = $user->rfc822_mailbox;
+			} else {
+				if ($user->full_name) {
+					$sender = $user->full_name . " <$from>"
+				} else {
+					$sender = $from;
+				}
+			}
+		} else {
+			$sender = $from;
+		}
 		
 		# sanity checks
 		unless ($sender) {
@@ -352,7 +363,7 @@ sub getFeedbackRecipients {
 		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
 			my $rcpt = $db->getUser($rcptName); # checked
 			if ($rcpt and $rcpt->email_address) {
-				push @recipients, $rcpt->email_address;
+				push @recipients, $rcpt->rfc822_mailbox;
 			}
 		}
 	}
@@ -369,7 +380,7 @@ sub format_user {
 	my $ce = $self->r->ce;
 	
 	my $result = "User ID:    " . $User->user_id . "\n";
-	$result .= "Name:       " . $User->first_name . " " . $User->last_name . "\n";
+	$result .= "Name:       " . $User->full_name . "\n";
 	$result .= "Email:      " . $User->email_address . "\n";
 	$result .= "Student ID: " . $User->student_id . "\n";
 	
