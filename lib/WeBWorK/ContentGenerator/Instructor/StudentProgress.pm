@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.20 2005/09/19 17:11:25 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.21 2005/10/08 21:55:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -136,32 +136,27 @@ sub body {
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 		
 	if ($type eq 'student') {
-		my $studentName  = $self->{studentName};
+		my $studentName = $self->{studentName};
+		my $studentRecord = $db->getUser($studentName) # checked
+			or die "record for user $studentName not found";
+		my $fullName = $studentRecord->full_name;
+        my $courseHomePage = $urlpath->new(type  => 'set_list',
+        	args => {courseID=>$courseName});
+		my $email = $studentRecord->email_address;
 		
-		my $studentRecord = $db->getUser($studentName); # checked
-			die "record for user $studentName not found" unless $studentRecord;
-		
-		my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
- 
-        my $courseHomePage     = $urlpath->new(type  => 'set_list',
-												args => {courseID   => $courseName}
-		);
-		my $act_as_student_url = $self->systemLink($courseHomePage,
-												   params => { effectiveUser => $studentName }
-		);
-
-		my $email    = $studentRecord->email_address;
-		print  
-			CGI::a({-href=>"mailto:$email"},$email),CGI::br(),
+		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
 			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation,CGI::br(),
-			'Act as: ',
-			CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);	
-		    WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
+			"Recitation: ", $studentRecord->recitation, CGI::br();
 		
-		# The table format has been borrowed from the Grades.pm module
+		if ($authz->hasPermissions($user, "become_student")) {
+			my $act_as_student_url = $self->systemLink($courseHomePage,
+				params => {effectiveUser=>$studentName});
+			
+			print 'Act as: ', CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+		}
+		
+		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
 	} elsif( $type eq 'set') {
-		my $setName = $self->{setName};
 		$self->displaySets($self->{setName});
 	} elsif ($type eq '') {
 		
