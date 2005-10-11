@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.75 2005/09/06 14:17:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.76 2005/09/30 19:31:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -241,9 +241,10 @@ sub dispatch($) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 				} else {
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-					$eUserID = $userID;
-					$r->notes("authen_error" => "You do not have permission to become another user.");
-					$displayModule = AUTHEN_MODULE;
+					#$eUserID = $userID;
+					#$r->notes("authen_error" => "You do not have permission to become another user.");
+					#$displayModule = AUTHEN_MODULE;
+					die "You are not allowed to act as another user.\n";
 				}
 			}
 			
