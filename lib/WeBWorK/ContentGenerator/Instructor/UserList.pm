@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.72 2005/10/05 18:16:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.73 2005/10/08 21:55:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1297,6 +1297,8 @@ sub importUsersFromCSV {
 		%replaceOK = %allUserIDs;
 	}
 	
+	my $default_permission_level = $ce->{default_permission_level};
+	
 	my (@replaced, @added, @skipped);
 	
 	# get list of hashrefs representing lines in classlist file
@@ -1319,6 +1321,12 @@ sub importUsersFromCSV {
 		if (not exists $allUserIDs{$user_id} and not $createNew) {
 			push @skipped, $user_id;
 			next;
+		}
+		
+		# make sure permission level is numeric
+		unless ($record{permission} =~ m/^[+\-]?\d*$/) {
+			$self->addbadmessage("permission level '$record{permission}' for user '$user_id' is not an integer. using default permission level '$default_permission_level'.\n");
+			$record{permission} = $default_permission_level;
 		}
 		
 		my $User = $db->newUser(%record);
