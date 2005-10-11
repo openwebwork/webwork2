@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.69 2005/09/09 20:52:03 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.70 2005/09/13 01:24:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -322,23 +322,29 @@ $dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
 # time zone.
 # 
 # Error handling has also been improved. Exceptions are now thrown for errors,
-# and more information is given abou the nature of errors.
+# and more information is given about the nature of errors.
 # 
 sub unformatDateAndTime {
 	my ($string) = @_;
-	my $orgString =$string;
+	my $orgString = $string;
+	
 	$string =~ s|^\s+||;
 	$string =~ s|\s+$||;
 	$string =~ s|at| at |i; ## OK if forget to enter spaces or use wrong case
 	$string =~ s|AM| AM|i;	## OK if forget to enter spaces or use wrong case
 	$string =~ s|PM| PM|i;	## OK if forget to enter spaces or use wrong case
 	$string =~ s|,| at |;	## start translating old form of date/time to new form
-    if ($string =~ m|^\s*[\/\d]+\s+[:\d]+| ) {   # case where the at is missing: MM/DD/YYYY at HH:MM AMPM ZONE
-    	die "Incorrect date/time format \"$orgString\". The \"at\" appears to be missing. 
-    		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE (e.g.  \"03/29/2004 at 06:00am EST\")";
-	}
-
-	my($date,$at, $time,$AMPM,$TZ) = split(/\s+/,$string);
+	
+	# case where the at is missing: MM/DD/YYYY at HH:MM AMPM ZONE
+	unformatDateAndTime_error($orgString, "The 'at' appears to be missing.")
+		if $string =~ m|^\s*[\/\d]+\s+[:\d]+|;
+	
+	my ($date, $at, $time, $AMPM, $TZ) = split /\s+/, $string;
+	
+	unformatDateAndTime_error($orgString, "The date and/or time appear to be missing.", $date, $time, $AMPM, $TZ)
+		unless defined $date and defined $at and defined $time;
+	
+	# deal with military time
 	unless ($time =~ /:/) {
 		{  ##bare block for 'case" structure
 			$time =~ /(\d\d)(\d\d)/;
@@ -355,57 +361,56 @@ sub unformatDateAndTime {
 		}  ##end of bare block for 'case" structure
 
 	}
- 
-	my ($mday, $mon, $year, $wday, $yday,$sec, $pm, $min, $hour);
+	
+	# default value for $AMPM
+	$AMPM = "AM" unless defined $AMPM;
+ 	
+	my ($mday, $mon, $year, $wday, $yday, $sec, $pm, $min, $hour);
 	$sec=0;
 	$time =~ /^([0-9]+)\s*\:\s*([0-9]*)/;
 	$min=$2;
 	$hour = $1;
-	if ($hour < 1 or $hour > 12) {
-		die "Incorrect date/time format \"$orgString\". Hour must be in the range [1,12]. 
-		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE (e.g.  \"03/29/2004 at 06:00am EST\")
-			date = $date
-			time = $time
-			ampm = $AMPM
-			zone = $TZ\n";
-	}
-	if ($min < 0 or $min > 59) {
-		die "Incorrect date/time format \"$orgString\". Minute must be in the range [0-59]. 
-		Correct format is MM/DD/YYYY at HH:MM AMPM ZONE
-			date = $date
-			time = $time
-			ampm = $AMPM
-			zone = $TZ\n";
-	}
+	unformatDateAndTime_error($orgString, "Hour must be in the range [1,12].", $date, $time, $AMPM, $TZ)
+		if $hour < 1 or $hour > 12;
+	unformatDateAndTime_error($orgString, "Minute must be in the range [0-59].", $date, $time, $AMPM, $TZ)
+		if $min < 0 or $min > 59;
 	$pm = 0;
 	$pm = 12 if ($AMPM =~/PM/ and $hour < 12);
 	$hour += $pm;
 	$hour = 0 if ($AMPM =~/AM/ and $hour == 12);
-	$date =~  m!([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)! ;
+	$date =~  m|([0-9]+)\s*/\s*([0-9]+)/\s*([0-9]+)|;
 	$mday =$2;
 	$mon=($1-1);
-	if ($mday < 1 or $mday > 31) {
-		die "Incorrect date/time format \"$orgString\". Day must be in the range [1,31]. 
-		Correct format is MM/DD/YY at HH:MM AMPM ZONE
-			date = $date
-			time = $time
-			ampm = $AMPM
-			zone = $TZ\n";
-	}
-	if ($mon < 0 or $mon > 11) {
-		die "Incorrect date/time format \"$orgString\". Month must be in the range [1,12]. 
-		Correct format is MM/DD/YY at HH:MM AMPM ZONE
-			date = $date
-			time = $time
-			ampm = $AMPM
-			zone = $TZ\n";
-	}
+	unformatDateAndTime_error($orgString, "Day must be in the range [1,31].", $date, $time, $AMPM, $TZ)
+		if $mday < 1 or $mday > 31;
+	unformatDateAndTime_error($orgString, "Month must be in the range [1,12].", $date, $time, $AMPM, $TZ)
+		if $mon < 0 or $mon > 11;
 	$year=$3;
 	$wday="";
 	$yday="";
 	return ($sec, $min, $hour, $mday, $mon, $year, $TZ);
 }
 
+sub unformatDateAndTime_error {
+	
+	if (@_ > 2) {
+		my ($orgString, $error, $date, $time, $AMPM, $TZ) = @_;
+		$date = "(undefined)" unless defined $date;
+		$time = "(undefined)" unless defined $time;
+		$AMPM = "(undefined)" unless defined $AMPM;
+		$TZ   = "(undefined)" unless defined $TZ;
+		die "Incorrect date/time format \"$orgString\": $error\n",
+			"Correct format is MM/DD/YY at HH:MM AMPM ZONE\n",
+			"\tdate = $date\n",
+			"\ttime = $time\n",
+			"\tampm = $AMPM\n",
+			"\tzone = $TZ\n";
+	} else {
+		my ($orgString, $error) = @_;
+		die "Incorrect date/time format \"$orgString\": $error\n",
+			"Correct format is MM/DD/YY at HH:MM AMPM ZONE\n";
+	}
+}
 
 sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
