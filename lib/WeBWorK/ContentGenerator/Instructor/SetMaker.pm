@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.56 2005/09/01 01:10:35 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.57 2005/09/02 00:06:21 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -156,13 +156,14 @@ sub get_set_defs {
 	my @found_set_defs;
 	# get_set_defs_wanted is a closure over @found_set_defs
 	my $get_set_defs_wanted = sub {
-		my $fn = $_;
-		my $fdir = $File::Find::dir;
-		return() if($fn !~ /^set.*\.def$/);
-		#return() if(not -T $fn);
-		push @found_set_defs, "$fdir/$fn";
+		#my $fn = $_;
+		#my $fdir = $File::Find::dir;
+		#return() if($fn !~ /^set.*\.def$/);
+		##return() if(not -T $fn);
+		#push @found_set_defs, "$fdir/$fn";
+		push @found_set_defs, $_ if m|/set[^/]*\.def$|;
 	};
-	find({ wanted => $get_set_defs_wanted, follow_fast=>1}, $topdir);
+	find({ wanted => $get_set_defs_wanted, follow_fast=>1, no_chdir=>1}, $topdir);
 	map { $_ =~ s|^$topdir/?|| } @found_set_defs;
 	return @found_set_defs;
 }
@@ -673,7 +674,11 @@ sub browse_setdef_panel {
 	my $ce = $r->ce;
 	my $library_selected = shift;
 	my $default_value = "Select a Set Definition File";
-	my @list_of_set_defs = get_set_defs($ce->{courseDirs}{templates});
+	# in the following line, the parens after sort are important. if they are
+	# omitted, sort will interpret get_set_defs as the name of the comparison
+	# function, and ($ce->{courseDirs}{templates}) as a single element list to
+	# be sorted. *barf*
+	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
 	if(scalar(@list_of_set_defs) == 0) {
 		@list_of_set_defs = (NO_LOCAL_SET_STRING);
 	} elsif (not $library_selected or $library_selected eq $default_value) { 
