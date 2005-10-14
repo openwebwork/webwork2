@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.66 2005/09/29 17:41:09 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.67 2005/10/10 22:34:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -412,21 +412,22 @@ sub generate_hardcopy {
 	my $eUserID = $r->param("effectiveUser");
 	
 	# we want to make the temp directory web-accessible, for error reporting
-	#my $temp_dir_path = eval { makeTempDirectory($ce->{webworkDirs}{tmp}, "webwork-hardcopy") };
 	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy"; # makeTempDirectory will ensure that .../hardcopy exists
 	my $temp_dir_path = eval { makeTempDirectory($temp_dir_parent_path, "work") };
 	if ($@) {
-		$self->add_errors($@);
+		$self->add_errors(CGI::escapeHTML($@));
 		return;
 	}
 	
 	# do some error checking
 	unless (-e $temp_dir_path) {
-		$self->add_errors("Temporary directory '$temp_dir_path' does not exist, but creation didn't fail. This shouldn't happen.");
+		$self->add_errors("Temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))
+			."' does not exist, but creation didn't fail. This shouldn't happen.");
 		return;
 	}
 	unless (-w $temp_dir_path) {
-		$self->add_errors("Temporary directory '$temp_dir_path' is not writeable.");
+		$self->add_errors("Temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))
+			."' is not writeable.");
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
@@ -437,7 +438,8 @@ sub generate_hardcopy {
 	# write TeX
 	my $open_result = open my $FH, ">", $tex_file_path;
 	unless ($open_result) {
-		$self->add_errors("Failed to open file '$tex_file_path' for writing: $!");
+		$self->add_errors("Failed to open file '".CGI::code(CGI::escapeHTML($tex_file_path))
+			."' for writing: ".CGI::code(CGI::escapeHTML($!)));
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
@@ -453,7 +455,8 @@ sub generate_hardcopy {
 	
 	# if no hardcopy.tex file was generated, fail now
 	unless (-e "$temp_dir_path/hardcopy.tex") {
-		$self->add_errors("'hardcopy.tex' not written to temporary directory '$temp_dir_path'. Can't continue.");
+		$self->add_errors("'".CGI::code("hardcopy.tex")."' not written to temporary directory '"
+			.CGI::code(CGI::escapeHTML($temp_dir_path))."'. Can't continue.");
 		$self->delete_temp_dir($temp_dir_path);
 		return;
 	}
@@ -487,7 +490,9 @@ sub generate_hardcopy {
 	
 	# make sure final file exists
 	unless (-e $final_file_path) {
-		$self->add_errors("Final hardcopy file '$final_file_path' not found after calling '$format_subr': $!");
+		$self->add_errors("Final hardcopy file '".CGI::code(CGI::escapeHTML($final_file_path))
+			."' not found after calling '".CGI::code(CGI::escapeHTML($format_subr))."': "
+			.CGI::code(CGI::escapeHTML($!)));
 		return $final_file_url, %temp_file_map;
 	}
 	
@@ -497,8 +502,10 @@ sub generate_hardcopy {
 	my $mv_cmd = "2>&1 /bin/mv " . shell_quote($final_file_path, $final_file_final_path);
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to move hardcopy file '$final_file_name' from '$temp_dir_path' to '$temp_dir_parent_path':"
-			.CGI::br().CGI::pre($mv_out));
+		$self->add_errors("Failed to move hardcopy file '".CGI::code(CGI::escapeHTML($final_file_name))
+			."' from '".CGI::code(CGI::escapeHTML($temp_dir_path))."' to '"
+			.CGI::code(CGI::escapeHTML($temp_dir_parent_path))."':".CGI::br()
+			.CGI::pre(CGI::escapeHTML($mv_out)));
 		$final_file_url = "$temp_dir_url/$final_file_name";
 	} else {
 		$final_file_url = "$temp_dir_parent_url/$final_file_name";
@@ -521,7 +528,7 @@ sub delete_temp_dir {
 	my $rm_cmd = "2>&1 /bin/rm -rf " . shell_quote($temp_dir_path);
 	my $rm_out = readpipe $rm_cmd;
 	if ($?) {
-		$self->add_errors("Failed to remove temporary directory '$temp_dir_path':"
+		$self->add_errors("Failed to remove temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))."':"
 			.CGI::br().CGI::pre($rm_out));
 		return 0;
 	} else {
@@ -549,7 +556,10 @@ sub generate_hardcopy_tex {
 	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path':".CGI::br().CGI::pre($mv_out));
+		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
+			.CGI::code(CGI::escapeHTML($dest_name))."' in directory '"
+			.CGI::code(CGI::escapeHTML($temp_dir_path))."':".CGI::br()
+			.CGI::pre(CGI::escapeHTML($mv_out)));
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
@@ -567,7 +577,35 @@ sub generate_hardcopy_pdf {
 		. $self->r->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (system $pdflatex_cmd) {
-		$self->add_errors("Failed to convert TeX to PDF with command '$pdflatex_cmd'.");
+		$self->add_errors("Failed to convert TeX to PDF with command '"
+			.CGI::code(CGI::escapeHTML($pdflatex_cmd))."'.");
+		
+		# read hardcopy.log and report first error
+		my $hardcopy_log = "$temp_dir_path/hardcopy.log";
+		if (-e $hardcopy_log) {
+			if (open my $LOG, "<", $hardcopy_log) {
+				my $line;
+				while ($line = <$LOG>) {
+					last if $line =~ /^!\s+/;
+				}
+				my $first_error = $line;
+				while ($line = <$LOG>) {
+					last if $line =~ /^!\s+/;
+					$first_error .= $line;
+				}
+				close $LOG;
+				if (defined $first_error) {
+					$self->add_errors("First error in TeX log is:".CGI::br().
+						CGI::pre(CGI::escapeHTML($first_error)));
+				} else {
+					$self->add_errors("No errors encoundered in TeX log.");
+				}
+			} else {
+				$self->add_errors("Could not read TeX log: ".CGI::code(CGI::escapeHTML($!)));
+			}
+		} else {
+			$self->add_errors("No TeX log was found.");
+		}
 	}
 	
 	my $final_file_name;
@@ -578,7 +616,10 @@ sub generate_hardcopy_pdf {
 	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
-		$self->add_errors("Failed to rename '$src_name' to '$dest_name' in directory '$temp_dir_path':".CGI::br().CGI::pre($mv_out));
+		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
+			.CGI::code(CGI::escapeHTML($dest_name))."' in directory '"
+			.CGI::code(CGI::escapeHTML($temp_dir_path))."':".CGI::br()
+			.CGI::pre(CGI::escapeHTML($mv_out)));
 		$final_file_name = $src_name;
 	} else {
 		$final_file_name = $dest_name;
@@ -626,7 +667,7 @@ sub write_multiset_tex {
 	# get user record
 	my $TargetUser = $db->getUser($targetUserID); # checked
 	unless ($TargetUser) {
-		$self->add_errors("Can't generate hardcopy for user '$targetUserID' -- no such user exists.\n");
+		$self->add_errors("Can't generate hardcopy for user '".CGI::code(CGI::escapeHTML($targetUserID))."' -- no such user exists.\n");
 		return;
 	}
 	
@@ -651,17 +692,23 @@ sub write_set_tex {
 	# get set record
 	my $MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
 	unless ($MergedSet) {
-		$self->add_errors("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set is not assigned to that user.");
+		$self->add_errors("Can't generate hardcopy for set ''".CGI::code(CGI::escapeHTML($setID))
+			."' for user '".CGI::code(CGI::escapeHTML($TargetUser->user_id))
+			."' -- set is not assigned to that user.");
 		return;
 	}
 	
 	# see if the *real* user is allowed to access this problem set
 	if ($MergedSet->open_date > time and not $authz->hasPermissions($userID, "view_unopened_sets")) {
-		$self->add_errors("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set is not yet open.");
+		$self->add_errors("Can't generate hardcopy for set '".CGI::code(CGI::escapeHTML($setID))
+			."' for user '".CGI::code(CGI::escapeHTML($TargetUser->user_id))
+			."' -- set is not yet open.");
 		return;
 	}
 	if (not $MergedSet->published and not $authz->hasPermissions($userID, "view_unpublished_sets")) {
-		$self->addbadmessage("Can't generate hardcopy for set '$setID' for user '".$TargetUser->user_id."' -- set has not been published.");
+		$self->addbadmessage("Can't generate hardcopy for set '".CGI::code(CGI::escapeHTML($setID))
+			."' for user '".CGI::code(CGI::escapeHTML($TargetUser->user_id))
+			."' -- set has not been published.");
 		return;
 	}
 	
@@ -706,7 +753,11 @@ sub write_problem_tex {
 		
 		# handle nonexistent problem
 		unless ($MergedProblem) {
-			$self->add_errors("Can't generate hardcopy for problem '$problemID' in set '".$MergedSet->set_id."' for user '".$MergedSet->user_id."' -- problem does not exist in that set or is not assigned to that user.");
+			$self->add_errors("Can't generate hardcopy for problem '"
+				.CGI::code(CGI::escapeHTML($problemID))."' in set '"
+				.CGI::code(CGI::escapeHTML($MergedSet->set_id))
+				."' for user '".CGI::code(CGI::escapeHTML($MergedSet->user_id))
+				."' -- problem does not exist in that set or is not assigned to that user.");
 			return;
 		}
 	} elsif ($pgFile) {
@@ -793,7 +844,7 @@ sub write_problem_tex {
 	if ($pg->{warnings} ne "") {
 		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
 			."Warnings encountered while processing $problem_desc. "
-			."Error text:".CGI::br().CGI::pre($pg->{warnings})
+			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings}))
 		);
 	}
 	
@@ -802,7 +853,7 @@ sub write_problem_tex {
 		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
 			."Errors encountered while processing $problem_desc. "
 			."This $problem_name has been omitted from the hardcopy. "
-			."Error text:".CGI::br().CGI::pre($pg->{errors})
+			."Error text:".CGI::br().CGI::pre(CGI::escpaeHTML($pg->{errors}))
 		);
 		return;
 	}
@@ -835,7 +886,8 @@ sub write_tex_file {
 	
 	my $tex = eval { readFile($file) };
 	if ($@) {
-		$self->add_errors("Failed to include TeX file '$file': $@");
+		$self->add_errors("Failed to include TeX file '".CGI::code(CGI::escapeHTML($file))."': "
+			.CGI::escapeHTML($@));
 	} else {
 		print $FH $tex;
 	}
