@@ -15,7 +15,7 @@ td.LeftPanel a:visited { color: #FF9933; }
 
 div.Logo {  }
 div.Links { font-size: small; }
-div.Siblings { font-size: small; }
+div.Siblings { font-size: small; height: 10em; overflow: auto; }
 div.Options { font-size: small; }
 
 /* top table cell, contains login message and path */
