@@ -675,8 +675,28 @@ sub initialize {
 			}
 			$db->putGlobalSet($setRecord);
 		}
-
-
+		#####################################################################
+		# Add blank problem if needed
+		#####################################################################
+		if (defined($r->param("add_blank_problem") ) and $r->param("add_blank_problem") == 1) {
+					my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+					my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+					my $new_file_path         =  $ce->{courseDirs}->{templates}."/set$setID/blank.pg";
+					#################################################
+					# Update problem record
+					#################################################
+					my $problemRecord  = $self->addProblemToSet(
+							   setName        => $setID,
+							   sourceFile     => $blank_file_path, 
+							   problemID      => $targetProblemNumber, #added to end of set
+					);
+					$self->assignProblemToAllSetUsers($problemRecord);
+					$self->addgoodmessage("Added $blank_file_path to ". $setID. " as problem $targetProblemNumber") ;
+			#warn "A new blank problem has been added at number $targetProblemNumber with source $blank_file_path and record is $problemRecord" ;
+			#FIXME   -- for reasons I don't understand the sourceFile reference is not accepted.
+			# furthermore, while the new problem appears in the listing for problem set details, it doesn't appear in the "hmwk set editor" (ProblemSetEditor.pm)
+			# this snippet was copied from PGProblemSetEditor.pm line 1038 where it appears to work.  What's up??
+		}
 		#####################################################################
 		# Save problem information
 		#####################################################################
@@ -1293,8 +1313,12 @@ sub body {
 		print CGI::checkbox({
 				  label=> "Force problems to be numbered consecutively from one",
 				  name=>"force_renumber", value=>"1"}),
+			  CGI::br(),
+		      CGI::checkbox({
+				  label=> "Add blank problem to set",
+				  name=>"add_blank_problem", value=>"1"}),
 
-		  CGI::br();
+		      CGI::br();
 		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
 		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
 		print CGI::p(<<HERE);

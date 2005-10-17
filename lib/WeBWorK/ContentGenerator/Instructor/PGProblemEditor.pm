@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.57 2005/09/29 01:57:56 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.58 2005/10/17 03:42:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -547,7 +547,7 @@ sub determineLocalFilePath {
 	if ($path =~ /Library/) {
 		$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
 	} else { # if its not in a library we'll just save it locally
-		$path = "new_problem_".rand(40).".pg";	#l hope there aren't any collisions.
+		$path = "new_problem_".int(rand(1000)).".pg";	#l hope there aren't any collisions.
 	}
     $path;
 
@@ -557,7 +557,8 @@ sub determineTempFilePath {  # this does not create the path to the file
 	my $self = shift;  die "determineTempFilePath is a method" unless ref($self);
 	my $path =shift;
 	my $user = $self->r->param("user");
-	$user    = rand(1000) unless defined $user;
+	$user    = int(rand(1000)) unless defined $user;
+	my $setID = $self->{setID} || int(rand(1000));
 	my $courseDirectory = $self->r->ce->{courseDirs};
 	#FIXME  -- we can put all of the temp files in a special directory
 	# so that even library files can viewed.
@@ -565,16 +566,17 @@ sub determineTempFilePath {  # this does not create the path to the file
 	# Calculate the location of the temporary file
 	###############
 	my $templatesDirectory = $courseDirectory->{templates};
+	my $blank_file_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+	my $tmpEditFileDirectory = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
 	if ($path =~ /^$templatesDirectory/ ) {
 		$path =~ s|^$templatesDirectory||;
 		$path =~ s|^/||;   # remove the initial slash if any
+		$path = "$tmpEditFileDirectory/$path.$user.tmp";
+	} elsif ($path eq $blank_file_path) {
+		$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";  # handle the case of the blank problem
 	} else {
 		die "determineTempFilePath should only be used on paths within the templates directory, not on $path";
 	}
-	my $tmpEditFileDirectory = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
-	$path = "$tmpEditFileDirectory/$path.$user.tmp";
-	#$path .= ".$user.tmp";
-	#WeBWorK::Utils::surePathToFile($templatesDirectory, $path);
 	$path;
 }
 sub isTempFilePath  {
@@ -1038,7 +1040,7 @@ sub add_problem_handler {
 		my $problemRecord  = $self->addProblemToSet(
 							   setName        => $targetSetName,
 							   sourceFile     => $sourceFilePath, 
-							   problemID      => $targetProblemNumber,
+							   problemID      => $targetProblemNumber, #added to end of set
 		);
 		$self->assignProblemToAllSetUsers($problemRecord);
 		$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as problem $targetProblemNumber") ;
