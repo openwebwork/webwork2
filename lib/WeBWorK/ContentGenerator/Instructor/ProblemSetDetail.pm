@@ -675,28 +675,7 @@ sub initialize {
 			}
 			$db->putGlobalSet($setRecord);
 		}
-		#####################################################################
-		# Add blank problem if needed
-		#####################################################################
-		if (defined($r->param("add_blank_problem") ) and $r->param("add_blank_problem") == 1) {
-					my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
-					my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-					my $new_file_path         =  $ce->{courseDirs}->{templates}."/set$setID/blank.pg";
-					#################################################
-					# Update problem record
-					#################################################
-					my $problemRecord  = $self->addProblemToSet(
-							   setName        => $setID,
-							   sourceFile     => $blank_file_path, 
-							   problemID      => $targetProblemNumber, #added to end of set
-					);
-					$self->assignProblemToAllSetUsers($problemRecord);
-					$self->addgoodmessage("Added $blank_file_path to ". $setID. " as problem $targetProblemNumber") ;
-			#warn "A new blank problem has been added at number $targetProblemNumber with source $blank_file_path and record is $problemRecord" ;
-			#FIXME   -- for reasons I don't understand the sourceFile reference is not accepted.
-			# furthermore, while the new problem appears in the listing for problem set details, it doesn't appear in the "hmwk set editor" (ProblemSetEditor.pm)
-			# this snippet was copied from PGProblemSetEditor.pm line 1038 where it appears to work.  What's up??
-		}
+		
 		#####################################################################
 		# Save problem information
 		#####################################################################
@@ -805,16 +784,6 @@ sub initialize {
 			}
 		}
 		
-		# Delete all problems marked for deletion
-		foreach my $problemID ($r->param('deleteProblem')) {
-			$db->deleteGlobalProblem($setID, $problemID);
-		}
-		
-		# Sets the specified header to "" so that the default file will get used.
-		foreach my $header ($r->param('defaultHeader')) {
-			$setRecord->$header("");
-		}
-		
 		# Mark the specified problems as correct for all users
 		foreach my $problemID ($r->param('markCorrect')) {
 			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
@@ -826,6 +795,39 @@ sub initialize {
 					$db->putUserProblem($record);
 				}
 			}
+		}
+		
+		# Delete all problems marked for deletion
+		foreach my $problemID ($r->param('deleteProblem')) {
+			$db->deleteGlobalProblem($setID, $problemID);
+		}
+		
+		#####################################################################
+		# Add blank problem if needed
+		#####################################################################
+		if (defined($r->param("add_blank_problem") ) and $r->param("add_blank_problem") == 1) {
+					my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+					my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+					my $new_file_path         =  $ce->{courseDirs}->{templates}."/set$setID/blank.pg";
+					#################################################
+					# Update problem record
+					#################################################
+					my $problemRecord  = $self->addProblemToSet(
+							   setName        => $setID,
+							   sourceFile     => $blank_file_path, 
+							   problemID      => $targetProblemNumber, #added to end of set
+					);
+					#$self->assignProblemToAllSetUsers($problemRecord);
+					$self->addgoodmessage("Added $blank_file_path to ". $setID. " as problem $targetProblemNumber") ;
+			#warn "A new blank problem has been added at number $targetProblemNumber with source $blank_file_path and record is $problemRecord" ;
+			#FIXME   -- for reasons I don't understand the sourceFile reference is not accepted.
+			# furthermore, while the new problem appears in the listing for problem set details, it doesn't appear in the "hmwk set editor" (ProblemSetEditor.pm)
+			# this snippet was copied from PGProblemSetEditor.pm line 1038 where it appears to work.  What's up??
+		}
+		
+		# Sets the specified header to "" so that the default file will get used.
+		foreach my $header ($r->param('defaultHeader')) {
+			$setRecord->$header("");
 		}
 	}	
 	
