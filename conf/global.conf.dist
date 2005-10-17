@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.150 2005/10/10 22:36:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.151 2005/10/11 21:04:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -268,6 +268,9 @@ $courseDirs{macros}      = "$courseDirs{templates}/macros";
 
 # Location of mail-merge templates.
 $courseDirs{email}       = "$courseDirs{templates}/email";
+
+# Location of temporary editing files.
+$courseDirs{tmpEditFileDir}  = "$courseDirs{templates}/tmpEdit";
 
 ################################################################################
 # System-wide files
