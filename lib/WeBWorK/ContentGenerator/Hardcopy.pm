@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.67 2005/10/10 22:34:18 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.68 2005/10/14 19:10:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -853,7 +853,7 @@ sub write_problem_tex {
 		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
 			."Errors encountered while processing $problem_desc. "
 			."This $problem_name has been omitted from the hardcopy. "
-			."Error text:".CGI::br().CGI::pre(CGI::escpaeHTML($pg->{errors}))
+			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors}))
 		);
 		return;
 	}
