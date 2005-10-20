@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.58 2005/10/17 03:42:42 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.59 2005/10/17 13:58:07 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1185,6 +1185,22 @@ sub save_handler {
 				status_message     => uri_escape($self->{status_message})
 			}
 		);
+	} elsif ($file_type eq 'source_path_for_problem_file') {  # redirect to ProblemSets.pm
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		courseID => $courseName, setID => $setName, problemID => $problemNumber
+		);
+		my $viewURL = $self->systemLink($problemPage, 
+			 params=>{
+			    displayMode        => $displayMode,
+				problemSeed        => $problemSeed,
+				editMode           => "savedFile",
+				edit_level         => 0,
+				sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
+				file_type          => 'source_path_for_problem_file',
+				status_message     => uri_escape($self->{status_message})
+
+			 }
+	);
 
 	} else {
 		die "I don't know how to redirect this file type $file_type ";
@@ -1314,7 +1330,9 @@ sub make_local_copy_form {
 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
 	return "" unless -e $editFilePath;
 	return "" if -w $editFilePath;
-	return "" unless $self->{file_type} eq 'problem'  or $self->{file_type} eq 'set_header' ;
+	return "" unless $self->{file_type} eq 'problem'  
+	                 or $self->{file_type} eq 'set_header' ;
+	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy
 	return join ("",
 		"Make local copy at: [TMPL]/".determineLocalFilePath($editFilePath),
 		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>determineLocalFilePath($editFilePath) ),
