@@ -66,7 +66,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 var jsMath = {
   
-  version: "2.1d",  // change this if you edit the file
+  version: "2.3b",  // change this if you edit the file
   
   //
   //  Name of image files
@@ -210,7 +210,7 @@ var jsMath = {
    *  Get the em size and if it has changed, reinitialize the sizes
    */
   ReInit: function () {
-    var em = this.BBoxFor('<DIV STYLE="width: 10em; height: 1em"></DIV>').w/10;
+    var em = this.BBoxFor('<SPAN STYLE="width: 10em; height: 1em"></SPAN>').w/10;
     if (em != this.em) {this.Init(em)}
   },
   
@@ -288,7 +288,8 @@ jsMath.Setup = {
    *  Source a jsMath JavaScript file
    */
   Script: function (file) {
-    document.write('<SCRIPT SRC="'+jsMath.root+file+'"></SCRIPT>');
+    if (!file.match('^([a-zA-Z]+:/)?/')) {file = jsMath.root + file}
+    document.write('<SCRIPT SRC="'+file+'"></SCRIPT>');
   },
   
   /*
@@ -298,7 +299,6 @@ jsMath.Setup = {
     jsMath.hidden = this.TopHTML("Hidden",{'class':"normal"},{
       position:"absolute", top:0, left:0, border:0, padding:0, margin:0
     });
-    jsMath.hiddenDIV = jsMath.hidden;
     return;
   },
 
@@ -764,16 +764,22 @@ jsMath.Font = {
     '<B>No TeX fonts found</B> -- using image fonts instead.<BR>\n'
       + 'These may be slow and might not print well.<BR>\n'
       + 'Use the jsMath control panel to get additional information.',
+      
+  extra_message:
+    'Extra TeX fonts not found: <B><SPAN ID="jsMath.ExtraFonts"></SPAN></B><BR>'
+      + 'Using image fonts instead.  This may be slow and might not print well.<BR>\n'
+      + 'Use the jsMath control panel to get additional information.',
   
   /*
    *  Look to see if a font is found.  HACK!
-   *  Check the character in the '|' position, and see if it is
-   *  wider than the usual '|'.
+   *  Check the character in a given position, and see if it is
+   *  wider than the usual one in that position.
    */
   Test1: function (name,n,factor) {
     if (n == null) {n = 124}; if (factor == null) {factor = 2}
     var wh1 = jsMath.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+jsMath.TeX[name][n].c+'</SPAN>');
     var wh2 = jsMath.BBoxFor('<SPAN STYLE="font-family: serif">'+jsMath.TeX[name][n].c+'</SPAN>');
+    //alert([wh1.w,wh2.w,wh1.h,factor*wh2.w]);
     return (wh1.w > factor*wh2.w && wh1.h != 0);
   },
 
@@ -781,6 +787,7 @@ jsMath.Font = {
     if (n == null) {n = 124}; if (factor == null) {factor = 2}
     var wh1 = jsMath.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+jsMath.TeX[name][n].c+'</SPAN>');
     var wh2 = jsMath.BBoxFor('<SPAN STYLE="font-family: serif">'+jsMath.TeX[name][n].c+'</SPAN>');
+    //alert([wh2.w,wh1.w,wh1.h,factor*wh1.w]);
     return (wh2.w > factor*wh1.w && wh1.h != 0);
   },
   
@@ -843,6 +850,7 @@ jsMath.Font = {
    *  of your page.
    */
   Message: function (message) {
+    if(jsMath.Element("Warning")) return;
     var div = jsMath.Setup.TopHTML("Warning",{'class':'jsM_Warning'},{});
     div.innerHTML = 
       '<CENTER><TABLE><TR><TD>'
@@ -859,7 +867,62 @@ jsMath.Font = {
   HideMessage: function () {
     var message = jsMath.Element("Warning");
     if (message) {message.style.display = "none"}
-  }
+  },
+  
+  /*
+   *  Register an extra font so jsMath knows about it
+   */
+  Register: function (data) {
+    if (typeof(data) == 'string') {data = {name: data}}
+    var fontname = data.name; var name = fontname.replace(/10$/,'');
+    var fontfam = jsMath.TeX.fam.length;
+    if (!data.style) {data.style = "font-family: "+fontname+", serif"}
+    if (!data.styles) {data.styles = {}}
+    if (!data.macros) {data.macros = {}}
+    /*
+     *  Register font family
+     */
+    jsMath.TeX.fam[fontfam] = fontname;
+    data.macros[name] = ['HandleFont',fontfam];
+    jsMath.Add(jsMath.Parser.prototype.macros,data.macros);
+    /*
+     *  Set up styles
+     */
+    data.styles['.'+fontname] = data.style;
+    jsMath.Setup.Styles(data.styles);
+    jsMath.Setup.TeXfont(fontname);
+    /*
+     *  Check for font and give message if missing
+     */
+    var hasTeXfont = !jsMath.nofonts &&
+                      data.test(fontname,data.testChar,data.testFactor);
+    if (hasTeXfont && jsMath.Controls.cookie.font == 'tex') {
+      if (data.tex) {data.tex(fontname,fontfam)}
+      return;
+    }
+    if (!hasTeXfont && jsMath.Controls.cookie.warn &&
+        jsMath.Controls.cookie.font == 'tex' && !jsMath.nofonts) {
+      if (!jsMath.Element("Warning")) this.Message(this.extra_message);
+      var extra = jsMath.Element("ExtraFonts");
+      if (extra) {
+        if (extra.innerHTML != "") {extra.innerHTML += ','}
+        extra.innerHTML += " " + fontname;
+      }
+    }
+    if (jsMath.Controls.cookie.font == 'unicode') {
+      if (data.fallback) {data.fallback(fontname,fontfam)}
+      return;
+    }
+    //  Image fonts
+    var font = {}; font[fontname] = ['all'];
+    jsMath.Img.SetFont(font);
+    jsMath.Img.LoadFont(fontname);
+  },
+
+  /*
+   *  Load a font
+   */
+  Load: function (name) {jsMath.Setup.Script("fonts/"+name+"/def.js")}
   
 };
 
@@ -1930,9 +1993,6 @@ jsMath.Img = {
   // image fonts are loaded
   loaded: 0,
   
-  // temporarily force scaling of images (when jsMath.hidden can't be changed)
-  forceScale: 0,
-  
   // add characters to be drawn using images
   SetFont: function (change) {
     for (var font in change) {
@@ -2225,7 +2285,7 @@ jsMath.Add(jsMath.Box,{
   TeX: function (C,font,style,size) {
     var c = jsMath.TeX[font][C];
     if (c.d == null) {c.d = 0}; if (c.h == null) {c.h = 0}
-    if (c.img != null) this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
+    if (c.img != null && c.c != '') this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
     var scale = jsMath.Typeset.TeX(style,size).scale;
     var h = c.h + jsMath.TeX[font].dh
     var box = new jsMath.Box('text',c.c,c.w*scale,h*scale,c.d*scale);
@@ -2259,7 +2319,7 @@ jsMath.Add(jsMath.Box,{
     var c = jsMath.TeX[font][C];
     if (c.img.size != null && c.img.size == size &&
         c.img.best != null && c.img.best == jsMath.Img.best) return;
-    var mustScale = (jsMath.Img.scale != 1 || jsMath.Img.forceScale);
+    var mustScale = (jsMath.Img.scale != 1);
     var id = jsMath.Img.best + size - 4;
     if (id < 0) {id = 0; mustScale = 1} else
     if (id >= jsMath.Img.fonts.length) {id = jsMath.Img.fonts.length-1; mustScale = 1}
@@ -5445,22 +5505,11 @@ jsMath.Add(jsMath,{
   /*
    *  Move hidden to the location of the math element to be
    *  processed and reinitialize sizes for that location.
-   *  For MSIE (which can't put a DIV inside a SPAN),
-   *    default to the standard hidden DIV, but check to
-   *    see if we need to scale images or not.
    */
   ResetHidden: function (element) {
-    jsMath.Img.forceScale = 0;
-    try {
-      element.innerHTML = '<DIV CLASS="normal" STYLE="position:absolute; top:0; left: 0;"></DIV>';
-      element.className='';
-      jsMath.hidden = element.firstChild;
-    } catch (err) {
-      element.innerHTML = '<SPAN CLASS="normal">M</SPAN>';
-      var w = element.offsetWidth;
-      jsMath.hidden = jsMath.hiddenDIV;
-      jsMath.Img.forceScale = (Math.abs(w-jsMath.BBoxFor("M").w) > w/10);
-    }
+    element.innerHTML = '<SPAN CLASS="normal" STYLE="position:absolute; top:0;left:0;"></SPAN>';
+    element.className='';
+    jsMath.hidden = element.firstChild;
     jsMath.ReInit();
   },
   
@@ -5558,7 +5607,7 @@ jsMath.Add(jsMath,{
   GetMathElements: function (obj) {
     var element = [];
     if (!obj) {obj = document}
-    if (typeof(obj) == 'string') {obj = document.getElementById(ibj)}
+    if (typeof(obj) == 'string') {obj = document.getElementById(obj)}
     if (!obj.getElementsByTagName) return
     var math = obj.getElementsByTagName('DIV');
     for (var k = 0; k < math.length; k++) {

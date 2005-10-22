@@ -28,12 +28,14 @@
 jsMath.Add(jsMath,{
   
   ConvertTeX: function (element) {jsMath.tex2math.ConvertMath("tex",element)},
+  ConvertTeX2: function (element) {jsMath.tex2math.ConvertMath("tex2",element)},
   ConvertLaTeX: function (element) {jsMath.tex2math.ConvertMath("latex",element)},
   
   tex2math: {
     
     pattern: {
-      tex:   /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\]|(\$\$?)(([^$\\]|\\.)*)\9)/,
+      tex:   /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\]|\$\$((\\.|\$[^$\\]|[^$\\])*)\$\$|\$(([^$\\]|\\.)*)\$)/,
+      tex2:  /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\]|\$\$((\\.|\$[^$\\]|[^$\\])*)\$\$)/,
       latex: /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\])/
     },
   
@@ -42,14 +44,13 @@ jsMath.Add(jsMath,{
         if (recurse) return;
         element = document.body;
       }
-      if (typeof(element) == 'string')
-      {element = document.getElementById(element)}
+      if (typeof(element) == 'string') {element = document.getElementById(element)}
       
       var pattern = jsMath.tex2math.pattern[method];
       while (element) {
         if (element.nodeName == '#text') {
           if (!element.parentNode.tagName ||
-              !element.parentNode.tagName.match(/^(SCRIPT|STYLE|TEXTAREA)$/i)) {
+              !element.parentNode.tagName.match(/^(SCRIPT|NOSCRIPT|STYLE|TEXTAREA)$/i)) {
             element = jsMath.tex2math.TeX2math(pattern,element);
           }
         } else {
@@ -67,9 +68,15 @@ jsMath.Add(jsMath,{
         if (element.nodeValue.search(/\\\$/) >= 0)
           {element.nodeValue = element.nodeValue.replace(/\\\$/g,'')}
         math.parentNode.removeChild(math);
-        if (text = (result[5] || result[7] || result[10])) {
+        if (text = (result[5] || result[7] || result[9] || result[11])) {
           tag = jsMath.tex2math.createMathTag(result[4].substr(0,2),text);
-          rest.parentNode.insertBefore(tag,rest);
+	  if (rest.parentNode) {
+	    rest.parentNode.insertBefore(tag,rest);
+	  } else if (element.nextSibling) {
+	    element.parentNode.insertBefore(tag,element.nextSibling);
+	  } else {
+	    element.parentNode.appendChild(tag);
+	  }
         }
         element = rest;
       }

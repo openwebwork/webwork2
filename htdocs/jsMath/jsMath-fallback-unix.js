@@ -874,7 +874,7 @@ jsMath.Add(jsMath.TeX,{
 
 /*
  *  We need to replace the jsMath.Box.TeX function in order to use the
- *  different font metrics in thie tables above, and to handle the
+ *  different font metrics in the tables above, and to handle the
  *  scaling better.
  */
 
@@ -883,7 +883,7 @@ jsMath.Add(jsMath.Box,{
   TeX_orig = jsMath.Box.TeX,
 
   TeX: function (C,font,style,size) {
-    c = jsMath.TeX[font][C];
+    c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
     if (c.img != null) {return this.TeX_orig(C,font,style,size)}
     if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
     var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
