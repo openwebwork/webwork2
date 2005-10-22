@@ -880,9 +880,9 @@ jsMath.Add(jsMath.TeX,{
 
 jsMath.Add(jsMath.Box,{
   TeX: function (C,font,style,size) {
-    c = jsMath.TeX[font][C];
+    c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
     if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
-    if (c.img != null) this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
+    if (c.img != null && c.c != '') this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
     var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
     var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
