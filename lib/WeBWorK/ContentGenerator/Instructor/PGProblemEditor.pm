@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.59 2005/10/17 13:58:07 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.60 2005/10/20 19:40:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -543,9 +543,17 @@ sub body {
 # This is a subroutine, not a method
 # 
 sub determineLocalFilePath {
+	my $self= shift;				die "determineLocalFilePath is a method" unless ref($self);
 	my $path = shift;
+# 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
+# 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $setID = $self->{setID} || int(rand(1000));
 	if ($path =~ /Library/) {
 		$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
+# 	} elsif ($path eq $default_screen_header_path) {
+# 		$path = "set$setID/setHeader.pg";
+# 	} elsif ($path eq $default_hardcopy_header_path) {
+# 		$path = "set$setID/hardcopyHeader.tex";
 	} else { # if its not in a library we'll just save it locally
 		$path = "new_problem_".int(rand(1000)).".pg";	#l hope there aren't any collisions.
 	}
@@ -560,13 +568,13 @@ sub determineTempFilePath {  # this does not create the path to the file
 	$user    = int(rand(1000)) unless defined $user;
 	my $setID = $self->{setID} || int(rand(1000));
 	my $courseDirectory = $self->r->ce->{courseDirs};
-	#FIXME  -- we can put all of the temp files in a special directory
-	# so that even library files can viewed.
 	###############
 	# Calculate the location of the temporary file
 	###############
 	my $templatesDirectory = $courseDirectory->{templates};
-	my $blank_file_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+	my $blank_file_path              = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
+	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $tmpEditFileDirectory = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
 	if ($path =~ /^$templatesDirectory/ ) {
 		$path =~ s|^$templatesDirectory||;
@@ -574,6 +582,10 @@ sub determineTempFilePath {  # this does not create the path to the file
 		$path = "$tmpEditFileDirectory/$path.$user.tmp";
 	} elsif ($path eq $blank_file_path) {
 		$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";  # handle the case of the blank problem
+	} elsif ($path eq $default_screen_header_path) {
+		$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp";  # handle the case of the screen header in snippets 
+	} elsif ($path eq $default_hardcopy_header_path) {
+		$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";  # handle the case of the hardcopy header in snippets 
 	} else {
 		die "determineTempFilePath should only be used on paths within the templates directory, not on $path";
 	}
@@ -1069,9 +1081,9 @@ sub add_problem_handler {
 		#################################################
 		# Update set record
 		#################################################
-		my $setRecord  = $self->db->getGlobalSet($targetSetName);
+		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
 		$setRecord->set_header($sourceFilePath);
-		if(  $self->db->putGlobalSet($setRecord) ) {
+		if(  $self->r->db->putGlobalSet($setRecord) ) {
 			$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as new set header ") ;
 		} else {
 			$self->addbadmessage("Unable to make $sourceFilePath the set header for $targetSetName");
@@ -1330,12 +1342,12 @@ sub make_local_copy_form {
 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
 	return "" unless -e $editFilePath;
 	return "" if -w $editFilePath;
-	return "" unless $self->{file_type} eq 'problem'  
-	                 or $self->{file_type} eq 'set_header' ;
+	return "" unless $self->{file_type} eq 'problem';  
+	                 # or $self->{file_type} eq 'set_header' ;    # need problem structure to make local copy -- not available for header
 	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy
 	return join ("",
-		"Make local copy at: [TMPL]/".determineLocalFilePath($editFilePath),
-		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>determineLocalFilePath($editFilePath) ),
+		"Make local copy at: [TMPL]/".($self->determineLocalFilePath($editFilePath)),
+		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>$self->determineLocalFilePath($editFilePath) ),
 		CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$editFilePath ),
 	);
 
