@@ -52,7 +52,7 @@ safe compartment into a hash. This hash becomes the course environment.
 
 use strict;
 use warnings;
-use Carp qw/croak/;
+use Carp;
 use Safe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
@@ -253,7 +253,7 @@ abbreviation is not found.
 
 sub status_abbrev_to_name {
 	my ($ce, $status_abbrev) = @_;
-	croak "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty"
+	carp "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty"
 		if not defined $status_abbrev or $status_abbrev eq "";
 	
 	return $ce->{_status_abbrev_to_name}{$status_abbrev};
@@ -268,7 +268,7 @@ the status is not found.
 
 sub status_name_to_abbrevs {
 	my ($ce, $status_name) = @_;
-	croak "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty"
+	carp "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty"
 		if not defined $status_name or $status_name eq "";
 	
 	return unless exists $ce->{statuses}{$status_name};
@@ -283,9 +283,9 @@ Return true if $status_name lists $behavior.
 
 sub status_has_behavior {
 	my ($ce, $status_name, $behavior) = @_;
-	croak "status_has_behavior: status_name (first argument) must be defined and non-empty"
+	carp "status_has_behavior: status_name (first argument) must be defined and non-empty"
 		if not defined $status_name or $status_name eq "";
-	croak "status_has_behavior: behavior (second argument) must be defined and non-empty"
+	carp "status_has_behavior: behavior (second argument) must be defined and non-empty"
 		if not defined $behavior or $behavior eq "";
 	
 	if (exists $ce->{statuses}{$status_name}) {
@@ -309,9 +309,9 @@ Return true if the status abbreviated by $status_abbrev lists $behavior.
 
 sub status_abbrev_has_behavior {
 	my ($ce, $status_abbrev, $behavior) = @_;
-	croak "status_abbrev_has_behavior: status_abbrev (first argument) must be defined and non-empty"
+	carp "status_abbrev_has_behavior: status_abbrev (first argument) must be defined and non-empty"
 		if not defined $status_abbrev or $status_abbrev eq "";
-	croak "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty"
+	carp "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty"
 		if not defined $behavior or $behavior eq "";
 	
 	return $ce->status_has_behavior($ce->status_abbrev_to_name($status_abbrev), $behavior);
