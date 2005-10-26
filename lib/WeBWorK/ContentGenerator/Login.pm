@@ -178,9 +178,9 @@ sub body {
 	my @allowedGuestUsers;
 	foreach my $GuestUser (@GuestUsers) {
 		next unless defined $GuestUser->status;
-		next unless $GusetUser->status ne "";
+		next unless $GuestUser->status ne "";
 		push @allowedGuestUsers, $GuestUser
-			if $ce->status_abbrev_has_behavior($_->status, "allow_course_access");
+			if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
 	}
 	
 	# form for guest login
