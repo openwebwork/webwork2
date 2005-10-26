@@ -175,9 +175,13 @@ sub body {
 	# figure out if there are any valid practice users
 	my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 	my @GuestUsers = $db->getUsers(@guestUserIDs);
-	my @allowedGuestUsers = grep { defined $_->status and $_->status ne ""
-		and $ce->status_abbrev_has_behavior($_->status, "allow_course_access")
-	} @GuestUsers;
+	my @allowedGuestUsers;
+	foreach my $GuestUser (@GuestUsers) {
+		next unless defined $GuestUser->status;
+		next unless $GusetUser->status ne "";
+		push @allowedGuestUsers, $GuestUser
+			if $ce->status_abbrev_has_behavior($_->status, "allow_course_access");
+	}
 	
 	# form for guest login
 	if (@allowedGuestUsers) {
