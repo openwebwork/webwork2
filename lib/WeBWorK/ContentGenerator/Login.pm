@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.29 2005/09/14 23:44:52 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.30 2005/10/08 22:07:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -175,7 +175,9 @@ sub body {
 	# figure out if there are any valid practice users
 	my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 	my @GuestUsers = $db->getUsers(@guestUserIDs);
-	my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
+	my @allowedGuestUsers = grep { defined $_->status and $_->status ne ""
+		and $ce->status_abbrev_has_behavior($_->status, "allow_course_access")
+	} @GuestUsers;
 	
 	# form for guest login
 	if (@allowedGuestUsers) {
