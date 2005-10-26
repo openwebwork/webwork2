@@ -253,8 +253,10 @@ abbreviation is not found.
 
 sub status_abbrev_to_name {
 	my ($ce, $status_abbrev) = @_;
-	carp "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty"
-		if not defined $status_abbrev or $status_abbrev eq "";
+	if (not defined $status_abbrev or $status_abbrev eq "") {
+		carp "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty";
+		return;
+	}
 	
 	return $ce->{_status_abbrev_to_name}{$status_abbrev};
 }
@@ -268,8 +270,10 @@ the status is not found.
 
 sub status_name_to_abbrevs {
 	my ($ce, $status_name) = @_;
-	carp "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty"
-		if not defined $status_name or $status_name eq "";
+	if (not defined $status_name or $status_name eq "") {
+		carp "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty";
+		return;
+	}
 	
 	return unless exists $ce->{statuses}{$status_name};
 	return @{$ce->{statuses}{$status_name}{abbrevs}};
@@ -283,10 +287,14 @@ Return true if $status_name lists $behavior.
 
 sub status_has_behavior {
 	my ($ce, $status_name, $behavior) = @_;
-	carp "status_has_behavior: status_name (first argument) must be defined and non-empty"
-		if not defined $status_name or $status_name eq "";
-	carp "status_has_behavior: behavior (second argument) must be defined and non-empty"
-		if not defined $behavior or $behavior eq "";
+	if (not defined $status_name or $status_name eq "") {
+		carp "status_has_behavior: status_name (first argument) must be defined and non-empty";
+		return;
+	}
+	if (not defined $behavior or $behavior eq "") {
+		carp "status_has_behavior: behavior (second argument) must be defined and non-empty";
+		return;
+	}
 	
 	if (exists $ce->{statuses}{$status_name}) {
 		if (exists $ce->{statuses}{$status_name}{behaviors}) {
@@ -309,16 +317,20 @@ Return true if the status abbreviated by $status_abbrev lists $behavior.
 
 sub status_abbrev_has_behavior {
 	my ($ce, $status_abbrev, $behavior) = @_;
-	carp "status_abbrev_has_behavior: status_abbrev (first argument) must be defined and non-empty"
-		if not defined $status_abbrev or $status_abbrev eq "";
-	carp "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty"
-		if not defined $behavior or $behavior eq "";
+	if (not defined $status_abbrev or $status_abbrev eq "") {
+		carp "status_abbrev_has_behavior: status_abbrev (first argument) must be defined and non-empty";
+		return;
+	}
+	if (not defined $behavior or $behavior eq "") {
+		carp "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty";
+		return;
+	}
 	
 	my $status_name = $ce->status_abbrev_to_name($status_abbrev);
 	if (defined $status_name) {
 		return $ce->status_has_behavior($status_name, $behavior);
 	} else {
-		carp "status abbreviation '$status_abbrev' not found in \%statuses -- assuming no behaviors.\n";
+		warn "status abbreviation '$status_abbrev' not found in \%statuses -- assuming no behaviors.\n";
 	}
 }
 
