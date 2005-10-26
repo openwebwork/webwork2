@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.28 2005/10/02 19:51:44 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.29 2005/10/05 18:16:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -253,6 +253,9 @@ abbreviation is not found.
 
 sub status_abbrev_to_name {
 	my ($ce, $status_abbrev) = @_;
+	croak "status_abbrev_to_name: status_abbrev (first argument) must be defined and non-empty"
+		if not defined $status_abbrev or $status_abbrev eq "";
+	
 	return $ce->{_status_abbrev_to_name}{$status_abbrev};
 }
 
@@ -265,6 +268,9 @@ the status is not found.
 
 sub status_name_to_abbrevs {
 	my ($ce, $status_name) = @_;
+	croak "status_name_to_abbrevs: status_name (first argument) must be defined and non-empty"
+		if not defined $status_name or $status_name eq "";
+	
 	return unless exists $ce->{statuses}{$status_name};
 	return @{$ce->{statuses}{$status_name}{abbrevs}};
 }
@@ -277,6 +283,11 @@ Return true if $status_name lists $behavior.
 
 sub status_has_behavior {
 	my ($ce, $status_name, $behavior) = @_;
+	croak "status_has_behavior: status_name (first argument) must be defined and non-empty"
+		if not defined $status_name or $status_name eq "";
+	croak "status_has_behavior: behavior (second argument) must be defined and non-empty"
+		if not defined $behavior or $behavior eq "";
+	
 	if (exists $ce->{statuses}{$status_name}) {
 		if (exists $ce->{statuses}{$status_name}{behaviors}) {
 			my $num_matches = grep { $_ eq $behavior } @{$ce->{statuses}{$status_name}{behaviors}};
@@ -298,6 +309,11 @@ Return true if the status abbreviated by $status_abbrev lists $behavior.
 
 sub status_abbrev_has_behavior {
 	my ($ce, $status_abbrev, $behavior) = @_;
+	croak "status_abbrev_has_behavior: status_abbrev (first argument) must be defined and non-empty"
+		if not defined $status_abbrev or $status_abbrev eq "";
+	croak "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty"
+		if not defined $behavior or $behavior eq "";
+	
 	return $ce->status_has_behavior($ce->status_abbrev_to_name($status_abbrev), $behavior);
 }
 
