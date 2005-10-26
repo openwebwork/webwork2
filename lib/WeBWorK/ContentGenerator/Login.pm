@@ -177,6 +177,7 @@ sub body {
 	my @GuestUsers = $db->getUsers(@guestUserIDs);
 	my @allowedGuestUsers;
 	foreach my $GuestUser (@GuestUsers) {
+		warn "GuestUser=".$GuestUser->toString."\n";
 		next unless defined $GuestUser->status;
 		next unless $GuestUser->status ne "";
 		push @allowedGuestUsers, $GuestUser
