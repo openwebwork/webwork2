@@ -314,7 +314,12 @@ sub status_abbrev_has_behavior {
 	carp "status_abbrev_has_behavior: behavior (second argument) must be defined and non-empty"
 		if not defined $behavior or $behavior eq "";
 	
-	return $ce->status_has_behavior($ce->status_abbrev_to_name($status_abbrev), $behavior);
+	my $status_name = $ce->status_abbrev_to_name($status_abbrev);
+	if (defined $status_name) {
+		return $ce->status_has_behavior($status_name, $behavior);
+	} else {
+		carp "status abbreviation '$status_abbrev' not found in \%statuses -- assuming no behaviors.\n";
+	}
 }
 
 =back
