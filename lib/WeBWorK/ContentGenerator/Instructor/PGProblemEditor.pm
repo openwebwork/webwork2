@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.60 2005/10/20 19:40:43 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.61 2005/10/25 20:34:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -406,6 +406,8 @@ sub body {
 		unless $authz->hasPermissions($user, "modify_student_data");
 
 	
+	
+	
 	# Gathering info
 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
 	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
@@ -416,6 +418,17 @@ sub body {
                                                               # to keep set 0 from being set to the 
                                                               # empty string.
     $problemNumber      = defined($problemNumber) ? $problemNumber : '';
+    
+	#########################################################################    
+    # Construct url for reporting bugs:
+	#########################################################################
+
+	$editFilePath =~ m|([^/]*)Library|;    #find the path to the file
+	my $libraryName = $1;                  # find the library, if any exists in the path name (first library is picked)
+	$libraryName ='rochester' unless defined($libraryName) and $libraryName =~/\S/; # default library
+	
+    my $BUGZILLA = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=Problem%20libraries&component=$libraryName&bug_file_loc=$editFilePath";
+	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to intelligent reporting of bugs.
     
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
@@ -479,22 +492,25 @@ sub body {
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
-		CGI::div(
+		CGI::div(" | ",
 			CGI::a({-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
 				'&nbsp;Manpages&nbsp;',
-			),
+			)," | ",
 			CGI::a({-href=>'http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile',-target=>"manpage_window"},
 				'&nbsp;macro list&nbsp;',
-			),
+			)," | ",
 			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"manpage_window"},
 				'&nbsp;pod docs&nbsp;',
-			),
+			)," | ",
+			CGI::a({-href=>$BUGZILLA,-target=>"bugs_window"},
+				'&nbsp;report problem bugs&nbsp;',
+			)," | ",
 		),
 		CGI::p(
 			CGI::textarea(
 				-name => 'problemContents', -default => $problemContents,
 				-rows => $rows, -columns => $columns, -override => 1,
-			),
+			)," | ",
 		);
 
 
