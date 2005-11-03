@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.68 2005/10/14 19:10:04 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.69 2005/10/19 01:49:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -261,27 +261,34 @@ sub display_form {
 	}
 	
 	# get sets for selection
+	my @globalSetIDs;
 	my @GlobalSets;
 	if ($perm_multiuser) {
 		# if we're allowed to select sets for multiple users, get all sets.
-		@GlobalSets = $db->getGlobalSets($db->listGlobalSets);
+		@globalSetIDs = $db->listGlobalSets;
+		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	} else {
 		# otherwise, only get the sets assigned to the effective user.
 		# note that we are getting GlobalSets, but using the list of UserSets assigned to the
 		# effective user. this is because if we pass UserSets  to ScrollingRecordList it will
 		# give us composite IDs back, which is a pain in the ass to deal with.
-		@GlobalSets = $db->getGlobalSets($db->listUserSets($eUserID));
+		@globalSetIDs = $db->listUserSets($eUserID);
+		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	}
 	
+	$GlobalSets[1] = undef;
+	
 	# filter out unwanted sets
+	my @WantedGlobalSets;
 	foreach my $i (0 .. $#GlobalSets) {
 		my $Set = $GlobalSets[$i];
 		unless (defined $Set) {
-			warn "\$GlobalSets[\$i] not defined -- skipping";
+			warn "\$GlobalSets[\$i] (ID $globalSetIDs[$i]) not defined -- skipping";
 			next;
 		}
-		splice @GlobalSets, $i, 1 unless $Set->open_date <= time or $perm_unopened;
-		splice @GlobalSets, $i, 1 unless $Set->published or $perm_unpublished;
+		next unless $Set->open_date <= time or $perm_unopened;
+		next unless $Set->published or $perm_unpublished;
+		push @WantedGlobalSets, $Set;
 	}
 	
 	my $scrolling_user_list = scrollingRecordList({
@@ -302,7 +309,7 @@ sub display_form {
 		default_filters => ["all"],
 		size => 20,
 		multiple => $perm_multiset,
-	}, @GlobalSets);
+	}, @WantedGlobalSets);
 	
 	# we change the text a little bit depending on whether the user has multiuser privileges
 	my $ss = $perm_multiuser ? "s" : "";
