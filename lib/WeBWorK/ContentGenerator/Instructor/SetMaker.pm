@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.57 2005/09/02 00:06:21 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.58 2005/10/11 22:06:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make problem sets.
 use strict;
 use warnings;
 
-use CGI::Pretty qw();
+use CGI qw();
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);

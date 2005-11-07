@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.34 2005/10/05 18:16:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.35 2005/10/10 22:17:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 use strict;
 use warnings;
 use Data::Dumper;
-use CGI::Pretty qw();
+use CGI qw();
 use Mail::Sender;
 use Text::Wrap qw(wrap);
 use WeBWorK::Utils qw/formatDateTime decodeAnswers/;

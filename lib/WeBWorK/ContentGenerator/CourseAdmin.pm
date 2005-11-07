@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.40 2005/08/14 16:51:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.41 2005/09/15 20:24:44 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::CourseAdmin - Add, rename, and delete courses.
 
 use strict;
 use warnings;
-use CGI::Pretty qw();
+use CGI qw();
 use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
