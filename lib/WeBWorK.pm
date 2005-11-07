@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.76 2005/09/30 19:31:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.77 2005/10/11 20:44:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -223,6 +223,7 @@ sub dispatch($) {
 		
 		debug("...and now we can authenticate the remote user...\n");
 		my $authen = new WeBWorK::Authen($r);
+		$r->authen($authen);
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
 			my $userID = $r->param("user");
