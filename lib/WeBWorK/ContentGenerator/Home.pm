@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Home.pm,v 1.8 2005/07/31 18:13:50 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Home.pm,v 1.9 2005/09/08 17:52:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,13 +25,13 @@ WeBWorK::ContentGenerator::Home - display a list of courses.
 
 use strict;
 use warnings;
-use CGI::Pretty qw();
+use CGI qw();
 use WeBWorK::Utils qw(readFile readDirectory);
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
-sub loginstatus { "" }
-sub links { "" }
-sub options { "" };
+#sub loginstatus { "" }
+#sub links { "" }
+#sub options { "" };
 sub info {
 	my ($self) = @_;
 	my $r = $self->r;
