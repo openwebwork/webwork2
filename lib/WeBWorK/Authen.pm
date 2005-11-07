@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.45 2005/10/05 18:16:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.46 2005/10/08 22:07:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,20 @@ use WeBWorK::Utils qw(writeCourseLog);
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 
+################################################################################
+# Public API
+################################################################################
+
+=head1 CONSTRUCTOR
+
+=over
+
+=item new($r)
+
+Instantiates a new WeBWorK::Authen object for the given WeBWorK::Requst ($r).
+
+=cut
+
 sub new {
 	my ($invocant, $r) = @_;
 	my $class = ref($invocant) || $invocant;
@@ -40,215 +54,25 @@ sub new {
 	return $self;
 }
 
-sub checkPassword($$$) {
-	my ($self, $userID, $possibleClearPassword) = @_;
-	my $db = $self->{r}->db;
-	
-	my $Password = $db->getPassword($userID); # checked
-	return 0 unless defined $Password;
-	
-	# check against WW password database
-	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
-	return 1 if $possibleCryptPassword eq $Password->password;
-	
-	# check site-specific verification method
-	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
-	
-	# fail by default
-	return 0;
-}
+=back
 
-# Site-specific password checking
-# 
-# The site_checkPassword routine can be used to provide a hook to your institution's
-# authentication system. If authentication against the  course's password database, the
-# method $self->site_checkPassword($userID, $clearTextPassword) is called. If this
-# method returns a true value, authentication succeeds.
-# 
-# Here is an example site_checkPassword which checks the password against the Ohio State
-# popmail server:
-# 	sub site_checkPassword($$) {
-# 		my ($self, $userID, $clearTextPassword) = @_;
-# 		use Net::POP3;
-# 		my $pop = Net::POP3->new('pop.service.ohio-state.edu', Timeout => 60);
-# 		if ($pop->login($userID, $clearTextPassword)) {
-# 			return 1;
-# 		}
-# 		return 0;
-# 	}
-# 
-# Since you have access to the WeBWorK::Authen object, the possibilities are limitless!
-# This example checks the password against the system password database and updates the
-# user's password in the course database if it succeeds:
-# 	sub site_checkPassword {
-# 		my ($self, $userID, $clearTextPassword) = @_;
-# 		my $realCryptPassword = (getpwnam $userID)[1] or return 0;
-# 		my $possibleCryptPassword = crypt($possibleClearPassword, $realCryptPassword); # user real PW as salt
-# 		if ($possibleCryptPassword eq $realCryptPassword) {
-# 			# update WeBWorK password
-# 			use WeBWorK::Utils qw(cryptPassword);
-# 			my $db = $self->{r}->db;
-# 			my $Password = $db->getPassword($userID);
-# 			my $pass = cryptPassword($clearTextPassword);
-# 			$Password->password($pass);
-# 			$db->putPassword($Password);
-# 			return 1;
-# 		} else {
-# 			return 0;
-# 		}
-# 	}
-# 
-# 
-# The default site_checkPassword always fails:
-sub site_checkPassword {
-	my ($self, $userID, $clearTextPassword) = @_;
-	return 0;
-}
+=cut
 
-sub generateKey($$) {
-	my ($self, $userID) = @_;
-	my $ce = $self->{r}->ce;
-	
-	my @chars = @{ $ce->{sessionKeyChars} };
-	my $length = $ce->{sessionKeyLength};
-	
-	srand;
-	my $key = join ("", @chars[map rand(@chars), 1 .. $length]);
-	return WeBWorK::DB::Record::Key->new(user_id=>$userID, key=>$key, timestamp=>time);
-}
+=head1 METHODS
 
-sub checkKey($$$) {
-	my ($self, $userID, $possibleKey) = @_;
-	my $ce = $self->{r}->ce;
-	my $db = $self->{r}->db;
-	
-	my $Key = $db->getKey($userID); # checked
-	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
-		if ($possibleKey eq $Key->key()) {
-			# unexpired and matches -- update timestamp
-			$Key->timestamp(time);
-			$db->putKey($Key);
-			return 1;
-		} else {
-			# unexpired but doesn't match -- leave timestamp alone
-			# we do this to keep an attacker from keeping someone's session
-			# alive. (yeah, we don't match IPs.)
-			return 0;
-		}
-	} else {
-		# expired -- delete key
-		$db->deleteKey($userID);
-		return 0;
-	}
-}
+=over
 
-sub unexpiredKeyExists($$) {
-	my ($self, $userID) = @_;
-	my $ce = $self->{r}->ce;
-	my $db = $self->{r}->db;
-	
-	my $Key = $db->getKey($userID); # checked
-	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
-		# unexpired, but leave timestamp alone
-		return 1;
-	} else {
-		# expired -- delete key
-		$db->deleteKey($userID);
-		return 0;
-	}
-}
+=item verify()
 
-sub fetchCookie {
-	my ($self, $user, $key) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $urlpath = $r->urlpath;
-	
-	my $courseID = $urlpath->arg("courseID");
-	
-	my %cookies = Apache::Cookie->fetch;
-	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
-	
-	if ($cookie) {
-		#warn __PACKAGE__, ": fetchCookie: found a cookie for this course: \"", $cookie->as_string, "\"\n";
-		#warn __PACKAGE__, ": fetchCookie: cookie has this value: \"", $cookie->value, "\"\n";
-		my ($userID, $key) = split "\t", $cookie->value;
-		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
-			#warn __PACKAGE__, ": fetchCookie: looks good, returning userID=$userID key=$key\n";
-			return $userID, $key;
-		} else {
-			#warn __PACKAGE__, ": fetchCookie: malformed cookie. returning empty strings.\n";
-			return "", "";
-		}
-	} else {
-		#warn __PACKAGE__, ": fetchCookie: found no cookie for this course. returning empty strings.\n";
-		return "", "";
-	}
-}
+verify() checks several properties of the WeBWorK::Request with which it was
+created to determine if a user is who they say they are. If the verification
+failed because of of invalid authentication data, a note will be written in the
+request explaining why it failed. If the request failed because no
+authentication data was provided, however, no note will be written, as this is
+expected to happen whenever someone types in a URL manually, and is not
+considered an error condition.
 
-sub sendCookie {
-	my ($self, $userID, $key) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	
-	my $courseID = $r->urlpath->arg("courseID");
-	
-	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
-	my $cookie = Apache::Cookie->new($r,
-		-name    => "WeBWorKCourseAuthen.$courseID",
-		-value   => "$userID\t$key",
-		-expires => $expires,
-		-domain  => $r->hostname,
-		-path    => $ce->{webworkURLRoot},
-		-secure  => 0,
-	);
-	my $cookieString = $cookie->as_string;
-	
-	#warn __PACKAGE__, ": sendCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
-	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
-}
-
-sub killCookie {
-	my ($self) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	
-	my $courseID = $r->urlpath->arg("courseID");
-	
-	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
-	my $cookie = Apache::Cookie->new($r,
-		-name => "WeBWorKCourseAuthen.$courseID",
-		-value => "\t",
-		-expires => $expires,
-		-domain => $r->hostname,
-		-path => $ce->{webworkURLRoot},
-		-secure => 0,
-	);
-	my $cookieString = $cookie->as_string;
-	
-	#warn __PACKAGE__, ": killCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
-	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
-}
-
-sub record_login($$) {
-	my ($self, $userID) = @_;
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $timestamp = localtime;
-	($timestamp) = $timestamp =~ /^\w+\s(.*)\s/;
-	my $remote_host = $r->get_remote_host || "(cannot get host)";
-	my $user_agent = $r->header_in("User-Agent");
-	writeCourseLog($ce, "login_log", "$userID on $remote_host ($user_agent)");
-}
-
-# verify will return 1 if the person is who they say the are. If the
-# verification failed because of of invalid authentication data, a note will be
-# written in the request explaining why it failed. If the request failed because
-# no authentication data was provided, however, no note will be written, as this
-# is expected to happen whenever someone types in a URL manually, and is not
-# considered an error condition.
+=cut
 
 # much of the code in verify() is duplicated in verifyProctor(), below.  any 
 # changes that are made to this subroutine should be checked against 
@@ -486,6 +310,9 @@ sub verify($) {
 			$self->killCookie;
 		}
 		
+		# store verification result for fast retrevial later
+		$self->{was_verified} = 0;
+		
 		return 0;
 	} elsif ($failWithoutError) {
 		# authentication failed, but we don't have any error message to report
@@ -496,6 +323,9 @@ sub verify($) {
 			#warn "fail without error: killing cookie";
 			$self->killCookie;
 		}
+		
+		# store verification result for fast retrevial later
+		$self->{was_verified} = 0;
 		
 		return 0;
 	} else {
@@ -523,14 +353,49 @@ sub verify($) {
 			#warn "succeed: killing cookie";
 			$self->killCookie;
 		}
+		
+		# store verification result for fast retrevial later
+		$self->{was_verified} = 1;
+		
 		return 1;
 	}
 }
 
-# verifyProctor will return 1 if the proctor is who they say they are.  It is 
-# essentially the same as verify(), but pulls out the proctor data from the 
-# form input and uses that with the appropriate database entry names to determine
-# whether the proctor is valid.
+=item was_verified()
+
+Returns true if verify() returned true the last time it was called.
+
+=cut
+
+sub was_verified {
+	my ($self) = @_;
+	
+	return 1 if exists $self->{was_verified} and $self->{was_verified};
+	return 0;
+}
+
+=item forget_verification()
+
+Future calls to was_verified() will return false, until verify() is called again and succeeds.
+
+=cut
+
+sub forget_verification {
+	my ($self) = @_;
+	
+	$self->{was_verified} = 0;
+}
+
+=item verifyProctor()
+
+verifyProctor() checks several properties of the WeBWorK::Request with which it
+was created to determine if a proctor is who they say they are. It is
+essentially the same as verify(), but pulls out the proctor data from the form
+input and uses that with the appropriate database entry names to determine
+whether the proctor is valid.
+
+=cut
+
 sub verifyProctor {
 	my $self = shift();
 	my $r = $self->{r};
@@ -634,6 +499,229 @@ sub verifyProctor {
 	} else {
 		return 1;
 	}
+}
+
+=back
+
+=cut
+
+################################################################################
+# Password management
+################################################################################
+
+sub checkPassword($$$) {
+	my ($self, $userID, $possibleClearPassword) = @_;
+	my $db = $self->{r}->db;
+	
+	my $Password = $db->getPassword($userID); # checked
+	return 0 unless defined $Password;
+	
+	# check against WW password database
+	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
+	return 1 if $possibleCryptPassword eq $Password->password;
+	
+	# check site-specific verification method
+	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
+	
+	# fail by default
+	return 0;
+}
+
+# Site-specific password checking
+# 
+# The site_checkPassword routine can be used to provide a hook to your institution's
+# authentication system. If authentication against the  course's password database, the
+# method $self->site_checkPassword($userID, $clearTextPassword) is called. If this
+# method returns a true value, authentication succeeds.
+# 
+# Here is an example site_checkPassword which checks the password against the Ohio State
+# popmail server:
+# 	sub site_checkPassword($$) {
+# 		my ($self, $userID, $clearTextPassword) = @_;
+# 		use Net::POP3;
+# 		my $pop = Net::POP3->new('pop.service.ohio-state.edu', Timeout => 60);
+# 		if ($pop->login($userID, $clearTextPassword)) {
+# 			return 1;
+# 		}
+# 		return 0;
+# 	}
+# 
+# Since you have access to the WeBWorK::Authen object, the possibilities are limitless!
+# This example checks the password against the system password database and updates the
+# user's password in the course database if it succeeds:
+# 	sub site_checkPassword {
+# 		my ($self, $userID, $clearTextPassword) = @_;
+# 		my $realCryptPassword = (getpwnam $userID)[1] or return 0;
+# 		my $possibleCryptPassword = crypt($possibleClearPassword, $realCryptPassword); # user real PW as salt
+# 		if ($possibleCryptPassword eq $realCryptPassword) {
+# 			# update WeBWorK password
+# 			use WeBWorK::Utils qw(cryptPassword);
+# 			my $db = $self->{r}->db;
+# 			my $Password = $db->getPassword($userID);
+# 			my $pass = cryptPassword($clearTextPassword);
+# 			$Password->password($pass);
+# 			$db->putPassword($Password);
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	}
+# 
+# 
+# The default site_checkPassword always fails:
+sub site_checkPassword {
+	my ($self, $userID, $clearTextPassword) = @_;
+	return 0;
+}
+
+################################################################################
+# Session key management
+################################################################################
+
+sub generateKey($$) {
+	my ($self, $userID) = @_;
+	my $ce = $self->{r}->ce;
+	
+	my @chars = @{ $ce->{sessionKeyChars} };
+	my $length = $ce->{sessionKeyLength};
+	
+	srand;
+	my $key = join ("", @chars[map rand(@chars), 1 .. $length]);
+	return WeBWorK::DB::Record::Key->new(user_id=>$userID, key=>$key, timestamp=>time);
+}
+
+sub checkKey($$$) {
+	my ($self, $userID, $possibleKey) = @_;
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $Key = $db->getKey($userID); # checked
+	return 0 unless defined $Key;
+	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
+		if ($possibleKey eq $Key->key()) {
+			# unexpired and matches -- update timestamp
+			$Key->timestamp(time);
+			$db->putKey($Key);
+			return 1;
+		} else {
+			# unexpired but doesn't match -- leave timestamp alone
+			# we do this to keep an attacker from keeping someone's session
+			# alive. (yeah, we don't match IPs.)
+			return 0;
+		}
+	} else {
+		# expired -- delete key
+		$db->deleteKey($userID);
+		return 0;
+	}
+}
+
+sub unexpiredKeyExists($$) {
+	my ($self, $userID) = @_;
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $Key = $db->getKey($userID); # checked
+	return 0 unless defined $Key;
+	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
+		# unexpired, but leave timestamp alone
+		return 1;
+	} else {
+		# expired -- delete key
+		$db->deleteKey($userID);
+		return 0;
+	}
+}
+
+################################################################################
+# Cookie management
+################################################################################
+
+sub fetchCookie {
+	my ($self, $user, $key) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	
+	my $courseID = $urlpath->arg("courseID");
+	
+	my %cookies = Apache::Cookie->fetch;
+	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+	
+	if ($cookie) {
+		#warn __PACKAGE__, ": fetchCookie: found a cookie for this course: \"", $cookie->as_string, "\"\n";
+		#warn __PACKAGE__, ": fetchCookie: cookie has this value: \"", $cookie->value, "\"\n";
+		my ($userID, $key) = split "\t", $cookie->value;
+		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
+			#warn __PACKAGE__, ": fetchCookie: looks good, returning userID=$userID key=$key\n";
+			return $userID, $key;
+		} else {
+			#warn __PACKAGE__, ": fetchCookie: malformed cookie. returning empty strings.\n";
+			return "", "";
+		}
+	} else {
+		#warn __PACKAGE__, ": fetchCookie: found no cookie for this course. returning empty strings.\n";
+		return "", "";
+	}
+}
+
+sub sendCookie {
+	my ($self, $userID, $key) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	
+	my $courseID = $r->urlpath->arg("courseID");
+	
+	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
+	my $cookie = Apache::Cookie->new($r,
+		-name    => "WeBWorKCourseAuthen.$courseID",
+		-value   => "$userID\t$key",
+		-expires => $expires,
+		-domain  => $r->hostname,
+		-path    => $ce->{webworkURLRoot},
+		-secure  => 0,
+	);
+	my $cookieString = $cookie->as_string;
+	
+	#warn __PACKAGE__, ": sendCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
+	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+}
+
+sub killCookie {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	
+	my $courseID = $r->urlpath->arg("courseID");
+	
+	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
+	my $cookie = Apache::Cookie->new($r,
+		-name => "WeBWorKCourseAuthen.$courseID",
+		-value => "\t",
+		-expires => $expires,
+		-domain => $r->hostname,
+		-path => $ce->{webworkURLRoot},
+		-secure => 0,
+	);
+	my $cookieString = $cookie->as_string;
+	
+	#warn __PACKAGE__, ": killCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
+	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+}
+
+################################################################################
+# Utilities
+################################################################################
+
+sub record_login($$) {
+	my ($self, $userID) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $timestamp = localtime;
+	($timestamp) = $timestamp =~ /^\w+\s(.*)\s/;
+	my $remote_host = $r->get_remote_host || "(cannot get host)";
+	my $user_agent = $r->header_in("User-Agent");
+	writeCourseLog($ce, "login_log", "$userID on $remote_host ($user_agent)");
 }
 
 1;
