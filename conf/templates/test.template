@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/test.template,v 1.2 2003/12/09 01:12:29 sh002i Exp $
+# $CVSHeader: webwork2/conf/templates/test.template,v 1.3 2004/01/05 13:51:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -21,15 +21,91 @@
 -->
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
- <head>
-  <title>WeBWorK Test Template</title>
- </head>
- <body>
-  <h1>#path</h1>	<div><!--#path style="image" image="webwork_files/images/right_arrow.png" text=" > "--></div>
-  <h1>#quicklinks</h1>	<div><!--#quicklinks--></div>
-  <h1>#siblings</h1>	<div><!--#siblings--></div>
-  <h1>#nav</h1>		<div><!--#nav style="image" imagesuffix=".png" separator=" | "--></div>
-  <h1>#title</h1>	<div><!--#title--></div>
-  <h1>#body</h1>	<div><!--#body--></div>
- </body>
+<head>
+<title>WeBWorK Test Template</title>
+<style type="text/css">
+div.test_box { border: 1px solid black }
+</style>
+<!--#head-->
+</head>
+<body>
+
+<h1>help</h1>
+<div class="test_box">
+<!--#help-->
+</div>
+
+<h1>links</h1>
+<div class="test_box">
+<!--#links-->
+</div>
+
+<h1>siblings</h1>
+<div class="test_box">
+<!--#siblings-->
+</div>
+
+<h1>options</h1>
+<div class="test_box">
+<!--#options-->
+</div>
+
+<h1>path</h1>
+<div class="test_box">
+<!--#path style="text" text=" > "-->
+</div>
+
+<h1>loginstatus</h1>
+<div class="test_box">
+<!--#loginstatus-->
+</div>
+
+<h1>nav</h1>
+<div class="test_box">
+<!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+</div>
+
+<h1>title</h1>
+<div class="test_box">
+<!--#title-->
+</div>
+
+<h1>message</h1>
+<p>used for addmessage/addgoodmessae/addbadmessage... displayed at top and bottom of page in ur.template.</p>
+<div class="test_box">
+<!--#message-->
+</div>
+
+<h1>submiterror</h1>
+<p>this should go away... it is only used in three places (Grades, SendMail, ShowAnswers), and could be replaced with calls to addbadmessage.</p>
+<div class="test_box">
+<!--#submiterror-->
+</div>
+
+<h1>body</h1>
+<div class="test_box">
+<!--#body-->
+</div>
+
+<h1>warnings</h1>
+<div class="test_box">
+<!--#warnings-->
+</div>
+
+<h1>message</h1>
+<div class="test_box">
+<!--#message-->
+</div>
+
+<h1>info</h1>
+<div class="test_box">
+<!--#info-->
+</div>
+
+<h1>timestamp</h1>
+<div class="test_box">
+<!--#timestamp-->
+</div>
+
+</body>
 </html>
