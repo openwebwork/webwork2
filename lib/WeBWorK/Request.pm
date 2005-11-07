@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.1 2004/03/05 04:16:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.2 2004/10/22 22:59:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -87,6 +87,19 @@ sub db {
 	my $self = shift;
 	$self->{db} = shift if @_;
 	return $self->{db};
+}
+
+=item authen([$new])
+
+Return the authenticator (WeBWorK::Authen) associated with this request. If $new
+is specified, set the authenticator to $new before returning the value.
+
+=cut
+
+sub authen {
+	my $self = shift;
+	$self->{authen} = shift if @_;
+	return $self->{authen};
 }
 
 =item authz([$new])
