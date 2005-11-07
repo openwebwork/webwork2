@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.150 2005/09/30 19:36:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.151 2005/10/02 19:51:44 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,7 @@ use strict;
 use warnings;
 use Apache::Constants qw(:response);
 use Carp;
-use CGI::Pretty qw(*ul *li escapeHTML);
+use CGI qw(*ul *li escapeHTML);
 use Date::Format;
 use URI::Escape;
 use WeBWorK::Debug;
@@ -491,10 +491,14 @@ sub links {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authen = $r->authen;
 	my $authz = $r->authz;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
+	
+	# we don't currently have any links to display if the user's not logged in. this may change, though.
+	return unless $authen and $authen->was_verified;
 	
 	# we're linking to other places in the same course, so grab the courseID from the current path
 	my $courseID = $urlpath->arg("courseID");
@@ -713,11 +717,10 @@ user, a link to stop acting as the effective user, and a link to logout.
 sub loginstatus {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $authen = $r->authen;
 	my $urlpath = $r->urlpath;
 	
-	my $key = $r->param("key");
-	
-	if ($key) {
+	if ($authen and $authen->was_verified) {
 		my $courseID = $urlpath->arg("courseID");
 		my $userID = $r->param("user");
 		my $eUserID = $r->param("effectiveUser");
@@ -726,18 +729,18 @@ sub loginstatus {
 			params => { effectiveUser => $userID },
 		);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
-		
-		print "\n<!-- BEGIN " . __PACKAGE__ . "::loginstatus -->\n";
-		
-		print "Logged in as $userID. ", CGI::br();
-		print CGI::a({href=>$logoutURL}, "Log Out");
+
+		my $text = "Logged in as $userID. " . CGI::br() . CGI::a({href=>$logoutURL}, "Log Out");
 		
 		if ($eUserID ne $userID) {
-			print " | Acting as $eUserID. ";
-			print CGI::a({href=>$stopActingURL}, "Stop Acting");
+			$text .= print " | Acting as $eUserID. " . CGI::a({href=>$stopActingURL}, "Stop Acting");
 		}
 		
-		print "<!-- END " . __PACKAGE__ . "::loginstatus -->\n";
+		#print CGI::div({class=>"LoginStatus"}, $text); # soon, my friend, soon...
+		print $text;
+	} else {
+		#print CGI::div({class=>"LoginStatus"}, "Not logged in."); # likewise...
+		print "Not logged in.";
 	}
 	
 	return "";
@@ -1040,19 +1043,24 @@ sub if_can {
 If the user is currently logged in, $arg is returned. Otherwise, the inverse of
 $arg is returned.
 
-The implementation in this package always returns $arg, since most content
-generators are only reachable when the user is authenticated. It is up to
-classes that can be reached without logging in to override this method and
-provide the correct behavior.
+#The implementation in this package always returns $arg, since most content
+#generators are only reachable when the user is authenticated. It is up to
+#classes that can be reached without logging in to override this method and
+#provide the correct behavior.
+#
+#This is suboptimal, and may change in the future.
 
-This is suboptimal, and may change in the future.
+The implementation in this package uses WeBWorK::Authen::was_verified() to
+retrieve the result of the last call to WeBWorK::Authen::verify().
 
 =cut
 
 sub if_loggedin {
 	my ($self, $arg) = @_;
 	
-	return $arg;
+	#return $arg;
+	return 0 unless $self->r->authen;
+	return $self->r->authen->was_verified() ? $arg : !$arg;
 }
 
 =item if_submiterror($arg)
