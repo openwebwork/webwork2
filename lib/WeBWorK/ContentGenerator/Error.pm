@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.107 2004/06/21 20:11:58 toenail Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Error.pm,v 1.5 2004/06/30 15:18:49 toenail Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,8 +30,8 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(ref2string);
 use Apache::Constants qw(:http :common);
 
-sub loginstatus { "" }
-sub links { "" }
+#sub loginstatus { "" }
+#sub links { "" }
 
 sub header {
 	my $self = shift;
