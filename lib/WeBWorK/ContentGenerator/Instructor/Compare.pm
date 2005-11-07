@@ -32,7 +32,7 @@ WeBWorK::ContentGenerator::Instructor::Compare - Compare problems
 use strict;
 use warnings;
 
-use CGI::Pretty qw();
+use CGI qw();
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max);
 use WeBWorK::Utils::Tasks qw(renderProblems);

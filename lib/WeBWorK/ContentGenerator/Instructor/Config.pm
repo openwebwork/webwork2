@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.3 2005/10/03 00:52:02 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.4 2005/10/03 04:29:56 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -357,7 +357,7 @@ WeBWorK::ContentGenerator::Instructor::Config - Config
 use strict;
 use warnings;
 
-use CGI::Pretty qw();
+use CGI qw();
 use WeBWorK::CourseEnvironment;
 
 # Load the configuration parts defined in Constants.pm 
