@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.10 2005/07/14 13:15:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,11 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+	my $authen = $r->authen;
+	
+	# get rid of stored authentication info (this is kind of a hack. i have a better way
+	# in mind but it requires pretty much rewriting Authen/Login/Logout. :-( )
+	$authen->forget_verification;
 	
 	my $cookie = Apache::Cookie->new($r,
 		-name => "WeBWorKAuthentication",
@@ -43,17 +48,17 @@ sub pre_header_initialize {
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
-# This content generator is NOT logged in.
-sub if_loggedin {
-	my ($self, $arg) = @_;
-	
-	return !$arg;
-}
-
-# suppress links
-sub links {
-	return "";
-}
+## This content generator is NOT logged in.
+#sub if_loggedin {
+#	my ($self, $arg) = @_;
+#	
+#	return !$arg;
+#}
+#
+## suppress links
+#sub links {
+#	return "";
+#}
 
 sub body {
 	my ($self) = @_;
