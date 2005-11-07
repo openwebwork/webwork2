@@ -24,7 +24,7 @@ td.TopPanel a:link,
 td.TopPanel a:visited { color: #FF9933; }
 
 
-*.LoginStatus { text-align: right; font-size: small; position:absolute; right: 0; }
+*.LoginStatus { text-align: right; font-size: small; position:absolute; top: 0; right: 0; }
 td.Timestamp   { text-align: left;  font-size: small; font-style: italic; }
 
 *.Path {  }
