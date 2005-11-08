@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.69 2005/10/19 01:49:17 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.70 2005/11/03 04:18:21 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -283,7 +283,7 @@ sub display_form {
 	foreach my $i (0 .. $#GlobalSets) {
 		my $Set = $GlobalSets[$i];
 		unless (defined $Set) {
-			warn "\$GlobalSets[\$i] (ID $globalSetIDs[$i]) not defined -- skipping";
+			warn "\$GlobalSets[$i] (ID $globalSetIDs[$i]) not defined -- skipping";
 			next;
 		}
 		next unless $Set->open_date <= time or $perm_unopened;
