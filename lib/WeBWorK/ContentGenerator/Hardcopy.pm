@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.70 2005/11/03 04:18:21 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.71 2005/11/08 20:24:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -275,8 +275,6 @@ sub display_form {
 		@globalSetIDs = $db->listUserSets($eUserID);
 		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	}
-	
-	$GlobalSets[1] = undef;
 	
 	# filter out unwanted sets
 	my @WantedGlobalSets;
