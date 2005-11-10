@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.71 2005/11/08 20:24:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.72 2005/11/08 20:47:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -417,7 +417,13 @@ sub generate_hardcopy {
 	my $eUserID = $r->param("effectiveUser");
 	
 	# we want to make the temp directory web-accessible, for error reporting
-	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy"; # makeTempDirectory will ensure that .../hardcopy exists
+	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy"; 
+	#FIXME
+	#  ensure that .../hardcopy exists
+	unless (-w $temp_dir_parent_path) {
+		mkdir "$temp_dir_parent_path"
+			or die "Failed to create course directory $temp_dir_parent_path: $!\n";
+	}
 	my $temp_dir_path = eval { makeTempDirectory($temp_dir_parent_path, "work") };
 	if ($@) {
 		$self->add_errors(CGI::escapeHTML($@));
