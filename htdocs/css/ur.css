@@ -15,10 +15,10 @@ td.LeftPanel a:visited { color: #FF9933; }
 
 div.Logo {  }
 div.Links { font-size: small; }
-/* we used to say "overflow: auto" here, but it caused problems for 
- * mozilla. so we're back to having a looong siblings list for the time 
- * being. :-( */
-div.Siblings { font-size: small; height: 10em; }
+/* we used to say "height: 10em; overflow: auto" here, but it caused 
+ * problems for mozilla. so we're back to having a looong siblings list 
+ * for the time being. :-( */
+div.Siblings { font-size: small; }
 div.Options { font-size: small; }
 
 /* top table cell, contains login message and path */
