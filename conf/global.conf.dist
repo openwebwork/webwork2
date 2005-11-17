@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.151 2005/10/11 21:04:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.152 2005/10/17 03:37:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -708,6 +708,7 @@ $pg{displayModeOptions}{jsMath} = {
 	reportMissingFonts => 0,       # set to 1 to allow the missing font message
 	missingFontMessage => undef,   # set to an HTML string to replace the missing font message
 	noImageFonts => 0,             # set to 1 if you didn't install the jsMath image fonts
+	processDoubleClicks => 1,      # set to 0 to disable double-click on math to get TeX source
 };
 
 ##### Directories used by PG
