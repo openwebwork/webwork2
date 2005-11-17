@@ -66,7 +66,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 var jsMath = {
   
-  version: "2.3b",  // change this if you edit the file
+  version: "2.4a",  // change this if you edit the file
   
   //
   //  Name of image files
@@ -99,10 +99,11 @@ var jsMath = {
     '.cmmi10':         'font-family: cmmi10',
     '.cmsy10':         'font-family: cmsy10',
     '.cmex10':         'font-family: cmex10',
-
-    '.normal':         'font-family: serif; font-style: normal; font-weight: normal',
+    
     '.math':           'font-family: serif; font-style: normal; font-weight: normal',
     '.typeset':        'font-family: serif; font-style: normal; font-weight: normal',
+    '.normal':         'font-family: serif; font-style: normal; font-weight: normal; '
+                          + 'padding:0px; border:0px; margin:0px;',
     'span.typeset':    '',
     'div.typeset':     'text-align: center; margin: 1em 0px;',
     '.mathlink':       'text-decoration: none',
@@ -114,10 +115,17 @@ var jsMath = {
 
     '.jsM_panel':      'position:fixed; bottom:1.5em; right:1.5em; padding: 10px 20px; '
                          + 'background-color:#DDDDDD; border: outset 2px; '
-                         + 'z-index:102; width:auto;',
+                         + 'z-index:103; width:auto;',
     '.jsM_button':     'position:fixed; bottom:1px; right:2px; background-color:white; '
                          + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
-                         + 'z-index:101; color:black; text-decoration:none; font-size:x-small; width:auto;',
+                         + 'z-index:102; color:black; text-decoration:none; font-size:x-small; width:auto;',
+    '.jsM_float':      'position:absolute; top:0px; left:0px; max-width:80%; '
+                         + 'z-index:101; width:auto; height:auto;',
+    '.jsM_drag':       'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
+    '.jsM_close':      'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
+    '.jsM_source':     'background-color:#E2E2E2; border: outset 1px; '
+                         + 'width:auto; height:auto; padding: 8px 15px; '
+                         + 'font-family: courier, fixed; font-size: 90%',
     '.jsM_noFont':     'text-align: center; padding: 10px 20px; border: 3px solid #DD0000; '
                          + ' background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
     '.jsM_fontLink':   'padding: 0px 5px 2px 5px; text-decoration:none; color:black;'
@@ -131,9 +139,9 @@ var jsMath = {
    *  Get the width and height (in pixels) of an HTML string
    */
   BBoxFor: function (s) {
-    this.hidden.innerHTML = '<SPAN CLASS="jsM_scale">'+s+'</SPAN>';
+    this.hidden.innerHTML = '<NOBR><SPAN CLASS="jsM_scale">'+s+'</SPAN></NOBR>';
     var bbox = {w: this.hidden.offsetWidth, h: this.hidden.offsetHeight};
-    this.hidden.innerHTML = '';    // avoid MSIE bug on the Mac
+    this.hidden.innerHTML = '';
     return bbox;
   },
 
@@ -161,7 +169,7 @@ var jsMath = {
    *  Initialize jsMath.  This determines the em size, and a variety
    *  of other parameters used throughout jsMath.
    */
-  Init: function (em) {
+  Init: function () {
     if (jsMath.Setup.inited != 1) {
       if (jsMath.Setup.inited) {
         alert("It looks like jsMath failed to set up properly.");
@@ -171,8 +179,7 @@ var jsMath = {
       }
       jsMath.Setup.Init(); // may fail to load fallback files properly
     }
-    if (em) {this.em = em}
-       else {this.em = this.BBoxFor('<DIV STYLE="width: 10em; height: 1em"></DIV>').w/10}
+    this.em = this.BBoxFor('<IMG SRC="'+jsMath.blank+'" STYLE="width:10em; height:1em">').w/10;
     if (jsMath.Browser.italicString) 
       jsMath.Browser.italicCorrection = jsMath.BBoxFor(jsMath.Browser.italicString).w;
     if (jsMath.Browser.hiddenSpace != '') {
@@ -183,35 +190,36 @@ var jsMath = {
                       jsMath.Browser.hiddenSpace +
                       jsMath.Browser.hiddenSpace).w/5;
     }
-    var h = this.BBoxFor('x').h;    // Line height and depth to baseline
+    var bb = this.BBoxFor('x'); var h = bb.h;
     var d = this.BBoxFor('x<IMG SRC="'+jsMath.blank+'" HEIGHT="'+(h*jsMath.Browser.imgScale)+'" WIDTH="1">').h - h;
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
-    this.ph = h-d; this.pd = d;
+    this.xWidth = bb.w;  // used to tell if scale has changed
     
     this.Setup.TeXfonts();
     
     var x_height = this.EmBoxFor('<SPAN CLASS="cmr10">M</SPAN>').w/2;
     this.TeX.M_height = x_height*(26/14);
     this.TeX.h = this.h; this.TeX.d = this.d; this.TeX.hd = this.hd;
-    // factor for \big and its brethren
-    this.p_height = (this.TeX.cmex10[0].h+this.TeX.cmex10[0].d) / .85;
-
+    
     this.Img.Scale();
     if (!this.initialized) {
       this.Setup.Sizes();
       this.Img.UpdateFonts();
     }
-    
+
+    // factor for \big and its brethren
+    this.p_height = (this.TeX.cmex10[0].h + this.TeX.cmex10[0].d) / .85;
+
     this.initialized = 1;
   },
   
   /*
-   *  Get the em size and if it has changed, reinitialize the sizes
+   *  Get the xWidth size and if it has changed, reinitialize the sizes
    */
   ReInit: function () {
-    var em = this.BBoxFor('<SPAN STYLE="width: 10em; height: 1em"></SPAN>').w/10;
-    if (em != this.em) {this.Init(em)}
+    var w = this.BBoxFor('x').w;
+    if (w != this.xWidth) {this.Init()}
   },
   
   /*
@@ -299,6 +307,7 @@ jsMath.Setup = {
     jsMath.hidden = this.TopHTML("Hidden",{'class':"normal"},{
       position:"absolute", top:0, left:0, border:0, padding:0, margin:0
     });
+    jsMath.hiddenTop = jsMath.hidden;
     return;
   },
 
@@ -372,10 +381,10 @@ jsMath.Setup = {
     var WH = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+font[65].c+'</SPAN>');
     font.hd = WH.h;
     font.d = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+ font[65].c +
-      '<IMG SRC="'+jsMath.blank+'" STYLE="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1"></SPAN>').h 
+      '<IMG SRC="'+jsMath.blank+'" STYLE="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1px;"></SPAN>').h
       - font.hd;
     font.h = font.hd - font.d;
-    font.dh = .05;
+    font.dh = .05; if (jsMath.browser == 'Safari') {font.hd *= 2};
     if (name == 'cmmi10') {font.skewchar = 0177} 
     else if (name == 'cmsy10') {font.skewchar = 060}
   },
@@ -432,6 +441,7 @@ jsMath.Setup = {
     jsMath.Setup.Source();
     jsMath.Browser.Init();
     jsMath.Controls.Init();
+    jsMath.Click.Init();
     jsMath.Setup.Styles();
     
     jsMath.Setup.User();  //  do user-specific initialization
@@ -514,6 +524,8 @@ jsMath.Browser = {
   hiddenSpace: "",            // ditto
   valignBug: 0,               // Konqueror doesn't nest vertical-align
 
+  operaHiddenFix: '',         // for Opera to fix bug with math in tables
+
   /*
    *  Determine if the "top" of a <SPAN> is always at the same height
    *  or varies with the height of the rest of the line (MSIE).
@@ -540,7 +552,7 @@ jsMath.Browser = {
   },
 
   /*
-   *  Test for browser characteristics, and adjust the font table
+   *  Test for browser characteristics, and adjust things
    *  to overcome specific browser bugs
    */
   Init: function () {
@@ -582,21 +594,23 @@ jsMath.Browser = {
         jsMath.Update.TeXfonts({
           cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
           cmmi10: {
-	     '10':  {c: '<I>&Omega;</I>', tclass: 'normal'},
-	     '126': {c: '&#x7E;<SPAN STYLE="margin-left:.1em"></SPAN>'}
-	  },
+             '10':  {c: '<I>&Omega;</I>', tclass: 'normal'},
+             '126': {c: '&#x7E;<SPAN STYLE="margin-left:.1em"></SPAN>'}
+          },
           cmsy10: {
-	    '10': {c: '&#x2297;', tclass: 'arial'},
-	    '55': {c: '<SPAN STYLE="margin-right:-.54em">7</SPAN>'}
-	  },
+            '10': {c: '&#x2297;', tclass: 'arial'},
+            '55': {c: '<SPAN STYLE="margin-right:-.54em">7</SPAN>'}
+          },
           cmex10: {'10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'}},
           cmti10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
           cmbx10: {'10': {c: '<B>&Omega;</B>', tclass: 'normal'}}
         });
         this.allowAbsoluteDelim = 1;
-	this.separateSkips = 1;
+        this.separateSkips = 1;
+        this.buttonCheck = 1;
+        this.msieDivWidthBug = 1;
         this.msieFontBug = 1; this.msieIntegralBug = 1;
-	this.msieAlphaBug = 1; this.alphaPrintBug = 1;
+        this.msieAlphaBug = 1; this.alphaPrintBug = 1;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieSpaceFix = '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD">';
         this.msieInlineBlockFix = ' display: inline-block;';
@@ -614,10 +628,12 @@ jsMath.Browser = {
           this.imgScale *= screen.logicalXDPI/screen.deviceXDPI;
           jsMath.Controls.cookie.alpha = 0;
         }
+        // Handle bug with getting width of italic text
         this.italicString = '<I>x</I>';
         jsMath.EmBoxFor = jsMath.EmBoxForItalics;
       } else if (navigator.platform == 'MacPPC') {
         this.msieAbsoluteBug = 1; this.msieButtonBug = 1;
+        this.msieDivWidthBug = 1;
         jsMath.Setup.Script('jsMath-msie-mac.js');
         jsMath.Parser.prototype.macros.angle = ['Replace','ord','<FONT FACE="Symbol">&#x8B;</FONT>','normal'];
         jsMath.styles['.jsM_panel'] = 'width:25em; ' + jsMath.styles['.jsM_panel'].replace(/width:auto/,"");
@@ -644,7 +660,7 @@ jsMath.Browser = {
         });
       } else {
         jsMath.Setup.Script('jsMath-mozilla.js');
-	this.alphaPrintBug = 1;
+        this.alphaPrintBug = 1;
       }
       for (var i = 0; i < jsMath.TeX.fam.length; i++) {
         if (jsMath.TeX.fam[i]) 
@@ -664,6 +680,7 @@ jsMath.Browser = {
       jsMath.browser = 'OmniWeb';
       this.allowAbsolute = !navigator.userAgent.match("OmniWeb/v4");
       this.allowAbsoluteDelim = this.allowAbsolute;
+      this.buttonCheck = 1;
     }
   },
     
@@ -701,6 +718,7 @@ jsMath.Browser = {
       });
       this.allowAbsolute = 0;
       this.delay = 10;
+      this.operaHiddenFix = '[Processing Math]';
     }
   },
 
@@ -713,11 +731,12 @@ jsMath.Browser = {
       var version = navigator.userAgent.match("Safari/([0-9]+)");
       version = (version)? version[1] : 200;  // FIXME: hack until I get Tiger
       for (var i = 0; i < jsMath.TeX.fam.length; i++)
-        {if (jsMath.TeX.fam[i] != '') {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}}
+        {if (jsMath.TeX.fam[i]) {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}}
       jsMath.TeX.axis_height += .05;
       this.allowAbsoluteDelim = version >= 125;
       this.safariIFRAMEbug = version >= 312;  // FIXME: find out if they fixed it
       this.safariImgBug = 1;
+      this.buttonCheck = 1;
     }
   },
   
@@ -959,14 +978,6 @@ jsMath.Controls = {
   },
   
   /*
-   *  Handle clicking on math to get control panel
-   */
-  CheckClick: function (event) {
-    if (!event) {event = window.event}
-    if (event.altKey) jsMath.Controls.Panel();
-  },
-  
-  /*
    *  Create the control panel button
    */
   Button: function () {
@@ -1070,6 +1081,207 @@ jsMath.Controls = {
       if (warn && !cookies.match(/jsMath=/))
         {alert("Cookies must be enabled in order to save jsMath options")}
     }
+  }
+
+};
+
+/***************************************************************************/
+
+/*
+ *  Implements the actions for clicking and double-clicking
+ *  on math formulas
+ */
+jsMath.Click = {
+  
+  dragging: 0,
+  
+  /*
+   *  Create the hidden DIV used for the tex source window
+   */
+  Init: function () {
+    this.source = jsMath.Setup.TopHTML("Source",{'class':'jsM_float'},{display:'none'});
+    this.source.innerHTML =
+      '<DIV CLASS="jsM_drag"><DIV CLASS="jsM_close"></DIV></DIV>'
+      + '<DIV CLASS="jsM_source"><SPAN></SPAN></DIV>';
+    this.drag = this.source.firstChild;
+    this.tex  = this.drag.nextSibling.firstChild;
+    this.drag.firstChild.onclick = jsMath.Click.CloseSource;
+    this.drag.onmousedown = jsMath.Click.StartDragging;
+    this.drag.ondragstart = jsMath.Click.False;
+    this.drag.onselectstart = jsMath.Click.False;
+    this.source.onclick = jsMath.Click.CheckClose;
+  },
+  False: function () {return false},
+
+  /*
+   *  Handle clicking on math to get control panel
+   */
+  CheckClick: function (event) {
+    if (!event) {event = window.event}
+    if (event.altKey) jsMath.Controls.Panel();
+  },
+  
+  /*
+   *  Handle double-click for seeing TeX code
+   */
+  CheckDblClick: function (event) {
+    if (!event) {event = window.event}
+    var event = jsMath.Click.Event(event);
+
+    var source = jsMath.Click.source
+    var tex = jsMath.Click.tex;
+
+    source.style.visibility = 'hidden';
+    source.style.display = ''; source.style.width = '';
+    source.style.left = ''; source.style.top = '';
+    tex.innerHTML = '';
+
+    var TeX = this.alt;
+    TeX = TeX.replace(/^\s+|\s+$/g,'');
+    TeX = TeX.replace(/&/g,'&amp;');
+    TeX = TeX.replace(/</g,'&lt;');
+    TeX = TeX.replace(/>/g,'&gt;');
+    TeX = TeX.replace(/\n/g,'<BR>');
+    tex.innerHTML = TeX;
+
+    var h = source.offsetHeight; var w;
+    if (jsMath.Browser.msieDivWidthBug) {
+      tex.className = 'jsM_source';      // Work around MSIE bug where
+      w = tex.offsetWidth + 5;           // DIV's don't collapse to
+      tex.className = '';                // their natural widths
+    } else {
+      w = source.offsetWidth;
+    }
+    w = Math.max(50,Math.min(w,.8*event.W,event.W-40));
+    var x = Math.floor(event.x-w/2); var y = Math.floor(event.y-h/2);
+    x = event.X + Math.max(Math.min(x,event.W-w-20),20);
+    y = event.Y + Math.max(Math.min(y,event.H-h-5),5);
+
+    source.style.left = x+'px'; source.style.top = y+'px';
+    source.style.width = w+'px';
+    source.style.visibility = '';
+    jsMath.Click.left = x + event.X; jsMath.Click.top = y + event.Y;
+    jsMath.Click.w = w; jsMath.Click.h = source.offsetHeight;
+
+    jsMath.Click.DeselectText(x,y);
+    return false;
+  },
+
+  /*
+   *  Get window width, height, and offsets plus
+   *  position of pointer relative to the window
+   */
+  Event: function (event) {
+    var W = window.innerWidth  || document.body.clientWidth;
+    var H = window.innerHeight || document.body.clientHeight;
+    var X = window.pageXOffset; var Y = window.pageYOffset;
+    if (X == null) {X = document.body.clientLeft; Y = document.body.clientTop}
+    var x = event.pageX; var y = event.pageY;
+    if (x == null) {
+      x = event.clientX; y = event.clientY;
+      if (jsMath.browser == 'MSIE' && document.compatMode == 'CSS1Compat') {
+        X = document.documentElement.scrollLeft;
+        Y = document.documentElement.scrollTop;
+        W = document.documentElement.clientWidth;
+        H = document.documentElement.clientHeight;
+      } else {
+        X = document.body.scrollLeft;
+        Y = document.body.scrollTop;
+      }
+    } else {x -= X; y -= Y}
+
+    return {x: x, y: y, W: W, H: H, X: X, Y: Y};
+  },
+  
+  /*
+   *  Unselect whatever text is selected (since double-clicking
+   *  usually selects something)
+   */
+  DeselectText: function (x,y) {
+    if (window.getSelection && window.getSelection().removeAllRanges)
+      {window.getSelection().removeAllRanges()}
+    else if (document.getSelection && document.getSelection().removeAllRanges)
+      {document.getSelection().removeAllRanges()}
+    else if (document.selection && document.selection.empty)
+      {document.selection.empty()}
+    else {
+      /* Hack to deselect the text in Opera and Safari */
+      if (jsMath.browser == 'MSIE') return;  // don't try it if MISE on Mac
+      jsMath.hiddenTop.innerHTML =
+        '<textarea style="visibility:hidden" ROWS="1" COLS="1">a</textarea>';
+      jsMath.hiddenTop.firstChild.style.position = 'absolute';
+      jsMath.hiddenTop.firstChild.style.left = x+'px';
+      jsMath.hiddenTop.firstChild.style.top  = y+'px';
+      setTimeout(jsMath.Click.SelectHidden,1);
+    }
+  },
+  SelectHidden: function () {
+    jsMath.hiddenTop.firstChild.focus();
+    jsMath.hiddenTop.firstChild.select();
+    jsMath.hiddenTop.innerHTML = '';
+  },
+
+  /*
+   *  Close the TeX source window
+   */
+  CloseSource: function () {
+    jsMath.Click.tex.innerHTML = '';
+    jsMath.Click.source.style.display = 'none';
+    jsMath.Click.source.style.visibility = 'hidden';
+    jsMath.Click.StopDragging();
+    return false;
+  },
+  CheckClose: function (event) {
+    if (!event) {event = window.event}
+    if (event.altKey) {jsMath.Click.CloseSource(); return false}
+  },
+  
+  /*
+   *  Set up for dragging the source panel
+   */
+  StartDragging: function (event) {
+    if (!event) {event = window.event}
+    if (jsMath.Click.dragging) {jsMath.Click.StopDragging(event)}
+    var event = jsMath.Click.Event(event);
+    jsMath.Click.dragging = 1;
+    jsMath.Click.x = event.x + 2*event.X - jsMath.Click.left;
+    jsMath.Click.y = event.y + 2*event.Y - jsMath.Click.top;
+    jsMath.Click.oldonmousemove = document.body.onmousemove;
+    jsMath.Click.oldonmouseup = document.body.onmouseup;
+    document.body.onmousemove = jsMath.Click.DragSource;
+    document.body.onmouseup = jsMath.Click.StopDragging;
+    return false;
+  },
+  
+  /*
+   *  Stop dragging the source window
+   */
+  StopDragging: function (event) {
+    if (jsMath.Click.dragging) {
+      document.body.onmousemove = jsMath.Click.oldonmousemove;
+      document.body.onmouseup   = jsMath.Click.oldonmouseup;
+      jsMath.Click.oldonmousemove = null;
+      jsMath.Click.oldonmouseup   = null;
+      jsMath.Click.dragging = 0;
+    }
+    return false;
+  },
+  
+  /*
+   *  Move the source window (but stay within the browser window)
+   */
+  DragSource: function (event) {
+    if (!event) {event = window.event}
+    if (jsMath.Browser.buttonCheck && !event.button) {return jsMath.Click.StopDragging(event)}
+    event = jsMath.Click.Event(event);
+    var x = event.x + event.X - jsMath.Click.x;
+    var y = event.y + event.Y - jsMath.Click.y;
+    x = Math.max(event.X,Math.min(event.W+event.X-jsMath.Click.w,x));
+    y = Math.max(event.Y,Math.min(event.H+event.Y-jsMath.Click.h,y));
+    jsMath.Click.source.style.left = x + 'px';
+    jsMath.Click.source.style.top  = y + 'px';
+    jsMath.Click.left = x + event.X; jsMath.Click.top = y + event.Y;
+    return false;
   }
 
 };
@@ -2352,9 +2564,9 @@ jsMath.Add(jsMath.Box,{
     if (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha) {
       c.c = '<IMG SRC="'+jsMath.blank+'" '
                + 'STYLE="'+jsMath.Browser.msieCenterBugFix
-	       + resize + vadjust + wadjust
-	       + ' filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src=' + "'"
-	       + URL + "', sizingMethod='scale'" + ');">';
+               + resize + vadjust + wadjust
+               + ' filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src=' + "'"
+               + URL + "', sizingMethod='scale'" + ');">';
     } else {
       c.c = '<IMG SRC="'+URL+'" STYLE="'+jsMath.Browser.msieCenterBugFix
                   + resize + vadjust + wadjust + '">';
@@ -5374,9 +5586,8 @@ jsMath.Package(jsMath.Parser,{
     if (isSmall) {// hide the extra size
       if (jsMath.Browser.allowAbsolute) {
         var y = 0;
-        if (jsMath.Browser.spanHeightVaries || box.bh > jsMath.h+.001) {y = (jsMath.h - box.bh)}
+        if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y,jsMath.h);
-	isBig = 1;
       } else if (!jsMath.Browser.valignBug) {
         // remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
@@ -5384,14 +5595,15 @@ jsMath.Package(jsMath.Parser,{
                + ' position:relative; top:'+dy+'; vertical-align:'+dy
                + '">' + html + '</SPAN>';
       }
+      isBig = 1;
     }
     if (isBig) {// add height and depth to the line (force a little
                 //    extra to separate lines if needed)
       html += '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD" STYLE="'
-               + 'height:'+jsMath.HTML.Em((box.h+box.d+.2)*jsMath.Browser.imgScale)+'; '
-               + 'vertical-align:'+jsMath.HTML.Em(-box.d-.1)+';">'
+               + 'height:'+jsMath.HTML.Em((box.h+box.d+.1)*jsMath.Browser.imgScale)+'; '
+               + 'vertical-align:'+jsMath.HTML.Em(-box.d-.05)+';">'
     }
-    return '<NOBR><SPAN CLASS="jsM_scale">'+html+'</SPAN><NOBR>';
+    return '<NOBR><SPAN CLASS="jsM_scale">'+html+'</SPAN></NOBR>';
   }
 
 });
@@ -5507,11 +5719,14 @@ jsMath.Add(jsMath,{
    *  processed and reinitialize sizes for that location.
    */
   ResetHidden: function (element) {
-    element.innerHTML = '<SPAN CLASS="normal" STYLE="position:absolute; top:0;left:0;"></SPAN>';
+    element.innerHTML =
+      '<SPAN CLASS="normal" STYLE="position:absolute; top:0px;left:0px;"></SPAN>'
+        + jsMath.Browser.operaHiddenFix; // needed by Opera in tables
     element.className='';
     jsMath.hidden = element.firstChild;
     jsMath.ReInit();
   },
+
   
   /*
    *  Typeset the contents of an element in \textstyle
@@ -5521,6 +5736,7 @@ jsMath.Add(jsMath,{
     this.ResetHidden(element);
     element.innerHTML = this.TextMode(text);
     element.className = 'typeset';
+    element.alt = text;
   },
   
   /*
@@ -5531,6 +5747,7 @@ jsMath.Add(jsMath,{
     this.ResetHidden(element);
     element.innerHTML = this.DisplayMode(text);
     element.className = 'typeset';
+    element.alt = text;
   },
   
   /*
@@ -5543,16 +5760,17 @@ jsMath.Add(jsMath,{
       } else if (element.tagName == 'SPAN') {
         this.ConvertText(element);
         //
-	// Overcome a bug in MSIE where were tex2math can't insert DIV's inside
+        // Overcome a bug in MSIE where were tex2math can't insert DIV's inside
         // some elements, so fake it with SPANs, but can't fake the centering,
-	// so do that here.
-	//
-	if (element.parentNode.className == 'jsMath.recenter') {
-	  element.parentNode.style.marginLeft =
-	    Math.floor((element.parentNode.offsetWidth - element.offsetWidth)/2)+"px";
-	}
+        // so do that here.
+        //
+        if (element.parentNode.className == 'jsMath.recenter') {
+          element.parentNode.style.marginLeft =
+            Math.floor((element.parentNode.offsetWidth - element.offsetWidth)/2)+"px";
+        }
       }
-      element.onclick = jsMath.Controls.CheckClick;
+      element.onclick = jsMath.Click.CheckClick;
+      element.ondblclick = jsMath.Click.CheckDblClick;
     } catch (err) {}
   },
 
@@ -5645,11 +5863,12 @@ jsMath.Add(jsMath,{
         element[i].removeAttribute('NAME');
       }
     }
+    jsMath.hidden = jsMath.hiddenTop;
     jsMath.element = [];
     window.status = 'Done';
     if (jsMath.Browser.safariImgBug &&
         (jsMath.Controls.cookie.font == 'symbol' ||
-	 jsMath.Controls.cookie.font == 'image')) {
+         jsMath.Controls.cookie.font == 'image')) {
       //
       //  For Safari, the images don't always finish
       //  updating, so nudge the window to cause a

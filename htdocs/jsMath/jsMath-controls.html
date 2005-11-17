@@ -64,7 +64,7 @@ jsMath.Add(jsMath.Controls,{
     this.panel.style.display = "none";
     jsMath.Element("jsMath").style.display = (this.cookie.button ? "block" : "none");
     if (this.document.location.protocol == 'file:') return;
-    for (var id in {scale:1, scaleImg:1, font:1, print:1, autofont:1, alpha:1}) {
+    for (var id in {scale:1, scaleImg:1, font:1, print:1, autofont:1, alpha:1, tex2math:1}) {
       if (this.cookie[id] != this.oldCookie[id]) {
         this.loaded = 0;
         this.document.location.reload();
@@ -112,7 +112,7 @@ jsMath.Add(jsMath.Controls,{
     this.panel.innerHTML = document.getElementById("jsMath.options").innerHTML;
     jsMath.Element("scale").value = this.cookie.scale;
     jsMath.Element("keep").value = this.cookie.keep;
-    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1}) {
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1, tex2math:1}) {
       if (this.cookie[id]) {jsMath.Element(id).checked = true}
     }
     var font = this.document.getElementsByName("jsMath.font");
@@ -133,6 +133,9 @@ jsMath.Add(jsMath.Controls,{
       jsMath.Element("alphaText").style.color = "#888888";
       jsMath.Element("alpha").disabled = true;
     }
+    if (!jsMath.tex2math) {
+      jsMath.Element("tex2mathRow").style.display = 'none';
+    }
 
     /*
      *  Seems to be a bug in Safari that messes up the button names
@@ -151,7 +154,7 @@ jsMath.Add(jsMath.Controls,{
     var font = this.document.getElementsByName("jsMath.font");
     for (var i = 0; i < font.length; i++) 
       {if (font[i].checked) {this.cookie.font = font[i].value}}
-    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1}) {
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1, tex2math:1}) {
       this.cookie[id] = jsMath.Element(id).checked ? 1: 0;
     }
     this.cookie.keep = jsMath.Element("keep").value;
@@ -181,7 +184,7 @@ jsMath.Add(jsMath.Controls,{
 <p>
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0" STYLE="margin:0pt 1em">
 <TR><TD ALIGN="CENTER"><TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
-<TR><TD ALIGN="CENTER" COLSPAN="2">
+<TR><TD ALIGN="CENTER" COLSPAN="3">
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 <TR><TD>
 <UL STYLE="text-align:left; margin:0pt 0pt; padding-left:1em; padding-bottom:1em">
@@ -195,20 +198,21 @@ jsMath.Add(jsMath.Controls,{
 </TD></TR>
 </TABLE>
 </TD></TR>
-<TR><TD ALIGN="CENTER" COLSPAN="2">
+<TR><TD ALIGN="CENTER" COLSPAN="3">
 <INPUT TYPE="BUTTON" ID="jsMath.resolution" VALUE="Hi-Res Fonts for Printing"
        STYLE="width:17em" onClick="jsMath.Controls.PrintResolution()">
 </TD></TR>
 <TR><TD HEIGHT="5"></TD></TR>
 <TR><TD ALIGN="LEFT">
 <INPUT TYPE="BUTTON" VALUE="Options" ID="jsMath.opts" STYLE="width:8em" onClick="jsMath.Controls.Options()">
+</TD><TD>
 &nbsp;
 </TD><TD ALIGN="RIGHT">
 <INPUT TYPE="BUTTON" VALUE="Done" ID="jsMath.done" STYLE="width:8em" onClick="jsMath.Controls.Close()">
 </TD></TR>
 </TABLE></TD></TR>
 <TR><TD HEIGHT="10"></TD></TR>
-<TR><TD ALIGN="CENTER" COLSPAN="2" STYLE="width:20em; font-size:x-small">
+<TR><TD ALIGN="CENTER" COLSPAN="3" STYLE="width:20em; font-size:x-small">
 <I>Click on the jsMath floating button or <NOBR>ALT-click</NOBR> on a
 mathematical expression to get this dialog at any time.</I>
 </TD></TR>
@@ -248,6 +252,7 @@ Use native Unicode fonts</TD></TR>
 <TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.alpha" VALUE="1"> <SPAN ID="jsMath.alphaText">Use image alpha channels</SPAN></TD></TR>
 <TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.warn" VALUE="1"> Show font warnings</TD></TR>
 <TR><TD><INPUT TYPE="CHECKBOX" ID="jsMath.button" VALUE="1"> Show jsMath button</TD></TR>
+<TR ID="jsMath.tex2mathRow"><TD><INPUT TYPE="CHECKBOX" ID="jsMath.tex2math" VALUE="1"> Enable <CODE>tex2math</CODE> plug-in</TD></TR>
 
 <TR><TD HEIGHT="8"></TD></TR>
 

@@ -25,41 +25,126 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-jsMath.Add(jsMath,{
+jsMath.Insert(jsMath,{
   
-  ConvertTeX: function (element) {jsMath.tex2math.ConvertMath("tex",element)},
-  ConvertTeX2: function (element) {jsMath.tex2math.ConvertMath("tex2",element)},
-  ConvertLaTeX: function (element) {jsMath.tex2math.ConvertMath("latex",element)},
+  ConvertTeX: function (element) {jsMath.tex2math.Convert("tex",element)},
+  ConvertTeX2: function (element) {jsMath.tex2math.Convert("tex2",element)},
+  ConvertLaTeX: function (element) {jsMath.tex2math.Convert("latex",element)},
   
   tex2math: {
     
+    /*
+     *  Set up for the correct type of search, and recursively
+     *  convert the mathematics.  Disable tex2math if the cookie
+     *  isn't set, or of there is an element with ID of 'tex2math_off'.
+     */
+    Convert: function (type,element) {
+      if (jsMath.Controls.cookie.tex2math && 
+          (!jsMath.tex2math.allowDisableTag || !document.getElementById('tex2math_off'))) {
+        var pattern = jsMath.tex2math.pattern[type];
+        if (type == 'custom') {jsMath.tex2math.isDisplay = jsMath.tex2math.customIsDisplay}
+                         else {jsMath.tex2math.isDisplay = jsMath.tex2math.standardIsDisplay}
+        jsMath.tex2math.ConvertMath(pattern,element);
+      }
+    },
+    
+    /*
+     *  Patterns for the various types of conversions
+     */
     pattern: {
       tex:   /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\]|\$\$((\\.|\$[^$\\]|[^$\\])*)\$\$|\$(([^$\\]|\\.)*)\$)/,
       tex2:  /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\]|\$\$((\\.|\$[^$\\]|[^$\\])*)\$\$)/,
       latex: /((^|[^\\])(\\[^\[\(])*)(\\\((([^\\]|\\[^\)])*)\\\)|\\\[(([^\\]|\\[^\]])*)\\\])/
     },
-  
-    ConvertMath: function (method,element,recurse) {
-      if (!element) {
-        if (recurse) return;
-        element = document.body;
+
+    /*
+     *  Test if we have a string that initiates display math mode
+     */
+    standardIsDisplay: function (string) {
+      string = string.substr(0,2);
+      return (string == '\\[' ||
+             (!jsMath.tex2math.doubleDollarsAreInLine && string == '$$'));
+    },
+    
+    /*
+     *  Create a pattern for custom math and display indicators.  E.g.
+     *
+     *   jsMath.tex2math.CustomSearch('[math]','[/math]','[display]','[/display]');
+     *
+     *  would make in-line math be delimted by [math]...[/math] and
+     *  display math by [display]...[/display].  Make sure that the opening
+     *  delimiter is not something that would appear within the
+     *  mathematics, or tex2math might not be able to match the delimiters 
+     *  properly.
+     */
+    CustomSearch: function (mathopen,mathclose,displayopen,displayclose) {
+      var pattern = this.patternCombine(mathopen,displayopen);
+      this.pattern.custom = new RegExp('(()())('
+        + this.patternQuote(displayopen) + pattern + this.patternQuote(displayclose) 
+        + '|'
+        + this.patternQuote(mathopen) + pattern + this.patternQuote(mathclose)
+        + ')');
+      this.customIsDisplay = function (string) {
+        return (string.substr(0,displayopen.length) == displayopen);
+      };
+      jsMath.ConvertCustom = function (element) {jsMath.tex2math.Convert('custom',element)};
+    },
+    
+    patternCombine: function (s1,s2) {
+      for (var i = 0; i < s1.length && i < s2.length && s1.charAt(i) == s2.charAt(i); i++) {};
+      var pattern = this.patternAdd('',s1.substr(0,i),0);
+      if (i) {pattern += '|'}
+      pattern += this.patternQuote(s1.substr(0,i))
+              + '[^' + this.patternQuote(s1.charAt(i)+s2.charAt(i)) + ']';
+      pattern = this.patternAdd(pattern,s1,i+1);
+      pattern = this.patternAdd(pattern,s2,i+1);
+      return '((' + pattern + ')*)';
+      return pattern;
+    },
+    
+    patternAdd: function (pattern,string,i) {
+      while (i < string.length) {
+        if (pattern != "") {pattern += '|'}
+        pattern += this.patternQuote(string.substr(0,i))
+                + '[^' + this.patternQuote(string.charAt(i)) + ']';
+        i++;
       }
+      return pattern;
+    },
+    
+    patternQuote: function (s) {
+      s = s.replace(/([\^(){}+*?\-|\[\]\:\\])/g,'\\$1');
+      return s;
+    },
+  
+    /*
+     *  Recursively look through text nodes for mathematics
+     *  that needs to be surrounded by SPAN or DIV tags.
+     *  Don't process SCRIPT, NOSCRIPT, STYLE, TEXTAREA or PRE
+     *  tags (unless they are of class "tex2math_process") and don't
+     *  process any that are of class "tex2math_ignore").
+     */
+    ConvertMath: function (pattern,element,recurse,ignore) {
+      if (!element) {if (recurse) {return} else {element = document.body}}
       if (typeof(element) == 'string') {element = document.getElementById(element)}
-      
-      var pattern = jsMath.tex2math.pattern[method];
+
       while (element) {
         if (element.nodeName == '#text') {
-          if (!element.parentNode.tagName ||
-              !element.parentNode.tagName.match(/^(SCRIPT|NOSCRIPT|STYLE|TEXTAREA)$/i)) {
-            element = jsMath.tex2math.TeX2math(pattern,element);
-          }
-        } else {
-          this.ConvertMath(method,element.firstChild,1);
+          if (!ignore) {element = jsMath.tex2math.TeX2math(pattern,element)}
+        } else if (element.firstChild) {
+          var off = ignore || element.className == 'tex2math_ignore' ||
+                    (element.tagName && element.tagName.match(/^(SCRIPT|NOSCRIPT|STYLE|TEXTAREA|PRE)$/i));
+          off = off && element.className != 'tex2math_process';
+          this.ConvertMath(pattern,element.firstChild,1,off);
         }
         element = element.nextSibling;
       }
     },
   
+    /*
+     *  Search a string for the math pattern and and replace it
+     *  by the proper type of SPAN or DIV
+     */
     TeX2math: function (pattern,element) {
       var result; var text; var tag; var math; var rest;
       while (result = pattern.exec(element.nodeValue.replace(/\n/g,' '))) {
@@ -69,7 +154,7 @@ jsMath.Add(jsMath,{
           {element.nodeValue = element.nodeValue.replace(/\\\$/g,'')}
         math.parentNode.removeChild(math);
         if (text = (result[5] || result[7] || result[9] || result[11])) {
-          tag = jsMath.tex2math.createMathTag(result[4].substr(0,2),text);
+          tag = jsMath.tex2math.createMathTag(result[4],text);
 	  if (rest.parentNode) {
 	    rest.parentNode.insertBefore(tag,rest);
 	  } else if (element.nextSibling) {
@@ -85,8 +170,11 @@ jsMath.Add(jsMath,{
       return element;
     },
     
+    /*
+     *  Create an element for the mathematics
+     */
     createMathTag: function (type,text) {
-      type = (type == '\\[' || type == '$$')? "div" : "span";
+      type = (jsMath.tex2math.isDisplay(type))? "div" : "span";
       var tag = document.createElement(type); tag.className = "math";
       var math = document.createTextNode(text);
       tag.appendChild(math);
@@ -105,7 +193,7 @@ jsMath.Add(jsMath,{
     MSIEcreateMathTag: function (type,text) {
       var tag = document.createElement("span");
       tag.className = "math";
-      if (type == '\\[' || type == '$$') {
+      if (jsMath.tex2math.isDisplay(type)) {
         tag.className = (jsMath.tex2math.center)? "jsMath.recenter": "";
         tag.style.width = "100%"; tag.style.margin = jsMath.tex2math.margin;
         tag.style.display = "inline-block";
@@ -118,6 +206,18 @@ jsMath.Add(jsMath,{
   }
 });
 
+/*
+ *  Enable this plugin by default
+ */
+if (jsMath.Controls.cookie.tex2math == null) {jsMath.Controls.cookie.tex2math = 1}
+if (jsMath.tex2math.allowDisableTag == null) {jsMath.tex2math.allowDisableTag = 1}
+
+/*
+ *  MSIE can't handle the DIV's properly, so we need to do it by
+ *  hand.  Look up the style for typeset math to see if the user
+ *  has changed it, and get whether it is centered or indented
+ *  so we can mirror that using a SPAN
+ */
 if (jsMath.browser == 'MSIE' && navigator.platform == 'Win32') {
   jsMath.tex2math.createMathTag = jsMath.tex2math.MSIEcreateMathTag;
   jsMath.Add(jsMath.tex2math,{margin: "", center: 0});
