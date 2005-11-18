@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.12 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.13 2005/09/21 18:25:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -338,57 +338,6 @@ sub attemptResults {
 # *BeginPPM* ###################################################################
 # this code taken from Problem.pm; excerpted section ends at *EndPPM*
 # modifications are flagged with comments *GW*
-	    
-sub viewOptions {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
-
-	# don't show options if we don't have anything to show
-#	return if $self->{invalidSet} or $self->{invalidProblem};
-#	return unless $self->{isOpen};
-	return if $self->{invalidSet};
-	
-	my $displayMode = $self->{displayMode};
-	my %must = %{ $self->{must} };
-	my %can  = %{ $self->{can}  };
-	my %will = %{ $self->{will} };
-	
-	my $optionLine;
-	$can{showOldAnswers} and $optionLine .= join "",
-		"Show: &nbsp;".CGI::br(),
-		CGI::checkbox(
-			-name    => "showOldAnswers",
-			-checked => $will{showOldAnswers},
-			-label   => "Saved answers",
-		), "&nbsp;&nbsp;".CGI::br();
-
-	$optionLine and $optionLine .= join "", CGI::br();
-	
-	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	my @active_modes = grep { exists $display_modes{$_} }
-			@{$ce->{pg}->{displayModes}};
-	my $modeLine = (scalar(@active_modes) > 1) ?
-		"View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;".CGI::br().
-		CGI::radio_group(
-			-name    => "displayMode",
-			-values  => \@active_modes,
-			-default => $displayMode,
-			-linebreak=>'true',
-			-labels  => {
-				plainText     => "plain",
-				formattedText => "formatted",
-				images        => "images",
-				jsMath	      => "jsMath",
-				asciimath     => "asciimath",
-			},
-		). CGI::br().CGI::hr() : '';
-	
-	return CGI::div({-style=>"border: thin groove; padding: 1ex; margin: 2ex align: left"},
-		$modeLine,
-		$optionLine,
-		CGI::submit(-name=>"redisplay", -label=>"Apply Options"),
-	);
-}
 
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen) = @_;
@@ -917,23 +866,23 @@ sub nav {
 
 sub options {
 	my ($self) = @_;
+	#warn "doing options in GatewayQuiz";
 	
-	return "" if $self->{invalidProblem};
-	my $sourceFilePathfield = '';
-        if($self->r->param("sourceFilePath")) {
-		$sourceFilePathfield = CGI::hidden(-name => "sourceFilePath", 
-                                                   -value => $self->r->param("sourceFilePath"));
-	}
+	# don't show options if we don't have anything to show
+	return if $self->{invalidSet} or $self->{invalidProblem};
+	return unless $self->{isOpen};
 	
-	return join("",
-		CGI::start_form("POST", $self->{r}->uri),
-		$self->hidden_authen_fields,
-		$sourceFilePathfield,
-		CGI::hr(), 
-		CGI::start_div({class=>"viewOptions"}),
-		$self->viewOptions(),
-		CGI::end_div(),
-		CGI::end_form()
+	my $displayMode = $self->{displayMode};
+	my %can = %{ $self->{can} };
+	
+	my @options_to_show = "displayMode";
+	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
+	push @options_to_show, "showHints" if $can{showHints};
+	push @options_to_show, "showSolutions" if $can{showSolutions};
+	
+	return $self->optionsMacro(
+		options_to_show => \@options_to_show,
+		extra_params => ["editMode", "sourceFilePath"],
 	);
 }
 
