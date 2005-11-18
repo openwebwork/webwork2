@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.42 2005/09/10 18:21:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.43 2005/10/08 21:55:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -458,7 +458,7 @@ sub body {
 		$self->print_preview($setID);
 	} elsif (($response eq 'send_email')){
 		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
-		             ." when the task is completed.  This may take several minutes if the class is large."
+		             ." by email when the task is completed.  This may take several minutes if the class is large."
 		);
 		$self->addgoodmessage($message);
 		$self->{message} .= $message;
