@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.13 2005/09/21 18:25:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.14 2005/11/18 18:13:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -330,7 +330,7 @@ sub attemptResults {
 	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'}, 
 		       $resultsRows{'Preview'}, $resultsRows{'Correct'}, 
 		       $resultsRows{'Results'}, $resultsRows{'Messages'}) .
-	    ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
 #		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 #		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
