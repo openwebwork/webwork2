@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.26 2005/10/02 19:51:44 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.27 2005/10/08 22:20:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,6 +24,7 @@ WeBWorK::URLPath - the WeBWorK virtual URL heirarchy.
 
 use strict;
 use warnings;
+use Carp;
 use WeBWorK::Debug;
 
 {
@@ -586,7 +587,7 @@ sub newFromPath {
 	my ($invocant, $path) = @_;
 	
 	my ($type, %args) = getPathType($path);
-	die "no type matches path $path" unless $type;
+	croak "no type matches path $path" unless $type;
 	
 	return $invocant->new(
 		type => $type,
@@ -605,7 +606,7 @@ sub newFromModule {
 	my ($invocant, $module, %args) = @_;
 	
 	my $type = getModuleType($module, keys %args);
-	die "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
+	croak "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
 	
 	return $invocant->new(
 		type => $type,
