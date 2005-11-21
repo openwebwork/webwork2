@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env perl -d
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
@@ -21,41 +21,38 @@ wwdb - command-line interface to the WeBWorK libraries.
 
 =cut
 
-use strict;
-use warnings;
+use Data::Dumper;
 
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	DB::parse_options("NonStop=1");
+	unless ($ENV{WEBWORK_ROOT}) {
+		die "WEBWORK_ROOT not found in environment.\n";
+	}
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
-use PSH;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
-my ($course, $cmd) = @ARGV;
+our $ce;
+our $db;
 
-unless ($course) {
-	die "usage: $0 course\n";
+my $courseID = shift @ARGV;
+unless ($courseID) {
+	die "usage: $0 courseID\n";
 }
 
-our $ce = WeBWorK::CourseEnvironment->new($ENV{WEBWORK_ROOT}, "", "", $course);
-our $db = WeBWorK::DB->new($ce->{dbLayout});
-(undef) = $db; # placate warnings
+$ce = WeBWorK::CourseEnvironment->new({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName => $courseID,
+});
+$db = WeBWorK::DB->new($ce->{dbLayout});
 
-if ($cmd) {
-	no warnings;
-	no strict;
-	eval $cmd;
-	die $@ if $@;
-	use strict;
-	use warnings;
-} else {
-	print <<'EOF';
+print <<'EOF';
 wwsh - The WeBWorK Shell
 Available objects: $ce (WeBWorK::CourseEnvironment)
                    $db (WeBWorK::DB)
+Available modules: Data::Dumper
 EOF
-	PSH::prompt();
-}
+
+DB::parse_options("NonStop=0");
