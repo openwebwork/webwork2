@@ -1,6 +1,5 @@
-<!DOCTYPE html
-	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <!--
 ################################################################################
@@ -90,11 +89,6 @@ div.test_box { border: 1px solid black }
 <h1>warnings</h1>
 <div class="test_box">
 <!--#warnings-->
-</div>
-
-<h1>message</h1>
-<div class="test_box">
-<!--#message-->
 </div>
 
 <h1>info</h1>
