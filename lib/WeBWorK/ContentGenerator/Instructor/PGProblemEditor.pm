@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.61 2005/10/25 20:34:19 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.62 2005/11/01 01:51:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -423,11 +423,23 @@ sub body {
     # Construct url for reporting bugs:
 	#########################################################################
 
-	$editFilePath =~ m|([^/]*)Library|;    #find the path to the file
-	my $libraryName = $1;                  # find the library, if any exists in the path name (first library is picked)
-	$libraryName ='rochester' unless defined($libraryName) and $libraryName =~/\S/; # default library
-	
-    my $BUGZILLA = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=Problem%20libraries&component=$libraryName&bug_file_loc=$editFilePath";
+# 	$editFilePath =~ m|([^/]*)Library|;    #find the path to the file
+# 	my $libraryName = $1;                  # find the library, if any exists in the path name (first library is picked)
+# 	$libraryName ='rochester' unless defined($libraryName) and $libraryName =~/\S/; # default library
+	my $libraryName = '';
+	if ($editFilePath =~ m|([^/]*)Library|)   {  #find the path to the file
+		# find the library, if any exists in the path name (first library is picked)
+		my $tempLibraryName = $1;
+		$libraryName = ( defined($tempLibraryName) and $tempLibraryName =~/\S/ ) ? 
+		                $tempLibraryName : "Library"; 
+		# things that start /Library/setFoo/probBar  are labeled as component "Library"
+		# which refers to the SQL based problem library. (is nationalLibrary a better name?)
+	} else {
+		$libraryName = 'rochester';  # make sure there is some default component defined.
+	}
+
+    my $BUGZILLA = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=Problem%20libraries".
+                   "&component=$libraryName&bug_file_loc=${editFilePath}_with_problemSeed=".$self->{problemSeed};
 	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to intelligent reporting of bugs.
     
 	#########################################################################
