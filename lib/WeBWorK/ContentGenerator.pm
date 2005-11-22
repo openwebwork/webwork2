@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.151 2005/10/02 19:51:44 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.153 2005/11/21 21:41:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -487,6 +487,10 @@ Links that should appear on every page.
 
 =cut
 
+# http://devel.webwork.rochester.edu:8000/webwork2/sam_2005-08-04_renamed1/fun_set
+# /2/?user=sam&effectiveUser=sam&key=c0rr63Ki5r9HZh1J9pGG1loi.Hm4D!1caiFTjh*2&
+# displayMode=images&showOldAnswers=1
+
 sub links {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -575,8 +579,9 @@ sub links {
 	# we'd like to preserve displayMode and showOldAnswers between pages, and we
 	# don't have a general way of preserving non-authen params between requests,
 	# so here is the hack:
-	$args{displayMode} = $r->param("displayMode") if defined $r->param("displayMode");
-	$args{showOldAnswers} = $r->param("showOldAnswers") if defined $r->param("showOldAnswers");
+	my %params;
+	$params{displayMode} = $r->param("displayMode") if defined $r->param("displayMode");
+	$params{showOldAnswers} = $r->param("showOldAnswers") if defined $r->param("showOldAnswers");
 	# in the past, we were checking $self->{displayMode} and $self->{will}->{showOldAnswers}
 	# to set these args, but I don't wanna do that anymore, since it relies on
 	# fields specific to Problem.pm (pretty sure). The only differences in this
@@ -586,6 +591,8 @@ sub links {
 	# (b) showOldAnswers will get set to the value specified in the current
 	# request, regardless of whether it is allowed, but this is OK since we
 	# always this value before using it.
+	my %systemlink_args;
+	$systemlink_args{params} = \%params if %params;
 	
 	#print CGI::start_ul();
 	#print CGI::start_li(); # Courses
@@ -598,17 +605,17 @@ sub links {
 		
 		print CGI::start_ul();
 		print CGI::start_li(); # Homework Sets
-		print &$makelink("${pfx}ProblemSets", text=>"Homework Sets", urlpath_args=>{%args});
+		print &$makelink("${pfx}ProblemSets", text=>"Homework Sets", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 		
 		if (defined $setID) {
 			print CGI::start_ul();
 			print CGI::start_li(); # $setID
-			print &$makelink("${pfx}ProblemSet", text=>"$setID", urlpath_args=>{%args,setID=>$setID});
+			print &$makelink("${pfx}ProblemSet", text=>"$setID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 			# FIXME i think we only want this if the problem set is not a gateway quiz
 			if (defined $problemID) {
 				print CGI::start_ul();
 				print CGI::start_li(); # $problemID
-				print &$makelink("${pfx}Problem", text=>"Problem $problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID});
+				print &$makelink("${pfx}Problem", text=>"Problem $problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
 				
 				print CGI::end_li(); # end $problemID
 				print CGI::end_ul();
@@ -619,30 +626,30 @@ sub links {
 		print CGI::end_li(); # end Homework Sets
 		
 		if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
-			print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}));
+			print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 		}
 		
-		print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}));
+		print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 		
 		if ($authz->hasPermissions($userID, "access_instructor_tools")) {
 			$pfx .= "Instructor::";
 			
 			print CGI::start_li(); # Instructor Tools
-			print &$makelink("${pfx}Index", urlpath_args=>{%args});
+			print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::start_ul();
 			
-			print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}));
+			print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
 			print CGI::start_li(); # Homework Set Editor
-			print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args});
+			print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			if (defined $setID) {
 				print CGI::start_ul();
 				print CGI::start_li(); # $setID
-				print &$makelink("${pfx}ProblemSetDetail", text=>"$setID", urlpath_args=>{%args,setID=>$setID});
+				print &$makelink("${pfx}ProblemSetDetail", text=>"$setID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				
 				if (defined $problemID) {
 					print CGI::start_ul();
-					print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$setID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}));
+					print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$setID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args));
 					print CGI::end_ul();
 				}
 				
@@ -651,50 +658,50 @@ sub links {
 			}
 			print CGI::end_li(); # end Homework Set Editor
 			
-			print CGI::li(&$makelink("${pfx}SetMaker", text=>"Library Browser", urlpath_args=>{%args}));
+			print CGI::li(&$makelink("${pfx}SetMaker", text=>"Library Browser", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
 			print CGI::start_li(); # Stats
-			print &$makelink("${pfx}Stats", urlpath_args=>{%args});
+			print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			if ($userID ne $eUserID or defined $setID) {
 				print CGI::start_ul();
 				if ($userID ne $eUserID) {
-					print CGI::li(&$makelink("${pfx}Stats", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}));
+					print CGI::li(&$makelink("${pfx}Stats", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 				}
 				if (defined $setID) {
-					print CGI::li(&$makelink("${pfx}Stats", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}));
+					print CGI::li(&$makelink("${pfx}Stats", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
 				}
 				print CGI::end_ul();
 			}
 			print CGI::end_li(); # end Stats
 			
 			print CGI::start_li(); # Student Progress
-			print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args});
+			print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			if ($userID ne $eUserID or defined $setID) {
 				print CGI::start_ul();
 				if ($userID ne $eUserID) {
-					print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}));
+					print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 				}
 				if (defined $setID) {
-					print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}));
+					print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
 				}
 				print CGI::end_ul();
 			}
 			print CGI::end_li(); # end Student Progress
 			
 			if ($authz->hasPermissions($userID, "score_sets")) {
-				print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}));
+				print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			}
 			
 			if ($authz->hasPermissions($userID, "send_mail")) {
-				print CGI::li(&$makelink("${pfx}SendMail", urlpath_args=>{%args}));
+				print CGI::li(&$makelink("${pfx}SendMail", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			}
 			
 			if ($authz->hasPermissions($userID, "manage_course_files")) {
-				print CGI::li(&$makelink("${pfx}FileManager", urlpath_args=>{%args}));
+				print CGI::li(&$makelink("${pfx}FileManager", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			}
 			
 			if ($authz->hasPermissions($userID, "manage_course_files")) {
-				print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}));
+				print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			}
 			
 			print CGI::end_ul();
@@ -737,17 +744,14 @@ sub loginstatus {
 			params => { effectiveUser => $userID },
 		);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
-
-		my $text = "Logged in as $userID. " . CGI::br() . CGI::a({href=>$logoutURL}, "Log Out");
 		
-		if ($eUserID ne $userID) {
-			$text .= print " | Acting as $eUserID. " . CGI::a({href=>$stopActingURL}, "Stop Acting");
+		if ($eUserID eq $userID) {
+			print "Logged in as $userID. " . CGI::br() . CGI::a({href=>$logoutURL}, "Log Out");
+		} else {
+			print "Logged in as $userID. " . CGI::a({href=>$logoutURL}, "Log Out") . CGI::br();
+			print "Acting as $eUserID. " . CGI::a({href=>$stopActingURL}, "Stop Acting");
 		}
-		
-		#print CGI::div({class=>"LoginStatus"}, $text); # soon, my friend, soon...
-		print $text;
 	} else {
-		#print CGI::div({class=>"LoginStatus"}, "Not logged in."); # likewise...
 		print "Not logged in.";
 	}
 	
