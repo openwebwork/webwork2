@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.153 2005/11/21 21:41:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.154 2005/11/22 01:42:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -487,10 +487,6 @@ Links that should appear on every page.
 
 =cut
 
-# http://devel.webwork.rochester.edu:8000/webwork2/sam_2005-08-04_renamed1/fun_set
-# /2/?user=sam&effectiveUser=sam&key=c0rr63Ki5r9HZh1J9pGG1loi.Hm4D!1caiFTjh*2&
-# displayMode=images&showOldAnswers=1
-
 sub links {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -593,6 +589,13 @@ sub links {
 	# always this value before using it.
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
+	
+	if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
+			and $authz->hasPermissions($userID, "report_bugs")) {
+		print CGI::start_ul();
+		print CGI::li(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
+		print CGI::end_ul();
+	}
 	
 	#print CGI::start_ul();
 	#print CGI::start_li(); # Courses
