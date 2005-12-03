@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.50 2005/08/22 19:22:31 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.51 2005/10/05 18:16:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -547,15 +547,15 @@ sub userCountMessage {
 	
 	my $message;
 	if ($count == 0) {
-		$message = CGI::em("no users");
+		$message = CGI::em("no students");
 	} elsif ($count == $numUsers) {
-		$message = "all users";
+		$message = "all students";
 	} elsif ($count == 1) {
-		$message = "1 user";
+		$message = "1 student";
 	} elsif ($count > $numUsers || $count < 0) {
 		$message = CGI::em("an impossible number of users: $count out of $numUsers");
 	} else {
-		$message = "$count users";
+		$message = "$count students out of $numUsers";
 	}
 	
 	return $message;
