@@ -67,6 +67,9 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_li
 #				1 => "Yes",
 #				0 => "No",
 #		},
+
+use constant BLANKPROBLEM => 'blankProblem.pg';
+
 use constant  FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
@@ -807,18 +810,28 @@ sub initialize {
 		#####################################################################
 		if (defined($r->param("add_blank_problem") ) and $r->param("add_blank_problem") == 1) {
 					my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+					##################################################
+					# make local copy of the blankProblem
+					##################################################
 					my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-					my $new_file_path         =  $ce->{courseDirs}->{templates}."/set$setID/blank.pg";
+					my $problemContents       =  WeBWorK::Utils::readFile($blank_file_path);
+					my $new_file_path         =  "set$setID/".BLANKPROBLEM();
+					my $fullPath              =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'.$new_file_path);
+					local(*TEMPFILE);
+					open(TEMPFILE, ">$fullPath") or warn "Can't write to file $fullPath";
+					print TEMPFILE $problemContents;
+					close(TEMPFILE);
+					
 					#################################################
 					# Update problem record
 					#################################################
 					my $problemRecord  = $self->addProblemToSet(
 							   setName        => $setID,
-							   sourceFile     => $blank_file_path, 
+							   sourceFile     => $new_file_path, 
 							   problemID      => $targetProblemNumber, #added to end of set
 					);
 					$self->assignProblemToAllSetUsers($problemRecord);
-					$self->addgoodmessage("Added $blank_file_path to ". $setID. " as problem $targetProblemNumber") ;
+					$self->addgoodmessage("Added $new_file_path to ". $setID. " as problem $targetProblemNumber") ;
 		}
 		
 		# Sets the specified header to "" so that the default file will get used.
@@ -966,7 +979,7 @@ sub body {
 				unshift @unassignedUsers, $ID;
 			}
 		}
-		@editForUser = @assignedUsers;
+		@editForUser = sort @assignedUsers;
 		$r->param("editForUser", \@editForUser);
 		
 		if (scalar @editForUser && scalar @unassignedUsers) {
@@ -987,7 +1000,7 @@ sub body {
 	my $userToShow        = $forUsers ? $editForUser[0] : $userID;
 	
 	my $userCount        = $db->listUsers();
-	my $setCount         = $db->listGlobalSets() if $forOneUser;
+	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
 	my $setUserCount     = $db->countSetUsers($setID);
 	my $userSetCount     = $db->countUserSets($editForUser[0]) if $forOneUser;
 
@@ -1013,12 +1026,43 @@ sub body {
 	$setCountMessage  = "The user $editForUser[0] has been assigned " . $setCountMessage . "." if $forOneUser;
 
 	if ($forUsers) {
-		print CGI::p("$userCountMessage  Editing user-specific overrides for ". CGI::b(join ", ", @editForUser));
-		if ($forOneUser) {
-			print CGI::p($setCountMessage);
+	    ##############################################
+		# calculate links for the users being edited:
+		##############################################
+		my @userLinks = ();
+		foreach my $userID (@editForUser) {
+		    my $u = $db->getUser($userID);
+			my $line = $u->last_name.", ".$u->first_name."&nbsp;&nbsp;&nbsp;".$u->user_id."&nbsp;&nbsp; ";
+			my $editSetsAssignedToUserURL = $self->systemLink(
+	           $urlpath->newFromModule(
+                "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
+                  courseID => $courseID, userID => $u->user_id));
+            $line .= CGI::a({href=>$editSetsAssignedToUserURL}, 
+                     $self->setCountMessage($db->countUserSets($u->user_id), $setCount));
+            unshift @userLinks,$line;
 		}
+		@userLinks = sort @userLinks;
+	
+		print CGI::table({border=>2,cellpadding=>10}, 
+		    CGI::Tr(
+				CGI::td([
+					 "Editing problem set ".CGI::strong($setID)." data for these individual students:".CGI::br(). 
+					                CGI::strong(join CGI::br(), @userLinks),
+					CGI::a({href=>$setDetailURL },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set."),
+				
+				])
+			)
+		);
 	} else {
-		print CGI::p($userCountMessage);
+		print CGI::table({border=>2,cellpadding=>10}, 
+		    CGI::Tr(
+				CGI::td([
+					"This set ".CGI::strong($setID)." is assigned to ".$self->userCountMessage($setUserCount, $userCount).'.' ,
+					'Edit '.CGI::a({href=>$editUsersAssignedToSetURL},'individual versions '). "of set $setID.",
+				
+				])
+			)
+		);
 	}
 	
 	# handle renumbering of problems if necessary
@@ -1319,15 +1363,14 @@ sub body {
 		      CGI::br();
 		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
 		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
-		print CGI::p(<<HERE);
+		print CGI::p(<<EOF);
 Any time problem numbers are intentionally changed, the problems will
 always be renumbered consecutively, starting from one.  When deleting
 problems, gaps will be left in the numbering unless the box above is
 checked.
-HERE
-                print CGI::p("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.") if ($setRecord->open_date>time());
-		print CGI::p("When changing problem numbers, we will move 
- the problem to be ", CGI::em("before"), " the chosen number.");
+EOF
+        print CGI::p("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.") if ($setRecord->open_date>time());
+		print CGI::p("When changing problem numbers, we will move the problem to be ", CGI::em("before"), " the chosen number.");
 
 	} else {
 		print CGI::p(CGI::b("This set doesn't contain any problems yet."));
@@ -1336,7 +1379,7 @@ HERE
 	my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
     my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
 
-	print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). 'a new blank problem');
+	print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). ' a new blank problem');
 
 	print CGI::end_form();
 	

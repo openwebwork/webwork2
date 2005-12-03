@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.62 2005/11/01 01:51:32 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.63 2005/11/22 01:44:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -113,7 +113,7 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view add_problem make_local_copy save save_as revert)]; #[qw(view save save_as revert add_problem add_header make_local_copy)];
+use constant ACTION_FORMS => [qw(view add_problem make_local_copy save save_as  revert)]; #[qw(view save save_as revert add_problem add_header make_local_copy)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
@@ -122,10 +122,12 @@ use constant FORM_PERMS => {
 		make_local_copy => "modify_student_data",
 		save => "modify_student_data",
 		save_as => "modify_student_data",
+#		rename  => "modify_student_data",
 		revert => "modify_student_data",
 };
 
-
+our $BLANKPROBLEM = 'blankProblem.pg';
+# use constant BLANKPROBLEM => 'blankProblem.pg';  # doesn't work because this constant needs to be used inside a match.
 sub pre_header_initialize {
 	my ($self)         = @_;
 	my $r              = $self->r;
@@ -351,7 +353,10 @@ sub initialize  {
 		$self->addbadmessage("This file '$inputFilePath' is protected! ".CGI::br()."To edit this text you must either 'Make a local copy' of this problem, or 
                            use 'Save As' to save it to another file.");
 	}
-    
+    if ($inputFilePath =~/$BLANKPROBLEM$/) {
+    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
+                           use 'Save As' to save it to another file.");
+    }
 	
 }
 
@@ -1142,8 +1147,10 @@ sub add_problem_handler {
 sub save_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r => $self->r;
-	if (-w $self->{editFilePath}) {
-		return "Save";
+	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/ ) {
+		return "";  #Can't save blank problems without changing names
+	} elsif (-w $self->{editFilePath}) {
+		return "Save";	
 	} else {
 		return ""; #"Can't save -- No write permission";
 	}
@@ -1251,7 +1258,14 @@ sub save_handler {
 
 sub save_as_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Save as [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>""),;
+	my $sourceFilePath = $self->{editFilePath}; 
+	my $templatesPath  =  $self->r->ce->{courseDirs}->{templates};
+	$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
+
+	return "Save ".
+				CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['rename','save_a_copy'], 
+			  -default=>'rename',-labels=>{rename=>' as ',save_a_copy=>'a copy to'}
+			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$sourceFilePath),;
 
 }
 
@@ -1265,13 +1279,13 @@ sub save_as_handler {
 	my $problemSeed     =  $self->{problemSeed};
 	
 	my $do_not_save = 0;
+	my $saveMode      = $actionParams->{'action.save_as.saveMode'}->[0] || '';
 	my $new_file_name = $actionParams->{'action.save_as.target_file'}->[0] || '';
 	$new_file_name =~ s/^\s*//;  #remove initial and final white space
 	$new_file_name =~ s/\s*$//;
 	if ( $new_file_name !~ /\S/) { # need a non-blank file name
 		# setting $self->{failure} stops saving and any redirects
 		$do_not_save = 1;
-		warn "new file name is $new_file_name";
 		$self->addbadmessage(CGI::p("Please specify a file to save to."));
 		last ACTION_CASES;  #stop processing
 	}
@@ -1309,10 +1323,26 @@ sub save_as_handler {
 		$self->{inputFilePath} = '';
 	}
 
-	
 
 	unless ($do_not_save ) {
-		$self->new_saveFileChanges($outputFilePath, \$problemContents);	
+		$self->new_saveFileChanges($outputFilePath, \$problemContents);
+		my $sourceFilePath = $outputFilePath; 
+		my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
+		$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
+
+		if ($saveMode eq 'rename') { #save to new file
+			my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
+			$problemRecord->source_file($new_file_name);
+			if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
+				$self->addgoodmessage("The current source file for problem $problemNumber has been renamed to [TMPL]/$sourceFilePath.") ;
+			} else {
+				$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
+			}
+		} elsif ($saveMode eq 'save_a_copy') {
+			$self->addgoodmessage("A new local, editable, copy of this problem has been created at [TMPL]/$sourceFilePath.") ;	
+		} else {
+			$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
+		}
 	}
 	my $edit_level = $self->r->param("edit_level") || 0;
 	$edit_level++;
@@ -1321,9 +1351,19 @@ sub save_as_handler {
 	# Set up redirect
 	# The redirect gives the server time to detect that the new file exists.
 	#################################################
-	my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
-		courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
-	);
+	my $problemPage;
+	if ($saveMode eq 'save_a_copy' ) {
+		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
+		);
+	} elsif ($saveMode eq 'rename') {
+		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			courseID => $courseName, setID => $setName, problemID => $problemNumber
+		);
+	
+	} else {
+		$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
+	}
 	my $viewURL = $self->systemLink($problemPage, 
 								 params=>{
 									 sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
@@ -1465,7 +1505,25 @@ sub make_local_copy_handler {
 	$self->reply_with_redirect($viewURL);
 }
 
+sub rename_form {
+	my ($self, $onChange, %actionParams) = @_;
+	my $problemPath = $self->{editFilePath};
+	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
+	#warn "problemPath $problemPath $templatesDir";
+	$problemPath   =~ s|^$templatesDir/||;
+	return join("",
+	       "Rename problem file to : [TMPL]/".CGI::textfield(-name=>'action.rename.target_file', -size=>40, -value=>$problemPath),
+	       	CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$self->{editFilePath} ),
+	);
 
+
+}
+
+sub rename_handler {
+    my ($self, $genericParams, $actionParams, $tableParams) = @_;
+    $actionParams->{'action.make_local_copy.target_file'}->[0] = $actionParams->{'action.rename.target_file'}->[0];
+	make_local_copy_handler($self, $genericParams, $actionParams, $tableParams);
+}
 
 
 1;
