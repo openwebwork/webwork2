@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.6 2005/03/29 21:23:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.7 2005/10/10 22:18:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -82,6 +82,31 @@ sub full_name {
 	}
 }
 
+# mailbox     =  addr-spec                    ; simple address
+#             /  phrase route-addr            ; name & addr-spec
+# route-addr  =  "<" [route] addr-spec ">"
+# addr-spec   =  local-part "@" domain        ; global address
+# phrase      =  1*word                       ; Sequence of words
+# word        =  atom / quoted-string
+# atom        =  1*<any CHAR except specials, SPACE and CTLs>
+# specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
+#             /  "," / ";" / ":" / "\" / <">  ;  string, to use
+#             /  "." / "[" / "]"              ;  within a word.
+# CR          =  <ASCII CR, carriage return>  ; (     15,      13.)
+# CTL         =  <any ASCII control           ; (  0- 37,  0.- 31.)
+#                 character and DEL>          ; (    177,     127.)
+# SPACE       =  <ASCII SP, space>            ; (     40,      32.)
+# HTAB        =  <ASCII HT, horizontal-tab>   ; (     11,       9.)
+# quoted-string = <"> *(qtext/quoted-pair) <">; Regular qtext or
+#                                             ;   quoted chars.
+# qtext       =  <any CHAR excepting <">,     ; => may be folded
+#                "\" & CR, and including
+#                linear-white-space>
+# linear-white-space =  1*([CRLF] LWSP-char)  ; semantics = SPACE
+#                                             ; CRLF => folding
+# LWSP-char   =  SPACE / HTAB                 ; semantics = SPACE
+# quoted-pair =  "\" CHAR                     ; may quote any char
+
 sub rfc822_mailbox {
 	my ($self) = @_;
 	
@@ -90,6 +115,12 @@ sub rfc822_mailbox {
 	
 	if (defined $address and $address ne "") {
 		if (defined $full_name and $full_name ne "") {
+			# see if we need to quote the phrase
+			# (this regex matches CTL, SPACE, and specials)
+			if ($full_name =~ /[\0-\037\177 ()<>@,;:\\".\[\]]/) {
+				$full_name =~ s/(["\\\r])/\\$1/g; # escape <">, "\", or CR
+				$full_name = "\"$full_name\"";
+			}
 			return "$full_name <$address>";
 		} else {
 			return $address;
