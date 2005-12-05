@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.152 2005/10/17 03:37:36 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.153 2005/11/17 22:56:23 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -549,6 +549,8 @@ $siteDefaults{default_templates_course} ="modelCourse";
 	record_answers_after_due_date                   => undef,
 	record_answers_after_answer_date                => undef,
 	dont_log_past_answers                           => "professor",
+	# does the user get to see a dump of the problem?
+	view_problem_debugging_info                     => "ta",
 	
 	##### Behavior of the Hardcopy Processor #####
 	

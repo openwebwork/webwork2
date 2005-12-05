@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.186 2005/09/24 00:51:58 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.187 2005/11/18 18:30:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -833,7 +833,11 @@ sub body {
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
-		print $self->errorOutput($pg->{errors}, $pg->{body_text});
+		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
+			print $self->errorOutput($pg->{errors}, $pg->{body_text});
+		} else {
+			print $self->errorOutput($pg->{errors}, "You do not have permission to view the details of this error.");
+		}
 		print $editorLink;
 		return "";
 	}
