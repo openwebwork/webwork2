@@ -82,29 +82,21 @@ sub full_name {
 	}
 }
 
-# mailbox     =  addr-spec                    ; simple address
-#             /  phrase route-addr            ; name & addr-spec
-# route-addr  =  "<" [route] addr-spec ">"
-# addr-spec   =  local-part "@" domain        ; global address
 # phrase      =  1*word                       ; Sequence of words
 # word        =  atom / quoted-string
 # atom        =  1*<any CHAR except specials, SPACE and CTLs>
 # specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
 #             /  "," / ";" / ":" / "\" / <">  ;  string, to use
 #             /  "." / "[" / "]"              ;  within a word.
-# CR          =  <ASCII CR, carriage return>  ; (     15,      13.)
+# SPACE       =  <ASCII SP, space>            ; (     40,      32.)
 # CTL         =  <any ASCII control           ; (  0- 37,  0.- 31.)
 #                 character and DEL>          ; (    177,     127.)
-# SPACE       =  <ASCII SP, space>            ; (     40,      32.)
-# HTAB        =  <ASCII HT, horizontal-tab>   ; (     11,       9.)
 # quoted-string = <"> *(qtext/quoted-pair) <">; Regular qtext or
 #                                             ;   quoted chars.
 # qtext       =  <any CHAR excepting <">,     ; => may be folded
 #                "\" & CR, and including
 #                linear-white-space>
-# linear-white-space =  1*([CRLF] LWSP-char)  ; semantics = SPACE
-#                                             ; CRLF => folding
-# LWSP-char   =  SPACE / HTAB                 ; semantics = SPACE
+# CR          =  <ASCII CR, carriage return>  ; (     15,      13.)
 # quoted-pair =  "\" CHAR                     ; may quote any char
 
 sub rfc822_mailbox {
