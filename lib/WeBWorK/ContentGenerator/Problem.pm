@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.187 2005/11/18 18:30:12 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.188 2005/12/05 19:43:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -666,8 +666,8 @@ sub options {
 	#warn "doing options in Problem";
 	
 	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
+	return "" if $self->{invalidSet} or $self->{invalidProblem};
+	return "" unless $self->{isOpen};
 	
 	my $displayMode = $self->{displayMode};
 	my %can = %{ $self->{can} };
@@ -762,7 +762,11 @@ sub nav {
 		push @links, "Next Problem", "", "navNext";
 	}
 	
-	my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
+	my $tail = "";
+	
+	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
+	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
+		if defined $self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
 }
 
