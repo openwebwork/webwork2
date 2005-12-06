@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.46 2005/10/08 22:07:36 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.47 2005/11/07 21:17:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,9 +26,11 @@ use strict;
 use warnings;
 use Apache::Cookie;
 use Date::Format;
-use WeBWorK::Utils qw(writeCourseLog);
+use Socket qw/unpack_sockaddr_in inet_ntoa/;
+use WeBWorK::Utils qw/writeCourseLog/;
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
+use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
 
 ################################################################################
 # Public API
@@ -125,11 +127,13 @@ sub verify($) {
 					$r->param("user", $userID);
 					$r->param("key", $Key->key);
 					$found = 1;
-					$self->record_login($userID);
+					$credentialSource = "guest";
+					$self->write_log_entry("GUEST LOGIN OK $userID");
 					last;
 				}
 			}
 			unless ($found) {
+				$self->write_log_entry("GUEST LOGIN FAILED - no logins availabe");
 				$error = "No practice users are available. Please try again in a few minutes.";
 			}
 			last VERIFY;
@@ -147,6 +151,7 @@ sub verify($) {
 				#$r->args->{user} = $user;
 				$r->param("key", $key);
 				$credentialSource = "cookie";
+				$self->write_log_entry("COOKIE LOGIN OK $user");
 			} else {
 				$failWithoutError = 1;
 				last VERIFY;
@@ -167,8 +172,8 @@ sub verify($) {
 		# Make sure user is in the database
 		my $User = $db->getUser($user); # checked
 		unless (defined $User) {
-			# FIXME too much information!
-			$error = "There is no account for $user in this course.";
+			$self->write_log_entry("LOGIN FAILED $user - user unknown");
+			$error = GENERIC_ERROR_MESSAGE;
 			last VERIFY;
 		}
 		
@@ -185,15 +190,15 @@ sub verify($) {
 		
 		# make sure users with this user's status are allowed to access the course (jeez...)
 		unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
-			# FIXME too much information!
-			$error = "The user $user has been dropped from this course.";
+			$self->write_log_entry("LOGIN FAILED $user - course access denied");
+			$error = GENERIC_ERROR_MESSAGE;
 			last VERIFY;
 		}
 		
 		# make sure the user is allowed to login
 		unless ($authz->hasPermissions($user, "login")) {
-			# FIXME too much information?
-			$error = "The user $user is not allowed to log in.";
+			$self->write_log_entry("LOGIN FAILED $user - no permission to login");
+			$error = GENERIC_ERROR_MESSAGE;
 			last VERIFY;
 		}
 		
@@ -207,9 +212,11 @@ sub verify($) {
 			if ($key) {
 				if ($self->checkKey($user, $key)) {
 					# they key was valid.
+					#$self->write_log_entry("KEY LOGIN OK $user");
 					last VERIFY;
 				} else {
 					# the key was invalid.
+					#$self->write_log_entry("KEY LOGIN FAILED $user - invalid key");
 					$error = "Your session has timed out due to inactivity. You must login again.";
 					last VERIFY;
 				}
@@ -228,7 +235,9 @@ sub verify($) {
 			}
 			
 			# an unexpired key exists -- the account is in use.
+			# FIXME improve the error message here
 			if ($self->unexpiredKeyExists($user)) {
+				$self->write_log_entry("GUEST LOGIN FAILED $user - in use");
 				$error = "That practice account is in use.";
 				last VERIFY;
 			}
@@ -277,11 +286,12 @@ sub verify($) {
 				$r->param("key", $Key->key());
 				# also delete the password
 				$r->param("passwd", "");
-				$self->record_login($user); 
+				$self->write_log_entry("LOGIN OK $user - valid password");
 				last VERIFY;
 			} else {
 				# incorrect password. fail.
-				$error = "Incorrect username or password.";
+				$self->write_log_entry("LOGIN FAILED $user - invalid password");
+				$error = "Invalid user ID or password.";
 				last VERIFY;
 			}
 		}
@@ -438,21 +448,21 @@ sub verifyProctor {
 		
 		my $Proctor = $db->getUser($proctorUser);
 		unless(defined $Proctor) {
-			# FIXME too much information
-			$error = "There is no proctor account for $proctorUser in this course";
+			$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - user unknown");
+			$error = "Invalid user ID or password";
 			last VERIFY;
 		}
 		
-		unless( !defined($Proctor->status) or $Proctor->status() eq 'C' ) {
-			# FIXME too much information
-			$error = "Proctor user $proctorUser does not have a valid status in this course.";
-			last VERIFY;
-		}
+		#unless( !defined($Proctor->status) or $Proctor->status() eq 'C' ) {
+		#	$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - invalid status");
+		#	$error = GENERIC_ERROR_MESSAGE;
+		#	last VERIFY;
+		#}
 		
 		# make sure proctor has valid status
 		unless($ce->status_abbrev_has_behavior($Proctor->status, "allow_course_access")) {
-			# FIXME too much information
-			$error = "Proctor user $proctorUser does not have a valid status in this course.";
+			$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - course access denied");
+			$error = GENERIC_ERROR_MESSAGE;
 			last VERIFY;
 		}
 		
@@ -713,15 +723,18 @@ sub killCookie {
 # Utilities
 ################################################################################
 
-sub record_login($$) {
-	my ($self, $userID) = @_;
+sub write_log_entry {
+	my ($self, $message) = @_;
+	
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	my $timestamp = localtime;
-	($timestamp) = $timestamp =~ /^\w+\s(.*)\s/;
-	my $remote_host = $r->get_remote_host || "(cannot get host)";
+	
+	my ($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
+	$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
+	$remote_port = "UNKNOWN" unless defined $remote_port;
 	my $user_agent = $r->header_in("User-Agent");
-	writeCourseLog($ce, "login_log", "$userID on $remote_host ($user_agent)");
+	
+	writeCourseLog($ce, "login_log", "$message (host=$remote_host port=$remote_port UA=$user_agent");
 }
 
 1;
