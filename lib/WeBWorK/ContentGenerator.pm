@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.155 2005/11/28 20:49:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.156 2005/12/03 21:24:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1361,7 +1361,7 @@ method. The simplest way to to this is:
 
 sub optionsMacro {
 	my ($self, %options) = @_;
-	debug("HELLO WORLD!");
+	
 	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
 	@options_to_show = "displayMode" unless @options_to_show;
 	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
