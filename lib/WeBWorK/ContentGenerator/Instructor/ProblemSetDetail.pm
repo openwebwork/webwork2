@@ -416,22 +416,31 @@ sub handle_problem_numbers {
 	my @sortme=();
 	my ($j, $val);
 
+	# keys are current problem numbers, values are target problem numbers
 	foreach $j (keys %newProblemNumbers) {
-		# what happens our first time on this page
+		# we don't want to act unless all problems have been assigned a new problem number, so if any have not, return
 		return "" if (not defined $newProblemNumbers{"$j"});
+		# if the problem has been given a new number, we reduce the "score" of the problem by the original number of the problem
+		# when multiple problems are assigned the same number, this results in the last one ending up first -- FIXME?
 		if ($newProblemNumbers{"$j"} != $j) {
+			# force always gets set if reordering is done, so don't expect to be able to delete a problem,
+			# reorder some other problems, and end up with a hole -- FIXME
 			$force = 1;
 			$val = 1000 * $newProblemNumbers{$j} - $j;
 		} else {
 			$val = 1000 * $newProblemNumbers{$j};
 		}
+		# store a mapping between current problem number and score (based on currnet and new problem number)
 		push @sortme, [$j, $val];
+		# replace new problem numbers in hash with the (global) problems themselves
 		$newProblemNumbers{$j} = $db->getGlobalProblem($setID, $j);
 		die "global $j for set $setID not found." unless $newProblemNumbers{$j};
 	}
 
+	# we don't have to do anything if we're not getting rid of holes
 	return "" unless $force;
 
+	# sort the curr. prob. num./score pairs by score
 	@sortme = sort {$a->[1] <=> $b->[1]} @sortme;
 	# now, for global and each user with this set, loop through problem list
 	#   get all of the problem records
@@ -443,14 +452,17 @@ sub handle_problem_numbers {
 	# Now, three stages.  First global values
 
 	for ($j = 0; $j < scalar @sortme; $j++) {
-		if($sortme[$j]->[0] == $j + 1) {
+		if($sortme[$j][0] == $j + 1) {
+			# if the jth problem (according to the new ordering) is in the right place (problem IDs are numbered from 1, hence $j+1)
 			# do nothing
 		} elsif (not defined $newProblemNumbers{$j + 1}) {
-			$newProblemNumbers{$sortme[$j]->[0]}->problem_id($j + 1);
-			$db->addGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+			# otherwise, if there's a hole for it, add it there
+			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
+			$db->addGlobalProblem($newProblemNumbers{$sortme[$j][0]});
 		} else {
-			$newProblemNumbers{$sortme[$j]->[0]}->problem_id($j + 1);
-			$db->putGlobalProblem($newProblemNumbers{$sortme[$j]->[0]});
+			# otherwise, overwrite the data for the problem that's already there with the jth problem's data (with a changed problemID)
+			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
+			$db->putGlobalProblem($newProblemNumbers{$sortme[$j][0]});
 		}
 	}
 
@@ -463,32 +475,57 @@ sub handle_problem_numbers {
 		# we can't do it again.  This relies on the global user not having
 		# a blank name.
 		next if $globalUserID eq $user;
+		# grab a copy of each UserProblem for this user. @problist can be sparse (if problems were deleted)
 		for $j (keys %newProblemNumbers) {
 			$problist[$j] = $db->getUserProblem($user, $setID, $j);
-			die " problem $j for set $setID and effective user $user not found" 
-				unless $problist[$j];
 		}
-		# ok, now we have all problem data for $user
+		use Data::Dumper;
 		for($j = 0; $j < scalar @sortme; $j++) { 
-			if ($sortme[$j]->[0] == $j + 1) {
+			if ($sortme[$j][0] == $j + 1) {
+				# same as above -- the jth problem is in the right place, so don't worry about it
 				# do nothing
-			} elsif (not defined $newProblemNumbers{$j + 1}) { 
-				$problist[$sortme[$j]->[0]]->problem_id($j + 1); 
-				$db->addUserProblem($problist[$sortme[$j]->[0]]); 
-			} else { 
-				$problist[$sortme[$j]->[0]]->problem_id($j + 1); 
-				$db->putUserProblem($problist[$sortme[$j]->[0]]); 
-			} 
+			} elsif ($problist[$sortme[$j][0]]) {
+				# we've made sure the user's problem actually exists HERE, since we want to be able to fail gracefullly if it doesn't
+				# the problem with the original conditional below is that %newProblemNumbers maps oldids => global problem record
+				# we need to check if the target USER PROBLEM exists, which is what @problist knows
+				#if (not defined $newProblemNumbers{$j + 1}) {
+				if (not defined $problist[$j+1]) {
+					# same as above -- there's a hole for that problem to go into, so add it in its new place
+					$problist[$sortme[$j][0]]->problem_id($j + 1); 
+					$db->addUserProblem($problist[$sortme[$j][0]]); 
+				} else { 
+					# same as above -- there's a problem already there, so overwrite its data with the data from the jth problem
+					$problist[$sortme[$j][0]]->problem_id($j + 1); 
+					$db->putUserProblem($problist[$sortme[$j][0]]); 
+				} 
+			} else {
+				warn "UserProblem missing for user=$user set=$setID problem=$sortme[$j][0]. This may indicate database corruption.\n";
+				# when a problem doesn't exist in the target slot, a new problem gets added there, but the original problem
+				# never gets overwritten (because there wan't a problem it would have to get exchanged with)
+				# i think this can get pretty complex. consider 1=>2, 2=>3, 3=>4, 4=>1 where problem 1 doesn't exist for some user:
+				# @sortme[$j][0] will contain: 4, 1, 2, 3
+				# - problem 1 will get **added** with the data from problem 4 (because problem 1 doesn't exist for this user)
+				# - problem 2 will get overwritten with the data from problem 1
+				# - problem 3 will get overwritten with the data from problem 2
+				# - nothing will happend to problem 4, since problem 1 doesn't exit
+				# so the solution is to delete problem 4 altogether!
+				# here's the fix:
+				
+				# the data from problem $j+1 was/will be moved to another problem slot,
+				# but there's no problem $sortme[$j][0] to replace it. thus, we delete it now.
+				$db->deleteUserProblem($user, $setID, $j+1);
+			}
 		} 
 	}
 
-
+	# any problems with IDs above $maxNum get deleted -- presumably their data has been copied into problems with lower IDs
 	foreach ($j = scalar @sortme; $j < $maxNum; $j++) {
 		if (defined $newProblemNumbers{$j + 1}) {
 			$db->deleteGlobalProblem($setID, $j+1);
 		}
 	}
 
+	# return a string form of the old problem IDs in the new order (not used by caller, incidentally)
 	return join(', ', map {$_->[0]} @sortme);
 }
 
