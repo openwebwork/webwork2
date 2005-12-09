@@ -1390,7 +1390,7 @@ sub body {
 # print final lines
 		print CGI::end_table();
 		print CGI::checkbox({
-				  label=> "Force problems to be numbered consecutively from one",
+				  label=> "Force problems to be numbered consecutively from one (always done when reordering problems)",
 				  name=>"force_renumber", value=>"1"}),
 			  CGI::br(),
 		      CGI::checkbox({
