@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.50 2005/09/19 17:11:25 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.51 2005/12/12 21:30:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -797,3 +797,41 @@ sub popup_set_form {
 
 }
 1;
+
+__END__
+
+Here's pretty much everything I can think of that we can get out of the database
+or calculate:
+
+for each set, we have a few rows of non-user-specific data above the student rows
+(we could just have additional columns for these values, but they'd have the same value in every row)
+	set_id
+	optional other set data (dates, etc)
+	per-problem data (usually not shown, but available if needed)
+		problem_id
+		problem value
+	for all problems in the set
+		total value
+for each student (one row) we need columns for:
+	user_id and/or student_id
+	optional other user data (first_name/last_name, section, recitation, etc)
+	per-set data
+		per-problem data (usually not shown, but available if needed)
+			status
+			score = value*status
+			number of attempts
+			number of correct attempts
+			number of incorrect attempts
+		for all problems in the set
+			total status
+			total score
+			total number of attempts
+			average number of attempts
+			total number of correct attempts
+			average number of correct attempts
+			total number of incorrect attempts
+			average number of incorrect attempts
+			index = ( total_status / total_value )**2 / average_number_of_attempts
+
+"value" is the weight of the problem, in the range [0,ƒ), usually 1.
+"status" is the correctness of a problem, in the range [0,1].
