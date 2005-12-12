@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.49 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.50 2005/09/19 17:11:25 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -484,7 +484,7 @@ sub scoreSet {
 	if ($scoringItems->{successIndex}) {
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			my $avg_num_attempts = ($num_of_problems) ? $numberOfAttempts{$user}/$num_of_problems : 0;
-			$userSuccessIndex{$user} = ($avg_num_attempts) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0;						
+			$userSuccessIndex{$user} = ($avg_num_attempts && $valueTotal) ? ($userStatusTotals{$user}/$valueTotal)**2/$avg_num_attempts : 0;						
 		}
 	}
 	# write the status totals
