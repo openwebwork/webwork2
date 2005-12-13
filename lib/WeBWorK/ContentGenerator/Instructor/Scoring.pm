@@ -165,20 +165,21 @@ sub body {
 									   },
 						),
 						CGI::br(),
-						CGI::checkbox({ -name=>'includeTotals',
-										-value=>1,
-										-label=>'Include Total score column',
-										-checked=>1,
-									   },
-						),
-						CGI::br(),
-						CGI::checkbox({ -name=>'includePercent',
-										-value=>1,
-										-label=>'Include Percent correct column',
-										-checked=>1,
-									   },
-						),
-						CGI::br(),
+						# These are not yet implemented
+						#CGI::checkbox({ -name=>'includeTotals',
+						#				-value=>1,
+						#				-label=>'Include Total score column',
+						#				-checked=>1,
+						#			   },
+						#),
+						#CGI::br(),
+						#CGI::checkbox({ -name=>'includePercent',
+						#				-value=>1,
+						#				-label=>'Include Percent correct column',
+						#				-checked=>1,
+						#			   },
+						#),
+						#CGI::br(),
 						CGI::checkbox({ -name=>'recordSingleSetScores',
 										-value=>1,
 										-label=>'Record Scores for Single Sets',
@@ -833,5 +834,5 @@ for each student (one row) we need columns for:
 			average number of incorrect attempts
 			index = ( total_status / total_value )**2 / average_number_of_attempts
 
-"value" is the weight of the problem, in the range [0,ƒ), usually 1.
+"value" is the weight of the problem, in the range [0,inf), usually 1.
 "status" is the correctness of a problem, in the range [0,1].
