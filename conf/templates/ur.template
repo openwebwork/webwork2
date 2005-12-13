@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.43 2005/12/08 18:10:20 sh002i Exp $
+# $CVSHeader: webwork2/conf/templates/ur.template,v 1.44 2005/12/11 01:33:31 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,7 +70,7 @@
 		<!--#else-->
 		<td class="TopPanel" >
 		<!--#endif-->
-			<table cellpadding="0" cellspacing="0" border="0">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
 				<tr valign="top">
 					<td class="TopPanel">
 						<!--#if can="path"-->
@@ -78,7 +78,7 @@
 						<!--#endif-->
 					</td>
 					<td>&nbsp;&nbsp;&nbsp;</td>
-					<td class="TopPanel" nowrap>
+					<td class="TopPanel" align="right" nowrap>
 						<!--#if can="loginstatus"-->
 						<span class="LoginStatus"><!--#loginstatus--></span>
 						<!--#endif-->
