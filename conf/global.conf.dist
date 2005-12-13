@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.153 2005/11/17 22:56:23 dpvc Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.154 2005/12/05 19:43:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -745,9 +745,9 @@ $pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$courseURLs{html}/CAPA_
 # Size in pixels of dynamically-generated images, i.e. graphs.
 $pg{specialPGEnvironmentVars}{onTheFlyImageSize}      = 400,
  
-# To activate Parser-based versions of num_cmp and fun_cmp, change this
-# value to 0.
-$pg{specialPGEnvironmentVars}{useOldAnswerMacros} = 1;
+# To disable the Parser-based versions of num_cmp and fun_cmp, and use the
+# original versions instead, set this value to 1.
+$pg{specialPGEnvironmentVars}{useOldAnswerMacros} = 0;
 
 # Strings to insert at the start and end of the body of a problem
 #  (at beginproblem() and ENDDOCUMENT) in various modes.  More display modes
