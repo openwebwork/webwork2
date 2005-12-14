@@ -1416,7 +1416,8 @@ EOF
 	my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
     my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
 
-	print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). ' a new blank problem');
+    # This next feature isn't fully supported and is causing problems.  Remove for now.  #FIXME
+	#print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). ' a new blank problem');
 
 	print CGI::end_form();
 	

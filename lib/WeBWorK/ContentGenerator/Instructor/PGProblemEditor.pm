@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.63 2005/11/22 01:44:55 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.64 2005/12/03 21:18:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -914,7 +914,7 @@ sub fixProblemContents {
 
 sub fresh_edit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	$self->addgoodmessage("fresh_edit_handler called");
+	#$self->addgoodmessage("fresh_edit_handler called");
 }
 sub view_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -1059,7 +1059,7 @@ sub add_problem_form {
 
 sub add_problem_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-#	$self->addgoodmessage("add_problem_handler called");
+	#$self->addgoodmessage("add_problem_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
 	my $problemNumber   =  $self->{problemID};
@@ -1159,7 +1159,7 @@ sub save_form {
 
 sub save_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	$self->addgoodmessage("save_handler called");
+	#$self->addgoodmessage("save_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
 	my $problemNumber   =  $self->{problemID};
@@ -1271,7 +1271,7 @@ sub save_as_form {
 
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	$self->addgoodmessage("save_as_handler called");
+	#$self->addgoodmessage("save_as_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
 	my $problemNumber   =  $self->{problemID};
@@ -1384,7 +1384,7 @@ sub revert_form {
 }
 sub revert_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	$self->addgoodmessage("revert_handler called");
+	#$self->addgoodmessage("revert_handler called");
 
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
@@ -1423,7 +1423,7 @@ sub make_local_copy_form {
 
 sub make_local_copy_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	$self->addgoodmessage("make_local_copy_handler called");
+	#$self->addgoodmessage("make_local_copy_handler called");
 
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
