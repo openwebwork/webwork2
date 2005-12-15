@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.188 2005/12/05 19:43:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.189 2005/12/06 19:56:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -390,6 +390,7 @@ sub pre_header_initialize {
 	my $userName = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
 	my $key = $r->param('key');
+	my $editMode = $r->param("editMode");
 	
 	my $user = $db->getUser($userName); # checked
 	die "record for user $userName (real user) does not exist."
@@ -407,10 +408,11 @@ sub pre_header_initialize {
 # gateway check here: we want to be sure that someone isn't trying to take 
 # a GatewayQuiz through the regular problem/homework mechanism, thereby 
 # circumventing the versioning, time limits, etc.
-	die('Invalid access attempt: the Problem ContentGenerator was called ' .
-	    'for a GatewayQuiz assignment.') 
-	    if ( defined($set) && defined( $set->assignment_type() ) && 
-		 $set->assignment_type() =~ /gateway/ );
+	if (defined $set and defined $set->assignment_type and $set->assignment_type() =~ /gateway/) {
+		unless ($editMode eq "temporaryFile" and $authz->hasPermissions($userName, "modify_student_data")) {
+			die('Invalid access attempt: the Problem ContentGenerator was called for a GatewayQuiz assignment.'	);
+		}
+	}
 	
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
@@ -427,8 +429,6 @@ sub pre_header_initialize {
 	
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
-
-	my $editMode = $r->param("editMode");
 
 	if ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		# professors are allowed to fabricate sets and problems not
