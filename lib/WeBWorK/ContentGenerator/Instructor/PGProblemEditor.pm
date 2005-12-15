@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.64 2005/12/03 21:18:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.65 2005/12/14 00:16:50 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -965,7 +965,7 @@ sub view_handler {
 	$edit_level++;
 	my $viewURL;
 	
-	if ($file_type eq 'problem' ) { # redirect to Problem.pm
+	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
 		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
@@ -1006,22 +1006,6 @@ sub view_handler {
 				editMode           => ("temporaryFile"),
 				edit_level         => $edit_level,
 				status_message     => uri_escape($self->{status_message})
-			}
-		);
-	} elsif ($file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
-		);
-		
-		$viewURL = $self->systemLink($problemPage,
-			params => {
-				displayMode        => $displayMode,
-				problemSeed        => $problemSeed,
-				editMode           => "temporaryFile",
-				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
-				status_message     => uri_escape($self->{status_message})
-	
 			}
 		);
 	} else {
