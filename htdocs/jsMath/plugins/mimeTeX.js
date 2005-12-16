@@ -1,4 +1,32 @@
 /*
+ *  mimeTeX.js
+ *  
+ *  Part of the jsMath package for mathematics on the web.
+ *
+ *  This file makes jsMath more compatible with the mimeTeX program.
+ *  It does not make everything work, but it goes a long way.
+ *
+ *  ---------------------------------------------------------------------
+ *
+ *  Copyright 2004-2005 by Davide P. Cervone
+ * 
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+
+jsMath.Script.Start();
+
+/*
  *  Treat ~ as space
  */
 jsMath.Parser.prototype.nextIsSpace = function () {
@@ -193,3 +221,5 @@ jsMath.Package(jsMath.Parser,{
     this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
   }
 });
+
+jsMath.Script.End();
