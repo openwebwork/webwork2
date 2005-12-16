@@ -8,20 +8,22 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  jsMath is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  jsMath is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with jsMath; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Copyright 2004-2005 by Davide P. Cervone
+ * 
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
+jsMath.Script.Start();
 
 jsMath.Add(jsMath.Box,{
   
@@ -46,8 +48,8 @@ jsMath.Add(jsMath.Box,{
       var ph = Math.round(h*jsMath.em);
       if (h > jsMath.hd) {
         box.bd = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)
-                   + '<IMG SRC="'+jsMath.blank+'" STYLE="'
-                   + 'width: 1; height: '+ph+'px">').h - h;
+                   + '<img src="'+jsMath.blank+'" style="'
+                   + 'width: 1px; height: '+ph+'px" />').h - h;
         box.bh = h - box.bd;
       }
       c.bh = box.bh/scale;
@@ -57,7 +59,7 @@ jsMath.Add(jsMath.Box,{
       // hack to avoid Font changing back to the default
       // font when a unicode reference is not followed
       // by a letter or number
-      box.html += '<SPAN STYLE="display: none">x</SPAN>'
+      box.html += '<span style="display: none">x</span>'
     }
     return box;
   }
@@ -388,22 +390,22 @@ jsMath.Img.UpdateTeXFonts({
 
 
 if (jsMath.browser == 'MSIE' && navigator.platform == 'MacPPC') {
-  jsMath.Update.Styles({
-    '.math':       'font-style: normal',
-    '.typeset':    'font-style: normal',
-    '.icmr10':     'font-family: Times',
-    '.icmmi10':    'font-family: Times; font-style:italic',
-    '.icmbx10':    'font-family: Times; font-weight:bold',
-    '.icmti10':    'font-family: Times; font-style:italic'
+  jsMath.Setup.Styles({
+    '.typeset .math':       'font-style: normal',
+    '.typeset .typeset':    'font-style: normal',
+    '.typeset .icmr10':     'font-family: Times',
+    '.typeset .icmmi10':    'font-family: Times; font-style: italic',
+    '.typeset .icmbx10':    'font-family: Times; font-weight: bold',
+    '.typeset .icmti10':    'font-family: Times; font-style: italic'
   });
 } else {
-  jsMath.Update.Styles({
-    '.math':       'font-style: normal',
-    '.typeset':    'font-style: normal',
-    '.icmr10':     'font-family: serif',
-    '.icmmi10':    'font-family: serif; font-style:italic',
-    '.icmbx10':    'font-family: serif; font-weight:bold',
-    '.icmti10':    'font-family: serif; font-style:italic'
+  jsMath.Setup.Styles({
+    '.typeset .math':       'font-style: normal',
+    '.typeset .typeset':    'font-style: normal',
+    '.typeset .icmr10':     'font-family: serif',
+    '.typeset .icmmi10':    'font-family: serif; font-style: italic',
+    '.typeset .icmbx10':    'font-family: serif; font-weight: bold',
+    '.typeset .icmti10':    'font-family: serif; font-style: italic'
   });
 }
 
@@ -453,5 +455,5 @@ jsMath.Img.SetFont({
 
 jsMath.Img.LoadFont('cm-fonts');
 
-jsMath.Setup.Styles();
-jsMath.Setup.TeXfonts();
+jsMath.Script.End();
+

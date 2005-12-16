@@ -9,30 +9,34 @@
  *            http://www.math.union.edu/locate/jsMath
  *
  *  for the latest version, and for documentation on how to use jsMath.
- * 
- *  Copyright (c) 2004-2005 by Davide P. Cervone.
  *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License.
- *  
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *  Copyright 2004-2005 by Davide P. Cervone
+ * 
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *  
  *****************************************************************************/
 
 /*
  *  Prevent running everything again if this file is loaded twice
  */
-if (!jsMath || !jsMath.loaded) {
-var jsMath_old = jsMath;  // save user customizations
+
+if (!window.jsMath || !window.jsMath.loaded) {
+
+// handle bug in MSIE/Mac in autoload
+if (window.parent && window.parent.jsMath) {jsMath = window.parent.jsMath}
+
+var jsMath_old = window.jsMath;  // save user customizations
+
 
 //
 // debugging routine
@@ -64,14 +68,14 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 /***************************************************************************/
 
-var jsMath = {
+jsMath = {
   
-  version: "2.4a",  // change this if you edit the file
+  version: "3.0",  // change this if you edit the file
   
-  //
-  //  Name of image files
-  //
-  blank: "blank.gif",
+  document: document,  // the document loading jsMath
+  window: window,      // the window of the of loading document
+  
+  blank: "blank.gif",  // the blank image file
   
   defaultH: 0, // default height for characters with none specified
 
@@ -82,64 +86,76 @@ var jsMath = {
   //  The styles needed for the TeX fonts
   //
   styles: {
-    '.size0':          'font-size: 50%',  // tiny (\scriptscriptsize)
-    '.size1':          'font-size: 60%',  //       (50% of \large for consistency)
-    '.size2':          'font-size: 70%',  // scriptsize
-    '.size3':          'font-size: 85%',  // small (70% of \large for consistency)
-    '.size4':          'font-size: 100%', // normalsize
-    '.size5':          'font-size: 120%', // large
-    '.size6':          'font-size: 144%', // Large
-    '.size7':          'font-size: 173%', // LARGE
-    '.size8':          'font-size: 207%', // huge
-    '.size9':          'font-size: 249%', // Huge
-  
-    '.cmr10':          'font-family: cmr10, serif',
-    '.cmbx10':         'font-family: cmbx10, cmr10',
-    '.cmti10':         'font-family: cmti10, cmr10',
-    '.cmmi10':         'font-family: cmmi10',
-    '.cmsy10':         'font-family: cmsy10',
-    '.cmex10':         'font-family: cmex10',
-    
-    '.math':           'font-family: serif; font-style: normal; font-weight: normal',
-    '.typeset':        'font-family: serif; font-style: normal; font-weight: normal',
-    '.normal':         'font-family: serif; font-style: normal; font-weight: normal; '
-                          + 'padding:0px; border:0px; margin:0px;',
-    'span.typeset':    '',
-    'div.typeset':     'text-align: center; margin: 1em 0px;',
-    '.mathlink':       'text-decoration: none',
-    '.mathHD':         'border-width:0px; width: 1px; margin-right: -1px',
-  
-    '.error':          'font-size: 10pt; font-style: italic; '
-                         + 'background-color: #FFFFCC; padding: 1px; '
-                         + 'border: 1px solid #CC0000',
+    '.math':              'font-family: serif; font-style: normal; font-weight: normal',
 
-    '.jsM_panel':      'position:fixed; bottom:1.5em; right:1.5em; padding: 10px 20px; '
-                         + 'background-color:#DDDDDD; border: outset 2px; '
-                         + 'z-index:103; width:auto;',
-    '.jsM_button':     'position:fixed; bottom:1px; right:2px; background-color:white; '
-                         + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
-                         + 'z-index:102; color:black; text-decoration:none; font-size:x-small; width:auto;',
-    '.jsM_float':      'position:absolute; top:0px; left:0px; max-width:80%; '
-                         + 'z-index:101; width:auto; height:auto;',
-    '.jsM_drag':       'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
-    '.jsM_close':      'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
-    '.jsM_source':     'background-color:#E2E2E2; border: outset 1px; '
-                         + 'width:auto; height:auto; padding: 8px 15px; '
-                         + 'font-family: courier, fixed; font-size: 90%',
-    '.jsM_noFont':     'text-align: center; padding: 10px 20px; border: 3px solid #DD0000; '
-                         + ' background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
-    '.jsM_fontLink':   'padding: 0px 5px 2px 5px; text-decoration:none; color:black;'
-                         + ' border: 2px outset; background-color:#E8E8E8; font-size:80%; width:auto;'
+    '.typeset':           'font-family: serif; font-style: normal; font-weight: normal',
+    'div.typeset':        'text-align: center; margin: 1em 0px;',
+    'span.typeset':       '',
+    
+    '.typeset .normal':   'font-family: serif; font-style: normal; font-weight: normal',
+
+    '.typeset .size0':    'font-size: 50%',  // tiny (\scriptscriptsize)
+    '.typeset .size1':    'font-size: 60%',  //       (50% of \large for consistency)
+    '.typeset .size2':    'font-size: 70%',  // scriptsize
+    '.typeset .size3':    'font-size: 85%',  // small (70% of \large for consistency)
+    '.typeset .size4':    'font-size: 100%', // normalsize
+    '.typeset .size5':    'font-size: 120%', // large
+    '.typeset .size6':    'font-size: 144%', // Large
+    '.typeset .size7':    'font-size: 173%', // LARGE
+    '.typeset .size8':    'font-size: 207%', // huge
+    '.typeset .size9':    'font-size: 249%', // Huge
+  
+    '.typeset .cmr10':    'font-family: jsMath-cmr10, serif',
+    '.typeset .cmbx10':   'font-family: jsMath-cmbx10, jsMath-cmr10',
+    '.typeset .cmti10':   'font-family: jsMath-cmti10, jsMath-cmr10',
+    '.typeset .cmmi10':   'font-family: jsMath-cmmi10',
+    '.typeset .cmsy10':   'font-family: jsMath-cmsy10',
+    '.typeset .cmex10':   'font-family: jsMath-cmex10',
+    
+    '.typeset .link':     'text-decoration: none',
+    '.typeset .HD':       'border-width:0px; width: 1px; margin-right: -1px',
+  
+    '.typeset .error':    'font-size: 10pt; font-style: italic; '
+                             + 'background-color: #FFFFCC; padding: 1px; '
+                             + 'border: 1px solid #CC0000',
+
+    '#jsMath_message':        'position:fixed; bottom:1px; left:2px; background-color:#E6E6E6; '
+                                + 'border: solid 1px #959595; margin:0px; padding: 1px 8px; '
+                                + 'z-index:102; color: black; font-size:small; width:auto;',
+    '#jsMath_panel':          'position:fixed; bottom:1.5em; right:1.5em; padding: 10px 20px; '
+                                + 'background-color:#DDDDDD; border: outset 2px; '
+                                + 'z-index:103; width:auto;',
+    '#jsMath_button':         'position:fixed; bottom:1px; right:2px; background-color:white; '
+                                + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
+                                + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
+                                + 'width:auto; cursor:pointer; cursor:hand;',
+    '#jsMath_float':          'position:absolute; top:0px; left:0px; max-width:80%; '
+                                + 'z-index:101; width:auto; height:auto;',
+    '#jsMath_float .drag':    'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
+    '#jsMath_float .close':   'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
+    '#jsMath_float .source':  'background-color:#E2E2E2; border: outset 1px; '
+                                + 'width:auto; height:auto; padding: 8px 15px; '
+                                + 'font-family: courier, fixed; font-size: 90%',
+    '#jsMath_noFont':         'text-align: center; padding: 10px 20px; border: 3px solid #DD0000; '
+                                + 'background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
+    '#jsMath_noFont .link':   'padding: 0px 5px 2px 5px; border: 2px outset; background-color:#E8E8E8; '
+                                + 'color:black; font-size:80%; width:auto; cursor:pointer; cursor:hand;'
   },
   
 
   /***************************************************************************/
 
   /*
+   *  Get a jsMath DOM element
+   */
+  Element: function (name) {return jsMath.document.getElementById('jsMath_'+name)},
+  
+  /*
    *  Get the width and height (in pixels) of an HTML string
    */
   BBoxFor: function (s) {
-    this.hidden.innerHTML = '<NOBR><SPAN CLASS="jsM_scale">'+s+'</SPAN></NOBR>';
+    this.hidden.innerHTML = 
+      '<nobr><span class="typeset"><span class="scale">'+s+'</span></span></nobr>';
     var bbox = {w: this.hidden.offsetWidth, h: this.hidden.offsetHeight};
     this.hidden.innerHTML = '';
     return bbox;
@@ -158,7 +174,7 @@ var jsMath = {
    */
   EmBoxForItalics: function (s) {
     var bbox = this.BBoxFor(s);
-    if (s.match(/<I>|CLASS="icm/i)) {
+    if (s.match(/<i>|class="icm/i)) {
       bbox.w = this.BBoxFor(s+jsMath.Browser.italicString).w
                 - jsMath.Browser.italicCorrection;
     }
@@ -172,14 +188,16 @@ var jsMath = {
   Init: function () {
     if (jsMath.Setup.inited != 1) {
       if (jsMath.Setup.inited) {
-        alert("It looks like jsMath failed to set up properly.");
+        alert("It looks like jsMath failed to set up properly.  " +
+              "I'll will try to keep going, but it could get ugly.");
+        jsMath.Setup.inited = 1;
       } else {
         alert("You must call jsMath.Setup.Body() explicitly when jsMath is" +
               "loaded as part of the <HEAD> section");
       }
-      jsMath.Setup.Init(); // may fail to load fallback files properly
+      jsMath.Setup.Body(); // may fail to load fallback files properly
     }
-    this.em = this.BBoxFor('<IMG SRC="'+jsMath.blank+'" STYLE="width:10em; height:1em">').w/10;
+    this.em = this.BBoxFor('<img src="'+jsMath.blank+'" style="width:10em; height:1em" />').w/10;
     if (jsMath.Browser.italicString) 
       jsMath.Browser.italicCorrection = jsMath.BBoxFor(jsMath.Browser.italicString).w;
     if (jsMath.Browser.hiddenSpace != '') {
@@ -191,14 +209,14 @@ var jsMath = {
                       jsMath.Browser.hiddenSpace).w/5;
     }
     var bb = this.BBoxFor('x'); var h = bb.h;
-    var d = this.BBoxFor('x<IMG SRC="'+jsMath.blank+'" HEIGHT="'+(h*jsMath.Browser.imgScale)+'" WIDTH="1">').h - h;
+    var d = this.BBoxFor('x<img src="'+jsMath.blank+'" height="'+(h*jsMath.Browser.imgScale)+'" width="1" />').h - h;
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
     this.xWidth = bb.w;  // used to tell if scale has changed
-    
+
     this.Setup.TeXfonts();
     
-    var x_height = this.EmBoxFor('<SPAN CLASS="cmr10">M</SPAN>').w/2;
+    var x_height = this.EmBoxFor('<span class="cmr10">M</span>').w/2;
     this.TeX.M_height = x_height*(26/14);
     this.TeX.h = this.h; this.TeX.d = this.d; this.TeX.hd = this.hd;
     
@@ -226,7 +244,15 @@ var jsMath = {
    *  Mark jsMath as loaded and copy any user-provided overrides
    */
   Loaded: function () {
-    this.Insert(jsMath,jsMath_old);
+    if (jsMath_old) {
+      var override = ['Process', 'ProcessBeforeShowing',
+        'ConvertTeX','ConvertTeX2','ConvertLaTeX','ConvertCustom',
+        'CustomSearch', 'Synchronize', 'Macro', 'document'];
+      for (var i = 0; i < override.length; i++) {
+        if (jsMath_old[override[i]]) {jsMath_old[override[i]] = null}
+      }
+    }
+    if (jsMath_old) {this.Insert(jsMath,jsMath_old)}
     jsMath_old = null;
     jsMath.loaded = 1;
   },
@@ -257,6 +283,285 @@ var jsMath = {
 /***************************************************************************/
 
 /*
+ *
+ *  Implement loading of remote scripts using XMLHttpRequest, if
+ *  possible, otherwise use a hidden IFRAME and fake it.  That
+ *  method runs asynchronously, which causes lots of headaches.
+ *  Solve these using Push command, which queues actions
+ *  until files have loaded.
+ */
+
+jsMath.Script =  {
+
+  request: null, // the XMLHttpRequest object
+
+  /*
+   *  Create the XMLHttpRequest object, if we can.
+   *  Otherwise, use the iframe-based fallback method.
+   */
+  Init: function () {
+    if (!(jsMath.Controls.cookie.asynch && jsMath.Controls.cookie.progress)) {
+      if (window.XMLHttpRequest) {
+        this.request = new XMLHttpRequest;
+      } else if (window.ActiveXObject) {
+        try {this.request = new ActiveXObject("Microsoft.XMLHTTP")} catch (err) {}
+      }
+    }
+    //
+    //  Use the delayed-script fallback for MSIE/Mac and old versions
+    //  of several browsers (Opera 7.5, OmniWeb 4.5).
+    //
+    if (!this.request || jsMath.Setup.domainChanged)
+      {this.Load = this.delayedLoad; this.needsBody = 1}
+  },
+
+  /*
+   *  Load a script and evaluate it in the window's context
+   */
+  Load: function (url) {jsMath.Script.Push(this,'xmlRequest',url)},
+
+  /*
+   *  Load a URL and run the contents of the file
+   */
+  xmlRequest: function (url) {
+    this.debug('xmlRequest: '+url);
+    try {
+      this.request.open("GET",url,false);
+      this.request.send(null);
+    } catch (err) {
+      throw "jsMath can't load the file '"+url+"'\n"
+          + "Message: "+err.message;
+    }
+    if (this.request.status && this.request.status >= 400) {
+      // Do we need to deal with redirected links?
+      throw "jsMath can't load the file '"+url+"'\n"
+          + "Error status: "+this.request.status;
+    }
+    this.Start(); this.blocking = 1;
+    jsMath.window.eval(this.request.responseText);
+    this.End(); this.blocking = 0;
+    this.Process();
+  },
+
+  /********************************************************************
+   *
+   *  Implement asynchronous loading and execution of scripts
+   *  (via hidden IFRAME) interleved with other JavaScript commands
+   *  that must be synchronized with the file loading.  (Basically, this
+   *  is for MSIE/Mac and Opera 7.5, which don't have XMLHttpRequest.)
+   */
+
+  cancelTimeout: 30*1000,   // delay for canceling load (30 sec)
+
+  iframe: null,      // the hidden iframe
+  blocking: 0,       // true when an asynchronous action is being performed
+  cancelTimer: null, // timer to cancel load if it takes too long
+  needsBody: 0,      // true if loading files requires BODY to be present
+  
+  queue: [],         // the stack of pending actions
+  queueAt: 0,
+
+  /*
+   *  Provide mechanism for synchronizing with the asynchronous jsMath
+   *  file-loading mechanism.  'code' can be a string or a function.
+   */
+  Synchronize: function (code,data) {
+    if (typeof(code) != 'string') {jsMath.Script.Push(null,code,data)}
+      else {jsMath.Script.Push(jsMath.window,'eval',code)}
+  },
+  
+  /*
+   *  Queue a function to be processed.
+   *  If nothing is being loaded, do the pending commands.
+   */
+  Push: function (object,method,data) {
+    this.debug('Pushing: '+method+' at '+this.queueAt);
+    this.queue = [].concat(this.queue.slice(0,this.queueAt),[[object,method,data]],this.queue.slice(this.queueAt));
+    this.queueAt++;
+    if (!(this.blocking || (this.needsBody && !jsMath.document.body))) this.Process();
+  },
+
+  /*
+   *  Do any pending functions (stopping if a file load is started)
+   */
+  Process: function () {
+    while (this.queue.length && !this.blocking) {
+      this.Start();
+      var call = this.queue[0]; this.queue = this.queue.slice(1);
+      var object = call[0]; var method = call[1]; var data = call[2];
+      this.debug('Calling: '+method);
+      if (object) {object[method](data)} else if (method) {method(data)}
+      this.debug('Done:    '+method);
+    }
+    this.End();
+  },
+  
+  Start: function () {this.queueAt = 0},
+  End:   function () {this.queueAt = this.queue.length},
+
+  /*
+   *  Handle loading of scripts that run asynchronously
+   */
+  delayedLoad: function (url) {
+    this.debug('Loading: '+url);
+    this.Push(this,'startLoad',url);
+  },
+  startLoad: function (url) {
+    this.iframe = jsMath.document.createElement('iframe');
+    this.iframe.style.visibility = 'hidden';
+    this.iframe.style.position = 'absolute';
+    this.iframe.style.width = '0px';
+    this.iframe.style.height = '0px';
+    if (jsMath.document.body.firstChild) {
+      jsMath.document.body.insertBefore(this.iframe,jsMath.document.body.firstChild);
+    } else {
+      jsMath.document.body.appendChild(this.iframe);
+    }
+    this.blocking = 1; this.url = url;
+    if (!url.match(/\.js$/)) {this.iframe.src = url}
+                        else {this.iframe.src = jsMath.root+"jsMath-loader.html"}
+    if (url.substr(0,jsMath.root.length) == jsMath.root)
+      {url = url.substr(jsMath.root.length)}
+    jsMath.Message.Set("Loading "+url);
+    this.debug('Starting: '+url);
+    this.cancelTimer = setTimeout('jsMath.Script.cancelLoad()',this.cancelTimeout);
+  },
+  endLoad: function (action) {
+    this.debug('Ending: '+this.url);
+    if (this.cancelTimer) {clearTimeout(this.cancelTimer); this.cancelTimer = null;}
+    jsMath.Message.Clear();
+    if (action != 'cancel') {this.blocking = 0; this.Process()}
+  },
+
+  /*
+   *  If the loading takes too long, cancel it and end the load.
+   */
+  cancelLoad: function () {
+    this.cancelTimer = null;
+    jsMath.Message.Set("Can't load file");
+    this.endLoad("cancel");
+  },
+
+  /*
+   *  Perform a delay (to let the browser catch up)
+   */
+  Delay: function (time) {
+    this.blocking = 1;
+    setTimeout('jsMath.Script.endDelay()',time);
+  },
+  endDelay: function () {this.blocking = 0; this.Process()},
+  
+  /*
+   *  for debugging the event queue
+   */
+  debug: function (message) {
+//    if (jsMath.document.body && jsMath.window.debug) {jsMath.window.debug(message)}
+//      else {alert(message)}
+  }
+
+};
+
+/***************************************************************************/
+
+/*
+ *  Message and screen blanking facility
+ */
+
+jsMath.Message = {
+  
+  blank: null,    // the div to blank out the screen
+  message: null,  // the div for the messages
+  text: null,     // the text node for messages
+  clear: null,    // timer for clearing message
+
+  /*
+   *  Create the elements needed for the message box
+   */
+  Init: function () {
+    if (!jsMath.document.body || !jsMath.Controls.cookie.progress) return;
+    if (jsMath.Setup.stylesReady) {
+      this.message = jsMath.Setup.DIV('message',{visibility:'hidden'});
+    } else {
+      this.message = jsMath.Setup.DIV('message',{
+        visibility:'hidden', position:'absolute', bottom:'1px', left:'2px',
+        backgroundColor:'#E6E6E6', border:'solid 1px #959595',
+        margin:'0px', padding:'1px 8px', zIndex:102,
+        color:'black', fontSize:'small', width:'auto'
+      });
+    }
+    this.text = jsMath.document.createTextNode('');
+    this.message.appendChild(this.text);
+    this.message.onmousedown = jsMath.Translate.Cancel;
+  },
+  
+  /*
+   *  Set the contents of the message box, or use the window status line
+   */
+  Set: function (text,canCancel) {
+    if (this.clear) {clearTimeout(this.clear); this.clear = null}
+    if (jsMath.Controls.cookie.progress) {
+      if (!this.text) {this.Init(); if (!this.text) return}
+      if (jsMath.Browser.textNodeBug) {this.message.innerHTML = text}
+        else {this.text.nodeValue = text}
+      this.message.style.visibility = 'visible';
+      if (canCancel) {
+        this.message.style.cursor = 'pointer';
+        if (!this.message.style.cursor) {this.message.style.cursor = 'hand'}
+        this.message.title = ' Cancel Processing of Math ';
+      } else {
+        this.message.style.cursor;
+        this.message.title = '';
+      }
+    } else {
+      if (text.substr(0,8) != "Loading ") {jsMath.window.status = text}
+    }
+  },
+  
+  /*
+   *  Clear the message box or status line
+   */
+  Clear: function () {
+    if (this.clear) {clearTimeout(this.clear)}
+    this.clear = setTimeout("jsMath.Message.doClear()",1000);
+  },
+  doClear: function () {
+    if (this.clear) {
+      this.clear = null;
+      jsMath.window.status = '';
+      if (this.text) {this.text.nodeValue = ''}
+      if (this.message) {this.message.style.visibility = 'hidden'}
+    }
+  },
+  
+  
+  /*
+   *  Put up a DIV that covers the window so that the
+   *  "flicker" of processing the mathematics will not be visible
+   */
+  Blank: function () {
+    if (this.blank || !jsMath.document.body) return;
+    this.blank = jsMath.Setup.DIV("blank",{
+      position:(jsMath.Browser.msiePositionFixedBug? 'absolute': 'fixed'),
+      top:'0px', left:'0px', bottom:'0px', right:'0px',
+      zIndex:101, backgroundColor:'white'
+    });
+    if (jsMath.Browser.msieBlankBug) {
+      this.blank.innerHTML = '&nbsp;';
+      this.blank.style.width = "110%";
+      this.blank.style.height = "110%";
+    }
+  },
+  
+  UnBlank: function () {
+    if (this.blank) {jsMath.document.body.removeChild(this.blank)}
+    this.blank = null;
+  }
+};
+
+
+/***************************************************************************/
+
+/*
  *  Miscellaneous setup and initialization
  */
 jsMath.Setup = {
@@ -265,30 +570,12 @@ jsMath.Setup = {
    *  Insert a DIV at the top of the page with given ID,
    *  attributes, and style settings
    */
-  TopHTML: function (id,attributes,styles) {
-    try {
-      var div = document.createElement('div');
-      div.setAttribute("id",'jsMath.'+id);
-      for (var i in attributes) {
-        div.setAttribute(i,attributes[i]);
-        if (i == "class") {div.setAttribute('className',attributes[i])} // MSIE
-      }
-      for (var i in styles) {div.style[i]= styles[i]}
-      if (!document.body.hasChildNodes) {document.body.appendChild(div)}
-        else {document.body.insertBefore(div,document.body.firstChild)}
-    } catch (err) {
-      var html = '<DIV ID="jsMath.'+id+'"';
-      for (var id in attributes) {html += ' '+id+'="'+attributes[id]+'"'}
-      if (styles) {
-        html += ' STYLE="';
-        for (var id in styles) {html += ' '+id+':'+styles[id]+';'}
-        html += '"';
-      }
-      html += '</DIV>';
-      if (!document.body.insertAdjacentHTML) {document.write(html)}
-        else {document.body.insertAdjacentHTML('AfterBegin',html)}
-      div = jsMath.Element(id);
-    }
+  DIV: function (id,styles) {
+    var div = jsMath.document.createElement('div');
+    div.id = 'jsMath_'+id;
+    for (var i in styles) {div.style[i]= styles[i]}
+    if (!jsMath.document.body.hasChildNodes) {jsMath.document.body.appendChild(div)}
+      else {jsMath.document.body.insertBefore(div,jsMath.document.body.firstChild)}
     return div;
   },
   
@@ -297,15 +584,16 @@ jsMath.Setup = {
    */
   Script: function (file) {
     if (!file.match('^([a-zA-Z]+:/)?/')) {file = jsMath.root + file}
-    document.write('<SCRIPT SRC="'+file+'"></SCRIPT>');
+    jsMath.Script.Load(file);
   },
   
   /*
    *  Use a hidden <DIV> for measuring the BBoxes of things
    */
-  HTML: function () {
-    jsMath.hidden = this.TopHTML("Hidden",{'class':"normal"},{
-      position:"absolute", top:0, left:0, border:0, padding:0, margin:0
+  Hidden: function () {
+    jsMath.hidden = this.DIV("Hidden",{
+      visibility: 'hidden', position:"absolute",
+      top:0, left:0, border:0, padding:0, margin:0
     });
     jsMath.hiddenTop = jsMath.hidden;
     return;
@@ -316,20 +604,24 @@ jsMath.Setup = {
    *  the other .js and .gif files)
    */
   Source: function () {
-    var script = document.getElementsByTagName('SCRIPT');
-    if (script) {
-      for (var i = 0; i < script.length; i++) {
-        var src = script[i].src;
-        if (src && src.match('(^|/)jsMath.js$')) {
-          jsMath.root = src.replace(/jsMath.js$/,'');
-          jsMath.Img.root = jsMath.root + "fonts/";
-          jsMath.blank = jsMath.root + jsMath.blank;
-          this.Domain();
-          return;
+    if (jsMath.Autoload && jsMath.Autoload.root) {
+      jsMath.root = jsMath.Autoload.root;
+    } else {
+      jsMath.root = '';
+      var script = jsMath.document.getElementsByTagName('script');
+      if (script) {
+        for (var i = 0; i < script.length; i++) {
+          var src = script[i].src;
+          if (src && src.match('(^|/)jsMath.js$')) {
+            jsMath.root = src.replace(/jsMath.js$/,'');
+            i = script.length;
+          }
         }
       }
     }
-    jsMath.root = ''; jsMath.Img.root = "fonts/";
+    jsMath.Img.root = jsMath.root + "fonts/";
+    jsMath.blank = jsMath.root + jsMath.blank;
+    this.Domain();
   },
   
   /*
@@ -338,17 +630,17 @@ jsMath.Setup = {
    *  the domain of the calling page.
    */
   Domain: function () {
-    var jsDomain = ''; var pageDomain = document.domain;
+    var jsDomain = ''; var pageDomain = jsMath.document.domain;
     if (jsMath.root.match('://([^/]*)/')) {jsDomain = RegExp.$1}
     jsDomain = jsDomain.replace(/:\d+$/,'');
     if (jsDomain == "" || jsDomain == pageDomain) return;
     //
-    // MSIE on the Mac can't change document.domain and 'try' won't
-    //   catch the error (Grrr!), so exit for them
+    // MSIE on the Mac can't change jsMath.document.domain and 'try' won't
+    //   catch the error (Grrr!), so exit for them.
     //
     if (navigator.appName == 'Microsoft Internet Explorer' &&
         navigator.platform == 'MacPPC' && navigator.onLine &&
-        navigator.userProfile && document.all) return;
+        navigator.userProfile && jsMath.document.all) return;
     jsDomain = jsDomain.split(/\./); pageDomain = pageDomain.split(/\./);
     if (jsDomain.length < 2 || pageDomain.length < 2 ||
         jsDomain[jsDomain.length-1] != pageDomain[pageDomain.length-1] ||
@@ -361,7 +653,8 @@ jsMath.Setup = {
       if (jsDomain[jsDomain.length-i] != pageDomain[pageDomain.length-i]) break;
       domain = jsDomain[jsDomain.length-i] + '.' + domain;
     }
-    document.domain = domain;
+    jsMath.document.domain = domain;
+    this.domainChanged = 1;
   },
 
   DomainWarning: function () {
@@ -373,15 +666,40 @@ jsMath.Setup = {
   },
   
   /*
+   *  Initialize a font's encoding array
+   */
+  EncodeFont: function (name) {
+    var font = jsMath.TeX[name];
+    if (font[0].c != null) return;
+    for (var k = 0; k < 128; k++) {
+      var data = font[k]; font[k] = data[3];
+      if (font[k] == null) {font[k] = {}};
+      font[k].w = data[0]; font[k].h = data[1];
+      if (data[2] != null) {font[k].d = data[2]}
+      font[k].c = jsMath.TeX.encoding[k];
+    }
+  },
+  
+  /*
+   *  Initialize the encodings for all fonts
+   */
+  Fonts: function () {
+    for (var i = 0; i < jsMath.TeX.fam.length; i++) {
+      var name = jsMath.TeX.fam[i];
+      if (name) {this.EncodeFont(name)}
+    }
+  },
+  
+  /*
    *  Look up the default height and depth for a TeX font
    *  and set the skewchar
    */
   TeXfont: function (name) {
     var font = jsMath.TeX[name];
-    var WH = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+font[65].c+'</SPAN>');
+    var WH = jsMath.EmBoxFor('<span class="'+name+'">'+font[65].c+'</span>');
     font.hd = WH.h;
-    font.d = jsMath.EmBoxFor('<SPAN CLASS="'+name+'">'+ font[65].c +
-      '<IMG SRC="'+jsMath.blank+'" STYLE="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1px;"></SPAN>').h
+    font.d = jsMath.EmBoxFor('<span class="'+name+'">'+ font[65].c +
+      '<img src="'+jsMath.blank+'" style="height:'+(font.hd*jsMath.Browser.imgScale)+'em; width:1px;" /></span>').h
       - font.hd;
     font.h = font.hd - font.d;
     font.dh = .05; if (jsMath.browser == 'Safari') {font.hd *= 2};
@@ -412,7 +730,6 @@ jsMath.Setup = {
     }
   },
 
-  
   /*
    *  Send the style definitions to the browser (these may be adjusted
    *  by the browser-specific code)
@@ -420,43 +737,99 @@ jsMath.Setup = {
   Styles: function (styles) {
     if (!styles) {
       styles = jsMath.styles;
-      styles['.jsM_scale'] = 'font-size:'+jsMath.Controls.cookie.scale+'%';
+      styles['.typeset .scale'] = 'font-size:'+jsMath.Controls.cookie.scale+'%';
+      this.stylesReady = 1;
     }
-    document.writeln('<STYLE TYPE="text/css" ID="jsMath.styles">');
-    for (var id in styles) {document.writeln('  '+id+'  {'+styles[id]+'}')}
-    document.writeln('</STYLE>');
+    jsMath.Script.Push(this,'AddStyleSheet',styles);
+    if (jsMath.Browser.styleChangeDelay) {jsMath.Script.Push(jsMath.Script,'Delay',1)}
   },
   
+  AddStyleSheet: function (styles) {
+    var head = jsMath.document.getElementsByTagName('head')[0];
+    //
+    //  Handle MSIE/Windows and Mozilla
+    //
+    if (jsMath.document.styleSheets) {
+      var style = head.appendChild(jsMath.document.createElement('style'));
+      var sheet = style.styleSheet || style.sheet;
+      if (sheet) {
+        for (var id in styles) {
+	  if (styles[id] != '') {
+            if (sheet.addRule) {
+              sheet.addRule(id,styles[id],sheet.length);
+            } else {
+              sheet.insertRule(id+' {'+styles[id]+'}',sheet.length);
+            }
+	  }
+        }
+        return;
+      } else {
+        head.removeChild(style);
+        style = null; sheet = null;
+      }
+    }
+    //
+    //  Handle Safari, Opera
+    //
+    var count = (jsMath.document.styleSheets)? jsMath.document.styleSheets.length: 0;
+    var string = '';
+    for (var id in styles) {string += id + ' {'+styles[id]+"}\n"}
+    var link = jsMath.document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = 'data:text/css;charset=utf-8,'+escape(string);
+    head.appendChild(link);
+    //
+    //  Handle MSIE/Mac
+    //
+    //  Check if we failed to create the styleSheet (but in
+    //  Safari, jsMath.document.styleSheets is not updated until after the
+    //  page is fully loaded, so we don't know if we succeeded.  So 
+    //  skip it (it has createCSSStyleSheet but MSIE/mac doesn't).
+    //
+    if (jsMath.document.styleSheets && jsMath.document.styleSheets.length == count &&
+        !(jsMath.document.implementation && jsMath.document.implementation.createCSSStyleSheet)) {
+      var div = jsMath.document.createElement('div');
+      div.style.display = 'none';
+      jsMath.document.body.appendChild(div);
+      div.innerHTML = '<style type="text/css">'+"\n"+string+"\n"+'</style>';
+    }
+  },
+
   /*
-   *  Do the initialization that requires the BODY to be in place.
-   *  (called automatically if the jsMath.js file is loaded in the
-   *  BODY, but must be called explicitly if it is in the HEAD).
+   *  Do the initialization that requires the <body> to be in place.
    */
   Body: function () {
     if (this.inited) return;
 
     this.inited = -1;
 
-    jsMath.Setup.HTML();
-    jsMath.Setup.Source();
+    jsMath.Setup.Hidden();
     jsMath.Browser.Init();
+
+    // blank screen if necessary
+    if (jsMath.Controls.cookie.blank) {jsMath.Message.Blank()}
+
+    jsMath.Setup.Styles();
     jsMath.Controls.Init();
     jsMath.Click.Init();
-    jsMath.Setup.Styles();
     
-    jsMath.Setup.User();  //  do user-specific initialization
+    // do user-specific initialization
+    jsMath.Script.Push(jsMath.Setup,'User','pre-font');
 
-    //make sure browser-specific loads are done before this
-    document.write('<SCRIPT>jsMath.Font.Check()</SCRIPT>');
+    // make sure browser-specific loads are done before this
+    jsMath.Script.Push(jsMath.Font,'Check');
     
     this.inited = 1;
   },
   
   /*
    *  Web page author can override this to do initialization
-   *  that must be done before the font check is performed
+   *  that must be done before the font check is performed.
+   *  This may be extended to pass additional parameters to
+   *  indicate when the call is being made.
    */
-  User: function () {}
+  User: function (when) {}
   
 };
 
@@ -485,13 +858,6 @@ jsMath.Update = {
         jsMath.TeX[font][i].c = change[font][i];
       }
     }
-  },
-
-  /*
-   *  Add a collection of styles to the style list
-   */
-  Styles: function (styles) {
-    for (var i in styles) {jsMath.styles[i] = styles[i]}
   }
   
 };
@@ -517,6 +883,8 @@ jsMath.Browser = {
 
   renameOK: 1,                // tells if brower will find a tag whose name
                               //   has been set via setAttributes
+  styleChangeDelay: 0,        // true if style changes need a delay in order
+                              //   for them to be available
 
   delay: 1,                   // delay for asynchronous math processing
   
@@ -531,9 +899,9 @@ jsMath.Browser = {
    *  or varies with the height of the rest of the line (MSIE).
    */
   TestSpanHeight: function () {
-    jsMath.hidden.innerHTML = '<SPAN><IMG SRC="'+jsMath.blank+'" STYLE="height: 2em"></SPAN>';
-    var span = jsMath.hidden.getElementsByTagName('SPAN')[0];
-    var img  = jsMath.hidden.getElementsByTagName('IMG')[0];
+    jsMath.hidden.innerHTML = '<span><img src="'+jsMath.blank+'" style="height: 2em" /></span>';
+    var span = jsMath.hidden.firstChild;
+    var img  = span.firstChild;
     this.spanHeightVaries = (span.offsetHeight == img.offsetHeight);
     jsMath.hidden.innerHTML = '';
   },
@@ -544,10 +912,23 @@ jsMath.Browser = {
    *  returned by getElementByName.
    */
   TestRenameOK: function () {
-    jsMath.hidden.innerHTML = '<SPAN ID="jsMath.test"></SPAN>';
-    var test = document.getElementById('jsMath.test');
-    test.setAttribute('NAME','jsMath_test');
-    this.renameOK = (document.getElementsByName('jsMath_test').length > 0);
+    jsMath.hidden.innerHTML = '<span></span>';
+    var test = jsMath.hidden.firstChild;
+    test.setAttribute('name','jsMath_test');
+    this.renameOK = (jsMath.document.getElementsByName('jsMath_test').length > 0);
+    jsMath.hidden.innerHTML = '';
+  },
+  
+  /*
+   *  See if style changes occur immediately, or if we need to delay
+   *  in order to let them take effect.
+   */
+  TestStyleChange: function () {
+    jsMath.hidden.innerHTML = '<span ID="jsMath_test">x</span>';
+    var span = jsMath.hidden.firstChild;
+    var w = span.offsetWidth;
+    jsMath.Setup.AddStyleSheet({'#jsMath_test': 'font-size:200%'});
+    this.styleChangeDelay = (span.offsetWidth == w);
     jsMath.hidden.innerHTML = '';
   },
 
@@ -559,6 +940,7 @@ jsMath.Browser = {
     jsMath.browser = 'unknown';
     this.TestSpanHeight();
     this.TestRenameOK();
+    this.TestStyleChange();
 
     this.MSIE();
     this.Mozilla();
@@ -591,37 +973,24 @@ jsMath.Browser = {
     if (this.spanHeightVaries) {
       jsMath.browser = 'MSIE';
       if (navigator.platform == 'Win32') {
-        jsMath.Update.TeXfonts({
-          cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
-          cmmi10: {
-             '10':  {c: '<I>&Omega;</I>', tclass: 'normal'},
-             '126': {c: '&#x7E;<SPAN STYLE="margin-left:.1em"></SPAN>'}
-          },
-          cmsy10: {
-            '10': {c: '&#x2297;', tclass: 'arial'},
-            '55': {c: '<SPAN STYLE="margin-right:-.54em">7</SPAN>'}
-          },
-          cmex10: {'10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'}},
-          cmti10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
-          cmbx10: {'10': {c: '<B>&Omega;</B>', tclass: 'normal'}}
-        });
-        this.allowAbsoluteDelim = 1;
-        this.separateSkips = 1;
-        this.buttonCheck = 1;
-        this.msieDivWidthBug = 1;
+        this.allowAbsoluteDelim = 1; this.separateSkips = 1;
+        this.buttonCheck = 1; this.msieBlankBug = 1;
+        this.msieDivWidthBug = 1; this.msiePositionFixedBug = 1;
         this.msieFontBug = 1; this.msieIntegralBug = 1;
         this.msieAlphaBug = 1; this.alphaPrintBug = 1;
         this.msieCenterBugFix = 'position:relative; ';
-        this.msieSpaceFix = '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD">';
+        this.msieSpaceFix = '<img src="'+jsMath.blank+'" class="HD" />';
         this.msieInlineBlockFix = ' display: inline-block;';
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
-        jsMath.styles['.arial'] = "font-family: 'Arial unicode MS'";
+        jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
         // MSIE doesn't implement fixed positioning, so use absolute
-        jsMath.styles['.jsM_panel'] =
-              jsMath.styles['.jsM_panel'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
-        jsMath.styles['.jsM_button'] = 'width:1px; '
-            + jsMath.styles['.jsM_button'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
-        window.onscroll = jsMath.Controls.MoveButton;
+        jsMath.styles['#jsMath_message'] =
+              jsMath.styles['#jsMath_message'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
+        jsMath.styles['#jsMath_panel'] =
+              jsMath.styles['#jsMath_panel'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
+        jsMath.styles['#jsMath_button'] = 'width:1px; '
+            + jsMath.styles['#jsMath_button'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
+        jsMath.window.onscroll = jsMath.Controls.MoveButton;
         // MSIE will rescale images if the DPIs differ
         if (screen.deviceXDPI && screen.logicalXDPI 
              && screen.deviceXDPI != screen.logicalXDPI) {
@@ -629,15 +998,15 @@ jsMath.Browser = {
           jsMath.Controls.cookie.alpha = 0;
         }
         // Handle bug with getting width of italic text
-        this.italicString = '<I>x</I>';
+        this.italicString = '<i>x</i>';
         jsMath.EmBoxFor = jsMath.EmBoxForItalics;
       } else if (navigator.platform == 'MacPPC') {
         this.msieAbsoluteBug = 1; this.msieButtonBug = 1;
-        this.msieDivWidthBug = 1;
+        this.msieDivWidthBug = 1; this.msieBlankBug = 1;
         jsMath.Setup.Script('jsMath-msie-mac.js');
-        jsMath.Parser.prototype.macros.angle = ['Replace','ord','<FONT FACE="Symbol">&#x8B;</FONT>','normal'];
-        jsMath.styles['.jsM_panel'] = 'width:25em; ' + jsMath.styles['.jsM_panel'].replace(/width:auto/,"");
-        jsMath.styles['.jsM_button'] = 'width:1px; ' + jsMath.styles['.jsM_button'].replace(/width:auto/,"");
+        jsMath.Parser.prototype.macros.angle = ['Replace','ord','<font face="Symbol">&#x8B;</font>','normal'];
+        jsMath.styles['#jsMath_panel'] = 'width:25em; ' + jsMath.styles['#jsMath_panel'].replace(/width:auto/,"");
+        jsMath.styles['#jsMath_button'] = 'width:1px; ' + jsMath.styles['#jsMath_button'].replace(/width:auto/,"");
       }
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
     }
@@ -649,23 +1018,7 @@ jsMath.Browser = {
   Mozilla: function () {
     if (jsMath.hidden.ATTRIBUTE_NODE) {
       jsMath.browser = 'Mozilla';
-      if (navigator.platform == 'MacPPC') {
-        jsMath.Update.TeXfonts({
-          cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
-          cmmi10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
-          cmsy10: {'10': {c: '&otimes;', tclass: 'normal'}},
-          cmex10: {'10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'}},
-          cmti10: {'10': {c: '<I>&Omega;</I>', tclass: 'normal'}},
-          cmbx10: {'10': {c: '<B>&Omega;</B>', tclass: 'normal'}}
-        });
-      } else {
-        jsMath.Setup.Script('jsMath-mozilla.js');
-        this.alphaPrintBug = 1;
-      }
-      for (var i = 0; i < jsMath.TeX.fam.length; i++) {
-        if (jsMath.TeX.fam[i]) 
-          {jsMath.styles['.'+jsMath.TeX.fam[i]] += '; position: relative'}
-      }
+      if (navigator.platform == 'Win32') {this.alphaPrintBug = 1}
       this.allowAbsoluteDelim = 1;
       this.separateSkips = 1;
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
@@ -680,7 +1033,7 @@ jsMath.Browser = {
       jsMath.browser = 'OmniWeb';
       this.allowAbsolute = !navigator.userAgent.match("OmniWeb/v4");
       this.allowAbsoluteDelim = this.allowAbsolute;
-      this.buttonCheck = 1;
+      this.buttonCheck = 1; this.textNodeBug = 1;
     }
   },
     
@@ -690,35 +1043,9 @@ jsMath.Browser = {
   Opera: function () {
     if (navigator.appName == 'Opera' || navigator.userAgent.match(" Opera ")) {
       jsMath.browser = 'Opera';
-      jsMath.Update.TeXfonts({
-        cmr10:  {
-          '10': {c: '&Omega;', tclass: 'normal'},
-          '20': {c: '&#x2C7;', tclass: 'normal'}
-        },
-        cmmi10: {
-          '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
-          '20': {c: '&kappa;', tclass: 'normal'}
-        },
-        cmsy10: {
-          '10': {c: '&otimes;', tclass: 'normal'},
-          '20': {c: '&#x2264;', tclass: 'normal'}
-        },
-        cmex10: {
-          '10': {c: '<SPAN STYLE="font-size: 67%">D</SPAN>'},
-          '20': {c: '<SPAN STYLE="font-size: 82%">"</SPAN>'}
-        },
-        cmti10: {
-          '10': {c: '<I>&Omega;</I>', tclass: 'normal'},
-          '20': {c: '<I>&#x2C7;</I>', tclass: 'normal'}
-        },
-        cmbx10: {
-          '10': {c: '<B>&Omega;</B>', tclass: 'normal'},
-          '20': {c: '<B>&#x2C7;</B>', tclass: 'normal'}
-        }
-      });
       this.allowAbsolute = 0;
       this.delay = 10;
-      this.operaHiddenFix = '[Processing Math]';
+      this.operaHiddenFix = '[Processing]';
     }
   },
 
@@ -729,14 +1056,15 @@ jsMath.Browser = {
     if (navigator.appVersion.match(/Safari\//)) {
       jsMath.browser = 'Safari';
       var version = navigator.userAgent.match("Safari/([0-9]+)");
-      version = (version)? version[1] : 200;  // FIXME: hack until I get Tiger
+      version = (version)? version[1] : 400;
       for (var i = 0; i < jsMath.TeX.fam.length; i++)
         {if (jsMath.TeX.fam[i]) {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}}
       jsMath.TeX.axis_height += .05;
       this.allowAbsoluteDelim = version >= 125;
-      this.safariIFRAMEbug = version >= 312;  // FIXME: find out if they fixed it
-      this.safariImgBug = 1;
+      this.safariIFRAMEbug = version >= 312 && version < 412;
+      this.safariImgBug = 1; this.textNodeBug = 1;
       this.buttonCheck = 1;
+      this.styleChangeDelay = 1;
     }
   },
   
@@ -746,14 +1074,6 @@ jsMath.Browser = {
   Konqueror: function () {
     if (navigator.product && navigator.product.match("Konqueror")) {
       jsMath.browser = 'Konqueror';
-      jsMath.Update.TeXfonts({
-        cmr10:  {'20': {c: '&#x2C7;', tclass: 'normal'}},
-        cmmi10: {'20': {c: '&kappa;', tclass: 'normal'}},
-        cmsy10: {'20': {c: '&#x2264;', tclass: 'normal'}},
-        cmex10: {'20': {c: '<SPAN STYLE="font-size: 84%">"</SPAN>'}},
-        cmti10: {'20': {c: '<I>&#x2C7;</I>', tclass: 'normal'}},
-        cmbx10: {'20': {c: '<B>&#x2C7;</B>', tclass: 'normal'}}
-      });
       this.allowAbsolute = 0;
       this.allowAbsoluteDelim = 0;
       if (navigator.userAgent.match(/Konqueror\/(\d+)\.(\d+)/)) {
@@ -761,7 +1081,7 @@ jsMath.Browser = {
           this.separateSkips = 1;
           this.valignBug = 1;
           this.hiddenSpace = '&nbsp;';
-          jsMath.Box.prototype.Remeasured = function () {return this};
+          jsMath.Box.prototype.Remeasured = new Function("return this");
         }
       }
     }
@@ -780,13 +1100,13 @@ jsMath.Font = {
 
   // the HTML for the missing font message
   message:    
-    '<B>No TeX fonts found</B> -- using image fonts instead.<BR>\n'
-      + 'These may be slow and might not print well.<BR>\n'
+    '<b>No TeX fonts found</b> -- using image fonts instead.<br/>\n'
+      + 'These may be slow and might not print well.<br/>\n'
       + 'Use the jsMath control panel to get additional information.',
       
   extra_message:
-    'Extra TeX fonts not found: <B><SPAN ID="jsMath.ExtraFonts"></SPAN></B><BR>'
-      + 'Using image fonts instead.  This may be slow and might not print well.<BR>\n'
+    'Extra TeX fonts not found: <b><span id="jsMath_ExtraFonts"></span></b><br/>'
+      + 'Using image fonts instead.  This may be slow and might not print well.<br/>\n'
       + 'Use the jsMath control panel to get additional information.',
   
   /*
@@ -794,20 +1114,35 @@ jsMath.Font = {
    *  Check the character in a given position, and see if it is
    *  wider than the usual one in that position.
    */
-  Test1: function (name,n,factor) {
-    if (n == null) {n = 124}; if (factor == null) {factor = 2}
-    var wh1 = jsMath.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+jsMath.TeX[name][n].c+'</SPAN>');
-    var wh2 = jsMath.BBoxFor('<SPAN STYLE="font-family: serif">'+jsMath.TeX[name][n].c+'</SPAN>');
+  Test1: function (name,n,factor,prefix) {
+    if (n == null) {n = 0x7C}; if (factor == null) {factor = 2}; if (prefix == null) {prefix = ''}
+    var wh1 = jsMath.BBoxFor('<span style="font-family: '+prefix+name+', serif">'+jsMath.TeX[name][n].c+'</span>');
+    var wh2 = jsMath.BBoxFor('<span style="font-family: serif">'+jsMath.TeX[name][n].c+'</span>');
     //alert([wh1.w,wh2.w,wh1.h,factor*wh2.w]);
     return (wh1.w > factor*wh2.w && wh1.h != 0);
   },
 
-  Test2: function (name,n,factor) {
-    if (n == null) {n = 124}; if (factor == null) {factor = 2}
-    var wh1 = jsMath.BBoxFor('<SPAN STYLE="font-family: '+name+', serif">'+jsMath.TeX[name][n].c+'</SPAN>');
-    var wh2 = jsMath.BBoxFor('<SPAN STYLE="font-family: serif">'+jsMath.TeX[name][n].c+'</SPAN>');
+  Test2: function (name,n,factor,prefix) {
+    if (n == null) {n = 0x7C}; if (factor == null) {factor = 2}; if (prefix == null) {prefix = ''}
+    var wh1 = jsMath.BBoxFor('<span style="font-family: '+prefix+name+', serif">'+jsMath.TeX[name][n].c+'</span>');
+    var wh2 = jsMath.BBoxFor('<span style="font-family: serif">'+jsMath.TeX[name][n].c+'</span>');
     //alert([wh2.w,wh1.w,wh1.h,factor*wh1.w]);
     return (wh2.w > factor*wh1.w && wh1.h != 0);
+  },
+  
+  /*
+   *  Check for the new jsMath versions of the fonts (blacker with
+   *  different encoding) and if not found, look for old-style fonts.
+   *  If they are found, load the BaKoMa encoding information.
+   */
+  CheckTeX: function () {
+    var wh = jsMath.BBoxFor('<span style="font-family: jsMath-cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
+    jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10',null,null,'jsMath-'));
+    if (jsMath.nofonts) {
+      wh = jsMath.BBoxFor('<span style="font-family: cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
+      jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
+      if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
+    }
   },
   
   /*
@@ -825,15 +1160,14 @@ jsMath.Font = {
    */
   Check: function () {
     var cookie = jsMath.Controls.cookie;
-    var wh = jsMath.BBoxFor('<SPAN STYLE="font-family: cmex10">'+jsMath.TeX.cmex10[1].c+'</SPAN>');
-    jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
+    this.CheckTeX();
     if (jsMath.nofonts) {
       if (cookie.autofont || cookie.font == 'tex') {
         cookie.font = this.fallback;
         if (cookie.warn) {
           jsMath.nofontMessage = 1;
           cookie.warn = 0; jsMath.Controls.SetCookie(0);
-          if (window.NoFontMessage) {window.NoFontMessage()}
+          if (jsMath.window.NoFontMessage) {jsMath.window.NoFontMessage()}
                                else {this.Message(this.message)}
         }
       }
@@ -862,7 +1196,7 @@ jsMath.Font = {
    *  The message for when no TeX fonts.  You can eliminate this message
    *  by including
    *  
-   *      <SCRIPT>jsMath = {Font: {Message: function () {}}}</SCRIPT>
+   *      <script>jsMath = {Font: {Message: function () {}}}</script>
    *
    *  in your HTML file, before loading jsMath.js, if you want.  But this
    *  means the user may not know that he or she can get a better version
@@ -870,17 +1204,17 @@ jsMath.Font = {
    */
   Message: function (message) {
     if(jsMath.Element("Warning")) return;
-    var div = jsMath.Setup.TopHTML("Warning",{'class':'jsM_Warning'},{});
+    var div = jsMath.Setup.DIV("Warning",{});
     div.innerHTML = 
-      '<CENTER><TABLE><TR><TD>'
-      + '<DIV CLASS="jsM_noFont">' + message
-      + '<DIV STYLE="text-align:left"><SPAN STYLE="float:left; margin: 8px 0px 0px 20px">'
-      + '<A HREF="javascript:jsMath.Controls.Panel()" CLASS="jsM_fontLink">jsMath Control Panel</A>'
-      + '</SPAN><SPAN STYLE="margin: 8px 20px 0px 0px; float:right">'
-      + '<A HREF="javascript:jsMath.Font.HideMessage()" CLASS="jsM_fontLink">Hide this Message</A>'
-      + '</SPAN></DIV><BR CLEAR="ALL"></DIV>'
-      + '<DIV STYLE="width:22em; height:1px"></DIV>'
-      + '</TD></TR></TABLE></CENTER><HR>';
+      '<center><table><tr><td>'
+      + '<div id="jsMath_noFont">' + message
+      + '<div style="text-align:left"><span style="float:left; margin: 8px 0px 0px 20px">'
+      + '<span onclick="jsMath.Controls.Panel()" title=" Open the jsMath Control Panel " class="link">jsMath Control Panel</span>'
+      + '</span><span style="margin: 8px 20px 0px 0px; float:right">'
+      + '<span onclick="jsMath.Font.HideMessage()" title=" Remove this font warning message " class="link">Hide this Message</span>'
+      + '</span></div><div style="height:6px"></div><br clear="all"/></div>'
+      + '<div style="width:22em; height:1px"></div>'
+      + '</td></tr></table></center><hr/>';
   },
   
   HideMessage: function () {
@@ -892,10 +1226,12 @@ jsMath.Font = {
    *  Register an extra font so jsMath knows about it
    */
   Register: function (data) {
+    jsMath.Script.Start();
     if (typeof(data) == 'string') {data = {name: data}}
     var fontname = data.name; var name = fontname.replace(/10$/,'');
     var fontfam = jsMath.TeX.fam.length;
-    if (!data.style) {data.style = "font-family: "+fontname+", serif"}
+    if (data.prefix == null) {data.prefix = ""}
+    if (!data.style) {data.style = "font-family: "+data.prefix+fontname+", serif"}
     if (!data.styles) {data.styles = {}}
     if (!data.macros) {data.macros = {}}
     /*
@@ -907,16 +1243,17 @@ jsMath.Font = {
     /*
      *  Set up styles
      */
-    data.styles['.'+fontname] = data.style;
+    data.styles['.typeset .'+fontname] = data.style;
     jsMath.Setup.Styles(data.styles);
     jsMath.Setup.TeXfont(fontname);
     /*
      *  Check for font and give message if missing
      */
     var hasTeXfont = !jsMath.nofonts &&
-                      data.test(fontname,data.testChar,data.testFactor);
+                      data.test(fontname,data.testChar,data.testFactor,data.prefix);
     if (hasTeXfont && jsMath.Controls.cookie.font == 'tex') {
-      if (data.tex) {data.tex(fontname,fontfam)}
+      if (data.tex) {data.tex(fontname,fontfam,data)}
+      jsMath.Script.End();
       return;
     }
     if (!hasTeXfont && jsMath.Controls.cookie.warn &&
@@ -925,17 +1262,19 @@ jsMath.Font = {
       var extra = jsMath.Element("ExtraFonts");
       if (extra) {
         if (extra.innerHTML != "") {extra.innerHTML += ','}
-        extra.innerHTML += " " + fontname;
+        extra.innerHTML += " " + data.prefix+fontname;
       }
     }
     if (jsMath.Controls.cookie.font == 'unicode') {
-      if (data.fallback) {data.fallback(fontname,fontfam)}
+      if (data.fallback) {data.fallback(fontname,fontfam,data)}
+      jsMath.Script.End();
       return;
     }
     //  Image fonts
     var font = {}; font[fontname] = ['all'];
     jsMath.Img.SetFont(font);
     jsMath.Img.LoadFont(fontname);
+    jsMath.Script.End();
   },
 
   /*
@@ -958,7 +1297,7 @@ jsMath.Controls = {
   cookie: {
     scale: 100,
     font: 'tex', autofont: 1, scaleImg: 0, alpha: 1,
-    warn: 1, button: 1,
+    warn: 1, button: 1, progress: 1, asynch: 0, blank: 0,
     print: 0, keep: '0D'
   },
   
@@ -966,26 +1305,31 @@ jsMath.Controls = {
   
   
   /*
+   *  Create the HTML needed for control panel
+   */
+  Init: function () {
+    this.panel = jsMath.Setup.DIV("panel",{display:'none'});
+    if (!jsMath.Browser.msieButtonBug) {this.Button()}
+      else {setTimeout("jsMath.Controls.Button()",500)}
+  },
+
+  /*
    *  Load the control panel
    */
   Panel: function () {
-    if (!this.panel) {this.panel = jsMath.Element("Controls")}
-    if (this.loaded) {this.Main()} else {
-      this.openMain = 1;
-      if (!this.iframe) {this.iframe = jsMath.Element("Frame")}
-      this.iframe.src = jsMath.root+"jsMath-controls.html";
-    }
+    jsMath.Translate.Cancel();
+    if (this.loaded) {this.Main()}
+      else {jsMath.Script.delayedLoad(jsMath.root+"jsMath-controls.html")}
   },
   
   /*
    *  Create the control panel button
    */
   Button: function () {
-    var button = jsMath.Setup.TopHTML("jsMath",{'class':'jsM_button'},{});
-    button.innerHTML = 
-      '<A HREF="javascript:jsMath.Controls.Panel()" '+
-         'STYLE="text-decoration:inherit; color:inherit">' +
-      '<SPAN TITLE="Open jsMath Control Panel">jsMath</SPAN></A>'
+    var button = jsMath.Setup.DIV("button",{});
+    button.title = ' Open jsMath Control Panel ';
+    button.innerHTML = 'jsMath';
+    button.onclick = new Function("jsMath.Controls.Panel()");
     if (!this.cookie.button) {button.style.display = "none"}
   },
   
@@ -993,40 +1337,9 @@ jsMath.Controls = {
   *  MSIE doesn't implement position:fixed, so redraw the button on scrolls.
   */
   MoveButton: function () {
-    if (!this.button) {this.button = jsMath.Element("jsMath")}
+    if (!this.button) {this.button = jsMath.Element("button")}
     this.button.style.visibility = "hidden";
     this.button.style.visibility = "visible";
-  },
-
-  /*
-   *  Create the HTML needed for control panel
-   */
-  Init: function () {
-    this.document = document;
-    this.panel = jsMath.Setup.TopHTML("Controls", {'class':"jsM_panel"},{display:'none'});
-    if (!jsMath.Browser.msieButtonBug) {this.Button()}
-      else {setTimeout("jsMath.Controls.Button()",500)}
-    if (jsMath.Browser.safariIFRAMEbug) {
-      document.write(
-         '<IFRAME SRC="'+jsMath.root+'/jsMath-controls.html" '
-         + 'ID="jsMath.Frame" SCROLLING="no" '
-         + 'STYLE="visibility:hidden; position:absolute; width:1em; height:1em;">'
-         + '</IFRAME>\n');
-      return;
-    }
-    try {
-      var frame = document.createElement('iframe');
-      frame.setAttribute('scrolling','no');
-      frame.style.border = '0px';
-      frame.style.width  = '0px';
-      frame.style.height = '0px';
-      document.body.insertBefore(frame,this.panel);
-      this.iframe = frame;
-    } catch (err) {
-      document.write('<IFRAME SRC="" ID="jsMath.Frame" SCROLLING="no" '
-         + 'STYLE="visibility:hidden; position:absolute; width:1em; height:1em;">'
-         + '</IFRAME>\n');
-    }
   },
 
   /*
@@ -1034,9 +1347,9 @@ jsMath.Controls = {
    *  (for file: references, use url '?' syntax)
    */
   GetCookie: function () {
-    var cookies = document.cookie;
-    if (window.location.protocol == 'file:') 
-      {cookies = unescape(window.location.search.substr(1))}
+    var cookies = jsMath.document.cookie;
+    if (jsMath.window.location.protocol == 'file:') 
+      {cookies = unescape(jsMath.window.location.search.substr(1))}
     if (cookies.match(/jsMath=([^;]*)/)) {
       var data = RegExp.$1.split(/,/);
       for (var i = 0; i < data.length; i++) {
@@ -1055,12 +1368,12 @@ jsMath.Controls = {
     var cookie = [];
     for (var id in this.cookie) {cookie[cookie.length] = id + ':' + this.cookie[id]}
     cookie = cookie.join(',');
-    if (window.location.protocol == 'file:') {
+    if (jsMath.window.location.protocol == 'file:') {
       if (!warn) return;
       this.loaded = 0;
-      var href = window.location.href;
+      var href = jsMath.window.location.href;
       href = href.replace(/\?.*/,"") + '?jsMath=' + escape(cookie);
-      if (href != window.location.href) {window.location.replace(href)}
+      if (href != jsMath.window.location.href) {jsMath.window.location.replace(href)}
     } else {
       if (this.cookiePath) {cookie += '; path='+this.cookiePath}
       if (this.cookieDomain) {cookie += '; domain='+this.cookieDomain}
@@ -1076,8 +1389,8 @@ jsMath.Controls = {
             this.cookie.keep.substr(0,1) * ms[this.cookie.keep.substr(1,1)]);
         cookie += '; expires=' + exp.toGMTString();
       }
-      document.cookie = 'jsMath='+cookie;
-      var cookies = document.cookie;
+      jsMath.document.cookie = 'jsMath='+cookie;
+      var cookies = jsMath.document.cookie;
       if (warn && !cookies.match(/jsMath=/))
         {alert("Cookies must be enabled in order to save jsMath options")}
     }
@@ -1099,10 +1412,10 @@ jsMath.Click = {
    *  Create the hidden DIV used for the tex source window
    */
   Init: function () {
-    this.source = jsMath.Setup.TopHTML("Source",{'class':'jsM_float'},{display:'none'});
+    this.source = jsMath.Setup.DIV("float",{display:'none'});
     this.source.innerHTML =
-      '<DIV CLASS="jsM_drag"><DIV CLASS="jsM_close"></DIV></DIV>'
-      + '<DIV CLASS="jsM_source"><SPAN></SPAN></DIV>';
+        '<div class="drag"><div class="close"></div></div>'
+      + '<div class="source"><span></span></div>';
     this.drag = this.source.firstChild;
     this.tex  = this.drag.nextSibling.firstChild;
     this.drag.firstChild.onclick = jsMath.Click.CloseSource;
@@ -1117,7 +1430,7 @@ jsMath.Click = {
    *  Handle clicking on math to get control panel
    */
   CheckClick: function (event) {
-    if (!event) {event = window.event}
+    if (!event) {event = jsMath.window.event}
     if (event.altKey) jsMath.Controls.Panel();
   },
   
@@ -1125,7 +1438,7 @@ jsMath.Click = {
    *  Handle double-click for seeing TeX code
    */
   CheckDblClick: function (event) {
-    if (!event) {event = window.event}
+    if (!event) {event = jsMath.window.event}
     var event = jsMath.Click.Event(event);
 
     var source = jsMath.Click.source
@@ -1141,12 +1454,12 @@ jsMath.Click = {
     TeX = TeX.replace(/&/g,'&amp;');
     TeX = TeX.replace(/</g,'&lt;');
     TeX = TeX.replace(/>/g,'&gt;');
-    TeX = TeX.replace(/\n/g,'<BR>');
+    TeX = TeX.replace(/\n/g,'<br/>');
     tex.innerHTML = TeX;
 
     var h = source.offsetHeight; var w;
     if (jsMath.Browser.msieDivWidthBug) {
-      tex.className = 'jsM_source';      // Work around MSIE bug where
+      tex.className = 'source';          // Work around MSIE bug where
       w = tex.offsetWidth + 5;           // DIV's don't collapse to
       tex.className = '';                // their natural widths
     } else {
@@ -1172,21 +1485,24 @@ jsMath.Click = {
    *  position of pointer relative to the window
    */
   Event: function (event) {
-    var W = window.innerWidth  || document.body.clientWidth;
-    var H = window.innerHeight || document.body.clientHeight;
-    var X = window.pageXOffset; var Y = window.pageYOffset;
-    if (X == null) {X = document.body.clientLeft; Y = document.body.clientTop}
+    var W = jsMath.window.innerWidth  || jsMath.document.body.clientWidth;
+    var H = jsMath.window.innerHeight || jsMath.document.body.clientHeight;
+    var X = jsMath.window.pageXOffset; var Y = jsMath.window.pageYOffset;
+    if (X == null) {
+      X = jsMath.document.body.clientLeft;
+      Y = jsMath.document.body.clientTop;
+    }
     var x = event.pageX; var y = event.pageY;
     if (x == null) {
       x = event.clientX; y = event.clientY;
-      if (jsMath.browser == 'MSIE' && document.compatMode == 'CSS1Compat') {
-        X = document.documentElement.scrollLeft;
-        Y = document.documentElement.scrollTop;
-        W = document.documentElement.clientWidth;
-        H = document.documentElement.clientHeight;
+      if (jsMath.browser == 'MSIE' && jsMath.document.compatMode == 'CSS1Compat') {
+        X = jsMath.document.documentElement.scrollLeft;
+        Y = jsMath.document.documentElement.scrollTop;
+        W = jsMath.document.documentElement.clientWidth;
+        H = jsMath.document.documentElement.clientHeight;
       } else {
-        X = document.body.scrollLeft;
-        Y = document.body.scrollTop;
+        X = jsMath.document.body.scrollLeft;
+        Y = jsMath.document.body.scrollTop;
       }
     } else {x -= X; y -= Y}
 
@@ -1198,17 +1514,17 @@ jsMath.Click = {
    *  usually selects something)
    */
   DeselectText: function (x,y) {
-    if (window.getSelection && window.getSelection().removeAllRanges)
-      {window.getSelection().removeAllRanges()}
-    else if (document.getSelection && document.getSelection().removeAllRanges)
-      {document.getSelection().removeAllRanges()}
-    else if (document.selection && document.selection.empty)
-      {document.selection.empty()}
+    if (jsMath.window.getSelection && jsMath.window.getSelection().removeAllRanges)
+      {jsMath.window.getSelection().removeAllRanges()}
+    else if (jsMath.document.getSelection && jsMath.document.getSelection().removeAllRanges)
+      {jsMath.document.getSelection().removeAllRanges()}
+    else if (jsMath.document.selection && jsMath.document.selection.empty)
+      {jsMath.document.selection.empty()}
     else {
       /* Hack to deselect the text in Opera and Safari */
       if (jsMath.browser == 'MSIE') return;  // don't try it if MISE on Mac
       jsMath.hiddenTop.innerHTML =
-        '<textarea style="visibility:hidden" ROWS="1" COLS="1">a</textarea>';
+        '<textarea style="visibility:hidden" rows="1" cols="1">a</textarea>';
       jsMath.hiddenTop.firstChild.style.position = 'absolute';
       jsMath.hiddenTop.firstChild.style.left = x+'px';
       jsMath.hiddenTop.firstChild.style.top  = y+'px';
@@ -1232,7 +1548,7 @@ jsMath.Click = {
     return false;
   },
   CheckClose: function (event) {
-    if (!event) {event = window.event}
+    if (!event) {event = jsMath.window.event}
     if (event.altKey) {jsMath.Click.CloseSource(); return false}
   },
   
@@ -1240,16 +1556,16 @@ jsMath.Click = {
    *  Set up for dragging the source panel
    */
   StartDragging: function (event) {
-    if (!event) {event = window.event}
+    if (!event) {event = jsMath.window.event}
     if (jsMath.Click.dragging) {jsMath.Click.StopDragging(event)}
     var event = jsMath.Click.Event(event);
     jsMath.Click.dragging = 1;
     jsMath.Click.x = event.x + 2*event.X - jsMath.Click.left;
     jsMath.Click.y = event.y + 2*event.Y - jsMath.Click.top;
-    jsMath.Click.oldonmousemove = document.body.onmousemove;
-    jsMath.Click.oldonmouseup = document.body.onmouseup;
-    document.body.onmousemove = jsMath.Click.DragSource;
-    document.body.onmouseup = jsMath.Click.StopDragging;
+    jsMath.Click.oldonmousemove = jsMath.document.body.onmousemove;
+    jsMath.Click.oldonmouseup = jsMath.document.body.onmouseup;
+    jsMath.document.body.onmousemove = jsMath.Click.DragSource;
+    jsMath.document.body.onmouseup = jsMath.Click.StopDragging;
     return false;
   },
   
@@ -1258,8 +1574,8 @@ jsMath.Click = {
    */
   StopDragging: function (event) {
     if (jsMath.Click.dragging) {
-      document.body.onmousemove = jsMath.Click.oldonmousemove;
-      document.body.onmouseup   = jsMath.Click.oldonmouseup;
+      jsMath.document.body.onmousemove = jsMath.Click.oldonmousemove;
+      jsMath.document.body.onmouseup   = jsMath.Click.oldonmouseup;
       jsMath.Click.oldonmousemove = null;
       jsMath.Click.oldonmouseup   = null;
       jsMath.Click.dragging = 0;
@@ -1271,7 +1587,7 @@ jsMath.Click = {
    *  Move the source window (but stay within the browser window)
    */
   DragSource: function (event) {
-    if (!event) {event = window.event}
+    if (!event) {event = jsMath.window.event}
     if (jsMath.Browser.buttonCheck && !event.button) {return jsMath.Click.StopDragging(event)}
     event = jsMath.Click.Event(event);
     var x = event.x + event.X - jsMath.Click.x;
@@ -1337,844 +1653,536 @@ jsMath.TeX = {
   //  The TeX font families
   fam: ['cmr10','cmmi10','cmsy10','cmex10','cmti10','','cmbx10'],
 
+  //  Encoding used by jsMath fonts
+  encoding: [
+    '&#xC0;', '&#xC1;', '&#xC2;', '&#xC3;', '&#xC4;', '&#xC5;', '&#xC6;', '&#xC7;',
+    '&#xC8;', '&#xC9;', '&#xCA;', '&#xCB;', '&#xCC;', '&#xCD;', '&#xCE;', '&#xCF;',
+
+    '&#xB0;', '&#xD1;', '&#xD2;', '&#xD3;', '&#xD4;', '&#xD5;', '&#xD6;', '&#xB7;',
+    '&#xD8;', '&#xD9;', '&#xDA;', '&#xDB;', '&#xDC;', '&#xB5;', '&#xB6;', '&#xDF;',
+
+    '&#xEF;', '!', '&#x22;', '#', '$', '%', '&#x26;', '&#x27;',
+    '(', ')', '*', '+', ',', '-', '.', '/',
+
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', ':', ';', '&#x3C;', '=', '&#x3E;', '?',
+
+    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+    'X', 'Y', 'Z', '[', '&#x5C;', ']', '^', '_',
+
+    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+    'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+
+    'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+    'x', 'y', 'z', '{', '|', '}', '&#x7E;', '&#xFF;'
+  ],
+
   /*
    *  The following are the TeX font mappings and metrics.  The metric
-   *  information comes directly from the TeX .tfm files, and the
-   *  character mappings are for the TrueType TeX fonts.  Browser-specific
+   *  information comes directly from the TeX .tfm files.  Browser-specific
    *  adjustments are made to these tables in the Browser.Init() routine
    */
   cmr10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.683, w: 0.625},
-    {c: '&#xA2;', h: 0.683, w: 0.833},
-    {c: '&#xA3;', h: 0.683, w: 0.778},
-    {c: '&#xA4;', h: 0.683, w: 0.694},
-    {c: '&#xA5;', h: 0.683, w: 0.667},
-    {c: '&#xA6;', h: 0.683, w: 0.75},
-    {c: '&#xA7;', h: 0.683, w: 0.722},
-    {c: '&#xA8;', h: 0.683, w: 0.778},
-    {c: '&#xA9;', h: 0.683, w: 0.722},
-    {c: '&#xAA;', h: 0.683, w: 0.778},
-    {c: '&#xAD;', h: 0.683, w: 0.722},
-    {c: '&#xAE;', h: 0.694, w: 0.583, ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 14, '108': 15}},
-    {c: '&#xAF;', h: 0.694, w: 0.556},
-    {c: '&#xB0;', h: 0.694, w: 0.556},
-    {c: '&#xB1;', h: 0.694, w: 0.833},
-    {c: '&#xB2;', h: 0.694, w: 0.833},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.431, w: 0.278},
-    {c: '&#xB4;', h: 0.431, d: 0.194, w: 0.306},
-    {c: '&#xB5;', h: 0.694, w: 0.5},
-    {c: '&#xB6;', h: 0.694, w: 0.5},
-    {c: '&#x2219;', h: 0.628, w: 0.5},
-    {c: '&#xB8;', h: 0.694, w: 0.5},
-    {c: '&#xB9;', h: 0.568, w: 0.5},
-    {c: '&#xBA;', h: 0.694, w: 0.75},
-    {c: '&#xBB;', d: 0.17, w: 0.444},
-    {c: '&#xBC;', h: 0.694, w: 0.5},
-    {c: '&#xBD;', h: 0.431, w: 0.722},
-    {c: '&#xBE;', h: 0.431, w: 0.778},
-    {c: '&#xBF;', h: 0.528, d: 0.0972, w: 0.5},
-    {c: '&#xC0;', h: 0.683, w: 0.903},
-    {c: '&#xC1;', h: 0.683, w: 1.01},
-    {c: '&#xC2;', h: 0.732, d: 0.0486, w: 0.778},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.431, w: 0.278, krn: {'108': -0.278, '76': -0.319}},
-    {c: '!', h: 0.694, w: 0.278, lig: {'96': 60}},
-    {c: '"', h: 0.694, w: 0.5},
-    {c: '#', h: 0.694, d: 0.194, w: 0.833},
-    {c: '$', h: 0.75, d: 0.0556, w: 0.5},
-    {c: '%', h: 0.75, d: 0.0556, w: 0.833},
-    {c: '&#x26;', h: 0.694, w: 0.778},
-    {c: '\'', h: 0.694, w: 0.278, krn: {'63': 0.111, '33': 0.111}, lig: {'39': 34}},
-    {c: '(', h: 0.75, d: 0.25, w: 0.389},
-    {c: ')', h: 0.75, d: 0.25, w: 0.389},
-    {c: '*', h: 0.75, w: 0.5},
-    {c: '+', h: 0.583, d: 0.0833, w: 0.778},
-    {c: ',', h: 0.106, d: 0.194, w: 0.278},
-    {c: '-', h: 0.431, w: 0.333, lig: {'45': 123}},
-    {c: '.', h: 0.106, w: 0.278},
-    {c: '/', h: 0.75, d: 0.25, w: 0.5},
-    // 30 - 3F
-    {c: '0', h: 0.644, w: 0.5},
-    {c: '1', h: 0.644, w: 0.5},
-    {c: '2', h: 0.644, w: 0.5},
-    {c: '3', h: 0.644, w: 0.5},
-    {c: '4', h: 0.644, w: 0.5},
-    {c: '5', h: 0.644, w: 0.5},
-    {c: '6', h: 0.644, w: 0.5},
-    {c: '7', h: 0.644, w: 0.5},
-    {c: '8', h: 0.644, w: 0.5},
-    {c: '9', h: 0.644, w: 0.5},
-    {c: ':', h: 0.431, w: 0.278},
-    {c: ';', h: 0.431, d: 0.194, w: 0.278},
-    {c: '&#x3C;', h: 0.5, d: 0.194, w: 0.278},
-    {c: '=', h: 0.367, d: -0.133, w: 0.778},
-    {c: '&#x3E;', h: 0.5, d: 0.194, w: 0.472},
-    {c: '?', h: 0.694, w: 0.472, lig: {'96': 62}},
-    // 40 - 4F
-    {c: '@', h: 0.694, w: 0.778},
-    {c: 'A', h: 0.683, w: 0.75, krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}},
-    {c: 'B', h: 0.683, w: 0.708},
-    {c: 'C', h: 0.683, w: 0.722},
-    {c: 'D', h: 0.683, w: 0.764, krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}},
-    {c: 'E', h: 0.683, w: 0.681},
-    {c: 'F', h: 0.683, w: 0.653, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}},
-    {c: 'G', h: 0.683, w: 0.785},
-    {c: 'H', h: 0.683, w: 0.75},
-    {c: 'I', h: 0.683, w: 0.361, krn: {'73': 0.0278}},
-    {c: 'J', h: 0.683, w: 0.514},
-    {c: 'K', h: 0.683, w: 0.778, krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}},
-    {c: 'L', h: 0.683, w: 0.625, krn: {'84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}},
-    {c: 'M', h: 0.683, w: 0.917},
-    {c: 'N', h: 0.683, w: 0.75},
-    {c: 'O', h: 0.683, w: 0.778, krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}},
-    // 50 - 5F
-    {c: 'P', h: 0.683, w: 0.681, krn: {'65': -0.0833, '111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}},
-    {c: 'Q', h: 0.683, d: 0.194, w: 0.778},
-    {c: 'R', h: 0.683, w: 0.736, krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}},
-    {c: 'S', h: 0.683, w: 0.556},
-    {c: 'T', h: 0.683, w: 0.722, krn: {'121': -0.0278, '101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}},
-    {c: 'U', h: 0.683, w: 0.75},
-    {c: 'V', h: 0.683, w: 0.75, ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}},
-    {c: 'W', h: 0.683, w: 1.03, ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}},
-    {c: 'X', h: 0.683, w: 0.75, krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}},
-    {c: 'Y', h: 0.683, w: 0.75, ic: 0.025, krn: {'101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}},
-    {c: 'Z', h: 0.683, w: 0.611},
-    {c: '[', h: 0.75, d: 0.25, w: 0.278},
-    {c: '\\', h: 0.694, w: 0.5},
-    {c: ']', h: 0.75, d: 0.25, w: 0.278},
-    {c: '^', h: 0.694, w: 0.5},
-    {c: '_', h: 0.668, w: 0.278},
-    // 60 - 6F
-    {c: '&#x60;', h: 0.694, w: 0.278, lig: {'96': 92}},
-    {c: 'a', h: 0.431, w: 0.5, krn: {'118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}},
-    {c: 'b', h: 0.694, w: 0.556, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}},
-    {c: 'c', h: 0.431, w: 0.444, krn: {'104': -0.0278, '107': -0.0278}},
-    {c: 'd', h: 0.694, w: 0.556},
-    {c: 'e', h: 0.431, w: 0.444},
-    {c: 'f', h: 0.694, w: 0.306, ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 12, '102': 11, '108': 13}},
-    {c: 'g', h: 0.431, d: 0.194, w: 0.5, ic: 0.0139, krn: {'106': 0.0278}},
-    {c: 'h', h: 0.694, w: 0.556, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}},
-    {c: 'i', h: 0.668, w: 0.278},
-    {c: 'j', h: 0.668, d: 0.194, w: 0.306},
-    {c: 'k', h: 0.694, w: 0.528, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}},
-    {c: 'l', h: 0.694, w: 0.278},
-    {c: 'm', h: 0.431, w: 0.833, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}},
-    {c: 'n', h: 0.431, w: 0.556, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}},
-    {c: 'o', h: 0.431, w: 0.5, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}},
-    // 70 - 7F
-    {c: 'p', h: 0.431, d: 0.194, w: 0.556, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}},
-    {c: 'q', h: 0.431, d: 0.194, w: 0.528},
-    {c: 'r', h: 0.431, w: 0.392},
-    {c: 's', h: 0.431, w: 0.394},
-    {c: 't', h: 0.615, w: 0.389, krn: {'121': -0.0278, '119': -0.0278}},
-    {c: 'u', h: 0.431, w: 0.556, krn: {'119': -0.0278}},
-    {c: 'v', h: 0.431, w: 0.528, ic: 0.0139, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}},
-    {c: 'w', h: 0.431, w: 0.722, ic: 0.0139, krn: {'101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}},
-    {c: 'x', h: 0.431, w: 0.528},
-    {c: 'y', h: 0.431, d: 0.194, w: 0.528, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}},
-    {c: 'z', h: 0.431, w: 0.444},
-    {c: '&#x7B;', h: 0.431, w: 0.5, ic: 0.0278, lig: {'45': 124}},
-    {c: '&#x7C;', h: 0.431, w: 1, ic: 0.0278},
-    {c: '&#x7D;', h: 0.694, w: 0.5},
-    {c: '&#x7E;', h: 0.668, w: 0.5},
-    {c: '&#xC4;', h: 0.668, w: 0.5}
+    [0.625,0.683], [0.833,0.683], [0.778,0.683], [0.694,0.683],
+    [0.667,0.683], [0.75,0.683], [0.722,0.683], [0.778,0.683],
+    [0.722,0.683], [0.778,0.683], [0.722,0.683],
+    [0.583,0.694,0,{ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 14, '108': 15}}],
+    [0.556,0.694], [0.556,0.694], [0.833,0.694], [0.833,0.694],
+
+    [0.278,0.431], [0.306,0.431,0.194], [0.5,0.694], [0.5,0.694],
+    [0.5,0.628], [0.5,0.694], [0.5,0.568], [0.75,0.694],
+    [0.444,0,0.17], [0.5,0.694], [0.722,0.431], [0.778,0.431],
+    [0.5,0.528,0.0972], [0.903,0.683], [1.01,0.683], [0.778,0.732,0.0486],
+
+    [0.278,0.431,0,{krn: {'108': -0.278, '76': -0.319}}],
+    [0.278,0.694,0,{lig: {'96': 60}}],
+    [0.5,0.694], [0.833,0.694,0.194], [0.5,0.75,0.0556],
+    [0.833,0.75,0.0556], [0.778,0.694],
+    [0.278,0.694,0,{krn: {'63': 0.111, '33': 0.111}, lig: {'39': 34}}],
+    [0.389,0.75,0.25], [0.389,0.75,0.25], [0.5,0.75],
+    [0.778,0.583,0.0833], [0.278,0.106,0.194],
+    [0.333,0.431,0,{lig: {'45': 123}}],
+    [0.278,0.106], [0.5,0.75,0.25],
+
+    [0.5,0.644], [0.5,0.644], [0.5,0.644], [0.5,0.644],
+    [0.5,0.644], [0.5,0.644], [0.5,0.644], [0.5,0.644],
+    [0.5,0.644], [0.5,0.644], [0.278,0.431], [0.278,0.431,0.194],
+    [0.278,0.5,0.194], [0.778,0.367,-0.133], [0.472,0.5,0.194],
+    [0.472,0.694,0,{lig: {'96': 62}}],
+
+    [0.778,0.694],
+    [0.75,0.683,0,{krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}}],
+    [0.708,0.683], [0.722,0.683],
+    [0.764,0.683,0,{krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}}],
+    [0.681,0.683],
+    [0.653,0.683,0,{krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}}],
+    [0.785,0.683], [0.75,0.683], [0.361,0.683,0,{krn: {'73': 0.0278}}],
+    [0.514,0.683],
+    [0.778,0.683,0,{krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}}],
+    [0.625,0.683,0,{krn: {'84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}}],
+    [0.917,0.683], [0.75,0.683],
+    [0.778,0.683,0,{krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}}],
+
+    [0.681,0.683,0,{krn: {'65': -0.0833, '111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}}],
+    [0.778,0.683,0.194],
+    [0.736,0.683,0,{krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}}],
+    [0.556,0.683],
+    [0.722,0.683,0,{krn: {'121': -0.0278, '101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}}],
+    [0.75,0.683],
+    [0.75,0.683,0,{ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}}],
+    [1.03,0.683,0,{ic: 0.0139, krn: {'111': -0.0833, '101': -0.0833, '117': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.111, '79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}}],
+    [0.75,0.683,0,{krn: {'79': -0.0278, '67': -0.0278, '71': -0.0278, '81': -0.0278}}],
+    [0.75,0.683,0,{ic: 0.025, krn: {'101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}}],
+    [0.611,0.683], [0.278,0.75,0.25], [0.5,0.694],
+    [0.278,0.75,0.25], [0.5,0.694], [0.278,0.668],
+
+    [0.278,0.694,0,{lig: {'96': 92}}],
+    [0.5,0.431,0,{krn: {'118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}}],
+    [0.556,0.694,0,{krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}}],
+    [0.444,0.431,0,{krn: {'104': -0.0278, '107': -0.0278}}],
+    [0.556,0.694], [0.444,0.431],
+    [0.306,0.694,0,{ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 12, '102': 11, '108': 13}}],
+    [0.5,0.431,0.194,{ic: 0.0139, krn: {'106': 0.0278}}],
+    [0.556,0.694,0,{krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}}],
+    [0.278,0.668], [0.306,0.668,0.194],
+    [0.528,0.694,0,{krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}}],
+    [0.278,0.694],
+    [0.833,0.431,0,{krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}}],
+    [0.556,0.431,0,{krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}}],
+    [0.5,0.431,0,{krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}}],
+
+    [0.556,0.431,0.194,{krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}}],
+    [0.528,0.431,0.194], [0.392,0.431], [0.394,0.431],
+    [0.389,0.615,0,{krn: {'121': -0.0278, '119': -0.0278}}],
+    [0.556,0.431,0,{krn: {'119': -0.0278}}],
+    [0.528,0.431,0,{ic: 0.0139, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}}],
+    [0.722,0.431,0,{ic: 0.0139, krn: {'101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}}],
+    [0.528,0.431],
+    [0.528,0.431,0.194,{ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}}],
+    [0.444,0.431], [0.5,0.431,0,{ic: 0.0278, lig: {'45': 124}}],
+    [1,0.431,0,{ic: 0.0278}], [0.5,0.694], [0.5,0.668], [0.5,0.668]
   ],
   
   cmmi10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.683, w: 0.615, ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}},
-    {c: '&#xA2;', h: 0.683, w: 0.833, krn: {'127': 0.167}},
-    {c: '&#xA3;', h: 0.683, w: 0.763, ic: 0.0278, krn: {'127': 0.0833}},
-    {c: '&#xA4;', h: 0.683, w: 0.694, krn: {'127': 0.167}},
-    {c: '&#xA5;', h: 0.683, w: 0.742, ic: 0.0757, krn: {'127': 0.0833}},
-    {c: '&#xA6;', h: 0.683, w: 0.831, ic: 0.0812, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: '&#xA7;', h: 0.683, w: 0.78, ic: 0.0576, krn: {'127': 0.0833}},
-    {c: '&#xA8;', h: 0.683, w: 0.583, ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0556}},
-    {c: '&#xA9;', h: 0.683, w: 0.667, krn: {'127': 0.0833}},
-    {c: '&#xAA;', h: 0.683, w: 0.612, ic: 0.11, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: '&#xAD;', h: 0.683, w: 0.772, ic: 0.0502, krn: {'127': 0.0833}},
-    {c: '&#xAE;', h: 0.431, w: 0.64, ic: 0.0037, krn: {'127': 0.0278}},
-    {c: '&#xAF;', h: 0.694, d: 0.194, w: 0.566, ic: 0.0528, krn: {'127': 0.0833}},
-    {c: '&#xB0;', h: 0.431, d: 0.194, w: 0.518, ic: 0.0556},
-    {c: '&#xB1;', h: 0.694, w: 0.444, ic: 0.0378, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: '&#xB2;', h: 0.431, w: 0.406, krn: {'127': 0.0556}},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.694, d: 0.194, w: 0.438, ic: 0.0738, krn: {'127': 0.0833}},
-    {c: '&#xB4;', h: 0.431, d: 0.194, w: 0.497, ic: 0.0359, krn: {'127': 0.0556}},
-    {c: '&#xB5;', h: 0.694, w: 0.469, ic: 0.0278, krn: {'127': 0.0833}},
-    {c: '&#xB6;', h: 0.431, w: 0.354, krn: {'127': 0.0556}},
-    {c: '&#x2219;', h: 0.431, w: 0.576},
-    {c: '&#xB8;', h: 0.694, w: 0.583},
-    {c: '&#xB9;', h: 0.431, d: 0.194, w: 0.603, krn: {'127': 0.0278}},
-    {c: '&#xBA;', h: 0.431, w: 0.494, ic: 0.0637, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}},
-    {c: '&#xBB;', h: 0.694, d: 0.194, w: 0.438, ic: 0.046, krn: {'127': 0.111}},
-    {c: '&#xBC;', h: 0.431, w: 0.57, ic: 0.0359},
-    {c: '&#xBD;', h: 0.431, d: 0.194, w: 0.517, krn: {'127': 0.0833}},
-    {c: '&#xBE;', h: 0.431, w: 0.571, ic: 0.0359, krn: {'59': -0.0556, '58': -0.0556}},
-    {c: '&#xBF;', h: 0.431, w: 0.437, ic: 0.113, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}},
-    {c: '&#xC0;', h: 0.431, w: 0.54, ic: 0.0359, krn: {'127': 0.0278}},
-    {c: '&#xC1;', h: 0.694, d: 0.194, w: 0.596, krn: {'127': 0.0833}},
-    {c: '&#xC2;', h: 0.431, d: 0.194, w: 0.626, krn: {'127': 0.0556}},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.694, d: 0.194, w: 0.651, ic: 0.0359, krn: {'127': 0.111}},
-    {c: '!', h: 0.431, w: 0.622, ic: 0.0359},
-    {c: '"', h: 0.431, w: 0.466, krn: {'127': 0.0833}},
-    {c: '#', h: 0.694, w: 0.591, krn: {'127': 0.0833}},
-    {c: '$', h: 0.431, w: 0.828, ic: 0.0278},
-    {c: '%', h: 0.431, d: 0.194, w: 0.517, krn: {'127': 0.0833}},
-    {c: '&#x26;', h: 0.431, d: 0.0972, w: 0.363, ic: 0.0799, krn: {'127': 0.0833}},
-    {c: '\'', h: 0.431, d: 0.194, w: 0.654, krn: {'127': 0.0833}},
-    {c: '(', h: 0.367, d: -0.133, w: 1},
-    {c: ')', h: 0.367, d: -0.133, w: 1},
-    {c: '*', h: 0.367, d: -0.133, w: 1},
-    {c: '+', h: 0.367, d: -0.133, w: 1},
-    {c: ',', h: 0.464, d: -0.0363, w: 0.278},
-    {c: '-', h: 0.464, d: -0.0363, w: 0.278},
-    {c: '.', h: 0.465, d: -0.0347, w: 0.5},
-    {c: '/', h: 0.465, d: -0.0347, w: 0.5},
-    // 30 - 3F
-    {c: '0', h: 0.431, w: 0.5},
-    {c: '1', h: 0.431, w: 0.5},
-    {c: '2', h: 0.431, w: 0.5},
-    {c: '3', h: 0.431, d: 0.194, w: 0.5},
-    {c: '4', h: 0.431, d: 0.194, w: 0.5},
-    {c: '5', h: 0.431, d: 0.194, w: 0.5},
-    {c: '6', h: 0.644, w: 0.5},
-    {c: '7', h: 0.431, d: 0.194, w: 0.5},
-    {c: '8', h: 0.644, w: 0.5},
-    {c: '9', h: 0.431, d: 0.194, w: 0.5},
-    {c: ':', h: 0.106, w: 0.278},
-    {c: ';', h: 0.106, d: 0.194, w: 0.278},
-    {c: '&#x3C;', h: 0.539, d: 0.0391, w: 0.778},
-    {c: '=', h: 0.75, d: 0.25, w: 0.5, krn: {'1': -0.0556, '65': -0.0556, '77': -0.0556, '78': -0.0556, '89': 0.0556, '90': -0.0556}},
-    {c: '&#x3E;', h: 0.539, d: 0.0391, w: 0.778},
-    {c: '?', h: 0.465, d: -0.0347, w: 0.5},
-    // 40 - 4F
-    {c: '@', h: 0.694, w: 0.531, ic: 0.0556, krn: {'127': 0.0833}},
-    {c: 'A', h: 0.683, w: 0.75, krn: {'127': 0.139}},
-    {c: 'B', h: 0.683, w: 0.759, ic: 0.0502, krn: {'127': 0.0833}},
-    {c: 'C', h: 0.683, w: 0.715, ic: 0.0715, krn: {'61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'D', h: 0.683, w: 0.828, ic: 0.0278, krn: {'127': 0.0556}},
-    {c: 'E', h: 0.683, w: 0.738, ic: 0.0576, krn: {'127': 0.0833}},
-    {c: 'F', h: 0.683, w: 0.643, ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}},
-    {c: 'G', h: 0.683, w: 0.786, krn: {'127': 0.0833}},
-    {c: 'H', h: 0.683, w: 0.831, ic: 0.0812, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: 'I', h: 0.683, w: 0.44, ic: 0.0785, krn: {'127': 0.111}},
-    {c: 'J', h: 0.683, w: 0.555, ic: 0.0962, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.167}},
-    {c: 'K', h: 0.683, w: 0.849, ic: 0.0715, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: 'L', h: 0.683, w: 0.681, krn: {'127': 0.0278}},
-    {c: 'M', h: 0.683, w: 0.97, ic: 0.109, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'N', h: 0.683, w: 0.803, ic: 0.109, krn: {'61': -0.0833, '61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'O', h: 0.683, w: 0.763, ic: 0.0278, krn: {'127': 0.0833}},
-    // 50 - 5F
-    {c: 'P', h: 0.683, w: 0.642, ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}},
-    {c: 'Q', h: 0.683, d: 0.194, w: 0.791, krn: {'127': 0.0833}},
-    {c: 'R', h: 0.683, w: 0.759, ic: 0.00773, krn: {'127': 0.0833}},
-    {c: 'S', h: 0.683, w: 0.613, ic: 0.0576, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'T', h: 0.683, w: 0.584, ic: 0.139, krn: {'61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'U', h: 0.683, w: 0.683, ic: 0.109, krn: {'59': -0.111, '58': -0.111, '61': -0.0556, '127': 0.0278}},
-    {c: 'V', h: 0.683, w: 0.583, ic: 0.222, krn: {'59': -0.167, '58': -0.167, '61': -0.111}},
-    {c: 'W', h: 0.683, w: 0.944, ic: 0.139, krn: {'59': -0.167, '58': -0.167, '61': -0.111}},
-    {c: 'X', h: 0.683, w: 0.828, ic: 0.0785, krn: {'61': -0.0833, '61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: 'Y', h: 0.683, w: 0.581, ic: 0.222, krn: {'59': -0.167, '58': -0.167, '61': -0.111}},
-    {c: 'Z', h: 0.683, w: 0.683, ic: 0.0715, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}},
-    {c: '[', h: 0.75, w: 0.389},
-    {c: '\\', h: 0.694, d: 0.194, w: 0.389},
-    {c: ']', h: 0.694, d: 0.194, w: 0.389},
-    {c: '^', h: 0.358, d: -0.142, w: 1},
-    {c: '_', h: 0.358, d: -0.142, w: 1},
-    // 60 - 6F
-    {c: '&#x60;', h: 0.694, w: 0.417, krn: {'127': 0.111}},
-    {c: 'a', h: 0.431, w: 0.529},
-    {c: 'b', h: 0.694, w: 0.429},
-    {c: 'c', h: 0.431, w: 0.433, krn: {'127': 0.0556}},
-    {c: 'd', h: 0.694, w: 0.52, krn: {'89': 0.0556, '90': -0.0556, '106': -0.111, '102': -0.167, '127': 0.167}},
-    {c: 'e', h: 0.431, w: 0.466, krn: {'127': 0.0556}},
-    {c: 'f', h: 0.694, d: 0.194, w: 0.49, ic: 0.108, krn: {'59': -0.0556, '58': -0.0556, '127': 0.167}},
-    {c: 'g', h: 0.431, d: 0.194, w: 0.477, ic: 0.0359, krn: {'127': 0.0278}},
-    {c: 'h', h: 0.694, w: 0.576, krn: {'127': -0.0278}},
-    {c: 'i', h: 0.66, w: 0.345},
-    {c: 'j', h: 0.66, d: 0.194, w: 0.412, ic: 0.0572, krn: {'59': -0.0556, '58': -0.0556}},
-    {c: 'k', h: 0.694, w: 0.521, ic: 0.0315},
-    {c: 'l', h: 0.694, w: 0.298, ic: 0.0197, krn: {'127': 0.0833}},
-    {c: 'm', h: 0.431, w: 0.878},
-    {c: 'n', h: 0.431, w: 0.6},
-    {c: 'o', h: 0.431, w: 0.485, krn: {'127': 0.0556}},
-    // 70 - 7F
-    {c: 'p', h: 0.431, d: 0.194, w: 0.503, krn: {'127': 0.0833}},
-    {c: 'q', h: 0.431, d: 0.194, w: 0.446, ic: 0.0359, krn: {'127': 0.0833}},
-    {c: 'r', h: 0.431, w: 0.451, ic: 0.0278, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}},
-    {c: 's', h: 0.431, w: 0.469, krn: {'127': 0.0556}},
-    {c: 't', h: 0.615, w: 0.361, krn: {'127': 0.0833}},
-    {c: 'u', h: 0.431, w: 0.572, krn: {'127': 0.0278}},
-    {c: 'v', h: 0.431, w: 0.485, ic: 0.0359, krn: {'127': 0.0278}},
-    {c: 'w', h: 0.431, w: 0.716, ic: 0.0269, krn: {'127': 0.0833}},
-    {c: 'x', h: 0.431, w: 0.572, krn: {'127': 0.0278}},
-    {c: 'y', h: 0.431, d: 0.194, w: 0.49, ic: 0.0359, krn: {'127': 0.0556}},
-    {c: 'z', h: 0.431, w: 0.465, ic: 0.044, krn: {'127': 0.0556}},
-    {c: '&#x7B;', h: 0.431, w: 0.322, krn: {'127': 0.0278}},
-    {c: '&#x7C;', h: 0.431, d: 0.194, w: 0.384, krn: {'127': 0.0833}},
-    {c: '&#x7D;', h: 0.431, d: 0.194, w: 0.636, krn: {'127': 0.111}},
-    {c: '&#x7E;', h: 0.714, w: 0.5, ic: 0.154},
-    {c: '&#xC4;', h: 0.694, w: 0.278, ic: 0.399}
+    [0.615,0.683,0,{ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}}],
+    [0.833,0.683,0,{krn: {'127': 0.167}}],
+    [0.763,0.683,0,{ic: 0.0278, krn: {'127': 0.0833}}],
+    [0.694,0.683,0,{krn: {'127': 0.167}}],
+    [0.742,0.683,0,{ic: 0.0757, krn: {'127': 0.0833}}],
+    [0.831,0.683,0,{ic: 0.0812, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.78,0.683,0,{ic: 0.0576, krn: {'127': 0.0833}}],
+    [0.583,0.683,0,{ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0556}}],
+    [0.667,0.683,0,{krn: {'127': 0.0833}}],
+    [0.612,0.683,0,{ic: 0.11, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.772,0.683,0,{ic: 0.0502, krn: {'127': 0.0833}}],
+    [0.64,0.431,0,{ic: 0.0037, krn: {'127': 0.0278}}],
+    [0.566,0.694,0.194,{ic: 0.0528, krn: {'127': 0.0833}}],
+    [0.518,0.431,0.194,{ic: 0.0556}],
+    [0.444,0.694,0,{ic: 0.0378, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.406,0.431,0,{krn: {'127': 0.0556}}],
+
+    [0.438,0.694,0.194,{ic: 0.0738, krn: {'127': 0.0833}}],
+    [0.497,0.431,0.194,{ic: 0.0359, krn: {'127': 0.0556}}],
+    [0.469,0.694,0,{ic: 0.0278, krn: {'127': 0.0833}}],
+    [0.354,0.431,0,{krn: {'127': 0.0556}}],
+    [0.576,0.431], [0.583,0.694],
+    [0.603,0.431,0.194,{krn: {'127': 0.0278}}],
+    [0.494,0.431,0,{ic: 0.0637, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}}],
+    [0.438,0.694,0.194,{ic: 0.046, krn: {'127': 0.111}}],
+    [0.57,0.431,0,{ic: 0.0359}],
+    [0.517,0.431,0.194,{krn: {'127': 0.0833}}],
+    [0.571,0.431,0,{ic: 0.0359, krn: {'59': -0.0556, '58': -0.0556}}],
+    [0.437,0.431,0,{ic: 0.113, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}}],
+    [0.54,0.431,0,{ic: 0.0359, krn: {'127': 0.0278}}],
+    [0.596,0.694,0.194,{krn: {'127': 0.0833}}],
+    [0.626,0.431,0.194,{krn: {'127': 0.0556}}],
+
+    [0.651,0.694,0.194,{ic: 0.0359, krn: {'127': 0.111}}],
+    [0.622,0.431,0,{ic: 0.0359}],
+    [0.466,0.431,0,{krn: {'127': 0.0833}}],
+    [0.591,0.694,0,{krn: {'127': 0.0833}}],
+    [0.828,0.431,0,{ic: 0.0278}],
+    [0.517,0.431,0.194,{krn: {'127': 0.0833}}],
+    [0.363,0.431,0.0972,{ic: 0.0799, krn: {'127': 0.0833}}],
+    [0.654,0.431,0.194,{krn: {'127': 0.0833}}],
+    [1,0.367,-0.133], [1,0.367,-0.133], [1,0.367,-0.133], [1,0.367,-0.133], 
+    [0.278,0.464,-0.0363], [0.278,0.464,-0.0363], [0.5,0.465,-0.0347], [0.5,0.465,-0.0347],
+
+    [0.5,0.431], [0.5,0.431], [0.5,0.431], [0.5,0.431,0.194],
+    [0.5,0.431,0.194], [0.5,0.431,0.194], [0.5,0.644], [0.5,0.431,0.194],
+    [0.5,0.644], [0.5,0.431,0.194], [0.278,0.106], [0.278,0.106,0.194],
+    [0.778,0.539,0.0391],
+    [0.5,0.75,0.25,{krn: {'1': -0.0556, '65': -0.0556, '77': -0.0556, '78': -0.0556, '89': 0.0556, '90': -0.0556}}],
+    [0.778,0.539,0.0391], [0.5,0.465,-0.0347],
+
+    [0.531,0.694,0,{ic: 0.0556, krn: {'127': 0.0833}}],
+    [0.75,0.683,0,{krn: {'127': 0.139}}],
+    [0.759,0.683,0,{ic: 0.0502, krn: {'127': 0.0833}}],
+    [0.715,0.683,0,{ic: 0.0715, krn: {'61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.828,0.683,0,{ic: 0.0278, krn: {'127': 0.0556}}],
+    [0.738,0.683,0,{ic: 0.0576, krn: {'127': 0.0833}}],
+    [0.643,0.683,0,{ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}}],
+    [0.786,0.683,0,{krn: {'127': 0.0833}}],
+    [0.831,0.683,0,{ic: 0.0812, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.44,0.683,0,{ic: 0.0785, krn: {'127': 0.111}}],
+    [0.555,0.683,0,{ic: 0.0962, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.167}}],
+    [0.849,0.683,0,{ic: 0.0715, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.681,0.683,0,{krn: {'127': 0.0278}}],
+    [0.97,0.683,0,{ic: 0.109, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.803,0.683,0,{ic: 0.109, krn: {'61': -0.0833, '61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.763,0.683,0,{ic: 0.0278, krn: {'127': 0.0833}}],
+
+    [0.642,0.683,0,{ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}}],
+    [0.791,0.683,0.194,{krn: {'127': 0.0833}}],
+    [0.759,0.683,0,{ic: 0.00773, krn: {'127': 0.0833}}],
+    [0.613,0.683,0,{ic: 0.0576, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.584,0.683,0,{ic: 0.139, krn: {'61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.683,0.683,0,{ic: 0.109, krn: {'59': -0.111, '58': -0.111, '61': -0.0556, '127': 0.0278}}],
+    [0.583,0.683,0,{ic: 0.222, krn: {'59': -0.167, '58': -0.167, '61': -0.111}}],
+    [0.944,0.683,0,{ic: 0.139, krn: {'59': -0.167, '58': -0.167, '61': -0.111}}],
+    [0.828,0.683,0,{ic: 0.0785, krn: {'61': -0.0833, '61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.581,0.683,0,{ic: 0.222, krn: {'59': -0.167, '58': -0.167, '61': -0.111}}],
+    [0.683,0.683,0,{ic: 0.0715, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}}],
+    [0.389,0.75], [0.389,0.694,0.194], [0.389,0.694,0.194],
+    [1,0.358,-0.142], [1,0.358,-0.142],
+
+    [0.417,0.694,0,{krn: {'127': 0.111}}],
+    [0.529,0.431], [0.429,0.694], [0.433,0.431,0,{krn: {'127': 0.0556}}],
+    [0.52,0.694,0,{krn: {'89': 0.0556, '90': -0.0556, '106': -0.111, '102': -0.167, '127': 0.167}}],
+    [0.466,0.431,0,{krn: {'127': 0.0556}}],
+    [0.49,0.694,0.194,{ic: 0.108, krn: {'59': -0.0556, '58': -0.0556, '127': 0.167}}],
+    [0.477,0.431,0.194,{ic: 0.0359, krn: {'127': 0.0278}}],
+    [0.576,0.694,0,{krn: {'127': -0.0278}}], [0.345,0.66],
+    [0.412,0.66,0.194,{ic: 0.0572, krn: {'59': -0.0556, '58': -0.0556}}],
+    [0.521,0.694,0,{ic: 0.0315}], [0.298,0.694,0,{ic: 0.0197, krn: {'127': 0.0833}}],
+    [0.878,0.431], [0.6,0.431], [0.485,0.431,0,{krn: {'127': 0.0556}}],
+
+    [0.503,0.431,0.194,{krn: {'127': 0.0833}}],
+    [0.446,0.431,0.194,{ic: 0.0359, krn: {'127': 0.0833}}],
+    [0.451,0.431,0,{ic: 0.0278, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}}],
+    [0.469,0.431,0,{krn: {'127': 0.0556}}], [0.361,0.615,0,{krn: {'127': 0.0833}}],
+    [0.572,0.431,0,{krn: {'127': 0.0278}}],
+    [0.485,0.431,0,{ic: 0.0359, krn: {'127': 0.0278}}],
+    [0.716,0.431,0,{ic: 0.0269, krn: {'127': 0.0833}}],
+    [0.572,0.431,0,{krn: {'127': 0.0278}}],
+    [0.49,0.431,0.194,{ic: 0.0359, krn: {'127': 0.0556}}],
+    [0.465,0.431,0,{ic: 0.044, krn: {'127': 0.0556}}],
+    [0.322,0.431,0,{krn: {'127': 0.0278}}],
+    [0.384,0.431,0.194,{krn: {'127': 0.0833}}],
+    [0.636,0.431,0.194,{krn: {'127': 0.111}}],
+    [0.5,0.714,0,{ic: 0.154}], [0.278,0.694,0,{ic: 0.399}]
   ],
 
   cmsy10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xA2;', h: 0.444, d: -0.0556, w: 0.278},
-    {c: '&#xA3;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xA4;', h: 0.465, d: -0.0347, w: 0.5},
-    {c: '&#xA5;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xA6;', h: 0.444, d: -0.0556, w: 0.5},
-    {c: '&#xA7;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xA8;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xA9;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xAA;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xAD;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xAE;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xAF;', h: 0.583, d: 0.0833, w: 0.778},
-    {c: '&#xB0;', h: 0.694, d: 0.194, w: 1},
-    {c: '&#xB1;', h: 0.444, d: -0.0556, w: 0.5},
-    {c: '&#xB2;', h: 0.444, d: -0.0556, w: 0.5},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.464, d: -0.0363, w: 0.778},
-    {c: '&#xB4;', h: 0.464, d: -0.0363, w: 0.778},
-    {c: '&#xB5;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#xB6;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#x2219;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#xB8;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#xB9;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#xBA;', h: 0.636, d: 0.136, w: 0.778},
-    {c: '&#xBB;', h: 0.367, d: -0.133, w: 0.778},
-    {c: '&#xBC;', h: 0.483, d: -0.0169, w: 0.778},
-    {c: '&#xBD;', h: 0.539, d: 0.0391, w: 0.778},
-    {c: '&#xBE;', h: 0.539, d: 0.0391, w: 0.778},
-    {c: '&#xBF;', h: 0.539, d: 0.0391, w: 1},
-    {c: '&#xC0;', h: 0.539, d: 0.0391, w: 1},
-    {c: '&#xC1;', h: 0.539, d: 0.0391, w: 0.778},
-    {c: '&#xC2;', h: 0.539, d: 0.0391, w: 0.778},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.367, d: -0.133, w: 1},
-    {c: '!', h: 0.367, d: -0.133, w: 1},
-    {c: '"', h: 0.694, d: 0.194, w: 0.5},
-    {c: '#', h: 0.694, d: 0.194, w: 0.5},
-    {c: '$', h: 0.367, d: -0.133, w: 1},
-    {c: '%', h: 0.694, d: 0.194, w: 1},
-    {c: '&#x26;', h: 0.694, d: 0.194, w: 1},
-    {c: '\'', h: 0.464, d: -0.0363, w: 0.778},
-    {c: '(', h: 0.367, d: -0.133, w: 1},
-    {c: ')', h: 0.367, d: -0.133, w: 1},
-    {c: '*', h: 0.694, d: 0.194, w: 0.611},
-    {c: '+', h: 0.694, d: 0.194, w: 0.611},
-    {c: ',', h: 0.367, d: -0.133, w: 1},
-    {c: '-', h: 0.694, d: 0.194, w: 1},
-    {c: '.', h: 0.694, d: 0.194, w: 1},
-    {c: '/', h: 0.431, w: 0.778},
-    // 30 - 3F
-    {c: '0', h: 0.556, w: 0.275},
-    {c: '1', h: 0.431, w: 1},
-    {c: '2', h: 0.539, d: 0.0391, w: 0.667},
-    {c: '3', h: 0.539, d: 0.0391, w: 0.667},
-    {c: '4', h: 0.694, d: 0.194, w: 0.889},
-    {c: '5', h: 0.694, d: 0.194, w: 0.889},
-    {c: '6', h: 0.694, d: 0.194, w: 0},
-    {c: '7', h: 0.367, d: -0.133, w: 0},
-    {c: '8', h: 0.694, w: 0.556},
-    {c: '9', h: 0.694, w: 0.556},
-    {c: ':', h: 0.431, w: 0.667},
-    {c: ';', h: 0.75, d: 0.0556, w: 0.5},
-    {c: '&#x3C;', h: 0.694, w: 0.722},
-    {c: '=', h: 0.694, w: 0.722},
-    {c: '&#x3E;', h: 0.694, w: 0.778},
-    {c: '?', h: 0.694, w: 0.778},
-    // 40 - 4F
-    {c: '@', h: 0.694, w: 0.611},
-    {c: 'A', h: 0.683, w: 0.798, krn: {'48': 0.194}},
-    {c: 'B', h: 0.683, w: 0.657, ic: 0.0304, krn: {'48': 0.139}},
-    {c: 'C', h: 0.683, w: 0.527, ic: 0.0583, krn: {'48': 0.139}},
-    {c: 'D', h: 0.683, w: 0.771, ic: 0.0278, krn: {'48': 0.0833}},
-    {c: 'E', h: 0.683, w: 0.528, ic: 0.0894, krn: {'48': 0.111}},
-    {c: 'F', h: 0.683, w: 0.719, ic: 0.0993, krn: {'48': 0.111}},
-    {c: 'G', h: 0.683, d: 0.0972, w: 0.595, ic: 0.0593, krn: {'48': 0.111}},
-    {c: 'H', h: 0.683, w: 0.845, ic: 0.00965, krn: {'48': 0.111}},
-    {c: 'I', h: 0.683, w: 0.545, ic: 0.0738, krn: {'48': 0.0278}},
-    {c: 'J', h: 0.683, d: 0.0972, w: 0.678, ic: 0.185, krn: {'48': 0.167}},
-    {c: 'K', h: 0.683, w: 0.762, ic: 0.0144, krn: {'48': 0.0556}},
-    {c: 'L', h: 0.683, w: 0.69, krn: {'48': 0.139}},
-    {c: 'M', h: 0.683, w: 1.2, krn: {'48': 0.139}},
-    {c: 'N', h: 0.683, w: 0.82, ic: 0.147, krn: {'48': 0.0833}},
-    {c: 'O', h: 0.683, w: 0.796, ic: 0.0278, krn: {'48': 0.111}},
-    // 50 - 5F
-    {c: 'P', h: 0.683, w: 0.696, ic: 0.0822, krn: {'48': 0.0833}},
-    {c: 'Q', h: 0.683, d: 0.0972, w: 0.817, krn: {'48': 0.111}},
-    {c: 'R', h: 0.683, w: 0.848, krn: {'48': 0.0833}},
-    {c: 'S', h: 0.683, w: 0.606, ic: 0.075, krn: {'48': 0.139}},
-    {c: 'T', h: 0.683, w: 0.545, ic: 0.254, krn: {'48': 0.0278}},
-    {c: 'U', h: 0.683, w: 0.626, ic: 0.0993, krn: {'48': 0.0833}},
-    {c: 'V', h: 0.683, w: 0.613, ic: 0.0822, krn: {'48': 0.0278}},
-    {c: 'W', h: 0.683, w: 0.988, ic: 0.0822, krn: {'48': 0.0833}},
-    {c: 'X', h: 0.683, w: 0.713, ic: 0.146, krn: {'48': 0.139}},
-    {c: 'Y', h: 0.683, d: 0.0972, w: 0.668, ic: 0.0822, krn: {'48': 0.0833}},
-    {c: 'Z', h: 0.683, w: 0.725, ic: 0.0794, krn: {'48': 0.139}},
-    {c: '[', h: 0.556, w: 0.667},
-    {c: '\\', h: 0.556, w: 0.667},
-    {c: ']', h: 0.556, w: 0.667},
-    {c: '^', h: 0.556, w: 0.667},
-    {c: '_', h: 0.556, w: 0.667},
-    // 60 - 6F
-    {c: '&#x60;', h: 0.694, w: 0.611},
-    {c: 'a', h: 0.694, w: 0.611},
-    {c: 'b', h: 0.75, d: 0.25, w: 0.444},
-    {c: 'c', h: 0.75, d: 0.25, w: 0.444},
-    {c: 'd', h: 0.75, d: 0.25, w: 0.444},
-    {c: 'e', h: 0.75, d: 0.25, w: 0.444},
-    {c: 'f', h: 0.75, d: 0.25, w: 0.5},
-    {c: 'g', h: 0.75, d: 0.25, w: 0.5},
-    {c: 'h', h: 0.75, d: 0.25, w: 0.389},
-    {c: 'i', h: 0.75, d: 0.25, w: 0.389},
-    {c: 'j', h: 0.75, d: 0.25, w: 0.278},
-    {c: 'k', h: 0.75, d: 0.25, w: 0.5},
-    {c: 'l', h: 0.75, d: 0.25, w: 0.5},
-    {c: 'm', h: 0.75, d: 0.25, w: 0.611},
-    {c: 'n', h: 0.75, d: 0.25, w: 0.5},
-    {c: 'o', h: 0.694, d: 0.194, w: 0.278},
-    // 70 - 7F
-    {c: 'p', h: 0.04, d: 0.96, w: 0.833},
-    {c: 'q', h: 0.683, w: 0.75},
-    {c: 'r', h: 0.683, w: 0.833},
-    {c: 's', h: 0.694, d: 0.194, w: 0.417, ic: 0.111},
-    {c: 't', h: 0.556, w: 0.667},
-    {c: 'u', h: 0.556, w: 0.667},
-    {c: 'v', h: 0.636, d: 0.136, w: 0.778},
-    {c: 'w', h: 0.636, d: 0.136, w: 0.778},
-    {c: 'x', h: 0.694, d: 0.194, w: 0.444},
-    {c: 'y', h: 0.694, d: 0.194, w: 0.444},
-    {c: 'z', h: 0.694, d: 0.194, w: 0.444},
-    {c: '&#x7B;', h: 0.694, d: 0.194, w: 0.611},
-    {c: '&#x7C;', h: 0.694, d: 0.13, w: 0.778},
-    {c: '&#x7D;', h: 0.694, d: 0.13, w: 0.778},
-    {c: '&#x7E;', h: 0.694, d: 0.13, w: 0.778},
-    {c: '&#xC4;', h: 0.694, d: 0.13, w: 0.778}
+    [0.778,0.583,0.0833], [0.278,0.444,-0.0556], [0.778,0.583,0.0833],
+    [0.5,0.465,-0.0347], [0.778,0.583,0.0833], [0.5,0.444,-0.0556],
+    [0.778,0.583,0.0833], [0.778,0.583,0.0833], [0.778,0.583,0.0833],
+    [0.778,0.583,0.0833], [0.778,0.583,0.0833], [0.778,0.583,0.0833],
+    [0.778,0.583,0.0833], [1,0.694,0.194], [0.5,0.444,-0.0556], [0.5,0.444,-0.0556],
+
+    [0.778,0.464,-0.0363], [0.778,0.464,-0.0363], [0.778,0.636,0.136],
+    [0.778,0.636,0.136], [0.778,0.636,0.136], [0.778,0.636,0.136],
+    [0.778,0.636,0.136], [0.778,0.636,0.136], [0.778,0.367,-0.133],
+    [0.778,0.483,-0.0169], [0.778,0.539,0.0391], [0.778,0.539,0.0391],
+    [1,0.539,0.0391], [1,0.539,0.0391], [0.778,0.539,0.0391], [0.778,0.539,0.0391],
+
+    [1,0.367,-0.133], [1,0.367,-0.133], [0.5,0.694,0.194], [0.5,0.694,0.194],
+    [1,0.367,-0.133], [1,0.694,0.194], [1,0.694,0.194], [0.778,0.464,-0.0363],
+    [1,0.367,-0.133], [1,0.367,-0.133], [0.611,0.694,0.194], [0.611,0.694,0.194],
+    [1,0.367,-0.133], [1,0.694,0.194], [1,0.694,0.194], [0.778,0.431],
+
+    [0.275,0.556], [1,0.431], [0.667,0.539,0.0391], [0.667,0.539,0.0391],
+    [0.889,0.694,0.194], [0.889,0.694,0.194], [0,0.694,0.194], [0,0.367,-0.133],
+    [0.556,0.694], [0.556,0.694], [0.667,0.431], [0.5,0.75,0.0556],
+    [0.722,0.694], [0.722,0.694], [0.778,0.694], [0.778,0.694],
+
+    [0.611,0.694], [0.798,0.683,0,{krn: {'48': 0.194}}],
+    [0.657,0.683,0,{ic: 0.0304, krn: {'48': 0.139}}],
+    [0.527,0.683,0,{ic: 0.0583, krn: {'48': 0.139}}],
+    [0.771,0.683,0,{ic: 0.0278, krn: {'48': 0.0833}}],
+    [0.528,0.683,0,{ic: 0.0894, krn: {'48': 0.111}}],
+    [0.719,0.683,0,{ic: 0.0993, krn: {'48': 0.111}}],
+    [0.595,0.683,0.0972,{ic: 0.0593, krn: {'48': 0.111}}],
+    [0.845,0.683,0,{ic: 0.00965, krn: {'48': 0.111}}],
+    [0.545,0.683,0,{ic: 0.0738, krn: {'48': 0.0278}}],
+    [0.678,0.683,0.0972,{ic: 0.185, krn: {'48': 0.167}}],
+    [0.762,0.683,0,{ic: 0.0144, krn: {'48': 0.0556}}],
+    [0.69,0.683,0,{krn: {'48': 0.139}}], [1.2,0.683,0,{krn: {'48': 0.139}}],
+    [0.82,0.683,0,{ic: 0.147, krn: {'48': 0.0833}}],
+    [0.796,0.683,0,{ic: 0.0278, krn: {'48': 0.111}}],
+
+    [0.696,0.683,0,{ic: 0.0822, krn: {'48': 0.0833}}],
+    [0.817,0.683,0.0972,{krn: {'48': 0.111}}],
+    [0.848,0.683,0,{krn: {'48': 0.0833}}],
+    [0.606,0.683,0,{ic: 0.075, krn: {'48': 0.139}}],
+    [0.545,0.683,0,{ic: 0.254, krn: {'48': 0.0278}}],
+    [0.626,0.683,0,{ic: 0.0993, krn: {'48': 0.0833}}],
+    [0.613,0.683,0,{ic: 0.0822, krn: {'48': 0.0278}}],
+    [0.988,0.683,0,{ic: 0.0822, krn: {'48': 0.0833}}],
+    [0.713,0.683,0,{ic: 0.146, krn: {'48': 0.139}}],
+    [0.668,0.683,0.0972,{ic: 0.0822, krn: {'48': 0.0833}}],
+    [0.725,0.683,0,{ic: 0.0794, krn: {'48': 0.139}}],
+    [0.667,0.556], [0.667,0.556], [0.667,0.556], [0.667,0.556], [0.667,0.556],
+
+    [0.611,0.694], [0.611,0.694], [0.444,0.75,0.25], [0.444,0.75,0.25],
+    [0.444,0.75,0.25], [0.444,0.75,0.25], [0.5,0.75,0.25], [0.5,0.75,0.25],
+    [0.389,0.75,0.25], [0.389,0.75,0.25], [0.278,0.75,0.25], [0.5,0.75,0.25],
+    [0.5,0.75,0.25], [0.611,0.75,0.25], [0.5,0.75,0.25], [0.278,0.694,0.194],
+
+    [0.833,0.04,0.96], [0.75,0.683], [0.833,0.683], [0.417,0.694,0.194,{ic: 0.111}],
+    [0.667,0.556], [0.667,0.556], [0.778,0.636,0.136], [0.778,0.636,0.136],
+    [0.444,0.694,0.194], [0.444,0.694,0.194], [0.444,0.694,0.194],
+    [0.611,0.694,0.194], [0.778,0.694,0.13], [0.778,0.694,0.13],
+    [0.778,0.694,0.13], [0.778,0.694,0.13]
   ],
 
   cmex10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.04, d: 1.16, w: 0.458, n: 16},
-    {c: '&#xA2;', h: 0.04, d: 1.16, w: 0.458, n: 17},
-    {c: '&#xA3;', h: 0.04, d: 1.16, w: 0.417, n: 104},
-    {c: '&#xA4;', h: 0.04, d: 1.16, w: 0.417, n: 105},
-    {c: '&#xA5;', h: 0.04, d: 1.16, w: 0.472, n: 106},
-    {c: '&#xA6;', h: 0.04, d: 1.16, w: 0.472, n: 107},
-    {c: '&#xA7;', h: 0.04, d: 1.16, w: 0.472, n: 108},
-    {c: '&#xA8;', h: 0.04, d: 1.16, w: 0.472, n: 109},
-    {c: '&#xA9;', h: 0.04, d: 1.16, w: 0.583, n: 110},
-    {c: '&#xAA;', h: 0.04, d: 1.16, w: 0.583, n: 111},
-    {c: '&#xAD;', h: 0.04, d: 1.16, w: 0.472, n: 68},
-    {c: '&#xAE;', h: 0.04, d: 1.16, w: 0.472, n: 69},
-    {c: '&#xAF;', d: 0.6, w: 0.333, delim: {rep: 12}},
-    {c: '&#xB0;', d: 0.6, w: 0.556, delim: {rep: 13}},
-    {c: '&#xB1;', h: 0.04, d: 1.16, w: 0.578, n: 46},
-    {c: '&#xB2;', h: 0.04, d: 1.16, w: 0.578, n: 47},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.04, d: 1.76, w: 0.597, n: 18},
-    {c: '&#xB4;', h: 0.04, d: 1.76, w: 0.597, n: 19},
-    {c: '&#xB5;', h: 0.04, d: 2.36, w: 0.736, n: 32},
-    {c: '&#xB6;', h: 0.04, d: 2.36, w: 0.736, n: 33},
-    {c: '&#x2219;', h: 0.04, d: 2.36, w: 0.528, n: 34},
-    {c: '&#xB8;', h: 0.04, d: 2.36, w: 0.528, n: 35},
-    {c: '&#xB9;', h: 0.04, d: 2.36, w: 0.583, n: 36},
-    {c: '&#xBA;', h: 0.04, d: 2.36, w: 0.583, n: 37},
-    {c: '&#xBB;', h: 0.04, d: 2.36, w: 0.583, n: 38},
-    {c: '&#xBC;', h: 0.04, d: 2.36, w: 0.583, n: 39},
-    {c: '&#xBD;', h: 0.04, d: 2.36, w: 0.75, n: 40},
-    {c: '&#xBE;', h: 0.04, d: 2.36, w: 0.75, n: 41},
-    {c: '&#xBF;', h: 0.04, d: 2.36, w: 0.75, n: 42},
-    {c: '&#xC0;', h: 0.04, d: 2.36, w: 0.75, n: 43},
-    {c: '&#xC1;', h: 0.04, d: 2.36, w: 1.04, n: 44},
-    {c: '&#xC2;', h: 0.04, d: 2.36, w: 1.04, n: 45},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.04, d: 2.96, w: 0.792, n: 48},
-    {c: '!', h: 0.04, d: 2.96, w: 0.792, n: 49},
-    {c: '"', h: 0.04, d: 2.96, w: 0.583, n: 50},
-    {c: '#', h: 0.04, d: 2.96, w: 0.583, n: 51},
-    {c: '$', h: 0.04, d: 2.96, w: 0.639, n: 52},
-    {c: '%', h: 0.04, d: 2.96, w: 0.639, n: 53},
-    {c: '&#x26;', h: 0.04, d: 2.96, w: 0.639, n: 54},
-    {c: '\'', h: 0.04, d: 2.96, w: 0.639, n: 55},
-    {c: '(', h: 0.04, d: 2.96, w: 0.806, n: 56},
-    {c: ')', h: 0.04, d: 2.96, w: 0.806, n: 57},
-    {c: '*', h: 0.04, d: 2.96, w: 0.806},
-    {c: '+', h: 0.04, d: 2.96, w: 0.806},
-    {c: ',', h: 0.04, d: 2.96, w: 1.28},
-    {c: '-', h: 0.04, d: 2.96, w: 1.28},
-    {c: '.', h: 0.04, d: 1.76, w: 0.811, n: 30},
-    {c: '/', h: 0.04, d: 1.76, w: 0.811, n: 31},
-    // 30 - 3F
-    {c: '0', h: 0.04, d: 1.76, w: 0.875, delim: {top: 48, bot: 64, rep: 66}},
-    {c: '1', h: 0.04, d: 1.76, w: 0.875, delim: {top: 49, bot: 65, rep: 67}},
-    {c: '2', h: 0.04, d: 1.76, w: 0.667, delim: {top: 50, bot: 52, rep: 54}},
-    {c: '3', h: 0.04, d: 1.76, w: 0.667, delim: {top: 51, bot: 53, rep: 55}},
-    {c: '4', h: 0.04, d: 1.76, w: 0.667, delim: {bot: 52, rep: 54}},
-    {c: '5', h: 0.04, d: 1.76, w: 0.667, delim: {bot: 53, rep: 55}},
-    {c: '6', d: 0.6, w: 0.667, delim: {top: 50, rep: 54}},
-    {c: '7', d: 0.6, w: 0.667, delim: {top: 51, rep: 55}},
-    {c: '8', d: 0.9, w: 0.889, delim: {top: 56, mid: 60, bot: 58, rep: 62}},
-    {c: '9', d: 0.9, w: 0.889, delim: {top: 57, mid: 61, bot: 59, rep: 62}},
-    {c: ':', d: 0.9, w: 0.889, delim: {top: 56, bot: 58, rep: 62}},
-    {c: ';', d: 0.9, w: 0.889, delim: {top: 57, bot: 59, rep: 62}},
-    {c: '&#x3C;', d: 1.8, w: 0.889, delim: {rep: 63}},
-    {c: '=', d: 1.8, w: 0.889, delim: {rep: 119}},
-    {c: '&#x3E;', d: 0.3, w: 0.889, delim: {rep: 62}},
-    {c: '?', d: 0.6, w: 0.667, delim: {top: 120, bot: 121, rep: 63}},
-    // 40 - 4F
-    {c: '@', h: 0.04, d: 1.76, w: 0.875, delim: {top: 56, bot: 59, rep: 62}},
-    {c: 'A', h: 0.04, d: 1.76, w: 0.875, delim: {top: 57, bot: 58, rep: 62}},
-    {c: 'B', d: 0.6, w: 0.875, delim: {rep: 66}},
-    {c: 'C', d: 0.6, w: 0.875, delim: {rep: 67}},
-    {c: 'D', h: 0.04, d: 1.76, w: 0.611, n: 28},
-    {c: 'E', h: 0.04, d: 1.76, w: 0.611, n: 29},
-    {c: 'F', d: 1, w: 0.833, n: 71},
-    {c: 'G', h: 0.1, d: 1.5, w: 1.11},
-    {c: 'H', d: 1.11, w: 0.472, ic: 0.194, n: 73},
-    {c: 'I', d: 2.22, w: 0.556, ic: 0.444},
-    {c: 'J', d: 1, w: 1.11, n: 75},
-    {c: 'K', h: 0.1, d: 1.5, w: 1.51},
-    {c: 'L', d: 1, w: 1.11, n: 77},
-    {c: 'M', h: 0.1, d: 1.5, w: 1.51},
-    {c: 'N', d: 1, w: 1.11, n: 79},
-    {c: 'O', h: 0.1, d: 1.5, w: 1.51},
-    // 50 - 5F
-    {c: 'P', d: 1, w: 1.06, n: 88},
-    {c: 'Q', d: 1, w: 0.944, n: 89},
-    {c: 'R', d: 1.11, w: 0.472, ic: 0.194, n: 90},
-    {c: 'S', d: 1, w: 0.833, n: 91},
-    {c: 'T', d: 1, w: 0.833, n: 92},
-    {c: 'U', d: 1, w: 0.833, n: 93},
-    {c: 'V', d: 1, w: 0.833, n: 94},
-    {c: 'W', d: 1, w: 0.833, n: 95},
-    {c: 'X', h: 0.1, d: 1.5, w: 1.44},
-    {c: 'Y', h: 0.1, d: 1.5, w: 1.28},
-    {c: 'Z', d: 2.22, w: 0.556, ic: 0.444},
-    {c: '[', h: 0.1, d: 1.5, w: 1.11},
-    {c: '\\', h: 0.1, d: 1.5, w: 1.11},
-    {c: ']', h: 0.1, d: 1.5, w: 1.11},
-    {c: '^', h: 0.1, d: 1.5, w: 1.11},
-    {c: '_', h: 0.1, d: 1.5, w: 1.11},
-    // 60 - 6F
-    {c: '&#x60;', d: 1, w: 0.944, n: 97},
-    {c: 'a', h: 0.1, d: 1.5, w: 1.28},
-    {c: 'b', h: 0.722, w: 0.556, n: 99},
-    {c: 'c', h: 0.75, w: 1, n: 100},
-    {c: 'd', h: 0.75, w: 1.44},
-    {c: 'e', h: 0.722, w: 0.556, n: 102},
-    {c: 'f', h: 0.75, w: 1, n: 103},
-    {c: 'g', h: 0.75, w: 1.44},
-    {c: 'h', h: 0.04, d: 1.76, w: 0.472, n: 20},
-    {c: 'i', h: 0.04, d: 1.76, w: 0.472, n: 21},
-    {c: 'j', h: 0.04, d: 1.76, w: 0.528, n: 22},
-    {c: 'k', h: 0.04, d: 1.76, w: 0.528, n: 23},
-    {c: 'l', h: 0.04, d: 1.76, w: 0.528, n: 24},
-    {c: 'm', h: 0.04, d: 1.76, w: 0.528, n: 25},
-    {c: 'n', h: 0.04, d: 1.76, w: 0.667, n: 26},
-    {c: 'o', h: 0.04, d: 1.76, w: 0.667, n: 27},
-    // 70 - 7F
-    {c: 'p', h: 0.04, d: 1.16, w: 1, n: 113},
-    {c: 'q', h: 0.04, d: 1.76, w: 1, n: 114},
-    {c: 'r', h: 0.04, d: 2.36, w: 1, n: 115},
-    {c: 's', h: 0.04, d: 2.96, w: 1, n: 116},
-    {c: 't', d: 1.8, w: 1.06, delim: {top: 118, bot: 116, rep: 117}},
-    {c: 'u', d: 0.6, w: 1.06},
-    {c: 'v', h: 0.04, d: 0.56, w: 1.06},
-    {c: 'w', d: 0.6, w: 0.778, delim: {top: 126, bot: 127, rep: 119}},
-    {c: 'x', d: 0.6, w: 0.667, delim: {top: 120, rep: 63}},
-    {c: 'y', d: 0.6, w: 0.667, delim: {bot: 121, rep: 63}},
-    {c: 'z', h: 0.12, w: 0.45},
-    {c: '&#x7B;', h: 0.12, w: 0.45},
-    {c: '&#x7C;', h: 0.12, w: 0.45},
-    {c: '&#x7D;', h: 0.12, w: 0.45},
-    {c: '&#x7E;', d: 0.6, w: 0.778, delim: {top: 126, rep: 119}},
-    {c: '&#xC4;', d: 0.6, w: 0.778, delim: {bot: 127, rep: 119}}
+    [0.458,0.04,1.16,{n: 16}], [0.458,0.04,1.16,{n: 17}],
+    [0.417,0.04,1.16,{n: 104}], [0.417,0.04,1.16,{n: 105}],
+    [0.472,0.04,1.16,{n: 106}], [0.472,0.04,1.16,{n: 107}],
+    [0.472,0.04,1.16,{n: 108}], [0.472,0.04,1.16,{n: 109}],
+    [0.583,0.04,1.16,{n: 110}], [0.583,0.04,1.16,{n: 111}],
+    [0.472,0.04,1.16,{n: 68}], [0.472,0.04,1.16,{n: 69}],
+    [0.333,0,0.6,{delim: {rep: 12}}], [0.556,0,0.6,{delim: {rep: 13}}],
+    [0.578,0.04,1.16,{n: 46}], [0.578,0.04,1.16,{n: 47}],
+
+    [0.597,0.04,1.76,{n: 18}], [0.597,0.04,1.76,{n: 19}],
+    [0.736,0.04,2.36,{n: 32}], [0.736,0.04,2.36,{n: 33}],
+    [0.528,0.04,2.36,{n: 34}], [0.528,0.04,2.36,{n: 35}],
+    [0.583,0.04,2.36,{n: 36}], [0.583,0.04,2.36,{n: 37}],
+    [0.583,0.04,2.36,{n: 38}], [0.583,0.04,2.36,{n: 39}],
+    [0.75,0.04,2.36,{n: 40}], [0.75,0.04,2.36,{n: 41}],
+    [0.75,0.04,2.36,{n: 42}], [0.75,0.04,2.36,{n: 43}],
+    [1.04,0.04,2.36,{n: 44}], [1.04,0.04,2.36,{n: 45}],
+
+    [0.792,0.04,2.96,{n: 48}], [0.792,0.04,2.96,{n: 49}],
+    [0.583,0.04,2.96,{n: 50}], [0.583,0.04,2.96,{n: 51}],
+    [0.639,0.04,2.96,{n: 52}], [0.639,0.04,2.96,{n: 53}],
+    [0.639,0.04,2.96,{n: 54}], [0.639,0.04,2.96,{n: 55}],
+    [0.806,0.04,2.96,{n: 56}], [0.806,0.04,2.96,{n: 57}],
+    [0.806,0.04,2.96], [0.806,0.04,2.96],
+    [1.28,0.04,2.96], [1.28,0.04,2.96],
+    [0.811,0.04,1.76,{n: 30}], [0.811,0.04,1.76,{n: 31}],
+
+    [0.875,0.04,1.76,{delim: {top: 48, bot: 64, rep: 66}}],
+    [0.875,0.04,1.76,{delim: {top: 49, bot: 65, rep: 67}}],
+    [0.667,0.04,1.76,{delim: {top: 50, bot: 52, rep: 54}}],
+    [0.667,0.04,1.76,{delim: {top: 51, bot: 53, rep: 55}}],
+    [0.667,0.04,1.76,{delim: {bot: 52, rep: 54}}],
+    [0.667,0.04,1.76,{delim: {bot: 53, rep: 55}}],
+    [0.667,0,0.6,{delim: {top: 50, rep: 54}}],
+    [0.667,0,0.6,{delim: {top: 51, rep: 55}}],
+    [0.889,0,0.9,{delim: {top: 56, mid: 60, bot: 58, rep: 62}}],
+    [0.889,0,0.9,{delim: {top: 57, mid: 61, bot: 59, rep: 62}}],
+    [0.889,0,0.9,{delim: {top: 56, bot: 58, rep: 62}}],
+    [0.889,0,0.9,{delim: {top: 57, bot: 59, rep: 62}}],
+    [0.889,0,1.8,{delim: {rep: 63}}],
+    [0.889,0,1.8,{delim: {rep: 119}}],
+    [0.889,0,0.3,{delim: {rep: 62}}],
+    [0.667,0,0.6,{delim: {top: 120, bot: 121, rep: 63}}],
+
+    [0.875,0.04,1.76,{delim: {top: 56, bot: 59, rep: 62}}],
+    [0.875,0.04,1.76,{delim: {top: 57, bot: 58, rep: 62}}],
+    [0.875,0,0.6,{delim: {rep: 66}}], [0.875,0,0.6,{delim: {rep: 67}}],
+    [0.611,0.04,1.76,{n: 28}], [0.611,0.04,1.76,{n: 29}],
+    [0.833,0,1,{n: 71}], [1.11,0.1,1.5], [0.472,0,1.11,{ic: 0.194, n: 73}],
+    [0.556,0,2.22,{ic: 0.444}], [1.11,0,1,{n: 75}], [1.51,0.1,1.5],
+    [1.11,0,1,{n: 77}], [1.51,0.1,1.5], [1.11,0,1,{n: 79}], [1.51,0.1,1.5],
+
+    [1.06,0,1,{n: 88}], [0.944,0,1,{n: 89}], [0.472,0,1.11,{ic: 0.194, n: 90}],
+    [0.833,0,1,{n: 91}], [0.833,0,1,{n: 92}], [0.833,0,1,{n: 93}],
+    [0.833,0,1,{n: 94}], [0.833,0,1,{n: 95}], [1.44,0.1,1.5],
+    [1.28,0.1,1.5], [0.556,0,2.22,{ic: 0.444}], [1.11,0.1,1.5],
+    [1.11,0.1,1.5], [1.11,0.1,1.5], [1.11,0.1,1.5], [1.11,0.1,1.5],
+
+    [0.944,0,1,{n: 97}], [1.28,0.1,1.5], [0.556,0.722,0,{n: 99}],
+    [1,0.75,0,{n: 100}], [1.44,0.75], [0.556,0.722,0,{n: 102}],
+    [1,0.75,0,{n: 103}], [1.44,0.75], [0.472,0.04,1.76,{n: 20}],
+    [0.472,0.04,1.76,{n: 21}], [0.528,0.04,1.76,{n: 22}],
+    [0.528,0.04,1.76,{n: 23}], [0.528,0.04,1.76,{n: 24}],
+    [0.528,0.04,1.76,{n: 25}], [0.667,0.04,1.76,{n: 26}],
+    [0.667,0.04,1.76,{n: 27}],
+
+    [1,0.04,1.16,{n: 113}], [1,0.04,1.76,{n: 114}], [1,0.04,2.36,{n: 115}],
+    [1,0.04,2.96,{n: 116}], [1.06,0,1.8,{delim: {top: 118, bot: 116, rep: 117}}],
+    [1.06,0,0.6], [1.06,0.04,0.56],
+    [0.778,0,0.6,{delim: {top: 126, bot: 127, rep: 119}}],
+    [0.667,0,0.6,{delim: {top: 120, rep: 63}}],
+    [0.667,0,0.6,{delim: {bot: 121, rep: 63}}],
+    [0.45,0.12], [0.45,0.12], [0.45,0.12], [0.45,0.12],
+    [0.778,0,0.6,{delim: {top: 126, rep: 119}}],
+    [0.778,0,0.6,{delim: {bot: 127, rep: 119}}]
   ],
   
   cmti10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.683, w: 0.627, ic: 0.133},
-    {c: '&#xA2;', h: 0.683, w: 0.818},
-    {c: '&#xA3;', h: 0.683, w: 0.767, ic: 0.094},
-    {c: '&#xA4;', h: 0.683, w: 0.692},
-    {c: '&#xA5;', h: 0.683, w: 0.664, ic: 0.153},
-    {c: '&#xA6;', h: 0.683, w: 0.743, ic: 0.164},
-    {c: '&#xA7;', h: 0.683, w: 0.716, ic: 0.12},
-    {c: '&#xA8;', h: 0.683, w: 0.767, ic: 0.111},
-    {c: '&#xA9;', h: 0.683, w: 0.716, ic: 0.0599},
-    {c: '&#xAA;', h: 0.683, w: 0.767, ic: 0.111},
-    {c: '&#xAD;', h: 0.683, w: 0.716, ic: 0.103},
-    {c: '&#xAE;', h: 0.694, d: 0.194, w: 0.613, ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 14, '108': 15}},
-    {c: '&#xAF;', h: 0.694, d: 0.194, w: 0.562, ic: 0.103},
-    {c: '&#xB0;', h: 0.694, d: 0.194, w: 0.588, ic: 0.103},
-    {c: '&#xB1;', h: 0.694, d: 0.194, w: 0.882, ic: 0.103},
-    {c: '&#xB2;', h: 0.694, d: 0.194, w: 0.894, ic: 0.103},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.431, w: 0.307, ic: 0.0767},
-    {c: '&#xB4;', h: 0.431, d: 0.194, w: 0.332, ic: 0.0374},
-    {c: '&#xB5;', h: 0.694, w: 0.511},
-    {c: '&#xB6;', h: 0.694, w: 0.511, ic: 0.0969},
-    {c: '&#x2219;', h: 0.628, w: 0.511, ic: 0.083},
-    {c: '&#xB8;', h: 0.694, w: 0.511, ic: 0.108},
-    {c: '&#xB9;', h: 0.562, w: 0.511, ic: 0.103},
-    {c: '&#xBA;', h: 0.694, w: 0.831},
-    {c: '&#xBB;', d: 0.17, w: 0.46},
-    {c: '&#xBC;', h: 0.694, d: 0.194, w: 0.537, ic: 0.105},
-    {c: '&#xBD;', h: 0.431, w: 0.716, ic: 0.0751},
-    {c: '&#xBE;', h: 0.431, w: 0.716, ic: 0.0751},
-    {c: '&#xBF;', h: 0.528, d: 0.0972, w: 0.511, ic: 0.0919},
-    {c: '&#xC0;', h: 0.683, w: 0.883, ic: 0.12},
-    {c: '&#xC1;', h: 0.683, w: 0.985, ic: 0.12},
-    {c: '&#xC2;', h: 0.732, d: 0.0486, w: 0.767, ic: 0.094},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.431, w: 0.256, krn: {'108': -0.256, '76': -0.321}},
-    {c: '!', h: 0.694, w: 0.307, ic: 0.124, lig: {'96': 60}},
-    {c: '"', h: 0.694, w: 0.514, ic: 0.0696},
-    {c: '#', h: 0.694, d: 0.194, w: 0.818, ic: 0.0662},
-    {c: '$', h: 0.694, w: 0.769},
-    {c: '%', h: 0.75, d: 0.0556, w: 0.818, ic: 0.136},
-    {c: '&#x26;', h: 0.694, w: 0.767, ic: 0.0969},
-    {c: '\'', h: 0.694, w: 0.307, ic: 0.124, krn: {'63': 0.102, '33': 0.102}, lig: {'39': 34}},
-    {c: '(', h: 0.75, d: 0.25, w: 0.409, ic: 0.162},
-    {c: ')', h: 0.75, d: 0.25, w: 0.409, ic: 0.0369},
-    {c: '*', h: 0.75, w: 0.511, ic: 0.149},
-    {c: '+', h: 0.562, d: 0.0567, w: 0.767, ic: 0.0369},
-    {c: ',', h: 0.106, d: 0.194, w: 0.307},
-    {c: '-', h: 0.431, w: 0.358, ic: 0.0283, lig: {'45': 123}},
-    {c: '.', h: 0.106, w: 0.307},
-    {c: '/', h: 0.75, d: 0.25, w: 0.511, ic: 0.162},
-    // 30 - 3F
-    {c: '0', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '1', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '2', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '3', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '4', h: 0.644, d: 0.194, w: 0.511, ic: 0.136},
-    {c: '5', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '6', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '7', h: 0.644, d: 0.194, w: 0.511, ic: 0.136},
-    {c: '8', h: 0.644, w: 0.511, ic: 0.136},
-    {c: '9', h: 0.644, w: 0.511, ic: 0.136},
-    {c: ':', h: 0.431, w: 0.307, ic: 0.0582},
-    {c: ';', h: 0.431, d: 0.194, w: 0.307, ic: 0.0582},
-    {c: '&#x3C;', h: 0.5, d: 0.194, w: 0.307, ic: 0.0756},
-    {c: '=', h: 0.367, d: -0.133, w: 0.767, ic: 0.0662},
-    {c: '&#x3E;', h: 0.5, d: 0.194, w: 0.511},
-    {c: '?', h: 0.694, w: 0.511, ic: 0.122, lig: {'96': 62}},
-    // 40 - 4F
-    {c: '@', h: 0.694, w: 0.767, ic: 0.096},
-    {c: 'A', h: 0.683, w: 0.743, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'B', h: 0.683, w: 0.704, ic: 0.103},
-    {c: 'C', h: 0.683, w: 0.716, ic: 0.145},
-    {c: 'D', h: 0.683, w: 0.755, ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}},
-    {c: 'E', h: 0.683, w: 0.678, ic: 0.12},
-    {c: 'F', h: 0.683, w: 0.653, ic: 0.133, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: 'G', h: 0.683, w: 0.774, ic: 0.0872},
-    {c: 'H', h: 0.683, w: 0.743, ic: 0.164},
-    {c: 'I', h: 0.683, w: 0.386, ic: 0.158},
-    {c: 'J', h: 0.683, w: 0.525, ic: 0.14},
-    {c: 'K', h: 0.683, w: 0.769, ic: 0.145, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: 'L', h: 0.683, w: 0.627, krn: {'84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'M', h: 0.683, w: 0.897, ic: 0.164},
-    {c: 'N', h: 0.683, w: 0.743, ic: 0.164},
-    {c: 'O', h: 0.683, w: 0.767, ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}},
-    // 50 - 5F
-    {c: 'P', h: 0.683, w: 0.678, ic: 0.103, krn: {'65': -0.0767}},
-    {c: 'Q', h: 0.683, d: 0.194, w: 0.767, ic: 0.094},
-    {c: 'R', h: 0.683, w: 0.729, ic: 0.0387, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'S', h: 0.683, w: 0.562, ic: 0.12},
-    {c: 'T', h: 0.683, w: 0.716, ic: 0.133, krn: {'121': -0.0767, '101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}},
-    {c: 'U', h: 0.683, w: 0.743, ic: 0.164},
-    {c: 'V', h: 0.683, w: 0.743, ic: 0.184, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: 'W', h: 0.683, w: 0.999, ic: 0.184, krn: {'65': -0.0767}},
-    {c: 'X', h: 0.683, w: 0.743, ic: 0.158, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}},
-    {c: 'Y', h: 0.683, w: 0.743, ic: 0.194, krn: {'101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}},
-    {c: 'Z', h: 0.683, w: 0.613, ic: 0.145},
-    {c: '[', h: 0.75, d: 0.25, w: 0.307, ic: 0.188},
-    {c: '\\', h: 0.694, w: 0.514, ic: 0.169},
-    {c: ']', h: 0.75, d: 0.25, w: 0.307, ic: 0.105},
-    {c: '^', h: 0.694, w: 0.511, ic: 0.0665},
-    {c: '_', h: 0.668, w: 0.307, ic: 0.118},
-    // 60 - 6F
-    {c: '&#x60;', h: 0.694, w: 0.307, ic: 0.124, lig: {'96': 92}},
-    {c: 'a', h: 0.431, w: 0.511, ic: 0.0767},
-    {c: 'b', h: 0.694, w: 0.46, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'c', h: 0.431, w: 0.46, ic: 0.0565, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'd', h: 0.694, w: 0.511, ic: 0.103, krn: {'108': 0.0511}},
-    {c: 'e', h: 0.431, w: 0.46, ic: 0.0751, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'f', h: 0.694, d: 0.194, w: 0.307, ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 12, '102': 11, '108': 13}},
-    {c: 'g', h: 0.431, d: 0.194, w: 0.46, ic: 0.0885},
-    {c: 'h', h: 0.694, w: 0.511, ic: 0.0767},
-    {c: 'i', h: 0.655, w: 0.307, ic: 0.102},
-    {c: 'j', h: 0.655, d: 0.194, w: 0.307, ic: 0.145},
-    {c: 'k', h: 0.694, w: 0.46, ic: 0.108},
-    {c: 'l', h: 0.694, w: 0.256, ic: 0.103, krn: {'108': 0.0511}},
-    {c: 'm', h: 0.431, w: 0.818, ic: 0.0767},
-    {c: 'n', h: 0.431, w: 0.562, ic: 0.0767, krn: {'39': -0.102}},
-    {c: 'o', h: 0.431, w: 0.511, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    // 70 - 7F
-    {c: 'p', h: 0.431, d: 0.194, w: 0.511, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 'q', h: 0.431, d: 0.194, w: 0.46, ic: 0.0885},
-    {c: 'r', h: 0.431, w: 0.422, ic: 0.108, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}},
-    {c: 's', h: 0.431, w: 0.409, ic: 0.0821},
-    {c: 't', h: 0.615, w: 0.332, ic: 0.0949},
-    {c: 'u', h: 0.431, w: 0.537, ic: 0.0767},
-    {c: 'v', h: 0.431, w: 0.46, ic: 0.108},
-    {c: 'w', h: 0.431, w: 0.664, ic: 0.108, krn: {'108': 0.0511}},
-    {c: 'x', h: 0.431, w: 0.464, ic: 0.12},
-    {c: 'y', h: 0.431, d: 0.194, w: 0.486, ic: 0.0885},
-    {c: 'z', h: 0.431, w: 0.409, ic: 0.123},
-    {c: '&#x7B;', h: 0.431, w: 0.511, ic: 0.0921, lig: {'45': 124}},
-    {c: '&#x7C;', h: 0.431, w: 1.02, ic: 0.0921},
-    {c: '&#x7D;', h: 0.694, w: 0.511, ic: 0.122},
-    {c: '&#x7E;', h: 0.668, w: 0.511, ic: 0.116},
-    {c: '&#xC4;', h: 0.668, w: 0.511, ic: 0.105}
+    [0.627,0.683,0,{ic: 0.133}], [0.818,0.683], [0.767,0.683,0,{ic: 0.094}],
+    [0.692,0.683], [0.664,0.683,0,{ic: 0.153}], [0.743,0.683,0,{ic: 0.164}],
+    [0.716,0.683,0,{ic: 0.12}], [0.767,0.683,0,{ic: 0.111}],
+    [0.716,0.683,0,{ic: 0.0599}], [0.767,0.683,0,{ic: 0.111}],
+    [0.716,0.683,0,{ic: 0.103}],
+    [0.613,0.694,0.194,{ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 14, '108': 15}}],
+    [0.562,0.694,0.194,{ic: 0.103}], [0.588,0.694,0.194,{ic: 0.103}],
+    [0.882,0.694,0.194,{ic: 0.103}], [0.894,0.694,0.194,{ic: 0.103}],
+
+    [0.307,0.431,0,{ic: 0.0767}], [0.332,0.431,0.194,{ic: 0.0374}],
+    [0.511,0.694], [0.511,0.694,0,{ic: 0.0969}], [0.511,0.628,0,{ic: 0.083}],
+    [0.511,0.694,0,{ic: 0.108}], [0.511,0.562,0,{ic: 0.103}], [0.831,0.694],
+    [0.46,0,0.17], [0.537,0.694,0.194,{ic: 0.105}], [0.716,0.431,0,{ic: 0.0751}],
+    [0.716,0.431,0,{ic: 0.0751}], [0.511,0.528,0.0972,{ic: 0.0919}],
+    [0.883,0.683,0,{ic: 0.12}], [0.985,0.683,0,{ic: 0.12}],
+    [0.767,0.732,0.0486,{ic: 0.094}],
+
+    [0.256,0.431,0,{krn: {'108': -0.256, '76': -0.321}}],
+    [0.307,0.694,0,{ic: 0.124, lig: {'96': 60}}],
+    [0.514,0.694,0,{ic: 0.0696}], [0.818,0.694,0.194,{ic: 0.0662}],
+    [0.769,0.694], [0.818,0.75,0.0556,{ic: 0.136}],
+    [0.767,0.694,0,{ic: 0.0969}],
+    [0.307,0.694,0,{ic: 0.124, krn: {'63': 0.102, '33': 0.102}, lig: {'39': 34}}],
+    [0.409,0.75,0.25,{ic: 0.162}], [0.409,0.75,0.25,{ic: 0.0369}],
+    [0.511,0.75,0,{ic: 0.149}], [0.767,0.562,0.0567,{ic: 0.0369}],
+    [0.307,0.106,0.194], [0.358,0.431,0,{ic: 0.0283, lig: {'45': 123}}],
+    [0.307,0.106], [0.511,0.75,0.25,{ic: 0.162}],
+
+    [0.511,0.644,0,{ic: 0.136}], [0.511,0.644,0,{ic: 0.136}],
+    [0.511,0.644,0,{ic: 0.136}], [0.511,0.644,0,{ic: 0.136}],
+    [0.511,0.644,0.194,{ic: 0.136}], [0.511,0.644,0,{ic: 0.136}],
+    [0.511,0.644,0,{ic: 0.136}], [0.511,0.644,0.194,{ic: 0.136}],
+    [0.511,0.644,0,{ic: 0.136}], [0.511,0.644,0,{ic: 0.136}],
+    [0.307,0.431,0,{ic: 0.0582}], [0.307,0.431,0.194,{ic: 0.0582}],
+    [0.307,0.5,0.194,{ic: 0.0756}], [0.767,0.367,-0.133,{ic: 0.0662}],
+    [0.511,0.5,0.194], [0.511,0.694,0,{ic: 0.122, lig: {'96': 62}}],
+
+    [0.767,0.694,0,{ic: 0.096}],
+    [0.743,0.683,0,{krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.704,0.683,0,{ic: 0.103}], [0.716,0.683,0,{ic: 0.145}],
+    [0.755,0.683,0,{ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}}],
+    [0.678,0.683,0,{ic: 0.12}],
+    [0.653,0.683,0,{ic: 0.133, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}}],
+    [0.774,0.683,0,{ic: 0.0872}], [0.743,0.683,0,{ic: 0.164}],
+    [0.386,0.683,0,{ic: 0.158}], [0.525,0.683,0,{ic: 0.14}],
+    [0.769,0.683,0,{ic: 0.145, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}}],
+    [0.627,0.683,0,{krn: {'84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.897,0.683,0,{ic: 0.164}], [0.743,0.683,0,{ic: 0.164}],
+    [0.767,0.683,0,{ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}}],
+
+    [0.678,0.683,0,{ic: 0.103, krn: {'65': -0.0767}}],
+    [0.767,0.683,0.194,{ic: 0.094}],
+    [0.729,0.683,0,{ic: 0.0387, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.562,0.683,0,{ic: 0.12}],
+    [0.716,0.683,0,{ic: 0.133, krn: {'121': -0.0767, '101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}}],
+    [0.743,0.683,0,{ic: 0.164}],
+    [0.743,0.683,0,{ic: 0.184, krn: {'111': -0.0767, '101': -0.0767, '117': -0.0767, '114': -0.0767, '97': -0.0767, '65': -0.102, '79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}}],
+    [0.999,0.683,0,{ic: 0.184, krn: {'65': -0.0767}}],
+    [0.743,0.683,0,{ic: 0.158, krn: {'79': -0.0256, '67': -0.0256, '71': -0.0256, '81': -0.0256}}],
+    [0.743,0.683,0,{ic: 0.194, krn: {'101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}}],
+    [0.613,0.683,0,{ic: 0.145}], [0.307,0.75,0.25,{ic: 0.188}],
+    [0.514,0.694,0,{ic: 0.169}], [0.307,0.75,0.25,{ic: 0.105}],
+    [0.511,0.694,0,{ic: 0.0665}], [0.307,0.668,0,{ic: 0.118}],
+
+    [0.307,0.694,0,{ic: 0.124, lig: {'96': 92}}], [0.511,0.431,0,{ic: 0.0767}],
+    [0.46,0.694,0,{ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.46,0.431,0,{ic: 0.0565, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.511,0.694,0,{ic: 0.103, krn: {'108': 0.0511}}],
+    [0.46,0.431,0,{ic: 0.0751, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.307,0.694,0.194,{ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 12, '102': 11, '108': 13}}],
+    [0.46,0.431,0.194,{ic: 0.0885}], [0.511,0.694,0,{ic: 0.0767}],
+    [0.307,0.655,0,{ic: 0.102}], [0.307,0.655,0.194,{ic: 0.145}],
+    [0.46,0.694,0,{ic: 0.108}], [0.256,0.694,0,{ic: 0.103, krn: {'108': 0.0511}}],
+    [0.818,0.431,0,{ic: 0.0767}], [0.562,0.431,0,{ic: 0.0767, krn: {'39': -0.102}}],
+    [0.511,0.431,0,{ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+
+    [0.511,0.431,0.194,{ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.46,0.431,0.194,{ic: 0.0885}],
+    [0.422,0.431,0,{ic: 0.108, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}}],
+    [0.409,0.431,0,{ic: 0.0821}], [0.332,0.615,0,{ic: 0.0949}],
+    [0.537,0.431,0,{ic: 0.0767}], [0.46,0.431,0,{ic: 0.108}],
+    [0.664,0.431,0,{ic: 0.108, krn: {'108': 0.0511}}],
+    [0.464,0.431,0,{ic: 0.12}], [0.486,0.431,0.194,{ic: 0.0885}],
+    [0.409,0.431,0,{ic: 0.123}], [0.511,0.431,0,{ic: 0.0921, lig: {'45': 124}}],
+    [1.02,0.431,0,{ic: 0.0921}], [0.511,0.694,0,{ic: 0.122}],
+    [0.511,0.668,0,{ic: 0.116}], [0.511,0.668,0,{ic: 0.105}]
   ],
   
   cmbx10: [
-    // 00 - 0F
-    {c: '&#xA1;', h: 0.686, w: 0.692},
-    {c: '&#xA2;', h: 0.686, w: 0.958},
-    {c: '&#xA3;', h: 0.686, w: 0.894},
-    {c: '&#xA4;', h: 0.686, w: 0.806},
-    {c: '&#xA5;', h: 0.686, w: 0.767},
-    {c: '&#xA6;', h: 0.686, w: 0.9},
-    {c: '&#xA7;', h: 0.686, w: 0.831},
-    {c: '&#xA8;', h: 0.686, w: 0.894},
-    {c: '&#xA9;', h: 0.686, w: 0.831},
-    {c: '&#xAA;', h: 0.686, w: 0.894},
-    {c: '&#xAD;', h: 0.686, w: 0.831},
-    {c: '&#xAE;', h: 0.694, w: 0.671, ic: 0.109, krn: {'39': 0.109, '63': 0.109, '33': 0.109, '41': 0.109, '93': 0.109}, lig: {'105': 14, '108': 15}},
-    {c: '&#xAF;', h: 0.694, w: 0.639},
-    {c: '&#xB0;', h: 0.694, w: 0.639},
-    {c: '&#xB1;', h: 0.694, w: 0.958},
-    {c: '&#xB2;', h: 0.694, w: 0.958},
-    // 10 - 1F
-    {c: '&#xB3;', h: 0.444, w: 0.319},
-    {c: '&#xB4;', h: 0.444, d: 0.194, w: 0.351},
-    {c: '&#xB5;', h: 0.694, w: 0.575},
-    {c: '&#xB6;', h: 0.694, w: 0.575},
-    {c: '&#x2219;', h: 0.632, w: 0.575},
-    {c: '&#xB8;', h: 0.694, w: 0.575},
-    {c: '&#xB9;', h: 0.596, w: 0.575},
-    {c: '&#xBA;', h: 0.694, w: 0.869},
-    {c: '&#xBB;', d: 0.17, w: 0.511},
-    {c: '&#xBC;', h: 0.694, w: 0.597},
-    {c: '&#xBD;', h: 0.444, w: 0.831},
-    {c: '&#xBE;', h: 0.444, w: 0.894},
-    {c: '&#xBF;', h: 0.542, d: 0.0972, w: 0.575},
-    {c: '&#xC0;', h: 0.686, w: 1.04},
-    {c: '&#xC1;', h: 0.686, w: 1.17},
-    {c: '&#xC2;', h: 0.735, d: 0.0486, w: 0.894},
-    // 20 - 2F
-    {c: '&#xC3;', h: 0.444, w: 0.319, krn: {'108': -0.319, '76': -0.378}},
-    {c: '!', h: 0.694, w: 0.35, lig: {'96': 60}},
-    {c: '"', h: 0.694, w: 0.603},
-    {c: '#', h: 0.694, d: 0.194, w: 0.958},
-    {c: '$', h: 0.75, d: 0.0556, w: 0.575},
-    {c: '%', h: 0.75, d: 0.0556, w: 0.958},
-    {c: '&#x26;', h: 0.694, w: 0.894},
-    {c: '\'', h: 0.694, w: 0.319, krn: {'63': 0.128, '33': 0.128}, lig: {'39': 34}},
-    {c: '(', h: 0.75, d: 0.25, w: 0.447},
-    {c: ')', h: 0.75, d: 0.25, w: 0.447},
-    {c: '*', h: 0.75, w: 0.575},
-    {c: '+', h: 0.633, d: 0.133, w: 0.894},
-    {c: ',', h: 0.156, d: 0.194, w: 0.319},
-    {c: '-', h: 0.444, w: 0.383, lig: {'45': 123}},
-    {c: '.', h: 0.156, w: 0.319},
-    {c: '/', h: 0.75, d: 0.25, w: 0.575},
-    // 30 - 3F
-    {c: '0', h: 0.644, w: 0.575},
-    {c: '1', h: 0.644, w: 0.575},
-    {c: '2', h: 0.644, w: 0.575},
-    {c: '3', h: 0.644, w: 0.575},
-    {c: '4', h: 0.644, w: 0.575},
-    {c: '5', h: 0.644, w: 0.575},
-    {c: '6', h: 0.644, w: 0.575},
-    {c: '7', h: 0.644, w: 0.575},
-    {c: '8', h: 0.644, w: 0.575},
-    {c: '9', h: 0.644, w: 0.575},
-    {c: ':', h: 0.444, w: 0.319},
-    {c: ';', h: 0.444, d: 0.194, w: 0.319},
-    {c: '&#x3C;', h: 0.5, d: 0.194, w: 0.35},
-    {c: '=', h: 0.391, d: -0.109, w: 0.894},
-    {c: '&#x3E;', h: 0.5, d: 0.194, w: 0.543},
-    {c: '?', h: 0.694, w: 0.543, lig: {'96': 62}},
-    // 40 - 4F
-    {c: '@', h: 0.694, w: 0.894},
-    {c: 'A', h: 0.686, w: 0.869, krn: {'116': -0.0319, '67': -0.0319, '79': -0.0319, '71': -0.0319, '85': -0.0319, '81': -0.0319, '84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}},
-    {c: 'B', h: 0.686, w: 0.818},
-    {c: 'C', h: 0.686, w: 0.831},
-    {c: 'D', h: 0.686, w: 0.882, krn: {'88': -0.0319, '87': -0.0319, '65': -0.0319, '86': -0.0319, '89': -0.0319}},
-    {c: 'E', h: 0.686, w: 0.756},
-    {c: 'F', h: 0.686, w: 0.724, krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}},
-    {c: 'G', h: 0.686, w: 0.904},
-    {c: 'H', h: 0.686, w: 0.9},
-    {c: 'I', h: 0.686, w: 0.436, krn: {'73': 0.0319}},
-    {c: 'J', h: 0.686, w: 0.594},
-    {c: 'K', h: 0.686, w: 0.901, krn: {'79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}},
-    {c: 'L', h: 0.686, w: 0.692, krn: {'84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}},
-    {c: 'M', h: 0.686, w: 1.09},
-    {c: 'N', h: 0.686, w: 0.9},
-    {c: 'O', h: 0.686, w: 0.864, krn: {'88': -0.0319, '87': -0.0319, '65': -0.0319, '86': -0.0319, '89': -0.0319}},
-    // 50 - 5F
-    {c: 'P', h: 0.686, w: 0.786, krn: {'65': -0.0958, '111': -0.0319, '101': -0.0319, '97': -0.0319, '46': -0.0958, '44': -0.0958}},
-    {c: 'Q', h: 0.686, d: 0.194, w: 0.864},
-    {c: 'R', h: 0.686, w: 0.862, krn: {'116': -0.0319, '67': -0.0319, '79': -0.0319, '71': -0.0319, '85': -0.0319, '81': -0.0319, '84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}},
-    {c: 'S', h: 0.686, w: 0.639},
-    {c: 'T', h: 0.686, w: 0.8, krn: {'121': -0.0319, '101': -0.0958, '111': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.0958, '117': -0.0958}},
-    {c: 'U', h: 0.686, w: 0.885},
-    {c: 'V', h: 0.686, w: 0.869, ic: 0.016, krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}},
-    {c: 'W', h: 0.686, w: 1.19, ic: 0.016, krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}},
-    {c: 'X', h: 0.686, w: 0.869, krn: {'79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}},
-    {c: 'Y', h: 0.686, w: 0.869, ic: 0.0287, krn: {'101': -0.0958, '111': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.0958, '117': -0.0958}},
-    {c: 'Z', h: 0.686, w: 0.703},
-    {c: '[', h: 0.75, d: 0.25, w: 0.319},
-    {c: '\\', h: 0.694, w: 0.603},
-    {c: ']', h: 0.75, d: 0.25, w: 0.319},
-    {c: '^', h: 0.694, w: 0.575},
-    {c: '_', h: 0.694, w: 0.319},
-    // 60 - 6F
-    {c: '&#x60;', h: 0.694, w: 0.319, lig: {'96': 92}},
-    {c: 'a', h: 0.444, w: 0.559, krn: {'118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}},
-    {c: 'b', h: 0.694, w: 0.639, krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}},
-    {c: 'c', h: 0.444, w: 0.511, krn: {'104': -0.0319, '107': -0.0319}},
-    {c: 'd', h: 0.694, w: 0.639},
-    {c: 'e', h: 0.444, w: 0.527},
-    {c: 'f', h: 0.694, w: 0.351, ic: 0.109, krn: {'39': 0.109, '63': 0.109, '33': 0.109, '41': 0.109, '93': 0.109}, lig: {'105': 12, '102': 11, '108': 13}},
-    {c: 'g', h: 0.444, d: 0.194, w: 0.575, ic: 0.016, krn: {'106': 0.0319}},
-    {c: 'h', h: 0.694, w: 0.639, krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}},
-    {c: 'i', h: 0.694, w: 0.319},
-    {c: 'j', h: 0.694, d: 0.194, w: 0.351},
-    {c: 'k', h: 0.694, w: 0.607, krn: {'97': -0.0639, '101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}},
-    {c: 'l', h: 0.694, w: 0.319},
-    {c: 'm', h: 0.444, w: 0.958, krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}},
-    {c: 'n', h: 0.444, w: 0.639, krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}},
-    {c: 'o', h: 0.444, w: 0.575, krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}},
-    // 70 - 7F
-    {c: 'p', h: 0.444, d: 0.194, w: 0.639, krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}},
-    {c: 'q', h: 0.444, d: 0.194, w: 0.607},
-    {c: 'r', h: 0.444, w: 0.474},
-    {c: 's', h: 0.444, w: 0.454},
-    {c: 't', h: 0.635, w: 0.447, krn: {'121': -0.0319, '119': -0.0319}},
-    {c: 'u', h: 0.444, w: 0.639, krn: {'119': -0.0319}},
-    {c: 'v', h: 0.444, w: 0.607, ic: 0.016, krn: {'97': -0.0639, '101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}},
-    {c: 'w', h: 0.444, w: 0.831, ic: 0.016, krn: {'101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}},
-    {c: 'x', h: 0.444, w: 0.607},
-    {c: 'y', h: 0.444, d: 0.194, w: 0.607, ic: 0.016, krn: {'111': -0.0319, '101': -0.0319, '97': -0.0319, '46': -0.0958, '44': -0.0958}},
-    {c: 'z', h: 0.444, w: 0.511},
-    {c: '&#x7B;', h: 0.444, w: 0.575, ic: 0.0319, lig: {'45': 124}},
-    {c: '&#x7C;', h: 0.444, w: 1.15, ic: 0.0319},
-    {c: '&#x7D;', h: 0.694, w: 0.575},
-    {c: '&#x7E;', h: 0.694, w: 0.575},
-    {c: '&#xC4;', h: 0.694, w: 0.575}
+    [0.692,0.686], [0.958,0.686], [0.894,0.686], [0.806,0.686],
+    [0.767,0.686], [0.9,0.686], [0.831,0.686], [0.894,0.686],
+    [0.831,0.686], [0.894,0.686], [0.831,0.686],
+    [0.671,0.694,0,{ic: 0.109, krn: {'39': 0.109, '63': 0.109, '33': 0.109, '41': 0.109, '93': 0.109}, lig: {'105': 14, '108': 15}}],
+    [0.639,0.694], [0.639,0.694], [0.958,0.694], [0.958,0.694],
+
+    [0.319,0.444], [0.351,0.444,0.194], [0.575,0.694], [0.575,0.694],
+    [0.575,0.632], [0.575,0.694], [0.575,0.596], [0.869,0.694],
+    [0.511,0,0.17], [0.597,0.694], [0.831,0.444], [0.894,0.444],
+    [0.575,0.542,0.0972], [1.04,0.686], [1.17,0.686], [0.894,0.735,0.0486],
+
+    [0.319,0.444,0,{krn: {'108': -0.319, '76': -0.378}}],
+    [0.35,0.694,0,{lig: {'96': 60}}], [0.603,0.694], [0.958,0.694,0.194],
+    [0.575,0.75,0.0556], [0.958,0.75,0.0556], [0.894,0.694],
+    [0.319,0.694,0,{krn: {'63': 0.128, '33': 0.128}, lig: {'39': 34}}],
+    [0.447,0.75,0.25], [0.447,0.75,0.25], [0.575,0.75], [0.894,0.633,0.133],
+    [0.319,0.156,0.194], [0.383,0.444,0,{lig: {'45': 123}}],
+    [0.319,0.156], [0.575,0.75,0.25],
+
+    [0.575,0.644], [0.575,0.644], [0.575,0.644], [0.575,0.644],
+    [0.575,0.644], [0.575,0.644], [0.575,0.644], [0.575,0.644],
+    [0.575,0.644], [0.575,0.644], [0.319,0.444], [0.319,0.444,0.194],
+    [0.35,0.5,0.194], [0.894,0.391,-0.109], [0.543,0.5,0.194],
+    [0.543,0.694,0,{lig: {'96': 62}}],
+
+    [0.894,0.694],
+    [0.869,0.686,0,{krn: {'116': -0.0319, '67': -0.0319, '79': -0.0319, '71': -0.0319, '85': -0.0319, '81': -0.0319, '84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}}],
+    [0.818,0.686], [0.831,0.686],
+    [0.882,0.686,0,{krn: {'88': -0.0319, '87': -0.0319, '65': -0.0319, '86': -0.0319, '89': -0.0319}}],
+    [0.756,0.686],
+    [0.724,0.686,0,{krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}}],
+    [0.904,0.686], [0.9,0.686], [0.436,0.686,0,{krn: {'73': 0.0319}}],
+    [0.594,0.686],
+    [0.901,0.686,0,{krn: {'79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}}],
+    [0.692,0.686,0,{krn: {'84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}}],
+    [1.09,0.686], [0.9,0.686],
+    [0.864,0.686,0,{krn: {'88': -0.0319, '87': -0.0319, '65': -0.0319, '86': -0.0319, '89': -0.0319}}],
+
+    [0.786,0.686,0,{krn: {'65': -0.0958, '111': -0.0319, '101': -0.0319, '97': -0.0319, '46': -0.0958, '44': -0.0958}}],
+    [0.864,0.686,0.194],
+    [0.862,0.686,0,{krn: {'116': -0.0319, '67': -0.0319, '79': -0.0319, '71': -0.0319, '85': -0.0319, '81': -0.0319, '84': -0.0958, '89': -0.0958, '86': -0.128, '87': -0.128}}],
+    [0.639,0.686],
+    [0.8,0.686,0,{krn: {'121': -0.0319, '101': -0.0958, '111': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.0958, '117': -0.0958}}],
+    [0.885,0.686],
+    [0.869,0.686,0,{ic: 0.016, krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}}],
+    [1.19,0.686,0,{ic: 0.016, krn: {'111': -0.0958, '101': -0.0958, '117': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.128, '79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}}],
+    [0.869,0.686,0,{krn: {'79': -0.0319, '67': -0.0319, '71': -0.0319, '81': -0.0319}}],
+    [0.869,0.686,0,{ic: 0.0287, krn: {'101': -0.0958, '111': -0.0958, '114': -0.0958, '97': -0.0958, '65': -0.0958, '117': -0.0958}}],
+    [0.703,0.686], [0.319,0.75,0.25], [0.603,0.694], [0.319,0.75,0.25],
+    [0.575,0.694], [0.319,0.694],
+
+    [0.319,0.694,0,{lig: {'96': 92}}],
+    [0.559,0.444,0,{krn: {'118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}}],
+    [0.639,0.694,0,{krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}}],
+    [0.511,0.444,0,{krn: {'104': -0.0319, '107': -0.0319}}],
+    [0.639,0.694], [0.527,0.444],
+    [0.351,0.694,0,{ic: 0.109, krn: {'39': 0.109, '63': 0.109, '33': 0.109, '41': 0.109, '93': 0.109}, lig: {'105': 12, '102': 11, '108': 13}}],
+    [0.575,0.444,0.194,{ic: 0.016, krn: {'106': 0.0319}}],
+    [0.639,0.694,0,{krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}}],
+    [0.319,0.694], [0.351,0.694,0.194],
+    [0.607,0.694,0,{krn: {'97': -0.0639, '101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}}],
+    [0.319,0.694],
+    [0.958,0.444,0,{krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}}],
+    [0.639,0.444,0,{krn: {'116': -0.0319, '117': -0.0319, '98': -0.0319, '121': -0.0319, '118': -0.0319, '119': -0.0319}}],
+    [0.575,0.444,0,{krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}}],
+
+    [0.639,0.444,0.194,{krn: {'101': 0.0319, '111': 0.0319, '120': -0.0319, '100': 0.0319, '99': 0.0319, '113': 0.0319, '118': -0.0319, '106': 0.0639, '121': -0.0319, '119': -0.0319}}],
+    [0.607,0.444,0.194], [0.474,0.444], [0.454,0.444],
+    [0.447,0.635,0,{krn: {'121': -0.0319, '119': -0.0319}}],
+    [0.639,0.444,0,{krn: {'119': -0.0319}}],
+    [0.607,0.444,0,{ic: 0.016, krn: {'97': -0.0639, '101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}}],
+    [0.831,0.444,0,{ic: 0.016, krn: {'101': -0.0319, '97': -0.0319, '111': -0.0319, '99': -0.0319}}],
+    [0.607,0.444],
+    [0.607,0.444,0.194,{ic: 0.016, krn: {'111': -0.0319, '101': -0.0319, '97': -0.0319, '46': -0.0958, '44': -0.0958}}],
+    [0.511,0.444], [0.575,0.444,0,{ic: 0.0319, lig: {'45': 124}}],
+    [1.15,0.444,0,{ic: 0.0319}], [0.575,0.694], [0.575,0.694], [0.575,0.694]
   ]
 };
 
@@ -2193,18 +2201,11 @@ jsMath.Img = {
       '120': 16.7, '144': 20.0, '173': 24.0, '207': 28.8, '249': 34.6,
       '298': 41.4, '358': 49.8, '430': 59.8},
         
-  // index of best font size in the fonts list
-  best: 4,
-    
-  // fonts to update (see UpdateFonts below)
-  update: {},
-    
-  // factor by which to shrink images (for better printing)
-  factor: 1,
-  
-  // image fonts are loaded
-  loaded: 0,
-  
+  best: 4,     // index of best font size in the fonts list    
+  update: {},  // fonts to update (see UpdateFonts below)
+  factor: 1,   // factor by which to shrink images (for better printing)
+  loaded: 0,   // image fonts are loaded
+
   // add characters to be drawn using images
   SetFont: function (change) {
     for (var font in change) {
@@ -2284,14 +2285,14 @@ jsMath.Img = {
   LoadFont: function (name) {
     if (jsMath.Controls.cookie.print) {
       jsMath.Controls.cookie.print = 0;
-      var button = jsMath.Element("jsMath");
+      var button = jsMath.Element("button");
       if (button) {button.style.display = "none"}
       this.factor *= 3;
-      if (window.location.protocol != 'file:') {jsMath.Controls.SetCookie(0)}
+      if (jsMath.window.location.protocol != 'file:') {jsMath.Controls.SetCookie(0)}
       if (jsMath.Browser.alphaPrintBug) {jsMath.Controls.cookie.alpha = 0}
     }
-    document.writeln('<SCRIPT SRC="'+this.URL(name,"")+'"></SCRIPT>');
     this.loaded = 1;
+    jsMath.Setup.Script(this.URL(name,""));
   }
   
 };
@@ -2306,7 +2307,7 @@ jsMath.Img = {
 jsMath.HTML = {
   
   /*
-   *  produce a string version of a measurement in ems,
+   *  Produce a string version of a measurement in ems,
    *  showing only a limited number of digits, and 
    *  using 0 when the value is near zero.
    */
@@ -2323,9 +2324,9 @@ jsMath.HTML = {
   Spacer: function (w) {
     if (w == 0) {return ''};
     return jsMath.Browser.msieSpaceFix
-      + '<SPAN STYLE="margin-left: '
+      + '<span style="margin-left: '
       +    this.Em(w-jsMath.Browser.spaceWidth)+'">'
-      + jsMath.Browser.hiddenSpace + '</SPAN>';
+      + jsMath.Browser.hiddenSpace + '</span>';
   },
 
   /*
@@ -2339,11 +2340,11 @@ jsMath.HTML = {
     if (!c) {c = 'black'};
     if (pos) {pos = 'absolute;'} else
              {pos = 'relative; margin-right: '+this.Em(-(w+2/jsMath.em))+'; '}
-    return '<IMG SRC="'+jsMath.blank+'" STYLE="position:' + pos
+    return '<img src="'+jsMath.blank+'" style="position:' + pos
              + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
              + 'width:' +this.Em(w*jsMath.Browser.imgScale)+'; '
              + 'height:'+this.Em(h*jsMath.Browser.imgScale)+'; '
-             + 'border: 1px solid '+c+';">';
+             + 'border: 1px solid '+c+';" />';
   },
 
   /*
@@ -2355,21 +2356,21 @@ jsMath.HTML = {
    */
   Rule: function (w,h) {
     if (h == null) {h = jsMath.TeX.default_rule_thickness}
-    if (w == 0 || h == 0) return;  // should make an invisible box?
+    if (w == 0 || h == 0) return '';  // should make an invisible box?
     w *= jsMath.Browser.imgScale;
     h = Math.round(h*jsMath.em*jsMath.Browser.imgScale+.25);
     if (h < 1) {h = 1};
-    return '<IMG SRC="'+jsMath.blank+'" HSPACE="0" VSPACE="0" '
-              + 'STYLE="width:'+this.Em(w)+'; height:1px; '
+    return '<img src="'+jsMath.blank+'" hspace="0" vspace="0" '
+              + 'style="width:'+this.Em(w)+'; height:1px; '
               + 'vertical-align:-1px; '
-              + 'border:0px none; border-top:'+h+'px solid">';
+              + 'border:0px none; border-top:'+h+'px solid" />';
   },
   
   /*
    *  Add a <SPAN> tag to activate a specific CSS class
    */
   Class: function (tclass,html) {
-    return '<SPAN CLASS="'+tclass+'">'+html+'</SPAN>';
+    return '<span class="'+tclass+'">'+html+'</span>';
   },
   
   /*
@@ -2381,10 +2382,10 @@ jsMath.HTML = {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
     if (x || y) {
-      var span = '<SPAN STYLE="position: relative;';
+      var span = '<span style="position: relative;';
       if (x) {span += ' margin-left:'+this.Em(x)+';'}
       if (y) {span += ' top:'+this.Em(-y)+';'}
-      html = span + '">' + html + '</SPAN>';
+      html = span + '">' + html + '</span>';
     }
     return html;
   },
@@ -2398,12 +2399,12 @@ jsMath.HTML = {
   PlaceSeparateSkips: function (html,x,y) {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
-    if (y) {html = '<SPAN STYLE="position: relative; top:'+this.Em(-y)+';'
-                       + '">' + html + '</SPAN>'}
+    if (y) {html = '<span style="position: relative; top:'+this.Em(-y)+';'
+                       + '">' + html + '</span>'}
     if (x) {html = jsMath.Browser.msieSpaceFix 
-                       + '<SPAN STYLE="margin-left:'
+                       + '<span style="margin-left:'
                        +    this.Em(x-jsMath.Browser.spaceWidth)+';">'
-                       +  jsMath.Browser.hiddenSpace + '</SPAN>' + html}
+                       +  jsMath.Browser.hiddenSpace + '</span>' + html}
     return html;
   },
   
@@ -2413,8 +2414,8 @@ jsMath.HTML = {
   PlaceAbsolute: function (html,x,y) {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
-    html = '<SPAN STYLE="position: absolute; left:'+this.Em(x)+'; '
-              + 'top:'+this.Em(y)+';">' + html + '&nbsp;</SPAN>';
+    html = '<span style="position: absolute; left:'+this.Em(x)+'; '
+              + 'top:'+this.Em(y)+';">' + html + '&nbsp;</span>';
               //  space normalizes line height
     return html;
   },
@@ -2424,24 +2425,26 @@ jsMath.HTML = {
     if (d && d != "none") {align = ' vertical-align: '+jsMath.HTML.Em(-d)+';'}
     if (y != "none") {
       if (Math.abs(y) < .0001) {y = 0}
-      html = '<SPAN STYLE="position: absolute; '
+      html = '<span style="position: absolute; '
+               + 'width:'+jsMath.HTML.Em(w)+'; '   // for Firefox 1.5
+               + 'height:'+jsMath.HTML.Em(H)+'; '  // for Firefox 1.5
                + 'top:'+jsMath.HTML.Em(y)+'; left: 0em;">'
                + html + '&nbsp;' // space normalizes line height in script styles
-             + '</SPAN>';
+             + '</span>';
     }
-    html += '<IMG SRC="'+jsMath.blank+'" STYLE="'
+    html += '<img src="'+jsMath.blank+'" style="'
               + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'; '
-              + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+';'+align+'">';
+              + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+';'+align+'" />';
     if (jsMath.Browser.msieAbsoluteBug) {           // for MSIE (Mac)
-      html = '<SPAN STYLE="position: relative;">' + html + '</SPAN>';
+      html = '<span style="position: relative;">' + html + '</span>';
     }
-    html =   '<SPAN STYLE="position: relative;'
+    html =   '<span style="position: relative;'
            +     ' width: '+jsMath.HTML.Em(w)+';'   // for MSIE
            +     ' height: '+jsMath.HTML.Em(H)+';'  // for MSIE
            +     jsMath.Browser.msieInlineBlockFix  // for MSIE
            +     '">'
            +   html
-           + '</SPAN>';
+           + '</span>';
     return html;
   }
 
@@ -2514,7 +2517,7 @@ jsMath.Add(jsMath.Box,{
         // hack to avoid Font changing back to the default
         // font when a unicode reference is not followed
         // by a letter or number
-        box.html += '<SPAN STYLE="display: none">x</SPAN>'
+        box.html += '<span style="display: none">x</span>'
       }
     }
     if (c.img != null) {
@@ -2562,14 +2565,14 @@ jsMath.Add(jsMath.Box,{
                          "": " vertical-align:"+v+';';
     var URL = jsMath.Img.URL(font,jsMath.Img.fonts[id],C);
     if (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha) {
-      c.c = '<IMG SRC="'+jsMath.blank+'" '
-               + 'STYLE="'+jsMath.Browser.msieCenterBugFix
+      c.c = '<img src="'+jsMath.blank+'" '
+               + 'style="'+jsMath.Browser.msieCenterBugFix
                + resize + vadjust + wadjust
                + ' filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src=' + "'"
-               + URL + "', sizingMethod='scale'" + ');">';
+               + URL + "', sizingMethod='scale'" + ');" />';
     } else {
-      c.c = '<IMG SRC="'+URL+'" STYLE="'+jsMath.Browser.msieCenterBugFix
-                  + resize + vadjust + wadjust + '">';
+      c.c = '<img src="'+URL+'" style="'+jsMath.Browser.msieCenterBugFix
+                  + resize + vadjust + wadjust + '" />';
     }
     c.tclass = "normal";
     c.img.bh = h+d; c.img.bd = -d;
@@ -2597,7 +2600,7 @@ jsMath.Add(jsMath.Box,{
    */
   Rule: function (w,h) {
     if (h == null) {h = jsMath.TeX.default_rule_thickness}
-    html = jsMath.HTML.Rule(w,h);
+    var html = jsMath.HTML.Rule(w,h);
     return new jsMath.Box('html',html,w,h,0);
   },
 
@@ -2622,7 +2625,7 @@ jsMath.Add(jsMath.Box,{
    *  Return the character, font, style and actual height used.
    */
   DelimBestFit: function (H,c,font,style) {
-    if (c == 0 && font == 0) return;
+    if (c == 0 && font == 0) return null;
     var C; var h; font = jsMath.TeX.fam[font];
     var isSS = (style.charAt(1) == 'S');
     var isS  = (style.charAt(0) == 'S');
@@ -2634,8 +2637,9 @@ jsMath.Add(jsMath.Box,{
       if (isSS && .5*h >= H) {return [c,font,'SS',.5*h]}
       if (isS  && .7*h >= H) {return [c,font,'S',.7*h]}
       if (h >= H || C.n == null) {return [c,font,'T',h]}
-      c = C.n
+      c = C.n;
     }
+    return null;
   },
   
   /*
@@ -2813,7 +2817,7 @@ jsMath.Add(jsMath.Box,{
       html += this.AddClass(rep.tclass,ehtml,rep.font) + jsMath.HTML.Spacer(w);
       ehtml = ''; for (var i = m; i < n; i++) {ehtml += ext};
       html += this.AddClass(rep.tclass,ehtml,rep.font);
-      if (jsMath.Browser.msieFontBug) {html += '<SPAN STYLE="display: none">x</SPAN>'}
+      if (jsMath.Browser.msieFontBug) {html += '<span style="display: none">x</span>'}
       html += jsMath.HTML.Place(this.AddClass(right.tclass,right.c,right.font),-.4,0);
     }
     w = jsMath.EmBoxFor(html).w;
@@ -3097,7 +3101,7 @@ jsMath.mItem = function (type,def) {
 jsMath.Add(jsMath.mItem,{
 
   /*
-   *  a general atom (given a nucleus for the atom)
+   *  A general atom (given a nucleus for the atom)
    */
   Atom: function (type,nucleus) {
     return new jsMath.mItem(type,{atom: 1, nuc: nucleus});
@@ -3278,7 +3282,7 @@ jsMath.Package(jsMath.mList,{
    *  contains an \over (or \above, etc).
    */
   Over: function () {
-    var over = this.data.overI; var from = this.data.overF
+    var over = this.data.overI; var from = this.data.overF;
     var atom = jsMath.mItem.Fraction(from.name,
       {type: 'mlist', mlist: this.Range(open+1,over-1)},
       {type: 'mlist', mlist: this.Range(over)},
@@ -3879,7 +3883,7 @@ jsMath.Add(jsMath.Typeset,{
   AddStyle: function (style,size,html) {
     if      (style == "S" || style == "S'")   {size = Math.max(0,size-2)}
     else if (style == "SS" || style == "SS'") {size = Math.max(0,size-4)}
-    if (size != 4) {html = '<SPAN CLASS="size'+size+'">' + html + '</SPAN>'}
+    if (size != 4) {html = '<span class="size'+size+'">' + html + '</span>'}
     return html;
   },
 
@@ -4055,10 +4059,10 @@ jsMath.Package(jsMath.Typeset,{
    *   versions by Browser.Init().)
    */
   Place: function (item) {
-    var html = '<SPAN STYLE="position: relative;';
+    var html = '<span style="position: relative;';
     if (item.x) {html += ' margin-left:'+jsMath.HTML.Em(item.x)+';'}
     if (item.y) {html += ' top:'+jsMath.HTML.Em(-item.y)+';'}
-    item.html = html + '">' + item.html + '</SPAN>';
+    item.html = html + '">' + item.html + '</span>';
     item.h += item.y; item.d -= item.y;
     item.x = 0; item.y = 0;
   },
@@ -4071,20 +4075,20 @@ jsMath.Package(jsMath.Typeset,{
    */
   PlaceSeparateSkips: function (item) {
     if (item.y) {
-      if (item.html.match(/^<IMG[^>]*>(<SPAN STYLE="margin-left: [-0-9.]*em"><\/SPAN>)?$/i) && !item.html.match(/top:/)) {
-        item.html = item.html.replace(/STYLE="/,
-            'STYLE="position:relative; top:'+jsMath.HTML.Em(-item.y)+';');
+      if (item.html.match(/^<img[^>]*>(<span style="margin-left: [-0-9.]*em"><\/span>)?$/i) && !item.html.match(/top:/)) {
+        item.html = item.html.replace(/style="/,
+            'style="position:relative; top:'+jsMath.HTML.Em(-item.y)+';');
       } else {
-        item.html = '<SPAN STYLE="position: relative; '
+        item.html = '<span style="position: relative; '
                        + 'top:'+jsMath.HTML.Em(-item.y)+';'
-                       + '">' + item.html + '</SPAN>'
+                       + '">' + item.html + '</span>'
       }
     }
     if (item.x) 
       {item.html = jsMath.Browser.msieSpaceFix
-                       + '<SPAN STYLE="margin-left:'
+                       + '<span style="margin-left:'
                        +    jsMath.HTML.Em(item.x-jsMath.Browser.spaceWidth)+';">'
-                       + jsMath.Browser.hiddenSpace + '</SPAN>' + item.html}
+                       + jsMath.Browser.hiddenSpace + '</span>' + item.html}
     item.h += item.y; item.d -= item.y;
     item.x = 0; item.y = 0;
   }
@@ -4451,8 +4455,8 @@ jsMath.Package(jsMath.Parser,{
     ker:          ['NamedOp',0],
     lg:           ['NamedOp',0],
     lim:           'NamedOp',
-    liminf:       ['NamedOp',null,'lim<SPAN STYLE="margin-left: '+1/6+'em"></SPAN>inf'],
-    limsup:       ['NamedOp',null,'lim<SPAN STYLE="margin-left: '+1/6+'em"></SPAN>sup'],
+    liminf:       ['NamedOp',null,'lim<span style="margin-left: '+1/6+'em"></span>inf'],
+    limsup:       ['NamedOp',null,'lim<span style="margin-left: '+1/6+'em"></span>sup'],
     ln:           ['NamedOp',0],
     log:          ['NamedOp',0],
     max:           'NamedOp',
@@ -4666,7 +4670,7 @@ jsMath.Package(jsMath.Parser,{
   leaders: {
     downbrace:  {left: [3,0x7A], lmid: [3,0x7D], rmid: [3,0x7C], right: [3,0x7B]},
     upbrace:    {left: [3,0x7C], lmid: [3,0x7B], rmid: [3,0x7A], right: [3,0x7D]},
-    leftarrow:  {left: [2,0x20], rep:  [2,0x00]},
+    leftarrow:  {left: [2,0x20], rep:   [2,0x00]},
     rightarrow: {rep:  [2,0x00], right: [2,0x21]}
   },
 
@@ -4709,7 +4713,7 @@ jsMath.Package(jsMath.Parser,{
   Process: function (arg) {
     var data = this.mlist.data;
     arg = jsMath.Parse(arg,data.font,data.size,data.style);
-      if (arg.error) {this.Error(arg); return}
+      if (arg.error) {this.Error(arg); return null}
     if (arg.mlist.Length() == 0) {return null}
     if (arg.mlist.Length() == 1) {
       var atom = arg.mlist.Last();
@@ -4727,7 +4731,8 @@ jsMath.Package(jsMath.Parser,{
     var letter = /^([a-z]+|.) ?/i;
     var cmd = letter.exec(this.string.slice(this.i));
     if (cmd) {this.i += cmd[1].length; return cmd[1]}
-    this.Error("Missing control sequnece name at end of string or argument"); return
+    this.Error("Missing control sequnece name at end of string or argument");
+    return null;
   },
 
   /*
@@ -4736,8 +4741,8 @@ jsMath.Package(jsMath.Parser,{
    */
   GetArgument: function (name,noneOK) {
     while (this.nextIsSpace()) {this.i++}
-    if (this.i >= this.string.length) {if (!noneOK) this.Error("Missing argument for "+name); return}
-    if (this.string.charAt(this.i) == this.close) {if (!noneOK) this.Error("Extra close brace"); return}
+    if (this.i >= this.string.length) {if (!noneOK) this.Error("Missing argument for "+name); return null}
+    if (this.string.charAt(this.i) == this.close) {if (!noneOK) this.Error("Extra close brace"); return null}
     if (this.string.charAt(this.i) == this.cmd) {this.i++; return this.cmd+this.GetCommand()}
     if (this.string.charAt(this.i) != this.open) {return this.string.charAt(this.i++)}
     var j = ++this.i; var pcount = 1; var c = '';
@@ -4746,18 +4751,19 @@ jsMath.Package(jsMath.Parser,{
       if (c == this.cmd) {this.i++}
       else if (c == this.open) {pcount++}
       else if (c == this.close) {
-        if (pcount == 0) {this.Error("Extra close brace"); return}
+        if (pcount == 0) {this.Error("Extra close brace"); return null}
         if (--pcount == 0) {return this.string.slice(j,this.i-1)}
       }
     }
     this.Error("Missing close brace");
+    return null;
   },
 
   /*
    *  Get an argument and process it into an mList
    */
   ProcessArg: function (name) {
-    var arg = this.GetArgument(name); if (this.error) return;
+    var arg = this.GetArgument(name); if (this.error) return null;
     return this.Process(arg);
   },
 
@@ -4769,10 +4775,11 @@ jsMath.Package(jsMath.Parser,{
     var c = this.string.charAt(this.i);
     if (this.i < this.string.length) {
       this.i++;
-      if (c == this.cmd) {c = '\\'+this.GetCommand(name); if (this.error) return}
+      if (c == this.cmd) {c = '\\'+this.GetCommand(name); if (this.error) return null}
       if (this.delimiter[c] != null) {return this.delimiter[c]}
     }
     this.Error("Missing or unrecognized delimiter for "+name);
+    return null;
   },
   
   /*
@@ -4790,7 +4797,7 @@ jsMath.Package(jsMath.Parser,{
       advance = 1;
     }
     var match = rest.match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)/);
-    if (!match) {this.Error("Missing dimension or its units for "+name); return}
+    if (!match) {this.Error("Missing dimension or its units for "+name); return null}
     if (advance) {
       this.i += match[0].length;
       if (this.nextIsSpace()) {this.i++}
@@ -4822,7 +4829,7 @@ jsMath.Package(jsMath.Parser,{
       if (c == '{') {pcount++}
       else if (c == '}') {
         if (pcount == 0)
-          {this.Error("Extra close brace while looking for ']'"); return}
+          {this.Error("Extra close brace while looking for ']'"); return null}
         pcount --;
       } else if (c == this.cmd) {
         this.i++;
@@ -4831,6 +4838,7 @@ jsMath.Package(jsMath.Parser,{
       }
     }
     this.Error("Couldn't find closing ']' for argument to "+this.cmd+name);
+    return null;
   },
   
   /*
@@ -4844,7 +4852,7 @@ jsMath.Package(jsMath.Parser,{
       if (c == '{') {pcount++}
       else if (c == '}') {
         if (pcount == 0)
-          {this.Error("Extra close brace while looking for "+this.cmd+token); return}
+          {this.Error("Extra close brace while looking for "+this.cmd+token); return null}
         pcount --;
       } else if (c == this.cmd) {
         // really need separate counter for begin/end
@@ -4867,6 +4875,7 @@ jsMath.Package(jsMath.Parser,{
       }
     }
     this.Error("Couldn't find "+this.cmd+token+" for "+name);
+    return null;
   },
 
   /*
@@ -4874,7 +4883,7 @@ jsMath.Package(jsMath.Parser,{
    *  process it to get its mlist
    */
   ProcessUpto: function (name,token) {
-    var arg = this.GetUpto(name,token); if (this.error) return;
+    var arg = this.GetUpto(name,token); if (this.error) return null;
     return this.Process(arg);
   },
 
@@ -4884,8 +4893,8 @@ jsMath.Package(jsMath.Parser,{
   GetEnd: function (env) {
     var body = ''; var name = '';
     while (name != env) {
-      body += this.GetUpto('begin{'+env+'}','end'); if (this.error) return;
-      name = this.GetArgument(this.cmd+'end'); if (this.error) return;
+      body += this.GetUpto('begin{'+env+'}','end'); if (this.error) return null;
+      name = this.GetArgument(this.cmd+'end'); if (this.error) return null;
     }
     return body;
   },
@@ -4940,12 +4949,11 @@ jsMath.Package(jsMath.Parser,{
 
   /*
    *  Show the argument in a particular color
-   *  ### doesn't affect horizontal rules; can we fix that? ###
    */
   Color: function (name) {
     var color = this.GetArgument(this.cmd+name); if (this.error) return;
     // check that it looks like a color?
-    this.AddHTML(name,['<SPAN STYLE="color: '+color+'">','</SPAN>']);
+    this.AddHTML(name,['<span style="color: '+color+'">','</span>']);
   },
   
   /*
@@ -4953,7 +4961,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Href: function (name) {
     var href = this.GetArgument(this.cmd+name); if (this.error) return;
-    this.AddHTML(name,['<A CLASS="mathlink" HREF="'+href+'">','</A>']);
+    this.AddHTML(name,['<a class="link" href="'+href+'">','</a>']);
   },
   
   /*
@@ -4961,7 +4969,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Class: function (name) {
     var clss = this.GetArgument(this.cmd+name); if (this.error) return;
-    this.AddHTML(name,['<SPAN CLASS="'+clss+'">','</SPAN>']);
+    this.AddHTML(name,['<span class="'+clss+'">','</span>']);
   },
   
   /*
@@ -4969,7 +4977,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Style: function (name) {
     var style = this.GetArgument(this.cmd+name); if (this.error) return;
-    this.AddHTML(name,['<SPAN STYLE="'+style+'">','</SPAN>']);
+    this.AddHTML(name,['<span style="'+style+'">','</span>']);
   },
   
   /*
@@ -5222,22 +5230,22 @@ jsMath.Package(jsMath.Parser,{
     if (h != 0) {h = Math.max(1.05/jsMath.em,h)}
     if (h == 0 || w == 0) {style = "blank"}
     if (w == 0) {
-      html = '<IMG SRC="'+jsMath.blank+'" STYLE="'
+      html = '<img src="'+jsMath.blank+'" style="'
                 + 'border:0px none; width:1px; margin-right:-1px; '
-                + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+'">';
+                + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+'" />';
     } else if (style == "blank") {
-      html = '<IMG SRC="'+jsMath.blank+'" STYLE="border:0px none; '
+      html = '<img src="'+jsMath.blank+'" style="border:0px none; '
                 + 'height:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+'; '
-                + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'">';
+                + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'" />';
     } else {
-      html = '<IMG SRC="'+jsMath.blank+'" STYLE="'
+      html = '<img src="'+jsMath.blank+'" style="'
                 + 'position: relative; top:1px; height:1px; border:0px none; '
                 + 'border-top:'+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+' solid; '
-                + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'">';
+                + 'width:' +jsMath.HTML.Em(w*jsMath.Browser.imgScale)+'" />';
     }
     if (d) {
-      html = '<SPAN STYLE="vertical-align:'+jsMath.HTML.Em(-d)+'">'
-           +  html + '</SPAN>';
+      html = '<span style="vertical-align:'+jsMath.HTML.Em(-d)+'">'
+           +  html + '</span>';
     }
     this.mlist.Add(jsMath.mItem.Typeset(new jsMath.Box('html',html,w,h-d,d)));
   },
@@ -5346,10 +5354,12 @@ jsMath.Package(jsMath.Parser,{
     var box = this.ProcessArg(this.cmd+name); if (this.error) return;
     box = jsMath.Box.Set(box,'D',this.mlist.data.size).Remeasured();
     var leader = jsMath.Box.Leaders(box.w,this.leaders[data[0]]);
-    if (data[2]) {leader.y = -leader.h - box.d} else {leader.y = box.h + leader.d}
-    leader.x = -(leader.w + box.w)/2;
+    if (data[2]) {leader.y = -leader.h - box.d}
+            else {leader.y = box.h + Math.max(0,leader.d)}
+    box.x = -(leader.w + box.w)/2;
+    var space = jsMath.Box.Space((leader.w-box.w)/2);
     box = jsMath.mItem.Atom(data[1]? 'op': 'inner',
-      jsMath.Box.SetList([box,leader],'T',this.mlist.data.size));
+      jsMath.Box.SetList([leader,box,space],'T',this.mlist.data.size));
     box.limits = (data[1]? 1: 0);
     this.mlist.Add(box);
   },
@@ -5503,11 +5513,15 @@ jsMath.Package(jsMath.Parser,{
     } else if (name.match(/withdelims$/)) {
       this.mlist.data.overF.left  = this.GetDelimiter(this.cmd+name); if (this.error) return;
       this.mlist.data.overF.right = this.GetDelimiter(this.cmd+name); if (this.error) return;
+    } else {
+      this.mlist.data.overF.left  = null;
+      this.mlist.data.overF.right = null;
     }
-    if (name.match(/^above/))
-    {
+    if (name.match(/^above/)) {
       this.mlist.data.overF.thickness = this.GetDimen(this.cmd.name,1);
       if (this.error) return;
+    } else {
+      this.mlist.data.overF.thickness = null; 
     }
   },
 
@@ -5574,7 +5588,7 @@ jsMath.Package(jsMath.Parser,{
   Typeset: function () {
     var data = this.mlist.init;
     var box = this.typeset = this.mlist.Typeset(data.style,data.size);
-    if (this.error) {return '<SPAN CLASS="error">'+this.error+'</SPAN>'}
+    if (this.error) {return '<span class="error">'+this.error+'</span>'}
     if (box.format == 'null') {return ''};
 
     box.Styled().Remeasured(); var isSmall = 0; var isBig = 0;
@@ -5591,19 +5605,19 @@ jsMath.Package(jsMath.Parser,{
       } else if (!jsMath.Browser.valignBug) {
         // remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
-        html = '<SPAN STYLE="line-height: 0;'
+        html = '<span style="line-height: 0px;'
                + ' position:relative; top:'+dy+'; vertical-align:'+dy
-               + '">' + html + '</SPAN>';
+               + '">' + html + '</span>';
       }
       isBig = 1;
     }
     if (isBig) {// add height and depth to the line (force a little
                 //    extra to separate lines if needed)
-      html += '<IMG SRC="'+jsMath.blank+'" CLASS="mathHD" STYLE="'
+      html += '<img src="'+jsMath.blank+'" class="HD" style="'
                + 'height:'+jsMath.HTML.Em((box.h+box.d+.1)*jsMath.Browser.imgScale)+'; '
-               + 'vertical-align:'+jsMath.HTML.Em(-box.d-.05)+';">'
+               + 'vertical-align:'+jsMath.HTML.Em(-box.d-.05)+';" />'
     }
-    return '<NOBR><SPAN CLASS="jsM_scale">'+html+'</SPAN></NOBR>';
+    return '<nobr><span class="scale">'+html+'</span></nobr>';
   }
 
 });
@@ -5628,7 +5642,7 @@ jsMath.Parser.prototype.AddSpecial({
  *  you must double the backslash in order to include control sequences
  *  within your replacement string.  E.g., 
  *  
- *      <SCRIPT> jsMath.Macro('R','{\\rm R}') </SCRIPT>
+ *      <script> jsMath.Macro('R','{\\rm R}') </script>
  * 
  *  would make \R produce a bold-faced R.
  *  
@@ -5636,14 +5650,14 @@ jsMath.Parser.prototype.AddSpecial({
  *  requires.  These are substituted for #1, #2, etc. within the 
  *  replacement string of the macro.  For example
  *  
- *      <SCRIPT> jsMath.Macro('x','{\\vec x}_{#1}',1) </SCRIPT>
+ *      <script> jsMath.Macro('x','{\\vec x}_{#1}',1) </script>
  *  
  *  would make \x1 produce {\vec x}_{1} and \x{i+1} produce {\vec x}_{i+1}.
  *
  *  You can put several jsMath.Macro calls together into one .js file, and
  *  then include that into your web page using a command of the form
  *  
- *      <SCRIPT SRC="..."></SCRIPT>
+ *      <script src="..."></script>
  *  
  *  in your main HTML page.  This way you can include the same macros
  *  into several web pages, for example.
@@ -5665,9 +5679,9 @@ jsMath.Add(jsMath,{
  *  These routines look through the web page for math elements to process.
  *  There are two main entry points you can call:
  *  
- *      <SCRIPT> jsMath.Process() </SCRIPT>
+ *      <script> jsMath.Process() </script>
  *  or
- *      <SCRIPT> jsMath.ProcessBeforeShowing() </SCRIPT>
+ *      <script> jsMath.ProcessBeforeShowing() </script>
  *
  *  The first will process the page asynchronously (so the user can start
  *  reading the top of the file while jsMath is still processing the bottom)
@@ -5675,6 +5689,36 @@ jsMath.Add(jsMath,{
  */
 
 jsMath.Add(jsMath,{
+  /*
+   *  Call this at the bottom of your HTML page to have the
+   *  mathematics typeset asynchronously.  This lets the user
+   *  start reading the mathematics while the rest of the page
+   *  is being processed.
+   */
+  Process: function (obj) {
+    jsMath.Setup.Body();
+    jsMath.Script.Push(jsMath.Translate,'Asynchronous',obj);
+  },
+  
+  /*
+   *  Call this at the bottom of your HTML page to have the
+   *  mathematics typeset before the page is displayed.
+   *  This can take a long time, so the user could cancel the
+   *  page before it is complete; use it with caution, and only
+   *  when there is a relatively small amount of math on the page.
+   */
+  ProcessBeforeShowing: function (obj) {
+    jsMath.Setup.Body();
+    var method = (jsMath.Controls.cookie.asynch ? "Asynchronous": "Synchronous");
+    jsMath.Script.Push(jsMath.Translate,method,obj);
+  }
+  
+});
+
+jsMath.Translate = {
+
+  element: [],  // the list of math elements on the page
+  cancel: 0,    // set to 1 to cancel asynchronous processing
 
   /*
    *  Typeset a string in \textstyle and return the HTML for it
@@ -5720,7 +5764,7 @@ jsMath.Add(jsMath,{
    */
   ResetHidden: function (element) {
     element.innerHTML =
-      '<SPAN CLASS="normal" STYLE="position:absolute; top:0px;left:0px;"></SPAN>'
+      '<span style="visibility: hidden; position:absolute; top:0px;left:0px;"></span>'
         + jsMath.Browser.operaHiddenFix; // needed by Opera in tables
     element.className='';
     jsMath.hidden = element.firstChild;
@@ -5734,9 +5778,9 @@ jsMath.Add(jsMath,{
   ConvertText: function (element) {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
+    element.alt = text;
     element.innerHTML = this.TextMode(text);
     element.className = 'typeset';
-    element.alt = text;
   },
   
   /*
@@ -5745,9 +5789,9 @@ jsMath.Add(jsMath,{
   ConvertDisplay: function (element) {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
+    element.alt = text;
     element.innerHTML = this.DisplayMode(text);
     element.className = 'typeset';
-    element.alt = text;
   },
   
   /*
@@ -5755,9 +5799,9 @@ jsMath.Add(jsMath,{
    */
   ProcessElement: function (element) {
     try {
-      if (element.tagName == 'DIV') {
+      if (element.tagName.toLowerCase() == 'div') {
         this.ConvertDisplay(element);
-      } else if (element.tagName == 'SPAN') {
+      } else if (element.tagName.toLowerCase() == 'span') {
         this.ConvertText(element);
         //
         // Overcome a bug in MSIE where were tex2math can't insert DIV's inside
@@ -5779,67 +5823,65 @@ jsMath.Add(jsMath,{
    *  the k-th one
    */
   ProcessElements: function (k) {
-    if (k >= this.element.length) {
+    if (k >= this.element.length || this.cancel) {
       this.ProcessComplete();
+      if (this.cancel) {
+        jsMath.Message.Set("Process Math: Canceled");
+        jsMath.Message.Clear()
+      }
+      jsMath.Script.blocking = 0;
+      jsMath.Script.Process();
     } else {
-      this.ProcessElement(this.element[k])
-      setTimeout('jsMath.ProcessElements('+(k+1)+')',jsMath.Browser.delay);
+      this.ProcessElement(this.element[k]); k++;
+      var p = Math.floor(100 * k / this.element.length);
+      jsMath.Message.Set('Processing Math: '+p+'%');
+      setTimeout('jsMath.Translate.ProcessElements('+k+')',jsMath.Browser.delay);
     }
   },
 
   /*
-   *  Call this at the bottom of your HTML page to have the
-   *  mathematics typeset asynchronously.  This lets the user
-   *  start reading the mathematics while the rest of the page
-   *  is being processed.
+   *  Start the asynchronous processing of mathematics
    */
-  Process: function (obj) {
+  Asynchronous: function (obj) {
     if (!jsMath.initialized) {jsMath.Init()}
-    this.element = this.GetMathElements(obj);
-    window.status = 'Processing Math...';
-    setTimeout('jsMath.ProcessElements(0)',jsMath.Browser.delay);
+    this.element = this.GetMathElements(obj); this.cancel = 0;
+    jsMath.Script.blocking = 1;
+    jsMath.Message.Set('Processing Math: 0%',1);
+    setTimeout('jsMath.Translate.ProcessElements(0)',jsMath.Browser.delay);
   },
   
   /*
-   *  Call this at the bottom of your HTML page to have the
-   *  mathematics typeset before the page is displayed.
-   *  This can take a long time, so the user could cancel the
-   *  page before it is complete; use it with caution, and only
-   *  when there is a relatively small amount of math on the page.
+   *  Do synchronous processing of mathematics
    */
-  ProcessBeforeShowing: function (obj) {
+  Synchronous: function (obj) {
     if (!jsMath.initialized) {jsMath.Init()}
-    var element = jsMath.GetMathElements(obj);
-    window.status = 'Processing Math...';
-    for (var i = 0; i < element.length; i++)
-      {jsMath.ProcessElement(element[i])}
-    jsMath.ProcessComplete();
+    var element = this.GetMathElements(obj);
+    for (var i = 0; i < element.length; i++) {this.ProcessElement(element[i])}
+    this.ProcessComplete(1);
   },
   
-  element: [],  // the list of math elements on the page
-
   /*
    *  Look up all the math elements on the page and
    *  put them in a list sorted from top to bottom of the page
    */
   GetMathElements: function (obj) {
     var element = [];
-    if (!obj) {obj = document}
-    if (typeof(obj) == 'string') {obj = document.getElementById(obj)}
-    if (!obj.getElementsByTagName) return
-    var math = obj.getElementsByTagName('DIV');
+    if (!obj) {obj = jsMath.document}
+    if (typeof(obj) == 'string') {obj = jsMath.document.getElementById(obj)}
+    if (!obj.getElementsByTagName) return null;
+    var math = obj.getElementsByTagName('div');
     for (var k = 0; k < math.length; k++) {
       if (math[k].className == 'math') {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
-               {math[k].setAttribute('NAME','_jsMath_')}
+               {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
       }
     }
-    math = obj.getElementsByTagName('SPAN');
+    math = obj.getElementsByTagName('span');
     for (var k = 0; k < math.length; k++) {
       if (math[k].className == 'math') {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
-               {math[k].setAttribute('NAME','_jsMath_')}
+               {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
       }
     }
@@ -5856,16 +5898,20 @@ jsMath.Add(jsMath,{
    *  Remove the window message about processing math
    *  and clean up any marked <SPAN> or <DIV> tags
    */
-  ProcessComplete: function () {
+  ProcessComplete: function (noMessage) {
     if (jsMath.Browser.renameOK) {
-      var element = document.getElementsByName('_jsMath_');
+      var element = jsMath.document.getElementsByName('_jsMath_');
       for (var i = element.length-1; i >= 0; i--) {
-        element[i].removeAttribute('NAME');
+        element[i].removeAttribute('name');
       }
     }
     jsMath.hidden = jsMath.hiddenTop;
-    jsMath.element = [];
-    window.status = 'Done';
+    this.element = [];
+    if (!noMessage) {
+      jsMath.Message.Set('Processing Math: Done');
+      jsMath.Message.Clear();
+    }
+    jsMath.Message.UnBlank();
     if (jsMath.Browser.safariImgBug &&
         (jsMath.Controls.cookie.font == 'symbol' ||
          jsMath.Controls.cookie.font == 'image')) {
@@ -5874,22 +5920,54 @@ jsMath.Add(jsMath,{
       //  updating, so nudge the window to cause a
       //  redraw.  (Hack!)
       //
-      setTimeout("window.resizeBy(-1,0); window.resizeBy(1,0);",2000);
+      setTimeout("jsMath.window.resizeBy(-1,0); jsMath.window.resizeBy(1,0);",2000);
     }
   },
   
-  Element: function (name) {return document.getElementById('jsMath.'+name)}
+  /*
+   *  Cancel procesing elements
+   */
+  Cancel: function () {
+    jsMath.Translate.cancel = 1;
+    if (jsMath.Script.cancelTimer) {jsMath.Script.cancelLoad()}
+  }
   
-});
+};
 
+jsMath.Add(jsMath,{
+  //
+  //  Synchronize these with the loading of the tex2math plugin.
+  //
+  ConvertTeX: function (element) {jsMath.Script.Push(jsMath.tex2math,'ConvertTeX',element)},
+  ConvertTeX2: function (element) {jsMath.Script.Push(jsMath.tex2math,'ConvertTeX2',element)},
+  ConvertLaTeX: function (element) {jsMath.Script.Push(jsMath.tex2math,'ConvertLaTeX',element)},
+  ConvertCustom: function (element) {jsMath.Script.Push(jsMath.tex2math,'ConvertCustom',element)},
+  CustomSearch: function (om,cm,od,cd) {jsMath.Script.Push(null,function () {jsMath.tex2math.CustomSearch(om,cm,od,cd)})},
+  tex2math: {
+    ConvertTeX: function () {},
+    ConvertTeX2: function () {},
+    ConvertLaTeX: function () {},
+    ConvertCustom: function () {},
+    CustomSearch: function () {}
+  }
+});
+jsMath.Synchronize = jsMath.Script.Synchronize;
 
 /***************************************************************************/
 
 /*
- *  Initialize everything
+ *  Initialize things
  */
+if (window.parent != window) {
+  window.parent.jsMath = jsMath;
+  jsMath.document = window.parent.document;
+  jsMath.window = window.parent;
+}
 jsMath.Loaded();
 jsMath.Controls.GetCookie();
-if (document.body) {jsMath.Setup.Body()}
+jsMath.Setup.Source();
+jsMath.Script.Init();
+jsMath.Setup.Fonts();
+if (jsMath.document.body) {jsMath.Setup.Body()}
 
 }}
