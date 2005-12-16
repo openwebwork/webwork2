@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.33 2005/10/03 04:32:08 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.34 2005/10/03 04:45:37 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -147,6 +147,10 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		{ var => 'permissionLevels{become_student}',
 		  doc => 'Allowed to <em>act as</em> another user',
 		  type => 'permission'},
+		{ var => 'permissionLevels{submit_feedback}',
+		  doc => 'Can e-mail instructor',
+		  doc2 => 'Only this permission level and higher get buttons for sending e-mail to the instructor.',
+		  type => 'permission'},
 		{ var => 'permissionLevels{record_answers_when_acting_as_student}',
 		  doc => 'Can submit answers for a student',
 		  doc2 => 'When acting as a student, this permission level and higher can submit answers for that student.',
@@ -154,6 +158,31 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		{ var => 'permissionLevels{report_bugs}',
 		  doc => 'Can report bugs',
 		  doc2 => 'Users with at least this permission level get a link in the left panel for reporting bugs to the bug tracking system in Rochester',
+		  type => 'permission'},
+		{ var => 'permissionLevels{change_email_address}',
+		  doc => 'Allowed to change their e-mail address',
+		  doc2 => 'Users at this level and higher are allowed to change their e-mail address. Normally guest users are not allowed to change the e-mail address since it does not make sense to send e-mail to anonymous accounts.',
+		  type => 'permission'},
+		{ var => 'permissionLevels{view_answers}',
+		  doc => 'Allowed to view past answers',
+		  doc2 => 'These users and higher get the "Show Past Answers" button on the problem page.',
+		  type => 'permission'},
+		{ var => 'permissionLevels{view_unopened_sets}',
+		  doc => 'Allowed to view problems in sets which are not open yet',
+		  type => 'permission'},
+		{ var => 'permissionLevels{show_correct_answers_before_answer_date}',
+		  doc => 'Allowed to see the correct answers before the answer date',
+		  type => 'permission'},
+		{ var => 'permissionLevels{show_solutions_before_answer_date}',
+		  doc => 'Allowed to see solutions before the answer date',
+		  type => 'permission'},
+		{ var => 'permissionLevels{can_show_old_answers_by_default}',
+		  doc => 'Can show old answers by default',
+		  doc2 => 'When viewing a problem, WeBWorK usually puts the previously submitted answer in the answer blank if it is before the due date.  Below this level, old answers are never initially shown.  Typically, that is the desired behaviour for guest accounts.',
+		  type => 'permission'},
+		{ var => 'permissionLevels{can_always_use_show_old_answers_default}',
+		  doc => 'Can always show old answers by default',
+		  doc2 => 'When viewing a problem, WeBWorK usually puts the previously submitted answer in the answer blank if it is before the due date.  At this level and higher, old answers are always shown (independent of the answer date).',
 		  type => 'permission'},
 	],
 	['PG - Problem Display/Answer Checking',
