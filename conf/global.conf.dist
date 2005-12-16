@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.154 2005/12/05 19:43:33 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.155 2005/12/13 18:28:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -236,12 +236,6 @@ $webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
 # available in $courseName.)
 $courseDirs{root}        = "$webworkDirs{courses}/$courseName";
 
-# Location of course-specific data files, such as WW1 (GDBM) database files.
-$courseDirs{DATA}        = "$courseDirs{root}/DATA";
-
-# Location of authentication data files when using a WW1 (GDBM) database.
-$courseDirs{auth_DATA}   = "$courseDirs{DATA}/.auth";
-
 # Location of course HTML files, passed to PG.
 $courseDirs{html}        = "$courseDirs{root}/html";
 $courseURLs{html}        = "$webwork_courses_url/$courseName";
@@ -372,11 +366,9 @@ $courseFiles{problibs}    = {
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
-# file of a particular course. If you choose "gdbm", WeBWorK will be able to
-# use courses from WeBWorK 1 without first adding course.conf files to them.
-# However, the recommended database layout for new courses is "sql_single". This
-# can be set when creating a course.
-$dbLayoutName = "sql_single"; # or "gdbm" or "sql"
+# file of a particular course. The only database layout supported in WW 2.1.4
+# and up is "sql_single".
+$dbLayoutName = "sql_single";
 
 # This sets the symbol "dbLayout" as an alias for the selected database layout.
 *dbLayout     = $dbLayouts{$dbLayoutName};
@@ -701,8 +693,8 @@ $pg{displayModeOptions}{images} = {
 	# FIXME: this database can become a table in the 'webwork' database
 	dvipng_depth_db => {
 		dbsource => 'dbi:mysql:DvipngDepths',
-		user     => $dbLayouts{sql}->{password}->{params}->{usernameRW},
-		passwd   => $dbLayouts{sql}->{password}->{params}->{passwordRW},
+		user     => $dbLayouts{sql_single}->{password}->{params}->{usernameRW},
+		passwd   => $dbLayouts{sql_single}->{password}->{params}->{passwordRW},
 	},
 };
 
