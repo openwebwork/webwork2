@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.13 2004/08/27 21:12:46 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.14 2004/09/27 17:15:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,96 +43,12 @@ line like the one below to the F<global.conf> or F<course.conf> file.
 
 %dbLayouts = (); # layouts are added to this hash below
 
-=head1 THE GDBM DATABASE LAYOUT ($dbLayouts{gdbm})
+=head1 THE SQL_SINGLE DATABASE LAYOUT
 
-This layout uses the traditional WeBWorK 1.x database format, using the GDBM
-file format. Use this layout if you wish to share courses between WeBWorK 1.x
-and WeBWorK 2.
-
-The C<globalUserID> parameter given for the C<set> and C<problem> tables denotes
-the ID of the user that the GlobalTableEmulator will use to store data for the
-C<set> and C<problem> tables. This is set to "global_user" by default, but can
-be overridden on a course-by-course basis to the ID of the professor who is most
-likely to be involved in creating new problem sets. Sets which have not been
-assigned will only be visible to this user when logging into WeBWorK 1.x.
-
-Use the following code to override these values in a course's F<course.conf>
-file:
-
- $dbLayout{set}->{params}->{globalUserID} = "some_user";
- $dbLayout{problem}->{params}->{globalUserID} = "some_user";
-
-=cut
-
-my %gdbmGlobalTableParams = (
-	globalUserID => "global_user",
-);
-
-my %gdbmUserSpecificTableParams = (
-	psvnLength => 5,
-);
-
-$dbLayouts{gdbm} = {
-	password => {
-		record => "WeBWorK::DB::Record::Password",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/$courseName\_password_DB",
-	},
-	permission => {
-		record => "WeBWorK::DB::Record::PermissionLevel",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/$courseName\_permissions_DB",
-	},
-	key => {
-		record => "WeBWorK::DB::Record::Key",
-		schema => "WeBWorK::DB::Schema::Auth1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{auth_DATA}/keys",
-	},
-	user => {
-		record => "WeBWorK::DB::Record::User",
-		schema => "WeBWorK::DB::Schema::Classlist1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_classlist_DB",
-	},
-	set => {
-		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
-		driver => "WeBWorK::DB::Driver::Null",
-		params => { %gdbmGlobalTableParams },
-	},
-	set_user => {
-		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
-		params => { %gdbmUserSpecificTableParams },
-	},
-	problem => {
-		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::GlobalTableEmulator",
-		driver => "WeBWorK::DB::Driver::Null",
-		params => { %gdbmGlobalTableParams },
-	},
-	problem_user => {
-		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::WW1Hash",
-		driver => "WeBWorK::DB::Driver::GDBM",
-		source => "$courseDirs{DATA}/$courseName\_webwork_DB",
-		params => { %gdbmUserSpecificTableParams },
-	},
-};
-
-=head1 THE SQL DATABASE LAYOUT ($dbLayouts{sql})
-
-The SQL database layout uses an SQL database server to store the tables of the
-WeBWorK database. The SQL driver uses two SQL accounts, a read only and a
-read-write account. The read-only account must have C<SELECT> access, and the
-read-write account needs C<SELECT>, C<INSERT>, C<UPDATE>, and C<DELETE> access.
-The names and passwords of these accounts are given as parameters to each table
-in the layout.
+The C<sql_single> layout is similar to the C<sql> layout, excpet that it uses a
+single database for all courses. This is accomplised by prefixing each table
+name with the name of the course. The names and passwords of these accounts are
+given as parameters to each table in the layout.
 
  usernameRO     the name of the read-only account
  usernameRW     the name of the read-write account
@@ -160,6 +76,7 @@ Other parameters that can be given are as follows:
 
 =cut
 
+# params common to all tables (also used by "sql" layout)
 my %sqlParams = (
 	usernameRO => "webworkRead",
 	passwordRO => "",
@@ -167,82 +84,6 @@ my %sqlParams = (
 	passwordRW => "",
 	debug      => 0,
 );
-
-my $sqlDBISourcePrefix = "dbi:mysql:webwork_";
-
-$dbLayouts{sql} = {
-	password => {
-		record => "WeBWorK::DB::Record::Password",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-	permission => {
-		record => "WeBWorK::DB::Record::PermissionLevel",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-	key => {
-		record => "WeBWorK::DB::Record::Key",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => {
-			%sqlParams,
-			tableOverride => "key_not_a_keyword",
-			fieldOverride => { key => "key_not_a_keyword" },
-		},
-	},
-	user => {
-		record => "WeBWorK::DB::Record::User",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-	set => {
-		record => "WeBWorK::DB::Record::Set",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => {
-			%sqlParams,
-			tableOverride => "set_not_a_keyword"
-		},
-	},
-	set_user => {
-		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-	problem => {
-		record => "WeBWorK::DB::Record::Problem",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-	problem_user => {
-		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::SQL",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => "$sqlDBISourcePrefix$courseName",
-		params => { %sqlParams },
-	},
-};
-
-=head1 THE SQL_SINGLE DATABASE LAYOUT
-
-The C<sql_single> layout is similar to the C<sql> layout, excpet that it uses a
-single database for all courses. This is accomplised by prefixing each table
-name with the name of the course.
-
-=cut
 
 my $sqlSingleDBISource = "dbi:mysql:webwork";
 
@@ -322,3 +163,14 @@ $dbLayouts{sql_single} = {
 	},
 };
 
+=head1 THE SQL DATABASE LAYOUT ($dbLayouts{sql})
+
+This layout is not supported as of WeBWorK 2.1.4.
+
+=cut
+
+=head1 THE GDBM DATABASE LAYOUT ($dbLayouts{gdbm})
+
+This layout is not supported as of WeBWorK 2.1.4.
+
+=cut
