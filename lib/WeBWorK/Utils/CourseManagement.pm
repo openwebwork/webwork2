@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.25 2005/09/17 20:13:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.26 2005/09/28 23:26:06 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -820,44 +820,6 @@ EOF
 	if (defined $options{dbLayoutName}) {
 		print $fh '$dbLayoutName = \'', protectQString($options{dbLayoutName}), '\';', "\n";
 		print $fh '*dbLayout = $dbLayouts{$dbLayoutName};', "\n";
-		print $fh "\n";
-	} else {
-		print $fh "\n\n\n";
-	}
-	
-	print $fh <<'EOF';
-# Global User ID (global value typically defined in database.conf)
-# 
-# The globalUserID parameter given for the set and problem tables denotes the ID
-# of the user that the GlobalTableEmulator will use to store data for the set
-# and problem tables.
-# 
-# If a course will be used under WeBWorK 1.x, this value should be overridden on
-# a course-by-course basis to the ID of the professor who is most likely to be
-# involved in creating new problem sets. Sets which have not been assigned will
-# only be visible to this user when logging into WeBWorK 1.x.
-# 
-# The global user ID is always set here, since one should be able to change the
-# default value in database.conf without disrupting existing courses.
-# 
-# global.conf values:
-EOF
-	
-	print $fh "# \t", '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = \'',
-			protectQString($ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}), '\';', "\n";
-	print $fh "# \t", '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = \'',
-			protectQString($ce->{dbLayouts}->{gdbm}->{problem}->{params}->{globalUserID}), '\';', "\n";
-	print $fh "\n";
-	
-	if (defined $options{globalUserID} or defined $options{globalUserID}) {
-		if (defined $options{globalUserID}) {
-			print $fh '$dbLayouts{gdbm}->{set}->{params}->{globalUserID} = \'',
-					protectQString($options{globalUserID}), '\';', "\n";
-		}
-		if (defined $options{globalUserID}) {
-			print $fh '$dbLayouts{gdbm}->{problem}->{params}->{globalUserID} = \'',
-					protectQString($options{globalUserID}), '\';', "\n";
-		}
 		print $fh "\n";
 	} else {
 		print $fh "\n\n\n";
