@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.15 2005/08/30 13:11:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.16 2005/09/08 02:54:48 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,7 @@ sub initialize {
 	my $user       = $r->param('user');
 	
 	unless ($authz->hasPermissions($user, "view_answers")) {
-		$self->{submitError} = "You aren't authorized to view past answers";
+		$self->addbadmessage("You aren't authorized to view past answers");
 		return;
 	}
 }
