@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.43 2005/10/08 21:55:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.44 2005/11/18 15:49:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -757,12 +757,6 @@ sub print_form {
 ##############################################################################
 # Utility methods
 ##############################################################################
-sub submission_error {
-	my $self = shift;
-	my $msg = join( " ", @_);
-	$self->{submitError} .= CGI::br().$msg; 
-	return;
-}
 
 sub saveProblem {     
     my $self      = shift;
