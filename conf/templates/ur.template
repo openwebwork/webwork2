@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.45 2005/12/13 18:18:34 sh002i Exp $
+# $CVSHeader: webwork2/conf/templates/ur.template,v 1.46 2005/12/14 16:42:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -108,11 +108,6 @@
 				</div>
 			<!--#endif-->
 
-			<!--#if can="submiterror"-->
-				<div class="SubmitError">
-					<!--#submiterror-->
-				</div>
-			<!--#endif-->
 			<!--#if can="body"-->
 			<div class="Body">
 				<!--#body-->
