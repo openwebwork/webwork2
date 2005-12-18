@@ -5,7 +5,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/test.template,v 1.3 2004/01/05 13:51:51 gage Exp $
+# $CVSHeader: webwork2/conf/templates/test.template,v 1.5 2005/11/21 21:20:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,12 +73,6 @@ div.test_box { border: 1px solid black }
 <p>used for addmessage/addgoodmessae/addbadmessage... displayed at top and bottom of page in ur.template.</p>
 <div class="test_box">
 <!--#message-->
-</div>
-
-<h1>submiterror</h1>
-<p>this should go away... it is only used in three places (Grades, SendMail, ShowAnswers), and could be replaced with calls to addbadmessage.</p>
-<div class="test_box">
-<!--#submiterror-->
 </div>
 
 <h1>body</h1>

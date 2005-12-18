@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.156 2005/12/03 21:24:56 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.157 2005/12/06 19:55:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -867,29 +867,6 @@ sub timestamp {
 	return(Date::Format::time2str($formatstring, time()));
 }
 	
-=item submiterror()
-
-Defined in this package.
-
-Print any error messages resulting from the last form submission.
-
-This method is deprecated -- use message() instead
-
-The implementation in this package prints the value of the field
-$self->{submitError}, if it is present.
-
-=cut
-
-sub submiterror {
-	my ($self) = @_;
-	
-	print "\n<!-- BEGIN " . __PACKAGE__ . "::submiterror -->\n";
-	print $self->{submitError} if exists $self->{submitError};
-	print "<!-- END " . __PACKAGE__ . "::submiterror -->\n";
-	
-	return "";
-}
-
 =item message()
 
 Defined in this package.
@@ -1076,40 +1053,6 @@ sub if_loggedin {
 	#return $arg;
 	return 0 unless $self->r->authen;
 	return $self->r->authen->was_verified() ? $arg : !$arg;
-}
-
-=item if_submiterror($arg)
-
-If the last form submission generated an error, $arg is returned. Otherwise, the
-inverse of $arg is returned.
-
-The implementation in this package checks for the field $self->{submitError} to
-determine if an error condition is present.
-
-If a subclass uses some other method to classify submission results, this method could be
-redefined to handle that variance:
-
- sub if_submiterror {
- 	my ($self, $arg) = @_;
- 	
- 	my $status = $self->{processReturnValue};
- 	if ($status != 0) {
- 		return $arg;
- 	} else {
- 		return !$arg;
- 	}
- }
-
-=cut
-
-sub if_submiterror {
-	my ($self, $arg) = @_;
-	
-	if (exists $self->{submitError}) {
-		return $arg;
-	} else {
-		return !$arg;
-	}
 }
 
 =item if_message($arg)
