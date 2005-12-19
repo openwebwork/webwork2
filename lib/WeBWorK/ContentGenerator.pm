@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.158 2005/12/18 22:38:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.159 2005/12/19 00:13:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -425,18 +425,16 @@ location of the template is looked up in the course environment.
 
 sub content {
 	my ($self) = @_;
-	my $ce = $self->r->ce;
+	my $r = $self->r;
+	my $ce = $r->ce;
 	
-	# if the content generator specifies a custom template name, use that
-	# field in the $ce->{templates} hash instead of "system" if it exists.
-	my $templateName;
-	if ($self->can("templateName")) {
-		$templateName = $self->templateName;
-	} else {
-		$templateName = "system";
-	}
-	$templateName = "system" unless exists $ce->{templates}->{$templateName};
-	template($ce->{templates}->{$templateName}, $self);
+	my $themesDir = $ce->{webworkDirs}{templates};
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	my $template = $self->can("templateName") ? $self->templateName : $ce->{defaultThemeTemplate};
+	my $templateFile = "$themesDir/$theme/$template.template";
+	
+	template($templateFile, $self);
 }
 
 =back
