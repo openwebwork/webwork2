@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.77 2005/10/11 20:44:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.78 2005/11/07 21:18:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -191,7 +191,15 @@ sub dispatch($) {
 		$r->param($u->name => "$id $hash");
 	}
 	
-	my ($db, $authz);
+	# create these out here. they should fail if they don't have the right information
+	# this lets us not be so careful about whether these objects are defined when we use them.
+	# instead, we just create the behavior that if they don't have a valid $db they fail.
+	my $authz = new WeBWorK::Authz($r);
+	$r->authz($authz);
+	my $authen = new WeBWorK::Authen($r);
+	$r->authen($authen);
+	
+	my $db;
 	
 	if ($displayArgs{courseID}) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
@@ -216,14 +224,6 @@ sub dispatch($) {
 			debug("hashDatabaseOK() returned $dbOK -- leaving displayModule as-is\n");
 		}
 		
-		debug("Create an authz object (Authen needs it to check login permission)...\n");
-		$authz = new WeBWorK::Authz($r);
-		debug("(here's the authz object: $authz)\n");
-		$r->authz($authz);
-		
-		debug("...and now we can authenticate the remote user...\n");
-		my $authen = new WeBWorK::Authen($r);
-		$r->authen($authen);
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
 			my $userID = $r->param("user");
@@ -278,14 +278,8 @@ sub dispatch($) {
 		}
 	}
 	
-	## if a course ID was given in the URL and resulted in an error (as stored in $!)
-	## it probably means that the course does not exist or was misspelled
-	#if ($displayArgs{courseID} and $ce->{'!'}) {
-	#	debug("Something was wrong with the courseID: \n");
-	#	debug("\t\t" . $ce->{'!'} . "\n");
-	#	debug("Time to bail!\n");
-	#	die "An error occured while accessing '$displayArgs{courseID}': '", $ce->{'!'}, "'.\n";
-	#}
+	# make fake authen/authz objects that just fail
+	$authen = 
 	
 	# store the time before we invoke the content generator
 	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
