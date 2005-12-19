@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.47 2005/11/07 21:17:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.48 2005/12/06 21:11:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -109,6 +109,12 @@ sub verify($) {
 	VERIFY: {
 		# This block is here so we can "last" out of it when we've
 		# decided whether we're going to succeed or fail.
+		
+		# no database means no user/password/permission records
+		unless ($db) {
+			$failWithoutError = 1;
+			last VERIFY;
+		}
 		
 		if ($login_practice_user) {
 			# ignore everything else, find an unused practice user
@@ -298,7 +304,7 @@ sub verify($) {
 		
 		# neither a key or a password were supplied.
 		$error = "You must enter a password."
-	}
+	} # /* VERIFY */
 	
 	# check for multiply defined users
 	my @test_users = $r->param("user");
