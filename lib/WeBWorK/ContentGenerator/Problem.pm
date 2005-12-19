@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.189 2005/12/06 19:56:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.190 2005/12/15 19:42:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -697,9 +697,9 @@ sub siblings {
 	my $eUserID = $r->param("effectiveUser");
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 	
-	print CGI::start_ul({class=>"LinksMenu"});
-	print CGI::start_li();
-	print CGI::span({style=>"font-size:larger"}, "Problems");
+	#print CGI::start_ul({class=>"LinksMenu"});
+	#print CGI::start_li();
+	#print CGI::span({style=>"font-size:larger"}, "Problems");
 	print CGI::start_ul();
 
 	foreach my $problemID (@problemIDs) {
@@ -713,8 +713,8 @@ sub siblings {
 	}
 	
 	print CGI::end_ul();
-	print CGI::end_li();
-	print CGI::end_ul();
+	#print CGI::end_li();
+	#print CGI::end_ul();
 	
 	return "";
 }
