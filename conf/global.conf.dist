@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.157 2005/12/18 21:44:54 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.158 2005/12/18 22:00:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,6 +170,9 @@ $webworkDirs{bin}           = "$webworkDirs{root}/bin";
 
 # Location of configuration files, templates, snippets, etc.
 $webworkDirs{conf}          = "$webworkDirs{root}/conf";
+
+# Location of theme templates.
+$webworkDirs{templates}     = "$webworkDirs{conf}/templates";
 
 # Location of course directories.
 $webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
@@ -452,13 +455,11 @@ $siteDefaults{timezone} = "";
 $siteDefaults{default_templates_course} ="modelCourse";
 
 ################################################################################
-# Frontend options 
+# Theme
 ################################################################################
 
-%templates = (
-	system => "$webworkDirs{conf}/templates/ur.template",
-	gateway => "$webworkDirs{conf}/templates/gw.template",
-);
+$defaultTheme = "math";
+$defaultThemeTemplate = "system";
 
 ################################################################################
 # Authorization system
