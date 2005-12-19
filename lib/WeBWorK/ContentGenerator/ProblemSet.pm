@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.66 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.67 2005/09/16 18:50:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -141,9 +141,9 @@ sub siblings {
 					    ( defined($gs->published()) ? $gs->published() : 1 )}
 	                     @setIDs;
 	}
-	print CGI::start_ul({class=>"LinksMenu"});
-	print CGI::start_li();
-	print CGI::span({style=>"font-size:larger"}, "Homework Sets");
+	#print CGI::start_ul({class=>"LinksMenu"});
+	#print CGI::start_li();
+	#print CGI::span({style=>"font-size:larger"}, "Homework Sets");
 	print CGI::start_ul();
 
 	# FIXME: setIDs contain no info on published/unpublished so unpublished sets are still printed
@@ -170,8 +170,8 @@ sub siblings {
 	#debug("Begin printing sets from getMergedSets()");
 	
 	print CGI::end_ul();
-	print CGI::end_li();
-	print CGI::end_ul();
+	#print CGI::end_li();
+	#print CGI::end_ul();
 	
 	return "";
 }
