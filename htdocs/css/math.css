@@ -1,0 +1,823 @@
+/* ************************************************************************** */
+
+/*  Default look-and-feel for www.math.rochester.edu.
+ *
+ *  This file controls the appearance of a LOT of pages; 
+ *  PLEASE BE CAREFUL when making modifications!  If you want to
+ *  add new styles for a specific subset of pages, you may want
+ *  to isolate those styles in a separate style sheet.
+ *
+ *  $Id$
+ */
+
+/* 
+ * Default styles for standard elements.
+ */
+body {
+   background: white;
+   color: black;
+   margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
+   padding: 0;
+   font-family: Times, serif;
+   min-width: 25em;
+   /* ugly hack to hide background from Mac MSIE 5.1, which messes it up \*/
+   /* don't need the background image */
+   /*background-image: url("/images/pale-KleinBottle.gif");
+   background-position: bottom left;
+   background-repeat: no-repeat;
+   background-attachment: scroll;*/
+   /* end of ugly hack */
+}
+
+h1, h2, h3, h4, h5, h6 {
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+   background: transparent;
+   color: #225;
+}
+h1 { font-size: 170%; }
+h2 { font-size: 140%; padding-bottom: 0; margin-bottom: .5ex }
+h3 { font-size: 120%; }
+h4 { font-size: 110%; }
+h5 { font-size: 105%; }
+h6 { font-size: 105%; } 
+
+/* no need for large margin-top on headers after XSLT-generated navheader */
+h1.title, h2.title { margin-top: .3em }
+
+/* for personal home pages */
+h1.whoami { margin: 0; padding: .5ex 0 0 0; }
+h2.whoami { margin: 0; padding: 0; }
+table.contact-info { margin: 2ex 0 0 0; border: 0 }
+table.contact-info th, table.contact-info td { 
+   text-align: left;
+   padding: 0 .2em 0 0;
+   font-weight: normal;
+}
+table.contact-info th { font-family: Arial, sans-serif }
+img.portrait { float: left; margin: 1.5ex 1ex 0 0 }
+
+img { border: 0; }
+sup, sub { font-size: 60%; }
+acronym sub, .acronym sub,
+acronym sup, .acronym sup {
+   font-size: 70%;
+   position: relative;
+}
+acronym sup, .acronym sup {
+   top: .5ex;
+}
+acronym sub, .acronym sub {
+   top: -1ex;
+}
+
+
+a:link { color: #00e; background-color: inherit; }
+a:visited { color: #808; background-color: inherit; }
+
+/* kludge to make "current semester" links on catalog pages larger */ 
+a[href=home] { font-size: 170%; }
+
+abbr,
+acronym {
+   border-bottom: 1px dotted;
+   cursor: help;
+   font-variant: normal;
+}
+
+span[title], a[title] {          /* indicate when a link or span has a title */
+   cursor: help;
+}
+
+/* --- Miscellaneous classes ---------------------------------------------- */
+
+/* "Split" title, with main heading left-aligned above a horizontal line,
+ * and subheading right-aligned below the line. 
+ *
+ * Usage:
+ * <h1 class="compound">Alumni Newsletter</h1>
+ * <h2 class="compound">Spring '00</h2>
+ *
+ */
+h1.compound {
+   border-bottom: 1px solid #559;
+   text-align: left;
+   padding: .5ex 0 0 0;
+   margin: 0;
+}
+h2.compound { float: right; margin: 0; padding: 0 }
+
+
+ul.inline {
+   display: inline;
+   list-style-type: none;
+   margin: 0;
+   padding: 0;
+}
+ul.inline li { 
+   display: inline;
+   margin: 0;
+   padding: 0 .3em 0 .3em;
+   border-right: 1px solid #555;
+}
+ul.inline li.last { 
+   border-right: none;
+}
+
+/* Course catalog stuff */
+dl.catalog dt {
+   font-weight: bold; 
+   font-family: sans-serif;
+}
+dl.catalog dd {
+   margin-left: 0;
+   padding-left: 0;
+   margin-bottom: 1ex;
+}
+
+.for-broken-browsers { display: none } /* show only to CSS-ignorant browsers */
+.print-only, .page-url { display: none; }
+
+/* for hiding floats from Netscape 4.x */
+.float-left { float: left; }
+.float-right { float: right; }
+
+.unobtrusive { font-size: smaller; color: #555; background-color: inherit; }
+.unobtrusive a:link { color: #77f; background-color: inherit; }
+.unobtrusive a:visited { color: #f7f; background-color: inherit; }
+
+/*
+ * Common style for a small box to hold supplemental info; typically this
+ * box will appear in a sidebar.  Sample usage:
+ *
+ *   <div class="info-box">
+ *      <h2>Announcements</h2>
+ *      <ul>
+ *         <li>foo</li>
+ *      </ul>
+ *      <a class="more" href="bar">Older announcements...</a>
+ *   </div>
+ */
+.info-box {
+   border: 1px solid #559;
+   border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
+   -moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
+   margin-bottom: 1ex; 
+   margin-top: 0;
+}
+.info-box h2,
+.info-box h3,
+.info-box h4,
+.info-box h5,
+.info-box h6 {
+   border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
+   -moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
+   border-bottom: 1px solid #559;
+   font-size: 100%;
+   text-align: center;
+   background: #88d;
+   color: white;
+   margin: 0;
+   padding: 0 .5em 0 .5em;
+}
+.info-box ul,
+.info-box ol {
+   margin: 1ex .5em 1ex 0;
+   padding-left: 1.5em;
+   font-size: 80%;
+}
+.info-box dl {
+   margin: 1ex .5em 1ex 1ex;
+   padding: 0;
+   font-size: 80%;
+}
+.info-box li,
+.info-box dt {
+   margin: 0 0 .5ex 0;
+   padding: 0;
+   line-height: 2.2ex;
+}
+.info-box dt { font-weight: bold }
+.info-box dd {
+   margin: 0 0 .5ex 1em;
+   padding: 0;
+   line-height: 2.2ex;
+}
+.info-box dd p {
+   margin-top: 0;
+}
+.info-box a.more {
+   float: right;
+   font-size: 80%;
+   font-style: italic;
+   margin-bottom: 1ex;
+   margin-right: .5em;
+}
+
+/* --- Classes for online documentation ----------------------------------- */
+    
+kbd { font-family: monospace; font-weight: bold }
+address { display: inline; font-style: normal; border: 0; margin: 0;}
+.note, .byline { font-style: italic; }
+.byline { display: block; font-size: medium; font-weight: normal }
+
+/* typed commands */
+.field-data, .command {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* GUI menu, elements */
+.field-name, .button-name, .menu-name, .menu-title, .menu-item,
+.gui-text, .icon-name, .window-name, .radio-button-name, .check-box-name,
+.guimenu, .guisubmenu, .guimenuitem, /* DocBook elements */
+.guibutton, .guiicon, .guilabel,     /* DocBook elements */
+.tab-name {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    /* 
+    color: #992222;
+    background-color: inherit;
+    */
+    white-space: nowrap;
+}
+
+/* for highlighting documentation references to hyperlinks */
+.link-name {
+   font-family: sans-serif;
+   font-weight: bold;
+   color: #225522;
+   background-color: inherit;
+}
+
+/* host names, URLs, etc. */
+.host-name, .terminal-text, .file-name, .url, .userinput {
+    font-family: monospace;
+}
+.email-address { font-family: inherit; }
+.url { white-space: nowrap; } /* don't break URLs */
+
+/* make RCS tags visible, but non-obtrusive */
+.rcs-id, #rcs-id {
+  float: right;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: x-small;
+  color: #ababab;
+  background-color: inherit;
+}
+
+/* code blocks or terminal sessions */
+/*
+pre.code, pre.terminal-text, pre.screen {
+    background-color: #aaddaa;
+    color: black;
+    border: 1px solid #88bb88;
+    font-family: monospace;
+    margin-left: 0em;
+    margin-right: 1em;
+    padding: 0.5em;
+    white-space: pre;
+}
+*/
+
+pre.code, pre.terminal-text, pre.screen, pre.programlisting {
+    background-color: inherit;
+    color: #258;
+    white-space: pre;
+    font-family: Courier, "Courier New", monospace;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+/* DocBook program listings */
+pre.programlisting, pre.screen {
+   font-size: 90%;
+   margin-left: 2em;
+   /* width: 83ex; */
+}
+pre.programlisting em {
+  background: #ccf;
+  color: #000;
+  font-style: normal; 
+  font-weight: normal;
+}
+
+/* comments in DocBook program listings */
+pre .lineannotation {
+   color: gray;
+   background: inherit;
+}
+
+pre .computeroutput {
+   background: inherit;
+   /* color: #222222; */
+}
+
+tt.literal { font-weight: bold }
+
+/* DocBook tips, warnings, important */
+.tip img,
+.warning img,
+.important img { 
+   float: left;
+   vertical-align: middle;
+   position: absolute;
+}
+.tip,
+.warning,
+.important { 
+   margin: .8ex 3em .8ex 1em;
+   font-style: italic; font-size: 90%;
+   padding: 1ex 1em .1ex 1ex;
+}
+.tip p,
+.warning p,
+.important p,
+.tip pre,
+.warning pre,
+.important pre {
+   margin-top: 0;
+   margin-left: 35px;
+}
+.tip p + p,
+.warning p + p,
+.important p + p {
+  margin-top: auto;
+}
+.tip pre,
+.warning pre,
+.important pre {
+   padding-left: 1em;
+}
+
+
+div.tip,
+div.warning, 
+div.important {
+  /* border: 1px dotted gray; */
+}
+
+/* Docbook figures */
+.figure {
+  float: right;
+  margin-left: .3em; 
+}
+
+.figure p.title {
+   font-family: sans-serif;
+   font-size: smaller;
+   text-align: center;
+   background: inherit;
+   color: #248;
+}
+
+
+.orderedlist ol {
+   margin-left: .6em;
+   padding-left: 1em;
+}
+
+/* stuff that we want to stand out */
+.prominent {
+   font-weight: bold;
+   text-decoration: underline;
+}
+a.prominent:link,
+a.prominent:visited {
+   color: red;
+}
+
+.error {
+   font-weight: bold;
+   color: red;
+}
+
+.success {
+   font-weight: bold;
+   color: green;
+}
+
+div.question {
+   margin: 0;
+   font-family: Trebuchet MS, Verdana, sans-serif;
+   font-size: 110%;
+   border: solid #225;
+   border-width: 0 0 .1em .5em;
+   padding-left: .2em;
+}
+div.question strong {
+   color: #228822;
+}
+
+div.answer {
+   margin: 0 0 2em 0;
+}
+
+div.qandaset dl { font-size: 95%; }
+div.qandaset dl dl { font-size: 100%; }
+div.qandaset dt a { text-decoration: none; }
+div.qandaset dl dt { font-size: 140%; }
+div.qandaset div.variablelist dl dt { font-size: 100%; }
+div.qandaset dd dl dt { font-size: 100%; }
+
+
+/* --- common layout elements for documents using templates ----------------*/
+
+/* The "masthead" of our document that tells users what site they're on.
+ * It contains a logo-ish title and some basic site navigation.  The
+ * masthead should appear at the top of the page, but we're not positioning
+ * it absolutely because we can't know its height in advance.  Therefore this 
+ * element should be placed at the very top of the <body> of our HTML document.
+ */
+#masthead {
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+   font-size: 100%;
+   margin: 0;
+   padding: 0;
+   color: #fff;
+   border: 1px solid #000;
+   background-color: #000038;
+   /* i don't think we need this */
+   /*background-image: url("/images/mandel-wide.jpg");*/
+   background-repeat: repeat-x;
+   background-position: top left;
+}
+#masthead a {
+   color: #fff;
+   background: transparent;
+   text-decoration: none;
+}
+#masthead a:hover { text-decoration: underline; }
+
+/*[ww] since this is a logo and not text, we need borders that are the same width all the way around */
+/*#masthead #logo { padding: .5ex .2em .1ex .5em }*/
+#masthead #logo { padding: .5ex }
+/* [ww] don't need these -- logo is an image */
+/*#masthead #logo h1 {
+   background-image: none;
+   background-color: transparent;
+   font-size: 100%;
+   font-weight: normal;
+   padding: 0;
+   margin: 0;
+   white-space: nowrap;
+   line-height: 1.9ex;
+}*/
+/*#masthead #logo h2 {
+   background-color: transparent;
+   background-image: none;
+   font-weight: bold;
+   font-size: 210%;
+   line-height: 1.9ex;
+   margin: 0;
+   padding: 0;
+}*/
+/* [ww] instead of a form, we want the loginstatus there */
+/*#masthead form {*/
+#masthead #loginstatus {
+   float: right;
+   padding: 0;
+   margin: 1ex .5em .1ex .1em;
+}
+
+/* "big-wrapper" contains everything other than the masthead.  It's merely 
+ * a relatively positioned div that allows us to use absolute positioning
+ * on elements within it -- and because it's relatively positioned,
+ * absolutely positioned objects *stay* within it.
+ */
+#big-wrapper {
+   position: relative;
+   top: 1ex;
+   width: 100%;
+   min-width: 18em;
+   margin: 0;
+   border: 0;
+}
+
+/*
+ * A simple list of "breadcrumbs" showing a path of links from the root of
+ * the site's hierarchy to our present location.  We are not positioning
+ * this element absolutely, because we don't know in advance how tall it
+ * will be, and we might want to place content under it.  So when coding
+ * our HTML document, we'll probably want to include this element right
+ * before the main content.
+ */
+
+#breadcrumbs {
+   margin-left: 10.4em;
+   margin-right: 0;
+   padding: 0 .4em;
+   border: 1px solid #559;
+   background: #88d;
+   color: #fff;
+   text-align: left; 
+   font-size: 100%;
+   font-family: Trebuchet MS, Arial, sans-serif;
+}
+#breadcrumbs a {
+   font-size: 100%;
+   white-space: nowrap;
+   background-color: inherit;
+   color: #fff;
+   text-decoration: none;
+}
+#breadcrumbs a.active { font-weight: bold; }
+#breadcrumbs a:hover { text-decoration: underline; }
+
+
+/* 
+ * For the more CSS-compliant browsers, we'd like to provide site-wide
+ * navigation links (e.g., a mini site map) to appear in a column along
+ * the left side of the page, just below the masthead.  This column is
+ * absolutely positioned, so that ideally we should be able to include its
+ * contents anywhere within the body of our HTML documents.  However, we 
+ * probably want to include this data at the END of our documents -- after
+ * the main content -- so that it doesn't interfere with document flow in 
+ * browsers that don't understand CSS (e.g., lynx) -- or in browsers for
+ * which we've disabled CSS via some hack (e.g. Netscape Navigator 4.x).
+ *
+ * We consider this meta-information to be non-essential; it is NOT part of
+ * the content, and may not be displayed in some circumstances.
+ */
+
+#site-navigation {
+   position: absolute;
+   left: 0;
+   top: 0;
+   margin: 0;
+   padding: 0;
+   width: 9.8em;
+}
+
+/*
+ * The "fisheye" view: a hierarchical view of the website to show the 
+ * user where they are in the document hierarchy.  Provides more "lateral" 
+ * information than breadcrumbs, but not as much as a full sitemap. To 
+ * appear within the #site-navigation div.  Inherits many of its attributes 
+ * from class info-box, and overrides some.
+ */
+#mini-sitemap,
+#fisheye {
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+   padding: 0 0 1ex 0;
+}
+#mini-sitemap a,
+#fisheye a {
+   text-decoration: none;
+}
+#mini-sitemap a:hover,
+#fisheye a:hover {
+   text-decoration: underline;
+}
+#mini-sitemap li,
+#fisheye li {
+   line-height: 2.5ex;
+   margin: 0;
+}
+#mini-sitemap ul,
+#fisheye ul {
+   font-size: 100%;
+   list-style-type: none;
+   margin: 0 .1em .3ex .3em;
+   padding: 0;
+}
+
+#mini-sitemap ul ul,
+#fisheye ul ul {
+   font-size: 95%;
+   margin-left: 0;
+}
+#mini-sitemap ul li,
+#fisheye ul li {
+   font-weight: bold;
+}
+
+#mini-sitemap ul ul ul,
+#fisheye ul ul ul {
+   font-size: 80%;
+   margin-left: .3em;
+   padding-left: .5em;
+   border-left: 1px dotted gray;
+}
+#mini-sitemap ul ul li a.active,
+#fisheye ul ul li a.active {
+   font-weight: bold;
+   color: black;
+   background-color: inherit;
+}
+
+#mini-sitemap ul ul ul li,
+#fisheye ul ul ul li {
+   font-weight: normal;
+}
+#mini-sitemap ul ul ul ul,
+#fisheye ul ul ul ul {
+   font-size: 90%;
+}
+#mini-sitemap ul ul ul ul ul,
+#fisheye ul ul ul ul ul {
+   font-size: 90%;
+}
+
+
+/* The primary information content of the document, excluding masthead and
+ * site navigation.  We want to leave a wide left margin to prevent overlap
+ * with our site map, which will be displayed on the left-hand side of the
+ * screen.
+ */
+#content {
+   /* [ww] we need to put things that don't have a top border at the top of this, so we need a top margin */
+   /*margin: 0 1em 0 10.4em;*/
+   margin: .5em 1em 0 10.4em;
+   padding: 0 0 0 0; 
+   font-family: Times, serif;
+   /* border-left: 1px dotted #bbf; */
+}
+#content h1 { margin: .4ex 0; } /* for crappy MSIE */
+
+
+#footer {
+   /* white-space: nowrap; */
+   clear: both;
+   /* border-top: 1px solid #559; */
+   margin: 0 .5em .2ex 10.4em;
+   padding: 0;
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+}
+#validate {
+   background-color: inherit;
+   clear: both;
+   margin-bottom: 2ex;
+   font-size: x-small;
+   color: #bbb;
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+}
+#validate a { background-color: inherit; color: #ccc; }
+#feedback {
+   font-size: 75%;
+   /* Hide from mac MSIE 5.1, which screws up floats \*/float: right; /* */
+}
+#feedback img { vertical-align: middle; }
+#copyright { font-size: 75%; margin: 0;}
+#last-modified {
+   clear: both;
+   font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+   font-size: 75%;
+   background-color: inherit;
+   color: #444;
+   margin: 1ex 0 0 0;
+   padding: 0;
+   border-bottom: 1px solid #559;
+}
+
+/* --- Turn off some features for handheld devices --- */
+
+@media handheld {
+
+   #site-navigation {
+      display: none
+      /*
+      position: relative;
+      width: auto;
+      */
+   }
+
+   /* remove any empty space we used for screen layout */
+   #content, #footer { margin: 0; padding: 0; border: none; }
+
+   /* keep masthead bar, but simplify its appearance */
+   #masthead {
+      margin: 0;
+      padding: 1ex 0 0 1ex;
+      font-size: 65%;
+      background: #ddd;
+      color: #fff;
+      border: 1px solid #444;
+   }
+
+   /* unfloat floated meta-info, make it smaller than other text */
+   #copyright, #last-modified { float: none; color: #444; font-size: 70%; }
+
+}
+
+
+
+/* --- old stuff to eventually remove ------------------------------------- */
+/* [ww] ok, i'll remove it */
+/*div.breadcrumbs {
+    font-family: sans-serif;
+    font-size: small; 
+    margin: .5ex .5em 1ex .5em;
+    padding-bottom: .5ex;
+    border-bottom: 2px dotted #ddd; 
+}
+.bottom-nav {
+    float: left;
+    font-family: sans-serif;
+    font-size: small;
+}*/
+
+/******************************************************************************/
+/* [ww] Additional template classes added for WW elements */
+
+#page-info {
+	font-size: smaller;
+   float: right;
+   width: 40%;
+   padding-left: 1em;
+}
+
+/******************************************************************************/
+/* WeBWorK classes: These classes are emitted by WeBWorK code and should
+ * appear in ANY WeBWorK template. they need not be implemented the same way
+ * in each template though. */
+
+/* tables used for laying out form fields shouldn't have a border */
+table.FormLayout { border: 0; }
+table.FormLayout tr { vertical-align: top; }
+table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
+table.FormLayout tr.ButtonRow { text-align: left; }
+table.FormLayout tr.ButtonRowCenter { text-align: center; }
+
+/* for problems which are rendered by themselves, e.g., by Set Maker */
+div.RenderSolo { background-color: #E0E0E0; color: black; }
+div.AuthorComment { background-color: #00E0E0; color: black; }
+
+/* minimal style for lists of links (generated by the links escape) */
+/*ul.LinksMenu { list-style: none; margin-left: 0; padding-left: 0; }*/
+/*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
+
+/* background styles for success and failure messages */
+div.ResultsWithoutError { background-color: #66ff99 } /* light green */
+div.ResultsWithError { background-color: #ffcccc } /* light red */
+div.ResultsAlert { background-color: yellow } /* yellow */
+
+/* styles used by WeBWorK::HTML::ScrollingRecordList */
+div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
+div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
+
+/* wraps the View Options form (generated by &optionsMacro) */
+/* FIXME: can't this style information just go in div.Options above? */
+div.viewOptions { font-size: small }
+
+/* messages, attempt results, answer previews, etc. go in this DIV */
+/* this used to be "float:left", but that was suspected of causing MSIE peekaboo bug */
+div.problemHeader {}
+
+/* styles for the attemptResults table */
+table.attemptResults {
+	border-style: outset; 
+	border-width: 1px; 
+	margin: 0px 10pt; 
+	border-spacing: 1px;
+}
+table.attemptResults td,
+table.attemptResults th {
+	border-style: inset; 
+	border-width: 1px; 
+	text-align: center; 
+#	width: 15ex;
+	padding: 2px 5px 2px 5px;
+	background-color: #DDDDDD;
+}
+/* override above settings in tables used to display ans_array results */
+table.attemptResults td td,
+table.attemptResults td th,
+table.ArrayLayout td {
+	border-style: none; 
+	border-width: 0px; 
+	padding: 0px;
+}
+table.attemptResults td.Message {
+   text-align: left; 
+   padding: 2px 5px 2px 5px;
+   width: auto;
+}
+.attemptResultsSummary { font-style:italic; }
+.parsehilight { background-color:yellow; }
+
+/* the problem TEXT itself does in this box */
+div.problem { clear: both; background-color: #E0E0E0; color: black; }
+
+/* jsMath emits this class when appropriate math fonts aren't available */
+div.NoFontMessage {
+	padding: 10;
+	border-style: solid;
+	border-width:3;
+	border-color: #DD0000;
+	background-color: #FFF8F8;
+	width: 75%;
+	text-align: left;
+	margin: 10px auto 10px 12%;
+}
+
+/* text colors for published and unpublished sets */
+font.Published   { font-style: normal; font-weight: normal; color: #000000; } /* black */
+font.Unpublished { font-style: italic; font-weight: normal; color: #aaaaaa; } /* light grey */
+
+/* styles used when editing a temporary file */
+.temporaryFile {  background-color: #ff9900 ; font-style: italic; }
+
+/* text colors for Auditing, Current, and Dropped students */
+.Audit { font-style: normal; color: purple; }
+.Enrolled { font-weight: normal; color: black; }
+.Drop { font-style: italic; color: grey; }

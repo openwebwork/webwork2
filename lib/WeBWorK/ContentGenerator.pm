@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.157 2005/12/06 19:55:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.158 2005/12/18 22:38:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1347,7 +1347,6 @@ sub optionsMacro {
 		$result .= CGI::br();
 	}
 	
-	$result .= CGI::br();
 	$result .= CGI::submit(-name=>"redisplay", -label=>"Apply Options");
 	$result .= CGI::end_div();
 	$result .= CGI::end_form();
