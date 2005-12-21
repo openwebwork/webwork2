@@ -5,12 +5,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <link rel="stylesheet" type="text/css" media="All" href="<!--#url type="webwork" name="htdocs"-->/css/math.css"/>
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
-<style type="text/css">
-	#breadcrumbs { margin-left: .5em }
-	#content { margin-left: .5em }
-	#footer { margin-left: .5em }
-	
-</style>
+<link rel="stylesheet" type="text/css" media="All" href="<!--#url type="webwork" name="htdocs"-->/css/gateway.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 <script language="javascript" type="text/javascript">
