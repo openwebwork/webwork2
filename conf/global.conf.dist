@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.158 2005/12/18 22:00:58 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.159 2005/12/19 03:40:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -493,6 +493,7 @@ $defaultThemeTemplate = "system";
 	change_email_address           => "student",
 	
 	proctor_quiz                   => "proctor",
+	view_proctored_tests           => "ta",
 	
 	view_multiple_sets             => "ta",
 	view_unopened_sets             => "ta",
@@ -617,6 +618,10 @@ $practiceUserPrefix = "practice";
 # kindof a backdoor to the practice user system, since he doesn't have a
 # password.  Come to think of it, why do we even have this?!
 #$debugPracticeUser = "practice666";
+
+# Option for gateway tests; $gatewayGracePeriod is the time in seconds
+# after the official due date during which we'll still grade the test
+$gatewayGracePeriod = 150;
 
 ################################################################################
 # PG subsystem options
