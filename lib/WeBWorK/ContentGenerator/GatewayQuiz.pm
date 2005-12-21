@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.14 2005/11/18 18:13:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.15 2005/11/18 18:30:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,21 +122,27 @@ sub can_recordAnswers {
 	    $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
+	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
+   # get the sag time after the due date in which we'll still grade the test
+	my $grace = $self->{ce}->{gatewayGracePeriod};
+
 	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
 			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : time();
+			   $Set->version_last_attempt_time() : $timeNow;
 
 	if ($User->user_id ne $EffectiveUser->user_id) {
 		return $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
 	}
+
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
-	} elsif (between($Set->open_date, $Set->due_date, $submitTime)) {
+	} elsif (between($Set->open_date, ($Set->due_date + $grace), $submitTime)) {
 
 # gateway change here; we look at maximum attempts per version, not for the set,
 #   to determine the number of attempts allowed
 # $addOne allows us to count the current submission
-	    my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
+	    my $addOne = ( defined( $submitAnswers ) && $submitAnswers ) ? 
+		1 : 0;
 	    my $max_attempts = $Set->attempts_per_version();
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
@@ -144,7 +150,7 @@ sub can_recordAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->answer_date, $submitTime)) {
+	} elsif (between(($Set->due_date + $grace), $Set->answer_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_due_date");
 	} elsif (after($Set->answer_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "record_answers_after_answer_date");
@@ -161,19 +167,24 @@ sub can_checkAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
 	    $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+
+	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
+   # get the sag time after the due date in which we'll still grade the test
+	my $grace = $self->{ce}->{gatewayGracePeriod};
 	
 	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
 			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : time();
+			   $Set->version_last_attempt_time() : $timeNow;
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
-	} elsif (between($Set->open_date, $Set->due_date, $submitTime)) {
+	} elsif (between($Set->open_date, ($Set->due_date + $grace), $submitTime)) {
 
 # gateway change here; we look at maximum attempts per version, not for the set,
 #   to determine the number of attempts allowed
 # $addOne allows us to count the current submission
-	    my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
+	    my $addOne = (defined( $submitAnswers ) && $submitAnswers) ? 
+		1 : 0;
 	    my $max_attempts = $Set->attempts_per_version();
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
@@ -182,7 +193,7 @@ sub can_checkAnswers {
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
 		}
-	} elsif (between($Set->due_date, $Set->answer_date, $submitTime)) {
+	} elsif (between(($Set->due_date + $grace), $Set->answer_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
 	} elsif (after($Set->answer_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
@@ -192,9 +203,9 @@ sub can_checkAnswers {
 # Helper functions for calculating times
 # gateway change here: we allow an optional additional argument to use as the
 #   time to check rather than time()
-sub before  { return (@_==2) ? $_[1] <= $_[0] : time <= $_[0] }
-sub after   { return (@_==2) ? $_[1] >= $_[0] : time >= $_[0] }
-sub between { my $t = (@_==3) ? $_[2] : time; return $t > $_[0] && $t < $_[1] }
+sub before  { return (@_==2) ? $_[1] < $_[0] : time < $_[0] }
+sub after   { return (@_==2) ? $_[1] > $_[0] : time > $_[0] }
+sub between { my $t = (@_==3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
 
 ################################################################################
 # output utilities
@@ -402,7 +413,7 @@ sub pre_header_initialize {
 
 # this is a horrible hack to allow use of a javascript link to trigger
 # the preview of the page: set previewAnswers to yes if either the 
-# "previewAnswers" or "previewhack" inputs are set
+# "previewAnswers" or "previewHack" inputs are set
     my $prevOr = $r->param('previewAnswers') || $r->param('previewHack');
     $r->param('previewAnswers', $prevOr) if ( defined( $prevOr ) );
 
@@ -444,10 +455,11 @@ sub pre_header_initialize {
 	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
 	       $r->param("submitAnswers") ) && ! $requestedVersion );
 
-# FIXME should we be more subtle than just die()ing here?  c.f. Problem.pm 
-#    $self->{invalidSet}  FIXME  (also, if getMergedSet() returns undef for
-#    sets not assigned to users, why does Problem.pm resort to the logic
-#    (grep /^$setName/, $db->listUserSets($effectiveUserName)) == 0)?
+# FIXME should we be more subtle than just die()ing here?  c.f. Problem.pm, 
+#    which sets $self->{invalidSet} and lets body() deal with it.  for 
+#    gateways I think we need to die() or skip the version creation 
+#    conditional, or else we could get user versions of an unpublished
+#    set. FIXME
     die( "Invalid set $setName requested" ) 
 	if ( ! ( $tmplSet->published || 
 		 $authz->hasPermissions($userName,"view_unpublished_sets") ) );
@@ -513,12 +525,17 @@ sub pre_header_initialize {
 #    version exceeds the number of attempts per version.  (among other
 #    things,) the number of attempts is a property of the problem, so 
 #    get a problem to check that.  note that for a gateway/quiz all 
-#    problems will have the same number of attempts.
-# note that this might not be defined, if the set hasn't been versioned 
+#    problems will have the same number of attempts.  This means that if 
+#    the set doesn't have any problems we're up a creek, so check for that
+#    here and bail if it's the case
+    my @setPNum = $db->listUserProblems($EffectiveUser->user_id, $setName);
+    die("Set $setName contains no problems.") if ( ! @setPNum );
+
+# the Problem here might not be defined, if the set hasn't been versioned 
 #    to the user yet--this gets fixed when we assign the setVersion
     my $Problem = 
 	$db->getMergedVersionedProblem($EffectiveUser->user_id, 
-				       $setName, $setVersionName, 1);
+				       $setName, $setVersionName, $setPNum[0]);
 
 # FIXME: is there any case where $maxAttemptsPerVersion shouldn't be 
 #    finite?  For the moment we don't deal with this here  FIXME
@@ -548,6 +565,8 @@ sub pre_header_initialize {
 #    limitation like "one version per hour", and we can set it to two sets
 #    per 12 hours for most "2ce daily" type applications
     my $timeNow = time();
+    my $grace = $ce->{gatewayGracePeriod};
+
     my $currentNumVersions = 0;  # this is the number of versions in the last
                                  #    time interval
     my $totalNumVersions = 0;
@@ -567,7 +586,6 @@ sub pre_header_initialize {
 ####################################
 
     my $versionIsOpen = 0;  # can we do anything to this version?
-    $timeNow -= 5;          # be safe with $timeNow
 
     if ( $isOpen && ! $isClosed ) {  # this makes sense, really
 
@@ -581,7 +599,7 @@ sub pre_header_initialize {
 		   ( 
 		     ( $currentNumAttempts >= $maxAttemptsPerVersion 
 		       ||
-		       $timeNow >= $set->due_date )
+		       $timeNow >= $set->due_date + $grace )
 		     &&
 		     ( ! $versionsPerInterval 
 		       ||
@@ -632,9 +650,9 @@ sub pre_header_initialize {
 		    "maximum number\nallowed.";
 
 	    } elsif ( $currentNumAttempts < $maxAttemptsPerVersion &&
-		      $timeNow < $set->due_date() ) {
+		      $timeNow < $set->due_date() + $grace ) {
 
-		if ( between($set->open_date(), $set->due_date(), $timeNow) ) {
+		if ( between($set->open_date(), $set->due_date() + $grace, $timeNow) ) {
 		    $versionIsOpen = 1;
 		} else {
 		    $versionIsOpen = 0;  # redundant; default is 0
@@ -662,7 +680,7 @@ sub pre_header_initialize {
 		   $authz->hasPermissions($effectiveUserName,
 				"record_answers_when_acting_as_student") )
 	       ) {
-		if ( between($set->open_date(), $set->due_date(), $timeNow) ) {
+		if ( between($set->open_date(), $set->due_date() + $grace, $timeNow) ) {
 		    $versionIsOpen = 1;
 		} else {
 		    $versionIsOpen = 0;  # redundant; default is 0
@@ -698,6 +716,8 @@ sub pre_header_initialize {
     $self->{isOpen} = $isOpen;
     $self->{isClosed} = $isClosed;
     $self->{versionIsOpen} = $versionIsOpen;
+
+    $self->{timeNow} = $timeNow;
 	
 ####################################
 # form processing
@@ -896,7 +916,9 @@ sub body {
     my $user = $r->param('user');
     my $effectiveUser = $r->param('effectiveUser');
 
-    my $timeNow = time();
+# report everything with the same time that we started with
+    my $timeNow = $self->{timeNow};
+    my $grace = $ce->{gatewayGracePeriod};
 
 #########################################
 # preliminary error checking and output
@@ -1067,9 +1089,23 @@ sub body {
 			    "recorded because you have no attempts " .
 			    "remaining on this set version.";
 		    } elsif ( ! $self->{versionIsOpen} ) {
+			my $endTime = ( $set->version_last_attempt_time ) ? 
+			    $set->version_last_attempt_time : $timeNow;
+			if ( $endTime > $set->due_date && 
+			     $endTime < $set->due_date + $grace ) {
+			    $endTime = $set->due_date;
+			}
+# sprintf forces two decimals, which we don't like
+#			my $elapsed = sprintf("%4.2f",($endTime - 
+#						       $set->open_date)/60);
+			my $elapsed = 
+			    int(($endTime - set->open_date)/0.6 + 0.5)/100;
+                    # we assume that allowed is an even number of minutes
+			my $allowed = ($set->due_date - $set->open_date)/60;
 			$scoreRecordedMessage[$i] = "Your score was not " .
 			    "recorded because you have exceeded the time " .
-			    "limit for this test.";
+			    "limit for this test. (Time taken: $elapsed min;" .
+			    " allowed: $allowed min.)";
 		    } else {
 			$scoreRecordedMessage[$i] = "Your score was not " .
 			    "recorded.";
@@ -1109,26 +1145,29 @@ sub body {
 	    }
 	} # end loop through problems
 
-# warn("in submitanswers conditional\n");
-
     } # end if submitAnswers conditional
     debug("end answer processing");
 
-# additional set-level database manipulation: this is all for versioned 
-#    sets/gateway tests
-# we want to save the time that a set was submitted, and for proctored 
-#    tests we want to reset the assignment type after a set is submitted 
-#    for the last time so that it's possible to look at it later without 
-#    getting proctor authorization
-    if ( ( $submitAnswers && $will{recordAnswers} ) ||
+# additional set-level database manipulation: we want to save the time 
+#    that a set was submitted, and for proctored tests we want to reset 
+#    the assignment type after a set is submitted for the last time so 
+#    that it's possible to look at it later without getting proctor 
+#    authorization
+    if ( ( $submitAnswers && 
+	   ( $will{recordAnswers} || 
+	     ( ! $set->version_last_attempt_time() &&
+	       $timeNow > $set->due_date + $grace ) ) ) ||
 	 ( ! $can{recordAnswersNextTime} && 
 	   $set->assignment_type() eq 'proctored_gateway' ) ) {
 
-# warn("in put set conditional\n");
-
 	my $setName = $set->set_id();
 
-	if ( $submitAnswers && $will{recordAnswers} ) {
+# save the submission time if we're recording the answer, or if the 
+# first submission occurs after the due_date
+	if ( $submitAnswers && 
+	     ( $will{recordAnswers} || 
+	       ( ! $set->version_last_attempt_time() &&
+		 $timeNow > $set->due_date + $grace ) ) ) {
 	    $set->version_last_attempt_time( $timeNow );
 	}
 	if ( ! $can{recordAnswersNextTime} && 
@@ -1144,61 +1183,135 @@ sub body {
 # output
 ####################################
 
-    my $overallScore = -1;  # is there a total score we should be reporting?
+# figure out score on this attempt, and recorded score for the set, if any
+    my $recordedScore = 0;
     my $totPossible = 0;
-    if ( $submitAnswers ) {
-	$overallScore = 0;
-	foreach ( @pg_results ) {
-	    $overallScore += $_->{state}->{recorded_score};
-# FIXME  we need to worry about weight, both for score and total possible
-#	    $totPossible += $_->value;
-	    $totPossible++;
+#    foreach ( @pg_results ) {
+    foreach ( @problems ) {
+# FIXME: this requires all problems to have weight 1
+	$totPossible++;
+#	$recordedScore += $_->{state}->{recorded_score} 
+#	    if ( defined( $_->{state}->{recorded_score} ) );
+	$recordedScore += $_->{status} if ( defined( $_->status ) );
+    }
+
+    my $attemptScore = 0;
+    if ( $submitAnswers || $checkAnswers ) {
+	foreach my $pg ( @pg_results ) {
+# to get the current result, we need to go through the parts of the problem
+	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
+		$attemptScore += $pg->{answers}->{$_}->{score};
+	    }
 	}
     }
 
-    if ( $overallScore > -1 ) {
+# we want to print elapsed and allowed times; allowed is easy (we assume
+# this is an even number of minutes)
+    my $allowed = ($set->due_date - $set->open_date)/60;
+# elapsed is a little harder; we're counting to the last submission 
+# time, or to the current time if the test hasn't been submitted, and if the
+# submission fell in the grace period round it to the due_date
+    my $exceededAllowedTime = 0;
+    my $endTime = ( $set->version_last_attempt_time ) ? 
+	$set->version_last_attempt_time : $timeNow;
+    if ( $endTime > $set->due_date && $endTime < $set->due_date + $grace ) {
+	$endTime = $set->due_date;
+    } elsif ( $endTime > $set->due_date ) {
+	$exceededAllowedTime = 1;
+    }
+    my $elapsed = int(($endTime - $set->open_date)/0.6 + 0.5)/100;
+
+    if ( $submitAnswers ) {
 	my $divClass = '';
-	my $ansRecorded = 1;
 	my $recdMsg = '';
 	foreach ( @scoreRecordedMessage ) { 
 	    if ( $_ ne 'Your score on this problem was recorded.' ) {
-		$ansRecorded = 0;
 		$recdMsg = $_;
 		last;
 	    }
 	}
-	if ( $ansRecorded ) {
+	if ( $recdMsg ) {
+	    $divClass = 'ResultsWithError';
+	    $recdMsg = "Your score on this test was NOT recorded.  " . $recdMsg;
+	} else {
 	    $divClass = 'ResultsWithoutError';
 	    $recdMsg = "Your score on this test was recorded.";
-	} else {
-	    $divClass = 'ResultsWithError';
-# inherit saved value from above
-	    $recdMsg = "Your score on this test was NOT recorded.  " . $recdMsg;
 	}
 
-	print CGI::div({class=>"$divClass"}, 
-		       CGI::strong("Score on this attempt (test number " .
-				   "$versionNumber) = " .
-				   "$overallScore / $totPossible"),
-		       CGI::br(),
-		       CGI::strong("$recdMsg")),"\n\n";
+	print CGI::start_div({class=>"$divClass"});
+	print CGI::strong("Your score on this attempt (test number " .
+			  "$versionNumber) is $attemptScore / " .
+			  "$totPossible"), CGI::br();
+	if ( $will{recordAnswers} ) {   # then this is a counted submission
+	    print CGI::strong("Time taken: $elapsed min (allowed: $allowed)"),
+	        CGI::br();
+	}
+	print CGI::strong("$recdMsg"), CGI::br() if ( $recdMsg );
+	print CGI::end_div();
+    } elsif ( $checkAnswers ) {
+	print CGI::start_div({class=>"gwMessage"});
+	print "Your score on this (checked, not recorded) submission " .
+	    "is $attemptScore / $totPossible", CGI::end_div();
     }
 
     if ( ! $can{recordAnswersNextTime} ) {
-# if we can't record answers any more, then we're finished with this set
-#   version.  print the appropriate message to that effect.
-	print CGI::start_div({class=>"gwMessage"});
-	my $mesg = ( $requestedVersion ) ? '' : 
-	    ", because you have used all available attempts on it or " .
-	    "because its time limit has expired.\n" .
-	    "To attempt the set again, please try again after the time " .
-	    "limit between versions has expired.\n";
-	print CGI::p(CGI::strong("Note: this set version (number " .
-			 "$versionNumber) can no longer be submitted for a" .
-			 " grade"),"\n",$mesg,"\n",
-	    "You may, however, check your answers to see what you did" .
-	    " right or wrong."), "\n\n";
-	print CGI::end_div();
+# if we can't record answers any more, then we want to add any message about
+# that, note if there's a recorded score, and be sure to flag any tests that 
+# are overtime.  (it's worth the effort to be careful about labeling tests 
+# this way mainly so that when students print a test and bring it in we know 
+# what's going on.)
+
+	my $timemsg = '';
+
+# if the test was submitted, just check to see if we should make a note about
+# the recorded score and time taken
+	if ( $submitAnswers ) {
+	    if ( $recordedScore ne $attemptScore || ! $will{recordAnswers} ) {
+		print CGI::start_div({class=>"gwMessage"});
+		if ( $recordedScore ne $attemptScore ) {
+		    print CGI::strong("Your recorded score on this test " .
+				      "is $recordedScore / $totPossible.");
+		} elsif ( ! $will{recordAnswers} ) {
+		    print CGI::strong("Time taken: $elapsed min (allowed: " .
+					  "$allowed)");
+		}
+		print CGI::end_div();
+	    }
+
+# otherwise, go through more convoluted logic
+	} else {
+    # first case: the test isn't submitted, but it's out of time.  
+	    if ( ! $set->version_last_attempt_time && $exceededAllowedTime ) {
+		print CGI::start_div({class=>'ResultsWithError'});
+		print CGI::strong("You have exceeded the allowed time on " .
+				  "this test ($allowed min; elapsed time " .
+				  "is $elapsed min)."), CGI::br();
+
+    # second case: it has been submitted, and the score is zero, possibly  
+    # because it's over time
+	    } elsif ( $set->version_last_attempt_time && $exceededAllowedTime &&
+		      $recordedScore == 0 ) {
+		print CGI::start_div({class=>'gwMessage'});
+		print CGI::strong("Your recorded score on this test is " .
+				  "0 / $totPossible (possibly because you " .
+				  "exceeded the allowed time on the test). " .
+				  "Time taken: $elapsed min (allowed: " .
+				  "$allowed)"), CGI::br();
+
+    # last case: we can't record answers, so if it's not submitted we must 
+    # be out of time (the first case), which means the last case is that 
+    # it's been submitted and we are either out of time or out of attempts
+	    } else {
+		print CGI::start_div({class=>'gwMessage'});
+		print CGI::strong("Your recorded score on this test is " .
+				  "$recordedScore / $totPossible. " .
+				  "Time taken: $elapsed min (allowed: " .
+				  "$allowed)"), CGI::br();
+	    }
+	    print "The test (which is number $versionNumber) may no " .
+		"longer be submitted for a grade, but you may still " .
+		"check your answers.", CGI::end_div();
+	}
 
     } else {
 
@@ -1206,11 +1319,11 @@ sub body {
 # FIXME: We need to drop this out gracefully if there isn't!
 # set up a timer
 	my $timeLeft = $set->due_date() - $timeNow;  # this is in seconds
-	print CGI::start_div({class=>"gwTiming"});
+	print CGI::start_div({class=>"gwTiming"}),"\n";
 	print CGI::startform({-name=>"gwtimer", -method=>"POST", 
-			      -action=>$r->uri}), "\n";
+			      -action=>$r->uri});
 	print CGI::hidden({-name=>"gwpagetimeleft", -value=>$timeLeft}), "\n";
-	print CGI::strong("Time Remaining:");
+	print CGI::strong("Time Remaining:"), "\n";
 	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
 	      CGI::strong("min:sec"), CGI::br(), "\n";
 	print CGI::endform();
@@ -1220,13 +1333,6 @@ sub body {
 				   "complete this test.\n"));
 	}
 	print CGI::end_div();
-#       print CGI::strong("Time Remaining:
-#                         scalar(localtime($set->open_date())), 
-#                         CGI::br(),"\nTime limit : ", 
-#                         ($set->version_time_limit()/60), 
-#                         " minutes (must be completed by: ", 
-#                         scalar(localtime($set->due_date())), ")", CGI::br(), 
-#                         "The current time is ", scalar(localtime())), "\n\n";
     }
 
 # this is a brutal hack to get a URL that won't require a proctor login if
