@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.51 2005/10/05 18:16:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.52 2005/12/03 21:17:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -199,6 +199,23 @@ sub assignProblemToUserSetVersion {
 
     # get list of problems in group
 	    my @problemList = $db->listGlobalProblems($problemGroupName);
+        # sanity check: if the group set hasn't been defined or doesn't
+        # actually contain problems (oops), then we can't very well assign 
+        # this problem to the user.  we could go on and assign all other 
+        # problems, but that results in a partial set.  so we die here if 
+        # this happens.  philosophically we're requiring that the instructor
+        # set up the sets correctly or have to deal with the carnage after-
+        # wards.  I'm not sure that this is the best long-term solution.
+        # FIXME: this means that we may have created a set version that
+        # doesn't have any problems.  this is bad.  but it's hard to see 
+        # where else to deal with it---fixing the problem requires checking
+        # at the set version-creation level that all the problems in the 
+        # set are well defined.  FIXME
+	    die("Error in set version creation: no problems are available " .
+		"in problem group $problemGroupName.  Set " . 
+		$userSet->set_id . " has been created for $userID, but " .
+		"does not contain the right problems.\n") if (! @problemList);
+
 	    my $nProb = @problemList;
 	    my $whichProblem = int(rand($nProb));
 
