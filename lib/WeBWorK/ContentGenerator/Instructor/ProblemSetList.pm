@@ -1412,16 +1412,15 @@ sub importSetsFromDef {
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);
 
-	# gateway/version data.  I'm not sure why I'm bothering to put these 
-        #   in a conditional.  in that we return '' for missing gateway data, 
-        #   it should just keep all of these values null for non-versioned/
-        #   non-gateway sets
-		$newSetRecord->assignment_type($assignmentType) if ( $assignmentType );
-		$newSetRecord->attempts_per_version($attemptsPerVersion) if ( $attemptsPerVersion );
-		$newSetRecord->time_interval($timeInterval) if ( $timeInterval );
-		$newSetRecord->versions_per_interval($versionsPerInterval) if ( $versionsPerInterval );
-		$newSetRecord->version_time_limit($versionTimeLimit) if ( $versionTimeLimit );
-		$newSetRecord->problem_randorder($problemRandOrder) if ( $problemRandOrder );
+	# gateway/version data.  these should are all initialized to ''
+        #   by readSetDef, so for non-gateway/versioned sets they'll just 
+        #   be stored as null
+		$newSetRecord->assignment_type($assignmentType);
+		$newSetRecord->attempts_per_version($attemptsPerVersion);
+		$newSetRecord->time_interval($timeInterval);
+		$newSetRecord->versions_per_interval($versionsPerInterval);
+		$newSetRecord->version_time_limit($versionTimeLimit);
+		$newSetRecord->problem_randorder($problemRandOrder);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
@@ -1544,19 +1543,10 @@ sub readSetDef {
 		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 	
                 #####################################################################
-                # Gateway/version variable cleanup
-
-		$assignmentType      =~ s/(.*?)\s*/$1/;  # remove trailing 
-		$attemptsPerVersion  =~ s/(.*?)\s*/$1/;  #   white space
-		$timeInterval        =~ s/(.*?)\s*/$1/;
-		$versionsPerInterval =~ s/(.*?)\s*/$1/;
-		$versionTimeLimit    =~ s/(.*?)\s*/$1/;
-		$problemRandOrder    =~ s/(.*?)\s*/$1/;
-
-                # convert times into seconds
+                # Gateway/version variable cleanup: convert times into seconds
 		$timeInterval = WeBWorK::Utils::timeToSec( $timeInterval )
 		    if ( $timeInterval );
-		$versionTimeLimit = WeBWorK::Utils::timeToSec( $versionTimeLimit )
+		$versionTimeLimit = WeBWorK::Utils::timeToSec($versionTimeLimit)
 		    if ( $versionTimeLimit );
 
 		#####################################################################
