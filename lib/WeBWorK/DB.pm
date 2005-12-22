@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.66 2005/08/12 02:47:28 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.67 2005/09/19 17:11:25 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1300,7 +1300,23 @@ sub countUserSets {
 	croak "countUserSets: argument 1 must contain a user_id"
 		unless defined $userID;
 		
-	return $self->{set_user}->count($userID, undef);
+# don't count versioned sets.  I think this is the correct behavior...
+	my $n = $self->{set_user}->count($userID, undef);
+	my $nv = $self->countUserSetVersions($userID);
+	return $n - $nv;
+}
+
+sub countUserSetVersions {
+# return the total number of versioned sets associated with the user
+	my ($self, $userID) = @_;
+	
+	croak "countUserSetVersions: requires 1 argument"
+		unless @_ == 2;
+	croak "countUserSetVersions: argument 1 must contain a user_id"
+		unless defined $userID;
+
+	my @versionedSetList = $self->listUserSetVersions($userID);
+	return scalar(@versionedSetList);
 }
 
 sub listUserSets {
@@ -1311,8 +1327,22 @@ sub listUserSets {
 	croak "listUserSets: argument 1 must contain a user_id"
 		unless defined $userID;
 	
-	return map { $_->[1] } # extract set_id
-		$self->{set_user}->list($userID, undef);
+    # the following specifically excludes versioned sets, so that 
+    # this behaves as non-gateway code expects
+	return( grep !/,v\d+$/, ( map { $_->[1] } # extract set_id
+				  $self->{set_user}->list($userID, undef) ) );
+}
+
+sub listUserSetVersions {
+	my ($self, $userID) = @_;
+	
+	croak "listUserSetVersions: requires 1 argument"
+		unless @_ == 2;
+	croak "listUserSetVersions: argument 1 must contain a user_id"
+		unless defined $userID;
+	
+	return( grep /,v\d+$/, ( map { $_->[1] } # extract set_id
+				$self->{set_user}->list($userID, undef) ) );
 }
 
 # the code from addUserSet() is duplicated in large part following in 
@@ -1481,8 +1511,8 @@ sub putVersionedUserSet {
 sub deleteUserSet {
 	my ($self, $userID, $setID, $skipVersionDel) = @_;
 	
-	croak "getUserSet: requires 2 arguments"
-		unless @_ == 3;
+	croak "getUserSet: requires 2 or 3 arguments"
+		unless @_ == 3 or @_ == 4;
 	croak "getUserSet: argument 1 must contain a user_id"
 		unless defined $userID or caller eq __PACKAGE__;
 	croak "getUserSet: argument 2 must contain a set_id"
@@ -1540,7 +1570,7 @@ sub getUserSetVersionNumber {
 
 # we just get all sets for the user and figure out which of them 
 #    look like the sid.
-    my @allSetIDs = $self->listUserSets( $uid );
+    my @allSetIDs = $self->listUserSetVersions( $uid );
     my @setIDs = sort( grep { /^$sid,v\d+$/ } @allSetIDs );
     my $lastSetID = $setIDs[-1];
 # I think this should be defined, unless the set hasn't been assigned to 
