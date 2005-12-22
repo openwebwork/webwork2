@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.67 2005/09/16 18:50:17 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.68 2005/12/19 20:18:28 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -128,10 +128,10 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
-	my @allsetIDs = sortByName(undef, $db->listUserSets($eUserID));
- # exclude versioned set IDs from the listing of global sets
-	my @setIDs = grep { $_ !~ /,v\d+$/ } @allsetIDs;
-	
+
+# note that listUserSets does not list versioned sets
+	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
+
 	# do not show unpublished siblings unless user is allowed to view unpublished sets, and 
         # exclude gateway tests 
 	unless ($authz->hasPermissions($user, "view_unpublished_sets") ) {
