@@ -70,7 +70,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 jsMath = {
   
-  version: "3.0",  // change this if you edit the file
+  version: "3.0-ww",  // change this if you edit the file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -90,7 +90,8 @@ jsMath = {
 
     '.typeset':           'font-family: serif; font-style: normal; font-weight: normal',
     'div.typeset':        'text-align: center; margin: 1em 0px;',
-    'span.typeset':       '',
+    'span.typeset':       'text-align: left',
+    '.typeset span':      'text-align: left', // needed for Firefox 1.5
     
     '.typeset .normal':   'font-family: serif; font-style: normal; font-weight: normal',
 
@@ -2426,8 +2427,6 @@ jsMath.HTML = {
     if (y != "none") {
       if (Math.abs(y) < .0001) {y = 0}
       html = '<span style="position: absolute; '
-               + 'width:'+jsMath.HTML.Em(w)+'; '   // for Firefox 1.5
-               + 'height:'+jsMath.HTML.Em(H)+'; '  // for Firefox 1.5
                + 'top:'+jsMath.HTML.Em(y)+'; left: 0em;">'
                + html + '&nbsp;' // space normalizes line height in script styles
              + '</span>';
