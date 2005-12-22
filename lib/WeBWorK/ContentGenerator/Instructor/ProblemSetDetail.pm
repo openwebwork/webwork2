@@ -149,7 +149,7 @@ use constant  FIELD_PROPERTIES => {
 		name      => "Test Time Limit (sec)",
 		type      => "edit",
 		size      => "4",
-		override  => "all",
+		override  => "any",
 		labels    => {	"" => 0 },  # I'm not sure this is quite right
 	},
 	time_interval => {
@@ -164,6 +164,7 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "3",
 		override  => "all",
+		labels    => {	"" => 0 },
 #		labels    => {	"" => 1 },
 	},
 	problem_randorder => {
@@ -260,11 +261,24 @@ sub FieldTable {
 
     # gateway data fields are included only if the set is a gateway
 		if ( $globalRecord->assignment_type() =~ /gateway/ ) {
-			$gwoutput = "\n<!-- begin gwoutput table -->\n" . CGI::start_table({border => 0, cellpadding => 1});
-			foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
-				$gwoutput .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $gwfield)]));
+		    my $gwhdr = "\n<!-- begin gwoutput table -->\n";
+		    my $nF = 0;
+
+		    foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
+			my @fieldData = 
+			    ($self->FieldHTML($userID, $setID, $problemID, 
+					     $globalRecord, $userRecord, 
+					     $gwfield));
+			if ( @fieldData && $fieldData[1] ne '' ) {
+			    $nF = @fieldData if ( @fieldData > $nF );
+			    $gwoutput .= CGI::Tr({}, CGI::td({}, [@fieldData]));
 		    	}
-		    	$gwoutput .= CGI::end_table() . "\n<!-- end gwoutput table -->\n";
+		    }
+		    $gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
+						 CGI::em("Gateway parameters")))
+			if ( $nF );
+		    $gwoutput = "$gwhdr$gwoutput\n" .
+			"<!-- end gwoutput table -->\n";
 		}
 	}
 
@@ -284,7 +298,7 @@ sub FieldTable {
 		}
   # this is a rather artifical addition to include gateway fields, which we 
   # only want to show for gateways
-		$output .= CGI::Tr({}, CGI::td({colspan => '4'}, $gwoutput)) . "\n"
+		$output .= "$gwoutput\n"
 		    if ( $field eq 'assignment_type' &&
 			 $globalRecord->assignment_type() =~ /gateway/ );
 	} 
