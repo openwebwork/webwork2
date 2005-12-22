@@ -3,6 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
 <link rel="stylesheet" type="text/css" media="All" href="<!--#url type="webwork" name="htdocs"-->/css/math.css"/>
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 <link rel="stylesheet" type="text/css" media="All" href="<!--#url type="webwork" name="htdocs"-->/css/gateway.css"/>
@@ -33,12 +35,12 @@ function jumpTo(ref) {  // scrolling javascript function
 var theTime = -1;      // -1 before we've initialized
 var alerted = -1;      // -1 = no alert set; 1 = 1st alert set
                        // this shouldn't really be needed
-
 function runtimer() {
 // aesthetically this is displeasing: we're assuming that the 
 // ContentGenerator will put the appropriate form elements in that
 // page for us to manipulate.  even with error checking, it seems sort
 // of odd.
+
     if ( document.gwtimer == null ) {  // no timer
         return;
     } else {
@@ -78,6 +80,9 @@ function runtimer() {
 }
 function toMinSec(t) {
 // convert to min:sec
+    if ( t < 0 ) {     // don't deal with negative times
+	t = 0;
+    }
     mn = Math.floor(t/60);
     sc = t - 60*mn;
     if ( mn < 10 && mn > -1 ) {
@@ -88,6 +93,11 @@ function toMinSec(t) {
     }
     return mn + ":" + sc;
 }
+
+// for some reason putting this as an onload event in the body tag
+// isn't working.  so start the timer here; the 500ms delay is to be 
+// sure that the timer form fields have loaded
+setTimeout("runtimer()",500);
 </script>
 </head>
 <body bgcolor="white">
