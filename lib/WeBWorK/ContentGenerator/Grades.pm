@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.19 2005/10/08 22:13:26 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.20 2005/12/18 22:37:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,7 +210,11 @@ sub displayStudentStats {
 	die "record for user $studentName not found" unless $studentRecord;
 	my $root = $ce->{webworkURLs}->{root};
 	
-	my @setIDs    = sort $db->listUserSets($studentName);
+# listUserSets() excludes versioned sets, which we probably want to 
+# list here, so we also get the versioned sets
+	my @setIDs    = sort(( $db->listUserSets($studentName),
+			       $db->listUserSetVersions($studentName) ));
+
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
 	my $effectiveUser = $studentRecord->user_id();
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
