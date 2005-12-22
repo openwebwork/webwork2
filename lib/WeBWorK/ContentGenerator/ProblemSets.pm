@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.63 2005/09/16 18:50:17 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.64 2005/09/23 23:27:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -133,11 +133,15 @@ sub body {
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 	
+# we have to get sets and versioned sets separately
 	my @setIDs = $db->listUserSets($effectiveUser);
+	my @vSetIDs = $db->listUserSetVersions($effectiveUser);
 	
 	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
+	my @vUserSetIDs = map {[$effectiveUser, /(.*),v\d+$/, $_]} @vSetIDs;
 	debug("Begin collecting merged sets");
 	my @sets = $db->getMergedSets( @userSetIDs );
+	my @vSets = (@vSetIDs) ? $db->getMergedVersionedSets(@vUserSetIDs) : ();
 	
 	debug("Begin fixing merged sets");
 	
@@ -160,15 +164,21 @@ sub body {
 # differently, so check for those here	
 	debug("Begin set-type check");
 	my $existVersions = 0;
+	my @gwSets = ();
+	my @nonGWsets = ();
 	foreach ( @sets ) {
 	    if ( defined( $_->assignment_type() ) && 
 		 $_->assignment_type() =~ /gateway/ ) {
 		$existVersions = 1; 
-		last;
+		push( @gwSets, $_ ) 
+		    if ( $_->assignment_type() !~ /proctored/ ||
+			 $authz->hasPermissions($user,"view_proctored_tests") );
+	    } else {
+		push( @nonGWsets, $_ );
 	    }
 	}
-# for gateways we change the default sort order if it isn't sent in
-	$sort = 'name' if ( $existVersions && ! $r->param("sort") );
+
+# set sort method
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
 
 # now set the headers for the table
@@ -203,8 +213,19 @@ sub body {
 
 	debug("Begin sorting merged sets");
 	
-	@sets = sortByName("set_id", @sets) if $sort eq "name";
-	@sets = sort byUrgency @sets if $sort eq "status";
+	if ( $sort eq 'name' ) {
+	    @nonGWsets = sortByName("set_id", @nonGWsets);
+	    @gwSets = sortByName("set_id", @gwSets);
+	} elsif ( $sort eq 'status' ) {
+	    @nonGWsets = sort byUrgency  @nonGWsets;
+	    @gwSets = sort byUrgency @gwSets;
+	}
+# we sort set versions by name; this at least in part relies on versions
+# being finished by the time they show up on the list here.
+	@vSets = sortByName("set_id", @vSets);
+
+# put together a complete list of sorted sets to consider
+	@sets = (@nonGWsets, @gwSets, @vSets);
 	
 	debug("End preparing merged sets");
 	
