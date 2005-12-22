@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.15 2005/11/18 18:30:12 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.16 2005/12/21 23:23:58 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1099,7 +1099,7 @@ sub body {
 #			my $elapsed = sprintf("%4.2f",($endTime - 
 #						       $set->open_date)/60);
 			my $elapsed = 
-			    int(($endTime - set->open_date)/0.6 + 0.5)/100;
+			    int(($endTime - $set->open_date)/0.6 + 0.5)/100;
                     # we assume that allowed is an even number of minutes
 			my $allowed = ($set->due_date - $set->open_date)/60;
 			$scoreRecordedMessage[$i] = "Your score was not " .
@@ -1198,7 +1198,8 @@ sub body {
     my $attemptScore = 0;
     if ( $submitAnswers || $checkAnswers ) {
 	foreach my $pg ( @pg_results ) {
-# to get the current result, we need to go through the parts of the problem
+# to get the current result, we need to go through the parts of each problem
+# (is there a better way of doing this?)  FIXME: factor in problem weight
 	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
 		$attemptScore += $pg->{answers}->{$_}->{score};
 	    }
@@ -1323,6 +1324,7 @@ sub body {
 	print CGI::startform({-name=>"gwtimer", -method=>"POST", 
 			      -action=>$r->uri});
 	print CGI::hidden({-name=>"gwpagetimeleft", -value=>$timeLeft}), "\n";
+
 	print CGI::strong("Time Remaining:"), "\n";
 	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
 	      CGI::strong("min:sec"), CGI::br(), "\n";
@@ -1335,11 +1337,10 @@ sub body {
 	print CGI::end_div();
     }
 
-# this is a brutal hack to get a URL that won't require a proctor login if
-# we've submitted a proctored test for the last time.  above we've reset the 
+# this is a hack to get a URL that won't require a proctor login if we've
+# submitted a proctored test for the last time.  above we've reset the 
 # assignment_type in this case, so we'll use that to decide if we should 
-# give a path to an unproctored test.  note that this substitution leaves 
-# unproctored test URLs unchanged
+# give a path to an unproctored test.
     my $action = $r->uri();
     $action =~ s/proctored_quiz_mode/quiz_mode/ 
 	if ( $set->assignment_type() eq 'gateway' );
@@ -1347,8 +1348,8 @@ sub body {
     print CGI::startform({-name=>"gwquiz", -method=>"POST", -action=>$action}), $self->hidden_authen_fields,
         $self->hidden_proctor_authen_fields;
 
-# FIXME RETURNTO
-# this is a horrible hack to try and let us use a javascript link to 
+# FIXME
+# this is a hack to try and let us use a javascript link to 
 # trigger previews
     print CGI::hidden({-name=>'previewHack', -value=>''}), CGI::br();
 # and the text for the link
