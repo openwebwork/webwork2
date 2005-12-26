@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.35 2005/12/16 18:41:19 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.36 2005/12/26 22:06:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ use warnings;
 
 # If true, WeBWorK::Debug will print debugging output.
 # 
-$WeBWorK::Debug::Enabled = 1;
+$WeBWorK::Debug::Enabled = 0;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 # 
@@ -51,7 +51,7 @@ $WeBWorK::Debug::DenySubroutineOutput = undef;
 # For example, this pattern allow only some function being worked on to log:
 #     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
 # 
-$WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::ContentGenerator::Instructor::UserDetail::initialize$/;
+$WeBWorK::Debug::AllowSubroutineOutput = undef;
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy
@@ -130,6 +130,10 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
     ['General',
 		{ var => 'courseFiles{course_info}',
 		  doc => 'Name of course information file',
+		  doc2 => 'The name of course information file (located in the templates directory). Its contents are displayed in the right panel next to the list of homework sets.',
+		  type => 'text'},
+		{ var => 'defaultTheme',
+		  doc => 'Theme. choices: (math, ur)',
 		  doc2 => 'The name of course information file (located in the templates directory). Its contents are displayed in the right panel next to the list of homework sets.',
 		  type => 'text'},
 		{ var => 'sessionKeyTimeout',
