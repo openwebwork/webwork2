@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.49 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.50 2005/09/30 19:36:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,7 +80,7 @@ sub pre_header_initialize {
 	
 	defined param $r "sets_assigned_to_user" and do {
 		if ($nusers == 1) {
-			$module = "${ipfx}::SetsAssignedToUser";
+			$module = "${ipfx}::UserDetail";
 			$args{userID} = $firstUserID;
 			$params{fromTools} = 1;
 		} else {
@@ -363,11 +363,11 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit("sets_assigned_to_user", "View/edit")." all sets for one <b>user</b>",
+				CGI::submit("sets_assigned_to_user", "View/edit")." all sets for one <b>user</b>(set dates, scores)",
 				CGI::submit("users_assigned_to_set", "View/edit")." all users for one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("edit_users", "Edit"). " selected <b>users</b>",
+				CGI::submit("edit_users", "Edit"). " class list data for selected <b>users</b>",
 				CGI::submit("edit_sets", "Edit"). " one <b>set</b>" . "&nbsp; &nbsp; ".
 				"or &nbsp; ".CGI::submit("prob_lib","add problems")." to one <b>set</b>",
 			]),
