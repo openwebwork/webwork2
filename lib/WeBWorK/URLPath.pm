@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.27 2005/10/08 22:20:47 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/URLPath.pm,v 1.28 2005/11/21 21:24:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -262,7 +262,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
 	instructor_user_detail => {
-		name    => '$userID',
+		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
 		kids    => [ qw/instructor_sets_assigned_to_user/ ],
 		match   => qr|^([^/]+)/|,

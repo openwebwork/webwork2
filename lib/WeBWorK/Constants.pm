@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.34 2005/10/03 04:45:37 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.35 2005/12/16 18:41:19 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,7 @@ use warnings;
 
 # If true, WeBWorK::Debug will print debugging output.
 # 
-$WeBWorK::Debug::Enabled = 0;
+$WeBWorK::Debug::Enabled = 1;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 # 
@@ -51,7 +51,7 @@ $WeBWorK::Debug::DenySubroutineOutput = undef;
 # For example, this pattern allow only some function being worked on to log:
 #     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
 # 
-$WeBWorK::Debug::AllowSubroutineOutput = undef;
+$WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::ContentGenerator::Instructor::UserDetail::initialize$/;
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy
@@ -209,18 +209,28 @@ You must use at least one display mode.  If you select only one, then the option
 		  min  => 1,
 		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath"],
 		  type => 'checkboxlist'},
+		  
+		{ var => 'pg{options}{displayMode} ',
+		  doc => 'The default display mode',
+		  doc2 => 'Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions.',
+		  min  => 1,
+		  type => 'text'},
+		  
 		{ var => 'pg{ansEvalDefaults}{useBaseTenLog}',
 		  doc => 'Use log base 10 instead of base <i>e</i>',
 		  doc2 => 'Set to true for log to mean base 10 log and false for log to mean natural logarithm',
 		  type => 'boolean'},
+		  
 		{ var => 'pg{ansEvalDefaults}{useOldAnswerMacros}',
 		  doc => 'Use older answer checkers',
 		  doc2 => 'During summer 2005, a newer version of the answer checkers was implemented for answers which are functions and numbers.  The newer checkers allow more functions in student answers, and behave better in certain cases.  Some problems are specifically coded to use new (or old) answer checkers.  However, for the bulk of the problems, you can choose what the default will be here.  <p>Choosing <i>false</i> here means that the newer answer checkers will be used by default, and choosing <i>true</i> means that the old answer checkers will be used by default.',
 		  type => 'boolean'},
+		  
 		{ var => 'pg{ansEvalDefaults}{defaultDisplayMatrixStyle}',
 		  doc => 'Control string for displaying matricies',
 		  doc2 => 'String of three characters for defining the defaults for displaying matricies.  The first and last characters give the left and right delimiters of the matrix, so usually one of ([| for a left delimiter, and one of )]| for the right delimiter.  It is also legal to specify "." for no delimiter. <p> The middle character indicates how to display vertical lines in a matrix (e.g., for an augmented matrix).  This can be s for solid lines and d for dashed lines.  While you can specify the defaults, individual problems may override these values.',
 		  type => 'text'},
+		  
 		{ var => 'pg{ansEvalDefaults}{numRelPercentTolDefault}',
 		  doc => 'Allowed error, as a percentage, for numerical comparisons',
 		  doc2 => "When numerical answers are checked, most test if the student's answer
@@ -265,9 +275,14 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  doc => 'E-mail addresses which can recieve e-mail from a pg problem',
 		  doc2 => 'List of e-mail addresses to which e-mail can be sent by a problem. Professors need to be added to this list if questionaires are used, or other WeBWorK problems which send e-mail as part of their answer mechanism.',
 		  type => 'list'},
+		{ var => 'permissionLevels{receive_feedback}',
+		  doc => 'E-mail feedback from students automatically sent to this permission level and higher:',
+		  doc2 => 'Users with this permssion level or greater will automatically be sent feedback from students (generated when they use the "Contact instructor" button on any problem page).  In addition the feedback message will be sent to addresses listed below.  To send ONLY to addresses listed below set permission level to "nobody".',
+		  type => 'permission'},
+		  
 		{ var => 'mail{allowedFeedback}',
-		  doc => 'Extra addresses for recieving feedback e-mail',
-		  doc2 => 'By default, feeback is sent to all users who have permission to receive feedback. If this list is non-empty, feedback is also sent to the addresses specified here.',
+		  doc => 'Additional addresses for receiving feedback e-mail.',
+		  doc2 => 'By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. (Separate email address entries by commas.',
 		  type => 'list'},
 	]
 ];
