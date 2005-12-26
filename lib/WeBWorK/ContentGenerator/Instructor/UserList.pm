@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.73 2005/10/08 21:55:41 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.74 2005/10/11 21:13:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -549,7 +549,11 @@ sub body {
 	print CGI::p("Showing ", scalar @Users, " out of ", scalar @allUserIDs, " users.");
 	
 	print CGI::p("If a password field is left blank, the student's current password will be maintained.") if $passwordMode;
-	
+	if ($editMode) {
+	   
+
+		print CGI::p('<b>Click</b> on the login name to <b>edit individual problem set data</b>, (e.g. due dates) for these students.');
+	}
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
 		passwordMode => $passwordMode,
@@ -1497,7 +1501,7 @@ sub recordEditHTML {
 										   params => {effectiveUser => $User->user_id}
 	);
 	
-	my $setsAssignedToUserURL = $self->systemLink($urlpath->new(type=>'instructor_sets_assigned_to_user',
+	my $setsAssignedToUserURL = $self->systemLink($urlpath->new(type=>'instructor_user_detail',
 	                                                            args=>{courseID => $courseName, 
 	                                                                   userID   => $User->user_id
 	                                                                   }),
@@ -1556,9 +1560,20 @@ sub recordEditHTML {
 		}	
 	}	
 	# User ID (edit mode) or Assigned Sets (otherwise)
-	if ($editMode  or $passwordMode) {
+	if ( $passwordMode) {
 		# straight user ID
 		push @tableCells, CGI::div({class=>$statusClass}, $User->user_id);
+	} elsif ($editMode) {
+		# straight user ID
+		 my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
+					                       args =>{
+						                             courseID => $courseName,
+						                             userID   => $User->user_id, #FIXME eventually this should be a list??
+	                }
+	    );
+	    my $userDetailUrl = $self->systemLink($userDetailPage,params =>{});
+		push @tableCells, CGI::a({href=>$userDetailUrl}, $User->user_id);
+	
 	} else {
 		# "edit sets assigned to user" link
 		#push @tableCells, CGI::a({href=>$setsAssignedToUserURL}, "Edit sets");

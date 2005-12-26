@@ -1062,12 +1062,12 @@ sub body {
                   courseID => $courseID, setID => $setID));
 	my $editSetsAssignedToUserURL = $self->systemLink(
 	      $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
+                "WeBWorK::ContentGenerator::Instructor::UserDetail",
                   courseID => $courseID, userID => $editForUser[0])) if $forOneUser;
 
 
 	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $setID);
-	my $setDetailURL   = $self->systemLink($setDetailPage,authen=>0);
+	my $setDetailURL   = $self->systemLink($setDetailPage);
 
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
@@ -1083,10 +1083,10 @@ sub body {
 		my @userLinks = ();
 		foreach my $userID (@editForUser) {
 		    my $u = $db->getUser($userID);
-			my $line = $u->last_name.", ".$u->first_name."&nbsp;&nbsp;&nbsp;".$u->user_id."&nbsp;&nbsp; ";
+			my $line = $u->last_name.", ".$u->first_name."&nbsp;&nbsp;(".$u->user_id."). Assigned to ";
 			my $editSetsAssignedToUserURL = $self->systemLink(
 	           $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
+                "WeBWorK::ContentGenerator::Instructor::UserDetail",
                   courseID => $courseID, userID => $u->user_id));
             $line .= CGI::a({href=>$editSetsAssignedToUserURL}, 
                      $self->setCountMessage($db->countUserSets($u->user_id), $setCount));
