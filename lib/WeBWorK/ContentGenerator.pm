@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.159 2005/12/19 00:13:00 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.161 2005/12/19 20:18:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -700,7 +700,7 @@ sub links {
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				
+				print CGI::li( $self->helpMacro('instructor_links','Help'),$self->help() );
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
@@ -715,12 +715,15 @@ sub links {
 	print CGI::end_li(); # end Courses
 	print CGI::end_ul();
 	
+	
+	print CGI::start_ul();
 	if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
-			and $authz->hasPermissions($userID, "report_bugs")) {
-		print CGI::start_ul();
-		print CGI::li(CGI::a({style=>"font-size:larger", href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
-		print CGI::end_ul();
+		and $authz->hasPermissions($userID, "report_bugs")) {
+		print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
 	}
+	
+	print CGI::end_ul();
+
 	
 	return "";
 }
@@ -1274,16 +1277,18 @@ helpFiles  directory.  Currently the link is made to the file $name.html
 sub helpMacro {
     my $self = shift;
 	my $name = shift;
+	my $label  = shift; #optional
 	my $ce   = $self->r->ce;
 	my $basePath = $ce->{webworkDirs}->{local_help};
 	$name        = 'no_help' unless -e "$basePath/$name.html";
 	my $path     = "$basePath/$name.html";
 	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
+	$label    = CGI::img({src=>$imageURL, alt=>" ? "}) unless defined $label;
 	return CGI::a({href      => $url,
 	               target    => 'ww_help',
-	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=on')"},
-	               CGI::img({src=>$imageURL, alt=>" ? "}));
+	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"},
+	               $label);
 }
 
 =item optionsMacro(options_to_show => \@options_to_show, extra_params => \@extra_params)
