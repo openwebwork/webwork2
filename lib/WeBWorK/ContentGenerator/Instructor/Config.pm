@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.4 2005/10/03 04:29:56 jj Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.5 2005/11/07 21:21:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -340,6 +340,58 @@ sub entry_widget {
 		-value => $self->{values},
 		-default => $default,
 		-columns=>1
+	);
+}
+
+########################### configpopuplist
+package configpopuplist;
+@configpopuplist::ISA = qw(configobject);
+
+sub display_value {
+	my ($self, $val) = @_;
+	$val = 'ur' if not defined($val);
+	return join(CGI::br(), $val);
+}
+
+# here r->param() returns an array, so we need a custom
+# version of convert_newval_source
+
+# sub convert_newval_source {
+# 	my ($self, $newvalsource) = @_;
+#     my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
+#     my @newvals;
+#     if($newvalsource =~ /widget/) {
+#         @newvals = $self->{Module}->{r}->param($newvalsource);
+#     } else {
+#         my $newval = eval('$self->{Module}->{r}->{ce}->'. $inlinevarname);
+# 		@newvals = @$newval;
+#     }
+# 	return(@newvals);
+# }
+
+sub save_string {
+	my ($self, $oldval, $newvalsource) = @_;
+	my $varname = $self->{var};
+	my $newval = $self->convert_newval_source($newvalsource);
+	my $displayoldval = $self->comparison_value($oldval);
+	return '' if($displayoldval eq $newval);
+	return('$'. $varname . " = " . "'$newval';\n");
+}
+
+# sub comparison_value {
+# 	my ($self, $val) = @_;
+# 	$val = 'ur' if not defined($val);
+# 	my $str = join(',', @{$val});
+# 	return($str);
+# }
+
+sub entry_widget {
+	my ($self, $name, $default) = @_;
+	return CGI::popup_menu(
+		-name => $name,
+		-value => $self->{values},
+		-default => $default,
+
 	);
 }
 
