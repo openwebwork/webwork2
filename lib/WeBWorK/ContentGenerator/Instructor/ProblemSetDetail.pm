@@ -1067,7 +1067,7 @@ sub body {
 
 
 	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $setID);
-	my $setDetailURL   = $self->systemLink($setDetailPage);
+	my $setDetailURL   = $self->systemLink($setDetailPage, authen=>0);
 
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
@@ -1099,7 +1099,7 @@ sub body {
 				CGI::td([
 					 "Editing problem set ".CGI::strong($setID)." data for these individual students:".CGI::br(). 
 					                CGI::strong(join CGI::br(), @userLinks),
-					CGI::a({href=>$setDetailURL },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set."),
+					CGI::a({href=>$self->systemLink($setDetailPage) },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set."),
 				
 				])
 			)
