@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.68 2005/12/19 20:18:28 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.69 2005/12/22 18:48:06 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -133,14 +133,19 @@ sub siblings {
 	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
 
 	# do not show unpublished siblings unless user is allowed to view unpublished sets, and 
-        # exclude gateway tests 
-	unless ($authz->hasPermissions($user, "view_unpublished_sets") ) {
+        # exclude gateway tests in all cases
+	if ( $authz->hasPermissions($user, "view_unpublished_sets") ) {
+		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
+				   $gs->assignment_type() !~ /gateway/} @setIDs;
+
+	} else {
 #		@setIDs    = grep {my $visible = $db->getGlobalSet( $_)->published; (defined($visible))? $visible : 1}
 		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-					$gs->assignment_type() !~ /gateway/ && 
-					    ( defined($gs->published()) ? $gs->published() : 1 )}
+				   $gs->assignment_type() !~ /gateway/ && 
+				       ( defined($gs->published()) ? $gs->published() : 1 )}
 	                     @setIDs;
 	}
+
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, "Homework Sets");
