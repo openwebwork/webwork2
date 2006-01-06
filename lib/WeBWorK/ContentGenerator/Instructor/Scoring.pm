@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.51 2005/12/12 21:30:33 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.53 2005/12/13 19:33:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -388,25 +388,35 @@ sub scoreSet {
 	} else {  # versioned sets; get the problems for the best version 
 
 		foreach my $userID (@sortedUserIDs) {
-			my %CurrUserProblems;
+			my $CurrUserProblems = {};
 			my $numVersions = $db->getUserSetVersionNumber( $userID, $setID );
 			my $bestScore = -1;
 
-			for ( my $i=1; $i<=$numVersions; $i++ ) {
+			if ( $numVersions ) {
+			    for ( my $i=1; $i<=$numVersions; $i++ ) {
 				my %versionUserProblems = map { $_->problem_id => $_ }
 					$db->getAllUserProblems( $userID, "$setID,v$i" );
 				my $score = 0;
 				foreach ( values ( %versionUserProblems ) ) {
 					my $status = $_->status || 0;
 					my $value = $_->value || 1;
+				# some of these are coming in null; I'm not
+				# why, or if this should be necessary
+					$_->status($status);
+					$_->value($value);
 					$score += $status*$value;
 				}
 				if ( $score > $bestScore ) {
-					%CurrUserProblems = %versionUserProblems;
+					$CurrUserProblems = \%versionUserProblems;
 					$bestScore = $score;
 				}
+			    }
+			} else {
+			    my %cp = map { $_->problem_id => $_ }
+				$db->getAllMergedUserProblems($userID, $setID);
+			    $CurrUserProblems = \%cp;
 			}
-			$UserProblems{$userID} = \%CurrUserProblems;
+			$UserProblems{$userID} = { %{$CurrUserProblems} };
 		}
 	}
 	debug("done pre-fetching user problems for set $setID");
