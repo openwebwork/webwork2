@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.65 2005/12/14 00:16:50 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.66 2005/12/15 19:11:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,7 +144,6 @@ sub pre_header_initialize {
 	my $file_type       = $r->param("file_type") || '';
 	my $setName         = $self->{setID};
 	my $problemNumber   = $self->{problemID};
-   
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
@@ -197,6 +196,7 @@ sub pre_header_initialize {
 	# or regular problem
 	if (defined($file_type) and ($file_type =~/\S/)) { #file_type is defined and is not blank
 		# file type is already defined -- do nothing
+		#warn "file type already defined as $file_type"  #FIXME debug
 	} else {
 	    # if "sourceFilePath" is defined in the form, then we are getting the path directly.
 		# if the problem number is defined and is 0
@@ -209,10 +209,11 @@ sub pre_header_initialize {
 			$file_type ='source_path_for_problem_file';
 		} elsif ( defined($problemNumber) ) {
 			 if ( $problemNumber =~/^\d+$/ and $problemNumber == 0 ) {  # if problem number is numeric and zero
-                $file_type = 'set_header' unless $file_type eq 'set_header' 
+                $file_type = 'set_header' unless  $file_type eq 'set_header' 
                                                or $file_type eq 'hardcopy_header';                                    
              } else {
-             	$file_type = 'problem';      	
+             	$file_type = 'problem';    
+             	#warn "setting file type to 'problem'\n";  #FIXME debug
              }
 			           
 		}
@@ -228,7 +229,8 @@ sub pre_header_initialize {
 		$self->{sourceFilePath} = $sourceFilePath;	
 	}
 	$self->{file_type} = $file_type;
-	
+	# $self->addgoodmessage("file type is $file_type");  #FIXME debug
+	# warn "file type is $file_type\n parameter is ".$self->r->param("file_type");
 	##########################################
 	# File type is one of:     blank_problem course_info  problem set_header hardcopy_header source_path_for_problem_file  
     ##########################################
@@ -350,8 +352,8 @@ sub initialize  {
 	if ( not( -e $inputFilePath) ) {
 		$self->addbadmessage("This file: $inputFilePath, cannot be found.");
 	} elsif (not -w $inputFilePath ) {
-		$self->addbadmessage("This file '$inputFilePath' is protected! ".CGI::br()."To edit this text you must either 'Make a local copy' of this problem, or 
-                           use 'Save As' to save it to another file.");
+		$self->addbadmessage("This file '$inputFilePath' is protected! ".CGI::br()."To edit this text you must make a copy of this file using the 'make local editable copy at ...' or the
+		'rename file path to ...' action below.");
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/) {
     	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
@@ -473,8 +475,8 @@ sub body {
 	}
 
 	my $protected_file = not -w $inputFilePath;
-	my $header = CGI::i("Editing problem".CGI::b("set $setName/ problem $problemNumber</emphasis>").CGI::br()." in file $inputFilePath");
-	$header = ($self->isTempFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
+	my $header = CGI::i("Editing problem ".CGI::b("set $setName/ problem $problemNumber</emphasis>").CGI::br()." in file $inputFilePath");
+	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
 	
 	#########################################################################
 	# Format the page
@@ -505,7 +507,7 @@ sub body {
 
  
 	print CGI::p($header),
-		CGI::start_form({method=>"POST", name=>"editor", action=>"$uri", target=>$target, enctype=>"application/x-www-form-urlencoded"}),
+		CGI::start_form({-method=>"POST", -name=>"editor", -action=>"$uri", -target=>$target, enctype=>"application/x-www-form-urlencoded"}),
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
@@ -578,15 +580,16 @@ sub body {
 sub determineLocalFilePath {
 	my $self= shift;				die "determineLocalFilePath is a method" unless ref($self);
 	my $path = shift;
-# 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
-# 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $setID = $self->{setID} || int(rand(1000));
+ 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
+ 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $setID = $self->{setID};
+	$setID = int(rand(1000)) unless $setID =~/\S/;  # setID can be 0
 	if ($path =~ /Library/) {
 		$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
-# 	} elsif ($path eq $default_screen_header_path) {
-# 		$path = "set$setID/setHeader.pg";
-# 	} elsif ($path eq $default_hardcopy_header_path) {
-# 		$path = "set$setID/hardcopyHeader.tex";
+ 	} elsif ($path eq $default_screen_header_path) {
+ 		$path = "set$setID/setHeader.pg";
+ 	} elsif ($path eq $default_hardcopy_header_path) {
+ 		$path = "set$setID/hardcopyHeader.tex";
 	} else { # if its not in a library we'll just save it locally
 		$path = "new_problem_".int(rand(1000)).".pg";	#l hope there aren't any collisions.
 	}
@@ -594,9 +597,10 @@ sub determineLocalFilePath {
 
 }
 
-sub determineTempFilePath {  # this does not create the path to the file
-	my $self = shift;  die "determineTempFilePath is a method" unless ref($self);
-	my $path =shift;
+sub determineTempEditFilePath {  # this does not create the directories in the path to the file
+                                 # it  returns an absolute path to the file
+	my $self = shift;  die "determineTempEditFilePath is a method" unless ref($self);
+	my $path =shift;    # this should be an absolute path to the file
 	my $user = $self->r->param("user");
 	$user    = int(rand(1000)) unless defined $user;
 	my $setID = $self->{setID} || int(rand(1000));
@@ -604,32 +608,81 @@ sub determineTempFilePath {  # this does not create the path to the file
 	###############
 	# Calculate the location of the temporary file
 	###############
-	my $templatesDirectory = $courseDirectory->{templates};
+	my $templatesDirectory           = $courseDirectory->{templates};
 	my $blank_file_path              = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $tmpEditFileDirectory = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
-	if ($path =~ /^$templatesDirectory/ ) {
-		$path =~ s|^$templatesDirectory||;
-		$path =~ s|^/||;   # remove the initial slash if any
-		$path = "$tmpEditFileDirectory/$path.$user.tmp";
-	} elsif ($path eq $blank_file_path) {
-		$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";  # handle the case of the blank problem
-	} elsif ($path eq $default_screen_header_path) {
-		$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp";  # handle the case of the screen header in snippets 
-	} elsif ($path eq $default_hardcopy_header_path) {
-		$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";  # handle the case of the hardcopy header in snippets 
+	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
+	$self->addbadmessage("The path to the original file should be absolute") unless $path =~m|^/|;  # debug
+	if ($path =~/^$tmpEditFileDirectory/) {
+		$self->addbadmessage("Error: This path is already in the temporary edit directory -- no new temporary file is created. path = $path");
+	
 	} else {
-		die "determineTempFilePath should only be used on paths within the templates directory, not on $path";
+		if ($path =~ /^$templatesDirectory/ ) {
+			$path =~ s|^$templatesDirectory||;
+			$path =~ s|^/||;   # remove the initial slash if any
+			$path = "$tmpEditFileDirectory/$path.$user.tmp";
+		} elsif ($path eq $blank_file_path) {
+			$path = "$tmpEditFileDirectory/blank.$setID.$user.tmp";  # handle the case of the blank problem
+		} elsif ($path eq $default_screen_header_path) {
+			$path = "$tmpEditFileDirectory/screenHeader.$setID.$user.tmp";  # handle the case of the screen header in snippets 
+		} elsif ($path eq $default_hardcopy_header_path) {
+			$path = "$tmpEditFileDirectory/hardcopyHeader.$setID.$user.tmp";  # handle the case of the hardcopy header in snippets 
+		} else {
+			die "determineTempEditFilePath should only be used on paths within the templates directory, not on $path";
+		}
 	}
 	$path;
 }
-sub isTempFilePath  {
+sub determineOriginalEditFilePath {  # determine the original path to a file corresponding to a temporary edit file
+                                     # returns path relative to the template directory
 	my $self = shift;
 	my $path = shift;
-	my $courseDirectory = $self->r->ce->{courseDirs};
-	my $templatesDirectory = $courseDirectory->{templates};
-	my $tmpEditFileDirectory = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
+	my $user = $self->r->param("user");
+	$self->addbadmessage("Can't determine user of temporary edit file $path.") unless defined($user);
+	my $templatesDirectory = $self->r->ce->{courseDirs} ->{templates};
+	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
+	# unless path is absolute assume that it is relative to the template directory
+	my $newpath = $path;
+	unless ($path =~ m|^/| ) {
+		$newpath = "$templatesDirectory/$path";
+	}
+	if ($self->isTempEditFilePath($newpath) ) {
+		$newpath =~ s|^$tmpEditFileDirectory/||; # delete temp edit directory 
+		if ($newpath =~m|blank\.[^/]*$|) {                     # handle the case of the blank problem 
+			$newpath = $self->r->ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+		} elsif (($newpath =~m|hardcopyHeader\.[^/]*$|)) {     # handle the case of the hardcopy header in snippets 
+			$newpath = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
+		} elsif (($newpath =~m|screenHeader\.[^/]*$|)) {       # handle the case of the screen header in snippets
+			$newpath = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
+		} else {
+			$newpath =~ s|\.$user\.tmp$||;           # delete suffix
+			
+		}
+		#$self->addgoodmessage("Original file path is $newpath"); #FIXME debug
+	} else {
+		$self->addbadmessage("This path |$newpath| is not the path to a temporary edit file.");
+		# returns original path
+	}
+	$newpath;
+}
+	
+sub getTempEditFileDirectory {
+	my $self = shift;
+	my $courseDirectory       = $self->r->ce->{courseDirs};
+	my $templatesDirectory    = $courseDirectory->{templates};
+	my $tmpEditFileDirectory  = (defined ($courseDirectory->{tmpEditFileDir}) ) ? $courseDirectory->{tmpEditFileDir} : "$templatesDirectory/tmpEdit";
+	$tmpEditFileDirectory;
+}
+sub isTempEditFilePath  {
+	my $self = shift;
+	my $path = shift;
+	my $templatesDirectory = $self->r->ce->{courseDirs} ->{templates};
+	# unless path is absolute assume that it is relative to the template directory
+	unless ($path =~ m|^/| ) {
+		$path = "$templatesDirectory/$path";
+	}
+	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
 	($path =~/^$tmpEditFileDirectory/) ? 1: 0;
 }
 sub getFilePaths {
@@ -645,7 +698,7 @@ sub getFilePaths {
 	$setName = '' unless defined $setName;
 	$problemNumber = '' unless defined $problemNumber;
 	die 'Internal error to PGProblemEditor -- file type is not defined'  unless defined $file_type;
-
+	#$self->addgoodmessage("file type is $file_type");  #FIXME remove
 	##########################################################
 	# Determine path to the input file to be edited. 
 	#   The permanent path of the input file  == $editFilePath 
@@ -701,20 +754,19 @@ sub getFilePaths {
 			my $header_file = "";
 			$header_file = $set_record->{$file_type};
 			if ($header_file && $header_file ne "") {
-					$editFilePath .= '/' . $header_file;
+					if ( $header_file =~ m|^/| ) { # if absolute address
+						$editFilePath  = $header_file;
+					} else {
+						$editFilePath .= '/' . $header_file;
+					}
 			} else {
-					# if the set record doesn't specify the filename
+					# if the set record doesn't specify the filename for a header
 					# then the set uses the default from snippets
-					# so we'll load that file, but change where it will be saved
-					# to and grey out the "Save" button
-					# FIXME why does the make_local_copy variable need to be checked?
-					# Isn't it automatic that a local copy has to be made?
-					#if ($r->param('make_local_copy')) {
+		
 						$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{setHeader} if $file_type eq 'set_header';
 						$editFilePath = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader} if $file_type eq 'hardcopy_header';
 						$self->addbadmessage("$editFilePath is the default header file and cannot be edited directly.");
 						$self->addbadmessage("Any changes you make will have to be saved as another file.");
-					#}
 			}
 			last CASE;
 		}; #end 'set_header, hardcopy_header' case
@@ -736,7 +788,13 @@ sub getFilePaths {
 		
 		($file_type eq 'source_path_for_problem_file') and do {
 		  my $forcedSourceFile = $self->{sourceFilePath};
-			# bail if no source path for the problem is found ;
+		  # if the source file is in the temporary edit directory find the original source file
+		  # the source file is relative to the templates directory.
+		  if ($self->isTempEditFilePath($forcedSourceFile) ) {
+		      $forcedSourceFile   = $self->determineOriginalEditFilePath($forcedSourceFile);     # original file path
+		      $self->addgoodmessage("the original path to the file is $forcedSourceFile");  #FIXME debug
+		  }
+		  # bail if no source path for the problem is found ;
 		  die "Cannot find a file path to save to" unless( defined($forcedSourceFile) and ($forcedSourceFile =~ /\S/)  );
 		  $self->{problemSeed} = 1234;
 		  $editFilePath .= '/' . $forcedSourceFile;
@@ -765,16 +823,16 @@ sub getFilePaths {
 	# Whew!!!
 	#################################################
 	
-	my $tempFilePath = $self->determineTempFilePath($editFilePath);  #"$editFilePath.$TEMPFILESUFFIX";
+	my $tempFilePath = $self->determineTempEditFilePath($editFilePath);  #"$editFilePath.$TEMPFILESUFFIX";
 	$self->{editFilePath}   = $editFilePath;
 	$self->{tempFilePath}   = $tempFilePath;
 	$self->{inputFilePath}  = (-r $tempFilePath) ? $tempFilePath : $editFilePath;
 	#warn "editfile path is $editFilePath and tempFile is $tempFilePath and inputFilePath is ". $self->{inputFilePath};
 }
-sub new_saveFileChanges {
+sub saveFileChanges {
 
 ################################################################################
-# new_saveFileChanges does most of the work. it is a separate method so that it can
+# saveFileChanges does most of the work. it is a separate method so that it can
 # be called from either pre_header_initialize() or initilize(), depending on
 # whether a redirect is needed or not.
 # 
@@ -872,10 +930,13 @@ sub new_saveFileChanges {
 	###########################################################	
 	unless( $writeFileErrors or $do_not_save) {  # everything worked!  unlink and announce success!
 		# unlink the temporary file if there are no errors and the save button has been pushed
-		if ($action eq 'save' or $action eq 'save_as' or $action eq 'revert') {
+		if ($action eq 'save' or $action eq 'save_as') {
+		             
+		             $self->addgoodmessage("Deleting temp file at " . $self->{tempFilePath});
 		             unlink($self->{tempFilePath}) ;
 		}
-		if ( defined($outputFilePath) and ! $self->{failure} )  {
+		if ( defined($outputFilePath) and ! $self->{failure} and not $self->isTempEditFilePath($outputFilePath) ) {  
+		            # don't announce saving of temporary editing files
 			my $msg = "Saved to file: |$outputFilePath|";
 			$self->addgoodmessage($msg);
 		}
@@ -883,7 +944,7 @@ sub new_saveFileChanges {
 	}
 
 
-}  # end new_saveFileChanges
+}  # end saveFileChanges
 
 
 
@@ -956,7 +1017,7 @@ sub view_handler {
 
 	my $do_not_save = 0;
 	my $file_type = $self->{file_type};                               
-	$self->new_saveFileChanges($tempFilePath,);
+	$self->saveFileChanges($tempFilePath,);
 
 	########################################################
 	# construct redirect URL and redirect
@@ -1003,7 +1064,7 @@ sub view_handler {
 			courseID => $courseName);
 		$viewURL = $self->systemLink($problemSetsPage,
 			params => {
-				editMode           => ("temporaryFile"),
+				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				status_message     => uri_escape($self->{status_message})
 			}
@@ -1134,7 +1195,10 @@ sub save_form {
 	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/ ) {
 		return "";  #Can't save blank problems without changing names
 	} elsif (-w $self->{editFilePath}) {
-		return "Save";	
+		my $sourceFilePath = $self->{editFilePath}; 
+		my $templatesPath  =  $self->r->ce->{courseDirs}->{templates};
+		$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
+		return "Save to: [TMPL]/$sourceFilePath";	
 	} else {
 		return ""; #"Can't save -- No write permission";
 	}
@@ -1165,7 +1229,7 @@ sub save_handler {
 
 	my $do_not_save = 0;
 	my $file_type = $self->{file_type};
-	$self->new_saveFileChanges($outputFilePath);	
+	$self->saveFileChanges($outputFilePath);	
 	#################################################
 	# Set up redirect to Problem.pm
 	#################################################
@@ -1240,15 +1304,15 @@ sub save_handler {
 	$self->reply_with_redirect($viewURL);
 }
 
-sub save_as_form {
+sub save_as_form {  # calls either the save_as_handler or the rename_handler
 	my ($self, $onChange, %actionParams) = @_;
 	my $sourceFilePath = $self->{editFilePath}; 
-	my $templatesPath  =  $self->r->ce->{courseDirs}->{templates};
-	$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
-
-	return "Save ".
-				CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['rename','save_a_copy'], 
-			  -default=>'rename',-labels=>{rename=>' as ',save_a_copy=>'a copy to'}
+	my $templatesDir  =  $self->r->ce->{courseDirs}->{templates};
+	$sourceFilePath   =~ s|^$templatesDir/||;
+	$sourceFilePath  = '' if $sourceFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
+	
+	return  CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['rename','save_a_copy'], 
+			  -default=>'rename',-labels=>{rename=>'Rename file path to ',save_a_copy=>'Create a copy of file at '}
 			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$sourceFilePath),;
 
 }
@@ -1309,7 +1373,7 @@ sub save_as_handler {
 
 
 	unless ($do_not_save ) {
-		$self->new_saveFileChanges($outputFilePath, \$problemContents);
+		$self->saveFileChanges($outputFilePath, \$problemContents);
 		my $sourceFilePath = $outputFilePath; 
 		my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
 		$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
@@ -1381,9 +1445,10 @@ sub revert_handler {
 	
 	my $editFilePath       = $self->{editFilePath};
 	$self->{inputFilePath} = $editFilePath;
-	$self->{tempFilePath}  = '';
 	# unlink the temp files;
 	unlink($self->{tempFilePath});
+	$self->addgoodmessage("Deleting temp file at " . $self->{tempFilePath});
+	$self->{tempFilePath}  = '';
 	my $problemContents    ='';
 	$self->{r_problemContents} = \$problemContents;
 	$self->addgoodmessage("Reverting to original file $editFilePath");
@@ -1394,13 +1459,15 @@ sub make_local_copy_form {
 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
 	return "" unless -e $editFilePath;
 	return "" if -w $editFilePath;
-	return "" unless $self->{file_type} eq 'problem';  
-	                 # or $self->{file_type} eq 'set_header' ;    # need problem structure to make local copy -- not available for header
-	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy
+	return "" unless    $self->{file_type} eq 'problem'           # need problem structure to make local copy in most cases
+	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of hardcopy header
+	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of screen header
+	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy -- can't be done in this case.
 	return join ("",
-		"Make local copy at: [TMPL]/".($self->determineLocalFilePath($editFilePath)),
+		"Make local editable copy at: [TMPL]/".($self->determineLocalFilePath($editFilePath)),
 		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>$self->determineLocalFilePath($editFilePath) ),
 		CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$editFilePath ),
+		CGI::hidden(-name=>'action.make_local_copy.file_type',-value=>$self->{file_type})
 	);
 
 }
@@ -1422,6 +1489,8 @@ sub make_local_copy_handler {
 	#################################################
 	my $new_file_name = $actionParams->{'action.make_local_copy.target_file'}->[0] || '';
 	my $sourceFilePath = $actionParams->{'action.make_local_copy.source_file'}->[0] || ''; 
+	my $file_type      = $actionParams->{'action.make_local_copy.file_type'}->[0] ||'';
+	
 	my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
 	$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
 
@@ -1452,20 +1521,31 @@ sub make_local_copy_handler {
 	} else {
 		#$self->addgoodmessage("Saving to file $outputFilePath.");
 	}
-	my $file_type = $self->{file_type};
 	unless ($do_not_save ) {
-		$self->new_saveFileChanges($outputFilePath);	
+		$self->saveFileChanges($outputFilePath);	
 	}
 	#################################################
 	# Modify source file in problem
 	#################################################
 	if (-r $outputFilePath and !$do_not_save) {
-		my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
-		$problemRecord->source_file($new_file_name);
-		if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
-			$self->addgoodmessage("A local, editable, copy of [TMPL]/$sourceFilePath has been made for problem $problemNumber.") ;
-		} else {
-			$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
+		if ($file_type eq 'problem') {
+			my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
+			die "Unable to problem record for set $setName, problem $problemNumber";
+			$problemRecord->source_file($new_file_name);
+			if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
+				$self->addgoodmessage("A local, editable, copy of [TMPL]/$sourceFilePath has been made for problem $problemNumber.") ;
+			} else {
+				$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
+			}
+		} elsif ($file_type eq 'set_header' or $file_type eq 'hardcopy_header')  { # we are dealing with a set header
+		
+			my $set_record = $self->r->db->getGlobalSet($setName);
+			$set_record->{$file_type} = $new_file_name;
+			if  ( $self->r->db->putGlobalSet($set_record)  ) {
+				$self->addgoodmessage("A local, editable, copy of [TMPL]/$sourceFilePath has been made for the $setName set header") ;
+			} else {
+				$self->addbadmessage("Unable to change the source file path for set $setName, set header. Unknown error.");
+			}
 		}
 	}
 	my $edit_level = $self->r->param("edit_level") || 0;
@@ -1479,9 +1559,9 @@ sub make_local_copy_handler {
 	);
 	my $viewURL = $self->systemLink($problemPage, 
 								 params=>{
-									 sourceFilePath     => $sourceFilePath, 
+									 sourceFilePath     => $new_file_name, 
 									 edit_level         => $edit_level,
-									 file_type          => 'problem',
+									 file_type          => $self->{file_type},
 									 status_message     => uri_escape($self->{status_message})
 
 								 }
@@ -1489,19 +1569,21 @@ sub make_local_copy_handler {
 	$self->reply_with_redirect($viewURL);
 }
 
-sub rename_form {
-	my ($self, $onChange, %actionParams) = @_;
-	my $problemPath = $self->{editFilePath};
-	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
-	#warn "problemPath $problemPath $templatesDir";
-	$problemPath   =~ s|^$templatesDir/||;
-	return join("",
-	       "Rename problem file to : [TMPL]/".CGI::textfield(-name=>'action.rename.target_file', -size=>40, -value=>$problemPath),
-	       	CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$self->{editFilePath} ),
-	);
-
-
-}
+# sub rename_form {  # see the save_as form
+# # 	my ($self, $onChange, %actionParams) = @_;
+# # 	my $problemPath = $self->{editFilePath};
+# # 	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
+# # 	#warn "problemPath $problemPath $templatesDir";
+# # 	$problemPath   =~ s|^$templatesDir/||;
+# # 	$problemPath  = '' if $problemPath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
+# # 	$self->addbadmessage("problem Path is $problemPath");
+# # 	return join("",
+# # 	       "Rename problem file to : [TMPL]/".CGI::textfield(-name=>'action.rename.target_file', -size=>40, -value=>$problemPath),
+# # 	       	CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$self->{editFilePath} ),
+# # 	);
+# 
+# 
+# }
 
 sub rename_handler {
     my ($self, $genericParams, $actionParams, $tableParams) = @_;
