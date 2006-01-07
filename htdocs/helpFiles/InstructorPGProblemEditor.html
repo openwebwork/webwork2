@@ -1,0 +1,69 @@
+
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+	
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork-modperl/htdocs/helpFiles/InstructorIndex.html,v 1.1 2005/12/28 02:34:01 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<title>PG Problem Editor Help Page</title>
+</head>
+<body>
+
+<h3>PG Problem Editor Help Page</h3>
+<blockquote>
+<p>
+This page allows to edit the contents of PG problem files (templates)
+as well as set headers and other files.
+</p>
+
+<h4>Features:</h4> 
+<dl>
+		
+
+	<dt>| Manpages | macro list | pod docs | report problem bugs |</dt>
+		<dd>The first three links are to pages that give some information about writing problems: "Manpages" is an (incomplete) list of the most commonly used macros with a description of their parameters and how to use them; a complete list of macros is provided by the "macro list"; and details for many macros can be obtained using the "pod docs" link which links to documentation embedded in the macro files themselves.   If you find an error in a library problem please use the "Report problem bugs" link to notify us so that we can fix it.  You will need to register with an email address the first time you use bugzilla, but after that you will not. </dd>
+	<dt>		The large text window</dt>
+		<dd>		This is where you edit the text of the problem template.  Nothing happens until you pick an action (below) and click the "Take action!" button.</dd>
+		</dl>
+		
+<h4>Action items:</h4> <i>(If an action cannot be executed it will not appear as an action item.)
+</i>
+</dl>
+	<dt>		View problem</dt>
+		<dd>		Will bring up a window to show the results of your editing.  It does not change the permanent file on the disk.</dd>
+	<dt>		Add problem to set</dt>
+		<dd>		Add this problem as the last problem in  an existing set, either as a problem or as the set header (the text that appears on the home page of a homework set). You can rearrange the order of the problems later using the "Hmwk Sets Editor"</dd>
+	<dt>		Save to...</dt>
+		<dd>		Saves the changes to the file indicated.</dd>
+	<dt>		Make local copy </dt>
+		<dd>		Will make a local copy of an uneditable library problem so that you can edit it.  It also changes the file path for the current problem to the new local copy. (It is much like "rename" but actually suggests the file name for you so that you can remember where the problem came from.</dd>
+	<dt>		Rename ...  </dt>
+		<dd>		Saves the changes to a new file and changes the file path for the current problem to this new file</dd>
+	<dt>		Create a copy ... </dt>
+		<dd>		Saves the changes to a new file but does not change the file path for the current problem</dd>
+	<dt>		Revert</dt>
+		<dd>		Reverts to the copy of the file saved on the disk -- all unsaved editing changes will be lost.</dd>
+	<dt>		Take action</dt>
+		<dd>		Executes the</dd> action item selected above
+</dl>
+
+</blockquote>
+</body>
+</html>
