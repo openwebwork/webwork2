@@ -1,7 +1,9 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.66.2.1 2006/01/08 01:19:33 gage Exp $
+
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.66.2.3 2006/01/08 18:06:03 gage Exp $
+
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -399,12 +401,16 @@ sub path {
 sub title {
 	my $self = shift;
 	my $r = $self->r;
+	my $courseName    = $r->urlpath->arg("courseID");
+	my $setID         = $r->urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
 	my $file_type = $self->{'file_type'} || '';
-	return "Set Header" if ($file_type eq 'set_header');
-	return "Hardcopy Header" if ($file_type eq 'hardcopy_header');
-	return "Course Information" if ($file_type eq 'course_info');
+
+	return "Set Header for  set $setID" if ($file_type eq 'set_header');
+	return "Hardcopy Header for set $setID" if ($file_type eq 'hardcopy_header');
+	return "Course Information for course $courseName" if ($file_type eq 'course_info');
 	return "Options Information" if ($file_type eq 'options_info');
+
 	return 'Problem ' . $r->{urlpath}->name;
 }
 
@@ -711,6 +717,7 @@ sub determineTempEditFilePath {  # this does not create the directories in the p
 	}
 	$path;
 }
+
 sub determineOriginalEditFilePath {  # determine the original path to a file corresponding to a temporary edit file
                                      # returns path relative to the template directory
 	my $self = shift;
@@ -760,6 +767,7 @@ sub isTempEditFilePath  {
 		$path = "$templatesDirectory/$path";
 	}
 	my $tmpEditFileDirectory = $self->getTempEditFileDirectory();
+
 	($path =~/^$tmpEditFileDirectory/) ? 1: 0;
 }
 sub getFilePaths {
@@ -1075,8 +1083,11 @@ sub fresh_edit_handler {
 }
 sub view_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $file_type     = $self->{file_type};
+	return "" if    $file_type eq 'hardcopy_header';  # these can't yet be edited from temporary files #FIXME
 	my $output_string = "View";
-	unless ($self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info') {
+	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
+
 		$output_string .= join(" ",
 ##			" problem using seed ",
 			" using seed ",
@@ -1140,7 +1151,7 @@ sub view_handler {
 	
 			}
 		);
-	} elsif ($file_type eq 'set_header' or $file_type eq 'hardcopy_header') { # redirect to ProblemSet
+	} elsif ($file_type eq 'set_header' ) { # redirect to ProblemSet
 		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseName, setID => $setName, 
 		);
@@ -1152,20 +1163,39 @@ sub view_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
+				sourceFilePath     => $tempFilePath,
 				status_message     => uri_escape($self->{status_message})
 	
 			}
 		);	
+	} elsif ($file_type eq 'hardcopy_header') { # redirect to ProblemSet?? # it's difficult to view temporary changes for hardcopy headers
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+			courseID => $courseName, setID => $setName, 
+		);
+		
+		$viewURL = $self->systemLink($problemPage,
+			params => {
+				set_header         => $tempFilePath,
+				displayMode        => $displayMode,
+				problemSeed        => $problemSeed,
+				editMode           => "temporaryFile",
+				edit_level         => $edit_level,
+				sourceFilePath     => $tempFilePath,
+				status_message     => uri_escape($self->{status_message})
 	
+			}
+		);	
 	
 	} elsif ($file_type eq 'course_info') {  # redirec to ProblemSets.pm
 		my $problemSetsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
 			courseID => $courseName);
 		$viewURL = $self->systemLink($problemSetsPage,
 			params => {
+
 				course_info        => $tempFilePath,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
+				sourceFilePath     => $tempFilePath,
 				status_message     => uri_escape($self->{status_message})
 			}
 		);
@@ -1174,9 +1204,10 @@ sub view_handler {
 			courseID => $courseName);
 		$viewURL = $self->systemLink($optionsPage,
 			params => {
-				options_info        => $tempFilePath,
+				options_info       => $tempFilePath,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
+				sourceFilePath     => $tempFilePath,
 				status_message     => uri_escape($self->{status_message})
 			}
 		);
@@ -1373,7 +1404,7 @@ sub save_handler {
 	
 			}
 		);
-	} elsif ($file_type eq 'set_header' or $file_type eq 'hardcopy_header') { # redirect to ProblemSet
+	} elsif ($file_type eq 'set_header' ) { # redirect to ProblemSet
 		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseName, setID => $setName, 
 		);
@@ -1388,7 +1419,21 @@ sub save_handler {
 	
 			}
 		);	
+	} elsif ( $file_type eq 'hardcopy_header') { # redirect to ProblemSet
+		my $problemPage = $self->r->urlpath->newFromModule('WeBWorK::ContentGenerator::Hardcopy',
+			courseID => $courseName, setID => $setName, 
+		);
+		
+		$viewURL = $self->systemLink($problemPage,
+			params => {
+				displayMode        => $displayMode,
+				problemSeed        => $problemSeed,
+				editMode           => "savedFile",
+				edit_level         => 0,
+				status_message     => uri_escape($self->{status_message})
 	
+			}
+		);	
 	
 	} elsif ($file_type eq 'course_info') {  # redirect to ProblemSets.pm
 		my $problemSetsPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
@@ -1435,6 +1480,7 @@ sub save_handler {
 }
 
 
+
 sub make_local_copy_form {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
@@ -1471,6 +1517,7 @@ sub make_local_copy_handler {
 		#warn "action.make_local_copy.$key", @{$actionParams->{"action.make_local_copy.$key"}}
 	}
   	save_as_handler($self, $genericParams, $actionParams, $tableParams);
+
 
 }
 sub save_as_form {  # calls the save_as_handler 
@@ -1651,7 +1698,9 @@ sub save_as_handler {
 		$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
 		die "Don't recognize saveMode: |$saveMode|. Unknown error."
 	}
-	warn "save mode is $saveMode";
+
+	#warn "save mode is $saveMode";
+
 	my $viewURL = $self->systemLink($problemPage, 
 								 params=>{
 									 sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
@@ -1687,6 +1736,8 @@ sub revert_handler {
 	$self->addgoodmessage("Reverting to original file '".$self->shortPath($editFilePath)."'");
 	# no redirect is needed
 }
+
+
 
 
 # sub make_local_copy_handler {
@@ -1807,6 +1858,7 @@ sub revert_handler {
 #     $actionParams->{'action.make_local_copy.target_file'}->[0] = $actionParams->{'action.rename.target_file'}->[0];
 # 	make_local_copy_handler($self, $genericParams, $actionParams, $tableParams);
 # }
+
 
 
 1;

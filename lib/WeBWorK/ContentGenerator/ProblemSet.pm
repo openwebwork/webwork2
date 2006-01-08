@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.69 2005/12/22 18:48:06 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.70.2.1 2006/01/08 18:05:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,7 +210,8 @@ sub info {
 	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	
 	if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-		$screenSetHeader = "$screenSetHeader.$userID.tmp";
+		my $screenHeaderPath = $r->param('sourceFilePath');
+		#$screenSetHeader = "$screenSetHeader.$userID.tmp";
 		$displayMode = $r->param("displayMode") if $r->param("displayMode");
 	}
 	

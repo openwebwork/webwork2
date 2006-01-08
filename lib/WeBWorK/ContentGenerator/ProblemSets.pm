@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.64 2005/09/23 23:27:03 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.65.2.1 2006/01/08 18:05:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,7 +51,8 @@ sub info {
 		# deal with instructor crap
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
 			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-				$course_info_path .= ".$user.tmp"; # this gets a big FIXME for obvious reasons
+				$course_info_path = $r->param("sourceFilePath");
+				$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $course_info_path));
 			}
 			
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
