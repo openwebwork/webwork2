@@ -1364,6 +1364,11 @@ sub importSetsFromDef {
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
 
+	# if the user includes "following files" in a multiple selection
+	# it shows up here as "" which causes the importing to die
+	# so, we select on filenames containing non-whitespace
+	@setDefFiles = grep(/\S/, @setDefFiles);
+
 	# FIXME: do we really want everything to fail on one bad file name?
 	foreach my $fileName (@setDefFiles) {
 		die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
