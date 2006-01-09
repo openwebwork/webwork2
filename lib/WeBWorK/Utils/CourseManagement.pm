@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.26 2005/09/28 23:26:06 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.27.2.1 2006/01/09 23:53:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use warnings;
 use Carp;
 use DBI;
 use File::Path qw(rmtree);
+use File::Spec;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory);
@@ -342,17 +343,47 @@ sub renameCourse {
 	my %newCourseDirs = %{ $newCE->{courseDirs} };
 	my @courseDirNames = sort { $oldCourseDirs{$a} cmp $oldCourseDirs{$b} } keys %oldCourseDirs;
 	foreach my $courseDirName (@courseDirNames) {
-		my $oldDir = $oldCourseDirs{$courseDirName};
-		my $newDir = $newCourseDirs{$courseDirName};
+		my $oldDir = File::Spec->canonpath($oldCourseDirs{$courseDirName});
+		my $newDir = File::Spec->canonpath($newCourseDirs{$courseDirName});
 		if (-e $oldDir) {
 			debug("oldDir $oldDir still exists. might move it...\n");
-			if (-e $newDir) {
-				warn "Can't move '$oldDir' to '$newDir', since the target already exists";
-			} else {
-				debug("Going to move $oldDir to $newDir...\n");
-				my $mvResult = system $mvCmd, $oldDir, $newDir;
-				$mvResult and die "failed to move directory with command: '$mvCmd $oldDir $newDir' (errno: $mvResult): $!\n";
+			
+			# check for a few likely error conditions, since the mv error is not that helpful
+			
+			# is the source really a directory
+			unless (-d $oldDir) {
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source is not a directory. You will have to move this directory manually.\n";
+				next;
 			}
+			
+			# does the destination already exist?
+			if (-e $newDir) {
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. You will have to move this directory manually.\n";
+				next;
+			}
+			
+			# is oldDir's parent writeable
+			my @oldDirElements = File::Spec->splitdir($oldDir);
+			pop @oldDirElements;
+			my $oldDirParent = File::Spec->catdir(@oldDirElements);
+			unless (-w $oldDirParent) {
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the source parent directory is not writeable. You will have to move this directory manually.\n";
+				next;
+			}
+			
+			# is newDir's parent writeable?
+			my @newDirElements = File::Spec->splitdir($newDir);
+			pop @newDirElements;
+			my $newDirParent = File::Spec->catdir(@newDirElements);
+			unless (-w $newDirParent) {
+				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the destination parent directory is not writeable. You will have to move this directory manually.\n";
+				next;
+			}
+			
+			# try to move the directory
+			debug("Going to move $oldDir to $newDir...\n");
+			my $mvResult = system $mvCmd, $oldDir, $newDir;
+			$mvResult and warn "$courseDirName: failed to move directory with command: '$mvCmd $oldDir $newDir' (errno: $mvResult): $! You will have to move this directory manually.\n";
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
