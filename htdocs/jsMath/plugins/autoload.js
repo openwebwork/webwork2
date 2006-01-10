@@ -293,6 +293,10 @@ jsMath.Add(jsMath.Autoload,{
   },
   afterLoad: function () {
     if (jsMath.tex2math.window) {jsMath.tex2math.window.jsMath = jsMath}
+    //
+    //  Handle MSIE bug where jsMath.window both is and is not the actual window
+    //
+    if (jsMath.browser == 'MSIE') {window.onscroll = jsMath.window.onscroll};
     var fonts = jsMath.Autoload.loadFonts;
     if (fonts) {
       if (typeof(fonts) != 'object') {fonts = [fonts]}

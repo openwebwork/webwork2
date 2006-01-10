@@ -186,6 +186,10 @@ jsMath.Add(jsMath.Controls,{
     this.Close();
   },
 
+  CheckVersion: function () {
+    jsMath.Script.delayedLoad('http://www.math.union.edu/locate/jsMath/jsMath/jsMath-version-check.js');
+  },
+
   NoAuto: function () {jsMath.Element("_autofont").checked = false}
 
 });
@@ -208,7 +212,7 @@ jsMath.Add(jsMath.Controls,{
 <tr><td height="5"></td></tr>
 <tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath">Home Page</a></td></tr>
 <tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/">Documentation</a></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/download/fonts.html">Download Fonts</a></td></tr>
+<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/download/jsMath-fonts.html">Download Fonts</a></td></tr>
 <tr><td height="5"></td></tr>
 <tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/bugs.html">Known Bugs</a></td></tr>
 <tr><td align="left">&#8226; <a id="jsMath__mailto" href="mailto:dpvc@union.edu?subject=jsMath Bug Report">Bug Reports</a></td></tr>
@@ -220,6 +224,11 @@ jsMath.Add(jsMath.Controls,{
 <tr><td align="center" colspan="3">
 <input type="button" id="jsMath__resolution" value="Hi-Res Fonts for Printing"
        style="width:17em" onclick="jsMath.Controls.PrintResolution()" />
+</td></tr>
+<tr><td height="1"></td></tr>
+<tr><td align="center" colspan="3">
+<input type="button" value="Check for jsMath Updates"
+       style="width:17em" onclick="jsMath.Controls.CheckVersion()" />
 </td></tr>
 <tr><td height="5"></td></tr>
 <tr><td align="left">

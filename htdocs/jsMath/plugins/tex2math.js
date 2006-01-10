@@ -304,7 +304,7 @@ jsMath.Add(jsMath.tex2math,{
       }
     } catch (err) {}
     this.search = {}; this.pattern.lastIndex = 0;
-    return element;
+    return math;
   },
     
   /*
