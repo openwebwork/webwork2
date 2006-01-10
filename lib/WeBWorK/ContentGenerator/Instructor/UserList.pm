@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.75.2.1 2006/01/10 00:07:11 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.75.2.2 2006/01/10 00:30:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1327,23 +1327,17 @@ sub importUsersFromCSV {
 			next;
 		}
 		
-		# make sure permission level is defined
-		if (not defined $record{permission}) {
-			$record{permission} = $default_permission_level;
-		}
-		
-		# make sure permission level is numeric
-		unless ($record{permission} =~ m/^[+\-]?\d*$/) {
-			$self->addbadmessage("permission level '$record{permission}' for user '$user_id' is not an integer. using default permission level '$default_permission_level'.\n");
-			$record{permission} = $default_permission_level;
-		}
-		
 		my $User = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => 0);
 		my $Password = $db->newPassword(user_id => $user_id, password => cryptPassword($record{student_id}));
 		
 		# use password and permission from record if there
 		if (exists $record{permission}) {
+			# make sure permission level is numeric
+			unless (defined($record{permission}) and $record{permission} =~ m/^[+\-]?\d*$/) {
+				$self->addbadmessage("permission levelÊ for user '$user_id' is not defined or is not an integer. Set the permission level to the default permission level '$default_permission_level'.\n");
+				$record{permission} = $default_permission_level;
+			}
 			$PermissionLevel->permission($record{permission});
 		}
 		
