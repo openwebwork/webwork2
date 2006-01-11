@@ -1,9 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.66.2.3 2006/01/08 18:06:03 gage Exp $
-
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.69 2006/01/08 18:18:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -494,9 +492,6 @@ sub body {
 
 	my $protected_file = not -w $inputFilePath;
 
-##
-## DPVC
-##	my $header = CGI::i("Editing problem".CGI::b("set $setName/ problem $problemNumber</emphasis>").CGI::br()." in file $inputFilePath");
 	my $file_type = $self->{file_type};
 	my %titles = (
 		problem         =>CGI::b("set $setName/problem $problemNumber"),
@@ -508,9 +503,6 @@ sub body {
 		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $problemNumber"),
 	);
 	my $header = CGI::i("Editing $titles{$file_type} in file '".$self->shortPath($inputFilePath)."'");
-##
-## /DPVC
-##
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
 	
 	#########################################################################
@@ -599,15 +591,15 @@ EOF
 				# Check permissions
 				#next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 				my $actionForm = "${actionID}_form";
-				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0; ## DPVC
-				my $onChange = "setRadio($i,$newWindow)";  ## DPVC
+				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
+				my $onChange = "setRadio($i,$newWindow)";
 ##				my $onChange = "document.userlist.action[$i].checked=true";
 				my %actionParams = $self->getActionParams($actionID);
 				my $line_contents = $self->$actionForm($onChange, %actionParams);
 				my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
 				$radio_params->{checked}=1 if ($actionID eq $default_choice) ;
-				$radio_params->{onclick} = "setTarget($newWindow)"; ## DPVC
-				$radio_params->{id} = "action$i"; ## DPVC
+				$radio_params->{onclick} = "setTarget($newWindow)";
+				$radio_params->{id} = "action$i";
 				print CGI::Tr({-valign=>"top"},
 					CGI::td({}, CGI::input($radio_params)),
 					CGI::td({}, $line_contents)
@@ -615,21 +607,12 @@ EOF
 				
 				$i++;
 			}
-#			print CGI::Tr({}, CGI::td({-align=>"right"}, "Select above then:"),
-#			                  CGI::td({-align=>"left"}, CGI::submit(-name=>'submit', -value=>"Take Action!")),
-			##
-			## DPVC
-			##
 			my $checkbox = CGI::input({-type=>"checkbox", -id=>"newWindow", -checked=>"checked",
 						   -onchange=>"updateTarget()"});
 			$checkbox =~ s/\n//; # remove unwanted linebreak
 			print CGI::Tr({}, CGI::td({-colspan=>2}, "Select above then:",
 			                  CGI::submit(-name=>'submit', -value=>"Take Action!"),
-						CGI::script("document.write('$checkbox in another window')"))
-			##
-			## /DPVC
-			##
-			);
+						CGI::script("document.write('$checkbox in another window')")));
 			print CGI::end_table();	
 	
 	
@@ -1531,18 +1514,6 @@ sub save_as_form {  # calls the save_as_handler
 	$shortFilePath   =~ s|^$templatesDir/||;
 	$shortFilePath  = '' if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
 	my $allowedActions = (defined($setID) && $setID =~/\S/ && $setID ne 'Undefined_Set') ? ['save_a_copy','rename' ] : ['save_a_copy'];
-# 	return  CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['rename','save_a_copy'], 
-# 			  -default=>'rename',-labels=>{rename=>'Rename file path to ',save_a_copy=>'Create a copy of file at '}
-# 			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$shortFilePath),;
-
-##
-##  DPVC
-##
-
-#	return "Save ".
-#				CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['rename','save_a_copy'], 
-#			  -default=>'rename',-labels=>{rename=>' as ',save_a_copy=>'a copy to'}
-#			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$shortFilePath),;
 
 	return CGI::popup_menu(
 			       -name=>'action.save_as.saveMode', -values=>$allowedActions, 
@@ -1561,15 +1532,12 @@ sub save_as_form {  # calls the save_as_handler
 # 	return CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['save_a_copy'], 
 # 			  -default=>'save_a_copy',-labels=>{save_a_copy=>'Save as'}, -onmousedown=>$onChange
 # 			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$shortFilePath)
-##
-## /DPVC
-##
 }
 
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	#$self->addgoodmessage("save_as_handler called");
-    $self->{status_message} = ''; ## DPVC -- remove bogus old messages
+	$self->{status_message} = ''; ## DPVC -- remove bogus old messages
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
 	my $problemNumber   =  $self->{problemID};
