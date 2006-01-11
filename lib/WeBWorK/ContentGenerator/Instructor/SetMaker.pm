@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.59.2.1 2006/01/11 22:24:29 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.60 2006/01/11 22:41:51 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,7 +67,7 @@ use constant SUCCESS => (1 << 2);
 ##	for additional problib buttons
 my %problib;	## filled in in global.conf
 my %ignoredir = (
-	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1,
+	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1,
 );
 
