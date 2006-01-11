@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.69 2006/01/08 18:18:17 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.70 2006/01/11 23:00:24 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -357,7 +357,6 @@ sub initialize  {
 	$self->addmessage($r->param('status_message') ||'');  # record status messages carried over if this is a redirect
 	$self->addbadmessage("Changes in this file have not yet been permanently saved.") if -r $tempFilePath;
 	if ( not( -e $inputFilePath) ) {
-##		$self->addbadmessage("This file: $inputFilePath, cannot be found.");
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' cannot be found.");
 	} elsif (not -w $inputFilePath ) {
 
@@ -519,7 +518,6 @@ sub body {
 	my $problemSeed     = $self->{problemSeed};	
 	my $uri             = $r->uri;
 	my $edit_level      = $r->param('edit_level') || 0;
-##	my $file_type        = $self->{file_type};
 	
 	my $force_field = (defined($self->{sourceFilePath}) and $self->{sourceFilePath} ne "") ?
 		CGI::hidden(-name=>'sourceFilePath',
@@ -549,7 +547,6 @@ EOF
  
 	print CGI::p($header),
 
-##		CGI::start_form({method=>"POST", name=>"editor", action=>"$uri", target=>$target, enctype=>"application/x-www-form-urlencoded"}),
 		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
 
 		$self->hidden_authen_fields,
@@ -573,7 +570,6 @@ EOF
 			CGI::textarea(
 				-name => 'problemContents', -default => $problemContents,
 				-rows => $rows, -columns => $columns, -override => 1,
-##			)," | ",
 			),
 		);
 
@@ -593,7 +589,6 @@ EOF
 				my $actionForm = "${actionID}_form";
 				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
 				my $onChange = "setRadio($i,$newWindow)";
-##				my $onChange = "document.userlist.action[$i].checked=true";
 				my %actionParams = $self->getActionParams($actionID);
 				my $line_contents = $self->$actionForm($onChange, %actionParams);
 				my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
@@ -812,7 +807,6 @@ sub getFilePaths {
 		
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-##			$self->addbadmessage("$editFilePath is blank problem template file and can not be edited directly. "
 			$self->addbadmessage("'".$self->shortPath($editFilePath)."' is blank problem template file and can not be edited directly. "
 			                     ."First use 'Save as' to make a local copy, then add the file to the current problem set, then edit the file."
 			);
@@ -842,7 +836,6 @@ sub getFilePaths {
 						$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{setHeader} if $file_type eq 'set_header';
 						$editFilePath = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader} if $file_type eq 'hardcopy_header';
 
-##						$self->addbadmessage("$editFilePath is the default header file and cannot be edited directly.");
 #						$self->addbadmessage("'".$self->shortPath($editFilePath)."' is the default header file and cannot be edited directly.".CGI::br()."Any changes you make will have to be saved as another file.");
 					#}
 
@@ -887,14 +880,12 @@ sub getFilePaths {
 	# which is almost undoubtedly NOT desirable
 
 	if (-d $editFilePath) {
-##		my $msg = "The file $editFilePath is a directory!";
 		my $msg = "The file '".$self->shortPath($editFilePath)."' is a directory!";
 		$self->{failure} = 1;
 		$self->addbadmessage($msg);
 	}
 	if (-e $editFilePath and not -r $editFilePath) {   #it's ok if the file doesn't exist, perhaps we're going to create it
 	                                                  # with save as
-##		my $msg = "The file $editFilePath cannot be read!";
 		my $msg = "The file '".$self->shortPath($editFilePath)."' cannot be read!";
 		$self->{failure} = 1;
 		$self->addbadmessage($msg);	
@@ -995,13 +986,10 @@ sub saveFileChanges {
 		if ( not -w $ce->{courseDirs}->{templates} ) {
 			$errorMessage = "Write permissions have not been enabled in the templates directory.  No changes can be made.";
 		} elsif ( not -w $currentDirectory ) {
-##			$errorMessage = "Write permissions have not been enabled in $currentDirectory.  Changes must be saved to a different directory for viewing.";
 			$errorMessage = "Write permissions have not been enabled in '".$self->shortPath($currentDirectory)."'.  Changes must be saved to a different directory for viewing.";
 		} elsif ( -e $outputFilePath and not -w $outputFilePath ) {
-##			$errorMessage = "Write permissions have not been enabled for $outputFilePath.  Changes must be saved to another file for viewing.";
 			$errorMessage = "Write permissions have not been enabled for '".$self->shortPath($outputFilePath)."'.  Changes must be saved to another file for viewing.";
 		} else {
-##			$errorMessage = "Unable to write to $outputFilePath: $writeFileErrors";
 			$errorMessage = "Unable to write to '".$self->shortPath($outputFilePath)."': $writeFileErrors";
 		}
 
@@ -1072,14 +1060,11 @@ sub view_form {
 	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
 
 		$output_string .= join(" ",
-##			" problem using seed ",
 			" using seed ",
 			CGI::textfield(-name=>'action.view.seed',-value=>$self->{problemSeed},-onfocus=>$onChange),
 			"and display mode ",
 			CGI::popup_menu(-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, 
-			  -default=>$self->{displayMode}, -onmousedown=>$onChange
-##			), ".",
-			)
+			  -default=>$self->{displayMode}, -onmousedown=>$onChange)
 		);
 	}
 
@@ -1224,7 +1209,6 @@ sub add_problem_form {
 	};
 	return "" if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
 	return join(" ",
-##		"Add problem to set " ,
 		"Add to set " ,
 		CGI::popup_menu({name=>'action.add_problem.target_set', values=>\@allSetNames, default=>$setName, onmousedown=>$onChange}),
 		" as ",
@@ -1294,10 +1278,8 @@ sub add_problem_handler {
 		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
 		$setRecord->set_header($sourceFilePath);
 		if(  $self->r->db->putGlobalSet($setRecord) ) {
-##			$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as new set header ") ;
 			$self->addgoodmessage("Added '".$self->shortPath($sourceFilePath)."' to ". $targetSetName. " as new set header ") ;
 		} else {
-##			$self->addbadmessage("Unable to make $sourceFilePath the set header for $targetSetName");
 			$self->addbadmessage("Unable to make '".$self->shortPath($sourceFilePath)."' the set header for $targetSetName");
 		}
 		$self->{file_type} = 'set_header'; # change file type to set_header if it not already so
@@ -1584,7 +1566,6 @@ sub save_as_handler {
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
-##		$self->addbadmessage(CGI::p("File $outputFilePath exists.  File not saved."));
 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
@@ -1597,8 +1578,6 @@ sub save_as_handler {
 
 	unless ($do_not_save ) {
 		$self->saveFileChanges($outputFilePath);
-##		my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
-##		$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
 
 		if ($saveMode eq 'rename' and -r $outputFilePath) { 
 		#################################################
@@ -1750,12 +1729,10 @@ sub revert_handler {
 # 	if (defined $outputFilePath and -e $outputFilePath) {
 # 		# setting $do_not_save stops saving and any redirects
 # 		$do_not_save = 1;
-# ##		$self->addbadmessage(CGI::p("File $outputFilePath exists.  File not saved."));
 # 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
 # 		File not saved. No changes have been made.
 # 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
 # 	} else {
-# ##		#$self->addgoodmessage("Saving to file $outputFilePath.");
 # 		#$self->addgoodmessage("Saving to file '".$self->shortPath($outputFilePath)."'.");
 # 	}
 # 
@@ -1776,7 +1753,6 @@ sub revert_handler {
 # 				my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
 # 				$problemRecord->source_file($new_file_name);
 # 				if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
-# 				##				$self->addgoodmessage("The current source file for set $setName problem $problemNumber has been renamed to [TMPL]/$outputFilePath.") ;
 # 					$self->addgoodmessage("The current source file for problem $problemNumber has been renamed to '".$self->shortPath($outputFilePath)."'.") ;
 # 				} else {
 # 					$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
