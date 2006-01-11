@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.32 2004/07/01 16:37:39 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemList.pm,v 1.33.2.1 2006/01/11 22:24:29 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -522,12 +522,12 @@ sub body {
 			            $urlpath->new(type=>'instructor_problem_editor_withset_withproblem',
 			              args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
 			            )
-			          )}, "Edit it" ) .
+			          ), target=>"WW_Editor"}, "Edit it" ) .
 			          '&nbsp;'.
 			        CGI::a({href=>$self->systemLink( $urlpath->new(type=>'problem_detail',
 			          args=>{courseID =>$courseName,setID=>$setName,problemID=>$problemID}
 			           ),
-			          params =>{effectiveUser => $editForUserName}  )}, "Try it") . 
+			          params =>{effectiveUser => $editForUserName}  ), target=>"WW_View"}, "Try it") . 
 
 			        CGI::br() .
 			        CGI::start_table().

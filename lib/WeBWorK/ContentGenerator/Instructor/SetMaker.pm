@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.58 2005/10/11 22:06:34 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.59.2.1 2006/01/11 22:24:29 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -832,7 +832,7 @@ sub make_data_row {
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
 			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-		  )}, "Edit it" );
+		  ), target=>"WW_Editor"}, "Edit it" );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -849,7 +849,7 @@ sub make_data_row {
 			sourceFilePath => "$sourceFileName",
 			displayMode => $displayMode,
 		}
-	)}, "Try it");
+	), target=>"WW_View"}, "Try it");
 
 	my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add this problem to the target set on the next update");
 	if($mark & SUCCESS) {

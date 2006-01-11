@@ -1250,8 +1250,8 @@ sub body {
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $properties{$header}->{name})) . 
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink}, "Edit it"))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink}, "View it"))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, "Edit it"))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, "View it"))) .
 #					CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "defaultHeader", value => $header, label => "Use Default"}))) .
 				CGI::end_table(),
 #				"",
@@ -1367,8 +1367,8 @@ sub body {
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 1}) .
 					CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editProblemLink}, "Edit it"))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewProblemLink}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $editProblemLink, target=>"WW_Editor"}, "Edit it"))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewProblemLink, target=>"WW_View"}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")))) .
 					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => "Delete it?"})))) .
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
