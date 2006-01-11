@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.70.2.1 2006/01/08 18:05:48 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.71 2006/01/08 18:18:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -210,8 +210,9 @@ sub info {
 	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	
 	if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-		my $screenHeaderPath = $r->param('sourceFilePath');
-		#$screenSetHeader = "$screenSetHeader.$userID.tmp";
+		$screenSetHeader = $r->param('sourceFilePath');
+		$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ",
+		            $screenSetHeader));
 		$displayMode = $r->param("displayMode") if $r->param("displayMode");
 	}
 	
@@ -243,13 +244,12 @@ sub info {
 	);
 	
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
-		#FIXME ?  can't edit the default set header this way
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		my $editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 		
 		print CGI::p(CGI::b("Set Info"), " ",
-			CGI::a({href=>$editorURL}, "[edit]"));
+			CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 	} else {
 		print CGI::p(CGI::b("Set Info"));
 	}

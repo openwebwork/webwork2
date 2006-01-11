@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.65.2.1 2006/01/08 18:05:48 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.66 2006/01/08 18:18:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,7 +59,7 @@ sub info {
 			my $editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 			
 			print CGI::p(CGI::b("Course Info"), " ",
-				CGI::a({href=>$editorURL}, "[edit]"));
+				CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 		} else {
 			print CGI::p(CGI::b("Course Info"));
 		}
