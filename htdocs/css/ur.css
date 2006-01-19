@@ -52,6 +52,7 @@ div.Warnings {  }
 
 /* contains info */
 td.InfoPanel { background-color: #DDDDDD; color: black; width: 30% }
+td.InfoPanel h2 { font-size: 120% }
 td.InfoPanel a:link,
 td.InfoPanel a:visited { color: blue; }
 td.InfoPanel a:active { color: red; }
