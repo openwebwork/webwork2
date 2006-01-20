@@ -64,7 +64,8 @@ sub info {
 					CGI::p("$@"),
 				);
 			} else {
-				print CGI::p(CGI::b("Login Info")), $text;
+				print CGI::h2("Login Info");
+				print $text;
 			}
 		}
 		

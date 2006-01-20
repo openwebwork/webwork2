@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Home.pm,v 1.12 2005/12/06 02:31:34 apizer Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,33 +34,32 @@ sub info {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	my $site_info = $ce->{webworkFiles}->{site_info};
+	my $result;
 	
+	# This section should be kept in sync with the Login.pm version
+	my $site_info = $ce->{webworkFiles}->{site_info};
 	if (defined $site_info and $site_info) {
-		my $site_info_path = $site_info;
-		
 		# deal with previewing a temporary file
 		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
 				and defined $r->param("editFileSuffix")) {
-			$site_info_path .= $r->param("editFileSuffix");
+			$site_info .= $r->param("editFileSuffix");
 		}
 		
-		if (-f $site_info_path) {
-			my $text = eval { readFile($site_info_path) };
+		if (-f $site_info) {
+			$result .= CGI::h2("Site Information");
+			
+			my $text = eval { readFile($site_info) };
 			if ($@) {
-				print CGI::div({class=>"ResultsWithError"},
-					CGI::p("$@"),
-				);
-			} elsif ($text) {
-				print CGI::p(CGI::b("Important Message")), $text,CGI::hr();
+				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+			} elsif ($text =~ /\S/) {
+				$result .= $text;
 			}
 		}
-		
-		
 	}
-	return "";
-
+	
+	return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
 }
+
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;

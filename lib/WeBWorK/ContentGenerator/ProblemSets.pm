@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.66 2006/01/08 18:18:03 gage Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,7 +48,10 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
+		print CGI::h2("Course Info");
+		
 		# deal with instructor crap
+		my $editorURL;
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
 			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
 				$course_info_path = $r->param("sourceFilePath");
@@ -56,13 +59,9 @@ sub info {
 			}
 			
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
-			my $editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
-			
-			print CGI::p(CGI::b("Course Info"), " ",
-				CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
-		} else {
-			print CGI::p(CGI::b("Course Info"));
+			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
+		
 		unless (-e $course_info_path) {       # FIXME 
 			`echo "" >$course_info_path`;     # we seem to need to have this file 
 			                                  # around to prevent
@@ -77,6 +76,10 @@ sub info {
 			} else {
 				print $text;
 			}
+		}
+
+		if ($editorURL) {
+			print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 		}
 		
 		return "";

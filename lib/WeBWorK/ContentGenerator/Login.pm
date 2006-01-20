@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.30 2005/10/08 22:07:39 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,58 +40,54 @@ sub info {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
+	my $result;
 	
+	# This section should be kept in sync with the Home.pm version
 	my $site_info = $ce->{webworkFiles}->{site_info};
-	
 	if (defined $site_info and $site_info) {
-		my $site_info_path = $site_info;
-		
 		# deal with previewing a temporary file
 		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
 				and defined $r->param("editFileSuffix")) {
-			$site_info_path .= $r->param("editFileSuffix");
+			$site_info .= $r->param("editFileSuffix");
 		}
 		
-		if (-f $site_info_path) {
-			my $text = eval { readFile($site_info_path) };
+		if (-f $site_info) {
+			my $text = eval { readFile($site_info) };
 			if ($@) {
-				print CGI::div({class=>"ResultsWithError"},
-					CGI::p("$@"),
-				);
-			} elsif($text) {
-				print CGI::p(CGI::b("Important Message")), $text,CGI::hr();
+				$result .= CGI::h2("Site Information");
+				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+			} elsif ($text =~ /\S/) {
+				$result .= CGI::h2("Site Information");
+				$result .= $text;
 			}
 		}
-		
-		
 	}
+	
+	# FIXME this is basically the same code as above... TIME TO REFACTOR!
 	my $login_info = $ce->{courseFiles}->{login_info};
-	
 	if (defined $login_info and $login_info) {
-		my $login_info_path = $ce->{courseDirs}->{templates} . "/$login_info";
+		# login info is relative to the templates directory, apparently
+		$login_info = $ce->{courseDirs}->{templates} . "/$login_info";
 		
 		# deal with previewing a temporary file
 		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
 				and defined $r->param("editFileSuffix")) {
-			$login_info_path .= $r->param("editFileSuffix");
+			$login_info .= $r->param("editFileSuffix");
 		}
 		
-		if (-f $login_info_path) {
-			my $text = eval { readFile($login_info_path) };
+		if (-f $login_info) {
+			my $text = eval { readFile($login_info) };
 			if ($@) {
-				print CGI::div({class=>"ResultsWithError"},
-					CGI::p("$@"),
-				);
-			} else {
-				print CGI::p(CGI::b("Login Info")), $text;
+				$result .= CGI::h2("Login Info");
+				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+			} elsif ($text =~ /\S/) {
+				$result .= CGI::h2("Login Info");
+				$result .= $text;
 			}
 		}
-		
-		
 	}
 	
-	
-	return "";
+	return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
 }
 
 sub body {

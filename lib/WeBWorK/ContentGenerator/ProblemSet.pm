@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.71 2006/01/08 18:18:03 gage Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -243,21 +243,23 @@ sub info {
 		},
 	);
 	
+	print CGI::p(CGI::b("Set Info"));
+	
+	my $editURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
-		my $editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
-		
-		print CGI::p(CGI::b("Set Info"), " ",
-			CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
-	} else {
-		print CGI::p(CGI::b("Set Info"));
+		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
 	
 	if ($pg->{flags}->{error_flag}) {
 		print CGI::div({class=>"ResultsWithError"}, $self->errorOutput($pg->{errors}, $pg->{body_text}));
 	} else {
 		print $pg->{body_text};
+	}
+	
+	if ($editURL) {
+		print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 	}
 	
 	return "";

@@ -51,6 +51,7 @@ div.Warnings {  }
 /* (shuld have Message here) */
 
 /* contains info */
+/* FIXME: this is erroniously used by SetMaker.pm. */
 td.InfoPanel { background-color: #DDDDDD; color: black; width: 30% }
 td.InfoPanel h2 { font-size: 120% }
 td.InfoPanel a:link,
@@ -62,6 +63,10 @@ div.Info {  }
 /******************************************************************************/
 /* WeBWorK classes: These classes are emitted by WeBWorK code and should
  * appear in ANY WeBWorK template. */
+
+/* the info escape emits a DIV with this class and id. */
+.info-box {  }
+#InfoPanel { font-size: smaller; }
 
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
