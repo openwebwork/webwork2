@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader: webwork2/htdocs/css/math.css,v 1.1.2.1 2006/01/19 01:09:00 sh002i Exp $
+ * $CVSHeader$
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -50,13 +50,15 @@ a:visited { color: #808; background-color: inherit; }
 
 /* --- Compound titles (class) ---------------------------------------------- */
 
+/* WeBWorK is not using this, but it might be nice to have it around later */
+
 /* "Split" title, with main heading left-aligned above a horizontal line,
  * and subheading right-aligned below the line. Usage:
  *
  * <h1 class="compound">Alumni Newsletter</h1>
  * <h2 class="compound">Spring '00</h2>
  */
-/* [ww] not using this, but it might be nice to have it around later */
+
 /*h1.compound {
 	border-bottom: 1px solid #559;
 	text-align: left;
@@ -66,6 +68,10 @@ a:visited { color: #808; background-color: inherit; }
 h2.compound { float: right; margin: 0; padding: 0 }*/
 
 /* --- Info box (class) ----------------------------------------------------- */
+
+/* FIXME as a quick hack, the info() escape outputs a DIV with this class.
+ * don't let the placement of these styles fool you -- <div style="info-box">
+ * is output by WeBWorK! */
 
 /* Common style for a small box to hold supplemental info; typically this
  * box will appear in a sidebar.  Sample usage:
@@ -78,6 +84,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
  *   <a class="more" href="bar">Older announcements...</a>
  * </div>
  */
+ 
 .info-box {
 	border: 1px solid #559;
 	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
@@ -142,6 +149,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
  * appear within the #site-navigation div.  Inherits many of its attributes 
  * from class info-box, and overrides some.
  */
+
 #mini-sitemap,
 #fisheye {
 	font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
@@ -362,21 +370,17 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	border-bottom: 1px solid #559;
 }
 
-/* --- Additional template classes added for WW elements -------------------- */
-
-#page-info {
-	font-size: smaller;
-	float: right;
-	width: 40%;
-	padding-left: 1em;
-}
-
 /* --- WeBWorK classes ------------------------------------------------------ */
 
 /* These classes are emitted by WeBWorK code and should appear in ANY WeBWorK
  * template. they need not be implemented the same way in each template though.
  * (These are mostly copied from ur.css right atm.)
  */
+
+/* the info escape emits a DIV with this id. (not that the same DIV has class
+ * "info-box" which is given above in the "template styles" section. Regardless,
+ * it is emitted by WW code! */
+#InfoPanel { font-size: smaller; float: right; max-width: 40%; }
 
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
