@@ -62,11 +62,6 @@ sub info {
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
 		
-		unless (-e $course_info_path) {       # FIXME 
-			`echo "" >$course_info_path`;     # we seem to need to have this file 
-			                                  # around to prevent
-			                                  # spurious errors when editing it.
-		}
 		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
