@@ -2,7 +2,7 @@
 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- WeBWorK Online Homework Delivery System
   -- Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-  -- $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.3.2.1 2006/01/19 01:03:17 sh002i Exp $
+  -- $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.3.2.2 2006/01/20 00:08:50 sh002i Exp $
   -- 
   -- This program is free software; you can redistribute it and/or modify it under
   -- the terms of either: (a) the GNU General Public License as published by the
@@ -132,17 +132,19 @@ setTimeout("runtimer()",500);
 	<div id="content">
 		
 		<!--#if can="info"-->
-		<div id="page-info">
-			<div class="info-box" id="fisheye">
-				<h2>Info</h2>
+		<!--<div id="page-info">-->
+			<!--<div class="info-box" id="fisheye">-->
 				<!--#info-->
-			</div>
-		</div>
+			<!--</div>-->
+		<!--</div>-->
 		<!--#endif-->
+		
 		<!-- [gateway] removed nav button to go up -->
+		
 		<!--#if can="title"-->
 		<h1><!--#title--></h1>
 		<!--#endif-->
+		
 		<!--#if can="message"-->
 			<div class="Message">
 				<!--#message-->
@@ -154,12 +156,14 @@ setTimeout("runtimer()",500);
 			<!--#body-->
 		</div>
 		<!--#endif-->
+		
 		<!--#if warnings="1"-->
 		<hr>
 		<div class="Warnings">
 			<!--#warnings-->
 		</div>
 		<!--#endif-->
+		
 		<!--#if can="message"-->
 			<div class="Message">
 				<!--#message-->
