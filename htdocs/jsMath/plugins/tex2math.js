@@ -10,7 +10,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright 2004-2005 by Davide P. Cervone
+ *  Copyright 2004-2006 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -283,6 +283,7 @@ jsMath.Add(jsMath.tex2math,{
     var math = search.open.splitText(search.pos);
     while (math.nextSibling && math.nextSibling != close) {
       if (math.nextSibling.nodeValue) {math.nodeValue += math.nextSibling.nodeValue}
+        else {math.nodeValue += ' '}
       math.parentNode.removeChild(math.nextSibling);
     }
     var TeX = math.nodeValue.substr(search.olength,
