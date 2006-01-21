@@ -7,7 +7,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright 2004-2005 by Davide P. Cervone
+ *  Copyright 2004-2006 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.

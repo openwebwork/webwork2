@@ -10,7 +10,7 @@
  *
  *  for the latest version, and for documentation on how to use jsMath.
  *
- *  Copyright 2004-2005 by Davide P. Cervone
+ *  Copyright 2004-2006 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 jsMath = {
   
-  version: "3.1",  // change this if you edit the file
+  version: "3.1b",  // change this if you edit the file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -173,7 +173,7 @@ jsMath = {
    */
   EmBoxForItalics: function (s) {
     var bbox = this.BBoxFor(s);
-    if (s.match(/<i>|class=\"icm/i)) {
+    if (s.match(/<i>|class=\"(icm|italic|igreek|iaccent)/i)) {
       bbox.w = this.BBoxFor(s+jsMath.Browser.italicString).w
                 - jsMath.Browser.italicCorrection;
     }
@@ -187,8 +187,9 @@ jsMath = {
   Init: function () {
     if (jsMath.Setup.inited != 1) {
       if (jsMath.Setup.inited) {
-        alert("It looks like jsMath failed to set up properly.  " +
-              "I'll will try to keep going, but it could get ugly.");
+        alert("It looks like jsMath failed to set up properly (error code "
+               + jsMath.Setup.inited + ").  "
+               + "I'll will try to keep going, but it could get ugly.");
         jsMath.Setup.inited = 1;
       } else {
         alert("You must call jsMath.Setup.Body() explicitly when jsMath is" +
@@ -290,7 +291,7 @@ jsMath = {
  *  until files have loaded.
  */
 
-jsMath.Script =  {
+jsMath.Script = {
 
   request: null, // the XMLHttpRequest object
 
@@ -459,6 +460,15 @@ jsMath.Script =  {
   },
   endDelay: function () {this.blocking = 0; this.Process()},
   
+  Uncompress: function (data) {
+    for (var k = 0; k <  data.length; k++) {
+      var d = data[k]; var n = d.length;
+      for (var i = 0; i < n; i++) {if (typeof(d[i]) == 'number') {d[i] = d[d[i]]}}
+      data[k] = d.join('');
+    }
+    window.eval(data.join(''));
+  },
+  
   /*
    *  for debugging the event queue
    */
@@ -625,6 +635,11 @@ jsMath.Setup = {
           var src = script[i].src;
           if (src && src.match('(^|/)jsMath.js$')) {
             jsMath.root = src.replace(/jsMath.js$/,'');
+	    if (!jsMath.root.match(/^[a-z]+:/i)) {
+	      src = new String(jsMath.document.location);
+	      jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
+	      while (jsMath.root.match('/[^/]*/\.\./')) {jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\.\./'),'/')}
+	    }
             i = script.length;
           }
         }
@@ -815,17 +830,17 @@ jsMath.Setup = {
 
     this.inited = -1;
 
-    jsMath.Setup.Hidden();
-    jsMath.Browser.Init();
+    jsMath.Setup.Hidden(); this.inited = -2;
+    jsMath.Browser.Init(); this.inited = -3;
 
     // blank screen if necessary
-    if (jsMath.Controls.cookie.blank) {jsMath.Message.Blank()}
+    if (jsMath.Controls.cookie.blank) {jsMath.Message.Blank()}; this.inited = -4;
 
-    jsMath.Setup.Styles();
-    jsMath.Controls.Init();
+    jsMath.Setup.Styles(); this.inited = -5;
+    jsMath.Controls.Init(); this.inited = -6;
     
     // do user-specific initialization
-    jsMath.Script.Push(jsMath.Setup,'User','pre-font');
+    jsMath.Script.Push(jsMath.Setup,'User','pre-font'); this.inited = -7;
 
     // make sure browser-specific loads are done before this
     jsMath.Script.Push(jsMath.Font,'Check');
@@ -835,9 +850,8 @@ jsMath.Setup = {
   
   /*
    *  Web page author can override this to do initialization
-   *  that must be done before the font check is performed.
-   *  This may be extended to pass additional parameters to
-   *  indicate when the call is being made.
+   *  that must be done before the font check is performed, or
+   *  at other times (as indicated by the value of the parameter).
    */
   User: function (when) {}
   
@@ -903,6 +917,8 @@ jsMath.Browser = {
   valignBug: 0,               // Konqueror doesn't nest vertical-align
 
   operaHiddenFix: '',         // for Opera to fix bug with math in tables
+  
+  version: 0,                 // browser version number (when needed)
 
   /*
    *  Determine if the "top" of a <SPAN> is always at the same height
@@ -940,6 +956,15 @@ jsMath.Browser = {
     jsMath.Setup.AddStyleSheet({'#jsMath_test': 'font-size:200%'});
     this.styleChangeDelay = (span.offsetWidth == w);
     jsMath.hidden.innerHTML = '';
+  },
+  
+  /*
+   *  Perform a version check on a standard version string
+   */
+  VersionAtLeast: function (v) {
+    var bv = new String(this.version).split('.');
+    v = new String(v).split('.'); if (v[1] == null) {v[1] = '0'}
+    return bv[0] > v[0] || (bv[0] == v[0] && bv[1] >= v[1]);
   },
 
   /*
@@ -986,7 +1011,7 @@ jsMath.Browser = {
         this.allowAbsoluteDelim = 1; this.separateSkips = 1;
         this.buttonCheck = 1; this.msieBlankBug = 1;
         this.msieDivWidthBug = 1; this.msiePositionFixedBug = 1;
-        this.msieFontBug = 1; this.msieIntegralBug = 1;
+        this.msieIntegralBug = 1;
         this.msieAlphaBug = 1; this.alphaPrintBug = 1;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieSpaceFix = '<img src="'+jsMath.blank+'" class="HD" />';
@@ -1032,6 +1057,11 @@ jsMath.Browser = {
       this.allowAbsoluteDelim = 1;
       this.separateSkips = 1;
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
+      if (navigator.vendor == 'Firefox') {
+        jsMath.Browser.version = navigator.vendorSub;
+      } else if (navigator.userAgent.match(' Firefox/([0-9.]+)( |$)')) {
+        jsMath.Browser.version = RegExp.$1;
+      }
     }
   },
   
@@ -1110,7 +1140,7 @@ jsMath.Font = {
 
   // the HTML for the missing font message
   message:    
-    '<b>No TeX fonts found</b> -- using image fonts instead.<br/>\n'
+    '<b>No jsMath TeX fonts found</b> -- using image fonts instead.<br/>\n'
       + 'These may be slow and might not print well.<br/>\n'
       + 'Use the jsMath control panel to get additional information.',
       
@@ -1120,7 +1150,7 @@ jsMath.Font = {
       + 'Use the jsMath control panel to get additional information.',
   
   /*
-   *  Look to see if a font is found.  HACK!
+   *  Look to see if a font is found.
    *  Check the character in a given position, and see if it is
    *  wider than the usual one in that position.
    */
@@ -1148,7 +1178,8 @@ jsMath.Font = {
   CheckTeX: function () {
     var wh = jsMath.BBoxFor('<span style="font-family: jsMath-cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
     jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10',null,null,'jsMath-'));
-    if (jsMath.nofonts) {
+    if (jsMath.nofonts && (navigator.platform != "MacPPC" ||
+        jsMath.browser != 'Mozilla' || !jsMath.Browser.VersionAtLeast(1.5))) {
       wh = jsMath.BBoxFor('<span style="font-family: cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
       jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
       if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
@@ -1189,10 +1220,14 @@ jsMath.Font = {
     if (cookie.font == 'unicode') {
       var platform = ({Win32: 'pc', MacPPC: 'mac'})[navigator.platform] || 'unix';
       jsMath.Setup.Script('jsMath-fallback-'+platform+'.js');
+      jsMath.Box.TeXnonfallback = jsMath.Box.TeX;
+      jsMath.Box.TeX = jsMath.Box.TeXfallback;
       return;
     }
     if (cookie.font == 'symbol') {
       jsMath.Setup.Script('jsMath-fallback-symbols.js');
+      jsMath.Box.TeXnonfallback = jsMath.Box.TeX;
+      jsMath.Box.TeX = jsMath.Box.TeXfallback;
       return;
     }
     jsMath.Img.SetFont({
@@ -1292,7 +1327,7 @@ jsMath.Font = {
    *  Load a font
    */
   Load: function (name) {jsMath.Setup.Script(this.URL(name))},
-  URL: function (name) {return 'fonts/'+name+'/def.js'}
+  URL: function (name) {return jsMath.Img.root+name+'/def.js'}
   
 };
 
@@ -2125,6 +2160,14 @@ jsMath.Img = {
    *  Laod the data for an image font
    */
   LoadFont: function (name) {
+    if (!this.loaded) this.Init();
+    jsMath.Setup.Script(this.URL(name,""));
+  },
+  
+  /*
+   *  Setup for print mode, and create the hex code table
+   */
+  Init: function () {
     if (jsMath.Controls.cookie.print) {
       jsMath.Controls.cookie.print = 0;
       var button = jsMath.Element("button");
@@ -2133,8 +2176,13 @@ jsMath.Img = {
       if (jsMath.window.location.protocol != 'file:') {jsMath.Controls.SetCookie(0)}
       if (jsMath.Browser.alphaPrintBug) {jsMath.Controls.cookie.alpha = 0}
     }
+    var codes = '0123456789ABCDEF';
+    this.HexCode = [];
+    for (var i = 0; i < 128; i++) {
+      var h = Math.floor(i/16); var l = i - 16*h;
+      this.HexCode[i] = codes.charAt(h)+codes.charAt(l);
+    }
     this.loaded = 1;
-    jsMath.Setup.Script(this.URL(name,""));
   }
   
 };
@@ -2310,9 +2358,9 @@ jsMath.Add(jsMath.Box,{
     var bd = ((tclass == 'cmsy10' || tclass == 'cmex10')? BB.h-TeX.h: TeX.d*BB.h/TeX.hd);
     var box = new jsMath.Box('text',text,BB.w,BB.h-bd,bd);
     box.style = style; box.size = size; box.tclass = tclass;
-    if (d != null) {if (d != 1) {box.d = d}} else {box.d = 0}
+    if (d != null) {box.d = d*TeX.scale} else {box.d = 0}
     if (a == null || a == 1) {box.h = .9*TeX.M_height}
-      else {box.h = 1.1*TeX.x_height + 1*a}; // sometimes a is a string?
+      else {box.h = 1.1*TeX.x_height + TeX.scale*a}
     return box;
   },
 
@@ -2331,26 +2379,50 @@ jsMath.Add(jsMath.Box,{
     box.style = style; box.size = size;
     if (c.tclass) {
       box.tclass = c.tclass;
-      box.bh = scale*jsMath.h;
-      box.bd = scale*jsMath.d;
+      if (c.img) {box.bh = c.img.bh; box.bd = c.img.bd}
+            else {box.bh = scale*jsMath.h; box.bd = scale*jsMath.d}
     } else {
       box.tclass = font;
       box.bh = scale*jsMath.TeX[font].h;
       box.bd = scale*jsMath.TeX[font].d;
-      if (jsMath.Browser.msieFontBug) {
-        // hack to avoid Font changing back to the default
+      if (jsMath.Browser.msieFontBug && box.html.match(/&#/)) {
+        // hack to avoid font changing back to the default
         // font when a unicode reference is not followed
         // by a letter or number
-        box.html += '<span style="display: none">x</span>'
+        box.html += '<span style="display: none">x</span>';
       }
-    }
-    if (c.img != null) {
-      box.bh = c.img.bh; box.bd = c.img.bd;
-      box.tclass = "normal";
     }
     return box;
   },
-  
+
+  /*
+   *  In fallback modes, handle the fact that we don't have the
+   *  sizes of the characters precomputed
+   */
+  TeXfallback: function (C,font,style,size) {
+    c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
+    if (c.img != null) {return this.TeXnonfallback(C,font,style,size)}
+    if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
+    var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
+    var scale = jsMath.Typeset.TeX(style,size).scale;
+    if (c.bh != null) {
+      box.bh = c.bh*scale;
+      box.bd = c.bd*scale;
+    } else {
+      var h = box.bd+box.bh;
+      var html = jsMath.Typeset.AddClass(box.tclass,box.html);
+          html = jsMath.Typeset.AddStyle(style,size,html);
+      box.bd = jsMath.EmBoxFor(html + '<img src="'+jsMath.blank+'" '
+                + 'style="width: 1px; height: '+jsMath.HTML.Em(h)+'" />').h - h;
+      box.bh = h - box.bd;
+      c.bh = box.bh/scale;
+      c.bd = box.bd/scale;
+    }
+    if (jsMath.msieFontBug && box.html.match(/&#/))
+      {box.html += '<span style="display: none">x</span>'}
+    return box;
+  },
+
   /*
    *  Set the character's string to the appropriate image file
    */
@@ -2373,7 +2445,7 @@ jsMath.Add(jsMath.Box,{
     }
     var w = img[0]*scale; var h = img[1]*scale; var d = -img[2]*scale; var v;
     var wadjust = (c.w == null || Math.abs(c.w-w) < .01)? "" : " margin-right:"+jsMath.HTML.Em(c.w-w)+';';
-    var resize = ""; C = this.HexCode(C);
+    var resize = ""; C = jsMath.Img.HexCode[C];
     if (!mustScale && !jsMath.Controls.cookie.scaleImg) {
       if (2*w < h || (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha))
          {resize = "height:"+(img[1]*jsMath.Browser.imgScale)+'px;'}
@@ -2403,15 +2475,6 @@ jsMath.Add(jsMath.Box,{
     c.img.size = size; c.img.best = jsMath.Img.best;
   },
   
-  /*
-   *  Get a two-character hex code (some browsers don't know toString(16))
-   */
-  HexCode: function (C) {
-    var codes = '0123456789ABCDEF';
-    var h = Math.floor(C/16); var l = C - 16*h;
-    return codes.charAt(h)+codes.charAt(l);
-  },
-
   /*
    *  A box containing a spacer of a specific width
    */
@@ -2760,25 +2823,25 @@ jsMath.Add(jsMath.Box,{
         if (match == '$') {
           parse = jsMath.Parse(text.slice(k,i-1),null,size);
           if (parse.error) {
-            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,1);
+            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,.2);
           } else {
             parse.Atomize();
             mlist[mlist.length] = parse.mlist.Typeset('T',size).Styled();
           }
           match = ''; k = i;
         } else {
-          mlist[mlist.length] = this.Text(text.slice(k,i-1),'normal','T',size,1,1);
+          mlist[mlist.length] = this.Text(text.slice(k,i-1),'normal','T',size,1,.2);
           match = '$'; k = i;
         }
       } else if (c == '\\') {
         c = text.charAt(i++);
         if (c == '(' && match == '') {
-          mlist[mlist.length] = this.Text(text.slice(k,i-2),'normal','T',size,1,1);
+          mlist[mlist.length] = this.Text(text.slice(k,i-2),'normal','T',size,1,.2);
           match = ')'; k = i;
         } else if (c == ')' && match == ')') {
           parse = jsMath.Parse(text.slice(k,i-2),null,size);
           if (parse.error) {
-            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,1);
+            mlist[mlist.length] = this.Text(parse.error,'error','T',size,1,.2);
           } else {
             parse.Atomize();
             mlist[mlist.length] = parse.mlist.Typeset('T',size).Styled();
@@ -2787,7 +2850,7 @@ jsMath.Add(jsMath.Box,{
         }
       }
     }
-    mlist[mlist.length] = this.Text(text.slice(k),'normal','T',size,1,1);
+    mlist[mlist.length] = this.Text(text.slice(k),'normal','T',size,1,.2);
     return this.SetList(mlist,'T',size);
   },
   
@@ -4981,7 +5044,7 @@ jsMath.Package(jsMath.Parser,{
    */
   NamedOp: function (name,data) {
     var a = (name.match(/[^acegm-su-z]/)) ? 1: 0;
-    var d = (name.match(/[gjpqy]/)) ? 1: 0;
+    var d = (name.match(/[gjpqy]/)) ? .2: 0;
     if (data[1]) {name = data[1]}
     var box = jsMath.mItem.TextAtom('op',name,'cmr10',a,d);
     if (data[0] != null) {box.limits = data[0]}
@@ -5440,10 +5503,10 @@ jsMath.Translate = {
    *  Return the text of a given DOM element
    */
   GetElementText: function (element) {
-    var text = element.innerText;
-    if (text == null || text == "") {
-      try {text = element.textContent} catch (err) {}
-      if (text == null || text == "") {text = element.innerHTML}
+    var text = '';
+    for (var i = 0; i < element.childNodes.length; i++) {
+      if (element.childNodes[i].nodeValue == null) {text += ' '}
+        else {text += element.childNodes[i].nodeValue}
     }
     if (text.search('&') >= 0) {
       text = text.replace(/&lt;/g,'<');
@@ -5476,8 +5539,9 @@ jsMath.Translate = {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
     element.alt = text;
-    element.innerHTML = this.TextMode(text);
+    text = this.TextMode(text);
     element.className = 'typeset';
+    element.innerHTML = text;
   },
   
   /*
@@ -5487,8 +5551,9 @@ jsMath.Translate = {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
     element.alt = text;
-    element.innerHTML = this.DisplayMode(text);
+    text = this.DisplayMode(text);
     element.className = 'typeset';
+    element.innerHTML = text;
   },
   
   /*

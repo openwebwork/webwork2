@@ -8,7 +8,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright 2004-2005 by Davide P. Cervone
+ *  Copyright 2004-2006 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -260,6 +260,7 @@ if (jsMath.browser == "Mozilla" && navigator.platform != "MacPPC") {
         /*
          *  MSIE/PC
          */
+        jsMath.Browser.msieFontBug = 1;
         jsMath.Update.TeXfonts({
           cmr10:  {'10': {c: '&Omega;', tclass: 'normal'}},
           cmmi10: {

@@ -8,7 +8,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright 2004-2005 by Davide P. Cervone
+ *  Copyright 2004-2006 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'O', krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}, tclass: 'normal'},
     // 50 - 5F
     {c: 'P', krn: {'65': -0.0833, '111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'normal'},
-    {c: 'Q', d: 1, tclass: 'normal'},
+    {c: 'Q', d:.1, tclass: 'normal'},
     {c: 'R', krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}, tclass: 'normal'},
     {c: 'S', tclass: 'normal'},
     {c: 'T', krn: {'121': -0.0278, '101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}, tclass: 'normal'},
@@ -149,18 +149,18 @@ jsMath.Add(jsMath.TeX,{
     {c: 'd', tclass: 'normal'},
     {c: 'e', a:0, tclass: 'normal'},
     {c: 'f', ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 12, '102': 11, '108': 13}, tclass: 'normal'},
-    {c: 'g', a:0, d:1, ic: 0.0139, krn: {'106': 0.0278}, tclass: 'normal'},
+    {c: 'g', a:0, d:.2, ic: 0.0139, krn: {'106': 0.0278}, tclass: 'normal'},
     {c: 'h', krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal'},
     {c: 'i', tclass: 'normal'},
-    {c: 'j', d:1, tclass: 'normal'},
+    {c: 'j', d:.2, tclass: 'normal'},
     {c: 'k', krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal'},
     {c: 'l', tclass: 'normal'},
     {c: 'm', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal'},
     {c: 'n', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'normal'},
     {c: 'o', a:0, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal'},
     // 70 - 7F
-    {c: 'p', a:0, d:1, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal'},
-    {c: 'q', a:0, d:1, tclass: 'normal'},
+    {c: 'p', a:0, d:.2, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'normal'},
+    {c: 'q', a:0, d:.2, tclass: 'normal'},
     {c: 'r', a:0, tclass: 'normal'},
     {c: 's', a:0, tclass: 'normal'},
     {c: 't', krn: {'121': -0.0278, '119': -0.0278}, tclass: 'normal'},
@@ -168,7 +168,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'v', a:0, ic: 0.0139, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal'},
     {c: 'w', a:0, ic: 0.0139, krn: {'101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'normal'},
     {c: 'x', a:0, tclass: 'normal'},
-    {c: 'y', a:0, d:1, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'normal'},
+    {c: 'y', a:0, d:.2, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'normal'},
     {c: 'z', a:0, tclass: 'normal'},
     {c: '&#x2013;', a:.1, ic: 0.0278, lig: {'45': 124}, tclass: 'normal'},
     {c: '&#x2014;', a:.1, ic: 0.0278, tclass: 'normal'},
@@ -191,36 +191,36 @@ jsMath.Add(jsMath.TeX,{
     {c: '&Psi;', ic: 0.11, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0556}, tclass: 'igreek'},
     {c: '&Omega;', ic: 0.0502, krn: {'127': 0.0833}, tclass: 'igreek'},
     {c: '&alpha;', a:0, ic: 0.0037, krn: {'127': 0.0278}, tclass: 'greek'},
-    {c: '&beta;', d:1, ic: 0.0528, krn: {'127': 0.0833}, tclass: 'greek'},
-    {c: '&gamma;', a:0, d:1, ic: 0.0556, tclass: 'greek'},
+    {c: '&beta;', d:.2, ic: 0.0528, krn: {'127': 0.0833}, tclass: 'greek'},
+    {c: '&gamma;', a:0, d:.2, ic: 0.0556, tclass: 'greek'},
     {c: '&delta;', ic: 0.0378, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}, tclass: 'greek'},
     {c: '&epsilon;', a:0, krn: {'127': 0.0556}, tclass: 'lucida'},
     // 10 - 1F
-    {c: '&zeta;', d:1, ic: 0.0738, krn: {'127': 0.0833}, tclass: 'greek'},
-    {c: '&eta;', a:0, d:1, ic: 0.0359, krn: {'127': 0.0556}, tclass: 'greek'},
+    {c: '&zeta;', d:.2, ic: 0.0738, krn: {'127': 0.0833}, tclass: 'greek'},
+    {c: '&eta;', a:0, d:.2, ic: 0.0359, krn: {'127': 0.0556}, tclass: 'greek'},
     {c: '&theta;', ic: 0.0278, krn: {'127': 0.0833}, tclass: 'greek'},
     {c: '&iota;', a:0, krn: {'127': 0.0556}, tclass: 'greek'},
     {c: '&kappa;', a:0, tclass: 'greek'},
     {c: '&lambda;', tclass: 'greek'},
-    {c: '&mu;', a:0, d:1, krn: {'127': 0.0278}, tclass: 'greek'},
+    {c: '&mu;', a:0, d:.2, krn: {'127': 0.0278}, tclass: 'greek'},
     {c: '&nu;', a:0, ic: 0.0637, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}, tclass: 'greek'},
-    {c: '&xi;', d:1, ic: 0.046, krn: {'127': 0.111}, tclass: 'greek'},
+    {c: '&xi;', d:.2, ic: 0.046, krn: {'127': 0.111}, tclass: 'greek'},
     {c: '&pi;', a:0, ic: 0.0359, tclass: 'greek'},
-    {c: '&rho;', a:0, d:1, krn: {'127': 0.0833}, tclass: 'greek'},
+    {c: '&rho;', a:0, d:.2, krn: {'127': 0.0833}, tclass: 'greek'},
     {c: '&sigma;', a:0, ic: 0.0359, krn: {'59': -0.0556, '58': -0.0556}, tclass: 'greek'},
     {c: '&tau;', a:0, ic: 0.113, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0278}, tclass: 'greek'},
     {c: '&upsilon;', a:0, ic: 0.0359, krn: {'127': 0.0278}, tclass: 'greek'},
-    {c: '&phi;', a:.1, d:1, krn: {'127': 0.0833}, tclass: 'greek'},
-    {c: '&chi;', a:0, d:1, krn: {'127': 0.0556}, tclass: 'greek'},
+    {c: '&phi;', a:.1, d:.2, krn: {'127': 0.0833}, tclass: 'greek'},
+    {c: '&chi;', a:0, d:.2, krn: {'127': 0.0556}, tclass: 'greek'},
     // 20 - 2F
-    {c: '&psi;', a:.1, d:1, ic: 0.0359, krn: {'127': 0.111}, tclass: 'greek'},
+    {c: '&psi;', a:.1, d:.2, ic: 0.0359, krn: {'127': 0.111}, tclass: 'greek'},
     {c: '&omega;', a:0, ic: 0.0359, tclass: 'greek'},
     {c: '&epsilon;', a:0, krn: {'127': 0.0833}, tclass: 'greek'},
     {c: '&#x3D1;', krn: {'127': 0.0833}, tclass: 'normal'},
     {c: '&#x3D6;', a:0, ic: 0.0278, tclass: 'normal'},
-    {c: '&#x3F1;', a:0, d:1, krn: {'127': 0.0833}, tclass: 'normal'},
-    {c: '&#x3C2;', a:0, d:1, ic: 0.0799, krn: {'127': 0.0833}, tclass: 'normal'},
-    {c: '&#x3D5;', a:.1, d:1, krn: {'127': 0.0833}, tclass: 'normal'},
+    {c: '&#x3F1;', a:0, d:.2, krn: {'127': 0.0833}, tclass: 'normal'},
+    {c: '&#x3C2;', a:0, d:.2, ic: 0.0799, krn: {'127': 0.0833}, tclass: 'normal'},
+    {c: '&#x3D5;', a:.1, d:.2, krn: {'127': 0.0833}, tclass: 'normal'},
     {c: '&#x21BC;', a:0, d:-.2, tclass: 'harpoon'},
     {c: '&#x21BD;', a:0, d:-.1, tclass: 'harpoon'},
     {c: '&#x21C0;', a:0, d:-.2, tclass: 'harpoon'},
@@ -265,7 +265,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'O', ic: 0.0278, krn: {'127': 0.0833}, tclass: 'italic'},
     // 50 - 5F
     {c: 'P', ic: 0.139, krn: {'61': -0.0556, '59': -0.111, '58': -0.111, '127': 0.0833}, tclass: 'italic'},
-    {c: 'Q', d:1, krn: {'127': 0.0833}, tclass: 'italic'},
+    {c: 'Q', d:.2, krn: {'127': 0.0833}, tclass: 'italic'},
     {c: 'R', ic: 0.00773, krn: {'127': 0.0833}, tclass: 'italic'},
     {c: 'S', ic: 0.0576, krn: {'61': -0.0556, '59': -0.0556, '58': -0.0556, '127': 0.0833}, tclass: 'italic'},
     {c: 'T', ic: 0.139, krn: {'61': -0.0278, '59': -0.0556, '58': -0.0556, '127': 0.0833}, tclass: 'italic'},
@@ -287,19 +287,19 @@ jsMath.Add(jsMath.TeX,{
     {c: 'c', a:0, krn: {'127': 0.0556}, tclass: 'italic'},
     {c: 'd', krn: {'89': 0.0556, '90': -0.0556, '106': -0.111, '102': -0.167, '127': 0.167}, tclass: 'italic'},
     {c: 'e', a:0, krn: {'127': 0.0556}, tclass: 'italic'},
-    {c: 'f', d:1, ic: 0.108, krn: {'59': -0.0556, '58': -0.0556, '127': 0.167}, tclass: 'italic'},
-    {c: 'g', a:0, d:1, ic: 0.0359, krn: {'127': 0.0278}, tclass: 'italic'},
+    {c: 'f', d:.2, ic: 0.108, krn: {'59': -0.0556, '58': -0.0556, '127': 0.167}, tclass: 'italic'},
+    {c: 'g', a:0, d:.2, ic: 0.0359, krn: {'127': 0.0278}, tclass: 'italic'},
     {c: 'h', krn: {'127': -0.0278}, tclass: 'italic'},
     {c: 'i', tclass: 'italic'},
-    {c: 'j', d:1, ic: 0.0572, krn: {'59': -0.0556, '58': -0.0556}, tclass: 'italic'},
+    {c: 'j', d:.2, ic: 0.0572, krn: {'59': -0.0556, '58': -0.0556}, tclass: 'italic'},
     {c: 'k', ic: 0.0315, tclass: 'italic'},
     {c: 'l', ic: 0.0197, krn: {'127': 0.0833}, tclass: 'italic'},
     {c: 'm', a:0, tclass: 'italic'},
     {c: 'n', a:0, tclass: 'italic'},
     {c: 'o', a:0, krn: {'127': 0.0556}, tclass: 'italic'},
     // 70 - 7F
-    {c: 'p', a:0, d:1, krn: {'127': 0.0833}, tclass: 'italic'},
-    {c: 'q', a:0, d:1, ic: 0.0359, krn: {'127': 0.0833}, tclass: 'italic'},
+    {c: 'p', a:0, d:.2, krn: {'127': 0.0833}, tclass: 'italic'},
+    {c: 'q', a:0, d:.2, ic: 0.0359, krn: {'127': 0.0833}, tclass: 'italic'},
     {c: 'r', a:0, ic: 0.0278, krn: {'59': -0.0556, '58': -0.0556, '127': 0.0556}, tclass: 'italic'},
     {c: 's', a:0, krn: {'127': 0.0556}, tclass: 'italic'},
     {c: 't', krn: {'127': 0.0833}, tclass: 'italic'},
@@ -307,11 +307,11 @@ jsMath.Add(jsMath.TeX,{
     {c: 'v', a:0, ic: 0.0359, krn: {'127': 0.0278}, tclass: 'italic'},
     {c: 'w', a:0, ic: 0.0269, krn: {'127': 0.0833}, tclass: 'italic'},
     {c: 'x', a:0, krn: {'127': 0.0278}, tclass: 'italic'},
-    {c: 'y', a:0, d:1, ic: 0.0359, krn: {'127': 0.0556}, tclass: 'italic'},
+    {c: 'y', a:0, d:.2, ic: 0.0359, krn: {'127': 0.0556}, tclass: 'italic'},
     {c: 'z', a:0, ic: 0.044, krn: {'127': 0.0556}, tclass: 'italic'},
     {c: '&#x131;', a:0, krn: {'127': 0.0278}, tclass: 'italic'},
-    {c: 'j', d:1, krn: {'127': 0.0833}, tclass: 'italic'},
-    {c: '&#x2118;', a:0, d:1, krn: {'127': 0.111}, tclass: 'normal'},
+    {c: 'j', d:.2, krn: {'127': 0.0833}, tclass: 'italic'},
+    {c: '&#x2118;', a:0, d:.2, krn: {'127': 0.111}, tclass: 'normal'},
     {c: '<span style="position:relative; left: .4em; top: -.8em; font-size: 50%">&#x2192;</span>', ic: 0.154, tclass: 'symbol'},
     {c: '&#x0311;', ic: 0.399, tclass: 'normal'}
   ],
@@ -682,7 +682,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'O', ic: 0.094, krn: {'88': -0.0256, '87': -0.0256, '65': -0.0256, '86': -0.0256, '89': -0.0256}, tclass: 'italic'},
     // 50 - 5F
     {c: 'P', ic: 0.103, krn: {'65': -0.0767}, tclass: 'italic'},
-    {c: 'Q', d: 1, ic: 0.094, tclass: 'italic'},
+    {c: 'Q', d:.1, ic: 0.094, tclass: 'italic'},
     {c: 'R', ic: 0.0387, krn: {'110': -0.0256, '108': -0.0256, '114': -0.0256, '117': -0.0256, '109': -0.0256, '116': -0.0256, '105': -0.0256, '67': -0.0256, '79': -0.0256, '71': -0.0256, '104': -0.0256, '98': -0.0256, '85': -0.0256, '107': -0.0256, '118': -0.0256, '119': -0.0256, '81': -0.0256, '84': -0.0767, '89': -0.0767, '86': -0.102, '87': -0.102, '101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
     {c: 'S', ic: 0.12, tclass: 'italic'},
     {c: 'T', ic: 0.133, krn: {'121': -0.0767, '101': -0.0767, '111': -0.0767, '114': -0.0767, '97': -0.0767, '117': -0.0767, '65': -0.0767}, tclass: 'italic'},
@@ -705,18 +705,18 @@ jsMath.Add(jsMath.TeX,{
     {c: 'd', ic: 0.103, krn: {'108': 0.0511}, tclass: 'italic'},
     {c: 'e', a:0, ic: 0.0751, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
     {c: 'f', ic: 0.212, krn: {'39': 0.104, '63': 0.104, '33': 0.104, '41': 0.104, '93': 0.104}, lig: {'105': 12, '102': 11, '108': 13}, tclass: 'italic'},
-    {c: 'g', a:0, d:1, ic: 0.0885, tclass: 'italic'},
+    {c: 'g', a:0, d:.2, ic: 0.0885, tclass: 'italic'},
     {c: 'h', ic: 0.0767, tclass: 'italic'},
     {c: 'i', ic: 0.102, tclass: 'italic'},
-    {c: 'j', d:1, ic: 0.145, tclass: 'italic'},
+    {c: 'j', d:.2, ic: 0.145, tclass: 'italic'},
     {c: 'k', ic: 0.108, tclass: 'italic'},
     {c: 'l', ic: 0.103, krn: {'108': 0.0511}, tclass: 'italic'},
     {c: 'm', a:0, ic: 0.0767, tclass: 'italic'},
     {c: 'n', a:0, ic: 0.0767, krn: {'39': -0.102}, tclass: 'italic'},
     {c: 'o', a:0, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
     // 70 - 7F
-    {c: 'p', a:0, d:1, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
-    {c: 'q', a:0, d:1, ic: 0.0885, tclass: 'italic'},
+    {c: 'p', a:0, d:.2, ic: 0.0631, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
+    {c: 'q', a:0, d:.2, ic: 0.0885, tclass: 'italic'},
     {c: 'r', a:0, ic: 0.108, krn: {'101': -0.0511, '97': -0.0511, '111': -0.0511, '100': -0.0511, '99': -0.0511, '103': -0.0511, '113': -0.0511}, tclass: 'italic'},
     {c: 's', a:0, ic: 0.0821, tclass: 'italic'},
     {c: 't', ic: 0.0949, tclass: 'italic'},
@@ -724,7 +724,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'v', a:0, ic: 0.108, tclass: 'italic'},
     {c: 'w', a:0, ic: 0.108, krn: {'108': 0.0511}, tclass: 'italic'},
     {c: 'x', a:0, ic: 0.12, tclass: 'italic'},
-    {c: 'y', a:0, d:1, ic: 0.0885, tclass: 'italic'},
+    {c: 'y', a:0, d:.2, ic: 0.0885, tclass: 'italic'},
     {c: 'z', a:0, ic: 0.123, tclass: 'italic'},
     {c: '&#x2013;', a:.1, ic: 0.0921, lig: {'45': 124}, tclass: 'italic'},
     {c: '&#x2014;', a:.1, ic: 0.0921, tclass: 'italic'},
@@ -821,7 +821,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'O', krn: {'88': -0.0278, '87': -0.0278, '65': -0.0278, '86': -0.0278, '89': -0.0278}, tclass: 'bold'},
     // 50 - 5F
     {c: 'P', krn: {'65': -0.0833, '111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'bold'},
-    {c: 'Q', d: 1, tclass: 'bold'},
+    {c: 'Q', d:.1, tclass: 'bold'},
     {c: 'R', krn: {'116': -0.0278, '67': -0.0278, '79': -0.0278, '71': -0.0278, '85': -0.0278, '81': -0.0278, '84': -0.0833, '89': -0.0833, '86': -0.111, '87': -0.111}, tclass: 'bold'},
     {c: 'S', tclass: 'bold'},
     {c: 'T', krn: {'121': -0.0278, '101': -0.0833, '111': -0.0833, '114': -0.0833, '97': -0.0833, '65': -0.0833, '117': -0.0833}, tclass: 'bold'},
@@ -844,18 +844,18 @@ jsMath.Add(jsMath.TeX,{
     {c: 'd', tclass: 'bold'},
     {c: 'e', a:0, tclass: 'bold'},
     {c: 'f', ic: 0.0778, krn: {'39': 0.0778, '63': 0.0778, '33': 0.0778, '41': 0.0778, '93': 0.0778}, lig: {'105': 12, '102': 11, '108': 13}, tclass: 'bold'},
-    {c: 'g', a:0, d:1, ic: 0.0139, krn: {'106': 0.0278}, tclass: 'bold'},
+    {c: 'g', a:0, d:.2, ic: 0.0139, krn: {'106': 0.0278}, tclass: 'bold'},
     {c: 'h', krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'bold'},
     {c: 'i', tclass: 'bold'},
-    {c: 'j', d:1, tclass: 'bold'},
+    {c: 'j', d:.2, tclass: 'bold'},
     {c: 'k', krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'bold'},
     {c: 'l', tclass: 'bold'},
     {c: 'm', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'bold'},
     {c: 'n', a:0, krn: {'116': -0.0278, '117': -0.0278, '98': -0.0278, '121': -0.0278, '118': -0.0278, '119': -0.0278}, tclass: 'bold'},
     {c: 'o', a:0, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'bold'},
     // 70 - 7F
-    {c: 'p', a:0, d:1, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'bold'},
-    {c: 'q', a:0, d:1, tclass: 'bold'},
+    {c: 'p', a:0, d:.2, krn: {'101': 0.0278, '111': 0.0278, '120': -0.0278, '100': 0.0278, '99': 0.0278, '113': 0.0278, '118': -0.0278, '106': 0.0556, '121': -0.0278, '119': -0.0278}, tclass: 'bold'},
+    {c: 'q', a:0, d:.2, tclass: 'bold'},
     {c: 'r', a:0, tclass: 'bold'},
     {c: 's', a:0, tclass: 'bold'},
     {c: 't', krn: {'121': -0.0278, '119': -0.0278}, tclass: 'bold'},
@@ -863,7 +863,7 @@ jsMath.Add(jsMath.TeX,{
     {c: 'v', a:0, ic: 0.0139, krn: {'97': -0.0556, '101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'bold'},
     {c: 'w', a:0, ic: 0.0139, krn: {'101': -0.0278, '97': -0.0278, '111': -0.0278, '99': -0.0278}, tclass: 'bold'},
     {c: 'x', a:0, tclass: 'bold'},
-    {c: 'y', a:0, d:1, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'bold'},
+    {c: 'y', a:0, d:.2, ic: 0.0139, krn: {'111': -0.0278, '101': -0.0278, '97': -0.0278, '46': -0.0833, '44': -0.0833}, tclass: 'bold'},
     {c: 'z', a:0, tclass: 'bold'},
     {c: '&#x2013;', a:.1, ic: 0.0278, lig: {'45': 124}, tclass: 'bold'},
     {c: '&#x2014;', a:.1, ic: 0.0278, tclass: 'bold'},
@@ -873,44 +873,6 @@ jsMath.Add(jsMath.TeX,{
   ]
 });
 
-
-/*
- *  We need to replace the jsMath.Box.TeX function in order to use the
- *  different font metrics in the tables above, and to handle the
- *  scaling better.
- */
-
-jsMath.Add(jsMath.Box,{
-  TeX: function (C,font,style,size) {
-    c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
-    if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
-    if (c.img != null && c.c != '') this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
-    var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
-    var scale = jsMath.Typeset.TeX(style,size).scale;
-    if (c.bh != null) {
-      box.bh = c.bh * scale;
-      box.bd = c.bd * scale;
-    } else {
-      var h = box.bd+box.bh;
-      var ph = Math.round(h*jsMath.em);
-      if (h > jsMath.hd) {
-        box.bd = jsMath.EmBoxFor(jsMath.HTML.Class(c.tclass,c.c)
-                   + '<img src="'+jsMath.blank+'" style="'
-                   + 'width: 1px; height: '+ph+'px" />').h - h;
-        box.bh = h - box.bd;
-      }
-      c.bh = box.bh/scale;
-      c.bd = box.bd/scale;
-    }
-    if (jsMath.msieFontBug) {
-      // hack to avoid Font changing back to the default
-      // font when a unicode reference is not followed
-      // by a letter or number
-      box.html += '<span style="display: none">x</span>'
-    }
-    return box;
-  }
-});
 
 jsMath.Setup.Styles({
     '.typeset .cmr10':          "font-family: serif",
@@ -1031,6 +993,16 @@ if (jsMath.browser == 'OmniWeb') {
     });
   }
   
+}
+
+//
+//  Adjust for Opera
+//
+if (jsMath.browser == 'Opera') {
+  jsMath.Setup.Styles({
+    '.typeset .bigop1c': "margin:0pt .12em 0pt 0pt;",
+    '.typeset .bigop2c': "margin:0pt .12em 0pt 0pt;"
+  });
 }
 
 if (jsMath.browser == 'Mozilla') {jsMath.Setup.Script('jsMath-fallback-mac-mozilla.js')}
