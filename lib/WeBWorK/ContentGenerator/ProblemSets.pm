@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.69 2006/01/20 00:21:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -48,6 +48,7 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
+		print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 		print CGI::h2("Course Info");
 		
 		# deal with instructor crap
@@ -76,6 +77,8 @@ sub info {
 		if ($editorURL) {
 			print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 		}
+		
+		print CGI::end_div();
 		
 		return "";
 	}
