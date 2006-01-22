@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Home.pm,v 1.14 2006/01/20 00:17:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,18 +46,21 @@ sub info {
 		}
 		
 		if (-f $site_info) {
-			$result .= CGI::h2("Site Information");
-			
 			my $text = eval { readFile($site_info) };
 			if ($@) {
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result = CGI::div({class=>"ResultsWithError"}, $@);
 			} elsif ($text =~ /\S/) {
-				$result .= $text;
+				$result = $text;
 			}
 		}
 	}
 	
-	return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
+	if (defined $result and $result ne "") {
+		return CGI::div({class=>"info-box", id=>"InfoPanel"},
+			CGI::h2("Site Information"), $result);
+	} else {
+		return "";
+	}
 }
 
 sub body {
