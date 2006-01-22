@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.73 2006/01/20 00:17:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -245,7 +245,7 @@ sub info {
 	
 	print CGI::p(CGI::b("Set Info"));
 	
-	my $editURL;
+	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
@@ -258,7 +258,7 @@ sub info {
 		print $pg->{body_text};
 	}
 	
-	if ($editURL) {
+	if ($editorURL) {
 		print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 	}
 	
