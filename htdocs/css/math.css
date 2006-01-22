@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader$
+ * $CVSHeader: webwork2/htdocs/css/math.css,v 1.3 2006/01/20 00:17:38 sh002i Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -398,9 +398,9 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.ResultsWithoutError { background-color: #66ff99 } /* light green */
-div.ResultsWithError { background-color: #ffcccc } /* light red */
-div.ResultsAlert { background-color: yellow } /* yellow */
+div.ResultsWithoutError { color: #096; } /* green */
+div.ResultsWithError { color: #C33; } /* red */
+div.ResultsAlert { color: #F60; } /* orange */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -466,7 +466,7 @@ font.Published   { font-style: normal; font-weight: normal; color: #000000; } /*
 font.Unpublished { font-style: italic; font-weight: normal; color: #aaaaaa; } /* light grey */
 
 /* styles used when editing a temporary file */
-.temporaryFile {  background-color: #ff9900 ; font-style: italic; }
+.temporaryFile { color: #F60; font-style: italic; }
 
 /* text colors for Auditing, Current, and Dropped students */
 .Audit { font-style: normal; color: purple; }
