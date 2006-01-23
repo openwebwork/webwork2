@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader: webwork2/htdocs/css/math.css,v 1.3 2006/01/20 00:17:38 sh002i Exp $
+ * $CVSHeader: webwork2/htdocs/css/math.css,v 1.4 2006/01/22 03:07:55 sh002i Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -380,7 +380,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 /* the info escape emits a DIV with this id. (not that the same DIV has class
  * "info-box" which is given above in the "template styles" section. Regardless,
  * it is emitted by WW code! */
-#InfoPanel { font-size: smaller; float: right; max-width: 40%; }
+#InfoPanel { font-size: smaller; float: right; width: 40%; overflow: auto; }
 
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
