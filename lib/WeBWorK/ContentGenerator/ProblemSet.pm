@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.74 2006/01/22 02:29:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.75 2006/01/22 02:55:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -146,6 +146,8 @@ sub siblings {
 	                     @setIDs;
 	}
 
+	print CGI::start_div({class=>"info-box", id=>"fisheye"});
+	print CGI::h2("Sets");
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, "Homework Sets");
@@ -177,6 +179,7 @@ sub siblings {
 	print CGI::end_ul();
 	#print CGI::end_li();
 	#print CGI::end_ul();
+	print CGI::end_div();
 	
 	return "";
 }
