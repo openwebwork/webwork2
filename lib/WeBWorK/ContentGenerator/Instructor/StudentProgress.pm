@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.21 2005/10/08 21:55:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.22 2005/10/11 20:45:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -103,9 +103,11 @@ sub siblings {
 	my $progress     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress", 
 	                                        courseID => $courseID);
 	
-	print CGI::start_ul({class=>"LinksMenu"});
-	print CGI::start_li();
-	print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($progress)}, 'Student&nbsp;Progress'));
+	print CGI::start_div({class=>"info-box", id=>"fisheye"});
+	print CGI::h2("Student Progress");
+	#print CGI::start_ul({class=>"LinksMenu"});
+	#print CGI::start_li();
+	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
 	print CGI::start_ul();
 	
 	foreach my $setID (@setIDs) {
@@ -115,8 +117,9 @@ sub siblings {
 	}
 	
 	print CGI::end_ul();
-	print CGI::end_li();
-	print CGI::end_ul();
+	#print CGI::end_li();
+	#print CGI::end_ul();
+	print CGI::end_div();
 	
 	return "";
 }
