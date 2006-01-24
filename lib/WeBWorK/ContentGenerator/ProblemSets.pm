@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.69 2006/01/20 00:21:14 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.70 2006/01/22 02:55:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -124,13 +124,6 @@ sub body {
 	my $sort            = $r->param("sort") || "status";
 	
 	my $courseName      = $urlpath->arg("courseID");
-	
-	# Print link to instructor page for instructors
-	if ($authz->hasPermissions($user, "access_instructor_tools")) {
-		my $instructorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Index", courseID => $courseName);
-		my $instructorLink = $self->systemLink($instructorPage);
-		print CGI::p({-align=>'center'},CGI::a({-href=>$instructorLink},'Instructor Tools'));
-	}
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
