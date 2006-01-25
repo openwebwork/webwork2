@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/FormatRecords.pm,v 1.6 2004/09/13 19:34:54 sh002i Exp $
+# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/FormatRecords.pm,v 1.7 2004/10/22 22:59:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

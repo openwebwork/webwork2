@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/snippets/hardcopySetHeader.pg,v 1.3 2004/04/22 20:47:24 gage Exp $
+# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/snippets/hardcopySetHeader.pg,v 1.4 2004/04/22 22:17:17 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

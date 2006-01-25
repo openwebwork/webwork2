@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/ww1hash_reindex,v 1.1 2004/10/07 02:06:25 sh002i Exp $
+# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/ww1hash_reindex,v 1.2 2004/10/10 17:04:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
