@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.28 2006/01/09 23:57:28 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.29 2006/01/25 23:13:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -160,10 +160,48 @@ sub addCourse {
 	
 	##### step 1: create course directory structure #####
 	
-	my @subDirs = sort values %{ $ce->{courseDirs} };
-	foreach my $subDir (@subDirs) {
-		mkdir "$subDir"
-			or die "Failed to create course directory $subDir: $!\n";
+	my %courseDirs = %{$ce->{courseDirs}};
+	
+	# deal with root directory first -- if we can't create it, we have to give up.
+	
+	exists $courseDirs{root} or croak "Can't create the course '$courseID' because no root directory is specified in the '%courseDirs' hash.";
+	my $root = $courseDirs{root};
+	delete $courseDirs{root};
+	{
+		# does the directory already exist?
+		-e $root and croak "Can't create the course '$courseID' because the root directory '$root' already exists.";
+		# is the parent directory writeable?
+		my @rootElements = File::Spec->splitdir($root);
+		pop @rootElements;
+		my $rootParent = File::Spec->catdir(@rootElements);
+		-w $rootParent or croak "Can't create the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+		# try to create it
+		mkdir $root or croak "Can't create the course '$courseID' becasue the root directory '$root' could not be created: $!.";
+	}
+	
+	# deal with the rest of the directories
+	
+	my @courseDirNames = sort { $courseDirs{$a} cmp $courseDirs{$b} } keys %courseDirs;
+	foreach my $courseDirName (@courseDirNames) {
+		my $courseDir = File::Spec->canonpath($courseDirs{$courseDirName});
+		
+		# does the directory already exist?
+		if (-e $courseDir) {
+			warn "Can't create $courseDirName directory '$courseDir', since it already exists. Using existing directory.\n";
+			next;
+		}
+		
+		# is the parent directory writeable?
+		my @courseDirElements = File::Spec->splitdir($courseDir);
+		pop @courseDirElements;
+		my $courseDirParent = File::Spec->catdir(@courseDirElements);
+		unless (-w $courseDirParent) {
+			warn "Can't create $courseDirName directory '$courseDir', since the parent directory is not writeable. You will have to create this directory manually.\n";
+			next;
+		}
+		
+		# try to create it
+		mkdir $courseDir or warn "Failed to create $courseDirName directory '$courseDir': $!. You will have to create this directory manually.\n";
 	}
 	
 	##### step 2: create course database (if necessary) #####
@@ -357,6 +395,7 @@ sub renameCourse {
 			}
 			
 			# does the destination already exist?
+			# (this should only happen on extra-coursedir directories, since we make sure the root dir doesn't exist above.)
 			if (-e $newDir) {
 				warn "$courseDirName: Can't move '$oldDir' to '$newDir', since the target already exists. You will have to move this directory manually.\n";
 				next;
@@ -383,7 +422,7 @@ sub renameCourse {
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
 			my $mvResult = system $mvCmd, $oldDir, $newDir;
-			$mvResult and warn "$courseDirName: failed to move directory with command: '$mvCmd $oldDir $newDir' (errno: $mvResult): $! You will have to move this directory manually.\n";
+			$mvResult and warn "$courseDirName: Failed to move directory with command: '$mvCmd $oldDir $newDir': $! (errno: $mvResult) You will have to move this directory manually.\n";
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
@@ -466,6 +505,24 @@ sub deleteCourse {
 	die "the course environment supplied doesn't appear to describe the course $courseID. can't proceed."
 		unless $ce->{courseName} eq $courseID;
 	
+	my %courseDirs = %{$ce->{courseDirs}};
+	
+	##### step 0: make sure course directory is deleteable #####
+	
+	# deal with root directory first -- if we won't be able to delete it, we have to give up.
+	
+	exists $courseDirs{root} or croak "Can't delete the course '$courseID' because no root directory is specified in the '%courseDirs' hash.";
+	my $root = $courseDirs{root};
+	if (-e $root) {
+		# is the parent directory writeable?
+		my @rootElements = File::Spec->splitdir($root);
+		pop @rootElements;
+		my $rootParent = File::Spec->catdir(@rootElements);
+		-w $rootParent or croak "Can't delete the course '$courseID' because the courses directory '$rootParent' is not writeable.";
+	} else {
+		warn "Warning: the course root directory '$root' does not exist. Attempting to delete the course database and other course directories...\n";
+	}
+	
 	##### step 1: delete course database (if necessary) #####
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
@@ -477,15 +534,37 @@ sub deleteCourse {
 	
 	##### step 2: delete course directory structure #####
 	
-	# my $courseDir = $ce->{courseDirs}->{root};
-	# the tmp file might be in a different tree
-	my @courseDirs = keys %{ $ce->{courseDirs} };
-	foreach my $key (@courseDirs) {
-	    my $courseDir = $ce->{courseDirs}->{$key};
-		rmtree($courseDir, 0, 0) if -e $courseDir;
+	my @courseDirNames = sort { $courseDirs{$a} cmp $courseDirs{$b} } keys %courseDirs;
+	foreach my $courseDirName (@courseDirNames) {
+		my $courseDir = File::Spec->canonpath($courseDirs{$courseDirName});
+		if (-e $courseDir) {
+			debug("courseDir $courseDir still exists. might delete it...\n");
+			
+			# check for a few likely error conditions, since the mv error is not that helpful
+			
+			# is it really a directory
+			unless (-d $courseDir) {
+				warn "Can't delete $courseDirName directory '$courseDir', since is not a directory. If it is not wanted, you will have to delete it manually.\n";
+				next;
+			}
+			
+			# is the parent writeable
+			my @courseDirElements = File::Spec->splitdir($courseDir);
+			pop @courseDirElements;
+			my $courseDirParent = File::Spec->catdir(@courseDirElements);
+			unless (-w $courseDirParent) {
+				warn "Can't delete $courseDirName directory '$courseDir', since its parent directory is not writeable. If it is not wanted, you will have to delete it manually.\n";
+				next;
+			}
+			
+			# try to delete the directory
+			debug("Going to delete $courseDir...\n");
+			rmtree($courseDir, 0, 1);
+		} else {
+			debug("courseDir $courseDir was already deleted.\n");
+		}
 	}
 }
-
 
 =item archiveCourse(%options)
 
