@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.7 2005/09/17 20:14:02 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.8 2006/01/25 23:13:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -490,15 +490,15 @@ sub deleteCourseHelper {
 	
 	##### issue SQL statements #####
 	
-	my $dbh = DBI->connect($source, $username, $password);
+	my $dbh = DBI->connect($source, $username, $password, { PrintError => 0 });
 	unless (defined $dbh) {
-		die "sql_single: failed to connect to DBI source '$source': $DBI::errstr\n";
+		warn "sql_single: failed to connect to DBI source '$source': $DBI::errstr\n";
 	}
 	
 	foreach my $stmt (@stmts) {
 		my $rows = $dbh->do($stmt);
 		unless (defined $rows) {
-			die "sql_single: failed to execute SQL statement '$stmt': $DBI::errstr\n";
+			warn "sql_single: failed to execute SQL statement '$stmt': $DBI::errstr\n";
 		}
 	}
 	
