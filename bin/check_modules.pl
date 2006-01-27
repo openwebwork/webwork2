@@ -27,12 +27,14 @@ my @modulesList = qw(
 	File::Spec
 	File::stat
 	File::Temp
+	GD
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
 	IO::File
 	Mail::Sender
 	MIME::Base64
+	Net::SMTP
 	Opcode
 	Pod::Usage
 	Safe
@@ -45,7 +47,6 @@ my @modulesList = qw(
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer
-	WheeWhaa
 );
 
 # modules used by disabled code
