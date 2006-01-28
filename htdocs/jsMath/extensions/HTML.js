@@ -35,6 +35,7 @@ jsMath.Package(jsMath.Parser,{
     href:       'Href',
     'class':    'Class',
     style:      'Style',
+    cssId:      'CSSId',
     unicode:    'Unicode'
   },
   
@@ -69,6 +70,14 @@ jsMath.Package(jsMath.Parser,{
   Style: function (name) {
     var style = this.GetArgument(this.cmd+name); if (this.error) return;
     this.AddHTML(name,['<span style="'+style+'">','</span>']);
+  },
+  
+  /*
+   *  Add a CSS element ID to the argument
+   */
+  CSSId: function (name) {
+    var id = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.AddHTML(name,['<span id="'+id+'">','</span>']);
   },
   
   /*

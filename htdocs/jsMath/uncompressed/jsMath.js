@@ -70,12 +70,13 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 jsMath = {
   
-  version: "3.1b",  // change this if you edit the file
+  version: "3.1c",  // change this if you edit the file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
   
-  blank: "blank.gif",  // the blank image file
+  // A transparent 1-pixel image
+  blank: "data:image/gif,GIF89a%01%00%01%00%f0%00%31%ff%ff%ff%00%00%00%21%f9%04%01%00%00%00%00%2c%00%00%00%00%01%00%01%00%00%02%02%44%01%00%3b",
   
   // Font sizes for \tiny, \small, etc. (must match styles below)
   sizes: [50, 60, 70, 85, 100, 120, 144, 173, 207, 249],
@@ -646,7 +647,7 @@ jsMath.Setup = {
       }
     }
     jsMath.Img.root = jsMath.root + "fonts/";
-    jsMath.blank = jsMath.root + jsMath.blank;
+//    jsMath.blank = jsMath.root + jsMath.blank;
     this.Domain();
   },
   
@@ -959,6 +960,16 @@ jsMath.Browser = {
   },
   
   /*
+   *  See if a data:image/gif URL is acceptable
+   */
+  TestDataURL: function () {
+    jsMath.hidden.innerHTML = '<IMG SRC="'+jsMath.blank+'">';
+    var img = jsMath.hidden.firstChild;
+    if (img.offsetWidth > 1) {jsMath.blank = jsMath.root + "blank.gif"}
+    jsMath.hidden.innerHTML = '';
+  },
+  
+  /*
    *  Perform a version check on a standard version string
    */
   VersionAtLeast: function (v) {
@@ -973,6 +984,7 @@ jsMath.Browser = {
    */
   Init: function () {
     jsMath.browser = 'unknown';
+    this.TestDataURL();
     this.TestSpanHeight();
     this.TestRenameOK();
     this.TestStyleChange();
@@ -2415,8 +2427,7 @@ jsMath.Add(jsMath.Box,{
       box.bd = jsMath.EmBoxFor(html + '<img src="'+jsMath.blank+'" '
                 + 'style="width: 1px; height: '+jsMath.HTML.Em(h)+'" />').h - h;
       box.bh = h - box.bd;
-      c.bh = box.bh/scale;
-      c.bd = box.bd/scale;
+      if (scale == 1) {c.bh = box.bh; c.bd = box.bd}
     }
     if (jsMath.msieFontBug && box.html.match(/&#/))
       {box.html += '<span style="display: none">x</span>'}
@@ -3942,7 +3953,7 @@ jsMath.Package(jsMath.Parser,{
   cmd:   '\\',
   open:  '{',
   close: '}',
-
+  
   // patterns for letters and numbers
   letter:  /[a-z]/i,
   number:  /[0-9]/,
@@ -3976,6 +3987,7 @@ jsMath.Package(jsMath.Parser,{
     '^':   'HandleSuperscript',
     '_':   'HandleSubscript',
     ' ':   'Space',
+    '\01': 'Space',
     "\t":  'Space',
     "\r":  'Space',
     "\n":  'Space',
@@ -4460,12 +4472,16 @@ jsMath.Package(jsMath.Parser,{
     huge:       ['HandleSize',8],
     Huge:       ['HandleSize',9],
     dots:       ['Macro','\\ldots'],
+    
+    newcommand: ['Extension','newcommand'],
+    def:        ['Extension','newcommand'],
 
     //  Extensions to TeX
     color:      ['Extension','HTML'],
     href:       ['Extension','HTML'],
     'class':    ['Extension','HTML'],
     style:      ['Extension','HTML'],
+    cssId:      ['Extension','HTML'],
     unicode:    ['Extension','HTML'],
     
     require:    'Require',
@@ -4486,7 +4502,7 @@ jsMath.Package(jsMath.Parser,{
     vmatrix:    ['Array','\\vert','\\vert','c'],
     Vmatrix:    ['Array','\\Vert','\\Vert','c'],
     cases:      ['Array','\\{','.','ll'],
-    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18]]
+    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18],'D']
   },
 
 
@@ -4519,6 +4535,14 @@ jsMath.Package(jsMath.Parser,{
    */
   nextIsSpace: function () {
     return this.string.charAt(this.i) == ' ';
+  },
+  
+  /*
+   *  Trim spaces from a string
+   */
+  trimSpaces: function (text) {
+    if (typeof(text) != 'string') {return text}
+    return text.replace(/^\s+|\s+/g,'');
   },
 
   /*
@@ -4732,7 +4756,7 @@ jsMath.Package(jsMath.Parser,{
        {base = this.mlist.Add(jsMath.mItem.Atom('ord',null))}
     if (base.sup) {this.Error("Prime causes double exponent: use braces to clarify"); return}
     var sup = '';
-    while (c == "'") {sup += '\\prime'; c = this.GetNext(); if (c == "'") {this.i++}}
+    while (c == "'") {sup += this.cmd+'prime'; c = this.GetNext(); if (c == "'") {this.i++}}
     base.sup = this.Process(sup);
   },
 
@@ -4883,9 +4907,10 @@ jsMath.Package(jsMath.Parser,{
     }
     if (this.mlist.data.overI != null) {this.mlist.Over()}
     var data = this.mlist.data;
-    this.mlist.Atomize('T',data.size); var box = this.mlist.Typeset('T',data.size);
+    this.mlist.Atomize(data.style,data.size);
+    var box = this.mlist.Typeset(data.style,data.size);
     this.row[this.row.length] = box;
-    this.mlist = new jsMath.mList(null,null,data.size); 
+    this.mlist = new jsMath.mList(null,null,data.size,data.style); 
   },
   
   /*
@@ -4911,9 +4936,9 @@ jsMath.Package(jsMath.Parser,{
     }
     columns = columns.replace(/[^clr]/g,'');
     columns = columns.split('');
-    var data = this.mlist.data;
+    var data = this.mlist.data; var style = delim[4] || 'T';
     var arg = this.GetEnd(name); if (this.error) return;
-    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
+    var parse = new jsMath.Parser(arg+this.cmd+'\\',null,data.size,style);
     parse.matrix = name; parse.row = []; parse.table = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
@@ -5069,29 +5094,49 @@ jsMath.Package(jsMath.Parser,{
    *  for #1, #2, etc. within the replacement string.
    *  
    *  See the jsMath.Macro() command below for more details.
+   *  The "newcommand" extension implements \newcommand and \def
+   *  and are loaded automatically if needed.
    */
   Macro: function (name,data) {
-    var text = data[0]
+    var text = data[0];
     if (data[1]) {
       var args = [];
-      for (var i = 0; i < data[1]; i++) 
+      for (var i = 0; i < data[1]; i++)
         {args[args.length] = this.GetArgument(this.cmd+name); if (this.error) return}
-      text = ''; var c; var i = 0;
-      while (i < data[0].length) {
-        c = data[0].charAt(i++);
-        if (c == '\\') {text += c + data[0].charAt(i++)}
-        else if (c == '#') {
-          c = data[0].charAt(i++);
-          if (c == "#") {text += c} else {
-            if (!c.match(/[1-9]/) || c > args.length)
-              {this.Error("Illegal macro argument reference"); return}
-            text += args[c-1];
-          }
-        } else {text += c}
-      }
+      text = this.SubstituteArgs(args,text);
     }
-    this.string = text + this.string.slice(this.i);
+    this.string = this.AddArgs(text,this.string.slice(this.i));
     this.i = 0;
+  },
+  
+  /*
+   *  Replace macro paramters with their values
+   */
+  SubstituteArgs: function (args,string) {
+    var text = ''; var newstring = ''; var c; var i = 0;
+    while (i < string.length) {
+      c = string.charAt(i++);
+      if (c == this.cmd) {text += c + string.charAt(i++)}
+      else if (c == '#') {
+        c = string.charAt(i++);
+        if (c == "#") {text += c} else {
+          if (!c.match(/[1-9]/) || c > args.length)
+            {this.Error("Illegal macro parameter reference"); return}
+          newstring = this.AddArgs(this.AddArgs(newstring,text),args[c-1]);
+          text = '';
+        }
+      } else {text += c}
+    }
+    return this.AddArgs(newstring,text);
+  },
+  
+  /*
+   *  Make sure that macros are followed by a space if their names
+   *  could accidentally be continued into the following text.
+   */
+  AddArgs: function (s1,s2) {
+    if (s2.match(/^[a-z]/i) && s1.match(/(^|[^\\])(\\\\)*\\[a-z]+$/i)) {s1 += ' '}
+    return s1+s2;
   },
   
   /*
@@ -5503,17 +5548,21 @@ jsMath.Translate = {
    *  Return the text of a given DOM element
    */
   GetElementText: function (element) {
-    var text = '';
-    for (var i = 0; i < element.childNodes.length; i++) {
-      if (element.childNodes[i].nodeValue == null) {text += ' '}
-        else {text += element.childNodes[i].nodeValue}
-    }
+    var text = this.recursiveElementText(element);
     if (text.search('&') >= 0) {
       text = text.replace(/&lt;/g,'<');
       text = text.replace(/&gt;/g,'>');
       text = text.replace(/&quot;/g,'"');
       text = text.replace(/&amp;/g,'&');
     }
+    return text;
+  },
+  recursiveElementText: function (element) {
+    if (element.nodeValue != null) {return element.nodeValue}
+    if (element.childNodes.length == 0) {return " "}
+    var text = '';
+    for (var i = 0; i < element.childNodes.length; i++) 
+      {text += this.recursiveElementText(element.childNodes[i])}
     return text;
   },
   
@@ -5706,7 +5755,10 @@ jsMath.Translate = {
       //  updating, so nudge the window to cause a
       //  redraw.  (Hack!)
       //
-      setTimeout("jsMath.window.resizeBy(-1,0); jsMath.window.resizeBy(1,0);",2000);
+      if (this.timeout) {clearTimeout(this.timeout)}
+      this.timeout = setTimeout("jsMath.window.resizeBy(-1,0); "
+                              + "jsMath.window.resizeBy(1,0); "
+                              + "jsMath.Translate.timeout = null",2000);
     }
   },
   
