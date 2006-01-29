@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.38 2005/12/27 00:35:03 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.39 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -285,9 +285,9 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  doc2 => 'Users with this permssion level or greater will automatically be sent feedback from students (generated when they use the "Contact instructor" button on any problem page).  In addition the feedback message will be sent to addresses listed below.  To send ONLY to addresses listed below set permission level to "nobody".',
 		  type => 'permission'},
 		  
-		{ var => 'mail{allowedFeedback}',
+		{ var => 'mail{feedbackRecipients}',
 		  doc => 'Additional addresses for receiving feedback e-mail.',
-		  doc2 => 'By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. (Separate email address entries by commas.',
+		  doc2 => 'By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas.',
 		  type => 'list'},
 	]
 ];
