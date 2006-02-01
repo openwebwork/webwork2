@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.74 2005/12/16 18:19:00 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.75 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,13 +28,15 @@ use strict;
 use warnings;
 use Apache::Constants qw/:common REDIRECT/;
 use CGI qw//;
+use File::Path;
+use File::Temp qw/tempdir/;
 use String::ShellQuote;
 use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile makeTempDirectory surePathToFile/;
+use WeBWorK::Utils qw/readFile/;
 
 =head1 CONFIGURATION VARIABLES
 
@@ -417,16 +419,17 @@ sub generate_hardcopy {
 	my $eUserID = $r->param("effectiveUser");
 	
 	# we want to make the temp directory web-accessible, for error reporting
-	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy"; 
-	#FIXME
-	#  ensure that .../hardcopy exists
-	unless (-w $temp_dir_parent_path) {
-		mkdir "$temp_dir_parent_path"
-			or die "Failed to create course directory $temp_dir_parent_path: $!\n";
-	}
-	my $temp_dir_path = eval { makeTempDirectory($temp_dir_parent_path, "work") };
+	# use mkpath to ensure it exists (mkpath is pretty much ``mkdir -p'')
+	my $temp_dir_parent_path = $ce->{courseDirs}{html_temp} . "/hardcopy";
+	eval { mkpath($temp_dir_parent_path) };
 	if ($@) {
-		$self->add_errors(CGI::escapeHTML($@));
+		die "Couldn't create hardcopy directory $temp_dir_parent_path: $@";
+	}
+	
+	# create a randomly-named working directory in the hardcopy directory
+	my $temp_dir_path = eval { tempdir("work.XXXXXXXX", DIR => $temp_dir_parent_path) };
+	if ($@) {
+		$self->add_errors("Couldn't create temporary working directory: ".CGI::code(CGI::escapeHTML($@)));
 		return;
 	}
 	
@@ -854,7 +857,7 @@ sub write_problem_tex {
 	# deal with PG warnings
 	if ($pg->{warnings} ne "") {
 		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
-			."Warnings encountered while processing $problem_desc. "
+			." Warnings encountered while processing $problem_desc. "
 			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings}))
 		);
 	}
@@ -862,7 +865,7 @@ sub write_problem_tex {
 	# deal with PG errors
 	if ($pg->{flags}->{error_flag}) {
 		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
-			."Errors encountered while processing $problem_desc. "
+			." Errors encountered while processing $problem_desc. "
 			."This $problem_name has been omitted from the hardcopy. "
 			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors}))
 		);
