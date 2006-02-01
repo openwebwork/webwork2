@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.23 2006/01/24 23:27:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.24 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -237,7 +237,7 @@ sub index {
 
 		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
 		                                                     prams=>{effectiveUser => $studentRecord->user_id}
-		                                                     )},"  $first_name $last_name ($user_id)" ),;	
+		                                                     )},"  $last_name, $first_name  ($user_id)" ),;	
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
