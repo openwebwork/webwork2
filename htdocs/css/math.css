@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader$
+ * $CVSHeader: webwork2/htdocs/css/math.css,v 1.6 2006/01/24 02:05:09 sh002i Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -452,7 +452,8 @@ table.attemptResults td.Message {
 .parsehilight { color: inherit; background-color: yellow; }
 
 /* the problem TEXT itself does in this box */
-div.problem { clear: both; background-color: #E0E0E0; color: black; }
+/* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
+div.problem {  }
 
 /* jsMath emits this class when appropriate math fonts aren't available */
 div.NoFontMessage {
