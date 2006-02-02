@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.162 2005/12/26 22:06:37 gage Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -706,7 +706,16 @@ sub links {
 			} # /* access_instructor_tools */
 			
 			print CGI::end_ul();
-		} # /* was_verified */
+			
+			print CGI::start_ul();
+			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
+				and $authz->hasPermissions($userID, "report_bugs")) {
+				print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
+			}
+	
+	print CGI::end_ul();
+
+		} # /* authentication was_verified */
 		
 		#print CGI::end_li(); # end $courseID
 		#print CGI::end_ul();
@@ -716,13 +725,6 @@ sub links {
 	print CGI::end_ul();
 	
 	
-	print CGI::start_ul();
-	if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
-		and $authz->hasPermissions($userID, "report_bugs")) {
-		print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
-	}
-	
-	print CGI::end_ul();
 
 	
 	return "";
