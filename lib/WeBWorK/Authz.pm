@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.24 2005/12/19 03:42:05 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -120,7 +120,7 @@ sub setCachedUser {
 			$self->{PermissionLevel} = $PermissionLevel;
 		}
 	} else {
-		warn "setCachedUser() called with userID undefined.\n";
+		warn "setCachedUser() called with userID undefined.";
 	}
 }
 
@@ -181,12 +181,12 @@ sub hasPermissions {
 		$permission_level = $PermissionLevel->permission;
 	} else {
 		# uh, oh. this user has no permission level record!
-		warn "User '$userID' has no PermissionLevel record -- assuming no permission.\n";
+		warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
 		return 0;
 	}
 	
 	unless (defined $permission_level and $permission_level ne "") {
-		warn "User '$userID' has empty permission level -- assuming no permission.\n";
+		warn "User '$userID' has empty permission level -- assuming no permission.";
 		return 0;
 	}
 	
@@ -201,18 +201,18 @@ sub hasPermissions {
 				if (defined $role_permlevel) {
 					return $permission_level >= $role_permlevel;
 				} else {
-					warn "Role '$activity_role' has undefined permisison level -- assuming no permission.\n";
+					warn "Role '$activity_role' has undefined permisison level -- assuming no permission.";
 					return 0;
 				}
 			} else {
-				warn "Role '$activity_role' for activity '$activity' not found in \%userRoles -- assuming no permission.\n";
+				warn "Role '$activity_role' for activity '$activity' not found in \%userRoles -- assuming no permission.";
 				return 0;
 			}
 		} else {
 			return 0; # undefiend $activity_role, no one has permission to perform $activity
 		}
 	} else {
-		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.\n";
+		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.";
 		return 0;
 	}
 }
