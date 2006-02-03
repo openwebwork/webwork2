@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.79 2005/12/19 03:41:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.80 2006/01/25 23:13:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 =cut
 
-BEGIN { $main::VERSION = "2.1"; }
+BEGIN { $main::VERSION = "2.x"; }
 
 use strict;
 use warnings;
