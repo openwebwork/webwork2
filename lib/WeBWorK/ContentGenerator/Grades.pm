@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.21 2005/12/22 18:47:20 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.22 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -304,7 +304,8 @@ sub displayStudentStats {
 			if (!$attempted && ($status || $num_of_attempts)) {
 				$attempted = 1;
 				$problemRecord->attempted('1');
-				$db->putUserProblem($problemRecord);
+				my $versioned = ( $setName =~ /,v\d+$/ ) ? 1 : 0;
+				$db->putUserProblem($problemRecord, $versioned);
 			}
 			
 			if (!$attempted){
