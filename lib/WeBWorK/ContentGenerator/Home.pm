@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Home.pm,v 1.15 2006/01/22 02:41:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Home.pm,v 1.16 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,10 +40,12 @@ sub info {
 	my $site_info = $ce->{webworkFiles}->{site_info};
 	if (defined $site_info and $site_info) {
 		# deal with previewing a temporary file
-		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-				and defined $r->param("editFileSuffix")) {
-			$site_info .= $r->param("editFileSuffix");
-		}
+		# FIXME: DANGER: this code allows viewing of any file
+		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
+		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
+		#		and defined $r->param("editFileSuffix")) {
+		#	$site_info .= $r->param("editFileSuffix");
+		#}
 		
 		if (-f $site_info) {
 			my $text = eval { readFile($site_info) };
