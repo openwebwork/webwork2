@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.71 2005/10/11 22:44:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.72 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use warnings;
 use DateTime;
 use Date::Parse;
 use Date::Format;
+use File::Spec;
 use Time::Zone;
 use MIME::Base64;
 use Errno;
@@ -57,6 +58,7 @@ our @EXPORT_OK = qw(
 	surePathToFile
 	makeTempDirectory
 	removeTempDirectory
+	path_is_subdir
 	formatDateTime
 	parseDateTime
 	textDateTime
@@ -287,6 +289,31 @@ sub makeTempDirectory($$) {
 sub removeTempDirectory($) {
 	my ($dir) = @_;
 	rmtree($dir, 0, 0);
+}
+
+=item path_is_subdir($path, $dir)
+
+Ensures that $path refers to a location "inside" $dir. The method of checking is
+rather rudimentary at the moment. First, upreferences ("..") are disallowed,
+in $path, then it is checked to make sure that some prefix of it matches $dir.
+
+If either of these checks fails, a false value is returned. Otherwise, a true
+value is returned.
+
+=cut
+
+sub path_is_subdir($$) {
+	my ($path, $dir) = @_;
+	
+	$path = File::Spec->canonpath($path);
+	$path .= "/" unless $path =~ m|/$|;
+	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
+	
+	$dir = File::Spec->canonpath($dir);
+	$dir .= "/" unless $dir =~ m|/$|;
+	return 0 unless $path =~ m|^$dir|;
+	
+	return 1;
 }
 
 =back

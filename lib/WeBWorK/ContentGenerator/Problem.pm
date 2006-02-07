@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.193 2006/01/24 23:27:02 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.194 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,7 +32,7 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory path_is_subdir);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use URI::Escape;
 
@@ -459,6 +459,7 @@ sub pre_header_initialize {
 			# if the global problem doesn't exist either, bail!
 			if(not defined $globalProblem) {
 				my $sourceFilePath = $r->param("sourceFilePath");
+				die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates});
 				# These are problems from setmaker.  If declared invalid, they won't come up
 				$self->{invalidProblem} = $self->{invalidSet} = 1 unless defined $sourceFilePath;
 #				die "Problem $problemNumber in set $setName does not exist" unless defined $sourceFilePath;
@@ -486,8 +487,8 @@ sub pre_header_initialize {
 		# if the caller is asking to override the source file, and
 		# editMode calls for a temporary file, do so
 		my $sourceFilePath = $r->param("sourceFilePath");
-		if (defined $sourceFilePath and 
-		    (not defined $editMode or $editMode eq "temporaryFile")) {
+		if (defined $editMode and $editMode eq "temporaryFile" and defined $sourceFilePath) {
+			die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates});
 			$problem->source_file($sourceFilePath);
 		}
 		

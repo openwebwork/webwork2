@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.71 2006/01/24 23:41:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.72 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use CGI qw();
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName);
+use WeBWorK::Utils qw(readFile sortByName path_is_subdir);
 
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -56,6 +56,7 @@ sub info {
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
 			if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
 				$course_info_path = $r->param("sourceFilePath");
+				die "sourceFilePath is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates});
 				$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $course_info_path));
 			}
 			
