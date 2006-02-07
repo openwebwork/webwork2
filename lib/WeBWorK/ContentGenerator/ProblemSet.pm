@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.76 2006/01/24 23:27:02 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -158,10 +158,12 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
-		print CGI::li(CGI::a({href=>$self->systemLink($setPage),
+		my $pretty_set_id = $setID;
+		$pretty_set_id =~ s/_/ /g;
+		print CGI::li(CGI::a({title=>$pretty_set_id, href=>$self->systemLink($setPage),
 		                            params=>{  displayMode => $self->{displayMode}, 
 									    showOldAnswers => $self->{will}->{showOldAnswers}
-									}}, $setID)
+									}}, $pretty_set_id)
 	    ) ;
 	}
 	debug("End printing sets from listUserSets()");
