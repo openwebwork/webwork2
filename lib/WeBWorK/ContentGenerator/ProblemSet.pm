@@ -30,7 +30,7 @@ use CGI qw(*ul *li);
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils qw(sortByName path_is_subdir);
 
 sub initialize {
 	my ($self) = @_;
@@ -214,11 +214,14 @@ sub info {
 	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
 	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	
-	if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
-		$screenSetHeader = $r->param('sourceFilePath');
-		$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ",
-		            $screenSetHeader));
-		$displayMode = $r->param("displayMode") if $r->param("displayMode");
+	if ($authz->hasPermissions($userID, "modify_problem_sets")) {
+		if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile") {
+			$screenSetHeader = $r->param('sourceFilePath');
+			die "sourceFilePath is unsafe!" unless path_is_subdir($screenSetHeader, $ce->{courseDirs}->{templates});
+			$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ",
+			            $screenSetHeader));
+			$displayMode = $r->param("displayMode") if $r->param("displayMode");
+		}
 	}
 	
 	return "" unless defined $screenSetHeader and $screenSetHeader;
