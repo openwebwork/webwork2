@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader: webwork2/htdocs/css/math.css,v 1.6 2006/01/24 02:05:09 sh002i Exp $
+ * $CVSHeader$
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -93,6 +93,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
+	overflow: hidden;
 }
 .info-box h2,
 .info-box h3,
@@ -173,14 +174,14 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 }
 #mini-sitemap ul,
 #fisheye ul {
-	font-size: 100%;
+	font-size: 90%;
 	list-style-type: none;
 	margin: 0 .1em .3ex .3em;
 	padding: 0;
 }
 #mini-sitemap ul ul,
 #fisheye ul ul {
-	font-size: 95%;
+	font-size: 90%;
 	margin-left: 0;
 }
 #mini-sitemap ul li,
@@ -189,7 +190,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 }
 #mini-sitemap ul ul ul,
 #fisheye ul ul ul {
-	font-size: 80%;
+	font-size: 95%;
 	margin-left: .3em;
 	padding-left: .5em;
 	border-left: 1px dotted gray;
