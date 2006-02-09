@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.24 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.25 2006/02/01 19:24:36 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -742,22 +742,35 @@ sub displaySets {
 		),
 		;
 	} else {
+		# we need to preserve display options when the sort headers are clicked
+		my %display_options = (
+			returning       => 1,
+			show_best_only  => $showBestOnly,
+			show_index      => $showColumns{index},
+			show_date       => $showColumns{date},
+			show_testtime   => $showColumns{testtime},
+			show_problems   => $showColumns{problems},
+			show_section    => $showColumns{section},
+			show_recitation => $showColumns{recitation},
+			show_login      => $showColumns{login},
+		);
+		my %params = (%past_sort_methods, %display_options);
 	    my @columnHdrs = ();
-	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},'First').
-		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},'Last') );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},'Score') );
+	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},'First').
+		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},'Last') );
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},'Score') );
 	    push( @columnHdrs, 'Out'.CGI::br().'Of' );
 	    push( @columnHdrs, 'Date' ) if ( $showColumns{ 'date' } );
 	    push( @columnHdrs, 'TestTime' ) if ( $showColumns{ 'testtime' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %params})},'Ind') )
 		if ( $showColumns{ 'index' } );
 	    push( @columnHdrs, 'Problems'.CGI::br().$problem_header )
 		if ( $showColumns{ 'problems' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},'Section') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},'Section') )
 		if ( $showColumns{ 'section' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},'Recitation') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %params})},'Recitation') )
 		if ( $showColumns{ 'recit' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},'Login Name') )
 		if ( $showColumns{ 'login' } );
 
 	    print CGI::start_table({-border=>5,style=>'font-size:smaller'}),
