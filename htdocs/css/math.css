@@ -111,6 +111,14 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin: 0;
 	padding: 0 .5em 0 .5em;
 }
+.info-box h2 a,
+.info-box h3 a,
+.info-box h4 a,
+.info-box h5 a,
+.info-box h6 a {
+	color: #fff;
+	background: inherit;
+}
 .info-box ul,
 .info-box ol {
 	margin: 1ex .5em 1ex 0;

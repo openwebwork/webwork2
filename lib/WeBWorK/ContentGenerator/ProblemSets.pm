@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.72 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.73 2006/02/07 21:03:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,7 +49,6 @@ sub info {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
 		print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
-		print CGI::h2("Course Info");
 		
 		# deal with instructor crap
 		my $editorURL;
@@ -64,6 +63,12 @@ sub info {
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
 		
+		if ($editorURL) {
+			print CGI::h2("Course Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
+		} else {
+			print CGI::h2("Course Info");
+		}
+		
 		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
@@ -75,10 +80,6 @@ sub info {
 			}
 		}
 
-		if ($editorURL) {
-			print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
-		}
-		
 		print CGI::end_div();
 		
 		return "";
