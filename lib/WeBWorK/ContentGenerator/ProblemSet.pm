@@ -251,9 +251,6 @@ sub info {
 		},
 	);
 	
-	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
-	print CGI::h2("Set Info");
-	
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
@@ -261,14 +258,18 @@ sub info {
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
 	
+	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
+	
+	if ($editorURL) {
+		print CGI::h2("Set Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
+	} else {
+		print CGI::h2("Set Info");
+	}
+	
 	if ($pg->{flags}->{error_flag}) {
 		print CGI::div({class=>"ResultsWithError"}, $self->errorOutput($pg->{errors}, $pg->{body_text}));
 	} else {
 		print $pg->{body_text};
-	}
-	
-	if ($editorURL) {
-		print CGI::div(CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 	}
 	
 	print CGI::end_div();
