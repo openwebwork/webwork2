@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.49 2005/12/19 03:42:05 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.50 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -459,12 +459,6 @@ sub verifyProctor {
 			last VERIFY;
 		}
 		
-		#unless( !defined($Proctor->status) or $Proctor->status() eq 'C' ) {
-		#	$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - invalid status");
-		#	$error = GENERIC_ERROR_MESSAGE;
-		#	last VERIFY;
-		#}
-		
 		# make sure proctor has valid status
 		unless($ce->status_abbrev_has_behavior($Proctor->status, "allow_course_access")) {
 			$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - course access denied");
@@ -498,9 +492,16 @@ sub verifyProctor {
 				$db->addKey($newKeyObject);
 				
 				$r->param('proctor_key', $newKeyObject->key);
+
+				my $atype = ( $submitAnswers ) ? '(GRADING)' : '(LOGIN)';
 				
+				$self->write_log_entry("PROCTOR AUTHORIZATION $atype OK $proctorUser authorizing $user - valid password");
+
 				last VERIFY;
 			}  else {
+				my $atype = ( $submitAnswers ) ? '(GRADING)' : '(LOGIN)';
+				$self->write_log_entry("PROCTOR AUTHORIZATION $atype FAILED $proctorUser authorizing $user - invalid password");
+
 				$error = 'Incorrect proctor username or password.';
 				last VERIFY;
 			}
