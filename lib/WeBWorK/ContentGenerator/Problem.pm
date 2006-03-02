@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.194 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.195 2006/02/07 21:03:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -934,7 +934,7 @@ sub body {
 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
 			# The fact that it is not defined is probably due to an error in some answer evaluator.
 			# But I think it is useful to suppress this error message in the log.
-			foreach (sort keys %answerHash) {
+			foreach (sortByName(undef, keys %answerHash)) {
 				my $orig_ans = $answerHash{$_}->{original_student_ans};
 				my $student_ans = defined $orig_ans ? $orig_ans : '';
 				$answerString  .= $student_ans."\t";
