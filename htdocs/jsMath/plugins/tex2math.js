@@ -323,19 +323,22 @@ jsMath.Add(jsMath.tex2math,{
   //  contain in-line data (like <P> or <SPAN>), so we have to fake it
   //  using SPAN tags that force the formatting to work like DIV.  We
   //  use a separate SPAN that is the full width of the containing
-  //  item, and that has the margins from the div.typeset style
-  //  and we name is jsMath.recenter to get jsMath to recenter it when
-  //  it is typeset (HACK!!!)
+  //  item, and that has the margins and centering from the div.typeset
+  //  style.
   //
   MSIEcreateMathTag: function (type,text) {
     var tag = jsMath.document.createElement("span");
     tag.className = "math";
     text = text.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     if (type == 'div') {
-      tag.className = (jsMath.tex2math.center)? "jsMath.recenter": "";
+      tag.className = "";
       tag.style.width = "100%"; tag.style.margin = jsMath.tex2math.margin;
       tag.style.display = "inline-block";
       text = '<span class="math">\\displaystyle{'+text+'}</span>';
+      if (jsMath.tex2math.center) {
+        tag.style.textAlign = "center";
+        text = '<span style="text-align:left">'+text+'</span>'
+      }
     }
     tag.innerHTML = text;
     return tag;
