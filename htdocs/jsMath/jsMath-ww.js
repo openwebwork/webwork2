@@ -43,7 +43,7 @@ if (!window.jsMath || !window.jsMath.loaded) {
 
   };
 
-  if (window.noFontMessage) {jsMath.styles['.jsM_Warning'] = "display: none"}
+  if (window.noFontMessage) {jsMath.styles['#jsMath_Warning'] = "display: none"}
   if (window.missingFontMessage) {jsMath.Font.message = missingFontMessage}
   if (!window.processDoubleClicks) {jsMath.Click = {CheckDblClick: function () {}}}
 
