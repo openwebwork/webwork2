@@ -425,7 +425,8 @@ jsMath.Setup.Styles({
   '.typeset .cmti10': 'font-family: cmti10, cmr10',
   '.typeset .cmmi10': 'font-family: cmmi10',
   '.typeset .cmsy10': 'font-family: cmsy10',
-  '.typeset .cmex10': 'font-family: cmex10'
+  '.typeset .cmex10': 'font-family: cmex10',
+  '.typeset .arial':  "font-family: 'Arial unicode MS'"
 });
 
 jsMath.Script.End();
