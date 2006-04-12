@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Debug.pm,v 1.6 2005/08/12 15:53:02 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Debug.pm,v 1.7 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,7 @@ head1 SYNOPSIS
 use strict;
 use warnings;
 use Time::HiRes qw/gettimeofday/;
+use WeBWorK::Utils qw/undefstr/;
 
 ################################################################################
 
@@ -99,7 +100,7 @@ Write @messages to the debugging log.
 =cut
 
 sub debug {
-	my (@message) = @_;
+	my (@message) = undefstr("###UNDEF###", @_);
 	
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);
