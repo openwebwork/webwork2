@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.18 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.19 2006/02/07 21:03:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -504,7 +504,7 @@ sub pre_header_initialize {
 # check against the requested set, if that is the one we're using, or against
 #    the template if no version was specified.
 	die("Set $setName requires a valid proctor login.") 
-	    if ( ! WeBWorK::Authen->new($r, $ce, $db)->verifyProctor() );
+	    if ( ! WeBWorK::Authen::Proctor->new($r, $ce, $db)->verify() );
     }
 
 #################################
