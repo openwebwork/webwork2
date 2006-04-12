@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.68 2005/12/22 18:46:25 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.69 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2418,22 +2418,34 @@ sub checkKeyfields($;$) {
 	my ($Record, $versioned) = @_;
 	foreach my $keyfield ($Record->KEYFIELDS) {
 		my $value = $Record->$keyfield;
-		croak "checkKeyfields: $keyfield is empty"
+		
+		croak "checkKeyfields: field '$keyfield' cannot be empty"
 			unless defined $value and $value ne "";
 		
 		if ($keyfield eq "problem_id") {
-			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
-				unless $value =~ m/^\d*$/;
+			croak "checkKeyfields: invalid characters in field '$keyfield': '$value' (valid characters are [0-9])"
+				unless $value =~ m/^[0-9]*$/;
+		} elsif ($versioned and ($keyfield eq "set_id" or $keyfield eq "user_id")) {
+			croak "checkKeyfields: invalid characters in field '$keyfield': '$value' (valid characters are [-a-zA-Z0-9_.,])"
+				unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
 		} else {
-			croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_.])"
-#				unless $value =~ m/^[.\w\-]*$/;
-				unless ( $value =~ m/^[.\w-]*$/ ||
-					 ( $value =~ m/^[\w,-]*$/ &&
-					   (defined($versioned) && $versioned) 
-					   &&
-					   ($keyfield eq "set_id" ||
-					    $keyfield eq "user_id") ) );
+			croak "checkKeyfields: invalid characters in field '$keyfield': '$value' (valid characters are [-a-zA-Z0-9_.])"
+				unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
 		}
+		
+		#if ($keyfield eq "problem_id") {
+		#	croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
+		#		unless $value =~ m/^\d*$/;
+		#} else {
+		#	croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_.])"
+		#		#unless $value =~ m/^[.\w\-]*$/;
+		#		unless ( $value =~ m/^[.\w-]*$/ ||
+		#			 ( $value =~ m/^[\w,-]*$/ &&
+		#			   (defined($versioned) && $versioned) 
+		#			   &&
+		#			   ($keyfield eq "set_id" ||
+		#			    $keyfield eq "user_id") ) );
+		#}
 	}
 }
 
