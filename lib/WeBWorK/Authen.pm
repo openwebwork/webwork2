@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.50 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.51 2006/02/21 22:00:29 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,8 @@ use strict;
 use warnings;
 use Apache::Cookie;
 use Date::Format;
-use Socket qw/unpack_sockaddr_in inet_ntoa/;
+use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
+use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog/;
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
@@ -64,317 +65,38 @@ sub new {
 
 =over
 
-=item verify()
-
-verify() checks several properties of the WeBWorK::Request with which it was
-created to determine if a user is who they say they are. If the verification
-failed because of of invalid authentication data, a note will be written in the
-request explaining why it failed. If the request failed because no
-authentication data was provided, however, no note will be written, as this is
-expected to happen whenever someone types in a URL manually, and is not
-considered an error condition.
-
 =cut
 
-# much of the code in verify() is duplicated in verifyProctor(), below.  any 
-# changes that are made to this subroutine should be checked against 
-# verifyProctor() to ensure that the the two routines continue to work in 
-# approximately the same manner.
-sub verify($) {
+sub verify {
+	debug("BEGIN VERIFY");
 	my $self = shift;
 	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
 	
-	my $practiceUserPrefix = $ce->{practiceUserPrefix};
-	my $debugPracticeUser = $ce->{debugPracticeUser};
+	my $result = $self->do_verify;
+	my $error = $self->{error};
+	my $user_id = $self->{user_id};
+	my $credential_source = $self->{credential_source};
 	
-	my $force_passwd_authen = $r->param('force_passwd_authen');
-	my $login_practice_user = $r->param('login_practice_user');
-	my $send_cookie = $r->param("send_cookie");
-	my @temp_users = $r->param("user");
-	warn "users start out as ", join(" ", @temp_users) if @temp_users >1;
-	my $error;
-	my $failWithoutError = 0;
-	my $credentialSource = "params";
+	$self->{was_verified} = $result ? 1 : 0;
 	
-	my $user = $r->param('user');
-	my $passwd = $r->param('passwd');
-	my $key = $r->param('key');
-	
-	my ($cookieUser, $cookieKey) = $self->fetchCookie;
-	#warn __PACKAGE__, ": verify: cookieUser=$cookieUser cookieKey=$cookieKey\n";
-	
-	VERIFY: {
-		# This block is here so we can "last" out of it when we've
-		# decided whether we're going to succeed or fail.
-		
-		# no database means no user/password/permission records
-		unless ($db) {
-			$failWithoutError = 1;
-			last VERIFY;
-		}
-		
-		if ($login_practice_user) {
-			# ignore everything else, find an unused practice user
-			my $found = 0;
-			
-			# figure out if there are any valid practice users
-			my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
-			my @GuestUsers = $db->getUsers(@guestUserIDs);
-			my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
-			my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
-			
-			foreach my $userID (@allowedGestUserIDs) {
-				if (not $self->unexpiredKeyExists($userID)) {
-					my $Key = $self->generateKey($userID);
-					$db->addKey($Key);
-					$r->param("user", $userID);
-					$r->param("key", $Key->key);
-					$found = 1;
-					$credentialSource = "guest";
-					$self->write_log_entry("GUEST LOGIN OK $userID");
-					last;
-				}
-			}
-			unless ($found) {
-				$self->write_log_entry("GUEST LOGIN FAILED - no logins availabe");
-				$error = "No practice users are available. Please try again in a few minutes.";
-			}
-			last VERIFY;
-		}
-		
-		# no authentication data was given. this is OK.
-		unless (defined $user or defined $passwd or defined $key) {
-			# check to see if a cookie was sent by the browser. if so, use the
-			# user and key from the cookie for authentication. note that the
-			# cookie is only used if no credentials are sent as parameters.
-			if ($cookieUser and $cookieKey) {
-				$user = $cookieUser;
-				$key = $cookieKey;
-				$r->param("user", $user);
-				#$r->args->{user} = $user;
-				$r->param("key", $key);
-				$credentialSource = "cookie";
-				$self->write_log_entry("COOKIE LOGIN OK $user");
-			} else {
-				$failWithoutError = 1;
-				last VERIFY;
-			}
-		}
-		
-		if (defined $user and $force_passwd_authen) {
-			$failWithoutError = 1;
-			last VERIFY;
-		}
-		
-		# no user was supplied.  somebody's building their own GET
-		unless ($user) {
-			$error = "You must specify a username.";
-			last VERIFY;
-		}
-		
-		# Make sure user is in the database
-		my $User = $db->getUser($user); # checked
-		unless (defined $User) {
-			$self->write_log_entry("LOGIN FAILED $user - user unknown");
-			$error = GENERIC_ERROR_MESSAGE;
-			last VERIFY;
-		}
-		
-		# fix invalid status values (FIXME this should be in DB!)
-		if (not defined $User->status or not defined $ce->status_abbrev_to_name($User->status)) {
-			my $default_status = $ce->{default_status};
-			die "default_status not defined in course environment" unless defined $default_status;
-			my ($default_abbrev) = $ce->status_name_to_abbrevs($default_status);
-			die "default status has no abbrevs in course environment" unless defined $default_abbrev;
-			$User->status($default_abbrev);
-			$db->putUser($User);
-			warn "Setting status for user $user to '$default_abbrev'. It was previously unset or set to an invalid value.";
-		}
-		
-		# make sure users with this user's status are allowed to access the course (jeez...)
-		unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
-			$self->write_log_entry("LOGIN FAILED $user - course access denied");
-			$error = GENERIC_ERROR_MESSAGE;
-			last VERIFY;
-		}
-		
-		# make sure the user is allowed to login
-		unless ($authz->hasPermissions($user, "login")) {
-			$self->write_log_entry("LOGIN FAILED $user - no permission to login");
-			$error = GENERIC_ERROR_MESSAGE;
-			last VERIFY;
-		}
-		
-		# it's a practice user.
-		if ($practiceUserPrefix and $user =~ /^$practiceUserPrefix/) {
-			# we're not interested in a practice user's password
-			$r->param("passwd", "");
-	
-
-			# we've got a key.
-			if ($key) {
-				if ($self->checkKey($user, $key)) {
-					# they key was valid.
-					#$self->write_log_entry("KEY LOGIN OK $user");
-					last VERIFY;
-				} else {
-					# the key was invalid.
-					#$self->write_log_entry("KEY LOGIN FAILED $user - invalid key");
-					$error = "Your session has timed out due to inactivity. You must login again.";
-					last VERIFY;
-				}
-			}
-			
-			# -- here we know that a key was not supplied. --
-			
-			# it's the debug user.
-			if ($debugPracticeUser and $user eq $debugPracticeUser) {
-				# clobber any existing session, valid or not.
-				my $Key = $self->generateKey($user);
-				eval { $db->deleteKey($user) };
-				$db->addKey($Key);
-				$r->param("key", $Key->key());
-				last VERIFY;
-			}
-			
-			# an unexpired key exists -- the account is in use.
-			# FIXME improve the error message here
-			if ($self->unexpiredKeyExists($user)) {
-				$self->write_log_entry("GUEST LOGIN FAILED $user - in use");
-				$error = "That practice account is in use.";
-				last VERIFY;
-			}
-			
-			# here we know the account is not in use, so we
-			# generate a new  session key (unexpiredKeyExists
-			# deleted any expired key) and succeed!
-			my $Key = $self->generateKey($user);
-			$db->addKey($Key);
-			$r->param("key", $Key->key());
-			last VERIFY;
-		}
-		
-		# -- here we know it's a regular user. --
-	
-		
-		# a key was supplied.
-		if ($key) {
-			# we're not interested in a user's password if they're
-			# supplying a key unless that key comes from a cookie in which case
-			# the key could be expired but the password good.
-			$r->param("passwd", "") unless $cookieKey;
-			
-			if ($self->checkKey($user, $key)) {
-				# valid key, so succeed.
-				last VERIFY;
-			} else {
-				# invalid key. the login page doesn't propogate the key,
-				# so we know this is an expired session.
-				unless ($passwd) {
-					$error = "Your session has timed out due to inactivity. You must login again.";
-					last VERIFY;
-				}
-			}
-		}
-
-		# a password was supplied.
-		if ($passwd) {
-
-			if ($self->checkPassword($user, $passwd)) {
-				# valid password, so create a new session. (we don't want
-				# to reuse an old one, duh.)
-				my $Key = $self->generateKey($user);
-				eval { $db->deleteKey($user) };
-				$db->addKey($Key);
-				$r->param("key", $Key->key());
-				# also delete the password
-				$r->param("passwd", "");
-				$self->write_log_entry("LOGIN OK $user - valid password");
-				last VERIFY;
-			} else {
-				# incorrect password. fail.
-				$self->write_log_entry("LOGIN FAILED $user - invalid password");
-				$error = "Invalid user ID or password.";
-				last VERIFY;
-			}
-		}
-		
-		# neither a key or a password were supplied.
-		$error = "You must enter a password."
-	} # /* VERIFY */
-	
-	# check for multiply defined users
-	my @test_users = $r->param("user");
-	if (@test_users>1)    {
-		warn "User has been multiply defined in Authen.pm ", join(" ", @test_users)  ;
-		$r->param("user"=>$test_users[0]);
-		@test_users = $r->param("user");
-		warn "New value of user is ", join(" ", @test_users);
+	if ($self->can("site_fixup")) {
+		$self->site_fixup;
 	}
 	
-	if (defined $error) {
-		# authentication failed, store the error message
-		$r->notes("authen_error", $error);
-		
-		# if we got a cookie, it probably has incorrect information in it. so
-		# we want to get rid of it
-		if ($cookieUser or $cookieKey) {
-			#warn "fail with error: killing cookie";
-			$self->killCookie;
-		}
-		
-		# store verification result for fast retrevial later
-		$self->{was_verified} = 0;
-		
-		return 0;
-	} elsif ($failWithoutError) {
-		# authentication failed, but we don't have any error message to report
-		
-		# if we got a cookie, it probably has incorrect information in it. so
-		# we want to get rid of it
-		if ($cookieUser or $cookieKey) {
-			#warn "fail without error: killing cookie";
-			$self->killCookie;
-		}
-		
-		# store verification result for fast retrevial later
-		$self->{was_verified} = 0;
-		
-		return 0;
+	if ($result) {
+		#$self->write_log_entry("LOGIN OK user_id=$user_id credential_source=$credential_source");
+		$self->maybe_send_cookie;
+		$self->set_params;
 	} else {
-		# autentication succeeded!
-		
-		# we send a cookie if any of these conditions are met:
-		# (a) a cookie was used for authentication
-		# (b) a cookie was sent but not used for authentication, and the
-		#     credentials used for authentication were the same as those in
-		#     the cookie
-		# (c) the user asked to have a cookie sent and is not a guest user.
-		my $usedCookie = ($credentialSource eq "cookie") || 0;
-
-		my $unusedCookieMatched = (defined($key) and defined($cookieUser) and defined($cookieKey) and 
-		                            $user eq $cookieUser and $key eq $cookieKey) || 0;
-		my $userRequestsCookie = ($send_cookie and not $login_practice_user) || 0;
-		#warn "usedCookie=$usedCookie\n";
-		#warn "unusedCookieMatched=$unusedCookieMatched\n";
-		#warn "userRequestsCookie=$userRequestsCookie\n";
-		if ($usedCookie or $unusedCookieMatched or $userRequestsCookie) {
-			#warn "succeed: sending cookie";
-			$self->sendCookie($r->param("user"), $r->param("key"));
-		} elsif ($cookieUser or $cookieKey) {
-			# otherwise, we don't want any bad cookies sticking around
-			#warn "succeed: killing cookie";
-			$self->killCookie;
+		#$self->write_log_entry("LOGIN FAILED user_id=$user_id credential_source=$credential_source");
+		$self->killCookie;
+		if ($error) {
+			$r->notes("authen_error", $error);
 		}
-		
-		# store verification result for fast retrevial later
-		$self->{was_verified} = 1;
-		
-		return 1;
 	}
+	
+	debug("END VERIFY");
+	return $result;
 }
 
 =item was_verified()
@@ -402,131 +124,261 @@ sub forget_verification {
 	$self->{was_verified} = 0;
 }
 
-=item verifyProctor()
-
-verifyProctor() checks several properties of the WeBWorK::Request with which it
-was created to determine if a proctor is who they say they are. It is
-essentially the same as verify(), but pulls out the proctor data from the form
-input and uses that with the appropriate database entry names to determine
-whether the proctor is valid.
-
-=cut
-
-sub verifyProctor {
-	my $self = shift();
-	my $r = $self->{r};
-	my $ce = $r->ce;
-	my $db = $r->db;
-	
-	my $user          = $r->param('effectiveUser');
-	my $proctorUser   = $r->param('proctor_user');
-	my $proctorPasswd = $r->param('proctor_passwd');
-	my $proctorKey    = $r->param('proctor_key');
-	
-	# we use the following to require a second proctor authorization to grade the test
-	my $submitAnswers = defined($r->param('submitAnswers'))
-		? $r->param('submitAnswers')
-		: '';
-	
-	my $failWithoutError = 0;
-	my $error = '';
-	
-	# we define a key for "effectiveuser,proctoruser" to authorize a test, and 
-	# "effectiveuser,proctoruser,g" to authorize grading.
-	my $prKeyIndex = '';
-	
-	VERIFY: {
-		unless(
-			defined $proctorUser && $proctorUser
-				or
-			defined $proctorPasswd && $proctorPasswd
-				or 
-			defined $proctorKey && $proctorKey
-		) {
-			$failWithoutError = 1;
-			last VERIFY;
-		}
-		
-		unless(defined $proctorUser) {
-			$error = 'Proctor username must be specified.';
-			last VERIFY;
-		}
-		
-		my $Proctor = $db->getUser($proctorUser);
-		unless(defined $Proctor) {
-			$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - user unknown");
-			$error = "Invalid user ID or password";
-			last VERIFY;
-		}
-		
-		# make sure proctor has valid status
-		unless($ce->status_abbrev_has_behavior($Proctor->status, "allow_course_access")) {
-			$self->write_log_entry("PROCTOR LOGIN FAILED $proctorUser - course access denied");
-			$error = GENERIC_ERROR_MESSAGE;
-			last VERIFY;
-		}
-		
-		if ($proctorKey) {
-			$r->param('proctor_password', '');
-			
-			$prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
-			if ($self->checkKey($prKeyIndex, $proctorKey)) {
-				last VERIFY;
-			} else {
-				if ($submitAnswers) {
-					$error = 'Assignment requires valid proctor authorization for grading';
-				} else {
-					$error = "Invalid or expired proctor session key.";
-				}
-				last VERIFY;
-			}
-		}
-		
-		if ($proctorPasswd) {
-			if ($self->checkPassword($proctorUser, $proctorPasswd)) {
-				$prKeyIndex = "$user,$proctorUser" . (($submitAnswers) ? ',g' : '');
-				my $newKeyObject = $self->generateKey( $prKeyIndex );
-				$r->param('proctor_passwd', '');
-				
-				eval{ $db->deleteKey($prKeyIndex); };
-				$db->addKey($newKeyObject);
-				
-				$r->param('proctor_key', $newKeyObject->key);
-
-				my $atype = ( $submitAnswers ) ? '(GRADING)' : '(LOGIN)';
-				
-				$self->write_log_entry("PROCTOR AUTHORIZATION $atype OK $proctorUser authorizing $user - valid password");
-
-				last VERIFY;
-			}  else {
-				my $atype = ( $submitAnswers ) ? '(GRADING)' : '(LOGIN)';
-				$self->write_log_entry("PROCTOR AUTHORIZATION $atype FAILED $proctorUser authorizing $user - invalid password");
-
-				$error = 'Incorrect proctor username or password.';
-				last VERIFY;
-			}
-		}
-	}
-	
-	if (defined $error and $error) {
-		$r->notes("authen_error", $error);
-		return 0;
-	} elsif ($failWithoutError) {
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
 =back
 
 =cut
 
 ################################################################################
+# Helper functions (called by verify)
+################################################################################
+
+sub do_verify {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+	return 0 unless $db;
+	
+	return 0 unless $self->get_credentials;
+	
+	return 0 unless $self->check_user;
+	
+	my $practiceUserPrefix = $ce->{practiceUserPrefix};
+	if ($practiceUserPrefix and $self->{user_id} =~ /^$practiceUserPrefix/){
+		return $self->verify_practice_user;
+	} else {
+		return $self->verify_normal_user;
+	}
+}
+
+sub get_credentials {
+	my ($self) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+	# allow guest login: if the "Guest Login" button was clicked, we find an unused
+	# practice user and create a session for it.
+	if ($r->param("login_practice_user")) {
+		my $practiceUserPrefix = $ce->{practiceUserPrefix};
+		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
+		my @GuestUsers = $db->getUsers(@guestUserIDs);
+		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
+		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
+		
+		foreach my $userID (@allowedGestUserIDs) {
+			if (not $self->unexpired_session_exists($userID)) {
+				my $newKey = $self->create_session($userID);
+				
+				$self->{user_id} = $userID;
+				$self->{session_key} = $newKey;
+				$self->{credential_source} = "guest";
+				debug("guest user '", $userID. "' key '", $newKey. "'");
+				return 1;
+			}
+		}
+		
+		$self->write_log_entry("GUEST LOGIN FAILED - no logins availabe");
+		$self->{error} = "No practice users are available. Please try again in a few minutes.";
+		return 0;
+	}
+	
+	# at least the user ID is available in request parameters
+	if (defined $r->param("user")) {
+		$self->{user_id} = $r->param("user");
+		$self->{session_key} = $r->param("key");
+		$self->{password} = $r->param("passwd");
+		$self->{credential_source} = "params";
+		debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
+		return 1;
+	}
+	
+	my ($cookieUser, $cookieKey) = $self->fetchCookie;
+	if (defined $cookieUser) {
+		$self->{user_id} = $cookieUser;
+		$self->{session_key} = $cookieKey;
+		$self->{credential_source} = "cookie";
+		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
+		return 1;
+	}
+}
+
+sub check_user {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $authz = $r->authz;
+	
+	my $user_id = $self->{user_id};
+	
+	if (defined $user_id and $user_id eq "") {
+		$self->{error} = "You must specify a user ID.";
+		return 0;
+	}
+	
+	my $User = $db->getUser($user_id);
+	
+	unless ($User) {
+		$self->write_log_entry("LOGIN FAILED $user_id - user unknown");
+		$self->{error} = GENERIC_ERROR_MESSAGE;
+		return 0;
+	}
+	
+	# FIXME "fix invalid status values" used to be here, but it needs to move to $db->getUser
+	
+	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
+		$self->write_log_entry("LOGIN FAILED $user_id - course access denied");
+		$self->{error} = GENERIC_ERROR_MESSAGE;
+		return 0;
+	}
+	
+	unless ($authz->hasPermissions($user_id, "login")) {
+		$self->write_log_entry("LOGIN FAILED $user_id - no permission to login");
+		$self->{error} = GENERIC_ERROR_MESSAGE;
+		return 0;
+	}
+	
+	return 1;
+}
+
+sub verify_practice_user {
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	
+	my $user_id = $self->{user_id};
+	my $session_key = $self->{session_key};
+	
+	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
+	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
+	
+	if ($sessionExists) {
+		if ($keyMatches) {
+			if ($timestampValid) {
+				return 1;
+			} else {
+				$self->{session_key} = $self->create_session($user_id);
+				return 1;
+			}
+		} else {
+			if ($timestampValid) {
+				my $debugPracticeUser = $ce->{debugPracticeUser};
+				if (defined $debugPracticeUser and $user_id eq $debugPracticeUser) {
+					$self->{session_key} = $self->create_session($user_id);
+					return 1;
+				} else {
+					$self->{error} = "That guest account is in use.";
+					return 0;
+				}
+			} else {
+				$self->{session_key} = $self->create_session($user_id);
+				return 1;
+			}
+		}
+	} else {
+		$self->{session_key} = $self->create_session($user_id);
+		return 1;
+	}
+}
+
+sub verify_normal_user {
+	my $self = shift;
+	my $r = $self->{r};
+	
+	my $user_id = $self->{user_id};
+	my $session_key = $self->{session_key};
+	
+	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
+	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
+	
+	if ($keyMatches and $timestampValid) {
+		return 1;
+	} else {
+		my $auth_result = $self->authenticate;
+		
+		if ($auth_result > 0) {
+			$self->{session_key} = $self->create_session($user_id);
+			$self->write_log_entry("LOGIN OK $user_id");
+			return 1;
+		} elsif ($auth_result == 0) {
+			$self->write_log_entry("LOGIN FAILED $user_id - authentication failed");
+			$self->{error} = GENERIC_ERROR_MESSAGE;
+			return 0;
+		} else { # ($auth_result < 0) => required data was not present
+			if ($keyMatches and not $timestampValid) {
+				$self->{error} = "Your session has timed out due to inactivity. Please log in again.";
+			}
+			return 0;
+		}
+	}
+}
+
+#  1 == authentication succeeded
+#  0 == required data was present, but authentication failed
+# -1 == required data was not present (i.e. password missing)
+sub authenticate {
+	my $self = shift;
+	my $r = $self->{r};
+	
+	my $user_id = $self->{user_id};
+	my $password = $self->{password};
+	
+	if (defined $password) {
+		return $self->checkPassword($user_id, $password);
+	} else {
+		return -1;
+	}
+}
+
+sub maybe_send_cookie {
+	my $self = shift;
+	my $r = $self->{r};
+	
+	my ($cookie_user, $cookie_key) = $self->fetchCookie;
+	
+	# we send a cookie if any of these conditions are met:
+	
+	# (a) a cookie was used for authentication
+	my $used_cookie = ($self->{credential_source} eq "cookie");
+	
+	# (b) a cookie was sent but not used for authentication, and the
+	#     credentials used for authentication were the same as those in
+	#     the cookie
+	my $unused_valid_cookie = ($self->{credential_source} ne "cookie"
+		and defined $cookie_user and $self->{user_id} eq $cookie_user
+		and defined $cookie_key and $self->{session_key} eq $cookie_key);
+	
+	# (c) the user asked to have a cookie sent and is not a guest user.
+	my $user_requests_cookie = ($self->{credential_source} ne "guest"
+		and $r->param("send_cookie"));
+	
+	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie, "'");
+	
+	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie) {
+		$self->sendCookie($self->{user_id}, $self->{session_key});
+	} else {
+		$self->killCookie;
+	}
+}
+
+sub set_params {
+	my $self = shift;
+	my $r = $self->{r};
+	
+	$r->param("user", $self->{user_id});
+	$r->param("key", $self->{session_key});
+	$r->param("passwd", "");
+	
+	debug("params user='", $r->param("user"), "' key='", $r->param("key"), "' passwd='", $r->param("passwd"), "'");
+}
+
+################################################################################
 # Password management
 ################################################################################
 
-sub checkPassword($$$) {
+sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
 	my $db = $self->{r}->db;
 	
@@ -553,7 +405,7 @@ sub checkPassword($$$) {
 # 
 # Here is an example site_checkPassword which checks the password against the Ohio State
 # popmail server:
-# 	sub site_checkPassword($$) {
+# 	sub site_checkPassword {
 # 		my ($self, $userID, $clearTextPassword) = @_;
 # 		use Net::POP3;
 # 		my $pop = Net::POP3->new('pop.service.ohio-state.edu', Timeout => 60);
@@ -595,45 +447,7 @@ sub site_checkPassword {
 # Session key management
 ################################################################################
 
-sub generateKey($$) {
-	my ($self, $userID) = @_;
-	my $ce = $self->{r}->ce;
-	
-	my @chars = @{ $ce->{sessionKeyChars} };
-	my $length = $ce->{sessionKeyLength};
-	
-	srand;
-	my $key = join ("", @chars[map rand(@chars), 1 .. $length]);
-	return WeBWorK::DB::Record::Key->new(user_id=>$userID, key=>$key, timestamp=>time);
-}
-
-sub checkKey($$$) {
-	my ($self, $userID, $possibleKey) = @_;
-	my $ce = $self->{r}->ce;
-	my $db = $self->{r}->db;
-	
-	my $Key = $db->getKey($userID); # checked
-	return 0 unless defined $Key;
-	if (time <= $Key->timestamp()+$ce->{sessionKeyTimeout}) {
-		if ($possibleKey eq $Key->key()) {
-			# unexpired and matches -- update timestamp
-			$Key->timestamp(time);
-			$db->putKey($Key);
-			return 1;
-		} else {
-			# unexpired but doesn't match -- leave timestamp alone
-			# we do this to keep an attacker from keeping someone's session
-			# alive. (yeah, we don't match IPs.)
-			return 0;
-		}
-	} else {
-		# expired -- delete key
-		$db->deleteKey($userID);
-		return 0;
-	}
-}
-
-sub unexpiredKeyExists($$) {
+sub unexpired_session_exists {
 	my ($self, $userID) = @_;
 	my $ce = $self->{r}->ce;
 	my $db = $self->{r}->db;
@@ -645,9 +459,56 @@ sub unexpiredKeyExists($$) {
 		return 1;
 	} else {
 		# expired -- delete key
-		$db->deleteKey($userID);
+		# NEW: no longer delete the key here -- a user re-visiting with a formerly-valid key should
+		# always get a "session expired" message. formerly, if they i.e. reload the login screen
+		# the message disappears, which is confusing (i claim ;)
+		#$db->deleteKey($userID);
 		return 0;
 	}
+}
+
+# clobbers any existing session for this $userID
+# if $newKey is not specified, a random key is generated
+# the key is returned
+sub create_session {
+	my ($self, $userID, $newKey) = @_;
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $timestamp = time;
+	unless ($newKey) {
+		my @chars = @{ $ce->{sessionKeyChars} };
+		my $length = $ce->{sessionKeyLength};
+		
+		srand;
+		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
+	}
+	
+	my $Key = $db->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
+	eval { $db->deleteKey($userID) };
+	$db->addKey($Key);
+	return $newKey;
+}
+
+# returns ($sessionExists, $keyMatches, $timestampValid)
+# if $updateTimestamp is true, the timestamp on a valid session is updated
+sub check_session {
+	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
+	my $ce = $self->{r}->ce;
+	my $db = $self->{r}->db;
+	
+	my $Key = $db->getKey($userID); # checked
+	return 0 unless defined $Key;
+	
+	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
+	my $timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
+	
+	if ($keyMatches and $timestampValid and $updateTimestamp) {
+		$Key->timestamp(time);
+		$db->putKey($Key);
+	}
+	
+	return (1, $keyMatches, $timestampValid);
 }
 
 ################################################################################
@@ -655,7 +516,7 @@ sub unexpiredKeyExists($$) {
 ################################################################################
 
 sub fetchCookie {
-	my ($self, $user, $key) = @_;
+	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
@@ -666,19 +527,19 @@ sub fetchCookie {
 	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
 	
 	if ($cookie) {
-		#warn __PACKAGE__, ": fetchCookie: found a cookie for this course: \"", $cookie->as_string, "\"\n";
-		#warn __PACKAGE__, ": fetchCookie: cookie has this value: \"", $cookie->value, "\"\n";
+		debug("found a cookie for this course: '", $cookie->as_string, "'");
+		debug("cookie has this value: '", $cookie->value, "'");
 		my ($userID, $key) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
-			#warn __PACKAGE__, ": fetchCookie: looks good, returning userID=$userID key=$key\n";
+			debug("looks good, returning userID='$userID' key='$key'");
 			return $userID, $key;
 		} else {
-			#warn __PACKAGE__, ": fetchCookie: malformed cookie. returning empty strings.\n";
-			return "", "";
+			debug("malformed cookie. returning nothing.");
+			return;
 		}
 	} else {
-		#warn __PACKAGE__, ": fetchCookie: found no cookie for this course. returning empty strings.\n";
-		return "", "";
+		debug("found no cookie for this course. returning nothing.");
+		return;
 	}
 }
 
@@ -700,7 +561,7 @@ sub sendCookie {
 	);
 	my $cookieString = $cookie->as_string;
 	
-	#warn __PACKAGE__, ": sendCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
+	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
@@ -722,7 +583,7 @@ sub killCookie {
 	);
 	my $cookieString = $cookie->as_string;
 	
-	#warn __PACKAGE__, ": killCookie: about to add Set-Cookie header with this string: \"", $cookie->as_string, "\"\n";
+	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
 }
 
