@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.80 2006/01/25 23:13:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.81 2006/02/03 18:21:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,6 +47,7 @@ use WeBWorK::Constants;
 
 # the rest of these are modules that are acutally used by this one
 use WeBWorK::Authen;
+use WeBWorK::Authen::Proctor;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -56,8 +57,8 @@ use WeBWorK::Upload;
 use WeBWorK::URLPath;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
-use constant AUTHEN_MODULE => "WeBWorK::ContentGenerator::Login";
-use constant PROCTOR_AUTHEN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
+use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
+use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
 use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
 our %SeedCE;
@@ -244,7 +245,7 @@ sub dispatch($) {
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
 					#$eUserID = $userID;
 					#$r->notes("authen_error" => "You do not have permission to become another user.");
-					#$displayModule = AUTHEN_MODULE;
+					#$displayModule = LOGIN_MODULE;
 					die "You are not allowed to act as another user.\n";
 				}
 			}
@@ -258,28 +259,19 @@ sub dispatch($) {
 			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
 			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
-			    my $procAuthOK = $authen->verifyProctor();
-
-			    if ($procAuthOK) {
-					my $proctorUserID = $r->param("proctor_user");
-					my $proctor_authorized = $authz->hasPermissions($proctorUserID, "proctor_quiz");
-					unless ($proctor_authorized) {
-						$r->notes("authen_error", "User $proctorUserID is not authorized to proctor tests in this course.");
-					    $displayModule = PROCTOR_AUTHEN_MODULE;
-					}
-				} else {
-					$displayModule = PROCTOR_AUTHEN_MODULE;
+				my $authenProctor = new WeBWorK::Authen::Proctor($r);
+			    my $procAuthOK = $authenProctor->verify();
+				
+				if (not $procAuthOK) {
+					$displayModule = PROCTOR_LOGIN_MODULE;
 				}
 			}
 		} else {
 			debug("Bad news: authentication failed!\n");
-			$displayModule = AUTHEN_MODULE;
+			$displayModule = LOGIN_MODULE;
 			debug("set displayModule to $displayModule\n");
 		}
 	}
-	
-	# make fake authen/authz objects that just fail
-	$authen = 
 	
 	# store the time before we invoke the content generator
 	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
