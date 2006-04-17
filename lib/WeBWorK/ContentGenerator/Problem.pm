@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.196 2006/03/02 16:50:39 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.197 2006/03/02 17:03:54 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -459,7 +459,7 @@ sub pre_header_initialize {
 			# if the global problem doesn't exist either, bail!
 			if(not defined $globalProblem) {
 				my $sourceFilePath = $r->param("sourceFilePath");
-				die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates});
+				die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 				# These are problems from setmaker.  If declared invalid, they won't come up
 				$self->{invalidProblem} = $self->{invalidSet} = 1 unless defined $sourceFilePath;
 #				die "Problem $problemNumber in set $setName does not exist" unless defined $sourceFilePath;
@@ -488,7 +488,7 @@ sub pre_header_initialize {
 		# editMode calls for a temporary file, do so
 		my $sourceFilePath = $r->param("sourceFilePath");
 		if (defined $editMode and $editMode eq "temporaryFile" and defined $sourceFilePath) {
-			die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates});
+			die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 			$problem->source_file($sourceFilePath);
 		}
 		

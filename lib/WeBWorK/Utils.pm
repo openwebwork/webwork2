@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.72 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.73 2006/02/07 21:03:21 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -291,19 +291,30 @@ sub removeTempDirectory($) {
 	rmtree($dir, 0, 0);
 }
 
-=item path_is_subdir($path, $dir)
+=item path_is_subdir($path, $dir, $allow_relative)
 
-Ensures that $path refers to a location "inside" $dir. The method of checking is
-rather rudimentary at the moment. First, upreferences ("..") are disallowed,
-in $path, then it is checked to make sure that some prefix of it matches $dir.
+Ensures that $path refers to a location "inside" $dir. If $allow_relative is
+true and $path is not absoulte, it is assumed to be relative to $dir.
+
+The method of checking is rather rudimentary at the moment. First, upreferences
+("..") are disallowed, in $path, then it is checked to make sure that some
+prefix of it matches $dir.
 
 If either of these checks fails, a false value is returned. Otherwise, a true
 value is returned.
 
 =cut
 
-sub path_is_subdir($$) {
-	my ($path, $dir) = @_;
+sub path_is_subdir($$;$) {
+	my ($path, $dir, $allow_relative) = @_;
+	
+	unless ($path =~ /^\//) {
+		if ($allow_relative) {
+			$path = "$dir/$path";
+		} else {
+			return 0;
+		}
+	}
 	
 	$path = File::Spec->canonpath($path);
 	$path .= "/" unless $path =~ m|/$|;
