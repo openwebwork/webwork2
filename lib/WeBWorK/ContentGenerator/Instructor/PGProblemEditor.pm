@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.71 2006/01/11 23:08:44 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.72 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@ WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
 use strict;
 use warnings;
 use CGI qw();
-use WeBWorK::Utils qw(readFile surePathToFile);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
 use Apache::Constants qw(:common REDIRECT);
 use HTML::Entities;
 use URI::Escape;
@@ -474,10 +474,12 @@ sub body {
 
 	unless ( $problemContents =~/\S/)   { # non-empty contents
 		if (-r $tempFilePath and not -d $tempFilePath) {
+			die "tempFilePath is unsafe!" unless path_is_subdir($tempFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 			eval { $problemContents = WeBWorK::Utils::readFile($tempFilePath) };
 			$problemContents = $@ if $@;
 			$inputFilePath = $tempFilePath;
 		} elsif  (-r $editFilePath and not -d $editFilePath) {
+			die "editFilePath is unsafe!" unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 			eval { $problemContents = WeBWorK::Utils::readFile($editFilePath) };
 			$problemContents = $@ if $@;
 			$inputFilePath = $editFilePath;
@@ -956,6 +958,7 @@ sub saveFileChanges {
 		# make sure any missing directories are created
 		WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},
 		                                                        $outputFilePath);
+		die "outputFilePath is unsafe!" unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 
 		eval {
 			local *OUTPUTFILE;
@@ -1005,6 +1008,7 @@ sub saveFileChanges {
 		if (($action eq 'save' or $action eq 'save_as') and (-w $self->{tempFilePath})  ) {
 		             
 		             $self->addgoodmessage("Deleting temp file at " . $self->shortPath($self->{tempFilePath}));
+		             die "tempFilePath is unsafe!" unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 		             unlink($self->{tempFilePath}) ;
 		}
 
@@ -1671,10 +1675,12 @@ sub revert_form {
 }
 sub revert_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $ce = $self->ce;
 	#$self->addgoodmessage("revert_handler called");	
 	my $editFilePath       = $self->{editFilePath};
 	$self->{inputFilePath} = $editFilePath;
 	# unlink the temp files;
+	die "tempFilePath is unsafe!" unless path_is_subdir($self->{tempFilePath}, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 	unlink($self->{tempFilePath});
 	$self->addgoodmessage("Deleting temp file at " . $self->shortPath($self->{tempFilePath}));
 	$self->{tempFilePath}  = '';
