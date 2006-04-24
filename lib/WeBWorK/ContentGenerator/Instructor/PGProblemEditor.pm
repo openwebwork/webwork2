@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.72 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.73 2006/04/18 23:27:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1675,7 +1675,7 @@ sub revert_form {
 }
 sub revert_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $ce = $self->ce;
+	my $ce = $self->r->ce;
 	#$self->addgoodmessage("revert_handler called");	
 	my $editFilePath       = $self->{editFilePath};
 	$self->{inputFilePath} = $editFilePath;
