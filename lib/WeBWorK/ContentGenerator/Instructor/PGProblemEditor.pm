@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.73 2006/04/18 23:27:32 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.74 2006/04/24 16:00:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -637,6 +637,15 @@ sub shortPath {
 # Utilities
 ################################################################################
 
+sub getRelativeSourceFilePath {
+	my ($self, $sourceFilePath) = @_;
+	
+	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
+	$sourceFilePath =~ s|^$templatesDir/*||; # remove templates path and any slashes that follow
+	
+	return $sourceFilePath;
+}
+
 # determineLocalFilePath   constructs a local file path parallel to a library file path
 # This is a subroutine, not a method
 # 
@@ -1107,6 +1116,8 @@ sub view_handler {
 	$edit_level++;
 	my $viewURL;
 	
+	my $relativeTempFilePath = $self->getRelativeSourceFilePath($tempFilePath);
+	
 	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
 		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
@@ -1118,7 +1129,7 @@ sub view_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
+				sourceFilePath     => $relativeTempFilePath,
 				status_message     => uri_escape($self->{status_message})
 	
 			}
@@ -1135,7 +1146,7 @@ sub view_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
+				sourceFilePath     => $relativeTempFilePath,
 				status_message     => uri_escape($self->{status_message})
 	
 			}
@@ -1152,7 +1163,7 @@ sub view_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
+				sourceFilePath     => $relativeTempFilePath,
 				status_message     => uri_escape($self->{status_message})
 	
 			}
@@ -1167,7 +1178,7 @@ sub view_handler {
 				course_info        => $tempFilePath,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
+				sourceFilePath     => $relativeTempFilePath,
 				status_message     => uri_escape($self->{status_message})
 			}
 		);
@@ -1179,7 +1190,7 @@ sub view_handler {
 				options_info       => $tempFilePath,
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
-				sourceFilePath     => $tempFilePath,
+				sourceFilePath     => $relativeTempFilePath,
 				status_message     => uri_escape($self->{status_message})
 			}
 		);
@@ -1264,13 +1275,14 @@ sub add_problem_handler {
 			setID     => $targetSetName, 
 			problemID => $targetProblemNumber, 
 		);
+		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
 		$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode        => $displayMode,
 					problemSeed        => $problemSeed,
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
-					sourceFilePath     => $sourceFilePath,
+					sourceFilePath     => $relativeSourceFilePath,
 					status_message     => uri_escape($self->{status_message})
 	
 				}
@@ -1362,13 +1374,15 @@ sub save_handler {
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		
+		my $relativeEditFilePath = $self->getRelativeSourceFilePath($editFilePath);
+		
 		$viewURL = $self->systemLink($problemPage,
 			params => {
 				displayMode        => $displayMode,
 				problemSeed        => $problemSeed,
 				editMode           => "savedFile",
 				edit_level         => 0,
-				sourceFilePath     => $editFilePath,
+				sourceFilePath     => $relativeEditFilePath,
 				status_message     => uri_escape($self->{status_message})
 	
 			}
@@ -1652,9 +1666,11 @@ sub save_as_handler {
 
 	#warn "save mode is $saveMode";
 
+	my $relativeOutputFilePath = $self->getRelativeSourceFilePath($outputFilePath);
+	
 	my $viewURL = $self->systemLink($problemPage, 
 								 params=>{
-									 sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
+									 sourceFilePath     => $relativeOutputFilePath, #The path relative to the templates directory is required.
 									 edit_level         => $edit_level,
 									 file_type          => $new_file_type,
 									 status_message     => uri_escape($self->{status_message})
