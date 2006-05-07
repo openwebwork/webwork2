@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.77 2006/01/10 00:33:19 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.78 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1545,7 +1545,7 @@ sub recordEditHTML {
 	} else {
 		# check to see if a user is currently logged in
 		my $Key = $db->getKey($User->user_id);
-		push @tableCells, ($Key and WeBWorK::Authen::checkKey($self, $User->user_id, $Key->key)) ? CGI::b("active") : CGI::em("inactive");
+		push @tableCells, ($Key and WeBWorK::Authen::check_session($self, $User->user_id, $Key->key, 1)) ? CGI::b("active") : CGI::em("inactive");
 	}
 	
 	# change password (only in password mode)
