@@ -269,7 +269,7 @@ sub FieldTable {
 			    ($self->FieldHTML($userID, $setID, $problemID, 
 					     $globalRecord, $userRecord, 
 					     $gwfield));
-			if ( @fieldData && $fieldData[1] ne '' ) {
+			if ( @fieldData && defined($fieldData[1]) and $fieldData[1] ne '' ) {
 			    $nF = @fieldData if ( @fieldData > $nF );
 			    $gwoutput .= CGI::Tr({}, CGI::td({}, [@fieldData]));
 		    	}
