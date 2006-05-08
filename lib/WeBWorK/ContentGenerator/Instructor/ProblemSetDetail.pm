@@ -1084,7 +1084,6 @@ sub body {
 		foreach my $userID (@editForUser) {
 		    my $u = $db->getUser($userID);
 		    my $email_address = $u->email_address;
-		    warn "email address is $email_address";
 			my $line = $u->last_name.", ".$u->first_name."&nbsp;&nbsp;(".CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id."). Assigned to ";
 			my $editSetsAssignedToUserURL = $self->systemLink(
 	           $urlpath->newFromModule(
