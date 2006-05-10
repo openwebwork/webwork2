@@ -51,7 +51,11 @@ Verify that the proper column type is in use for each column.
 
 =item -v
 
-Verbose output
+Verbose output.
+
+=item -n
+
+Don't offer to fix problems, just report them.
 
 =back
 
@@ -73,14 +77,26 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw/runtime_use/;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
-our $opt_v;
-getopts("v");
+our ($opt_n, $opt_v);
+getopts("nv");
+
+my $noop = sub {};
+
+if ($opt_n) {
+	*maybe_add_table = $noop;
+	*maybe_add_field = $noop;
+	*maybe_change_field = $noop;
+} else {
+	*maybe_add_table = \&ask_add_table;
+	*maybe_add_field = \&ask_add_field;
+	*maybe_change_field = \&ask_change_field;
+}
 
 if ($opt_v) {
 	$| = 1;
 	*verbose = sub { print STDERR @_ };
 } else {
-	*verbose = sub {};
+	*verbose = $noop;
 }
 
 # a random coursename we can grab back out later
@@ -106,6 +122,8 @@ my $dbh = DBI->connect(
  %ww_table_data = (
 	 $table => {
 		 sql_name => "SQL name for this field, probably contains $random_courseID",
+		 field_order => [ ... ],
+		 keyfield_order => [ ... ],
 		 fields => {
 			 $field => {
 				 sql_name => "SQL name for this field, possibly overridden",
@@ -135,10 +153,28 @@ my @ww_courses = @ARGV;
 foreach my $ww_course_name (@ww_courses) {
 	verbose("\nChecking tables for course '$ww_course_name'\n");
 	
+	my $ce2 = WeBWorK::CourseEnvironment->new({
+		webwork_dir => $ENV{WEBWORK_ROOT},
+		courseName => $ww_course_name,
+	});
+	
+	my $do_this_course = 1;
+	
+	my @diffs = compare_dbLayouts($ce, $ce2);
+	if (@diffs) {
+		print "\nThe database layout for course '$ww_course_name' differs from the generic database layout in global.conf. Here's how:\n\n";
+		print map("* $_\n", @diffs), "\n";
+		$do_this_course = ask_permission("Check course '$ww_course_name'?", 0);
+	}
+	
 	foreach my $ww_table_name (keys %ww_table_data) {
 		check_table($ww_course_name, $ww_table_name);
 	}
 }
+
+my $qualifier = @ARGV ? " selected" : "";
+print "\nThe following tables exist in the database but are not associated with any$qualifier course:\n\n";
+print join("\n", sort keys %sql_tables), "\n\n";
 
 exit;
 
@@ -208,7 +244,7 @@ sub check_table {
 	}
 }
 
-sub maybe_add_table {
+sub ask_add_table {
 	my ($ww_course_name, $ww_table_name) = @_;
 	my $ww_table_rec = $ww_table_data{$ww_table_name};
 	my $sql_table_name = get_sql_table_name($ww_table_rec->{sql_name}, $ww_course_name);
@@ -336,7 +372,7 @@ sub check_fields {
 	}
 }
 
-sub maybe_add_field {
+sub ask_add_field {
 	my ($ww_course_name, $ww_table_name, $ww_field_name) = @_;
 	my $ww_table_rec = $ww_table_data{$ww_table_name};
 	my $sql_table_name = get_sql_table_name($ww_table_rec->{sql_name}, $ww_course_name);
@@ -386,7 +422,7 @@ sub get_location_modifier {
 	}
 }
 
-sub maybe_change_field {
+sub ask_change_field {
 	my ($ww_course_name, $ww_table_name, $ww_field_name) = @_;
 	my $ww_table_rec = $ww_table_data{$ww_table_name};
 	my $sql_table_name = get_sql_table_name($ww_table_rec->{sql_name}, $ww_course_name);
@@ -436,6 +472,24 @@ sub ask_permission {
 		return 0 if lc $resp eq "n";
 		$prompt = 'Please enter "y" or "n".';
 	}
+}
+
+sub compare_dbLayouts {
+	my ($ce1, $ce2) = @_;
+	
+	my $dbLayout1 = $ce1->{dbLayoutName};
+	my $dbLayout2 = $ce2->{dbLayoutName};
+	#warn "Generic: '$dbLayout1' this course: '$dbLayout2'.\n";
+	
+	# simplisic check for now
+	if ($dbLayout1 ne $dbLayout2) {
+		return "\$dbLayoutName differs. Generic: '$dbLayout1' this course: '$dbLayout2'. (This is a rather"
+		. " simplistic check. If you've created a modified version of the '$dbLayout1' database layout for"
+		. " use with this course, it's probably OK to check this course anyway. Just be sure that any fixes"
+		. " this program proposes are appropriate given your modifications.)";
+	}
+	
+	return ();
 }
 
 ################################################################################
