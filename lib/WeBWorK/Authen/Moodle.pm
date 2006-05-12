@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.51 2006/02/21 22:00:29 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.1 2006/04/12 18:50:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,20 +77,6 @@ sub get_credentials {
 	return 0;
 }
 
-# FIXME: original moodle bridge would take a request with a user ID and an expired but matching
-# session key, and check to see if there was an unexpired moodle cookie around. if there was, the
-# existing webwork session would be updated.
-# 
-# this can happen in the following situation:
-#  1. log in to moodle, click on webwork link
-#  2. webwork authenticates with moodle cookie due to lack of userID/key in URL
-#  3. wait... depending on settings, webwork session might expire before moodle session
-#  4. click on an internal webwork link -- userID/key will match, but session is expired
-#  5. should fall back on moodle cookie (but doesn't in this implementation)
-# 
-# currently, this implementation doesn't do that. here, the moodle cookie is never checked if a
-# user ID was found in the request (i.e. if it was an internal link)
-
 # extend the moodle session if authentication succeeded
 sub site_fixup {
 	my $self = shift;
@@ -122,6 +108,41 @@ sub checkPassword {
 	return 0;
 }
 
+# FIXME: original moodle bridge would take a request with a user ID and an expired but matching
+# session key, and check to see if there was an unexpired moodle cookie around. if there was, the
+# existing webwork session would be updated.
+# 
+# this can happen in the following situation:
+#  1. log in to moodle, click on webwork link
+#  2. webwork authenticates with moodle cookie due to lack of userID/key in URL
+#  3. wait... depending on settings, webwork session might expire before moodle session
+#  4. click on an internal webwork link -- userID/key will match, but session is expired
+#  5. should fall back on moodle cookie (but doesn't in this implementation)
+# 
+# currently, this implementation doesn't do that. here, the moodle cookie is never checked if a
+# user ID was found in the request (i.e. if it was an internal link)
+# 
+# to do this, we need to look at the result of check_session for keyMatches=1 timestampValid=0
+# can we do that by wrapping check_session, and calling create_session if there's an unexpired
+# moodle cookie? or is the factorization of verify_normal_user wrong?
+
+sub check_session {
+	my ($self, $user_id, $session_key, $update_timestamp) = @_;
+	
+	my ($sessionExists, $keyMatches, $timestampValid) = $self->SUPER::check_session($user_id, $session_key, $update_timestamp);
+	
+	if ($update_timestamp and $sessionExists and $keyMatches and not $timestampValid) {
+		my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_cookie;
+		if (defined $moodle_user_id and $moodle_user_id eq $user_id
+				and defined $moodle_expiration_time and time <= $moodle_expiration_time) {
+			$self->{session_key} = $self->create_session($moodle_user_id);
+			$keyMatches = 1;
+		}
+	}
+	
+	return $sessionExists, $keyMatches, $timestampValid;
+}
+
 sub fetchMoodleSession {
 	# fetches the basic information from the moodle session.
 	# returns the user name and expiration time of the moodle session
@@ -138,7 +159,7 @@ sub fetchMoodleSession {
 		return $db->getMoodleSession($cookie->value);
 	}
 	else {
-		return undef, undef;
+		return;
 	}
 }
 
