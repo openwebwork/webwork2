@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.2 2004/07/12 04:15:51 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.3 2006/01/25 23:13:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -71,6 +71,7 @@ LoadModule usertrack_module   libexec/apache/mod_usertrack.so
 LoadModule unique_id_module   libexec/apache/mod_unique_id.so
 LoadModule setenvif_module    libexec/apache/mod_setenvif.so
 LoadModule perl_module        libexec/apache/libperl.so
+LoadModule php4_module        libexec/apache/libphp4.so
 
 # Reconstruction of the complete module list from all available modules
 # (static and shared ones) to achieve correct module execution order.
@@ -110,6 +111,7 @@ AddModule mod_unique_id.c
 AddModule mod_so.c
 AddModule mod_setenvif.c
 AddModule mod_perl.c
+AddModule mod_php4.c
 
 ExtendedStatus On
 
