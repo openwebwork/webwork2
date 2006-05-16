@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.165 2006/05/16 18:58:04 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.166 2006/05/16 21:06:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -374,6 +374,13 @@ $database_username = "webworkWrite";
 $database_password = "";
 $database_debug = 0;
 
+# Variables for sql_moodle database layout.
+$moodle_dsn = "dbi:mysql:moodle";
+$moodle_dsn = "dbi:mysql:moodle_sam";
+$mooble_table_prefix = "mdl_";
+$moodle_username = $database_username;
+$moodle_password = $database_password;
+
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
 include "conf/database.conf";
@@ -470,6 +477,32 @@ $siteDefaults{default_templates_course} ="modelCourse";
 
 $defaultTheme = "math";
 $defaultThemeTemplate = "system";
+
+################################################################################
+# Authentication system
+################################################################################
+
+# FIXME This mechanism is a little awkward and probably should be merged with
+# the dblayout selection system somehow.
+
+# Select the authentication module to use for normal logins.
+# 
+# If this value is a string, the given authentication module will be used
+# regardless of the database layout. If it is a hash, the database layout name
+# will be looked up in the hash and the resulting value will be used as the
+# authentication module. The special hash key "*" is used if no entry for the
+# current database layout is found.
+# 
+$authen{user_module} = {
+	sql_moodle => "WeBWorK::Authen::Moodle",
+	"*" => "WeBWorK::Authen",
+};
+
+# Select the authentication module to use for proctor logins.
+# 
+# A string or a hash is accepted, as above.
+# 
+$authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
 ################################################################################
 # Authorization system
