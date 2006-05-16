@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.19 2006/02/07 21:03:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.20 2006/04/12 18:51:21 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -385,7 +385,8 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "jsMath") {
-		return '<DIV CLASS="math">'.$tex.'</DIV>' ;
+		$tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
+		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
 
