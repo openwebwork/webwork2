@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.163 2006/01/24 23:40:43 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.164 2006/01/25 23:13:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -366,6 +366,13 @@ $courseFiles{problibs}    = {
 ################################################################################
 # Database options
 ################################################################################
+
+# these variables are used by database.conf. we define them here so that editing
+# database.conf isn't necessary.
+$database_dsn = "dbi:mysql:webwork";
+$database_username = "webworkWrite";
+$database_password = "";
+$database_debug = 0;
 
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
