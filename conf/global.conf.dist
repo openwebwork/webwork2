@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.164 2006/01/25 23:13:48 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.165 2006/05/16 18:58:04 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -614,10 +614,10 @@ $default_status = "Enrolled";
 $sessionKeyTimeout = 60*30;
 
 # $sessionKeyLength defines the length (in characters) of the session key
-$sessionKeyLength = 40;
+$sessionKeyLength = 32;
 
 # @sessionKeyChars lists the legal session key characters
-@sessionKeyChars = ('A'..'Z', 'a'..'z', '0'..'9', '.', '^', '/', '!', '*');
+@sessionKeyChars = ('A'..'Z', 'a'..'z', '0'..'9');
 
 # Practice users are users who's names start with $practiceUser
 # (you can comment this out to remove practice user support)
