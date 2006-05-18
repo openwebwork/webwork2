@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.18 2006/05/16 21:10:35 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.19 2006/05/18 19:27:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,7 @@ line like the one below to the F<global.conf> or F<course.conf> file.
 
 %dbLayouts = (); # layouts are added to this hash below
 
-=head1 THE SQL_SINGLE DATABASE LAYOUT
+=head2 THE SQL_SINGLE DATABASE LAYOUT
 
 The C<sql_single> layout is similar to the C<sql> layout, excpet that it uses a
 single database for all courses. This is accomplised by prefixing each table
@@ -161,7 +161,7 @@ $dbLayouts{sql_single} = {
 	},
 };
 
-=head1 THE SQL_MOODLE DATABASE LAYOUT
+=head2 THE SQL_MOODLE DATABASE LAYOUT
 
 The C<sql_moodle> layout is similar to the C<sql_single> layout, except it uses
 a Moodle database for user information and authentication.
@@ -207,15 +207,43 @@ $dbLayouts{sql_moodle} = {
 		source => $moodle_dsn,
 		params => { %moodleParams },
 	},
-	
-#	moodlekey => {
-#		# never actually use this, as this is a wierd record type...
-#		record => "WeBWorK::DB::Record::Key",
-#		schema => "WeBWorK::DB::Schema::Moodle::Key",
-#		driver => "WeBWorK::DB::Driver::SQL",
-#		source => $sqlMoodleSource,
-#		params => { %sqlParams,
-#			tablePrefix => "mdl_",
-#		},
-#	},
+	#moodlekey => {
+	#	# never actually use this, as this is a wierd record type...
+	#	record => "WeBWorK::DB::Record::Key",
+	#	schema => "WeBWorK::DB::Schema::Moodle::Key",
+	#	driver => "WeBWorK::DB::Driver::SQL",
+	#	source => $sqlMoodleSource,
+	#	params => { %sqlParams,
+	#		tablePrefix => "mdl_",
+	#	},
+	#},
 };
+
+=head1 DATABASE LAYOUT METADATA
+
+=over
+
+=item @dbLayout_order
+
+Database layouts listed in this array will be displayed first, in the order
+specified, wherever database layouts are listed. (For example, in the "Add
+Course" tool.) Other layouts are listed after these.
+
+=cut
+
+@dbLayout_order = qw/sql_single sql_moodle/;
+
+=item %dbLayout_descr
+
+Hash mapping database layout names to textual descriptions.
+
+=cut
+
+%dblayout_descr = (
+	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
+	sql_moodle => "Simiar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
+);
+
+=back
+
+=cut
