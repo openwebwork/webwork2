@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.42 2005/11/07 21:20:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.43 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,18 +30,10 @@ use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use IO::File;
+use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
-
-# put the following database layouts at the top of the list, in this order
-our @DB_LAYOUT_ORDER = qw/sql_single gdbm sql/;
-
-our %DB_LAYOUT_DESCRIPTIONS = (
-	gdbm => CGI::i("Deprecated. Uses GDBM databases to record WeBWorK data. Use this layout if the course must be used with WeBWorK 1.x."),
-	sql => CGI::i("Deprecated. Uses a separate SQL database to record WeBWorK data for each course."),
-	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
-);
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -366,7 +358,7 @@ sub add_course_form {
 	
 	my @dbLayouts = do {
 		my @ordered_layouts;
-		foreach my $layout (@DB_LAYOUT_ORDER) {
+		foreach my $layout (@{$ce->{dbLayout_order}}) {
 			if (exists $ce->{dbLayouts}->{$layout}) {
 				push @ordered_layouts, $layout;
 			}
@@ -389,24 +381,6 @@ sub add_course_form {
 		$ce->{pg}->{directories}->{root},
 		"COURSENAME",
 	);
-	
-	my $dbi_source = do {
-		# find the most common SQL source (stolen from CourseManagement.pm)
-		my %sources;
-		foreach my $table (keys %{ $ce2->{dbLayouts}->{sql} }) {
-			$sources{$ce2->{dbLayouts}->{sql}->{$table}->{source}}++;
-		}
-		my $source;
-		if (keys %sources > 1) {
-			foreach my $curr (keys %sources) {
-				$source = $curr if not defined $source or 
-					$sources{$curr} > $sources{$source};
-			}
-		} else {
-			($source) = keys %sources;
-		}
-		$source;
-	};
 	
 	my @existingCourses = listCourses($ce);
 	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
@@ -500,8 +474,8 @@ sub add_course_form {
 	foreach my $dbLayout (@dbLayouts) {
 		print CGI::start_table({class=>"FormLayout"});
 		
-		my $dbLayoutLabel = (defined $DB_LAYOUT_DESCRIPTIONS{$dbLayout})
-			? "$dbLayout - $DB_LAYOUT_DESCRIPTIONS{$dbLayout}"
+		my $dbLayoutLabel = (defined $ce->{dbLayout_descr}{$dbLayout})
+			? "$dbLayout - " . $ce->{dbLayout_descr}{$dbLayout}
 			: $dbLayout;
 		
 		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
@@ -513,80 +487,6 @@ sub add_course_form {
 			CGI::td($dbLayoutLabel),
 		);
 		
-		print CGI::start_Tr();
-		print CGI::td(); # for indentation :(
-		print CGI::start_td();
-		
-		
-		if ($dbLayout eq "sql") {
-		    
-		    print CGI::p({style=>'font-style:italic'},"The following information is only required for the deprecated sql database format:");
-			print CGI::start_table({class=>"FormLayout"});
-			print CGI::Tr(CGI::td({colspan=>2}, 
-					"Enter the user ID and password for an SQL account with sufficient permissions to create a new database."
-				)
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-				CGI::td(CGI::textfield("add_sql_username", $add_sql_username, 25)),
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-				CGI::td(CGI::password_field("add_sql_password", $add_sql_password, 25)),
-			);
-			
-			print CGI::Tr(CGI::td({colspan=>2},
-					"The optionial SQL settings you enter below must match the settings in the DBI source"
-					. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
-					. " with the course name you entered above."
-				)
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-				CGI::td(
-					CGI::textfield("add_sql_host", $add_sql_host, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the default host."),
-				),
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-				CGI::td(
-					CGI::textfield("add_sql_port", $add_sql_port, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the default port."),
-				),
-			);
-		
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td(
-					CGI::textfield("add_sql_database", $add_sql_database, 25),
-					CGI::br(),
-					CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
-				),
-			);
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
-				CGI::td(
-					CGI::textfield("add_sql_wwhost", $add_sql_wwhost || "localhost", 25),
-					CGI::br(),
-					CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
-				),
-			);
-			print CGI::end_table();
-		} elsif ($dbLayout eq "gdbm") {
-			print CGI::p({style=>"font-style: italic"},"The following information is only required for the deprecated gdbm database format:");
-			print CGI::start_table({class=>"FormLayout"});
-			print CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "GDBM Global User ID:"),
-				CGI::td(CGI::textfield("add_gdbm_globalUserID", $add_gdbm_globalUserID || "global_user", 25)),
-			);
-			print CGI::end_table();
-		}
-		
-		print CGI::end_td();
-		print CGI::end_Tr();
 		print CGI::end_table();
 	}
 	
