@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.17 2006/05/16 18:58:04 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.18 2006/05/16 21:10:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,6 +170,7 @@ a Moodle database for user information and authentication.
 
 # params used by moodle-backed tables
 my %moodleParams = (
+	non_native  => 1,
 	usernameRO  => $moodle_username,
 	passwordRO  => $moodle_password,
 	usernameRW  => $moodle_username,
