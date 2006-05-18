@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.81 2006/02/03 18:21:26 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.82 2006/04/12 18:50:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,8 +46,8 @@ use Time::HiRes qw/time/;
 use WeBWorK::Constants;
 
 # the rest of these are modules that are acutally used by this one
-use WeBWorK::Authen;
-use WeBWorK::Authen::Proctor;
+#use WeBWorK::Authen;
+#use WeBWorK::Authen::Proctor;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -197,7 +197,32 @@ sub dispatch($) {
 	# instead, we just create the behavior that if they don't have a valid $db they fail.
 	my $authz = new WeBWorK::Authz($r);
 	$r->authz($authz);
-	my $authen = new WeBWorK::Authen($r);
+	
+	# figure out which authentication modules to use
+	my $user_authen_module;
+	my $proctor_authen_module;
+	if (ref $ce->{authen}{user_module} eq "HASH") {
+		if (exists $ce->{authen}{user_module}{$ce->{dbLayoutName}}) {
+			$user_authen_module = $ce->{authen}{user_module}{$ce->{dbLayoutName}};
+		} else {
+			$user_authen_module = $ce->{authen}{user_module}{"*"};
+		}
+	} else {
+		$user_authen_module = $ce->{authen}{user_module};
+	}
+	if (ref $ce->{authen}{proctor_module} eq "HASH") {
+		if (exists $ce->{authen}{proctor_module}{$ce->{dbLayoutName}}) {
+			$proctor_authen_module = $ce->{authen}{proctor_module}{$ce->{dbLayoutName}};
+		} else {
+			$proctor_authen_module = $ce->{authen}{proctor_module}{"*"};
+		}
+	} else {
+		$proctor_authen_module = $ce->{authen}{proctor_module};
+	}
+	
+	runtime_use $user_authen_module;
+	my $authen = $user_authen_module->new($r);
+	debug("Using user_authen_module $user_authen_module: $authen\n");
 	$r->authen($authen);
 	
 	my $db;
@@ -259,7 +284,9 @@ sub dispatch($) {
 			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
 			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
-				my $authenProctor = new WeBWorK::Authen::Proctor($r);
+				runtime_use $proctor_authen_module;
+				my $authenProctor = $proctor_authen_module->new($r);
+			debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
 			    my $procAuthOK = $authenProctor->verify();
 				
 				if (not $procAuthOK) {
@@ -338,7 +365,6 @@ sub mungeParams {
 		}
 	}
 }
-
 
 =head1 AUTHOR
 
