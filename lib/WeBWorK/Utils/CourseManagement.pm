@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.29 2006/01/25 23:13:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.30 2006/01/26 21:45:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -211,33 +211,37 @@ sub addCourse {
 	
 	##### step 3: populate course database #####
 	
-	my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
-	
-	# make sure we add the global user
-	if (exists $courseOptions{globalUserID}) {
-		unless (grep { $_->[0]->user_id eq $courseOptions{globalUserID} } @users) {
-			push @users, [
-				$db->newUser(user_id => $courseOptions{globalUserID}),
-				$db->newPassword(user_id => $courseOptions{globalUserID}),
-				$db->newPermissionLevel(user_id => $courseOptions{globalUserID}),
-			];
+	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
+		debug("not adding users to the course database: 'user' table is non-native.\n");
+	} else {
+		my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
+		
+		# make sure we add the global user
+		if (exists $courseOptions{globalUserID}) {
+			unless (grep { $_->[0]->user_id eq $courseOptions{globalUserID} } @users) {
+				push @users, [
+					$db->newUser(user_id => $courseOptions{globalUserID}),
+					$db->newPassword(user_id => $courseOptions{globalUserID}),
+					$db->newPermissionLevel(user_id => $courseOptions{globalUserID}),
+				];
+			}
 		}
-	}
-	
-	# apparently never used:
-	#my @professors; # user ID of any user whose permission level == 10
-	
-	foreach my $userTriple (@users) {
-		my ($User, $Password, $PermissionLevel) = @$userTriple;
 		
 		# apparently never used:
-		#if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
-		#	push @professors, $PermissionLevel->user_id;
-		#}
+		#my @professors; # user ID of any user whose permission level == 10
 		
-		eval { $db->addUser($User)                       }; warn $@ if $@;
-		eval { $db->addPassword($Password)               }; warn $@ if $@;
-		eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
+		foreach my $userTriple (@users) {
+			my ($User, $Password, $PermissionLevel) = @$userTriple;
+			
+			# apparently never used:
+			#if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
+			#	push @professors, $PermissionLevel->user_id;
+			#}
+			
+			eval { $db->addUser($User)                       }; warn $@ if $@;
+			eval { $db->addPassword($Password)               }; warn $@ if $@;
+			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
+		}
 	}
 	
 	##### step 4: write course.conf file #####
@@ -341,8 +345,9 @@ sub renameCourse {
 	# get the database layout out of the options hash
 	my $dbLayoutName = $oldCE->{dbLayoutName};
 	
-	die "I happen to know that renameCourse() will only succeed for sql_single courses. Bug sam to write support for gdbm and sql courses.\n"
-		unless $dbLayoutName eq "sql_single";
+	if (not ref getHelperRef("copyCourseDataHelper", $dbLayoutName)) {
+		die "This database layout doesn't support course renaming. Sorry!\n"
+	}
 	
 	# collect some data
 	my $coursesDir = $oldCE->{webworkDirs}->{courses};
@@ -640,8 +645,9 @@ sub archiveCourse {
 	# get the database layout out of the options hash
 	my $dbLayoutName = $ce->{dbLayoutName};
 	
-	die "I happen to know that renameCourse() will only succeed for sql_single courses. Bug Mike to write support for gdbm and sql courses.\n"
-		unless $dbLayoutName eq "sql_single";
+	if (not ref getHelperRef("archiveCourseHelper", $dbLayoutName)) {
+		die "This database layout doesn't support course archiving. Sorry!\n"
+	}
 	
 	# collect some data
 	my $coursesDir  = $ce->{webworkDirs}->{courses};
@@ -710,6 +716,11 @@ sub dbLayoutSQLSources {
 	foreach my $table (@tables) {
 		my %table = %{ $dbLayout{$table} };
 		my %params = %{ $table{params} };
+		
+		if ($params{non_native}) {
+			debug("$table: marked non-native, skipping\n");
+			next;
+		}
 		
 		my $source = $table{source};
 		my $username = $params{usernameRW};
@@ -831,6 +842,17 @@ class exists and contains a function named "${helperName}Helper".
 sub callHelperIfExists {
 	my ($helperName, $dbLayoutName, @args) = @_;
 	
+	my $helperRef = getHelperRef($helperName, $dbLayoutName);
+	if (ref $helperRef) {
+		return $helperRef->(@args);
+	} else {
+		return $helperRef;
+	}
+}
+
+sub getHelperRef {
+	my ($helperName, $dbLayoutName) = @_;
+	
 	my $result;
 	
 	my $package = __PACKAGE__ . "::$dbLayoutName";
@@ -838,7 +860,7 @@ sub callHelperIfExists {
 	eval { runtime_use $package };
 	if ($@) {
 		if ($@ =~ /^Can't locate/) {
-			#warn "No database-layout specific library for layout '$dbLayoutName'.\n";
+			debug("No database-layout specific library for layout '$dbLayoutName'.\n");
 			$result = 1;
 		} else {
 			warn "Failed to load database-layout specific library: $@\n";
@@ -846,15 +868,17 @@ sub callHelperIfExists {
 		}
 	} else {
 		my %syms = do { no strict 'refs'; %{$package."::"} };
+		#use Data::Dumper;
+		#debug(Dumper(\%syms));
 		if (exists $syms{$helperName}) {
-			my $func = do { no strict 'refs'; \&{$package."::".$helperName} };
-			$result = $func->(@args);
+			$result = do { no strict 'refs'; \&{$package."::".$helperName} };
 		} else {
-			#warn "No helper defined for operation '$helperName'.\n";
+			debug("No helper defined for operation '$helperName'.\n");
 			$result = 1;
 		}
 	}
 	
+	#warn "getHelperRef = '$result'\n";
 	return $result;
 }
 
