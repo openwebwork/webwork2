@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.198 2006/04/17 21:17:12 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.199 2006/05/16 00:31:06 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1001,9 +1001,10 @@ sub body {
 	print CGI::end_div();
 	
 	# main form
-	print CGI::startform("POST", $r->uri);
+	print "\n";
+	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onSubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
-	
+	print "\n";
 	print CGI::start_div({class=>"problem"});
 	print CGI::p($pg->{body_text});
 	print CGI::p(CGI::b("Note: "), CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
