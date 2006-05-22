@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.164 2006/02/02 22:29:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -392,7 +392,7 @@ sub header {
 	my $self = shift;
 	my $r = $self->r;
 	
-	$r->content_type("text/html");
+	$r->content_type("text/html; charset=utf-8");
 	$r->send_http_header();
 	return OK;
 }
