@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.78 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.79 2006/05/07 21:46:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -69,7 +69,6 @@ use warnings;
 use CGI qw();
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
-use WeBWorK::Authen qw(checkKey);
 use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
@@ -1545,7 +1544,8 @@ sub recordEditHTML {
 	} else {
 		# check to see if a user is currently logged in
 		my $Key = $db->getKey($User->user_id);
-		push @tableCells, ($Key and WeBWorK::Authen::check_session($self, $User->user_id, $Key->key, 1)) ? CGI::b("active") : CGI::em("inactive");
+		my $is_active = ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		push @tableCells, $is_active ? CGI::b("active") : CGI::em("inactive");
 	}
 	
 	# change password (only in password mode)
