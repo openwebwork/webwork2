@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.63 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/PG.pm,v 1.64 2006/05/21 00:52:20 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -131,7 +131,7 @@ sub defineProblemEnvir {
 	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
-	
+	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir
@@ -144,7 +144,8 @@ sub defineProblemEnvir {
 	$envir{cgiURL}                 = undef;
 	$envir{classDirectory}         = undef;
     $envir{macrosPath}             = $ce->{pg}->{directories}{macrosPath};
-    $envir{appletDirs}             = $ce->{pg}->{directories}{appletDirs};
+    $envir{appletPath}             = $ce->{pg}->{directories}{appletPath};
+    $envir{pgDirectories}          = $ce->{pg}->{directories};
 	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
 	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
 	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";
