@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.1 2006/04/12 18:50:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.2 2006/05/12 18:39:10 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,12 +46,8 @@ data, change permission level, add user, delete user. Run this for a rough estim
 
 use strict;
 use warnings;
-
-=for comment
-
-
-
-=cut
+use Digest::MD5 qw(md5_hex);
+use WeBWorK::Debug;
 
 # call superclass get_credentials. if no credentials were found, look for a moodle cooke.
 # if a moodle cookie is found, a new webwork session is created and the session key is used.
@@ -61,17 +57,24 @@ sub get_credentials {
 	my $r = $self->{r};
 	
 	my $super_result = $self->SUPER::get_credentials;
-	return $super_result if $super_result;
+	if ($super_result) {
+		debug("Superclass's get_credentials found credentials. Using them.\n");
+		return $super_result;
+	}
 	
-	my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_cookie;
+	my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_session;
+	debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n");
 	
 	if (defined $moodle_user_id and defined $moodle_expiration_time and time <= $moodle_expiration_time) {
 		my $newKey = $self->create_session($moodle_user_id);
+		debug("Unexpired moodle session found. Created new WeBWorK session with newKey='$newKey'.\n");
 		
 		$self->{user_id} = $moodle_user_id;
 		$self->{session_key} = $newKey;
 		$self->{credential_source} = "moodle";
 		return 1;
+	} else {
+		debug("No moodle session found or moodle session expired. No credentials to be had.\n");
 	}
 	
 	return 0;
@@ -82,9 +85,8 @@ sub site_fixup {
 	my $self = shift;
 	
 	if ($self->was_verified) {
-		$self->extendMoodleSession;
-	} else {
-		# ***
+		debug("User was verified, updating moodle session.\n");
+		$self->update_moodle_session;
 	}
 }
 
@@ -94,14 +96,20 @@ sub checkPassword {
 	my ($self, $userID, $possibleClearPassword) = @_;
 	my $db = $self->{r}->db;
 	
+	debug("Moodle module is doing the password checking.\n");
+	
 	my $Password = $db->getPassword($userID); # checked
 	return 0 unless defined $Password;
 	
+	debug("Hashed password from Password record: '", $Password->password, "'.\n");
+	
 	# check against Moodle password database
-	my $possibleMD5Password = md5_hex($possibleClearPassword, $Password->password());
+	my $possibleMD5Password = md5_hex($possibleClearPassword);
+	debug("Hashed password from supplied cleartext: '$possibleMD5Password'.\n");
 	return 1 if $possibleMD5Password eq $Password->password;
 	
 	# check site-specific verification method
+	# FIXME do we really want to call this here?
 	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
 	
 	# fail by default
@@ -143,7 +151,9 @@ sub check_session {
 	return $sessionExists, $keyMatches, $timestampValid;
 }
 
-sub fetchMoodleSession {
+################################################################################
+
+sub fetch_moodle_session {
 	# fetches the basic information from the moodle session.
 	# returns the user name and expiration time of the moodle session
 	# Note that we don't worry about the user being in this course at this point. That is taken care of in Schema::Moodle::User.
@@ -163,7 +173,7 @@ sub fetchMoodleSession {
 	}
 }
 
-sub extendMoodleSession {
+sub update_moodle_session {
 	# extend the timeout of the current moodle session, if one exists.
 	my ($self) = @_;
 	my $r = $self->{r};
@@ -177,12 +187,12 @@ sub extendMoodleSession {
 	}
 }
 
-sub moodleSessionExpired {
-	# determine if the moodle session is expired
-	my ($self) = @_;
-	
-	my ($moodleUser, $moodleExpires) = $self->fetchMoodleSession;
-	return time > $moodleExpires;
-}
+#sub moodle_session_expired {
+#	# determine if the moodle session is expired
+#	my ($self) = @_;
+#	
+#	my ($moodleUser, $moodleExpires) = $self->fetchMoodleSession;
+#	return time > $moodleExpires;
+#}
 
 1;
