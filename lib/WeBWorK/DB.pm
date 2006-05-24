@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.69 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.70 2006/04/12 18:51:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -462,6 +462,29 @@ sub hashDatabaseOK {
 =back
 
 =cut
+
+################################################################################
+# moodle functions
+################################################################################
+=head2 Moodle Functions
+
+=over
+
+=item getMoodleSession()
+
+Returns the username and expiration time for the moodle session associated with the specified key.
+
+=cut
+
+sub getMoodleSession {
+	my ($self, $key) = @_;
+	return $self->{moodlekey}->get($key);
+}
+
+sub extendMoodleSession {
+	my ($self, $key) = @_;
+	return $self->{moodlekey}->extend($key);
+}
 
 ################################################################################
 # password functions
