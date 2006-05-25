@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.164 2006/02/02 22:29:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.165 2006/05/22 21:39:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1620,6 +1620,12 @@ If set to a false value, the authentication parameters (C<user>,
 C<effectiveUser>, and C<key>) are included in the the generated link unless
 explicitly listed in C<params>.
 
+=item use_abs_url
+
+If set to a true value, the scheme, host, and port are prepended to the URL.
+This is useful for links which must be usable on their own, such as those sent
+via email.
+
 =back
 
 =cut
@@ -1648,7 +1654,21 @@ sub systemLink {
 		$params{key}           = undef unless exists $params{key};
 	}
 	
-	my $url = $r->location . $urlpath->path;
+	my $url;
+	
+	if ($options{use_abs_url}) {
+		my $hostname = $r->hostname();
+		my $port     = $r->get_server_port();
+		if ($r->subprocess_env('https')) {
+			$url = "https://$hostname";
+			$url .= ":$port" if $port != 443;
+		} else {
+			$url = "http://$hostname";
+			$url .= ":$port" if $port != 80;
+		}
+	}
+	
+	$url .= $r->location . $urlpath->path;
 	my $first = 1;
 	
 	foreach my $name (keys %params) {
