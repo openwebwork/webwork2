@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.166 2006/05/16 21:06:47 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.167 2006/05/16 21:11:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,6 +44,10 @@ $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $webwork_courses_url = "/webwork2_course_files";
 $webwork_courses_dir = "$webwork_dir/courses";
 
+# machine domain name (#FIXME can we get this automatically???) (needed to find applets)
+$domainName         = "devel.webwork.rochester.edu:8002";
+
+
 ################################################################################
 # Paths to external programs 
 ################################################################################
@@ -68,6 +72,10 @@ $externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
 $externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
 $externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
 $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
+
+# url checker
+$externalPrograms{checkurl} = "/usr/local/bin/lwp-request -mHEAD "; # or "/usr/local/bin/w3c -head "
+
 
 # image conversions utiltiies
 # the source file is given on stdin, and the output expected on stdout.
@@ -760,6 +768,7 @@ $pg{displayModeOptions}{jsMath} = {
 $pg{directories}{root}   = "$pg_dir";
 $pg{directories}{lib}    = "$pg{directories}{root}/lib";
 $pg{directories}{macros} = "$pg{directories}{root}/macros";
+$pg{directories}{applets} = "http://$domainName$webwork_htdocs_url/applets";
 
 #
 #  The macro file search path.  Each directory in this list is seached
@@ -769,6 +778,11 @@ $pg{directories}{macrosPath} = [
    ".",                     # search the problem file's directory
    $courseDirs{macros},
    $pg{directories}{macros},
+];
+
+$pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
+   $pg{directories}{applets},
+   "http://$domainName$courseURLs{html}/applets",
 ];
 
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
