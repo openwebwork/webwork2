@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.22 2006/05/25 03:12:57 gage Exp $
+# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.23 2006/05/25 04:01:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -176,7 +176,7 @@ my %moodleParams = (
 	usernameRW  => $moodle_username,
 	passwordRW  => $moodle_password,
 	debug       => $database_debug,
-	tablePrefix => $mooble_table_prefix,
+	tablePrefix => $moodle_table_prefix,
 	courseName  => $courseName,
 );
 
