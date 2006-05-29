@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.14 2006/05/16 21:25:14 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.15 2006/05/16 21:35:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,7 +80,8 @@ case $1 in
 	start)
 		checknopid
 		checkconfs "$CONFIG_GLOBAL" "$CONFIG_DATABASE" "$CONFIG_DEVEL" "$CONFIG_DEVEL_SITE" "$CONFIG_WEBWORK" "$CONFIG_THISFILE"
-		"$HTTPD" -f "$CONFIG_DEVEL"
+		mkdir -pv "$WEBWORKROOT"/run # hack for httpd.mm
+		"$HTTPD" -f "$CONFIG_DEVEL" -d "$WEBWORKROOT"
 		;;
 	stop)
 		checkpid
@@ -93,11 +94,11 @@ case $1 in
 		;;
 	graceful)
 		checkpid
-		kill -USR1 `cat "$PID"`
 		checkconfs "$CONFIG_GLOBAL" "$CONFIG_DATABASE" "$CONFIG_DEVEL" "$CONFIG_DEVEL_SITE" "$CONFIG_WEBWORK" "$CONFIG_THISFILE"
+		kill -USR1 `cat "$PID"`
 		;;
 	configtest)
-		"$HTTPD" -t -f "$CONFIG_DEVEL"
+		"$HTTPD" -t -f "$CONFIG_DEVEL" -d "$WEBWORKROOT"
 		;;
 	*)
 		usage
