@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.3 2006/01/25 23:13:48 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.4 2006/05/16 21:11:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@
 ################################################################################
 
 ServerType standalone
-ServerRoot /usr/local
+#ServerRoot /usr/local
 ResourceConfig /dev/null
 AccessConfig /dev/null
 Timeout 300
@@ -38,48 +38,54 @@ KeepAliveTimeout 15
 # Dynamic Shared Object (DSO) Support
 # Note: The order in which modules are loaded is important.  Don't change
 # the order below without expert advice.
-LoadModule mmap_static_module libexec/apache/mod_mmap_static.so
-LoadModule vhost_alias_module libexec/apache/mod_vhost_alias.so
-LoadModule env_module         libexec/apache/mod_env.so
-LoadModule config_log_module  libexec/apache/mod_log_config.so
-LoadModule mime_magic_module  libexec/apache/mod_mime_magic.so
-LoadModule mime_module        libexec/apache/mod_mime.so
-LoadModule negotiation_module libexec/apache/mod_negotiation.so
-LoadModule status_module      libexec/apache/mod_status.so
-LoadModule info_module        libexec/apache/mod_info.so
-LoadModule includes_module    libexec/apache/mod_include.so
-LoadModule autoindex_module   libexec/apache/mod_autoindex.so
-LoadModule dir_module         libexec/apache/mod_dir.so
-LoadModule cgi_module         libexec/apache/mod_cgi.so
-LoadModule asis_module        libexec/apache/mod_asis.so
-LoadModule imap_module        libexec/apache/mod_imap.so
-LoadModule action_module      libexec/apache/mod_actions.so
-LoadModule speling_module     libexec/apache/mod_speling.so
-LoadModule userdir_module     libexec/apache/mod_userdir.so
-LoadModule alias_module       libexec/apache/mod_alias.so
-LoadModule rewrite_module     libexec/apache/mod_rewrite.so
-LoadModule access_module      libexec/apache/mod_access.so
-LoadModule auth_module        libexec/apache/mod_auth.so
-LoadModule anon_auth_module   libexec/apache/mod_auth_anon.so
-LoadModule db_auth_module     libexec/apache/mod_auth_db.so
-LoadModule digest_module      libexec/apache/mod_digest.so
-LoadModule proxy_module       libexec/apache/libproxy.so
-LoadModule cern_meta_module   libexec/apache/mod_cern_meta.so
-LoadModule expires_module     libexec/apache/mod_expires.so
-LoadModule headers_module     libexec/apache/mod_headers.so
-LoadModule usertrack_module   libexec/apache/mod_usertrack.so
-LoadModule unique_id_module   libexec/apache/mod_unique_id.so
-LoadModule setenvif_module    libexec/apache/mod_setenvif.so
-LoadModule perl_module        libexec/apache/libperl.so
-LoadModule php4_module        libexec/apache/libphp4.so
+LoadModule mmap_static_module /usr/local/libexec/apache/mod_mmap_static.so
+LoadModule vhost_alias_module /usr/local/libexec/apache/mod_vhost_alias.so
+LoadModule env_module         /usr/local/libexec/apache/mod_env.so
+LoadModule define_module      /usr/local/libexec/apache/mod_define.so
+LoadModule config_log_module  /usr/local/libexec/apache/mod_log_config.so
+LoadModule mime_magic_module  /usr/local/libexec/apache/mod_mime_magic.so
+LoadModule mime_module        /usr/local/libexec/apache/mod_mime.so
+LoadModule negotiation_module /usr/local/libexec/apache/mod_negotiation.so
+LoadModule status_module      /usr/local/libexec/apache/mod_status.so
+LoadModule info_module        /usr/local/libexec/apache/mod_info.so
+LoadModule includes_module    /usr/local/libexec/apache/mod_include.so
+LoadModule autoindex_module   /usr/local/libexec/apache/mod_autoindex.so
+LoadModule dir_module         /usr/local/libexec/apache/mod_dir.so
+LoadModule cgi_module         /usr/local/libexec/apache/mod_cgi.so
+LoadModule asis_module        /usr/local/libexec/apache/mod_asis.so
+LoadModule imap_module        /usr/local/libexec/apache/mod_imap.so
+LoadModule action_module      /usr/local/libexec/apache/mod_actions.so
+LoadModule speling_module     /usr/local/libexec/apache/mod_speling.so
+LoadModule userdir_module     /usr/local/libexec/apache/mod_userdir.so
+LoadModule alias_module       /usr/local/libexec/apache/mod_alias.so
+LoadModule rewrite_module     /usr/local/libexec/apache/mod_rewrite.so
+LoadModule access_module      /usr/local/libexec/apache/mod_access.so
+LoadModule auth_module        /usr/local/libexec/apache/mod_auth.so
+LoadModule anon_auth_module   /usr/local/libexec/apache/mod_auth_anon.so
+LoadModule db_auth_module     /usr/local/libexec/apache/mod_auth_db.so
+LoadModule digest_module      /usr/local/libexec/apache/mod_digest.so
+LoadModule proxy_module       /usr/local/libexec/apache/libproxy.so
+LoadModule cern_meta_module   /usr/local/libexec/apache/mod_cern_meta.so
+LoadModule expires_module     /usr/local/libexec/apache/mod_expires.so
+LoadModule headers_module     /usr/local/libexec/apache/mod_headers.so
+LoadModule usertrack_module   /usr/local/libexec/apache/mod_usertrack.so
+LoadModule log_forensic_module /usr/local/libexec/apache/mod_log_forensic.so
+LoadModule unique_id_module   /usr/local/libexec/apache/mod_unique_id.so
+LoadModule setenvif_module    /usr/local/libexec/apache/mod_setenvif.so
+<IfDefine SSL>
+LoadModule ssl_module         /usr/local/libexec/apache/libssl.so
+</IfDefine>
+LoadModule perl_module        /usr/local/libexec/apache/libperl.so
+LoadModule php4_module        /usr/local/libexec/apache/libphp4.so
 
-# Reconstruction of the complete module list from all available modules
-# (static and shared ones) to achieve correct module execution order.
-# [WHENEVER YOU CHANGE THE LOADMODULE SECTION ABOVE UPDATE THIS, TOO]
+#  Reconstruction of the complete module list from all available modules
+#  (static and shared ones) to achieve correct module execution order.
+#  [WHENEVER YOU CHANGE THE LOADMODULE SECTION ABOVE UPDATE THIS, TOO]
 ClearModuleList
 AddModule mod_mmap_static.c
 AddModule mod_vhost_alias.c
 AddModule mod_env.c
+AddModule mod_define.c
 AddModule mod_log_config.c
 AddModule mod_mime_magic.c
 AddModule mod_mime.c
@@ -107,9 +113,13 @@ AddModule mod_cern_meta.c
 AddModule mod_expires.c
 AddModule mod_headers.c
 AddModule mod_usertrack.c
+AddModule mod_log_forensic.c
 AddModule mod_unique_id.c
 AddModule mod_so.c
 AddModule mod_setenvif.c
+<IfDefine SSL>
+AddModule mod_ssl.c
+</IfDefine>
 AddModule mod_perl.c
 AddModule mod_php4.c
 
@@ -199,16 +209,16 @@ ServerSignature On
         Allow from all
     </Directory>
 
-    # The same rules about trailing "/" apply to ScriptAlias directives as to
-    # Alias.
-    ScriptAlias /cgi-bin/ "/usr/local/www/cgi-bin/"
-
-    <Directory "/usr/local/www/cgi-bin">
-        AllowOverride None
-        Options None
-        Order allow,deny
-        Allow from all
-    </Directory>
+#    # The same rules about trailing "/" apply to ScriptAlias directives as to
+#    # Alias.
+#    ScriptAlias /cgi-bin/ "/usr/local/www/cgi-bin/"
+#
+#    <Directory "/usr/local/www/cgi-bin">
+#        AllowOverride None
+#        Options None
+#        Order allow,deny
+#        Allow from all
+#    </Directory>
 
 </IfModule>
 
@@ -375,3 +385,24 @@ ServerSignature On
     Order allow,deny
     Allow from all
 </Location>
+
+<IfDefine SSL>
+    AddType application/x-x509-ca-cert .crt
+    AddType application/x-pkcs7-crl    .crl
+</IfDefine>
+
+<IfModule mod_ssl.c>
+    SSLPassPhraseDialog  builtin
+    
+    SSLSessionCache         dbm:run/ssl_scache
+    SSLSessionCacheTimeout  300
+    
+    SSLMutex  file:run/ssl_mutex
+    
+    SSLRandomSeed startup builtin
+    SSLRandomSeed connect builtin
+    
+    #sam# log -> logs
+    SSLLog      logs/ssl_engine_log
+    SSLLogLevel info
+</IfModule>
