@@ -270,9 +270,11 @@ sub getDBListings {
 		$extrawhere .= " AND dbsc.name=\"$sec\" ";
 	}
 	my $textextrawhere = '';
+    my $haveTextInfo=0;
 	for my $j (qw( textbook textchapter textsection )) {
 		my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
 		if($foo) {
+            $haveTextInfo=1;
 			$foo =~ s/'/\\'/g;
 			$textextrawhere .= " AND ".LIBRARY_STRUCTURE->{$j}{where}."=\"$foo\" ";
 		}
@@ -282,6 +284,14 @@ sub getDBListings {
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
 	my $query = "SELECT $selectwhat from pgfile pgf, 
+         DBsection dbsc, DBchapter dbc, DBsubject dbsj $kw1
+        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+              dbc.DBchapter_id = dbsc.DBchapter_id AND
+              dbsc.DBsection_id = pgf.DBsection_id 
+              \n $extrawhere 
+              $kw2";
+	if($haveTextInfo) {
+      $query = "SELECT $selectwhat from pgfile pgf, 
          DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
          problem prob, textbook tbk , chapter tc, section ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
@@ -293,6 +303,7 @@ sub getDBListings {
               ts.chapter_id = tc.chapter_id AND
               prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
               $kw2";
+     }
 #$query =~ s/\n/ /g;
 #warn $query;
 	my $pg_id_ref = $dbh->selectall_arrayref($query);
