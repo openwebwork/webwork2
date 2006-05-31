@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwsh,v 1.7 2005/11/21 21:05:34 sh002i Exp $
+# $CVSHeader: webwork-modperl/bin/wwsh,v 1.8 2006/01/25 23:13:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +22,9 @@ wwdb - command-line interface to the WeBWorK libraries.
 =cut
 
 use Data::Dumper;
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
 
 BEGIN {
 	DB::parse_options("NonStop=1");
@@ -30,9 +33,6 @@ BEGIN {
 	}
 }
 
-use lib "$ENV{WEBWORK_ROOT}/lib";
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
 
 our $ce;
 our $db;
