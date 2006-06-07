@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.29 2005/08/30 05:49:59 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.30 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -219,7 +219,8 @@ sub gets($@) {
 		
 		my ($where, @where_args) = $self->makeWhereClause(@keyparts);
 		
-		my $stmt = "SELECT * FROM `$sqlTable` $where";
+		my $fieldnames = join(", ", $self->sqlFieldnames);
+		my $stmt = "SELECT $fieldnames FROM `$sqlTable` $where";
 		$self->debug("SQL-gets: $stmt\n");
 		
 		my $sth = $self->{driver}->dbi()->prepare($stmt);
@@ -263,7 +264,8 @@ sub getAll {
 	
 	my ($where, @where_args) = $self->makeWhereClause(@keyparts);
 	
-	my $stmt = "SELECT * FROM `$sqlTable` $where";
+	my $fieldnames = join(", ", $self->sqlFieldnames);
+	my $stmt = "SELECT $fieldnames FROM `$sqlTable` $where";
 	$self->debug("SQL-getAll: $stmt\n");
 	
 	my @records;
