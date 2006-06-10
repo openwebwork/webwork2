@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.43 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.44 2006/05/18 19:52:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -412,7 +412,8 @@ sub add_course_form {
 	my $checked = ($add_admin_users) ?"checked": "";  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
 	print CGI::p(CGI::input({-type=>'checkbox', -name=>"add_admin_users", $checked=>'' }, "Add WeBWorK administrators to new course"));
 	
-	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, and underscores.");
+	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only 
+	numbers, letters, hyphens, periods (dots), commas,and underscores.\n");
 	
 	print CGI::table({class=>"FormLayout"}, CGI::Tr(
 		CGI::td(
@@ -589,7 +590,7 @@ sub do_add_course {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
-	#my $authz = $r->authz;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	my $add_courseID                     = $r->param("add_courseID") || "";
@@ -658,7 +659,9 @@ sub do_add_course {
 			my $User            = $db->getUser($userID);
 			my $Password        = $db->getPassword($userID);
 			my $PermissionLevel = $db->getPermissionLevel($userID);
-			push @users, [ $User, $Password, $PermissionLevel ];
+			push @users, [ $User, $Password, $PermissionLevel ] 
+			       if $authz->hasPermissions($userID,"create_and_delete_courses");  
+			       #only transfer the "instructors" in the admin course classlist.
 		}
 	}
 	
@@ -730,6 +733,35 @@ sub do_add_course {
 	    ));
 	    # add contact to admin course as student?
 	    # FIXME -- should we do this?
+	    if ($add_initial_userID ne "") {
+	        my $composite_id = "${add_initial_userID}_${add_courseID}"; # student id includes school name and contact
+			my $User = $db->newUser(
+			user_id       => $composite_id,          # student id includes school name and contact
+			first_name    => $add_initial_firstName,
+			last_name     => $add_initial_lastName,
+			student_id    => $add_initial_userID,
+			email_address => $add_initial_email,
+			status        => "C",
+			);
+			my $Password = $db->newPassword(
+				user_id  => $composite_id,
+				password => cryptPassword($add_initial_password),
+			);
+			my $PermissionLevel = $db->newPermissionLevel(
+				user_id    => $composite_id,
+				permission => "0",
+			);
+			# add contact to admin course as student
+			# or if this contact and course already exist in a dropped status
+			# change the student's status to enrolled
+			if (my $oldUser = $db->getUser($composite_id) ) {
+				warn "Replacing old data for $composite_id  status: ". $oldUser->status;
+				$db->deleteUser($composite_id);
+			}
+			eval { $db->addUser($User)                       }; warn $@ if $@;
+			eval { $db->addPassword($Password)               }; warn $@ if $@;
+			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
+		}
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully created the course $add_courseID"),
 		);
@@ -1209,7 +1241,7 @@ sub do_delete_course {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	#my $db = $r->db;
+	my $db = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
@@ -1251,6 +1283,21 @@ sub do_delete_course {
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
+	    # mark the contact person in the admin course as dropped.
+	    # find the contact person for the course by searching the admin classlist.
+	    my @contacts = grep /_$delete_courseID$/,  $db->listUsers;
+	    die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
+	    #warn "contacts", join(" ", @contacts);
+	    #my $composite_id = "${add_initial_userID}_${add_courseID}";
+	    my $composite_id  = $contacts[0];
+	    
+	    # mark the contact person as dropped.
+        my $User = $db->getUser($composite_id);
+        my $status_name = 'Drop';
+        my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
+        $User->status($status_value);
+        $db->putUser($User);
+        
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully deleted the course $delete_courseID."),
 		);
