@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.21 2005/08/12 02:47:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.22 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -184,9 +184,11 @@ sub body {
 		my $UserSet = $db->getUserSet($userID, $setID); # checked
 		my $currentlyAssigned = defined $UserSet;
 		
-		my $prettyDate = $self->formatDateTime($Set->due_date);
+		my $prettyDate;
 		if ($currentlyAssigned and $UserSet->due_date) {
 			$prettyDate = $self->formatDateTime($UserSet->due_date);
+		} else {
+			$prettyDate = $self->formatDateTime($Set->due_date);
 		}
 		
 		# URL to edit user-specific set data
