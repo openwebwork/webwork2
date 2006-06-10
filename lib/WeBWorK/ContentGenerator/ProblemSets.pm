@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.73 2006/02/07 21:03:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.74 2006/02/10 01:09:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -309,10 +309,6 @@ sub setListRow {
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
 	
-	my $openDate = $self->formatDateTime($set->open_date);
-	my $dueDate = $self->formatDateTime($set->due_date);
-	my $answerDate = $self->formatDateTime($set->answer_date);
-	
 	my $control = "";
 	if ($multiSet) {
 		$control = CGI::checkbox(
@@ -357,28 +353,28 @@ sub setListRow {
 	    } else {            
 		my $t = time();
 		if ( $t < $set->open_date() ) {
-		    $status = "will open on $openDate";
+		    $status = "will open on " . $self->formatDateTime($set->open_date);
 		    $control = "" unless $preOpenSets;
 		    $interactive = $name unless $preOpenSets;
 		} elsif ( $t < $set->due_date() ) {
-		    $status = "open, due $dueDate";
+		    $status = "open, due " . $self->formatDateTime($set->due_date);
 		} else {
 		    $status = "closed";
 		}
 	    }
 # old conditional
 	} elsif (time < $set->open_date) {
-		$status = "will open on $openDate";
+		$status = "will open on " . $self->formatDateTime($set->open_date);
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
            if ( $set->set_id() !~ /,v\d+$/ ) {
-	        $status = "now open, due $dueDate";
+	        $status = "now open, due " . $self->formatDateTime($set->due_date);
 	    } else {
-		$status = "now open (if version attempts remain), due $dueDate";
+		$status = "now open (if version attempts remain), due " . $self->formatDateTime($set->due_date);
 	    }
 	} elsif (time < $set->answer_date) {
-		$status = "closed, answers on $answerDate";
+		$status = "closed, answers on " . $self->formatDateTime($set->answer_date);
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
 		$status = "closed, answers recently available";
 	} else {
