@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.70 2006/04/12 18:51:06 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.71 2006/05/24 23:28:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1062,7 +1062,7 @@ sub getUser {
 	return $self->{user}->get($userID);
 }
 
-=item getUsers(@uesrIDs)
+=item getUsers(@userIDs)
 
 Return a list of user records associated with the user IDs given. If there is no
 record associated with a given user ID, that element of the list will be
