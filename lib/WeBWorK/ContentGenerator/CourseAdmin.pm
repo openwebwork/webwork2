@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.44 2006/05/18 19:52:12 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.45 2006/06/10 14:18:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,7 +32,8 @@ use WeBWorK::CourseEnvironment;
 use IO::File;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
-use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse);
+use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
+                                        listArchivedCourses unarchiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 
 sub pre_header_initialize {
@@ -179,7 +180,28 @@ sub pre_header_initialize {
 				$method_to_call = "archive_course_form";
 			}
 		}
-		
+		elsif ($subDisplay eq "unarchive_course") {
+			if (defined $r->param("unarchive_course")) {
+				# validate or confirm
+				@errors = $self->unarchive_course_validate;
+				if (@errors) {
+					$method_to_call = "unarchive_course_form";
+				} else {
+					$method_to_call = "unarchive_course_confirm";
+				}
+			} elsif (defined $r->param("confirm_unarchive_course")) {
+				# validate and archive
+				@errors = $self->unarchive_course_validate;
+				if (@errors) {
+					$method_to_call = "unarchive_course_form";
+				} else {
+					$method_to_call = "do_unarchive_course";
+				}
+			} else {
+				# form only
+				$method_to_call = "unarchive_course_form";
+			}
+		}
 		else {
 			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
 		}
@@ -269,6 +291,8 @@ sub body {
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, "Archive Course"),
+		 "|",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, "Unarchive Course"),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -315,6 +339,16 @@ sub body {
 			
 			);
 			 
+		}
+		
+		print CGI::end_ol();
+		
+		print CGI::h2("Archived Courses");
+		print CGI::start_ol();
+		
+		@courseIDs = listArchivedCourses($ce);
+		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
+			print CGI::li($courseID),	 
 		}
 		
 		print CGI::end_ol();
@@ -1775,57 +1809,7 @@ sub archive_course_form {
 		"Currently the archive facility is only available for mysql databases.
 		It depends on the mysqldump application."
 	);
-# 	print CGI::p(
-# 		"If the course's database layout (indicated in parentheses above) is "
-# 		. CGI::b("sql") . ", supply the SQL connections information requested below."
-# 	);
-	
-# 	print CGI::start_table({class=>"FormLayout"});
-# 	print CGI::Tr(CGI::td({colspan=>2}, 
-# 			"Enter the user ID and password for an SQL account with sufficient permissions to archive an existing database."
-# 		)
-# 	);
-# 	print CGI::Tr(
-# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-# 		CGI::td(CGI::textfield("archive_sql_username", $archive_sql_username, 25)),
-# 	);
-# 	print CGI::Tr(
-# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-# 		CGI::td(CGI::password_field("archive_sql_password", $archive_sql_password, 25)),
-# 	);
-# 	
-# 	#print CGI::Tr(CGI::td({colspan=>2},
-# 	#		"The optionial SQL settings you enter below must match the settings in the DBI source"
-# 	#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
-# 	#		. " with the course name you entered above."
-# 	#	)
-# 	#);
-# 	print CGI::Tr(
-# 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-# 		CGI::td(
-# 			CGI::textfield("archive_sql_host", $archive_sql_host, 25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the default host."),
-# 		),
-# 	);
-# 	print CGI::Tr(
-# 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-# 		CGI::td(
-# 			CGI::textfield("archive_sql_port", $archive_sql_port, 25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the default port."),
-# 		),
-# 	);
-# 
-# 	print CGI::Tr(
-# 		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-# 		CGI::td(
-# 			CGI::textfield("archive_sql_database", $archive_sql_database, 25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
-# 		),
-# 	);
-# 	print CGI::end_table();
+
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit("archive_course", "archive Course"));
 	
@@ -1985,13 +1969,206 @@ sub do_archive_course {
 	    	"",
 	    	$archive_courseID,
 	    ));
-		print CGI::start_form("POST", $r->uri);
-		print $self->hidden_authen_fields;
-		print $self->hidden_fields("subDisplay");
-		
-		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "OK"),);
-		
-		print CGI::end_form();
+# 		print CGI::start_form("POST", $r->uri);
+# 		print $self->hidden_authen_fields;
+# 		print $self->hidden_fields("subDisplay");
+# 		
+# 		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "OK"),);
+# 		
+# 		print CGI::end_form();
+	}
+}
+##########################################################################
+sub unarchive_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
+	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
+	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
+	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
+	my $unarchive_sql_database = $r->param("unarchive_sql_database")    || "";
+	
+	# First find courses which have been archived.
+	my @courseIDs = listArchivedCourses($ce);
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+	
+	my %courseLabels; # records... heh.
+	foreach my $courseID (@courseIDs) {
+        $courseLabels{$courseID} = $courseID;
+	}
+	
+	print CGI::h2("Unarchive Course -- not yet operational");
+	
+	print CGI::start_form("POST", $r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select a course to unarchive.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "unarchive_courseID",
+					-values => \@courseIDs,
+					-default => $unarchive_courseID,
+					-size => 10,
+					-multiple => 0,
+					-labels => \%courseLabels,
+				),
+			),
+		),
+	);
+	
+	print CGI::p(
+		"Currently the unarchive facility is only available for mysql databases.
+		It depends on the mysqldump application."
+	);
+
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit("unarchive_course", "Unarchive Course"));
+	
+	print CGI::end_form();
+}
+
+sub unarchive_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
+	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
+	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
+	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
+	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
+	
+	my @errors;
+	
+	my $new_courseID = $unarchive_courseID; $new_courseID =~ s/\.tar\.gz$//;
+	
+	if ($new_courseID eq "") {
+		push @errors, "You must specify a course name.";
+	} elsif ( -d $ce->{webworkDirs}->{courses}."/$new_courseID" ) {
+	    #Check that a directory for this course doesn't already exist
+		push @errors, "A directory already exists with the name $new_courseID. 
+		 You must first delete this existing course before you can unarchive.";
+	}
+	
+
+	
+	return @errors;
+}
+
+sub unarchive_course_confirm {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	print CGI::h2("Unarchive Course");
+	
+	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
+	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
+	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
+	
+    my $new_courseID = $unarchive_courseID; $new_courseID =~ s/\.tar\.gz$//;
+
+
+
+	print CGI::start_form("POST", $r->uri);
+		print CGI::p($unarchive_courseID," to course ", 
+	             CGI::input({-name=>'new_courseID', -value=>$new_courseID})
+	);
+
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	print $self->hidden_fields(qw/unarchive_courseID 
+	                              unarchive_sql_host 
+	                              unarchive_sql_port 
+	                              unarchive_sql_username 
+	                              unarchive_sql_password 
+	                              unarchive_sql_database/);
+	
+	print CGI::p({style=>"text-align: center"},
+		CGI::submit("decline_unarchive_course", "Don't unarchive"),
+		"&nbsp;",
+		CGI::submit("confirm_unarchive_course", "unarchive"),
+	);
+	
+	print CGI::end_form();
+}
+
+sub do_unarchive_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	my $new_courseID           = $r->param("new_courseID")           || "";
+	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
+	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
+	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
+	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
+	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
+	
+	
+	my %dbOptions;
+
+	eval {
+		unarchiveCourse(
+			courseID => $new_courseID,
+			archivePath =>$ce->{webworkDirs}->{courses}."/$unarchive_courseID",
+			ce => $ce , #   $ce2,
+			dbOptions => undef,
+		);
+	};
+	
+	if ($@) {
+		my $error = $@;
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("An error occured while archiving the course $unarchive_courseID:"),
+			CGI::tt(CGI::escapeHTML($error)),
+		);
+	} else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("Successfully unarchived  $unarchive_courseID to the course $new_courseID"),
+		);
+		 writeLog($ce, "hosted_courses", join("\t",
+	    	"\tunarchived",
+	    	"",
+	    	"",
+	    	"$unarchive_courseID to $new_courseID",
+	    ));
+
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+			courseID => $new_courseID);
+		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
+		print CGI::div({style=>"text-align: center"},
+			CGI::a({href=>$newCourseURL}, "Log into $new_courseID"),
+		);
+# 		print CGI::start_form("POST", $r->uri);
+# 		print $self->hidden_authen_fields;
+# 		print $self->hidden_fields("subDisplay");
+# 		
+# 		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_unarchive_course", "OK"),);
+# 		
+# 		print CGI::end_form();
 	}
 }
 
