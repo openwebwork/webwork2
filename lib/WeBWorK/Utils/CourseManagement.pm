@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.30 2006/01/26 21:45:40 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.31 2006/05/18 19:32:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,10 +36,12 @@ use WeBWorK::Utils qw(runtime_use readDirectory);
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	listCourses
+	listArchivedCourses
 	addCourse
 	renameCourse
 	deleteCourse
 	archiveCourse
+	unarchiveCourse
 	dbLayoutSQLSources
 );
 
@@ -58,7 +60,17 @@ sub listCourses {
 	my $coursesDir = $ce->{webworkDirs}->{courses};
 	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
 }
+=item listArchivedCourses($ce)
 
+Lists the courses which have been archived (end in .tar.gz). 
+
+=cut
+
+sub listArchivedCourses {
+	my ($ce) = @_;
+	my $coursesDir = $ce->{webworkDirs}->{courses};
+	return grep { m/\.tar\.gz$/ } readDirectory($coursesDir);
+}
 =item addCourse(%options)
 
 %options must contain:
@@ -629,7 +641,7 @@ Any errors encountered while renaming the course are returned.
 sub archiveCourse {
 	my (%options) = @_;
 	
-	# renameCourseHelper needs:
+	# archiveCourseHelper needs:
 	#    $fromCourseID ($oldCourseID)
 	#    $fromCE ($ce)
 	#    $toCourseID ($newCourseID)
@@ -681,15 +693,69 @@ sub archiveCourse {
 	
 	# archive top-level course directory
 	#FIXME (check) don't follow links
+	#FIXME archive relative to the coursesDir
 	my $tarCmd = $ce->{externalPrograms}->{tar};
 	debug("archiving course dir: $tarCmd $archivePath $courseDir \n");
-	my $tarStatement = "$tarCmd  -zcf   $archivePath  $courseDir";
+	my $tarStatement = "cd $coursesDir && $tarCmd  -zcf   $archivePath  $courseID";
 	my $tarResult = system $tarStatement ;
-	$tarResult and die "Failed to tar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
+	$tarResult and die "Failed to tar course directory with command:<br>\n '$tarStatement ' <br>\n(errno: $tarResult): $!<br>\n";
 	
 }
 
+sub unarchiveCourse {
+	my (%options) = @_;
+	
+	# renameCourseHelper needs:
+	#    $fromCourseID ($oldCourseID)
+	#    $fromCE ($ce)
+	#    $toCourseID ($newCourseID)
+	#    $toCE (construct from $ce)
+	#    $dbLayoutName ($ce->{dbLayoutName})
+	#    %options ($dbOptions)
+	
+	my $courseID = $options{courseID};
+	my $archivePath = $options{archivePath};
+	my $ce = $options{ce};
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+	my $coursesDir  = $ce->{webworkDirs}->{courses};
+	
+	###############################################################
+	# RPC  call to system to tar and gzip the courses directory
+	###############################################################	
+	my $tarCmd = $ce->{externalPrograms}->{tar};	
+	debug("unarchiving course dir: cd $coursesDir && $tarCmd  -zxf   $archivePath  \n"); # the z is ignored.
+	my $tarStatement = "cd $coursesDir && $tarCmd  -zxf   $archivePath ";
+	my $tarResult = system $tarStatement ;
+	$tarResult and die "Failed to untar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
+	###############################################################
+	# End RPC  call to system to tar and gzip the courses directory
+	###############################################################	
+	
+	# read the global.conf and course.conf files for the newly created course
+	debug( "Checking that course directory is at $coursesDir/$courseID: = ", -e "$coursesDir/$courseID");
+	my $ce2 = WeBWorK::CourseEnvironment->new(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$courseID,
+	);
+	my $courseDir   = "$coursesDir/$courseID";
+	my $dataDir     = "$courseDir/DATA";
 
+	#get the database layout out of the options hash
+    my $dbLayoutName = $ce2->{dbLayoutName};
+    	
+ 	if (not ref getHelperRef("unarchiveCourseHelper", $dbLayoutName)) {
+ 		die "This database layout doesn't support course archiving. Sorry!\n"
+ 	}
+ 	$dbOptions{unarchiveDatabasePath}   =  "$dataDir/${courseID}_mysql.database";
+    # import database tables
+ 	my $unarchiveHelperResult = unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+ 	die "$courseID: unable to import tables into database.\n" unless $unarchiveHelperResult;
+
+		
+	
+}
 =item dbLayoutSQLSources($dbLayout)
 
 Retrun a hash of database sources for the sql and sql_single database layouts.
@@ -793,6 +859,19 @@ Perform database-layout specific operations for archiving the data in a course.
 sub archiveCourseHelper {
 	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	my $result = callHelperIfExists("archiveCourseHelper", $dbLayoutName, @_);
+	return $result;
+}
+
+=item unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
+
+Perform database-layout specific operations for unarchiving the data in a course
+and placing it in the database.
+
+=cut
+
+sub unarchiveCourseHelper {
+	my ($courseID, $ce, $dbLayoutName, %options) = @_;
+	my $result = callHelperIfExists("unarchiveCourseHelper", $dbLayoutName, @_);
 	return $result;
 }
 

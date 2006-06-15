@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.9 2006/01/26 21:45:42 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.10 2006/05/18 19:32:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -382,6 +382,41 @@ sub archiveCourseHelper {
 # 	
 # 	$dbh->disconnect;
 	
+	return 1;
+}
+sub unarchiveCourseHelper {
+	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
+	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
+	
+	##### get list of tables to archive #####
+	
+	my $dbLayout    = $ce->{dbLayouts}->{$dbLayoutName};
+	debug("dbLayout=$dbLayout\n");
+	my %sources     = dbLayoutSQLSources($dbLayout);
+	debug("fSources: ", Dumper(\%sources));
+	my $source    = mostPopularSource(%sources);
+	debug("source=$source\n");
+	my %source = %{ $sources{$source} };
+	my @tables = @{ $source{tables} };
+	my $username = $source{username};
+	my $password = $source{password};
+	my $unarchiveDatabasePath = $options{unarchiveDatabasePath};
+	debug( "unarchive database Path is $unarchiveDatabasePath");
+	##### construct SQL statements to copy the data in each table #####
+	
+
+	# this method would be mysql specific but it's a start
+	my $importStatement = " mysql  --user=$username  ".
+	"--password=$password " .
+	"-D webwork".        # specifies database name
+	"   <$unarchiveDatabasePath";
+	debug($importStatement);
+	my $importResult = system $importStatement;
+	$importResult and die "<pre>Failed to import database with command: \n
+	'$importStatement ' \n
+	(errno: $importResult): $!
+	\n Check server error log for more information.\n</pre>";
+	#FIXME  -- what should the return be??
 	return 1;
 }
 
