@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+foreach my $arg (@ARGV) {
+	my ($conf_file, $dist_file);
+	
+	if ($arg =~ /^(.*)\.dist$/) {
+		$conf_file = $1;
+		$dist_file = $arg;
+	} else {
+		$conf_file = $arg;
+		$dist_file = "$arg.dist";
+	}
+	
+	my $conf_version = cvs_version($conf_file)
+		or die "couldn't find CVS version in $conf_file\n";
+	my $dist_version = cvs_version($dist_file)
+		or die "couldn't find CVS version in $dist_file\n";
+	
+	if ($conf_version eq $dist_version) {
+		print "$conf_file is up-to-date at version $conf_version.\n";
+		next;
+	}
+	
+	system "cvs diff -r '$conf_version' -r '$dist_version' '$dist_file'"
+		. "| patch '$conf_file'";
+}
+
+sub cvs_version {
+	my ($file) = @_;
+	open my $fh, "<", $file or die "couldn't open $file for reading: $!\n";
+	my $line;
+	while (my $line = <$fh>) {
+		if ($line =~ /\$CVSHeader: .*?(1(?:\.\d+)+).*?\$/) {
+			return $1;
+		}
+	}
+}
