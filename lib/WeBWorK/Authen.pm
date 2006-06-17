@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.51 2006/02/21 22:00:29 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.52 2006/04/12 18:50:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -602,7 +602,9 @@ sub write_log_entry {
 	$remote_port = "UNKNOWN" unless defined $remote_port;
 	my $user_agent = $r->header_in("User-Agent");
 	
-	writeCourseLog($ce, "login_log", "$message (host=$remote_host port=$remote_port UA=$user_agent");
+	my $log_msg = "$message (host=$remote_host port=$remote_port UA=$user_agent";
+	debug("Writing to login log: '$log_msg'.\n");
+	writeCourseLog($ce, "login_log", $log_msg);
 }
 
 1;
