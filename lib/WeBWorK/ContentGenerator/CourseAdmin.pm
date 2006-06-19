@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.45 2006/06/10 14:18:56 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.46 2006/06/15 14:48:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1802,7 +1802,19 @@ sub archive_course_form {
 					-labels => \%courseLabels,
 				),
 			),
+			
 		),
+		CGI::Tr(
+			CGI::th({class=>"LeftHeader"}, "Delete course:"),
+			CGI::td({-style=>'color:red'}, CGI::checkbox({ 
+			                    -name=>'delete_course', 
+			                    -checked=>0,
+			                    -value => 1,
+			                    -label =>'Delete course after archiving. Caution there is no undo!',
+			                   },
+			       ),
+			),
+		)
 	);
 	
 	print CGI::p(
@@ -1869,7 +1881,7 @@ sub archive_course_confirm {
 	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
 	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
 	my $archive_sql_database = $r->param("archive_sql_database") || "";
-	
+	my $delete_course_flag   = $r->param("delete_course")        || "";
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
 		$ce->{webworkURLs}->{root},
@@ -1877,33 +1889,19 @@ sub archive_course_confirm {
 		$archive_courseID,
 	);
 	
-	if ($ce2->{dbLayoutName} eq "sql") {
+	if ($ce2->{dbLayoutName} ) {
 		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
 		. "? ");
+		print(CGI::p({-style=>'color:red; font-weight:bold'}, "Are you sure that you want to delete the course ".
+		CGI::b($archive_courseID). " after archiving?  This cannot be undone!")) if $delete_course_flag;
 		
-		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-				CGI::td($archive_sql_host || "system default"),
-			),
-			CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-				CGI::td($archive_sql_port || "system default"),
-			),
-			CGI::Tr(
-				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td($archive_sql_database || "webwork_$archive_courseID"),
-			),
-		);
-	} else {
-		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
-			. "? All course files and data will be destroyed. There is no undo available.");
+	
 	}
 	
 	print CGI::start_form("POST", $r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/archive_courseID archive_sql_host archive_sql_port archive_sql_username archive_sql_password archive_sql_database/);
+	print $self->hidden_fields(qw/archive_courseID archive_sql_host archive_sql_port archive_sql_username archive_sql_password archive_sql_database delete_course/);
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::submit("decline_archive_course", "Don't archive"),
@@ -1918,7 +1916,7 @@ sub do_archive_course {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	#my $db = $r->db;
+	my $db = $r->db;
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
@@ -1928,6 +1926,7 @@ sub do_archive_course {
 	my $archive_sql_username = $r->param("archive_sql_username") || "";
 	my $archive_sql_password = $r->param("archive_sql_password") || "";
 	my $archive_sql_database = $r->param("archive_sql_database") || "";
+	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -1969,6 +1968,46 @@ sub do_archive_course {
 	    	"",
 	    	$archive_courseID,
 	    ));
+	    
+		if ($delete_course_flag) {
+			eval {
+				deleteCourse(
+					courseID => $archive_courseID,
+					ce => $ce2,
+					dbOptions => \%dbOptions,
+				);
+			};
+			
+			if ($@) {
+				my $error = $@;
+				print CGI::div({class=>"ResultsWithError"},
+					CGI::p("An error occured while deleting the course $archive_courseID:"),
+					CGI::tt(CGI::escapeHTML($error)),
+				);
+			} else {
+				# mark the contact person in the admin course as dropped.
+				# find the contact person for the course by searching the admin classlist.
+				my @contacts = grep /_$archive_courseID$/,  $db->listUsers;
+				die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;
+				#warn "contacts", join(" ", @contacts);
+				#my $composite_id = "${add_initial_userID}_${add_courseID}";
+				my $composite_id  = $contacts[0];
+				
+				# mark the contact person as dropped.
+				my $User = $db->getUser($composite_id);
+				my $status_name = 'Drop';
+				my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
+				$User->status($status_value);
+				$db->putUser($User);
+				
+				print CGI::div({class=>"ResultsWithoutError"},
+					CGI::p("Successfully deleted the course $archive_courseID."),
+				);
+			}
+		
+		
+		}
+	   
 # 		print CGI::start_form("POST", $r->uri);
 # 		print $self->hidden_authen_fields;
 # 		print $self->hidden_fields("subDisplay");
