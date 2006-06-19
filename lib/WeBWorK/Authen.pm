@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.52 2006/04/12 18:50:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.53 2006/06/17 21:35:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -89,7 +89,7 @@ sub verify {
 		$self->set_params;
 	} else {
 		#$self->write_log_entry("LOGIN FAILED user_id=$user_id credential_source=$credential_source");
-		$self->killCookie;
+		$self->maybe_kill_cookie;
 		if ($error) {
 			$r->notes("authen_error", $error);
 		}
@@ -361,6 +361,11 @@ sub maybe_send_cookie {
 	} else {
 		$self->killCookie;
 	}
+}
+
+sub maybe_kill_cookie {
+	my $self = shift;
+	$self->killCookie(@_);
 }
 
 sub set_params {
