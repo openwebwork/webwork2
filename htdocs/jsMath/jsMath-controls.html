@@ -33,16 +33,17 @@ while (!window.jsMath && !showWarning) {
     window.jsMath = window.parent.jsMath;
     if (!window.jsMath) {throw "no jsMath";}
   } catch (err) {
-    showWarning = 1;
+    showWarning = 1; pageDomain = '';
+    try {pageDomain = document.domain} catch (err) {}
     //
     // MSIE on Mac can't change document.domain, and 'try' won't
-    //   catch the error (Grrr!) so don't even try for it
+    //   catch the error (Grrr!) so don't even attempt it.
     //
-    if (document.domain.match(/\..*\./) &&
+    if (pageDomain.match(/\..*\./) &&
         (navigator.appName != 'Microsoft Internet Explorer' ||
          navigator.platform != 'MacPPC' || !navigator.userProfile || !document.all)) {
       try {
-        document.domain = document.domain.replace(/^[^.]*\./,'');
+        document.domain = pageDomain.replace(/^[^.]*\./,'');
         showWarning = 0;
       } catch(err) {}
     }
@@ -58,20 +59,27 @@ function Warning () {
 }
 
 if (showWarning) {setTimeout("Warning()",1)} else {
-debug = window.parent.debug; show = window.parent.show;
+var debug = window.parent.debug; var show = window.parent.show;
 
 jsMath.Add(jsMath.Controls,{
 
   loaded: 1,
 
+  mainLabels: {
+    print: 'Print',  reload: 'Reload', local: 'Go Local', global: 'Go Global',
+    ctrls: 'Controls', opts: 'Options', done: 'Done'
+  },
+  optionLabels: {back: 'Back', done: 'Done'},
+
   Close: function () {
     this.panel.style.display = "none";
     jsMath.Element("button").style.display = (this.cookie.button ? "block" : "none");
-    if (jsMath.document.location.protocol == 'file:') return;
-    for (var id in {scale:1, scaleImg:1, font:1, print:1, autofont:1, alpha:1, tex2math:1}) {
-      if (this.cookie[id] != this.oldCookie[id] && this.oldCookie[id] != null) {
-        this.loaded = 0;
-        jsMath.document.location.reload();
+    if (jsMath.document.location.protocol == 'file:' && jsMath.Global.islocal) return;
+    for (var id in {scale:1, scaleImg:1, font:1, print:1, printwarn:1,
+                    stayhires:1, autofont:1, alpha:1, tex2math:1, global:1}) {
+      if (this.cookie[id] && this.cookie[id] != this.oldCookie[id] &&
+          this.oldCookie[id] != null) {
+        this.Reload();
         return;
       }
     }
@@ -103,14 +111,24 @@ jsMath.Add(jsMath.Controls,{
        (this.cookie.font != 'image' && this.cookie.font != 'symbol'))
          {jsMath.Element("_resolution").disabled = true}
 
-    /*
-     *  Seems to be a bug in Safari that messes up the button names
-     *  when the page is reloaded after an option change
-     */
-    if (jsMath.browser == 'Safari') {
-      jsMath.Element("_resolution").value = "Hi-Res Fonts for Printing";
-      jsMath.Element("_opts").value = "Options";
-      jsMath.Element("_done").value = "Done";
+    if (jsMath.Global.isLocal) {
+      jsMath.Element("_ctrls").disabled = true;
+    } else {
+      this.cookie.hiddenGlobal = jsMath.Global.isHidden;
+      jsMath.Element("_global").style.display = "none";
+      jsMath.Element("_local").style.display = "";
+      if (!jsMath.Global.isHidden || jsMath.noShowGlobal)
+        {jsMath.Element("_ctrls").disabled = true}
+    }
+    if (jsMath.noChangeGlobal) {
+      for (var id in {global:1, local:1, ctrls: 1})
+        {jsMath.Element('_'+id).disabled = true}
+    }
+    if (!window.print) {jsMath.Element("_print").disabled = true}
+
+    if (jsMath.Browser.safariButtonBug) {
+      for (var id in this.mainLabels)
+        {jsMath.Element('_'+id).value = this.mainLabels[id]}
     }
 
     this.panel.style.display = "block";
@@ -126,8 +144,9 @@ jsMath.Add(jsMath.Controls,{
     }
     jsMath.Element("_scale").value = this.cookie.scale;
     jsMath.Element("_keep").value = this.cookie.keep;
-    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1,
-                    progress:1, asynch:1, blank:1, tex2math:1}) {
+    jsMath.Element("_global").value = this.cookie.global;
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, printwarn: 1,
+                    stayhires: 1, button:1, progress:1, asynch:1, blank:1, tex2math:1}) {
       if (this.cookie[id]) {jsMath.Element('_'+id).checked = true}
     }
     var font = jsMath.document.getElementsByName("jsMath__font");
@@ -135,30 +154,33 @@ jsMath.Add(jsMath.Controls,{
       if ((font[i].value == 'tex' && jsMath.nofonts) ||
           ((font[i].value == 'symbol' || font[i].value == 'image') &&
              jsMath.noImgFonts)) {
-        jsMath.Element('_'+font[i].value+"Text").style.color = "#888888";
+        jsMath.Element('_'+font[i].value+"Text").className = "disabled";
         font[i].disabled = true;
       }
       else if (this.cookie.font == font[i].value) {font[i].checked = true}
     }
     if (jsMath.noImgFonts) {
-      jsMath.Element("_alphaText").style.color = "#888888";
-      jsMath.Element("_alpha").disabled = true;
-      jsMath.Element("_scaleImg").disabled = true;
+      for (var id in {alpha:1, printwarn:1, stayhires:1}) {
+        var obj = jsMath.Element("_"+id);
+        obj.disabled = true;
+        obj.parentNode.className = "disabled";
+      }
     } else if (jsMath.Browser.imgScale != 1) {
-      jsMath.Element("_alphaText").style.color = "#888888";
+      jsMath.Element("_alphaText").className = "disabled";
       jsMath.Element("_alpha").disabled = true;
     }
     if (jsMath.tex2math.Convert) {
+      jsMath.Element("_separator").style.display = '';
       jsMath.Element("_tex2mathRow").style.display = '';
     }
+    if (jsMath.noChangeGlobal) {
+      jsMath.Element("_globalText").className = "disabled";
+      jsMath.Element("_global").disabled = true;
+    }
 
-    /*
-     *  Seems to be a bug in Safari that messes up the button names
-     *  when the page is reloaded after an option change
-     */
-    if (jsMath.isSafari) {
-      jsMath.Element("_back").value = "Back";
-      jsMath.Element("_done").value = "Done";
+    if (jsMath.Browser.safariButtonBug) {
+      for (var id in this.optionLabels)
+        {jsMath.Element('_'+id).value = this.optionLabels[id]}
     }
 
     this.panel.style.display = "block";
@@ -169,13 +191,15 @@ jsMath.Add(jsMath.Controls,{
     var font = jsMath.document.getElementsByName("jsMath__font");
     for (var i = 0; i < font.length; i++) 
       {if (font[i].checked) {this.cookie.font = font[i].value}}
-    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, button:1,
-                    progress:1, asynch:1, blank:1, tex2math:1}) {
+    for (var id in {autofont:1, scaleImg:1, alpha:1, warn:1, printwarn: 1,
+                    stayhires: 1, button:1, progress:1, asynch:1, blank:1, tex2math:1}) {
       if (this.cookie[id] != null) {
         this.cookie[id] = jsMath.Element('_'+id).checked ? 1: 0;
       }
     }
     this.cookie.keep = jsMath.Element("_keep").value;
+    this.cookie.global = jsMath.Element("_global").value;
+    this.cookie.print = this.cookie.stayhires;
     this.SetCookie(1);
     if (close) {this.Close()} else {this.Main()}
   },
@@ -184,6 +208,22 @@ jsMath.Add(jsMath.Controls,{
     this.cookie.print = 1;
     this.SetCookie(1);
     this.Close();
+  },
+
+  Print: function () {
+    this.Close();
+    jsMath.window.print();
+  },
+
+  GoGlobal: function () {
+    this.cookie.global = "always";
+    jsMath.Global.GoGlobal(this.SetCookie(2));
+  },
+  GoLocal: function () {jsMath.Global.GoLocal()},
+
+  ShowControls: function () {
+    this.Close();
+    jsMath.Global.Show();
   },
 
   CheckVersion: function () {
@@ -200,51 +240,71 @@ jsMath.Add(jsMath.Controls,{
 <!------------------------------------------------------------>
 
 <div id="jsMath_panel">
-<div style="text-align:center; margin:1em 2em">
-<b style="font-size:large">jsMath v<span ID="jsMath__version"></span></b><br/>
-<small>(<span id="jsMath__fontType">type</span> fonts)</small>
-<p>
+<div style="text-align:center">
+<b style="font-size:133%">jsMath v<span ID="jsMath__version"></span></b>
+(<span id="jsMath__fontType">type</span> fonts)
+[<a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/main.html">help</a>]
+<p style="margin-bottom:0px">
 <table border="0" cellspacing="0" cellpadding="0" style="margin:0px">
-<tr><td align="center"><table border="0" cellspacing="0" cellpadding="0">
-<tr><td align="center" colspan="3">
+<tr valign="middle"><td align="center">
 <table border="0" cellspacing="0" cellpadding="0">
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/quickstart.html">Quick Start</a></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/printing.html">Printing Issues</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/quickstart.html">Quick Start</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/printing.html">Printing Issues</a></td></tr>
 <tr><td height="5"></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath">Home Page</a></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/">Documentation</a></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/download/jsMath-fonts.html">Download Fonts</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath">Home Page</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/">Documentation</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/download/jsMath-fonts.html">Download Fonts</a></td></tr>
 <tr><td height="5"></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/bugs.html">Known Bugs</a></td></tr>
-<tr><td align="left">&#8226; <a id="jsMath__mailto" href="mailto:dpvc@union.edu?subject=jsMath Bug Report">Report a  Bug</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/bugs.html">Known Bugs</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a id="jsMath__mailto" href="mailto:dpvc@union.edu?subject=jsMath Bug Report">Report a  Bug</a></td></tr>
 <tr><td height="5"></td></tr>
-<tr><td align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/jsMath/COPYING.txt">License</a></td></tr>
+<tr><td class="infoLink" align="left">&#8226; <a target="_blank" href="http://www.math.union.edu/locate/jsMath/jsMath/COPYING.txt">License</a></td></tr>
 </table>
-</td></tr>
-<tr><td style="height:1em"></td></tr>
-<tr><td align="center" colspan="3">
-<input type="button" id="jsMath__resolution" value="Hi-Res Fonts for Printing"
-       style="width:17em" onclick="jsMath.Controls.PrintResolution()" />
-</td></tr>
-<tr><td height="1"></td></tr>
+</td>
+
+<td style="width:1em">&nbsp;</td>
+
+<td align="center">
+<table border="0" cellspacing="0" cellpadding="0">
 <tr><td align="center" colspan="3">
 <input type="button" value="Check for jsMath Updates"
-       style="width:17em" onclick="jsMath.Controls.CheckVersion()" />
+       style="width:18em" onclick="jsMath.Controls.CheckVersion()" /><br />
+<input type="button" id="jsMath__resolution" value="Hi-Res Fonts for Printing"
+       style="width:18em" onclick="jsMath.Controls.PrintResolution()" />
 </td></tr>
-<tr><td height="5"></td></tr>
-<tr><td align="left">
-<input type="button" value="Options" id="jsMath__opts" style="width:8em" onclick="jsMath.Controls.Options()" />
+
+<tr><td height="8"></td></tr>
+
+<tr valign="bottom"><td align="left">
+<input type="button" value="Print" id="jsMath__print" style="width:8em" onclick="jsMath.Controls.Print()" /><br />
+<input type="button" value="Reload" id="jsMath__reload" style="width:8em" style="width:8em" onclick="jsMath.window.location.reload()" /><br />
+</td><td>
+&nbsp;
+</td><td align="right">
+<input type="button" value="Go Global" id="jsMath__global" style="width:8em" onclick="jsMath.Controls.GoGlobal()"a /><!--
+--><input type="button" value="Go Local" id="jsMath__local" style="width:8em;display:none" onclick="jsMath.Controls.GoLocal()" /><br />
+<input type="button" value="Controls" id="jsMath__ctrls" style="width:8em" onclick="jsMath.Controls.ShowControls()" /><br/>
+</td></tr>
+
+<tr><td height="8"></td></tr>
+
+<tr valign="bottom"><td align="left">
+<input type="button" value="Options" id="jsMath__opts" style="width:8em" onclick="jsMath.Controls.Options()" /><br/>
 </td><td>
 &nbsp;
 </td><td align="right">
 <input type="button" value="Done" id="jsMath__done" style="width:8em" onclick="jsMath.Controls.Close()" />
 </td></tr>
 </table></td></tr>
-<tr><td height="7"></td></tr>
-<tr><td align="center" colspan="3" style="width:20em; font-size:x-small">
-<i>Click on the jsMath floating button or <nobr>ALT-click</nobr> on a
-mathematical expression to get this dialog at any time.</i>
+
+<tr><td height="10"></td></tr>
+
+<tr>
+<td colspan="3" align="center" style="width:26em">
+<i style="font-size:75%">Click the jsMath button or <nobr>ALT-click</nobr>
+on mathematics to reopen this panel.</i>
 </td></tr>
+
 </table></p>
 </div>
 </div>
@@ -252,15 +312,43 @@ mathematical expression to get this dialog at any time.</i>
 <!------------------------------------------------------------>
 
 <div id="jsMath_options">
-<div style="text-align:center; padding:.75em 1.4em;">
-<b style="font-size:large">jsMath Options</b> <small>[<a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/help.html">help</a>]</small>
+<div style="text-align:center">
+<b style="font-size:133%">jsMath Options</b>
+[<a target="_blank" href="http://www.math.union.edu/locate/jsMath/users/help.html">help</a>]
 <p>
-<form action="javascript:" style="margin:0px;">
+<form action="javascript:" style="margin:0px">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr valign="top"><td>
+
 <table border="0" cellspacing="0" cellpadding="0" style="text-align:left">
 
+<tr><td><input type="checkbox" id="jsMath__autofont"  value="1" /> Autoselect best font</td></tr>
+<tr><td><input type="checkbox" id="jsMath__warn"      value="1" /> Show font warnings</td></tr>
+<tr><td><input type="checkbox" id="jsMath__alpha"     value="1" /> Use image alpha channels</td></tr>
+<tr><td><input type="checkbox" id="jsMath__printwarn" value="1" /> Print image-font help</td></tr>
+<tr><td><input type="checkbox" id="jsMath__stayhires" value="1" /> Always use hi-res fonts</td></tr>
+
+<tr><td style="height:.8em"></td></tr>
+
+<tr><td><input type="checkbox" id="jsMath__progress" value="1" /> Show progress messages</td></tr>
+<tr><td><input type="checkbox" id="jsMath__asynch"   value="1" /> Force asynchronous processing</td></tr>
+<tr><td><input type="checkbox" id="jsMath__blank"    value="1" /> Don't show page until complete</td></tr>
+<tr><td><input type="checkbox" id="jsMath__button"   value="1" /> Show jsMath button</td></tr>
+
+<tr id="jsMath__separator" style="display:none"><td style="height:.8em"></td></tr>
+
+<tr id="jsMath__tex2mathRow" style="display:none"><td><input type="checkbox" id="jsMath__tex2math" value="1" /> Enable <code>tex2math</code> plug-in</td></tr>
+
+</td></tr>
+</table>
+</td>
+<td style="width:2em"></td>
+<td>
+
+<table border="0" cellspacing="0" cellpadding="0" style="text-align:left">
 <tr><td>Scale all mathematics to <input type="text" id="jsMath__scale" value="100" size="3" />%</td></tr>
 
-<tr><td height="5"></td></tr>
+<tr><td style="height:.5em"></td></tr>
 
 <tr><td><input type="radio" name="jsMath__font" value="tex" onclick="jsMath.Controls.NoAuto()" />
 <span id="jsMath__texText">Use native TeX fonts</span>
@@ -268,34 +356,24 @@ mathematical expression to get this dialog at any time.</i>
 </td></tr>
 <tr><td><input type="radio" name="jsMath__font" value="image" onclick="jsMath.Controls.NoAuto()" />
 <span id="jsMath__imageText">Use image fonts
-(<input type="checkbox" id="jsMath__scaleImg" value="1" /> scalable)</span></td></tr>
+<span id="jsMath__scaleImgText">(<input type="checkbox" id="jsMath__scaleImg" value="1" /> scalable)</span></span></td></tr>
 <tr><td><input type="radio" name="jsMath__font" value="symbol" onclick="jsMath.Controls.NoAuto()" />
 <span id="jsMath__symbolText">Use images for symbols only</span></td></tr>
 <tr><td height="2"></td></tr>
 <tr><td><input type="radio" name="jsMath__font" value="unicode" onclick="jsMath.Controls.NoAuto()" />
 Use native Unicode fonts</td></tr>
 
-<tr><td height="8"></td></tr>
+<tr><td style="height:1em"></td></tr>
 
-<tr><td><input type="checkbox" id="jsMath__autofont" value="1" /> Autoselect best font</td></tr>
-<tr><td><input type="checkbox" id="jsMath__alpha"    value="1" /> <span id="jsMath__alphaText">Use image alpha channels</span></td></tr>
-<tr><td><input type="checkbox" id="jsMath__warn"     value="1" /> Show font warnings</td></tr>
-
-<tr><td height="8"></td></tr>
-
-<tr><td><input type="checkbox" id="jsMath__progress" value="1" /> Show progress messages</td></tr>
-<tr><td><input type="checkbox" id="jsMath__asynch"   value="1" /> Force asynchronous processing</td></tr>
-<tr><td><input type="checkbox" id="jsMath__blank"    value="1" /> Don't show page until complete</td></tr>
-<tr><td><input type="checkbox" id="jsMath__button"   value="1" /> Show jsMath button</td></tr>
-
-<tr><td height="8"></td></tr>
-
-<tr id="jsMath__tex2mathRow" STYLE="display:none"><td><input type="checkbox" id="jsMath__tex2math" value="1" /> Enable <code>tex2math</code> plug-in</td></tr>
-
-<tr><td height="8"></td></tr>
-
+<tr><td align="center"><span id="jsMath__globalText">Use Global mode</span>
+<select id="jsMath__global">
+<option value="auto">when requested
+<option value="always">always
+<option value="never">never
+</select>
+</td></tr>
+<tr><td height="3"></td></tr>
 <tr><td>Save settings for
-
 <select id="jsMath__keep">
 <option value="0D">this session only
 <option value="1D">1 day
@@ -310,23 +388,25 @@ Use native Unicode fonts</td></tr>
 <option value="1Y">1 year
 <option value="5Y">5 years
 </select>
-
 </td></tr>
 
-<tr><td height="13"></td></tr>
+<tr><td style="height:1em"></td></tr>
 
-<tr><td align="center">
+</table>
+
 <table border="0" cellspacing="0" cellpadding="0" width="100%">
 <tr>
-<td align="left">
+<td align="left">&nbsp;
 <input type="button" value="Back" id="jsMath__back" style="width:8em" onclick="jsMath.Controls.SaveOptions(0)" />
 &nbsp;&nbsp;
 </td>
 <td align="right">
 <input type="button" value="Done" id="jsMath__done" style="width:8em" onclick="jsMath.Controls.SaveOptions(1)" />
+&nbsp;
 </td>
 </tr>
 </table>
+
 </td></tr>
 
 </table>

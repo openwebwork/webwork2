@@ -37,14 +37,14 @@ jsMath.Add(jsMath.HTML,{
     h -= 2/jsMath.em; // use 2 pixels to compensate for border size
     w -= 2/jsMath.em;
     y -= 1/jsMath.em;
-    if (!c) {c = 'black'};
+    if (!c) {c = ''} else {c = ' '+c};
     if (pos) {pos = 'absolute;'} else
              {pos = 'relative; margin-right: '+this.Em(-(w+2/jsMath.em))+'; '}
     return '<img src="'+jsMath.blank+'" style="position:' + pos
              + 'vertical-align: '+this.Em(y)+'; left: '+this.Em(x)+'; '
              + 'width:' +this.Em(w*jsMath.Browser.imgScale)+'; '
              + 'height:'+this.Em(h*jsMath.Browser.imgScale)+'; '
-             + 'border: 1px solid '+c+';" />';
+             + 'border: 1px solid'+c+';" />';
   }
 
 });

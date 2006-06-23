@@ -33,6 +33,4 @@
 
 /********************************************************************/
 
-jsMath.Script.Start();
 jsMath.Setup.Script('plugins/mimeTeX.js');
-jsMath.Script.End();

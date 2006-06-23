@@ -23,5 +23,5 @@
  *  limitations under the License.
  */
 
-if (!jsMath) {var jsMath = {}}
-jsMath.noImgFonts = 1;
+if (!window.jsMath) {window.jsMath = {}}
+window.jsMath.noImgFonts = 1;

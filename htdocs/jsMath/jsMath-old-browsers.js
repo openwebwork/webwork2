@@ -22,8 +22,6 @@
  *  limitations under the License.
  */
 
-jsMath.Script.Start();
-
 jsMath.Add(jsMath.HTML,{
   /*
    *  Use the blank GIF image for spacing and rules
@@ -58,5 +56,3 @@ if (jsMath.browser == 'Konqueror') {
 }
 
 jsMath.styles['.typeset .spacer'] = '';
- 
-jsMath.Script.End();

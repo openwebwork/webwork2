@@ -24,15 +24,6 @@
 
 
 
-/********************************************************************
- *
- *  Mac MSIE has problems accessing a number of the characters in
- *  the TeX fonts, so we replace them by other characters when
- *  possible.
- */
-
-jsMath.Script.Start();
-
 /*
  *  MSIE crashes if it changes the page too quickly, so we add a
  *  delay between processing math entries.  Unfortunately, this really
@@ -59,6 +50,4 @@ jsMath.Add(jsMath,{
 
 });
 
-jsMath.Browser.delay = 75;  // hope this is enogh of a delay!
-
-jsMath.Script.End();
+jsMath.Browser.delay = 75;  // hope this is enough of a delay!

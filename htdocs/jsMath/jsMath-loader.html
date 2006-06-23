@@ -35,16 +35,17 @@ while (!window.jsMath && !showWarning) {
     window.jsMath = window.parent.jsMath;
     if (!window.jsMath) {throw "no jsMath";}
   } catch (err) {
-    showWarning = 1;
+    showWarning = 1; pageDomain = '';
+    try {pageDomain = document.domain} catch (err) {}
     //
     // MSIE on Mac can't change document.domain, and 'try' won't
-    //   catch the error (Grrr!) so don't even try for it
+    //   catch the error (Grrr!) so don't even attempt it.
     //
-    if (document.domain.match(/\..*\./) &&
+    if (pageDomain.match(/\..*\./) &&
         (navigator.appName != 'Microsoft Internet Explorer' ||
          navigator.platform != 'MacPPC' || !navigator.userProfile || !document.all)) {
       try {
-        document.domain = document.domain.replace(/^[^.]*\./,'');
+        document.domain = pageDomain.replace(/^[^.]*\./,'');
         showWarning = 0;
       } catch(err) {}
     }
@@ -59,21 +60,31 @@ function Warning () {
   );
 }
 
+isOmniWeb4 = (document.readyState == 'loading' &&
+              navigator.accentColorName != null &&
+              navigator.omniWebString == null);
+
 if (showWarning) {setTimeout("Warning()",1)} else {
   debug = window.parent.debug; show = window.parent.show;
   jsMath.Script.window = window; url = jsMath.Script.url;
-  document.write('<script src="'+url+'"><'+'/script>');
+  if (isOmniWeb4) {
+    if (url != jsMath.Script.prevURL) {
+      jsMath.Script.prevURL = url;
+      document.writeln('<script src="'+jsMath.root+'jsMath-loader-omniweb4.js"><'+'/script>');
+      document.writeln('<script src="'+url+'"><'+'/script>');
+      document.writeln('<script src="'+jsMath.root+'jsMath-loader-omniweb4.js"><'+'/script>');
+    }
+  } else {
+    jsMath.Script.Start();
+    document.writeln('<script src="'+url+'"><'+'/script>');
+  }
 }
 </script>
 
 <script>
-if (window.jsMath) {
-  if (document.readyState == 'loading') {
-    // work around bug in OmniWeb 4.5 that would otherwise run this twice.
-    setTimeout("jsMath.Script.endLoad();",1)
-  } else {
-    jsMath.Script.endLoad();
-  }
+if (window.jsMath && !isOmniWeb4) {
+  jsMath.Script.End();
+  jsMath.Script.endLoad();
 }
 </script>
 

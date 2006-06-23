@@ -147,11 +147,14 @@ jsMath.Add(jsMath.tex2math,{
     while (element) {
       if (element.nodeName == '#text') {
         if (!ignore) {element = this.ScanText(element)}
-      } else if (element.firstChild && element.className != 'math') {
-        var off = ignore || element.className == 'tex2math_ignore' ||
-           (element.tagName && element.tagName.match(/^(script|noscript|style|textarea|pre)$/i));
-        off = off && element.className != 'tex2math_process';
-        this.ScanElement(element.firstChild,off);
+      } else {
+        if (element.className == null) {element.className = ''}
+        if (element.firstChild && element.className != 'math') {
+          var off = ignore || element.className == 'tex2math_ignore' ||
+             (element.tagName && element.tagName.match(/^(script|noscript|style|textarea|pre)$/i));
+          off = off && element.className != 'tex2math_process';
+          this.ScanElement(element.firstChild,off);
+        }
       }
       if (element) {element = element.nextSibling}
     }
@@ -170,6 +173,7 @@ jsMath.Add(jsMath.tex2math,{
       this.pattern.lastIndex = 0;
       while (element && element.nodeName == '#text' &&
             (match = this.pattern.exec(element.nodeValue))) {
+        this.pattern.match = match;
         element = this.ProcessMatch(match[0],match.index,element);
       }
       if (this.search.matched) {element = this.EncloseMath(element)}
@@ -196,14 +200,16 @@ jsMath.Add(jsMath.tex2math,{
     } else {
       switch (match) {
         case '\\(':
-          if (this.search.end != '$' && this.search.end != '$$' &&
+          if (this.search.end == null ||
+             (this.search.end != '$' && this.search.end != '$$') &&
               this.processSlashParens) {
             this.ScanMark('span',element,'\\)');
           }
           break;
 
         case '\\[':
-          if (this.search.end != '$' && this.search.end != '$$' &&
+          if (this.search.end == null ||
+             (this.search.end != '$' && this.search.end != '$$') &&
               this.processSlashBrackets) {
             this.ScanMark('div',element,'\\]');
           }
@@ -259,7 +265,7 @@ jsMath.Add(jsMath.tex2math,{
    *  for the math element, and the end delimiter we want to find.
    */
   ScanMark: function (type,element,end) {
-    var len = RegExp.$1.length;
+    var len = this.pattern.match[1].length;
     this.search = {
       type: type, end: end, open: element, olength: len,
       pos: this.pattern.lastIndex - len

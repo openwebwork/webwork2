@@ -31,8 +31,6 @@
  *
  */
 
-jsMath.Script.Start();
-
 jsMath.Update.TeXfonts({
   cmmi10: {
 //  '41':  // leftharpoondown
@@ -107,6 +105,3 @@ jsMath.Setup.Styles({
 
 jsMath.Macro('not','\\mathrel{\\rlap{\\kern 3mu/}}');
 jsMath.Macro('joinrel','\\mathrel{\\kern-3mu}');
-
-
-jsMath.Script.End();

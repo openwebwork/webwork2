@@ -34,8 +34,6 @@
  *  fonts).
  */
 
-jsMath.Script.Start();
-
 jsMath.Add(jsMath.TeX,{
 
   cmr10: [
@@ -977,5 +975,3 @@ jsMath.Macro('not','\\mathrel{\\rlap{\\kern 3mu/}}');
 jsMath.Macro('bowtie','\\mathrel\\triangleright\\kern-6mu\\mathrel\\triangleleft');
 
 jsMath.Box.defaultH = 0.8;
-
-jsMath.Script.End();
