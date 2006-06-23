@@ -97,8 +97,9 @@ jsMath.Package(jsMath.Parser,{
   /*
    *  Insert a unicode reference as an Ord atom.  Its argument should
    *  be the unicode code point, e.g. \unicode{8211}, or \unicode{x203F}.
-   *  You can also specify the height and depth in ems, e.g.,
-   *  \unicode{8211,.6,-.3}
+   *  You can also specify the height (offset from the x height) and depth
+   *  in ems, together with a CSS class for the character, e.g.,
+   *  \unicode{8211,class,.2,-.3}
    */
   Unicode: function (name) {
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;

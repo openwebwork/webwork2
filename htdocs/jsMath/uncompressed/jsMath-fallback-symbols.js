@@ -23,8 +23,6 @@
  *  limitations under the License.
  */
 
-jsMath.Script.Start();
-
 jsMath.Add(jsMath.Img,{
   UpdateTeXFonts: function (change) {
     for (var font in change) {
@@ -414,6 +412,4 @@ jsMath.Img.SetFont({
 });
 
 jsMath.Img.LoadFont('cm-fonts');
-
-jsMath.Script.End();
 

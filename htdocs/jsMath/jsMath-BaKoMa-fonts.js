@@ -31,8 +31,6 @@
  *  to correspond to the their encoding.
  */
 
-jsMath.Script.Start();
-
 if (jsMath.browser == "Mozilla" && navigator.platform != "MacPPC") {
 
   /*
@@ -428,5 +426,3 @@ jsMath.Setup.Styles({
   '.typeset .cmex10': 'font-family: cmex10',
   '.typeset .arial':  "font-family: 'Arial unicode MS'"
 });
-
-jsMath.Script.End();

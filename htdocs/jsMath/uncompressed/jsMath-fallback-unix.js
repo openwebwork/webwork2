@@ -34,8 +34,6 @@
  *  fonts).
  */
 
-jsMath.Script.Start();
-
 jsMath.Add(jsMath.TeX,{
 
   cmr10: [
@@ -935,5 +933,3 @@ jsMath.Macro('joinrel','\\mathrel{\\kern-2mu}');
 jsMath.Box.DelimExtend = jsMath.Box.DelimExtendRelative;
 
 jsMath.Box.defaultH = 0.8;
-
-jsMath.Script.End();

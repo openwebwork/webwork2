@@ -86,7 +86,7 @@
 /*
  *  Make sure jsMath.Autoload is available
  */
-if (jsMath == null) {jsMath = {}}
+if (!window.jsMath) {window.jsMath = {}}
 if (jsMath.Autoload == null) {jsMath.Autoload = {}}
 jsMath.Add = function (dst,src) {for (var id in src) {dst[id] = src[id]}},
 jsMath.document = document; // tex2math needs this
@@ -192,7 +192,7 @@ jsMath.Add(jsMath.Autoload,{
    */
   Check2: function () {
     this.Script.tex2math = 0;
-    this.needsJsMath = 0;
+    this.needsJsMath = 0; if (this.checkElement == null) {this.checkElement = null}
     if (this.findMathElements) {
       this.needsJsMath = this.areMathElements(this.checkElement);
     }
@@ -270,10 +270,10 @@ jsMath.Add(jsMath.Autoload,{
     if (!obj.getElementsByTagName) {return false}
     var math = obj.getElementsByTagName('div');
     for (var k = 0; k < math.length; k++) 
-      {if (math[k].className == 'math') {return true}}
+      {if (math[k].className.match(/(^| )math( |$)/)) {return true}}
     math = obj.getElementsByTagName('span');
     for (var k = 0; k < math.length; k++) 
-      {if (math[k].className == 'math') {return true}}
+      {if (math[k].className.match(/(^| )math( |$)/)) {return true}}
     return false;
   },
 

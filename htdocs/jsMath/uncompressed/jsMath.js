@@ -29,14 +29,9 @@
 /*
  *  Prevent running everything again if this file is loaded twice
  */
-
 if (!window.jsMath || !window.jsMath.loaded) {
 
-// handle bug in MSIE/Mac in autoload
-if (window.parent && window.parent.jsMath) {jsMath = window.parent.jsMath}
-
 var jsMath_old = window.jsMath;  // save user customizations
-
 
 //
 // debugging routine
@@ -70,9 +65,9 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 /***************************************************************************/
 
-jsMath = {
+window.jsMath = {
   
-  version: "3.2",  // change this if you edit the file
+  version: "3.3b",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -122,29 +117,40 @@ jsMath = {
     '.typeset .blank':    'display:inline-block; overflow:hidden; border:0px none; width:0px; height:0px;',
     '.typeset .spacer':   'display:inline-block',
 
-    '#jsMath_message':        'position:fixed; bottom:1px; left:2px; background-color:#E6E6E6; '
-                                + 'border: solid 1px #959595; margin:0px; padding: 1px 8px; '
-                                + 'z-index:102; color: black; font-size:small; width:auto;',
-    '#jsMath_panel':          'position:fixed; bottom:1.5em; right:1.5em; padding: 10px 20px; '
-                                + 'background-color:#DDDDDD; border: outset 2px; '
-                                + 'z-index:103; width:auto;',
-    '#jsMath_button':         'position:fixed; bottom:1px; right:2px; background-color:white; '
-                                + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
-                                + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
-                                + 'width:auto; cursor:pointer; cursor:hand;',
-    '#jsMath_float':          'position:absolute; top:0px; left:0px; max-width:80%; '
-                                + 'z-index:101; width:auto; height:auto;',
-    '#jsMath_float .drag':    'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
-    '#jsMath_float .close':   'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
-    '#jsMath_float .source':  'background-color:#E2E2E2; border: outset 1px; '
-                                + 'width:auto; height:auto; padding: 8px 15px; '
-                                + 'font-family: courier, fixed; font-size: 90%',
-    '#jsMath_noFont':         'text-align: center; padding: 10px 20px; border: 3px solid #DD0000; '
-                                + 'background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
-    '#jsMath_noFont .link':   'padding: 0px 5px 2px 5px; border: 2px outset; background-color:#E8E8E8; '
-                                + 'color:black; font-size:80%; width:auto; cursor:pointer; cursor:hand;',
+    '#jsMath_message':         'position:fixed; bottom:1px; left:2px; background-color:#E6E6E6; '
+                                 + 'border: solid 1px #959595; margin:0px; padding: 1px 8px; '
+                                 + 'z-index:102; color: black; font-size:small; width:auto;',
+    '#jsMath_panel':           'position:fixed; bottom:1.5em; right:1.5em; padding: .8em 1.6em; '
+                                 + 'background-color:#DDDDDD; border: outset 2px; '
+                                 + 'z-index:103; width:auto;',
+    '#jsMath_panel .disabled': 'color:#888888',
+    '#jsMath_panel .infoLink': 'font-size:85%',
+    '#jsMath_button':          'position:fixed; bottom:1px; right:2px; background-color:white; '
+                                 + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
+                                 + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
+                                 + 'width:auto; cursor:hand;',
+    '#jsMath_global':          'font-style:italic;',
+    '#jsMath_float':           'position:absolute; top:0px; left:0px; max-width:80%; '
+                                 + 'z-index:101; width:auto; height:auto;',
+    '#jsMath_float .drag':     'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
+    '#jsMath_float .close':    'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
+    '#jsMath_float .source':   'background-color:#E2E2E2; border: outset 1px; '
+                                 + 'width:auto; height:auto; padding: 8px 15px; '
+                                 + 'font-family: courier, fixed; font-size: 90%',
 
-    '@media print': '#jsMath_button {display:none}'
+    '#jsMath_noFont .message': 'text-align: center; padding: .8em 1.6em; border: 3px solid #DD0000; '
+                                  + 'background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
+    '#jsMath_noFont .link':    'padding: 0px 5px 2px 5px; border: 2px outset; background-color:#E8E8E8; '
+                                  + 'color:black; font-size:80%; width:auto; cursor:hand;',
+
+    '#jsMath_PrintWarning .message':
+                                 'text-align: center; padding: .8em 1.6em; border: 3px solid #DD0000; '
+                                   + 'background-color: #FFF8F8; color: #AA0000; font-size:x-small; width:auto;',
+
+    '@media print':      '#jsMath_button {display:none}\n' +
+                         '#jsMath_Warning {display:none}',
+                         
+    '@media screen':     '#jsMath_PrintWarning {display:none}'
 
   },
   
@@ -168,23 +174,35 @@ jsMath = {
   },
 
   /*
-   *  Get the width and height (in ems) of an HTML string
+   *  Get the width and height (in ems) of an HTML string.
+   *  Check the cache first to see if we've already measured it.
    */
   EmBoxFor: function (s) {
-    var bbox = this.BBoxFor(s);
-    return {w: bbox.w/this.em, h: bbox.h/this.em};
+    var cache = jsMath.Global.cache.R;
+    if (!cache[this.em]) {cache[this.em] = {}}
+    if (!cache[this.em][s]) {
+      var bbox = this.BBoxFor(s);
+      cache[this.em][s] = {w: bbox.w/this.em, h: bbox.h/this.em};
+    }
+    return cache[this.em][s];
   },
 
   /*
-   *  For browsers that don't handle sizes of italics properly (MSIE)
+   *  For browsers that don't handle sizes of italics properly (MSIE).
+   *  Check the cache first to see if we've already measured it.
    */
   EmBoxForItalics: function (s) {
-    var bbox = this.BBoxFor(s);
-    if (s.match(/<i>|class=\"(icm|italic|igreek|iaccent)/i)) {
-      bbox.w = this.BBoxFor(s+jsMath.Browser.italicString).w
-                - jsMath.Browser.italicCorrection;
+    var cache = jsMath.Global.cache.R;
+    if (!cache[this.em]) {cache[this.em] = {}}
+    if (!cache[this.em][s]) {
+      var bbox = this.BBoxFor(s);
+      if (s.match(/<i>|class=\"(icm|italic|igreek|iaccent)/i)) {
+        bbox.w = this.BBoxFor(s+jsMath.Browser.italicString).w
+                  - jsMath.Browser.italicCorrection;
+      }
+      cache[this.em][s] = {w: bbox.w/this.em, h: bbox.h/this.em};
     }
-    return {w: bbox.w/this.em, h: bbox.h/this.em};
+    return cache[this.em][s];
   },
 
   /*
@@ -193,26 +211,29 @@ jsMath = {
    */
   Init: function () {
     if (jsMath.Setup.inited != 1) {
-      if (jsMath.Setup.inited) {
+      if (!jsMath.Setup.inited) {jsMath.Setup.Body()}
+      if (jsMath.Setup.inited != 1) {
         alert("It looks like jsMath failed to set up properly (error code "
                + jsMath.Setup.inited + ").  "
-               + "I'll will try to keep going, but it could get ugly.");
+               + "I will try to keep going, but it could get ugly.");
         jsMath.Setup.inited = 1;
-      } else {
-        alert("You must call jsMath.Setup.Body() explicitly when jsMath is" +
-              "loaded as part of the <HEAD> section");
       }
-      jsMath.Setup.Body(); // may fail to load fallback files properly
     }
-    this.em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:10em;height:1em"></span>').w/10;
+    this.em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:13em;height:1em"></span>').w/13;
     if (this.em == 0) {
       // handle older browsers
-      this.em = this.BBoxFor('<img src="'+jsMath.blank+'" style="width:10em;height:1em"/>').w/10;
+      this.em = this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em"/>').w/13;
     }
-    if (jsMath.Browser.italicString) 
-      jsMath.Browser.italicCorrection = jsMath.BBoxFor(jsMath.Browser.italicString).w;
-    var bb = this.BBoxFor('x'); var h = bb.h;
-    var d = this.BBoxFor('x'+jsMath.HTML.Rule(1,h/jsMath.em)).h - h;
+    var cache = jsMath.Global.cache.B;
+    if (!cache[this.em]) {
+      cache[this.em] = {};
+      cache[this.em].bb = this.BBoxFor('x'); var hh = cache[this.em].bb.h;
+      cache[this.em].d = this.BBoxFor('x'+jsMath.HTML.Rule(1,hh/jsMath.em)).h - hh;
+      if (jsMath.Browser.italicString) 
+        {cache[this.em].ic = jsMath.BBoxFor(jsMath.Browser.italicString).w}
+    }
+    jsMath.Browser.italicCorrection = cache[this.em].ic;
+    var bb = cache[this.em].bb; var h = bb.h; var d = cache[this.em].d
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
     this.xWidth = bb.w;  // used to tell if scale has changed
@@ -252,7 +273,7 @@ jsMath = {
         'ConvertTeX','ConvertTeX2','ConvertLaTeX','ConvertCustom',
         'CustomSearch', 'Synchronize', 'Macro', 'document'];
       for (var i = 0; i < override.length; i++) {
-        if (jsMath_old[override[i]]) {jsMath_old[override[i]] = null}
+        if (jsMath_old[override[i]]) {delete jsMath_old[override[i]]}
       }
     }
     if (jsMath_old) {this.Insert(jsMath,jsMath_old)}
@@ -281,7 +302,84 @@ jsMath = {
   },
   Package: function (obj,def) {this.Insert(obj.prototype,def)}
 
-}
+};
+
+
+/***************************************************************************/
+
+  /*
+   *  Implements items associated with the global cache.
+   *
+   *  This object will be replaced by a global version when 
+   *  (and if) jsMath-global.html is loaded.
+   */
+jsMath.Global = {
+    isLocal: 1,  // a local copy if jsMath-global.html hasn't been loaded
+    cache: {T: {}, D: {}, R: {}, B: {}},
+
+    /*
+     *  Clear the global (or local) cache
+     */
+    ClearCache: function () {jsMath.Global.cache = {T: {}, D: {}, R: {}, B: {}}},
+
+    /*
+     *  Initiate global mode
+     */
+    GoGlobal: function (cookie) {
+      var url = String(jsMath.window.location);
+      var c = (jsMath.window.location.protocol == 'mk:') ? '#' : '?';
+      if (cookie) {url = url.replace(/\?.*/,'') + '?' + cookie}
+      jsMath.Controls.Reload(jsMath.root + "jsMath-global.html" + c +escape(url));
+    },
+
+    /*
+     *  Check if we need to go to global mode
+     */
+    Init: function () {
+      if (jsMath.Controls.cookie.global == "always" && !jsMath.noGoGlobal) {
+        if (navigator.accentColorName) return; // OmniWeb crashes on GoGlobal
+        if (!jsMath.window) {jsMath.window = window}
+        jsMath.Controls.loaded = 1;
+        jsMath.Controls.defaults.hiddenGlobal = null;
+        this.GoGlobal(jsMath.Controls.SetCookie(2));
+      }
+    },
+
+    /*
+     *  Try to register with a global.html window that contains us
+     */
+    Register: function () {
+      try {
+        if (window.location.protocol != 'mk:') this.Domain();
+        if (parent.jsMath && parent.jsMath.isGlobal)
+          {parent.jsMath.Register(jsMath.window)}
+      } catch (err) {}
+    },
+
+    /*
+     *  If we're not the parent window, try to set the domain to
+     *  match the parent's domain (so we can use the Global data
+     *  if the surrounding frame is a Global frame.
+     */
+    Domain: function () {
+      // MSIE/Mac can't do domain changes, so don't bother trying
+      if (navigator.appName == 'Microsoft Internet Explorer' &&
+          navigator.platform == 'MacPPC' && navigator.userProfile != null) return;
+      if (window == parent) return;
+      var oldDomain = jsMath.document.domain;
+      try {
+        while (true) {
+          try {if (parent.document.title != null) return} catch (err) {}
+          if (!document.domain.match(/\..*\./)) break;
+          jsMath.document.domain = jsMath.document.domain.replace(/^[^.]*\./,'');
+        }
+      } catch (err) {}
+      jsMath.document.domain = oldDomain;
+    }
+
+};
+  
+
 
 /***************************************************************************/
 
@@ -304,10 +402,13 @@ jsMath.Script = {
    */
   Init: function () {
     if (!(jsMath.Controls.cookie.asynch && jsMath.Controls.cookie.progress)) {
-      if (window.XMLHttpRequest) {
-        this.request = new XMLHttpRequest;
-      } else if (window.ActiveXObject) {
-        try {this.request = new ActiveXObject("Microsoft.XMLHTTP")} catch (err) {}
+      if (window.XMLHttpRequest) {try {this.request = new XMLHttpRequest} catch (err) {}}
+      if (!this.request && window.ActiveXObject) {
+        var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
+                   "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
+        for (var i = 0; i < xml.length && !this.request; i++) {
+          try {this.request = new ActiveXObject(xml[i])} catch (err) {}
+        }
       }
     }
     //
@@ -336,7 +437,8 @@ jsMath.Script = {
    *  Load a URL and run the contents of the file
    */
   xmlRequest: function (url) {
-    this.debug('xmlRequest: '+url);
+    this.blocking = 1;
+//    this.debug('xmlRequest: '+url);
     try {
       this.request.open("GET",url,false);
       this.request.send(null);
@@ -349,9 +451,11 @@ jsMath.Script = {
       throw "jsMath can't load the file '"+url+"'\n"
           + "Error status: "+this.request.status;
     }
-    this.Start(); this.blocking = 1;
+    var tmpQueue = this.queue; this.queue = [];
+//    this.debug('xml Eval ['+tmpQueue.length+']');
     jsMath.window.eval(this.request.responseText);
-    this.End(); this.blocking = 0;
+//    this.debug('xml Done ['+this.queue.length+' + '+tmpQueue.length+']');
+    this.blocking = 0; this.queue = this.queue.concat(tmpQueue);
     this.Process();
   },
 
@@ -371,7 +475,6 @@ jsMath.Script = {
   needsBody: 0,      // true if loading files requires BODY to be present
   
   queue: [],         // the stack of pending actions
-  queueAt: 0,
 
   /*
    *  Provide mechanism for synchronizing with the asynchronous jsMath
@@ -387,9 +490,8 @@ jsMath.Script = {
    *  If nothing is being loaded, do the pending commands.
    */
   Push: function (object,method,data) {
-    this.debug('Pushing: '+method+' at '+this.queueAt);
-    this.queue = [].concat(this.queue.slice(0,this.queueAt),[[object,method,data]],this.queue.slice(this.queueAt));
-    this.queueAt++;
+//    this.debug('Pushing: '+method+' at '+this.queue.length);
+    this.queue[this.queue.length] = [object,method,data];
     if (!(this.blocking || (this.needsBody && !jsMath.document.body))) this.Process();
   },
 
@@ -398,24 +500,20 @@ jsMath.Script = {
    */
   Process: function () {
     while (this.queue.length && !this.blocking) {
-      this.Start();
-      var call = this.queue[0]; this.queue = this.queue.slice(1);
+      var call = this.queue[0]; var tmpQueue = this.queue.slice(1); this.queue = [];
       var object = call[0]; var method = call[1]; var data = call[2];
-      this.debug('Calling: '+method);
+//      this.debug('Calling: '+method+' ['+tmpQueue.length+']');
       if (object) {object[method](data)} else if (method) {method(data)}
-      this.debug('Done:    '+method);
+//      this.debug('Done:    '+method+' ['+this.queue.length+' + '+tmpQueue.length+']');
+      this.queue = this.queue.concat(tmpQueue);
     }
-    this.End();
   },
   
-  Start: function () {this.queueAt = 0},
-  End:   function () {this.queueAt = this.queue.length},
-
   /*
    *  Handle loading of scripts that run asynchronously
    */
   delayedLoad: function (url) {
-    this.debug('Loading: '+url);
+//    this.debug('Loading: '+url);
     this.Push(this,'startLoad',url);
   },
   startLoad: function (url) {
@@ -435,14 +533,21 @@ jsMath.Script = {
     if (url.substr(0,jsMath.root.length) == jsMath.root)
       {url = url.substr(jsMath.root.length)}
     jsMath.Message.Set("Loading "+url);
-    this.debug('Starting: '+url);
     this.cancelTimer = setTimeout('jsMath.Script.cancelLoad()',this.cancelTimeout);
   },
   endLoad: function (action) {
-    this.debug('Ending: '+this.url);
     if (this.cancelTimer) {clearTimeout(this.cancelTimer); this.cancelTimer = null;}
     jsMath.Message.Clear();
     if (action != 'cancel') {this.blocking = 0; this.Process()}
+  },
+  
+  Start: function () {
+//    this.debug('Starting: ['+this.queue.length+'] '+this.url);
+    this.tmpQueue = this.queue; this.queue = [];
+  },
+  End:   function () {
+//    this.debug('Ending:   ['+this.queue.length+' + '+this.tmpQueue.length+'] '+this.url);
+    this.queue = this.queue.concat(this.tmpQueue); delete this.tmpQueue;
   },
 
   /*
@@ -461,16 +566,22 @@ jsMath.Script = {
     this.blocking = 1;
     setTimeout('jsMath.Script.endDelay()',time);
   },
-  endDelay: function () {this.debug('endDelay'); this.blocking = 0; this.Process()},
+  endDelay: function () {
+//    this.debug('endDelay');
+    this.blocking = 0;
+    this.Process();
+  },
   
   /*
    *  Load an image and wait for it
    *  (so MSIE won't load extra copies of it)
    */
+  imageCount: 0,
   WaitForImage: function (file) {
-    this.blocking = 1; if (this.img == null) {this.img = []}
+    this.blocking = 1; this.imageCount++;
+    if (this.img == null) {this.img = []}
     var img = new Image(); this.img[this.img.length] = img;
-    img.onload = function () {jsMath.Script.endDelay()}
+    img.onload = function () {if (--jsMath.Script.imageCount == 0) jsMath.Script.endDelay()}
     img.onerror = img.onload; img.onabort = img.onload;
     img.src = file;
   },
@@ -485,15 +596,15 @@ jsMath.Script = {
       data[k] = d.join('');
     }
     window.eval(data.join(''));
-  },
+  }//,
   
   /*
    *  for debugging the event queue
    */
-  debug: function (message) {
+//  debug: function (message) {
 //    if (jsMath.document.body && jsMath.window.debug) {jsMath.window.debug(message)}
 //      else {alert(message)}
-  }
+//  }
 
 };
 
@@ -545,7 +656,7 @@ jsMath.Message = {
         if (!this.message.style.cursor) {this.message.style.cursor = 'hand'}
         this.message.title = ' Cancel Processing of Math ';
       } else {
-        this.message.style.cursor;
+        this.message.style.cursor = '';
         this.message.title = '';
       }
     } else {
@@ -622,7 +733,7 @@ jsMath.Setup = {
    */
   Script: function (file,show) {
     if (this.loaded[file]) {return} else {this.loaded[file] = 1}
-    if (!file.match('^([a-zA-Z]+:/)?/')) {file = jsMath.root + file}
+    if (!file.match('^([a-zA-Z]+:/?)?/')) {file = jsMath.root + file}
     jsMath.Script.Load(file,show);
   },
   
@@ -657,12 +768,12 @@ jsMath.Setup = {
               jsMath.root = jsMath.document.location.protocol + '//'
                           + jsMath.document.location.host + jsMath.root;
             } else if (!jsMath.root.match(/^[a-z]+:/i)) {
-	      src = new String(jsMath.document.location);
-	      jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
-	      while (jsMath.root.match('/[^/]*/\\.\\./')) {
-	        jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\\.\\./'),'/');
-	      }
-	    }
+              src = new String(jsMath.document.location);
+              jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
+              while (jsMath.root.match('/[^/]*/\\.\\./')) {
+                jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\\.\\./'),'/');
+              }
+            }
             i = script.length;
           }
         }
@@ -679,6 +790,7 @@ jsMath.Setup = {
    *  the domain of the calling page.
    */
   Domain: function () {
+    try {jsMath.document.domain} catch (err) {return}
     var jsDomain = ''; var pageDomain = jsMath.document.domain;
     if (jsMath.root.match('://([^/]*)/')) {jsDomain = RegExp.$1}
     jsDomain = jsDomain.replace(/:\d+$/,'');
@@ -796,7 +908,8 @@ jsMath.Setup = {
     var string = ''; for (var id in styles) {string += id + ' {'+styles[id]+"}\n"}
     if (jsMath.document.createStyleSheet) {// check for MSIE
       head.insertAdjacentHTML('beforeEnd',
-          '<span style="display:none">x</span><style type="text/css">'+string+'</style>');
+          '<span style="display:none">x</span>'  // MSIE needs this for some reason
+          + '<style type="text/css">'+string+'</style>');
     } else {
       var style = jsMath.document.createElement('style'); style.type = "text/css";
       style.appendChild(jsMath.document.createTextNode(string));
@@ -826,6 +939,8 @@ jsMath.Setup = {
 
     // make sure browser-specific loads are done before this
     jsMath.Script.Push(jsMath.Font,'Check');
+    if (jsMath.Font.register.length)
+      {jsMath.Script.Push(jsMath.Font,'LoadRegistered')}
     
     this.inited = 1;
   },
@@ -886,6 +1001,7 @@ jsMath.Browser = {
   operaHiddenFix: '',         // for Opera to fix bug with math in tables
   msieCenterBugFix: '',       // for MSIE centering bug with image fonts
   msieInlineBlockFix: '',     // for MSIE alignment bug in non-quirks mode
+  msieSpaceFix: '',           // for MSIE to avoid dropping empty spans
   imgScale: 1,                // MSI scales images for 120dpi screens, so compensate
 
   renameOK: 1,                // tells if brower will find a tag whose name
@@ -915,13 +1031,15 @@ jsMath.Browser = {
    *  and decide whether to use spans or images for spacing
    */
   TestInlineBlock: function () {
-    this.block = "display:inline-block";
+    this.block = "display:-moz-inline-box";
     this.hasInlineBlock = jsMath.BBoxFor('<span style="'+this.block+';width:10px;height:5px"></span>').w > 0;
-    if (!this.hasInlineBlock) {
-      this.block = "display:-moz-inline-box";
+    if (this.hasInlineBlock) {
+      jsMath.styles['.typeset .blank']  = jsMath.styles['.typeset .blank'].replace(/display:inline-block/,this.block);
+      jsMath.styles['.typeset .spacer'] = jsMath.styles['.typeset .spacer'].replace(/display:inline-block/,'');
+    } else {
+      this.block = "display:inline-block";
       this.hasInlineBlock = jsMath.BBoxFor('<span style="'+this.block+';width:10px;height:5px"></span>').w > 0;
       if (!this.hasInlineBlock) return;
-      jsMath.styles['.typeset .blank']  = jsMath.styles['.typeset .blank'].replace(/display:inline-block/,this.block);
     }
     this.block += ';overflow:hidden';
     var h = jsMath.BBoxFor('x').h;
@@ -1021,6 +1139,7 @@ jsMath.Browser = {
         this.msieAlphaBug = 1; this.alphaPrintBug = 1;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
+        this.msieSpaceFix = '<span style="display:inline-block"></span>';
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
         // MSIE doesn't implement fixed positioning, so use absolute
@@ -1048,8 +1167,8 @@ jsMath.Browser = {
         this.msieDivWidthBug = 1; this.msieBlankBug = 1;
         jsMath.Setup.Script('jsMath-msie-mac.js');
         jsMath.Parser.prototype.macros.angle = ['Replace','ord','<font face="Symbol">&#x8B;</font>','normal'];
-        jsMath.styles['#jsMath_panel']  = 'width:25em; ' + jsMath.styles['#jsMath_panel'].replace(/width:auto/,"");
-        jsMath.styles['#jsMath_button'] = 'width:1px; ' + jsMath.styles['#jsMath_button'].replace(/width:auto/,"");
+        jsMath.styles['#jsMath_panel']  = 'width:42em; ' + jsMath.styles['#jsMath_panel'].replace(/width:auto/,"");
+        jsMath.Controls.cookie.printwarn = 0; // MSIE/Mac doesn't handle '@media screen'
       }
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
     }
@@ -1062,12 +1181,14 @@ jsMath.Browser = {
     if (jsMath.hidden.ATTRIBUTE_NODE) {
       jsMath.browser = 'Mozilla';
       if (navigator.platform == 'Win32') {this.alphaPrintBug = 1}
-      this.allowAbsoluteDelim = 1; // this.separateSkips = 1; // no longer needed?
+      this.allowAbsoluteDelim = 1;
+      jsMath.styles['#jsMath_button'] = jsMath.styles['#jsMath_button'].replace(/cursor:hand/,'cursor:pointer');
+      jsMath.styles['#jsMath_noFont .link'] = jsMath.styles['#jsMath_noFont .link'].replace(/cursor:hand/,'cursor:pointer');
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
       if (navigator.vendor == 'Firefox') {
-        jsMath.Browser.version = navigator.vendorSub;
+        this.version = navigator.vendorSub;
       } else if (navigator.userAgent.match(' Firefox/([0-9.]+)( |$)')) {
-        jsMath.Browser.version = RegExp.$1;
+        this.version = RegExp.$1;
       }
     }
   },
@@ -1080,8 +1201,9 @@ jsMath.Browser = {
       jsMath.browser = 'OmniWeb';
       this.allowAbsolute = this.hasInlineBlock;
       this.allowAbsoluteDelim = this.allowAbsolute;
-      this.valignBug = this.allowAbsolute;
+      this.valignBug = !this.allowAbsolute;
       this.buttonCheck = 1; this.textNodeBug = 1;
+      jsMath.noChangeGlobal = 1; // OmniWeb craches on GoGlobal
       if (!this.hasInlineBlock) {jsMath.Setup.Script('jsMath-old-browsers.js')}
     }
   },
@@ -1108,11 +1230,15 @@ jsMath.Browser = {
       jsMath.browser = 'Safari';
       var version = navigator.userAgent.match("Safari/([0-9]+)");
       version = (version)? version[1] : 400;
-      for (var i = 0; i < jsMath.TeX.fam.length; i++)
-        {if (jsMath.TeX.fam[i]) {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}}
+      for (var i = 0; i < jsMath.TeX.fam.length; i++) {
+        if (jsMath.TeX.fam[i] && jsMath.TeX[jsMath.TeX.fam[i]])
+          {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}
+      }
       jsMath.TeX.axis_height += .05;
+      jsMath.TeX.default_rule_thickness += .025;
       this.allowAbsoluteDelim = version >= 125;
       this.safariIFRAMEbug = version >= 312 && version < 412;
+      this.safariButtonBug = version < 412;
       this.safariImgBug = 1; this.textNodeBug = 1;
       this.buttonCheck = 1;
       this.styleChangeDelay = 1;
@@ -1147,6 +1273,7 @@ jsMath.Browser = {
 jsMath.Font = {
   
   fallback: "symbol", // the default fallback method
+  register: [],       // list of fonts registered before jsMath.Init()
 
   // the HTML for the missing font message
   message:    
@@ -1158,6 +1285,14 @@ jsMath.Font = {
     'Extra TeX fonts not found: <b><span id="jsMath_ExtraFonts"></span></b><br/>'
       + 'Using image fonts instead.  This may be slow and might not print well.<br/>\n'
       + 'Use the jsMath control panel to get additional information.',
+
+  print_message:
+    'To print higher-resolution math symbols, click the<br/>\n'
+       + '<b>Hi-res Fonts for Printing</b> button on the jsMath control panel.<br/>\n',
+
+  alpha_message:
+    'If the math symbols print as black boxes, turn off <b>image alpha channels</b><br/>\n'
+       + 'using the <B>Options</B> pane of the jsMath control panel.<br/>\n',
   
   /*
    *  Look to see if a font is found.
@@ -1234,6 +1369,11 @@ jsMath.Font = {
       jsMath.Box.TeX = jsMath.Box.TeXfallback;
       return;
     }
+    if (!cookie.print && cookie.printwarn) {
+      this.PrintMessage(
+        (jsMath.Browser.alphaPrintBug && jsMath.Controls.cookie.alpha) ?
+          this.print_message + this.alpha_message : this.print_message);
+    }
     if (jsMath.Browser.waitForImages) {
       jsMath.Script.Push(jsMath.Script,"WaitForImage",jsMath.blank);
     }
@@ -1261,16 +1401,16 @@ jsMath.Font = {
    *  of your page.
    */
   Message: function (message) {
-    if(jsMath.Element("Warning")) return;
+    if (jsMath.Element("Warning")) return;
     var div = jsMath.Setup.DIV("Warning",{});
     div.innerHTML = 
       '<center><table><tr><td>'
-      + '<div id="jsMath_noFont">' + message
+      + '<div id="jsMath_noFont"><div class="message">' + message
       + '<div style="text-align:left"><span style="float:left; margin: 8px 0px 0px 20px">'
       + '<span onclick="jsMath.Controls.Panel()" title=" Open the jsMath Control Panel " class="link">jsMath Control Panel</span>'
       + '</span><span style="margin: 8px 20px 0px 0px; float:right">'
       + '<span onclick="jsMath.Font.HideMessage()" title=" Remove this font warning message " class="link">Hide this Message</span>'
-      + '</span></div><div style="height:6px"></div><br clear="all"/></div>'
+      + '</span></div><div style="height:6px"></div><br clear="all"/></div></div>'
       + '<div style="width:22em; height:1px"></div>'
       + '</td></tr></table></center><hr/>';
   },
@@ -1280,12 +1420,25 @@ jsMath.Font = {
     if (message) {message.style.display = "none"}
   },
   
+  PrintMessage: function (message) {
+    if (jsMath.Element("PrintWarning")) return;
+    var div = jsMath.Setup.DIV("PrintWarning",{});
+    div.innerHTML = 
+      '<center><table><tr><td>'
+      + '<div class="message">' + message + '</div>'
+      + '<div style="width:22em; height:1px"></div>'
+      + '</td></tr></table></center><hr/>';
+  },
+  
   /*
    *  Register an extra font so jsMath knows about it
    */
-  Register: function (data) {
-    jsMath.Script.Start();
+  Register: function (data,force) {
     if (typeof(data) == 'string') {data = {name: data}}
+    if (!jsMath.Setup.inited && !force) {
+      this.register[this.register.length] = data;
+      return;
+    }
     var fontname = data.name; var name = fontname.replace(/10$/,'');
     var fontfam = jsMath.TeX.fam.length;
     if (data.prefix == null) {data.prefix = ""}
@@ -1304,7 +1457,7 @@ jsMath.Font = {
      */
     data.styles['.typeset .'+fontname] = data.style;
     jsMath.Setup.Styles(data.styles);
-    jsMath.Script.Push(jsMath.Setup,'TeXfont',fontname);
+    if (jsMath.initialized) {jsMath.Script.Push(jsMath.Setup,'TeXfont',fontname)}
     /*
      *  Check for font and give message if missing
      */
@@ -1312,7 +1465,6 @@ jsMath.Font = {
                       data.test(fontname,data.testChar,data.testFactor,data.prefix);
     if (hasTeXfont && jsMath.Controls.cookie.font == 'tex') {
       if (data.tex) {data.tex(fontname,fontfam,data)}
-      jsMath.Script.End();
       return;
     }
     if (!hasTeXfont && jsMath.Controls.cookie.warn &&
@@ -1326,16 +1478,25 @@ jsMath.Font = {
     }
     if (jsMath.Controls.cookie.font == 'unicode') {
       if (data.fallback) {data.fallback(fontname,fontfam,data)}
-      jsMath.Script.End();
       return;
     }
     //  Image fonts
     var font = {}; font[fontname] = ['all'];
     jsMath.Img.SetFont(font);
     jsMath.Img.LoadFont(fontname);
-    jsMath.Script.Push(jsMath.Img,'Scale');
-    jsMath.Script.Push(jsMath.Img,'UpdateFonts');
-    jsMath.Script.End();
+    if (jsMath.initialized) {
+      jsMath.Script.Push(jsMath.Img,'Scale');
+      jsMath.Script.Push(jsMath.Img,'UpdateFonts');
+    }
+  },
+  /*
+   *  If fonts are registered before jsMath.Init() is called, jsMath.em
+   *  will not be available, so they need to be delayed.
+   */
+  LoadRegistered: function () {
+    var i = 0;
+    while (i < this.register.length) {this.Register(this.register[i++],1)}
+    this.register = [];
   },
 
   /*
@@ -1359,11 +1520,13 @@ jsMath.Controls = {
   cookie: {
     scale: 100,
     font: 'tex', autofont: 1, scaleImg: 0, alpha: 1,
-    warn: 1, button: 1, progress: 1, asynch: 0, blank: 0,
-    print: 0, keep: '0D'
+    warn: 1, printwarn: 1, stayhires: 0,
+    button: 1, progress: 1, asynch: 0, blank: 0,
+    print: 0, keep: '0D', global: 'auto', hiddenGlobal: 1
   },
   
   cookiePath: '/',  // can also set cookieDomain
+  noCookiePattern: /^(file|mk):$/,  // pattern for handling cookies locally
   
   
   /*
@@ -1390,9 +1553,14 @@ jsMath.Controls = {
   Button: function () {
     var button = jsMath.Setup.DIV("button",{});
     button.title = ' Open jsMath Control Panel ';
-    button.innerHTML = 'jsMath';
-    if (button.offsetWidth < 2*jsMath.em) {button.style.width = "auto"}
-    button.onclick = new Function("jsMath.Controls.Panel()");
+    button.innerHTML = 
+      '<span onclick="jsMath.Controls.Panel()">jsMath</span>';
+    if (!jsMath.Global.isLocal && !jsMath.noShowGlobal) {
+      button.innerHTML +=
+        '<span id="jsMath_global" title=" Open jsMath Global Panel " '
+          + 'onclick="jsMath.Global.Show(1)">Global&nbsp;</span>';
+    }
+    if (button.offsetWidth < 30) {button.style.width = "auto"}
     if (!this.cookie.button) {button.style.display = "none"}
   },
   
@@ -1410,17 +1578,27 @@ jsMath.Controls = {
    *  (for file: references, use url '?' syntax)
    */
   GetCookie: function () {
+    // save the current cookie settings as the defaults
+    if (this.defaults == null) {this.defaults = {}}
+    jsMath.Add(this.defaults,this.cookie); this.userSet = {};
+    // get the browser's cookie data
     var cookies = jsMath.document.cookie;
-    if (jsMath.window.location.protocol == 'file:') 
-      {cookies = unescape(jsMath.window.location.search.substr(1))}
-    if (cookies.match(/jsMath=([^;]*)/)) {
+    if (jsMath.window.location.protocol.match(this.noCookiePattern)) {
+      cookies = this.localGetCookie();
+      this.isLocalCookie = 1;
+    }
+    if (cookies.match(/jsMath=([^;]+)/)) {
       var data = RegExp.$1.split(/,/);
       for (var i = 0; i < data.length; i++) {
         var x = data[i].match(/(.*):(.*)/);
         if (x[2].match(/^\d+$/)) {x[2] = 1*x[2]} // convert from string
         this.cookie[x[1]] = x[2];
+        this.userSet[x[1]] = 1;
       }
     }
+  },
+  localGetCookie: function () {
+    return unescape(jsMath.window.location.search.substr(1));
   },
   
   /*
@@ -1429,15 +1607,16 @@ jsMath.Controls = {
    */
   SetCookie: function (warn) {
     var cookie = [];
-    for (var id in this.cookie) {cookie[cookie.length] = id + ':' + this.cookie[id]}
+    for (var id in this.cookie) {
+      if (this.defaults[id] == null || this.cookie[id] != this.defaults[id])
+        {cookie[cookie.length] = id + ':' + this.cookie[id]}
+    }
     cookie = cookie.join(',');
-    if (jsMath.window.location.protocol == 'file:') {
-      if (!warn) return;
-      this.loaded = 0;
-      var href = jsMath.window.location.href;
-      href = href.replace(/\?.*/,"") + '?jsMath=' + escape(cookie);
-      if (href != jsMath.window.location.href) {jsMath.window.location.replace(href)}
+    if (this.isLocalCookie) {
+      if (warn == 2) {return 'jsMath='+escape(cookie)}
+      this.localSetCookie(cookie,warn);
     } else {
+      if (cookie == '') {warn = 0}
       if (this.cookiePath) {cookie += '; path='+this.cookiePath}
       if (this.cookieDomain) {cookie += '; domain='+this.cookieDomain}
       if (this.cookie.keep != '0D') {
@@ -1452,13 +1631,33 @@ jsMath.Controls = {
             this.cookie.keep.substr(0,1) * ms[this.cookie.keep.substr(1,1)]);
         cookie += '; expires=' + exp.toGMTString();
       }
-      jsMath.document.cookie = 'jsMath='+cookie;
-      var cookies = jsMath.document.cookie;
-      if (warn && !cookies.match(/jsMath=/))
-        {alert("Cookies must be enabled in order to save jsMath options")}
+      if (cookie != '') {
+        jsMath.document.cookie = 'jsMath='+cookie;
+        var cookies = jsMath.document.cookie;
+        if (warn && !cookies.match(/jsMath=/))
+          {alert("Cookies must be enabled in order to save jsMath options")}
+      }
     }
+    return null;
+  },
+  localSetCookie: function (cookie,warn) {
+    if (!warn) return;
+    var href = String(jsMath.window.location).replace(/\?.*/,"");
+    if (cookie != '') {href += '?jsMath=' + escape(cookie)}
+    if (href != jsMath.window.location.href) {this.Reload(href)}
+  },
+  
+  /*
+   *  Reload the page (with the given URL)
+   */
+  Reload: function (url) {
+    if (!this.loaded) return;
+    this.loaded = 0;
+    jsMath.Global.ClearCache();
+    if (url) {jsMath.window.location.replace(url)}
+        else {jsMath.window.location.reload()}
   }
-
+  
 };
 
 /***************************************************************************/
@@ -1525,7 +1724,7 @@ jsMath.TeX = {
   delim1:     2.39,
   delim2:     1.0,
   axis_height: .25,
-  default_rule_thickness: .04,
+  default_rule_thickness: .06,
   big_op_spacing1:  .111111,
   big_op_spacing2:  .166666,
   big_op_spacing3:  .2,
@@ -2184,10 +2383,10 @@ jsMath.Img = {
    *  Setup for print mode, and create the hex code table
    */
   Init: function () {
-    if (jsMath.Controls.cookie.print) {
-      jsMath.Controls.cookie.print = 0;
+    if (jsMath.Controls.cookie.print || jsMath.Controls.cookie.stayhires) {
+      jsMath.Controls.cookie.print = jsMath.Controls.cookie.stayhires;
       this.factor *= 3;
-      if (jsMath.window.location.protocol != 'file:') {jsMath.Controls.SetCookie(0)}
+      if (!jsMath.Controls.isLocalCookie || !jsMath.Global.isLocal) {jsMath.Controls.SetCookie(0)}
       if (jsMath.Browser.alphaPrintBug) {jsMath.Controls.cookie.alpha = 0}
     }
     var codes = '0123456789ABCDEF';
@@ -2227,7 +2426,7 @@ jsMath.HTML = {
    */
   Spacer: function (w) {
     if (w == 0) {return ''};
-    return '<span class="spacer" style="margin-left:'+this.Em(w)+'"></span>';
+    return jsMath.Browser.msieSpaceFix+'<span class="spacer" style="margin-left:'+this.Em(w)+'"></span>';
   },
   
   /*
@@ -2251,7 +2450,7 @@ jsMath.HTML = {
     if (d == null) {d = 0}
     if (h) {
       var H = this.Em(h+d);
-      if (isRule && h > 0 && h*jsMath.em < 1.5) {H = "1px"; h = 1/jsMath.em}
+      if (isRule && h*jsMath.em < 1.5) {H = "1px"; h = 1/jsMath.em}
       style += 'height:'+H+';';
     }
     if (jsMath.Browser.mozInlineBlockBug) {d = -h}
@@ -2413,7 +2612,7 @@ jsMath.Add(jsMath.Box,{
         // hack to avoid font changing back to the default
         // font when a unicode reference is not followed
         // by a letter or number
-        box.html += '<span style="display: none">x</span>';
+        box.html += '<span style="display:none">x</span>';
       }
     }
     return box;
@@ -2424,10 +2623,10 @@ jsMath.Add(jsMath.Box,{
    *  sizes of the characters precomputed
    */
   TeXfallback: function (C,font,style,size) {
-    c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
+    var c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
     if (c.img != null) {return this.TeXnonfallback(C,font,style,size)}
     if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
-    var box = this.Text(c.c,c.tclass,style,size,c.a,c.d);
+    var box = this.Text(c.c,c.tclass,style,size,c.a || 0,c.d || 0);
     var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
       box.bh = c.bh*scale;
@@ -2607,7 +2806,7 @@ jsMath.Add(jsMath.Box,{
    */
   DelimExtendAbsolute: function (H,c,font,a,nocenter) {
     var Font = jsMath.TeX[font];
-    var C = Font[c];
+    var C = Font[c]; var html;
     var top = this.GetChar(C.delim.top? C.delim.top: C.delim.rep,font);
     var rep = this.GetChar(C.delim.rep,font);
     var bot = this.GetChar(C.delim.bot? C.delim.bot: C.delim.rep,font);
@@ -2659,7 +2858,7 @@ jsMath.Add(jsMath.Box,{
     if (CFSH == null) {return this.Space(TeX.nulldelimiterspace)}
     if (CFSH[2] == '')
       {return this.DelimExtend(H,CFSH[0],CFSH[1],TeX.axis_height,nocenter)}
-    box = jsMath.Box.TeX(CFSH[0],CFSH[1],CFSH[2],size).Styled();
+    var box = jsMath.Box.TeX(CFSH[0],CFSH[1],CFSH[2],size).Styled();
     if (nocenter) {box.y = -jsMath.TeX[CFSH[1]].dh*TeX.scale}
       else {box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height)}
     if (Math.abs(box.y) < .0001) {box.y = 0}
@@ -2701,9 +2900,10 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  LayoutRelative: function (size,table,align,cspacing) {
+  LayoutRelative: function (size,table,align,cspacing,rspacing,vspace) {
     if (align == null) {align = []}
     if (cspacing == null) {cspacing = []}
+    if (rspacing == null) {rspacing = []}
     
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
@@ -2711,6 +2911,7 @@ jsMath.Add(jsMath.Box,{
     var unset = -1000; var bh = unset; var bd = unset;
     var i; var j; var row;
     for (i = 0; i < table.length; i++) {
+      if (rspacing[i] == null) {rspacing[i] = 0}
       row = table[i]; H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
       for (j = 0; j < row.length; j++) {
         row[j] = row[j].Remeasured();
@@ -2722,15 +2923,17 @@ jsMath.Add(jsMath.Box,{
         if (row[j].bd > bd) {bd = row[j].bd}
       }
     }
+    if (rspacing[table.length] == null) {rspacing[table.length] = 0}
     if (bh == unset) {bh = 0}; if (bd == unset) {bd = 0}
 
     // lay out the columns
     var HD = (jsMath.hd-.01)*scale;
+    var dy = (vspace || 1) * scale/6;
     var html = ''; var pW = 0; var cW = 0;
     var w; var h; var y;
     var box; var mlist; var entry;
     for (j = 0; j < W.length; j++) {
-      mlist = []; y = -H[0]; pW = 0;
+      mlist = []; y = -H[0]-rspacing[0]; pW = 0;
       for (i = 0; i < table.length; i++) {
         entry = table[i][j];
         if (entry && entry.format != 'null') {
@@ -2740,8 +2943,7 @@ jsMath.Add(jsMath.Box,{
           entry.x = w - pW; pW = entry.w + w; entry.y = y;
           mlist[mlist.length] = entry;
         }
-        if (i == table.length-1) {y -= D[i]}
-        else {y -= Math.max(HD,D[i]+H[i+1]) + scale/10}
+        if (i+1 < table.length) {y -= Math.max(HD,D[i]+H[i+1]) + dy + rspacing[i+1]}
       }
       if (cspacing[j] == null) cspacing[j] = scale;
       if (mlist.length > 0) {
@@ -2752,9 +2954,9 @@ jsMath.Add(jsMath.Box,{
     }
     
     // get the full width and height
-    w = -cspacing[W.length-1]; y = (H.length-1)*scale/10;
+    w = -cspacing[W.length-1]; y = (H.length-1)*dy + rspacing[0];
     for (i = 0; i < W.length; i++) {w += W[i] + cspacing[i]}
-    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i])}
+    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i]) + rspacing[i+1]}
     h = y/2 + jsMath.TeX.axis_height; var d = y-h;
     
     // adjust the final row width, and vcenter the table
@@ -2773,17 +2975,20 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  LayoutAbsolute: function (size,table,align,cspacing) {
+  LayoutAbsolute: function (size,table,align,cspacing,rspacing,vspace) {
     if (align == null) {align = []}
     if (cspacing == null) {cspacing = []}
+    if (rspacing == null) {rspacing = []}
     
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
     var HD = (jsMath.hd-.01)*scale;
+    var dy = (vspace || 1) * scale/6;
     var W = []; var H = []; var D = [];
     var w = 0; var h; var x; var y;
     var i; var j; var row;
     for (i = 0; i < table.length; i++) {
+      if (rspacing[i] == null) {rspacing[i] = 0}
       row = table[i];
       H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
       for (j = 0; j < row.length; j++) {
@@ -2794,27 +2999,27 @@ jsMath.Add(jsMath.Box,{
         else if (row[j].w > W[j]) {W[j] = row[j].w}
       }
     }
+    if (rspacing[table.length] == null) {rspacing[table.length] = 0}
 
     // get the height and depth of the centered table
-    y = (H.length-1)*scale/6;
-    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i])}
+    y = (H.length-1)*dy + rspacing[0];
+    for (i = 0; i < H.length; i++) {y += Math.max(HD,H[i]+D[i]) + rspacing[i+1]}
     h = y/2 + jsMath.TeX.axis_height; var d = y - h;
 
     // lay out the columns
     var html = ''; var entry; w = scale/6;
     for (j = 0; j < W.length; j++) {
-      y = H[0]-h;
+      y = H[0]-h + rspacing[0];
       for (i = 0; i < table.length; i++) {
         entry = table[i][j];
         if (entry && entry.format != 'null') {
-          if (align[j] == 'l') {x = 0} else
-          if (align[j] == 'r') {x = W[j] - entry.w} else
+          if (align[j] && align[j] == 'l') {x = 0} else
+          if (align[j] && align[j] == 'r') {x = W[j] - entry.w} else
             {x = (W[j] - entry.w)/2}
           html += jsMath.HTML.PlaceAbsolute(entry.html,w+x,
                     y-Math.max(0,entry.bh-jsMath.h*scale));
         }
-        if (i == table.length-1) {y += D[i]}
-        else {y += Math.max(HD,D[i]+H[i+1]) + scale/6}
+        if (i+1 < table.length) {y += Math.max(HD,D[i]+H[i+1]) + dy + rspacing[i+1]}
       }
       if (cspacing[j] == null) cspacing[j] = scale;
       w += W[j] + cspacing[j];
@@ -2835,6 +3040,7 @@ jsMath.Add(jsMath.Box,{
    *  Look for math within \hbox and other non-math text
    */
   InternalMath: function (text,size) {
+    text = text.replace(/@\(([^)]*)\)/g,'<$1>');
     if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
     
     var i = 0; var k = 0; var c; var match = '';
@@ -2889,7 +3095,7 @@ jsMath.Add(jsMath.Box,{
         return box.mlist.Typeset(style,size);
       }
       if (box.type == 'text') {
-        box = this.Text(box.text,box.tclass,style,size,box.ascend,box.descend);
+        box = this.Text(box.text,box.tclass,style,size,box.ascend||null,box.descend||null);
         if (addstyle != 0) {box.Styled()}
         return box;
       }
@@ -2938,8 +3144,7 @@ jsMath.Package(jsMath.Box,{
    *  Recompute the box width to make it more accurate.
    */
   Remeasured: function () {
-    if (this.w > 0 && !this.html.match(/position: ?absolute/))
-      {this.w = jsMath.EmBoxFor(this.html).w}
+    if (this.w > 0) {this.w = jsMath.EmBoxFor(this.html).w}
     return this;
   }
 
@@ -3183,7 +3388,7 @@ jsMath.Package(jsMath.mList,{
   AddDelimiters: function(style,size) {
     var unset = -10000; var h = unset; var d = unset;
     for (var i = 0; i < this.mlist.length; i++) {
-      mitem = this.mlist[i];
+      var mitem = this.mlist[i];
       if (mitem.atom || mitem.type == 'box') {
         h = Math.max(h,mitem.nuc.h+mitem.nuc.y);
         d = Math.max(d,mitem.nuc.d-mitem.nuc.y);
@@ -3288,7 +3493,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Handle a Bin atom. (Rule 5)
    */
   bin: function (style,size,mitem,prev) {
-    if (prev) {
+    if (prev && prev.type) {
       var type  = prev.type;
       if (type == 'bin' || type == 'op' || type == 'rel' ||
           type == 'open' || type == 'punct' || type == '' ||
@@ -3301,7 +3506,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Handle a Rel atom.  (Rule 6)
    */
   rel: function (style,size,mitem,prev) {
-    if (prev.type == 'bin') {prev.type = 'ord'}
+    if (prev.type && prev.type == 'bin') {prev.type = 'ord'}
     jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
@@ -3309,7 +3514,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Handle a Close atom.  (Rule 6)
    */
   close: function (style,size,mitem,prev) {
-    if (prev.type == 'bin') {prev.type = 'ord'}
+    if (prev.type && prev.type == 'bin') {prev.type = 'ord'}
     jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
@@ -3317,7 +3522,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
    *  Handle a Punct atom.  (Rule 6)
    */
   punct: function (style,size,mitem,prev) {
-    if (prev.type == 'bin') {prev.type = 'ord'}
+    if (prev.type && prev.type == 'bin') {prev.type = 'ord'}
     jsMath.mList.prototype.Atomize.SupSub(style,size,mitem);
   },
 
@@ -3387,13 +3592,13 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     var p = t; if (style == 'D' || style == "D'") {p = TeX.x_height}
     var r = t + p/4; 
     var surd = jsMath.Box.Delimiter(box.h+box.d+r+t,[0,2,0x70,3,0x70],style,1);
-    t = surd.h; // thickness of rule is height of surd character
+//    if (surd.h > 0) {t = surd.h} // thickness of rule is height of surd character
     if (surd.d > box.h+box.d+r) {r = (r+surd.d-box.h-box.d)/2}
     surd.y = box.h+r;
     var rule = jsMath.Box.Rule(box.w,t);
     rule.y = surd.y-t/2; rule.h += 3*t/2; box.x = -box.w;
     var Cr = jsMath.Typeset.UpStyle(jsMath.Typeset.UpStyle(style));
-    var root = jsMath.Box.Set(mitem.root,Cr,size).Remeasured();
+    var root = jsMath.Box.Set(mitem.root || null,Cr,size).Remeasured();
     if (mitem.root) {
       root.y = .55*(box.h+box.d+3*t+r)-box.d;
       surd.x = Math.max(root.w-(11/18)*surd.w,0);
@@ -3960,7 +4165,7 @@ jsMath.Package(jsMath.Parser,{
   letter:  /[a-z]/i,
   number:  /[0-9]/,
   //  pattern for macros to ^ and _ that should be read with arguments
-  scriptargs: /^((math|text)..|mathcal)$/,
+  scriptargs: /^((math|text)..|mathcal|[hm]box)$/,
   
   //  the \mathchar definitions (see Appendix B of the TeXbook).
   mathchar: {
@@ -4273,6 +4478,8 @@ jsMath.Package(jsMath.Parser,{
     it:                ['HandleFont',4],
     bf:                ['HandleFont',6],
     
+    font:              ['Extension','font'],
+    
     left:              'HandleLeft',
     right:             'HandleRight',
 
@@ -4465,9 +4672,14 @@ jsMath.Package(jsMath.Parser,{
     matrix:     'Matrix',
     array:      'Matrix',  // ### still need to do alignment options ###
     pmatrix:    ['Matrix','(',')','c'],
-    cases:      ['Matrix','\\{','.',['l','l']],
+    cases:      ['Matrix','\\{','.',['l','l'],null,2],
+    eqalign:    ['Matrix',null,null,['r','l'],[5/18],3,'D'],
+    displaylines: ['Matrix',null,null,['c'],null,3,'D'],
     cr:         'HandleRow',
     '\\':       'HandleRow',
+    noalign:    'HandleNoAlign',
+    eqalignno:  ['Matrix',null,null,['r','l','r'],[5/8,3],3,'D'],
+    leqalignno: ['Matrix',null,null,['r','l','r'],[5/8,3],3,'D'],
     
     //  LaTeX
     begin:      'Begin',
@@ -4494,6 +4706,7 @@ jsMath.Package(jsMath.Parser,{
     style:      ['Extension','HTML'],
     cssId:      ['Extension','HTML'],
     unicode:    ['Extension','HTML'],
+    bbox:       ['Extension','bbox'],
     
     require:    'Require',
     
@@ -4512,8 +4725,8 @@ jsMath.Package(jsMath.Parser,{
     Bmatrix:    ['Array','\\{','\\}','c'],
     vmatrix:    ['Array','\\vert','\\vert','c'],
     Vmatrix:    ['Array','\\Vert','\\Vert','c'],
-    cases:      ['Array','\\{','.','ll'],
-    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18],'D']
+    cases:      ['Array','\\{','.','ll',null,2],
+    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18],3,'D']
   },
 
 
@@ -4581,8 +4794,7 @@ jsMath.Package(jsMath.Parser,{
     var letter = /^([a-z]+|.) ?/i;
     var cmd = letter.exec(this.string.slice(this.i));
     if (cmd) {this.i += cmd[1].length; return cmd[1]}
-    this.Error("Missing control sequnece name at end of string or argument");
-    return null;
+    this.i++; return " ";
   },
 
   /*
@@ -4627,7 +4839,7 @@ jsMath.Package(jsMath.Parser,{
   ProcessScriptArg: function (name) {
     var arg = this.GetArgument(name); if (this.error) {return null}
     if (arg.charAt(0) == this.cmd) {
-      csname = arg.substr(1);
+      var csname = arg.substr(1);
       if (csname == "frac") {
         arg += '{'+this.GetArgument(csname)+'}'; if (this.error) {return null}
         arg += '{'+this.GetArgument(csname)+'}'; if (this.error) {return null}
@@ -4670,7 +4882,11 @@ jsMath.Package(jsMath.Parser,{
       rest = this.string.slice(this.i);
       advance = 1;
     }
-    var match = rest.match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)/);
+    return this.ParseDimen(rest,name,advance,nomu);
+  },
+  
+  ParseDimen: function (dimen,name,advance,nomu) {
+    var match = dimen.match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)/);
     if (!match) {this.Error("Missing dimension or its units for "+name); return null}
     if (advance) {
       this.i += match[0].length;
@@ -4803,7 +5019,7 @@ jsMath.Package(jsMath.Parser,{
    */
   RaiseLower: function (name) {
     var h = this.GetDimen(this.cmd+name,1); if (this.error) return;
-    var box = this.ProcessArg(this.cmd+name); if (this.error) return;
+    var box = this.ProcessScriptArg(this.cmd+name); if (this.error) return;
     if (name == 'lower') {h = -h}
     this.mlist.Add(new jsMath.mItem('raise',{nuc: box, raise: h}));
   },
@@ -4838,7 +5054,6 @@ jsMath.Package(jsMath.Parser,{
   Extension: function (name,data) {
     jsMath.Translate.restart = 1;
     if (name != null) {delete jsMath.Parser.prototype[data[1]||'macros'][name]}
-    jsMath.Script.Start();
     jsMath.Extension.Require(data[0],jsMath.Translate.asynchronous);
     throw "restart";
   },
@@ -4858,8 +5073,8 @@ jsMath.Package(jsMath.Parser,{
   Sqrt: function (name) {
     var n = this.GetBrackets(this.cmd+name); if (this.error) return;
     var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
-    box = jsMath.mItem.Atom('radical',arg);
-    if (this.n != '') {box.root = this.Process(n); if (this.error) return}
+    var box = jsMath.mItem.Atom('radical',arg);
+    if (n != '') {box.root = this.Process(n); if (this.error) return}
     this.mlist.Add(box);
   },
 
@@ -4869,7 +5084,7 @@ jsMath.Package(jsMath.Parser,{
   Root: function (name) {
     var n = this.ProcessUpto(this.cmd+name,'of'); if (this.error) return;
     var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
-    box = jsMath.mItem.Atom('radical',arg);
+    var box = jsMath.mItem.Atom('radical',arg);
     box.root = n; this.mlist.Add(box);
   },
   
@@ -4915,15 +5130,15 @@ jsMath.Package(jsMath.Parser,{
   Matrix: function (name,delim) {
     var data = this.mlist.data;
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
-    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
-    parse.matrix = name; parse.row = []; parse.table = [];
+    var parse = new jsMath.Parser(arg+this.cmd+'\\',null,data.size,delim[5] || 'T');
+    parse.matrix = name; parse.row = []; parse.table = []; parse.rspacing = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,delim[2]);
+    var box = jsMath.Box.Layout(data.size,parse.table,delim[2]||null,delim[3]||null,parse.rspacing,delim[4]||null);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      var left  = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[1]],'T');
       box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
     this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
@@ -4953,12 +5168,28 @@ jsMath.Package(jsMath.Parser,{
    *  When we see a \cr or \\, try to add a row to the table
    */
   HandleRow: function (name,last) {
-    if (!this.matrix)
-      {this.Error(this.cmd+name+" can only appear in a matrix or array"); return}
+    var dimen;
+    if (!this.matrix) {this.Error(this.cmd+name+" can only appear in a matrix or array"); return}
+    if (name == "\\") {
+      dimen = this.GetBrackets(this.cmd+name); if (this.error) return;
+      if (dimen) {dimen = this.ParseDimen(dimen,this.cmd+name,0,1)}
+    }
     this.HandleEntry(name);
     if (!last || this.row.length > 1 || this.row[0].format != 'null')
       {this.table[this.table.length] = this.row}
+    if (dimen) {this.rspacing[this.table.length] = dimen}
     this.row = [];
+  },
+  
+  /*
+   *  Look for \vskip or \vspace in \noalign parameters
+   */
+  HandleNoAlign: function (name) {
+    var arg = this.GetArgument(this.cmd+name); if (this.error) return;
+    var skip = arg.replace(/^.*(vskip|vspace)([^a-z])/i,'$2');
+    if (skip.length == arg.length) return;
+    var d = this.ParseDimen(skip,this.cmd+RegExp.$1,0,1); if (this.error) return;
+    this.rspacing[this.table.length] = (this.rspacing[this.table.length] || 0) + d;
   },
   
   /*
@@ -4972,17 +5203,17 @@ jsMath.Package(jsMath.Parser,{
     }
     columns = columns.replace(/[^clr]/g,'');
     columns = columns.split('');
-    var data = this.mlist.data; var style = delim[4] || 'T';
+    var data = this.mlist.data; var style = delim[5] || 'T';
     var arg = this.GetEnd(name); if (this.error) return;
     var parse = new jsMath.Parser(arg+this.cmd+'\\',null,data.size,style);
-    parse.matrix = name; parse.row = []; parse.table = [];
+    parse.matrix = name; parse.row = []; parse.table = []; parse.rspacing = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing);
+    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing,parse.rspacing,delim[4]);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      var left  = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[1]],'T');
       box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
     this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
@@ -5144,7 +5375,7 @@ jsMath.Package(jsMath.Parser,{
         c = string.charAt(i++);
         if (c == "#") {text += c} else {
           if (!c.match(/[1-9]/) || c > args.length)
-            {this.Error("Illegal macro parameter reference"); return}
+            {this.Error("Illegal macro parameter reference"); return null}
           newstring = this.AddArgs(this.AddArgs(newstring,text),args[c-1]);
           text = '';
         }
@@ -5336,7 +5567,7 @@ jsMath.Package(jsMath.Parser,{
       this.mlist.data.overF.right = null;
     }
     if (name.match(/^above/)) {
-      this.mlist.data.overF.thickness = this.GetDimen(this.cmd.name,1);
+      this.mlist.data.overF.thickness = this.GetDimen(this.cmd+name,1);
       if (this.error) return;
     } else {
       this.mlist.data.overF.thickness = null; 
@@ -5423,10 +5654,14 @@ jsMath.Package(jsMath.Parser,{
         var y = 0;
         if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y,jsMath.h);
-      } else if (!jsMath.Browser.valignBug) {
+      } else if (jsMath.Browser.valignBug) {
+        // remove line height
+        html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';">'
+             +    html + '</span>';
+      } else {
         // remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
-        html = '<span style="line-height: 0px;'
+        html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';'
                + ' position:relative; top:'+dy+'; vertical-align:'+dy
                + '">' + html + '</span>';
       }
@@ -5574,26 +5809,25 @@ jsMath.Translate = {
 
   element: [],  // the list of math elements on the page
   cancel: 0,    // set to 1 to cancel asynchronous processing
-
+  
   /*
-   *  Typeset a string in \textstyle and return the HTML for it
+   *  Parse a TeX string in Text or Display mode and return
+   *  the HTML for it (taking it from the cache, if available)
    */
-  TextMode: function (s) {
-    var parse = jsMath.Parse(s,null,null,'T');
-    parse.Atomize();
-    var html = parse.Typeset();
-    return html;
+  Parse: function (style,s,noCache) {
+    var cache = jsMath.Global.cache[style];
+    if (!cache[jsMath.em]) {cache[jsMath.em] = {}}
+    var HTML = cache[jsMath.em][s];
+    if (!HTML || noCache) {
+      var parse = jsMath.Parse(s,null,null,style);
+      parse.Atomize(); HTML = parse.Typeset();
+      if (!noCache) {cache[jsMath.em][s] = HTML}
+    }
+    return HTML;
   },
 
-  /*
-   *  Typeset a string in \displaystyle and return the HTML for it
-   */
-  DisplayMode: function (s) {
-    var parse = jsMath.Parse(s,null,null,'D');
-    parse.Atomize();
-    var html = parse.Typeset();
-    return html;
-  },
+  TextMode:    function (s,noCache) {this.Parse('T',s,noCache)},
+  DisplayMode: function (s,noCache) {this.Parse('D',s,noCache)},
   
   /*
    *  Return the text of a given DOM element
@@ -5626,7 +5860,7 @@ jsMath.Translate = {
     element.innerHTML =
       '<span style="visibility: hidden; position:absolute; top:0px;left:0px;"></span>'
         + jsMath.Browser.operaHiddenFix; // needed by Opera in tables
-    element.className='';
+    element.className = '';
     jsMath.hidden = element.firstChild;
     if (!jsMath.BBoxFor("x").w) {jsMath.hidden = jsMath.hiddenTop}
     jsMath.ReInit();
@@ -5636,10 +5870,12 @@ jsMath.Translate = {
   /*
    *  Typeset the contents of an element in \textstyle
    */
-  ConvertText: function (element) {
+  ConvertText: function (element,noCache) {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
-    text = this.TextMode(text);
+    if (text.match(/^\s*\\nocache([^a-zA-Z])/))
+      {noCache = true; text = text.replace(/\s*\\nocache/,'')}
+    text = this.Parse('T',text,noCache);
     element.className = 'typeset';
     element.innerHTML = text;
   },
@@ -5647,10 +5883,12 @@ jsMath.Translate = {
   /*
    *  Typeset the contents of an element in \displaystyle
    */
-  ConvertDisplay: function (element) {
+  ConvertDisplay: function (element,noCache) {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
-    text = this.DisplayMode(text);
+    if (text.match(/^\s*\\nocache([^a-zA-Z])/))
+      {noCache = true; text = text.replace(/\s*\\nocache/,'')}
+    text = this.Parse('D',text,noCache);
     element.className = 'typeset';
     element.innerHTML = text;
   },
@@ -5660,13 +5898,14 @@ jsMath.Translate = {
    */
   ProcessElement: function (element) {
     this.restart = 0;
+    var noCache = (element.className.toLowerCase().match(/(^| )nocache( |$)/) != null);
     try {
       if (element.tagName.toLowerCase() == 'div') {
-        this.ConvertDisplay(element);
+        this.ConvertDisplay(element,noCache);
         element.onclick = jsMath.Click.CheckClick;
         element.ondblclick = jsMath.Click.CheckDblClick;
       } else if (element.tagName.toLowerCase() == 'span') {
-        this.ConvertText(element);
+        this.ConvertText(element,noCache);
         element.onclick = jsMath.Click.CheckClick;
         element.ondblclick = jsMath.Click.CheckDblClick;
       }
@@ -5677,6 +5916,8 @@ jsMath.Translate = {
         tex = tex.replace(/</g,'&lt;');
         tex = tex.replace(/>/g,'&gt;');
         element.innerHTML = tex;
+        element.className = 'math';
+        if (noCache) {element.className += ' nocache'}
       }
       jsMath.hidden = jsMath.hiddenTop;
     }
@@ -5755,7 +5996,7 @@ jsMath.Translate = {
     if (!obj.getElementsByTagName) return null;
     var math = obj.getElementsByTagName('div');
     for (var k = 0; k < math.length; k++) {
-      if (math[k].className == 'math') {
+      if (math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
@@ -5763,7 +6004,7 @@ jsMath.Translate = {
     }
     math = obj.getElementsByTagName('span');
     for (var k = 0; k < math.length; k++) {
-      if (math[k].className == 'math') {
+      if (math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
@@ -5842,19 +6083,26 @@ jsMath.Synchronize = jsMath.Script.Synchronize;
 
 /***************************************************************************/
 
+
 /*
  *  Initialize things
  */
-if (window.parent != window) {
-  window.parent.jsMath = jsMath;
-  jsMath.document = window.parent.document;
-  jsMath.window = window.parent;
-}
+try {
+  if (window.parent != window && window.jsMathAutoload) {
+    window.parent.jsMath = jsMath;
+    jsMath.document = window.parent.document;
+    jsMath.window = window.parent;
+  }
+} catch (err) {}
+
+jsMath.Global.Register();
 jsMath.Loaded();
 jsMath.Controls.GetCookie();
 jsMath.Setup.Source();
+jsMath.Global.Init();
 jsMath.Script.Init();
 jsMath.Setup.Fonts();
 if (jsMath.document.body) {jsMath.Setup.Body()}
 
 }}
+

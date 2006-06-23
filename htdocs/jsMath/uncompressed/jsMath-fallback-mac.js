@@ -34,8 +34,6 @@
  *  fonts).
  */
 
-jsMath.Script.Start();
-
 jsMath.Add(jsMath.TeX,{
 
   cmr10: [
@@ -1015,6 +1013,4 @@ if (jsMath.browser == 'MSIE') {jsMath.Setup.Script('jsMath-fallback-mac-msie.js'
 jsMath.Macro('not','\\mathrel{\\rlap{\\kern 4mu/}}');
 
 jsMath.Box.defaultH = 0.8;
-
-jsMath.Script.End();
 

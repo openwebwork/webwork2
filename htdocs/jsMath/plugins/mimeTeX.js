@@ -24,8 +24,6 @@
  */
 
 
-jsMath.Script.Start();
-
 /*
  *  Treat ~ as space
  */
@@ -183,18 +181,18 @@ jsMath.Package(jsMath.Parser,{
     }
     columns = columns.replace(/[^clr]/g,'');
     columns = columns.split('');
-    var data = this.mlist.data;
+    var data = this.mlist.data; var style = delim[5] || 'T';
     var arg = this.GetEnd(name); if (this.error) return;
     if (arg.match(/\$/)) {arg = arg.replace(/^([^$]*)\$/,''); columns = RegExp.$1}
-    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
-    parse.matrix = name; parse.row = []; parse.table = [];
+    var parse = new jsMath.Parser(arg+this.cmd+'\\',null,data.size,style);
+    parse.matrix = name; parse.row = []; parse.table = []; parse.rspacing = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing);
+    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing,parse.rspacing,delim[4]||null);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      var left  = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[1]],'T');
       box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
     this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
@@ -207,19 +205,17 @@ jsMath.Package(jsMath.Parser,{
     var data = this.mlist.data;
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
     if (arg.match(/\$/)) {arg = arg.replace(/^([^$]*)\$/,''); delim[2] = RegExp.$1}
-    var parse = new jsMath.Parser(arg+'\\\\',null,data.size);
-    parse.matrix = name; parse.row = []; parse.table = [];
+    var parse = new jsMath.Parser(arg+this.cmd+'\\',null,data.size,delim[5] || 'T');
+    parse.matrix = name; parse.row = []; parse.table = []; parse.rspacing = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,delim[2]);
+    var box = jsMath.Box.Layout(data.size,parse.table,delim[2]||null,delim[3]||null,parse.rspacing,delim[4]||null);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
-      var left  = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[0]],'T');
-      var right = jsMath.Box.Delimiter(box.h+box.d,this.delimiter[delim[1]],'T');
+      var left  = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[0]],'T');
+      var right = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[1]],'T');
       box = jsMath.Box.SetList([left,box,right],data.style,data.size);
     }
     this.mlist.Add(jsMath.mItem.Atom((delim[0]? 'inner': 'ord'),box));
   }
 });
-
-jsMath.Script.End();

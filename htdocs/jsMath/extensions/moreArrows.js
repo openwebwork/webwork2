@@ -29,8 +29,6 @@
 
 /********************************************************************/
 
-jsMath.Script.Start();
-
 jsMath.Extension.Require('leaders');
 
 jsMath.Package(jsMath.Parser,{
@@ -68,5 +66,3 @@ jsMath.Package(jsMath.Parser,{
   }
 
 });
-
-jsMath.Script.End();

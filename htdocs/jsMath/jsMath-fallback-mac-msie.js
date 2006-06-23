@@ -31,8 +31,6 @@
  *
  */
 
-jsMath.Script.Start();
-
 jsMath.Update.TeXfonts({
   cmr10: {
     '0':  {c: 'G', tclass: 'greek'},
@@ -200,5 +198,3 @@ jsMath.Setup.Styles({
   '.typeset .igreek':   "font-family: Symbol; font-style:italic",
   '.typeset .bgreek':   "font-family: Symbol; font-weight:bold"
 });
-
-jsMath.Script.End();
