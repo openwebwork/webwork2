@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.199 2006/05/16 00:31:06 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.200 2006/05/21 00:51:25 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -282,16 +282,16 @@ sub attemptResults {
 	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},"The above answer is correct.");
+					$summary .= CGI::div({class=>"ResultsWithoutError"},"The answer above is correct.");
 				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},"The above answer is NOT ${fully}correct.");
+					 $summary .= CGI::div({class=>"ResultsWithError"},"The answer above is NOT ${fully}correct.");
 				 }
 		} else {
 				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the above answers are correct.");
+					$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the answers above are correct.");
 				 } 
 				 unless ($numCorrect + $numBlanks == scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},"At least one of the above answers is NOT ${fully}correct.");
+					$summary .= CGI::div({class=>"ResultsWithError"},"At least one of the answers above is NOT ${fully}correct.");
 				 }
 				 if ($numBlanks) {
 					my $s = ($numBlanks>1)?'':'s';
@@ -828,7 +828,7 @@ sub body {
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
-	# if we are here without a real problem set, carry that through
+	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
