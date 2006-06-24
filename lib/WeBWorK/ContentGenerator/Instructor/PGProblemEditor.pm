@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.75 2006/04/25 17:05:27 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.76 2006/06/24 20:08:30 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -479,7 +479,9 @@ sub body {
 			$problemContents = $@ if $@;
 			$inputFilePath = $tempFilePath;
 		} elsif  (-r $editFilePath and not -d $editFilePath) {
-			die "editFilePath is unsafe!" unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+			die "editFilePath is unsafe!" unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1)  # 1==path can be relative to dir
+				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{setHeader}
+				|| $editFilePath eq $ce->{webworkFiles}{hardcopySnippets}{hardcopyHeader};
 			eval { $problemContents = WeBWorK::Utils::readFile($editFilePath) };
 			$problemContents = $@ if $@;
 			$inputFilePath = $editFilePath;
