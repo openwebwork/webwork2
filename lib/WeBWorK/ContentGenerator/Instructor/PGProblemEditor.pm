@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.77 2006/06/24 20:31:01 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.78 2006/06/24 21:04:13 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -368,7 +368,7 @@ sub initialize  {
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use 'Save as' to save it to another file.");
+                           use 'Create a copy' below to save it to another file.");
     }
 	
 }
@@ -824,7 +824,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."First use 'Save as' to make a local copy, then add the file to the current problem set, then edit the file."
+			                     ."First use 'Create a copy' below to make a local copy, then add the file to the current problem set, then edit the file."
 			);
 			last CASE;
 		};
