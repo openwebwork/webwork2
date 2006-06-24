@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.61 2006/01/11 22:56:12 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.62 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::SetMaker - Make problem sets.
+WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 
 =cut
 
@@ -345,7 +345,7 @@ sub browse_local_panel {
 	));
 }
 
-#####	 Version 2 is local problem sets
+#####	 Version 2 is local homework sets
 sub browse_mysets_panel {
 	my $self = shift;
 	my $library_selected = shift;
@@ -858,6 +858,10 @@ sub make_data_row {
 		$add_box_data{ -checked } = 1;
 	}
 
+	my $inSet = ($self->{isInSet}{$sourceFileName})?
+	    CGI::span({-style=>"float:right; text-align: right"},
+	      CGI::i(CGI::b("(This problem is in the target set)"))) : "";
+
 	print CGI::Tr({-align=>"left"}, CGI::td(
 		CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
 			CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
@@ -865,6 +869,7 @@ sub make_data_row {
 		), CGI::br(),
 		CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update"),
 		CGI::br(),
+		$inSet,
 		CGI::checkbox((%add_box_data)),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName]).
 		CGI::p($problem_output),
@@ -1035,6 +1040,7 @@ sub pre_header_initialize {
 				push @pg_files, $problemRecord->source_file;
 
 			}
+			@pg_files = sortByName(undef,@pg_files);
 			$use_previous_problems=0;
 		}
 
@@ -1067,14 +1073,14 @@ sub pre_header_initialize {
 		}
 		$use_previous_problems=0; 
 
-		##### Edit the current local problem set
+		##### Edit the current local homework set
 
 	} elsif ($r->param('edit_local')) { ## Jump to set edit page
 
 		; # already handled
 
 
-		##### Make a new local problem set
+		##### Make a new local homework set
 
 	} elsif ($r->param('new_local_set')) {
 		if ($r->param('new_set_name') !~ /^[\w .-]*$/) {
@@ -1265,6 +1271,16 @@ sub body {
 									 user => $user,
 									 problem_list => [@pg_files[$first_shown..$last_shown]],
 									 displayMode => $r->param('mydisplayMode')) : ();
+
+	my %isInSet;
+	my $setName = $r->param("local_sets");
+	if ($setName) {
+		foreach my $problem ($db->listGlobalProblems($setName)) {
+			my $problemRecord = $db->getGlobalProblem($setName, $problem);
+			$isInSet{$problemRecord->source_file} = 1;
+		}
+	}
+	$self->{isInSet} = \%isInSet;
 
 	##########	Top part
 	print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
