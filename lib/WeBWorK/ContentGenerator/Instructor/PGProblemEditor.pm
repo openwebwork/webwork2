@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.76 2006/06/24 20:08:30 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.77 2006/06/24 20:31:01 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -351,6 +351,7 @@ sub initialize  {
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 	
+	my $file_type       = $r->param('file_type') || "";
 	my $tempFilePath    = $self->{tempFilePath}; # path to the file currently being worked with (might be a .tmp file)
 	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
 	
@@ -358,13 +359,13 @@ sub initialize  {
 	$self->addbadmessage("Changes in this file have not yet been permanently saved.") if -r $tempFilePath;
 	if ( not( -e $inputFilePath) ) {
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' cannot be found.");
-	} elsif (not -w $inputFilePath ) {
+	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
 		"To edit this text you must make a copy of this file using the 'make local editable copy at ...' action below.");
 
 	}
-    if ($inputFilePath =~/$BLANKPROBLEM$/) {
+    if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
                            use 'Save as' to save it to another file.");
@@ -481,7 +482,8 @@ sub body {
 		} elsif  (-r $editFilePath and not -d $editFilePath) {
 			die "editFilePath is unsafe!" unless path_is_subdir($editFilePath, $ce->{courseDirs}->{templates}, 1)  # 1==path can be relative to dir
 				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{setHeader}
-				|| $editFilePath eq $ce->{webworkFiles}{hardcopySnippets}{hardcopyHeader};
+				|| $editFilePath eq $ce->{webworkFiles}{hardcopySnippets}{setHeader}
+				|| $editFilePath eq $ce->{webworkFiles}{screenSnippets}{blankProblem};
 			eval { $problemContents = WeBWorK::Utils::readFile($editFilePath) };
 			$problemContents = $@ if $@;
 			$inputFilePath = $editFilePath;
@@ -497,7 +499,8 @@ sub body {
 
 	my $file_type = $self->{file_type};
 	my %titles = (
-		problem         =>CGI::b("set $setName/problem $problemNumber"),
+		problem         => CGI::b("set $setName/problem $problemNumber"),
+		blank_problem   => "blank problem",
 		set_header      => "header file",
 		hardcopy_header => "hardcopy header file",
 		course_info     => "course information",
@@ -820,7 +823,7 @@ sub getFilePaths {
 		
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-			$self->addbadmessage("'".$self->shortPath($editFilePath)."' is blank problem template file and can not be edited directly. "
+			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
 			                     ."First use 'Save as' to make a local copy, then add the file to the current problem set, then edit the file."
 			);
 			last CASE;
