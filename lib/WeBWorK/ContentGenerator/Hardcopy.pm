@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.75 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.76 2006/02/01 00:24:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -856,7 +856,7 @@ sub write_problem_tex {
 		
 	# deal with PG warnings
 	if ($pg->{warnings} ne "") {
-		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
 			." Warnings encountered while processing $problem_desc. "
 			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings}))
 		);
@@ -864,7 +864,7 @@ sub write_problem_tex {
 	
 	# deal with PG errors
 	if ($pg->{flags}->{error_flag}) {
-		$self->add_errors(CGI::a({href=>$edit_url}, "[edit]")
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
 			." Errors encountered while processing $problem_desc. "
 			."This $problem_name has been omitted from the hardcopy. "
 			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors}))
