@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.74 2006/04/24 16:00:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.75 2006/04/25 17:05:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -361,7 +361,7 @@ sub initialize  {
 	} elsif (not -w $inputFilePath ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must make a copy of this file using the 'make local editable copy at ...'action below.");
+		"To edit this text you must make a copy of this file using the 'make local editable copy at ...' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/) {
@@ -1081,7 +1081,7 @@ sub view_form {
 		);
 	}
 
-	return $output_string;  #FIXME  add -lables to the pop up menu
+	return $output_string;  #FIXME  add -labels to the pop up menu
 }
 
 sub view_handler {
