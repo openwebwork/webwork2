@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.78 2006/06/24 21:04:13 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.79 2006/06/24 21:12:29 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1334,7 +1334,7 @@ sub save_form {
 		return "";  #Can't save blank problems without changing names
 	} elsif (-w $self->{editFilePath}) {
 
-		return "Save to: ".$self->shortPath($self->{editFilePath})." and View";	
+		return "Save to ".CGI::b($self->shortPath($self->{editFilePath}))." and View";	
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -1476,8 +1476,9 @@ sub make_local_copy_form {
 	return "" unless -e $editFilePath;
 	return "" if -w $editFilePath;
 	return "" unless    $self->{file_type} eq 'problem'           # need problem structure to make local copy in most cases
-	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of hardcopy header
-	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of screen header
+			 or $self->{file_type} eq 'blank_problem'   # $editFilePath eq  $self->r->cr->{webworkFiles}{screenSnippets}{blankProblem}
+	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of screen header
+	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of hardcopy header
 	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy -- can't be done in this case.
 	return join ("",
 		"Make local editable copy at: [TMPL]/".($self->determineLocalFilePath($editFilePath)),
@@ -1511,32 +1512,44 @@ sub make_local_copy_handler {
 sub save_as_form {  # calls the save_as_handler 
 	my ($self, $onChange, %actionParams) = @_;
 	my $editFilePath  = $self->{editFilePath};
-	return "" unless -w $editFilePath;
+#	return "" unless -w $editFilePath;  ##  DPVC -- we don't need to be able to write the original in order to make a copy
 	
 	my $shortFilePath =  $editFilePath;
 	my $templatesDir  =  $self->r->ce->{courseDirs}->{templates};
 	my $setID         = $self->{setID};
 	$shortFilePath   =~ s|^$templatesDir/||;
-	$shortFilePath  = '' if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
-	my $allowedActions = (defined($setID) && $setID =~/\S/ && $setID ne 'Undefined_Set') ? ['save_a_copy','rename' ] : ['save_a_copy'];
+	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
 
-	return CGI::popup_menu(
-			       -name=>'action.save_as.saveMode', -values=>$allowedActions, 
-			       -default=>'rename',-labels=>{save_a_copy=>'Create a copy of file at ', rename=>'Rename file path to'},
-			       -onmousedown=>$onChange
-			      ). ": [TMPL]/".
+### --- old menu-based apparoach ---
+#	my $allowedActions = (defined($setID) && $setID =~/\S/ && $setID ne 'Undefined_Set') ? ['save_a_copy','rename' ] : ['save_a_copy'];
+
+#	return CGI::popup_menu(
+#			       -name=>'action.save_as.saveMode', -values=>$allowedActions, 
+#			       -default=>'rename',-labels=>{save_a_copy=>'Create a copy of file at ', rename=>'Rename file path to'},
+#			       -onmousedown=>$onChange
+#			      ). " [TMPL]/".
+###
+
+	my $probNum = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
+	my $andRelink = '';
+	$andRelink = ' and '.CGI::checkbox(
+				-name => "action.save_as.saveMode",
+				-value => "rename",
+				-label => "",
+				-checked => 1,
+				-onclick=>$onChange
+				).
+		     " use in ".CGI::b("set $setID$probNum")
+		         if defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set' &&
+			    $self->{file_type} ne 'blank_problem';
+	return 'Create a copy at [TMPL]/'.
 	        CGI::textfield(
-			       -name=>'action.save_as.target_file', -size=>40, -value=>$shortFilePath,
+			       -name=>'action.save_as.target_file', -size=>30, -value=>$shortFilePath,
 			       -onfocus=>$onChange
 			      ).
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
-			CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}),
-			;
-#			          if $self->{setID} && $self->{setID} ne '' && $self->{setID} ne 'Undefined_Set';
-# FIXME  -- this should eventually work for undefined sets as well.
-# 	return CGI::popup_menu(-name=>'action.save_as.saveMode', -values=>['save_a_copy'], 
-# 			  -default=>'save_a_copy',-labels=>{save_a_copy=>'Save as'}, -onmousedown=>$onChange
-# 			). ": [TMPL]/".CGI::textfield(-name=>'action.save_as.target_file', -size=>40, -value=>$shortFilePath)
+			CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}).
+			$andRelink;
 }
 
 sub save_as_handler {
@@ -1550,7 +1563,7 @@ sub save_as_handler {
 	my $problemSeed     =  $self->{problemSeed};
 	
 	my $do_not_save = 0;
-	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || '';
+	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'save_a_copy';
 	my $new_file_name  = $actionParams->{'action.save_as.target_file'}->[0] || '';
 	my $sourceFilePath = $actionParams->{'action.save_as.source_file'}->[0] || '';
 	my $file_type      = $actionParams->{'action.save_as.file_type'}->[0] || '';
