@@ -90,17 +90,46 @@ sub count {
 sub list($@) {
 	my ($self, @keyparts) = @_;
 	my @keynames = $self->{record}->KEYFIELDS();
-	
 	croak "Too many keyparts for table user. Need at most @keynames"
 		if @keyparts > @keynames;
 	
-	my $table = $self->prefixTable("user");
-	my $qry = "SELECT username FROM `$table`";
-	my @qryArgs = ();
-	if( defined $keyparts[0] ) {
-		$qry = $qry . " WHERE username=?";
-		$qryArgs[0] = $keyparts[0];
-	}
+# 	my $table = $self->prefixTable("user");
+# 	my $qry = "SELECT username FROM `$table`";
+# 	my @qryArgs = ();
+# 	if( defined $keyparts[0] ) {
+# 		$qry = $qry . " WHERE username=?";
+# 		$qryArgs[0] = $keyparts[0];
+# 	}
+    my $courseName = $self->{params}->{courseName};
+    my $userTable = $self->prefixTable('user');
+    my $courseTable = $self->prefixTable('wwmoodle');
+    my $student_courseTable = $self->prefixTable('user_students');
+    my $teacher_courseTable = $self->prefixTable('user_teachers');
+    my @qryArgs = ();
+    push @qryArgs, $courseName;  # get the students in the course 
+    my $qry = "SELECT username 
+               FROM `$userTable`  JOIN `$student_courseTable` 
+               ON $userTable.id = $student_courseTable.userid  
+               JOIN  `$courseTable`
+               ON $courseTable.course = $student_courseTable.course 
+               WHERE $courseTable.courseName =?";
+    if( defined $keyparts[0] ) {
+ 		$qry = $qry . " AND username=?";
+ 		push @qryArgs, $keyparts[0];
+ 	} 
+ 	push @qryArgs, $courseName; # now get the teachers in the course 
+ 	$qry   .= "UNION
+ 			   SELECT username 
+               FROM `$userTable`  JOIN `$teacher_courseTable` 
+               ON $userTable.id   = $teacher_courseTable.userid  
+               JOIN  `$courseTable`
+               ON $courseTable.course = $teacher_courseTable.course
+               WHERE $courseTable.courseName =?";
+ 
+    if( defined $keyparts[0] ) {
+ 		$qry = $qry . " AND username=?";
+ 		push @qryArgs, $keyparts[0];
+ 	} 
 	$self->debug("SQL-list: $qry\n");
 	
 	$self->{driver}->connect("ro");

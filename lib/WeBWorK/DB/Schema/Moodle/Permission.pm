@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 
+use WeBWorK::Debug;
 use constant TABLES => qw(permission);
 use constant STYLE  => "dbi";
 
@@ -165,7 +166,7 @@ sub gets($@) {
 	my $ta        = 5;
 	my $professor = 10;
 	my $nobody    = undef;
-	
+	debug(" doing a gets to find permission level");
 	my @records;
 	foreach my $keypartsRef(@keypartsRefList) {
 		my @keyparts = @$keypartsRef;
@@ -214,13 +215,13 @@ sub delete($@) {
 # utility functions
 ################################################################################
 
-sub debug($@) {
-	my ($self, @string) = @_;
-	
-	if ($self->{params}->{debug}) {
-		warn @string;
-	}
-}
+# sub debug($@) {
+# 	my ($self, @string) = @_;
+# 	
+# 	if ($self->{params}->{debug}) {
+# 		warn @string;
+# 	}
+# }
 
 sub prefixTable($$) {
 	my ($self, $table) = @_;
@@ -269,6 +270,7 @@ sub isStudent($$$) {
 	$self->{driver}->disconnect();
 	
 	croak "failed to SELECT : $DBI::errstr" unless defined $result;
+	debug("result  $result, $id $courseName");
 	return $result > 0;
 }
 # Determine if the given userID is an admin.
