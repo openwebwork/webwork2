@@ -1027,15 +1027,15 @@ sub saveFileChanges {
     # If things have worked so far determine if the file might be accompanied by auxiliary files
   
     $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
-    my $auxilliaryFilesExist = ($1 eq $2) ? 1 : 0;
+    my $auxiliaryFilesExist = ($1 eq $2) ? 1 : 0;
 
-    if ($auxilliaryFilesExist and not $do_not_save ) {
+    if ($auxiliaryFilesExist and not $do_not_save ) {
         my $sourceDirectory = $sourceFilePath;
     	my $outputDirectory = $outputFilePath;
         $sourceDirectory =~ s|/[^/]+\.pg$||;
         $outputDirectory =~ s|/[^/]+\.pg$||;
 
-    	#$self->addgoodmessage("Copying auxilliary files from $sourceDirectory to  new location at $outputDirectory");
+    	#$self->addgoodmessage("Copying auxiliary files from $sourceDirectory to  new location at $outputDirectory");
     	my @filesToCopy;
         @filesToCopy = WeBWorK::Utils::readDirectory($sourceDirectory) if -d $sourceDirectory;
         #$self->addgoodmessage("Transfer".join(" ", @filesToCopy));
@@ -1596,7 +1596,7 @@ sub save_as_form {  # calls the save_as_handler
 			CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}).
 			$andRelink;
 }
-
+ 
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	#$self->addgoodmessage("save_as_handler called");
