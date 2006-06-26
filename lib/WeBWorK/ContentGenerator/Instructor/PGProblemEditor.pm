@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.79 2006/06/24 21:12:29 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.80 2006/06/24 22:23:30 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,6 +33,7 @@ use Apache::Constants qw(:common REDIRECT);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils;
+use File::Copy;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ###########################################################
@@ -652,7 +653,7 @@ sub getRelativeSourceFilePath {
 }
 
 # determineLocalFilePath   constructs a local file path parallel to a library file path
-# This is a subroutine, not a method
+
 # 
 sub determineLocalFilePath {
 	my $self= shift;				die "determineLocalFilePath is a method" unless ref($self);
@@ -933,7 +934,8 @@ sub saveFileChanges {
  	my $ce            = $r->ce;
 
 	my $action        = $self->{action}||'no action';
-	my $editFilePath  = $self->{editFilePath};
+	# my $editFilePath  = $self->{editFilePath}; # not used??
+	my $sourceFilePath = $self->{sourceFilePath};
 	my $tempFilePath  = $self->{tempFilePath}; 	
 	
 	if (defined($problemContents) and ref($problemContents) ) {
@@ -985,7 +987,7 @@ sub saveFileChanges {
 
 		$writeFileErrors = $@ if $@;
 	} 
-
+ 
 	###########################################################
 	# Catch errors in saving files,  clean up temp files
 	###########################################################
@@ -1014,6 +1016,46 @@ sub saveFileChanges {
 		$self->addbadmessage(CGI::p($errorMessage));
 		
 	} 
+	###########################################################
+	# FIXME if the file is accompanied by auxiliary files transfer them as well
+	# if the filepath ends in   foobar/foobar.pg  then we assume there are auxiliary files
+	# copy the contents of the original foobar directory to the new one
+	#
+	# something similar needs to be done with temp files
+	# TO BE DONE -- MEG
+	###########################################################
+    # If things have worked so far determine if the file might be accompanied by auxiliary files
+  
+    $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
+    my $auxilliaryFilesExist = ($1 eq $2) ? 1 : 0;
+
+    if ($auxilliaryFilesExist and not $do_not_save ) {
+        my $sourceDirectory = $sourceFilePath;
+    	my $outputDirectory = $outputFilePath;
+        $sourceDirectory =~ s|/[^/]+\.pg$||;
+        $outputDirectory =~ s|/[^/]+\.pg$||;
+
+    	#$self->addgoodmessage("Copying auxilliary files from $sourceDirectory to  new location at $outputDirectory");
+    	my @filesToCopy;
+        @filesToCopy = WeBWorK::Utils::readDirectory($sourceDirectory) if -d $sourceDirectory;
+        #$self->addgoodmessage("Transfer".join(" ", @filesToCopy));
+        foreach my $file (@filesToCopy) {
+            next if $file =~ /\.pg$/;   # .pg file should already be transferred
+        	my $fromPath = "$sourceDirectory/$file";
+        	my $toPath   = "$outputDirectory/$file";
+        	if (-f $fromPath and -r $fromPath and not -e $toPath) { # don't copy directories, don't copy files that have already been copied
+				copy($fromPath, $toPath) or $writeFileErrors.= "<br> Error copying $fromPath to $toPath";
+				# need to use binary transfer for gif files.  File::Copy does this.
+				#warn "copied from $fromPath to $toPath";
+				#warn "files are different ",system("diff $fromPath $toPath");
+        	}
+        	$self->addbadmessage($writeFileErrors) if defined($writeFileErrors) and $writeFileErrors;
+        	
+
+        }
+    }
+    
+     
 	###########################################################
 	# clean up temp files on revert, save and save_as
 	###########################################################	
@@ -1514,12 +1556,15 @@ sub save_as_form {  # calls the save_as_handler
 	my $editFilePath  = $self->{editFilePath};
 #	return "" unless -w $editFilePath;  ##  DPVC -- we don't need to be able to write the original in order to make a copy
 	
-	my $shortFilePath =  $editFilePath;
+	
 	my $templatesDir  =  $self->r->ce->{courseDirs}->{templates};
 	my $setID         = $self->{setID};
+	
+	
+	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
-
+   
 ### --- old menu-based apparoach ---
 #	my $allowedActions = (defined($setID) && $setID =~/\S/ && $setID ne 'Undefined_Set') ? ['save_a_copy','rename' ] : ['save_a_copy'];
 
@@ -1544,7 +1589,7 @@ sub save_as_form {  # calls the save_as_handler
 			    $self->{file_type} ne 'blank_problem';
 	return 'Create a copy at [TMPL]/'.
 	        CGI::textfield(
-			       -name=>'action.save_as.target_file', -size=>30, -value=>$shortFilePath,
+			       -name=>'action.save_as.target_file', -size=>30, -value=>"$shortFilePath",  #FIXME -- you might not be able to save to this default filepath
 			       -onfocus=>$onChange
 			      ).
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
@@ -1567,7 +1612,7 @@ sub save_as_handler {
 	my $new_file_name  = $actionParams->{'action.save_as.target_file'}->[0] || '';
 	my $sourceFilePath = $actionParams->{'action.save_as.source_file'}->[0] || '';
 	my $file_type      = $actionParams->{'action.save_as.file_type'}->[0] || '';
-	
+	$self ->{sourceFilePath} = $sourceFilePath;  # store for use in saveFileChanges
 	$new_file_name =~ s/^\s*//;  #remove initial and final white space
 	$new_file_name =~ s/\s*$//;
 	if ( $new_file_name !~ /\S/) { # need a non-blank file name
@@ -1617,7 +1662,7 @@ sub save_as_handler {
 
 		if ($saveMode eq 'rename' and -r $outputFilePath) { 
 		#################################################
-		# Modify source file in problem
+		# Modify source file path in problem
 		#################################################
 			if ($file_type eq 'set_header' ) {
 				my $setRecord = $self->r->db->getGlobalSet($setName);
@@ -1647,7 +1692,7 @@ sub save_as_handler {
 			}
 		} elsif ($saveMode eq 'save_a_copy') {
 		#################################################
-		# Don't modify source file in problem -- just report 
+		# Don't modify source file path in problem -- just report 
 		#################################################
 
 			#$self->{status_message} = '';  ## DPVC remove old messages
