@@ -100,12 +100,17 @@ sub handler($) {
 	
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
-	local *WeBWorK::Authen::get_credentials   = \&Authen::WeBWorK::HTTPBasic::get_credentials;
-	local *WeBWorK::Authen::maybe_send_cookie = \&Authen::WeBWorK::HTTPBasic::noop;
-	local *WeBWorK::Authen::maybe_kill_cookie = \&Authen::WeBWorK::HTTPBasic::noop;
-	local *WeBWorK::Authen::set_params        = \&Authen::WeBWorK::HTTPBasic::noop;
+	my $authenOK;
+	{
+		no warnings 'redefine';
+		local *WeBWorK::Authen::get_credentials   = \&Authen::WeBWorK::HTTPBasic::get_credentials;
+		local *WeBWorK::Authen::maybe_send_cookie = \&Authen::WeBWorK::HTTPBasic::noop;
+		local *WeBWorK::Authen::maybe_kill_cookie = \&Authen::WeBWorK::HTTPBasic::noop;
+		local *WeBWorK::Authen::set_params        = \&Authen::WeBWorK::HTTPBasic::noop;
+		
+		$authenOK = $authen->verify;
+	}
 	
-	my $authenOK = $authen->verify;
 	
 	debug("verify said: '$authenOK'");
 	
