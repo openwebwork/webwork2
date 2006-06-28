@@ -41,8 +41,8 @@ head1 SYNOPSIS
 use strict;
 use warnings;
 use Time::HiRes qw/gettimeofday/;
-use WeBWorK::Utils qw/undefstr/;
 use WeBWorK::Constants;
+use WeBWorK::Utils qw/undefstr/;
 
 ################################################################################
 
