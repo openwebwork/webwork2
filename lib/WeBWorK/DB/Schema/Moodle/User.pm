@@ -31,7 +31,7 @@ use Carp qw(croak);
 
 use constant TABLES => qw(user);
 use constant STYLE  => "dbi";
-
+use constant MOODLE_WEBWORK_BRIDGE_TABLE  => 'wwassignment_bridge';
 =head1 SUPPORTED PARAMS
 
 This schema pays attention to the following items in the C<params> entry.
@@ -102,7 +102,7 @@ sub list($@) {
 # 	}
     my $courseName = $self->{params}->{courseName};
     my $userTable = $self->prefixTable('user');
-    my $courseTable = $self->prefixTable('wwmoodle');
+    my $courseTable = $self->prefixTable(MOODLE_WEBWORK_BRIDGE_TABLE());
     my $student_courseTable = $self->prefixTable('user_students');
     my $teacher_courseTable = $self->prefixTable('user_teachers');
     my @qryArgs = ();
@@ -112,7 +112,7 @@ sub list($@) {
                ON $userTable.id = $student_courseTable.userid  
                JOIN  `$courseTable`
                ON $courseTable.course = $student_courseTable.course 
-               WHERE $courseTable.courseName =?";
+               WHERE $courseTable.coursename =?";
     if( defined $keyparts[0] ) {
  		$qry = $qry . " AND username=?";
  		push @qryArgs, $keyparts[0];
@@ -124,7 +124,7 @@ sub list($@) {
                ON $userTable.id   = $teacher_courseTable.userid  
                JOIN  `$courseTable`
                ON $courseTable.course = $teacher_courseTable.course
-               WHERE $courseTable.courseName =?";
+               WHERE $courseTable.coursename =?";
  
     if( defined $keyparts[0] ) {
  		$qry = $qry . " AND username=?";
