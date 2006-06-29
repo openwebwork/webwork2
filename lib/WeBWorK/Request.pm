@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.3 2005/11/07 21:18:13 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.4 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -15,7 +15,6 @@
 ################################################################################
 
 package WeBWorK::Request;
-use base qw(Apache::Request);
 
 =head1 NAME
 
@@ -26,6 +25,22 @@ Apache::Request with additional WeBWorK-specific fields.
 
 use strict;
 use warnings;
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+# This class inherits from Apache::Request under mod_perl and Apache2::Request under mod_perl2
+BEGIN {
+	if (MP2) {
+		require Apache2::Request;
+		Apache2::Request->import;
+		push @WeBWorK::Request::ISA, "Apache2::Request";
+	} else {
+		require Apache::Request;
+		Apache::Request->import;
+		push @WeBWorK::Request::ISA, "Apache::Request";
+	}
+}
 
 =head1 CONSTRUCTOR
 
@@ -51,7 +66,9 @@ Apache::Request object to delegate to.)
 sub new {
 	my ($invocant, @args) = @_;
 	my $class = ref $invocant || $invocant;
-	return bless { r => Apache::Request->new(@args) }, $class;
+	# construct the appropriate superclass instance depending on mod_perl version
+	my $apreq_class = MP2 ? "Apache2::Request" : "Apache::Request";
+	return bless { r => $apreq_class->new(@args) }, $class;
 }
 
 =back

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.74 2005/07/14 13:15:24 glarose Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.75 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,10 +30,22 @@ details.
 
 use strict;
 use warnings;
-use Apache::Log;
 use HTML::Entities;
 use Date::Format;
 use WeBWorK;
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+# load correct 
+BEGIN {
+	if (MP2) {
+		# FIXME need to load Apache2::Log
+	} else {
+		require Apache::Log;
+		Apache::Log->import;
+	}
+}
 
 ################################################################################
 
@@ -56,9 +68,9 @@ sub handler($) {
 		my ($warning) = @_;
 		chomp $warning;
 		
-		my $warnings = $r->notes("warnings");
+		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 		$warnings .= "$warning\n";
-		$r->notes("warnings", $warnings);
+		MP2 ? $r->notes->set(warnings => $warnings) : $r->notes("warnings" => $warnings);
 		
 		$log->warn("[$uri] $warning");
 	};
@@ -80,7 +92,7 @@ sub handler($) {
 	if ($@) {
 		my $exception = $@;
 		
-		my $warnings = $r->notes("warnings");
+		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 		my $htmlMessage = htmlMessage($r, $warnings, $exception, @backtrace);
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
@@ -158,7 +170,7 @@ sub htmlMessage($$$@) {
 	my $method = $r->method;
 	my $uri = $r->uri;
 	my $headers = do {
-		my %headers = $r->headers_in;
+		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
 		join("", map { "<tr><td><small>$_</small></td><td><small>$headers{$_}</small></td></tr>" } keys %headers);
 	};
 	
@@ -286,27 +298,3 @@ sub htmlEscape($) {
 =cut
 
 1;
-
-__END__
-
-		local $SIG{__DIE__} = sub {
-			my ($error) = @_;
-			print STDERR "\n***** \$SIG{__DIE__} called with error: >>>>>$error<<<<<\n\n";
-			
-			# NEW STACK TRACE HOOK ADDED BY DPVC
-			# Add traceback unless it already has been added. It looks like
-			# traps are in effect from 5 or 6 places, and all of them end up here,
-			# with the additional error messages already appended.
-			#die $error if ref($error); # return if it's not a string
-			#unless ($error =~ m/-------------\n/) {
-			#	$error .= "\nCall Stack: The information below can help experts locate the source of an error which is due to WeBWorK.\n"
-			#		. traceback() . "--------------------------------------\n";
-			#}
-			my @backtrace = backtrace();
-			$r->notes(lastCallStack => \@backtrace);
-			
-			print STDERR "\n***** \$SIG{__DIE__} about to rethrow: >>>>>$error<<<<<\n\n";
-			
-			die $error;
-		};
-		

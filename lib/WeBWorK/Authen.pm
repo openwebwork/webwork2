@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.53 2006/06/17 21:35:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.54 2006/06/19 15:39:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,7 +24,7 @@ WeBWorK::Authen - Check user identity, manage session keys.
 
 use strict;
 use warnings;
-use Apache::Cookie;
+use WeBWorK::Cookie;
 use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
 use WeBWorK::Debug;
@@ -32,6 +32,9 @@ use WeBWorK::Utils qw/writeCourseLog/;
 
 use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 ################################################################################
 # Public API
@@ -91,7 +94,7 @@ sub verify {
 		#$self->write_log_entry("LOGIN FAILED user_id=$user_id credential_source=$credential_source");
 		$self->maybe_kill_cookie;
 		if ($error) {
-			$r->notes("authen_error", $error);
+			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
 		}
 	}
 	
@@ -372,6 +375,7 @@ sub set_params {
 	my $self = shift;
 	my $r = $self->{r};
 	
+	# A2 - params are not non-modifiable, with no explanation or workaround given in docs. WTF!
 	$r->param("user", $self->{user_id});
 	$r->param("key", $self->{session_key});
 	$r->param("passwd", "");
@@ -528,7 +532,8 @@ sub fetchCookie {
 	
 	my $courseID = $urlpath->arg("courseID");
 	
-	my %cookies = Apache::Cookie->fetch;
+	# AP2 - Apache2::Cookie needs $r, Apache::Cookie doesn't
+	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
 	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
 	
 	if ($cookie) {
@@ -556,7 +561,7 @@ sub sendCookie {
 	my $courseID = $r->urlpath->arg("courseID");
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
-	my $cookie = Apache::Cookie->new($r,
+	my $cookie = WeBWorK::Cookie->new($r,
 		-name    => "WeBWorKCourseAuthen.$courseID",
 		-value   => "$userID\t$key",
 		-expires => $expires,
@@ -564,7 +569,6 @@ sub sendCookie {
 		-path    => $ce->{webworkURLRoot},
 		-secure  => 0,
 	);
-	my $cookieString = $cookie->as_string;
 	
 	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
@@ -578,7 +582,7 @@ sub killCookie {
 	my $courseID = $r->urlpath->arg("courseID");
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
-	my $cookie = Apache::Cookie->new($r,
+	my $cookie = WeBWorK::Cookie->new($r,
 		-name => "WeBWorKCourseAuthen.$courseID",
 		-value => "\t",
 		-expires => $expires,
@@ -586,7 +590,6 @@ sub killCookie {
 		-path => $ce->{webworkURLRoot},
 		-secure => 0,
 	);
-	my $cookieString = $cookie->as_string;
 	
 	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
@@ -602,9 +605,16 @@ sub write_log_entry {
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	
-	my ($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
-	$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
-	$remote_port = "UNKNOWN" unless defined $remote_port;
+	my ($remote_host, $remote_port);
+	if (MP2) {
+		require APR::SockAddr;
+		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
+		$remote_port = $r->connection->remote_addr->port || "UNKNOWN";
+	} else {
+		($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
+		$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
+		$remote_port = "UNKNOWN" unless defined $remote_port;
+	}
 	my $user_agent = $r->header_in("User-Agent");
 	
 	my $log_msg = "$message (host=$remote_host port=$remote_port UA=$user_agent";

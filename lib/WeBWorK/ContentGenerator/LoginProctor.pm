@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.5 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.6 2006/02/03 00:22:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,9 @@ use warnings;
 use CGI qw();
 use WeBWorK::Utils qw(readFile dequote);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # This content generator is NOT logged in.
 # FIXME  I'm not sure this is really what we want for the proctor login,
@@ -167,9 +170,10 @@ sub body {
     # if invalid authentication is found.  If this is done, it's a signal to
     # us to yell at the user for doing that, since Authen isn't a content-
     # generating module.
-	if ($r->notes("authen_error")) {
+	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
+	if ($authen_error) {
 		print CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->notes("authen_error"))
+			CGI::p($authen_error)
 		);
 	}
 	

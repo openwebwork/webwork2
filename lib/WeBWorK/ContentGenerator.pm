@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.165 2006/05/22 21:39:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.166 2006/05/25 16:35:10 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,6 +51,9 @@ use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::PG;
 use WeBWorK::Template qw(template);
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 ###############################################################################
 
@@ -935,7 +938,8 @@ sub warnings {
 	my $r = $self->r;
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
-	print $self->warningOutput($r->notes("warnings")) if $r->notes("warnings");
+	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
 	return "";
@@ -1111,7 +1115,7 @@ sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
 	
-	if ($r->notes("warnings")) {
+	if (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) {
 		return $arg;
 	} else {
 		!$arg;
