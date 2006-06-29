@@ -30,6 +30,9 @@ use Carp qw(croak);
 use WeBWorK::Debug;
 use constant TABLES => qw(permission);
 use constant STYLE  => "dbi";
+use constant MOODLE_WEBWORK_BRIDGE_TABLE  => 'wwassignment_bridge';
+
+
 
 =head1 SUPPORTED PARAMS
 
@@ -234,7 +237,7 @@ sub isTeacher($$$) {
 	my ($self, $id, $courseName) = @_;
 	my $table = $self->prefixTable("user_teachers");
 	my $userTable = $self->prefixTable("user");
-	my $courseTable = $self->prefixTable("wwmoodle");
+	my $courseTable = $self->prefixTable(MOODLE_WEBWORK_BRIDGE_TABLE());  #FIXME  table name needs to be abstracted
 	# TODO: do this in a way that works from mysql < 4.1
 	my $qry = "SELECT COUNT(*) FROM `$table` JOIN `$userTable` ON $table.userid=$userTable.id JOIN `$courseTable` ON $courseTable.course=$table.course WHERE username=? AND $courseTable.coursename=?";
 	my @qryArgs = ($id, $courseName);
@@ -255,7 +258,7 @@ sub isStudent($$$) {
 	my ($self, $id, $courseName) = @_;
 	my $table = $self->prefixTable("user_students");
 	my $userTable = $self->prefixTable("user");
-	my $courseTable = $self->prefixTable("wwmoodle");
+	my $courseTable = $self->prefixTable(MOODLE_WEBWORK_BRIDGE_TABLE());  #FIXME  table name needs to be abstracted
 	# TODO: ensure this new syntax works properly
 	my $qry = "SELECT COUNT(*) FROM `$table` JOIN `$userTable` ON $table.userid=$userTable.id JOIN `$courseTable` ON $courseTable.course=$table.course WHERE username=? AND $courseTable.coursename=?";
 	
