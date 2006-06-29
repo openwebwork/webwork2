@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.4 2006/05/16 21:11:52 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel-site.apache2-config.dist,v 1.1 2006/06/17 21:21:24 sh002i Exp $
 ################################################################################
 
 # This file contains the site-specific (but user-independent) directives used
@@ -249,9 +249,9 @@ MaxRequestsPerChild    0
 #
 #ww# prepend /usr/local/apache2 to each path here
 #ww# some unneeded modules commented out
-LoadModule auth_anon_module /usr/local/apache2/modules/mod_auth_anon.so
-LoadModule auth_dbm_module /usr/local/apache2/modules/mod_auth_dbm.so
-LoadModule auth_digest_module /usr/local/apache2/modules/mod_auth_digest.so
+#ww#LoadModule auth_anon_module /usr/local/apache2/modules/mod_auth_anon.so
+#ww#LoadModule auth_dbm_module /usr/local/apache2/modules/mod_auth_dbm.so
+#ww#LoadModule auth_digest_module /usr/local/apache2/modules/mod_auth_digest.so
 LoadModule file_cache_module /usr/local/apache2/modules/mod_file_cache.so
 LoadModule cache_module /usr/local/apache2/modules/mod_cache.so
 LoadModule disk_cache_module /usr/local/apache2/modules/mod_disk_cache.so
@@ -264,20 +264,20 @@ LoadModule expires_module /usr/local/apache2/modules/mod_expires.so
 LoadModule headers_module /usr/local/apache2/modules/mod_headers.so
 LoadModule usertrack_module /usr/local/apache2/modules/mod_usertrack.so
 LoadModule unique_id_module /usr/local/apache2/modules/mod_unique_id.so
-LoadModule proxy_module /usr/local/apache2/modules/mod_proxy.so
-LoadModule proxy_connect_module /usr/local/apache2/modules/mod_proxy_connect.so
-LoadModule proxy_ftp_module /usr/local/apache2/modules/mod_proxy_ftp.so
-LoadModule proxy_http_module /usr/local/apache2/modules/mod_proxy_http.so
+#ww#LoadModule proxy_module /usr/local/apache2/modules/mod_proxy.so
+#ww#LoadModule proxy_connect_module /usr/local/apache2/modules/mod_proxy_connect.so
+#ww#LoadModule proxy_ftp_module /usr/local/apache2/modules/mod_proxy_ftp.so
+#ww#LoadModule proxy_http_module /usr/local/apache2/modules/mod_proxy_http.so
 <IfDefine SSL>
 LoadModule ssl_module /usr/local/apache2/modules/mod_ssl.so
 </IfDefine>
-LoadModule dav_module /usr/local/apache2/modules/mod_dav.so
+#ww#LoadModule dav_module /usr/local/apache2/modules/mod_dav.so
 LoadModule asis_module /usr/local/apache2/modules/mod_asis.so
 LoadModule info_module /usr/local/apache2/modules/mod_info.so
-LoadModule suexec_module /usr/local/apache2/modules/mod_suexec.so
-LoadModule cgi_module /usr/local/apache2/modules/mod_cgi.so
-LoadModule cgid_module /usr/local/apache2/modules/mod_cgid.so
-LoadModule dav_fs_module /usr/local/apache2/modules/mod_dav_fs.so
+#ww#LoadModule suexec_module /usr/local/apache2/modules/mod_suexec.so
+#ww#LoadModule cgi_module /usr/local/apache2/modules/mod_cgi.so
+#ww#LoadModule cgid_module /usr/local/apache2/modules/mod_cgid.so
+#ww#LoadModule dav_fs_module /usr/local/apache2/modules/mod_dav_fs.so
 LoadModule vhost_alias_module /usr/local/apache2/modules/mod_vhost_alias.so
 LoadModule imap_module /usr/local/apache2/modules/mod_imap.so
 LoadModule actions_module /usr/local/apache2/modules/mod_actions.so
@@ -285,6 +285,7 @@ LoadModule speling_module /usr/local/apache2/modules/mod_speling.so
 LoadModule userdir_module /usr/local/apache2/modules/mod_userdir.so
 LoadModule rewrite_module /usr/local/apache2/modules/mod_rewrite.so
 LoadModule perl_module /usr/local/apache2/modules/mod_perl.so
+LoadModule apreq_module /usr/local/apache2/modules/mod_apreq2.so
 
 #
 # ExtendedStatus controls whether Apache will generate "full" status
