@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.4 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.5 2006/06/29 23:20:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,43 @@ BEGIN {
 		push @WeBWorK::Request::ISA, "Apache::Request";
 	}
 }
+
+# Apache2::Request's param method doesn't support setting parameters, so we need to provide the
+# behavior in this class if we're running under mod_perl2.
+BEGIN {
+	if (MP2) {
+		*param = sub {
+			my $self = shift;
+			if (@_ == 0) {
+				my %names;
+				@names{$self->SUPER::param} = ();
+				@names{keys %{$self->{paramcache}}} = ();
+				return keys %names;
+			} elsif (@_ == 1) {
+				my $name = shift;
+				if (exists $self->{paramcache}{$name}) {
+					my $val = $self->{paramcache}{$name};
+					if (ref $val eq "ARRAY") {
+						return @$val;
+					} else {
+						return $val;
+					}
+				} else {
+					return $self->SUPER::param($name);
+				}
+			} elsif (@_ == 2) {
+				my ($name, $val) = @_;
+				$self->{paramcache}{$name} = $val;
+				if (ref $val eq "ARRAY") {
+					return @$val;
+				} else {
+					return $val;
+				}
+			}
+		}
+	}
+}
+
 
 =head1 CONSTRUCTOR
 
