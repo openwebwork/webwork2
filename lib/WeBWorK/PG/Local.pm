@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/PG/Local.pm,v 1.19 2006/01/25 23:13:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.20 2006/05/21 00:50:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,9 @@ use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # Problem processing will time out after this number of seconds.
 use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
@@ -110,6 +113,12 @@ sub new_helper {
 	# evaluate modules and "extra packages"
 	#warn "PG: evaluating modules and \"extra packages\"\n";
 	my @modules = @{ $ce->{pg}->{modules} };
+	# HACK for apache2
+	if (MP2) {
+		push @modules, ["Apache2::Log"], ["APR::Table"];
+	} else {
+		push @modules, ["Apache::Log"];
+	}
 	foreach my $module_packages_ref (@modules) {
 		my ($module, @extra_packages) = @$module_packages_ref;
 		# the first item is the main package
