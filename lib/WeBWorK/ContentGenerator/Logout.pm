@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.11 2005/11/07 21:29:27 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.12 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,7 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 use strict;
 use warnings;
 use CGI qw();
+use WeBWorK::Cookie;
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -34,10 +35,10 @@ sub pre_header_initialize {
 	my $authen = $r->authen;
 	
 	# get rid of stored authentication info (this is kind of a hack. i have a better way
-	# in mind but it requires pretty much rewriting Authen/Login/Logout. :-( )
+	# in mind but it requires pretty much rewriting Authen/Login/Logout. :-( FIXME)
 	$authen->forget_verification;
 	
-	my $cookie = Apache::Cookie->new($r,
+	my $cookie = WeBWorK::Cookie->new($r,
 		-name => "WeBWorKAuthentication",
 		-value => "",
 		-expires => "-1D",

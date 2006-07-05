@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.4 2006/05/25 03:08:50 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.5 2006/06/08 23:27:02 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,7 +47,11 @@ data, change permission level, add user, delete user. Run this for a rough estim
 use strict;
 use warnings;
 use Digest::MD5 qw(md5_hex);
+use WeBWorK::Cookie;
 use WeBWorK::Debug;
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # call superclass get_credentials. if no credentials were found, look for a moodle cooke.
 # if a moodle cookie is found, a new webwork session is created and the session key is used.
@@ -146,7 +150,7 @@ sub fetch_moodle_session {
 	my $r = $self->{r};
 	my $db = $r->db;
 	
-	my %cookies = Apache::Cookie->fetch;
+	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
 	my $cookie = $cookies{"MoodleSession"};
 	
 	if( $cookie ) {
@@ -164,7 +168,7 @@ sub update_moodle_session {
 	my $r = $self->{r};
 	my $db = $r->db;
 	
-	my %cookies = Apache::Cookie->fetch;
+	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
 	my $cookie = $cookies{"MoodleSession"};
 	if( $cookie ) {
 		# update the session with the new expiration time:
