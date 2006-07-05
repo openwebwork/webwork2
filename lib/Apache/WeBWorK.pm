@@ -37,10 +37,11 @@ use WeBWorK;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-# load correct 
+# load correct logging module
 BEGIN {
 	if (MP2) {
-		# FIXME need to load Apache2::Log
+		require Apache2::Log;
+		Apache2::Log->import;
 	} else {
 		require Apache::Log;
 		Apache::Log->import;
@@ -64,16 +65,41 @@ sub handler($) {
 	
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
-	my $warning_handler = sub {
-		my ($warning) = @_;
-		chomp $warning;
+	my $warning_handler;
+	if (MP2) {
+		$warning_handler = sub {
+			my ($warning) = @_;
+			chomp $warning;
+			
+			my $warnings = $r->notes->get("warnings");
+			$warnings .= "$warning\n";
+			#my $backtrace = join("\n",backtrace());
+			#$warnings .= "$backtrace\n\n";
+			$r->notes->set(warnings => $warnings);
+			
+			$log->warn("[$uri] $warning");
+		};
+	} else {
+		$warning_handler = sub {
+			my ($warning) = @_;
+			chomp $warning;
+			
+			my $warnings = $r->notes("warnings");
+			$warnings .= "$warning\n";
+			#my $backtrace = join("\n",backtrace());
+			#$warnings .= "$backtrace\n\n";
+			$r->notes("warnings" => $warnings);
+			
+			$log->warn("[$uri] $warning");
+		};
 		
-		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-		$warnings .= "$warning\n";
-		MP2 ? $r->notes->set(warnings => $warnings) : $r->notes("warnings" => $warnings);
-		
-		$log->warn("[$uri] $warning");
-	};
+		# the exception handler generates a backtrace when catching an exception
+		my @backtrace;
+		my $exception_handler = sub {
+			@backtrace = backtrace();
+			die @_;
+		};
+	}
 	
 	# the exception handler generates a backtrace when catching an exception
 	my @backtrace;
