@@ -5,22 +5,23 @@ use warnings;
 
 my @modulesList = qw(
 	Apache
-	Apache::Constants
+	Apache::Constants 
 	Apache::Cookie
 	Apache::Log
 	Apache::Request
+	Apache2::ServerRec
+	Apache2::ServerUtil
 	Benchmark
 	Carp
 	CGI
 	Data::Dumper
-	Data::UUID
+	Data::UUID 
 	Date::Format
 	Date::Parse
 	DateTime
 	DBI
 	Digest::MD5
 	Errno
-	Fcntl
 	File::Copy
 	File::Find
 	File::Path
@@ -34,10 +35,13 @@ my @modulesList = qw(
 	IO::File
 	Mail::Sender
 	MIME::Base64
+	Net::LDAPS
 	Net::SMTP
 	Opcode
+	PHP::Serialization
 	Pod::Usage
 	Safe
+	SOAP::Lite 
 	Socket
 	String::ShellQuote
 	Text::Wrap
@@ -47,6 +51,7 @@ my @modulesList = qw(
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer
+	XMLRPC::Lite
 );
 
 # modules used by disabled code
