@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.62 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.63 2006/06/24 20:01:25 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -940,9 +940,9 @@ sub pre_header_initialize {
 	my @pg_files=();
 	my $use_previous_problems = 1;
 	my $first_shown = $r->param('first_shown') || 0;
-	my $last_shown = $r->param('last_shown');
+	my $last_shown = $r->param('last_shown'); debug("last_shown 1: ", $last_shown);
 	if (not defined($last_shown)) {
-		$last_shown = -1;
+		$last_shown = -1; debug("last_shown 2: ", $last_shown);
 	}
 	my @all_past_list = (); # these are include requested, but not shown
 	my $j = 0;
@@ -1159,16 +1159,16 @@ sub pre_header_initialize {
 		@all_past_list = (@all_past_list[0..($first_shown-1)],
 					@pg_files,
 					@all_past_list[($last_shown+1)..(scalar(@all_past_list)-1)]);
-		$last_shown = $first_shown+$maxShown -1;
-		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
+		$last_shown = $first_shown+$maxShown -1; debug("last_shown 3: ", $last_shown);
+		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list)); debug("last_shown 4: ", $last_shown);
 
 	} elsif ($r->param('next_page')) {
 		$first_shown = $last_shown+1;
-		$last_shown = $first_shown+$maxShown-1;
-		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list));
+		$last_shown = $first_shown+$maxShown-1; debug("last_shown 5: ", $last_shown);
+		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list)); debug("last_shown 6: ", $last_shown);
 		@past_marks = ();
 	} elsif ($r->param('prev_page')) {
-		$last_shown = $first_shown-1;
+		$last_shown = $first_shown-1; debug("last_shown 7: ", $last_shown);
 		$first_shown = $last_shown - $maxShown+1;
 
 		$first_shown = 0 if($first_shown<0);
@@ -1208,8 +1208,8 @@ sub pre_header_initialize {
 		@pg_files = @all_past_list;
 	} else {
 		$first_shown = 0;
-		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown;
-		$last_shown--;		# to make it an array index
+		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown; debug("last_shown 8: ", $last_shown);
+		$last_shown--; debug("last_shown 9: ", $last_shown);		# to make it an array index
 		@past_marks = ();
 	}
 	############# Now store data in self for retreival by body
@@ -1260,7 +1260,7 @@ sub body {
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown};
+	my $last_shown = $self->{last_shown}; debug("last_shown 10: ", $last_shown);
 	my $browse_which = $self->{browse_which};
 	my $problem_seed = $self->{problem_seed};
 	my @pg_files = @{$self->{pg_files}};
@@ -1296,6 +1296,8 @@ sub body {
 	}
 
 	print CGI::hidden(-name=>'first_shown', -default=>[$first_shown]);
+	debug("last_shown 11: ", $last_shown);
+	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -default=>[$last_shown]));
 	print CGI::hidden(-name=>'last_shown', -default=>[$last_shown]);
 
 
