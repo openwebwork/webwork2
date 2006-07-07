@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.13 2006/01/25 23:13:45 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwapache2ctl,v 1.1 2006/06/17 21:21:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,10 +28,10 @@
 HTTPD=/usr/local/apache2/bin/httpd
 
 # The path to your personal webwork2 directory
-WEBWORKROOT=$HOME/work/webwork2
+WEBWORKROOT=$HOME/webwork2
 
 # If you're sharing files with systems being run by other users, uncomment this
-umask 2
+#umask 2
 
 # if you want to use SSL, uncomment this line
 #SSL=-DSSL
