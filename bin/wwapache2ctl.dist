@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapache2ctl,v 1.1 2006/06/17 21:21:40 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwapache2ctl.dist,v 1.1 2006/07/07 23:40:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,9 +41,9 @@ PID=$WEBWORKROOT/logs/httpd2.pid
 CONFIG_GLOBAL=$WEBWORKROOT/conf/global.conf
 CONFIG_DATABASE=$WEBWORKROOT/conf/database.conf
 CONFIG_DEVEL=$WEBWORKROOT/conf/devel.apache2-config
-CONFIG_DEVEL_SITE=$WEBWORKROOT/conf/devel-site.apache-config
-CONFIG_WEBWORK=$WEBWORKROOT/conf/webwork.apache-config
-CONFIG_THISFILE=$WEBWORKROOT/bin/wwapachectl
+CONFIG_DEVEL_SITE=$WEBWORKROOT/conf/devel-site.apache2-config
+CONFIG_WEBWORK=$WEBWORKROOT/conf/webwork.apache2-config
+CONFIG_THISFILE=$WEBWORKROOT/bin/wwapache2ctl
 
 ################################################################################
 # Implementation
