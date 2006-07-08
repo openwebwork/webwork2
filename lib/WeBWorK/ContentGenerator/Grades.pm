@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.22 2006/01/25 23:13:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.23 2006/02/03 14:05:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,7 @@ problem set.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 use WeBWorK::Debug;
 use WeBWorK::DB::Record::Set;
 use WeBWorK::Utils qw(readDirectory list2hash max);

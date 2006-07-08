@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.3 2005/11/07 21:20:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.4 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,7 +47,7 @@ use warnings;
 # can use it without a corresponding "use" line. Sample lines are given below:
 # 
 # You'll probably want to generate HTML code:
-#use CGI qw();
+#use CGI qw(-nosticky );
 # 
 # You might need some utility functions:
 #use WeBWorK::Utils qw(function1 function2);

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/FixDB.pm,v 1.2 2005/11/07 21:20:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/FixDB.pm,v 1.3 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::FixDB - prompt the user to fix a broken database.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 
 sub title {
 	return "Fix Database";

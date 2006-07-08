@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.4 2004/09/13 19:35:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.5 2005/07/14 13:15:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Instructor::Preflight.pm  -- display past answers of 
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 use WeBWorK::HTML::OptionList qw/optionList/;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 

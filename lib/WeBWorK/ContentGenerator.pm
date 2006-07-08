@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.166 2006/05/25 16:35:10 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.167 2006/06/29 23:20:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,7 @@ use strict;
 use warnings;
 use Apache::Constants qw(:response);
 use Carp;
-use CGI qw(*ul *li escapeHTML);
+use CGI qw(-nosticky *ul *li escapeHTML);
 use Date::Format;
 use URI::Escape;
 use WeBWorK::Debug;

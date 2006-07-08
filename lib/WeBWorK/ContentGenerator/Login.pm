@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.39 2006/02/03 00:22:15 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.40 2006/06/29 23:20:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 use WeBWorK::Utils qw(readFile dequote);
 
 use mod_perl;
