@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.53 2005/12/21 23:24:43 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.54 2006/01/25 23:13:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,7 @@ tools, providing useful utility functions.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 use File::Find;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;

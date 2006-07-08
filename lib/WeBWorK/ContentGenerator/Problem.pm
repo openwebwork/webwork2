@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.200 2006/05/21 00:51:25 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.201 2006/06/24 19:38:00 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,7 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use strict;
 use warnings;
-use CGI qw();
+use CGI qw(-nosticky );
 use File::Path qw(rmtree);
 use WeBWorK::Debug;
 use WeBWorK::Form;

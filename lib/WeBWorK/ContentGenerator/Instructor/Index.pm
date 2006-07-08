@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.51 2005/12/26 22:02:58 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.52 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ pages
 use strict;
 use warnings;
 use Apache::Constants qw(:response);
-use CGI qw();
+use CGI qw(-nosticky );
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 #use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
 
