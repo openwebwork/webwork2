@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.63 2006/06/24 20:01:25 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.64 2006/07/07 22:27:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -871,7 +871,7 @@ sub make_data_row {
 		CGI::br(),
 		$inSet,
 		CGI::checkbox((%add_box_data)),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName]).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName],-override=>1).
 		CGI::p($problem_output),
 	));
 }
@@ -1289,16 +1289,16 @@ sub body {
 	CGI::start_table({-border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
-	print CGI::hidden(-name=>'browse_which', -default=>[$browse_which]),
-		CGI::hidden(-name=>'problem_seed', -default=>[$problem_seed]);
+	print CGI::hidden(-name=>'browse_which', -value=>[$browse_which], -override=>1),
+		CGI::hidden(-name=>'problem_seed', -value=>[$problem_seed], -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
-		print CGI::hidden(-name=>"all_past_list$j", -default=>$pg_files[$j]);
+		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j]);
 	}
 
-	print CGI::hidden(-name=>'first_shown', -default=>[$first_shown]);
+	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown], -override=>1);
 	debug("last_shown 11: ", $last_shown);
-	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -default=>[$last_shown]));
-	print CGI::hidden(-name=>'last_shown', -default=>[$last_shown]);
+	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1));
+	print CGI::hidden(-name=>'last_shown', -value=>[$last_shown], -override=>1);
 
 
 	########## Now print problems
