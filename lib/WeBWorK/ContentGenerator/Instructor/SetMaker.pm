@@ -324,7 +324,7 @@ sub browse_local_panel {
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
 	my $name = ($lib eq '')? 'Local' : $problib{$lib};
-
+    debug("library is $lib and sets are $library_selected");
 	my $list_of_prob_dirs= get_problem_directories($self->r->ce,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
 		$library_selected = "Found no directories containing problems";
@@ -488,7 +488,7 @@ sub browse_library_panel2 {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
-		CGI::hidden(-name=>"library_is_basic", -default=>[1]),
+		CGI::hidden(-name=>"library_is_basic", -default=>[1],-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		CGI::Tr(
 			CGI::td(["Subject:",
@@ -599,7 +599,7 @@ sub browse_library_panel2adv {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"},
-		CGI::hidden(-name=>"library_is_basic", -default=>[2]),
+		CGI::hidden(-name=>"library_is_basic", -default=>[2],-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		# Html done by hand since it is temporary
 		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, 'All Selected Constraints Joined by "And"')),
@@ -708,9 +708,10 @@ sub make_top_row {
 	my $list_of_local_sets = $data{all_db_sets};
 	my $have_local_sets = scalar(@$list_of_local_sets);
 	my $browse_which = $data{browse_which};
-	my $library_selected = $r->param('library_sets');
+	my $library_selected = $self->{current_library_set};
+	debug("library_sets parameter is now ", $library_selected);
 	my $set_selected = $r->param('local_sets');
-
+    debug("local_sets parameter is now ", $set_selected);
 	my ($dis1, $dis2, $dis3, $dis4) = ("","","", "");
 	$dis1 =	 '-disabled' if($browse_which eq 'browse_library');	 
 	$dis2 =	 '-disabled' if($browse_which eq 'browse_local');
@@ -743,7 +744,7 @@ sub make_top_row {
 						-values=>$list_of_local_sets, 
 						-default=> $set_selected),
 		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
-		CGI::hidden(-name=>"selfassign", -default=>[0]).
+		CGI::hidden(-name=>"selfassign", -default=>[0],-override=>1).
 		CGI::br(), 
 		CGI::br(), 
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
@@ -872,7 +873,7 @@ sub make_data_row {
 		CGI::br(),
 		$inSet,
 		CGI::checkbox((%add_box_data)),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName]).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName],-override=>1).
 		CGI::p($problem_output),
 	));
 }
@@ -901,7 +902,10 @@ sub pre_header_initialize {
 	for my $key (keys(%{ LIB2_DATA() })) {
 		clear_default($r, LIB2_DATA->{$key}->{name}, LIB2_DATA->{$key}->{all} );
 	}
-
+    ##  Grab library sets to display from parameters list.  We will modify this
+    ##  as we go through the if/else tree
+    $self->{current_library_set} =  $r->param('library_sets');
+    
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
 
@@ -969,27 +973,30 @@ sub pre_header_initialize {
 	}
 
 	########### Start the logic through if elsif elsif ...
-
+    debug("browse_lib", $r->param("$browse_lib"));
+    debug("browse_library", $r->param("browse_library"));
+    debug("browse_mysets", $r->param("browse_mysets"));
+    debug("browse_setdefs", $r->param("browse_setdefs"));
 	##### Asked to browse certain problems
 	if ($browse_lib ne '') {
 		$browse_which = $browse_lib;
-		$r->param('library_sets', "");
+		$self->{current_library_sets} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_library')) {
 		$browse_which = 'browse_library';
-		$r->param('library_sets', "");
+		$self->{current_library_sets} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_local')) {
 		$browse_which = 'browse_local';
-		$r->param('library_sets', "");
+		$self->{current_library_sets} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_mysets')) {
 		$browse_which = 'browse_mysets';
-		$r->param('library_sets', "");
+		$self->{current_library_sets} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_setdefs')) {
 		$browse_which = 'browse_setdefs';
-		$r->param('library_sets', "");
+		$self->{current_library_sets} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 
 		##### Change the seed value
@@ -1010,7 +1017,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_local_set')) {
 
-		my $set_to_display = $r->param('library_sets');
+		my $set_to_display = $self->{current_library_sets};
 		if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
 			$self->addbadmessage('You need to select a set to view.');
 		} else {
@@ -1025,7 +1032,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_mysets_set')) {
 
-		my $set_to_display = $r->param('library_sets');
+		my $set_to_display = $self->{current_library_sets};
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Homework Set"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
@@ -1064,7 +1071,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_setdef_set')) {
 
-		my $set_to_display = $r->param('library_sets');
+		my $set_to_display = $self->{current_library_sets};
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Set Definition File"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
@@ -1093,7 +1100,8 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
-	$self->addbadmessage("The set name $newSetName is already in use.  Pick a different name if you would like to start a new set.");
+	            $self->addbadmessage("The set name $newSetName is already in use.  
+	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 				$newSetRecord = $db->{set}->{record}->new();
 				$newSetRecord->set_id($newSetName);
@@ -1136,19 +1144,21 @@ sub pre_header_initialize {
 			$localSet = $r->param('local_sets');
 			if (not defined($localSet) or 
 					$localSet eq SELECT_SET_STRING or 
-		$localSet eq NO_LOCAL_SET_STRING) {
-	$self->addbadmessage('You are trying to add problems to something, but you did not select a "Target Set" name as a target.');
+		            $localSet eq NO_LOCAL_SET_STRING) {
+				$self->addbadmessage('You are trying to add problems to something, 
+				but you did not select a "Target Set" name as a target.');
 			} else {
-	my $newSetRecord  = $db->getGlobalSet($localSet);
-	if (not defined($newSetRecord)) {
-		$self->addbadmessage("You are trying to add problems to $localSet, but that set does not seem to exist!  I bet you used your \"Back\" button.");
-	} else {
-		my $addcount = add_selected($self, $db, $localSet);
-		if($addcount > 0) {
-			$self->addgoodmessage("Added $addcount problem".(($addcount>1)?'s':'').
-				" to $localSet.");
-		}
-	}
+				my $newSetRecord  = $db->getGlobalSet($localSet);
+				if (not defined($newSetRecord)) {
+					$self->addbadmessage("You are trying to add problems to $localSet, 
+					but that set does not seem to exist!  I bet you used your \"Back\" button.");
+				} else {
+					my $addcount = add_selected($self, $db, $localSet);
+					if($addcount > 0) {
+						$self->addgoodmessage("Added $addcount problem".(($addcount>1)?'s':'').
+							" to $localSet.");
+					}
+				}
 			}
 		}
 		## now handle problems to be hidden
@@ -1199,7 +1209,7 @@ sub pre_header_initialize {
 		;
 	}				##### end of the if elsif ...
 
-
+ 
 	############# List of local sets
 
 	my @all_db_sets = $db->listGlobalSets;
@@ -1290,13 +1300,13 @@ sub body {
 	CGI::start_table({-border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
-	print CGI::hidden(-name=>'browse_which', -value=>[$browse_which]),
-		CGI::hidden(-name=>'problem_seed', -value=>[$problem_seed]);
+	print CGI::hidden(-name=>'browse_which', -value=>[$browse_which],-override=>1),
+		CGI::hidden(-name=>'problem_seed', -value=>[$problem_seed], -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
-		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j]);
+		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j],-override=>1);
 	}
 
-	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown]);
+	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown],-override=>1);
 	debug("last_shown 11: ", $last_shown);
 
 	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1));
