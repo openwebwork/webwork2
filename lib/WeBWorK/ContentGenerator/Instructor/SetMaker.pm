@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.65 2006/07/08 01:52:01 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.66 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,8 @@ WeBWorK::ContentGenerator::Instructor::SetMaker - Make homework sets.
 use strict;
 use warnings;
 
-use CGI qw(-nosticky );
+
+use CGI qw(-nosticky);
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
@@ -1297,8 +1298,9 @@ sub body {
 
 	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown]);
 	debug("last_shown 11: ", $last_shown);
-	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -value=>$last_shown));
-	print CGI::hidden(-name=>'last_shown', -value=>[$last_shown]);
+
+	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1));
+	print CGI::hidden(-name=>'last_shown', -value=>[$last_shown], -override=>1);
 
 
 	########## Now print problems
