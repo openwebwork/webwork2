@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+my $cvs_header_line = '\$' . 'CVSHeader';
+
 foreach my $arg (@ARGV) {
 	my ($conf_file, $dist_file);
 	
@@ -24,8 +26,9 @@ foreach my $arg (@ARGV) {
 		next;
 	}
 	
-	system "cvs diff -r '$conf_version' -r '$dist_version' '$dist_file'"
-		. "| patch '$conf_file'";
+	print "conf_version=$conf_version dist_version=$dist_version\n";
+	#system "cvs diff -r '$conf_version' -r '$dist_version' '$dist_file'"
+	#	. "| patch '$conf_file'";
 }
 
 sub cvs_version {
@@ -33,7 +36,7 @@ sub cvs_version {
 	open my $fh, "<", $file or die "couldn't open $file for reading: $!\n";
 	my $line;
 	while (my $line = <$fh>) {
-		if ($line =~ /\$CVSHeader: .*?(1(?:\.\d+)+).*?\$/) {
+		if ($line =~ /$cvs_header_line.*?(1(?:\.\d+)+)/) {
 			return $1;
 		}
 	}
