@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.66 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.70 2006/07/08 17:29:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -710,9 +710,7 @@ sub make_top_row {
 	my $have_local_sets = scalar(@$list_of_local_sets);
 	my $browse_which = $data{browse_which};
 	my $library_selected = $self->{current_library_set};
-	debug("library_sets parameter is now ", $library_selected);
 	my $set_selected = $r->param('local_sets');
-    debug("local_sets parameter is now ", $set_selected);
 	my ($dis1, $dis2, $dis3, $dis4) = ("","","", "");
 	$dis1 =	 '-disabled' if($browse_which eq 'browse_library');	 
 	$dis2 =	 '-disabled' if($browse_which eq 'browse_local');
@@ -743,7 +741,8 @@ sub make_top_row {
 		CGI::b("Target Set: "),
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
-						-default=> $set_selected),
+						-default=> $set_selected,
+						-override=>1),
 		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
 		CGI::hidden(-name=>"selfassign", -default=>[0],-override=>1).
 		CGI::br(), 
@@ -870,10 +869,10 @@ sub make_data_row {
 			CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
 			CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_link)
 		), CGI::br(),
-		CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update"),
+		CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
 		CGI::br(),
 		$inSet,
-		CGI::checkbox((%add_box_data)),
+		CGI::checkbox((%add_box_data),-override=>1),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName],-override=>1).
 		CGI::p($problem_output),
 	));
@@ -946,9 +945,9 @@ sub pre_header_initialize {
 	my @pg_files=();
 	my $use_previous_problems = 1;
 	my $first_shown = $r->param('first_shown') || 0;
-	my $last_shown = $r->param('last_shown'); debug("last_shown 1: ", $last_shown);
+	my $last_shown = $r->param('last_shown'); 
 	if (not defined($last_shown)) {
-		$last_shown = -1; debug("last_shown 2: ", $last_shown);
+		$last_shown = -1; 
 	}
 	my @all_past_list = (); # these are include requested, but not shown
 	my $j = 0;
@@ -1019,7 +1018,6 @@ sub pre_header_initialize {
 	} elsif ($r->param('view_local_set')) {
 
 		my $set_to_display = $self->{current_library_set};
-		debug("display local sets", $r->param('local_sets'), "or library sets", $set_to_display);
 		if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
 			$self->addbadmessage('You need to select a set to view.');
 		} else {
@@ -1101,7 +1099,9 @@ sub pre_header_initialize {
 			my $newSetName = $r->param('new_set_name');
 			# if we want to munge the input set name, do it here
 			$newSetName =~ s/\s/_/g;
-			$r->param('local_sets',$newSetName);
+			debug("local_sets was ", $r->param('local_sets'));
+			$r->param('local_sets',$newSetName);  ## use of two parameter param
+			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
 	            $self->addbadmessage("The set name $newSetName is already in use.  
@@ -1183,7 +1183,7 @@ sub pre_header_initialize {
 		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list)); debug("last_shown 6: ", $last_shown);
 		@past_marks = ();
 	} elsif ($r->param('prev_page')) {
-		$last_shown = $first_shown-1; debug("last_shown 7: ", $last_shown);
+		$last_shown = $first_shown-1; 
 		$first_shown = $last_shown - $maxShown+1;
 
 		$first_shown = 0 if($first_shown<0);
@@ -1223,8 +1223,8 @@ sub pre_header_initialize {
 		@pg_files = @all_past_list;
 	} else {
 		$first_shown = 0;
-		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown; debug("last_shown 8: ", $last_shown);
-		$last_shown--; debug("last_shown 9: ", $last_shown);		# to make it an array index
+		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown; 
+		$last_shown--;		# to make it an array index
 		@past_marks = ();
 	}
 	############# Now store data in self for retreival by body
@@ -1236,6 +1236,7 @@ sub pre_header_initialize {
 	$self->{past_marks} = \@past_marks;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
+	debug("past_marks is ", join(" ", @{$self->{past_marks}}));
 }
 
 
@@ -1275,7 +1276,7 @@ sub body {
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown}; debug("last_shown 10: ", $last_shown);
+	my $last_shown = $self->{last_shown}; 
 	my $browse_which = $self->{browse_which};
 	my $problem_seed = $self->{problem_seed};
 	my @pg_files = @{$self->{pg_files}};
@@ -1311,9 +1312,7 @@ sub body {
 	}
 
 	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown],-override=>1);
-	debug("last_shown 11: ", $last_shown);
-
-	debug("last_shown hidden field: ", CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1));
+	
 	print CGI::hidden(-name=>'last_shown', -value=>[$last_shown], -override=>1);
 
 
@@ -1321,7 +1320,8 @@ sub body {
 	my $jj;
 	for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
 		$pg_files[$jj] =~ s|^$ce->{courseDirs}->{templates}/?||;
-		$self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1, $self->{past_marks}->[$jj]);
+		$self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1, $self->{past_marks}->[$jj]); 
+		#$self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1, $self->{past_marks}->[$jj+$first_shown]); #MEG
 	}
 
 	########## Finish things off
