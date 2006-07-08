@@ -26,9 +26,9 @@ foreach my $arg (@ARGV) {
 		next;
 	}
 	
-	print "conf_version=$conf_version dist_version=$dist_version\n";
-	#system "cvs diff -r '$conf_version' -r '$dist_version' '$dist_file'"
-	#	. "| patch '$conf_file'";
+	#print "conf_version=$conf_version dist_version=$dist_version\n";
+	system "cvs diff -r '$conf_version' -r '$dist_version' '$dist_file'"
+		. "| patch '$conf_file'";
 }
 
 sub cvs_version {
