@@ -981,23 +981,23 @@ sub pre_header_initialize {
 	##### Asked to browse certain problems
 	if ($browse_lib ne '') {
 		$browse_which = $browse_lib;
-		$self->{current_library_sets} = "";
+		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_library')) {
 		$browse_which = 'browse_library';
-		$self->{current_library_sets} = "";
+		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_local')) {
 		$browse_which = 'browse_local';
-		$self->{current_library_sets} = "";
+		#$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_mysets')) {
 		$browse_which = 'browse_mysets';
-		$self->{current_library_sets} = "";
+		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_setdefs')) {
 		$browse_which = 'browse_setdefs';
-		$self->{current_library_sets} = "";
+		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 
 		##### Change the seed value
@@ -1018,7 +1018,8 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_local_set')) {
 
-		my $set_to_display = $r->param('local_sets');
+		my $set_to_display = $self->{current_library_set};
+		debug("display local sets", $r->param('local_sets'), "or library sets", $set_to_display);
 		if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
 			$self->addbadmessage('You need to select a set to view.');
 		} else {
