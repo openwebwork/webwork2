@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.5 2006/06/08 23:27:02 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen/Moodle.pm,v 1.6 2006/07/05 18:28:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,7 +67,7 @@ sub get_credentials {
 	}
 	
 	my ($moodle_user_id, $moodle_expiration_time) = $self->fetch_moodle_session;
-	debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n");
+	#debug("fetch_moodle_session returned: moodle_user_id='$moodle_user_id' moodle_expiration_time='$moodle_expiration_time'.\n"); # causes errors when undefined
 	
 	if (defined $moodle_user_id and defined $moodle_expiration_time and time <= $moodle_expiration_time) {
 		my $newKey = $self->create_session($moodle_user_id);
