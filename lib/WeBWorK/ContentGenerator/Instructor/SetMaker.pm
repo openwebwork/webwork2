@@ -324,7 +324,7 @@ sub browse_local_panel {
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
 	my $name = ($lib eq '')? 'Local' : $problib{$lib};
-    debug("library is $lib and sets are $library_selected");
+    
 	my $list_of_prob_dirs= get_problem_directories($self->r->ce,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
 		$library_selected = "Found no directories containing problems";
@@ -336,6 +336,7 @@ sub browse_local_panel {
 			$library_selected = $default_value;
 		}
 	}
+	debug("library is $lib and sets are $library_selected");
 	my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "$name Problems: ",
 		CGI::popup_menu(-name=> 'library_sets', 
@@ -1017,7 +1018,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_local_set')) {
 
-		my $set_to_display = $self->{current_library_sets};
+		my $set_to_display = $r->param('local_sets');
 		if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
 			$self->addbadmessage('You need to select a set to view.');
 		} else {
@@ -1032,7 +1033,8 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_mysets_set')) {
 
-		my $set_to_display = $self->{current_library_sets};
+		my $set_to_display = $r->param('local_sets');
+		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Homework Set"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
@@ -1071,11 +1073,12 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_setdef_set')) {
 
-		my $set_to_display = $self->{current_library_sets};
+		my $set_to_display = $r->param('local_sets');
+		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Set Definition File"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
-			$self->addbadmessage("You need to select a set from this course to view.");
+			$self->addbadmessage("You need to select a set definition file to view.");
 		} else {
 			@pg_files= $self->read_set_def($set_to_display);
 		}
