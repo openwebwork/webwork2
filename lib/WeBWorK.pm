@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.83 2006/05/18 19:25:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.84 2006/06/29 21:28:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -150,17 +150,18 @@ sub dispatch($) {
 	
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
-		debug("\t$key\n");
-		debug("\t\t$_\n") foreach $r->param($key);
+		my @vals = $r->param($key);
+		my $vals = join(", ", map { "'$_'" } @vals);
+		debug("\t$key => $vals\n");
 	}
 	
 	#mungeParams($r);
-	
-	debug("The munged params:\n");
-	foreach my $key ($r->param) {
-		debug("\t$key\n");
-		debug("\t\t$_\n") foreach $r->param($key);
-	}
+	#
+	#debug("The munged params:\n");
+	#foreach my $key ($r->param) {
+	#	debug("\t$key\n");
+	#	debug("\t\t$_\n") foreach $r->param($key);
+	#}
 	
 	debug(("-" x 80) . "\n");
 	
