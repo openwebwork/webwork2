@@ -1,18 +1,17 @@
 /*
- *  This prevents scrollbars from appearing
- *  (we won't need them because we resize the IFRAME
- *  to fit, but some browsers would show them anyway).
- *
- *  This is not part of the CSS style so that it only
- *  is in effect if JavaScript is enabled.
- */
-if (document.body) {document.body.style.overflow = "hidden"}
-
-/*
  *  Turn off interface elements that are not needed by Moodle
  */
 if (parent.ww) {
   document.write('<STYLE>.moodleIgnore {display:none}</STYLE>');
+  /*
+   *  This prevents scrollbars from appearing
+   *  (we won't need them because we resize the IFRAME
+   *  to fit, but some browsers would show them anyway).
+   *
+   *  This is not part of the CSS style so that it only
+   *  is in effect if JavaScript is enabled.
+   */
+  if (document.body) {document.body.style.overflow = "hidden"}
 }
 
 ww = {
