@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.4 2006/07/11 12:29:16 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.5 2006/07/11 13:25:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,7 +122,7 @@ sub AUTOLOAD {
 							   } else { # no labels
 							   	  @text = map {$_ .$ret} @values;
 							   }
-	                           @inputs = (-value=>\@values, -text=>\@text);
+	                           @inputs = (-type=>'radio',-value=>\@values, -text=>\@text);
 	                        }; 
 	$func =~/^(popup_menu|scrolling_list)$/   &&do{
 							   my %inputs       = @inputs;
