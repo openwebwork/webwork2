@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.6 2006/07/11 13:28:26 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.8 2006/07/11 14:44:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,9 +38,9 @@ sub AUTOLOAD {
 	                           $func ='input', 
 	                           push @inputs, '-type',$type;
 	                           my %inputs = @inputs;
-	                           my ($key) = grep /-?label/, @inputs;
-	                           my $label = ($key)?$inputs{$key}:'';
-	                           delete($inputs{$key}) if defined $key and exists($inputs{$key});
+	                           my $labels_key = normalizeName('labels?',@inputs);
+	                           my $label = ($labels_key)?$inputs{$labels_key}:'';
+	                           delete($inputs{$labels_key}) if defined $labels_key and exists($inputs{$labels_key});
 	                           @inputs = (\%inputs);
 	                           if (defined($label) and $label) {
 	                           		$prolog = "<label>";
@@ -51,16 +51,22 @@ sub AUTOLOAD {
 	                          my $type = 'text';
 	                          $func ='input';
 	                          push @inputs, '-type',$type;
-	                          @inputs;
+	                       };
+	$func =~/^textarea$/     && do {
+	                          my %inputs = @inputs;
+	                          my $default_label = normalizeName('defaults?',keys %inputs);
+	                          $inputs{-text} = $inputs{$default_label};
+	                          @inputs = %{removeParam($default_label, \%inputs)};
+	                          
 	                       };
     $func =~/^submit$/        && do {
     	                       my $type = $func;
 	                           $func ='input', 
 	                           push @inputs, '-type',$type;
 	                           my %inputs = @inputs;
-	                           my ($key) = grep /-?label/, @inputs;
-	                           $inputs{-value}= $inputs{$key} if defined $key and exists $inputs{$key}; # use value for name
-	                           delete($inputs{$key}) if defined $key and exists $inputs{$key};
+	                           my ($labels_key) = normalizeName('labels?',@inputs);
+	                           $inputs{-value}= $inputs{$labels_key} if defined $labels_key and exists $inputs{$labels_key}; # use value for name
+	                           delete($inputs{$labels_key}) if defined $labels_key and exists $inputs{$labels_key};
 	                           @inputs = (\%inputs);
 	                       };
     $func =~/^radio$/          && do {
@@ -68,9 +74,9 @@ sub AUTOLOAD {
 							   $func ='input', 
 							   push @inputs, '-type',$type;
 							   my %inputs = @inputs;
-							   my ($key) = grep /-?values/, @inputs;
-							   $inputs{-value}= $inputs{$key};  # use value for name
-							   delete($inputs{$key}) if defined $key and exists $inputs{$key};
+							   my ($values_key) = normalizeName('values?',@inputs);
+							   $inputs{-value}= $inputs{$values_key};  # use value for name
+							   delete($inputs{$values_key}) if defined $values_key and exists $inputs{$values_key};
 							   @inputs = (\%inputs);
 							   };
 	$func =~/^(p|Tr|td|li|hidden|table|div|th)$/     && do { # concatenate inputs
@@ -91,8 +97,8 @@ sub AUTOLOAD {
 	                           push @inputs, '-type','radio';
 	                           my %inputs = @inputs;
 	                           %inputs = %{removeParam('override',\%inputs)};
-	                           my $labels_key = normalizeName('labels',@inputs);
-	                           my $values_key = normalizeName('values',@inputs);
+	                           my $labels_key = normalizeName('labels?',@inputs);
+	                           my $values_key = normalizeName('values?',@inputs);
 	                           my $name_key = normalizeName('name',@inputs);
 	                           my $ra_value     = $inputs{$values_key};
 							   my $rh_labels    = $inputs{labels_key};
@@ -133,8 +139,8 @@ sub AUTOLOAD {
 	$func =~/^(popup_menu|scrolling_list)$/   &&do{
 							   my %inputs       = @inputs;
 							   %inputs = %{removeParam('override',\%inputs)};
-							   my $values_key   = normalizeName('values',@inputs); #get keys
-							   my $labels_key   = normalizeName('labels',@inputs);
+							   my $values_key   = normalizeName('values?',@inputs); #get keys
+							   my $labels_key   = normalizeName('labels?',@inputs);
 							   my $ra_value     = $inputs{$values_key};
 							   my $rh_labels    = $inputs{labels_key};
 							   my @values       =  @{$inputs{$values_key}};
