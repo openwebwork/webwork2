@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.10 2006/07/11 16:11:13 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.11 2006/07/11 16:19:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,19 +33,32 @@ sub AUTOLOAD {
 	my $prolog = '';
 	my $postlog = '';
 	# handle special cases
+	print "\n\n$func";
 	$func =~/^(checkbox|hidden)$/  && do {
 	                           my $type = $func;
-	                           $func ='input', 
-	                           my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
-	                           $inputs{-type} = $type;
-	                           my $labels_key = normalizeName('labels?',keys %inputs);
-	                           my $label = ($labels_key)?$inputs{$labels_key}:'';
-	                           delete($inputs{$labels_key}) if defined $labels_key and exists($inputs{$labels_key});
-	                           @inputs = (\%inputs);
-	                           if (defined($label) and $label) {
-	                           		$prolog = "<label>";
-	                           		$postlog = "$label</label>";
+	                           $func ='input',
+	                           my %inputs;
+	                           my $name_key = normalizeName('name',@inputs);
+	                           if (defined($name_key)) {  # we're dealing with labeled inputs
+								   $inputs{-type} = $type;
+								   my $labels_key = normalizeName('labels?', keys %inputs);
+								   # deal with labels
+								   my $label = ($labels_key)?$inputs{$labels_key}:'';
+								   delete($inputs{$labels_key}) if defined $labels_key and exists($inputs{$labels_key});
+								   if (defined($label) and $label) {
+										$prolog = "<label>";
+										$postlog = "$label</label>";
+								   }
+								   @inputs = (\%inputs);
+	                           } elsif (ref($_[0]) ){ # the attributes are in a hash
+	                           
+	                           
+	                           } else {    # we are dealing with name value pair
+	                               $inputs{-name} = $inputs[0];
+	                               $inputs{-value}= $inputs[1];
+	                               @inputs = (\%inputs);
 	                           }
+	                           
 	                       };
 	$func =~/^textfield$/     && do {
 	                          my $type = 'text';
@@ -79,7 +92,7 @@ sub AUTOLOAD {
 							   delete($inputs{$values_key}) if defined $values_key and exists $inputs{$values_key};
 							   @inputs = (\%inputs);
 							   };
-	$func =~/^(p|Tr|td|li|hidden|table|div|th)$/     && do { # concatenate inputs
+	$func =~/^(p|Tr|td|li|table|div|th)$/     && do { # concatenate inputs
 							   my $attributes;
 							   $attributes = shift @inputs if ref($inputs[0]) =~/HASH/;
 							   if (ref($inputs[0]) =~/ARRAY/) { # implied group
