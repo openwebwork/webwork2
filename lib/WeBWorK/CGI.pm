@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.1 2006/07/10 20:02:03 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.2 2006/07/11 02:51:18 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -101,7 +101,7 @@ sub AUTOLOAD {
 	                           $inputs{text} = \@text;
 	                           
 	                        }; 
-	$func =~/^(popup_menu)$/   &&do{
+	$func =~/^(popup_menu|scrolling_list)$/   &&do{
 							   my %inputs       = @inputs;
 							   %inputs = %{removeParam('override',\%inputs)};
 							   my $values_key   = normalizeName('values',@inputs); #get keys
@@ -115,17 +115,21 @@ sub AUTOLOAD {
 							   my $selected_option = '';
 							   my $text = '';
 							   if (defined($default) and $default and defined($inputs{$default})) {
-							        # grab the selected option
-							        my $selected_value = $inputs{$default};
-							        if (defined $labels_key) {
-							        	$text = $inputs{$labels_key}->{$selected_value};
-							        	delete($inputs{$labels_key}->{$selected_value});
-							        } else {
-							        	$text = $selected_value;
-							        }
-									@values = grep !/$selected_value/, @values; 
-									$selected_option = $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+							        # grab the selected options
+							        my @selected_values  = (ref($inputs{$default})=~/ARRAY/) ? 
+							                   @{$inputs{$default}}:($inputs{$default}); 
+							        foreach my $selected_value (@selected_values) {
+										if (defined $labels_key) {
+											$text = $inputs{$labels_key}->{$selected_value};
+											delete($inputs{$labels_key}->{$selected_value});
+										} else {
+											$text = $selected_value;
+										}
+										@values = grep !/$selected_value/, @values; 
+										$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+									}
 							   } 
+							   %inputs = %{removeParam('default',\%inputs)};
 							   ## match labels to values
 							   my @text=();
 							   if (defined($labels_key) and $labels_key) {
