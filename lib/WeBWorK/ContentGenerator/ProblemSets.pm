@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.76 2006/06/24 19:51:02 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.77 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::ProblemSets - Display a list of built problem sets.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile sortByName path_is_subdir);
 
@@ -237,7 +238,7 @@ sub body {
 	
 	print CGI::end_table();
 	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
-	print CGI::p(CGI::submit("hardcopy", "Download Hardcopy for Selected Set$pl"));
+	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>"Download Hardcopy for Selected Set$pl"));
 	print CGI::endform();
 	
 	## feedback form url
