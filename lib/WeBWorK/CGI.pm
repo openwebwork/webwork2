@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.44 2006/06/26 23:25:15 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.1 2006/07/10 20:02:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,7 +30,8 @@ sub AUTOLOAD {
 
 	$func=~s/^start_?(.*)$/$1_start/;
 	$func=~s/^end_?(.*)$/$1_end/;
-	my $label = undef;
+	my $prolog = '';
+	my $postlog = '';
 	# handle special cases
 	$func =~/^(checkbox|hidden)$/  && do {
 	                           my $type = $func;
@@ -38,20 +39,24 @@ sub AUTOLOAD {
 	                           push @inputs, '-type',$type;
 	                           my %inputs = @inputs;
 	                           my ($key) = grep /-?label/, @inputs;
-	                           $label = ($key)?$inputs{$key}:'';
+	                           my $label = ($key)?$inputs{$key}:'';
 	                           delete($inputs{$key}) if defined $key and exists($inputs{$key});
 	                           @inputs = (\%inputs);
-	                           };
+	                           if (defined($label) and $label) {
+	                           		$prolog = "<label>";
+	                           		$postlog = "$label</label>";
+	                           }
+	                       };
     $func =~/^submit$/        && do {
     	                       my $type = $func;
 	                           $func ='input', 
 	                           push @inputs, '-type',$type;
 	                           my %inputs = @inputs;
 	                           my ($key) = grep /-?label/, @inputs;
-	                           $inputs{-value}= $inputs{$key};  # use value for name
+	                           $inputs{-value}= $inputs{$key} if defined $key and exists $inputs{$key}; # use value for name
 	                           delete($inputs{$key}) if defined $key and exists $inputs{$key};
 	                           @inputs = (\%inputs);
-	                           };
+	                       };
     $func =~/^radio$/          && do {
 							   my $type = $func;
 							   $func ='input', 
@@ -62,7 +67,7 @@ sub AUTOLOAD {
 							   delete($inputs{$key}) if defined $key and exists $inputs{$key};
 							   @inputs = (\%inputs);
 							   };
-	$func =~/^(p|Tr|td|li)$/     && do { # concatenate inputs
+	$func =~/^(p|Tr|td|li|hidden)$/     && do { # concatenate inputs
 							   my $attributes;
 							   $attributes = shift @inputs if ref($inputs[0]) =~/HASH/;
 							   if (ref($inputs[0]) =~/ARRAY/) { # implied group
@@ -72,30 +77,71 @@ sub AUTOLOAD {
 								   @inputs = ($text);
 							   }
 							   unshift @inputs, $attributes if defined $attributes;
-							   };
+						    };
  
        $func =~/^radio_group$/ &&do {
    							   my $type = $func;
 	                           $func ='input_group', 
 	                           push @inputs, '-type','radio';
 	                           my %inputs = @inputs;
-	                           my ($key) = grep /-?labels/, @inputs;
-	                           my @text=();
-	                           my ($key2) = grep /-?values/, @inputs;
+	                           %inputs = %{removeParam('override',\%inputs)};
+	                           my $k_labels = normalizeName('labels',@inputs);
+	                           my $k_values = normalizeName('values',@inputs);
+	                           my @text=(); 
 	                           # get values
-							   my @values =  @{$inputs{$key2}};
+							   my @values =  @{$inputs{$k_values}};
 	                           my $ret = (defined($inputs{'-linebreak'}) and $inputs{'-linebreak'} eq 'true')?"<br>\n":'';
-	                           if (defined($key) and $key) {
-								   my %button_labels= %{$inputs{$key}}; 
-								   delete($inputs{$key}) if exists $inputs{$key};
+	                           if (defined($k_labels) and $k_labels) {
+								   my %button_labels= %{$inputs{$k_labels}}; 
+								   delete($inputs{$k_labels}) if exists $inputs{$k_labels};
 								   @text  = map {$button_labels{$_}.$ret} @values;
 							   } else { # no labels
 							   	  @text = map {$_ .$ret} @values;
 							   }
 	                           $inputs{text} = \@text;
-	                           @inputs = (\%inputs);
-	                           }; 
-    
+	                           
+	                        }; 
+	$func =~/^(popup_menu)$/   &&do{
+							   my %inputs       = @inputs;
+							   %inputs = %{removeParam('override',\%inputs)};
+							   my $values_key   = normalizeName('values',@inputs); #get keys
+							   my $labels_key   = normalizeName('labels',@inputs);
+							   my $ra_value     = $inputs{$values_key};
+							   my $rh_labels    = $inputs{labels_key};
+							   my @values       =  @{$inputs{$values_key}};
+							   
+							   # deal with the default option
+							   my $default = normalizeName('default', @inputs);
+							   my $selected_option = '';
+							   my $text = '';
+							   if (defined($default) and $default and defined($inputs{$default})) {
+							        # grab the selected option
+							        my $selected_value = $inputs{$default};
+							        if (defined $labels_key) {
+							        	$text = $inputs{$labels_key}->{$selected_value};
+							        	delete($inputs{$labels_key}->{$selected_value});
+							        } else {
+							        	$text = $selected_value;
+							        }
+									@values = grep !/$selected_value/, @values; 
+									$selected_option = $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+							   } 
+							   ## match labels to values
+							   my @text=();
+							   if (defined($labels_key) and $labels_key) {
+								   my %labels= %{$inputs{$labels_key}}; 
+								   delete($inputs{$labels_key}) if exists $inputs{$labels_key};
+								   @text  = map {$labels{$_}} @values;
+							   } else { # no labels
+							   	   @text = @values;
+							   }
+							   delete($inputs{$values_key});
+							   # end match labels to values
+							   $prolog = $html2->select_start(\%inputs).$selected_option;
+							   $postlog = $html2->select_end();
+							   $func = 'option_group';
+							   @inputs =({-value=>\@values, -text=>\@text });
+	                        };
     
     #my @singles   = grep /override|enable|disable|selected/, @inputs;
     #warn "possible problem with single names (no values)", join(" ", @singles) if @singles;
@@ -108,11 +154,26 @@ sub AUTOLOAD {
 	}
 	#$result = eval { use WeBWorK::CGI; $html2->$func(@_) };
 	#handle special cases
-	if ( defined($label) ) {
-		$result =~ s/^\n//;   # get rid of extra return
-		$result = "\n<label>$result$label</label>" if defined $label and $label;
+	if ( $prolog or $postlog ) {
+		$result =~ s/^\n//;   # get rid of extra return??
+		$result = "$prolog$result$postlog" ;
 	}
 	return $result;
 }
+sub normalizeName {
+	my $name = shift;  #name to find
+	my @inputs  = @_;   #inputs 
+	my ($key) = grep /-?$name/, @inputs;
+	return $key;
+}
 
+# possible utility subroutines.
+sub removeParam {
+	my $name = shift;
+	my $rh_inputs = shift;
+	delete($rh_inputs->{$name}) if defined $name and exists $rh_inputs->{$name};
+	delete($rh_inputs->{-$name}) if defined $name and exists $rh_inputs->{-$name};
+	$rh_inputs;
+}
+	
 1;
