@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.168 2006/07/08 14:07:33 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.169 2006/07/11 03:59:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -226,7 +226,7 @@ sub do_reply_with_file {
 	# send our custom HTTP header
 	$r->content_type($type);
 	$r->header_out("Content-Disposition" => "attachment; filename=\"$name\"");
-	$r->send_http_header;
+	$r->send_http_header unless MP2;
 	
 	# send the file
 	$r->send_fd($fh);
@@ -251,7 +251,7 @@ sub do_reply_with_redirect {
 	
 	$r->status(MP2 ? Apache2::Const::REDIRECT : Apache::Constants::REDIRECT);
 	$r->header_out(Location => $url);
-	$r->send_http_header();
+	$r->send_http_header unless MP2;
 }
 
 =back
@@ -405,7 +405,7 @@ sub header {
 	my $r = $self->r;
 	
 	$r->content_type("text/html; charset=utf-8");
-	$r->send_http_header();
+	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }
 
