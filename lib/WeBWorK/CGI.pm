@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.3 2006/07/11 12:07:37 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.4 2006/07/11 12:29:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -85,21 +85,44 @@ sub AUTOLOAD {
 	                           push @inputs, '-type','radio';
 	                           my %inputs = @inputs;
 	                           %inputs = %{removeParam('override',\%inputs)};
-	                           my $k_labels = normalizeName('labels',@inputs);
-	                           my $k_values = normalizeName('values',@inputs);
-	                           my @text=(); 
-	                           # get values
-							   my @values =  @{$inputs{$k_values}};
-	                           my $ret = (defined($inputs{'-linebreak'}) and $inputs{'-linebreak'} eq 'true')?"<br>\n":'';
-	                           if (defined($k_labels) and $k_labels) {
-								   my %button_labels= %{$inputs{$k_labels}}; 
-								   delete($inputs{$k_labels}) if exists $inputs{$k_labels};
-								   @text  = map {$button_labels{$_}.$ret} @values;
+	                           my $labels_key = normalizeName('labels',@inputs);
+	                           my $values_key = normalizeName('values',@inputs);
+	                           my $name_key = normalizeName('name',@inputs);
+	                           my $ra_value     = $inputs{$values_key};
+							   my $rh_labels    = $inputs{labels_key};
+							   my @values       =  @{$inputs{$values_key}};
+							   my $ret = (defined($inputs{'-linebreak'}) and $inputs{'-linebreak'} )?"<br>":'';
+	                           # deal with the default option
+							   my $default = normalizeName('default', @inputs);
+							   my $selected_button = '';
+							   my $text = '';
+							   if (defined($default) and $default and defined($inputs{$default})) {
+							        # grab the selected options
+							        my $selected_value  = $inputs{$default}; 
+							        
+										if (defined $labels_key) {
+											$text = $inputs{$labels_key}->{$selected_value}.$ret;
+											delete($inputs{$labels_key}->{$selected_value});
+										} else {
+											$text = $selected_value;
+										}
+										@values = grep !/$selected_value/, @values; 
+										$prolog.= $html2->input({-name=>$inputs{$name_key},-type=>'radio',
+										                                   -checked=>1, -text=>$text, 
+										                                   -value=>$selected_value})."\n";
+									
+							   } 
+							   %inputs = %{removeParam('default',\%inputs)};
+	                            ## match labels to values
+	                           my @text=();
+	                           if (defined($labels_key) and $labels_key) {
+								   my %labels= %{$inputs{$labels_key}}; 
+								   delete($inputs{$labels_key}) if exists $inputs{$labels_key};
+								   @text  = map {$labels{$_}.$ret} @values;
 							   } else { # no labels
 							   	  @text = map {$_ .$ret} @values;
 							   }
-	                           $inputs{text} = \@text;
-	                           
+	                           @inputs = (-value=>\@values, -text=>\@text);
 	                        }; 
 	$func =~/^(popup_menu|scrolling_list)$/   &&do{
 							   my %inputs       = @inputs;
@@ -179,5 +202,8 @@ sub removeParam {
 	delete($rh_inputs->{-$name}) if defined $name and exists $rh_inputs->{-$name};
 	$rh_inputs;
 }
-	
+sub labelsToText {   #takes labels attached to values and distributes them into a text variable
+	my $rh_labels = shift;
+	my $rh_values = shift;
+}	
 1;
