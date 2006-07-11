@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.7 2004/12/18 16:12:19 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/HTML/ScrollingRecordList.pm,v 1.8 2006/01/25 23:13:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -168,7 +168,7 @@ sub scrollingRecordList {
 		   CGI::td(CGI::scrolling_list(%filter_options)),
 		 ]),
 	       ),
-	       CGI::submit("$name!refresh", $refresh_button_name), CGI::br(),
+	       CGI::submit(-name=>"$name!refresh", -label=>$refresh_button_name), CGI::br(),
 	       CGI::scrolling_list(%list_options),
        );
 }
