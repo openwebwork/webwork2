@@ -47,6 +47,12 @@ sub AUTOLOAD {
 	                           		$postlog = "$label</label>";
 	                           }
 	                       };
+	$func =~/^textfield$/     && do {
+	                          my $type = 'text';
+	                          $func ='input';
+	                          push @inputs, '-type',$type;
+	                          @inputs;
+	                       };
     $func =~/^submit$/        && do {
     	                       my $type = $func;
 	                           $func ='input', 
