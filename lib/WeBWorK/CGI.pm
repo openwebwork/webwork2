@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.8 2006/07/11 14:44:55 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.9 2006/07/11 15:04:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,9 +36,9 @@ sub AUTOLOAD {
 	$func =~/^(checkbox|hidden)$/  && do {
 	                           my $type = $func;
 	                           $func ='input', 
-	                           push @inputs, '-type',$type;
-	                           my %inputs = @inputs;
-	                           my $labels_key = normalizeName('labels?',@inputs);
+	                           my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
+	                           $inputs{-type} = $type;
+	                           my $labels_key = normalizeName('labels?',keys %inputs);
 	                           my $label = ($labels_key)?$inputs{$labels_key}:'';
 	                           delete($inputs{$labels_key}) if defined $labels_key and exists($inputs{$labels_key});
 	                           @inputs = (\%inputs);
@@ -53,7 +53,7 @@ sub AUTOLOAD {
 	                          push @inputs, '-type',$type;
 	                       };
 	$func =~/^textarea$/     && do {
-	                          my %inputs = @inputs;
+	                          my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 	                          my $default_label = normalizeName('defaults?',keys %inputs);
 	                          $inputs{-text} = $inputs{$default_label};
 	                          @inputs = %{removeParam($default_label, \%inputs)};
@@ -62,9 +62,9 @@ sub AUTOLOAD {
     $func =~/^submit$/        && do {
     	                       my $type = $func;
 	                           $func ='input', 
-	                           push @inputs, '-type',$type;
-	                           my %inputs = @inputs;
-	                           my ($labels_key) = normalizeName('labels?',@inputs);
+	                           my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
+	                           $inputs{-type} = $type;
+	                           my ($labels_key) = normalizeName('labels?',key %inputs);
 	                           $inputs{-value}= $inputs{$labels_key} if defined $labels_key and exists $inputs{$labels_key}; # use value for name
 	                           delete($inputs{$labels_key}) if defined $labels_key and exists $inputs{$labels_key};
 	                           @inputs = (\%inputs);
@@ -72,9 +72,9 @@ sub AUTOLOAD {
     $func =~/^radio$/          && do {
 							   my $type = $func;
 							   $func ='input', 
-							   push @inputs, '-type',$type;
-							   my %inputs = @inputs;
-							   my ($values_key) = normalizeName('values?',@inputs);
+							   my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
+	                           $inputs{-type} = $type;
+							   my ($values_key) = normalizeName('values?',keys %inputs);
 							   $inputs{-value}= $inputs{$values_key};  # use value for name
 							   delete($inputs{$values_key}) if defined $values_key and exists $inputs{$values_key};
 							   @inputs = (\%inputs);
@@ -137,13 +137,14 @@ sub AUTOLOAD {
 	                           @inputs = (-type=>'radio',-value=>\@values, -text=>\@text);
 	                        }; 
 	$func =~/^(popup_menu|scrolling_list)$/   &&do{
-							   my %inputs       = @inputs;
+							   my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 							   %inputs = %{removeParam('override',\%inputs)};
-							   my $values_key   = normalizeName('values?',@inputs); #get keys
-							   my $labels_key   = normalizeName('labels?',@inputs);
+							   my $values_key   = normalizeName('values?',keys %inputs); #get keys
+							   my $labels_key   = normalizeName('labels?',keys %inputs);
 							   my $ra_value     = $inputs{$values_key};
 							   my $rh_labels    = $inputs{labels_key};
-							   my @values       =  @{$inputs{$values_key}};
+							   my @values       =  eval{ @{$inputs{$values_key}} };
+							   warn "error in $values_key  $inputs{$values_key}",join(' ', @inputs), caller(), $@ if $@;
 							   
 							   # deal with the default option
 							   my $default = normalizeName('default', @inputs);
@@ -202,7 +203,7 @@ sub AUTOLOAD {
 sub normalizeName {
 	my $name = shift;  #name to find
 	my @inputs  = @_;   #inputs 
-	my ($key) = grep /-?$name/, @inputs;
+	my ($key) = grep /^-?$name$/, @inputs;
 	return $key;
 }
 
