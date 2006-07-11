@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.2 2006/07/11 02:51:18 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.3 2006/07/11 12:07:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,7 +67,7 @@ sub AUTOLOAD {
 							   delete($inputs{$key}) if defined $key and exists $inputs{$key};
 							   @inputs = (\%inputs);
 							   };
-	$func =~/^(p|Tr|td|li|hidden)$/     && do { # concatenate inputs
+	$func =~/^(p|Tr|td|li|hidden|table|div)$/     && do { # concatenate inputs
 							   my $attributes;
 							   $attributes = shift @inputs if ref($inputs[0]) =~/HASH/;
 							   if (ref($inputs[0]) =~/ARRAY/) { # implied group
