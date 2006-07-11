@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.84 2006/06/29 21:28:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.85 2006/07/10 17:48:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,7 +38,6 @@ BEGIN { $main::VERSION = "2.x"; }
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common REDIRECT DONE);
 use Time::HiRes qw/time/;
 
 # load WeBWorK::Constants before anything else
@@ -46,8 +45,6 @@ use Time::HiRes qw/time/;
 use WeBWorK::Constants;
 
 # the rest of these are modules that are acutally used by this one
-#use WeBWorK::Authen;
-#use WeBWorK::Authen::Proctor;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;

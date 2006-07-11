@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.4 2004/04/04 04:00:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.5 2006/01/25 23:13:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,8 @@ use strict;
 use warnings;
 use Apache::Constants qw(:common);
 
+# FIXME replace all crap with a call to reply_with_file
+# FIXME and then maybe merge that functionality into Scoring.pm
 sub header {
 	my ($self)     = @_;
 	my $r          = $self->r;

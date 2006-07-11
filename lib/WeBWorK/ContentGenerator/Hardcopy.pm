@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.77 2006/06/24 19:35:36 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.78 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,6 @@ problem sets.
 
 use strict;
 use warnings;
-use Apache::Constants qw/:common REDIRECT/;
 use CGI qw(-nosticky );
 use File::Path;
 use File::Temp qw/tempdir/;

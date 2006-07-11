@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.80 2006/05/23 17:38:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.81 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -209,6 +209,7 @@ sub pre_header_initialize {
 	};
 }
 # FIXME  -- this should be moved up to instructor or contentgenerator
+# FIXME replace this crap with call to $self->reply_with_redirect (in pre_header_initialize)
 sub header {
 	my $self = shift;
 	return REDIRECT if $self->{noContent};

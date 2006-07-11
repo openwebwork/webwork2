@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.167 2006/06/29 23:20:47 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.168 2006/07/08 14:07:33 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,6 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
-use Apache::Constants qw(:response);
 use Carp;
 use CGI qw(-nosticky *ul *li escapeHTML);
 use Date::Format;
@@ -54,6 +53,16 @@ use WeBWorK::Template qw(template);
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+BEGIN {
+	if (MP2) {
+		require Apache2::Const;
+		Apache2::Const->import(-compile => qw/OK NOT_FOUND FORBIDDEN SERVER_ERROR REDIRECT/);
+	} else {
+		require Apache::Constants;
+		Apache::Constants->import(qw/OK NOT_FOUND FORBIDDEN SERVER_ERROR REDIRECT/);
+	}
+}
 
 ###############################################################################
 
@@ -145,7 +154,7 @@ sub go {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $returnValue = OK;
+	my $returnValue = MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 	
 	# We only write to the activity log if it has been defined and if
 	# we are in a specific course.  The latter check is to prevent attempts
@@ -208,11 +217,11 @@ sub do_reply_with_file {
 	my $delete_after = $fileHash->{delete_after};
 	
 	# if there was a problem, we return here and let go() worry about sending the reply
-	return NOT_FOUND unless -e $source;
-	return FORBIDDEN unless -r $source;
+	return MP2 ? Apache2::Const::NOT_FOUND : Apache::Constants::NOT_FOUND unless -e $source;
+	return MP2 ? Apache2::Const::FORBIDDEN : Apache::Constants::FORBIDDEN unless -r $source;
 	
 	# open the file now, so we can send the proper error status is we fail
-	open my $fh, "<", $source or return SERVER_ERROR;
+	open my $fh, "<", $source or return MP2 ? Apache2::Const::SERVER_ERROR : Apache::Constants::SERVER_ERROR;
 	
 	# send our custom HTTP header
 	$r->content_type($type);
@@ -240,7 +249,7 @@ sub do_reply_with_redirect {
 	my ($self, $url) = @_;
 	my $r = $self->r;
 	
-	$r->status(REDIRECT);
+	$r->status(MP2 ? Apache2::Const::REDIRECT : Apache::Constants::REDIRECT);
 	$r->header_out(Location => $url);
 	$r->send_http_header();
 }
@@ -397,7 +406,7 @@ sub header {
 	
 	$r->content_type("text/html; charset=utf-8");
 	$r->send_http_header();
-	return OK;
+	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }
 
 =item initialize()
