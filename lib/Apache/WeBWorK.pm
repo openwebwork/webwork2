@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.75 2006/01/25 23:13:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.77 2006/07/05 18:27:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -122,7 +122,7 @@ sub handler($) {
 		my $htmlMessage = htmlMessage($r, $warnings, $exception, @backtrace);
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
-			$r->send_http_header;
+			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html><body>$htmlMessage</body></html>";
 		}
 		$r->print($htmlMessage);
