@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.170 2006/07/11 14:21:36 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.171 2006/07/12 01:27:47 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -226,7 +226,7 @@ sub do_reply_with_file {
 	
 	# send our custom HTTP header
 	$r->content_type($type);
-	$r->header_out("Content-Disposition" => "attachment; filename=\"$name\"");
+	$r->headers_out->{"Content-Disposition"} = "attachment; filename=\"$name\"";
 	$r->send_http_header unless MP2;
 	
 	# send the file
@@ -238,6 +238,8 @@ sub do_reply_with_file {
 	if ($delete_after) {
 		unlink $source or warn "failed to unlink $source after sending: $!";
 	}
+	
+	return; # (see comment on return statement in do_reply_with_redirect, below.)
 }
 
 =item do_reply_with_redirect($url)
@@ -251,8 +253,26 @@ sub do_reply_with_redirect {
 	my $r = $self->r;
 	
 	$r->status(MP2 ? Apache2::Const::REDIRECT : Apache::Constants::REDIRECT);
-	$r->header_out(Location => $url);
+	$r->headers_out->{"Location"} = $url;
 	$r->send_http_header unless MP2;
+	
+	return; # we need to explicitly return noting here, otherwise we return $url under Apache2.
+	        # the return value from the mod_perl handler is used to set the HTTP status code,
+	        # but we're setting it explicitly above. i think we should dispense with setting it
+	        # with the return value altogether, and always do it with $r->status. the other way
+	        # is too oblique and error-prone. this is probably a FIXME.
+	        # 
+	        # Apache::WeBWorK::handler always returns the value it got from WeBWorK::dispatch
+	        # WeBWorK::dispatch always returns the value it got from WW::ContentGenerator::go
+	        # WW::ContentGenerator::go works like this:
+	        #		- if reply_with_file, return the return value from do_reply_with_file
+	        #		  (do_reply_with_file actually uses this to return NOT_FOUND/FORBIDDEN)
+	        #		- if reply_with_redirect, return the return value from do_reply_with_redirect
+	        #		  (do_reply_with_redirect does NOT use this -- it sets $r->status instead!)
+	        #		- if header returns a defined value, return that
+	        #		  (CG::header always returns OK!)
+	        #		- otherwise, return OK (this never happens!)
+	        # there are no longer any legitimate header() methods other than the one in CG.pm
 }
 
 =back
