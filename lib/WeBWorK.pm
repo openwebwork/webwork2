@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.85 2006/07/10 17:48:46 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.86 2006/07/11 03:59:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,6 +53,17 @@ use WeBWorK::Request;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+# Apache2 needs upload class
+BEGIN {
+	if (MP2) {
+		require Apache2::Upload;
+		Apache2::Upload->import();
+	}
+}
 
 use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
@@ -174,7 +185,13 @@ sub dispatch($) {
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
 	
-	my @uploads = $r->upload;
+	my @uploads;
+	if (MP2) {
+		my $upload_table = $r->upload;
+		@uploads = values %$upload_table if defined $upload_table;
+	} else {
+		@uploads = $r->upload;
+	}
 	foreach my $u (@uploads) {
 		# make sure it's a "real" upload
 		next unless $u->filename;
