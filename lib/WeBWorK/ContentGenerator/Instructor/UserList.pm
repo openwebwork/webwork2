@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.82 2006/07/11 03:59:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.83 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,7 +70,6 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
-use Apache::Constants qw(:common REDIRECT DONE);  #FIXME  -- this should be called higher up in the object tree.
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant PASSWORD_FORMS => [qw(cancelPassword savePassword)];
@@ -204,30 +203,10 @@ sub pre_header_initialize {
 		#FIXME  does the display mode need to be defined?
 		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
 		# even that might not work with every browser since there are two effective User assignments.
-		$r->header_out(Location => $uri);
-		$self->{noContent} =  1;  # forces redirect
+		$self->reply_with_redirect($uri);
 		return;
 	};
 }
-# FIXME  -- this should be moved up to instructor or contentgenerator
-# FIXME replace this crap with call to $self->reply_with_redirect (in pre_header_initialize)
-sub header {
-	my $self = shift;
-	return REDIRECT if $self->{noContent};
-	my $r    = $self->r;
-	$r->content_type('text/html');
-	$r->send_http_header();
-	return OK;
-}
-
-#FIXME -- this should probably be moved up to instructor or contentgenerator as well
-#sub nbsp {
-#	my $str = shift;  
-#        ($str =~/\S/) ? $str : '&nbsp;'  ;  # returns non-breaking space for empty strings
-#                                            # tricky cases:   $str =0;
-#                                            #  $str is a complex number
-#}
-# moved to ContentGenerator.pm
 
 sub initialize {
 	my ($self) = @_;
