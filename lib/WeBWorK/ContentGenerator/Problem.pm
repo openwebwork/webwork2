@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.201 2006/06/24 19:38:00 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.202 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use File::Path qw(rmtree);
 use WeBWorK::Debug;
 use WeBWorK::Form;
@@ -1007,7 +1008,7 @@ sub body {
 	print "\n";
 	print CGI::start_div({class=>"problem"});
 	print CGI::p($pg->{body_text});
-	print CGI::p(CGI::b("Note: "), CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
+	print CGI::p(CGI::b("Note: "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
 	print $editorLink; # this is empty unless it is appropriate to have an editor link.
 	print CGI::end_div();
 	
@@ -1095,7 +1096,7 @@ sub body {
 	#}
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
 		my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
-		print CGI::p(
+		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
 			$submitAnswers ?"You received a score of ".sprintf("%.0f%%", $pg->{result}->{score} * 100)." for this attempt.".CGI::br():'',
@@ -1103,7 +1104,7 @@ sub body {
 				? "Your overall recorded score is $lastScore.  $notCountedMessage" . CGI::br()
 				: "",
 			$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
-		);
+		));
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}

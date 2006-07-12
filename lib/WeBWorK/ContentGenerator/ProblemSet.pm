@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.81 2006/06/24 19:51:02 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.82 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,8 @@ problem set.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky *ul *li);
+#use CGI qw(-nosticky *ul *li);
+use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;

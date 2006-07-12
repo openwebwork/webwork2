@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.78 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.79 2006/07/11 03:59:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,11 @@ problem sets.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+
+#use Apache::Constants qw/:common REDIRECT/;
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
+
 use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
@@ -304,7 +308,7 @@ sub display_form {
 		name => "selected_sets",
 		request => $r,
 		default_sort => "set_id",
-		default_format => "set_id",
+		default_format => "sid",
 		default_filters => ["all"],
 		size => 20,
 		multiple => $perm_multiset,
@@ -355,7 +359,8 @@ sub display_form {
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::small("You may choose to show any of the following data. Correct answers and solutions are only available $phrase_for_privileged_users after the answer date of the homework set."),
+				CGI::small("You may choose to show any of the following data. Correct answers and solutions are only 
+				            available $phrase_for_privileged_users after the answer date of the homework set."),
 				CGI::br(),
 				CGI::b("Show:"), " ",
 				CGI::checkbox(
