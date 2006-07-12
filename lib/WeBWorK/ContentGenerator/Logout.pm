@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.13 2006/07/05 18:28:14 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.14 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Logout - invalidate key and display logout message.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Cookie;
 
 sub pre_header_initialize {
@@ -106,7 +107,7 @@ sub body {
 	print CGI::start_form(-method=>"POST", -action=>$loginURL);
 	print CGI::hidden("user", $userID);
 	print CGI::hidden("force_passwd_authen", 1);
-	print CGI::p({align=>"center"}, CGI::submit("submit", "Log In Again"));
+	print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>"Log In Again"));
 	print CGI::end_form();
 	
 	return "";

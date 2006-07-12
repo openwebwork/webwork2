@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.40 2006/06/29 23:20:48 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.41 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Login - display a login form.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile dequote);
 
 use mod_perl;
@@ -162,11 +163,11 @@ sub body {
 		CGI::td([
 		  "Username:",
 		  CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
-		]),
+		]),CGI::br(),
 		CGI::td([
 		  "Password:",
 		  CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
-		]),
+		]),CGI::br(),
 		CGI::td([
 		  "",
 		  CGI::checkbox(
@@ -174,7 +175,7 @@ sub body {
 			-label=>"Remember Me",
 		  ),
 		]),
-	 ])
+	  ])
 	);
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
