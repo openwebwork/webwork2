@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.26 2006/02/09 23:20:20 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.27 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Instructor::StudentProgress - Display Student Progres
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
 use WeBWorK::DB::Record::Set;

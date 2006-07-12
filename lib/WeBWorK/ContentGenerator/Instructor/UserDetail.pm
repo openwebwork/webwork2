@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Instructor::UserDetail - Detailed User specific infor
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Debug;
 

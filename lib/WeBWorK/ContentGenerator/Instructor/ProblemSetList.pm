@@ -79,7 +79,8 @@ Delete sets:
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 

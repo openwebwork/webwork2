@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.34 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.35 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Instructor::Assigner - Assign homework sets to users.
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
 sub pre_header_initialize {

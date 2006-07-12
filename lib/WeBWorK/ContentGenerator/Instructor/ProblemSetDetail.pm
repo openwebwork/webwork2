@@ -25,7 +25,8 @@ WeBWorK::ContentGenerator::Instructor::ProblemSetDetail - Edit general set and s
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
 use WeBWorK::DB::Record::Set;

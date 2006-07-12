@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.46 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.47 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,8 +25,9 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
-#use HTML::Entities;
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
+use HTML::Entities;
 use Mail::Sender;
 use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
@@ -603,7 +604,7 @@ sub print_form {
 				 CGI::div({style=>"background-color: #CCCCCC"},
 					 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
 					 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-columns=>30, -override=>1),  
+					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
 				CGI::submit(-name=>'action', -value=>$UPDATE_SETTINGS_BUTTON),
@@ -732,7 +733,7 @@ sub print_form {
 #print actual body of message
 
 	print  "\n", CGI::p( $self->{message}) if defined($self->{message});  
-    print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -columns=>$columns, -override=>1));
+    print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -cols=>$columns, -override=>1));
 
 #############################################################################################
 #	action button table
