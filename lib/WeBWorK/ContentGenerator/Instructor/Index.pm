@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.53 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.54 2006/07/11 03:59:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,7 +26,8 @@ pages
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 #use WeBWorK::Utils::FilterRecords qw/getFiltersForClass/;
 
@@ -342,7 +343,7 @@ sub body {
 		name => "selected_sets",
 		request => $r,
 		default_sort => "set_id",
-		default_format => "set_id",
+		default_format => "sid",
 		default_filters => ["all"],
 		size => 10,
 		multiple => 1,
@@ -362,27 +363,27 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit("sets_assigned_to_user", "View/edit")." all sets for one <b>user</b>(set dates, scores)",
-				CGI::submit("users_assigned_to_set", "View/edit")." all users for one <b>set</b>",
+				CGI::submit(-name=>"sets_assigned_to_user", -label=>"View/edit")." all sets for one <b>user</b>(set dates, scores)",
+				CGI::submit(-name=>"users_assigned_to_set", -label=>"View/edit")." all users for one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("edit_users", "Edit"). " class list data for selected <b>users</b>",
-				CGI::submit("edit_sets", "Edit"). " one <b>set</b>" . "&nbsp; &nbsp; ".
-				"or &nbsp; ".CGI::submit("prob_lib","add problems")." to one <b>set</b>",
+				CGI::submit(-name=>"edit_users", -label=>"Edit"). " class list data for selected <b>users</b>",
+				CGI::submit(-name=>"edit_sets", -label=>"Edit"). " one <b>set</b>" . "&nbsp; &nbsp; ".
+				"or &nbsp; ".CGI::submit(-name=>"prob_lib",-label=>"add problems")." to one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("user_stats", "Statistics")." or ".
-				CGI::submit("user_progress", "progress")." for one <b>user</b>",
-				CGI::submit("set_stats", "Statistics")." or ".
-				CGI::submit("set_progress", "progress")." for one <b>set</b>",
+				CGI::submit(-name=>"user_stats", -label=>"Statistics")." or ".
+				CGI::submit(-name=>"user_progress", -label=>"progress")." for one <b>user</b>",
+				CGI::submit(-name=>"set_stats", -label=>"Statistics")." or ".
+				CGI::submit(-name=>"set_progress", -label=>"progress")." for one <b>set</b>",
 			]),
 			CGI::td([
-				CGI::submit("user_options", "Change password")." for one <b>user</b>",
-				CGI::submit("score_sets", "Score"). " selected <b>sets</b>",
+				CGI::submit(-name=>"user_options", -label=>"Change password")." for one <b>user</b>",
+				CGI::submit(-name=>"score_sets", -label=>"Score"). " selected <b>sets</b>",
 			]),
 			CGI::td([
-				CGI::submit("add_users", "Add")." new users",
-				CGI::submit("create_set", "Create"). " new set: ".
+				CGI::submit(-name=>"add_users", -label=>"Add")." new users",
+				CGI::submit(-name=>"create_set", -label=>"Create"). " new set: ".
 				   CGI::textfield(-name=>"new_set_name", 
 					   -default=>"Name for new set here",
 					   -override=>1, -size=>20),
@@ -393,13 +394,13 @@ sub body {
 				CGI::table({-border=>0, align=>"center"},
 					CGI::Tr({-align=>"left"}, [
 						CGI::td({-height=>2}),
-						CGI::td(CGI::submit("assign_users", "Assign")." selected <b>users</b> to selected <b>sets</b>"),
-						CGI::td(CGI::submit("act_as_user", "Act as")." one <b>user</b> (on one <b>set</b>)"),
-						CGI::td(CGI::submit("edit_set_for_users", "Edit"). " one <b>set</b> for  <b>users</b>"),
+						CGI::td(CGI::submit(-name=>"assign_users", -label=>"Assign")." selected <b>users</b> to selected <b>sets</b>"),
+						CGI::td(CGI::submit(-name=>"act_as_user", -label=>"Act as")." one <b>user</b> (on one <b>set</b>)"),
+						CGI::td(CGI::submit(-name=>"edit_set_for_users", -label=>"Edit"). " one <b>set</b> for  <b>users</b>"),
 						CGI::td({-height=>4}),
-						CGI::td(CGI::submit("email_users", "Email"). " your students"),
+						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " your students"),
 						($authz->hasPermissions($user, "manage_course_files")
-							? CGI::td(CGI::submit("transfer_files", "Transfer"). " course files")
+							? CGI::td(CGI::submit(-name=>"transfer_files", -label=>"Transfer"). " course files")
 							: ()
 						),
 					])

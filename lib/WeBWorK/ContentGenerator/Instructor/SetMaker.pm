@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.70 2006/07/08 17:29:16 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.71 2006/07/08 22:23:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,8 @@ use strict;
 use warnings;
 
 
-use CGI qw(-nosticky);
+#use CGI qw(-nosticky);
+use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
@@ -489,7 +490,7 @@ sub browse_library_panel2 {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
-		CGI::hidden(-name=>"library_is_basic", -default=>[1],-override=>1),
+		CGI::hidden(-name=>"library_is_basic", -default=>1,-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		CGI::Tr(
 			CGI::td(["Subject:",
@@ -600,7 +601,7 @@ sub browse_library_panel2adv {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"},
-		CGI::hidden(-name=>"library_is_basic", -default=>[2],-override=>1),
+		CGI::hidden(-name=>"library_is_basic", -default=>2,-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		# Html done by hand since it is temporary
 		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, 'All Selected Constraints Joined by "And"')),
@@ -711,17 +712,17 @@ sub make_top_row {
 	my $browse_which = $data{browse_which};
 	my $library_selected = $self->{current_library_set};
 	my $set_selected = $r->param('local_sets');
-	my ($dis1, $dis2, $dis3, $dis4) = ("","","", "");
-	$dis1 =	 '-disabled' if($browse_which eq 'browse_library');	 
-	$dis2 =	 '-disabled' if($browse_which eq 'browse_local');
-	$dis3 =	 '-disabled' if($browse_which eq 'browse_mysets');
-	$dis4 =	 '-disabled' if($browse_which eq 'browse_setdefs');
+	my (@dis1, @dis2, @dis3, @dis4) = ();
+	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_library');	 
+	@dis2 =	 (-disabled=>1) if($browse_which eq 'browse_local');
+	@dis3 =	 (-disabled=>1) if($browse_which eq 'browse_mysets');
+	@dis4 =	 (-disabled=>1) if($browse_which eq 'browse_setdefs');
 
 	##	Make buttons for additional problem libraries
 	my $libs = '';
 	foreach my $lib (sort(keys(%problib))) {
 		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>$problib{$lib},
-																 ($browse_which eq "browse_$lib")? '-disabled': '')
+																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
 	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
@@ -744,7 +745,7 @@ sub make_top_row {
 						-default=> $set_selected,
 						-override=>1),
 		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
-		CGI::hidden(-name=>"selfassign", -default=>[0],-override=>1).
+		CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
 		CGI::br(), 
 		CGI::br(), 
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
@@ -765,10 +766,10 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
-		CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, $dis1),
-		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, $dis2),
-		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, $dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, $dis4),
+		CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, @dis1),
+		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, @dis2),
+		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, @dis3),
+		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, @dis4),
 		$libs,
 	));
 
@@ -827,7 +828,7 @@ sub make_data_row {
 
 
 	#if($self->{r}->param('browse_which') ne 'browse_library') {
-	my $problem_seed = $self->{r}->param('problem_seed') || 0;
+	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
 		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			  courseID =>$urlpath->arg("courseID"),
@@ -873,7 +874,7 @@ sub make_data_row {
 		CGI::br(),
 		$inSet,
 		CGI::checkbox((%add_box_data),-override=>1),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>[$sourceFileName],-override=>1).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
 		CGI::p($problem_output),
 	));
 }
@@ -897,7 +898,7 @@ sub pre_header_initialize {
 	my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
 	my $library_basic = $r->param('library_is_basic') || 1;
-
+	$self->{problem_seed} = $r->param('problem_seed') || 1234;
 	## Fix some parameters
 	for my $key (keys(%{ LIB2_DATA() })) {
 		clear_default($r, LIB2_DATA->{$key}->{name}, LIB2_DATA->{$key}->{all} );
@@ -960,8 +961,7 @@ sub pre_header_initialize {
 
 	my $browse_which = $r->param('browse_which') || 'browse_local';
 
-	my $problem_seed = $r->param('problem_seed') || 0;
-	$r->param('problem_seed', $problem_seed); # if it wasn't defined before
+	
 
 	## check for problem lib buttons
 	my $browse_lib = '';
@@ -1002,8 +1002,8 @@ sub pre_header_initialize {
 		##### Change the seed value
 
 	} elsif ($r->param('rerandomize')) {
-		$problem_seed++;
-		$r->param('problem_seed', $problem_seed);
+		$self->{problem_seed}= 1+$self->{problem_seed};
+		#$r->param('problem_seed', $problem_seed);
 		$self->addbadmessage('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
 
 		##### Clear the display
@@ -1231,7 +1231,7 @@ sub pre_header_initialize {
 	$self->{first_shown} = $first_shown;
 	$self->{last_shown} = $last_shown;
 	$self->{browse_which} = $browse_which;
-	$self->{problem_seed} = $problem_seed;
+	#$self->{problem_seed} = $problem_seed;
 	$self->{pg_files} = \@pg_files;
 	$self->{past_marks} = \@past_marks;
 	$self->{all_db_sets} = \@all_db_sets;
@@ -1278,7 +1278,7 @@ sub body {
 	my $first_shown = $self->{first_shown};
 	my $last_shown = $self->{last_shown}; 
 	my $browse_which = $self->{browse_which};
-	my $problem_seed = $self->{problem_seed};
+	my $problem_seed = $self->{problem_seed}||1234;
 	my @pg_files = @{$self->{pg_files}};
 	my @all_db_sets = @{$self->{all_db_sets}};
 
@@ -1299,21 +1299,21 @@ sub body {
 	$self->{isInSet} = \%isInSet;
 
 	##########	Top part
-	print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
+	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields,
 			'<div align="center">',
 	CGI::start_table({-border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
-	print CGI::hidden(-name=>'browse_which', -value=>[$browse_which],-override=>1),
-		CGI::hidden(-name=>'problem_seed', -value=>[$problem_seed], -override=>1);
+	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
+		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
 		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j],-override=>1);
 	}
 
-	print CGI::hidden(-name=>'first_shown', -value=>[$first_shown],-override=>1);
+	print CGI::hidden(-name=>'first_shown', -value=>$first_shown,-override=>1);
 	
-	print CGI::hidden(-name=>'last_shown', -value=>[$last_shown], -override=>1);
+	print CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1);
 
 
 	########## Now print problems

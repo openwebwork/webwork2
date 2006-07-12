@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.17 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.18 2006/04/02 12:32:02 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,7 +31,8 @@ WeBWorK::ContentGenerator::Instructor::FileManager.pm -- simple directory manage
 
 use strict;
 use warnings;
-use CGI;
+#use CGI;
+use WeBWorK::CGI;
 
 use constant HOME => 'templates';
 
@@ -324,20 +325,20 @@ EOF
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
 		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group('format',['Text','Binary','Automatic'],
-				     $self->getFlag('format','Automatic')))),
+		    CGI::radio_group(name=>'format',values=>['Text','Binary','Automatic'],
+				     default=>$self->getFlag('format','Automatic')))),
 		),
 	]);
 	print CGI::Tr([
 		CGI::td(),
 		CGI::td({colspan=>3},
-		  CGI::small(CGI::checkbox('overwrite',$self->getFlag('overwrite'),1,
-					   'Overwrite existing files silently')),
+		  CGI::small(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
+					   -label=>'Overwrite existing files silently')),
 		  CGI::br(),
-		  CGI::small(CGI::checkbox('unpack',$self->getFlag('unpack'),1,
-					   'Unpack archives automatically')),
-		  CGI::small(CGI::checkbox('autodelete',$self->getFlag('autodelete'),1,
-					   'then delete them')),
+		  CGI::small(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
+					   -label=>'Unpack archives automatically')),
+		  CGI::small(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
+					   -label=>'then delete them')),
 		),
 	]);
 

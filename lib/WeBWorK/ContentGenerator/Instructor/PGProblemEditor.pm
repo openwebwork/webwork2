@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.83 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.84 2006/07/11 03:59:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,8 @@ WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
 
 use strict;
 use warnings;
-use CGI qw(-nosticky );
+#use CGI qw(-nosticky );
+use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
 use HTML::Entities;
 use URI::Escape;
@@ -576,7 +577,7 @@ EOF
 		CGI::p(
 			CGI::textarea(
 				-name => 'problemContents', -default => $problemContents,
-				-rows => $rows, -columns => $columns, -override => 1,
+				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
 
@@ -1033,11 +1034,11 @@ sub saveFileChanges {
     	my $outputDirectory = $outputFilePath;
         $sourceDirectory =~ s|/[^/]+\.pg$||;
         $outputDirectory =~ s|/[^/]+\.pg$||;
-
-    	#$self->addgoodmessage("Copying auxiliary files from $sourceDirectory to  new location at $outputDirectory");
+##############
+# Transfer this to Utils::copyAuxiliaryFiles($sourceDirectory, $destinationDirectory)
+##############
     	my @filesToCopy;
         @filesToCopy = WeBWorK::Utils::readDirectory($sourceDirectory) if -d $sourceDirectory;
-        #$self->addgoodmessage("Transfer".join(" ", @filesToCopy));
         foreach my $file (@filesToCopy) {
             next if $file =~ /\.pg$/;   # .pg file should already be transferred
         	my $fromPath = "$sourceDirectory/$file";
@@ -1052,8 +1053,11 @@ sub saveFileChanges {
         	
 
         }
+        $self->addgoodmessage("Copied auxiliary files from $sourceDirectory to  new location at $outputDirectory");
+ 
     }
-    
+ ##############
+ ##############
      
 	###########################################################
 	# clean up temp files on revert, save and save_as
