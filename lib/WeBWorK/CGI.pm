@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.10 2006/07/11 16:11:13 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.13 2006/07/11 18:18:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,6 +14,10 @@
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
+
+
+
+
 use HTML::EasyTags;
 use strict;
 package CGI; # (override standard CGI namespace!!)
@@ -36,7 +40,7 @@ sub AUTOLOAD {
 	# handle special cases
 	$func =~/^(checkbox)$/  && do {
 	                           my $type = $func;
-	                           $func ='input', 
+	                           $func ='input'; 
 	                           my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 	                           $inputs{-type} = $type;
 	                           my $labels_key = normalizeName('labels?',keys %inputs);
@@ -62,7 +66,7 @@ sub AUTOLOAD {
 	                       };
     $func =~/^submit$/        && do {
     	                       my $type = $func;
-	                           $func ='input', 
+	                           $func ='input'; 
 	                           my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 	                           $inputs{-type} = $type;
 	                           my ($labels_key) = normalizeName('labels?',keys %inputs);
@@ -72,7 +76,7 @@ sub AUTOLOAD {
 	                       };
     $func =~/^radio$/          && do {
 							   my $type = $func;
-							   $func ='input', 
+							   $func ='input'; 
 							   my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 	                           $inputs{-type} = $type;
 							   my ($values_key) = normalizeName('values?',keys %inputs);
@@ -80,7 +84,7 @@ sub AUTOLOAD {
 							   delete($inputs{$values_key}) if defined $values_key and exists $inputs{$values_key};
 							   @inputs = (\%inputs);
 							   };
-	$func =~/^(p|Tr|td|li|hidden|table|div|th)$/     && do { # concatenate inputs
+	$func =~/^(p|Tr|td|li|table|div|th)$/     && do { # concatenate inputs
 							   my $attributes;
 							   $attributes = shift @inputs if ref($inputs[0]) =~/HASH/;
 							   if (ref($inputs[0]) =~/ARRAY/) { # implied group
@@ -93,12 +97,25 @@ sub AUTOLOAD {
 						    };
        $func =~ /^hidden/ && do  { # handles name value pairs
                                my $type = $func;
-	                           $func ='input', 
+	                           $func ='input'; 
 	                           my %inputs;
-	                           $inputs{-type} = $type;
-	                           $inputs{-name} = $inputs[0];
-	                           $inputs{-text}= $inputs[1];
-	                           @inputs = (\%inputs);
+	                           if (@inputs == 2)  { #name value pair
+								   $inputs{-type} = $type;
+								   $inputs{-name} = $inputs[0];
+								   $inputs{-value}= $inputs[1];
+								   $inputs{-value} = 1 unless defined($inputs{-value}); 
+								   @inputs = (\%inputs);
+							   } elsif( ref($inputs[0])=~/HASH/ ){
+							   	   $inputs[0]->{-type} = $type;
+							   } else {  # labeled entries
+							       
+							   	   %inputs = @inputs;
+							   	   $inputs{-type} = $type;
+							   	   @inputs = (\%inputs);
+							   }
+							   	
+	                           #warn "hidden inputs are ", join(" ", @inputs);
+	                           
 	                        };
 	                           
        $func =~/^radio_group$/ &&do {
@@ -153,7 +170,8 @@ sub AUTOLOAD {
 							   my $labels_key   = normalizeName('labels?',keys %inputs);
 							   my $ra_value     = $inputs{$values_key};
 							   my $rh_labels    = $inputs{labels_key};
-							   my @values       =  eval{ @{$inputs{$values_key}} };
+							   my @values       =  eval{ @{$inputs{$values_key}} }; 
+							   @values          = grep {defined($_) and $_} @values;
 							   warn "error in $values_key  $inputs{$values_key}",join(' ', @inputs), caller(), $@ if $@;
 							   
 							   # deal with the default option
@@ -177,6 +195,7 @@ sub AUTOLOAD {
 							   } 
 							   %inputs = %{removeParam('default',\%inputs)};
 							   ## match labels to values
+							   return unless @values;   # don't try to call options_group on an empty list
 							   my @text=();
 							   if (defined($labels_key) and $labels_key) {
 								   my %labels= %{$inputs{$labels_key}}; 
@@ -189,7 +208,7 @@ sub AUTOLOAD {
 							   # end match labels to values
 							   $prolog = $html2->select_start(\%inputs).$selected_option;
 							   $postlog = $html2->select_end();
-							   $func = 'option_group';
+							   $func = 'option_group'; 
 							   @inputs =({-value=>\@values, -text=>\@text });
 	                        };
     
