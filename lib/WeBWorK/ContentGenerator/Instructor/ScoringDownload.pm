@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.5 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ScoringDownload.pm,v 1.6 2006/07/11 03:59:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,26 @@ WeBWorK::ContentGenerator::Instructor::ScoringDownload - Download scoring data f
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common);
+
+sub pre_header_initialize {
+	my ($self) = @_;
+	my $r          = $self->r;
+	my $ce         = $r->ce;
+	my $authz      = $r->authz;
+	my $scoringDir = $ce->{courseDirs}->{scoring};
+	my $file       = $r->param('getFile');
+	my $user       = $r->param('user');
+	
+	if ($authz->hasPermissions($user, "score_sets")) {
+		$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); # 0==don't delete file after downloading
+	} else {
+		$self->addbadmessage("You do not have permission to access scoring data.");
+	}
+}
+
+1;
+
+__END__
 
 # FIXME replace all crap with a call to reply_with_file
 # FIXME and then maybe merge that functionality into Scoring.pm
