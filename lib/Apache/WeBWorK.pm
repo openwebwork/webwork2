@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.77 2006/07/05 18:27:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.78 2006/07/11 03:59:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,7 +37,7 @@ use WeBWorK;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-# load correct logging module
+# load correct modules
 BEGIN {
 	if (MP2) {
 		require Apache2::Log;
@@ -125,7 +125,7 @@ sub handler($) {
 			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html><body>$htmlMessage</body></html>";
 		}
-		$r->print($htmlMessage);
+		print $htmlMessage;
 		
 		# log the error to the apache error log
 		my $textMessage = textMessage($r, $warnings, $exception, @backtrace);
