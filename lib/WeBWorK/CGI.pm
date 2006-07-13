@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.18 2006/07/13 16:56:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.19 2006/07/13 17:24:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -111,6 +111,7 @@ sub AUTOLOAD {
                                my $type = $func;
 	                           $func ='input'; 
 	                           my %inputs;
+	                           my $default_key = normalizeName('default', @inputs);
 	                           if (@inputs == 2)  { #name value pair
 								   $inputs{-type} = $type;
 								   $inputs{-name} = $inputs[0];
@@ -120,14 +121,16 @@ sub AUTOLOAD {
 							   } elsif( ref($inputs[0])=~/HASH/ ){
 							   	   $inputs[0]->{-type} = $type;
 							   } else {  # labeled entries
-							       
-							   	   %inputs = @inputs;
+							       %inputs = @inputs;
 							   	   $inputs{-type} = $type;
+							   	   if ( $default_key and defined($inputs{$default_key}) ) {
+							   	   		$inputs{-value} = $inputs{$default_key};
+							   	   		%inputs = %{removeParam('default',\%inputs)};
+							   	   }
+							   	   
 							   	   @inputs = (\%inputs);
 							   }
-							   last CASES;
-	                           #warn "hidden inputs are ", join(" ", @inputs);
-	                           
+							   last CASES; 
 	                        };
 	                           
        $func =~/^radio_group$/ &&do {
@@ -147,22 +150,11 @@ sub AUTOLOAD {
 							   my $default = normalizeName('default', @inputs);
 							   my $selected_button = '';
 							   my $text = '';
+							   my $selected_value = $values[0];
 							   if (defined($default) and $default and defined($inputs{$default})) {
 							        # grab the selected options
-							        my $selected_value  = $inputs{$default}; 
-							        
-										if (defined $labels_key) {
-											$text = $inputs{$labels_key}->{$selected_value}.$ret;
-											delete($inputs{$labels_key}->{$selected_value});
-										} else {
-											$text = $selected_value;
-										}
-										@values = grep !/$selected_value/, @values; 
-										$prolog.= $html2->input({-name=>$inputs{$name_key},-type=>'radio',
-										                                   -checked=>1, -text=>$text, 
-										                                   -value=>$selected_value})."\n";
-									
-							   } 
+							        $selected_value  = $inputs{$default}; 
+							   }  
 							   %inputs = %{removeParam('default',\%inputs)};
 	                            ## match labels to values
 	                           my @text=();
@@ -173,7 +165,8 @@ sub AUTOLOAD {
 							   } else { # no labels
 							   	  @text = map {$_ .$ret} @values;
 							   }
-	                           @inputs = (-type=>'radio',-value=>\@values, -text=>\@text);
+							   my @checked = map { $selected_value eq $_ } @values;
+	                           @inputs = (-type=>'radio',-name=>$inputs{$name_key}, -value=>\@values, -text=>\@text, -checked=>\@checked);
 	                           last CASES;
 	                        }; 
 	$func =~/^(popup_menu|scrolling_list)$/   &&do{ 
@@ -191,31 +184,16 @@ sub AUTOLOAD {
 							   my $default = normalizeName('default', @inputs);
 							   my $selected_option = '';
 							   my $text = '';
-							   my @selected_values = ($values[0]);  # select the first value by default
-							   #print "default is |$default| and |$inputs{$default}|";
+							   my %selected_values = ($values[0] => 1);  # select the first value by default
 							   if (defined($default) and $default and defined($inputs{$default}) and $inputs{$default}) {
 							        # grab the selected options
 							        if (ref($inputs{$default})=~/ARRAY/ ) {
-							        	@selected_values = @{$inputs{$default}};
+							        	%selected_values = map {$_ => 1 } @{$inputs{$default}};
 							        } elsif ($inputs{$default}) {
-							        	@selected_values = ($inputs{$default});
+							        	%selected_values = ($inputs{$default} => 1);
 							        }
 							   }
-							   #print "selected value is @selected_values";
-							   foreach my $selected_value (@selected_values) {
-									if (defined $labels_key) {
-										$text = $inputs{$labels_key}->{$selected_value};
-										delete($inputs{$labels_key}->{$selected_value});
-									} else {
-										$text = $selected_value;
-									}
-									my @newvalues = grep !/$selected_value/, @values; 
-									if (@newvalues < @values ) {  # default was present in values
-										$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
-										@values = @newvalues;
-									}
-							   }
-							   #print "selected option is $selected_option";
+                               my @selected = map {(exists($selected_values{$_}) )?1 : 0 } @values;
 							   %inputs = %{removeParam('default',\%inputs)};
 							   ## match labels to values
 							   my @text=();
@@ -232,7 +210,7 @@ sub AUTOLOAD {
 							   $postlog = $html2->select_end();
 							   return "$prolog$postlog" unless @values;  # don't call group if options are empty
 							   $func = 'option_group'; 
-							   @inputs =({-value=>\@values, -text=>\@text });
+							   @inputs =({-value=>\@values, -text=>\@text, -selected =>\@selected });
 							   last CASES;
 	                        };
     } # end CASES block
