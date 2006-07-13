@@ -444,8 +444,8 @@ sub add_course_form {
 	);
 	
 	print CGI::p("To add the WeBWorK administrators to the new course (as instructors) check the box below.");
-	my $checked = ($add_admin_users) ?"checked": "";  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
-	print CGI::p(CGI::input({-type=>'checkbox', -name=>"add_admin_users", $checked=>'' }, "Add WeBWorK administrators to new course"));
+	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
+	print CGI::p(CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, "Add WeBWorK administrators to new course"));
 	
 	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only 
 	numbers, letters, hyphens, periods (dots), commas,and underscores.\n");
@@ -518,7 +518,7 @@ sub add_course_form {
 		print CGI::Tr(
 			CGI::td({style=>"text-align: right"},
 				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
-				. ($add_dbLayout eq $dbLayout ? " checked" : "") . ' />',
+				. ($add_dbLayout eq $dbLayout ? 'checked=>"1"' : '') . ' />',
 			),
 			CGI::td($dbLayoutLabel),
 		);
