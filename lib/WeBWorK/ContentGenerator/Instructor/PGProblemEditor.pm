@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.84 2006/07/11 03:59:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.85 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1025,9 +1025,10 @@ sub saveFileChanges {
 	# TO BE DONE -- MEG
 	###########################################################
     # If things have worked so far determine if the file might be accompanied by auxiliary files
-  
+    $outputFilePath = "" unless defined $outputFilePath;
     $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
-    my $auxiliaryFilesExist = ($1 eq $2) ? 1 : 0;
+    my $auxiliaryFilesExist = 0;
+    my $auxiliaryFilesExist = 1 if ($1 eq $2);
 
     if ($auxiliaryFilesExist and not $do_not_save ) {
         my $sourceDirectory = $sourceFilePath;
