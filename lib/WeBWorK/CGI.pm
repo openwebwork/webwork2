@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.13 2006/07/11 18:18:16 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.14 2006/07/12 01:14:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,6 +54,11 @@ sub AUTOLOAD {
 	                       };
 	$func =~/^textfield$/     && do {
 	                          my $type = 'text';
+	                          $func ='input';
+	                          push @inputs, '-type',$type;
+	                       };
+	$func =~/^password_field$/     && do {
+	                          my $type = 'password';
 	                          $func ='input';
 	                          push @inputs, '-type',$type;
 	                       };
