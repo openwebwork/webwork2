@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.14 2006/07/12 01:14:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.15 2006/07/13 15:01:05 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -162,7 +162,7 @@ sub AUTOLOAD {
 	                           if (defined($labels_key) and $labels_key) {
 								   my %labels= %{$inputs{$labels_key}}; 
 								   delete($inputs{$labels_key}) if exists $inputs{$labels_key};
-								   @text  = map {$labels{$_}.$ret} @values;
+								   @text  = map {( exists($labels{$_}) )? $labels{$_}.$ret: $_.$ret } @values;
 							   } else { # no labels
 							   	  @text = map {$_ .$ret} @values;
 							   }
@@ -205,7 +205,7 @@ sub AUTOLOAD {
 							   if (defined($labels_key) and $labels_key) {
 								   my %labels= %{$inputs{$labels_key}}; 
 								   delete($inputs{$labels_key}) if exists $inputs{$labels_key};
-								   @text  = map {$labels{$_}} @values;
+								   @text  = map {( exists($labels{$_}) )? $labels{$_}: $_ } @values;
 							   } else { # no labels
 							   	   @text = @values;
 							   }
