@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGI.pm,v 1.15 2006/07/13 15:01:05 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.18 2006/07/13 16:56:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,7 @@ sub AUTOLOAD {
 	my $prolog = '';
 	my $postlog = '';
 	# handle special cases
+	CASES:{
 	$func =~/^(checkbox)$/  && do {
 	                           my $type = $func;
 	                           $func ='input'; 
@@ -51,23 +52,26 @@ sub AUTOLOAD {
 	                           		$prolog = "<label>";
 	                           		$postlog = "$label</label>";
 	                           }
+	                           last CASES;
 	                       };
 	$func =~/^textfield$/     && do {
 	                          my $type = 'text';
 	                          $func ='input';
 	                          push @inputs, '-type',$type;
+	                          last CASES;
 	                       };
 	$func =~/^password_field$/     && do {
 	                          my $type = 'password';
 	                          $func ='input';
 	                          push @inputs, '-type',$type;
+	                          last CASES;
 	                       };
 	$func =~/^textarea$/     && do {
 	                          my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 	                          my $default_label = normalizeName('defaults?',keys %inputs);
 	                          $inputs{-text} = $inputs{$default_label};
 	                          @inputs = %{removeParam($default_label, \%inputs)};
-	                          
+	                          last CASES;
 	                       };
     $func =~/^submit$/        && do {
     	                       my $type = $func;
@@ -78,6 +82,7 @@ sub AUTOLOAD {
 	                           $inputs{-value}= $inputs{$labels_key} if defined $labels_key and exists $inputs{$labels_key}; # use value for name
 	                           delete($inputs{$labels_key}) if defined $labels_key and exists $inputs{$labels_key};
 	                           @inputs = (\%inputs);
+	                           last CASES;
 	                       };
     $func =~/^radio$/          && do {
 							   my $type = $func;
@@ -88,6 +93,7 @@ sub AUTOLOAD {
 							   $inputs{-value}= $inputs{$values_key};  # use value for name
 							   delete($inputs{$values_key}) if defined $values_key and exists $inputs{$values_key};
 							   @inputs = (\%inputs);
+							   last CASES;
 							   };
 	$func =~/^(p|Tr|td|li|table|div|th)$/     && do { # concatenate inputs
 							   my $attributes;
@@ -99,6 +105,7 @@ sub AUTOLOAD {
 								   @inputs = ($text);
 							   }
 							   unshift @inputs, $attributes if defined $attributes;
+							   last CASES;
 						    };
        $func =~ /^hidden/ && do  { # handles name value pairs
                                my $type = $func;
@@ -118,7 +125,7 @@ sub AUTOLOAD {
 							   	   $inputs{-type} = $type;
 							   	   @inputs = (\%inputs);
 							   }
-							   	
+							   last CASES;
 	                           #warn "hidden inputs are ", join(" ", @inputs);
 	                           
 	                        };
@@ -167,8 +174,9 @@ sub AUTOLOAD {
 							   	  @text = map {$_ .$ret} @values;
 							   }
 	                           @inputs = (-type=>'radio',-value=>\@values, -text=>\@text);
+	                           last CASES;
 	                        }; 
-	$func =~/^(popup_menu|scrolling_list)$/   &&do{
+	$func =~/^(popup_menu|scrolling_list)$/   &&do{ 
 							   my %inputs       = (ref($_[0])=~/HASH/) ? %{$_[0]} : @inputs;
 							   %inputs = %{removeParam('override',\%inputs)};
 							   my $values_key   = normalizeName('values?',keys %inputs); #get keys
@@ -184,6 +192,7 @@ sub AUTOLOAD {
 							   my $selected_option = '';
 							   my $text = '';
 							   my @selected_values = ($values[0]);  # select the first value by default
+							   #print "default is |$default| and |$inputs{$default}|";
 							   if (defined($default) and $default and defined($inputs{$default}) and $inputs{$default}) {
 							        # grab the selected options
 							        if (ref($inputs{$default})=~/ARRAY/ ) {
@@ -192,20 +201,23 @@ sub AUTOLOAD {
 							        	@selected_values = ($inputs{$default});
 							        }
 							   }
-								foreach my $selected_value (@selected_values) {
+							   #print "selected value is @selected_values";
+							   foreach my $selected_value (@selected_values) {
 									if (defined $labels_key) {
 										$text = $inputs{$labels_key}->{$selected_value};
 										delete($inputs{$labels_key}->{$selected_value});
 									} else {
 										$text = $selected_value;
 									}
-									@values = grep !/$selected_value/, @values; 
-									$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
-								}
-							    
+									my @newvalues = grep !/$selected_value/, @values; 
+									if (@newvalues < @values ) {  # default was present in values
+										$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+										@values = @newvalues;
+									}
+							   }
+							   #print "selected option is $selected_option";
 							   %inputs = %{removeParam('default',\%inputs)};
 							   ## match labels to values
-							   return unless @values;   # don't try to call options_group on an empty list
 							   my @text=();
 							   if (defined($labels_key) and $labels_key) {
 								   my %labels= %{$inputs{$labels_key}}; 
@@ -218,10 +230,12 @@ sub AUTOLOAD {
 							   # end match labels to values 
 							   $prolog = $html2->select_start(\%inputs).$selected_option;
 							   $postlog = $html2->select_end();
+							   return "$prolog$postlog" unless @values;  # don't call group if options are empty
 							   $func = 'option_group'; 
 							   @inputs =({-value=>\@values, -text=>\@text });
+							   last CASES;
 	                        };
-    
+    } # end CASES block
     #my @singles   = grep /override|enable|disable|selected/, @inputs;
     #warn "possible problem with single names (no values)", join(" ", @singles) if @singles;
     
