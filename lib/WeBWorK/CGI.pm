@@ -187,6 +187,7 @@ sub AUTOLOAD {
 							        # grab the selected options
 							        my @selected_values  = (ref($inputs{$default})=~/ARRAY/) ? 
 							                   @{$inputs{$default}}:($inputs{$default}); 
+							        @selected_values =($values[0]);   # select the first value by default
 							        foreach my $selected_value (@selected_values) {
 										if (defined $labels_key) {
 											$text = $inputs{$labels_key}->{$selected_value};
