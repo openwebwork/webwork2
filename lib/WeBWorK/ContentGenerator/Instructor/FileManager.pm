@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.18 2006/04/02 12:32:02 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.19 2006/07/12 01:19:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -325,7 +325,7 @@ EOF
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
 		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group(name=>'format',values=>['Text','Binary','Automatic'],
+		    CGI::radio_group(name=>'format', value=>['Text','Binary','Automatic'],
 				     default=>$self->getFlag('format','Automatic')))),
 		),
 	]);
