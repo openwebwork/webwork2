@@ -183,22 +183,26 @@ sub AUTOLOAD {
 							   my $default = normalizeName('default', @inputs);
 							   my $selected_option = '';
 							   my $text = '';
-							   if (defined($default) and $default and defined($inputs{$default})) {
+							   my @selected_values = ($values[0]);  # select the first value by default
+							   if (defined($default) and $default and defined($inputs{$default}) and $inputs{$default}) {
 							        # grab the selected options
-							        my @selected_values  = (ref($inputs{$default})=~/ARRAY/) ? 
-							                   @{$inputs{$default}}:($inputs{$default}); 
-							        @selected_values =($values[0]);   # select the first value by default
-							        foreach my $selected_value (@selected_values) {
-										if (defined $labels_key) {
-											$text = $inputs{$labels_key}->{$selected_value};
-											delete($inputs{$labels_key}->{$selected_value});
-										} else {
-											$text = $selected_value;
-										}
-										@values = grep !/$selected_value/, @values; 
-										$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+							        if (ref($inputs{$default})=~/ARRAY/ ) {
+							        	@selected_values = @{$inputs{$default}};
+							        } elsif ($inputs{$default}) {
+							        	@selected_values = ($inputs{$default});
+							        }
+							   }
+								foreach my $selected_value (@selected_values) {
+									if (defined $labels_key) {
+										$text = $inputs{$labels_key}->{$selected_value};
+										delete($inputs{$labels_key}->{$selected_value});
+									} else {
+										$text = $selected_value;
 									}
-							   } 
+									@values = grep !/$selected_value/, @values; 
+									$selected_option .= $html2->option({-selected=>1, -text=>$text, -value=>$selected_value})."\n";
+								}
+							    
 							   %inputs = %{removeParam('default',\%inputs)};
 							   ## match labels to values
 							   return unless @values;   # don't try to call options_group on an empty list
@@ -211,7 +215,7 @@ sub AUTOLOAD {
 							   	   @text = @values;
 							   }
 							   delete($inputs{$values_key});
-							   # end match labels to values
+							   # end match labels to values 
 							   $prolog = $html2->select_start(\%inputs).$selected_option;
 							   $postlog = $html2->select_end();
 							   $func = 'option_group'; 
