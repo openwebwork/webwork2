@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.48 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.49 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -422,7 +422,7 @@ sub add_course_form {
 	
 	print CGI::h2("Add Course");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -431,15 +431,15 @@ sub add_course_form {
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Course ID:"),
-			CGI::td(CGI::textfield("add_courseID", $add_courseID, 25)),
+			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25)),
 		),
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Course Title:"),
-			CGI::td(CGI::textfield("add_courseTitle", $add_courseTitle, 25)),
+			CGI::td(CGI::textfield(-name=>"add_courseTitle", -value=>$add_courseTitle, -size=>25)),
 		),
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "Institution:"),
-			CGI::td(CGI::textfield("add_courseInstitution", $add_courseInstitution, 25)),
+			CGI::td(CGI::textfield(-name=>"add_courseInstitution", -value=>$add_courseInstitution, -size=>25)),
 		),
 	);
 	
@@ -455,15 +455,15 @@ sub add_course_form {
 			CGI::table({class=>"FormLayout"},
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "User ID:"),
-					CGI::td(CGI::textfield("add_initial_userID", $add_initial_userID, 25)),
+					CGI::td(CGI::textfield(-name=>"add_initial_userID", -value=>$add_initial_userID, -size=>25)),
 				),
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "Password:"),
-					CGI::td(CGI::password_field("add_initial_password", $add_initial_password, 25)),
+					CGI::td(CGI::password_field(-name=>"add_initial_password", -value=>$add_initial_password, -size=>25)),
 				),
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "Confirm Password:"),
-					CGI::td(CGI::password_field("add_initial_confirmPassword", $add_initial_confirmPassword, 25)),
+					CGI::td(CGI::password_field(-name=>"add_initial_confirmPassword", -value=>$add_initial_confirmPassword, -size=>25)),
 				),
 			),
 		),
@@ -471,15 +471,15 @@ sub add_course_form {
 			CGI::table({class=>"FormLayout"},
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "First Name:"),
-					CGI::td(CGI::textfield("add_initial_firstName", $add_initial_firstName, 25)),
+					CGI::td(CGI::textfield(-name=>"add_initial_firstName", -value=>$add_initial_firstName, -size=>25)),
 				),
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "Last Name:"),
-					CGI::td(CGI::textfield("add_initial_lastName", $add_initial_lastName, 25)),
+					CGI::td(CGI::textfield(-name=>"add_initial_lastName", -value=>$add_initial_lastName, -size=>25)),
 				),
 				CGI::Tr(
 					CGI::th({class=>"LeftHeader"}, "Email Address:"),
-					CGI::td(CGI::textfield("add_initial_email", $add_initial_email, 25)),
+					CGI::td(CGI::textfield(-name=>"add_initial_email", -value=>$add_initial_email, -size=>25)),
 				),
 			),
 			
@@ -526,7 +526,7 @@ sub add_course_form {
 		print CGI::end_table();
 	}
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("add_course", "Add Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"add_course", -label=>"Add Course"));
 	
 	print CGI::end_form();
 }
@@ -848,7 +848,7 @@ sub rename_course_form {
 	
 	print CGI::h2("Rename Course");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -870,7 +870,7 @@ sub rename_course_form {
 		),
 		CGI::Tr(
 			CGI::th({class=>"LeftHeader"}, "New Name:"),
-			CGI::td(CGI::textfield("rename_newCourseID", $rename_newCourseID, 25)),
+			CGI::td(CGI::textfield(-name=>"rename_newCourseID", -value=>$rename_newCourseID, -size=>25)),
 		),
 	);
 	
@@ -886,17 +886,17 @@ sub rename_course_form {
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-		CGI::td(CGI::textfield("rename_sql_username", $rename_sql_username, 25)),
+		CGI::td(CGI::textfield(-name=>"rename_sql_username", -value=>$rename_sql_username, -size=>25)),
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-		CGI::td(CGI::password_field("rename_sql_password", $rename_sql_password, 25)),
+		CGI::td(CGI::password_field(-name=>"rename_sql_password", -value=>$rename_sql_password, -size=>25)),
 	);
 	
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
 		CGI::td(
-			CGI::textfield("rename_sql_host", $rename_sql_host, 25),
+			CGI::textfield(-name=>"rename_sql_host", -value=>$rename_sql_host, -size=>25),
 			CGI::br(),
 			CGI::small("Leave blank to use the default host."),
 		),
@@ -904,7 +904,7 @@ sub rename_course_form {
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
 		CGI::td(
-			CGI::textfield("rename_sql_port", $rename_sql_port, 25),
+			CGI::textfield(-name=>"rename_sql_port", -value=>$rename_sql_port, -size=>25),
 			CGI::br(),
 			CGI::small("Leave blank to use the default port."),
 		),
@@ -913,30 +913,30 @@ sub rename_course_form {
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Current Database Name:"),
 		CGI::td(
-			CGI::textfield("rename_sql_database", $rename_sql_oldDatabase, 25),
+			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_oldDatabase, -size=>25),
 			CGI::br(),
-			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
 		),
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL New Database Name:"),
 		CGI::td(
-			CGI::textfield("rename_sql_database", $rename_sql_newDatabase, 25),
+			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_newDatabase, -size=>25),
 			CGI::br(),
-			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+			CGI::small("Leave blank to use the name ".CGI::tt("webwork_COURSENAME"). "."),
 		),
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
 		CGI::td(
-			CGI::textfield("rename_sql_wwhost", $rename_sql_wwhost || "localhost", 25),
+			CGI::textfield(-name=>"rename_sql_wwhost". -value=>$rename_sql_wwhost || "localhost". -size=>25),
 			CGI::br(),
 			CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
 		),
 	);
 	print CGI::end_table();
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("rename_course", "Rename Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"rename_course", -label=>"Rename Course"));
 	
 	print CGI::end_form();
 }
@@ -1094,7 +1094,7 @@ sub delete_course_form {
 	
 	print CGI::h2("Delete Course");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -1128,11 +1128,11 @@ sub delete_course_form {
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-		CGI::td(CGI::textfield("delete_sql_username", $delete_sql_username, 25)),
+		CGI::td(CGI::textfield(-name=>"delete_sql_username", -value=>$delete_sql_username, -size=>25)),
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-		CGI::td(CGI::password_field("delete_sql_password", $delete_sql_password, 25)),
+		CGI::td(CGI::password_field(-name=>"delete_sql_password", -value=>$delete_sql_password, -size=>25)),
 	);
 	
 	#print CGI::Tr(CGI::td({colspan=>2},
@@ -1144,15 +1144,15 @@ sub delete_course_form {
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
 		CGI::td(
-			CGI::textfield("delete_sql_host", $delete_sql_host, 25),
+			CGI::textfield(-name=>"delete_sql_host", -value=>$delete_sql_host, -size=>25),
 			CGI::br(),
-			CGI::small("Leave blank to use the default host."),
+			CGI::small(-name=>"Leave blank to use the default host."),
 		),
 	);
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
 		CGI::td(
-			CGI::textfield("delete_sql_port", $delete_sql_port, 25),
+			CGI::textfield(-name=>"delete_sql_port", -value=>$delete_sql_port, -size=>25),
 			CGI::br(),
 			CGI::small("Leave blank to use the default port."),
 		),
@@ -1161,14 +1161,14 @@ sub delete_course_form {
 	print CGI::Tr(
 		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
 		CGI::td(
-			CGI::textfield("delete_sql_database", $delete_sql_database, 25),
+			CGI::textfield(-name=>"delete_sql_database", -value=>$delete_sql_database, -size=>25),
 			CGI::br(),
-			CGI::small("Leave blank to use the name ", CGI::tt("webwork_COURSENAME"), "."),
+			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
 		),
 	);
 	print CGI::end_table();
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("delete_course", "Delete Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course", -value=>"Delete Course"));
 	
 	print CGI::end_form();
 }
@@ -1258,15 +1258,15 @@ sub delete_course_confirm {
 			. "? All course files and data will be destroyed. There is no undo available.");
 	}
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	print $self->hidden_fields(qw/delete_courseID delete_sql_host delete_sql_port delete_sql_username delete_sql_password delete_sql_database/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit("decline_delete_course", "Don't delete"),
+		CGI::submit(-name=>"decline_delete_course", -label=>"Don't delete"),
 		"&nbsp;",
-		CGI::submit("confirm_delete_course", "Delete"),
+		CGI::submit(-name=>"confirm_delete_course", -label=>"Delete"),
 	);
 	
 	print CGI::end_form();
@@ -1342,11 +1342,11 @@ sub do_delete_course {
 	    	"",
 	    	$delete_courseID,
 	    ));
-		print CGI::start_form("POST", $r->uri);
+		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 		
-		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_delete_course", "OK"),);
+		print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_delete_course", -value=>"OK"),);
 		
 		print CGI::end_form();
 	}
@@ -1385,7 +1385,7 @@ sub export_database_form {
 	
 	print CGI::h2("Export Database");
 	
-	print CGI::start_form("GET", $r->uri);
+	print CGI::start_form(-method=>"GET", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -1421,7 +1421,7 @@ sub export_database_form {
 		),
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("export_database", "Export Database"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"export_database", -value=>"Export Database"));
 	
 	print CGI::end_form();
 }
@@ -1587,7 +1587,7 @@ sub import_database_form {
 	
 	print CGI::h2("Import Database");
 	
-	print CGI::start_form("POST", $r->uri, &CGI::MULTIPART);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri, -enctype=>&CGI::MULTIPART);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -1653,7 +1653,7 @@ sub import_database_form {
 		),
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("import_database", "Import Database"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"import_database", -value=>"Import Database"));
 	
 	print CGI::end_form();
 }
@@ -1784,7 +1784,7 @@ sub archive_course_form {
 	
 	print CGI::h2("archive Course");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -1824,7 +1824,7 @@ sub archive_course_form {
 	);
 
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("archive_course", "archive Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course", -value=>"archive Course"));
 	
 	print CGI::end_form();
 }
@@ -1899,15 +1899,15 @@ sub archive_course_confirm {
 	
 	}
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	print $self->hidden_fields(qw/archive_courseID archive_sql_host archive_sql_port archive_sql_username archive_sql_password archive_sql_database delete_course/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit("decline_archive_course", "Don't archive"),
+		CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
 		"&nbsp;",
-		CGI::submit("confirm_archive_course", "archive"),
+		CGI::submit(-name=>"confirm_archive_course", -value=>"archive"),
 	);
 	
 	print CGI::end_form();
@@ -2009,7 +2009,7 @@ sub do_archive_course {
 		
 		}
 	   
-# 		print CGI::start_form("POST", $r->uri);
+# 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 # 		print $self->hidden_authen_fields;
 # 		print $self->hidden_fields("subDisplay");
 # 		
@@ -2045,7 +2045,7 @@ sub unarchive_course_form {
 	
 	print CGI::h2("Unarchive Course -- not yet operational");
 	
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
@@ -2073,7 +2073,7 @@ sub unarchive_course_form {
 	);
 
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit("unarchive_course", "Unarchive Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"unarchive_course", -value=>"Unarchive Course"));
 	
 	print CGI::end_form();
 }
@@ -2129,7 +2129,7 @@ sub unarchive_course_confirm {
 
 
 
-	print CGI::start_form("POST", $r->uri);
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print CGI::p($unarchive_courseID," to course ", 
 	             CGI::input({-name=>'new_courseID', -value=>$new_courseID})
 	);
@@ -2144,9 +2144,9 @@ sub unarchive_course_confirm {
 	                              unarchive_sql_database/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit("decline_unarchive_course", "Don't unarchive"),
+		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't unarchive"),
 		"&nbsp;",
-		CGI::submit("confirm_unarchive_course", "unarchive"),
+		CGI::submit(-name=>"confirm_unarchive_course", -value=>"unarchive"),
 	);
 	
 	print CGI::end_form();
@@ -2202,7 +2202,7 @@ sub do_unarchive_course {
 		print CGI::div({style=>"text-align: center"},
 			CGI::a({href=>$newCourseURL}, "Log into $new_courseID"),
 		);
-# 		print CGI::start_form("POST", $r->uri);
+# 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 # 		print $self->hidden_authen_fields;
 # 		print $self->hidden_fields("subDisplay");
 # 		
