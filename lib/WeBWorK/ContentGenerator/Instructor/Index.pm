@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.54 2006/07/11 03:59:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.55 2006/07/12 01:19:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -290,7 +290,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	print CGI::p("Use the interface below to quickly access commonly-used
+	print CGI::p({},"Use the interface below to quickly access commonly-used
 	instructor tools, or select a tool from the list to the left.", CGI::br(),
 	"Select user(s) and/or set(s) below and click the action button
 	of your choice.");
@@ -353,11 +353,11 @@ sub body {
 	print $self->hidden_authen_fields();
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th("Users"),
 			CGI::th("Sets"),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({style=>"width:50%"}, $scrolling_user_list),
 			CGI::td({style=>"width:50%"}, $scrolling_set_list),
 		),

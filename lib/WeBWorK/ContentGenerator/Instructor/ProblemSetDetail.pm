@@ -285,7 +285,7 @@ sub FieldTable {
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
-		$output .= CGI::Tr(
+		$output .= CGI::Tr({},
 		    CGI::th({colspan=>"2"}, "&nbsp;"),
 			CGI::th({colspan=>"1"}, "User Values"),
 			CGI::th({}, "Class values"),
@@ -1423,7 +1423,7 @@ problems, gaps will be left in the numbering unless the box above is
 checked.
 EOF
         print CGI::p("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.") if ($setRecord->open_date>time());
-		print CGI::p("When changing problem numbers, we will move the problem to be ", CGI::em("before"), " the chosen number.");
+		print CGI::p("When changing problem numbers, we will move the problem to be ". CGI::em("before"). " the chosen number.");
 
 	} else {
 		print CGI::p(CGI::b("This set doesn't contain any problems yet."));

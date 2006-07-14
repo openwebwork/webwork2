@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.27 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.28 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -110,11 +110,10 @@ sub siblings {
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
 	print CGI::start_ul();
-	
 	foreach my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",
 			courseID => $courseID, setID => $setID,statType => 'set',);
-		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, WeBWorK::ContentGenerator::underscore2nbsp($setID)));
+		print CGI::li({},CGI::a({href=>$self->systemLink($problemPage)}, WeBWorK::ContentGenerator::underscore2nbsp($setID)));
 	}
 	
 	print CGI::end_ul();
@@ -136,7 +135,7 @@ sub body {
 	my $type       = $self->{type};
 
 	# Check permissions	
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+	return CGI::div({class=>"ResultsWithError"}. CGI::p("You are not authorized to access instructor tools"))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 		
 	if ($type eq 'student') {
@@ -181,7 +180,6 @@ sub index {
 	my $ce            = $r->ce;
 	my $db            = $r->db;
 	my $courseName    = $urlpath->arg("courseID");
-	
 	my @studentList   = sort $db->listUsers;
 	my @setList       = sort  $db->listGlobalSets;
 
@@ -242,7 +240,7 @@ sub index {
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({-valign=>'top'}, 
 				CGI::h3({-align=>'center'},'View student progress by set'),
 				CGI::ul(  CGI::li( [@setLinks] ) ), 
@@ -699,7 +697,7 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p('A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates 
+		CGI::p({},'A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates 
 		a problem has been answered 100% correctly, and a number from 0 to 99 
 		indicates the percentage of partial credit earned. The number on the 
 		second line gives the number of incorrect attempts.  The success indicator,'
@@ -789,8 +787,8 @@ sub displaySets {
 		my $email    = $rec->{email_address}; 
 		my $twoString  = $rec->{twoString};
 		if ( ! $setIsVersioned ) {
-		    print CGI::Tr(
-			CGI::td(CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
+		    print CGI::Tr({},
+			CGI::td({},CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
 			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
 			CGI::td($rec->{total}), # out of 
 			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator

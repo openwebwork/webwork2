@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.63 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.64 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -206,7 +206,7 @@ sub index {
 	}
 	print join("",
 		CGI::start_table({-border=>2, -cellpadding=>20}),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({-valign=>'top'}, 
 				CGI::h3({-align=>'center'},'View statistics by set'),
 				CGI::ul(  CGI::li( [@setLinks] ) ), 

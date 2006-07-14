@@ -483,7 +483,7 @@ sub body {
 	$prettyFieldNames{set_id} = "Edit All <br> Set Data" if $editMode;
 	
 	
-	print CGI::p("Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
+	print CGI::p({},"Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
 	
 	$self->printTableHTML(\@Sets, \%prettyFieldNames,
 		editMode => $editMode,
