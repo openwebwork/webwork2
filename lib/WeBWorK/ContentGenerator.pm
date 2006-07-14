@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.171 2006/07/12 01:27:47 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.172 2006/07/12 04:35:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -733,7 +733,7 @@ sub links {
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				print CGI::li( $self->helpMacro('instructor_links','Help'),$self->help() );
+				print CGI::li({}, $self->helpMacro('instructor_links','Help'),$self->help() );
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
