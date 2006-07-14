@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.24 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.25 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -338,7 +338,7 @@ sub displayStudentStats {
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 	
-		push @rows, CGI::Tr(
+		push @rows, CGI::Tr({},
 			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
@@ -359,7 +359,7 @@ sub displayStudentStats {
 	
 	my $table_header = join("\n",
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({ -align=>'center',},'Set'),
 			CGI::th({ -align=>'center', },'Score'),
 			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
