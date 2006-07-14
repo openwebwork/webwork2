@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.77 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.78 2006/07/11 16:39:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -195,7 +195,7 @@ sub body {
 # and send the start of the table 
 	print CGI::start_table();
 	if ( ! $existVersions ) {
-	    print CGI::Tr(
+	    print CGI::Tr({},
 		    CGI::th("Sel."),
 		    CGI::th($nameHeader),
 		    CGI::th($statusHeader),

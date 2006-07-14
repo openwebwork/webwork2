@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.41 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.42 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -131,7 +131,7 @@ sub body {
 		);
 	}
 	
-	print CGI::p("Please enter your username and password for ",CGI::b($course)," below:");
+	print CGI::p({},"Please enter your username and password for ",CGI::b($course)," below:");
 	print CGI::p(dequote <<"	EOT");
 		If you check ${\( CGI::b("Remember Me") )} &nbsp;your login information will
 		be remembered by the browser you are using, allowing you to visit
