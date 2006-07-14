@@ -37,14 +37,14 @@ sub AUTOLOAD {
 			if ( @inputs == 0 ) {
 			 # do nothing -- verything was defined in the attributes
 			} elsif (ref($inputs[0]) =~/ARRAY/) { # implied group  is this case legal?
-			   $func = $func.'_group';
+			   #print "array is here";
 			   warn "can't follow an ARRAY by other inputs $func @inputs " if @inputs >1;
 			} else { #combine remaining inputs for text field
 			   my $text = join("", @inputs);
-			   $attributes->{text} =$text;
-			   @inputs = ();
+			   @inputs = ($text);
 			}
-			@inputs= ($attributes);
+			unshift @inputs, $attributes;
+			#print "next inputs @inputs";
 	} elsif (ref($inputs[0]) =~/ARRAY/) { # implied group no other terms allowed
 			$func = $func.'_group';
 			@inputs = ($inputs[0]);
@@ -163,11 +163,29 @@ sub AUTOLOAD {
 	};
 	$func =~/^(p|Tr|td|li|table|div|th)$/	&& do { # concatenate inputs
 		my %inputs=();
+		#print "previous inputs @inputs";
 		if (ref($inputs[0]) =~/HASH/ ) { #
-			%inputs = %{$inputs[0]};
+			my $attributes = shift @inputs;
+			if (ref($inputs[0]) =~/ARRAY/) {
+				my @values = @{$inputs[0]};
+				foreach my $attribute (keys %{$attributes} ){
+					 $inputs{$attribute} = [ map { $attributes->{$attribute} } @values ];
+					 #print "$attribute is ", @{$inputs{$attribute}},"\n";
+				}
+				@inputs = (%inputs,text=>\@values);
+			    $func = $func."_group";
+			} else {
+			    #print "\nfirst inputs @inputs\n";
+			    my $text =  join(" ",@inputs);
+				@inputs = ($attributes, $text);
+				#print "\ninputs @inputs\n";
+			}
+		} elsif (ref($inputs[0]) =~/ARRAY/ ) {
+			# do nothing
+			warn "inputs which start with an array reference should have only on element" if @inputs >1;
 		} else {
 			@inputs = (join("",@inputs));
-		}	    
+		}
 		last CASES;
 	};
 		$func =~ /^hidden/ && do  { # handles name value pairs
@@ -284,15 +302,7 @@ sub AUTOLOAD {
 	};
 	} # end CASES block
 
-#	print "to EasyTags $func ", join(" ", @inputs);
-
-
-# 	if (ref($inputs[0])) {  # even number of hash elements
-# 		#$result = "OK: $func( @inputs )"; 
-# 		$result = eval {  $html2->$func(@inputs) };
-# 	} else {
-# 		$result = "ERROR: bad  inputs $func(   " .join(" ", @_)." )";
-# 	}
+#	print "\n\nto EasyTags $func @inputs ";
     $result = eval {  $html2->$func(@inputs) };
 	#$result = eval { use WeBWorK::CGI; $html2->$func(@_) };
 	#handle special cases
