@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.19 2006/07/12 01:19:14 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.20 2006/07/13 18:56:39 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -119,12 +119,13 @@ sub body {
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 
-	print CGI::start_multipart_form(
+	print CGI::start_form(
 		-method=>"POST",
 		-action=>$fileManagerURL,
 		-id=>"FileManager",
+		-enctype=> 'multipart/form-data',
 		-name=>"FileManager",
-                -style=>"margin:0",
+         -style=>"margin:0",
 	);
 	print $self->hidden_authen_fields;
 
@@ -159,8 +160,8 @@ sub body {
 	}
 
 	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
-	print CGI::hidden({name=>'formAction'});
-	print CGI::end_multipart_form();
+	print CGI::hidden({name=>'formAction',value=>""});
+	print CGI::end_form();
 
 	return "";
 }
@@ -258,7 +259,7 @@ EOF
 	#
 	# Directory menu and date/size checkbox
 	#
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::td({colspan=>2},
 			CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
 			CGI::popup_menu(
@@ -296,7 +297,7 @@ EOF
 			-onChange => "checkFiles()"
 		))),
 		CGI::td({width=>15}),
-		CGI::td(
+		CGI::td({},
 			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
 			CGI::Tr([
 				CGI::td(CGI::input({%button,value=>"View",id=>"View"})),

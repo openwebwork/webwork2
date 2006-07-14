@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.83 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.84 2006/07/12 04:37:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -526,7 +526,7 @@ sub body {
 	
 	########## print table
 	
-	print CGI::p("Showing ", scalar @Users, " out of ", scalar @allUserIDs, " users.");
+	print CGI::p({},"Showing ", scalar @Users, " out of ", scalar @allUserIDs, " users.");
 	
 	print CGI::p("If a password field is left blank, the student's current password will be maintained.") if $passwordMode;
 	if ($editMode) {

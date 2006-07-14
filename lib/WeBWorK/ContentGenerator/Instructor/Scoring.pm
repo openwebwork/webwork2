@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.57 2006/07/11 16:26:20 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.58 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -156,9 +156,9 @@ sub body {
 			$self->hidden_authen_fields,"\n",
 			CGI::hidden({-name=>'scoreSelected', -value=>1}),
 			CGI::start_table({border=>1,}),
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::td($self->popup_set_form),
-					CGI::td(
+					CGI::td({},
 						CGI::checkbox({ -name=>'includeIndex',
 										-value=>1,
 										-label=>'Include Index',
