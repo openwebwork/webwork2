@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.5 2006/06/29 23:20:47 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.6 2006/06/30 18:47:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,28 +56,22 @@ BEGIN {
 			} elsif (@_ == 1) {
 				my $name = shift;
 				if (exists $self->{paramcache}{$name}) {
-					my $val = $self->{paramcache}{$name};
-					if (ref $val eq "ARRAY") {
-						return @$val;
-					} else {
-						return $val;
-					}
+					return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
 				} else {
 					return $self->SUPER::param($name);
 				}
 			} elsif (@_ == 2) {
 				my ($name, $val) = @_;
-				$self->{paramcache}{$name} = $val;
 				if (ref $val eq "ARRAY") {
-					return @$val;
+					$self->{paramcache}{$name} = $val;
 				} else {
-					return $val;
+					$self->{paramcache}{$name} = [$val];
 				}
+				return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
 			}
-		}
+		};
 	}
 }
-
 
 =head1 CONSTRUCTOR
 
