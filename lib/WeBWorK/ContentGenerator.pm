@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.172 2006/07/12 04:35:26 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.173 2006/07/14 21:27:33 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -221,8 +221,11 @@ sub do_reply_with_file {
 	return MP2 ? Apache2::Const::NOT_FOUND : Apache::Constants::NOT_FOUND unless -e $source;
 	return MP2 ? Apache2::Const::FORBIDDEN : Apache::Constants::FORBIDDEN unless -r $source;
 	
-	# open the file now, so we can send the proper error status is we fail
-	open my $fh, "<", $source or return MP2 ? Apache2::Const::SERVER_ERROR : Apache::Constants::SERVER_ERROR;
+	my $fh;
+	if (!MP2) {
+		# open the file now, so we can send the proper error status is we fail
+		open $fh, "<", $source or return Apache::Constants::SERVER_ERROR;
+	}
 	
 	# send our custom HTTP header
 	$r->content_type($type);
@@ -230,10 +233,16 @@ sub do_reply_with_file {
 	$r->send_http_header unless MP2;
 	
 	# send the file
-	$r->send_fd($fh);
+	if (MP2) {
+		$r->sendfile($source);
+	} else {
+		$r->send_fd($fh);
+	}
 	
-	# close the file and go home
-	close $fh;
+	if (!MP2) {
+		# close the file and go home
+		close $fh;
+	}
 	
 	if ($delete_after) {
 		unlink $source or warn "failed to unlink $source after sending: $!";
