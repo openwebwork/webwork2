@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.55 2006/06/29 23:20:47 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.56 2006/07/12 04:33:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,6 +35,15 @@ use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+BEGIN {
+	if (MP2) {
+		require APR::SockAddr;
+		APR::SockAddr->import();
+		require Apache2::Connection;
+		Apache2::Connection->import();
+	}
+}
 
 ################################################################################
 # Public API
@@ -607,7 +616,6 @@ sub write_log_entry {
 	
 	my ($remote_host, $remote_port);
 	if (MP2) {
-		require APR::SockAddr;
 		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
 		$remote_port = $r->connection->remote_addr->port || "UNKNOWN";
 	} else {
