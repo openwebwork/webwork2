@@ -62,6 +62,8 @@ BEGIN {
 	if (MP2) {
 		require Apache2::Upload;
 		Apache2::Upload->import();
+		require Apache2::RequestUtil;
+		Apache2::RequestUtil->import();
 	}
 }
 
@@ -73,7 +75,15 @@ our %SeedCE;
 
 sub dispatch($) {
 	my ($apache) = @_;
-	my $r = new WeBWorK::Request $apache;
+	my $r = new WeBWorK::Request($apache);
+	
+	# HACK ALERT -- Place a reference to $r in a package variable, so that WeBWorK::CGIParamShim
+	# can access it at instantiation time. This is necessary because we want to continue to use
+	# the function API of CGI, but we need to include $r in the default $CGI::Q object that is
+	# created when the first CGI function is called. Eventually, we will replace CGI::* function
+	# calls with an explicitly-created $cgi object (probably stored inside $r), and we can dispense
+	# with this shameful hackery. FIXME THREADSAFETY
+	$WeBWorK::CGIParamShim::WEBWORK_REQUEST = $r;
 	
 	my $method = $r->method;
 	my $location = $r->location;
