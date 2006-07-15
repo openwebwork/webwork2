@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.78 2006/07/11 03:59:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/Apache/WeBWorK.pm,v 1.79 2006/07/12 04:33:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -307,8 +307,8 @@ sub textWarningsList(@) {
 
 =item htmlEscape($string)
 
-Protect characters that would be interpreted as HTML entities using the CGI.pm
-escapeHTML() routine. Then, replace line breaks with HTML "<br />" tags.
+Protect characters that would be interpreted as HTML entities. Then, replace
+line breaks with HTML "<br />" tags.
 
 =cut
 
