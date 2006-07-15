@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.47 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.48 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -584,7 +584,8 @@ sub print_form {
 #	first column
 #############################################################################################	
 
-			 CGI::td(CGI::strong("Message file: "), $input_file,"\n",CGI::br(),
+			 CGI::td({},
+			     CGI::strong("Message file: "), $input_file,"\n",CGI::br(),
 				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
@@ -613,19 +614,14 @@ sub print_form {
 #############################################################################################
 #	second column
 #############################################################################################	
-#			CGI::td({-align=>'left',style=>'font-size:smaller'},
-#			   
-#			    		    CGI::strong("Send to:"),
-#							CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-#								-labels=>{all_students=>'All students in course',studentID => 'Selected'},
-#								-default=>'studentID',
-#								-linebreak=>0
-#							), CGI::br(),CGI::br(),
+
 ## Edit by Mark to insert scrolling list
-					CGI::td({-style=>"width:33%"},CGI::strong("Send to:"),
-		                                       CGI::radio_group(-name=>'radio', -values=>['all_students','studentID'],
-		                                                        -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
-		                                                        -default=>'studentID', -linebreak=>0), 
+					CGI::td({-style=>"width:33%"},
+					     CGI::strong("Send to:"),
+		                  CGI::radio_group(-name=>'radio', 
+		                                   -values=>['all_students','studentID'],
+		                                   -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
+		                                   -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list,
 							CGI::i("Preview set to: "), $preview_record->last_name,
 							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
@@ -659,26 +655,7 @@ sub print_form {
 #	third column
 #############################################################################################	
 			CGI::td({align=>'left'},
-#			     "<b>Merge file:</b> $merge_file", CGI::br(),
-# 				 CGI::submit(-name=>'action', -value=>'Set merge file to:'),CGI::br(),
-# 				 CGI::popup_menu(-name=>'merge_file', 
-# 				                 -values=>\@sorted_merge_files, 
-# 				                 -default=>$merge_file,
-# 				 ), "\n",
-#				 CGI::hr(),
-# 				CGI::b("Viewing email for: "), "$preview_user",CGI::br(),
-# 				CGI::submit(-name=>'action', -value=>'resize', -label=>$REFRESH_RESIZE_BUTTON),'&nbsp;',
-# 				CGI::popup_menu(-name=>'preview_user',
-# 							   -values=>\@users,
-# 							   #-labels=>\%classlistLabels,
-# 							   -default=>$preview_user,
-# 				),
-# 				CGI::br(),
-# 				CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
-# 				
-# 				CGI::br(),
-# 				
-# 				CGI::hr(),
+
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
@@ -739,10 +716,10 @@ sub print_form {
 #	action button table
 #############################################################################################	
 	print    CGI::table( { -border=>2,-cellpadding=>4},
-				 CGI::Tr( 
-					 CGI::td( CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
-					 CGI::td(CGI::submit(-name=>'action', -value=>'Save')," to $output_file"), " \n",
-					 CGI::td(CGI::submit(-name=>'action', -value=>'Save as:'),
+				 CGI::Tr( {},
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Save')," to $output_file"), " \n",
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Save as:'),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
 					 CGI::td(CGI::submit(-name=>'action', -value=>'Save as Default')),

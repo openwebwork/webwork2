@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.71 2006/07/08 22:23:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.72 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -339,12 +339,12 @@ sub browse_local_panel {
 	}
 	debug("library is $lib and sets are $library_selected");
 	my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "$name Problems: ",
-		CGI::popup_menu(-name=> 'library_sets', 
+	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, "$name Problems: ",
+		              CGI::popup_menu(-name=> 'library_sets', 
 		                -values=>$list_of_prob_dirs, 
 		                -default=> $library_selected),
-		CGI::br(), 
-		$view_problem_line,
+		              CGI::br(), 
+		              $view_problem_line,
 	));
 }
 
@@ -363,7 +363,8 @@ sub browse_mysets_panel {
 	} 
 
 	my $view_problem_line = view_problems_line('view_mysets_set', 'View Problems', $self->r);
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Browse from: ",
+	print CGI::Tr({},
+		CGI::td({-class=>"InfoPanel", -align=>"left"}, "Browse from: ",
 		CGI::popup_menu(-name=> 'library_sets', 
 		                -values=>$list_of_local_sets, 
 		                -default=> $library_selected),
@@ -440,7 +441,7 @@ sub browse_library_panel1 {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::start_table(),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td(["Chapter:",
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
@@ -448,7 +449,7 @@ sub browse_library_panel1 {
 					                -onchange=>"submit();return true"
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("Section:"),
 				CGI::td({-colspan=>2},
 					CGI::popup_menu(-name=> 'library_sections', 
@@ -489,10 +490,11 @@ sub browse_library_panel2 {
 		$count_line = "There are $count_line matching WeBWorK problem files";
 	}
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
+	print CGI::Tr({},
+	    CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::hidden(-name=>"library_is_basic", -default=>1,-override=>1),
 		CGI::start_table({-width=>"100%"}),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Subject:",
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
@@ -502,7 +504,7 @@ sub browse_library_panel2 {
 			CGI::td({-colspan=>2, -align=>"right"},
 				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
@@ -512,7 +514,7 @@ sub browse_library_panel2 {
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_advanced", -value=>"Advanced Search"))
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Section:",
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
@@ -600,12 +602,13 @@ sub browse_library_panel2adv {
 		$count_line = "There are $count_line matching WeBWorK problem files";
 	}
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"},
+	print CGI::Tr({},
+	  CGI::td({-class=>"InfoPanel", -align=>"left"},
 		CGI::hidden(-name=>"library_is_basic", -default=>2,-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		# Html done by hand since it is temporary
 		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, 'All Selected Constraints Joined by "And"')),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Subject:",
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
@@ -615,7 +618,7 @@ sub browse_library_panel2adv {
 			CGI::td({-colspan=>2, -align=>"right"},
 				CGI::submit(-name=>"lib_select_subject", -value=>"Update Menus",
 					-style=> $right_button_style))),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
@@ -626,7 +629,7 @@ sub browse_library_panel2adv {
 					CGI::submit(-name=>"library_reset", -value=>"Reset",
 					-style=>$right_button_style))
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td(["Section:",
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
@@ -637,10 +640,10 @@ sub browse_library_panel2adv {
 					CGI::submit(-name=>"library_basic", -value=>"Basic Search",
 					-style=>$right_button_style))
 		 ),
-		 CGI::Tr(
+		 CGI::Tr({},
 			CGI::td(["Textbook:", $text_popup]),
 		 ),
-		 CGI::Tr(
+		 CGI::Tr({},
 			CGI::td(["Text chapter:",
 			CGI::popup_menu(-name=> 'library_textchapter', 
 					        -values=>\@textchaps,
@@ -648,7 +651,7 @@ sub browse_library_panel2adv {
 							-onchange=>"submit();return true"
 		    )]),
 		 ),
-		 CGI::Tr(
+		 CGI::Tr({},
 			CGI::td(["Text section:",
 			CGI::popup_menu(-name=> 'library_textsection', 
 					        -values=>\@textsecs,
@@ -656,7 +659,8 @@ sub browse_library_panel2adv {
 							-onchange=>"submit();return true"
 		    )]),
 		 ),
-		 CGI::Tr(CGI::td("Keywords:"),CGI::td({-colspan=>2},
+		 CGI::Tr({},
+		     CGI::td("Keywords:"),CGI::td({-colspan=>2},
 			 CGI::textfield(-name=>"library_keywords",
 							-default=>$library_keywords,
 							-override=>1,
@@ -790,21 +794,23 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-		CGI::start_table({-border=>"0"}),
-		CGI::Tr( CGI::td({ -align=>"center"},
-			CGI::submit(-name=>"select_all", -style=>$these_widths,
+	print CGI::Tr({},
+	        CGI::td({-class=>"InfoPanel", -align=>"center"},
+		      CGI::start_table({-border=>"0"}),
+		        CGI::Tr({}, CGI::td({ -align=>"center"},
+			       CGI::submit(-name=>"select_all", -style=>$these_widths,
 			            -value=>"Mark All For Adding"),
-			CGI::submit(-name=>"select_none", -style=>$these_widths,
+			       CGI::submit(-name=>"select_none", -style=>$these_widths,
 			            -value=>"Clear All Marks"),
-		)), 
-		CGI::Tr(CGI::td(
+		     )), 
+		CGI::Tr({}, 
+		 CGI::td({},
 			CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
 			            -value=>"Update Set"),
-		CGI::submit(-name=>"rerandomize", 
-		            -style=>$these_widths,
-		            -value=>"Rerandomize"),
-		CGI::submit(-name=>"cleardisplay", 
+		    CGI::submit(-name=>"rerandomize", 
+		                -style=>$these_widths,
+		                -value=>"Rerandomize"),
+		    CGI::submit(-name=>"cleardisplay", 
 		            -style=>$these_widths,
 		            -value=>"Clear Problem Display")
 	)), 
