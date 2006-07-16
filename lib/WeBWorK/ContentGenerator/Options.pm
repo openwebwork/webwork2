@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.21 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Options.pm,v 1.22 2006/07/11 16:39:29 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -118,17 +118,17 @@ sub body {
 	
 	if ($authz->hasPermissions($userID, "change_password")) {
 		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("$user_name\'s Current Password"),
-				CGI::td(CGI::password_field("currPassword")),
+				CGI::td(CGI::password_field(name=>"currPassword")),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("$e_user_name\'s New Password"),
-				CGI::td(CGI::password_field("newPassword")),
+				CGI::td(CGI::password_field(name=>"newPassword")),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("Confirm $e_user_name\'s New Password"),
-				CGI::td(CGI::password_field("confirmPassword")),
+				CGI::td(CGI::password_field(name=>"confirmPassword")),
 			),
 		);
 	} else {
@@ -163,11 +163,11 @@ sub body {
 	
 	if ($authz->hasPermissions($userID, "change_email_address")) {
 		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("$e_user_name\'s Current Address"),
 				CGI::td($EUser->email_address),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td("$e_user_name\'s New Address"),
 				CGI::td(CGI::textfield(-name=>"newAddress", -text=>$newA)),
 			),

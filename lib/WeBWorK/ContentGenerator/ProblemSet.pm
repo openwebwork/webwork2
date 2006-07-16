@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.82 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.83 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -263,7 +263,7 @@ sub info {
 	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
-		print CGI::h2("Set Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
+		print CGI::h2({},"Set Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
 	} else {
 		print CGI::h2("Set Info");
 	}
@@ -321,7 +321,7 @@ sub body {
 	
 	if (@problemNumbers) {
 		print CGI::start_table();
-		print CGI::Tr(
+		print CGI::Tr({},
 			CGI::th("Name"),
 			CGI::th("Attempts"),
 			CGI::th("Remaining"),
@@ -407,7 +407,7 @@ sub problemListRow($$$) {
 	
 #	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	
-	return CGI::Tr(
+	return CGI::Tr({},
 		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 		CGI::td({-nowrap=>1, -align=>"center"},
 	 		[
