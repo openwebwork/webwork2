@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.48 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.49 2006/07/15 16:31:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -955,7 +955,7 @@ sub process_message {
 	
 	my @preview_COL = @COL;
 	shift @preview_COL; ## shift back for preview
-	my $preview_header = 	CGI::pre("",data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
+	my $preview_header = 	CGI::pre({},data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
 		                    CGI::h3( "This sample mail would be sent to $EMAIL");
 
 	return $msg, $preview_header;

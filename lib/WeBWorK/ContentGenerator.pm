@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.173 2006/07/14 21:27:33 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.174 2006/07/15 14:23:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1473,7 +1473,7 @@ sub hidden_fields {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
 		my $value  = $r->param($param);
-		$html .= CGI::hidden($param, $value);
+		$html .= CGI::hidden(name=>$param, value=>$value);
 	}
 	return $html;
 }
@@ -1810,7 +1810,7 @@ sub errorOutput($$$) {
 	my $uri = $r->uri;
 	my $headers = do {
 		my %headers = $r->headers_in;
-		join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
+		join("", map { CGI::Tr({},CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	};
 
 	# if it is a long report pass details by reference rather than by value
@@ -1845,10 +1845,10 @@ EOF
 		
 		CGI::h3("Request information"),
 		CGI::table({border=>"1"},
-			CGI::Tr(CGI::td("Time"), CGI::td($time)),
-			CGI::Tr(CGI::td("Method"), CGI::td($method)),
-			CGI::Tr(CGI::td("URI"), CGI::td($uri)),
-			CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
+			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
+			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
+			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
+			CGI::Tr({},CGI::td("HTTP Headers"), CGI::td(
 				CGI::table($headers),
 			)),
 		),
@@ -1896,9 +1896,9 @@ EOF
 		CGI::ul($warnings),
 		CGI::h3("Request information"),
 		CGI::table({border=>"1"},
-			CGI::Tr(CGI::td("Time"), CGI::td($time)),
-			CGI::Tr(CGI::td("Method"), CGI::td($method)),
-			CGI::Tr(CGI::td("URI"), CGI::td($uri)),
+			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
+			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
+			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
 			#CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 			#	CGI::table($headers),
 			#)),
