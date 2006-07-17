@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.79 2006/07/11 03:59:08 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.80 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -337,11 +337,11 @@ sub display_form {
 		      ." for each (set, user) pair.");
 		
 		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::th("Users"),
 				CGI::th("Sets"),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::td($scrolling_user_list),
 				CGI::td($scrolling_set_list),
 			),
@@ -357,7 +357,7 @@ sub display_form {
 	
 	}
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::small("You may choose to show any of the following data. Correct answers and solutions are only 
 				            available $phrase_for_privileged_users after the answer date of the homework set."),
@@ -380,7 +380,7 @@ sub display_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::b("Hardcopy Format:"), " ",
 				CGI::radio_group(
@@ -391,7 +391,7 @@ sub display_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::submit(
 					-name => "generate_hardcopy",
