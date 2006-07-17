@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.1 2006/07/15 16:35:32 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.2 2006/07/17 17:16:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -445,13 +445,31 @@ sub AUTOLOAD {
 	# restore attributes
 	unshift @inputs,$attributes if defined $attributes;
 #	print "\n\nto EasyTags $func @inputs ";
+
     # check attributes
+    my $warningFlag="";
     { # warning block
     	local $SIG{__WARN__} =sub{die $_[0]};
     	$result = eval {  $html2->$func(@inputs) };
-    	warn "problem evaluating $func ", join(" ",@inputs), " from ", caller(), $@, WeBWorK::Utils::pretty_print_rh({\@inputs}) if $@;
+    	$warningFlag = $@;
     }
+    if ($warningFlag) {
+     	warn "problem evaluating $func ", join(" ",@inputs); 
+     	my $warnText = '';
+     	if ($inputs[0]=~/HASH/) {
+     		foreach my $key (keys %{$inputs[0]}) {
+     			$warnText .= "$key => ",$inputs[0]->{$key};
+     		}
+     		warn "hash is $warnText";
+     	}
+     	  my $i=0;
+		 while (my ($pack, $file, $line, $subname) = caller($i++) and $i<10) {
+			warn "called from line $line of file $file. subroutine: ${pack}::$subname";
+		 }
+     }
+   
 	
+
 	#handle special cases
 	if ( $prolog or $postlog ) {
 		$result =~ s/\n/\n  /g;   
@@ -479,4 +497,5 @@ sub labelsToText {   #takes labels attached to values and distributes them into 
 	my $rh_labels = shift;
 	my $rh_values = shift;
 }	
+
 1;
