@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.22 2006/07/14 02:32:28 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.1 2006/07/15 16:35:32 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,7 @@ See HTML::EasyTags for other syntax
 
 
 use HTML::EasyTags;
+use WeBWorK::Utils;
 use strict;
 package CGI; # (override standard CGI namespace!!)
 
@@ -363,7 +364,7 @@ sub AUTOLOAD {
 		my $ra_value	= $attributes->{$values_key};
 		my $rh_labels	= $attributes->{labels_key};
 		my @values	  =  @{$attributes->{$values_key}};
-		my $ret = (defined($linebreak_key) and defined($attributes->{$linebreak_key}) and $attributes->{$linebreak_key} )?"<br>":'';
+		my $ret = (defined($linebreak_key) and defined($attributes->{$linebreak_key}) and $attributes->{$linebreak_key} )?"<br/>":"";
 		# deal with the default option
 		my $selected_button = '';
 		my $text = '';
@@ -375,13 +376,14 @@ sub AUTOLOAD {
 		## match labels to values
 		my @text=();
 		if (defined($labels_key) and $labels_key) {
-				   my %labels= %{$attributes->{$labels_key}}; 
-				   delete($attributes->{$labels_key}) if exists $attributes->{$labels_key};
-				   @text  = map {( exists($labels{$_}) )? $labels{$_}.$ret: $_.$ret } @values;
+		   my %labels= %{$attributes->{$labels_key}}; 
+		   delete($attributes->{$labels_key}) if exists $attributes->{$labels_key};
+		   @text  = map {( exists($labels{$_}) )? $labels{$_}.$ret: $_.$ret } @values;
 		} else { # no labels
 		  @text = map {$_ .$ret} @values;
 		}
 		my @checked = map { $selected_value eq $_ } @values;
+		$attributes->{checked} = \@checked;
 		$attributes->{-text} = \@text;
 		$attributes = removeParam($linebreak_key,$attributes);
 		$attributes = removeParam($default_key,$attributes);
@@ -443,8 +445,13 @@ sub AUTOLOAD {
 	# restore attributes
 	unshift @inputs,$attributes if defined $attributes;
 #	print "\n\nto EasyTags $func @inputs ";
-    $result = eval {  $html2->$func(@inputs) };
-	#$result = eval { use WeBWorK::CGI; $html2->$func(@_) };
+    # check attributes
+    { # warning block
+    	local $SIG{__WARN__} =sub{die $_[0]};
+    	$result = eval {  $html2->$func(@inputs) };
+    	warn "problem evaluating $func ", join(" ",@inputs), " from ", caller(), $@, WeBWorK::Utils::pretty_print_rh({\@inputs}) if $@;
+    }
+	
 	#handle special cases
 	if ( $prolog or $postlog ) {
 		$result =~ s/\n/\n  /g;   
