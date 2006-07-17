@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.83 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.84 2006/07/16 02:40:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,6 +43,8 @@ sub initialize {
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
+	$self->{displayMode}  = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
+	
 
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
