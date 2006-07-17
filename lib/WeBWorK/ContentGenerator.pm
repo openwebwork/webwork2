@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.174 2006/07/15 14:23:06 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.175 2006/07/16 02:40:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1358,7 +1358,7 @@ sub optionsMacro {
 	my ($self, %options) = @_;
 	
 	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
-	@options_to_show = "displayMode" unless @options_to_show;
+	@options_to_show = "displayMode" unless @options_to_show;  #FIXME -- I don't understant this -- type seems wrong
 	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
 	my @extra_params = @{$options{extra_params}} if exists $options{extra_params};
 	
@@ -1435,7 +1435,6 @@ sub feedbackMacro {
 	while (my ($key, $value) = each %params) {
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
-
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -label=>"Email instructor"));
 	$result .= CGI::endform() . "\n";
 	
@@ -1472,8 +1471,9 @@ sub hidden_fields {
 	foreach my $param (@fields) {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
+# 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
 		my $value  = $r->param($param);
-		$html .= CGI::hidden(name=>$param, value=>$value);
+		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 	}
 	return $html;
 }
@@ -1809,7 +1809,7 @@ sub errorOutput($$$) {
 	my $method = $r->method;
 	my $uri = $r->uri;
 	my $headers = do {
-		my %headers = $r->headers_in;
+		my %headers = %{$r->headers_in};
 		join("", map { CGI::Tr({},CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	};
 
