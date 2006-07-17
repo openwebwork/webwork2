@@ -1097,7 +1097,7 @@ sub body {
 		@userLinks = sort @userLinks;
 	
 		print CGI::table({border=>2,cellpadding=>10}, 
-		    CGI::Tr(
+		    CGI::Tr({},
 				CGI::td([
 					 "Editing problem set ".CGI::strong($setID)." data for these individual students:".CGI::br(). 
 					                CGI::strong(join CGI::br(), @userLinks),
@@ -1108,7 +1108,7 @@ sub body {
 		);
 	} else {
 		print CGI::table({border=>2,cellpadding=>10}, 
-		    CGI::Tr(
+		    CGI::Tr({},
 				CGI::td([
 					"This set ".CGI::strong($setID)." is assigned to ".$self->userCountMessage($setUserCount, $userCount).'.' ,
 					'Edit '.CGI::a({href=>$editUsersAssignedToSetURL},'individual versions '). "of set $setID.",
