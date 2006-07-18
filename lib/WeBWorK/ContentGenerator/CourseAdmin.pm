@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.49 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.51 2006/07/13 14:55:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -429,15 +429,15 @@ sub add_course_form {
 	print CGI::p("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course ID:"),
 			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25)),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Title:"),
 			CGI::td(CGI::textfield(-name=>"add_courseTitle", -value=>$add_courseTitle, -size=>25)),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Institution:"),
 			CGI::td(CGI::textfield(-name=>"add_courseInstitution", -value=>$add_courseInstitution, -size=>25)),
 		),
@@ -445,39 +445,39 @@ sub add_course_form {
 	
 	print CGI::p("To add the WeBWorK administrators to the new course (as instructors) check the box below.");
 	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
-	print CGI::p(CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, "Add WeBWorK administrators to new course"));
+	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, "Add WeBWorK administrators to new course"));
 	
 	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only 
 	numbers, letters, hyphens, periods (dots), commas,and underscores.\n");
 	
-	print CGI::table({class=>"FormLayout"}, CGI::Tr(
-		CGI::td(
+	print CGI::table({class=>"FormLayout"}, CGI::Tr({},
+		CGI::td({},
 			CGI::table({class=>"FormLayout"},
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "User ID:"),
 					CGI::td(CGI::textfield(-name=>"add_initial_userID", -value=>$add_initial_userID, -size=>25)),
 				),
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "Password:"),
 					CGI::td(CGI::password_field(-name=>"add_initial_password", -value=>$add_initial_password, -size=>25)),
 				),
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "Confirm Password:"),
 					CGI::td(CGI::password_field(-name=>"add_initial_confirmPassword", -value=>$add_initial_confirmPassword, -size=>25)),
 				),
 			),
 		),
-		CGI::td(
+		CGI::td({},
 			CGI::table({class=>"FormLayout"},
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "First Name:"),
 					CGI::td(CGI::textfield(-name=>"add_initial_firstName", -value=>$add_initial_firstName, -size=>25)),
 				),
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "Last Name:"),
 					CGI::td(CGI::textfield(-name=>"add_initial_lastName", -value=>$add_initial_lastName, -size=>25)),
 				),
-				CGI::Tr(
+				CGI::Tr({},
 					CGI::th({class=>"LeftHeader"}, "Email Address:"),
 					CGI::td(CGI::textfield(-name=>"add_initial_email", -value=>$add_initial_email, -size=>25)),
 				),
@@ -489,7 +489,7 @@ sub add_course_form {
 	print CGI::p("To copy problem templates from an existing course, select the course below.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Copy templates from:"),
 			CGI::td(
 				CGI::popup_menu(
@@ -515,10 +515,16 @@ sub add_course_form {
 			: $dbLayout;
 		
 		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
-		print CGI::Tr(
+		print CGI::Tr({},
 			CGI::td({style=>"text-align: right"},
-				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
-				. ($add_dbLayout eq $dbLayout ? 'checked=>"1"' : '') . ' />',
+# why did this not work?  because values aren't escaped?
+#				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
+#				. ($add_dbLayout eq $dbLayout ? 'checked=>"1"' : '') . ' />',
+				CGI::radio(-name =>"add_dbLayout",
+				           -value => $dbLayout,
+				           -checked => ($add_dbLayout eq $dbLayout) ? 1 : 0,
+				),
+				           
 			),
 			CGI::td($dbLayoutLabel),
 		);
@@ -855,7 +861,7 @@ sub rename_course_form {
 	print CGI::p("Select a course to rename.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -868,72 +874,72 @@ sub rename_course_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "New Name:"),
 			CGI::td(CGI::textfield(-name=>"rename_newCourseID", -value=>$rename_newCourseID, -size=>25)),
 		),
 	);
 	
-	print CGI::p(
-		"If the course's database layout (indicated in parentheses above) is "
-		. CGI::b("sql") . ", supply the SQL connections information requested below."
-	);
-	
-	print CGI::start_table({class=>"FormLayout"});
-	print CGI::Tr(CGI::td({colspan=>2}, 
-			"Enter the user ID and password for an SQL account with sufficient permissions to create and delete databases."
-		)
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-		CGI::td(CGI::textfield(-name=>"rename_sql_username", -value=>$rename_sql_username, -size=>25)),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-		CGI::td(CGI::password_field(-name=>"rename_sql_password", -value=>$rename_sql_password, -size=>25)),
-	);
-	
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-		CGI::td(
-			CGI::textfield(-name=>"rename_sql_host", -value=>$rename_sql_host, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the default host."),
-		),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-		CGI::td(
-			CGI::textfield(-name=>"rename_sql_port", -value=>$rename_sql_port, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the default port."),
-		),
-	);
-
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL Current Database Name:"),
-		CGI::td(
-			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_oldDatabase, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
-		),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "SQL New Database Name:"),
-		CGI::td(
-			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_newDatabase, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the name ".CGI::tt("webwork_COURSENAME"). "."),
-		),
-	);
-	print CGI::Tr(
-		CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
-		CGI::td(
-			CGI::textfield(-name=>"rename_sql_wwhost". -value=>$rename_sql_wwhost || "localhost". -size=>25),
-			CGI::br(),
-			CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
-		),
-	);
+# 	print CGI::p(
+# 		"If the course's database layout (indicated in parentheses above) is "
+# 		. CGI::b("sql") . ", supply the SQL connections information requested below."
+# 	);
+# 	
+# 	print CGI::start_table({class=>"FormLayout"});
+# 	print CGI::Tr(CGI::td({colspan=>2}, 
+# 			"Enter the user ID and password for an SQL account with sufficient permissions to create and delete databases."
+# 		)
+# 	);
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
+# 		CGI::td(CGI::textfield(-name=>"rename_sql_username", -value=>$rename_sql_username, -size=>25)),
+# 	);
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
+# 		CGI::td(CGI::password_field(-name=>"rename_sql_password", -value=>$rename_sql_password, -size=>25)),
+# 	);
+# 	
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
+# 		CGI::td({},
+# 			CGI::textfield(-name=>"rename_sql_host", -value=>$rename_sql_host, -size=>25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the default host."),
+# 		),
+# 	);
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
+# 		CGI::td({},
+# 			CGI::textfield(-name=>"rename_sql_port", -value=>$rename_sql_port, -size=>25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the default port."),
+# 		),
+# 	);
+# 
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL Current Database Name:"),
+# 		CGI::td({},
+# 			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_oldDatabase, -size=>25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
+# 		),
+# 	);
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "SQL New Database Name:"),
+# 		CGI::td({},
+# 			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_newDatabase, -size=>25),
+# 			CGI::br(),
+# 			CGI::small("Leave blank to use the name ".CGI::tt("webwork_COURSENAME"). "."),
+# 		),
+# 	);
+# 	print CGI::Tr({},
+# 		CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
+# 		CGI::td({},
+# 			CGI::textfield(-name=>"rename_sql_wwhost", -value=>$rename_sql_wwhost || "localhost", -size=>25),
+# 			CGI::br(),
+# 			CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
+# 		),
+# 	);
 	print CGI::end_table();
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"rename_course", -label=>"Rename Course"));
@@ -1101,7 +1107,7 @@ sub delete_course_form {
 	print CGI::p("Select a course to delete.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -1126,11 +1132,11 @@ sub delete_course_form {
 			"Enter the user ID and password for an SQL account with sufficient permissions to delete an existing database."
 		)
 	);
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
 		CGI::td(CGI::textfield(-name=>"delete_sql_username", -value=>$delete_sql_username, -size=>25)),
 	);
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
 		CGI::td(CGI::password_field(-name=>"delete_sql_password", -value=>$delete_sql_password, -size=>25)),
 	);
@@ -1141,26 +1147,26 @@ sub delete_course_form {
 	#		. " with the course name you entered above."
 	#	)
 	#);
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-		CGI::td(
+		CGI::td({},
 			CGI::textfield(-name=>"delete_sql_host", -value=>$delete_sql_host, -size=>25),
 			CGI::br(),
 			CGI::small(-name=>"Leave blank to use the default host."),
 		),
 	);
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-		CGI::td(
+		CGI::td({},
 			CGI::textfield(-name=>"delete_sql_port", -value=>$delete_sql_port, -size=>25),
 			CGI::br(),
 			CGI::small("Leave blank to use the default port."),
 		),
 	);
 
-	print CGI::Tr(
+	print CGI::Tr({},
 		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-		CGI::td(
+		CGI::td({},
 			CGI::textfield(-name=>"delete_sql_database", -value=>$delete_sql_database, -size=>25),
 			CGI::br(),
 			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
@@ -1240,15 +1246,15 @@ sub delete_course_confirm {
 		. " There is no undo available.");
 		
 		print CGI::table({class=>"FormLayout"},
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
 				CGI::td($delete_sql_host || "system default"),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
 				CGI::td($delete_sql_port || "system default"),
 			),
-			CGI::Tr(
+			CGI::Tr({},
 				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
 				CGI::td($delete_sql_database || "webwork_$delete_courseID"),
 			),
@@ -1389,13 +1395,13 @@ sub export_database_form {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Select a course to export the course's database. Please note
+	print CGI::p({},"Select a course to export the course's database. Please note
 	that exporting can take a very long time for a large course. If you have
 	shell access to the WeBWorK server, you may use the ", CGI::code("wwdb"), "
 	utility instead.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -1408,9 +1414,9 @@ sub export_database_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Tables to Export:"),
-			CGI::td(
+			CGI::td({},
 				CGI::checkbox_group(
 					-name => "export_tables",
 					-values => \@tables,
@@ -1592,14 +1598,8 @@ sub import_database_form {
 	print $self->hidden_fields("subDisplay");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Database XML File:"),
-# 			CGI::td(
-# 				CGI::filefield(
-# 					-name => "import_file",
-# 					-size => 50,
-# 				),
-# 			),
 			CGI::td(
 				CGI::scrolling_list(
 					-name => "import_file",
@@ -1612,7 +1612,7 @@ sub import_database_form {
 			
 			)
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Tables to Import:"),
 			CGI::td(
 				CGI::checkbox_group(
@@ -1623,7 +1623,7 @@ sub import_database_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Import into Course:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -1636,7 +1636,7 @@ sub import_database_form {
 				),
 			),
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Conflicts:"),
 			CGI::td(
 				CGI::radio_group(
@@ -1791,7 +1791,7 @@ sub archive_course_form {
 	print CGI::p("Select a course to archive.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -1805,7 +1805,7 @@ sub archive_course_form {
 			),
 			
 		),
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Delete course:"),
 			CGI::td({-style=>'color:red'}, CGI::checkbox({ 
 			                    -name=>'delete_course', 
@@ -2052,7 +2052,7 @@ sub unarchive_course_form {
 	print CGI::p("Select a course to unarchive.");
 	
 	print CGI::table({class=>"FormLayout"},
-		CGI::Tr(
+		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
@@ -2202,13 +2202,6 @@ sub do_unarchive_course {
 		print CGI::div({style=>"text-align: center"},
 			CGI::a({href=>$newCourseURL}, "Log into $new_courseID"),
 		);
-# 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
-# 		print $self->hidden_authen_fields;
-# 		print $self->hidden_fields("subDisplay");
-# 		
-# 		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_unarchive_course", "OK"),);
-# 		
-# 		print CGI::end_form();
 	}
 }
 
