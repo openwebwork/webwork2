@@ -7,7 +7,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/htdocs/helpFiles/InstructorPGProblemEditor.html,v 1.1 2006/01/07 02:08:52 gage Exp $
+# $CVSHeader: webwork-modperl/htdocs/helpFiles/InstructorPGProblemEditor.html,v 1.2 2006/01/25 23:13:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,7 +32,11 @@
 This page allows to edit the contents of PG problem files (templates)
 as well as set headers and other files.
 </p>
-
+<p>
+When using this page two or more windows may be created -- one to edit the text in the 
+file and one to view the results.  This can be a bit confusing.  If a window seems to 
+have completely disappeared make sure that it is not hiding behind one of the other windows.
+</p>
 <h4>Features:</h4> 
 <dl>
 		
@@ -40,28 +44,37 @@ as well as set headers and other files.
 	<dt>| Manpages | macro list | pod docs | report problem bugs |</dt>
 		<dd>The first three links are to pages that give some information about writing problems: "Manpages" is an (incomplete) list of the most commonly used macros with a description of their parameters and how to use them; a complete list of macros is provided by the "macro list"; and details for many macros can be obtained using the "pod docs" link which links to documentation embedded in the macro files themselves.   If you find an error in a library problem please use the "Report problem bugs" link to notify us so that we can fix it.  You will need to register with an email address the first time you use bugzilla, but after that you will not. </dd>
 	<dt>		The large text window</dt>
-		<dd>		This is where you edit the text of the problem template.  Nothing happens until you pick an action (below) and click the "Take action!" button.</dd>
+		<dd>		This is where you edit the text of the problem template.  Nothing happens until you pick an action (below) and 
+		            click the "Take action!" button.</dd>
 		</dl>
 		
 <h4>Action items:</h4> <i>(If an action cannot be executed it will not appear as an action item.)
 </i>
 </dl>
-	<dt>		View problem</dt>
-		<dd>		Will bring up a window to show the results of your editing.  It does not change the permanent file on the disk.</dd>
-	<dt>		Add problem to set</dt>
-		<dd>		Add this problem as the last problem in  an existing set, either as a problem or as the set header (the text that appears on the home page of a homework set). You can rearrange the order of the problems later using the "Hmwk Sets Editor"</dd>
-	<dt>		Save to...</dt>
-		<dd>		Saves the changes to the file indicated.</dd>
-	<dt>		Make local copy </dt>
-		<dd>		Will make a local copy of an uneditable library problem so that you can edit it.  It also changes the file path for the current problem to the new local copy. (It is much like "rename" but actually suggests the file name for you so that you can remember where the problem came from.</dd>
-	<dt>		Rename ...  </dt>
-		<dd>		Saves the changes to a new file and changes the file path for the current problem to this new file</dd>
-	<dt>		Create a copy ... </dt>
-		<dd>		Saves the changes to a new file but does not change the file path for the current problem</dd>
+	<dt>		View using seed "12345" and display mode "image"</dt>
+		<dd>		Will bring up a window to show the results of your editing.  It does not change the permanent file on the disk. You can view
+		            different versions of the same problem by changing the seed (any number will do).  You can also change mannerin which the 
+		            mathematics is typset (jsMath and images are the most common modes.)</dd>
+	<dt>		Add to set ...</dt>
+		<dd>		Add this problem as the last problem of an existing set, either as a problem or as the set header 
+		           (the text that appears on the home page of a homework set). You can rearrange the order of the problems later using 
+		            the "Hmwk Sets Editor"</dd>
+	<dt>		Create a copy at [TMPL]/"path"...</dt>
+		<dd>		Makes a new copy of the file you are editing at the location relative to the course's templates ([TMPL]) directory given by  "path".
+		            The checkbox allows you to replace the current problem with the new problem in the homework set. 
+		            <p> Check the checkbox if you want to edit the current problem without changing the original problem file.</p>
+		            <p> Leave the checkbox unchecked if you are using the current problem as a model for a brand new problem. You can add the
+		                new file to the homework set from the Library Browser.</p>
+		            <p>If the original problem could not be edited than you will have to change the path name
+		            before you will be allowed to save the problem. (Adding  "local/" to the beginning of the suggested path will work. All of your
+		            edited files will then appear in a subdirectory named "local". A new problem whose path ends in blankProblem.pg should be given
+		            a new name, for example, "myNewProblem.pg")</P.</dd>
 	<dt>		Revert</dt>
-		<dd>		Reverts to the copy of the file saved on the disk -- all unsaved editing changes will be lost.</dd>
+		<dd>		Reverts to the copy of the file saved on the disk -- all unsaved editing changes will be lost. 
+		            This option only appears when you have making
+		            provisional edits using the first option "View..." above</dd>
 	<dt>		Take action</dt>
-		<dd>		Executes the</dd> action item selected above
+		<dd>		Executes the</dd> action item selected above. You can elect to have this action appear in a new window or not.
 </dl>
 
 </blockquote>
