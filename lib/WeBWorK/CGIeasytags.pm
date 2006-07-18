@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.2 2006/07/17 17:16:37 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.3 2006/07/17 21:54:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -347,7 +347,7 @@ sub AUTOLOAD {
 	};
 
 			
-	$func =~/^radio_group$/ &&do {
+	$func =~/^(radio_group)$/ &&do {
 		my $type = $func;
 		$func ='input_group'; 
 		$type =~ s/_group$//;
@@ -366,7 +366,6 @@ sub AUTOLOAD {
 		my @values	  =  @{$attributes->{$values_key}};
 		my $ret = (defined($linebreak_key) and defined($attributes->{$linebreak_key}) and $attributes->{$linebreak_key} )?"<br/>":"";
 		# deal with the default option
-		my $selected_button = '';
 		my $text = '';
 		my $selected_value = $values[0];
 		if (defined($default_key) and $default_key and defined($attributes->{$default_key})) {
@@ -383,6 +382,53 @@ sub AUTOLOAD {
 		  @text = map {$_ .$ret} @values;
 		}
 		my @checked = map { $selected_value eq $_ } @values;
+		$attributes->{checked} = \@checked;
+		$attributes->{-text} = \@text;
+		$attributes = removeParam($linebreak_key,$attributes);
+		$attributes = removeParam($default_key,$attributes);
+
+		@inputs = ( );
+		last CASES;
+	}; 
+	$func =~/^(checkbox_group)$/ &&do {
+		my $type = $func;
+		$func ='input_group'; 
+		$type =~ s/_group$//;
+		unless (defined $attributes) {
+				warn "probable error $func @inputs ";
+		}
+		$attributes->{type}=$type;
+		$attributes = removeParam('override',$attributes);
+		my $labels_key = normalizeName('labels?',keys %{$attributes});
+		my $values_key = normalizeName('values?',keys %{$attributes});
+		my $name_key = normalizeName('name', keys %{$attributes});
+		my $default_key = normalizeName('defaults?', keys %{$attributes});
+		my $linebreak_key = normalizeName('linebreaks?', keys %{$attributes});
+		my $ra_value	= $attributes->{$values_key};
+		my $rh_labels	= $attributes->{labels_key};
+		my @values	  =  @{$attributes->{$values_key}};
+		my $ret = (defined($linebreak_key) and defined($attributes->{$linebreak_key}) and $attributes->{$linebreak_key} )?"<br/>":"";
+		# deal with the default option
+		my %selected_values = ($values[0] => 1);  # select the first value by default
+		if (defined($default_key) and $default_key and defined($attributes->{$default_key}) and $attributes->{$default_key}) {
+		   # grab the selected options
+		   if (ref($attributes->{$default_key})=~/ARRAY/ ) {
+			%selected_values = map {$_ => 1 } @{$attributes->{$default_key}};
+		   } elsif ($attributes->{$default_key}) {
+			%selected_values = ($attributes->{$default_key} => 1);
+		   }
+		}
+		my @selected = map {(exists($selected_values{$_}) )?1 : 0 } @values;
+		## match labels to values
+		my @text=();
+		if (defined($labels_key) and $labels_key) {
+		   my %labels= %{$attributes->{$labels_key}}; 
+		   delete($attributes->{$labels_key}) if exists $attributes->{$labels_key};
+		   @text  = map {( exists($labels{$_}) )? $labels{$_}.$ret: $_.$ret } @values;
+		} else { # no labels
+		  @text = map {$_ .$ret} @values;
+		}
+		my @checked = map { (exists( $selected_values{$_} ) )?1 : 0 } @values;
 		$attributes->{checked} = \@checked;
 		$attributes->{-text} = \@text;
 		$attributes = removeParam($linebreak_key,$attributes);
