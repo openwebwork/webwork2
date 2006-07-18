@@ -172,7 +172,7 @@ sub AUTOLOAD {
 #				warn "the following keys don't make sense |", join(" ", @bad_keys), "|  Use name value pairs when possible. $func inputs: ", join(" ", %inputs);
 				# handle the case where there are only two value inputs
 				$inputs{name}  = $inputs[0];
-				$inputs{value} = $inputs[1];
+				$inputs{value} = escapeHTML($inputs[1]);
 				if (@inputs > 2 ) {
 					my ($pkg, $file, $line) = caller();
 					warn "Perhaps you have used an illegal key? Please use named parameters for more than two entries.";
@@ -313,6 +313,7 @@ sub AUTOLOAD {
 		}
 		my $default_label = normalizeName('defaults?',keys %{$attributes});
 		$attributes->{-text} = $attributes->{$default_label} if defined $default_label;
+		$attributes->{text} = escapeHTML($attributes->{text});
 		$attributes = removeParam($default_label, $attributes);
 		@inputs = ( );
 		last CASES;
@@ -345,7 +346,6 @@ sub AUTOLOAD {
 		last CASES;
 	};
 
-			
 	$func =~/^(radio_group)$/ &&do {
 		my $type = $func;
 		$func ='input_group'; 
@@ -503,7 +503,7 @@ sub AUTOLOAD {
      	my $warnText = '';
      	if ($inputs[0]=~/HASH/) {
      		foreach my $key (keys %{$inputs[0]}) {
-     			$warnText .= "$key => ",$inputs[0]->{$key};
+     			$warnText .= "$key => ".$inputs[0]->{$key};
      		}
      		warn "hash is $warnText";
      	}
@@ -542,5 +542,38 @@ sub labelsToText {   #takes labels attached to values and distributes them into 
 	my $rh_labels = shift;
 	my $rh_values = shift;
 }	
-
+sub escapeHTML {
+	my $input = shift;
+	if ( not ref($input) ) {
+		$input = escapeHTMLitem($input);
+	} elsif (ref($input) =~/ARRAY/) {
+		my @inputs = @{$input};
+		foreach my $item (@inputs) {
+			$item = escapeHTMLitem($item);	
+		}
+		$input = \@inputs;
+	} elsif (ref($input) =~/HASH/) {
+		my %inputs = %$input;
+		foreach my $key (keys %inputs) {
+			$inputs{$key} = escapeHTMLitem($inputs{$key});	
+		}
+		$input = \%inputs;
+	} else {
+	  warn "Error with $input";	
+	}
+	return $input;
+}
+	  
+sub escapeHTMLitem {
+	my $item = shift;
+	return $item unless defined $item;
+	$item =~ s/&/&amp;/;
+	$item =~ s/"/&quot;/;
+	$item =~ s/>/&gt;/;
+	$item =~ s/</&lt;/;
+	return $item;
+}	
+	
+	
+	
 1;
