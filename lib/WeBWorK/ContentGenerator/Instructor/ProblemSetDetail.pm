@@ -1407,15 +1407,7 @@ sub body {
 		print CGI::end_table();
 		print CGI::checkbox({
 				  label=> "Force problems to be numbered consecutively from one (always done when reordering problems)",
-				  name=>"force_renumber", value=>"1"}),
-			  CGI::br(),
-		      CGI::checkbox({
-				  label=> "Add blank problem to set",
-				  name=>"add_blank_problem", value=>"1"}),
-
-		      CGI::br();
-		print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
-		print CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}) . "(Any unsaved changes will be lost.)";
+				  name=>"force_renumber", value=>"1"});
 		print CGI::p(<<EOF);
 Any time problem numbers are intentionally changed, the problems will
 always be renumbered consecutively, starting from one.  When deleting
@@ -1429,9 +1421,19 @@ EOF
 		print CGI::p(CGI::b("This set doesn't contain any problems yet."));
 	}
 	# always allow one to add a new problem.
-	my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
-    my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
+	print 	CGI::checkbox({
+				  label=> "Add blank problem template to end of homework set",
+				  name=>"add_blank_problem", value=>"1"}
+			),CGI::br(),CGI::br(),
+			CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
+			CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
+			"(Any unsaved changes will be lost.)"
+	;
 
+	
+	
+	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
+    #my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
     # This next feature isn't fully supported and is causing problems.  Remove for now.  #FIXME
 	#print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). ' a new blank problem');
 
