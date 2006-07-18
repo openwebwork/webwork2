@@ -2,7 +2,7 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
 
-# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.3 2006/07/17 21:54:38 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/CGIeasytags.pm,v 1.4 2006/07/18 14:08:21 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,7 +65,6 @@ See HTML::EasyTags for other syntax
 
 
 use HTML::EasyTags;
-use WeBWorK::Utils;
 use strict;
 package CGI; # (override standard CGI namespace!!)
 
