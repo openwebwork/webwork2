@@ -2,7 +2,7 @@
 
 # standard CGI -- will not work properly with apache2
 
-use CGI qw(*ul *li escapeHTML);
+#use CGI qw(*ul *li escapeHTML);
 
 # there are 2 CGI substitutes for apache2:
 
@@ -22,6 +22,16 @@ use CGI qw(*ul *li escapeHTML);
 
 # below is a subclass of CGI that forces CGI to use the WeBWorK Request 
 # object when finding "sticky" parameters
+# 
+# however: this does not solve the problem we have. bummer.
 
-#use WeBWorK::CGIParamShim;
+#use WeBWorK::CGIParamShim qw(*ul *li);
+
+# this module deletes all parameters from any CGI object. the effect is to 
+# disable sticky parameters completely. this seems to solve the problems  
+# we've been having with parameter management under Apache2. see the tail 
+# end of the notes in CGIParamShim.pm for more details.
+
+use WeBWorK::CGIDeleteParams qw(*ul *li);
+
 1;
