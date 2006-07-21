@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGI.pm,v 1.16 2006/07/13 16:17:52 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGIParamShim.pm,v 1.1 2006/07/16 18:47:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -111,7 +111,73 @@ stick it in there in our constructor, and then call SUPER::new
 new will refrain from overwriting it with Apache2::RequestUtil->apache
 
 no wait, i'm wrong. the REAL trick is getting our lexical instance of WeBWorK::Request ($r)
-into the GLOBAL $CGI::Q variable! maybe we can do this trickily in 
+into the GLOBAL $CGI::Q variable! maybe we can do this trickily in WeBWorK.pm. yeah, that works.
+
+--------------------------------------------------------------------------------
+
+time passes. the duck may or may not have left the bar.
+
+From: Sam Hathaway <sh002i@math.rochester.edu>
+Date: Thu, 20 Jul 2006 15:20:06 -0400
+To: Mike Gage <gage@math.rochester.edu>
+Cc: openwebwork-devel@lists.sourceforge.net
+Subject: [WWdevel] CGI weirdness under Apache 1
+
+Hi Mike,
+
+In doing some testing, I've discovered that CGI.pm doesn't behave the way we thought it did under
+Apache 1. For some reason, the default CGI object ($CGI::Q) doesn't seem to be getting parameters
+from POSTDATA.
+
+I've added a Test.pm content generator (/webwork2/coursename/test/) which demonstrates this
+behavior. Click "Refresh" and note that CGI::param('pwd') returns an empty value under Apache 1,
+even though there is a "pwd" field in the request. Also note that the $CGI::Q object dumped at the
+top of the page is essentially empty.
+
+If you change the POST to a GET, the parameters show up in the CGI object, and the new "pwd" value
+from $self->{pwd} isn't used in the hidden field.
+
+We actually rely on this lack of existing values. For example, FileManager relies on the value of
+$self->{pwd} actually being written out in the line:
+
+print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
+
+In order for this to happen, CGI has to think that there is no existing "pwd" parameter.
+
+In Apache 2, CGI.pm *is* able to get parameters from POSTDATA. This is the REAL CAUSE of the
+original parameter problem that we've been working on. CGI.pm failing to get parameter data is not
+the problem -- it's actually when it succeeds that things break.
+
+So this changes the contours of the problem a bit.
+
+Only two forms in WeBWorK use GET requests. They are the database export form in CourseAdmin.pm and
+the main form in Instructor/Index.pm. Sticky values *could* be a problem in these forms, but as it
+turns out, they aren't. The rest of WeBWorK's forms use POST, and many form fields have been
+written with the assumption that the "-value" or "-default" will always be used.
+
+So you'd think that the solution would be to simply add the "-nosticky" pragma, like we originally
+tried. However, from looking at the CGI.pm code, I think -nosticky doesn't do what we think it
+does. What it appears to do is suppress the output of hidden ".cgifields" fields naming each of the
+radio buttons, checkboxes, and scrolling lists in the form. (And also give the default name
+".submit" to unnamed submit buttons.) THAT'S ALL.
+
+As far as i can tell, all that ".cgifields" does is ensures that the parameter *names* for
+checkboxes, radio buttons, and scrolling lists are still known to CGI.pm even if none of them are
+selected (and thus don't appear in the request). This has very little to do with form field
+"stickiness", despite statements to the contrary in the docs. (The only connection is that it
+prevents checkboxes, radio buttons, and scrolling lists from being reset to their defaults if none
+of their items are selected.) It looks to me like the only way to turn off form field stickiness is
+to specify "-override=>1" in each field.
+
+This seems really weird to me, since it implies that the CGI module documentation is just plain
+wrong. Could you do me a favor and look at $NOSTICKY in the CGI.pm source and tell me if I'm
+missing something?
+-sam
+
+--------------------------------------------------------------------------------
+
+so this module is pretty much useless, since people rely on NOT getting sticky behavior, and this
+is only achieved when CGI doesn't know about any params.
 
 =cut
 
@@ -133,12 +199,14 @@ $CGI::DefaultClass = __PACKAGE__;
 $WeBWorK::CGIParamShim::AutoloadClass = 'CGI';
 
 sub new {
+	#print STDERR Carp::longmess("new(@_) called");
 	my $invocant = shift;
 	@_ = $WeBWorK::CGIParamShim::WEBWORK_REQUEST unless @_;
 	return $invocant->SUPER::new(@_);
 }
 
 sub param {
+	#print STDERR Carp::longmess("param(@_) called");
 	#CGI#my($self,@p) = self_or_default(@_);
 	my($self,@p) = CGI::self_or_default(@_);
 	return $self->all_parameters unless @p;
@@ -178,6 +246,7 @@ sub param {
 }
 
 sub add_parameter {
+	#print STDERR Carp::longmess("add_parameter(@_) called");
 	my($self,$param)=@_;
 	return unless defined $param;
 	#CGI#push (@{$self->{'.parameters'}},$param) 
@@ -187,6 +256,7 @@ sub add_parameter {
 }
 
 sub all_parameters {
+	#print STDERR Carp::longmess("all_parameters(@_) called");
     my $self = shift;
 	#CGI#return () unless defined($self) && $self->{'.parameters'};
 	#CGI#return () unless @{$self->{'.parameters'}};
@@ -197,6 +267,7 @@ sub all_parameters {
 }
 
 sub delete {
+	#print STDERR Carp::longmess("delete(@_) called");
 	#CGI#my($self,@p) = self_or_default(@_);
 	my($self,@p) = CGI::self_or_default(@_);
 	#CGI#my(@names) = rearrange([NAME],@p);
@@ -217,6 +288,7 @@ sub delete {
 }
 
 sub append {
+	#print STDERR Carp::longmess("append(@_) called");
 	#CGI#my($self,@p) = self_or_default(@_);
 	my($self,@p) = CGI::self_or_default(@_);
 	#CGI#my($name,$value) = rearrange([NAME,[VALUE,VALUES]],@p);
@@ -231,6 +303,7 @@ sub append {
 }
 
 sub param_fetch {
+	#print STDERR Carp::longmess("param_fetch(@_) called");
 	croak "param_fetch not supported in " . __PACKAGE__;
 }
 
