@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CGIParamShim.pm,v 1.1 2006/07/16 18:47:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CGIDeleteParams.pm,v 1.1 2006/07/21 00:18:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,7 +14,7 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::CGIParamShim;
+package WeBWorK::CGIDeleteParams;
 
 use strict;
 use warnings;
@@ -29,7 +29,7 @@ require CGI;
 $VERSION = "0.1";
 
 $CGI::DefaultClass = __PACKAGE__;
-$WeBWorK::CGIParamShim::AutoloadClass = 'CGI';
+$WeBWorK::CGIDeleteParams::AutoloadClass = 'CGI';
 
 sub new {
 	my $self = shift->SUPER::new(@_);
