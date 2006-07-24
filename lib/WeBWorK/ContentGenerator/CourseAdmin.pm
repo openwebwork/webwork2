@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.51 2006/07/13 14:55:46 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.52 2006/07/18 13:10:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -506,33 +506,33 @@ sub add_course_form {
 	);
 	
 	print CGI::p("Select a database layout below.");
-	
+	print CGI::start_table({class=>"FormLayout"});
 	foreach my $dbLayout (@dbLayouts) {
-		print CGI::start_table({class=>"FormLayout"});
+		
 		
 		my $dbLayoutLabel = (defined $ce->{dbLayout_descr}{$dbLayout})
 			? "$dbLayout - " . $ce->{dbLayout_descr}{$dbLayout}
-			: $dbLayout;
+			: "$dbLayout - no description provided in global.conf";
 		
 		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
 		print CGI::Tr({},
-			CGI::td({style=>"text-align: right"},
+			CGI::td({width=>'20%'},
 # why did this not work?  because values aren't escaped?
 #				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
 #				. ($add_dbLayout eq $dbLayout ? 'checked=>"1"' : '') . ' />',
-				CGI::radio(-name =>"add_dbLayout",
-				           -value => $dbLayout,
-				           -checked => ($add_dbLayout eq $dbLayout) ? 1 : 0,
+				CGI::radio_group(-name =>"add_dbLayout",
+				           -value => [$dbLayout],
+				           -default => $dbLayout,
 				),
 				           
 			),
 			CGI::td($dbLayoutLabel),
 		);
 		
-		print CGI::end_table();
+		
 	}
-	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"add_course", -label=>"Add Course"));
+	print CGI::end_table();
+	print CGI::p({style=>"text-align: left"}, CGI::submit(-name=>"add_course", -label=>"Add Course"));
 	
 	print CGI::end_form();
 }
