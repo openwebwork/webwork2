@@ -29,6 +29,7 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 #use WeBWorK::CGIParamShim;
+use WeBWorK::Utils qw/undefstr/;
 
 sub body {
 	my ($self) = @_;
@@ -40,23 +41,31 @@ sub body {
 	
 	$self->{pwd} = $r->param("pwd") || "helloworld";
 	
+	print CGI::p(
+		"REQUEST_METHOD is $ENV{REQUEST_METHOD}", CGI::br(),
+		"CONTENT_TYPE is $ENV{CONTENT_TYPE}", CGI::br(),
+		"CONTENT_LENGTH is $ENV{CONTENT_LENGTH}",
+	);
+	
 	use Data::Dumper;
 	print CGI::pre(CGI::escapeHTML(Dumper($CGI::Q)));
 	
 	#print CGI::start_form(-method=>"POST", -action=>$r->uri);
-	print CGI::start_form(
+	my $start_form = CGI::start_form(
 		-method=>"POST",
 		-action=>$r->uri,
-		-enctype=>'application/x-www-form-urlencoded',
-		#-enctype=>'multipart/form-data',
+		#-enctype=>'application/x-www-form-urlencoded',
+		-enctype=>'multipart/form-data',
 	);
+	print CGI::pre(CGI::escapeHTML($start_form));
+	print $start_form;
 	print $self->hidden_authen_fields;
 	
 	print CGI::p("before action:" . CGI::br()
-		. " \$r->param('pwd')=" . $r->param('pwd') . CGI::br()
-		. " CGI::param('pwd')=" . CGI::param('pwd') . CGI::br()
-		. " \$CGI::Q->{pwd}=" . ($CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "") . CGI::br()
-		. " \$self->{pwd}=" . $self->{pwd});
+		. " \$r->param('pwd')=" . (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF") . CGI::br()
+		. " CGI::param('pwd')=" . (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF") . CGI::br()
+		. " \$CGI::Q->{pwd}=" . (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF") . CGI::br()
+		. " \$self->{pwd}=" . (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
 	
 	if (defined $r->param("submit") and $r->param("submit") eq "ChangePWD") {
 		$self->{pwd} = $r->param("new_pwd");
@@ -66,10 +75,10 @@ sub body {
 	print "new_pwd: ", CGI::textfield({name=>"new_pwd",value=>$self->{pwd}}), CGI::br();
 	
 	print CGI::p("after action:" . CGI::br()
-		. " \$r->param('pwd')=" . $r->param('pwd') . CGI::br()
-		. " CGI::param('pwd')=" . CGI::param('pwd') . CGI::br()
-		. " \$CGI::Q->{pwd}=" . ($CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "") . CGI::br()
-		. " \$self->{pwd}=" . $self->{pwd});
+		. " \$r->param('pwd')=" . (defined $r->param('pwd') ? $r->param('pwd') : "UNDEF") . CGI::br()
+		. " CGI::param('pwd')=" . (defined CGI::param('pwd') ? CGI::param('pwd') : "UNDEF") . CGI::br()
+		. " \$CGI::Q->{pwd}=" . (defined $CGI::Q->{pwd} ? "@{$CGI::Q->{pwd}}" : "UNDEF") . CGI::br()
+		. " \$self->{pwd}=" . (defined $self->{pwd} ? $self->{pwd} : "UNDEF"));
 	
 	my $hidden_pwd = CGI::hidden({name=>"pwd",value=>$self->{pwd}});
 	print CGI::p("hidden field is being passed value=>".$self->{pwd}, CGI::br(),
