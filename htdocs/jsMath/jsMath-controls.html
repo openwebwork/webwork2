@@ -87,12 +87,7 @@ jsMath.Add(jsMath.Controls,{
 
   Main: function () {
     this.oldCookie = {}; jsMath.Add(this.oldCookie,this.cookie);
-    this.panel.innerHTML = ""; // for MSIE on the Mac
-    if (jsMath.browser == 'Mozilla') {
-      this.panel.appendChild(document.getElementById("jsMath_panel").cloneNode(true));
-    } else {
-      this.panel.innerHTML = document.getElementById("jsMath_panel").innerHTML;
-    }
+    this.GetPanel("panel");
 
     jsMath.Element("_version").innerHTML = jsMath.version;
 
@@ -136,12 +131,7 @@ jsMath.Add(jsMath.Controls,{
   },
 
   Options: function () {
-    this.panel.innerHTML = ""; // for MSIE on the Mac
-    if (jsMath.browser == 'Mozilla') {
-      this.panel.appendChild(document.getElementById("jsMath_options").cloneNode(true));
-    } else {
-      this.panel.innerHTML = document.getElementById("jsMath_options").innerHTML;
-    }
+    this.GetPanel("options");
     jsMath.Element("_scale").value = this.cookie.scale;
     jsMath.Element("_keep").value = this.cookie.keep;
     jsMath.Element("_global").value = this.cookie.global;
@@ -177,6 +167,10 @@ jsMath.Add(jsMath.Controls,{
       jsMath.Element("_globalText").className = "disabled";
       jsMath.Element("_global").disabled = true;
     }
+    if (jsMath.isCHMmode) {
+      jsMath.Element("_asynchText").className  = "disabled";
+      jsMath.Element("_asynch").disabled = true;
+    }
 
     if (jsMath.Browser.safariButtonBug) {
       for (var id in this.optionLabels)
@@ -184,6 +178,15 @@ jsMath.Add(jsMath.Controls,{
     }
 
     this.panel.style.display = "block";
+  },
+
+  GetPanel: function (name) {
+    this.panel.innerHTML = ""; // for MSIE on the Mac
+    if (jsMath.browser == 'Mozilla') {
+      this.panel.appendChild(document.getElementById("jsMath_"+name).cloneNode(true));
+    } else {
+      this.panel.innerHTML = document.getElementById("jsMath_"+name).innerHTML;
+    }
   },
 
   SaveOptions: function (close) {
@@ -331,7 +334,7 @@ on mathematics to reopen this panel.</i>
 <tr><td style="height:.8em"></td></tr>
 
 <tr><td><input type="checkbox" id="jsMath__progress" value="1" /> Show progress messages</td></tr>
-<tr><td><input type="checkbox" id="jsMath__asynch"   value="1" /> Force asynchronous processing</td></tr>
+<tr><td><input type="checkbox" id="jsMath__asynch"   value="1" /> <span id="jsMath__asynchText">Force asynchronous processing</span></td></tr>
 <tr><td><input type="checkbox" id="jsMath__blank"    value="1" /> Don't show page until complete</td></tr>
 <tr><td><input type="checkbox" id="jsMath__button"   value="1" /> Show jsMath button</td></tr>
 

@@ -372,7 +372,7 @@ var jsMath = {
       } catch (err) {}
       document.domain = oldDomain;
     } else {
-      if (!this.src.match(/^[^:]+:\/\/([^/]+)(:[0-9]+)?\//)) return;
+      if (!this.src.match(new RegExp('^[^:]+:\/\/([^/]+)(:[0-9]+)?\/'))) return;
       if (document.domain == RegExp.$1) return;
       var src = RegExp.$1.split(/\./);
       var loc = String(window.location.host).split(/\./);
