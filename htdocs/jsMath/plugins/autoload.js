@@ -95,12 +95,58 @@ jsMath.Add(jsMath.Autoload,{
   
   Script: {
 
-    iframe: null,  // the hidden iframe
+    request: null,  // XMLHttpRequest object (if we can get it)
+    iframe: null,   // the hidden iframe (if not)
 
     /*
-     *  Load an external JavaScript file asynchronously
+     *  Get XMLHttpRequest object, if possible, and look up the URL root
+     */
+    Init: function () {
+      if (window.XMLHttpRequest) {try {this.request = new XMLHttpRequest} catch (err) {}}
+      if (!this.request && window.ActiveXObject) {
+        var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
+                   "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
+        for (var i = 0; i < xml.length && !this.request; i++) {
+          try {this.request = new ActiveXObject(xml[i])} catch (err) {}
+        }
+      }
+      this.Root();
+    },
+
+    /*
+     *  Load an external JavaScript file
      */
     Load: function (url) {
+      if (this.request) {
+        setTimeout(function () {jsMath.Autoload.Script.xmlLoad(url)},1);
+      } else {
+        this.startLoad(url);
+      }
+    },
+
+    /*
+     *  Load an external JavaScript file via XMLHttpRequest
+     */
+    xmlLoad: function (url) {
+      try {
+        this.request.open("GET",jsMath.Autoload.root+url,false);
+        this.request.send(null);
+      } catch (err) {
+        throw "autoload: can't load the file '"+url+"'\n"
+            + "Message: "+err.message;
+      }
+      if (this.request.status && this.request.status >= 400) {
+        throw "autoload: can't load the file '"+url+"'\n"
+            + "Error status: "+this.request.status;
+      }
+      window.eval(this.request.responseText);
+      this.endLoad();
+    },
+
+    /*
+     *  Load an external JavaScript file via jsMath-autoload.html
+     */
+    startLoad: function (url) {
       this.iframe = document.createElement('iframe');
       this.iframe.style.visibility = 'hidden';
       this.iframe.style.position = 'absolute';
@@ -144,6 +190,7 @@ jsMath.Add(jsMath.Autoload,{
         if (data.length == 1) {jsMath[name](data[0])}
           else {jsMath[name](data[0],data[1],data[2],data[3])}
       }
+     this.queue = [];
     },
   
     AfterLoad: function () {jsMath.Autoload.Script.RunStack()},
@@ -185,6 +232,13 @@ jsMath.Add(jsMath.Autoload,{
       this.Check2();
     }
   },
+  ReCheck: function () {
+    if (jsMath.loaded) return;
+    this.InitStubs();
+    this.checked = 0;
+    this.Script.queue = [];
+    this.Check();
+  },
 
   /*
    *  Once tex2math is loaded, use it to check for math that
@@ -216,17 +270,19 @@ jsMath.Add(jsMath.Autoload,{
     if (this.needsJsMath) {
       this.LoadJsMath();
     } else {
-      jsMath.Autoload.Script = null;
       jsMath.Process = function () {};
       jsMath.ProcessBeforeShowing = function () {};
-      jsMath.Synchronize = function () {};
       jsMath.ConvertTeX = function () {};
       jsMath.ConvertTeX2 = function () {};
       jsMath.ConvertLaTeX = function () {};
       jsMath.ConvertCustom = function () {};
       jsMath.CustomSearch = function () {};
       jsMath.Macro = function () {};
-      jsMath.Autoload.Run = function () {};
+      jsMath.Synchronize = function (code,data) {
+        if (typeof(code) != 'string') {code(data)} else {eval(code)}
+      };
+      jsMath.Autoload.Script.RunStack(); // perform pending commands
+      jsMath.Autoload.setMessage();
     }
   },
 
@@ -243,21 +299,24 @@ jsMath.Add(jsMath.Autoload,{
    *  jsMath.Autoload.Run() can be called to perform the 
    *  tex2math calls given by the Autoload parameters.
    */
-  Run: function (data) {this.Script.Push('Autorun',[data])},
+  Run: function (data) {
+    if (jsMath.loaded) {this.Autorun(data)}
+                  else {this.Script.Push('Autorun',[data])}
+  },
 
-  Autorun: function () {
-    if (this.findTeXstrings) {jsMath.ConvertTeX(this.checkElement)}
-    if (this.findLaTeXstrings) {jsMath.ConvertLaTeX(this.checkElement)}
+  Autorun: function (element) {
+    if (!element) {element = this.checkElement}
+    if (this.findTeXstrings) {jsMath.ConvertTeX(element)}
+    if (this.findLaTeXstrings) {jsMath.ConvertLaTeX(element)}
     if (this.findCustomSettings) {
       jsMath.Synchronize(function () {
-        jsMath.tex2math.Convert(jsMath.Autoload.checkElement,
-                                jsMath.Autoload.findCustomSettings);
+        jsMath.tex2math.Convert(element,jsMath.Autoload.findCustomSettings);
       });
     }
     if (this.findCustomStrings) {
       var s = this.findCustomStrings;
       jsMath.CustomSearch(s[0],s[1],s[2],s[3]);
-      jsMath.ConvertCustom(this.checkElement);
+      jsMath.ConvertCustom(element);
     }
   },
 
@@ -283,6 +342,7 @@ jsMath.Add(jsMath.Autoload,{
    *  and then do any pending commands.
    */
   LoadJsMath: function () {
+    if (jsMath.loaded) {this.afterLoad(); return}
     if (this.root) {
       this.setMessage('Loading jsMath...');
       this.Script.AfterLoad = this.afterLoad;
@@ -327,28 +387,30 @@ jsMath.Add(jsMath.Autoload,{
       };
       for (var id in style) {this.div.style[id] = style[id]}
       this.div.appendChild(jsMath.document.createTextNode(message));
-    } else {
+    } else if (this.div) {
       this.div.firstChild.nodeValue = "";
       this.div.style.visibility = 'hidden';
     }
-  }
-  
-});
+  },
 
-/*
- *  Queue these so we can do them after jsMath has been loaded
- */
-jsMath.Add(jsMath,{
-  Process: function (data) {jsMath.Autoload.Script.Push('Process',[data])},
-  ProcessBeforeShowing: function (data) {jsMath.Autoload.Script.Push('ProcessBeforeShowing',[data])},
-  ConvertTeX: function (data) {jsMath.Autoload.Script.Push('ConvertTeX',[data])},
-  ConvertTeX2: function (data) {jsMath.Autoload.Script.Push('ConvertTeX2',[data])},
-  ConvertLaTeX: function (data) {jsMath.Autoload.Script.Push('ConvertLaTeX',[data])},
-  ConvertCustom: function (data) {jsMath.Autoload.Script.Push('ConvertCustom',[data])},
-  CustomSearch: function (d1,d2,d3,d4) {jsMath.Autoload.Script.Push('CustomSearch',[d1,d2,d3,d4])},
-  Synchronize: function (data) {jsMath.Autoload.Script.Push('Synchronize',[data])},
-  Macro: function (cs,def,params) {jsMath.Autoload.Script.Push('Macro',[cs,def,params])},
-  Autorun: function () {jsMath.Autoload.Autorun()}
+  /*
+   *  Queue these so we can do them after jsMath has been loaded
+   */
+  stubs: {
+    Process: function (data) {jsMath.Autoload.Script.Push('Process',[data])},
+    ProcessBeforeShowing: function (data) {jsMath.Autoload.Script.Push('ProcessBeforeShowing',[data])},
+    ConvertTeX: function (data) {jsMath.Autoload.Script.Push('ConvertTeX',[data])},
+    ConvertTeX2: function (data) {jsMath.Autoload.Script.Push('ConvertTeX2',[data])},
+    ConvertLaTeX: function (data) {jsMath.Autoload.Script.Push('ConvertLaTeX',[data])},
+    ConvertCustom: function (data) {jsMath.Autoload.Script.Push('ConvertCustom',[data])},
+    CustomSearch: function (d1,d2,d3,d4) {jsMath.Autoload.Script.Push('CustomSearch',[d1,d2,d3,d4])},
+    Synchronize: function (data) {jsMath.Autoload.Script.Push('Synchronize',[data])},
+    Macro: function (cs,def,params) {jsMath.Autoload.Script.Push('Macro',[cs,def,params])},
+    Autorun: function (data) {jsMath.Autoload.Autorun(data)}
+  },
+
+  InitStubs: function () {jsMath.Add(jsMath,jsMath.Autoload.stubs)}
+  
 });
 
 /*
@@ -359,5 +421,6 @@ if (jsMath.Autoload.findMathElements == null) {jsMath.Autoload.findMathElements 
 if (jsMath.Autoload.findTeXstrings == null)   {jsMath.Autoload.findTeXstrings = 0}
 if (jsMath.Autoload.findLaTeXstrings == null) {jsMath.Autoload.findLaTeXstrings = 0}
 
-jsMath.Autoload.Script.Root();
+jsMath.Autoload.Script.Init();
+jsMath.Autoload.InitStubs();
 if (document.body) {jsMath.Autoload.Check()}

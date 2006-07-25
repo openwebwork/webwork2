@@ -3,7 +3,7 @@
  *  
  *  Part of the jsMath package for mathematics on the web.
  *
- *  This file is a plugin that searches text wthin a web page
+ *  This file is a plugin that searches text within a web page
  *  for \(...\), \[...\], $...$ and $$...$$ and converts them to
  *  the appropriate <SPAN CLASS="math">...</SPAN> or
  *  <DIV CLASS="math">...</DIV> tags.
@@ -87,7 +87,7 @@ jsMath.Add(jsMath.tex2math,{
   },
   
   patternQuote: function (s) {
-    s = s.replace(/([\^(){}+*?\-|\[\]\:\\])/g,'\\$1');
+    s = s.replace(/([\^$(){}+*?\-|\[\]\:\\])/g,'\\$1');
     return s;
   },
 
