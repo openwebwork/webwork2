@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.86 2006/07/11 03:59:03 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.88 2006/07/15 14:06:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,7 +44,7 @@ use Time::HiRes qw/time/;
 # this sets package variables in several packages
 use WeBWorK::Constants;
 
-# the rest of these are modules that are acutally used by this one
+use WeBWorK::Authen;
 use WeBWorK::Authz;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -224,26 +224,28 @@ sub dispatch($) {
 	$r->authz($authz);
 	
 	# figure out which authentication modules to use
-	my $user_authen_module;
-	my $proctor_authen_module;
-	if (ref $ce->{authen}{user_module} eq "HASH") {
-		if (exists $ce->{authen}{user_module}{$ce->{dbLayoutName}}) {
-			$user_authen_module = $ce->{authen}{user_module}{$ce->{dbLayoutName}};
-		} else {
-			$user_authen_module = $ce->{authen}{user_module}{"*"};
-		}
-	} else {
-		$user_authen_module = $ce->{authen}{user_module};
-	}
-	if (ref $ce->{authen}{proctor_module} eq "HASH") {
-		if (exists $ce->{authen}{proctor_module}{$ce->{dbLayoutName}}) {
-			$proctor_authen_module = $ce->{authen}{proctor_module}{$ce->{dbLayoutName}};
-		} else {
-			$proctor_authen_module = $ce->{authen}{proctor_module}{"*"};
-		}
-	} else {
-		$proctor_authen_module = $ce->{authen}{proctor_module};
-	}
+	#my $user_authen_module;
+	#my $proctor_authen_module;
+	#if (ref $ce->{authen}{user_module} eq "HASH") {
+	#	if (exists $ce->{authen}{user_module}{$ce->{dbLayoutName}}) {
+	#		$user_authen_module = $ce->{authen}{user_module}{$ce->{dbLayoutName}};
+	#	} else {
+	#		$user_authen_module = $ce->{authen}{user_module}{"*"};
+	#	}
+	#} else {
+	#	$user_authen_module = $ce->{authen}{user_module};
+	#}
+	#if (ref $ce->{authen}{proctor_module} eq "HASH") {
+	#	if (exists $ce->{authen}{proctor_module}{$ce->{dbLayoutName}}) {
+	#		$proctor_authen_module = $ce->{authen}{proctor_module}{$ce->{dbLayoutName}};
+	#	} else {
+	#		$proctor_authen_module = $ce->{authen}{proctor_module}{"*"};
+	#	}
+	#} else {
+	#	$proctor_authen_module = $ce->{authen}{proctor_module};
+	#}
+	
+	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 	
 	runtime_use $user_authen_module;
 	my $authen = $user_authen_module->new($r);
@@ -306,9 +308,10 @@ sub dispatch($) {
 			# proctored quiz but calling the unproctored ContentGenerator
 			my $urlProducedPath = $urlPath->path();
 			if ( $urlProducedPath =~ /proctored_quiz_mode/i ) {
+				my $proctor_authen_module = WeBWorK::Authen::class($ce, "proctor_module");
 				runtime_use $proctor_authen_module;
 				my $authenProctor = $proctor_authen_module->new($r);
-			debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
+				debug("Using proctor_authen_module $proctor_authen_module: $authenProctor\n");
 			    my $procAuthOK = $authenProctor->verify();
 				
 				if (not $procAuthOK) {
