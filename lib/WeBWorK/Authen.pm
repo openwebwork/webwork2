@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.56 2006/07/12 04:33:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.57 2006/07/15 14:07:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,6 +19,32 @@ package WeBWorK::Authen;
 =head1 NAME
 
 WeBWorK::Authen - Check user identity, manage session keys.
+
+=head1 SYNOPSIS
+
+ # get the name of the appropriate Authen class, based on the %authen hash in $ce
+ my $class_name = WeBWorK::Authen::class($ce, "user_module");
+ 
+ # load that class
+ require $class_name;
+ 
+ # create an authen object
+ my $authen = $class_name->new($r);
+ 
+ # verify credentials
+ $authen->verify or die "Authentication failed";
+ 
+ # verification status is stored for quick retrieval later
+ my $auth_ok = $authen->was_verified;
+ 
+ # for some reason, you might want to clear that cache
+ $authen->forget_verification;
+
+=head1 DESCRIPTION
+
+WeBWorK::Authen is the base class for all WeBWorK authentication classes. It
+provides default authentication behavior which can be selectively overridden in
+subclasses.
 
 =cut
 
@@ -48,6 +74,43 @@ BEGIN {
 ################################################################################
 # Public API
 ################################################################################
+
+=head1 FACTORY
+
+=over
+
+=item class($ce, $type)
+
+This subroutine consults the given WeBWorK::CourseEnvironment object to
+determine which WeBWorK::Authen subclass should be used. $type can be any key
+given in the %authen hash in the course environment. If the type is not found in
+the %authen hash, an exception is thrown.
+
+=cut
+
+sub class {
+	my ($ce, $type) = @_;
+	
+	if (exists $ce->{authen}{$type}) {
+		if (ref $ce->{authen}{$type} eq "HASH") {
+			if (exists $ce->{authen}{$type}{$ce->{dbLayoutName}}) {
+				return $ce->{authen}{$type}{$ce->{dbLayoutName}};
+			} elsif (exists $ce->{authen}{$type}{"*"}) {
+				return $ce->{authen}{$type}{"*"};
+			} else {
+				die "authentication type '$type' in %authen hash in course environemnt has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
+			}
+		} else {
+			return $ce->{authen}{$type};
+		}
+	} else {
+		die "authentication type '$type' not found in course environment \%authen hash";
+	}
+}
+
+=back
+
+=cut
 
 =head1 CONSTRUCTOR
 
