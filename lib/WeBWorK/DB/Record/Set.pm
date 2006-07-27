@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.10 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.11 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,7 @@ sub KEYFIELDS {qw(
 # added fields here for gateway testing:
 #    assignment_type, attempts_per_version, time_interval, 
 #    versions_per_interval, version_time_limit, version_creation_time,
-#    version_last_attempt_time, problem_randorder
+#    version_last_attempt_time, problem_randorder, problems_per_page
 sub NONKEYFIELDS {qw(
 	set_header
 	hardcopy_header
@@ -49,6 +49,7 @@ sub NONKEYFIELDS {qw(
         version_creation_time
         problem_randorder
         version_last_attempt_time
+	problems_per_page
 )}
 
 sub FIELDS {qw(
@@ -67,6 +68,7 @@ sub FIELDS {qw(
         version_creation_time
         problem_randorder
         version_last_attempt_time
+	problems_per_page
 )}
 
 sub SQL_TYPES {qw(
@@ -85,6 +87,7 @@ sub SQL_TYPES {qw(
         BIGINT
         INT
         BIGINT
+        INT
 )}
 
 1;

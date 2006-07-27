@@ -37,7 +37,7 @@ use WeBWorK::Debug;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -50,7 +50,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # convoluted logic below, but it saves burdening people who are only using 
 # homework assignments with all of the gateway parameters
 use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published assignment_type)];
-use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder)];
+use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -174,6 +174,13 @@ use constant  FIELD_PROPERTIES => {
 		choices   => [qw( 0 1 )],
 		override  => "all",
 		labels    => {	0 => "No", 1 => "Yes" },
+	},
+	problems_per_page => {
+	        name      => "Number of Problems per Page (0=all)",
+		type      => "edit",
+		size      => "3",
+		override  => "all",
+		labels    => { "" => 0 },
 	},
 	# Problem information
 	source_file => {
