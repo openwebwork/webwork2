@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.78 2006/07/11 16:39:29 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.79 2006/07/14 21:25:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -306,6 +306,17 @@ sub setListRow {
 													  showOldAnswers => $self->{will}->{showOldAnswers}
 										   }
 	);
+  # check for gateway and template gateway assignments
+	my $gwtype = 0;
+	if ( defined( $set->assignment_type() ) && 
+	     $set->assignment_type() =~ /gateway/ ) {
+	    if ( $name =~ /,v\d+$/ ) {
+		$gwtype = 1;
+	    } else {
+		$gwtype = 2;
+	    }
+	}
+
   # the conditional here should be redundant.  ah well.
 	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
 	    ( defined( $set->assignment_type() ) && 
@@ -313,26 +324,33 @@ sub setListRow {
 	
 	my $control = "";
 	if ($multiSet) {
-		$control = CGI::checkbox(
-			-name=>"selected_sets",
-			-value=>$name,
-			-label=>"",
-		);
+		if ( $gwtype < 2 ) {
+			$control = CGI::checkbox(
+				-name=>"selected_sets",
+				-value=>$name,
+				-label=>"",
+			);
+		} else {
+			$control = '&nbsp;';
+		}
 	} else {
-		$control = CGI::radio_group(
-			-name=>"selected_sets",
-			-values=>[$name],
-			-default=>"-",
-			-labels=>{$name => ""},
-		);
+		if ( $gwtype < 2 ) {
+			$control = CGI::radio_group(
+				-name=>"selected_sets",
+				-values=>[$name],
+				-default=>"-",
+				-labels=>{$name => ""},
+			);
+		} else {
+			$control = '&nbsp;';
+		}
 	}
 	
 	$name =~ s/_/&nbsp;/g;
 	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
 # edit this a bit for gateways 
-	if ( defined( $set->assignment_type() ) && 
-	     $set->assignment_type() =~ /gateway/ ) {
-	    if ( $name =~ /,v\d+$/ ) {
+	if ( $gwtype ) {
+	    if ( $gwtype == 1 ) {
 		my $sname = $name;
 		$sname =~ s/,v(\d+)$//;
 		$interactive = CGI::a({-href=>$interactiveURL}, 
@@ -347,9 +365,8 @@ sub setListRow {
 #    there's only one attempt and we default to showing answers once the 
 #    test is done.
 	my $status;
-	if ( defined($set->assignment_type()) && 
-	     $set->assignment_type() =~ /gateway/ ) {
-	    if ( $set->set_id() =~ /,v\d+$/ ) {
+	if ( $gwtype ) {
+	    if ( $gwtype == 1 ) {
 		$status = ' ';  # for g/w, we only give one attempt per version,
                                 #    so by the time we're here it's closed
 	    } else {            
