@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.23 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.24 2006/07/27 15:47:29 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -461,11 +461,11 @@ sub pre_header_initialize {
     $requestedVersion = 
 	$db->getUserSetVersionNumber($effectiveUserName, $setName)
 	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
-	       $r->param("submitAnswers") || $r->param("nextPage") ) 
+	       $r->param("submitAnswers") || $r->param("newPage") ) 
 	     && ! $requestedVersion );
     die("Requested version 0 when returning to problem?!") 
 	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
-	       $r->param("submitAnswers") || $r->param("nextPage") ) 
+	       $r->param("submitAnswers") || $r->param("newPage") ) 
 	     && ! $requestedVersion );
 
 # FIXME should we be more subtle than just die()ing here?  c.f. Problem.pm, 
@@ -1477,7 +1477,7 @@ sub body {
 #    of the problem set
 	srand( $set->psvn );
 	while ( @probOrder ) { 
-	    my $i = int(rand(@probOrder));
+	    my $i = int(rand(scalar(@probOrder)));
 	    push( @newOrder, $probOrder[$i] );
 	    splice(@probOrder, $i, 1);
 	}
@@ -1588,7 +1588,7 @@ sub body {
 	print CGI::hidden({-name=>"previewingAnswersNow", 
 			   -value=>"1"}), "\n" if $previewAnswers;
 	print CGI::hidden({-name=>"checkingAnswersNow", 
-			   -value=>"1"}), "\n" if $checkAnswers;
+			   -value=>"1"}), "\n" if $checkAnswers || $submitAnswers;
 # should we allow this too?
 # 	print CGI::hidden({-name=>"submittingAnswersNow", 
 #                          -value=>"1"}), "\n" if $submitAnswers;
