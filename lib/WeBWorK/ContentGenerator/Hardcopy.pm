@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.80 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.81 2006/07/17 21:51:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -82,6 +82,12 @@ our %HC_FORMATS = (
 #   set to a true value by write_problem_tex if it is able to sucessfully render
 #   a problem. checked by generate_hardcopy to determine whether to continue
 #   with the generation process.
+#
+# versioned
+#   set to a true value in write_set_tex if the set_id indicates that 
+#   the set being rendered is a versioned set; this is used in 
+#   write_problem_tex to determine which problem merging routine from 
+#   DB.pm to use
 
 ################################################################################
 # UI subroutines
@@ -531,7 +537,7 @@ sub generate_hardcopy {
 	
 	# remove the temp directory if there are no errors
 	unless ($self->get_errors or $PreserveTempFiles) {
-		$self->delete_temp_dir($temp_dir_path);
+#		$self->delete_temp_dir($temp_dir_path);
 	}
 	
 	warn "Preserved temporary files in directory '$temp_dir_path'.\n" if $PreserveTempFiles;
@@ -707,8 +713,21 @@ sub write_set_tex {
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
 	
-	# get set record
-	my $MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
+	# get set record; if it's a versioned set, getMergedVersionedSet
+	#   instead of getMergedSet
+	my $MergedSet;
+	my $versioned;
+	if ( $setID =~ /,\d+$/ ) {
+	    $versioned = 1;
+	    $MergedSet = $db->getMergedVersionedSet($TargetUser->user_id,
+						    $setID);
+	} else {
+	    $versioned = 0;
+	    $MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
+	}
+	# save versioned info for use in write_problem_tex
+	$self->{versioned} = $versioned;
+
 	unless ($MergedSet) {
 		$self->add_errors("Can't generate hardcopy for set ''".CGI::code(CGI::escapeHTML($setID))
 			."' for user '".CGI::code(CGI::escapeHTML($TargetUser->user_id))
@@ -739,6 +758,23 @@ sub write_set_tex {
 	
 	# get list of problem IDs
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($MergedSet->user_id, $MergedSet->set_id);
+
+	# for versioned sets (gateways), we might have problems in a random
+	# order; reset the order of the problemIDs if this is the case
+	if ( defined( $MergedSet->problem_randorder ) && 
+	     $MergedSet->problem_randorder ) {
+		my @newOrder = ();
+
+	# to set the same order each time we set the random seed to the psvn
+		srand( $MergedSet->psvn );
+		while ( @problemIDs ) {
+			my $i = int(rand(scalar(@problemIDs)));
+			push( @newOrder, $problemIDs[$i] );
+			splice(@problemIDs, $i, 1);
+		}
+		@problemIDs = @newOrder;
+	}
+		    
 	
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
@@ -760,6 +796,7 @@ sub write_problem_tex {
 	my $db = $r->db;
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
+	my $versioned = $self->{versioned};
 	
 	my @errors;
 	
@@ -767,7 +804,13 @@ sub write_problem_tex {
 	my $MergedProblem;
 	if ($problemID) {
 		# a non-zero problem ID was given -- load that problem
-		$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
+	        # we use $versioned to determine which merging routine to use
+		if ( $versioned ) {
+			$MergedProblem = $db->getMergedVersionedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID);
+
+		} else {
+			$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
+		}
 		
 		# handle nonexistent problem
 		unless ($MergedProblem) {
@@ -804,6 +847,17 @@ sub write_problem_tex {
 	
 	# FIXME -- there can be a problem if the $siteDefaults{timezone} is not defined?  Why is this?
 	# why does it only occur with hardcopy?
+
+	# we need an additional translation option for versioned sets:
+	my $transOpts = 
+		{ # translation options
+			displayMode     => "tex",
+			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
+			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
+			processAnswers  => $showCorrectAnswers ? 1 : 0,
+		};
+	$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_' if ($versioned);
+
 	my $pg = WeBWorK::PG->new(
 		$ce,
 		$TargetUser,
@@ -812,12 +866,7 @@ sub write_problem_tex {
 		$MergedProblem,
 		$MergedSet->psvn,
 		{}, # no form fields!
-		{ # translation options
-			displayMode     => "tex",
-			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
-			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
-			processAnswers  => $showCorrectAnswers ? 1 : 0,
-		},
+		$transOpts,
 	);
 	
 	# only bother to generate this info if there were warnings or errors
@@ -881,8 +930,9 @@ sub write_problem_tex {
 	
 	print $FH $pg->{body_text};
 	
-	# write the list of correct answers is appropriate
-	my @ans_entry_order = @{$pg->{flags}->{ANSWER_ENTRY_ORDER}};
+	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
+	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
+	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
 		my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
 			. "\\vspace{-\\parskip}\\begin{itemize}\n";
