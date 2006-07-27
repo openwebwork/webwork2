@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.33 2005/10/26 16:46:00 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.34 2006/01/25 23:13:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -187,7 +187,7 @@ sub new {
 	my $self = {};
 	foreach my $name (keys %symbolHash) {
 		# weed out internal symbols
-		next if $name =~ /^(INC|_|__ANON__|main::)$/;
+		next if $name =~ /^(INC|_.*|__ANON__|main::)$/;
 		# pull scalar, array, and hash values for this symbol
 		my $scalar = ${*{$symbolHash{$name}}};
 		my @array = @{*{$symbolHash{$name}}};
