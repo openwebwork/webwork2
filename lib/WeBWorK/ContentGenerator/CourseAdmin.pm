@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.53 2006/07/24 23:28:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.54 2006/07/28 02:10:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,12 @@ use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
                                         listArchivedCourses unarchiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
+
+use constant IMPORT_EXPORT_WARNING => "The ability to import and export
+databases is still under development. It seems to work but it is <b>VERY</b>
+slow on large courses.  You may prefer to use webwork2/bin/wwdb  or the mysql
+dump facility for archiving large courses. Please send bug reports if you find
+errors.";
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -298,11 +304,6 @@ sub body {
 		$methodMessage,
 		
 	);
-	
-	print CGI::p("The ability to import and to export databases is still under development.
-	 It seems to work but it is <b>VERY</b> slow on large courses.  You may prefer to 
-	 use webwork2/bin/wwdb  or the mysql dump facility for archiving large courses.
-	 Please send bug reports if you find errors.  ");
 	
 	my @errors = @{$self->{errors}};
 	
@@ -1393,6 +1394,8 @@ sub export_database_form {
 	
 	print CGI::h2("Export Database");
 	
+	print CGI::p(IMPORT_EXPORT_WARNING);
+	
 	print CGI::start_form(-method=>"GET", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
@@ -1594,6 +1597,8 @@ sub import_database_form {
 	#######
 	
 	print CGI::h2("Import Database");
+	
+	print CGI::p(IMPORT_EXPORT_WARNING);
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri, -enctype=>&CGI::MULTIPART);
 	print $self->hidden_authen_fields;
