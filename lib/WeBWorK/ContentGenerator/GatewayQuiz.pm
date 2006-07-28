@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.24 2006/07/27 15:47:29 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.25 2006/07/27 20:40:12 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,6 +37,7 @@ use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2st
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
+use PGrandom;
 
 # template method
 sub templateName {
@@ -1345,9 +1346,10 @@ sub body {
 				  "Time taken: $elapsed min (allowed: " .
 				  "$allowed)"), CGI::br();
 
-    # last case: we can't record answers, so if it's not submitted we must 
-    # be out of time (the first case), which means the last case is that 
-    # it's been submitted and we are either out of time or out of attempts
+    # last case: here we can't record answers, and if it's not submitted we 
+    # must be out of time (which was caught in the first case, above), which 
+    # means this last case is that it's been submitted and we are either out 
+    # of time or out of attempts
 	    } else {
 		print CGI::start_div({class=>'gwMessage'});
 		print CGI::strong("Your recorded score on this test is " .
@@ -1474,10 +1476,12 @@ sub body {
 #    this requires either saving the order in the set definition, or being 
 #    sure that the random seed that we use is the same each time the same 
 #    set is called.  we'll do the latter by setting the seed to the psvn
-#    of the problem set
-	srand( $set->psvn );
+#    of the problem set.  we use a local PGrandom object to avoid mucking
+#    with the system seed.
+	my $pgrand = PGrandom->new();
+	$pgrand->srand( $set->psvn );
 	while ( @probOrder ) { 
-	    my $i = int(rand(scalar(@probOrder)));
+	    my $i = int($pgrand->rand(scalar(@probOrder)));
 	    push( @newOrder, $probOrder[$i] );
 	    splice(@probOrder, $i, 1);
 	}
