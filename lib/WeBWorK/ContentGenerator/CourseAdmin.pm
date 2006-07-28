@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.52 2006/07/18 13:10:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.53 2006/07/24 23:28:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1327,17 +1327,19 @@ sub do_delete_course {
 	    # mark the contact person in the admin course as dropped.
 	    # find the contact person for the course by searching the admin classlist.
 	    my @contacts = grep /_$delete_courseID$/,  $db->listUsers;
-	    die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
-	    #warn "contacts", join(" ", @contacts);
-	    #my $composite_id = "${add_initial_userID}_${add_courseID}";
-	    my $composite_id  = $contacts[0];
-	    
-	    # mark the contact person as dropped.
-        my $User = $db->getUser($composite_id);
-        my $status_name = 'Drop';
-        my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
-        $User->status($status_value);
-        $db->putUser($User);
+	    if (@contacts) {
+			die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
+			#warn "contacts", join(" ", @contacts);
+			#my $composite_id = "${add_initial_userID}_${add_courseID}";
+			my $composite_id  = $contacts[0];
+			
+			# mark the contact person as dropped.
+			my $User = $db->getUser($composite_id);
+			my $status_name = 'Drop';
+			my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
+			$User->status($status_value);
+			$db->putUser($User);
+		}
         
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully deleted the course $delete_courseID."),
@@ -1989,17 +1991,19 @@ sub do_archive_course {
 				# mark the contact person in the admin course as dropped.
 				# find the contact person for the course by searching the admin classlist.
 				my @contacts = grep /_$archive_courseID$/,  $db->listUsers;
-				die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;
-				#warn "contacts", join(" ", @contacts);
-				#my $composite_id = "${add_initial_userID}_${add_courseID}";
-				my $composite_id  = $contacts[0];
-				
-				# mark the contact person as dropped.
-				my $User = $db->getUser($composite_id);
-				my $status_name = 'Drop';
-				my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
-				$User->status($status_value);
-				$db->putUser($User);
+				if (@contacts) {
+					die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;
+					#warn "contacts", join(" ", @contacts);
+					#my $composite_id = "${add_initial_userID}_${add_courseID}";
+					my $composite_id  = $contacts[0];
+					
+					# mark the contact person as dropped.
+					my $User = $db->getUser($composite_id);
+					my $status_name = 'Drop';
+					my $status_value = ($ce->status_name_to_abbrevs($status_name))[0];
+					$User->status($status_value);
+					$db->putUser($User);
+				}
 				
 				print CGI::div({class=>"ResultsWithoutError"},
 					CGI::p("Successfully deleted the course $archive_courseID."),
