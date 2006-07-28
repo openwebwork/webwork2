@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.81 2006/07/17 21:51:11 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.82 2006/07/27 20:43:04 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,7 +39,8 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile/;
+use WeBWorK::Utils qw/readFile decodeAnswers/;
+use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
 
@@ -87,7 +88,8 @@ our %HC_FORMATS = (
 #   set to a true value in write_set_tex if the set_id indicates that 
 #   the set being rendered is a versioned set; this is used in 
 #   write_problem_tex to determine which problem merging routine from 
-#   DB.pm to use
+#   DB.pm to use, and to indicate what problem number in a versioned 
+#   test we're on
 
 ################################################################################
 # UI subroutines
@@ -537,7 +539,7 @@ sub generate_hardcopy {
 	
 	# remove the temp directory if there are no errors
 	unless ($self->get_errors or $PreserveTempFiles) {
-#		$self->delete_temp_dir($temp_dir_path);
+		$self->delete_temp_dir($temp_dir_path);
 	}
 	
 	warn "Preserved temporary files in directory '$temp_dir_path'.\n" if $PreserveTempFiles;
@@ -717,7 +719,7 @@ sub write_set_tex {
 	#   instead of getMergedSet
 	my $MergedSet;
 	my $versioned;
-	if ( $setID =~ /,\d+$/ ) {
+	if ( $setID =~ /,v\d+$/ ) {
 	    $versioned = 1;
 	    $MergedSet = $db->getMergedVersionedSet($TargetUser->user_id,
 						    $setID);
@@ -765,10 +767,13 @@ sub write_set_tex {
 	     $MergedSet->problem_randorder ) {
 		my @newOrder = ();
 
-	# to set the same order each time we set the random seed to the psvn
-		srand( $MergedSet->psvn );
+	# to set the same order each time we set the random seed to the psvn,
+ 	# and to avoid messing with the system random number generator we use
+	# our own PGrandom object
+		my $pgrand = PGrandom->new();
+		$pgrand->srand( $MergedSet->psvn );
 		while ( @problemIDs ) {
-			my $i = int(rand(scalar(@problemIDs)));
+			my $i = int($pgrand->rand(scalar(@problemIDs)));
 			push( @newOrder, $problemIDs[$i] );
 			splice(@problemIDs, $i, 1);
 		}
@@ -780,9 +785,14 @@ sub write_set_tex {
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
 	
 	# write each problem
+	# for versioned problem sets (gateway tests) we like to include 
+	#   problem numbers
+	my $i = 1;
 	while (my $problemID = shift @problemIDs) {
 		$self->write_tex_file($FH, $divider);
+		$self->{versioned} = $i if $versioned;
 		$self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
+		$i++;
 	}
 	
 	# write footer
@@ -797,7 +807,7 @@ sub write_problem_tex {
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
 	my $versioned = $self->{versioned};
-	
+
 	my @errors;
 	
 	# get problem record
@@ -806,7 +816,9 @@ sub write_problem_tex {
 		# a non-zero problem ID was given -- load that problem
 	        # we use $versioned to determine which merging routine to use
 		if ( $versioned ) {
-			$MergedProblem = $db->getMergedVersionedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID);
+			my $baseSetID = $MergedSet->set_id();
+			$baseSetID =~ s/,v\d+$//;
+			$MergedProblem = $db->getMergedVersionedProblem($MergedSet->user_id, $baseSetID, $MergedSet->set_id, $problemID);
 
 		} else {
 			$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
@@ -848,7 +860,9 @@ sub write_problem_tex {
 	# FIXME -- there can be a problem if the $siteDefaults{timezone} is not defined?  Why is this?
 	# why does it only occur with hardcopy?
 
-	# we need an additional translation option for versioned sets:
+	# we need an additional translation option for versioned sets; also,
+	#   for versioned sets include old answers in the set if we're also 
+	#   asking for the answers
 	my $transOpts = 
 		{ # translation options
 			displayMode     => "tex",
@@ -856,7 +870,15 @@ sub write_problem_tex {
 			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
 			processAnswers  => $showCorrectAnswers ? 1 : 0,
 		};
-	$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_' if ($versioned);
+	my $formFields = { };
+	if ( $versioned && $MergedProblem->problem_id != 0 ) {
+		$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_';
+		if ( $showCorrectAnswers ) { 
+			my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
+			$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
+			print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
+		}
+	}
 
 	my $pg = WeBWorK::PG->new(
 		$ce,
@@ -865,7 +887,7 @@ sub write_problem_tex {
 		$MergedSet,
 		$MergedProblem,
 		$MergedSet->psvn,
-		{}, # no form fields!
+		$formFields, # no form fields!
 		$transOpts,
 	);
 	
@@ -927,12 +949,30 @@ sub write_problem_tex {
 	
 	# if we got here, there were no errors (because errors cause a return above)
 	$self->{at_least_one_problem_rendered_without_error} = 1;
-	
+
+	print $FH "{\\bf Problem $versioned.}\n" 
+		if ( $versioned && $MergedProblem->problem_id != 0 );
 	print $FH $pg->{body_text};
+
+	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
+
+	# write the list of student answers if we're working with a versioned
+	#   set and showing the correct answers
+	if ( $versioned && $showCorrectAnswers && 
+	     $MergedProblem->problem_id != 0 && @ans_entry_order ) {
+		my $stuAnswers = "\\par{\\small{\\it Answer submitted:}\n" .
+			"\\vspace{-\\parskip}\\begin{itemize}\n";
+		for my $ansName ( @ans_entry_order ) {
+			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
+			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
+		}
+
+		$stuAnswers .= "\\end{itemize}}\\par\n";
+		print $FH $stuAnswers;
+	}
 	
 	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
 	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
-	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
 		my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
 			. "\\vspace{-\\parskip}\\begin{itemize}\n";
