@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.4 2006/05/16 21:11:52 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel-site.apache-config.dist,v 1.5 2006/05/31 18:25:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -382,6 +382,14 @@ ServerSignature On
 
 <Location /server-info>
     SetHandler server-info
+    Order allow,deny
+    Allow from all
+</Location>
+
+<Location /perl-status>
+    SetHandler perl-script
+    PerlHandler Apache::Status
+    PerlSetVar StatusOptionsAll On
     Order allow,deny
     Allow from all
 </Location>
