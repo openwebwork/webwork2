@@ -4,7 +4,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.6 2006/01/24 02:05:07 sh002i Exp $
+# $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.7 2006/02/13 20:56:27 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,54 +49,70 @@ function jumpTo(ref) {  // scrolling javascript function
 }
 
 // timer for gateway 
-var theTime = -1;      // -1 before we've initialized
-var alerted = -1;      // -1 = no alert set; 1 = 1st alert set
-                       // this shouldn't really be needed
+var numAlerts = 0;
+var theTimer;		// variable for the timer
+var browserTime;	// on load, the time on the client's computer
+var serverTime;		// on load, the time on the server
+var timeDelta;		// the difference between those
+var serverDueTime;	// the time the test is due
+
 function runtimer() {
-// aesthetically this is displeasing: we're assuming that the 
-// ContentGenerator will put the appropriate form elements in that
-// page for us to manipulate.  even with error checking, it seems sort
-// of odd.
-
-    if ( document.gwtimer == null ) {  // no timer
-        return;
+// function to start the timer, initializing the time variables
+    if ( document.getElementById('gwTimer') == null ) {  // no timer
+	return;
     } else {
-        var tm = document.gwtimer.gwtime;
-        var st = document.gwtimer.gwpagetimeleft.value;
+	theTimer = document.getElementById('gwTimer');
+	var dateNow = new Date();
+	browserTime = Math.round(dateNow.getTime()/1000);
+	serverTime = document.gwTimeData.serverTime.value;
+	serverDueTime = document.gwTimeData.serverDueTime.value;
+	timeDelta = browserTime - serverTime;
 
-        if ( st == 0 ) {                  // no time limit
-            return;
-        } else {
-            if ( theTime == -1 ) {
-                theTime = st;
-                tm.value = toMinSec(theTime);
-                setTimeout("runtimer()", 1000);  // 1000 ms = 1 sec
-            } else if ( theTime == 0 && alerted != 3 ) {
-	        alert("* You are out of time! *");
-		alerted = 3;
-	    } else if ( alerted != 3 ) {
-	        theTime--;
-                tm.value = toMinSec(theTime);
-                setTimeout("runtimer()", 1000);  // 1000 ms = 1 sec
-		if ( theTime == 35 && alerted != 2 ) { // time is in seconds
-		    alert("* You have only about 30 seconds to complete " +
-		          "this assignment.  Press Grade very soon! *\n" +
-			  "* The on-page timer stops (but your time is *\n" +
-			  "* still going down) while this box is open *");
-		    alerted = 2;
-		    theTime -= 5;
-                } else if ( theTime == 75 && alerted != 1) {
-		    alert("* You have only about a minute left " +
-		          "to complete this assignment! *\n" +
-			  "* The on-page timer stops (but your time is *\n" +
-			  "* still going down) while this box is open *");
-                    alerted = 1;
-		    theTime -= 5;
-                }
-            }
-        }
+	var remainingTime = serverDueTime - browserTime + 1.*timeDelta;
+
+	if ( remainingTime >= 0 ) {
+	    theTimer.innerHTML = "Remaining time: " + toMinSec(remainingTime) + " (min:sec)";
+	    setTimeout("updateTimer();", 1000);
+	    setTimeout("checkAlert();", 1000);
+	}
     }
 }
+
+function updateTimer() {
+// update the timer 
+    var dateNow = new Date();
+    browserTime = Math.round(dateNow.getTime()/1000);
+    var remainingTime = serverDueTime - browserTime + 1.*timeDelta;
+    if ( remainingTime >= 0 ) {
+	theTimer.innerHTML = "Remaining time: " + toMinSec(remainingTime) + " (min:sec)";
+	setTimeout("updateTimer();", 1000);
+    }
+}
+
+function checkAlert() { 
+// check to see if we should put up a low time alert
+    var dateNow = new Date();
+    browserTime = Math.round(dateNow.getTime()/1000);
+    var timeRemaining = serverDueTime - browserTime + 1.*timeDelta;
+
+    if ( timeRemaining <= 0 ) {
+        alert("* You are out of time! *\n" + 
+	      "* Press grade now!     *\n");
+	numAlerts = 3
+    } else if ( timeRemaining <= 45 && numAlerts == 1 ) {
+	alert("* You have less than 45 seconds left! *\n" + 
+	      "* Press Grade very soon!         *");
+	numAlerts = 2;
+    } else if ( timeRemaining <= 90 && numAlerts == 0 ) {
+	alert("* You only have less than a minute and a half left to *\n" + 
+	      "* complete this assignment.  You should finish it very soon! *");
+	numAlerts = 1;
+    }
+    if ( timeRemaining > 0 ) {
+	setTimeout("checkAlert();", 15000);
+    }
+}
+
 function toMinSec(t) {
 // convert to min:sec
     if ( t < 0 ) {     // don't deal with negative times
@@ -115,12 +131,13 @@ function toMinSec(t) {
 
 // for some reason putting this as an onload event in the body tag
 // isn't working.  so start the timer here; the 500ms delay is to be 
-// sure that the timer form fields have loaded
+// sure that the timer has loaded
 setTimeout("runtimer()",500);
+// this does not work either
+// window.onload=runtimer();
 </script>
 </head>
 <body bgcolor="white">
-
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
