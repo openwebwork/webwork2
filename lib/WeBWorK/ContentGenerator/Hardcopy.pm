@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.82 2006/07/27 20:43:04 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.83 2006/07/28 20:10:28 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -964,7 +964,16 @@ sub write_problem_tex {
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
-			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
+			my $recScore = $pg->{state}->{recorded_score};
+			my $corrMsg = '';
+			if ( $recScore == 1 ) {
+				$corrMsg = ' (correct)';
+			} elsif ( $recScore == 0 ) {
+				$corrMsg = ' (incorrect)';
+			} else {
+				$corrMsg = " (score $recScore)";
+			}
+			$stuAnswers .= "\\item\\begin{verbatim}$stuAns$corrMsg\\end{verbatim}\n";
 		}
 
 		$stuAnswers .= "\\end{itemize}}\\par\n";
