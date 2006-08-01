@@ -16,6 +16,19 @@ div.gwTiming {
 }
 div.gwWarning { background-color:#ffffdd; color: black; }
 
+div#gwTimer { 
+	background-color:#ffeeaa;
+	color: black; 
+	font-family: Times serif;
+	position: fixed;
+	width: 15em;
+	right: 4em;
+	top: 4em;
+	border: dashed black 1px;
+	padding: 3px;
+	text-align: center;
+}
+
 span.resultsWithError { background-color: #ffcccc; color: black; }
 span.resultsWithoutError { background-color: #66ff99; color: black; }
 div.gwCorrect { background-color: #66ff99; color: black; }
@@ -32,7 +45,7 @@ div.gwSoln {
 /*      background-color: #e0e0ff; */
         background-color: transparent;
         color: black;
-/*      padding: 2px; */,
+/*      padding: 2px; */
 /*      border: dashed black 1px; */
 }
 div.gwSoln b { color: navy; }
@@ -58,3 +71,20 @@ table.gwAttemptResults td.output {
         background-color: #eeeeee;
 }
 
+div.gwPrintMe { 
+	width: 25%;
+	float: right;
+	margin-top: 2em;
+	margin-right: 1em;
+/*	position: relative;
+	left: 65%;
+	top: -1em;
+	z-index: 1; */
+/*	margin-left: auto;
+	margin-right: 2em;
+	margin-top: 3px; */
+	border: dashed black 1px;
+	padding: 3px;
+	color: black;
+	background-color: #e0e0ff;
+}
