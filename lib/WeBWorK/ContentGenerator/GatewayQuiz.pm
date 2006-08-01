@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.25 2006/07/27 20:40:12 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.26 2006/07/28 20:08:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1310,6 +1310,12 @@ sub body {
 # what's going on.)
 
 	my $timemsg = '';
+# FIXME: add printme link
+	my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
+	    '/hardcopy/' . $set->set_id . '/?' . $self->url_authen_args;
+	my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
+				CGI::a({-href=>$link}, "Print Test"));
+	print $printmsg;
 
 # if the test was submitted, just check to see if we should make a note about
 # the recorded score and time taken
@@ -1368,21 +1374,28 @@ sub body {
 # FIXME: We need to drop this out gracefully if there isn't!
 # set up a timer
 	my $timeLeft = $set->due_date() - $timeNow;  # this is in seconds
-	print CGI::start_div({class=>"gwTiming"}),"\n";
-	print CGI::startform({-name=>"gwtimer", -method=>"POST", 
+	print CGI::div({-id=>"gwTimer"},"\n");
+	print CGI::startform({-name=>"gwTimeData", -method=>"POST",
 			      -action=>$r->uri});
-	print CGI::hidden({-name=>"gwpagetimeleft", -value=>$timeLeft}), "\n";
-
-	print CGI::strong("Time Remaining:"), "\n";
-	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
-	      CGI::strong("min:sec"), CGI::br(), "\n";
+	print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), "\n";
+	print CGI::hidden({-name=>"serverDueTime", -value=>$set->due_date()}),
+		"\n";
 	print CGI::endform();
+
+#	print CGI::startform({-name=>"gwtimer", -method=>"POST", 
+#			      -action=>$r->uri});
+#	print CGI::hidden({-name=>"gwpagetimeleft", -value=>$timeLeft}), "\n";
+#
+#	print CGI::strong("Time Remaining:"), "\n";
+#	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
+#	      CGI::strong("min:sec"), CGI::br(), "\n";
+#	print CGI::endform();
 	if ( $timeLeft < 1 ) {
 	    print CGI::span({-class=>"resultsWithError"}, 
 			    CGI::b("You have less than 1 minute to ",
 				   "complete this test.\n"));
 	}
-	print CGI::end_div();
+#	print CGI::end_div();
     }
 
 # this is a hack to get a URL that won't require a proctor login if we've
