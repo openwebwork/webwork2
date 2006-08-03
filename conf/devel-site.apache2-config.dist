@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# $CVSHeader: webwork2/conf/devel-site.apache2-config.dist,v 1.1 2006/06/17 21:21:24 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel-site.apache2-config.dist,v 1.2 2006/06/29 15:20:09 sh002i Exp $
 ################################################################################
 
 # This file contains the site-specific (but user-independent) directives used
@@ -1074,9 +1074,26 @@ BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
 # Bring in additional module-specific configurations
 #
 <IfModule mod_ssl.c>
-    Include conf/devel-site-ssl.apache2-config
+    #ww# not bothering with this file
+    #Include conf/devel-site-ssl.apache2-config
+    
+    SSLRandomSeed startup builtin
+    SSLRandomSeed connect builtin
+    
+    AddType application/x-x509-ca-cert .crt
+    AddType application/x-pkcs7-crl    .crl
+    
+    SSLPassPhraseDialog  builtin
+    
+    SSLSessionCache         dbm:run/ssl_scache2
+    SSLSessionCacheTimeout  300
+    SSLMutex  file:run/ssl_mutex2
+    
+    SSLEngine On
+    SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+    SSLCertificateFile /usr/local/etc/apache/ssl.crt/server.crt
+    SSLCertificateKeyFile /usr/local/etc/apache/ssl.key/server.key
 </IfModule>
-
 
 ### Section 3: Virtual Hosts
 #
