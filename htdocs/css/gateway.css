@@ -7,6 +7,8 @@
 #content { margin-left: .5em }
 #footer { margin-left: .5em }
 
+hr { clear: both; }
+
 div.gwMessage { background-color:#dddddd; color: black; }
 div.gwTiming {
         background-color:#ddddff;
