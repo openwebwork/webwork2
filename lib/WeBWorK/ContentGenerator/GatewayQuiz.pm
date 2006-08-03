@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.26 2006/07/28 20:08:54 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.27 2006/08/01 22:02:50 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1390,10 +1390,13 @@ sub body {
 #	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
 #	      CGI::strong("min:sec"), CGI::br(), "\n";
 #	print CGI::endform();
-	if ( $timeLeft < 1 ) {
+	if ( $timeLeft < 1 && $timeLeft > 0 ) {
 	    print CGI::span({-class=>"resultsWithError"}, 
 			    CGI::b("You have less than 1 minute to ",
 				   "complete this test.\n"));
+	} elsif ( $timeLeft <= 0 ) { 
+	    print CGI::span({-class=>"resultsWithError"}, 
+			    CGI::b("You are out of time.  Press grade now!\n"));
 	}
 #	print CGI::end_div();
     }
