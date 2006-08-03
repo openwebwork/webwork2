@@ -4,7 +4,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.7 2006/02/13 20:56:27 glarose Exp $
+# $CVSHeader: webwork2/conf/templates/math/gateway.template,v 1.8 2006/08/01 22:04:30 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,7 +49,6 @@ function jumpTo(ref) {  // scrolling javascript function
 }
 
 // timer for gateway 
-var numAlerts = 0;
 var theTimer;		// variable for the timer
 var browserTime;	// on load, the time on the client's computer
 var serverTime;		// on load, the time on the server
@@ -74,6 +73,14 @@ function runtimer() {
 	    theTimer.innerHTML = "Remaining time: " + toMinSec(remainingTime) + " (min:sec)";
 	    setTimeout("updateTimer();", 1000);
 	    setTimeout("checkAlert();", 1000);
+	} else {
+	    theTimer.innerHTML = "Remaining time: 0 min";
+	}
+
+    // one last check for i.e., which can't do position: fixed
+	if ( navigator.appName != "Netscape" &&
+	     parseFloat(navigator.appVersion) < 7 ) {
+	    theTimer.style.position = "absolute";
 	}
     }
 }
@@ -97,19 +104,16 @@ function checkAlert() {
 
     if ( timeRemaining <= 0 ) {
         alert("* You are out of time! *\n" + 
-	      "* Press grade now!     *\n");
-	numAlerts = 3
-    } else if ( timeRemaining <= 45 && numAlerts == 1 ) {
+	      "* Press grade now!     *");
+    } else if ( timeRemaining <= 45 && timeRemaining > 40 ) {
 	alert("* You have less than 45 seconds left! *\n" + 
-	      "* Press Grade very soon!         *");
-	numAlerts = 2;
-    } else if ( timeRemaining <= 90 && numAlerts == 0 ) {
-	alert("* You only have less than a minute and a half left to *\n" + 
-	      "* complete this assignment.  You should finish it very soon! *");
-	numAlerts = 1;
+	      "*      Press Grade very soon!         *");
+    } else if ( timeRemaining <= 90 && timeRemaining > 85 ) {
+	alert("* You only have less than 90 sec left to complete  *\n" + 
+	      "* this assignment. You should finish it very soon! *");
     }
     if ( timeRemaining > 0 ) {
-	setTimeout("checkAlert();", 15000);
+	setTimeout("checkAlert();", 5000);
     }
 }
 
