@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.89 2006/07/26 22:20:04 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.90 2006/08/03 17:01:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -69,7 +69,6 @@ BEGIN {
 
 use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
-use constant FIXDB_MODULE => "WeBWorK::ContentGenerator::FixDB";
 
 our %SeedCE;
 
@@ -257,17 +256,6 @@ sub dispatch($) {
 		$db = new WeBWorK::DB($ce->{dbLayout});
 		debug("(here's the DB handle: $db)\n");
 		$r->db($db);
-		
-		debug("Now we check the database...\n");
-		debug("(we can detect if a hash-style database from WW1 has not be converted properly.)\n");
-		my ($dbOK, @dbMessages) = $db->hashDatabaseOK(0); # 0 == don't fix
-		if (not $dbOK) {
-			debug("hashDatabaseOK() returned $dbOK -- looks like trouble...\n");
-			$displayModule = FIXDB_MODULE;
-			debug("set displayModule to $displayModule\n");
-		} else {
-			debug("hashDatabaseOK() returned $dbOK -- leaving displayModule as-is\n");
-		}
 		
 		my $authenOK = $authen->verify;
 		if ($authenOK) {
