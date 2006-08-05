@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.30 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.31 2006/06/07 19:30:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,7 +177,7 @@ sub add($$) {
 	
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
-	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues;
+	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues; # demote "" to undef
 	
 	my $stmt = "INSERT INTO `$sqlTable` ($fieldnames) VALUES ($marks)";
 	$self->debug("SQL-add: $stmt\n");
@@ -310,7 +310,7 @@ sub put($$) {
 	
 	my @realFieldnames = $self->{record}->FIELDS();
 	my @fieldvalues = map { $Record->$_() } @realFieldnames;
-	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues;
+	@fieldvalues = map { (defined($_) and $_ eq "") ? undef : $_ } @fieldvalues; # demote "" to undef
 	
 	my ($where, @where_args) = $self->makeWhereClause(map { $Record->$_() } @realKeynames);
 	
