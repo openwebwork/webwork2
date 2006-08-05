@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.57 2006/07/15 14:07:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/RPC.pm,v 1.1 2006/07/28 04:33:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,6 +78,32 @@ sub dumper {
 sub get_course_environment {
 	my ($self, %params) = bootstrap(@_);
 	return $self->{r}->ce;
+}
+
+################################################################################
+
+package WeBWorK::RPC::CourseManagement;
+
+use WeBWorK::Utils::CourseManagement;
+
+sub listCourses {
+	my ($self) = WeBWorK::RPC::bootstrap(@_);
+	return WeBWorK::Utils::CourseManagement::listCourses($self->{r}->ce);
+}
+
+sub listArchivedCourses {
+	my ($self) = WeBWorK::RPC::bootstrap(@_);
+	return WeBWorK::Utils::CourseManagement::listArchivedCourses($self->{r}->ce);
+}
+
+sub addCourse {
+	my ($self, %options) = WeBWorK::RPC::bootstrap(@_);
+	die "missing courseID in \%options" unless defined $options{courseID};
+	$options{ce} = new WeBWorK::CourseEnvironment({
+		webwork_dir => $self->{r}->ce->{webwork_dir},
+		courseName => $options{courseID},
+	});
+	return WeBWorK::Utils::CourseManagement::addCourse(%options);
 }
 
 1;
