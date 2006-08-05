@@ -55,10 +55,6 @@ my @modulesList = qw(
 );
 
 # modules used by disabled code
-#	Class::Data::Inheritable (DBv3)
-#	Class::DBI::Plugin::AbstractCount (DBv3)
-#	DateTime::Format::DBI (DBv3)
-#	GDBM_File (Driver::GDBM)
 #	RQP::Render (RQP)
 #	SOAP::Lite (PG::Remote)
 
