@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/DB.pm,v 1.71 2006/05/24 23:28:24 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.72 2006/06/10 14:20:42 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,63 +67,20 @@ listed below, and uses schema modules (via tables) to implement those methods.
 
 The middle layer of the architecture is provided by one or more schema modules.
 They are called "schema" modules because they control the structure of the data
-for a table. This includes odd things like the way multiple tables are encoded
-in a single hash in the WW1Hash schema, and the encoding scheme used.
+for a table.
 
 The schema modules provide an API that matches the requirements of the DB
 layer, on a per-table basis. Each schema module has a style that determines
-which drivers it can interface with. For example, WW1Hash is a "hash" style
-schema. SQL is a "dbi" style schema.
-
-=head3 Examples
-
-Both WeBWorK 1.x and 2.x courses use:
-
-  / password  permission  key \        / user \      <- tables provided
- +-----------------------------+  +----------------+
- |          Auth1Hash          |  | Classlist1Hash |
- +-----------------------------+  +----------------+
-             \ hash /                  \ hash /      <- driver style required
-
-WeBWorK 1.x courses also use:
-
-  / set_user problem_user \       / set problem \    
- +-------------------------+  +---------------------+
- |         WW1Hash         |  | GlobalTableEmulator |
- +-------------------------+  +---------------------+
-           \ hash /                   \ null /       
-
-The GlobalTableEmulator schema emulates the global set and problem tables using
-data from the set_user and problem_user tables.
-
-WeBWorK 2.x courses also use:
-
-  / set set_user problem problem_user \ 
- +-------------------------------------+
- |               WW2Hash               |
- +-------------------------------------+
-                 \ hash /               
+which drivers it can interface with. For example, SQL is an "dbi" style
+schema.
 
 =head2 Bottom Layer: Drivers
 
 Driver modules implement a style for a schema. They provide physical access to
 a data source containing the data for a table. The style of a driver determines
 what methods it provides. All drivers provide C<connect(MODE)> and
-C<disconnect()> methods. A hash style driver provides a C<hash()> method which
-returns the tied hash. A dbi style driver provides a C<handle()> method which
+C<disconnect()> methods. A dbi style driver provides a C<handle()> method which
 returns the DBI handle.
-
-=head3 Examples
-
-  / hash \    / hash \    / hash \  <- style
- +--------+  +--------+  +--------+
- |   DB   |  |  GDBM  |  |   DB3  |
- +--------+  +--------+  +--------+
-
-  / dbi \    / ldap \ 
- +-------+  +--------+
- |  SQL  |  |  LDAP  |
- +-------+  +--------+
 
 =head2 Record Types
 
@@ -238,234 +195,9 @@ sub new($$) {
 =cut
 
 ################################################################################
-# general functions
-################################################################################
-
-=head2 General Methods
-
-=over
-
-=cut
-
-=item hashDatabaseOK($fix)
-
-If the schema module in use for the C<set> and C<problem> tables is
-WeBWorK::DB::Schema::GlobalTableEmulator, the database is checked to make sure
-that the "global user" exists and all sets and problems are assigned to it. If
-$fix is true, problems found will be fixed: A global user will be created and
-all sets/problems assigned to it.
-
-A list of values is returned. The first value is a boolean value indicating
-whether problems remain in the database after hashDatabaseOK() is called. The
-remaining values are a list of strings indicating the particular ways in which
-the database is (or was) broken.
-
-=cut
-
-sub hashDatabaseOK {
-	my ($self, $fix) = @_;
-	
-	my $errorsExist;
-	my @results;
-	
-	##### do we need to run? #####
-	
-	unless (ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
-		#warn "hashDatabaseOK($fix): no checks necessary, set table does not use GlobalTableEmulator.\n";
-		return 1;
-	}
-	
-	##### is globalUserID defined? #####
-	
-	my $globalUserID = $self->{set}->{params}->{globalUserID};
-	if ($globalUserID eq "") {
-		return 0, "globalUserID not specified (fix this in %dbLayout.)";
-	} else {
-		#warn "hashDatabaseOK($fix): globalUserID not empty ($globalUserID) -- good.\n";
-	}
-	
-	##### does a user with ID globalUserID exist? #####
-	
-	my $GlobalUser = $self->getUser($globalUserID);
-	if (defined $GlobalUser) {
-		#warn "hashDatabaseOK($fix): user with ID '$globalUserID' exists -- good.\n";
-	} else {
-		#warn "hashDatabaseOK($fix): user with ID '$globalUserID' not found -- bad!\n";
-		if ($fix) {
-			$self->addUser($self->newUser(
-				user_id => $globalUserID,
-				first_name => "Global",
-				last_name => "User",
-				email_address => "",
-				student_id => $globalUserID,
-				status => "D",
-				section => "",
-				recitation => "",
-				comment => "This user is used to store data about global set and problem records when using a hash-style database.",
-			));
-			push @results, "User $globalUserID does not exist -- FIXED.";
-			#warn "hashDatabaseOK($fix): created user with ID '$globalUserID' -- good.\n";
-		} else {
-			# at this point, we don't go on. no global user means everything below is going to fail.
-			return 0, "User $globalUserID does not exist.";
-		}
-	}
-	
-	##### are all sets assigned to the user with ID globalUserID? #####
-	
-	# FIXME: this is way too slow!
-	#my @userSetIDs = $self->{set_user}->list(undef, undef);
-	
-	# Timing Data
-	# 
-	# old method:
-	# TIMING 36119 1 1087502726.923311 (0.139117) mth143: WeBWorK::DB::hashDatabaseOK: about to get orphaned UserSets
-	# TIMING 36119 1 1087502768.074221 (41.290027) mth143: WeBWorK::DB::hashDatabaseOK: done getting orphaned UserSets
-	#
-	# new method:
-	# TIMING 36134 0 1087502854.579133 (0.141437) mth143: WeBWorK::DB::hashDatabaseOK: about to get orphaned UserSets
-	# TIMING 36134 0 1087502856.852504 (2.414808) mth143: WeBWorK::DB::hashDatabaseOK: done getting orphaned UserSets
-	# 
-	# yay!
-	
-	debug(__PACKAGE__ . "::hashDatabaseOK: about to get orphaned UserSets");
-	
-	# ... so instead, we're going to do things manually
-	
-	# key: setID, value: hash of userIDs of users to whom this set is assigned
-	my %orphanUserSets;
-	
-	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash") {
-		# we can only do this with WW1Hash
-		#warn "the fast way!\n";
-		
-		# connect
-		$self->{set_user}->{driver}->connect("ro")
-			or return 0, @results, "Failed to connect to set_user database.";
-		
-
-		# get PSVNs for global user (ÔN)
-		# this reads from "login<>global_user"
-		my @globalUserPSVNs = $self->{set_user}->getPSVNsForUser($globalUserID);
-		#warn "found ", scalar @globalUserPSVNs, " PSVNs for the global user.\n";
-		
-		# get setIDs for PSVNs (M)
-		my @globalUserSetIDs;
-		foreach my $PSVN (@globalUserPSVNs) {
-			#warn "getting setID for PSVN '$PSVN'...\n";
-			my $string = $self->{set_user}->fetchString($PSVN);
-			my (undef, $setID) = $self->{set_user}->string2IDs($string); # discard userID, problemIDs
-			push @globalUserSetIDs, $setID;
-			#warn "got setID '$setID'\n";
-		}
-		
-
-		# get PSVNs for each setID (ÔN*M)
-		# this reads from "set<>$_"
-		my @okPSVNs = map { $self->{set_user}->getPSVNsForSet($_) } @globalUserSetIDs;
-		#warn "found ", scalar @okPSVNs, " PSVNs for sets assigned to the global user.\n";
-		
-		# get all PSVNs (N*M)
-		# uses: grep { m/^\d+$/ } keys %{ $self->{driver}->hash() }
-		my @allPSVNs = $self->{set_user}->getAllPSVNs;
-		#warn "found ", scalar @allPSVNs, " PSVNs total.\n";
-		
-		# eliminate PSVNs of sets that are assigned to the global user
-		my %allPSVNs;
-		@allPSVNs{@allPSVNs} = ();
-		
-		foreach my $PSVN (@okPSVNs) {
-			delete $allPSVNs{$PSVN};
-		}
-		
-		#warn "the orphan PSVNs are: ", join(", ", keys %allPSVNs), "\n";
-		
-		# get setIDs for orphan PSVNs
-		foreach my $PSVN (keys %allPSVNs) {
-			#warn "getting userID and setID for PSVN '$PSVN'...\n";
-			my $string = $self->{set_user}->fetchString($PSVN);
-			my ($userID, $setID) = $self->{set_user}->string2IDs($string);
-			$orphanUserSets{$setID}->{$userID} = 1;
-			#warn "got setID '$setID' for userID '$userID'\n";
-		}
-		
-		# disconnect
-		$self->{set_user}->{driver}->disconnect;
-	} else {
-		# otherwise, do it the slow way (maybe it's not slow with some other schema?)
-		#warn "oddly enough, set_user isn't using WW1Hash, so we have to use the slow list() method";
-		my @userSetIDs = $self->{set_user}->list(undef, undef);
-		
-		foreach my $userSetID (@userSetIDs) {
-			my ($userID, $setID) = @$userSetID;
-			$orphanUserSets{$setID}->{$userID} = 1;
-		}
-		
-		foreach my $setID (keys %orphanUserSets) {
-			delete $orphanUserSets{$setID}
-				if exists $orphanUserSets{$setID}->{$globalUserID};
-		}
-	}
-	
-	debug(__PACKAGE__ . "::hashDatabaseOK: done getting orphaned UserSets");
-	
-	if (keys %orphanUserSets) {
-		foreach my $setID (keys %orphanUserSets) {
-			# detect "false positives" -- sets that are assigned to the global user
-			# but for some reason don't appear in any set index.
-			if ($self->{set_user}->exists($globalUserID, $setID)) {
-				my @userIDs = keys %{$orphanUserSets{$setID}};
-				warn "Set ID '$setID' for users '@userIDs' do not appear in any set index. Index re-build recommended.\n";
-				push @results, "Set ID '$setID' for users '@userIDs' do not appear in any set index. Index re-build recommended.\n";
-			} else {
-				if ($fix) {
-					my ($userID) = keys %{$orphanUserSets{$setID}};
-					
-					# grab the first UserSet of this set (connect and disconnect required for get1*)
-					$self->{set_user}->{driver}->connect("ro")
-						or return 0, @results, "Failed to connect to set_user database.";
-					my $RawUserSet = $self->{set_user}->get1NoFilter($userID, $setID);
-					my @RawUserProblems = $self->{problem_user}->getAllNoFilter($userID, $setID);
-					$self->{set_user}->{driver}->disconnect();
-					unless ($RawUserSet) {
-						warn "failed to fetch UserSet '$setID' for user '$userID'!\n";
-						next;
-					}
-					
-					# change user ID to globalUserID and add to database
-					$RawUserSet->user_id($globalUserID);
-					$self->{set_user}->add($RawUserSet);
-					foreach my $RawUserProblem (@RawUserProblems) {
-						$RawUserProblem->user_id($globalUserID);
-						$self->{problem_user}->add($RawUserProblem);
-						#warn "hashDatabaseOK($fix): assigned problem '", $RawUserProblem->problem_id, "' from set '$setID' to global user '$globalUserID' -- good.\n";
-					}
-					
-					#warn "hashDatabaseOK($fix): assigned set '$setID' to global user '$globalUserID' -- good.\n";
-					push @results, "Set '$setID' not assigned to global user '$globalUserID' -- FIXED.";
-				} else {
-					#warn "hashDatabaseOK($fix): set '$setID' not assigned to global user '$globalUserID' -- bad!\n";
-					push @results, "Set '$setID' not assigned to global user '$globalUserID'.";
-				}
-			}
-		}
-	} else {
-		#warn "hashDatabaseOK($fix): all sets assigned to global user '$globalUserID' -- good.\n";
-	}
-	
-	##### done! #####
-	
-	my $status = not $errorsExist;
-	return $status, @results;
-}
-
-=back
-
-=cut
-
-################################################################################
 # moodle functions
 ################################################################################
+
 =head2 Moodle Functions
 
 =over
@@ -1700,8 +1432,8 @@ sub getGlobalProblems {
 =item getAllGlobalProblems($setID)
 
 Returns a list of Problem objects representing all the problems in the given
-global set. When using the WW1Hash/GlobalTableEmulator schemas, this is far
-more efficient than using listGlobalProblems and getGlobalProblems.
+global set. Depending on the schema in use, this can be faster than using
+listGlobalProblems and getGlobalProblems.
 
 =cut
 
@@ -1895,8 +1627,8 @@ sub getUserProblems {
 =item getAllUserProblems($userID, $setID)
 
 Returns a list of UserProblem objects representing all the problems in the
-given set. When using the WW1Hash/GlobalTableEmulator schemas, this is far
-more efficient than using listUserProblems and getUserProblems.
+given set. Depending on the schema in use, this can be more efficient than using
+listUserProblems and getUserProblems.
 
 =cut
 
@@ -2105,16 +1837,6 @@ sub getMergedSets {
 			       and defined $userSetIDs[$i]->[1];
 	}
 	
-	# a horrible, terrible hack ;)
-	if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
-			and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
-		#warn __PACKAGE__.": using a terrible hack.\n";
-		debug("DB: getsNoFilter start");
-		my @MergedSets = $self->{set_user}->getsNoFilter(@userSetIDs);
-		debug("DB: getsNoFilter end");
-		return @MergedSets;
-	}
-	
 	debug("DB: getUserSets start");
 	my @UserSets = $self->getUserSets(@userSetIDs); # checked
 	
@@ -2162,20 +1884,6 @@ sub getMergedVersionedSets {
     my @nonversionedUserSetIDs = map { [$_->[0], $_->[1]] } @userSetIDs;
 # these are [user_id, versioned_set_id] pairs
     my @versionedUserSetIDs = map { [$_->[0], $_->[2]] } @userSetIDs;
-
-# the following has never been tested, and probably doesn't actually work
-# will anyone every try and do gateways on a GDBM install of WeBWorK2?
-  # a horrible, terrible hack ;)
-    if (ref $self->{set_user} eq "WeBWorK::DB::Schema::WW1Hash"
-	and ref $self->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator") {
-    #warn __PACKAGE__.": using a terrible hack.\n";
-#	debug("DB: getsNoFilter start");
-#	my @MergedSets = $self->{set_user}->getsNoFilter(@versionedUserSetIDs);
-#	debug("DB: getsNoFilter end");
-#	return @MergedSets;
-	croak 'getMergedVersionedSets: using WW1Hash DB Schema!  Versioned ' .
-	    'sets are not supported in this context.';
-    }
 
 # we merge the nonversioned ("template") user sets (user_id, set_id) and
 #    the global data into the versioned user sets	
@@ -2335,11 +2043,8 @@ sub getMergedProblems {
 		my $GlobalProblem = $GlobalProblems[$i];
 		next unless defined $UserProblem and defined $GlobalProblem;
 		foreach my $field (@commonFields) {
-			# FIXME: WW1Hash upgrades undefined fileds to "" when creating record objects
-			# Shouldn't we be testing for emptiness rather than definedness?
-			# I think the spec says that if a field is EMPTY the global value is used.
-			#next if defined $UserProblem->$field;
-			# ok, now we're testing for emptiness as well as definedness.
+			# FIXME: we currently promote undef to "" in SQL.pm, so we need to override on
+			# empty strings as well as undefined values.
 			next if defined $UserProblem->$field and $UserProblem->$field ne "";
 			$UserProblem->$field($GlobalProblem->$field);
 		}
@@ -2420,15 +2125,6 @@ sub getMergedVersionedProblems {
 =cut
 
 ################################################################################
-# debugging
-################################################################################
-
-#sub dumpDB($$) {
-#	my ($self, $table) = @_;
-#	return $self->{$table}->dumpDB();
-#}
-
-################################################################################
 # utilities
 ################################################################################
 
@@ -2455,20 +2151,6 @@ sub checkKeyfields($;$) {
 			croak "checkKeyfields: invalid characters in field '$keyfield': '$value' (valid characters are [-a-zA-Z0-9_.])"
 				unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
 		}
-		
-		#if ($keyfield eq "problem_id") {
-		#	croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [0-9])"
-		#		unless $value =~ m/^\d*$/;
-		#} else {
-		#	croak "checkKeyfields: invalid characters in $keyfield field: $value (valid characters are [A-Za-z0-9_.])"
-		#		#unless $value =~ m/^[.\w\-]*$/;
-		#		unless ( $value =~ m/^[.\w-]*$/ ||
-		#			 ( $value =~ m/^[\w,-]*$/ &&
-		#			   (defined($versioned) && $versioned) 
-		#			   &&
-		#			   ($keyfield eq "set_id" ||
-		#			    $keyfield eq "user_id") ) );
-		#}
 	}
 }
 
