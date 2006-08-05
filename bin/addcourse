@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/addcourse,v 1.16 2004/10/10 21:45:40 sh002i Exp $
+# $CVSHeader: webwork2/bin/addcourse,v 1.17 2006/01/25 23:13:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -37,56 +37,6 @@ be granted professor privileges.
 
 The specified database layout will be used in place of the default specified in
 F<global.conf>.
-
-If B<--db-layout> is set to C<gdbm>, the following options are valid:
-
-=over
-
-=item B<--global-user>=I<USERID>
-
-Specifies that the user ID of the global user will be I<USERID>, overriding the
-value set in F<database.conf>. Applicable only to courses using the C<gdbm>
-database layout.
-
-=back
-
-If B<--db-layout> is set to C<sql>, the following options are valid:
-
-=over
-
-=item B<--sql-host>=I<HOST>
-
-Specifies the hostname of the SQL server on which to create the course database.
-If not specified, the default for your RDBMS will be used.
-
-=item B<--sql-port>=I<PORT>
-
-Specifies the port of the SQL server on which to create the course database. If
-not specified, the default for your RDBMS will be used.
-
-=item B<--sql-user>=I<USER>
-
-Specifies the username to use when connecting to the SQL server to create the
-course database. This user must have CREATE, DELETE, FILE, INSERT, SELECT, and
-UPDATE privileges, WITH GRANT OPTION.
-
-=item B<--sql-pass>=I<PASS>
-
-Specifies the password to use when connecting to the SQL server.
-
-=item B<--sql-db>=I<DBNAME>
-
-Specifies the name of the database to create. (This is usually
-"webwork_COURSENAME", but can be overridden by changing the database layout in
-F<global.conf>.)
-
-=item B<--sql-wwhost>=I<WWHOST>
-
-Specifies the host from which the webwork database users will be allowed to
-connect. (if B<--sql-host> is set to localhost, this should be set to localhost
-too.)
-
-=back
 
 =item B<--users>=I<FILE>
 
@@ -137,12 +87,6 @@ sub usage {
 	print STDERR "usage: $0 [options] COURSEID\n";
 	print STDERR "Options:\n";
 	print STDERR "  [--db-layout=LAYOUT]\n";
-	print STDERR "  for \"sql\" database layout:\n";
-	print STDERR "    [--sql-host=HOST] [--sql-port=port]\n";
-	print STDERR "    --sql-user=USER --sql-pass=PASS\n";
-	print STDERR "    --sql-db=DBNAME --sql-wwhost=WWHOST\n";
-	print STDERR "  for \"gdbm\" database layout:\n";
-	print STDERR "    [--global-user=USERID]\n";
 	print STDERR "  [--users=FILE [--professors=USERID[,USERID]...] ]\n";
 	exit;
 }
@@ -201,34 +145,17 @@ if ($dbLayout) {
 	$dbLayout = $ce->{dbLayoutName};
 }
 
-if ($dbLayout eq "sql") {
-	usage_error("must specify --sql-user.")   unless $sql_user;
-	usage_error("must specify --sql-pass.")   unless $sql_pass;
-	usage_error("must specify --sql-db.")     unless $sql_db;
-	usage_error("must specify --sql-wwhost.") unless $sql_wwhost;
-} elsif ($dbLayout eq "gdbm") {
-	# no required params, apparently...
-}
-
 usage_error("can't specify --professors without also specifying --users.")
 	if @professors and not $users;
 
 ##### set up parameters to pass to addCourse() #####
 
 my %courseOptions = ( dbLayoutName => $dbLayout );
-if ($dbLayout eq "gdbm") {
-	$courseOptions{globalUserID} = $globalUserID if $globalUserID ne "";
-}
 
+# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
+# below this line, we would grab values from getopt and put them in this hash
+# but for now the hash can remain empty
 my %dbOptions;
-if ($dbLayout eq "sql") {
-	$dbOptions{host}     = $sql_host if $sql_host ne "";
-	$dbOptions{port}     = $sql_port if $sql_port ne "";
-	$dbOptions{username} = $sql_user;
-	$dbOptions{password} = $sql_pass;
-	$dbOptions{database} = $sql_db;
-	$dbOptions{wwhost}   = $sql_wwhost;
-}
 
 my @users;
 if ($users) {
