@@ -1840,8 +1840,22 @@ sub recordEditHTML {
 		push @tableCells, CGI::a({href=>$usersAssignedToSetURL}, "$users/$totalUsers");
 	}
 	
+	# determine which non-key fields to show
+	my @fieldsToShow;
+	if ($editMode) {
+		@fieldsToShow = @{ EDIT_FIELD_ORDER() };
+	} elsif ($exportMode) {
+		@fieldsToShow = @{ EXPORT_FIELD_ORDER() };
+	} else {
+		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
+	}
+	
+	# make a hash out of this so we can test membership easily
+	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
+	
 	# Set Fields
-	foreach my $field ($Set->NONKEYFIELDS) {
+	foreach my $field (@fieldsToShow) {
+		next unless exists $nonkeyfields{$field};
 		my $fieldName = "set." . $set_id . "." . $field,		
 		my $fieldValue = $Set->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
@@ -1850,21 +1864,10 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /published/ and not $editMode;
 		push @tableCells, CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-		$fakeRecord{$field} = CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		#$fakeRecord{$field} = CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
-	my @fieldsToShow;
-	if ($editMode) {
-		@fieldsToShow = @{ EDIT_FIELD_ORDER() };
-	} else {
-		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
-	}
-	
-	if ($exportMode) {
-		@fieldsToShow = @{ EXPORT_FIELD_ORDER() };
-	}
-
-	@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
+	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
 
 	return CGI::Tr({}, CGI::td({}, \@tableCells));
 }
