@@ -490,13 +490,8 @@ sub handle_problem_numbers {
 
 	my @setUsers = $db->listSetUsers($setID);
 	my (@problist, $user);
-	my $globalUserID = $db->{set}->{params}->{globalUserID} || '';
 
 	foreach $user (@setUsers) {
-		# if this is gdbm, the global user has been taken care of above.
-		# we can't do it again.  This relies on the global user not having
-		# a blank name.
-		next if $globalUserID eq $user;
 		# grab a copy of each UserProblem for this user. @problist can be sparse (if problems were deleted)
 		for $j (keys %newProblemNumbers) {
 			$problist[$j] = $db->getUserProblem($user, $setID, $j);
