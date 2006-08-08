@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement.pm,v 1.31 2006/05/18 19:32:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.32 2006/06/15 14:47:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,8 +93,6 @@ environment.
 $courseOptions is a reference to a hash containing the following options:
 
  dbLayoutName         => $dbLayoutName
- globalUserID         => $dbLayouts{gdbm}->{set}->{params}->{globalUserID}
-                         $dbLayouts{gdbm}->{problem}->{params}->{globalUserID}
  allowedRecipients    => $mail{allowedRecipients}
  feedbackRecipients   => $mail{feedbackRecipients}
  PRINT_FILE_NAMES_FOR => $pg{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}
@@ -228,20 +226,6 @@ sub addCourse {
 	} else {
 		my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
 		
-		# make sure we add the global user
-		if (exists $courseOptions{globalUserID}) {
-			unless (grep { $_->[0]->user_id eq $courseOptions{globalUserID} } @users) {
-				push @users, [
-					$db->newUser(user_id => $courseOptions{globalUserID}),
-					$db->newPassword(user_id => $courseOptions{globalUserID}),
-					$db->newPermissionLevel(user_id => $courseOptions{globalUserID}),
-				];
-			}
-		}
-		
-		# apparently never used:
-		#my @professors; # user ID of any user whose permission level == 10
-		
 		foreach my $userTriple (@users) {
 			my ($User, $Password, $PermissionLevel) = @$userTriple;
 			
@@ -321,16 +305,9 @@ the course's new database and delete the course's old database.
 
 The name of the course's directory is changed to $newCourseID.
 
-If the course's database layout is C<sql_single>, new tables are created in the
-current database, course data is copied from the old tables to the new tables,
-and the old tables are deleted.
-
-If the course's database layout is C<sql>, a new database is created, course
-data is copied from the old database to the new database, and the old database
-is deleted.
-
-If the course's database layout is C<gdbm>, the DBM files are simply renamed on
-disk.
+If the course's database layout is C<sql_single> or C<sql_moodle>, new tables
+are created in the current database, course data is copied from the old tables
+to the new tables, and the old tables are deleted.
 
 If the course's database layout is something else, no database changes are made.
 
@@ -603,34 +580,13 @@ themselves are saved.
 $ce is a WeBWorK::CourseEnvironment object that describes the existing course's
 environment.
 
-# $dbOptions is a reference to a hash containing information required to create
-# the course's new database and delete the course's old database.
-# 
-#  if dbLayout == "sql":
-#  
-#  	host         => host to connect to
-#  	port         => port to connect to
-#  	username     => user to connect as (must have CREATE, DELETE, FILE, INSERT,
-#  	                SELECT, UPDATE privileges, WITH GRANT OPTION.)
-#  	password     => password to supply
-#  	old_database => the name of the database to delete
-#  	new_database => the name of the database to create
-#  	wwhost       => the host from which the webwork database users will be allowed
-#  	                to connect. (if host is set to localhost, this should be set to
-#  	                localhost too.)
-# 
-# The name of the course's directory is changed to $newCourseID.
+$dbOptions is a reference to a hash containing information required to create
+the course's new database and delete the course's old database. (Currently,
+no information is needed, so this should be an empty hash.)
 
 If the course's database layout is C<sql_single>, the contents of 
 the courses database tables are exported to text files using the sql database's
 export facility.  Then the tables are deleted from the database.
-
-# If the course's database layout is C<sql>, a new database is created, course
-# data is copied from the old database to the new database, and the old database
-# is deleted.
-# 
-# If the course's database layout is C<gdbm>, the DBM files are simply renamed on
-# disk.
 
 If the course's database layout is something else, no database changes are made.
 
@@ -986,8 +942,6 @@ sub writeCourseConf {
 	
 	# several options should be defined no matter what
 	$options{dbLayoutName} = $ce->{dbLayoutName} unless defined $options{dbLayoutName};
-	$options{globalUserID} = $ce->{dbLayouts}->{gdbm}->{set}->{params}->{globalUserID}
-		unless defined $options{globalUserID};
 	
 	print $fh <<'EOF';
 #!perl
