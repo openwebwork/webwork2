@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/snippets/setHeader.pg,v 1.9 2004/06/07 19:34:36 jj Exp $
+# $CVSHeader: webwork2/conf/snippets/setHeader.pg,v 1.10 2006/01/25 23:13:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,7 +36,7 @@ TEXT(MODES(TeX =>EV3(<<'END_TEXT'),HTML=>""));
 \noindent {\large \bf $studentName}
 \hfill
 \noindent {\large \bf \{protect_underbar($courseName)\}  
-$sectionNumber   Fall 2003}
+$sectionNumber   }
 \par
 
 END_TEXT
