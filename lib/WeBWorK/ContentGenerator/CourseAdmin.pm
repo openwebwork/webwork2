@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.54 2006/07/28 02:10:33 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.55 2006/07/28 02:13:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -384,13 +384,6 @@ sub add_course_form {
 	my $add_templates_course             = $r->param("add_templates_course") || "";
 	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
-	my $add_sql_host                     = $r->param("add_sql_host") || "";
-	my $add_sql_port                     = $r->param("add_sql_port") || "";
-	my $add_sql_username                 = $r->param("add_sql_username") || "";
-	my $add_sql_password                 = $r->param("add_sql_password") || "";
-	my $add_sql_database                 = $r->param("add_sql_database") || "";
-	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
-	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
 	
 	my @dbLayouts = do {
 		my @ordered_layouts;
@@ -506,31 +499,22 @@ sub add_course_form {
 		),
 	);
 	
+	
+	
 	print CGI::p("Select a database layout below.");
 	print CGI::start_table({class=>"FormLayout"});
+	
+	my %dbLayout_buttons;
+	my $selected_dbLayout = defined $add_dbLayout ? $add_dbLayout : $ce->{dbLayout_order}[0];
+	@dbLayout_buttons{@dbLayouts} = CGI::radio_group(-name=>"add_dbLayout",-values=>\@dbLayouts,-default=>$selected_dbLayout);
 	foreach my $dbLayout (@dbLayouts) {
-		
-		
 		my $dbLayoutLabel = (defined $ce->{dbLayout_descr}{$dbLayout})
 			? "$dbLayout - " . $ce->{dbLayout_descr}{$dbLayout}
 			: "$dbLayout - no description provided in global.conf";
-		
-		# we generate singleton radio button tags ourselves because it's too much of a pain to do it with CGI.pm
 		print CGI::Tr({},
-			CGI::td({width=>'20%'},
-# why did this not work?  because values aren't escaped?
-#				'<input type="radio" name="add_dbLayout" value="' . $dbLayout . '"'
-#				. ($add_dbLayout eq $dbLayout ? 'checked=>"1"' : '') . ' />',
-				CGI::radio_group(-name =>"add_dbLayout",
-				           -value => [$dbLayout],
-				           -default => $dbLayout,
-				),
-				           
-			),
+			CGI::td({width=>'20%'}, $dbLayout_buttons{$dbLayout}),
 			CGI::td($dbLayoutLabel),
 		);
-		
-		
 	}
 	print CGI::end_table();
 	print CGI::p({style=>"text-align: left"}, CGI::submit(-name=>"add_course", -label=>"Add Course"));
@@ -562,13 +546,6 @@ sub add_course_validate {
 	my $add_templates_course             = $r->param("add_templates_course") || "";
 	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
-	my $add_sql_host                     = $r->param("add_sql_host") || "";
-	my $add_sql_port                     = $r->param("add_sql_port") || "";
-	my $add_sql_username                 = $r->param("add_sql_username") || "";
-	my $add_sql_password                 = $r->param("add_sql_password") || "";
-	my $add_sql_database                 = $r->param("add_sql_database") || "";
-	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
-	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
 	
 	my @errors;
 	
@@ -613,12 +590,8 @@ sub add_course_validate {
 		push @errors, "You must select a database layout.";
 	} else {
 		if (exists $ce->{dbLayouts}->{$add_dbLayout}) {
-			if ($add_dbLayout eq "sql") {
-				push @errors, "You must specify the SQL admin username." if $add_sql_username eq "";
-				push @errors, "You must specify the WeBWorK host." if $add_sql_wwhost eq "";
-			} elsif ($add_dbLayout eq "gdbm") {
-				push @errors, "You must specify the GDBM global user ID." if $add_gdbm_globalUserID eq "";
-			}
+			# we used to check for layout-specific fields here, but there aren't any layouts that require them
+			# anymore. (in the future, we'll probably deal with this in layout-specific modules.)
 		} else {
 			push @errors, "The database layout $add_dbLayout doesn't exist.";
 		}
@@ -651,13 +624,6 @@ sub do_add_course {
 	my $add_templates_course             = $r->param("add_templates_course") || "";
 	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
-	my $add_sql_host                     = $r->param("add_sql_host") || "";
-	my $add_sql_port                     = $r->param("add_sql_port") || "";
-	my $add_sql_username                 = $r->param("add_sql_username") || "";
-	my $add_sql_password                 = $r->param("add_sql_password") || "";
-	my $add_sql_database                 = $r->param("add_sql_database") || "";
-	my $add_sql_wwhost                   = $r->param("add_sql_wwhost") || "";
-	my $add_gdbm_globalUserID            = $r->param("add_gdbm_globalUserID") || "";
 
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -675,19 +641,10 @@ sub do_add_course {
 		#$courseOptions{feedbackRecipients} = [ $add_initial_email ];
 	}
 	
-	if ($add_dbLayout eq "gdbm") {
-		$courseOptions{globalUserID} = $add_gdbm_globalUserID if $add_gdbm_globalUserID ne "";
-	}
-	
+	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
+	# below this line, we would grab values from getopt and put them in this hash
+	# but for now the hash can remain empty
 	my %dbOptions;
-	if ($add_dbLayout eq "sql") {
-		$dbOptions{host}     = $add_sql_host if $add_sql_host ne "";
-		$dbOptions{port}     = $add_sql_port if $add_sql_port ne "";
-		$dbOptions{username} = $add_sql_username;
-		$dbOptions{password} = $add_sql_password;
-		$dbOptions{database} = $add_sql_database || "webwork_$add_courseID";
-		$dbOptions{wwhost}   = $add_sql_wwhost;
-	}
 	
 	my @users;
 	
@@ -831,14 +788,6 @@ sub rename_course_form {
 	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
 	
-	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
-	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
-	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
-	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
-	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
-	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
-	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
-	
 	my @courseIDs = listCourses($ce);
 	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs;
 	
@@ -881,66 +830,6 @@ sub rename_course_form {
 		),
 	);
 	
-# 	print CGI::p(
-# 		"If the course's database layout (indicated in parentheses above) is "
-# 		. CGI::b("sql") . ", supply the SQL connections information requested below."
-# 	);
-# 	
-# 	print CGI::start_table({class=>"FormLayout"});
-# 	print CGI::Tr(CGI::td({colspan=>2}, 
-# 			"Enter the user ID and password for an SQL account with sufficient permissions to create and delete databases."
-# 		)
-# 	);
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-# 		CGI::td(CGI::textfield(-name=>"rename_sql_username", -value=>$rename_sql_username, -size=>25)),
-# 	);
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-# 		CGI::td(CGI::password_field(-name=>"rename_sql_password", -value=>$rename_sql_password, -size=>25)),
-# 	);
-# 	
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-# 		CGI::td({},
-# 			CGI::textfield(-name=>"rename_sql_host", -value=>$rename_sql_host, -size=>25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the default host."),
-# 		),
-# 	);
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-# 		CGI::td({},
-# 			CGI::textfield(-name=>"rename_sql_port", -value=>$rename_sql_port, -size=>25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the default port."),
-# 		),
-# 	);
-# 
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL Current Database Name:"),
-# 		CGI::td({},
-# 			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_oldDatabase, -size=>25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
-# 		),
-# 	);
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "SQL New Database Name:"),
-# 		CGI::td({},
-# 			CGI::textfield(-name=>"rename_sql_database", -value=>$rename_sql_newDatabase, -size=>25),
-# 			CGI::br(),
-# 			CGI::small("Leave blank to use the name ".CGI::tt("webwork_COURSENAME"). "."),
-# 		),
-# 	);
-# 	print CGI::Tr({},
-# 		CGI::th({class=>"LeftHeader"}, "WeBWorK Host:"),
-# 		CGI::td({},
-# 			CGI::textfield(-name=>"rename_sql_wwhost", -value=>$rename_sql_wwhost || "localhost", -size=>25),
-# 			CGI::br(),
-# 			CGI::small("If the SQL server does not run on the same host as WeBWorK, enter the host name of the WeBWorK server as seen by the SQL server."),
-# 		),
-# 	);
 	print CGI::end_table();
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"rename_course", -label=>"Rename Course"));
@@ -958,14 +847,6 @@ sub rename_course_validate {
 	
 	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
-	
-	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
-	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
-	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
-	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
-	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
-	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
-	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
 	
 	my @errors;
 	
@@ -992,13 +873,6 @@ sub rename_course_validate {
 		$rename_oldCourseID,
 	);
 	
-	if ($ce2->{dbLayoutName} eq "sql") {
-		push @errors, "You must specify the SQL admin username." if $rename_sql_username eq "";
-		#push @errors, "You must specify the SQL admin password." if $rename_sql_password eq "";
-		#push @errors, "You must specify the current SQL database name." if $rename_sql_oldDatabase eq "";
-		#push @errors, "You must specify the new SQL database name." if $rename_sql_newDatabase eq "";
-	}
-	
 	return @errors;
 }
 
@@ -1013,14 +887,6 @@ sub do_rename_course {
 	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
 	
-	my $rename_sql_host        = $r->param("rename_sql_host")        || "";
-	my $rename_sql_port        = $r->param("rename_sql_port")        || "";
-	my $rename_sql_username    = $r->param("rename_sql_username")    || "";
-	my $rename_sql_password    = $r->param("rename_sql_password")    || "";
-	my $rename_sql_oldDatabase = $r->param("rename_sql_oldDatabase") || "";
-	my $rename_sql_newDatabase = $r->param("rename_sql_newDatabase") || "";
-	my $rename_sql_wwhost      = $r->param("rename_sql_wwhost")      || "";
-
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
 		$ce->{webworkURLs}->{root},
@@ -1030,16 +896,10 @@ sub do_rename_course {
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
 	
+	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
+	# below this line, we would grab values from getopt and put them in this hash
+	# but for now the hash can remain empty
 	my %dbOptions;
-	if ($dbLayoutName eq "sql") {
-		$dbOptions{host}         = $rename_sql_host if $rename_sql_host ne "";
-		$dbOptions{port}         = $rename_sql_port if $rename_sql_port ne "";
-		$dbOptions{username}     = $rename_sql_username;
-		$dbOptions{password}     = $rename_sql_password;
-		$dbOptions{old_database} = $rename_sql_oldDatabase || "webwork_$rename_oldCourseID";
-		$dbOptions{new_database} = $rename_sql_newDatabase || "webwork_$rename_newCourseID";
-		$dbOptions{wwhost}       = $rename_sql_wwhost;
-	}
 	
 	eval {
 		renameCourse(
@@ -1079,11 +939,6 @@ sub delete_course_form {
 	#my $urlpath = $r->urlpath;
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
-	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
-	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
-	my $delete_sql_username = $r->param("delete_sql_username") || "";
-	my $delete_sql_password = $r->param("delete_sql_password") || "";
-	my $delete_sql_database = $r->param("delete_sql_database")    || "";
 	
 	my @courseIDs = listCourses($ce);
 	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
@@ -1123,58 +978,6 @@ sub delete_course_form {
 		),
 	);
 	
-	print CGI::p(
-		"If the course's database layout (indicated in parentheses above) is "
-		. CGI::b("sql") . ", supply the SQL connections information requested below."
-	);
-	
-	print CGI::start_table({class=>"FormLayout"});
-	print CGI::Tr(CGI::td({colspan=>2}, 
-			"Enter the user ID and password for an SQL account with sufficient permissions to delete an existing database."
-		)
-	);
-	print CGI::Tr({},
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Username:"),
-		CGI::td(CGI::textfield(-name=>"delete_sql_username", -value=>$delete_sql_username, -size=>25)),
-	);
-	print CGI::Tr({},
-		CGI::th({class=>"LeftHeader"}, "SQL Admin Password:"),
-		CGI::td(CGI::password_field(-name=>"delete_sql_password", -value=>$delete_sql_password, -size=>25)),
-	);
-	
-	#print CGI::Tr(CGI::td({colspan=>2},
-	#		"The optionial SQL settings you enter below must match the settings in the DBI source"
-	#		. " specification " . CGI::tt($dbi_source) . ". Replace " . CGI::tt("COURSENAME")
-	#		. " with the course name you entered above."
-	#	)
-	#);
-	print CGI::Tr({},
-		CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-		CGI::td({},
-			CGI::textfield(-name=>"delete_sql_host", -value=>$delete_sql_host, -size=>25),
-			CGI::br(),
-			CGI::small(-name=>"Leave blank to use the default host."),
-		),
-	);
-	print CGI::Tr({},
-		CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-		CGI::td({},
-			CGI::textfield(-name=>"delete_sql_port", -value=>$delete_sql_port, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the default port."),
-		),
-	);
-
-	print CGI::Tr({},
-		CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-		CGI::td({},
-			CGI::textfield(-name=>"delete_sql_database", -value=>$delete_sql_database, -size=>25),
-			CGI::br(),
-			CGI::small("Leave blank to use the name ". CGI::tt("webwork_COURSENAME"). "."),
-		),
-	);
-	print CGI::end_table();
-	
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course", -value=>"Delete Course"));
 	
 	print CGI::end_form();
@@ -1189,11 +992,6 @@ sub delete_course_validate {
 	my $urlpath = $r->urlpath;
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
-	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
-	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
-	my $delete_sql_username = $r->param("delete_sql_username") || "";
-	my $delete_sql_password = $r->param("delete_sql_password") || "";
-	my $delete_sql_database = $r->param("delete_sql_database") || "";
 	
 	my @errors;
 	
@@ -1210,12 +1008,6 @@ sub delete_course_validate {
 		$delete_courseID,
 	);
 	
-	if ($ce2->{dbLayoutName} eq "sql") {
-		push @errors, "You must specify the SQL admin username." if $delete_sql_username eq "";
-		#push @errors, "You must specify the SQL admin password." if $delete_sql_password eq "";
-		#push @errors, "You must specify the SQL database name." if $delete_sql_database eq "";
-	}
-	
 	return @errors;
 }
 
@@ -1230,9 +1022,6 @@ sub delete_course_confirm {
 	print CGI::h2("Delete Course");
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
-	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
-	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
-	my $delete_sql_database = $r->param("delete_sql_database") || "";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -1241,34 +1030,13 @@ sub delete_course_confirm {
 		$delete_courseID,
 	);
 	
-	if ($ce2->{dbLayoutName} eq "sql") {
-		print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
-		. "? All course files and data and the following database will be destroyed."
-		. " There is no undo available.");
-		
-		print CGI::table({class=>"FormLayout"},
-			CGI::Tr({},
-				CGI::th({class=>"LeftHeader"}, "SQL Server Host:"),
-				CGI::td($delete_sql_host || "system default"),
-			),
-			CGI::Tr({},
-				CGI::th({class=>"LeftHeader"}, "SQL Server Port:"),
-				CGI::td($delete_sql_port || "system default"),
-			),
-			CGI::Tr({},
-				CGI::th({class=>"LeftHeader"}, "SQL Database Name:"),
-				CGI::td($delete_sql_database || "webwork_$delete_courseID"),
-			),
-		);
-	} else {
-		print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
-			. "? All course files and data will be destroyed. There is no undo available.");
-	}
+	print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
+		. "? All course files and data will be destroyed. There is no undo available.");
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/delete_courseID delete_sql_host delete_sql_port delete_sql_username delete_sql_password delete_sql_database/);
+	print $self->hidden_fields(qw/delete_courseID/);
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::submit(-name=>"decline_delete_course", -label=>"Don't delete"),
@@ -1288,11 +1056,6 @@ sub do_delete_course {
 	#my $urlpath = $r->urlpath;
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
-	my $delete_sql_host     = $r->param("delete_sql_host")     || "";
-	my $delete_sql_port     = $r->param("delete_sql_port")     || "";
-	my $delete_sql_username = $r->param("delete_sql_username") || "";
-	my $delete_sql_password = $r->param("delete_sql_password") || "";
-	my $delete_sql_database = $r->param("delete_sql_database") || "";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
@@ -1301,14 +1064,10 @@ sub do_delete_course {
 		$delete_courseID,
 	);
 	
+	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
+	# below this line, we would grab values from getopt and put them in this hash
+	# but for now the hash can remain empty
 	my %dbOptions;
-	if ($ce2->{dbLayoutName} eq "sql") {
-		$dbOptions{host}     = $delete_sql_host if $delete_sql_host ne "";
-		$dbOptions{port}     = $delete_sql_port if $delete_sql_port ne "";
-		$dbOptions{username} = $delete_sql_username;
-		$dbOptions{password} = $delete_sql_password;
-		$dbOptions{database} = $delete_sql_database || "webwork_$delete_courseID";
-	}
 	
 	eval {
 		deleteCourse(
@@ -1769,11 +1528,6 @@ sub archive_course_form {
 	#my $urlpath = $r->urlpath;
 	
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
-	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
-	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
-	my $archive_sql_username = $r->param("archive_sql_username") || "";
-	my $archive_sql_password = $r->param("archive_sql_password") || "";
-	my $archive_sql_database = $r->param("archive_sql_database")    || "";
 	
 	my @courseIDs = listCourses($ce);
 	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
@@ -1845,11 +1599,6 @@ sub archive_course_validate {
 	my $urlpath = $r->urlpath;
 	
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
-	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
-	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
-	my $archive_sql_username = $r->param("archive_sql_username") || "";
-	my $archive_sql_password = $r->param("archive_sql_password") || "";
-	my $archive_sql_database = $r->param("archive_sql_database") || "";
 	
 	my @errors;
 	
@@ -1859,18 +1608,12 @@ sub archive_course_validate {
 		push @errors, "You cannot archive the course you are currently using.";
 	}
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$archive_courseID,
-	);
-	
-	if ($ce2->{dbLayoutName} eq "sql") {
-		push @errors, "You must specify the SQL admin username." if $archive_sql_username eq "";
-		#push @errors, "You must specify the SQL admin password." if $archive_sql_password eq "";
-		#push @errors, "You must specify the SQL database name." if $archive_sql_database eq "";
-	}
+	#my $ce2 = WeBWorK::CourseEnvironment->new(
+	#	$ce->{webworkDirs}->{root},
+	#	$ce->{webworkURLs}->{root},
+	#	$ce->{pg}->{directories}->{root},
+	#	$archive_courseID,
+	#);
 	
 	return @errors;
 }
@@ -1886,10 +1629,8 @@ sub archive_course_confirm {
 	print CGI::h2("archive Course");
 	
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
-	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
-	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
-	my $archive_sql_database = $r->param("archive_sql_database") || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
+	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
 		$ce->{webworkDirs}->{root},
 		$ce->{webworkURLs}->{root},
@@ -1909,7 +1650,7 @@ sub archive_course_confirm {
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/archive_courseID archive_sql_host archive_sql_port archive_sql_username archive_sql_password archive_sql_database delete_course/);
+	print $self->hidden_fields(qw/archive_courseID delete_course/);
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
@@ -1929,11 +1670,6 @@ sub do_archive_course {
 	#my $urlpath = $r->urlpath;
 	
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
-	my $archive_sql_host     = $r->param("archive_sql_host")     || "";
-	my $archive_sql_port     = $r->param("archive_sql_port")     || "";
-	my $archive_sql_username = $r->param("archive_sql_username") || "";
-	my $archive_sql_password = $r->param("archive_sql_password") || "";
-	my $archive_sql_database = $r->param("archive_sql_database") || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new(
@@ -1943,14 +1679,10 @@ sub do_archive_course {
 		$archive_courseID,
 	);
 	
+	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
+	# below this line, we would grab values from getopt and put them in this hash
+	# but for now the hash can remain empty
 	my %dbOptions;
-	if ($ce2->{dbLayoutName} eq "sql") {
-		$dbOptions{host}     = $archive_sql_host if $archive_sql_host ne "";
-		$dbOptions{port}     = $archive_sql_port if $archive_sql_port ne "";
-		$dbOptions{username} = $archive_sql_username;
-		$dbOptions{password} = $archive_sql_password;
-		$dbOptions{database} = $archive_sql_database || "webwork_$archive_courseID";
-	}
 	
 	eval {
 		archiveCourse(
@@ -2037,11 +1769,6 @@ sub unarchive_course_form {
 	#my $urlpath = $r->urlpath;
 	
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
-	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
-	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
-	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
-	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
-	my $unarchive_sql_database = $r->param("unarchive_sql_database")    || "";
 	
 	# First find courses which have been archived.
 	my @courseIDs = listArchivedCourses($ce);
@@ -2096,11 +1823,6 @@ sub unarchive_course_validate {
 	my $urlpath = $r->urlpath;
 	
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
-	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
-	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
-	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
-	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
-	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
 	
 	my @errors;
 	
@@ -2130,9 +1852,6 @@ sub unarchive_course_confirm {
 	print CGI::h2("Unarchive Course");
 	
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
-	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
-	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
-	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
 	
     my $new_courseID = $unarchive_courseID; $new_courseID =~ s/\.tar\.gz$//;
 
@@ -2145,12 +1864,7 @@ sub unarchive_course_confirm {
 
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/unarchive_courseID 
-	                              unarchive_sql_host 
-	                              unarchive_sql_port 
-	                              unarchive_sql_username 
-	                              unarchive_sql_password 
-	                              unarchive_sql_database/);
+	print $self->hidden_fields(qw/unarchive_courseID/);
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't unarchive"),
@@ -2170,12 +1884,6 @@ sub do_unarchive_course {
 	my $urlpath = $r->urlpath;
 	my $new_courseID           = $r->param("new_courseID")           || "";
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
-	my $unarchive_sql_host     = $r->param("unarchive_sql_host")     || "";
-	my $unarchive_sql_port     = $r->param("unarchive_sql_port")     || "";
-	my $unarchive_sql_username = $r->param("unarchive_sql_username") || "";
-	my $unarchive_sql_password = $r->param("unarchive_sql_password") || "";
-	my $unarchive_sql_database = $r->param("unarchive_sql_database") || "";
-	
 	
 	my %dbOptions;
 
