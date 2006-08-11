@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.170 2006/07/05 18:24:43 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.171 2006/08/05 03:36:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -47,7 +47,6 @@ $webwork_courses_dir = "$webwork_dir/courses";
 # machine domain name (#FIXME can we get this automatically???) (needed to find applets)
 $domainName         = "devel.webwork.rochester.edu:8002";
 
-
 ################################################################################
 # Paths to external programs 
 ################################################################################
@@ -75,7 +74,6 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 
 # url checker
 $externalPrograms{checkurl} = "/usr/local/bin/lwp-request -mHEAD "; # or "/usr/local/bin/w3c -head "
-
 
 # image conversions utiltiies
 # the source file is given on stdin, and the output expected on stdout.
@@ -734,24 +732,17 @@ $pg{renderers}{"WeBWorK::PG::Remote"} = {
 $pg{displayModeOptions}{images} = {
 	# Determines the method used to align images in output. Can be
 	# "baseline", "absmiddle", or "mysql".
-	dvipng_align => 'baseline', 
+	dvipng_align => 'mysql', 
 
-	# If we choose mysql, we need information on connecting to the
-	# database. Whatever you use here, you have to create the database
-	# and grant read/write priveleges to the user listed here. To create
-	# the database in mysql, as root use:
-	# 
-	#     CREATE DATABASE DvipngDepths;
-	#     USE DvipngDepths;
-	#     CREATE TABLE depths (md5 CHAR(33) NOT NULL, depth SMALLINT, PRIMARY KEY (md5));
-	#     GRANT ALL ON DvipngDepths.* TO webworkWrite;
-	# 
-	# In the last statement, "webworkWrite" should match the user below.
-	# FIXME: this database can become a table in the 'webwork' database
+	# If mysql is chosen, this information indicates which database contains the
+	# 'depths' table. Since 2.3.0, the depths table is kept in the main webwork
+	# database. (If you are upgrading from an earlier version of webwork, and
+	# used the mysql method in the past, you should move your existing 'depths'
+	# table to the main database.)
 	dvipng_depth_db => {
-		dbsource => 'dbi:mysql:DvipngDepths',
-		user     => $dbLayouts{sql_single}->{password}->{params}->{usernameRW},
-		passwd   => $dbLayouts{sql_single}->{password}->{params}->{passwordRW},
+		dbsource => $database_dsn,
+		user     => $database_username,
+		passwd   => $database_password,
 	},
 };
 
