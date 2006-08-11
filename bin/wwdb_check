@@ -151,19 +151,27 @@ my $dbh = DBI->connect(
 
 =cut
 
+# get table data for the current version of webwork
 #my %ww_table_data = get_ww_table_data();
+#$Data::Dumper::Indent = 1;
+#print Dumper(\%ww_table_data);
+#exit;
 # get static table data for version zero of the database
 my %ww_table_data = get_version_zero_ww_table_data();
 
 my %sql_tables = get_sql_tables();
 
-exit unless check_db_version();
+if (exists $sql_tables{dbupgrade}) {
+	print "A 'dbupgrade' table exists in this database. This suggests that this database may already be upgraded beyond db_version 0. If this is the case, running this utility is not necessary. This utility is only needed to make sure that databases are set up correctly to enter into the automatic upgrade regimen.";
+	exit unless ask_permission("Go ahead with table checks?", 0);
+	delete $sql_tables{dbupgrade};
+}
 
 my @ww_courses = @ARGV;
 @ww_courses = listCourses($ce) if not @ww_courses;
 
 foreach my $ww_course_name (@ww_courses) {
-	verbose("\nChecking tables for course '$ww_course_name'\n");
+	print "\nChecking tables for course '$ww_course_name'\n";
 	
 	my $ce2 = WeBWorK::CourseEnvironment->new({
 		webwork_dir => $ENV{WEBWORK_ROOT},
@@ -185,7 +193,8 @@ foreach my $ww_course_name (@ww_courses) {
 }
 
 my $qualifier = @ARGV ? " selected" : "";
-print "\nThe following tables exist in the database but are not associated with any$qualifier course:\n\n";
+print "\nDone checking course tables.\n";
+print "The following tables exist in the database but are not associated with any$qualifier course:\n\n";
 print join("\n", sort keys %sql_tables), "\n\n";
 
 exit;
@@ -233,66 +242,6 @@ sub get_sql_tables {
 	my %sql_tables; @sql_tables{@$sql_tables_ref} = ();
 	
 	return %sql_tables;
-}
-
-sub check_db_version {
-	my $later_version = "It's possible that this database was used with a later version of WeBWorK. If that is the case, you probably shouldn't make any changes to the database with this utility.";
-	my $messed_up = "(Or maybe it's just messed up, in which case you should take a closer look before continuing.)";
-	
-	if (exists $sql_tables{dbupgrade}) {
-		delete $sql_tables{dbupgrade};
-		my @record = $dbh->selectrow_array("SELECT `value` FROM `dbupgrade` WHERE `name`='db_version'");
-		if (@record) {
-			my $db_version = $record[0];
-			if (not defined $db_version) {
-				print "'db_version' exists, but it has a NULL value. $later_version $messed_up\n";
-				return ask_permission("Go ahead with table checks?", 0);
-			} elsif ($db_version !~ /^-?\d+$/) {
-				print "'db_version' is set to the non-numeric value '$db_version'. $later_version $messed_up\n";
-				return ask_permission("Go ahead with table checks?", 0);
-			} elsif ($db_version < 0) {
-				print "'db_version' is set to the negative value '$db_version'. $later_version $messed_up\n";
-				return ask_permission("Go ahead with table checks?", 0);
-			} elsif ($db_version == DB_VERSION) {
-				print "'db_version' is already set to '", DB_VERSION, "', which suggests that the database is already in a consistent state for that version. You can still check the database though. It shouldn't do any harm.\n";
-				return ask_permission("Go ahead with table checks?", 1);
-			} elsif ($db_version > DB_VERSION) {
-				print "'db_version' is set to '$db_version'. This version of WeBWorK expects it to be '", DB_VERSION, "'. $later_version\n";
-				return ask_permission("Go ahead with table checks?", 0);
-			} else { # (0 <= $db_version < DB_VERSION)
-				 print "'db_version' is set to '$db_version'. This version of WeBWorK expects it to be '", DB_VERSION, "'. In theory, the automatic upgrade functionality of WeBWorK should take care of this the first time you visit the site after upgrading. Running this utility could be detrimental, since more than just column types could have changed since db_version $db_version. If you're trying to check database consistancy before auto-upgrading, you should find a copy of this utility from the previous version, and run that instead.\n";
-				return ask_permission("Go ahead with table checks?", 0);
-			}
-		} else {
-			print "The 'dbupgrade' table exists, but doesn't contain a 'db_version' setting.\n";
-			if (!$opt_n and ask_permission("Add 'db_version' and set it to '".DB_VERSION."'?", 1)) {
-				return unless do_handle_error($dbh, "INSERT INTO `dbupgrade` (`name`, `value`) VALUES ('db_version', '".DB_VERSION."')");
-				print "Added the setting.\n";
-			} else {
-				if ($opt_n) {
-					print "Not adding the setting (as per the -n switch).\n";
-				} else {
-					print "Very well, not adding the setting.\n";
-				}
-			}
-			return ask_permission("Go ahead with table checks?", 1);
-		}
-	} else {
-		print "The 'dbupgrade' table doesn't exist yet. Future versions of WeBWorK will use this table to lock the database during automatic updates and track the version of the database schema.\n";
-		if (!$opt_n and ask_permission("Create dbupgrade table?", 1)) {
-			return unless do_handle_error($dbh, "CREATE TABLE `dbupgrade` (`name` VARCHAR(255) NOT NULL PRIMARY KEY, `value` TEXT)");
-			print "Created the tabled.\n";
-			return unless do_handle_error($dbh, "INSERT INTO `dbupgrade` (`name`, `value`) VALUES ('db_version', '".DB_VERSION."')");
-			print "Added the setting.\n";
-		} else {
-			if ($opt_n) {
-				print "Not adding the table (as per -n switch).\n";
-			} else {
-				print "Very well, not adding the table.\n";
-			}
-		}
-		return ask_permission("Go ahead with table checks?", 1);
-	}
 }
 
 ################################################################################
