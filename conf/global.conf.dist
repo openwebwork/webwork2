@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.171 2006/08/05 03:36:58 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.172 2006/08/11 21:50:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,9 +43,6 @@ $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 # URL and path to courses directory.
 $webwork_courses_url = "/webwork2_course_files";
 $webwork_courses_dir = "$webwork_dir/courses";
-
-# machine domain name (#FIXME can we get this automatically???) (needed to find applets)
-$domainName         = "devel.webwork.rochester.edu:8002";
 
 ################################################################################
 # Paths to external programs 
@@ -382,7 +379,6 @@ $database_debug = 0;
 
 # Variables for sql_moodle database layout.
 $moodle_dsn = "dbi:mysql:moodle";
-$moodle_dsn = "dbi:mysql:moodle_sam";
 $moodle_table_prefix = "mdl_";
 $moodle_username = $database_username;
 $moodle_password = $database_password;
@@ -759,7 +755,6 @@ $pg{displayModeOptions}{jsMath} = {
 $pg{directories}{root}   = "$pg_dir";
 $pg{directories}{lib}    = "$pg{directories}{root}/lib";
 $pg{directories}{macros} = "$pg{directories}{root}/macros";
-$pg{directories}{applets} = "http://$domainName$webwork_htdocs_url/applets";
 
 #
 #  The macro file search path.  Each directory in this list is seached
@@ -771,9 +766,16 @@ $pg{directories}{macrosPath} = [
    $pg{directories}{macros},
 ];
 
+# The applet search path. If a full URL is given, it is used unmodified. If an
+# absolute path is given, the URL of the local server is prepended to it.
+# 
+# For example, if an item is "/math/applets",
+# and the local server is  "https://math.yourschool.edu",
+# then the URL "https://math.yourschool.edu/math/applets" will be used.
+# 
 $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
-   $pg{directories}{applets},
-   "http://$domainName$courseURLs{html}/applets",
+	"$webworkURLs{htdocs}/applets",
+	"$courseURLs{html}/applets",
 ];
 
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
