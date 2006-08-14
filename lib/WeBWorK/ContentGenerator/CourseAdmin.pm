@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.55 2006/07/28 02:13:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.56 2006/08/08 16:03:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -558,12 +558,12 @@ sub add_course_validate {
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
 		push @errors, "A course with ID $add_courseID already exists.";
 	}
-	if ($add_courseTitle eq "") {
-		push @errors, "You must specify a course title.";
-	}
-	if ($add_courseInstitution eq "") {
-		push @errors, "You must specify an institution for this course.";
-	}
+	#if ($add_courseTitle eq "") {
+	#	push @errors, "You must specify a course title.";
+	#}
+	#if ($add_courseInstitution eq "") {
+	#	push @errors, "You must specify an institution for this course.";
+	#}
 	
 	if ($add_initial_userID ne "") {
 		if ($add_initial_password eq "") {
@@ -723,8 +723,8 @@ sub do_add_course {
 	    #log the action
 	    writeLog($ce, "hosted_courses", join("\t",
 	    	"\tAdded",
-	    	$add_courseInstitution,
-	    	$add_courseTitle,
+	    	( defined $add_courseInstitution ? $add_courseInstitution : "(no institution specified)" ),
+	    	( defined $add_courseTitle ? $add_courseTitle : "(no title specified)" ),
 	    	$add_courseID,
 	    	$add_initial_firstName,
 	    	$add_initial_lastName,
