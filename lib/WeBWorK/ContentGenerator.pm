@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator.pm,v 1.175 2006/07/16 02:40:21 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.176 2006/07/17 21:53:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1701,18 +1701,7 @@ sub systemLink {
 	
 	my $url;
 	
-	if ($options{use_abs_url}) {
-		my $hostname = $r->hostname();
-		my $port     = $r->get_server_port();
-		if ($r->subprocess_env('https')) {
-			$url = "https://$hostname";
-			$url .= ":$port" if $port != 443;
-		} else {
-			$url = "http://$hostname";
-			$url .= ":$port" if $port != 80;
-		}
-	}
-	
+	$url = $r->ce->{apache_root_url} if $options{use_abs_url};
 	$url .= $r->location . $urlpath->path;
 	my $first = 1;
 	
