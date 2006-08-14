@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.90 2006/08/03 17:01:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.91 2006/08/05 02:53:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -174,13 +174,28 @@ sub dispatch($) {
 	
 	debug(("-" x 80) . "\n");
 	
+	my $apache_hostname = $r->hostname;
+	my $apache_port     = $r->get_server_port;
+	my $apache_is_ssl   = ($r->subprocess_env('https') ? 1 : "");
+	my $apache_root_url;
+	if ($r->subprocess_env('https')) {
+		$apache_root_url = "https://$apache_hostname";
+		$apache_root_url .= ":$apache_port" if $apache_port != 443;
+	} else {
+		$apache_root_url = "http://$apache_hostname";
+		$apache_root_url .= ":$apache_port" if $apache_port != 80;
+	}
+	
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = eval { new WeBWorK::CourseEnvironment({
-		#webworkRoot => $r->dir_config("webwork_root"),
-		#webworkURLRoot => $location,
-		#pgRoot => $r->dir_config("pg_root"),
 		%SeedCE,
 		courseName => $displayArgs{courseID},
+		# this is kind of a hack, but it's really the only sane way to get this
+		# server information into the PG box
+		apache_hostname => $apache_hostname,
+		apache_port => $apache_port,
+		apache_is_ssl => $apache_is_ssl,
+		apache_root_url => $apache_root_url,
 	}) };
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
