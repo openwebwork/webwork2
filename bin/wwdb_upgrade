@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.1 2006/08/11 18:47:21 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.2 2006/08/12 15:44:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -104,12 +104,12 @@ my %sql_tables = get_sql_tables();
 
 my $db_version = exists $sql_tables{dbupgrade} ? get_db_version() : 0;
 
-verbose("Initial db_version is $db_version\n");
-
 if (not defined $db_version) {
-	print "Failed to get db_version -- can't continue.";
+	print "Failed to get db_version -- can't continue.\n";
 	exit 1;
 }
+
+verbose("Initial db_version is $db_version\n");
 
 if ($db_version > $THIS_DB_VERSION) {
 	print "db_version is $db_version, but the current database version is only $THIS_DB_VERSION. This database was probably used with a newer version of WeBWorK.\n";
@@ -198,8 +198,8 @@ sub upgrade_to_version {
 	if (exists $info{global_code}) {
 		eval { $info{global_code}->() };
 		if ($@) {
-			print "\nAn error occured while running the global upgrade code for version $vers:\n\n";
-			print "$@\n";
+			print "\nAn error occured while running the system upgrade code for version $vers:\n";
+			print "$@";
 			return 0 unless ask_permission("Ignore this error and keep going?", 0);
 		}
 	}
@@ -208,8 +208,8 @@ sub upgrade_to_version {
 		foreach my $curr_course (@ww_courses) {
 			eval { $info{course_code}->($curr_course) };
 			if ($@) {
-				print "\nAn error occured while running the course upgrade code on course $curr_course for version $vers:\n\n";
-				print "$@\n";
+				print "\nAn error occured while running the course upgrade code for version $vers on course $curr_course:\n";
+				print "$@";
 				next if ask_permission("Ignore this error and go on to the next course?", 0);
 			}
 		}
