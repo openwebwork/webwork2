@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.45 2006/07/14 00:02:44 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.46 2006/07/15 14:11:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -207,12 +207,13 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 <li> jsMath: uses javascript to place symbols, which may come from fonts or images
  (the choice is configurable by the end user).
 <li> asciimath: renders formulas client side using ASCIIMathML
+<li> LaTeXMathML: renders formulas client side using LaTeXMathML
 </ul>
 <p>
 You must use at least one display mode.  If you select only one, then the options box will
  not give a choice of modes (since there will only be one active).',
 		  min  => 1,
-		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath"],
+		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath", "LaTeXMathML"],
 		  type => 'checkboxlist'},
 		  
 		{ var => 'pg{options}{displayMode} ',
