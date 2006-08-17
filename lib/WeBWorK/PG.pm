@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.65 2006/05/23 20:47:27 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.66 2006/08/14 18:15:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,6 +36,7 @@ use constant DISPLAY_MODES => {
 	images        => "HTML_dpng",
 	jsMath	      => "HTML_jsMath",
 	asciimath     => "HTML_asciimath",
+	LaTeXMathML   => "HTML_LaTeXMathML",
 };
 
 sub new {
@@ -139,6 +140,7 @@ sub defineProblemEnvir {
 	# ADDED: asciimathURL
 	# ADDED: macrosPath
 	# REMOVED: macrosDirectory, courseScriptsDirectory
+	# ADDED: LaTeXMathML
 	
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
@@ -156,6 +158,7 @@ sub defineProblemEnvir {
 	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
 	$envir{jsMathURL}              = $ce->{webworkURLs}->{jsMath};
 	$envir{asciimathURL}	       = $ce->{webworkURLs}->{asciimath};
+	$envir{LaTeXMathMLURL}	       = $ce->{webworkURLs}->{LaTeXMathML};
 	$envir{server_root_url}        = $ce->{apache_root_url};
 	
 	# Information for sending mail
