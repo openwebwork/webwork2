@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.176 2006/07/17 21:53:40 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.177 2006/08/14 18:14:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -573,6 +573,7 @@ sub links {
 		my $systemlink_args = $options{systemlink_args} || {};
 		my $text = $options{text};
 		my $active = $options{active};
+		my %target = ($options{target} ? (target => $options{target}) : ());
 		
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
@@ -602,9 +603,9 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add <strong> for old browsers
-			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, class=>"active"}, $text));
+			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, class=>"active", %target}, $text));
 		} else {
-			$new_anchor = CGI::a({href=>$new_systemlink}, $text);
+			$new_anchor = CGI::a({href=>$new_systemlink, %target}, $text);
 		}
 		
 		return $new_anchor;
@@ -688,7 +689,7 @@ sub links {
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args));
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
 						print CGI::end_ul();
 					}
 					
