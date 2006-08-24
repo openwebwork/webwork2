@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.20 2006/05/21 00:50:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.21 2006/07/05 18:24:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,6 +127,24 @@ sub new_helper {
 		$translator->load_extra_packages(@extra_packages);
 	}
 	
+	# prepare an imagegenerator object (if we're in "images" mode)
+	my $image_generator;
+	if ($translationOptions->{displayMode} eq "images") {
+		my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
+		$image_generator = WeBWorK::PG::ImageGenerator->new(
+			tempDir         => $ce->{webworkDirs}->{tmp}, # global temp dir
+			latex	        => $ce->{externalPrograms}->{latex},
+			dvipng          => $ce->{externalPrograms}->{dvipng},
+			useCache        => 1,
+			cacheDir        => $ce->{webworkDirs}{equationCache},
+			cacheURL        => $ce->{webworkURLs}{equationCache},
+			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
+			useMarkers      => ($imagesModeOptions{dvipng_align} && $imagesModeOptions{dvipng_align} eq 'mysql'),
+			dvipng_align    => $imagesModeOptions{dvipng_align},
+			dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+		);
+	}
+	
 	# set the environment (from defineProblemEnvir)
 	#warn "PG: setting the environment (from defineProblemEnvir)\n";
 	my $envir = $class->defineProblemEnvir(
@@ -138,6 +156,9 @@ sub new_helper {
 		$psvn,
 		$formFields,
 		$translationOptions,
+		{ #extras (this is kind of a hack, but not a serious one)
+			image_generator => $image_generator,
+		},
 	);
 	$translator->environment($envir);
 	
@@ -253,30 +274,25 @@ EOF
 	#warn "PG: translating the PG source into text\n";
 	$translator->translate();
 	
+	# !!!!!!!! IMPORTANT: $envir shouldn't be trusted after problem code runs!
+	
 	# after we're done translating, we may have to clean up after the
 	# translator:
 	
-	# for example, HTML_img mode uses a tempdir for dvipng's temp files.\
-	# We have to remove it.
-	if ($envir->{dvipngTempDir}) {
-		rmtree($envir->{dvipngTempDir}, 0, 0);
-	}
-	
-	# HTML_dpng, on the other hand, uses an ImageGenerator. We have to
-	# render the queued equations.
+	# HTML_dpng uses an ImageGenerator. We have to render the queued equations.
 	my $body_text_ref  = $translator->r_text;
-	if ($envir->{imagegen}) {
+	if ($image_generator) {
 		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
-		my %mtimeOption = -e $sourceFile
-			? (mtime => (stat $sourceFile)[9])
-			: ();
+		my %mtimeOption = -e $sourceFile ? (mtime => (stat $sourceFile)[9]) : ();
 		
-		$envir->{imagegen}->render(
+		$image_generator->render(
 			refresh => $translationOptions->{refreshMath2img},
 			%mtimeOption,
 			body_text => $body_text_ref,
 		);
 	}
+	
+	# end of cleanup phase
 	
 	my ($result, $state); # we'll need these on the other side of the if block!
 	if ($translationOptions->{processAnswers}) {

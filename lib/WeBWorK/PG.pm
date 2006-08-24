@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.66 2006/08/14 18:15:11 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.67 2006/08/17 23:54:09 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
+use WeBWorK::Utils::RestrictedClosureClass;
 
 use constant DISPLAY_MODES => {
 	# display name   # mode name
@@ -62,6 +63,7 @@ sub defineProblemEnvir {
 		$psvn,
 		$formFields,
 		$options,
+		$extras,
 	) = @_;
 	
 	my %envir;
@@ -174,26 +176,13 @@ sub defineProblemEnvir {
 	
 	# ----------------------------------------------------------------------
 	
-	my $basename = "equation-$envir{psvn}.$envir{probNum}";
-	$basename .= ".$envir{problemSeed}" if $envir{problemSeed};
+	# ADDED: ImageGenerator for images mode
+	if (defined $extras->{image_generator}) {
+		$envir{imagegen} = $extras->{image_generator};
+		# only allow access to the add() method
+		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, "add");
+	}
 	
-	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
-	# Object for generating equation images
-	$envir{imagegen} = WeBWorK::PG::ImageGenerator->new(
-		tempDir  => $ce->{webworkDirs}->{tmp}, # global temp dir
-		latex	 => $envir{externalLaTeXPath},
-		dvipng   => $envir{externalDvipngPath},
-		useCache => 1,
-		cacheDir => $ce->{webworkDirs}->{equationCache},
-		cacheURL => $ce->{webworkURLs}->{equationCache},
-		cacheDB  => $ce->{webworkFiles}->{equationCacheDB},
-		useMarkers      => ($imagesModeOptions{dvipng_align} && $imagesModeOptions{dvipng_align} eq 'mysql'),
-		dvipng_align    => $imagesModeOptions{dvipng_align},
-		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
-
 	#  ADDED: jsMath options
 	$envir{jsMath} = {%{$ce->{pg}{displayModeOptions}{jsMath}}};
 	
