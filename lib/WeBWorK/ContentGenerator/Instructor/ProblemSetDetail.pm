@@ -165,7 +165,8 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "3",
 		override  => "all",
-		labels    => {	"" => 0 },
+		default   => "0",
+#		labels    => {	"" => 0 },
 #		labels    => {	"" => 1 },
 	},
 	problem_randorder => {
@@ -180,7 +181,8 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "all",
-		labels    => { "" => 0 },
+		default   => "0",
+#		labels    => { "" => 0 },
 	},
 	# Problem information
 	source_file => {
@@ -723,6 +725,7 @@ sub initialize {
 
 				my $param = $r->param("set.$setID.$field");
 				$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
+
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/) {
