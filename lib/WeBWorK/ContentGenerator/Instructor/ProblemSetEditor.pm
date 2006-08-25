@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.67 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetEditor.pm,v 1.68 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,7 @@ our $rowheight = 20;  #controls the length of the popup menus.
 our $libraryName;  #library directory name
 
 # added gateway fields here: everything after published
-use constant SET_FIELDS => [qw(open_date due_date answer_date set_header hardcopy_header published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder)];
+use constant SET_FIELDS => [qw(open_date due_date answer_date set_header hardcopy_header published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page )];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant PROBLEM_USER_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -117,14 +117,13 @@ sub initialize {
 	###################################################
 		
 	if (defined($r->param('submit_set_changes'))) {
-
 		if (!$forUsers) {
 			foreach (@{SET_FIELDS()}) {
             # this is an unnecessary logical division: we deal with gateway 
 	    #   fields separately from the rest, for no particular reason other
             #   than it makes life somewhat easier for those who don't care  
             #   about gateways
-			    if ( /(assignment_type)|(attempts_per_version)|(version_time_limit)|(versions_per_interval)|(time_interval)|(problem_randorder)/ ) {
+			    if ( /(assignment_type)|(attempts_per_version)|(version_time_limit)|(versions_per_interval)|(time_interval)|(problem_randorder)|(problems_per_page)/ ) {
 				if (defined($r->param($_))) {
 				    if ( /assignment_type/ && 
 					 $r->param($_) =~ /default/i ) {
@@ -443,7 +442,15 @@ sub body {
                                                  $setRecord->problem_randorder : 1,
                                                3,
                                                @{$overrideArgs{problem_randorder}}) .
-                                      "\n" )
+                                      "\n" ),
+                      CGI::td( {}, "&nbsp;&nbsp;", 
+                                   setRowHTML( "Problems per page (0=all)",
+                                               "problems_per_page",
+                                               $setRecord->problems_per_page eq '' ? 
+                                                 0 : $setRecord->problems_per_page,
+                                               3,
+                                               @{$overrideArgs{problems_per_page}}) .
+                                      "\n" ),
                     ] )
                  ), "\n";
         }
