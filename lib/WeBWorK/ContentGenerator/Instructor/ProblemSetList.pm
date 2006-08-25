@@ -193,7 +193,12 @@ use constant  FIELD_PROPERTIES => {
 		type => "text",
 		size => 4,
 		access => "readwrite",
-	},	
+	},
+	problems_per_page => {
+		type => "text",
+		size => 4,
+		access => "readwrite",
+	},
 	version_creation_time => {
 		type => "text",
 		size => 10,
@@ -1391,7 +1396,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1427,6 +1432,7 @@ sub importSetsFromDef {
 		$newSetRecord->versions_per_interval($versionsPerInterval);
 		$newSetRecord->version_time_limit($versionTimeLimit);
 		$newSetRecord->problem_randorder($problemRandOrder);
+		$newSetRecord->problems_per_page($problemsPerPage);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
@@ -1480,7 +1486,8 @@ sub readSetDef {
 
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
-	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder ) = 
+	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
+	     $problemsPerPage ) = 
 		 ('')x6;  # initialize these to ''
 
 	my %setInfo;
@@ -1528,6 +1535,8 @@ sub readSetDef {
 				$versionTimeLimit = $value;
 			} elsif ($item eq 'problemRandOrder') {
 				$problemRandOrder = $value;
+			} elsif ($item eq 'problemsPerPage') {
+				$problemsPerPage = $value;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -1592,6 +1601,7 @@ sub readSetDef {
 		 \@problemData,
 		 $assignmentType, $attemptsPerVersion, $timeInterval, 
 		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
+		 $problemsPerPage,
 		);
 	} else {
 		warn "Can't open file $filePath\n";
