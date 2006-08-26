@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.84 2006/07/12 04:37:43 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.85 2006/07/14 21:22:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1288,9 +1288,14 @@ sub importUsersFromCSV {
 	# get list of hashrefs representing lines in classlist file
 	my @classlist = parse_classlist("$dir/$fileName");
 	
+	# Default status is enrolled -- fetch abbreviation for enrolled
+	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
+	
 	foreach my $record (@classlist) {
 		my %record = %$record;
 		my $user_id = $record{user_id};
+		
+		$record{status} = $default_status_abbrev unless defined($record{status}) and $record{status};
 		
 		if ($user_id eq $user) { # don't replace yourself!!
 			push @skipped, $user_id;
