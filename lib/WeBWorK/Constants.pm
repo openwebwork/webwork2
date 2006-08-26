@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.46 2006/07/15 14:11:44 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.47 2006/08/17 23:54:09 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -140,7 +140,11 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		{ var => 'sessionKeyTimeout',
 		  doc => 'Inactivity time before a user is required to login again',
 		  doc2 => 'Length of time, in seconds, a user has to be inactive before he is required to login again.<p> This value should be entered as a number, so as 3600 instead of 60*60 for one hour',
-		  type => 'number'}],
+		  type => 'number'},
+		{ var => 'siteDefaults{timezone}',
+		  doc => 'Timezone for the course',
+		  doc2 => 'Some servers handle courses taking place in different timezones.  If this course is not showing the correct timezone, enter the correct value here.  The format consists of unix times, such as "America/Chicago", "America/Phoenix", "America/Los_Angeles", "America/New_York", or "America/Denver".',
+		  type => 'text'},],
 	['Permissions',
 		{ var => 'permissionLevels{login}',
 		  doc => 'Allowed to login to the course',
