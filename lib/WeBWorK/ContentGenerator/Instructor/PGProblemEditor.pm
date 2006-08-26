@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.87 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.88 2006/07/16 02:40:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1021,15 +1021,16 @@ sub saveFileChanges {
 	# if the filepath ends in   foobar/foobar.pg  then we assume there are auxiliary files
 	# copy the contents of the original foobar directory to the new one
 	#
-	# something similar needs to be done with temp files
-	# TO BE DONE -- MEG
 	###########################################################
     # If things have worked so far determine if the file might be accompanied by auxiliary files
-    $outputFilePath = "" unless defined $outputFilePath;
-    $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
+    # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
+    #
     my $auxiliaryFilesExist = 0;
-    $auxiliaryFilesExist = 1 if ($1 eq $2);
-
+    if (defined($outputFilePath) and $outputFilePath) {
+    	    my ($dir, $prob) = $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
+			$auxiliaryFilesExist = 1 if (defined($dir) and defined ($prob) and $dir eq $prob);
+    }
+    
     if ($auxiliaryFilesExist and not $do_not_save ) {
         my $sourceDirectory = $sourceFilePath;
     	my $outputDirectory = $outputFilePath;
