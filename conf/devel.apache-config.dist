@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/devel.apache-config.dist,v 1.9 2006/05/16 21:12:01 sh002i Exp $
+# $CVSHeader: webwork2/conf/devel.apache-config.dist,v 1.10 2006/05/31 18:25:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -68,7 +68,7 @@ $ServerAdmin = "$user_name\@$host_name";
 # Locations of some files.
 $LockFile = "$WeBWorK::SeedCE{webwork_dir}/logs/httpd.lock";
 $PidFile  = "$WeBWorK::SeedCE{webwork_dir}/logs/httpd.pid";
-$ErrorLog = "$WeBWorK::SeedCE{webwork_dir}/logs/error.log";
+$ErrorLog = "$WeBWorK::SeedCE{webwork_dir}/logs/httpd-error.log";
 
 # Control the number of child processes and how long they stick around.
 $StartServers        = 2;
