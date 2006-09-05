@@ -1,0 +1,12 @@
+# $Id: defaultClasslist.lst,v 1.1 2006-09-05 16:27:37 sh002i Exp $
+# Field order: student_id,last_name,first_name,status,comment,section,recitation,email_address,user_id,password,permission
+practice1,Practice1,,C,,,,,practice1,,-5
+practice2,Practice2,,C,,,,,practice2,,-5
+practice3,Practice3,,C,,,,,practice3,,-5
+practice4,Practice4,,C,,,,,practice4,,-5
+practice5,Practice5,,C,,,,,practice5,,-5
+practice6,Practice6,,C,,,,,practice6,,-5
+practice7,Practice7,,C,,,,,practice7,,-5
+practice8,Practice8,,C,,,,,practice8,,-5
+practice9,Practice9,,C,,,,,practice9,,-5
+professor,Professor,,C,,,,,professor,dmU8ES4L.64VU,10
