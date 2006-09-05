@@ -1,0 +1,23 @@
+openDate = 1/10/97 at 6:00am
+dueDate = 1/1/05 at 2:00am
+answerDate = 1/1/05 at 2:00am
+paperHeaderFile = setMAAtutorial/MAAtutorialSetHeader.pg
+screenHeaderFile = setMAAtutorial/MAAtutorialSetHeader.pg
+problemList =
+setMAAtutorial/hello.pg,   1
+setMAAtutorial/standardexample.pg,   1
+setMAAtutorial/simplemultiplechoiceexample.pg,  1
+setMAAtutorial/multiplechoiceexample.pg,   1
+setMAAtutorial/matchinglistexample.pg,   1
+setMAAtutorial/truefalseexample.pg,    1
+setMAAtutorial/popuplistexample.pg,    1
+setMAAtutorial/ontheflygraphicsexample1.pg,    1
+setMAAtutorial/ontheflygraphicsexample2.pg,    1
+setMAAtutorial/staticgraphicsexample/staticgraphicsexample.pg,      1
+setMAAtutorial/hermitegraphexample.pg,         1
+setMAAtutorial/htmllinksexample/htmllinksexample.pg,           1
+setMAAtutorial/javascriptexample1.pg,    1
+setMAAtutorial/javascriptexample2.pg,    1
+setMAAtutorial/vectorfieldexample.pg,			1
+setMAAtutorial/conditionalquestionexample.pg,   1
+setMAAtutorial/javaappletexample.pg,    1
