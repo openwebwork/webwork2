@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.47 2006/08/17 23:54:09 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.48 2006/08/26 23:05:18 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,7 +51,7 @@ $WeBWorK::Debug::DenySubroutineOutput = undef;
 # For example, this pattern allow only some function being worked on to log:
 #     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
 # 
-$WeBWorK::Debug::AllowSubroutineOutput = undef;
+$WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::Authen/;
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy
