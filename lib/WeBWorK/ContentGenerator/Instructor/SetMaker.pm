@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.72 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.73 2006/07/15 16:31:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1078,7 +1078,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('view_setdef_set')) {
 
-		my $set_to_display = $r->param('local_sets');
+		my $set_to_display = $r->param('library_sets');
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Set Definition File"
