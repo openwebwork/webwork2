@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.49 2006/07/15 16:31:16 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.50 2006/07/16 02:40:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,6 +93,8 @@ sub initialize {
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 	my @users =  $db->listUsers;
 	my @Users = $db->getUsers(@users);
+	# filter out users who don't get included in email (fixes bug #938)
+	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
 	my @user_records = ();
 
 ## Mark's code to prefilter userlist
