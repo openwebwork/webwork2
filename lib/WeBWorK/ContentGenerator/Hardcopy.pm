@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.83 2006/07/28 20:10:28 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.84 2006/08/01 22:02:07 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -852,7 +852,7 @@ sub write_problem_tex {
 	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
 	my $showHints           = $r->param("showHints")          || 0;
 	my $showSolutions       = $r->param("showSolutions")      || 0;
-	unless ($authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or time > $MergedSet->answer_date) {
+	unless ($authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or ( time > $MergedSet->answer_date or ($versioned && $MergedProblem->num_correct() + $MergedProblem->num_incorrect() >= $MergedSet->attempts_per_version()) ) ) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
