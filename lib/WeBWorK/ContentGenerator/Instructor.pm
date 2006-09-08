@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.56 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.57 2006/08/31 20:17:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -123,6 +123,10 @@ sub assignSetVersionToUser {
 # populate set with problems
     my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
 
+# keep track of problems assigned from groups so that we can have multiple
+#    problems from a given group, without duplicates
+    my %groupProblems = ();
+
     foreach my $GlobalProblem ( @GlobalProblems ) {
 	$GlobalProblem->set_id( $setVersionID );
 # this is getting called from within ContentGenerator, so that $self
@@ -134,7 +138,7 @@ sub assignSetVersionToUser {
 #	    $self->assignProblemToUser( $userID, $GlobalProblem );
 	my @result = 
 	    assignProblemToUserSetVersion( $self, $userID, $userSet,
-	    			           $GlobalProblem );
+	    			           $GlobalProblem, \%groupProblems );
 	push( @results, @result ) if ( @result && not $set_assigned );
     }
 
@@ -187,12 +191,11 @@ sub assignProblemToUser {
 }
 
 sub assignProblemToUserSetVersion {
-	my ($self, $userID, $userSet, $GlobalProblem) = @_;
+	my ($self, $userID, $userSet, $GlobalProblem, $groupProbRef) = @_;
 	my $db = $self->{db};
 	
 # conditional to allow selection of problems from a group of problems, 
 # defined in a set.  
-	my %groupProblems = ();  # list of which problem groups are in use
 
     # problem groups are indicated by source files "group:problemGroupName"
 	if ( $GlobalProblem->source_file() =~ /^group:(.+)$/ ) {
@@ -222,22 +225,22 @@ sub assignProblemToUserSetVersion {
 
     # we allow selection of multiple problems from a group, but want them to
     #   be different.  there's probably a better way to do this
-	    if ( defined( $groupProblems{$problemGroupName} ) &&
-		 $problemGroupName =~ /\b$whichProblem\b/ ) {
+	    if ( defined( $groupProbRef->{$problemGroupName} ) &&
+		 $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/ ) {
 		my $nAvail = $nProb - 
-		    ( $groupProblems{$problemGroupName} =~ tr/,// ) - 1;
+		    ( $groupProbRef->{$problemGroupName} =~ tr/,// ) - 1;
 
 		die("Too many problems selected from group.") if ( ! $nAvail );
 
 		$whichProblem = int(rand($nProb));
-		while ( $problemGroupName =~ /\b$whichProblem\b/ ) {
+		while ( $groupProbRef->{$problemGroupName} =~ /\b$whichProblem\b/ ) {
 		    $whichProblem = ( $whichProblem + 1 )%$nProb;
 		}
 	    }
-	    if ( defined( $groupProblems{$problemGroupName} ) ) {
-		$groupProblems{$problemGroupName} .= ",$whichProblem";
+	    if ( defined( $groupProbRef->{$problemGroupName} ) ) {
+		$groupProbRef->{$problemGroupName} .= ",$whichProblem";
 	    } else {
-		$groupProblems{$problemGroupName} = "$whichProblem";
+		$groupProbRef->{$problemGroupName} = "$whichProblem";
 	    }
 
 	    my $prob = $db->getGlobalProblem($problemGroupName,
