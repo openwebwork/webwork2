@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.175 2006/09/01 17:41:24 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.176 2006/09/07 17:03:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -397,22 +397,25 @@ $dbLayoutName = "sql_single";
 # Problem library options
 ################################################################################
 
+# For configuration instructions, see:
+# http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DatabaseProblemLibrary
+
 # The directory containing the problem library files. Set to "" if no problem
 # library is installed.
 $problemLibrary{root}        = "";
 
 # Problem Library version
 # Version 1 is in use.  Version 2 will be released soon.
-$problemLibrary{version} = "1";
+$problemLibrary{version} = "2";
 
 # The name of the SQL database containing problem metadata
 $problemLibrary{sourceSQL}   = "ProblemLibrary";
 
 # The user name to use when connecting to the problem library database
-$problemLibrary{userSQL}     = "webworkRead";
+$problemLibrary{userSQL}     = $database_username;
 
 # The password to use when connecting to the problem library database
-$problemLibrary{passwordSQL} = "";
+$problemLibrary{passwordSQL} = $database_password;
 
 ################################################################################
 # Logs
