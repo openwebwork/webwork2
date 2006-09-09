@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.21 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.22 2006/07/20 23:21:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +22,7 @@ use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
 use File::Spec;
+use String::ShellQuote;
 
 =head1 NAME
 
@@ -658,15 +659,13 @@ sub MakeArchive {
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
 	my $archive = uniqueName($dir,(scalar(@files) == 1)?
 				 $files[0].".tgz": $self->{courseName}.".tgz");
-	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -cvzf $archive ";
-	$tar .= join(" ",@files);
-	my $files = `$tar`; chomp($files);
+	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -cvzf ".shell_quote($archive,@files);
+	@files = readpipe "2>&1 ".$tar;
 	if ($? == 0) {
-		my @files = split(/\n/,$files);
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
 		$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
 	} else {
-		$self->addbadmessage("Can't create archive '$archive': comand returned ".systemError($?));
+		$self->addbadmessage("Can't create archive '$archive': command returned ".systemError($?));
 	}
 	$self->Refresh;
 }
@@ -690,10 +689,9 @@ sub unpack {
 	my $self = shift;
 	my $archive = shift;
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
-	my $tar = "cd '$dir' && $self->{ce}{externalPrograms}{tar} -vxzf $archive";
-               my $files = `$tar`; chomp($files);
+	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vxzf ".shell_quote($archive);
+	my @files = readpipe "2>&1 ".$tar;
 	if ($? == 0) {
-		my @files = split(/\n/,$files);
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
 		$self->addgoodmessage("$n file$s unpacked successfully");
 		return 1;
@@ -1084,7 +1082,7 @@ sub uniqueName {
 
 ##################################################
 #
-# Verify that a name can be added tot he current
+# Verify that a name can be added to the current
 # directory.
 #
 sub verifyName {
