@@ -194,7 +194,7 @@ sub gets($@) {
 		}
 		
 		my $table = $self->prefixTable("user");
-		my $qry = "SELECT username, firstname, lastname, email, idnumber, deleted FROM `$table`";
+		my $qry = "SELECT id, username, firstname, lastname, email, idnumber, deleted FROM `$table`";
 		my @qryArgs = ();
 		if( defined $keyparts[0] ) {
 			$qry = $qry . " WHERE username=?";
@@ -207,8 +207,11 @@ sub gets($@) {
 
 		if( defined $result ) {
 			my @record = @$result;
+			my $user_moodle_id = shift @record; # store moodle id and remove from record;
+			my ($section, $recitation) = $self->get_section_recitation($user_moodle_id);
 			my $Record = $self->{record}->new();
 			my @realFieldNames = $self->{record}->FIELDS();
+			# transfer fields -- the order is important here FRAGILE
 			foreach (@realFieldNames) {
 				my $value = shift @record;
 				if( "status" eq $_ ) {
@@ -218,6 +221,10 @@ sub gets($@) {
 					else {
 						$value = 'C';
 					}
+				} elsif("section" eq $_) {
+					$value = $section;
+				} elsif("recitation" eq $_) {
+					$value = $recitation;
 				}
 				$value = "" unless defined $value;
 				$Record->$_($value);
@@ -239,6 +246,51 @@ sub put($$) {
 sub delete($@) {
 	croak "Modifications to user information is not supported from WeBWorK. Please use Moodle to make any changes.";
 }
+
+################################################################################
+# Data glue subroutines
+################################################################################
+# mapping from moodle "groups" to webwork  "section" and "recitation"
+# sections are defined as groups that begin with SEC_
+# all other groups are continued to be recitations
+
+sub get_section_recitation {
+	my $self = shift;
+	my $id = shift;
+	my $courseName = $self->{params}->{courseName};
+    my $courseTable = $self->prefixTable(MOODLE_WEBWORK_BRIDGE_TABLE());
+    my $groupMembersTable = $self->prefixTable('groups_members');
+    my $groupTable        = $self->prefixTable('groups');
+    my @qryArgs = ();
+    push @qryArgs, $courseName;  # get the students in the course 
+
+	my $qry = "SELECT `$groupTable`.name FROM `$groupMembersTable` 
+	              JOIN `$groupTable` ON $groupTable.id = $groupMembersTable.groupid 
+	              JOIN  `$courseTable` ON $courseTable.course = $groupTable.courseid
+                  WHERE $courseTable.coursename =?";
+	if( defined $id ) {
+		$qry = $qry . " AND userid=?";  # need to check course eventually as well
+		push @qryArgs, $id;
+	}
+	
+	my $sth = $self->{driver}->dbi()->prepare($qry);
+	$sth->execute(@qryArgs);
+    my $section = '';
+    my $recitation = '';
+	my $result = $sth->fetchall_arrayref;
+	if (ref $result ) {
+		# There may be more than one group #FIXME
+		# Find first group not prefixed by SEC_
+		my @groups = ( map {@$_ } @$result);
+		my @sections =  grep /^SEC_/, @groups;
+		my @recitations = grep !/^SEC_/, @groups;
+		$section =  $sections[0];
+		$section =~ s/^SEC_// if $section;		
+		$recitation = $recitations[0];
+	} 
+	return ($section, $recitation);
+}
+
 
 ################################################################################
 # utility functions
