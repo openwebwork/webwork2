@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.22 2006/07/20 23:21:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.23 2006/09/09 01:40:30 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -660,7 +660,7 @@ sub MakeArchive {
 	my $archive = uniqueName($dir,(scalar(@files) == 1)?
 				 $files[0].".tgz": $self->{courseName}.".tgz");
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -cvzf ".shell_quote($archive,@files);
-	@files = readpipe "2>&1 ".$tar;
+	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
 		$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
@@ -690,7 +690,7 @@ sub unpack {
 	my $archive = shift;
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vxzf ".shell_quote($archive);
-	my @files = readpipe "2>&1 ".$tar;
+	my @files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
 		$self->addgoodmessage("$n file$s unpacked successfully");
