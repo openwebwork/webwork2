@@ -81,7 +81,8 @@ var doubleblankmathdelimiter = false; // if true,  x+1  is equal to `x+1`
 //var separatetokens;// has been removed (email me if this is a problem)
 */
 
-if (!window.AMnoMathMLNote) { // DPVC
+if (!window.LaTeXMathML_loaded) { // DPVC
+window.LaTeXMathML_loaded = 1;    // DPVC
 
 var isIE = document.createElementNS==null;
 
