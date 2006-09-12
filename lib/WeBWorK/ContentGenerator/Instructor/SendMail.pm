@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.50 2006/07/16 02:40:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.51 2006/09/06 18:18:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -52,9 +52,9 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "send_mail");
 
-#############################################################################################
-#	gather directory data
-#############################################################################################	
+	#############################################################################################
+	#	gather directory data
+	#############################################################################################	
 	my $emailDirectory    =    $ce->{courseDirs}->{email};
 	my $scoringDirectory  =    $ce->{courseDirs}->{scoring};
 	my $templateDirectory =    $ce->{courseDirs}->{templates};
@@ -87,9 +87,9 @@ sub initialize {
 	my @classList                   =   (defined($r->param('classList')))    ? $r->param('classList') : ($user);
 	$self->{preview_user}           =   $classList[0] || $user;
 	
-#############################################################################################
-#	gather database data
-#############################################################################################	
+	#############################################################################################
+	#	gather database data
+	#############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
 	my @users =  $db->listUsers;
 	my @Users = $db->getUsers(@users);
@@ -97,7 +97,7 @@ sub initialize {
 	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
 	my @user_records = ();
 
-## Mark's code to prefilter userlist
+	## Mark's code to prefilter userlist
 
 	
 	my (@viewable_sections,@viewable_recitations);
@@ -121,30 +121,7 @@ sub initialize {
 	}
 	else {@user_records = @Users;}
 
-## End Mark's code
-
-#	foreach my $userName (@users) {
-#		my $userRecord = $db->getUser($userName); # checked
-#		die "record for user $userName not found" unless $userRecord;
-#		push(@user_records, $userRecord);
-#	}
-	###########################
-	# Sort the users for presentation in the select list
-	###########################
-#	if (defined $r->param("sort_by") ) {
-#		my $sort_method = $r->param("sort_by");
-#		if ($sort_method eq 'section') {
-#			@user_records = sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-#		} elsif ($sort_method eq 'recitation') {
-#			@user_records = sort { (lc($a->recitation) cmp lc($b->recitation)) || (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-#		} elsif ($sort_method eq 'alphabetical') {
-#			@user_records = sort {  (lc($a->last_name) cmp lc($b->last_name)) } @user_records;
-#		} elsif ($sort_method eq 'id' )          {
-#		    @user_records = sort { $a->user_id cmp $b->user_id }  @user_records;		
-#		}
-#	} else {
-#		@user_records = sort { $a->user_id cmp $b->user_id }  @user_records;
-#	}
+	## End Mark's code
 	
 
 	# replace the user names by a sorted version.
@@ -153,19 +130,19 @@ sub initialize {
 	$self->{ra_users}              =   \@users;
 	$self->{ra_user_records}       =   \@user_records;
 
-#############################################################################################
-#	gather list of recipients
-#############################################################################################	
+	#############################################################################################
+	#	gather list of recipients
+	#############################################################################################	
 	my @send_to                    =   ();	
 	#FIXME  this (radio) is a lousy name
 	my $recipients                 = $r->param('radio');
 	if (defined($recipients) and $recipients eq 'all_students') {  #only active students #FIXME status check??
 		
-## Add code so that only people who pass the current filters are added to our list of recipients.		
-#	@user_records = filterRecords({filter=\@selected_filters},@user_records);
-#  I wasn't able to make this work
-#  I edited the selection button to make that clear.
-#
+		## Add code so that only people who pass the current filters are added to our list of recipients.		
+		#	@user_records = filterRecords({filter=\@selected_filters},@user_records);
+		#  I wasn't able to make this work
+		#  I edited the selection button to make that clear.
+		#
 
 		foreach my $ur (@user_records) {
 			push(@send_to,$ur->user_id)
@@ -178,9 +155,9 @@ sub initialize {
 		# no recipients have been defined -- probably the first time on the page
 	}	
 	$self->{ra_send_to}               = \@send_to;
-#################################################################
-# Check the validity of the input file name
-#################################################################
+	#################################################################
+	# Check the validity of the input file name
+	#################################################################
 	my $input_file = '';
 	#make sure an input message file was submitted and exists
 	#else use the default message		
@@ -207,9 +184,9 @@ sub initialize {
 	}
 	$self->{input_file} =$input_file;
 
-#################################################################
-# Determine the file name to save message into
-#################################################################
+	#################################################################
+	# Determine the file name to save message into
+	#################################################################
 	my $output_file      = 'FIXME no output file specified';	
 	if (defined($action) and $action eq 'Save as Default') {
 		$output_file  = $default_msg_file;
@@ -243,18 +220,18 @@ sub initialize {
 	$self->{output_file} = $output_file;  # this is ok.  It will be put back in the text input box for re-editing.
 
 
-#############################################################################################
-# Determine input source
-#############################################################################################
+	#############################################################################################
+	# Determine input source
+	#############################################################################################
 	#warn "Action = $action";
 	my $input_source;
 	if ($action){	
 		$input_source =  ( defined( $r->param('body') ) and $action ne 'Open' ) ? 'form' : 'file';}
 	else { $input_source = ( defined($r->param('body')) ) ? 'form' : 'file';}
 
-#############################################################################################
-# Get inputs
-#############################################################################################
+	#############################################################################################
+	# Get inputs
+	#############################################################################################
 	my($from, $replyTo, $r_text, $subject);
 	if ($input_source eq 'file') {
 
@@ -282,32 +259,32 @@ sub initialize {
 
 
 
-###################################################################################
-#Determine the appropriate script action from the buttons
-###################################################################################
-#     first time actions
-#          open new file
-#          open default file 
-#     choose merge file actions
-#          chose merge button
-#     option actions
-#       'reset rows'
+	###################################################################################
+	#Determine the appropriate script action from the buttons
+	###################################################################################
+	#     first time actions
+	#          open new file
+	#          open default file 
+	#     choose merge file actions
+	#          chose merge button
+	#     option actions
+	#       'reset rows'
+	
+	#     save actions
+	#		"save" button
+	#		"save as" button
+	#		"save as default" button
+	#     preview actions
+	#		'preview' button
+	#     email actions
+	#		'entire class'
+	#		'selected studentIDs'
+	#     error actions (various)
 
-#     save actions
-#		"save" button
-#		"save as" button
-#		"save as default" button
-#     preview actions
-#		'preview' button
-#     email actions
-#		'entire class'
-#		'selected studentIDs'
-#     error actions (various)
 
-
-#############################################################################################
-# if no form is submitted, gather data needed to produce the mail form and return
-#############################################################################################
+	#############################################################################################
+	# if no form is submitted, gather data needed to produce the mail form and return
+	#############################################################################################
 	my $to                =    $r->param('To');
 	my $script_action     = '';
 	
@@ -322,15 +299,15 @@ sub initialize {
 
 	
 
-#############################################################################################
-# If form is submitted deal with filled out forms 
-# and various actions resulting from different buttons
-#############################################################################################
+	#############################################################################################
+	# If form is submitted deal with filled out forms 
+	# and various actions resulting from different buttons
+	#############################################################################################
 
 
 	if ($action eq 'Save' or $action eq 'Save as:' or $action eq 'Save as Default') {
 	
-#		warn "FIXME Saving files  action = $action  outputFileName=$output_file";
+		#warn "FIXME Saving files  action = $action  outputFileName=$output_file";
 		
 		#################################################################
 		# construct message body
@@ -341,7 +318,7 @@ sub initialize {
 				   "From: $from \nReply-To: $replyTo\n" ,
 				   "Subject: $subject\n" ,
 				   "Message: \n    $temp_body");
-#		warn "FIXME from $from | subject $subject |reply $replyTo|msg $temp_body";
+		#warn "FIXME from $from | subject $subject |reply $replyTo|msg $temp_body";
 		#################################################################
 		# overwrite protection
 		#################################################################
@@ -396,39 +373,6 @@ sub initialize {
 			};
 			$r->post_connection($post_connection_action) ;
 		}
-# 		foreach my $recipient (@recipients) {
-# 			#warn "FIXME sending email to $recipient";
-# 			my $ur      = $self->{db}->getUser($recipient); #checked
-# 			die "record for user $recipient not found" unless $ur;
-# 			unless ($ur->email_address) {
-# 				$self->addbadmessage(CGI::p("user $recipient does not have an email address -- skipping"));
-# 				next;
-# 			}
-# 			my ($msg, $preview_header);
-# 			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
-# 			$self->addbadmessage(CGI::p("There were errors in processing user $ur, merge file $merge_file. $@")) if $@;
-# 			my $mailer = Mail::Sender->new({
-# 				from    =>   $from,
-# 				to      =>   $ur->email_address,
-# 				smtp    =>   $ce->{mail}->{smtpServer},
-# 				subject =>   $subject,
-# 				headers =>   "X-Remote-Host: ".$r->get_remote_host(),
-# 			});
-# 			unless (ref $mailer) {
-# 				$self->addbadmessage(CGI::p("Failed to create a mailer for user $recipient: $Mail::Sender::Error"));
-# 				next;
-# 			}
-# 			unless (ref $mailer->Open()) {
-# 				$self->addbadmessage(CGI::p("Failed to open the mailer for user $recipient: $Mail::Sender::Error"));
-# 				next;
-# 			}
-# 			my $MAIL = $mailer->GetHandle() or $self->addbadmessage(CGI::p("Couldn't get handle"));
-# 			print $MAIL  $msg || $self->addbadmessage(CGI::p("Couldn't print to $MAIL"));
-# 			close $MAIL || $self->addbadmessage(CGI::p("Couldn't close $MAIL"));
-# 		    #warn "FIXME mailed to ", $ur->email_address, "from $from subject $subject";
-# 			 
-# 		} 
-			
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
 	}
@@ -538,7 +482,7 @@ sub print_form {
 		$classlistLabels{$ur->user_id} = $ur->user_id.': '.$ur->last_name. ', '. $ur->first_name.' -- '.$ur->section." / ".$ur->recitation;
 	}
 
-## Mark edit define scrolling list
+	## Mark edit define scrolling list
 	my $scrolling_user_list = scrollingRecordList({
 		name => "classList", 			## changed from classList to action
 		request => $r,
@@ -550,7 +494,7 @@ sub print_form {
 		refresh_button_name =>'Update settings and refresh page',
 	}, @{$ra_user_records});
 
-##############################################################################################################
+	##############################################################################################################
 	
 
 	my $from            = $self->{from};
@@ -572,19 +516,19 @@ sub print_form {
 	die "record for preview user ".$self->{preview_user}. " not found." unless $preview_record;
 
 
-#############################################################################################		
+	#############################################################################################		
 
 	print CGI::start_form({method=>"post", action=>$sendMailURL});
 	print $self->hidden_authen_fields();
-#############################################################################################
-#	begin upper table
-#############################################################################################	
+	#############################################################################################
+	#	begin upper table
+	#############################################################################################	
 
     print CGI::start_table({-border=>'2', -cellpadding=>'4'});
 	print CGI::Tr({-align=>'left',-valign=>'top'},
-#############################################################################################
-#	first column
-#############################################################################################	
+	#############################################################################################
+	#	first column
+	#############################################################################################	
 
 			 CGI::td({},
 			     CGI::strong("Message file: "), $input_file,"\n",CGI::br(),
@@ -613,11 +557,11 @@ sub print_form {
 				CGI::submit(-name=>'action', -value=>$UPDATE_SETTINGS_BUTTON),
 				 
 			),
-#############################################################################################
-#	second column
-#############################################################################################	
+	#############################################################################################
+	#	second column
+	#############################################################################################	
 
-## Edit by Mark to insert scrolling list
+	## Edit by Mark to insert scrolling list
 					CGI::td({-style=>"width:33%"},
 					     CGI::strong("Send to:"),
 		                  CGI::radio_group(-name=>'radio', 
@@ -629,39 +573,19 @@ sub print_form {
 							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
 					),
 				
-## Edit here to insert filtering 
-## be sure to fail GRACEFULLY!
-#
-#
-#						    CGI::input({type=>'submit',value=>'Sort by',name=>'action'}),, 
-#							CGI::radio_group(-name=>'sort_by', -values=>['id','alphabetical','section','recitation'],
-#								-labels=>{id=>'Login',alphabetical=>'Alph.',section => 'Sec.',recitation=>'Rec.'},
-#								-default=>defined($r->param("sort_by")) ? $r->param("sort_by") : 'id',
-#								-linebreak=>0
-#							),
-#
-#						CGI::br(),CGI::br(),
-#				CGI::popup_menu(-name=>'classList',
-#						   -values=>\@users,
-#						   -labels=>\%classlistLabels,
-#						   -size  => 10,
-#						   -multiple => 1,
-#						   -default=>$user
-#				),
-#			),	
 
 					
 
 
-#############################################################################################
-#	third column
-#############################################################################################	
+	#############################################################################################
+	#	third column
+	#############################################################################################	
 			CGI::td({align=>'left'},
 
 				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
-#				CGI::i('Press any action button to update display'),CGI::br(),
+				#CGI::i('Press any action button to update display'),CGI::br(),
 			#show available macros
 				CGI::popup_menu(
 						-name=>'dummyName',
@@ -683,40 +607,29 @@ sub print_form {
 
 	); # end Tr
 	print CGI::end_table();	
-#############################################################################################
-#	end upper table
-#############################################################################################	
+	#############################################################################################
+	#	end upper table
+	#############################################################################################	
  
-# show merge file
-#         print  "<pre>",(map {$_ =~s/\s/\./g;$_}     map {sprintf('%-8.8s',$_);}  0..8),"</pre>";
-# 		print  CGI::popup_menu(
-# 						-name=>'dummyName2',
-# 						-values=>\@merge_keys,
-# 						-labels=>$rh_merge_data,
-# 						-multiple=>1,
-# 						-size    =>2,
-# 						
-# 				), "\n",CGI::br();
-#       warn "merge keys ", join( " ",@merge_keys);
-#############################################################################################
-#	merge file fragment and message text area field
-#############################################################################################	
-		my @tmp2;
-        eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };}; # checked
-        if ($@ and $merge_file ne 'None') {
-			print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
-        } else {
-			print CGI::pre("",data_format(1..($#tmp2+1)),"<br>", data_format2(@tmp2));
-		}
-#create a textbox with the subject and a textarea with the message
-#print actual body of message
+	#############################################################################################
+	#	merge file fragment and message text area field
+	#############################################################################################	
+	my @tmp2;
+	eval{  @tmp2= @{$rh_merge_data->{ $db->getUser($preview_user)->student_id  }  };}; # checked
+	if ($@ and $merge_file ne 'None') {
+		print "No merge data for $preview_user in merge file: &lt;$merge_file&gt;",CGI::br();
+	} else {
+		print CGI::pre("",data_format(1..($#tmp2+1)),"<br>", data_format2(@tmp2));
+	}
+	#create a textbox with the subject and a textarea with the message
+	#print actual body of message
 
 	print  "\n", CGI::p( $self->{message}) if defined($self->{message});  
     print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -cols=>$columns, -override=>1));
 
-#############################################################################################
-#	action button table
-#############################################################################################	
+	#############################################################################################
+	#	action button table
+	#############################################################################################	
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( {},
 					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
@@ -728,7 +641,7 @@ sub print_form {
 				) 
 	);
 			   
-##############################################################################################################
+	##############################################################################################################
 
 	print CGI::end_form();	
 	return "";
