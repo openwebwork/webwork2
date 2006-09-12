@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/File/Classlist.pm,v 1.5 2006/07/12 04:38:24 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/File/Classlist.pm,v 1.6 2006/08/26 16:55:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,7 +50,7 @@ sub parse_classlist($) {
 		s/^\s*//;
 		s/\s*$//;
 		
-		my @fields = split /\s*,\s*/;
+		my @fields = split /\s*,\s*/, $_, -1; # -1 == don't delete empty trailing fields
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
 			warn "Skipped invalid line $. of classlist '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
