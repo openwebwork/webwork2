@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.31 2006/07/20 18:32:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.32 2006/09/01 17:28:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -401,7 +401,7 @@ our %pathTypes = (
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
-		display => '',
+		display => undef,
 	},
 	instructor_problem_editor_withset_withproblem => {
 		name    => '$problemID',
@@ -801,6 +801,18 @@ sub path {
 =head1 UTILITY FUNCTIONS
 
 =over
+
+=item all_modules()
+
+Return a list of the display modules associated with all possible path types.
+
+=cut
+
+sub all_modules {
+	my @modules = grep { defined } map { $pathTypes{$_}{display} } keys %pathTypes;
+	my %modules; @modules{@modules} = (); # remove duplicates
+	return keys %modules;
+}
 
 =item interpolate($string, %symbols)
 

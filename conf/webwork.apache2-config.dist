@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.2 2006/08/03 16:29:07 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.3 2006/09/01 17:41:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,8 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
 my $webwork_courses_url = $ce->{webwork_courses_url};
 my $webwork_courses_dir = $ce->{webwork_courses_dir};
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
+
+require Apache::WeBWorK; # force compilation of pretty much everything
 
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 

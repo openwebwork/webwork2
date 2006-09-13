@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.91 2006/08/05 02:53:45 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.92 2006/08/14 18:14:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -69,6 +69,20 @@ BEGIN {
 
 use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
+
+BEGIN {
+	# pre-compile all content generators
+	# Login and LoginProctor need to be handled separately, since they don't have paths
+	map { eval "require $_" }
+		WeBWorK::URLPath->all_modules,
+		LOGIN_MODULE,
+		PROCTOR_LOGIN_MODULE;
+	# other candidates for preloading:
+	# - DB Record, Schema, and Driver classes (esp. Driver::SQL as it loads DBI)
+	# - CourseManagement subclasses (ditto. sql_single.pm)
+	# - WeBWorK::PG::Local, which loads WeBWorK::PG::Translator
+	# - Authen subclasses
+}
 
 our %SeedCE;
 
