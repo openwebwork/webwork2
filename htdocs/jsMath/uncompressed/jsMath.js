@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.3b",  // change this if you edit the file, but don't edit this file
+  version: "3.3e",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -125,6 +125,7 @@ window.jsMath = {
                                  + 'z-index:103; width:auto;',
     '#jsMath_panel .disabled': 'color:#888888',
     '#jsMath_panel .infoLink': 'font-size:85%',
+    '#jsMath_panel td, tr, table': 'border:0px; padding:0px; margin:0px;',
     '#jsMath_button':          'position:fixed; bottom:1px; right:2px; background-color:white; '
                                  + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
                                  + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
@@ -213,6 +214,7 @@ window.jsMath = {
     if (jsMath.Setup.inited != 1) {
       if (!jsMath.Setup.inited) {jsMath.Setup.Body()}
       if (jsMath.Setup.inited != 1) {
+        if (jsMath.Setup.inited == -100) return;
         alert("It looks like jsMath failed to set up properly (error code "
                + jsMath.Setup.inited + ").  "
                + "I will try to keep going, but it could get ugly.");
@@ -327,7 +329,7 @@ jsMath.Global = {
      */
     GoGlobal: function (cookie) {
       var url = String(jsMath.window.location);
-      var c = (jsMath.window.location.protocol == 'mk:') ? '#' : '?';
+      var c = (jsMath.isCHMmode ? '#' : '?');
       if (cookie) {url = url.replace(/\?.*/,'') + '?' + cookie}
       jsMath.Controls.Reload(jsMath.root + "jsMath-global.html" + c +escape(url));
     },
@@ -349,11 +351,14 @@ jsMath.Global = {
      *  Try to register with a global.html window that contains us
      */
     Register: function () {
+      var parent = jsMath.window.parent;
+      if (!jsMath.isCHMode)
+        {jsMath.isCHMmode = (jsMath.window.location.protocol == 'mk:')}
       try {
-        if (window.location.protocol != 'mk:') this.Domain();
+        if (!jsMath.isCHMmode) this.Domain();
         if (parent.jsMath && parent.jsMath.isGlobal)
           {parent.jsMath.Register(jsMath.window)}
-      } catch (err) {}
+      } catch (err) {jsMath.noGoGlobal = 1}
     },
 
     /*
@@ -451,12 +456,14 @@ jsMath.Script = {
       throw "jsMath can't load the file '"+url+"'\n"
           + "Error status: "+this.request.status;
     }
+    if (!url.match(/\.js$/)) {return(this.request.responseText)}
     var tmpQueue = this.queue; this.queue = [];
 //    this.debug('xml Eval ['+tmpQueue.length+']');
     jsMath.window.eval(this.request.responseText);
 //    this.debug('xml Done ['+this.queue.length+' + '+tmpQueue.length+']');
     this.blocking = 0; this.queue = this.queue.concat(tmpQueue);
     this.Process();
+    return "";
   },
 
   /********************************************************************
@@ -764,19 +771,19 @@ jsMath.Setup = {
           var src = script[i].src;
           if (src && src.match('(^|/)jsMath.js$')) {
             jsMath.root = src.replace(/jsMath.js$/,'');
-            if (jsMath.root.charAt(0) == '/') {
-              jsMath.root = jsMath.document.location.protocol + '//'
-                          + jsMath.document.location.host + jsMath.root;
-            } else if (!jsMath.root.match(/^[a-z]+:/i)) {
-              src = new String(jsMath.document.location);
-              jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
-              while (jsMath.root.match('/[^/]*/\\.\\./')) {
-                jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\\.\\./'),'/');
-              }
-            }
             i = script.length;
           }
         }
+      }
+    }
+    if (jsMath.root.charAt(0) == '/') {
+      jsMath.root = jsMath.document.location.protocol + '//'
+                  + jsMath.document.location.host + jsMath.root;
+    } else if (!jsMath.root.match(/^[a-z]+:/i)) {
+      src = new String(jsMath.document.location);
+      jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
+      while (jsMath.root.match('/[^/]*/\\.\\./')) {
+        jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\\.\\./'),'/');
       }
     }
     jsMath.Img.root = jsMath.root + "fonts/";
@@ -941,7 +948,7 @@ jsMath.Setup = {
     jsMath.Script.Push(jsMath.Font,'Check');
     if (jsMath.Font.register.length)
       {jsMath.Script.Push(jsMath.Font,'LoadRegistered')}
-    
+
     this.inited = 1;
   },
   
@@ -1260,6 +1267,16 @@ jsMath.Browser = {
           jsMath.Setup.Script('jsMath-old-browsers.js');
         }
       }
+      //  Apparently, Konqueror wants the names without the hyphen
+      jsMath.Add(jsMath.styles,{
+        '.typeset .cmr10':    'font-family: jsMath-cmr10, jsMath cmr10, serif',
+        '.typeset .cmbx10':   'font-family: jsMath-cmbx10, jsMath cmbx10, jsMath-cmr10, jsMath cmr10',
+        '.typeset .cmti10':   'font-family: jsMath-cmti10, jsMath cmti10, jsMath-cmr10, jsMath cmr10',
+        '.typeset .cmmi10':   'font-family: jsMath-cmmi10, jsMath cmmi10',
+        '.typeset .cmsy10':   'font-family: jsMath-cmsy10, jsMath cmsy10',
+        '.typeset .cmex10':   'font-family: jsMath-cmex10, jsMath cmex10'
+      });
+      jsMath.Font.testFont = "jsMath-cmex10, jsMath cmex10";
     }
   }
 
@@ -1272,6 +1289,7 @@ jsMath.Browser = {
  */
 jsMath.Font = {
   
+  testFont: "jsMath-cmex10",
   fallback: "symbol", // the default fallback method
   register: [],       // list of fonts registered before jsMath.Init()
 
@@ -1321,7 +1339,7 @@ jsMath.Font = {
    *  If they are found, load the BaKoMa encoding information.
    */
   CheckTeX: function () {
-    var wh = jsMath.BBoxFor('<span style="font-family: jsMath-cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
+    var wh = jsMath.BBoxFor('<span style="font-family: '+jsMath.Font.testFont+', serif">'+jsMath.TeX.cmex10[1].c+'</span>');
     jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10',null,null,'jsMath-'));
     if (jsMath.nofonts && (navigator.platform != "MacPPC" ||
         jsMath.browser != 'Mozilla' || !jsMath.Browser.VersionAtLeast(1.5))) {
@@ -1588,7 +1606,7 @@ jsMath.Controls = {
       this.isLocalCookie = 1;
     }
     if (cookies.match(/jsMath=([^;]+)/)) {
-      var data = RegExp.$1.split(/,/);
+      var data = unescape(RegExp.$1).split(/,/);
       for (var i = 0; i < data.length; i++) {
         var x = data[i].match(/(.*):(.*)/);
         if (x[2].match(/^\d+$/)) {x[2] = 1*x[2]} // convert from string
@@ -1598,7 +1616,7 @@ jsMath.Controls = {
     }
   },
   localGetCookie: function () {
-    return unescape(jsMath.window.location.search.substr(1));
+    return jsMath.window.location.search.substr(1);
   },
   
   /*
@@ -1616,6 +1634,7 @@ jsMath.Controls = {
       if (warn == 2) {return 'jsMath='+escape(cookie)}
       this.localSetCookie(cookie,warn);
     } else {
+      cookie = escape(cookie);
       if (cookie == '') {warn = 0}
       if (this.cookiePath) {cookie += '; path='+this.cookiePath}
       if (this.cookieDomain) {cookie += '; domain='+this.cookieDomain}
@@ -1652,7 +1671,7 @@ jsMath.Controls = {
    */
   Reload: function (url) {
     if (!this.loaded) return;
-    this.loaded = 0;
+    this.loaded = 0; jsMath.Setup.inited = -100;
     jsMath.Global.ClearCache();
     if (url) {jsMath.window.location.replace(url)}
         else {jsMath.window.location.reload()}
@@ -2626,7 +2645,8 @@ jsMath.Add(jsMath.Box,{
     var c = jsMath.TeX[font][C]; if (!c.tclass) {c.tclass = font}
     if (c.img != null) {return this.TeXnonfallback(C,font,style,size)}
     if (c.h != null && c.a == null) {c.a = c.h-1.1*jsMath.TeX.x_height}
-    var box = this.Text(c.c,c.tclass,style,size,c.a || 0,c.d || 0);
+    var a = c.a; var d = c.d; // avoid Firefox warnings
+    var box = this.Text(c.c,c.tclass,style,size,a,d);
     var scale = jsMath.Typeset.TeX(style,size).scale;
     if (c.bh != null) {
       box.bh = c.bh*scale;
@@ -4677,6 +4697,7 @@ jsMath.Package(jsMath.Parser,{
     displaylines: ['Matrix',null,null,['c'],null,3,'D'],
     cr:         'HandleRow',
     '\\':       'HandleRow',
+    newline:    'HandleRow',
     noalign:    'HandleNoAlign',
     eqalignno:  ['Matrix',null,null,['r','l','r'],[5/8,3],3,'D'],
     leqalignno: ['Matrix',null,null,['r','l','r'],[5/8,3],3,'D'],
@@ -5858,7 +5879,7 @@ jsMath.Translate = {
    */
   ResetHidden: function (element) {
     element.innerHTML =
-      '<span style="visibility: hidden; position:absolute; top:0px;left:0px;"></span>'
+      '<span style="visibility:hidden; position:absolute; top:0px;left:0px; text-indent:0px"></span>'
         + jsMath.Browser.operaHiddenFix; // needed by Opera in tables
     element.className = '';
     jsMath.hidden = element.firstChild;
@@ -5996,7 +6017,7 @@ jsMath.Translate = {
     if (!obj.getElementsByTagName) return null;
     var math = obj.getElementsByTagName('div');
     for (var k = 0; k < math.length; k++) {
-      if (math[k].className.match(/(^| )math( |$)/)) {
+      if (math[k].className && math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
@@ -6004,7 +6025,7 @@ jsMath.Translate = {
     }
     math = obj.getElementsByTagName('span');
     for (var k = 0; k < math.length; k++) {
-      if (math[k].className.match(/(^| )math( |$)/)) {
+      if (math[k].className && math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
           else {element[element.length] = math[k]}
@@ -6105,4 +6126,5 @@ jsMath.Setup.Fonts();
 if (jsMath.document.body) {jsMath.Setup.Body()}
 
 }}
+
 
