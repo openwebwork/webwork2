@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils.pm,v 1.74 2006/04/17 21:17:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.75 2006/06/26 18:03:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -89,9 +89,26 @@ our @EXPORT_OK = qw(
 # Lowlevel thingies
 ################################################################################
 
-sub runtime_use($) {
-	croak "runtime_use: no module specified" unless $_[0];
-	eval "package Main; require $_[0]; import $_[0]";
+# This is like use, except it happens at runtime. You have to quote the module name and put a
+# comma after it if you're specifying an import list. Also, to specify an empty import list (as
+# opposed to no import list) use an empty arrayref instead of an empty array.
+# 
+#   use Xyzzy;               =>    runtime_use "Xyzzy";
+#   use Foo qw/pine elm/;    =>    runtime_use "Foo", qw/pine elm/;
+#   use Foo::Bar ();         =>    runtime_use "Foo::Bar", [];
+
+sub runtime_use($;@) {
+	my ($module, @import_list) = @_;
+	my $package = (caller)[0]; # import into caller's namespace
+	
+	my $import_string;
+	if (@import_list == 1 and ref $import_list[0] eq "ARRAY" and @{$import_list[0]} == 0) {
+		$import_string = "";
+	} else {
+		# \Q = quote metachars \E = end quoting
+		$import_string = "import $module " . join(",", map { qq|"\Q$_\E"| } @import_list);
+	}
+	eval "package $package; require $module; $import_string";
 	die $@ if $@;
 }
 
