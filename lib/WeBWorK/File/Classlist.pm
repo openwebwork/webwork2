@@ -104,9 +104,4 @@ sub write_classlist($@) {
 	$fh->close;
 }
 
-#sub import {
-#	warn "Import called!\n";
-#	shift->SUPER::import(@_);
-#}
-
 1;
