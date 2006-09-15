@@ -1,37 +1,37 @@
-# choose one
-
-# standard CGI -- will not work properly with apache2
-
-#use CGI qw(*ul *li escapeHTML);
-
-# there are 2 CGI substitutes for apache2:
-
-# below is a front end for CGIeasytags that imitates some of the 
-# shortcuts of CGI. 
-# It is probably not ready for prime time.
-# It only concatenates arguments if the first 
-# argument is a hash (possibly empty) of params.
-# This enforces uniformity, but it is also annoying
-# The error reporting however is fairly good.
-# It is shorter than CGI, but it may not be easy to maintain
-# if it seems desirable to use it then the code should be cleaned up
-# There are many places where code can be factored out to improve speed
-# increase reliability and readability
-
-#use WeBWorK::CGIeasytags;
-
-# below is a subclass of CGI that forces CGI to use the WeBWorK Request 
-# object when finding "sticky" parameters
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/lib/WeBWorK/CGIDeleteParams.pm,v 1.2 2006/07/21 00:36:37 sh002i Exp $
 # 
-# however: this does not solve the problem we have. bummer.
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
 
-#use WeBWorK::CGIParamShim qw(*ul *li);
+package WeBWorK::CGI;
 
-# this module deletes all parameters from any CGI object. the effect is to 
-# disable sticky parameters completely. this seems to solve the problems  
-# we've been having with parameter management under Apache2. see the tail 
-# end of the notes in CGIParamShim.pm for more details.
+use strict;
+use warnings;
 
-use WeBWorK::CGIDeleteParams qw(*ul *li);
+# from http://search.cpan.org/src/LDS/CGI.pm-3.20/cgi_docs.html#subclassing
+use vars qw/@ISA $VERSION/;
+require CGI;
+@ISA = 'CGI';
+$VERSION = "0.1";
+
+$CGI::DefaultClass = __PACKAGE__;
+$WeBWorK::CGI::AutoloadClass = 'CGI';
+
+sub new {
+	my $self = shift->SUPER::new(@_);
+	$self->delete_all;
+	return $self;
+}
 
 1;
