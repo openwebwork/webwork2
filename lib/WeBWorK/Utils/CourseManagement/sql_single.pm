@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.10 2006/05/18 19:32:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.11 2006/06/15 14:47:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,6 +42,8 @@ indicates success or failure.
 
 =cut
 
+# DBFIXME this whole process should be through an abstraction layer
+# DBFIXME (we shouldn't be generating server-specific SQL here!)
 sub addCourseHelper {
 	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	
@@ -184,6 +186,8 @@ deleteCourseHelper() to delete the old course database.
 
 =cut
 
+# DBFIXME this whole process should be through an abstraction layer
+# DBFIXME (we shouldn't be generating server-specific SQL here!)
 sub copyCourseDataHelper {
 	my ($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options) = @_;
 	debug("fromCourseID=$fromCourseID, fromCE=$fromCE toCourseID=$toCourseID toCE=$toCE dbLayoutName=$dbLayoutName\n");
@@ -302,6 +306,8 @@ deleteCourseHelper() to delete the old course database.
 
 =cut
 
+# DBFIXME this whole process should be through an abstraction layer
+# DBFIXME (we shouldn't be calling mysqldump here
 sub archiveCourseHelper {
 	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
 	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
@@ -384,6 +390,8 @@ sub archiveCourseHelper {
 	
 	return 1;
 }
+# DBFIXME this whole process should be through an abstraction layer
+# DBFIXME (we shouldn't be calling mysqldump here!)
 sub unarchiveCourseHelper {
 	my ($courseID, $ce,  $dbLayoutName, %options) = @_;
 	debug("courseID=$courseID, ce=$ce dbLayoutName=$dbLayoutName\n");
@@ -448,6 +456,8 @@ indicates success or failure.
 
 =cut
 
+# DBFIXME this whole process should be through an abstraction layer
+# DBFIXME (we shouldn't be generating server-specific SQL here!)
 sub deleteCourseHelper {
 	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	
