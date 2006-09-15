@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.51 2006/02/21 22:00:29 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Proctor.pm,v 1.1 2006/04/12 18:50:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,6 @@ sub get_credentials {
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	my $db = $r->db;
 	
 	# at least the user ID is available in request parameters
 	if (defined $r->param("proctor_user")) {
