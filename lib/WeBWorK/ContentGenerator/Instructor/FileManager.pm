@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.23 2006/09/09 01:40:30 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.24 2006/09/10 01:59:19 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -516,9 +516,9 @@ sub RefreshEdit {
 		CGI::td({align=>"center", nowrap=>1},
 			CGI::input({%button,value=>"Cancel"}),"&nbsp;",
 			CGI::input({%button,value=>"Revert"}),"&nbsp;",
+			CGI::input({%button,value=>"Save"}),,"&nbsp;",
 			CGI::input({%button,value=>"Save As:"}),
-			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),"&nbsp;",
-			CGI::input({%button,value=>"Save"}),
+			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
 		),
 	]);
 	print CGI::end_table();
