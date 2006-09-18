@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.75 2006/06/26 18:03:48 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.76 2006/09/15 17:53:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,9 @@ our @EXPORT_OK = qw(
 	textDateTime
 	intDateTime
 	timeToSec
+	before
+	after
+	between
 	writeLog
 	writeCourseLog
 	writeTimingLogEntry
@@ -645,6 +648,33 @@ sub timeToSec($) {
 	return 0;
     }
 }
+
+=item before($time, $now)
+
+True if $now is less than $time. If $now is not specified, the value of time()
+is used.
+
+=cut
+
+sub before  { return (@_==2) ? $_[1] < $_[0] : time < $_[0] }
+
+=item after($time, $now)
+
+True if $now is greater than $time. If $now is not specified, the value of time()
+is used.
+
+=cut
+
+sub after   { return (@_==2) ? $_[1] > $_[0] : time > $_[0] }
+
+=item between($start, $end, $now)
+
+True if $now is greater than or equal to $start and less than or equal to $end.
+If $now is not specified, the value of time() is used.
+
+=cut
+
+sub between { my $t = (@_==3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
 
 =back
 
