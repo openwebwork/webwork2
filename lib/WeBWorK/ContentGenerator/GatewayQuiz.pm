@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.27 2006/08/01 22:02:50 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.28 2006/08/03 15:20:18 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,8 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory);
+use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
+	ref2string makeTempDirectory before after between);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
@@ -201,13 +202,6 @@ sub can_checkAnswers {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
 	}
 }
-
-# Helper functions for calculating times
-# gateway change here: we allow an optional additional argument to use as the
-#   time to check rather than time()
-sub before  { return (@_==2) ? $_[1] < $_[0] : time < $_[0] }
-sub after   { return (@_==2) ? $_[1] > $_[0] : time > $_[0] }
-sub between { my $t = (@_==3) ? $_[2] : time; return $t >= $_[0] && $t <= $_[1] }
 
 ################################################################################
 # output utilities

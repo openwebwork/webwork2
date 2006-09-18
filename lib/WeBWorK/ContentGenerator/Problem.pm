@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.203 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.204 2006/08/22 18:37:22 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,7 +33,8 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers ref2string makeTempDirectory path_is_subdir sortByName);
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers
+	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
 use URI::Escape;
 
@@ -169,11 +170,6 @@ sub can_checkAnswers {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
 	}
 }
-
-# Helper functions for calculating times
-sub before  { return time <= $_[0] }
-sub after   { return time >= $_[0] }
-sub between { my $t = time; return $t > $_[0] && $t < $_[1] }
 
 # Reset the default in some cases
 sub set_showOldAnswers_default {
