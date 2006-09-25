@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.28 2006/08/03 15:20:18 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.29 2006/09/18 18:04:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -551,6 +551,10 @@ sub pre_header_initialize {
     my $timeInterval          = $tmplSet->time_interval();
     my $versionsPerInterval   = $tmplSet->versions_per_interval();
     my $timeLimit             = $tmplSet->version_time_limit();
+# what happens if someone didn't set one of these?  this shouldn't happen if
+# the database is feeding values back out properly, I think.
+    $timeInterval = 0 if ( ! defined($timeInterval) );
+    $versionsPerInterval = 0 if ( ! defined($versionsPerInterval) );
 
 # these both work because every problem in the set must have the same
 #    submission characteristics
