@@ -73,6 +73,9 @@ sub new($$$) {
 	);
 	die $DBI::errstr unless defined $self->{handle};
 	
+	# set trace level from debug param
+	$self->{handle}->trace($params->{debug}) if $params->{debug};
+	
 	return $self;
 }
 
