@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.6 2006/06/30 18:47:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.7 2006/07/15 14:23:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,6 +44,7 @@ BEGIN {
 
 # Apache2::Request's param method doesn't support setting parameters, so we need to provide the
 # behavior in this class if we're running under mod_perl2.
+# FIXME it would be more efficient to copy the whole param list into this class.
 BEGIN {
 	if (MP2) {
 		*param = sub {
