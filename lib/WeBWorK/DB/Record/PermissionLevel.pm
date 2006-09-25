@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/PermissionLevel.pm,v 1.7 2005/03/29 21:23:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/PermissionLevel.pm,v 1.8 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,22 +27,12 @@ table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	user_id
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		user_id    => { type=>"BLOB", key=>1 },
+		permission => { type=>"INT" },
 
-sub NONKEYFIELDS {qw(
-	permission
-)}
-
-sub FIELDS {qw(
-	user_id
-	permission
-)}
-
-sub SQL_TYPES {qw(
-	BLOB
-	INT
-)}
+	);
+}
 
 1;

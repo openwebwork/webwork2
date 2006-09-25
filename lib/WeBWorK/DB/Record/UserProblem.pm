@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.5 2005/03/29 21:23:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.6 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,55 +27,22 @@ table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	user_id
-	set_id
-	problem_id
-)}
-
-sub NONKEYFIELDS {qw(
-	source_file
-	value
-	max_attempts
-	problem_seed
-	status
-	attempted
-	last_answer
-	num_correct
-	num_incorrect
-)}
-
-sub FIELDS {qw(
-	user_id
-	set_id
-	problem_id
-	source_file
-	value
-	max_attempts
-	problem_seed
-	status
-	attempted
-	last_answer
-	num_correct
-	num_incorrect
-)}
-
-# Should value be float instead of text?
-
-sub SQL_TYPES {qw(
-	BLOB
-	BLOB
-	INT
-	TEXT
-	INT
-	INT
-	INT
-	TEXT
-	INT
-	TEXT
-	INT
-	INT
-)}
-
+BEGIN {
+	__PACKAGE__->_fields(
+		user_id       => { type=>"BLOB", key=>1 },
+		set_id        => { type=>"BLOB", key=>1 },
+		problem_id    => { type=>"INT", key=>1 },
+		source_file   => { type=>"TEXT" },
+		# FIXME i think value should be able to hold decimal values...
+		value         => { type=>"INT" },
+		max_attempts  => { type=>"INT" },
+		problem_seed  => { type=>"INT" },
+		status        => { type=>"TEXT" },
+		attempted     => { type=>"INT" },
+		last_answer   => { type=>"TEXT" },
+		num_correct   => { type=>"INT" },
+		num_incorrect => { type=>"INT" },
+	);
+}
 
 1;
