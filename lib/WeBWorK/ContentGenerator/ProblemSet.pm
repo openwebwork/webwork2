@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.84 2006/07/16 02:40:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.85 2006/07/17 21:51:12 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -133,6 +133,7 @@ sub siblings {
 	my $eUserID = $r->param("effectiveUser");
 
 # note that listUserSets does not list versioned sets
+	# DBFIXME do filtering in WHERE clause, use iterator for results :)
 	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
 
 	# do not show unpublished siblings unless user is allowed to view unpublished sets, and 
@@ -319,6 +320,7 @@ sub body {
 	
 	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
 	
+	# DBFIXME use iterator
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
 	
 	if (@problemNumbers) {

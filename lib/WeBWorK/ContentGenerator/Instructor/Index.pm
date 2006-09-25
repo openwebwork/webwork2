@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.55 2006/07/12 01:19:14 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.56 2006/07/14 21:22:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -295,6 +295,7 @@ sub body {
 	"Select user(s) and/or set(s) below and click the action button
 	of your choice.");
 	
+	# DBFIXME shouldn't need to use list of IDs, use iterator for results, marks edits in WHERE clause
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
 
@@ -323,6 +324,7 @@ sub body {
 	}
 ## End Mark's Edits
 
+	# DBFIXME shouldn't need to use list of IDs, use iterator for results
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	

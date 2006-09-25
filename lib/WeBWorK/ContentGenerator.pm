@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.177 2006/08/14 18:14:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.178 2006/08/22 19:00:04 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -548,6 +548,7 @@ sub links {
 	
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
+		# DBFIXME testing for existence by keyfields -- don't need fetch record
 		if (defined $setID and $db->getUserSet($eUserID, $setID)) {
 			if (defined $problemID and $db->getUserProblem($eUserID, $setID, $problemID)) {
 				# both set and poblem exist -- do nothing
@@ -559,10 +560,6 @@ sub links {
 			$problemID = undef;
 		}
 	}
-	
-	# old method -- get rid of this after a while
-	#$setID = "" if (defined $setID && !(grep /$setID/, $db->listUserSets($eUserID)));
-	#$problemID = "" if (defined $problemID && !(grep /$problemID/, $db->listUserProblems($eUserID, $setID)));
 	
 	# experimental subroutine for generating links, to clean up the rest of the
 	# code. ignore for now. (this is a closure over $self.)

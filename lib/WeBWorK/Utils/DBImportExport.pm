@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.7 2005/07/14 13:15:27 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.8 2006/01/25 23:13:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -142,6 +142,7 @@ Unimplemented.
 
 =cut
 
+# DBFIXME this whole module is a MESS! we need efficient dump/restore functionality in the abstraction layer!
 sub dbExport {
 	my (%options) = @_;
 	
@@ -374,6 +375,7 @@ duplicate records. If not set, duplicate records are skipped.
 
 =cut
 
+# DBFIXME this whole module is a MESS! we need efficient dump/restore functionality in the abstraction layer!
 sub dbImport {
 	my (%options) = @_;
 	

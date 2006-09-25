@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.25 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.26 2006/07/14 21:25:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -213,6 +213,7 @@ sub displayStudentStats {
 	
 # listUserSets() excludes versioned sets, which we probably want to 
 # list here, so we also get the versioned sets
+	# DBFIXME use iterator instead of setIDs
 	my @setIDs    = sort(( $db->listUserSets($studentName),
 			       $db->listUserSetVersions($studentName) ));
 
@@ -302,6 +303,7 @@ sub displayStudentStats {
 			# This is a fail safe mechanism that makes sure that
 			# the problem is marked as attempted if the status has
 			# been set or if the problem has been attempted
+			# DBFIXME this should happen in the database layer, not here!
 			if (!$attempted && ($status || $num_of_attempts)) {
 				$attempted = 1;
 				$problemRecord->attempted('1');

@@ -695,6 +695,7 @@ sub initialize {
 		#####################################################################
 
 		if ($forUsers) {
+			# DBFIXME use a WHERE clause, iterator
 			my @userRecords = $db->getUserSets(map { [$_, $setID] } @editForUser);
 			foreach my $record (@userRecords) {
 				foreach my $field ( @{ SET_FIELDS() } ) {
@@ -740,6 +741,7 @@ sub initialize {
 		# Save problem information
 		#####################################################################
 
+		# DBFIXME use a WHERE clause, iterator?
 		my @problemIDs = sort { $a <=> $b } $db->listGlobalProblems($setID);;
 		my @problemRecords = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
 		foreach my $problemRecord (@problemRecords) {
@@ -753,6 +755,7 @@ sub initialize {
 								
 				my @userIDs = @editForUser;
 				my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
+				# DBFIXME where clause? iterator?
 				my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
 				foreach my $record (@userProblemRecords) {
 
@@ -823,6 +826,7 @@ sub initialize {
 				}
 
 				if (keys %useful) {
+					# DBFIXME where clause, iterator
 					my @userIDs = $db->listProblemUsers($setID, $problemID);
 					my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
 					my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
@@ -846,6 +850,7 @@ sub initialize {
 		
 		# Mark the specified problems as correct for all users
 		foreach my $problemID ($r->param('markCorrect')) {
+			# DBFIXME where clause, iterator
 			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
 			my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
 			foreach my $record (@userProblemRecords) {
@@ -1030,6 +1035,7 @@ sub body {
 	my @unassignedUsers;
 	if (scalar @editForUser) {
 		foreach my $ID (@editForUser) {
+			# DBFIXME iterator
 			if ($db->getUserSet($ID, $setID)) {
 				unshift @assignedUsers, $ID;
 			} else {
@@ -1056,6 +1062,7 @@ sub body {
 	# if you're editing for one user, the problems shown should be his/hers
 	my $userToShow        = $forUsers ? $editForUser[0] : $userID;
 	
+	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
 	my $setUserCount     = $db->countSetUsers($setID);
@@ -1296,15 +1303,19 @@ sub body {
 
 	my @problemIDList = sort { $a <=> $b } $db->listGlobalProblems($setID);
 	
+	# DBFIXME use iterators instead of getting all at once
+	
 	# get global problem records for all problems in one go
 	my %GlobalProblems;
 	my @globalKeypartsRef = map { [$setID, $_] } @problemIDList;
+	# DBFIXME shouldn't need to get key list here
 	@GlobalProblems{@problemIDList} = $db->getGlobalProblems(@globalKeypartsRef);
 	
 	# if needed, get user problem records for all problems in one go
 	my (%UserProblems, %MergedProblems);
 	if ($forOneUser) {
 		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
+		# DBFIXME shouldn't need to get key list here
 		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
 		@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
 	}

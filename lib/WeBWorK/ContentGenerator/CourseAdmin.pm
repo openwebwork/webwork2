@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.56 2006/08/08 16:03:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.57 2006/08/14 18:21:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -650,6 +650,7 @@ sub do_add_course {
 	
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
+		# DBFIXME do the searching in the database, and grab user/passwd/perm. all at once with a join
 		foreach my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
 				$self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
@@ -753,6 +754,7 @@ sub do_add_course {
 			# add contact to admin course as student
 			# or if this contact and course already exist in a dropped status
 			# change the student's status to enrolled
+			# DBFIXME can use a REPLACE here?
 			if (my $oldUser = $db->getUser($composite_id) ) {
 				warn "Replacing old data for $composite_id  status: ". $oldUser->status;
 				$db->deleteUser($composite_id);
@@ -1086,6 +1088,7 @@ sub do_delete_course {
 	} else {
 	    # mark the contact person in the admin course as dropped.
 	    # find the contact person for the course by searching the admin classlist.
+	    # DBFIXME use a where clause, iterator
 	    my @contacts = grep /_$delete_courseID$/,  $db->listUsers;
 	    if (@contacts) {
 			die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
@@ -1727,6 +1730,7 @@ sub do_archive_course {
 			} else {
 				# mark the contact person in the admin course as dropped.
 				# find the contact person for the course by searching the admin classlist.
+				# DBFIXME where clause, iterator
 				my @contacts = grep /_$archive_courseID$/,  $db->listUsers;
 				if (@contacts) {
 					die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;

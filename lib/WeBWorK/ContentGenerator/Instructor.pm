@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.57 2006/08/31 20:17:27 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.58 2006/09/08 21:01:19 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -309,6 +309,7 @@ sub assignSetToAllUsers {
 	my @userIDs = $db->listUsers;
 
 	debug("$setID: getting user list");
+	# DBFIXME pre-filter with WHERE clause for status abbrevs. that allow assignment (tricky...)
 	my @userRecords = $db->getUsers(@userIDs);
 	debug("$setID: (done with that)");
 	
@@ -379,6 +380,7 @@ sub assignAllSetsToUser {
 	#my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	# FIXME: i don't think we need to do the above, since asignSetToUser fails
 	# silently if a UserSet already exists. instead we do this:
+	# DBFIXME shouldn't need to get list of set IDs
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	

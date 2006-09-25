@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.84 2006/08/01 22:02:07 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.85 2006/09/08 20:28:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -267,6 +267,7 @@ sub display_form {
 	my @Users;
 	if ($perm_multiuser) {
 		# if we're allowed to select multiple users, get all the users
+		# DBFIXME shouldn't need to pass list of users, should use iterator for results?
 		@Users = $db->getUsers($db->listUsers);
 	} else {
 		# otherwise, we get our own record only
@@ -274,6 +275,7 @@ sub display_form {
 	}
 	
 	# get sets for selection
+	# DBFIXME should use WHERE clause to filter on open_date and published, rather then getting all
 	my @globalSetIDs;
 	my @GlobalSets;
 	if ($perm_multiuser) {
@@ -759,6 +761,7 @@ sub write_set_tex {
 	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider};
 	
 	# get list of problem IDs
+	# DBFIXME use ORDER BY in database
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($MergedSet->user_id, $MergedSet->set_id);
 
 	# for versioned sets (gateways), we might have problems in a random
