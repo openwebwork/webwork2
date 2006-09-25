@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.5 2005/07/14 13:15:26 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.6 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -447,7 +447,7 @@ sub showHTML {
 	$string =~ s/&/\&amp;/g;
 	$string =~ s/</\&lt;/g;
 	$string =~ s/>/\&gt;/g;
-	$string =~ s/ /,/g;
+	$string =~ s/\0/,/g;
 	$string =~ s/ /&nbsp;/g;
 	return $string;
 }
