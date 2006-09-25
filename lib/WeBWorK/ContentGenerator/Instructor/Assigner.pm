@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.35 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.36 2006/07/12 01:19:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -95,6 +95,8 @@ sub body {
 	print CGI::p("Select one or more sets and one or more users below to assign/unassign"
 		. " each selected set to/from all selected users.");
 	
+	# DBFIXME shouldn't have to get the user id list
+	# DBFIXME mark's filtering should happen in a WHERE clause
 	my @userIDs = $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
 ## Mark's Edits for filtering
@@ -123,6 +125,7 @@ sub body {
 ## End Mark's Edits
 
 	
+	# DBFIXME shouldn't have to get the set ID list
 	my @globalSetIDs = $db->listGlobalSets;
 	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	

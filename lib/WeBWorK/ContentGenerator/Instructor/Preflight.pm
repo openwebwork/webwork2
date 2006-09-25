@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.6 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.7 2006/09/25 22:02:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -94,7 +94,9 @@ sub body {
 	# print form
 	#####################################################################
 	
+	# FIXME why are we filtering out users with non-word characters in their userIDs?
 	my @userIDs = grep /\w/, sort $db->listUsers();
+	# DBFIXME for these "get all" type queries, we shouldn't need the lists of setIDs
 	my @Users = $db->getUsers(@userIDs);
 	my %users = map { $_ => $db->getUser($_)->first_name } @userIDs;
 	my @setIDs = sort $db->listGlobalSets();

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.88 2006/07/16 02:40:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.89 2006/08/26 12:33:22 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -531,6 +531,7 @@ sub body {
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$self->{sourceFilePath}) : '';
 
+	# FIXME this isn't used at all! --sam
 	my @allSetNames = sort $db->listGlobalSets;
 	for (my $j=0; $j<scalar(@allSetNames); $j++) {
 		$allSetNames[$j] =~ s|^set||;
@@ -832,6 +833,7 @@ sub getFilePaths {
 		
 		($file_type eq 'set_header' or $file_type eq 'hardcopy_header') and do {
 			# first try getting the merged set for the effective user
+			# FIXME merged set is overwritten immediately with global value... WTF? --sam
 			my $set_record = $db->getMergedSet($effectiveUserName, $setName); # checked
 			# if that doesn't work (the set is not yet assigned), get the global record
 			$set_record = $db->getGlobalSet($setName); # checked

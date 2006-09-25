@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.29 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.30 2006/09/25 16:05:31 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,7 +62,7 @@ sub initialize {
  		my $setRecord  = $db->getGlobalSet($setName); # checked
 		die "global set $setName  not found." unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
-		$self->{setRecord}   = $setRecord;
+		$self->{setRecord}   = $setRecord; # FIXMEFIXME NEVER USED WHAT THE HELL!
  	}
 }
 
@@ -185,6 +185,7 @@ sub index {
 
 ## Edit to filter out students you aren't allowed to see
 #
+	# DBFIXME do filtering in database
 	my @myUsers;
 #	my @studentRecords = $db->getUsers;  #this is never used
 	my $user = $r->param("user");
@@ -210,6 +211,7 @@ sub index {
 	}
 	else {@myUsers = @studentList;}
 	
+	# DBFIXME sort in database
 	my @studentRecords = $db->getUsers(@myUsers);
 	my @sortedStudentRecords = sortRecords({fields=>[qw/last_name first_name user_id/]}, @studentRecords);
 		
@@ -273,6 +275,7 @@ sub displaySets {
 	my $secondary_sort_method_name = $r->param('secondary_sort'); 
 	my $ternary_sort_method_name = $r->param('ternary_sort');  
 
+	# DBFIXME duplicate call!
 	my @studentList      = $db->listUsers;
     
 # another versioning/gateway change.  in many cases we don't want or need
@@ -417,6 +420,7 @@ sub displaySets {
 		
 		debug("Begin obtaining problem records for user $student set $setName");
 		
+		# DBFIXME sort in database
 		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedUserProblems( $student, $sN );
 		debug("End obtaining problem records for user $student set $setName");
 		my $num_of_problems = @problemRecords;
@@ -649,6 +653,7 @@ sub displaySets {
 
 	# construct header
 	my $problem_header = '';
+	# DBFIXME sort in database
 	my @list_problems = sort {$a<=> $b } $db->listGlobalProblems($setName );
 	$problem_header = '<pre>'.join("", map {&threeSpaceFill($_)}  @list_problems  ).'</pre>';
 

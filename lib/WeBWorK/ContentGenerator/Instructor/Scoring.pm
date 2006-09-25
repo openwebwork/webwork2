@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.58 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.59 2006/07/14 21:22:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,12 +64,14 @@ sub initialize {
 		
 		# pre-fetch users
 		debug("pre-fetching users");
+		# DBFIXME shouldn't need ID list
 		my @Users = $db->getUsers($db->listUsers);
 		my %Users;
 		foreach my $User (@Users) {
 			next unless $User;
 			$Users{$User->user_id} = $User;
 		}
+		# DBFIXME use an ORDER BY clause in the database
 		my @sortedUserIDs = sort { 
 			lc($Users{$a}->last_name) cmp lc($Users{$b}->last_name) 
 				||
@@ -116,6 +118,7 @@ sub initialize {
 	# Obtaining list of sets:
 	my @setNames =  $db->listGlobalSets();
 	my @set_records = ();
+	# DBFIXME shouldn't need ID list
 	@set_records = $db->getGlobalSets( @setNames); 
 	
 	
@@ -269,6 +272,7 @@ sub scoreSet {
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 	
+	# DBFIXME these have already been fetched in ra_set_records
 	my $setRecord = $db->getGlobalSet($setID); #checked
 	die "global set $setID not found. " unless $setRecord;
 	#my %users;

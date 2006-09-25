@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/FilterRecords.pm,v 1.3 2004/09/10 22:15:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/FilterRecords.pm,v 1.4 2006/01/25 23:13:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -152,6 +152,7 @@ records are found to have identical first fields, and so on.
 
 =cut
 
+# DBFIXME filtering should happen in the database (WHERE clauses)
 sub filterRecords {
 	my ($options, @Records) = @_;
 	

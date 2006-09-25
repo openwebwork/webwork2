@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.39 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.40 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -366,6 +366,7 @@ sub getFeedbackRecipients {
 	my @recipients;
 	
 	# send to all users with permission to receive_feedback and an email address
+	# DBFIXME iterator?
 	foreach my $rcptName ($db->listUsers()) {
 		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
 			my $rcpt = $db->getUser($rcptName); # checked

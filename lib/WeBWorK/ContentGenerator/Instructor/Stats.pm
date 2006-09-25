@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.64 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.65 2006/07/14 21:22:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -179,6 +179,7 @@ sub index {
 	my $db            = $r->db;
 	my $courseName    = $urlpath->arg("courseID");
 	
+	# DBFIXME sort in database
 	my @studentList   = sort $db->listUsers;
 	my @setList       = sort  $db->listGlobalSets;
 	
@@ -270,6 +271,7 @@ sub displaySets {
 	
 	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
 	my $sort_method_name = $r->param('sort');  
+	# DBFIXME duplicate call
 	my @studentList      = $db->listUsers;
     
    	my @index_list                           = ();  # list of all student index 
@@ -299,6 +301,7 @@ sub displaySets {
 	my $max_num_problems  = 0;
 	# get user records
 	debug("Begin obtaining problem records for  set $setName");
+	# DBFIXME use an iterator
 	my @userRecords  = $db->getUsers(@studentList);
 	debug("End obtaining user records for set $setName");
     debug("begin main loop");
@@ -332,6 +335,7 @@ sub displaySets {
 		
 		debug("Begin obtaining problem records for user $student set $setName");
 		
+		# DBFIXME use an iterator
 		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
 		debug("End obtaining problem records for user $student set $setName");
 		my $num_of_problems = @problemRecords;

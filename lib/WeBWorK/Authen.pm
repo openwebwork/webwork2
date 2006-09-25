@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.58 2006/07/26 22:09:19 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.59 2006/09/11 20:22:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -237,6 +237,7 @@ sub get_credentials {
 	# practice user and create a session for it.
 	if ($r->param("login_practice_user")) {
 		my $practiceUserPrefix = $ce->{practiceUserPrefix};
+		# DBFIX search should happen in database
 		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
@@ -566,6 +567,7 @@ sub create_session {
 	}
 	
 	my $Key = $db->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
+	# DBFIXME this should be a REPLACE
 	eval { $db->deleteKey($userID) };
 	$db->addKey($Key);
 	return $newKey;

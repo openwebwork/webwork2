@@ -58,6 +58,7 @@ sub initialize {
 	# the forms are not currently set up to simply transmit changes
 	
 	#Get the list of sets and the global set records
+	# DBFIXME shouldn't need set IDs to get records
 	my @setIDs = $db->listGlobalSets;
 	my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
 	
@@ -285,6 +286,8 @@ sub body {
 	);
 	my $userDetailUrl = $self->systemLink($userDetailPage,authen=>0);
 
+	# DBFIXME all we need here is set IDs
+	# DBFIXME do sorting in DB
 	my %GlobalSetRecords = map { $_->set_id => $_ } $db->getGlobalSets($db->listGlobalSets());
 	my @UserSetRefs = map { [$editForUserID, $_] } sortByName(undef, @UserSetIDs);
 	my %UserSetRecords = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
@@ -325,6 +328,7 @@ sub body {
 			"Dates",
 		])
 	),"\n";
+	# DBFIXME already have this data
 	foreach my $setID (sortByName(undef, $db->listGlobalSets())) {
 		my $GlobalSetRecord = $GlobalSetRecords{$setID};
 		my $UserSetRecord = $UserSetRecords{$setID};

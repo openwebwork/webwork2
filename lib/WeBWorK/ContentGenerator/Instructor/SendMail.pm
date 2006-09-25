@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.51 2006/09/06 18:18:30 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.52 2006/09/12 17:07:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -91,6 +91,8 @@ sub initialize {
 	#	gather database data
 	#############################################################################################	
 	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
+	# DBFIXME shouldn't need ID list
+	# DBFIXME do filtering in database
 	my @users =  $db->listUsers;
 	my @Users = $db->getUsers(@users);
 	# filter out users who don't get included in email (fixes bug #938)
@@ -98,6 +100,7 @@ sub initialize {
 	my @user_records = ();
 
 	## Mark's code to prefilter userlist
+	# DBFIXME more filtering that we can do in the database
 
 	
 	my (@viewable_sections,@viewable_recitations);

@@ -304,6 +304,7 @@ sub body {
 	########## set initial values for state fields
 	
 	my @allSetIDs = $db->listGlobalSets;
+	# DBFIXME count would suffice here :P
 	my @users = $db->listUsers;
 	$self->{allSetIDs} = \@allSetIDs;
 	$self->{totalUsers} = scalar @users;
@@ -341,6 +342,7 @@ sub body {
 	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
 	
+	# DBFIXME shouldn't need set ID list
 	my @allSets = $db->getGlobalSets(@allSetIDs);
 
 	my (%open_dates, %due_dates, %answer_dates);
@@ -394,6 +396,7 @@ sub body {
 	
 	########## get required users
 		
+	# DBFIXME use an iterator
 	my @Sets = grep { defined $_ } @visibleSetIDs ? $db->getGlobalSets(@visibleSetIDs) : ();
 	
 	# presort users
@@ -630,10 +633,12 @@ sub filter_handler {
 		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
 		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
 	} elsif ($scope eq "published") {
+		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @publishedSetIDs = map { $_->published ? $_->set_id : ""} @setRecords;		
 		$self->{visibleSetIDs} = \@publishedSetIDs;
 	} elsif ($scope eq "unpublished") {
+		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @unpublishedSetIDs = map { (not $_->published) ? $_->set_id : ""} @setRecords;
 		$self->{visibleSetIDs} = \@unpublishedSetIDs;
@@ -804,6 +809,7 @@ sub publish_handler {
 		$result = "All selected sets $verb all students.";
 	}
 	
+	# can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	
 	map { $_->published("$value") if $_; $db->putGlobalSet($_); } @sets;
@@ -1298,6 +1304,7 @@ sub duplicate_handler {
 	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless defined($oldSetID) and $oldSetID =~ /\S/;	
 	my $newSetID = $actionParams->{"action.duplicate.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set name specified!") unless $newSetID =~ /\S/;		
+	# DBFIXME checking for existence -- don't need to fetch
 	return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: set $newSetID already exists!") if defined $db->getGlobalSet($newSetID);
 
 	my $newSet = $db->getGlobalSet($oldSetID);
@@ -1388,6 +1395,7 @@ sub importSetsFromDef {
 	#	but if the error message is ever changed the code here might be broken
 	#	then again, one call to getGlobalSets and skipping unnecessary calls to addGlobalSet
 	#	could be faster than no call to getGlobalSets and lots of unnecessary calls to addGlobalSet
+	# DBFIXME all we need here is set IDs, right? why fetch entire records?
 	my %allSets = map { $_->set_id => 1 if $_} $db->getGlobalSets(@allSetIDs); # checked
 
 	my (@added, @skipped);
@@ -1652,6 +1660,7 @@ SET:	foreach my $set (keys %filenames) {
 
 		my $problemList  = '';
 		foreach my $prob (sort {$a <=> $b} @problemList) {
+			# DBFIXME use an iterator?
 			my $problemRecord = $db->getGlobalProblem($set, $prob); # checked
 			unless (defined $problemRecord) {
 				push @skipped, $set;
@@ -1788,6 +1797,7 @@ sub recordEditHTML {
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
+	# DBFIXME count would suffice
 	my $problems = $db->listGlobalProblems($Set->set_id);
 	
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));

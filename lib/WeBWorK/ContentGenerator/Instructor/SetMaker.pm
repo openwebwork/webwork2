@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.73 2006/07/15 16:31:16 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.74 2006/09/06 16:25:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -253,6 +253,7 @@ sub add_selected {
 	my @past_problems = @{$self->{past_problems}};
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
+	# DBFIXME count would work just as well
 	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $addedcount=0;
 
@@ -1045,6 +1046,7 @@ sub pre_header_initialize {
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
 			$self->addbadmessage("You need to select a set from this course to view.");
 		} else {
+			# DBFIXME don't use ID list, use an iterator
 			my @problemList = $db->listGlobalProblems($set_to_display);
 			my $problem;
 			@pg_files=();
@@ -1113,6 +1115,7 @@ sub pre_header_initialize {
 	            $self->addbadmessage("The set name $newSetName is already in use.  
 	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
+				# DBFIXME use $db->newGlobalSet
 				$newSetRecord = $db->{set}->{record}->new();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("");
@@ -1222,6 +1225,7 @@ sub pre_header_initialize {
  
 	############# List of local sets
 
+	# DBFIXME sorting in database, please!
 	my @all_db_sets = $db->listGlobalSets;
 	@all_db_sets = sortByName(undef, @all_db_sets);
 
@@ -1297,6 +1301,11 @@ sub body {
 	my %isInSet;
 	my $setName = $r->param("local_sets");
 	if ($setName) {
+		# DBFIXME where clause, iterator
+		# DBFIXME maybe instead of hashing here, query when checking source files?
+		# DBFIXME definitely don't need to be making full record objects
+		# DBFIXME SELECT source_file FROM whatever_problem WHERE set_id=? GROUP BY source_file ORDER BY NULL;
+		# DBFIXME (and stick result directly into hash)
 		foreach my $problem ($db->listGlobalProblems($setName)) {
 			my $problemRecord = $db->getGlobalProblem($setName, $problem);
 			$isInSet{$problemRecord->source_file} = 1;

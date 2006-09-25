@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.21 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm,v 1.22 2006/07/08 14:07:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -116,6 +116,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to assign homework sets."))
 		unless $authz->hasPermissions($user, "assign_problem_sets");	
 	
+	# DBFIXME duplicate call
 	my @users = $db->listUsers;
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 

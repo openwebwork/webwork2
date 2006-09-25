@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.85 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.86 2006/08/26 12:56:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -289,9 +289,11 @@ sub body {
 	########## set initial values for state fields
 	
 	my @allUserIDs = $db->listUsers;
+	# DBFIXME count would work
 	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
 	$self->{allUserIDs} = \@allUserIDs;
 	
+	# DBFIXME filter in the database
 	if (defined $r->param("visable_user_string")) {
 		my @visableUserIDs = split /:/, $r->param("visable_user_string");
 		$self->{visibleUserIDs} = [ @visableUserIDs ];
@@ -337,6 +339,7 @@ sub body {
 		$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
 	}
 	
+	# DBFIXME use an iterator
 	my @allUsers = $db->getUsers(@allUserIDs);
 	my (%sections, %recitations);
 	foreach my $User (@allUsers) {
@@ -377,6 +380,7 @@ sub body {
 	########## retrieve possibly changed values for member fields
 	
 	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
+	# DBFIXME instead of re-listing, why not add added users to $self->{allUserIDs} ?
 	@allUserIDs = $db->listUsers; # recompute value in case some were added
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
@@ -406,6 +410,7 @@ sub body {
 	my $ternarySortSub = $sortSubs{$ternarySortField};
 	
 	# add permission level to user record hash so we can sort it if necessary
+	# DBFIXME this calls for a join... (i'd like the User record to contain permission level info)
 	if ($primarySortField eq 'permission' or $secondarySortField eq 'permission' or $ternarySortField eq 'permission') {
 		foreach my $User (@Users) {
 			next unless $User;
@@ -440,8 +445,10 @@ sub body {
 	
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
+		# DBFIX we maybe already have the permission level from above (for use in sorting)
 		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
 		
+		# DBFIXME this should go in the DB layer
 		unless ($PermissionLevel) {
 			# uh oh! no permission level record found!
 			warn "added missing permission level for user ", $User->user_id, "\n";
@@ -651,6 +658,7 @@ sub filter_form {
 
 # this action handler modifies the "visibleUserIDs" field based on the contents
 # of the "action.filter.scope" parameter and the "selected_users" 
+# DBFIXME filtering should happen in the database!
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	
@@ -1330,6 +1338,7 @@ sub importUsersFromCSV {
 			$Password->password($record{password});
 		}
 		
+		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
 			$db->putPermissionLevel($PermissionLevel);
@@ -1357,6 +1366,7 @@ sub exportUsersToCSV {
 	
 	my @records;
 	
+	# DBFIXME use an iterator here
 	my @Users = $db->getUsers(@userIDsToExport);
 	my @Passwords = $db->getPasswords(@userIDsToExport);
 	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
@@ -1529,6 +1539,7 @@ sub recordEditHTML {
 		# column not there
 	} else {
 		# check to see if a user is currently logged in
+		# DBFIXME use a WHERE clause
 		my $Key = $db->getKey($User->user_id);
 		my $is_active = ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
 		push @tableCells, $is_active ? CGI::b("active") : CGI::em("inactive");

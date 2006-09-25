@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.24 2006/07/08 14:07:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetsAssignedToUser.pm,v 1.25 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,6 +61,7 @@ sub initialize {
 		}
 	} elsif (defined $r->param('assignToSelected')) {
 		# get list of all sets and a hash for checking selectedness
+		# DBFIXME shouldn't need to get set list, should use iterator
 		my @setIDs = $db->listGlobalSets;
 		my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
 		my %selectedSets = map { $_ => 1 } $r->param("selected");
@@ -136,6 +137,7 @@ sub body {
 		unless $authz->hasPermissions($user, "assign_problem_sets");
 	
 	# get list of sets
+	# DBFIXME this is a duplicate call! :P :P :P
 	my @setIDs = $db->listGlobalSets;
 	my @Sets = $db->getGlobalSets(@setIDs);
 	
@@ -182,6 +184,7 @@ sub body {
 		my $setID = $Set->set_id;
 		
 		# this is true if $Set is assigned to the selected user
+		# DBFIXME testing for existence -- don't need to fetch record
 		my $UserSet = $db->getUserSet($userID, $setID); # checked
 		my $currentlyAssigned = defined $UserSet;
 		

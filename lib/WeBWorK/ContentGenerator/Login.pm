@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Login.pm,v 1.42 2006/07/12 01:23:54 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.43 2006/07/14 21:25:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -182,6 +182,7 @@ sub body {
 	print CGI::endform();
 	
 	# figure out if there are any valid practice users
+	# DBFIXME do this with a WHERE clause
 	my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 	my @GuestUsers = $db->getUsers(@guestUserIDs);
 	my @allowedGuestUsers;

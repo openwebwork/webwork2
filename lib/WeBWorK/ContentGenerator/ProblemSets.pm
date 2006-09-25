@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.79 2006/07/14 21:25:11 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.80 2006/07/27 20:58:18 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -133,6 +133,7 @@ sub body {
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 	
 # we have to get sets and versioned sets separately
+	# DBFIXME don't get ID lists, use WHERE clauses and iterators
 	my @setIDs = $db->listUserSets($effectiveUser);
 	my @vSetIDs = $db->listUserSetVersions($effectiveUser);
 	
@@ -147,6 +148,7 @@ sub body {
 	# Database fix (in case of undefined published values)
 	# this may take some extra time the first time but should NEVER need to be run twice
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
+	# DBFIXME this should be in the database layer (along with other "fixes" of its ilk)
 	foreach my $set (@sets) {
 		# make sure published is set to 0 or 1
 		if ( $set and $set->published ne "0" and $set->published ne "1") {
@@ -420,6 +422,7 @@ sub setListRow {
 			$startTime = localtime( $set->version_creation_time() );
 
 			# find score
+			# DBFIXME we can do this math in the database, i think
 			my @problemRecords = $db->getAllUserProblems( $set->user_id(),
 							      $set->set_id() );
 			my $possible = 0;
