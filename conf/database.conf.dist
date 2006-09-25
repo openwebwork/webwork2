@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/database.conf.dist,v 1.23 2006/05/25 04:01:44 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.24 2006/05/25 12:06:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -50,20 +50,17 @@ single database for all courses. This is accomplised by prefixing each table
 name with the name of the course. The names and passwords of these accounts are
 given as parameters to each table in the layout.
 
- usernameRO     the name of the read-only account
- usernameRW     the name of the read-write account
- passwordRO     the password for the read-only account
- passwordRW     the password for the read-write account
+ username     the username to use when connecting to the database
+ password     the password to use when connecting to the database
 
-Be default, the name of the read-only account is "webworkRead", and the name of
-the read-write account is "webworkWrite". There are no passwords by default. 
-It is not recommended that you use only passwords to secure database access.
-Most RDBMSs allow IP-based authorization as well. As the system administrator,
-IT IS YOUR RESPONSIBILITY TO SECURE DATABASE ACCESS.
+Be default, username is "webworkRead" and password is "". It is not recommended
+that you use only a non-empty password to secure database access. Most RDBMSs
+allow IP-based authorization as well. As the system administrator, IT IS YOUR
+RESPONSIBILITY TO SECURE DATABASE ACCESS.
 
-Don't confuse the accounts above with the accounts of the users of a course.
-These are system-wide accounts which allow WeBWorK to talk to the database
-server.
+Don't confuse the account information above with the accounts of the users of a
+course. This is a system-wide account which allow WeBWorK to talk to the
+database server.
 
 Other parameters that can be given are as follows:
 
@@ -78,11 +75,9 @@ Other parameters that can be given are as follows:
 
 # params common to all tables
 my %sqlParams = (
-	usernameRO => $database_username,
-	passwordRO => $database_password,
-	usernameRW => $database_username,
-	passwordRW => $database_password,
-	debug      => $database_debug,
+	username => $database_username,
+	password => $database_password,
+	debug    => $database_debug,
 );
 
 $dbLayouts{sql_single} = {
@@ -171,10 +166,8 @@ a Moodle database for user information and authentication.
 # params used by moodle-backed tables
 my %moodleParams = (
 	non_native  => 1,
-	usernameRO  => $moodle_username,
-	passwordRO  => $moodle_password,
-	usernameRW  => $moodle_username,
-	passwordRW  => $moodle_password,
+	username    => $moodle_username,
+	password    => $moodle_password,
 	debug       => $database_debug,
 	tablePrefix => $moodle_table_prefix,
 	courseName  => $courseName,
