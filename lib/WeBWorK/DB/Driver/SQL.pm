@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.9 2004/09/29 22:48:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.10 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,13 +40,13 @@ This driver pays attention to the following items in the C<params> entry.
 
 =over
 
-=item usernameRO, passwordRO
+=item username
 
-Username and password for read-only access to SQL database.
+Username for access to SQL database.
 
-=item usernameRW, passwordRW
+=item password
 
-Username and password for read-write access to SQL database.
+Password for access to SQL database.
 
 =back
 
@@ -59,32 +59,19 @@ Username and password for read-write access to SQL database.
 sub new($$$) {
 	my ($proto, $source, $params) = @_;
 	
-	my $handleRO = DBI->connect_cached(
-		$source,
-		$params->{usernameRO},
-		$params->{passwordRO},
-		{
-			RaiseError => 1,
-		},
-	);
-	die $DBI::errstr unless defined $handleRO;
-	
-	my $handleRW = DBI->connect_cached(
-		$source,
-		$params->{usernameRW},
-		$params->{passwordRW},
-		{
-			RaiseError => 1,
-		},
-	);
-	die $DBI::errstr unless defined $handleRW;
-	
 	my $self = $proto->SUPER::new($source, $params);
 	
-	# add DBI-specific data
-	$self->{handle}   = undef;
-	$self->{handleRO} = $handleRO;
-	$self->{handleRW} = $handleRW;
+	# add handle
+	$self->{handle} = DBI->connect_cached(
+		$source,
+		$params->{username},
+		$params->{password},
+		{
+			RaiseError => 1,
+			
+		},
+	);
+	die $DBI::errstr unless defined $self->{handle};
 	
 	return $self;
 }
@@ -93,23 +80,13 @@ sub new($$$) {
 # common methods
 ################################################################################
 
-sub connect($$) {
-	my ($self, $mode) = @_;
-	
-	if ($mode eq "ro") {
-		$self->{handle} = $self->{handleRO};
-	} else {
-		$self->{handle} = $self->{handleRW};
-	}
-	
+# deprecated, no-op
+sub connect {
 	return 1;
 }
 
-sub disconnect($) {
-	my $self = shift;
-	
-	undef $self->{handle};
-	
+# deprecated, no-op
+sub disconnect {
 	return 1;
 }
 
@@ -117,7 +94,7 @@ sub disconnect($) {
 # dbi-style methods
 ################################################################################
 
-sub dbi($) {
+sub dbi {
 	my ($self) = @_;
 	return $self->{handle};
 }

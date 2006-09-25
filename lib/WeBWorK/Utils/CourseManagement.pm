@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.32 2006/06/15 14:47:49 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.33 2006/08/08 16:09:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -745,8 +745,8 @@ sub dbLayoutSQLSources {
 		}
 		
 		my $source = $table{source};
-		my $username = $params{usernameRW};
-		my $password = $params{passwordRW};
+		my $username = $params{username};
+		my $password = $params{password};
 		
 		push @{$sources{$source}{tables}}, $table;
 		
