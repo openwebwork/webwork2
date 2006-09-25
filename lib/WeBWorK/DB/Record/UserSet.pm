@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserSet.pm,v 1.10 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserSet.pm,v 1.11 2006/07/27 15:49:23 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,70 +26,30 @@ WeBWorK::DB::Record::UserSet - represent a record from the set_user table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	user_id
-	set_id
-)}
-
-sub NONKEYFIELDS {qw(
-	psvn
-	set_header
-	hardcopy_header
-	open_date
-	due_date
-	answer_date
-	published
-        assignment_type
-	attempts_per_version
-	time_interval
-        versions_per_interval
-        version_time_limit
-        version_creation_time
-        problem_randorder
-        version_last_attempt_time
-	problems_per_page
-)}
-
-sub FIELDS {qw(
-	user_id
-	set_id
-	psvn
-	set_header
-	hardcopy_header
-	open_date
-	due_date
-	answer_date
-	published
-        assignment_type
-	attempts_per_version
-	time_interval
-        versions_per_interval
-        version_time_limit
-        version_creation_time
-        problem_randorder
-        version_last_attempt_time
-	problems_per_page
-)}
-
-sub SQL_TYPES {(
-	"BLOB",
-	"BLOB",
-	"INT NOT NULL PRIMARY KEY AUTO_INCREMENT",
-	"TEXT",
-	"TEXT",
-	"BIGINT",
-	"BIGINT",
-	"BIGINT",
-	"INT",
-	"TEXT",
-        "INT",
-        "INT",
-        "INT",
-        "INT",
-        "BIGINT",
-        "INT",
-        "BIGINT",
-        "INT",
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		user_id                   => { type=>"BLOB", key=>1 },
+		set_id                    => { type=>"BLOB", key=>1 },
+		# FIXME "NOT NULL PRIMARY KEY AUTO_INCREMENT" isn't part of the type
+		# FIXME should be specified symbolically (maybe serial=>1?)
+		# FIXME doesn't need to be the primary key -- we never look things up based on psvn
+		psvn                      => { type=>"INT NOT NULL PRIMARY KEY AUTO_INCREMENT" },
+		set_header                => { type=>"TEXT" },
+		hardcopy_header           => { type=>"TEXT" },
+		open_date                 => { type=>"BIGINT" },
+		due_date                  => { type=>"BIGINT" },
+		answer_date               => { type=>"BIGINT" },
+		published                 => { type=>"INT" },
+		assignment_type           => { type=>"TEXT" },
+		attempts_per_version      => { type=>"INT" },
+		time_interval             => { type=>"INT" },
+		versions_per_interval     => { type=>"INT" },
+		version_time_limit        => { type=>"INT" },
+		version_creation_time     => { type=>"BIGINT" },
+		problem_randorder         => { type=>"INT" },
+		version_last_attempt_time => { type=>"BIGINT" },
+		problems_per_page         => { type=>"INT" },
+	);
+}
 
 1;

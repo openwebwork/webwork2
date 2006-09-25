@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.11 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.12 2006/07/27 15:49:14 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,68 +26,25 @@ WeBWorK::DB::Record::Set - represent a record from the set table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	set_id
-)}
-
-# added fields here for gateway testing:
-#    assignment_type, attempts_per_version, time_interval, 
-#    versions_per_interval, version_time_limit, version_creation_time,
-#    version_last_attempt_time, problem_randorder, problems_per_page
-sub NONKEYFIELDS {qw(
-	set_header
-	hardcopy_header
-	open_date
-	due_date
-	answer_date
-	published
-        assignment_type
-	attempts_per_version
-	time_interval
-        versions_per_interval
-        version_time_limit
-        version_creation_time
-        problem_randorder
-        version_last_attempt_time
-	problems_per_page
-)}
-
-sub FIELDS {qw(
-	set_id
-	set_header
-	hardcopy_header
-	open_date
-	due_date
-	answer_date
-	published
-        assignment_type
-	attempts_per_version
-	time_interval
-        versions_per_interval
-        version_time_limit
-        version_creation_time
-        problem_randorder
-        version_last_attempt_time
-	problems_per_page
-)}
-
-sub SQL_TYPES {qw(
-	BLOB
-	TEXT
-	TEXT
-	BIGINT
-	BIGINT
-	BIGINT
-	INT
-	TEXT
-        INT
-        INT
-        INT
-        INT
-        BIGINT
-        INT
-        BIGINT
-        INT
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		set_id                    => { type=>"BLOB", key=>1 },
+		set_header                => { type=>"TEXT" },
+		hardcopy_header           => { type=>"TEXT" },
+		open_date                 => { type=>"BIGINT" },
+		due_date                  => { type=>"BIGINT" },
+		answer_date               => { type=>"BIGINT" },
+		published                 => { type=>"INT" },
+		assignment_type           => { type=>"TEXT" },
+		attempts_per_version      => { type=>"INT" },
+		time_interval             => { type=>"INT" },
+		versions_per_interval     => { type=>"INT" },
+		version_time_limit        => { type=>"INT" },
+		version_creation_time     => { type=>"BIGINT" },
+		problem_randorder         => { type=>"INT" },
+		version_last_attempt_time => { type=>"BIGINT" },
+		problems_per_page         => { type=>"INT" },
+	);
+}
 
 1;

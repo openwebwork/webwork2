@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Password.pm,v 1.6 2005/06/05 20:25:27 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Password.pm,v 1.7 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,22 +26,11 @@ WeBWorK::DB::Record::Password - represent a record from the password table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	user_id
-)}
-
-sub NONKEYFIELDS {qw(
-	password
-)}
-
-sub FIELDS {qw(
-	user_id
-	password
-)}
-
-sub SQL_TYPES {qw(
-	BLOB
-	TEXT
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		user_id  => { type=>"BLOB", key=>1 },
+		password => { type=>"TEXT" },
+	);
+}
 
 1;

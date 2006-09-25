@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.8 2004/10/10 20:33:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.9 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,8 +40,6 @@ $Prototype, which must be a subclass of WeBWorK::DB::Record.
 Create a new record object, set initial values from the hash %fields, which
 must contain keys equal to the field names of the record class.
 
-=back
-
 =cut
 
 sub new {
@@ -69,43 +67,83 @@ sub new {
 	return $self;
 }
 
-sub can {
-	my ($self, $function) = @_;
-	return grep { $_ eq $function } $self->FIELDS;
-}
+=back
 
-sub AUTOLOAD {
-	my ($self, @args) = @_;
-	our $AUTOLOAD;
-	my ($package, $function) = $AUTOLOAD =~ m/^(.*)::(.*)$/;
-	return if $function eq "DESTROY";
-	if (grep { $_ eq $function } $self->FIELDS) {
-		$self->{$function} = $args[0] if @args;
-		return $self->{$function};
-	} else {
-		croak "Undefined subroutine $package\::$function called";
-	}
-}
+=head1 BASE METHODS
+
+=over
+
+=item idsToString
+
+Returns a string representation of the object's keyfields.
+
+=cut
 
 sub idsToString {
 	my $self = shift;
-	return join " ", map { "$_=" . (defined $self->$_() ? $self->$_() : "") } $self->KEYFIELDS;
+	return join " ", map { "$_=" . (defined $self->$_ ? "'".$self->$_."'" : "undef") } $self->KEYFIELDS;
 }
+
+=item idsToString
+
+Returns a string representation of the object's fields.
+
+=cut
 
 sub toString {
 	my $self = shift;
-	my $result;
-	foreach ($self->FIELDS) {
-		$result .= "$_ => ";
-		$result .= defined $self->$_() ? $self->$_() : "";
-		$result .= "\n";
-	}
-	return $result;
+	return join " ", map { "$_=" . (defined $self->$_ ? "'".$self->$_."'" : "undef") } $self->FIELDS;
 }
 
+=item toHash
+
+Returns a hash representation of the object's fields. If interpreted as a list,
+the fields will be in order.
+
+=cut
+
 sub toHash {
-	my ($self) = @_;
-	return %$self;
+	my $self = shift;
+	return map { $_ => $self->$_ } $self->FIELDS;
+}
+
+=back
+
+=cut
+
+sub _fields {
+	my $invocant = shift;
+	my $class = ref $invocant || $invocant;
+	my @field_data = @_;
+	
+	my %field_data = @field_data;
+	my @field_order = @field_data[ grep {$_%2==0} 0..$#field_data ];
+	my @keyfields = grep { $field_data{$_}{key} } @field_order;
+	my @nonkeyfields = grep { not $field_data{$_}{key} } @field_order;
+	my @sql_types = map { $field_data{$_}{type} } @field_order;
+	
+	no strict 'refs';
+	
+	# class methods that return field info
+	*{$class."::FIELD_DATA"} = sub { return %field_data };
+	*{$class."::FIELDS"} = sub { return @field_order };
+	*{$class."::KEYFIELDS"} = sub { return @keyfields };
+	*{$class."::NONKEYFIELDS"} = sub { return @nonkeyfields };
+	*{$class."::SQL_TYPES"} = sub { return @sql_types };
+	
+	# accessor functions
+	foreach my $field (@field_order) {
+		# always define a "base" accessor
+		# custom public accessors can use this to actually do the getting and setting
+		*{$class."::_base_$field"} = sub {
+			my $self = shift;
+			$self->{$field} = shift if @_;
+			return $self->{$field};
+		};
+		# if there isn't a public accessor in the subclass, alias it to the base accessor
+		next if exists ${$class."::"}{$field};
+		*{$class."::$field"} = *{$class."::_base_$field"};
+	}
 }
 
 1;

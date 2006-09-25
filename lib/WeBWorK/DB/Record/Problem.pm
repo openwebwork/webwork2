@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.6 2005/03/29 21:23:34 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.7 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,31 +26,14 @@ WeBWorK::DB::Record::Problem - represent a record from the problem table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	set_id
-	problem_id
-)}
-
-sub NONKEYFIELDS {qw(
-	source_file
-	value
-	max_attempts
-)}
-
-sub FIELDS {qw(
-	set_id
-	problem_id
-	source_file
-	value
-	max_attempts
-)}
-
-sub SQL_TYPES {qw(
-	BLOB
-	INT
-	TEXT
-	INT
-	INT
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		set_id       => { type=>"BLOB", key=>1 },
+		problem_id   => { type=>"INT", key=>1 },
+		source_file  => { type=>"TEXT" },
+		value        => { type=>"INT" },
+		max_attempts => { type=>"INT" },
+	);
+}
 
 1;

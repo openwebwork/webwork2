@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.9 2005/12/05 17:58:01 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.10 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,44 +26,19 @@ WeBWorK::DB::Record::User - represent a record from the user table.
 use strict;
 use warnings;
 
-sub KEYFIELDS {qw(
-	user_id
-)}
-
-sub NONKEYFIELDS {qw(
-	first_name
-	last_name
-	email_address
-	student_id
-	status
-	section
-	recitation
-	comment
-)}
-
-sub FIELDS {qw(
-	user_id
-	first_name
-	last_name
-	email_address
-	student_id
-	status
-	section
-	recitation
-	comment
-)}
-
-sub SQL_TYPES {qw(
-	BLOB
-	TEXT
-	TEXT
-	TEXT
-	TEXT
-	TEXT
-	TEXT
-	TEXT
-	TEXT
-)}
+BEGIN {
+	__PACKAGE__->_fields(
+		user_id       => { type=>"BLOB", key=>1 },
+		first_name    => { type=>"TEXT" },
+		last_name     => { type=>"TEXT" },
+		email_address => { type=>"TEXT" },
+		student_id    => { type=>"TEXT" },
+		status        => { type=>"TEXT" },
+		section       => { type=>"TEXT" },
+		recitation    => { type=>"TEXT" },
+		comment       => { type=>"TEXT" },
+	);
+}
 
 sub full_name {
 	my ($self) = @_;
