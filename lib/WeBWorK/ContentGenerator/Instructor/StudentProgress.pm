@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.28 2006/07/12 01:19:15 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.29 2006/07/14 21:22:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -527,12 +527,15 @@ sub displaySets {
 		if ( defined( $userSet[0] ) ) {  # if this isn't defined, something's wrong
 		    $dateOfTest = 
 			localtime( $userSet[0]->version_creation_time() );
-		    my $gradeTime = '';
 		    if ( defined( $userSet[0]->version_last_attempt_time() ) &&
 			 $userSet[0]->version_last_attempt_time() ) {
 			$testTime = ( $userSet[0]->version_last_attempt_time() -
 				      $userSet[0]->version_creation_time() ) / 
 				      60; 
+		# clean-up: if the testTime is > allowed (that is, the test was submitted in 
+		# the grace period), report just that the testTime is the maximum allowed
+			my $timeLimit = $userSet[0]->version_time_limit()/60;
+			$testTime = $timeLimit if ( $testTime > $timeLimit );
 			$testTime = sprintf("%3.1f min", $testTime);
 		    } else {
 			$testTime = 'time limit exceeded';
