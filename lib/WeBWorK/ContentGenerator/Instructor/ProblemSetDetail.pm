@@ -498,7 +498,6 @@ sub handle_problem_numbers {
 		for $j (keys %newProblemNumbers) {
 			$problist[$j] = $db->getUserProblem($user, $setID, $j);
 		}
-		use Data::Dumper;
 		for($j = 0; $j < scalar @sortme; $j++) { 
 			if ($sortme[$j][0] == $j + 1) {
 				# same as above -- the jth problem is in the right place, so don't worry about it

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.15 2005/09/07 20:57:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.16 2006/01/25 23:13:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,6 @@ WeBWorK::DB::Utils - useful utilities for the database modules.
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -198,8 +197,6 @@ sub findDefaults($@) {
 		}
 	}
 	
-	#warn "Frequencies: ", Dumper(\%fields);
-	
 	my $Defaults = $globalClass->new();
 	foreach my $field (keys %fields) {
 		my $maxFreq = 0;
@@ -215,6 +212,8 @@ sub findDefaults($@) {
 		$Defaults->$field($maxValue);
 	}
 	
+	#use Data::Dumper;
+	#warn "Frequencies: ", Dumper(\%fields);
 	#warn "Consensus defaults: ", Dumper($Defaults);
 	
 	return $Defaults;

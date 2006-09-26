@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.33 2006/08/08 16:09:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.34 2006/09/25 22:35:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -903,8 +903,6 @@ sub getHelperRef {
 		}
 	} else {
 		my %syms = do { no strict 'refs'; %{$package."::"} };
-		#use Data::Dumper;
-		#debug(Dumper(\%syms));
 		if (exists $syms{$helperName}) {
 			$result = do { no strict 'refs'; \&{$package."::".$helperName} };
 		} else {
