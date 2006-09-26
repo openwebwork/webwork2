@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/SQL.pm,v 1.32 2006/08/05 02:10:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.1 2006/09/25 22:56:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -406,7 +406,6 @@ sub delete_fields {
 	my ($self, $fields, $rows) = @_;
 	
 	my ($sth, @order) = $self->_delete_fields_prep($fields);
-	print STDERR "order=@order\n";
 	my @results;
 	foreach my $row (@$rows) {
 		push @results, $sth->execute(@$row[@order]);
@@ -558,16 +557,16 @@ sub box {
 	
 	my @names = $self->{record}->FIELDS;
 	my %pairs;
-	@pairs{@names} = @$values;
+	# promoting undef values to empty string. eventually we'd like to stop doing this (FIXME)
+	@pairs{@names} = map { defined $_ ? $_ : "" } @$values;
 	return $self->{record}->new(%pairs);
 }
 
 sub unbox {
 	my ($self, $Record) = @_;
 	
-	print STDERR 'unbox: $Record=', $Record, "\n";
-	print STDERR 'unbox: $self->{record}=', $self->{record}, "\n";
-	return [ map { $Record->$_ } $self->{record}->FIELDS ];
+	# demote empty strings to undef. eventually we'd like to stop doing this (FIXME)
+	return [ map { $_=$Record->$_; defined $_ and $_ eq "" ? undef : $_ } $self->{record}->FIELDS ];
 }
 
 sub keyparts_to_where {
