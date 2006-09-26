@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.73 2006/08/05 02:53:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.74 2006/09/25 22:26:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -96,7 +96,6 @@ record class currently defined for that table in C<%dbLayout>.
 use strict;
 use warnings;
 use Carp;
-use Data::Dumper;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
 
