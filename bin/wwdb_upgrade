@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.3 2006/08/14 17:25:01 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.4 2006/09/28 22:48:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -89,11 +89,11 @@ $DB_VERSIONS[4]{course_code} = sub {
 	$dbh->do("ALTER TABLE `${course}_key` CHANGE COLUMN `timestamp` `timestamp` BIGINT");
 };
 
-$DB_VERSIONS[5]{desc} = "changes type of problem_user status field to INT";
+$DB_VERSIONS[5]{desc} = "changes type of problem_user status field to FLOAT";
 $DB_VERSIONS[5]{course_code} = sub {
 	my $course = shift;
 	$dbh->do("UPDATE `${course}_problem_user` SET `status`=NULL WHERE `status`=''");
-	$dbh->do("ALTER TABLE `${course}_problem_user` CHANGE COLUMN `status` `status` INT");
+	$dbh->do("ALTER TABLE `${course}_problem_user` CHANGE COLUMN `status` `status` FLOAT");
 };
 
 ################################################################################
