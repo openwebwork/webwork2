@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.9 2006/01/26 21:45:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_moodle.pm,v 1.1 2006/05/18 19:27:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,9 +28,7 @@ use strict;
 use warnings;
 use WeBWorK::Utils::CourseManagement::sql_single;
 
-*addCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::addCourseHelper;
-*copyCourseDataHelper = \&WeBWorK::Utils::CourseManagement::sql_single::copyCourseDataHelper;
 *archiveCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::archiveCourseHelper;
-*deleteCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::deleteCourseHelper;
+*unarchiveCourseHelper = \&WeBWorK::Utils::CourseManagement::sql_single::unarchiveCourseHelper;
 
 1;
