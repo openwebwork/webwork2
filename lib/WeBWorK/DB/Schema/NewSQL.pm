@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.3 2006/09/26 15:57:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.5 2006/09/29 16:47:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -164,6 +164,24 @@ sub _create_table_stmt {
 	
 	my $field_string = join(", ", @field_list);
 	return "CREATE TABLE `$sql_table_name` ( $field_string )";
+}
+
+################################################################################
+# table renaming
+################################################################################
+
+sub rename_table {
+	my ($self, $new_sql_table_name) = @_;
+	
+	my $stmt = $self->_rename_table_stmt($new_sql_table_name);
+	return $self->dbh->do($stmt);
+}
+
+sub _rename_table_stmt {
+	my ($self, $new_sql_table_name) = @_;
+	
+	my $sql_table_name = $self->sql_table_name;
+	return "RENAME TABLE `$sql_table_name` TO `$new_sql_table_name`";
 }
 
 ################################################################################
