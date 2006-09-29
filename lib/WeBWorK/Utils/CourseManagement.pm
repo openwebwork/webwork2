@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.34 2006/09/25 22:35:05 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.35 2006/09/26 15:57:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,6 +49,10 @@ our @EXPORT_OK = qw(
 
 =over
 
+=cut
+
+################################################################################
+
 =item listCourses($ce)
 
 Lists the courses defined. 
@@ -60,6 +64,7 @@ sub listCourses {
 	my $coursesDir = $ce->{webworkDirs}->{courses};
 	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
 }
+
 =item listArchivedCourses($ce)
 
 Lists the courses which have been archived (end in .tar.gz). 
@@ -71,6 +76,9 @@ sub listArchivedCourses {
 	my $coursesDir = $ce->{webworkDirs}->{courses};
 	return grep { m/\.tar\.gz$/ } readDirectory($coursesDir);
 }
+
+################################################################################
+
 =item addCourse(%options)
 
 %options must contain:
@@ -101,23 +109,10 @@ C<dbLayoutName> is required. C<allowedRecipients>, C<feedbackRecipients>, and
 C<PRINT_FILE_NAMES_FOR> are references to arrays.
 
 $dbOptions is a reference to a hash containing information required to create a
-database for the course.
-
- if dbLayout == "sql":
- 
- 	host     => host to connect to
- 	port     => port to connect to
- 	username => user to connect as (must have CREATE, DELETE, FILE, INSERT,
- 	            SELECT, UPDATE privileges, WITH GRANT OPTION.)
- 	password => password to supply
- 	database => the name of the database to create
- 	wwhost   => the host from which the webwork database users will be allowed
- 	            to connect. (if host is set to localhost, this should be set to
- 	            localhost too.)
-
-These values must match the information given in the selected dbLayout. If
-$dbOptions is undefined, addCourse() assumes that the database has already been
-created, and skips that step in the course creation process.
+database for the course. Current database layouts do not require additional
+information, so specify a reference to an empty hash. If $dbOptions is
+undefined, addCourse() assumes that the database has already been created, and
+skips that step in the course creation process.
 
 $users is a list of arrayrefs, each containing a User, Password, and
 PermissionLevel record for a single user:
@@ -150,22 +145,26 @@ sub addCourse {
 	# fail if the course already exists
 	# IMPORTANT: this must be the first check! if any check other than this one
 	# fails, CourseAdmin deletes the course!! Oh no!!!
+	# DO NOT CHANGE THE DIE MESSAGE -- CourseAdmin checks it to determine whether
+	# a course was partially created and should be deleted!
+	# FIXME -- this is bad, and addCourse should deal with cleaning up partially
+	# created courses itself
 	if (-e $courseDir) {
 		croak "$courseID: course exists";
 	}
 	
-	# FIXME: is hyphen ok? signs point to "no"
-	croak "Invalid characters in course ID: '$courseID' (valid characters are [A-Za-z0-9_])"
-		unless $courseID =~ m/^[\w-]*$/;
-	
-	# fail if the database layout is invalid
-	if (defined $dbLayoutName and not exists $ce->{dbLayouts}->{$dbLayoutName}) {
-		croak "$dbLayoutName: not found in \%dbLayouts";
-	}
+	# fail if the course ID contains invalid characters
+	croak "Invalid characters in course ID: '$courseID' (valid characters are [-A-Za-z0-9_])"
+		unless $courseID =~ m/^[-A-Za-z0-9_]*$/;
 	
 	# if we didn't get a database layout, use the default one
 	if (not defined $dbLayoutName) {
 		$dbLayoutName = $ce->{dbLayoutName};
+	}
+	
+	# fail if the database layout is invalid
+	if (not exists $ce->{dbLayouts}->{$dbLayoutName}) {
+		croak "$dbLayoutName: not found in \%dbLayouts";
 	}
 	
 	##### step 1: create course directory structure #####
@@ -216,23 +215,23 @@ sub addCourse {
 	
 	##### step 2: create course database (if necessary) #####
 	
-	my $createHelperResult = addCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
-	die "$courseID: course database creation failed.\n" unless $createHelperResult;
+	#my $createHelperResult = addCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+	#die "$courseID: course database creation failed.\n" unless $createHelperResult;
+	
+	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $create_db_result = $db->create_tables;
+	die "$courseID: course database creation failed.\n" unless $create_db_result;
 	
 	##### step 3: populate course database #####
 	
 	if ($ce->{dbLayouts}{$dbLayoutName}{user}{params}{non_native}) {
 		debug("not adding users to the course database: 'user' table is non-native.\n");
 	} else {
-		my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
+		# see above
+		#my $db = WeBWorK::DB->new($ce->{dbLayouts}->{$dbLayoutName});
 		
 		foreach my $userTriple (@users) {
 			my ($User, $Password, $PermissionLevel) = @$userTriple;
-			
-			# apparently never used:
-			#if (defined $PermissionLevel->permission and $PermissionLevel->permission == 10) {
-			#	push @professors, $PermissionLevel->user_id;
-			#}
 			
 			eval { $db->addUser($User)                       }; warn $@ if $@;
 			eval { $db->addPassword($Password)               }; warn $@ if $@;
@@ -270,8 +269,9 @@ sub addCourse {
 			warn "Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
 		}
 	}
-	
 }
+
+################################################################################
 
 =item renameCourse(%options)
 
@@ -288,20 +288,9 @@ $ce is a WeBWorK::CourseEnvironment object that describes the existing course's
 environment.
 
 $dbOptions is a reference to a hash containing information required to create
-the course's new database and delete the course's old database.
-
- if dbLayout == "sql":
- 
- 	host         => host to connect to
- 	port         => port to connect to
- 	username     => user to connect as (must have CREATE, DELETE, FILE, INSERT,
- 	                SELECT, UPDATE privileges, WITH GRANT OPTION.)
- 	password     => password to supply
- 	old_database => the name of the database to delete
- 	new_database => the name of the database to create
- 	wwhost       => the host from which the webwork database users will be allowed
- 	                to connect. (if host is set to localhost, this should be set to
- 	                localhost too.)
+the course's new database and delete the course's old database. Current database
+layouts do not require additional information, so specify a reference to an
+empty hash.
 
 The name of the course's directory is changed to $newCourseID.
 
@@ -452,6 +441,8 @@ sub renameCourse {
 	die "$oldCourseID: course database creation failed.\n" unless $deleteHelperResult;
 }
 
+################################################################################
+
 =item deleteCourse(%options)
 
 Options must contain:
@@ -466,23 +457,13 @@ describes the course to be deleted. Do not pass the course environment object
 associated with the request, unless you are deleting the course you're currently
 using.
 
-$dbOptions is a reference to a hash containing information required to create a
-database for the course.
-
- if dbLayout == "sql":
- 
- 	host     => host to connect to
- 	port     => port to connect to
- 	username => user to connect as (must have CREATE, DELETE, FILE, INSERT,
- 	            SELECT, UPDATE privileges, WITH GRANT OPTION.)
- 	password => password to supply
- 	database => the name of the database to delete
+$dbOptions is a reference to a hash containing information required to delete
+the database for the course. Current database layouts do not require additional
+information, so specify a reference to an empty hash. If $dbOptions is
+undefined, addCourse() assumes that the database has already been deleted, and
+skips that step in the course deletion process.
 
 Deletes the course named $courseID. The course directory is removed.
-
-If the course's database layout is C<sql>, the course database is dropped.
-
-If the course's database layout is something else, no databases are removed.
 
 Any errors encountered while deleting the course are returned.
 
@@ -520,11 +501,15 @@ sub deleteCourse {
 	##### step 1: delete course database (if necessary) #####
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
-	my $deleteHelperResult = deleteCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
-	debug("deleteHelper returned '$deleteHelperResult'.");
-	unless ($deleteHelperResult) {
-		die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
-	}
+	#my $deleteHelperResult = deleteCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
+	#debug("deleteHelper returned '$deleteHelperResult'.");
+	#unless ($deleteHelperResult) {
+	#	die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
+	#}
+	
+	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $create_db_result = $db->delete_tables;
+	die "$courseID: course database deletion failed.\n" unless $create_db_result;
 	
 	##### step 2: delete course directory structure #####
 	
@@ -559,6 +544,8 @@ sub deleteCourse {
 		}
 	}
 }
+
+################################################################################
 
 =item archiveCourse(%options)
 
@@ -658,6 +645,8 @@ sub archiveCourse {
 	
 }
 
+################################################################################
+
 sub unarchiveCourse {
 	my (%options) = @_;
 	
@@ -712,6 +701,9 @@ sub unarchiveCourse {
 		
 	
 }
+
+################################################################################
+
 =item dbLayoutSQLSources($dbLayout)
 
 Retrun a hash of database sources for the sql and sql_single database layouts.
@@ -780,6 +772,8 @@ sub dbLayoutSQLSources {
 
 =cut
 
+################################################################################
+# database helpers
 ################################################################################
 
 =head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
@@ -858,6 +852,8 @@ sub deleteCourseHelper {
 
 =cut
 
+################################################################################
+# utilities
 ################################################################################
 
 =head1 UTILITIES
