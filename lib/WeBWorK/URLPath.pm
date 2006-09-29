@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.32 2006/09/01 17:28:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.33 2006/09/13 23:40:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -247,7 +247,7 @@ our %pathTypes = (
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
-			instructor_set_assigner instructor_file_transfer instructor_file_manager
+			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_set_maker instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
@@ -366,15 +366,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
-	},
-	instructor_file_transfer => {
-		name    => 'File Transfer',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^file_xfer/|,
-		capture => [ qw// ],
-		produce => 'file_xfer/',
-		display => 'WeBWorK::ContentGenerator::Instructor::FileXfer',
 	},
 	instructor_file_manager => {
 		name    => 'File Manager',
