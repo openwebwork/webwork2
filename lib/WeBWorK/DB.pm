@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.75 2006/09/26 15:57:37 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.77 2006/09/29 16:49:47 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -216,7 +216,7 @@ sub extendMoodleSession {
 }
 
 ################################################################################
-# table creation/deletion
+# create/rename/delete tables
 ################################################################################
 
 sub create_tables {
@@ -229,6 +229,30 @@ sub create_tables {
 			$schema_obj->create_table;
 		} else {
 			warn "skipping creation of '$table' table: no create_table method\n";
+		}
+	}
+	
+	return 1;
+}
+
+sub rename_tables {
+	my ($self, $new_dblayout) = @_;
+	
+	foreach my $table (keys %$self) {
+		next if $table =~ /^_/; # skip non-table self fields (none yet)
+		my $schema_obj = $self->{$table};
+		if (exists $new_dblayout->{$table}) {
+			if ($schema_obj->can("rename_table")) {
+				# we look into the new dblayout to determine the new table names
+				my $new_sql_table_name = defined $new_dblayout->{$table}{params}{tableOverride}
+					? $new_dblayout->{$table}{params}{tableOverride}
+					: $table;
+				$schema_obj->rename_table($new_sql_table_name);
+			} else {
+				warn "skipping renaming of '$table' table: no rename_table method\n";
+			}
+		} else {
+			warn "skipping renaming of '$table' table: table doesn't exist in new dbLayout\n";
 		}
 	}
 	
