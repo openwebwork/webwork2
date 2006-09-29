@@ -121,7 +121,6 @@ sub create_table {
 	my ($self) = @_;
 	
 	my $stmt = $self->_create_table_stmt;
-	print STDERR "create_table statement is $stmt\n";
 	return $self->dbh->do($stmt);
 }
 
@@ -132,7 +131,7 @@ sub _create_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
-	my %field_data = $self->{record}->FIELD_DATA;
+	my %field_data = $self->field_data;
 	
 	my @field_list;
 	
@@ -171,14 +170,14 @@ sub _create_table_stmt {
 # table deletion
 ################################################################################
 
-sub drop_table {
+sub delete_table {
 	my ($self) = @_;
 	
-	my $stmt = $self->_drop_table_stmt;
+	my $stmt = $self->_delete_table_stmt;
 	return $self->dbh->do($stmt);
 }
 
-sub _drop_table_stmt {
+sub _delete_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
@@ -567,7 +566,7 @@ sub gets {
 sub getAll {
 	my ($self, @keyparts) = @_;
 	
-	my $table = $self->{table};
+	my $table = $self->table;
 	croak "getAll: only supported for the problem_user table"
 		unless $table eq "problem" or $table eq "problem_user";
 	
@@ -608,6 +607,10 @@ sub keyfields {
 
 sub fields {
 	return shift->{record}->FIELDS;
+}
+
+sub field_data {
+	return shift->{record}->FIELD_DATA;
 }
 
 sub sql_table_name {
