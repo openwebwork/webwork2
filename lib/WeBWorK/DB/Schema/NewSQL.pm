@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.1 2006/09/25 22:56:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.3 2006/09/26 15:57:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,7 +39,7 @@ use constant STYLE  => "dbi";
 	
 	sub debug {
 		my ($self, @string) = @_;
-		WeBWorK::Debug::debug(@string) if $self->{params}->{debug};
+		WeBWorK::Debug::debug(@string) if $self->{params}{debug};
 	}
 }
 
@@ -96,8 +96,8 @@ sub new {
 	if (defined $params->{fieldOverride}) {
 		$transform_field = sub {
 			my $label = shift;
-			return defined $self->{params}->{fieldOverride}->{$label}
-				? $self->{params}->{fieldOverride}->{$label}
+			return defined $self->{params}{fieldOverride}{$label}
+				? $self->{params}{fieldOverride}{$label}
 				: $label;
 		};
 	}
@@ -117,13 +117,73 @@ sub new {
 # table creation
 ################################################################################
 
+sub create_table {
+	my ($self) = @_;
+	
+	my $stmt = $self->_create_table_stmt;
+	print STDERR "create_table statement is $stmt\n";
+	return $self->dbh->do($stmt);
+}
 
+# this is mostly ripped off from wwdb_check, which is pretty much a per-table
+# version of the table creation code in sql_single.pm. wwdb_check is going away
+# after 2.3.x, and sql_single.pm is being replaced by this code.
+sub _create_table_stmt {
+	my ($self) = @_;
+	
+	my $sql_table_name = $self->sql_table_name;
+	my %field_data = $self->{record}->FIELD_DATA;
+	
+	my @field_list;
+	
+	# generate a column specification for each field
+	foreach my $field ($self->fields) {
+		my $sql_field_name = $self->sql_field_name($field);
+		my $sql_field_type = $field_data{$field}{type};
+		
+		push @field_list, "`$sql_field_name` $sql_field_type";
+	}
+	
+	# generate an INDEX specification for each all possible sets of keyfields (i.e. 0+1+2, 1+2, 2)
+	my @keyfields = $self->keyfields;
+	foreach my $start (0 .. $#keyfields) {
+		my @index_components;
+		
+		foreach my $component (@keyfields[$start .. $#keyfields]) {
+			my $sql_field_name = $self->sql_field_name($component);
+			my $sql_field_type = $field_data{$component}{type};
+			# FIXME rather than specifying length on anything that's not an int,
+			# could we instead only specify length for types for TEXT and BLOB?
+			my $length_specifier = ($sql_field_type =~ /int/i) ? "" : "(16)";
+			push @index_components, "`$sql_field_name`$length_specifier";
+		}
+		
+		my $index_string = join(", ", @index_components);
+		my $index_keyword = $start == 0 ? "UNIQUE" : "INDEX";
+		push @field_list, "$index_keyword ( $index_string )";
+	}
+	
+	my $field_string = join(", ", @field_list);
+	return "CREATE TABLE `$sql_table_name` ( $field_string )";
+}
 
 ################################################################################
 # table deletion
 ################################################################################
 
+sub drop_table {
+	my ($self) = @_;
+	
+	my $stmt = $self->_drop_table_stmt;
+	return $self->dbh->do($stmt);
+}
 
+sub _drop_table_stmt {
+	my ($self) = @_;
+	
+	my $sql_table_name = $self->sql_table_name;
+	return "DROP TABLE `$sql_table_name`";
+}
 
 ################################################################################
 # counting/existence
@@ -535,13 +595,11 @@ sub table {
 }
 
 sub sql {
-	my ($self) = @_;
-	return $self->{sql};
+	return shift->{sql};
 }
 
 sub dbh {
-	my ($self) = @_;
-	return $self->{driver}->dbi;
+	return shift->{driver}->dbi;
 }
 
 sub keyfields {
@@ -550,6 +608,20 @@ sub keyfields {
 
 sub fields {
 	return shift->{record}->FIELDS;
+}
+
+sub sql_table_name {
+	my ($self) = @_;
+	return defined $self->{params}{tableOverride}
+		? $self->{params}{tableOverride}
+		: $self->table;
+}
+
+sub sql_field_name {
+	my ($self, $field) = @_;
+	return defined $self->{params}{fieldOverride}{$field}
+		? $self->{params}{fieldOverride}{$field}
+		: $field;
 }
 
 sub box {
