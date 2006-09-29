@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.92 2006/08/14 18:14:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.93 2006/09/13 23:40:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,7 +73,7 @@ use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
 BEGIN {
 	# pre-compile all content generators
 	# Login and LoginProctor need to be handled separately, since they don't have paths
-	map { eval "require $_" }
+	map { eval "require $_"; die $@ if $@ }
 		WeBWorK::URLPath->all_modules,
 		LOGIN_MODULE,
 		PROCTOR_LOGIN_MODULE;
