@@ -216,6 +216,42 @@ sub extendMoodleSession {
 }
 
 ################################################################################
+# table creation/deletion
+################################################################################
+
+sub create_tables {
+	my ($self) = @_;
+	
+	foreach my $table (keys %$self) {
+		next if $table =~ /^_/; # skip non-table self fields (none yet)
+		my $schema_obj = $self->{$table};
+		if ($schema_obj->can("create_table")) {
+			$schema_obj->create_table;
+		} else {
+			warn "skipping creation of '$table' table: no create_table method\n";
+		}
+	}
+	
+	return 1;
+}
+
+sub delete_tables {
+	my ($self) = @_;
+	
+	foreach my $table (keys %$self) {
+		next if $table =~ /^_/; # skip non-table self fields (none yet)
+		my $schema_obj = $self->{$table};
+		if ($schema_obj->can("delete_table")) {
+			$schema_obj->delete_table;
+		} else {
+			warn "skipping deletion of '$table' table: no delete_table method\n";
+		}
+	}
+	
+	return 1;
+}
+
+################################################################################
 # password functions
 ################################################################################
 
