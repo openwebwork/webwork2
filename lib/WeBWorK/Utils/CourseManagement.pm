@@ -213,10 +213,7 @@ sub addCourse {
 		mkdir $courseDir or warn "Failed to create $courseDirName directory '$courseDir': $!. You will have to create this directory manually.\n";
 	}
 	
-	##### step 2: create course database (if necessary) #####
-	
-	#my $createHelperResult = addCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
-	#die "$courseID: course database creation failed.\n" unless $createHelperResult;
+	##### step 2: create course database #####
 	
 	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 	my $create_db_result = $db->create_tables;
@@ -323,10 +320,6 @@ sub renameCourse {
 	# get the database layout out of the options hash
 	my $dbLayoutName = $oldCE->{dbLayoutName};
 	
-	if (not ref getHelperRef("copyCourseDataHelper", $dbLayoutName)) {
-		die "This database layout doesn't support course renaming. Sorry!\n"
-	}
-	
 	# collect some data
 	my $coursesDir = $oldCE->{webworkDirs}->{courses};
 	my $oldCourseDir = "$coursesDir/$oldCourseID";
@@ -411,34 +404,11 @@ sub renameCourse {
 		}
 	}
 	
-	##### step 2: create new database #####
+	##### step 2: rename database #####
 	
-	# munge DB options to move new_database => database
-	my %createDBOptions = %dbOptions;
-	if (exists $createDBOptions{new_database}) {
-		$createDBOptions{database} = $createDBOptions{new_database};
-		delete $createDBOptions{new_database};
-	}
-	
-	my $createHelperResult = addCourseHelper($oldCourseID, $newCE, $dbLayoutName, %dbOptions);
-	die "$oldCourseID: course database creation failed.\n" unless $createHelperResult;
-	
-	##### step 3: copy course data #####
-	
-	my $copyCourseDataResult = copyCourseDataHelper($oldCourseID, $oldCE, $newCourseID, $newCE, $dbLayoutName, %dbOptions);
-	die "$oldCourseID: failed to copy course data from $oldCourseID to $newCourseID.\n" unless $copyCourseDataResult;
-	
-	##### step 4: delete old database #####
-	
-	# munge DB options to move old_database => database
-	my %deleteDBOptions = %dbOptions;
-	if (exists $deleteDBOptions{old_database}) {
-		$deleteDBOptions{database} = $deleteDBOptions{old_database};
-		delete $deleteDBOptions{old_database};
-	}
-	
-	my $deleteHelperResult = deleteCourseHelper($oldCourseID, $oldCE, $dbLayoutName, %dbOptions);
-	die "$oldCourseID: course database creation failed.\n" unless $deleteHelperResult;
+	my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
+	my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
+	die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
 }
 
 ################################################################################
@@ -501,12 +471,6 @@ sub deleteCourse {
 	##### step 1: delete course database (if necessary) #####
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
-	#my $deleteHelperResult = deleteCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
-	#debug("deleteHelper returned '$deleteHelperResult'.");
-	#unless ($deleteHelperResult) {
-	#	die "Failed to delete course database. Does the database exist? Were proper admin credentials given?\n";
-	#}
-	
 	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 	my $create_db_result = $db->delete_tables;
 	die "$courseID: course database deletion failed.\n" unless $create_db_result;
@@ -778,27 +742,13 @@ sub dbLayoutSQLSources {
 
 =head1 DATABASE-LAYOUT SPECIFIC HELPER FUNCTIONS
 
-The addCourseHelper(), copyCourseDataHelper(), and deleteCourseHelper()
-functions are used to perform database-layout specific operations, such as
-creating a database.
+These functions are used to perform database-layout specific operations.
 
 The implementations in this class do nothing, but if an appropriate function
 exists in a class with the name
 WeBWorK::Utils::CourseManagement::I<$dbLayoutName>, it will be used instead.
 
 =over
-
-=item addCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for adding a course.
-
-=cut
-
-sub addCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	my $result = callHelperIfExists("addCourseHelper", $dbLayoutName, @_);
-	return $result;
-}
 
 =item archiveCourseHelper($courseID, $ce, $dbLayoutName, %options)
 
@@ -823,29 +773,6 @@ sub unarchiveCourseHelper {
 	my ($courseID, $ce, $dbLayoutName, %options) = @_;
 	my $result = callHelperIfExists("unarchiveCourseHelper", $dbLayoutName, @_);
 	return $result;
-}
-
-=item copyCourseDataHelper($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options)
-
-Perform database-layout specific operations for copying a course's data from one
-database to another.
-
-=cut
-
-sub copyCourseDataHelper {
-	my ($fromCourseID, $fromCE, $toCourseID, $toCE, $dbLayoutName, %options) = @_;
-	return callHelperIfExists("copyCourseDataHelper", $dbLayoutName, @_);
-}
-
-=item deleteCourseHelper($courseID, $ce, $dbLayoutName, %options)
-
-Perform database-layout specific operations for renaming a course.
-
-=cut
-
-sub deleteCourseHelper {
-	my ($courseID, $ce, $dbLayoutName, %options) = @_;
-	return callHelperIfExists("deleteCourseHelper", $dbLayoutName, @_);
 }
 
 =back
