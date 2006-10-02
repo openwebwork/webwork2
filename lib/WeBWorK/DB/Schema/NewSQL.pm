@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.5 2006/09/29 16:47:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.6 2006/09/29 19:37:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -151,15 +151,19 @@ sub _create_table_stmt {
 		foreach my $component (@keyfields[$start .. $#keyfields]) {
 			my $sql_field_name = $self->sql_field_name($component);
 			my $sql_field_type = $field_data{$component}{type};
-			# FIXME rather than specifying length on anything that's not an int,
-			# could we instead only specify length for types for TEXT and BLOB?
-			my $length_specifier = ($sql_field_type =~ /int/i) ? "" : "(16)";
+			my $length_specifier = $sql_field_type =~ /(text|blob)/i ? "(255)" : "";
+			if ($start == 0 and $length_specifier and $sql_field_type !~ /tiny/i) {
+				warn "warning: UNIQUE KEY component $sql_field_name is a $sql_field_type, which can"
+					. " hold values longer than 255 characters. However, the maximum key prefix"
+					. " length for text/blob fields is 255. Therefore, uniqueness must occur within"
+					. " the first 255 characters of this field.";
+			}
 			push @index_components, "`$sql_field_name`$length_specifier";
 		}
 		
 		my $index_string = join(", ", @index_components);
-		my $index_keyword = $start == 0 ? "UNIQUE" : "INDEX";
-		push @field_list, "$index_keyword ( $index_string )";
+		my $index_type = $start == 0 ? "UNIQUE KEY" : "KEY";
+		push @field_list, "$index_type ( $index_string )";
 	}
 	
 	my $field_string = join(", ", @field_list);

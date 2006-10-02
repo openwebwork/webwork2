@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserSet.pm,v 1.12 2006/09/25 22:40:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserSet.pm,v 1.13 2006/10/02 15:04:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,10 +30,7 @@ BEGIN {
 	__PACKAGE__->_fields(
 		user_id                   => { type=>"TINYBLOB NOT NULL", key=>1 },
 		set_id                    => { type=>"TINYBLOB NOT NULL", key=>1 },
-		# FIXME "NOT NULL PRIMARY KEY AUTO_INCREMENT" isn't part of the type
-		# FIXME should be specified symbolically (maybe serial=>1?)
-		# FIXME doesn't need to be the primary key -- we never look things up based on psvn
-		psvn                      => { type=>"INT NOT NULL PRIMARY KEY AUTO_INCREMENT" },
+		psvn                      => { type=>"INT UNIQUE NOT NULL AUTO_INCREMENT" },
 		set_header                => { type=>"TEXT" },
 		hardcopy_header           => { type=>"TEXT" },
 		open_date                 => { type=>"BIGINT" },
