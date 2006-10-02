@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.4 2006/09/28 22:48:18 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.5 2006/09/28 23:42:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,25 +41,12 @@ if ($opt_v) {
 	*verbose = sub {};
 }
 
-my $ce = WeBWorK::CourseEnvironment->new({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-});
-
-my @ww_courses = listCourses($ce);
-
-my $dbh = DBI->connect(
-	$ce->{database_dsn},
-	$ce->{database_username},
-	$ce->{database_password},
-	{
-		PrintError => 0,
-		RaiseError => 1,
-	},
-);
+# global variables, hah hah.
+my ($dbh, %sql_tables);
 
 ################################################################################
 
-our $THIS_DB_VERSION = 5;
+our $THIS_DB_VERSION = 6;
 
 our @DB_VERSIONS;
 
@@ -69,34 +56,81 @@ $DB_VERSIONS[1]{desc} = "adds dbupgrade table to facilitate automatic database u
 $DB_VERSIONS[1]{global_code} = sub {
 	$dbh->do("CREATE TABLE `dbupgrade` (`name` VARCHAR(255) NOT NULL PRIMARY KEY, `value` TEXT)");
 	$dbh->do("INSERT INTO `dbupgrade` (`name`, `value`) VALUES (?, ?)", {}, "db_version", 1);
+	$sql_tables{dbupgrade} = ();
 };
 
 $DB_VERSIONS[2]{desc} = "adds problems_per_page field to set and set_user tables of each course.";
 $DB_VERSIONS[2]{course_code} = sub {
 	my $course = shift;
-	$dbh->do("ALTER TABLE `${course}_set` ADD COLUMN `problems_per_page` INT");
-	$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `problems_per_page` INT");
+	$dbh->do("ALTER TABLE `${course}_set` ADD COLUMN `problems_per_page` INT")
+		if exists $sql_tables{"${course}_set"};
+	$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `problems_per_page` INT")
+		if exists $sql_tables{"${course}_set_user"};
 };
 
 $DB_VERSIONS[3]{desc} = "adds depths table to keep track of dvipng depth information.";
 $DB_VERSIONS[3]{global_code} = sub {
 	$dbh->do("CREATE TABLE depths (md5 CHAR(33) NOT NULL, depth SMALLINT, PRIMARY KEY (md5))");
+	$sql_tables{depths} = ();
 };
 
 $DB_VERSIONS[4]{desc} = "changes type of key timestamp field to BIGINT";
 $DB_VERSIONS[4]{course_code} = sub {
 	my $course = shift;
+	return unless exists $sql_tables{"${course}_key"};
 	$dbh->do("ALTER TABLE `${course}_key` CHANGE COLUMN `timestamp` `timestamp` BIGINT");
 };
 
 $DB_VERSIONS[5]{desc} = "changes type of problem_user status field to FLOAT";
 $DB_VERSIONS[5]{course_code} = sub {
 	my $course = shift;
+	return unless exists $sql_tables{"${course}_problem_user"};
 	$dbh->do("UPDATE `${course}_problem_user` SET `status`=NULL WHERE `status`=''");
 	$dbh->do("ALTER TABLE `${course}_problem_user` CHANGE COLUMN `status` `status` FLOAT");
 };
 
+$DB_VERSIONS[6]{desc} = "changes types of alphanumeric keyfields to TINYBLOB NOT NULL";
+$DB_VERSIONS[6]{course_code} = sub {
+	my $course = shift;
+	$dbh->do("ALTER TABLE `${course}_user` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_user"};
+	$dbh->do("ALTER TABLE `${course}_password` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_password"};
+	$dbh->do("ALTER TABLE `${course}_permission` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_permission"};
+	$dbh->do("ALTER TABLE `${course}_key` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_key"};
+	$dbh->do("ALTER TABLE `${course}_set` CHANGE COLUMN `set_id` `set_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_set"};
+	$dbh->do("ALTER TABLE `${course}_problem` CHANGE COLUMN `set_id` `set_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_problem"};
+	$dbh->do("ALTER TABLE `${course}_set_user` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_set_user"};
+	$dbh->do("ALTER TABLE `${course}_set_user` CHANGE COLUMN `set_id` `set_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_set_user"};
+	$dbh->do("ALTER TABLE `${course}_problem_user` CHANGE COLUMN `user_id` `user_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_problem_user"};
+	$dbh->do("ALTER TABLE `${course}_problem_user` CHANGE COLUMN `set_id` `set_id` TINYBLOB NOT NULL")
+		if exists $sql_tables{"${course}_problem_user"};
+};
+
 ################################################################################
+
+my $ce = WeBWorK::CourseEnvironment->new({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+});
+
+my @ww_courses = listCourses($ce);
+
+$dbh = DBI->connect(
+	$ce->{database_dsn},
+	$ce->{database_username},
+	$ce->{database_password},
+	{
+		PrintError => 0,
+		RaiseError => 1,
+	},
+);
 
 {
 	verbose("Obtaining dbupgrade lock...\n");
@@ -113,7 +147,7 @@ $DB_VERSIONS[5]{course_code} = sub {
 	}
 }
 
-my %sql_tables = get_sql_tables();
+%sql_tables = get_sql_tables();
 
 my $db_version = exists $sql_tables{dbupgrade} ? get_db_version() : 0;
 
