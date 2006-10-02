@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.77 2006/09/29 16:49:47 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.78 2006/09/29 19:37:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -273,6 +273,93 @@ sub delete_tables {
 	}
 	
 	return 1;
+}
+
+################################################################################
+# user functions
+################################################################################
+
+BEGIN { *newUser = gen_new("user"); }
+
+sub listUsers {
+	my ($self) = @_;
+	
+	croak "listUsers: requires 0 arguments"
+		unless @_ == 1;
+	
+	return map { $_->[0] }
+		$self->{user}->list(undef);
+}
+
+sub addUser {
+	my ($self, $User) = @_;
+	
+	croak "addUser: requires 1 argument"
+		unless @_ == 2;
+	croak "addUser: argument 1 must be of type ", $self->{user}->{record}
+		unless ref $User eq $self->{user}->{record};
+	
+	checkKeyfields($User);
+	
+	croak "addUser: user exists (perhaps you meant to use putUser?)"
+		if $self->{user}->exists($User->user_id);
+	
+	return $self->{user}->add($User);
+}
+
+sub getUser {
+	my ($self, $userID) = @_;
+	
+	croak "getUser: requires 1 argument"
+		unless @_ == 2;
+	croak "getUser: argument 1 must contain a user_id"
+		unless defined $userID;
+	
+	return $self->{user}->get($userID);
+}
+
+sub getUsers {
+	my ($self, @userIDs) = @_;
+	
+	#croak "getUsers: requires 1 or more argument"
+	#	unless @_ >= 2;
+	foreach my $i (0 .. $#userIDs) {
+		croak "getUsers: element $i of argument list must contain a user_id"
+			unless defined $userIDs[$i];
+	}
+	
+	return $self->{user}->gets(map { [$_] } @userIDs);
+}
+
+sub putUser {
+	my ($self, $User) = @_;
+	
+	croak "putUser: requires 1 argument"
+		unless @_ == 2;
+	croak "putUser: argument 1 must be of type ", $self->{user}->{record}
+		unless ref $User eq $self->{user}->{record};
+	
+	checkKeyfields($User);
+	
+	croak "putUser: user not found (perhaps you meant to use addUser?)"
+		unless $self->{user}->exists($User->user_id);
+	
+	return $self->{user}->put($User);
+}
+
+sub deleteUser {
+	my ($self, $userID) = @_;
+	
+	croak "deleteUser: requires 1 argument"
+		unless @_ == 2;
+	croak "deleteUser: argument 1 must contain a user_id"
+		unless defined $userID;
+	
+	$self->deleteUserSet($userID, undef);
+	$self->deletePassword($userID);
+	$self->deletePermissionLevel($userID);
+	$self->deleteKey($userID);
+	return $self->{user}->delete($userID);
 }
 
 ################################################################################
@@ -577,93 +664,6 @@ sub deleteKey($$) {
 		unless defined $userID;
 	
 	return $self->{key}->delete($userID);
-}
-
-################################################################################
-# user functions
-################################################################################
-
-BEGIN { *newUser = gen_new("user"); }
-
-sub listUsers {
-	my ($self) = @_;
-	
-	croak "listUsers: requires 0 arguments"
-		unless @_ == 1;
-	
-	return map { $_->[0] }
-		$self->{user}->list(undef);
-}
-
-sub addUser {
-	my ($self, $User) = @_;
-	
-	croak "addUser: requires 1 argument"
-		unless @_ == 2;
-	croak "addUser: argument 1 must be of type ", $self->{user}->{record}
-		unless ref $User eq $self->{user}->{record};
-	
-	checkKeyfields($User);
-	
-	croak "addUser: user exists (perhaps you meant to use putUser?)"
-		if $self->{user}->exists($User->user_id);
-	
-	return $self->{user}->add($User);
-}
-
-sub getUser {
-	my ($self, $userID) = @_;
-	
-	croak "getUser: requires 1 argument"
-		unless @_ == 2;
-	croak "getUser: argument 1 must contain a user_id"
-		unless defined $userID;
-	
-	return $self->{user}->get($userID);
-}
-
-sub getUsers {
-	my ($self, @userIDs) = @_;
-	
-	#croak "getUsers: requires 1 or more argument"
-	#	unless @_ >= 2;
-	foreach my $i (0 .. $#userIDs) {
-		croak "getUsers: element $i of argument list must contain a user_id"
-			unless defined $userIDs[$i];
-	}
-	
-	return $self->{user}->gets(map { [$_] } @userIDs);
-}
-
-sub putUser {
-	my ($self, $User) = @_;
-	
-	croak "putUser: requires 1 argument"
-		unless @_ == 2;
-	croak "putUser: argument 1 must be of type ", $self->{user}->{record}
-		unless ref $User eq $self->{user}->{record};
-	
-	checkKeyfields($User);
-	
-	croak "putUser: user not found (perhaps you meant to use addUser?)"
-		unless $self->{user}->exists($User->user_id);
-	
-	return $self->{user}->put($User);
-}
-
-sub deleteUser {
-	my ($self, $userID) = @_;
-	
-	croak "deleteUser: requires 1 argument"
-		unless @_ == 2;
-	croak "deleteUser: argument 1 must contain a user_id"
-		unless defined $userID;
-	
-	$self->deleteUserSet($userID, undef);
-	$self->deletePassword($userID);
-	$self->deletePermissionLevel($userID);
-	$self->deleteKey($userID);
-	return $self->{user}->delete($userID);
 }
 
 ################################################################################
