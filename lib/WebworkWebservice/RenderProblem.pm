@@ -26,8 +26,6 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
 use WeBWorK::DB;
-use WeBWorK::DB::Record;
-use WeBWorK::DB::Record::UserProblem;
 use WeBWorK::Constants;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
