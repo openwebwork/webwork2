@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.8 2006/09/28 22:48:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.9 2006/09/28 23:42:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,9 +29,9 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id       => { type=>"BLOB", key=>1 },
-		set_id        => { type=>"BLOB", key=>1 },
-		problem_id    => { type=>"INT", key=>1 },
+		user_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
+		set_id        => { type=>"TINYBLOB NOT NULL", key=>1 },
+		problem_id    => { type=>"INT NOT NULL", key=>1 },
 		source_file   => { type=>"TEXT" },
 		# FIXME i think value should be able to hold decimal values...
 		value         => { type=>"INT" },

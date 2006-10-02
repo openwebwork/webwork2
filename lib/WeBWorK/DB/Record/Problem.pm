@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.7 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.8 2006/09/25 22:40:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,8 +28,8 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		set_id       => { type=>"BLOB", key=>1 },
-		problem_id   => { type=>"INT", key=>1 },
+		set_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
+		problem_id   => { type=>"INT NOT NULL", key=>1 },
 		source_file  => { type=>"TEXT" },
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
