@@ -29,7 +29,6 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
-use WeBWorK::DB::Record::Set;
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 
