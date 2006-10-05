@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.10 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.12 2006/09/25 22:41:37 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -67,8 +67,8 @@ sub new($$$) {
 		$params->{username},
 		$params->{password},
 		{
+			PrintError => 0,
 			RaiseError => 1,
-			
 		},
 	);
 	die $DBI::errstr unless defined $self->{handle};
