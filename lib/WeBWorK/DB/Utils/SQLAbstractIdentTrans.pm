@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.16 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils/SQLAbstractIdentTrans.pm,v 1.1 2006/09/26 15:01:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -46,7 +46,9 @@ sub _quote {
 	return $self->_quote_field($label)
 		if !defined $self->{name_sep};
 	
-	if ($label =~ /^(.+)\.(.+)/) {
+	if (defined $self->{transform_all}) {
+		return $self->{transform_all}->($label);
+	} elsif ($label =~ /(.+)\.(.+)/) {
 		return $self->_quote_table($1) . $self->{name_sep} . $self->_quote_field($2);
 	} else {
 		return $self->_quote_field($label);
