@@ -880,27 +880,6 @@ sub deleteUserProblem {
 # set+set_user functions
 ################################################################################
 
-#sub cmp_getMergedSet {
-#	my $self = shift;
-#	my $R1 = $self->getMergedSet(@_);
-#	my $R2 = $self->getMergedSet2(@_);
-#	foreach my $field ($R1->FIELDS) {
-#		my $r1 = $R1->$field;
-#		my $r2 = $R2->$field;
-#		print "$field differs: R1='", undefstr("#UNDEF#",$r1), "' R2='", sundefstr("#UNDEF#",$r2), "'\n"
-#			if defined $r1 != defined $r2 or defined $r1 and defined $r2 and $r1 ne $r2;
-#	}
-#}
-#
-#use Benchmark qw/:all/;
-#sub time_getMergedSet {
-#	my ($self, @args) = @_;
-#	cmpthese(-5, {
-#		getMergedSet => sub { $self->getMergedSet(@args) },
-#		getMergedSet2 => sub { $self->getMergedSet2(@args) },
-#	});
-#}
-
 sub getMergedSet {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
 	return ( $self->getMergedSets([$userID, $setID]) )[0];
