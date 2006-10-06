@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.7 2006/10/02 16:32:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.8 2006/10/05 19:42:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,19 +26,10 @@ WeBWorK::DB::Schema::NewSQL - base class for SQL access.
 use strict;
 use warnings;
 use Carp qw(croak);
-use WeBWorK::Debug;
+use WeBWorK::Utils qw/undefstr/;
 
 use constant TABLES => qw(*);
 use constant STYLE  => "dbi";
-
-{
-	no warnings 'redefine';
-	
-	sub debug {
-		my ($self, @string) = @_;
-		WeBWorK::Debug::debug(@string) if $self->{params}{debug};
-	}
-}
 
 ################################################################################
 # utility methods
@@ -134,6 +125,17 @@ sub gen_update_hashes {
 	delete @values{@keyfields};
 	
 	return \%values, \%where;
+}
+
+our $__PACKAGE__ = __PACKAGE__;
+sub debug_stmt {
+	my ($self, $sth, @bind_vals) = @_;
+	return unless $self->{params}{debug};
+	my ($subroutine) = (caller(1))[3];
+	$subroutine =~ s/^${__PACKAGE__}:://;
+	my $stmt = $sth->{Statement};
+	@bind_vals = undefstr("#UNDEF#", @bind_vals);
+	print STDERR "$subroutine: |$stmt| => |@bind_vals|\n";
 }
 
 1;
