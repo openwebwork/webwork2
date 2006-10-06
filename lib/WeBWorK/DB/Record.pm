@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.9 2006/01/25 23:13:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.10 2006/09/25 22:40:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -125,7 +125,7 @@ sub _fields {
 	no strict 'refs';
 	
 	# class methods that return field info
-	*{$class."::FIELD_DATA"} = sub { return %field_data };
+	*{$class."::FIELD_DATA"} = sub { return \%field_data };
 	*{$class."::FIELDS"} = sub { return @field_order };
 	*{$class."::KEYFIELDS"} = sub { return @keyfields };
 	*{$class."::NONKEYFIELDS"} = sub { return @nonkeyfields };

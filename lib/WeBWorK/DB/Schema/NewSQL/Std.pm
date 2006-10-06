@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.1 2006/10/05 19:43:06 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.2 2006/10/06 04:35:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -113,14 +113,13 @@ sub _create_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
-	my %field_data = $self->field_data;
 	
 	my @field_list;
 	
 	# generate a column specification for each field
 	foreach my $field ($self->fields) {
 		my $sql_field_name = $self->sql_field_name($field);
-		my $sql_field_type = $field_data{$field}{type};
+		my $sql_field_type = $self->field_data->{$field}{type};
 		
 		push @field_list, "`$sql_field_name` $sql_field_type";
 	}
@@ -132,7 +131,7 @@ sub _create_table_stmt {
 		
 		foreach my $component (@keyfields[$start .. $#keyfields]) {
 			my $sql_field_name = $self->sql_field_name($component);
-			my $sql_field_type = $field_data{$component}{type};
+			my $sql_field_type = $self->field_data->{$component}{type};
 			my $length_specifier = $sql_field_type =~ /(text|blob)/i ? "(255)" : "";
 			if ($start == 0 and $length_specifier and $sql_field_type !~ /tiny/i) {
 				warn "warning: UNIQUE KEY component $sql_field_name is a $sql_field_type, which can"
