@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.7 2006/10/02 16:32:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.1 2006/10/05 19:43:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,18 +32,6 @@ use Iterator::Util;
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
 
-use constant TABLES => qw(*);
-use constant STYLE  => "dbi";
-
-{
-	no warnings 'redefine';
-	
-	sub debug {
-		my ($self, @string) = @_;
-		WeBWorK::Debug::debug(@string) if $self->{params}{debug};
-	}
-}
-
 =head1 SUPPORTED PARAMS
 
 This schema pays attention to the following items in the C<params> entry.
@@ -60,66 +48,118 @@ lowest priority.
 =cut
 
 ################################################################################
-# constructor for SQL-specific behavior
+# constructor for merge-specific behavior
 ################################################################################
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $self = $proto->SUPER::new($db, $driver, $table, $record, $params);
+	my $proto = shift;
+	my $self = $proto->SUPER::new(@_);
+	
+	$self->merge_init;
+	
+	$self->sql_init;
+	
+	return $self;
+}
+
+sub merge_init {
+	my $self = shift;
+	my $db = $self->{db};
 	
 	my @merge_tables = @{$self->{params}{merge}};
 	
 	my %sql_table_names;
-	@sql_table_names{@merge_tables} = map { $self->{db}{$_}->sql_table_name } @merge_tables;
+	@sql_table_names{@merge_tables} = map { $db->{$_}->sql_table_name } @merge_tables;
 	
-	my $pri_table = shift @merge_tables;
-	my $pri_table_schema = $self->{db}{$pri_table};
-	my $pri_table_sql = $sql_table_names{$pri_table};
-	my %pri_table_data = $pri_table_schema->field_data;
+	my %sql_field_names;
+	foreach my $table (@merge_tables) {
+		my @fields = $db->{$table}->fields;
+		@{$sql_field_names{$table}}{@fields} = map { $db->{$table}->sql_field_name($_) } @fields;
+	}
+	
+	my $pri = $merge_tables[0];
 	
 	my %sql_fieldexprs;
 	my $sql_whereprefix;
 	
-	foreach my $field ($pri_table_schema->fields) {
-		my $sql_field_name = $pri_table_schema->sql_field_name($field);
-		if ($pri_table_data->{$field}{key}) {
+	foreach my $field ($db->{$pri}->fields) {
+		my $sql_field_name = $sql_field_names{$pri}{$field};
+		if ($db->{$pri}->field_data->{$field}{key}) {
 			# if it's a keyfield, use the version from the primary table
 			# (they're all going to be the same anyway)
-			$sql_fieldexprs{$field} = "`$pri_table_sql`.`$sql_field_name`";
+			$sql_fieldexprs{$field} = "`$sql_table_names{$pri}`.`$sql_field_names{$pri}{$field}`";
 			# add this field to the where clause
-			foreach my $table (@merge_tables) {
-				my %table_data = $self->{db}{$table}->table_data;
-				if (exists $table_data{$field}) {
-					$sql_whereprefix .= "`$pri_table_sql`.`sql_field_name`".
-						. "=`$sql_table_names{$table}`.`"
-						. $self->{db}{$table}->sql_field_name($field) ."` AND ";
+			foreach my $table (@merge_tables[1..$#merge_tables]) {
+				if (exists $db->{$table}->field_data->{$field}) {
+					$sql_whereprefix .= "`$sql_table_names{$pri}`"
+						. ".`$sql_field_names{$pri}{$field}`"
+						. "=`$sql_table_names{$table}`"
+						. ".`$sql_field_names{$table}{$field}`"
+						. " AND ";
 				}
 			}
 		} else {
 			# if it's not a keyfield, we use the COALESCE function to select a
 			# value from the table that has the first non-NULL value
 			my $coalesce = "COALESCE(";
-			my $first = 1;
 			foreach my $table (@merge_tables) {
-				$first ? $first = 0 : $coalesce .= ",";
-				$coalesce .= "`$sql_table_names{$table}`.`"
-					. $self->{db}{$table}->sql_field_name($field) . "`";
+				next unless exists $db->{$table}->field_data->{$field};
+				$coalesce .= "`$sql_table_names{$table}`.`$sql_field_names{$table}{$field}`,";
 			}
+			chop $coalesce; # get rid of trailing comma
 			$coalesce .= ")";
 			$sql_fieldexprs{$field} = $coalesce;
 		}
 	}
 	
-	$self->{sql_tablelist} = [@sql_table_names{@merge_tables}];
+	$self->{pri} = $pri;
+	$self->{sql_table_names} = \%sql_table_names;
+	$self->{sql_field_names} = \%sql_field_names;
+	#$self->{sql_tablelist} = [@sql_table_names{@merge_tables}];
 	$self->{sql_fieldexprs} = \%sql_fieldexprs;
 	$self->{sql_whereprefix} = $sql_whereprefix;
+}
+
+sub sql_init {
+	my $self = shift;
 	
-	return $self;
+	# transformation functions for table and field names: these allow us to pass
+	# the WeBWorK table/field names to SQL::Abstract, and have it translate them
+	# to the SQL table/field names from tableOverride and fieldOverride.
+	# (Without this, it would be hard to translate field names in WHERE
+	# structures, since they're so convoluted.)
+	my $transform_table = sub {
+		my $label = shift;
+		if (exists $self->{sql_table_names}{$label}) {
+			return $self->{sql_table_names}{$label};
+		} else {
+			warn "can't transform unrecognized table name '$label'";
+			return $label;
+		}
+	};
 	
-	# use the SQL statement generation object from the primary table, so that
-	# the table/field name transformation functions will be corrent (not point
-	# in duplicating that logic here)
-	$self->{sql} = $pri_table_schema->{sql};
+	# This transformation is called both on bare field names and on qualified
+	# field names (i.e. "table.field"), but not on bare table names.
+	my $transform_all = sub {
+		my $label = shift;
+		my ($table, $field) = $label =~ /(?:(.+)\.)?(.+)/;
+		$table = $self->{pri} unless defined $table;
+		if (exists $self->{sql_field_names}{$table}{$field}) {
+			$field = $self->{sql_field_names}{$table}{$field};
+		} else {
+			warn "can't transform unrecognized field name '$field' for table name '$table'";
+		}
+		$table = $transform_table->($table);
+		return "`$table`.`$field`";
+	};
+	
+	# add SQL statement generation object
+	$self->{sql} = new WeBWorK::DB::Utils::SQLAbstractIdentTrans(
+		quote_char => "`",
+		name_sep => ".",
+		transform_table => $transform_table,
+		transform_all => $transform_all,
+	);
 }
 
 =for comment
@@ -139,49 +179,26 @@ sam_course_set_user.user_id='sam';
 # lowlevel get
 ################################################################################
 
-# returns a list of refs to arrays containing field values for each matching row
-sub get_fields_where {
-	my ($self, $fields, $where, $order) = @_;
-	
-	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
-	my @results = @{ $sth->fetchall_arrayref };
-	$sth->finish;
-	return @results;
-}
-
-# returns an Iterator that generates refs to arrays containg field values for each matching row
-sub get_fields_where_i {
-	my ($self, $fields, $where, $order) = @_;
-	
-	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
-	return new Iterator sub {
-		my $row = $sth->fetchrow_arrayref;
-		if (defined $row) {
-			return [@$row]; # need to make a copy here, since DBI reuses arrayrefs
-		} else {
-			$sth->finish; # let the server know we're done getting values (is this necessary?)
-			undef $sth; # allow the statement handle to get garbage-collected
-			Iterator::is_done();
-		}
-	};
-}
+*get_fields_where = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where;
+*get_fields_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where_i;
 
 # helper, returns a prepared statement handle
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;
 	
-	# pull the requested fields out of $self->{sql_fieldlist}
+	# pull the requested fields out of $self->{sql_fieldexprs}
 	my $sql_fields = join(",", @{$self->{sql_fieldexprs}}{@$fields});
 	
 	# generate the WHERE clause separately, and then prepend $self->{sql_whereprefix}
 	my ($stmt, @bind_vals) = $self->sql->where($where, $order);
 	my $where_prefix = $self->{sql_whereprefix};
-	$stmt =~ s/^WHERE/WHERE $where_prefix /;
+	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/;
 	
-	# instead of using $self->table, use join("," $self->{tablelist})
-	(substr($stmt, 0, 0)) = $self->sql->select($self->{tablelist}, $sql_fields);
+	# instead of using $self->table, use the merge list
+	(substr($stmt, 0, 0)) = $self->sql->select($self->{params}{merge}, $sql_fields);
 	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	$self->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);	
 	return $sth;
 }
@@ -190,21 +207,8 @@ sub _get_fields_where_prepex {
 # getting records
 ################################################################################
 
-# returns a record objects for each matching row
-sub get_records_where {
-	my ($self, $where, $order) = @_;
-	
-	return map { $self->box($_) }
-		$self->get_fields_where([$self->fields], $where, $order);
-}
-
-# returns an iterator that generates a record object for each matching row
-sub get_records_where_i {
-	my ($self, $where, $order) = @_;
-	
-	return imap { $self->box($_) }
-		$self->get_fields_where_i([$self->fields], $where, $order);
-}
+*get_records_where = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where;
+*get_records_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where_i;
 
 ################################################################################
 # compatibility methods for old API
@@ -226,16 +230,10 @@ sub exists {
 }
 
 # oldapi
-sub get {
-	my ($self, @keyparts) = @_;
-	return ( $self->get_records_where($self->keyparts_to_where(@keyparts)) )[0];
-}
+*get = *WeBWorK::DB::Schema::NewSQL::Std::get;
 
 # oldapi
-sub gets {
-	my ($self, @keypartsRefList) = @_;
-	return map { $self->get_records_where($self->keyparts_to_where(@$_)) } @keypartsRefList;
-}
+*gets = *WeBWorK::DB::Schema::NewSQL::Std::gets;
 
 # oldapi
 sub add {
@@ -255,5 +253,7 @@ sub delete {
 ################################################################################
 # utility methods
 ################################################################################
+
+*sql = *WeBWorK::DB::Schema::NewSQL::Std::sql;
 
 1;
