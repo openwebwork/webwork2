@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.7 2006/10/02 16:32:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.1 2006/10/05 19:43:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -198,6 +198,7 @@ sub count_where {
 	
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, "COUNT(*)", $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
+	$self->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);
 	my ($result) = $sth->fetchrow_array;
 	$sth->finish;
@@ -248,6 +249,7 @@ sub _get_fields_where_prepex {
 	
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, $fields, $where, $order);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	$self->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);	
 	return $sth;
 }
@@ -299,24 +301,24 @@ sub insert_fields {
 	my ($sth, @order) = $self->_insert_fields_prep($fields);
 	my @results;
 	foreach my $row (@$rows) {
-		push @results, $sth->execute(@$row[@order]);
+		my @bind_vals = @$row[@order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
 }
 
 # returns the number of rows affected by inserting each row
-use Data::Dumper;
 sub insert_fields_i {
 	my ($self, $fields, $rows_i) = @_;
 	
 	my ($sth, @order) = $self->_insert_fields_prep($fields);
 	my @results;
-	print STDERR Dumper(\@order);
 	until ($rows_i->is_exhausted) {
-		my @row = @{$rows_i->value}[@order];
-		print STDERR Dumper(\@row);
-		push @results, $sth->execute(@row);
+		my @bind_vals = @{$rows_i->value}[@order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
@@ -364,6 +366,7 @@ sub update_where {
 	
 	my ($stmt, @bind_vals) = $self->sql->update($self->table, $fieldvals, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
+	$self->debug_stmt($sth, @bind_vals);
 	my $result = $sth->execute(@bind_vals);
 	$sth->finish;
 	
@@ -386,7 +389,9 @@ sub update_fields {
 	my ($sth, $val_order, $where_order) = $self->_update_fields_prep($fields);
 	my @results;
 	foreach my $row (@$rows) {
-		push @results, $sth->execute(@$row[@$val_order,@$where_order]);
+		my @bind_vals = @$row[@$val_order,@$where_order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
@@ -399,7 +404,9 @@ sub update_fields_i {
 	my ($sth, $val_order, $where_order) = $self->_update_fields_prep($fields);
 	my @results;
 	until ($rows_i->is_exhausted) {
-		push @results, $sth->execute(@{$rows_i->value}[@$val_order,@$where_order]);
+		my @bind_vals = @{$rows_i->value}[@$val_order,@$where_order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
@@ -449,6 +456,7 @@ sub delete_where {
 	
 	my ($stmt, @bind_vals) = $self->sql->delete($self->table, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
+	$self->debug_stmt($sth, @bind_vals);
 	my $result = $sth->execute(@bind_vals);
 	$sth->finish;
 	
@@ -468,6 +476,9 @@ sub delete_where {
 # together the ANDed keyfields for each record to delete. This has the potential
 # to accumulate a huge stmt string, but it's just one execute.
 
+# this doesn't support NULL in keyfields, because the WHERE clause is
+# constructed differently for NULL and non-NULL values. use delete_where.
+
 # returns the number of rows affected by deleting each row
 sub delete_fields {
 	my ($self, $fields, $rows) = @_;
@@ -475,7 +486,9 @@ sub delete_fields {
 	my ($sth, @order) = $self->_delete_fields_prep($fields);
 	my @results;
 	foreach my $row (@$rows) {
-		push @results, $sth->execute(@$row[@order]);
+		my @bind_vals = @$row[@order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
@@ -489,7 +502,9 @@ sub delete_fields_i {
 	
 	my @results;
 	until ($rows_i->is_exhausted) {
-		push @results, $sth->execute(@{$rows_i->value}[@order]);
+		my @bind_vals = @{$rows_i->value}[@order];
+		$self->debug_stmt($sth, @bind_vals);
+		push @results, $sth->execute(@bind_vals);
 	}
 	$sth->finish;
 	return @results;
@@ -579,7 +594,8 @@ sub put {
 # oldapi
 sub delete {
 	my ($self, @keyparts) = @_;
-	return ( $self->delete_fields([$self->keyfields], [\@keyparts]) )[0];
+	#return ( $self->delete_fields([$self->keyfields], [\@keyparts]) )[0];
+	return $self->delete_where($self->keyparts_to_where(@keyparts));
 }
 
 ################################################################################
