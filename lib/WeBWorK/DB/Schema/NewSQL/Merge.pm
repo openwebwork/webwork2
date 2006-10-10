@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.1 2006/10/05 19:43:33 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.2 2006/10/06 20:20:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -115,7 +115,6 @@ sub merge_init {
 	$self->{pri} = $pri;
 	$self->{sql_table_names} = \%sql_table_names;
 	$self->{sql_field_names} = \%sql_field_names;
-	#$self->{sql_tablelist} = [@sql_table_names{@merge_tables}];
 	$self->{sql_fieldexprs} = \%sql_fieldexprs;
 	$self->{sql_whereprefix} = $sql_whereprefix;
 }
@@ -162,19 +161,6 @@ sub sql_init {
 	);
 }
 
-=for comment
-
-SELECT
-sam_course_set_user.user_id,sam_course_set_user.set_id,sam_course_set_user.psvn,
-COALESCE(sam_course_set.set_header,sam_course_set_user.set_header),COALESCE(
-sam_course_set.hardcopy_header,sam_course_set_user.hardcopy_header) FROM
-sam_course_set, sam_course_set_user where
-sam_course_set_user.set_id=sam_course_set.set_id and
-sam_course_set_user.set_id='imagegen_test' and
-sam_course_set_user.user_id='sam';
-
-=cut
-
 ################################################################################
 # lowlevel get
 ################################################################################
@@ -214,41 +200,8 @@ sub _get_fields_where_prepex {
 # compatibility methods for old API
 ################################################################################
 
-# oldapi
-sub count {
-	croak "read-only table";
-}
-
-# oldapi
-sub list {
-	croak "read-only table";
-}
-
-# oldapi
-sub exists {
-	croak "read-only table";
-}
-
-# oldapi
 *get = *WeBWorK::DB::Schema::NewSQL::Std::get;
-
-# oldapi
 *gets = *WeBWorK::DB::Schema::NewSQL::Std::gets;
-
-# oldapi
-sub add {
-	croak "read-only table";
-}
-
-# oldapi
-sub put {
-	croak "read-only table";
-}
-
-# oldapi
-sub delete {
-	croak "read-only table";
-}
 
 ################################################################################
 # utility methods
