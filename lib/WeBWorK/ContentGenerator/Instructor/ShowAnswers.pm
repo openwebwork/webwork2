@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.18 2006/01/25 23:13:53 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.19 2006/07/12 01:19:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,7 +98,7 @@ sub body {
 		$setName = "[^|]*"       if ($setName eq ""  or $setName eq "*");
 		$problemNumber = "[^|]*" if ($problemNumber eq "" or $problemNumber eq "*");
 		
-		my $pattern = "^[[^]]*]|$studentUser\\|$setName\\|$problemNumber\\|";
+		my $pattern = "^[^|]*\\|$studentUser\\|$setName\\|$problemNumber\\|";
 		
 		if (-e $answer_log) {
 			if (open my $log, $answer_log) {
