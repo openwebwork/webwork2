@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.2 2006/10/06 04:35:05 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.3 2006/10/06 20:19:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,6 @@ use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-#use Devel::XRay only => qw/create_table rename_table delete_table count_where exists_where get_fields_where get_fields_where_i list_where list_where_i get_records_where get_records_where_i insert_fields insert_fields_i insert_records insert_records_i update_where update_fields update_fields_i update_records update_records_i delete_where delete_fields delete_fields_i delete_records delete_records_i count list exists get gets add put delete/;
 
 =head1 SUPPORTED PARAMS
 
@@ -55,8 +54,16 @@ naming requirements.
 ################################################################################
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
-	my $self = $proto->SUPER::new($db, $driver, $table, $record, $params);
+	my $proto = shift;
+	my $self = $proto->SUPER::new(@_);
+	
+	$self->sql_init;
+	
+	return $self;
+}
+
+sub sql_init {
+	my $self = shift;
 	
 	# transformation functions for table and field names: these allow us to pass
 	# the WeBWorK table/field names to SQL::Abstract, and have it translate them
@@ -64,7 +71,7 @@ sub new {
 	# (Without this, it would be hard to translate field names in WHERE
 	# structures, since they're so convoluted.)
 	my ($transform_table, $transform_field);
-	if (defined $params->{tableOverride}) {
+	if (defined $self->{params}{tableOverride}) {
 		$transform_table = sub {
 			my $label = shift;
 			if ($label eq $self->{table}) {
@@ -75,7 +82,7 @@ sub new {
 			}
 		};
 	}
-	if (defined $params->{fieldOverride}) {
+	if (defined $self->{params}{fieldOverride}) {
 		$transform_field = sub {
 			my $label = shift;
 			return defined $self->{params}{fieldOverride}{$label}
@@ -91,8 +98,6 @@ sub new {
 		transform_table => $transform_table,
 		transform_field => $transform_field,
 	);
-	
-	return $self;
 }
 
 ################################################################################
