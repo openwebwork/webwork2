@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.8 2006/10/05 19:42:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.9 2006/10/06 04:35:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -136,6 +136,56 @@ sub debug_stmt {
 	my $stmt = $sth->{Statement};
 	@bind_vals = undefstr("#UNDEF#", @bind_vals);
 	print STDERR "$subroutine: |$stmt| => |@bind_vals|\n";
+}
+
+################################################################################
+# null implementations (to provide slightly nicer error messages)
+################################################################################
+
+our %API;
+@API{qw/
+	create_table
+	rename_table
+	delete_table
+	count_where
+	exists_where
+	get_fields_where
+	get_fields_where_i
+	list_where
+	list_where_i
+	get_records_where
+	get_records_where_i
+	insert_fields
+	insert_fields_i
+	insert_records
+	insert_records_i
+	update_where
+	update_fields
+	update_fields_i
+	update_records
+	update_records_i
+	delete_where
+	delete_fields
+	delete_fields_i
+	delete_records
+	delete_records_i
+	count
+	list
+	exists
+	get
+	gets
+	add
+	put
+	delete
+/} = ();
+
+sub AUTOLOAD {
+	our $AUTOLOAD =~ /(.*)::(.*)/;
+	if (exists $API{$2}) {
+		croak sprintf("%s does not implement &%s", $1, $2);
+	} else {
+		croak sprintf("Undefined subroutine &%s called", $AUTOLOAD);
+	}
 }
 
 1;
