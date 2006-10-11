@@ -28,7 +28,7 @@ use WeBWorK::PG::Local;
 use WeBWorK::DB;
 use WeBWorK::Constants;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
-use WeBWorK::DB::Utils qw(global2user user2global findDefaults);
+use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
 use WeBWorK::PG::ImageGenerator;
