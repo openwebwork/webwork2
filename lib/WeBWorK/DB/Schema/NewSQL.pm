@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.9 2006/10/06 04:35:03 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.10 2006/10/10 18:15:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,9 +27,29 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use WeBWorK::Utils qw/undefstr/;
+use WeBWorK::DB::Utils qw/make_vsetID/;
 
 use constant TABLES => qw(*);
 use constant STYLE  => "dbi";
+
+################################################################################
+# where clauses (not sure if this is where these belong...)
+################################################################################
+
+sub where_set_id_eq {shift; {set_id=>shift} }
+sub where_set_id_eq_problem_id_eq {shift; {set_id=>shift,problem_id=>shift} }
+sub where_user_id_eq_set_id_eq {shift; {user_id=>shift,set_id=>shift} }
+
+#sub where_section {shift; {section=>shift} }
+#sub where_recitation {shift; {recitation=>shift} }
+
+# VERSIONING
+sub where_nonversionedset_user_id_eq
+	{shift; {user_id=>shift,set_id=>{NOT_LIKE=>make_vsetID("%","%")}} }
+sub where_versionedset_user_id_eq
+	{shift; {user_id=>shift,set_id=>{LIKE=>make_vsetID("%","%")}} }
+sub where_versionedset_user_id_eq_set_id_eq
+	{shift; {user_id=>shift,setID=>{LIKE=>make_vsetID(shift,"%")}} }
 
 ################################################################################
 # utility methods
@@ -82,12 +102,23 @@ sub unbox {
 	return \@result;
 }
 
+sub conv_where {
+	my ($self, $where) = @_;
+	if (ref $where eq "ARRAY") {
+		my ($clause, @args) = @$where;
+		my $func = "where_$clause";
+		croak "Unrecognized where clause '$clause'" unless $self->can($func);
+		return $self->$func(@args);
+	} else {
+		return $where;
+	}
+}
+
 sub keyparts_to_where {
 	my ($self, @keyparts) = @_;
 	
 	my $table = $self->{table};
 	my @keynames = $self->keyfields;
-	#croak "too many keyparts for table $table (need at most: @keynames)"
 	croak "got ", scalar @keyparts, " keyparts, expected at most ", scalar @keynames, " (@keynames) for table $table"
 		if @keyparts > @keynames;
 	

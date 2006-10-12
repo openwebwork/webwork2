@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.78 2006/09/29 19:37:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.81 2006/10/06 21:17:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,6 +98,8 @@ use warnings;
 use Carp;
 use Data::Dumper;
 use WeBWorK::DB::Schema;
+use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
+	grok_versionID_from_vsetID_sql/;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
 
@@ -655,7 +657,8 @@ sub countSetUsers { return scalar shift->listSetUsers(@_) }
 
 sub listSetUsers {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = {set_id=>$setID};
+	#my $where = {set_id=>$setID};
+	my $where = [set_id_eq => $setID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["user_id"], $where);
 	} else {
@@ -668,7 +671,8 @@ sub countUserSets { return scalar shift->listUserSets(@_) }
 sub listUserSets {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	# VERSIONING -- only list non-versioned sets
-	my $where = {user_id=>$userID, set_id=>{"NOT LIKE"=>make_vsetID("%","%")}};
+	#my $where = {user_id=>$userID, set_id=>{"NOT LIKE"=>make_vsetID("%","%")}};
+	my $where = [nonversionedset_user_id_eq => $userID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
 	} else {
@@ -739,7 +743,8 @@ sub countGlobalProblems { return scalar shift->listGlobalProblems(@_) }
 
 sub listGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	my $where = {set_id=>$setID};
+	#my $where = {set_id=>$setID};
+	my $where = [set_id_eq => $setID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem}->get_fields_where(["problem_id"], $where);
 	} else {
@@ -759,11 +764,12 @@ sub getGlobalProblems {
 
 sub getAllGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	return $self->{problem}->get_records_where({set_id=>$setID});
+	#my $where = {set_id=>$setID};
+	my $where = [set_id_eq => $setID];
+	return $self->{problem}->get_records_where($where);
 }
 
-sub addGlobalProblem {
-	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
+sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC:problem/);
 	
 	croak "addGlobalProblem: set ", $GlobalProblem->set_id, " not found"
 		unless $self->{set}->exists($GlobalProblem->set_id);
@@ -804,7 +810,8 @@ sub countProblemUsers { return scalar shift->listProblemUsers(@_) }
 
 sub listProblemUsers {
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
-	my $where = {set_id=>$setID, problem_id=>$problemID};
+	#my $where = {set_id=>$setID, problem_id=>$problemID};
+	my $where = [set_id_eq_problem_id_eq => $setID,$problemID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem_user}->get_fields_where(["user_id"], $where);
 	} else {
@@ -816,7 +823,8 @@ sub countUserProblems { return scalar shift->listUserProblems(@_) }
 
 sub listUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	my $where = {user_id=>$userID, set_id=>$setID};
+	#my $where = {user_id=>$userID, set_id=>$setID};
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem_user}->get_fields_where(["problem_id"], $where);
 	} else {
@@ -836,7 +844,9 @@ sub getUserProblems {
 
 sub getAllUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	return $self->{problem_user}->get_records_where({user_id=>$userID, set_id=>$setID});
+	#my $where = {user_id=>$userID, set_id=>$setID};
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	return $self->{problem_user}->get_records_where($where);
 }
 
 sub addUserProblem {
@@ -971,14 +981,18 @@ sub getMergedProblems {
 
 sub getAllMergedUserProblems_old {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	#my $where = {user_id=>$userID, set_id=>$setID};
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	my @userProblemIDs = $self->{problem_user}->get_fields_where([qw/user_id set_id problem_id/],
-		{user_id=>$userID, set_id=>$setID});
+		$where);
 	return $self->getMergedProblems(@userProblemIDs);
 }
 
 sub getAllMergedUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	return $self->{problem_merged}->get_records_where({user_id=>$userID, set_id=>$setID});
+	#my $where = {user_id=>$userID, set_id=>$setID};
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	return $self->{problem_merged}->get_records_where($where);
 }
 
 ################################################################################
@@ -989,7 +1003,8 @@ sub countUserSetVersions { return scalar shift->listUserSetVersions(@_) }
 
 sub listUserSetVersions {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("%","%")}};
+	#my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("%","%")}};
+	my $where = [versionedset_user_id_eq => $userID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
 	} else {
@@ -1003,7 +1018,9 @@ sub listUserSetVersions {
 #	   numbers
 sub getUserSetVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	return $self->{set_user}->get_records_where({user_id=>$userID,setID=>{"LIKE"=>make_vsetID($setID,"%")}});
+	#my $where = {user_id=>$userID,setID=>{"LIKE"=>make_vsetID($setID,"%")}};
+	my $where = [versionedset_user_id_eq_set_id_eq => $userID,$setID];
+	return $self->{set_user}->get_records_where($where);
 }
 
 sub addVersionedUserSet {
@@ -1082,7 +1099,8 @@ sub getUserSetVersionNumber {
 	# go away once we move versioned sets into their own table, which is hopefully going to happen
 	# before we want to support other RDBMSs.
 	my $field = "IFNULL(MAX(" . grok_versionID_from_vsetID_sql("set_id") . "+0),0)";
-	my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("$setID","%")}};
+	#my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("$setID","%")}};
+	my $where = [versionedset_user_id_eq_set_id_eq => $userID,$setID];
 	return ( $self->{set_user}->get_fields_where($field, $where) )[0]->[0];
 }
 
@@ -1366,31 +1384,6 @@ sub checkArgsRefList {
 	}
 	
 	return $self, @$items;
-}
-
-################################################################################
-# versioning utilities
-################################################################################
-
-sub make_vsetID {
-	my ($setID, $versionID) = @_;
-	return "$setID,$versionID";
-}
-
-sub grok_vsetID {
-	my ($vsetID) = @_;
-	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,(.*))?/;
-	return $setID, $versionID;
-}
-
-sub grok_setID_from_vsetID_sql {
-	my ($field) = @_;
-	return "SUBSTRING(`$field`,1,INSTR(`$field`,',v'))";
-}
-
-sub grok_versionID_from_vsetID_sql {
-	my ($field) = @_;
-	return "SUBSTRING(`$field`,INSTR(`$field`,',v')+2)";
 }
 
 1;
