@@ -171,14 +171,20 @@ sub sql_init {
 # helper, returns a prepared statement handle
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;
+	$where = $self->conv_where($where);
 	
 	# pull the requested fields out of $self->{sql_fieldexprs}
 	my $sql_fields = join(",", @{$self->{sql_fieldexprs}}{@$fields});
 	
-	# generate the WHERE clause separately, and then prepend $self->{sql_whereprefix}
+	# generate the WHERE clause separately
 	my ($stmt, @bind_vals) = $self->sql->where($where, $order);
+	
+	# prepend $self->{sql_whereprefix} (if there's no existing where clause, the
+	# s/// will fail and we'll fall add it -- note that $stmt might still
+	# contain an ORDER clause, which we need to preserve.)
 	my $where_prefix = $self->{sql_whereprefix};
-	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/;
+	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/
+		or $stmt = " WHERE $where_prefix $stmt";
 	
 	# instead of using $self->table, use the merge list
 	(substr($stmt, 0, 0)) = $self->sql->select($self->{params}{merge}, $sql_fields);

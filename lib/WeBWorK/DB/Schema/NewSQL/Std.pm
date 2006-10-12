@@ -29,6 +29,7 @@ use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
+use WeBWorK::Debug;
 
 =head1 SUPPORTED PARAMS
 
@@ -199,6 +200,7 @@ sub _delete_table_stmt {
 # returns the number of matching rows
 sub count_where {
 	my ($self, $where) = @_;
+	$where = $self->conv_where($where);
 	
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, "COUNT(*)", $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
@@ -250,6 +252,7 @@ sub get_fields_where_i {
 # helper, returns a prepared statement handle
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;
+	$where = $self->conv_where($where);
 	
 	my ($stmt, @bind_vals) = $self->sql->select($self->table, $fields, $where, $order);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
@@ -367,6 +370,7 @@ sub insert_records_i {
 # returns number of rows affected by update
 sub update_where {
 	my ($self, $fieldvals, $where) = @_;
+	$where = $self->conv_where($where);
 	
 	my ($stmt, @bind_vals) = $self->sql->update($self->table, $fieldvals, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
@@ -457,6 +461,7 @@ sub update_records_i {
 # returns number of rows affected by delete
 sub delete_where {
 	my ($self, $where) = @_;
+	$where = $self->conv_where($where);
 	
 	my ($stmt, @bind_vals) = $self->sql->delete($self->table, $where);
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
@@ -598,7 +603,6 @@ sub put {
 # oldapi
 sub delete {
 	my ($self, @keyparts) = @_;
-	#return ( $self->delete_fields([$self->keyfields], [\@keyparts]) )[0];
 	return $self->delete_where($self->keyparts_to_where(@keyparts));
 }
 
