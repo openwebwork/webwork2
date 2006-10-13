@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.2 2006/10/06 20:20:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.4 2006/10/12 22:02:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -194,6 +194,13 @@ sub _get_fields_where_prepex {
 	$sth->execute(@bind_vals);	
 	return $sth;
 }
+
+################################################################################
+# getting keyfields (a.k.a. listing)
+################################################################################
+
+*list_where = *WeBWorK::DB::Schema::NewSQL::Std::list_where;
+*list_where_i = *WeBWorK::DB::Schema::NewSQL::Std::list_where_i;
 
 ################################################################################
 # getting records

@@ -36,12 +36,15 @@ use constant STYLE  => "dbi";
 # where clauses (not sure if this is where these belong...)
 ################################################################################
 
+sub where_status_eq {shift; {status=>shift} }
+
+sub where_section_eq {shift; {section=>shift} }
+sub where_recitation_eq {shift; {recitation=>shift} }
+sub where_section_eq_recitation_eq {shift; {section=>shift,recitation=>shift} }
+
 sub where_set_id_eq {shift; {set_id=>shift} }
 sub where_set_id_eq_problem_id_eq {shift; {set_id=>shift,problem_id=>shift} }
 sub where_user_id_eq_set_id_eq {shift; {user_id=>shift,set_id=>shift} }
-
-#sub where_section {shift; {section=>shift} }
-#sub where_recitation {shift; {recitation=>shift} }
 
 # VERSIONING
 sub where_nonversionedset_user_id_eq
