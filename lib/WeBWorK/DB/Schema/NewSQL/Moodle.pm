@@ -78,6 +78,10 @@ sub new {
 # utility methods
 ################################################################################
 
+sub coursename {
+	return shift->{params}{courseName};
+}
+
 # all the tables that moodle can handle have a single keypart (user_id) so this
 # is somewhat easier that it might otherwise be :)
 sub keyparts_to_where {
