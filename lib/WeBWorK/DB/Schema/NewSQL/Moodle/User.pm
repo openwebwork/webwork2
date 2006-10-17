@@ -61,11 +61,11 @@ Status value to assign to non-deleted users.
 ################################################################################
 
 sub new {
-	my $proto = shift;
-	my $self = $proto->SUPER::new(@_);
+	my $self = shift->SUPER::new(@_);
 	
 	# generate subquery that returns the userid of each user "in" the course
-	$self->{userids_subquery} = [ $self->_userids_subquery($self->courseName) ];
+	#$self->{userids_subquery} = [ $self->_userids_subquery($self->courseName) ];
+	$self->{userids_subquery} = [ $self->_course_members_query(["id"]) ];
 	
 	return $self;
 }
@@ -340,7 +340,6 @@ sub _inner_select_stmt {
 	my $need_sec_rec = $match_section || $match_recitation || $asked_for_sec_rec;
 	
 	my @fields = @$fields; # webwork field names at this point, becomes CSV
-	#my @tables = $self->sql->_table("user"); # becomes CSV
 	my @joins;
 	my @where;
 	my @bind_vals;
@@ -361,23 +360,27 @@ sub _inner_select_stmt {
 		push @group_by, $self->sql->_quote("user.id");
 		
 		# join groups_members table
-		push @joins, " JOIN ".$self->sql->_table("groups_members")
+		my ($groups_stmt, @groups_bind_vals) = $self->_course_groups_query;
+		push @joins, " LEFT OUTER JOIN ".$self->sql->_table("groups_members")
 			. " ON " . $self->sql->_quote("groups_members.userid")
-			. "=" . $self->sql->_quote("user.id");
+			. "=" . $self->sql->_quote("user.id")
+			. " AND " . $self->sql->_quote("groups_members.groupid")
+			. " IN ( $groups_stmt )";
+		push @bind_vals, @groups_bind_vals;
 		
 		# join groups table
-		push @joins, " JOIN ".$self->sql->_table("groups")
+		push @joins, " LEFT OUTER JOIN ".$self->sql->_table("groups")
 			. " ON " . $self->sql->_quote("groups_members.groupid")
 			. "=" . $self->sql->_quote("groups.id");
 		
 		# join bridge table (to restrict us to groups in this course)
-		push @joins, " JOIN ".$self->sql->_table($self->MOODLE_WEBWORK_BRIDGE_TABLE)
-			. " ON " . $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".course")
-			. "=" . $self->sql->_quote("groups.courseid");
+		#push @joins, " LEFT OUTER JOIN ".$self->sql->_table($self->MOODLE_WEBWORK_BRIDGE_TABLE)
+		#	. " ON " . $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".course")
+		#	. "=" . $self->sql->_quote("groups.courseid");
 		
 		# restrict bridges to this course
-		push @where, $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".coursename") . "=?";
-		push @bind_vals, $self->courseName;
+		#push @where, $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".coursename") . "=?";
+		#push @bind_vals, $self->courseName;
 		
 		# get where clause for section/recitation matching, append it to main where clause
 		my ($sec_rec_where_clause, @sec_rec_bind_vals) = $self->_sec_rec_where($match_section,
