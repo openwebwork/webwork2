@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.3 2006/10/06 20:19:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.5 2006/10/12 22:02:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -55,8 +55,7 @@ naming requirements.
 ################################################################################
 
 sub new {
-	my $proto = shift;
-	my $self = $proto->SUPER::new(@_);
+	my $self = shift->SUPER::new(@_);
 	
 	$self->sql_init;
 	
