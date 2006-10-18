@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.3e",  // change this if you edit the file, but don't edit this file
+  version: "3.3g",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -87,7 +87,7 @@ window.jsMath = {
     '.typeset span':      'text-align: left; border:0px; margin:0px; padding:0px',
     
     '.typeset .normal':   'font-family: serif; font-style: normal; font-weight: normal',
-
+    
     '.typeset .size0':    'font-size: 50%',  // tiny (\scriptscriptsize)
     '.typeset .size1':    'font-size: 60%',  //       (50% of \large for consistency)
     '.typeset .size2':    'font-size: 70%',  // scriptsize
@@ -125,7 +125,9 @@ window.jsMath = {
                                  + 'z-index:103; width:auto;',
     '#jsMath_panel .disabled': 'color:#888888',
     '#jsMath_panel .infoLink': 'font-size:85%',
-    '#jsMath_panel td, tr, table': 'border:0px; padding:0px; margin:0px;',
+    '#jsMath_panel td':        'border:0px; padding:0px; margin:0px;',
+    '#jsMath_panel tr':        'border:0px; padding:0px; margin:0px;',
+    '#jsMath_panel table':     'border:0px; padding:0px; margin:0px;',
     '#jsMath_button':          'position:fixed; bottom:1px; right:2px; background-color:white; '
                                  + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
                                  + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
@@ -1160,6 +1162,8 @@ jsMath.Browser = {
         // MSIE needs this NOT to be inline-block
         jsMath.styles['.typeset .spacer'] =
               jsMath.styles['.typeset .spacer'].replace(/display:inline-block/,'');
+        // MSIE can't insert DIV's into text nodes, so tex2math must use SPAN's to fake DIV's
+        jsMath.styles['.tex2math_div'] = jsMath.styles['div.typeset'] + '; width: 100%; display: inline-block';
         // MSIE will rescale images if the DPIs differ
         if (screen.deviceXDPI && screen.logicalXDPI 
              && screen.deviceXDPI != screen.logicalXDPI) {
@@ -4413,6 +4417,7 @@ jsMath.Package(jsMath.Parser,{
     nwarrow:          [3,2,0x2D],
     swarrow:          [3,2,0x2E],
 
+    minuschar:  [3,2,0x00], // for longmapsto
     hbarchar:   [0,0,0x16], // for \hbar
     lhook:      [3,1,0x2C],
     rhook:      [3,1,0x2D],
@@ -4589,7 +4594,7 @@ jsMath.Package(jsMath.Parser,{
     Relbar:             ['Macro','\\mathrel='],
     bowtie:             ['Macro','\\mathrel\\triangleright\\joinrel\\mathrel\\triangleleft'],
     models:             ['Macro','\\mathrel|\\joinrel='],
-    mapsto:             ['Macro','\\mapstochar\\rightarrow'],
+    mapsto:             ['Macro','\\mathrel{\\mapstochar\\rightarrow}'],
     rightleftharpoons:  ['Macro','\\vcenter{\\mathrel{\\rlap{\\raise3mu{\\rightharpoonup}}}\\leftharpoondown}'],
     hookrightarrow:     ['Macro','\\lhook\\joinrel\\rightarrow'],
     hookleftarrow:      ['Macro','\\leftarrow\\joinrel\\rhook'],
@@ -4597,7 +4602,7 @@ jsMath.Package(jsMath.Parser,{
     longrightarrow:     ['Macro','\\relbar\\joinrel\\rightarrow'],
     longleftarrow:      ['Macro','\\leftarrow\\joinrel\\relbar'],
     Longleftarrow:      ['Macro','\\Leftarrow\\joinrel\\Relbar'],
-    longmapsto:         ['Macro','\\mapstochar\\char{cmsy10}{0}\\joinrel\\rightarrow'],
+    longmapsto:         ['Macro','\\mathrel{\\mapstochar\\minuschar\\joinrel\\rightarrow}'],
     longleftrightarrow: ['Macro','\\leftarrow\\joinrel\\rightarrow'],
     Longleftrightarrow: ['Macro','\\Leftarrow\\joinrel\\Rightarrow'],
     iff:                ['Macro','\\;\\Longleftrightarrow\\;'],

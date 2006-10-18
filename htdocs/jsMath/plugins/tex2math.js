@@ -232,6 +232,7 @@ jsMath.Add(jsMath.tex2math,{
           if (this.search.end == null && this.fixEscapedDollars) {
             element.nodeValue = element.nodeValue.substr(0,index)
                               + element.nodeValue.substr(index+1);
+            this.pattern.lastIndex--;
           }
           break;
       }
@@ -279,7 +280,6 @@ jsMath.Add(jsMath.tex2math,{
    *  SPAN or DIV element marked as CLASS="math".
    */
   EncloseMath: function (element) {
-    if (this.callback) {if (!this.callback()) {return null}}
     var search = this.search;
     var close = search.close;
     if (search.cpos == close.length) {close = close.nextSibling}
@@ -337,14 +337,8 @@ jsMath.Add(jsMath.tex2math,{
     tag.className = "math";
     text = text.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     if (type == 'div') {
-      tag.className = "";
-      tag.style.width = "100%"; tag.style.margin = jsMath.tex2math.margin;
-      tag.style.display = "inline-block";
+      tag.className = "tex2math_div";
       text = '<span class="math">\\displaystyle{'+text+'}</span>';
-      if (jsMath.tex2math.center) {
-        tag.style.textAlign = "center";
-        text = '<span style="text-align:left">'+text+'</span>'
-      }
     }
     tag.innerHTML = text;
     return tag;
@@ -353,28 +347,16 @@ jsMath.Add(jsMath.tex2math,{
   /*******************************************************************/
 
   Init: function () {
-
-    if (this.inited || !jsMath.browser) return
+    if (!jsMath.browser && document.all && !window.opera) {jsMath.browser = 'MSIE'}
+    if (this.inited || !jsMath.browser) return;
     /*
      *  MSIE can't handle the DIV's properly, so we need to do it by
      *  hand.  Look up the style for typeset math to see if the user
      *  has changed it, and get whether it is centered or indented
      *  so we can mirror that using a SPAN
      */
-    if (jsMath.browser == 'MSIE' && navigator.platform == 'Win32') {
-      this.createMathTag = this.MSIEcreateMathTag;
-      this.margin = ""; this.center = 0;
-      for (var i = 0; i < jsMath.document.styleSheets.length; i++) {
-        var rules = jsMath.document.styleSheets[i].cssRules;
-        if (!rules) {rules = jsMath.document.styleSheets[i].rules}
-        for (var j = 0; j < rules.length; j++) {
-          if (rules[j].selectorText.toLowerCase() == 'div.typeset') {
-            if (rules[j].style.margin != "") {this.margin = rules[j].style.margin}
-            this.center = (rules[j].style.textAlign == 'center');
-          }
-        }
-      }
-    }
+    if (jsMath.browser == 'MSIE' && navigator.platform == 'Win32')
+      {this.createMathTag = this.MSIEcreateMathTag}
     this.inited = 1;
   },
   
