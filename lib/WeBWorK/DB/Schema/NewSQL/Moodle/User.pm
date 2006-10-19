@@ -26,6 +26,7 @@ WeBWorK::DB::Schema::NewSQL::Moodle::User - Enumerates users from Moodle.
 use strict;
 use warnings;
 use Carp qw(croak);
+use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 # only support the "user" table (this overrides the version in NewSQL.pm)
 use constant TABLES => qw(user);
@@ -60,22 +61,18 @@ Status value to assign to non-deleted users.
 # constructor for Moodle-specific behavior
 ################################################################################
 
-sub new {
-	my $self = shift->SUPER::new(@_);
-	
-	# generate subquery that returns the userid of each user "in" the course
-	#$self->{userids_subquery} = [ $self->_userids_subquery($self->courseName) ];
-	$self->{userids_subquery} = [ $self->_course_members_query(["id"]) ];
-	
-	return $self;
-}
+#sub new {
+#	my $self = shift->SUPER::new(@_);
+#	
+#	return $self;
+#}
 
 ################################################################################
 # where clauses
 ################################################################################
 
 sub where_status_eq {
-	my ($self, $status) = @_;
+	my ($self, $flags, $status) = @_;
 	if (defined $status) {
 		if (grep { $_ eq $status } @{$self->{params}{statusDeletedAbbrevs}}) {
 			return {deleted=>{">",0}};
@@ -88,70 +85,32 @@ sub where_status_eq {
 }
 
 sub where_section_eq {
-	my ($self, $section) = @_;
-	our %flags;
+	my ($self, $flags, $section) = @_;
 	if (defined $section) {
-		$flags{match_section} = 1;
-		$flags{match_section_value} = $section;
+		$flags->{match_section} = 1;
+		$flags->{match_section_value} = $section;
 	} else {
-		$flags{match_null_section} = 1;
+		$flags->{match_null_section} = 1;
 	}
 	return {};
 }
 
 sub where_recitation_eq {
-	my ($self, $recitation) = @_;
-	our %flags;
+	my ($self, $flags, $recitation) = @_;
 	if (defined $recitation) {
-		$flags{match_recitation} = 1;
-		$flags{match_recitation_value} = $recitation;
+		$flags->{match_recitation} = 1;
+		$flags->{match_recitation_value} = $recitation;
 	} else {
-		$flags{match_null_recitation} = 1;
+		$flags->{match_null_recitation} = 1;
 	}
 	return {};
 }
 
 sub where_section_eq_recitation_eq {
-	my $self = shift;
-	$self->where_section(shift);
-	$self->where_recitation(shift);
+	my ($self, $flags, $section, $recitation) = @_;
+	$self->where_section($flags, $section);
+	$self->where_recitation($flags, $recitation);
 	return {};
-}
-
-################################################################################
-# list of users in this course
-################################################################################
-
-sub _per_course_userids_subquery {
-	my ($self, $type) = @_;
-	
-	my $tables = ["user_$type", $self->MOODLE_WEBWORK_BRIDGE_TABLE];
-	my $fields = ["user_$type.userid"];
-	my $where = $self->sql->_quote("wwassignment_bridge.course")
-		."=".$self->sql->_quote("user_$type.course")
-		." AND ".$self->sql->_quote("wwassignment_bridge.coursename")
-		."=?";
-	my $stmt = $self->sql->select($tables, $fields, $where);
-}
-
-sub _all_course_userids_subquery {
-	my ($self, $type) = @_;
-	
-	my $tables = ["user_$type"];
-	my $fields = ["user_$type.userid"];
-	my $stmt = $self->sql->select($tables, $fields);
-}
-
-sub _userids_subquery {
-	my ($self, $coursename) = @_;
-	
-	my $stmt = join(" UNION ",
-		$self->_per_course_userids_subquery("students"),
-		$self->_per_course_userids_subquery("teachers"),
-		$self->_all_course_userids_subquery("admins"),
-	);
-	my @bind_vals = ($coursename)x2;
-	return $stmt, @bind_vals;
 }
 
 ################################################################################
@@ -312,8 +271,10 @@ sub _inner_select_stmt {
 	$fields = [@$fields] if ref $fields;
 	$order = [@$order] if ref $order;
 	
-	local our %flags;
-	$where = $self->conv_where($where);
+	#warn "User::_inner_select_stmt: where=", Dumper($where), "\n";
+	($where, my $flags) = $self->conv_where($where);
+	#warn "User::_inner_select_stmt: where=", Dumper($where), "\n";
+	#warn "User::_inner_select_stmt: flags=", Dumper($flags), "\n";
 	# flags:
 	#   match_section - true if we need to match a specific section
 	#   match_section_value - specific section to match
@@ -321,35 +282,35 @@ sub _inner_select_stmt {
 	#   match_recitation - true if we need to match a specific recitation
 	#   match_recitation_value - specific recitation to match
 	#   match_null_recitation - true if we need to match users with no recitation
-	#use Data::Dumper;
-	#print STDERR Dumper(\%flags);
 	
 	# this modifies $fields and $order in place
 	$self->_conv_order_ww2mdl($fields, $order);
 	
 	my ($match_section, $match_recitation) = ("")x2;
-	$match_section = "specific" if $flags{match_section};
-	$match_section = "none" if $flags{match_null_section};
-	$match_recitation = "specific" if $flags{match_recitation};
-	$match_recitation = "none" if $flags{match_null_recitation};
+	$match_section = "specific" if $flags->{match_section};
+	$match_section = "none" if $flags->{match_null_section};
+	$match_recitation = "specific" if $flags->{match_recitation};
+	$match_recitation = "none" if $flags->{match_null_recitation};
 	
-	my $match_section_value = $flags{match_section_value};
-	my $match_recitation_value = $flags{match_recitation_value};
+	my $match_section_value = $flags->{match_section_value};
+	my $match_recitation_value = $flags->{match_recitation_value};
 	
 	my $asked_for_sec_rec = grep { /^(section|recitation)$/ } @$fields;
 	my $need_sec_rec = $match_section || $match_recitation || $asked_for_sec_rec;
 	
 	my @fields = @$fields; # webwork field names at this point, becomes CSV
 	my @joins;
+	my @join_bind_vals;
 	my @where;
-	my @bind_vals;
+	my @where_bind_vals;
 	my @group_by; # becomes CSV
 	my @having; # gets ANDed together
 	
 	# prepend the "id IN ( userids subquery )" part and bind values
-	my ($sub_stmt, @sub_bind_vals) = @{$self->{userids_subquery}};
+	#my ($sub_stmt, @sub_bind_vals) = @{$self->{userids_subquery}};
+	my ($sub_stmt, @sub_bind_vals) = $self->_course_members_query(["id"], $flags);
 	push @where, $self->sql->_quote("user.id") . " IN ( $sub_stmt )";
-	push @bind_vals, @sub_bind_vals;
+	push @where_bind_vals, @sub_bind_vals;
 	
 	if ($need_sec_rec) {
 		# add to fields list if they're not there already
@@ -366,42 +327,33 @@ sub _inner_select_stmt {
 			. "=" . $self->sql->_quote("user.id")
 			. " AND " . $self->sql->_quote("groups_members.groupid")
 			. " IN ( $groups_stmt )";
-		push @bind_vals, @groups_bind_vals;
+		push @join_bind_vals, @groups_bind_vals;
 		
 		# join groups table
 		push @joins, " LEFT OUTER JOIN ".$self->sql->_table("groups")
 			. " ON " . $self->sql->_quote("groups_members.groupid")
 			. "=" . $self->sql->_quote("groups.id");
 		
-		# join bridge table (to restrict us to groups in this course)
-		#push @joins, " LEFT OUTER JOIN ".$self->sql->_table($self->MOODLE_WEBWORK_BRIDGE_TABLE)
-		#	. " ON " . $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".course")
-		#	. "=" . $self->sql->_quote("groups.courseid");
-		
-		# restrict bridges to this course
-		#push @where, $self->sql->_quote($self->MOODLE_WEBWORK_BRIDGE_TABLE.".coursename") . "=?";
-		#push @bind_vals, $self->courseName;
-		
 		# get where clause for section/recitation matching, append it to main where clause
 		my ($sec_rec_where_clause, @sec_rec_bind_vals) = $self->_sec_rec_where($match_section,
 			$match_recitation, $match_section_value, $match_recitation_value);
-		#print STDERR Dumper(\@sec_rec_bind_vals);
 		if (defined $sec_rec_where_clause) {
 			push @where, $sec_rec_where_clause;
-			push @bind_vals, @sec_rec_bind_vals;
+			push @where_bind_vals, @sec_rec_bind_vals;
 		}
 		
 		# get having clause for section/recitation matching, append it to main having clause
 		push @having, $self->_sec_rec_having($match_section, $match_recitation);
 	}
 	
-	my ($base_where_clause, @base_bind_vals) = $self->sql->where($where, $order);
-	$base_where_clause =~ s/(\bORDER BY\b.*)//;
-	my $order_by_clause = defined $1 ? $1 : "";
-	$base_where_clause =~ s/\bWHERE\b//; # annoying
-	if ($base_where_clause =~ /\S/) {
+	#my ($base_where_clause, @base_bind_vals) = $self->sql->where($where, $order);
+	#$base_where_clause =~ s/(\bORDER BY\b.*)//;
+	#my $order_by_clause = defined $1 ? $1 : "";
+	#$base_where_clause =~ s/\bWHERE\b//; # annoying
+	my ($base_where_clause, @base_bind_vals) = $self->sql->_recurse_where($where) if $where;
+	if (defined $base_where_clause and $base_where_clause =~ /\S/) {
 		push @where, $base_where_clause;
-		push @bind_vals, @base_bind_vals;
+		push @where_bind_vals, @base_bind_vals;
 	}
 	my $where_clause = @where ? "WHERE " . join(" AND ", @where) : "";
 	
@@ -412,25 +364,20 @@ sub _inner_select_stmt {
 	my $join_clause = join(" ", @joins);
 	my $group_by_clause = @group_by ? "GROUP BY " . join(",", @group_by) : "";
 	my $having_clause = @having ? "HAVING " . join(" AND ", @having) : "";
+	my $order_by_clause = $order ? $self->sql->_order_by($order) : "";
 	
-	# make sure everything's defined
-	#{
-	#	my $junk;
-	#	$junk = "$fields_clause";
-	#	$junk = "table";
-	#	$junk = "$join_clause";
-	#	$junk = "$where_clause";
-	#	$junk = "$group_by_clause";
-	#	$junk = "$having_clause";
-	#	$junk = "$order_by_clause";
-	#}
+	#warn "fields_clause=$fields_clause\n";
+	#warn "table=$table\n";
+	#warn "join_clause=$join_clause\n";
+	#warn "join_bind_vals=@join_bind_vals\n";
+	#warn "where_clause=$where_clause\n";
+	#warn "where_bind_vals=@where_bind_vals\n";
+	#warn "group_by_clause=$group_by_clause\n";
+	#warn "having_clause=$having_clause\n";
+	#warn "order_by_clause=$order_by_clause\n";
 	
 	my $stmt = "SELECT $fields_clause FROM $table $join_clause $where_clause $group_by_clause $having_clause $order_by_clause";
-	
-	# DEBUG
-	#$stmt =~ s/\?/$self->dbh->quote(shift @bind_vals)/eg;
-	#return "$stmt;";
-	# END DEBUG
+	my @bind_vals = (@join_bind_vals, @where_bind_vals);
 	
 	return $stmt, @bind_vals;
 }
@@ -443,6 +390,7 @@ sub _inner_select_stmt {
 sub count_where {
 	my ($self, $where) = @_;
 	
+	#warn "BEGIN: WeBWorK::DB::Schema::Moodle::User::count_where\n";
 	my ($inner_stmt, @bind_vals) = $self->_inner_select_stmt([$self->keyfields], $where);
 	my $stmt = "SELECT COUNT(*) FROM ( $inner_stmt ) AS InnerSelect";
 	
@@ -455,19 +403,15 @@ sub count_where {
 	return $result;
 }
 
-*exists_where = *WeBWorK::DB::Schema::NewSQL::Std::exists_where;
-
 ################################################################################
 # lowlevel get
 ################################################################################
-
-*get_fields_where = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where;
-*get_fields_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where_i;
 
 # helper, returns a prepared statement handle
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;
 	
+	#warn "BEGIN: WeBWorK::DB::Schema::Moodle::User::_get_fields_where_prepex\n";
 	my ($inner_stmt, @bind_vals) = $self->_inner_select_stmt($fields, $where, $order);
 	my $stmt = $self->sql->select("", $fields);
 	$stmt =~ s/(?<=FROM).*//;
@@ -478,26 +422,5 @@ sub _get_fields_where_prepex {
 	$sth->execute(@bind_vals);	
 	return $sth;
 }
-
-################################################################################
-# getting keyfields (a.k.a. listing)
-################################################################################
-
-*list_where = *WeBWorK::DB::Schema::NewSQL::Std::list_where;
-*list_where_i = *WeBWorK::DB::Schema::NewSQL::Std::list_where_i;
-
-################################################################################
-# getting records
-################################################################################
-
-*get_records_where = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where;
-*get_records_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where_i;
-
-################################################################################
-# compatibility methods for old API
-################################################################################
-
-*get = *WeBWorK::DB::Schema::NewSQL::Std::get;
-*gets = *WeBWorK::DB::Schema::NewSQL::Std::gets;
 
 1;

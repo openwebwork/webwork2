@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.12 2006/10/13 20:37:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.13 2006/10/17 23:38:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,23 +36,86 @@ use constant STYLE  => "dbi";
 # where clauses (not sure if this is where these belong...)
 ################################################################################
 
-sub where_status_eq {shift; {status=>shift} }
+sub where_user_id_eq {
+	my ($self, $flags, $user_id) = @_;
+	return {user_id=>$user_id}
+}
 
-sub where_section_eq {shift; {section=>shift} }
-sub where_recitation_eq {shift; {recitation=>shift} }
-sub where_section_eq_recitation_eq {shift; {section=>shift,recitation=>shift} }
+sub where_status_eq {
+	my ($self, $flags, $status) = @_;
+	return {status=>$status}
+}
 
-sub where_set_id_eq {shift; {set_id=>shift} }
-sub where_set_id_eq_problem_id_eq {shift; {set_id=>shift,problem_id=>shift} }
-sub where_user_id_eq_set_id_eq {shift; {user_id=>shift,set_id=>shift} }
+sub where_section_eq {
+	my ($self, $flags, $section) = @_;
+	return {section=>$section}
+}
+
+sub where_recitation_eq {
+	my ($self, $flags, $recitation) = @_;
+	return {recitation=>$recitation}
+}
+
+sub where_section_eq_recitation_eq {
+	my ($self, $flags, $section, $recitation) = @_;
+	return {section=>$section,recitation=>$recitation}
+}
+
+sub where_password_eq {
+	my ($self, $flags, $password) = @_;
+	return {password=>$password}
+}
+
+sub where_permission_eq {
+	my ($self, $flags, $permission) = @_;
+	return {permission=>$permission}
+}
+
+sub where_permission_in_range {
+	my ($self, $flags, $min, $max) = @_;
+	if (defined $min and defined $max) {
+		return {-and=>[ {permission=>{">=",$min}}, {permission=>{"<=",$max}} ]};
+	} elsif (defined $min) {
+		return {permission=>{">=",$min}};
+	} elsif (defined $max) {
+		return {permission=>{"<=",$max}};
+	} else {
+		return {};
+	}
+}
+
+sub where_set_id_eq {
+	my ($self, $flags, $set_id) = @_;
+	return {set_id=>$set_id}
+}
+
+sub where_set_id_eq_problem_id_eq {
+	my ($self, $flags, $set_id, $problem_id) = @_;
+	return {set_id=>$set_id,problem_id=>$problem_id}
+}
+
+sub where_user_id_eq_set_id_eq {
+	my ($self, $flags, $user_id, $set_id) = @_;
+	return {user_id=>$user_id,set_id=>$set_id}
+}
 
 # VERSIONING
-sub where_nonversionedset_user_id_eq
-	{shift; {user_id=>shift,set_id=>{NOT_LIKE=>make_vsetID("%","%")}} }
-sub where_versionedset_user_id_eq
-	{shift; {user_id=>shift,set_id=>{LIKE=>make_vsetID("%","%")}} }
-sub where_versionedset_user_id_eq_set_id_eq
-	{shift; {user_id=>shift,setID=>{LIKE=>make_vsetID(shift,"%")}} }
+sub where_nonversionedset_user_id_eq {
+	my ($self, $flags, $user_id) = @_;
+	return {user_id=>$user_id,set_id=>{NOT_LIKE=>make_vsetID("%","%")}}
+}
+
+# VERSIONING
+sub where_versionedset_user_id_eq {
+	my ($self, $flags, $user_id) = @_;
+	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID("%","%")}}
+}
+
+# VERSIONING
+sub where_versionedset_user_id_eq_set_id_eq {
+	my ($self, $flags, $user_id, $set_id) = @_;
+	return {user_id=>$user_id,setID=>{LIKE=>make_vsetID($set_id,"%")}}
+}
 
 ################################################################################
 # utility methods
@@ -107,11 +170,15 @@ sub unbox {
 
 sub conv_where {
 	my ($self, $where) = @_;
+	my $flags = {};
 	if (ref $where eq "ARRAY") {
 		my ($clause, @args) = @$where;
 		my $func = "where_$clause";
 		croak "Unrecognized where clause '$clause'" unless $self->can($func);
-		return $self->$func(@args);
+		$where = $self->$func($flags, @args);
+	}
+	if (wantarray) {
+		return $where, $flags;
 	} else {
 		return $where;
 	}
@@ -169,12 +236,14 @@ sub debug_stmt {
 	$subroutine =~ s/^${__PACKAGE__}:://;
 	my $stmt = $sth->{Statement};
 	@bind_vals = undefstr("#UNDEF#", @bind_vals);
-	print STDERR "$subroutine: |$stmt| => |@bind_vals|\n";
+	#print STDERR "$subroutine: |$stmt| => |@bind_vals|\n";
+	print STDERR "$subroutine: ", $self->bind($stmt, @bind_vals), "\n";
 }
 
 sub bind {
 	my ($self, $stmt, @bind_vals) = @_;
-	$stmt =~ s/\?/$self->dbh->quote(shift @bind_vals)/eg;
+	$stmt =~ s/\?/@bind_vals ? $self->dbh->quote(shift @bind_vals) : "###NO BIND VALS###"/eg;
+	$stmt .= " ###EXTRA BIND VALS |@bind_vals|###" if @bind_vals;
 	return $stmt;
 }
 

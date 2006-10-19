@@ -26,6 +26,7 @@ WeBWorK::DB::Schema::NewSQL::Moodle - Base class for Moodle schema modules.
 use strict;
 use warnings;
 use Carp qw(croak);
+#use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 use constant MOODLE_WEBWORK_BRIDGE_TABLE => 'wwassignment_bridge';
 
@@ -87,37 +88,37 @@ sub new {
 }
 
 ################################################################################
-# list of users in this course
+# where clauses
 ################################################################################
 
-sub _course_members_query {
-	my ($self, $fields, $where, $order) = @_;
-	
-	local our %flags;
-	$where = $self->conv_where($where);
-	
-	my $fields_int = ref $fields ? $fields : ["user_id"];
-	my $fields_ext = ref $fields ? "*" : "COUNT(*)";
-	
-	my @stmt_parts;
-	my @bind_vals;
-	foreach my $type (["students",1],["teachers",1],["admins",0]) {
-		my ($curr_stmt, @curr_bind_vals) = $self->_course_members_type(@$type, \%flags, $fields_int);
-		next unless defined $curr_stmt;
-		push @stmt_parts, $curr_stmt;
-		push @bind_vals, @curr_bind_vals;
-	}
-	return unless @stmt_parts;
-	my $stmt = join(" UNION ", @stmt_parts);
-	
-	my ($base_where_clause, @base_bind_vals) = $self->sql->where($where, $order);
-	if ($base_where_clause =~ /\S/ or not ref $fields) {
-		$stmt = "SELECT $fields_ext FROM ($stmt) AS InnerSelect $base_where_clause";
-		push @bind_vals, @base_bind_vals;
-	}
-	
-	return $stmt, @bind_vals;
+sub where_user_id_eq {
+	my ($self, $flags, $user_id) = @_;
+	$flags->{match_username} = $user_id;
+	return {};
 }
+
+sub where_password_eq {
+	my ($self, $flags, $password) = @_;
+	$flags->{match_password} = $password;
+	return {};
+}
+
+sub where_permission_eq {
+	my ($self, $flags, $permission) = @_;
+	$flags->{match_permission} = $permission;
+	return {};
+}
+
+sub where_permission_in_range {
+	my ($self, $flags, $min, $max) = @_;
+	$flags->{match_permission_min} = $min;
+	$flags->{match_permission_max} = $max;
+	return {};
+}
+
+################################################################################
+# list of users in this course
+################################################################################
 
 sub _course_members_type {
 	my ($self, $type, $need_course, $flags, $fields) = @_;
@@ -161,7 +162,9 @@ sub _course_members_type {
 		my $coursename_field = $self->sql->_quote("coursename");
 		push @joins, "JOIN $bridge_table ON $bridge_table.$course_field=$type_table.$course_field";
 		push @where, "$bridge_table.$coursename_field=?";
+		#warn "adding $bridge_table.$coursename_field=? to \@where\n";
 		push @bind_vals, $self->courseName;
+		#warn "adding ", $self->courseName, " to \@bind_vals\n";
 	}
 	
 	if ($need_user) {
@@ -172,12 +175,16 @@ sub _course_members_type {
 		if ($flags->{match_username}) {
 			my $username_field = $self->sql->_quote("username");
 			push @where, "$user_table.$username_field=?";
+			#warn "adding $user_table.$username_field=? to \@where\n";
 			push @bind_vals, $flags->{match_username};
+			#warn "adding ", $flags->{match_username}, " to \@bind_vals\n";
 		}
 		if ($flags->{match_password}) {
 			my $password_field = $self->sql->_quote("password");
 			push @where, "$user_table.$password_field=?";
+			#warn "adding $user_table.$password_field=? to \@where\n";
 			push @bind_vals, $flags->{match_password};
+			#warn "adding ", $flags->{match_password}, " to \@bind_vals\n";
 		}
 	}
 	
@@ -188,10 +195,47 @@ sub _course_members_type {
 	return $stmt, @bind_vals;
 }
 
+sub _course_members_query {
+	my ($self, $fields, $flags, $where, $order) = @_;
+	#warn "Moodle::_course_members_query: where=", Dumper($where), "\n";
+	#warn "Moodle::_course_members_query: flags=", Dumper($flags), "\n";
+	
+	my $fields_int = ref $fields ? $fields : ["user_id"];
+	my $fields_ext = ref $fields ? "*" : "COUNT(*)";
+	
+	my @stmt_parts;
+	my @bind_vals;
+	foreach my $type (["students",1],["teachers",1],["admins",0]) {
+		my ($curr_stmt, @curr_bind_vals) = $self->_course_members_type(@$type, $flags, $fields_int);
+		next unless defined $curr_stmt;
+		#warn "type=", $type->[0], " curr_stmt=$curr_stmt, curr_bind_vals=@curr_bind_vals\n";
+		push @stmt_parts, $curr_stmt;
+		push @bind_vals, @curr_bind_vals;
+	}
+	return unless @stmt_parts;
+	#warn "stmt_parts=", join(" | ", @stmt_parts), "\n";
+	#warn "bind_vals=@bind_vals\n";
+	my $stmt = join(" UNION ", @stmt_parts);
+	
+	my ($base_where_clause, @base_bind_vals) = $self->sql->where($where, $order);
+	#warn "base_where_clause=$base_where_clause\n";
+	#warn "base_bind_vals=@base_bind_vals\n";
+	if ($base_where_clause =~ /\S/ or not ref $fields) {
+		$stmt = "SELECT $fields_ext FROM ($stmt) AS InnerSelect $base_where_clause";
+		push @bind_vals, @base_bind_vals;
+	}
+	
+	#warn "in _course_members_query: stmt=$stmt\n";
+	#warn "in _course_members_query: bind_vals=@bind_vals\n";
+	return $stmt, @bind_vals;
+}
+
 ################################################################################
 # list of users in this course
 ################################################################################
 
+# FIXME now that we're doing this, can we filter on group names here for section
+# and recitation matching?
 sub _course_groups_query {
 	my ($self) = @_;
 	
@@ -206,6 +250,27 @@ sub _course_groups_query {
 }
 
 ################################################################################
+# getto partial inheritance from NewSQL::Std
+################################################################################
+
+*exists_where = *WeBWorK::DB::Schema::NewSQL::Std::exists_where;
+
+*get_fields_where = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where;
+*get_fields_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_fields_where_i;
+
+*list_where = *WeBWorK::DB::Schema::NewSQL::Std::list_where;
+*list_where_i = *WeBWorK::DB::Schema::NewSQL::Std::list_where_i;
+
+*get_records_where = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where;
+*get_records_where_i = *WeBWorK::DB::Schema::NewSQL::Std::get_records_where_i;
+
+*count = *WeBWorK::DB::Schema::NewSQL::Std::count;
+*exists = *WeBWorK::DB::Schema::NewSQL::Std::exists;
+*list = *WeBWorK::DB::Schema::NewSQL::Std::list;
+*get = *WeBWorK::DB::Schema::NewSQL::Std::get;
+*gets = *WeBWorK::DB::Schema::NewSQL::Std::gets;
+
+################################################################################
 # utility methods
 ################################################################################
 
@@ -215,9 +280,10 @@ sub courseName {
 
 # all the tables that moodle can handle have a single keypart (user_id) so this
 # is somewhat easier that it might otherwise be :)
+# the return value here will get passed through conv_where later on
 sub keyparts_to_where {
 	my ($self, $userID) = @_;
-	return defined $userID ? {username=>$userID} : {};
+	return [user_id_eq=>$userID] if defined $userID;
 }
 
 sub gen_update_hashes {

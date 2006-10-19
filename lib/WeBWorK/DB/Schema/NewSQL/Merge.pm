@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.5 2006/10/13 20:37:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.6 2006/10/17 23:39:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,7 +78,7 @@ sub merge_init {
 	my $pri = $merge_tables[0];
 	
 	my %sql_fieldexprs;
-	my $sql_whereprefix;
+	my @sql_whereprefix;
 	
 	foreach my $field ($db->{$pri}->fields) {
 		my $sql_field_name = $sql_field_names{$pri}{$field};
@@ -88,25 +88,21 @@ sub merge_init {
 			$sql_fieldexprs{$field} = "`$sql_table_names{$pri}`.`$sql_field_names{$pri}{$field}`";
 			# add this field to the where clause
 			foreach my $table (@merge_tables[1..$#merge_tables]) {
-				if (exists $db->{$table}->field_data->{$field}) {
-					$sql_whereprefix .= "`$sql_table_names{$pri}`"
-						. ".`$sql_field_names{$pri}{$field}`"
-						. "=`$sql_table_names{$table}`"
-						. ".`$sql_field_names{$table}{$field}`"
-						. " AND ";
-				}
+				next unless exists $db->{$table}->field_data->{$field};
+				push @sql_whereprefix, "`$sql_table_names{$pri}`"
+					. ".`$sql_field_names{$pri}{$field}`"
+					. "=`$sql_table_names{$table}`"
+					. ".`$sql_field_names{$table}{$field}`";
 			}
 		} else {
 			# if it's not a keyfield, we use the COALESCE function to select a
 			# value from the table that has the first non-NULL value
-			my $coalesce = "COALESCE(";
+			my @coalesce;
 			foreach my $table (@merge_tables) {
 				next unless exists $db->{$table}->field_data->{$field};
-				$coalesce .= "`$sql_table_names{$table}`.`$sql_field_names{$table}{$field}`,";
+				push @coalesce, "`$sql_table_names{$table}`.`$sql_field_names{$table}{$field}`";
 			}
-			chop $coalesce; # get rid of trailing comma
-			$coalesce .= ")";
-			$sql_fieldexprs{$field} = $coalesce;
+			$sql_fieldexprs{$field} = "COALESCE(" . join(",", @coalesce) . ")";
 		}
 	}
 	
@@ -114,7 +110,7 @@ sub merge_init {
 	$self->{sql_table_names} = \%sql_table_names;
 	$self->{sql_field_names} = \%sql_field_names;
 	$self->{sql_fieldexprs} = \%sql_fieldexprs;
-	$self->{sql_whereprefix} = $sql_whereprefix;
+	$self->{sql_whereprefix} = join(" AND ", @sql_whereprefix);
 }
 
 sub sql_init {
@@ -172,20 +168,35 @@ sub _get_fields_where_prepex {
 	$where = $self->conv_where($where);
 	
 	# pull the requested fields out of $self->{sql_fieldexprs}
-	my $sql_fields = join(",", @{$self->{sql_fieldexprs}}{@$fields});
+	my $sql_fields = join(", ", @{$self->{sql_fieldexprs}}{@$fields});
 	
-	# generate the WHERE clause separately
-	my ($stmt, @bind_vals) = $self->sql->where($where, $order);
+#	# generate the WHERE clause separately
+#	my ($stmt, @bind_vals) = $self->sql->where($where, $order);
+#	
+#	# prepend $self->{sql_whereprefix} (if there's no existing where clause, the
+#	# s/// will fail and we'll fall add it -- note that $stmt might still
+#	# contain an ORDER clause, which we need to preserve.)
+#	my $where_prefix = $self->{sql_whereprefix};
+#	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/
+#		or $stmt = " WHERE $where_prefix $stmt";
+#	
+#	# instead of using $self->table, use the merge list
+#	(substr($stmt, 0, 0)) = $self->sql->select($self->{params}{merge}, $sql_fields);
 	
-	# prepend $self->{sql_whereprefix} (if there's no existing where clause, the
-	# s/// will fail and we'll fall add it -- note that $stmt might still
-	# contain an ORDER clause, which we need to preserve.)
-	my $where_prefix = $self->{sql_whereprefix};
-	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/
-		or $stmt = " WHERE $where_prefix $stmt";
+	my @where = $self->{sql_whereprefix};
+	my @bind_vals;
 	
-	# instead of using $self->table, use the merge list
-	(substr($stmt, 0, 0)) = $self->sql->select($self->{params}{merge}, $sql_fields);
+	my ($base_where_clause, @base_bind_vals) = $self->sql->_recurse_where($where) if $where;
+	if (defined $base_where_clause and $base_where_clause =~ /\S/) {
+		push @where, $base_where_clause;
+		push @bind_vals, @base_bind_vals;
+	}
+	
+	my $where_clause = @where ? "WHERE " . join(" AND ", @where) : "";
+	my $order_by_clause = $order ? $self->sql->_order_by($order) : "";
+	
+	my $stmt = $self->sql->select($self->{params}{merge}, $sql_fields)
+		. " $where_clause $order_by_clause";
 	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	$self->debug_stmt($sth, @bind_vals);
