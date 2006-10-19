@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Authen/Moodle.pm,v 1.6 2006/07/05 18:28:00 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.7 2006/07/08 22:58:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,16 +27,6 @@ WeBWorK::Authen::Moodle - Allow moodle cookies to be used for WeBWorK authentica
 
 TODO
 
-* I'm not altogether comfortable with the moodle sesion table being wired up as an additional
-"moodleKey" WWDBv2 table. The API presented is non-standard, and it doesn't really take advantage or
-any existing DB infrastructure (except maybe the "tablePrefix" param). I'm thinking there should be
-a separate toplevel Moodle::Session module? The other moodle Schema modules (User, Password,
-Permission) are OK, since they "fit" into the WWDBv2 stack appropriately and don't require changes
-to DB.pm.
-
-* However, those three schema modules could probably be replaced with a single schema module that's a
-sublcass of WeBWorK::DB::Schema::SQL.
-
 * Modules that modify data that's being taken from moodle should check for "alternative URLs" in the
 CE that can point back to the moodle installation. operations include: change password, change user
 data, change permission level, add user, delete user. Run this for a rough estimate:
@@ -46,12 +36,20 @@ data, change permission level, add user, delete user. Run this for a rough estim
 
 use strict;
 use warnings;
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw/md5_hex/;
 use WeBWorK::Cookie;
 use WeBWorK::Debug;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+sub new {
+	my $self = shift->SUPER::new(@_);
+	
+	$self->init_mdl_session;
+	
+	return $self;
+}
 
 # call superclass get_credentials. if no credentials were found, look for a moodle cooke.
 # if a moodle cookie is found, a new webwork session is created and the session key is used.
@@ -142,24 +140,54 @@ sub check_session {
 
 ################################################################################
 
+use DBI;
+use PHP::Serialization qw/unserialize/;
+
+use constant DEFAULT_EXPIRY => 7200;
+
+sub init_mdl_session {
+	my $self = shift;
+	
+	$self->{mdl_dbh} = DBI->connect_cached(
+		$self->{r}->ce->{authen}{moodle_options}{dsn},
+		$self->{r}->ce->{authen}{moodle_options}{username},
+		$self->{r}->ce->{authen}{moodle_options}{password},
+		{
+			PrintError => 0,
+			RaiseError => 1,
+		},
+	);
+	die $DBI::errstr unless defined $self->{mdl_dbh};
+}
+
 sub fetch_moodle_session {
 	# fetches the basic information from the moodle session.
 	# returns the user name and expiration time of the moodle session
-	# Note that we don't worry about the user being in this course at this point. That is taken care of in Schema::Moodle::User.
+	# Note that we don't worry about the user being in this course at this point.
+	# That is taken care of in Schema::Moodle::User.
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $db = $r->db;
 	
 	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
 	my $cookie = $cookies{"MoodleSession"};
+	return unless $cookie;
 	
-	if( $cookie ) {
-		# grab the session details from the database
-		return $db->getMoodleSession($cookie->value);
-	}
-	else {
-		return;
-	}
+	my $sessions = $self->prefix_table("sessions");
+	my $stmt = "SELECT `expiry`,`data` FROM `$sessions` WHERE `sesskey`=?";
+	my @bind_vals = $cookie->value;
+	
+	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	$sth->execute(@bind_vals);
+	my $row = $sth->fetchrow_arrayref;
+	$sth->finish;
+	return unless defined $row;
+	
+	my ($expires, $data_string) = @$row;
+	my $data = unserialize_session($data_string);
+	my $username = $data->{"USER"}{"username"};
+	
+	return $username, $expires;
 }
 
 sub update_moodle_session {
@@ -170,18 +198,43 @@ sub update_moodle_session {
 	
 	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
 	my $cookie = $cookies{"MoodleSession"};
-	if( $cookie ) {
-		# update the session with the new expiration time:
-		$db->extendMoodleSession($cookie->value);
+	return unless $cookie;
+	
+	my $sessions = $self->prefix_table("sessions");
+	my $config = $self->prefix_table("config");
+	my $stmt = "UPDATE `$sessions`"
+		. " SET `expiry`=IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?)+?"
+		. " WHERE `sesskey`=?";
+	my @bind_vals = ("sessiontimeout", DEFAULT_EXPIRY, time, $cookie->value);
+	
+	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
+	my $result = $sth->execute(@bind_vals);
+	$sth->finish;
+	
+	return defined $result;
+}
+
+sub prefix_table {
+	my ($self, $base) = @_;
+	if (defined $self->{r}->ce->{authen}{moodle_options}{table_prefix}) {
+		return $self->{r}->ce->{authen}{moodle_options}{table_prefix} . $base;
+	} else {
+		return $base;
 	}
 }
 
-#sub moodle_session_expired {
-#	# determine if the moodle session is expired
-#	my ($self) = @_;
-#	
-#	my ($moodleUser, $moodleExpires) = $self->fetchMoodleSession;
-#	return time > $moodleExpires;
-#}
+sub unserialize_session {
+	my $serialData = shift;
+	# first, url decode:
+	$serialData =~ s/\%([A-Fa-f0-9]{2})/pack('C', hex($1))/seg;
+	# then, split it up by |, it's some ADODB sillyness
+	my @serialArray = split(/(\w+)\|/, $serialData);
+	my %variables;
+	# finally, actually deserialize it:
+	for( my $i = 1; $i < $#serialArray; $i += 2 ) {
+		$variables{$serialArray[$i]} = unserialize($serialArray[$i+1]);
+	}
+	return \%variables;
+}
 
 1;
