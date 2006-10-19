@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.81 2006/10/06 21:17:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.82 2006/10/12 22:02:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -225,20 +225,6 @@ sub gen_new {
 		my ($self, @prototype) = @_;
 		return $self->{$table}{record}->new(@prototype);
 	};
-}
-
-################################################################################
-# moodle functions
-################################################################################
-
-sub getMoodleSession {
-	my ($self, $key) = @_;
-	return $self->{moodlekey}->get($key);
-}
-
-sub extendMoodleSession {
-	my ($self, $key) = @_;
-	return $self->{moodlekey}->extend($key);
 }
 
 ################################################################################

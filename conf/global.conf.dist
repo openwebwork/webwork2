@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.177 2006/09/08 19:53:21 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.178 2006/09/11 20:33:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -56,7 +56,7 @@ $externalPrograms{tar}      = "/usr/bin/tar";
 
 # equation rendering/hardcopy utiltiies
 $externalPrograms{latex}    = "/usr/bin/latex";
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape"; # --shell-escape allows pdflatex to handle .eps files
+$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{tth}      = "/usr/bin/tth";
 
@@ -365,6 +365,42 @@ $courseFiles{problibs}    = {
 };
 
 ################################################################################
+# Status system
+################################################################################
+
+# This is the default status given to new students and students with invalid
+# or missing statuses.
+$default_status = "Enrolled";
+
+# The first abbreviation in the abbreviations list is the canonical
+# abbreviation, and will be used when setting the status value in a user record
+# or an exported classlist file.
+# 
+# Results are undefined if more than one status has the same abbreviation.
+# 
+# The four behaviors that are controlled by status are:
+#   allow_course_access   => is this user allowed to log in?
+#   include_in_assignment => is this user included when assigning as set to "all" users?
+#   include_in_stats      => is this user included in statistical reports?
+#   include_in_email      => is this user included in emails sent to the class?
+#   include_in_scoring    => is this user included in score reports?
+
+%statuses = (
+	Enrolled => {
+		abbrevs => [qw/ C c current enrolled /],
+		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats include_in_email include_in_scoring /],
+	},
+	Audit => {
+		abbrevs => [qw/ A a audit /],
+		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats include_in_email /],
+	},
+	Drop => {
+		abbrevs => [qw/ D d drop withdraw /],
+		behaviors => [qw/  /],
+	},
+);
+
+################################################################################
 # Database options
 ################################################################################
 
@@ -377,9 +413,9 @@ $database_debug = 0;
 
 # Variables for sql_moodle database layout.
 $moodle_dsn = "dbi:mysql:moodle";
-$moodle_table_prefix = "mdl_";
 $moodle_username = $database_username;
 $moodle_password = $database_password;
+$moodle_table_prefix = "mdl_";
 
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
@@ -509,6 +545,13 @@ $authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
 # Options for particular authentication modules
 
+$authen{moodle_options} = {
+	dsn => $moodle_dsn,
+	username => $moodle_username,
+	password => $moodle_password,
+	table_prefix => $moodle_table_prefix,
+};
+
 $authen{ldap_options} = {
 	# hosts to attempt to connect to, in order. for example:
 	#   auth.myschool.edu             -- uses LDAP scheme and port 389
@@ -626,44 +669,6 @@ $authen{ldap_options} = {
 # This is the default permission level given to new students and students with
 # invalid or missing permission levels.
 $default_permission_level = $userRoles{student};
-
-################################################################################
-# Status system
-################################################################################
-
-# This is the default status given to new students and students with invalid
-# or missing statuses.
-$default_status = "Enrolled";
-
-# The first abbreviation in the abbreviations list is the canonical
-# abbreviation, and will be used when setting the status value in a user record
-# or an exported classlist file.
-# 
-# Results are undefined if more than one status has the same abbreviation.
-# 
-# The four behaviors that are controlled by status are:
-#   allow_course_access   => is this user allowed to log in?
-#   include_in_assignment => is this user included when assigning as set to "all" users?
-#   include_in_stats      => is this user included in statistical reports?
-#   include_in_email      => is this user included in emails sent to the class?
-#   include_in_scoring    => is this user included in score reports?
-
-%statuses = (
-	Enrolled => {
-		abbrevs => [qw/ C c current enrolled /],
-		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats
-			include_in_email include_in_scoring /],
-	},
-	Audit => {
-		abbrevs => [qw/ A a audit /],
-		behaviors => [qw/ allow_course_access include_in_assignment include_in_stats
-			include_in_email /],
-	},
-	Drop => {
-		abbrevs => [qw/ D d drop withdraw /],
-		behaviors => [qw/  /],
-	},
-);
 
 ################################################################################
 # Session options
