@@ -14,55 +14,23 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::DB::Schema::NewSQL::Moodle::Permission;
+package WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission;
 use base qw(WeBWorK::DB::Schema::NewSQL::Moodle);
 
 =head1 NAME
 
-WeBWorK::DB::Schema::NewSQL::Moodle::User - Enumerates user password and 
-permission levels from Moodle.
+WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission - Enumerates user
+passwords and permission levels from Moodle.
 
 =cut
 
 use strict;
 use warnings;
 use Carp qw(croak);
+use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 # only support particular tables (this overrides the version in NewSQL.pm)
 use constant TABLES => qw/password permission/;
-
-################################################################################
-# where clauses
-################################################################################
-
-sub where_user_id_eq {
-	shift;
-	our %flags;
-	$flags{match_username} = shift;
-	return {};
-}
-
-sub where_password_eq {
-	shift;
-	our %flags;
-	$flags{match_password} = shift;
-	return {};
-}
-
-sub where_permission_eq {
-	shift;
-	our %flags;
-	$flags{match_permission} = shift;
-	return {};
-}
-
-sub where_permission_in_range {
-	shift;
-	our %flags;
-	$flags{match_permission_min} = shift;
-	$flags{match_permission_max} = shift;
-	return {};
-}
 
 ################################################################################
 # counting/existence
@@ -72,7 +40,12 @@ sub where_permission_in_range {
 sub count_where {
 	my ($self, $where) = @_;
 	
-	my ($stmt, @bind_vals) = $self->_course_members_query(undef, $where);
+	#warn "BEGIN: WeBWorK::DB::Schema::Moodle::PasswordPermission::count_where\n";
+	#warn "PasswordPermission::count_where: where=", Dumper($where), "\n";
+	($where, my $flags) = $self->conv_where($where);
+	#warn "PasswordPermission::count_where: where=", Dumper($where), "\n";
+	#warn "PasswordPermission::count_where: flags=", Dumper($flags), "\n";
+	my ($stmt, @bind_vals) = $self->_course_members_query(undef, $flags, $where);
 	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3 -- see DBI docs
 	$self->debug_stmt($sth, @bind_vals);
@@ -96,7 +69,12 @@ sub count_where {
 sub _get_fields_where_prepex {
 	my ($self, $fields, $where, $order) = @_;
 	
-	my ($stmt, @bind_vals) = $self->_course_members_query($fields, $where, $order);
+	#warn "BEGIN: WeBWorK::DB::Schema::Moodle::PasswordPermission::_get_fields_where_prepex\n";
+	#warn "PasswordPermission::_get_fields_where_prepex: where=", Dumper($where), "\n";
+	($where, my $flags) = $self->conv_where($where);
+	#warn "PasswordPermission::_get_fields_where_prepex: where=", Dumper($where), "\n";
+	#warn "PasswordPermission::_get_fields_where_prepex: flags=", Dumper($flags), "\n";
+	my ($stmt, @bind_vals) = $self->_course_members_query($fields, $flags, $where, $order);
 	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	$self->debug_stmt($sth, @bind_vals);
