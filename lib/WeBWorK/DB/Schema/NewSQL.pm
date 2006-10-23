@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.13 2006/10/17 23:38:45 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.14 2006/10/19 17:37:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -115,6 +115,18 @@ sub where_versionedset_user_id_eq {
 sub where_versionedset_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
 	return {user_id=>$user_id,setID=>{LIKE=>make_vsetID($set_id,"%")}}
+}
+
+# VERSIONING
+sub where_versionedset_user_id_eq_set_id_eq_version_id_le {
+	my ($self, $flags, $user_id, $set_id, $version_id) = @_;
+	if ($version_id >= 1) {
+		my @vsetIDs = map { make_vsetID($set_id,$_) } 1 .. $version_id;
+		return {user_id=>$user_id,set_id=>\@vsetIDs};
+	} else {
+		# nothing matches an invalid version id
+		return {-and=>\("0==1")};
+	}
 }
 
 ################################################################################
