@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.82 2006/10/12 22:02:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.83 2006/10/19 17:35:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -307,6 +307,11 @@ sub listUsers {
 	}
 }
 
+sub existsUser {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	return $self->{user}->exists($userID);
+}
+
 sub getUser {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	return ( $self->getUsers($userID) )[0];
@@ -370,6 +375,13 @@ sub listPasswords {
 	} else {
 		return $self->{password}->count_where;
 	}
+}
+
+sub existsPassword {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	# FIXME should we claim that a password exists if the user exists, since
+	# password records are auto-created?
+	return $self->{password}->exists($userID);
 }
 
 sub getPassword {
@@ -449,6 +461,13 @@ sub listPermissionLevels {
 	}
 }
 
+sub existsPermissionLevel {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	# FIXME should we claim that a permission level exists if the user exists,
+	# since password records are auto-created?
+	return $self->{permission}->exists($userID);
+}
+
 sub getPermissionLevel {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	return ( $self->getPermissionLevels($userID) )[0];
@@ -526,6 +545,11 @@ sub listKeys {
 	}
 }
 
+sub existsKey {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	return $self->{key}->exists($userID);
+}
+
 sub getKey {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	return ( $self->getKeys($userID) )[0];
@@ -593,6 +617,11 @@ sub listGlobalSets {
 	}
 }
 
+sub existsGlobalSet {
+	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
+	return $self->{set}->exists($setID);
+}
+
 sub getGlobalSet {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
 	return ( $self->getGlobalSets($setID) )[0];
@@ -643,7 +672,6 @@ sub countSetUsers { return scalar shift->listSetUsers(@_) }
 
 sub listSetUsers {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	#my $where = {set_id=>$setID};
 	my $where = [set_id_eq => $setID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["user_id"], $where);
@@ -657,13 +685,17 @@ sub countUserSets { return scalar shift->listUserSets(@_) }
 sub listUserSets {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	# VERSIONING -- only list non-versioned sets
-	#my $where = {user_id=>$userID, set_id=>{"NOT LIKE"=>make_vsetID("%","%")}};
 	my $where = [nonversionedset_user_id_eq => $userID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
 	} else {
 		return $self->{set_user}->count_where($where);
 	}
+}
+
+sub existsUserSet {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	return $self->{set_user}->exists($userID, $setID);
 }
 
 sub getUserSet {
@@ -729,13 +761,17 @@ sub countGlobalProblems { return scalar shift->listGlobalProblems(@_) }
 
 sub listGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	#my $where = {set_id=>$setID};
 	my $where = [set_id_eq => $setID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem}->count_where($where);
 	}
+}
+
+sub existsGlobalProblem {
+	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
+	return $self->{problem}->exists($setID, $problemID);
 }
 
 sub getGlobalProblem {
@@ -750,7 +786,6 @@ sub getGlobalProblems {
 
 sub getAllGlobalProblems {
 	my ($self, $setID) = shift->checkArgs(\@_, qw/set_id/);
-	#my $where = {set_id=>$setID};
 	my $where = [set_id_eq => $setID];
 	return $self->{problem}->get_records_where($where);
 }
@@ -796,7 +831,6 @@ sub countProblemUsers { return scalar shift->listProblemUsers(@_) }
 
 sub listProblemUsers {
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
-	#my $where = {set_id=>$setID, problem_id=>$problemID};
 	my $where = [set_id_eq_problem_id_eq => $setID,$problemID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem_user}->get_fields_where(["user_id"], $where);
@@ -809,13 +843,17 @@ sub countUserProblems { return scalar shift->listUserProblems(@_) }
 
 sub listUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	#my $where = {user_id=>$userID, set_id=>$setID};
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	if (wantarray) {
 		return map { @$_ } $self->{problem_user}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem_user}->count_where($where);
 	}
+}
+
+sub existsUserProblem {
+	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+	return $self->{problem_user}->exists($userID, $setID, $problemID);
 }
 
 sub getUserProblem {
@@ -830,7 +868,6 @@ sub getUserProblems {
 
 sub getAllUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	#my $where = {user_id=>$userID, set_id=>$setID};
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	return $self->{problem_user}->get_records_where($where);
 }
@@ -875,6 +912,11 @@ sub deleteUserProblem {
 ################################################################################
 # set+set_user functions
 ################################################################################
+
+sub existsMergedSet {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	return $self->{set_merged}->exists($userID, $setID);
+}
 
 sub getMergedSet {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
@@ -923,6 +965,11 @@ sub getMergedSets {
 # problem+problem_user functions
 ################################################################################
 
+sub existsMergedProblem {
+	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+	return $self->{problem_merged}->exists($userID, $setID, $problemID);
+}
+
 sub getMergedProblem {
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
 	return ( $self->getMergedProblems([$userID, $setID, $problemID]) )[0];
@@ -967,7 +1014,6 @@ sub getMergedProblems {
 
 sub getAllMergedUserProblems_old {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	#my $where = {user_id=>$userID, set_id=>$setID};
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	my @userProblemIDs = $self->{problem_user}->get_fields_where([qw/user_id set_id problem_id/],
 		$where);
@@ -976,7 +1022,6 @@ sub getAllMergedUserProblems_old {
 
 sub getAllMergedUserProblems {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	#my $where = {user_id=>$userID, set_id=>$setID};
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	return $self->{problem_merged}->get_records_where($where);
 }
@@ -989,7 +1034,6 @@ sub countUserSetVersions { return scalar shift->listUserSetVersions(@_) }
 
 sub listUserSetVersions {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	#my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("%","%")}};
 	my $where = [versionedset_user_id_eq => $userID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
@@ -1004,9 +1048,10 @@ sub listUserSetVersions {
 #	   numbers
 sub getUserSetVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	#my $where = {user_id=>$userID,setID=>{"LIKE"=>make_vsetID($setID,"%")}};
-	my $where = [versionedset_user_id_eq_set_id_eq => $userID,$setID];
-	return $self->{set_user}->get_records_where($where);
+	my $where = [versionedset_user_id_eq_set_id_eq_version_id_le => $userID,$setID,$versionID];
+	# FIXME this is a literal order clause, which defeats field translation
+	my $order = \(grok_versionID_from_vsetID_sql('set_id'));
+	return $self->{set_user}->get_records_where($where, $order);
 }
 
 sub addVersionedUserSet {
@@ -1077,15 +1122,12 @@ sub deleteUserSetVersions {
 #	   user is returned.
 sub getUserSetVersionNumber {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	# the "+0" after the SUBSTRING() function casts the resulting value as a number so that MAX()
-	# will do a numeric comparison.
 	# FIXME passing a literal SQL expression into SQL::Abstract prevents fieldoverride translation
 	# from occuring!
 	# FIXME the whole idea of constructing SQL here is evil and corrupt! fortunately, this will
 	# go away once we move versioned sets into their own table, which is hopefully going to happen
 	# before we want to support other RDBMSs.
-	my $field = "IFNULL(MAX(" . grok_versionID_from_vsetID_sql("set_id") . "+0),0)";
-	#my $where = {user_id=>$userID, set_id=>{"LIKE"=>make_vsetID("$setID","%")}};
+	my $field = "IFNULL(MAX(" . grok_versionID_from_vsetID_sql("set_id") . "),0)";
 	my $where = [versionedset_user_id_eq_set_id_eq => $userID,$setID];
 	return ( $self->{set_user}->get_fields_where($field, $where) )[0]->[0];
 }
