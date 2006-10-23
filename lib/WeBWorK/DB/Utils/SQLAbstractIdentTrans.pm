@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils/SQLAbstractIdentTrans.pm,v 1.1 2006/09/26 15:01:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils/SQLAbstractIdentTrans.pm,v 1.2 2006/10/06 20:18:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,6 +75,20 @@ sub _quote_field {
 		if defined $self->{transform_field};
 	
 	return $self->{quote_char} . $label . $self->{quote_char};
+}
+
+sub _order_by {
+    my $self = shift;
+    my $ref = ref $_[0];
+
+    my @vals = $ref eq 'ARRAY'  ? @{$_[0]} :
+               $ref eq 'SCALAR' ? $_[0]    : # modification: don't dereference scalar refs
+               $ref eq ''       ? $_[0]    :
+               SQL::Abstract::puke "Unsupported data struct $ref for ORDER BY";
+
+    # modification: if an item is a scalar ref, don't quote it, only dereference it
+    my $val = join ', ', map { ref $_ eq "SCALAR" ? $$_ : $self->_quote($_) } @vals;
+    return $val ? $self->_sqlcase(' order by')." $val" : '';
 }
 
 1;
