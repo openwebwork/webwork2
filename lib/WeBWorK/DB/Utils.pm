@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.18 2006/10/11 16:16:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.19 2006/10/12 22:02:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,12 +75,12 @@ sub initializeUserProblem {
 
 sub make_vsetID($$) {
 	my ($setID, $versionID) = @_;
-	return "$setID,$versionID";
+	return "$setID,v$versionID";
 }
 
 sub grok_vsetID($) {
 	my ($vsetID) = @_;
-	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,(.*))?/;
+	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,v(.*))?/;
 	return $setID, $versionID;
 }
 
@@ -91,7 +91,8 @@ sub grok_setID_from_vsetID_sql($) {
 
 sub grok_versionID_from_vsetID_sql($) {
 	my ($field) = @_;
-	return "SUBSTRING(`$field`,INSTR(`$field`,',v')+2)";
+	# the "+0" casts the resulting value as a number
+	return "(SUBSTRING(`$field`,INSTR(`$field`,',v')+2)+0)";
 }
 
 1;
