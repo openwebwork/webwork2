@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.14 2006/10/19 17:37:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.16 2006/10/25 14:23:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -119,7 +119,7 @@ sub where_versionedset_user_id_eq {
 # VERSIONING
 sub where_versionedset_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
-	return {user_id=>$user_id,setID=>{LIKE=>make_vsetID($set_id,"%")}};
+	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID($set_id,"%")}};
 }
 
 # VERSIONING
@@ -164,24 +164,17 @@ sub field_data {
 
 sub box {
 	my ($self, $values) = @_;
-	
-	# promoting undef values to empty string. eventually we'd like to stop doing this (FIXME)
-	map { defined $_ ? $_ : "" } @$values;
-	
+	# promote undef values to empty strings. eventually we'd like to stop doing this (FIXME)
+	map { $_ = "" if not defined $_ } @$values;
 	return $self->{record}->new($values);
 }
 
 sub unbox {
 	my ($self, $Record) = @_;
-	
-	my @result;
-	foreach my $field ($self->{record}->FIELDS) {
-		my $value = $Record->$field;
-		# demote empty strings to undef. eventually we'd like to stop doing this (FIXME)
-		$value = undef if defined $value and $value eq "";
-		push @result, $value;
-	}
-	return \@result;
+	my @values = $Record->toArray;
+	# demote empty strings to undef. eventually we'd like to stop doing this (FIXME)
+	map { $_ = undef if defined $_ and $_ eq "" } @values;
+	return \@values;
 }
 
 sub conv_where {
