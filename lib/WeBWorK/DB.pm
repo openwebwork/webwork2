@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.83 2006/10/19 17:35:24 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.84 2006/10/23 17:33:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -220,11 +220,13 @@ sub init_table {
 ################################################################################
 
 sub gen_new {
-	my ($table) = @_;
-	return sub {
-		my ($self, @prototype) = @_;
-		return $self->{$table}{record}->new(@prototype);
-	};
+	my $table = shift;
+	return sub { shift->{$table}{record}->new(@_) };
+}
+
+sub gen_schema_accessor {
+	my $schema = shift;
+	return sub { shift->{$schema} };
 }
 
 ################################################################################
@@ -293,6 +295,8 @@ sub delete_tables {
 ################################################################################
 # user functions
 ################################################################################
+
+BEGIN { *User = gen_schema_accessor("user"); }
 
 BEGIN { *newUser = gen_new("user"); }
 
@@ -363,6 +367,8 @@ sub deleteUser {
 ################################################################################
 # password functions
 ################################################################################
+
+BEGIN { *Password = gen_schema_accessor("password"); }
 
 BEGIN { *newPassword = gen_new("password"); }
 
@@ -448,6 +454,8 @@ sub deletePassword {
 # permission functions
 ################################################################################
 
+BEGIN { *PermissionLevel = gen_schema_accessor("permission"); }
+
 BEGIN { *newPermissionLevel = gen_new("permission"); }
 
 sub countPermissionLevels { return scalar shift->listPermissionLevels(@_) }
@@ -532,6 +540,8 @@ sub deletePermissionLevel {
 # key functions
 ################################################################################
 
+BEGIN { *Key = gen_schema_accessor("key"); }
+
 BEGIN { *newKey = gen_new("key"); }
 
 sub countKeys { return scalar shift->listKeys(@_) }
@@ -604,6 +614,8 @@ sub deleteKey {
 # set functions
 ################################################################################
 
+BEGIN { *GlobalSet = gen_schema_accessor("set"); }
+
 BEGIN { *newGlobalSet = gen_new("set"); }
 
 sub countGlobalSets { return scalar shift->listGlobalSets(@_) }
@@ -665,6 +677,8 @@ sub deleteGlobalSet {
 ################################################################################
 # set_user functions
 ################################################################################
+
+BEGIN { *UserSet = gen_schema_accessor("set_user"); }
 
 BEGIN { *newUserSet = gen_new("set_user"); }
 
@@ -755,6 +769,8 @@ sub deleteUserSet {
 # problem functions
 ################################################################################
 
+BEGIN { *GlobalProblem = gen_schema_accessor("problem"); }
+
 BEGIN { *newGlobalProblem = gen_new("problem"); }
 
 sub countGlobalProblems { return scalar shift->listGlobalProblems(@_) }
@@ -824,6 +840,8 @@ sub deleteGlobalProblem {
 ################################################################################
 # problem_user functions
 ################################################################################
+
+BEGIN { *UserProblem = gen_schema_accessor("problem_user"); }
 
 BEGIN { *newUserProblem = gen_new("problem_user"); }
 
@@ -910,8 +928,10 @@ sub deleteUserProblem {
 }
 
 ################################################################################
-# set+set_user functions
+# set_merged functions
 ################################################################################
+
+BEGIN { *MergedSet = gen_schema_accessor("set_merged"); }
 
 sub existsMergedSet {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
@@ -962,8 +982,10 @@ sub getMergedSets {
 }
 
 ################################################################################
-# problem+problem_user functions
+# problem_merged functions
 ################################################################################
+
+BEGIN { *MergedProblem = gen_schema_accessor("problem_merged"); }
 
 sub existsMergedProblem {
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
@@ -1139,7 +1161,7 @@ sub getUserSetVersionNumber {
 # where set_id like '%,v%';
 
 ################################################################################
-# versioned set+set_user functions
+# versioned set_merged functions
 ################################################################################
 
 # getMergedVersionedSet( self, uid, sid [, versionNum] )
@@ -1225,7 +1247,7 @@ sub getMergedVersionedSets {
 }
 
 ################################################################################
-# versioned problem+problem_user functions
+# versioned problem_merged functions
 ################################################################################
 
 # this exists distinct from getMergedProblem only to be able to include the setVersionID
