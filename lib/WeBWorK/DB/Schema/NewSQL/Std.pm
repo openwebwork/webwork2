@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.6 2006/10/17 23:40:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.7 2006/10/19 17:37:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -238,11 +238,11 @@ sub get_fields_where_i {
 	
 	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
 	return new Iterator sub {
-		my $row = $sth->fetchrow_arrayref;
-		if (defined $row) {
-			return [@$row]; # need to make a copy here, since DBI reuses arrayrefs
+		my @row = $sth->fetchrow_array;
+		if (@row) {
+			return \@row;
 		} else {
-			$sth->finish; # let the server know we're done getting values (is this necessary?)
+			$sth->finish; # let the server know we're done getting values
 			undef $sth; # allow the statement handle to get garbage-collected
 			Iterator::is_done();
 		}
