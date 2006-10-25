@@ -97,6 +97,12 @@ sub where_user_id_eq {
 	return {};
 }
 
+sub where_user_id_like {
+	my ($self, $flags, $user_id) = @_;
+	$flags->{match_username_like} = $user_id;
+	return {};
+}
+
 sub where_password_eq {
 	my ($self, $flags, $password) = @_;
 	$flags->{match_password} = $password;
@@ -128,7 +134,8 @@ sub _course_members_type {
 	return if defined $flags->{match_permission_min} and $flags->{match_permission_min} > $permission_level;
 	return if defined $flags->{match_permission_max} and $flags->{match_permission_max} < $permission_level;
 	
-	my $need_user = defined $flags->{match_username} || defined $flags->{match_password};
+	my $need_user = defined $flags->{match_username} || defined $flags->{match_username_like}
+		|| defined $flags->{match_password};
 	my $type_table = $self->sql->_table("user_$type");
 	
 	my @fields_out;
@@ -178,6 +185,11 @@ sub _course_members_type {
 			#warn "adding $user_table.$username_field=? to \@where\n";
 			push @bind_vals, $flags->{match_username};
 			#warn "adding ", $flags->{match_username}, " to \@bind_vals\n";
+		}
+		if ($flags->{match_username_like}) {
+			my $username_field = $self->sql->_quote("username");
+			push @where, "$user_table.$username_field LIKE ?";
+			push @bind_vals, $flags->{match_username_like};
 		}
 		if ($flags->{match_password}) {
 			my $password_field = $self->sql->_quote("password");
