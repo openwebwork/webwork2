@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.10 2006/09/25 22:40:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.11 2006/10/06 20:17:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,28 +43,35 @@ must contain keys equal to the field names of the record class.
 =cut
 
 sub new {
-	my ($invocant, @rest) = @_;
-	my $class = ref($invocant) || $invocant;
-	my $self = {};
+	my $invocant = shift;
+	my $self = bless {}, ref($invocant) || $invocant;
 	
-	if (@rest) {
-		if ((ref $rest[0]) =~ /^WeBWorK::DB::Record/) {
-			my $prototype = $rest[0];
-			foreach ($invocant->FIELDS) {
-				$self->{$_} = $prototype->{$_}
-					if exists $prototype->{$_};
-			}
-		} elsif (@rest % 2 == 0) {
-			my %fields = @rest;
-			foreach ($invocant->FIELDS) {
-				$self->{$_} = $fields{$_}
-					if exists $fields{$_};
-			}
+	if (@_) {
+		if (UNIVERSAL::isa($_[0], __PACKAGE__)) {
+			$self->init_from_object($_[0]);
+		} elsif (ref $_[0] eq "HASH") {
+			$self->init_from_hashref($_[0]);
+		} elsif (ref $_[0] eq "ARRAY") {
+			$self->init_from_arrayref($_[0]);
+		} else {
+			$self->init_from_hashref({@_});
 		}
 	}
 	
-	bless $self, $class;
 	return $self;
+}
+
+# this will have to be changed if we actually implement any custom accessors/mutators
+sub init_from_object { shift->init_from_hashref(shift) }
+
+sub init_from_hashref {
+	my ($self, $prototype) = @_;
+	@$self{$self->FIELDS} = @$prototype{$self->FIELDS};
+}
+
+sub init_from_arrayref {
+	my ($self, $prototype) = @_;
+	@$self{$self->FIELDS} = @$prototype;
 }
 
 =back
@@ -105,6 +112,17 @@ the fields will be in order.
 sub toHash {
 	my $self = shift;
 	return map { $_ => $self->$_ } $self->FIELDS;
+}
+
+=item toArray
+
+Returns an array representation of the object's fields.
+
+=cut
+
+sub toArray {
+	my $self = shift;
+	return map { $self->$_ } $self->FIELDS;
 }
 
 =back
