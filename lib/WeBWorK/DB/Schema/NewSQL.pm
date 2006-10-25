@@ -38,37 +38,42 @@ use constant STYLE  => "dbi";
 
 sub where_user_id_eq {
 	my ($self, $flags, $user_id) = @_;
-	return {user_id=>$user_id}
+	return {user_id=>$user_id};
+}
+
+sub where_user_id_like {
+	my ($self, $flags, $user_id) = @_;
+	return {user_id=>{LIKE=>$user_id}};
 }
 
 sub where_status_eq {
 	my ($self, $flags, $status) = @_;
-	return {status=>$status}
+	return {status=>$status};
 }
 
 sub where_section_eq {
 	my ($self, $flags, $section) = @_;
-	return {section=>$section}
+	return {section=>$section};
 }
 
 sub where_recitation_eq {
 	my ($self, $flags, $recitation) = @_;
-	return {recitation=>$recitation}
+	return {recitation=>$recitation};
 }
 
 sub where_section_eq_recitation_eq {
 	my ($self, $flags, $section, $recitation) = @_;
-	return {section=>$section,recitation=>$recitation}
+	return {section=>$section,recitation=>$recitation};
 }
 
 sub where_password_eq {
 	my ($self, $flags, $password) = @_;
-	return {password=>$password}
+	return {password=>$password};
 }
 
 sub where_permission_eq {
 	my ($self, $flags, $permission) = @_;
-	return {permission=>$permission}
+	return {permission=>$permission};
 }
 
 sub where_permission_in_range {
@@ -86,35 +91,35 @@ sub where_permission_in_range {
 
 sub where_set_id_eq {
 	my ($self, $flags, $set_id) = @_;
-	return {set_id=>$set_id}
+	return {set_id=>$set_id};
 }
 
 sub where_set_id_eq_problem_id_eq {
 	my ($self, $flags, $set_id, $problem_id) = @_;
-	return {set_id=>$set_id,problem_id=>$problem_id}
+	return {set_id=>$set_id,problem_id=>$problem_id};
 }
 
 sub where_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
-	return {user_id=>$user_id,set_id=>$set_id}
+	return {user_id=>$user_id,set_id=>$set_id};
 }
 
 # VERSIONING
 sub where_nonversionedset_user_id_eq {
 	my ($self, $flags, $user_id) = @_;
-	return {user_id=>$user_id,set_id=>{NOT_LIKE=>make_vsetID("%","%")}}
+	return {user_id=>$user_id,set_id=>{NOT_LIKE=>make_vsetID("%","%")}};
 }
 
 # VERSIONING
 sub where_versionedset_user_id_eq {
 	my ($self, $flags, $user_id) = @_;
-	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID("%","%")}}
+	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID("%","%")}};
 }
 
 # VERSIONING
 sub where_versionedset_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
-	return {user_id=>$user_id,setID=>{LIKE=>make_vsetID($set_id,"%")}}
+	return {user_id=>$user_id,setID=>{LIKE=>make_vsetID($set_id,"%")}};
 }
 
 # VERSIONING
@@ -160,11 +165,10 @@ sub field_data {
 sub box {
 	my ($self, $values) = @_;
 	
-	my @names = $self->{record}->FIELDS;
-	my %pairs;
 	# promoting undef values to empty string. eventually we'd like to stop doing this (FIXME)
-	@pairs{@names} = map { defined $_ ? $_ : "" } @$values;
-	return $self->{record}->new(%pairs);
+	map { defined $_ ? $_ : "" } @$values;
+	
+	return $self->{record}->new($values);
 }
 
 sub unbox {
