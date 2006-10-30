@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.52 2006/09/12 17:07:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.53 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,9 +29,13 @@ use warnings;
 use WeBWorK::CGI;
 use HTML::Entities;
 use Mail::Sender;
+use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
+
+use mod_perl;
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 #my $REFRESH_RESIZE_BUTTON = "Set preview to: ";  # handle submit value idiocy
 my $UPDATE_SETTINGS_BUTTON = "Update settings and refresh page"; # handle submit value idiocy
@@ -254,10 +258,20 @@ sub initialize {
 		$r_text               =    \$body;
 
 	}
+	
+	my $remote_host;
+	if (MP2) {
+		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
+	} else {
+		(undef, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
+		$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
+	}
+
 	# store data
 	$self->{from}                   =    $from;
 	$self->{replyTo}                =    $replyTo;
 	$self->{subject}                =    $subject;
+	$self->{remote_host}            =    $remote_host;
 	$self->{r_text}                 =    $r_text;
 
 
@@ -374,7 +388,11 @@ sub initialize {
 				my $result_message = $self->mail_message_to_recipients();
 				$self->email_notification($result_message);
 			};
-			$r->post_connection($post_connection_action) ;
+			if (MP2) {
+				$r->connection->pool->cleanup_register($post_connection_action);
+			} else {
+				$r->post_connection($post_connection_action);
+			}
 		}
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
@@ -434,7 +452,7 @@ sub print_preview {
 	my $delimiter       = ',';
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 
-	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data);
+	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data,1); # 1 == for preview
 	
 	my $recipients  = join(" ",@{$self->{ra_send_to} });
 	my $errorMessage =  defined($self->{submit_message}) ?  CGI::i($self->{submit_message} ) : '' ; 
@@ -711,6 +729,7 @@ sub get_merge_file_names   {
 
 sub mail_message_to_recipients {
 	my $self                  = shift;
+	my $r                     = $self->r;
 	my $subject               = $self->{subject};
 	my $from                  = $self->{from};
 	my @recipients            = @{$self->{ra_send_to}};
@@ -730,15 +749,14 @@ sub mail_message_to_recipients {
 				$error_messages .="User $recipient does not have an email address -- skipping\n";
 				next;
 			}
-			my ($msg, $preview_header);
-			eval{ ($msg,$preview_header) = $self->process_message($ur,$rh_merge_data); };
-			$error_messages .= "There were errors in processing user $ur, merge file $merge_file. \n$@\n" if $@;
+			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
+			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 			my $mailer = Mail::Sender->new({
 				from    =>   $from,
 				to      =>   $ur->email_address,
 				smtp    =>   $self->{smtpServer},
 				subject =>   $subject,
-				headers =>   "X-Remote-Host: ".$self->r->get_remote_host(),
+				headers =>   "X-Remote-Host: ".$self->{remote_host},
 			});
 			unless (ref $mailer) {
 				$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n";
@@ -784,7 +802,7 @@ sub email_notification {
 		to   => $self->{defaultFrom},
 		smtp    => $self->{smtpServer},
 		subject => $subject,
-		headers => "X-Remote-Host: ".$self->r->get_remote_host(),
+		headers => "X-Remote-Host: ".$self->{remote_host},
 	});
 	unless (ref $mailer) {
 		$mailing_errors .= "Failed to create a mailer: $Mail::Sender::Error";
@@ -827,6 +845,7 @@ sub process_message {
 	my $self          = shift;
 	my $ur            = shift;
 	my $rh_merge_data = shift;
+	my $for_preview   = shift;
 	my $text          = defined($self->{r_text}) ? ${ $self->{r_text} }:
 	                        'FIXME no text was produced by initialization!!';	
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';  
@@ -847,7 +866,7 @@ sub process_message {
 	# get record from merge file
 	# FIXME this is inefficient.  The info should be cached
 	my @COL            = defined($rh_merge_data->{$SID}) ? @{$rh_merge_data->{$SID} } : ();
-	if ($merge_file ne 'None' && not defined($rh_merge_data->{$SID})  ) {
+	if ($merge_file ne 'None' and not defined($rh_merge_data->{$SID}) and $for_preview) {
 		$self->addbadmessage(CGI::p("No merge data for student id:$SID; name:$FN $LN; login:$LOGIN"));
 	}
 	unshift(@COL,"");			## this makes COL[1] the first column
@@ -871,12 +890,15 @@ sub process_message {
 			 
  	$msg =~ s/\r//g;
 	
-	my @preview_COL = @COL;
-	shift @preview_COL; ## shift back for preview
-	my $preview_header = 	CGI::pre({},data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
-		                    CGI::h3( "This sample mail would be sent to $EMAIL");
-
-	return $msg, $preview_header;
+	if ($for_preview) {
+		my @preview_COL = @COL;
+		shift @preview_COL; ## shift back for preview
+		my $preview_header = 	CGI::pre({},data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
+			                    CGI::h3( "This sample mail would be sent to $EMAIL");
+		return $msg, $preview_header;
+	} else {
+		return $msg;
+	}
 }
 
 
