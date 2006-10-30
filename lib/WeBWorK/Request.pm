@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.7 2006/07/15 14:23:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.8 2006/09/25 21:44:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -44,34 +44,33 @@ BEGIN {
 
 # Apache2::Request's param method doesn't support setting parameters, so we need to provide the
 # behavior in this class if we're running under mod_perl2.
-# FIXME it would be more efficient to copy the whole param list into this class.
 BEGIN {
 	if (MP2) {
-		*param = sub {
-			my $self = shift;
-			if (@_ == 0) {
-				my %names;
-				@names{$self->SUPER::param} = ();
-				@names{keys %{$self->{paramcache}}} = ();
-				return keys %names;
-			} elsif (@_ == 1) {
-				my $name = shift;
-				if (exists $self->{paramcache}{$name}) {
-					return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
-				} else {
-					return $self->SUPER::param($name);
-				}
-			} elsif (@_ == 2) {
-				my ($name, $val) = @_;
-				if (ref $val eq "ARRAY") {
-					$self->{paramcache}{$name} = $val;
-				} else {
-					$self->{paramcache}{$name} = [$val];
-				}
-				return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
-			}
-		};
+		*param = *mutable_param;
 	}
+}
+
+sub mutable_param {
+	my $self = shift;
+	
+	if (not defined $self->{paramcache}) {
+		my @names = $self->SUPER::param;
+		@{$self->{paramcache}}{@names} = map { [ $self->SUPER::param($_) ] } @names;
+	}
+	
+	@_ or return keys %{$self->{paramcache}};
+	
+	my $name = shift;
+	if (@_) {
+		my $val = shift;
+		if (ref $val eq "ARRAY") {
+			$self->{paramcache}{$name} = [@$val]; # make a copy
+		} else {
+			$self->{paramcache}{$name} = [$val];
+		}
+	}
+	return unless exists $self->{paramcache}{$name};
+	return wantarray ? @{$self->{paramcache}{$name}} : $self->{paramcache}{$name}->[0];
 }
 
 =head1 CONSTRUCTOR
