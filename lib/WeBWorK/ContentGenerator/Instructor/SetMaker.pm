@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.74 2006/09/06 16:25:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.75 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1213,13 +1213,8 @@ sub pre_header_initialize {
 		}
 	} elsif ($r->param('select_none')) {
 		@past_marks = ();
-
-		##### No action requested, probably our first time here
-
 	} else {
-		#my $c = $r->connection;
-		#print "Debug info: ". $r->get_remote_host ."<p>".	$c->remote_ip ;
-		;
+		##### No action requested, probably our first time here
 	}				##### end of the if elsif ...
 
  
