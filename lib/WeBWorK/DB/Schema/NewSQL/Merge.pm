@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.6 2006/10/17 23:39:14 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.7 2006/10/19 17:37:25 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -169,19 +169,6 @@ sub _get_fields_where_prepex {
 	
 	# pull the requested fields out of $self->{sql_fieldexprs}
 	my $sql_fields = join(", ", @{$self->{sql_fieldexprs}}{@$fields});
-	
-#	# generate the WHERE clause separately
-#	my ($stmt, @bind_vals) = $self->sql->where($where, $order);
-#	
-#	# prepend $self->{sql_whereprefix} (if there's no existing where clause, the
-#	# s/// will fail and we'll fall add it -- note that $stmt might still
-#	# contain an ORDER clause, which we need to preserve.)
-#	my $where_prefix = $self->{sql_whereprefix};
-#	$stmt =~ s/\bWHERE\b/WHERE $where_prefix/
-#		or $stmt = " WHERE $where_prefix $stmt";
-#	
-#	# instead of using $self->table, use the merge list
-#	(substr($stmt, 0, 0)) = $self->sql->select($self->{params}{merge}, $sql_fields);
 	
 	my @where = $self->{sql_whereprefix};
 	my @bind_vals;
