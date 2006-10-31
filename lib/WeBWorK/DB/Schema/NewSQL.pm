@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.16 2006/10/25 14:23:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.17 2006/10/25 15:49:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,46 +36,61 @@ use constant STYLE  => "dbi";
 # where clauses (not sure if this is where these belong...)
 ################################################################################
 
+# can be used for user,password,permission,key,set_user,problem_user,vset_user
 sub where_user_id_eq {
 	my ($self, $flags, $user_id) = @_;
 	return {user_id=>$user_id};
 }
 
+# can be used for user,password,permission,key,set_user,problem_user
 sub where_user_id_like {
 	my ($self, $flags, $user_id) = @_;
 	return {user_id=>{LIKE=>$user_id}};
 }
 
+# can be used for user
+sub where_email_address_nonempty {
+	my ($self, $flags) = @_;
+	return {email_address=>{'!=',[undef,""]}};
+}
+
+# can be used for user
 sub where_status_eq {
 	my ($self, $flags, $status) = @_;
 	return {status=>$status};
 }
 
+# can be used for user
 sub where_section_eq {
 	my ($self, $flags, $section) = @_;
 	return {section=>$section};
 }
 
+# can be used for user
 sub where_recitation_eq {
 	my ($self, $flags, $recitation) = @_;
 	return {recitation=>$recitation};
 }
 
+# can be used for user
 sub where_section_eq_recitation_eq {
 	my ($self, $flags, $section, $recitation) = @_;
 	return {section=>$section,recitation=>$recitation};
 }
 
+# can be used for password
 sub where_password_eq {
 	my ($self, $flags, $password) = @_;
 	return {password=>$password};
 }
 
+# can be used for permission
 sub where_permission_eq {
 	my ($self, $flags, $permission) = @_;
 	return {permission=>$permission};
 }
 
+# can be used for permission
 sub where_permission_in_range {
 	my ($self, $flags, $min, $max) = @_;
 	if (defined $min and defined $max) {
@@ -89,16 +104,19 @@ sub where_permission_in_range {
 	}
 }
 
+# can be used for set,set_user,problem,problem_user
 sub where_set_id_eq {
 	my ($self, $flags, $set_id) = @_;
 	return {set_id=>$set_id};
 }
 
+# can be used for problem,problem_user
 sub where_set_id_eq_problem_id_eq {
 	my ($self, $flags, $set_id, $problem_id) = @_;
 	return {set_id=>$set_id,problem_id=>$problem_id};
 }
 
+# can be used for set_user,problem_user
 sub where_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
 	return {user_id=>$user_id,set_id=>$set_id};

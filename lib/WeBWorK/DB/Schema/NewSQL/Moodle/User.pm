@@ -58,18 +58,13 @@ Status value to assign to non-deleted users.
 =cut
 
 ################################################################################
-# constructor for Moodle-specific behavior
-################################################################################
-
-#sub new {
-#	my $self = shift->SUPER::new(@_);
-#	
-#	return $self;
-#}
-
-################################################################################
 # where clauses
 ################################################################################
+
+sub where_email_address_nonempty {
+	my ($self, $flags) = @_;
+	return {email=>{'!=',[undef,""]}};
+}
 
 sub where_status_eq {
 	my ($self, $flags, $status) = @_;
