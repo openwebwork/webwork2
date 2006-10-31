@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.27 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.28 2006/10/02 16:59:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,40 +77,6 @@ sub getRecord {
         @lineArray = split(/\s*${delimiter}\s*/,$line);
         $lineArray[0] =~s/^\s*// if defined($lineArray[0]);                       # remove white space from first element
         @lineArray;
-}
-
-sub read_scoring_file    { # used in SendMail and Grades?....?
-	my ($self, $fileName, $delimiter) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	
-	$delimiter          = ',' unless defined($delimiter);
-	my $scoringDirectory= $ce->{courseDirs}->{scoring};
-	my $filePath        = "$scoringDirectory/$fileName";  
-        #       Takes a delimited file as a parameter and returns an
-        #       associative array with the first field as the key.
-        #       Blank lines are skipped. White space is removed
-    my(@dbArray,$key,$dbString);
-    my %assocArray = ();
-    local(*FILE);
-    if ($fileName eq 'None') {
-    	# do nothing
-    } elsif ( open(FILE, "$filePath")  )   {
-		my $index=0;
-		while (<FILE>){
-			unless ($_ =~ /\S/)  {next;}               ## skip blank lines
-			chomp;
-			@{$dbArray[$index]} =$self->getRecord($_,$delimiter);
-			$key    =$dbArray[$index][0];
-			$assocArray{$key}=$dbArray[$index];
-			$index++;
-		}
-		close(FILE);
-     } elsif (-e $filePath) {
-     	warn "Couldn't read file $filePath";
-     } else {
-     }
-     return \%assocArray;
 }
 
 sub scoring_info {
