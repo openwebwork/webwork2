@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.58 2006/09/08 21:01:19 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.59 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -609,38 +609,6 @@ sub read_dir {  # read a directory
 	my $pattern   = shift;
 	my @files = grep /$pattern/, WeBWorK::Utils::readDirectory($directory); 
 	return sort @files;
-}
-
-sub read_scoring_file    { # used in SendMail and ....?
-	my $self            = shift;
-	my $fileName        = shift;
-	my $delimiter       = shift;
-	$delimiter          = ',' unless defined($delimiter);
-	my $scoringDirectory= $self->{ce}->{courseDirs}->{scoring};
-	my $filePath        = "$scoringDirectory/$fileName";  
-        #       Takes a delimited file as a parameter and returns an
-        #       associative array with the first field as the key.
-        #       Blank lines are skipped. White space is removed
-    my(@dbArray,$key,$dbString);
-    my %assocArray = ();
-    my $file_string;
-    if ($fileName eq 'None') {
-    	# do nothing
-    } elsif ( $file_string = WeBWorK::Utils::readFile($filePath)  ) {
-        my @file_lines = split "\n",$file_string;
-		my $index=0;
-		foreach my $line (@file_lines){
-			unless ($line =~ /\S/)  {next;}               ## skip blank lines
-			chomp($line);
-			@{$dbArray[$index]} =$self->getRecord($line,$delimiter);
-			$key    =$dbArray[$index][0];
-			$assocArray{$key}=$dbArray[$index];
-			$index++;
-		}
-     } else {
-     	warn "Couldn't read file $filePath";
-     }
-     return \%assocArray;
 }
 
 =back

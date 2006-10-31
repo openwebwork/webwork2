@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.178 2006/08/22 19:00:04 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.179 2006/09/25 22:14:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1923,6 +1923,19 @@ sub formatDateTime {
 	my $ce = $self->r->ce;
 	$display_tz ||= $ce->{siteDefaults}{timezone};
 	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz);
+}
+
+=item read_scoring_file($fileName)
+
+Wrapper for WeBWorK::File::Scoring that no-ops if $fileName is "None" and
+prepends the path to the scoring directory.
+
+=cut
+
+sub read_scoring_file {
+	my ($self, $fileName) = @_;
+	return if $fileName eq "None";
+	return parse_scoring_file($self->r->ce->{courseDirs}{scoring}."/$fileName");
 }
 
 =back
