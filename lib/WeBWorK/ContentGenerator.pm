@@ -46,7 +46,6 @@ use warnings;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
 use WeBWorK::CGI;
-use WeBWorK::File::Scoring qw/parse_scoring_file/;
 use Date::Format;
 use URI::Escape;
 use WeBWorK::Debug;
@@ -549,9 +548,9 @@ sub links {
 	
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
-		# DBFIXME testing for existence by keyfields -- don't need fetch record => FIXED
-		if (defined $setID and $db->existsUserSet($eUserID, $setID)) {
-			if (defined $problemID and $db->existsUserProblem($eUserID, $setID, $problemID)) {
+		# DBFIXME testing for existence by keyfields -- don't need fetch record
+		if (defined $setID and $db->getUserSet($eUserID, $setID)) {
+			if (defined $problemID and $db->getUserProblem($eUserID, $setID, $problemID)) {
 				# both set and poblem exist -- do nothing
 			} else {
 				$problemID = undef;

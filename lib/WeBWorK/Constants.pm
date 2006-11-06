@@ -51,7 +51,7 @@ $WeBWorK::Debug::DenySubroutineOutput = undef;
 # For example, this pattern allow only some function being worked on to log:
 #     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
 # 
-$WeBWorK::Debug::AllowSubroutineOutput = qr/NewSQL/;
+$WeBWorK::Debug::AllowSubroutineOutput = undef;
 
 ################################################################################
 # WeBWorK::ContentGenerator::Hardcopy
