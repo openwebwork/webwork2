@@ -1928,8 +1928,7 @@ sub printTableHTML {
 	# FIXME: should this always presume to use the templates directory?
 	# (no, but that can wait until we have an abstract ProblemLibrary API -- sam)
 	my $templates_dir = $r->ce->{courseDirs}->{templates};
-	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
-	my $exempt_dirs = join("|", keys %probLibs);
+	my $exempt_dirs = join "|", keys %{ $r->ce->{courseFiles}->{problibs} };
 	my @headers = listFilesRecursive(
 		$templates_dir,
 		qr/header.*\.pg$/i, # match these files
