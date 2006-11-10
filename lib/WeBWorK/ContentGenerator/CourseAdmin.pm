@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.58 2006/09/25 22:14:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.59 2006/09/26 15:57:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1342,8 +1342,7 @@ sub import_database_form {
 	
 	# find databases:
 	my $templatesDir = $ce->{courseDirs}->{templates};
-	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
-	my $exempt_dirs = join("|", keys %probLibs);
+	my $exempt_dirs = join("|", keys %{ $r->ce->{courseFiles}->{problibs} });
 
 	my @databaseFiles = listFilesRecursive(
 		$templatesDir,

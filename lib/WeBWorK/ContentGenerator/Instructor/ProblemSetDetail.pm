@@ -1154,8 +1154,7 @@ sub body {
 	#####################################################################
 	
 	my $templates = $r->ce->{courseDirs}->{templates};
-	my %probLibs = %{ $r->ce->{courseFiles}->{problibs} };
-	my $skip = join("|", keys %probLibs);
+	my $skip = join("|", keys %{ $r->ce->{courseFiles}->{problibs} });
 
 	my @headerFileList = listFilesRecursive(
 		$templates,
