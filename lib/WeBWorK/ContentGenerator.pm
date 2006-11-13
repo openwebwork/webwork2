@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.183 2006/11/06 22:27:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.184 2006/11/06 22:30:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1416,17 +1416,31 @@ module and their values.
 sub feedbackMacro {
 	my ($self, %params) = @_;
 	my $r = $self->r;
-	my $userID = $r->param("user");
 	my $authz = $r->authz;
-	my $urlpath = $r->urlpath;
-	my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param("user");
 	
 	# don't do anything unless the user has permission to
 	return "" unless $authz->hasPermissions($userID, "submit_feedback");
 	
+	my $feedbackURL = $r->ce->{courseURLs}{feedbackURL};
+	if (defined $feedbackURL and $feedbackURL ne "") {
+		return $self->feedbackMacro_url($feedbackURL);
+	} else {
+		return $self->feedbackMacro_email(%params);
+	}
+}
+
+sub feedbackMacro_email {
+	my ($self, %params) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
+	
 	# feedback form url
 	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseID);
 	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
+	my $feedbackName = $ce->{feedback_button_name} || "Feedback";
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
 	$result .= $self->hidden_authen_fields . "\n";
@@ -1434,10 +1448,16 @@ sub feedbackMacro {
 	while (my ($key, $value) = each %params) {
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
-	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -label=>"Email instructor"));
+	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -label=>$feedbackName));
 	$result .= CGI::endform() . "\n";
 	
 	return $result;
+}
+
+sub feedbackMacro_url {
+	my ($self, $url) = @_;
+	my $feedbackName = $self->r->ce->{feedback_button_name} || "Feedback";
+	return CGI::a({-href=>$url}, $feedbackName);
 }
 
 =back
