@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.59 2006/09/11 20:22:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.60 2006/09/25 22:14:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -149,8 +149,7 @@ sub verify {
 	
 	my $result = $self->do_verify;
 	my $error = $self->{error};
-	my $user_id = $self->{user_id};
-	my $credential_source = $self->{credential_source};
+	my $log_error = $self->{log_error};
 	
 	$self->{was_verified} = $result ? 1 : 0;
 	
@@ -159,11 +158,13 @@ sub verify {
 	}
 	
 	if ($result) {
-		#$self->write_log_entry("LOGIN OK user_id=$user_id credential_source=$credential_source");
+		$self->write_log_entry("LOGIN OK") if $self->{initial_login};
 		$self->maybe_send_cookie;
 		$self->set_params;
 	} else {
-		#$self->write_log_entry("LOGIN FAILED user_id=$user_id credential_source=$credential_source");
+		if (defined $log_error) {
+			$self->write_log_entry("LOGIN FAILED $log_error");
+		}
 		$self->maybe_kill_cookie;
 		if ($error) {
 			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
@@ -220,7 +221,7 @@ sub do_verify {
 	return 0 unless $self->check_user;
 	
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
-	if ($practiceUserPrefix and $self->{user_id} =~ /^$practiceUserPrefix/){
+	if ($self->{login_type} eq "guest"){
 		return $self->verify_practice_user;
 	} else {
 		return $self->verify_normal_user;
@@ -246,17 +247,19 @@ sub get_credentials {
 		foreach my $userID (@allowedGestUserIDs) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
+				$self->{initial_login} = 1;
 				
 				$self->{user_id} = $userID;
 				$self->{session_key} = $newKey;
-				$self->{credential_source} = "guest";
+				$self->{login_type} = "guest";
+				$self->{credential_source} = "none";
 				debug("guest user '", $userID. "' key '", $newKey. "'");
 				return 1;
 			}
 		}
 		
-		$self->write_log_entry("GUEST LOGIN FAILED - no logins availabe");
-		$self->{error} = "No practice users are available. Please try again in a few minutes.";
+		$self->{log_error} = "no guest logins are available";
+		$self->{error} = "No guest logins are available. Please try again in a few minutes.";
 		return 0;
 	}
 	
@@ -265,6 +268,7 @@ sub get_credentials {
 		$self->{user_id} = $r->param("user");
 		$self->{session_key} = $r->param("key");
 		$self->{password} = $r->param("passwd");
+		$self->{login_type} = "normal";
 		$self->{credential_source} = "params";
 		debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
 		return 1;
@@ -274,6 +278,7 @@ sub get_credentials {
 	if (defined $cookieUser) {
 		$self->{user_id} = $cookieUser;
 		$self->{session_key} = $cookieKey;
+		$self->{login_type} = "normal";
 		$self->{credential_source} = "cookie";
 		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 		return 1;
@@ -290,6 +295,7 @@ sub check_user {
 	my $user_id = $self->{user_id};
 	
 	if (defined $user_id and $user_id eq "") {
+		$self->{log_error} = "no user id specified";
 		$self->{error} = "You must specify a user ID.";
 		return 0;
 	}
@@ -297,7 +303,7 @@ sub check_user {
 	my $User = $db->getUser($user_id);
 	
 	unless ($User) {
-		$self->write_log_entry("LOGIN FAILED $user_id - user unknown");
+		$self->{log_error} = "user unknown";
 		$self->{error} = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
@@ -305,13 +311,13 @@ sub check_user {
 	# FIXME "fix invalid status values" used to be here, but it needs to move to $db->getUser
 	
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
-		$self->write_log_entry("LOGIN FAILED $user_id - course access denied");
+		$self->{log_error} = "user not allowed course access";
 		$self->{error} = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 	
 	unless ($authz->hasPermissions($user_id, "login")) {
-		$self->write_log_entry("LOGIN FAILED $user_id - no permission to login");
+		$self->{log_error} = "user not permitted to login";
 		$self->{error} = GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
@@ -336,6 +342,7 @@ sub verify_practice_user {
 				return 1;
 			} else {
 				$self->{session_key} = $self->create_session($user_id);
+				$self->{initial_login} = 1;
 				return 1;
 			}
 		} else {
@@ -343,18 +350,22 @@ sub verify_practice_user {
 				my $debugPracticeUser = $ce->{debugPracticeUser};
 				if (defined $debugPracticeUser and $user_id eq $debugPracticeUser) {
 					$self->{session_key} = $self->create_session($user_id);
+					$self->{initial_login} = 1;
 					return 1;
 				} else {
+					$self->{log_error} = "guest account in use";
 					$self->{error} = "That guest account is in use.";
 					return 0;
 				}
 			} else {
 				$self->{session_key} = $self->create_session($user_id);
+				$self->{initial_login} = 1;
 				return 1;
 			}
 		}
 	} else {
 		$self->{session_key} = $self->create_session($user_id);
+		$self->{initial_login} = 1;
 		return 1;
 	}
 }
@@ -376,10 +387,10 @@ sub verify_normal_user {
 		
 		if ($auth_result > 0) {
 			$self->{session_key} = $self->create_session($user_id);
-			$self->write_log_entry("LOGIN OK $user_id");
+			$self->{initial_login} = 1;
 			return 1;
 		} elsif ($auth_result == 0) {
-			$self->write_log_entry("LOGIN FAILED $user_id - authentication failed");
+			$self->{log_error} = "authentication failed";
 			$self->{error} = GENERIC_ERROR_MESSAGE;
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
@@ -427,7 +438,7 @@ sub maybe_send_cookie {
 		and defined $cookie_key and $self->{session_key} eq $cookie_key);
 	
 	# (c) the user asked to have a cookie sent and is not a guest user.
-	my $user_requests_cookie = ($self->{credential_source} ne "guest"
+	my $user_requests_cookie = ($self->{login_type} ne "guest"
 		and $r->param("send_cookie"));
 	
 	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie, "'");
@@ -465,17 +476,25 @@ sub checkPassword {
 	my $db = $self->{r}->db;
 	
 	my $Password = $db->getPassword($userID); # checked
-	return 0 unless defined $Password;
-	
-	# check against WW password database
-	my $possibleCryptPassword = crypt($possibleClearPassword, $Password->password());
-	return 1 if $possibleCryptPassword eq $Password->password;
-	
-	# check site-specific verification method
-	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
-	
-	# fail by default
-	return 0;
+	if (defined $Password) {
+		# check against WW password database
+		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
+		if ($possibleCryptPassword eq $Password->password) {
+			$self->write_log_entry("AUTH WWDB: password accepted");
+			return 1;
+		} else {
+			if ($self->can("site_checkPassword")) {
+				$self->write_log_entry("AUTH WWDB: password rejected, deferring to site_checkPassword");
+				return $self->site_checkPassword($userID, $possibleClearPassword);
+			} else {
+				$self->write_log_entry("AUTH WWDB: password rejected");
+				return 0;
+			}
+		}
+	} else {
+		$self->write_log_entry("AUTH WWDB: user has no password record");
+		return 0;
+	}
 }
 
 # Site-specific password checking
@@ -517,13 +536,6 @@ sub checkPassword {
 # 			return 0;
 # 		}
 # 	}
-# 
-# 
-# The default site_checkPassword always fails:
-sub site_checkPassword {
-	my ($self, $userID, $clearTextPassword) = @_;
-	return 0;
-}
 
 ################################################################################
 # Session key management
@@ -675,9 +687,12 @@ sub killCookie {
 
 sub write_log_entry {
 	my ($self, $message) = @_;
-	
 	my $r = $self->{r};
 	my $ce = $r->ce;
+	
+	my $user_id = defined $self->{user_id} ? $self->{user_id} : "";
+	my $login_type = defined $self->{login_type} ? $self->{login_type} : "";
+	my $credential_source = defined $self->{credential_source} ? $self->{credential_source} : "";
 	
 	my ($remote_host, $remote_port);
 	if (MP2) {
@@ -690,7 +705,7 @@ sub write_log_entry {
 	}
 	my $user_agent = $r->headers_in->{"User-Agent"};
 	
-	my $log_msg = "$message (host=$remote_host port=$remote_port UA=$user_agent)";
+	my $log_msg = "$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
 	debug("Writing to login log: '$log_msg'.\n");
 	writeCourseLog($ce, "login_log", $log_msg);
 }

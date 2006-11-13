@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/LDAP.pm,v 1.1 2006/06/23 18:42:31 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/LDAP.pm,v 1.2 2006/09/11 20:34:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ sub checkPassword {
 	
 	# optional: fail over to superclass checkPassword
 	if ($failover) {
-		$self->write_log_entry("LDAP: authentication failed, deferring to superclass");
+		$self->write_log_entry("AUTH LDAP: authentication failed, deferring to superclass");
 		return $self->SUPER::checkPassword($userID, $possibleClearPassword);
 	}
 	
@@ -52,7 +52,7 @@ sub ldap_authen_uid {
 	# connect to LDAP server
 	my $ldap = new Net::LDAP($hosts, @$opts);
 	if (not defined $ldap) {
-		warn "LDAP: couldn't connect to any of ", join(", ", @$hosts), ".\n";
+		warn "AUTH LDAP: couldn't connect to any of ", join(", ", @$hosts), ".\n";
 		return 0;
 	}
 	
@@ -61,38 +61,38 @@ sub ldap_authen_uid {
 	# bind anonymously
 	$msg = $ldap->bind;
 	if ($msg->is_error) {
-		warn "LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
+		warn "AUTH LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
 		return 0;
 	}
 	
 	# look up user's DN
 	$msg = $ldap->search(base => $base, filter => "uid=$uid");
 	if ($msg->is_error) {
-		warn "LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n";
+		warn "AUTH LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n";
 		return 0;
 	}
 	if ($msg->count > 1) {
-		warn "LDAP: more than one result returned when searching for UID '$uid'.\n";
+		warn "AUTH LDAP: more than one result returned when searching for UID '$uid'.\n";
 		return 0;
 	}
 	if ($msg->count == 0) {
-		$self->write_log_entry("LDAP: UID '$uid' not found");
+		$self->write_log_entry("AUTH LDAP: UID not found");
 		return 0;
 	}
 	my $dn = $msg->shift_entry->dn;
 	if (not defined $dn) {
-		warn "LDAP: got null DN when looking up UID '$uid'.\n";
+		warn "AUTH LDAP: got null DN when looking up UID '$uid'.\n";
 		return 0;
 	}
 	
 	# re-bind as user. if that works, we've authenticated!
 	$msg = $ldap->bind($dn, password => $password);
 	if ($msg->code == LDAP_INVALID_CREDENTIALS) {
-		$self->write_log_entry("LDAP: server rejected password for UID '$uid'.");
+		$self->write_log_entry("AUTH LDAP: server rejected password for UID.");
 		return 0;
 	}
 	if ($msg->is_error) {
-		warn "LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
+		warn "AUTH LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
 		return 0;
 	}
 	
