@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.184 2006/11/06 22:30:26 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.185 2006/11/13 16:19:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1440,7 +1440,7 @@ sub feedbackMacro_email {
 	# feedback form url
 	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseID);
 	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	my $feedbackName = $ce->{feedback_button_name} || "Feedback";
+	my $feedbackName = $ce->{feedback_button_name} || "Email instructor";
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
 	$result .= $self->hidden_authen_fields . "\n";
@@ -1456,7 +1456,7 @@ sub feedbackMacro_email {
 
 sub feedbackMacro_url {
 	my ($self, $url) = @_;
-	my $feedbackName = $self->r->ce->{feedback_button_name} || "Feedback";
+	my $feedbackName = $self->r->ce->{feedback_button_name} || "Email instructor";
 	return CGI::a({-href=>$url}, $feedbackName);
 }
 
