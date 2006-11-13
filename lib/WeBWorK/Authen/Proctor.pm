@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Proctor.pm,v 1.1 2006/04/12 18:50:11 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Proctor.pm,v 1.2 2006/09/15 21:44:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,6 +49,7 @@ sub get_credentials {
 		$self->{user_id} = $r->param("proctor_user");
 		$self->{session_key} = $r->param("proctor_key");
 		$self->{password} = $r->param("proctor_passwd");
+		$self->{login_type} = $r->param("submitAnswers") ? "proctor_grading" : "proctor";
 		$self->{credential_source} = "params";
 		return 1;
 	}
@@ -69,7 +70,7 @@ sub check_user {
 	if ($authz->hasPermissions($user_id, "proctor_quiz")) {
 		return $super_result;
 	} else {
-		$self->write_log_entry("LOGIN FAILED $user_id - no permission to proctor");
+		$self->{log_error} = "user not permitted to proctor_quiz";
 		$self->{error} = "User $user_id is not authorized to proctor tests in this course.";
 		return 0;
 	}
@@ -108,7 +109,7 @@ sub proctor_key_id {
 	my $r = $self->{r};
 	
 	my $proctor_key_id = $r->param("effectiveUser") . "," . $userID;
-	$proctor_key_id .= ",g" if $r->param("submitAnswers");
+	$proctor_key_id .= ",g" if $self->{login_type} eq "proctor_grading";
 	
 	return $proctor_key_id;
 }

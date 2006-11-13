@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.7 2006/07/08 22:58:55 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.8 2006/10/19 17:35:20 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,6 +73,7 @@ sub get_credentials {
 		
 		$self->{user_id} = $moodle_user_id;
 		$self->{session_key} = $newKey;
+		$self->{login_type} = "normal";
 		$self->{credential_source} = "moodle";
 		return 1;
 	} else {
@@ -101,21 +102,25 @@ sub checkPassword {
 	debug("Moodle module is doing the password checking.\n");
 	
 	my $Password = $db->getPassword($userID); # checked
-	return 0 unless defined $Password;
-	
-	debug("Hashed password from Password record: '", $Password->password, "'.\n");
-	
-	# check against Moodle password database
-	my $possibleMD5Password = md5_hex($possibleClearPassword);
-	debug("Hashed password from supplied cleartext: '$possibleMD5Password'.\n");
-	return 1 if $possibleMD5Password eq $Password->password;
-	
-	# check site-specific verification method
-	# FIXME do we really want to call this here?
-	return 1 if $self->site_checkPassword($userID, $possibleClearPassword);
-	
-	# fail by default
-	return 0;
+	if (defined $Password) {
+		# check against Moodle password database
+		my $possibleMD5Password = md5_hex($possibleClearPassword);
+		debug("Hashed password from supplied cleartext: '$possibleMD5Password'.\n");
+		debug("Hashed password from Password record: '", $Password->password, "'.\n");
+		if ($possibleMD5Password eq $Password->password) {
+			$self->write_log_entry("AUTH MDL: password accepted");
+			return 1;
+		} else {
+			if ($self->can("site_checkPassword")) {
+				$self->write_log_entry("AUTH MDL: password rejected, deferring to site_checkPassword");
+				return $self->site_checkPassword($userID, $possibleClearPassword);
+			} else {
+				$self->write_log_entry("AUTH MDL: password rejected");
+				return 0;
+			}
+		}
+		
+	}
 }
 
 sub check_session {
