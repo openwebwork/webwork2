@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.84 2006/10/23 17:33:20 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.86 2006/10/31 18:51:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1210,7 +1210,7 @@ sub getMergedVersionedSet {
 	} else {
 		# setID was not versioned
 		$using_setID = $setID;
-		$using_versionID = $versionID || $self->getUserSetVersionNumver($userID, $setID);
+		$using_versionID = $versionID || $self->getUserSetVersionNumber($userID, $setID);
 		$using_vsetID = make_vsetID($using_setID, $using_versionID);
 	}
 	
