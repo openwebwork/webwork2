@@ -25,6 +25,7 @@ API.
 
 use strict;
 use warnings;
+use Safe::Hole;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 use WeBWorK::Utils::RestrictedClosureClass;
@@ -178,8 +179,16 @@ sub defineProblemEnvir {
 	
 	# ADDED: ImageGenerator for images mode
 	if (defined $extras->{image_generator}) {
+		#$envir{imagegen} = $extras->{image_generator};
 		# only allow access to the add() method
 		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, "add");
+	}
+	
+	if (defined $extras->{mailer}) {
+		my $rmailer = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer},
+			qw/Open SendEnc Close Cancel skipped_recipients error error_msg/);
+		my $safe_hole = new Safe::Hole {};
+		$envir{mailer} = $safe_hole->wrap($rmailer);
 	}
 	
 	#  ADDED: jsMath options

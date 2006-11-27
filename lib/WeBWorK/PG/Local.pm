@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.21 2006/07/05 18:24:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.22 2006/08/24 21:16:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,6 +41,7 @@ use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
+use WeBWorK::Utils::RestrictedMailer;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -145,6 +146,30 @@ sub new_helper {
 		);
 	}
 	
+	my $mailer = new WeBWorK::Utils::RestrictedMailer(
+		params => {
+			from => $ce->{mail}{smtpSender},
+			smtp => $ce->{mail}{smtpServer},
+			# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
+			# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
+			# put it in Utils! (or maybe in WW::Request?)
+			headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
+				. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
+				# can't add user-related information because this is used for anonymous questionnaires
+				#. "X-WeBWorK-User: " . $user->user_id . "\n"
+				#. "X-WeBWorK-Section: " . $user->section . "\n"
+				#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
+				. "X-WeBWorK-Set: " . $set->set_id . "\n"
+				. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
+				. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
+			debug => "/tmp/debug.txt",
+		},
+		lock_by_default => 1,
+		allow_change => [qw/fake_from to fake_to cc fake_cc bcc subject/],
+		allowed_recipients => $ce->{mail}{allowedRecipients},
+		fatal_errors => 1,
+	);
+	
 	# set the environment (from defineProblemEnvir)
 	#warn "PG: setting the environment (from defineProblemEnvir)\n";
 	my $envir = $class->defineProblemEnvir(
@@ -158,6 +183,7 @@ sub new_helper {
 		$translationOptions,
 		{ #extras (this is kind of a hack, but not a serious one)
 			image_generator => $image_generator,
+			mailer => $mailer,
 		},
 	);
 	$translator->environment($envir);
