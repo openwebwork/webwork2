@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.67 2006/08/17 23:54:09 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.68 2006/08/24 21:16:36 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -178,7 +178,6 @@ sub defineProblemEnvir {
 	
 	# ADDED: ImageGenerator for images mode
 	if (defined $extras->{image_generator}) {
-		$envir{imagegen} = $extras->{image_generator};
 		# only allow access to the add() method
 		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, "add");
 	}
