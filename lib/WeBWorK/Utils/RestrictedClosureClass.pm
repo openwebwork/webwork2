@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/FilterRecords.pm,v 1.4 2006/01/25 23:13:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.1 2006/08/24 21:07:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,7 +22,6 @@ WeBWorK::Utils::RestrictedClosureClass - Protect instance data and only allow
 calling of specified methods.
 
 =head1 SYNPOSIS
-
 
  package MyScaryClass;
  
