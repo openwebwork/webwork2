@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.8 2006/10/19 17:35:20 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.9 2006/11/13 16:48:39 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,9 +39,17 @@ use warnings;
 use Digest::MD5 qw/md5_hex/;
 use WeBWorK::Cookie;
 use WeBWorK::Debug;
+use WeBWorK::Utils;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+use constant MOODLE17 => (defined( $WeBWorK::Constants::MOODLE17) ) ? 
+                           $WeBWorK::Constants::MOODLE17 
+                           : 1;  # set to 0 if using moodle prior to moodle 1.7
+
+use constant SESSIONS =>(MOODLE17()) ? 'sessions2' :'sessions';
+     #name of moodle sessions table (was 'sessions' in moodle 1.6)
 
 sub new {
 	my $self = shift->SUPER::new(@_);
@@ -178,8 +186,9 @@ sub fetch_moodle_session {
 	my $cookie = $cookies{"MoodleSession"};
 	return unless $cookie;
 	
-	my $sessions = $self->prefix_table("sessions");
-	my $stmt = "SELECT `expiry`,`data` FROM `$sessions` WHERE `sesskey`=?";
+	my $sessions = $self->prefix_table(SESSIONS());
+	#my $stmt = "SELECT `expiry`,`data` FROM `$sessions` WHERE `sesskey`=?";
+	my $stmt = "SELECT `expiry`,`sessdata` FROM `$sessions` WHERE `sesskey`=?";
 	my @bind_vals = $cookie->value;
 	
 	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
@@ -189,6 +198,11 @@ sub fetch_moodle_session {
 	return unless defined $row;
 	
 	my ($expires, $data_string) = @$row;
+	# convert expires to unix time
+    # FIXME -- there might be a more robust way to do this
+    
+    $expires = (MOODLE17()) ? Date::Parse::str2time($expires) : $expires;
+    
 	my $data = unserialize_session($data_string);
 	my $username = $data->{"USER"}{"username"};
 	
@@ -205,11 +219,15 @@ sub update_moodle_session {
 	my $cookie = $cookies{"MoodleSession"};
 	return unless $cookie;
 	
-	my $sessions = $self->prefix_table("sessions");
+	my $sessions = $self->prefix_table(SESSIONS());
 	my $config = $self->prefix_table("config");
 	my $stmt = "UPDATE `$sessions`"
-		. " SET `expiry`=IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?)+?"
+		. ( (MOODLE17()) ? 
+		        " SET `expiry`= FROM_UNIXTIME(IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?) +?) ":
+		        " SET `expiry`= IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?)+?" )           
 		. " WHERE `sesskey`=?";
+	# FIXME new moodle format:  2006-11-25 18:27:45
+	my $formatted_time = (MOODLE17()) ? '2006-01-01 00:00:00' : time; 
 	my @bind_vals = ("sessiontimeout", DEFAULT_EXPIRY, time, $cookie->value);
 	
 	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
