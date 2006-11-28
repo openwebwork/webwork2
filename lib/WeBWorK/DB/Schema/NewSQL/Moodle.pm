@@ -17,6 +17,10 @@
 package WeBWorK::DB::Schema::NewSQL::Moodle;
 use base qw(WeBWorK::DB::Schema::NewSQL);
 
+use constant MOODLE17 => (defined( $WeBWorK::Constants::MOODLE17 ) )? 
+                           $WeBWorK::Constants::MOODLE17 
+                           : 1;  # set to 0 if using moodle prior to moodle 1.7
+
 =head1 NAME
 
 WeBWorK::DB::Schema::NewSQL::Moodle - Base class for Moodle schema modules.
@@ -26,7 +30,7 @@ WeBWorK::DB::Schema::NewSQL::Moodle - Base class for Moodle schema modules.
 use strict;
 use warnings;
 use Carp qw(croak);
-#use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
+use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 use constant MOODLE_WEBWORK_BRIDGE_TABLE => 'wwassignment_bridge';
 
@@ -126,17 +130,38 @@ sub where_permission_in_range {
 # list of users in this course
 ################################################################################
 
+use constant USER_TABLE=>'user';
+use constant ROLE_ASSIGNMENT_TABLE =>'role_assignments';
+use constant ROLE_TABLE =>'role';
+
+
 sub _course_members_type {
 	my ($self, $type, $need_course, $flags, $fields) = @_;
 	
-	my $permission_level = $self->{params}{$type."PermissionLevel"};
-	return if defined $flags->{match_permission} and $flags->{match_permission} != $permission_level;
-	return if defined $flags->{match_permission_min} and $flags->{match_permission_min} > $permission_level;
-	return if defined $flags->{match_permission_max} and $flags->{match_permission_max} < $permission_level;
+
+ 	my $permission_level = $self->{params}{$type."PermissionLevel"};
+ 	return if defined $flags->{match_permission} and $flags->{match_permission} != $permission_level;
+ 	return if defined $flags->{match_permission_min} and $flags->{match_permission_min} > $permission_level;
+ 	return if defined $flags->{match_permission_max} and $flags->{match_permission_max} < $permission_level;
 	
+	our $user_table = $self->sql->_table(USER_TABLE());
+	our $role_assignment_table = $self->sql->_table(ROLE_ASSIGNMENT_TABLE());
+	our $role_table = $self->sql->_table(ROLE_TABLE());  # not currently used, use role_assignment.roleid directly
+	
+	# used for moodle17
+	our $role_to_permission =
+		"CASE ". $self->sql->_quote(ROLE_ASSIGNMENT_TABLE().".roleid").
+		 "WHEN 1 THEN 10 ".  #administrator
+		 "WHEN 2 THEN 10 ".	#course creator
+		 "WHEN 3 THEN 10 ".	#editing teacher
+		 "WHEN 4 THEN 5 ".	#teacher
+		 "WHEN 5 THEN 0 ".	#student
+		 "WHEN 6 THEN -1 ".	# guest
+		 "ELSE -1 END ";
+		 
 	my $need_user = defined $flags->{match_username} || defined $flags->{match_username_like}
 		|| defined $flags->{match_password};
-	my $type_table = $self->sql->_table("user_$type");
+	my $type_table = $self->sql->_table("user_$type");  # used only in pre moodle17
 	
 	my @fields_out;
 	foreach my $field (@$fields) {
@@ -151,8 +176,11 @@ sub _course_members_type {
 			push @fields_out, $self->sql->_quote("user.password")
 				. " AS " . $self->sql->_quote("password");
 		} elsif ($field eq "permission") {
-			push @fields_out, $self->dbh->quote($permission_level)
-				. " AS " . $self->sql->_quote("permission");
+ 			push @fields_out, 
+ 			     (MOODLE17()) ? "$role_to_permission as permission" :
+							$self->dbh->quote($permission_level) 
+								. " AS " . $self->sql->_quote("permission");
+
 		} else {
 			croak "Unrecognized field '$field' in field list";
 		}
@@ -162,23 +190,52 @@ sub _course_members_type {
 	my @joins;
 	my @where;
 	my @bind_vals;
-	
+	     
+	     # use role assignment to find contextid(course) userid and roleid
+	     # use context table to connect contextid to courseid=instanceid
+	     # use bridge table to connect courseid to webwork coursename 
+	     # what we use:
+	     # user.username   bridge_table.coursename      
+	     # user.password   
+	     # role_assignment.roleid (translated to permission)
+	     # connectors:
+	     # user.id = role_assignment.userid 
+	     # bridge_table.courseid = context.instanceid
+	     # role_assignment.contextid = context.id
+ 
 	if ($need_course) {
 		my $bridge_table = $self->sql->_table($self->MOODLE_WEBWORK_BRIDGE_TABLE);
-		my $course_field = $self->sql->_quote("course");
+		my $context_table = $self->sql->_table('context'); #used in moodle17 only 
+		my $course_field = (MOODLE17()) ?
+		          $self->sql->_quote("instanceid"):
+		          $self->sql->_quote("course");
 		my $coursename_field = $self->sql->_quote("coursename");
-		push @joins, "JOIN $bridge_table ON $bridge_table.$course_field=$type_table.$course_field";
+		if (MOODLE17()) {
+			push @joins, "JOIN $context_table ON $role_assignment_table.contextid = $context_table.id";
+			push @joins, "JOIN $bridge_table ON $bridge_table.course=$context_table.$course_field";
+		} else {
+			push @joins, "JOIN $bridge_table ON $bridge_table.$course_field=$type_table.$course_field";
+	
+		}
 		push @where, "$bridge_table.$coursename_field=?";
 		#warn "adding $bridge_table.$coursename_field=? to \@where\n";
 		push @bind_vals, $self->courseName;
 		#warn "adding ", $self->courseName, " to \@bind_vals\n";
 	}
 	
+	    # use user table to connect userid with username
 	if ($need_user) {
-		my $user_table = $self->sql->_table("user");
+		#my $user_table = $self->sql->_table("user");
 		my $id_field = $self->sql->_quote("id");
 		my $userid_field = $self->sql->_quote("userid");
-		push @joins, "JOIN $user_table ON $user_table.$id_field=$type_table.$userid_field";
+		if (MOODLE17() ) {
+			push @joins, "JOIN $user_table ON $user_table.$id_field=$role_assignment_table.$userid_field";
+			#push @joins, "JOIN $role_table ON $role_assignment_table.roleid = $role_table.id"; #use role_assignment.roleid directly
+		} else {
+			push @joins, "JOIN $user_table ON $user_table.$id_field=$type_table.$userid_field";
+		}
+		
+		
 		if ($flags->{match_username}) {
 			my $username_field = $self->sql->_quote("username");
 			push @where, "$user_table.$username_field=?";
@@ -198,9 +255,12 @@ sub _course_members_type {
 			push @bind_vals, $flags->{match_password};
 			#warn "adding ", $flags->{match_password}, " to \@bind_vals\n";
 		}
+		  
 	}
 	
-	my $stmt = "SELECT $fields_out FROM $type_table";
+	my $stmt = (MOODLE17()) ?
+	      "SELECT $fields_out FROM $role_assignment_table" :
+	      "SELECT $fields_out FROM $type_table";
 	$stmt .= " " . join(" ", @joins) if @joins;
 	$stmt .= " WHERE " . join(" AND ", @where) if @where;
 	
@@ -217,7 +277,11 @@ sub _course_members_query {
 	
 	my @stmt_parts;
 	my @bind_vals;
-	foreach my $type (["students",1],["teachers",1],["admins",0]) {
+#	foreach my $type (["students",1],["teachers",1],["admins",0]) {
+#   I think we only need one search now since all of the users are in the same table.
+# FIXME  -- this is definitely a kludge
+    my @user_types = (MOODLE17()) ? (["students",1])   : (["students",1],["teachers",1],["admins",0]); 
+    foreach my $type (@user_types) {
 		my ($curr_stmt, @curr_bind_vals) = $self->_course_members_type(@$type, $flags, $fields_int);
 		next unless defined $curr_stmt;
 		#warn "type=", $type->[0], " curr_stmt=$curr_stmt, curr_bind_vals=@curr_bind_vals\n";
