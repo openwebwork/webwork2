@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.9 2006/11/13 16:48:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.10 2006/11/28 22:15:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -187,8 +187,8 @@ sub fetch_moodle_session {
 	return unless $cookie;
 	
 	my $sessions = $self->prefix_table(SESSIONS());
-	#my $stmt = "SELECT `expiry`,`data` FROM `$sessions` WHERE `sesskey`=?";
-	my $stmt = "SELECT `expiry`,`sessdata` FROM `$sessions` WHERE `sesskey`=?";
+	my $data_field = MOODLE17 ? "sessdata" : "data";
+	my $stmt = "SELECT `expiry`,`$data_field` FROM `$sessions` WHERE `sesskey`=?";
 	my @bind_vals = $cookie->value;
 	
 	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
