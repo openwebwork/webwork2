@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.185 2006/11/13 16:19:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.186 2006/11/13 18:05:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1955,7 +1955,7 @@ prepends the path to the scoring directory.
 
 sub read_scoring_file {
 	my ($self, $fileName) = @_;
-	return if $fileName eq "None";
+	return {} if $fileName eq "None"; # callers expect a hashref in all cases
 	return parse_scoring_file($self->r->ce->{courseDirs}{scoring}."/$fileName");
 }
 
