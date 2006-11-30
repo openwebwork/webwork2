@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.28 2006/10/02 16:59:20 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.29 2006/10/31 18:46:05 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -92,6 +92,8 @@ sub scoring_info {
 	my $filePath          = "$emailDirectory/report_grades.msg";
 	my $merge_file         = "report_grades_data.csv";
 	my $delimiter            = ',';
+	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
+	return "" unless -e "$scoringDirectory/$merge_file";
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
 	my $header = '';
