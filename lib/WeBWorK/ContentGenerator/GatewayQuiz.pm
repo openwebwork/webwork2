@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.30 2006/09/25 16:10:36 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.31 2006/10/11 16:15:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,9 +60,11 @@ sub templateName {
 # *** showing of correct answers after all attempts at a version are used
 
 sub can_showOldAnswers {
-	#my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
-	
-	return 1;
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+# FIXME: should just return ! $Set->hide_work()?  This would hide students' 
+# FIXME: work as they're working on the set, which is probably not what we 
+# FIXME: want; therefore, we'll use 
+	return( before( $Set->due_date() ) || ! $Set->hide_work() );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -81,7 +83,8 @@ sub can_showCorrectAnswers {
 	    $addOne;
 
 	return ( ( after( $Set->answer_date ) || 
-		   $attemptsUsed >= $maxAttempts ) ||
+		   ( $attemptsUsed >= $maxAttempts && 
+		     $Set->due_date() == $Set->answer_date() ) ) ||
 		 $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") )
 		 ;
@@ -109,7 +112,8 @@ sub can_showSolutions {
 	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
 	return ( ( after( $Set->answer_date ) || 
-		   $attemptsUsed >= $maxAttempts ) ||
+		   ( $attemptsUsed >= $maxAttempts &&
+		     $Set->due_date() == $Set->answer_date() ) ) ||
 		 $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") );
 }
@@ -639,10 +643,11 @@ sub pre_header_initialize {
     # because we're creating this on the fly, it should be published
 		$set->published(1);
     # set up creation time, open and due dates
+		my $ansOffset = $set->answer_date() - $set->due_date();
 		$set->version_creation_time( $timeNow );
 		$set->open_date( $timeNow );
 		$set->due_date( $timeNow+$timeLimit );
-		$set->answer_date( $timeNow+$timeLimit );
+		$set->answer_date( $timeNow+$timeLimit+$ansOffset );
 		$set->version_last_attempt_time( 0 );
     # put this new info into the database.  note that this means that -all- of
     #    the merged information gets put back into the database.  as long as
@@ -1287,14 +1292,14 @@ sub body {
 	print CGI::start_div({class=>"$divClass"});
 	print CGI::strong("Your score on this test (number " .
 			  "$versionNumber) is $attemptScore / " .
-			  "$totPossible"), CGI::br();
+			  "$totPossible"), CGI::br() if (! $set->hide_score());
 	if ( $will{recordAnswers} ) {   # then this is a counted submission
 	    print CGI::strong("Time taken: $elapsed min (allowed: $allowed)"),
 	        CGI::br();
 	}
 	print CGI::strong("$recdMsg"), CGI::br() if ( $recdMsg );
 	print CGI::end_div();
-    } elsif ( $checkAnswers ) {
+    } elsif ( $checkAnswers && ! $set->hide_score() ) {
 	print CGI::start_div({class=>"gwMessage"});
 	print "Your score on this (checked, not recorded) submission " .
 	    "is $attemptScore / $totPossible", CGI::end_div();
@@ -1308,19 +1313,21 @@ sub body {
 # what's going on.)
 
 	my $timemsg = '';
-# FIXME: add printme link
-	my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
-	    '/hardcopy/' . $set->set_id . '/?' . $self->url_authen_args;
-	my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
-				CGI::a({-href=>$link}, "Print Test"));
-	print $printmsg;
+# printme link; left off if we're not showing past student work
+	if ( ! $set->hide_work() ) {
+	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
+		'/hardcopy/' . $set->set_id . '/?' . $self->url_authen_args;
+	    my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
+				    CGI::a({-href=>$link}, "Print Test"));
+	    print $printmsg;
+	}
 
 # if the test was submitted, just check to see if we should make a note about
 # the recorded score and time taken
 	if ( $submitAnswers ) {
 	    if ( $recordedScore ne $attemptScore || ! $will{recordAnswers} ) {
 		print CGI::start_div({class=>"gwMessage"});
-		if ( $recordedScore ne $attemptScore ) {
+		if ( $recordedScore ne $attemptScore && ! $set->hide_score() ) {
 		    print CGI::strong("Your recorded score on this test " .
 				      "is $recordedScore / $totPossible.");
 		} elsif ( ! $will{recordAnswers} ) {
@@ -1355,15 +1362,17 @@ sub body {
     # means this last case is that it's been submitted and we are either out 
     # of time or out of attempts
 	    } else {
+		my $recdmsg = ( $set->hide_score() ) ? "" : 
+		    "Your recorded score on this test is $recordedScore / " .
+		    "$totPossible.  ";
 		print CGI::start_div({class=>'gwMessage'});
-		print CGI::strong("Your recorded score on this test is " .
-				  "$recordedScore / $totPossible. " .
-				  "Time taken: $elapsed min (allowed: " .
-				  "$allowed)"), CGI::br();
+		print CGI::strong("${recdmsg}Time taken: $elapsed min " .
+				  "(allowed: $allowed)"), CGI::br();
 	    }
 	    print "The test (which is number $versionNumber) may no " .
 		"longer be submitted for a grade, but you may still " .
-		"check your answers.", CGI::end_div();
+		"check your answers." if ( ! $set->hide_work() );
+	    print CGI::end_div();
 	}
 
     } else {
@@ -1407,47 +1416,61 @@ sub body {
     $action =~ s/proctored_quiz_mode/quiz_mode/ 
 	if ( $set->assignment_type() eq 'gateway' );
 
-    print CGI::startform({-name=>"gwquiz", -method=>"POST", -action=>$action}), $self->hidden_authen_fields,
-        $self->hidden_proctor_authen_fields;
+# now, we print out the rest of the page if we're not hiding submitted
+# answers
+    if ( ! $can{recordAnswersNextTime} && $set->hide_work() ) {
+	print CGI::start_div({class=>"gwProblem"});
+	print CGI::strong("Completed results for this assignment are " .
+			  "not available.");
+	print CGI::end_div();
+
+# else: we're not hiding answers
+    } else {
+
+	print CGI::startform({-name=>"gwquiz", -method=>"POST", 
+			      -action=>$action}), 
+	    $self->hidden_authen_fields, $self->hidden_proctor_authen_fields;
 
 # hacks to use a javascript link to trigger previews and jump to 
 # subsequent pages of a multipage test
-    print CGI::hidden({-name=>'previewHack', -value=>''}), CGI::br();
-    print CGI::hidden({-name=>'newPage', -value=>''}) if ( $numProbPerPage &&
-                                                           $numPages > 1 );
+	print CGI::hidden({-name=>'previewHack', -value=>''}), CGI::br();
+	print CGI::hidden({-name=>'newPage', -value=>''}) 
+	    if ( $numProbPerPage && $numPages > 1 );
 
 # the link for a preview; for a multipage test, this also needs to 
 # keep track of what page we're on
-    my $jsprevlink = 'javascript:document.gwquiz.previewHack.value="1";';
-    $jsprevlink .= "document.gwquiz.newPage.value=\"$pageNumber\";"
-	if ( $numProbPerPage && $numPages > 1 );
-    $jsprevlink .= 'document.gwquiz.submit();';
+	my $jsprevlink = 'javascript:document.gwquiz.previewHack.value="1";';
+	$jsprevlink .= "document.gwquiz.newPage.value=\"$pageNumber\";"
+	    if ( $numProbPerPage && $numPages > 1 );
+	$jsprevlink .= 'document.gwquiz.submit();';
 
 # set up links between problems and, for multi-page tests, pages
-    my $jumpLinks = '';
-    my $probRow = [ CGI::b("Problem"), CGI::b(" [ ") ];
-    for my $i ( 0 .. $#pg_results ) {
-	push( @$probRow , ( CGI::b(" ] "), CGI::b(" [ ") ) ) 
-	    if ( $numProbPerPage && $numPages > 1 && 
-		 $i && ! ($i % $numProbPerPage) );
-	my $pn = $i + 1;
-	if ( $i >= $startProb && $i <= $endProb ) {
-	    push( @$probRow, " &nbsp; " . 
-		  CGI::a({-href=>".", -onclick=>"jumpTo($pn);return false;"},
-			 "$pn") . " &nbsp; " );
-	} else {
-	    push( @$probRow, " &nbsp; $pn &nbsp; " );
+	my $jumpLinks = '';
+	my $probRow = [ CGI::b("Problem") ];
+	for my $i ( 0 .. $#pg_results ) {
+	    
+	    my $pn = $i + 1;
+	    if ( $i >= $startProb && $i <= $endProb ) {
+		push( @$probRow, CGI::b(" [ ") ) if ( $i == $startProb );
+		push( @$probRow, " &nbsp;" . 
+		      CGI::a({-href=>".", 
+			      -onclick=>"jumpTo($pn);return false;"},
+			     "$pn") . "&nbsp; " );
+		push( @$probRow, CGI::b(" ] ") ) if ( $i == $endProb );
+	    } elsif ( ! ($i % $numProbPerPage) ) {
+		push( @$probRow, " &nbsp;&nbsp; ", " &nbsp;&nbsp; ", 
+		      " &nbsp;&nbsp; " );
+	    }
 	}
-    }
-    push( @$probRow, CGI::b(" ] ") );
-    if ( $numProbPerPage && $numPages > 1 ) {
-	my $pageRow = [ CGI::td( [ CGI::b('Jump to: '), CGI::b('Page '), 
-				   CGI::b(' [ ') ] ) ];
-	for my $i ( 1 .. $numPages ) {
-	    my $pn = ( $i == $pageNumber ) ? $i : 
-		CGI::a({-href=>'javascript:' .
-			    "document.gwquiz.newPage.value=\"$i\";" .
-			    'document.gwquiz.submit();'}, "$i");
+	if ( $numProbPerPage && $numPages > 1 ) {
+	    my $pageRow = [ CGI::td([ CGI::b('Jump to: '), CGI::b('Page '),
+				      CGI::b(' [ ' ) ]) ];
+	    for my $i ( 1 .. $numPages ) {
+		my $pn = ( $i == $pageNumber ) ? $i : 
+		    CGI::a({-href=>'javascript:' .
+				"document.gwquiz.newPage.value=\"$i\";" .
+				'document.gwquiz.submit();'}, 
+			   "&nbsp;$i&nbsp;");
 # this doesn't quite preserve preview/etc. as we'd like
 # 	    my $pn = ( $i == $pageNumber ) ? $i : 
 # 		CGI::a({-href=>'javascript:' .
@@ -1455,134 +1478,140 @@ sub body {
 # 			    ($previewAnswers ? 
 # 			     'document.gwquiz.previewHack.value="1";' : '') .
 # 			    'document.gwquiz.submit();'}, "$i");
-	    my $colspan = 
-		( ($#pg_results - ($i-1)*$numProbPerPage) > $numProbPerPage ) ?
-		$numProbPerPage : ($#pg_results - ($i-1)*$numProbPerPage + 1);
-	    push( @$pageRow, CGI::td({-colspan=>$colspan, 
-				      -align=>'center'}, $pn) );
-	    push( @$pageRow, CGI::td( [CGI::b(' ] '), CGI::b(' [ ')] ) )
-		if ( $i != $numPages );
+		my $colspan =  0;
+		if ( $i == $pageNumber ) {
+		    $colspan = 
+			($#pg_results - ($i-1)*$numProbPerPage > $numProbPerPage) ?
+			$numProbPerPage : 
+			$#pg_results - ($i-1)*$numProbPerPage + 1;
+		} else {
+		    $colspan = 1;
+		}
+		push( @$pageRow, CGI::td({-colspan=>$colspan, 
+					  -align=>'center'}, $pn) );
+		push( @$pageRow, CGI::td( [CGI::b(' ] '), CGI::b(' [ ')] ) )
+		    if ( $i != $numPages );
+	    }
+	    push( @$pageRow, CGI::td(CGI::b(' ] ')) );
+	    unshift( @$probRow, ' &nbsp; ' );
+	    $jumpLinks = CGI::table( CGI::Tr(@$pageRow), 
+				     CGI::Tr( CGI::td($probRow) ) );
+	} else {
+	    unshift( @$probRow, CGI::b('Jump to: ') );
+	    $jumpLinks = CGI::table( CGI::Tr( CGI::td($probRow) ) );
 	}
-	push( @$pageRow, CGI::td(CGI::b(' ] ')) );
-	unshift( @$probRow, ' &nbsp; ' );
-	$jumpLinks = CGI::table( CGI::Tr(@$pageRow), 
-				 CGI::Tr( CGI::td($probRow) ) );
-    } else {
-	unshift( @$probRow, CGI::b('Jump to: ') );
-	$jumpLinks = CGI::table( CGI::Tr( CGI::td($probRow) ) );
-    }
-
-    print $jumpLinks,"\n";
+	
+	print $jumpLinks,"\n";
 
 # print out problems and attempt results, as appropriate
 # note: args to attemptResults are (self,) $pg, $showAttemptAnswers,
 #    $showCorrectAnswers, $showAttemptResults (and-ed with 
 #    $showAttemptAnswers), $showSummary, $showAttemptPreview (or-ed with zero)
-    my $problemNumber = 0;
+	my $problemNumber = 0;
 
 # deal with ordering
-    my @probOrder = ( 0 .. $#pg_results );
+	my @probOrder = ( 0 .. $#pg_results );
 
 # there's a routine to do this somewhere, I think...
-    if ( defined( $set->problem_randorder ) && $set->problem_randorder ) {
-	my @newOrder = ();
+	if ( defined( $set->problem_randorder ) && $set->problem_randorder ) {
+	    my @newOrder = ();
 # we need to keep the random order the same each time the set is loaded!
 #    this requires either saving the order in the set definition, or being 
 #    sure that the random seed that we use is the same each time the same 
 #    set is called.  we'll do the latter by setting the seed to the psvn
 #    of the problem set.  we use a local PGrandom object to avoid mucking
 #    with the system seed.
-	my $pgrand = PGrandom->new();
-	$pgrand->srand( $set->psvn );
-	while ( @probOrder ) { 
-	    my $i = int($pgrand->rand(scalar(@probOrder)));
-	    push( @newOrder, $probOrder[$i] );
-	    splice(@probOrder, $i, 1);
+	    my $pgrand = PGrandom->new();
+	    $pgrand->srand( $set->psvn );
+	    while ( @probOrder ) { 
+		my $i = int($pgrand->rand(scalar(@probOrder)));
+		push( @newOrder, $probOrder[$i] );
+		splice(@probOrder, $i, 1);
+	    }
+	    @probOrder = @newOrder;
 	}
-	@probOrder = @newOrder;
-    }
 	
-    foreach my $i ( 0 .. $#pg_results ) {
-	my $pg = $pg_results[$probOrder[$i]];
-	$problemNumber++;
+	foreach my $i ( 0 .. $#pg_results ) {
+	    my $pg = $pg_results[$probOrder[$i]];
+	    $problemNumber++;
 
-	if ( $i >= $startProb && $i <= $endProb ) { 
+	    if ( $i >= $startProb && $i <= $endProb ) { 
 
-	    my $recordMessage = '';
-	    my $resultsTable = '';
+		my $recordMessage = '';
+		my $resultsTable = '';
 
-	    if ($pg->{flags}->{showPartialCorrectAnswers}>=0 && $submitAnswers){
-		if ( $scoreRecordedMessage[$probOrder[$i]] ne 
-		     "Your score on this problem was recorded." ) {
-		    $recordMessage = CGI::span({class=>"resultsWithError"},
-					       "ANSWERS NOT RECORDED --", 
-				    $scoreRecordedMessage[$probOrder[$i]]);
+		if ($pg->{flags}->{showPartialCorrectAnswers}>=0 && $submitAnswers){
+		    if ( $scoreRecordedMessage[$probOrder[$i]] ne 
+			 "Your score on this problem was recorded." ) {
+			$recordMessage = CGI::span({class=>"resultsWithError"},
+						   "ANSWERS NOT RECORDED --", 
+						   $scoreRecordedMessage[$probOrder[$i]]);
 
-		}
-		$resultsTable = 
-		    $self->attemptResults($pg, 1, $will{showCorrectAnswers},
-				  $pg->{flags}->{showPartialCorrectAnswers},
-					  1, 1);
+		    }
+		    $resultsTable = 
+			$self->attemptResults($pg, 1, $will{showCorrectAnswers},
+					      $pg->{flags}->{showPartialCorrectAnswers},
+					      1, 1);
 		
-	    } elsif ( $checkAnswers ) {
-		$recordMessage = CGI::span({class=>"resultsWithError"},
-					   "ANSWERS ONLY CHECKED -- ", 
-					   "ANSWERS NOT RECORDED");
+		} elsif ( $checkAnswers ) {
+		    $recordMessage = CGI::span({class=>"resultsWithError"},
+					       "ANSWERS ONLY CHECKED -- ", 
+					       "ANSWERS NOT RECORDED");
 
-		$resultsTable = 
-		    $self->attemptResults($pg, 1, $will{showCorrectAnswers},
-				  $pg->{flags}->{showPartialCorrectAnswers},
-					  1, 1);
+		    $resultsTable = 
+			$self->attemptResults($pg, 1, $will{showCorrectAnswers},
+					      $pg->{flags}->{showPartialCorrectAnswers},
+					      1, 1);
 
-	    } elsif ( $previewAnswers ) {
-		$recordMessage = 
-		    CGI::span({class=>"resultsWithError"},
-			      "PREVIEW ONLY -- ANSWERS NOT RECORDED");
-		$resultsTable = $self->attemptResults($pg, 1, 0, 0, 0, 1);
+		} elsif ( $previewAnswers ) {
+		    $recordMessage = 
+			CGI::span({class=>"resultsWithError"},
+				  "PREVIEW ONLY -- ANSWERS NOT RECORDED");
+		    $resultsTable = $self->attemptResults($pg, 1, 0, 0, 0, 1);
  
-	    }	    
+		}	    
 
-	    print CGI::start_div({class=>"gwProblem"});
-	    my $i1 = $i+1;
-	    print CGI::a({-name=>"#$i1"},"");
-	    print CGI::strong("Problem $problemNumber."), "\n", $recordMessage;
-	    print CGI::p($pg->{body_text}),
-	      CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", 
-		     CGI::i($pg->{result}->{msg}));
-	    print CGI::p({class=>"gwPreview"}, 
-			 CGI::a({-href=>"$jsprevlink"}, "preview problems"));
+		print CGI::start_div({class=>"gwProblem"});
+		my $i1 = $i+1;
+		print CGI::a({-name=>"#$i1"},"");
+		print CGI::strong("Problem $problemNumber."), "\n", $recordMessage;
+		print CGI::p($pg->{body_text}),
+		CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", 
+		       CGI::i($pg->{result}->{msg}));
+		print CGI::p({class=>"gwPreview"}, 
+			     CGI::a({-href=>"$jsprevlink"}, "preview problems"));
 # 	print CGI::end_div();
 
-	    print $resultsTable if $resultsTable; 
+		print $resultsTable if $resultsTable; 
 
-	    print CGI::end_div();
+		print CGI::end_div();
 
-	    print "\n", CGI::hr(), "\n";
-	} else {
-	    my $i1 = $i+1;
+		print "\n", CGI::hr(), "\n";
+	    } else {
+		my $i1 = $i+1;
 # keep the jump to anchors so that jumping to problem number 6 still
 # works, even if we're viewing only problems 5-7, etc.
-	    print CGI::a({-name=>"#$i1"},""), "\n";
-	    my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
-	    my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
-	    foreach my $curr_field ( @curr_fields ) {
-		print CGI::hidden({-name=>$curr_field, 
-				   -value=>$self->{formFields}->{$curr_field}});
-	    }
+		print CGI::a({-name=>"#$i1"},""), "\n";
+		my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
+		my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
+		foreach my $curr_field ( @curr_fields ) {
+		    print CGI::hidden({-name=>$curr_field, 
+				       -value=>$self->{formFields}->{$curr_field}});
+		}
 # 	    my $probid = 'Q' . sprintf("%04d", $probOrder[$i]+1) . "_AnSwEr1";
 # 	    my $probval = $self->{formFields}->{$probid};
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
+	    }
 	}
-    }
-    print CGI::p($jumpLinks, "\n");
-    print "\n",CGI::hr(), "\n";
+	print CGI::p($jumpLinks, "\n");
+	print "\n",CGI::hr(), "\n";
 
-    if ($can{showCorrectAnswers}) {
-	print CGI::checkbox(-name    => "showCorrectAnswers",
-			    -checked => $will{showCorrectAnswers},
-			    -label   => "Show correct answers",
-			    );
-    }
+	if ($can{showCorrectAnswers}) {
+	    print CGI::checkbox(-name    => "showCorrectAnswers",
+				-checked => $will{showCorrectAnswers},
+				-label   => "Show correct answers",
+				);
+	}
 #     if ($can{showHints}) {
 # 	print CGI::div({style=>"color:red"},
 # 		       CGI::checkbox(-name    => "showHints",
@@ -1591,49 +1620,50 @@ sub body {
 # 				     )
 # 		       );
 #     }
-    if ($can{showSolutions}) {
-	print CGI::checkbox(-name    => "showSolutions",
-			    -checked => $will{showSolutions},
-			    -label   => "Show Solutions",
-			    );
-    }
+	if ($can{showSolutions}) {
+	    print CGI::checkbox(-name    => "showSolutions",
+				-checked => $will{showSolutions},
+				-label   => "Show Solutions",
+				);
+	}
 
 # this solution results in not being able to turn off preview or whatever
 # should we be previewing or checking answers too?  we need this to 
 # preserve state when viewing multiple page tests
-    if ( $numProbPerPage && $numPages > 1 ) {
-	print "\n";
-	print CGI::hidden({-name=>"previewingAnswersNow", 
-			   -value=>"1"}), "\n" if $previewAnswers;
-	print CGI::hidden({-name=>"checkingAnswersNow", 
-			   -value=>"1"}), "\n" if $checkAnswers || $submitAnswers;
+	if ( $numProbPerPage && $numPages > 1 ) {
+	    print "\n";
+	    print CGI::hidden({-name=>"previewingAnswersNow", 
+			       -value=>"1"}), "\n" if $previewAnswers;
+	    print CGI::hidden({-name=>"checkingAnswersNow", 
+			       -value=>"1"}), "\n" if $checkAnswers || $submitAnswers;
 # should we allow this too?
 # 	print CGI::hidden({-name=>"submittingAnswersNow", 
 #                          -value=>"1"}), "\n" if $submitAnswers;
-    }
+	}
 	
-    if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
-	print CGI::br();
-    }
+	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+	    print CGI::br();
+	}
 
 # Note: because of the way these things are grouped, the submit/et al buttons
 # in this form are getting put outside of the problem div, while on a regular
 # problem they'd fall inside.  Does this matter?  We shall see.
-    print CGI::p( CGI::submit( -name=>"previewAnswers", 
-			       -label=>"Preview Test" ),
-		  ($can{recordAnswersNextTime} ? 
-		      CGI::submit( -name=>"submitAnswers",
-				   -label=>"Grade Test" ) : " "),
-		  ($can{checkAnswersNextTime} && ! $can{recordAnswersNextTime} ?
-		      CGI::submit( -name=>"checkAnswers",
-				   -label=>"Check Test" ) : " "),
-		  ($numProbPerPage && $numPages > 1 && 
-		   $can{recordAnswersNextTime} ? CGI::br() . 
-		      CGI::em("Note: grading the test grades " . 
-			      CGI::b("all") . " problems, not just those " . 
-			      "on this page.") : " ") );
+	print CGI::p( CGI::submit( -name=>"previewAnswers", 
+				   -label=>"Preview Test" ),
+		      ($can{recordAnswersNextTime} ? 
+		       CGI::submit( -name=>"submitAnswers",
+				    -label=>"Grade Test" ) : " "),
+		      ($can{checkAnswersNextTime} && ! $can{recordAnswersNextTime} ?
+		       CGI::submit( -name=>"checkAnswers",
+				    -label=>"Check Test" ) : " "),
+		      ($numProbPerPage && $numPages > 1 && 
+		       $can{recordAnswersNextTime} ? CGI::br() . 
+		       CGI::em("Note: grading the test grades " . 
+			       CGI::b("all") . " problems, not just those " . 
+			       "on this page.") : " ") );
 
-    print CGI::endform();
+	print CGI::endform();
+    }
 
 # debugging verbiage
 #     if ( $can{checkAnswersNextTime} ) {
