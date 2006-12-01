@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.80 2006/07/27 20:58:18 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.81 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -421,21 +421,27 @@ sub setListRow {
 		 $set->set_id() =~ /,v\d+$/ ) {
 			$startTime = localtime( $set->version_creation_time() );
 
+			if ( ! $set->hide_score() ) {
 			# find score
 			# DBFIXME we can do this math in the database, i think
-			my @problemRecords = $db->getAllUserProblems( $set->user_id(),
-							      $set->set_id() );
-			my $possible = 0;
-			$score = 0;
-			foreach my $pRec ( @problemRecords ) {
-				if ( defined( $pRec ) && $score ne 'undef' ) {
-					$score += $pRec->status() || 0;
-				} else {
-					$score = 'undef';
+				my @problemRecords = 
+				    $db->getAllUserProblems( $set->user_id(),
+							     $set->set_id() );
+				my $possible = 0;
+				$score = 0;
+				foreach my $pRec ( @problemRecords ) {
+			    		if ( defined( $pRec ) && 
+					     $score ne 'undef' ) {
+						$score += $pRec->status() || 0;
+					} else {
+						$score = 'undef';
+					}
+					$possible++;
 				}
-				$possible++;
+				$score = "$score/$possible";
+			} else {
+				$score = "n/a";
 			}
-			$score = "$score/$possible";
 		} else {
 			$startTime = '&nbsp;';
 			$score = $startTime;
