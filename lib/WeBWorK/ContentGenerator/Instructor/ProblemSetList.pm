@@ -128,6 +128,8 @@ use constant SORT_SUBS => {
 
 };
 
+# note that field_properties for some fields, in particular, gateway 
+# parameters, are not currently shown in the edit or display tables
 use constant  FIELD_PROPERTIES => {
 	set_id => {
 		type => "text",
@@ -208,6 +210,16 @@ use constant  FIELD_PROPERTIES => {
 		type => "text",
 		size => 10,
 		access => "readonly",
+	},
+	hide_score => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
+	},	
+	hide_work => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
 	},	
 };
 
@@ -1404,7 +1416,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1441,6 +1453,8 @@ sub importSetsFromDef {
 		$newSetRecord->version_time_limit($versionTimeLimit);
 		$newSetRecord->problem_randorder($problemRandOrder);
 		$newSetRecord->problems_per_page($problemsPerPage);
+		$newSetRecord->hide_score($hideScore);
+		$newSetRecord->hide_work($hideWork);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
@@ -1497,6 +1511,8 @@ sub readSetDef {
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 	     $problemsPerPage ) = 
 		 ('')x6;  # initialize these to ''
+# additional fields currently used only by gateways; later, the world?
+	my ( $hideScore, $hideWork ) = ( 0, 0 );
 
 	my %setInfo;
 	if ( open (SETFILENAME, "$filePath") )    {
@@ -1545,6 +1561,10 @@ sub readSetDef {
 				$problemRandOrder = $value;
 			} elsif ($item eq 'problemsPerPage') {
 				$problemsPerPage = $value;
+			} elsif ($item eq 'hideScore') {
+				$hideScore = ( $value ) ? 1 : 0;
+			} elsif ($item eq 'hideWork') {
+				$hideWork = ( $value ) ? 1 : 0;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -1609,7 +1629,9 @@ sub readSetDef {
 		 \@problemData,
 		 $assignmentType, $attemptsPerVersion, $timeInterval, 
 		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-		 $problemsPerPage,
+		 $problemsPerPage, 
+		 $hideScore,
+		 $hideWork,
 		);
 	} else {
 		warn "Can't open file $filePath\n";
@@ -1619,6 +1641,7 @@ sub readSetDef {
 sub exportSetsToDef {
     	my ($self, %filenames) = @_;
 
+# FIXME: gateway fields are currently not exported
 	my $r        = $self->r;
 	my $ce       = $r->ce;
 	my $db       = $r->db;
