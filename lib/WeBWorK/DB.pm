@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.86 2006/10/31 18:51:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.87 2006/11/13 17:27:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -976,8 +976,15 @@ sub addUserProblem {
 	
 	croak "addUserProblem: user set ", $UserProblem->set_id, " for user ", $UserProblem->user_id, " not found"
 		unless $self->{set_user}->exists($UserProblem->user_id, $UserProblem->set_id);
-	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set ", $UserProblem->set_id, " not found"
-		unless $self->{problem}->exists($UserProblem->set_id, $UserProblem->problem_id);
+
+	# gateway: we need to check for the existence of the problem with
+	# the non-versioned set_id (this should probably do something with
+	# grok_vsetID, but I don't think that does both versioned and
+	# unversioned set IDs)
+	my $nv_set_id = ( $UserProblem->set_id =~ /(.+),v\d+$/ ) ? $1 : 
+		$UserProblem->set_id;
+	croak "addUserProblem: problem ", $UserProblem->problem_id, " in set $nv_set_id not found"
+		unless $self->{problem}->exists($nv_set_id, $UserProblem->problem_id);
 	
 	eval {
 		return $self->{problem_user}->add($UserProblem);
