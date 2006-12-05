@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.1 2006/08/24 21:07:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.2 2006/11/27 18:34:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -86,16 +86,19 @@ L<perltoot/Closures-as-Objects>
 
 use strict;
 use warnings;
+use Carp;
+use Scalar::Util qw/blessed/;
 
 sub new {
 	my ($invocant, $object, @methods) = @_;
-	die "wrapper class with no methods is dumb" unless @methods;
-	my %methods; @methods{@methods} = ();
+	croak "wrapper class with no methods is dumb" unless @methods;
 	my $class = ref $invocant || $invocant;
+	croak "object is not a blessed reference" unless blessed $object;
+	my %methods; @methods{@methods} = ();
 	my $self = sub { # CLOSURE over $object, %methods;
 		my $method = shift;
 		if (not exists $methods{$method}) {
-			die "Can't locate object method \"$method\" via package \"".ref($object)."\" fnord";
+			croak "Can't locate object method \"$method\" via package \"".ref($object)."\" fnord";
 		}
 		return $object->$method(@_);
 	};
