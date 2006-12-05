@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.22 2006/08/24 21:16:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.23 2006/11/27 18:37:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -41,7 +41,8 @@ use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
-use WeBWorK::Utils::RestrictedMailer;
+#use WeBWorK::Utils::RestrictedMailer;
+use WeBWorK::Utils::DelayedMailer;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -146,28 +147,70 @@ sub new_helper {
 		);
 	}
 	
-	my $mailer = new WeBWorK::Utils::RestrictedMailer(
-		params => {
-			from => $ce->{mail}{smtpSender},
-			smtp => $ce->{mail}{smtpServer},
-			# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
-			# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
-			# put it in Utils! (or maybe in WW::Request?)
-			headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
-				. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
-				# can't add user-related information because this is used for anonymous questionnaires
-				#. "X-WeBWorK-User: " . $user->user_id . "\n"
-				#. "X-WeBWorK-Section: " . $user->section . "\n"
-				#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
-				. "X-WeBWorK-Set: " . $set->set_id . "\n"
-				. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
-				. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
-			debug => "/tmp/debug.txt",
-		},
-		lock_by_default => 1,
-		allow_change => [qw/fake_from to fake_to cc fake_cc bcc subject/],
+	#my $mailer = new WeBWorK::Utils::RestrictedMailer(
+	#	params => {
+	#		from => $ce->{mail}{smtpSender},
+	#		smtp => $ce->{mail}{smtpServer},
+	#		# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
+	#		# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
+	#		# put it in Utils! (or maybe in WW::Request?)
+	#		#headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
+	#		#	. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
+	#		#	# can't add user-related information because this is used for anonymous questionnaires
+	#		#	#. "X-WeBWorK-User: " . $user->user_id . "\n"
+	#		#	#. "X-WeBWorK-Section: " . $user->section . "\n"
+	#		#	#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
+	#		#	. "X-WeBWorK-Set: " . $set->set_id . "\n"
+	#		#	. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
+	#		#	. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
+	#		#debug => "/tmp/debug.txt",
+	#	},
+	#	lock_by_default => 1,
+	#	allow_change => [qw/fake_from to fake_to cc fake_cc bcc subject/],
+	#	allowed_recipients => $ce->{mail}{allowedRecipients},
+	#	fatal_errors => 1,
+	#);
+	
+	#my $mailer = new WeBWorK::Utils::DelayedMailer(
+	#	new_opts => {
+	#		from => $ce->{mail}{smtpSender},
+	#		smtp => $ce->{mail}{smtpServer},
+	#		# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
+	#		# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
+	#		# put it in Utils! (or maybe in WW::Request?)
+	#		headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
+	#			. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
+	#			# can't add user-related information because this is used for anonymous questionnaires
+	#			#. "X-WeBWorK-User: " . $user->user_id . "\n"
+	#			#. "X-WeBWorK-Section: " . $user->section . "\n"
+	#			#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
+	#			. "X-WeBWorK-Set: " . $set->set_id . "\n"
+	#			. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
+	#			. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
+	#		#debug => \*STDERR,
+	#	},
+	#	allowed_recipients => $ce->{mail}{allowedRecipients},
+	#	on_illegal_rcpt => "carp",
+	#	on_unsafe_arg => "carp",
+	#);
+	
+	my $mailer = new WeBWorK::Utils::DelayedMailer(
+		smtp_server => $ce->{mail}{smtpServer},
+		smtp_sender => $ce->{mail}{smtpSender},
+		# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
+		# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
+		# put it in Utils! (or maybe in WW::Request?)
+		headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
+			. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
+			# can't add user-related information because this is used for anonymous questionnaires
+			#. "X-WeBWorK-User: " . $user->user_id . "\n"
+			#. "X-WeBWorK-Section: " . $user->section . "\n"
+			#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
+			. "X-WeBWorK-Set: " . $set->set_id . "\n"
+			. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
+			. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
 		allowed_recipients => $ce->{mail}{allowedRecipients},
-		fatal_errors => 1,
+		on_illegal_rcpt => "carp",
 	);
 	
 	# set the environment (from defineProblemEnvir)
@@ -302,24 +345,6 @@ EOF
 	
 	# !!!!!!!! IMPORTANT: $envir shouldn't be trusted after problem code runs!
 	
-	# after we're done translating, we may have to clean up after the
-	# translator:
-	
-	# HTML_dpng uses an ImageGenerator. We have to render the queued equations.
-	my $body_text_ref  = $translator->r_text;
-	if ($image_generator) {
-		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
-		my %mtimeOption = -e $sourceFile ? (mtime => (stat $sourceFile)[9]) : ();
-		
-		$image_generator->render(
-			refresh => $translationOptions->{refreshMath2img},
-			%mtimeOption,
-			body_text => $body_text_ref,
-		);
-	}
-	
-	# end of cleanup phase
-	
 	my ($result, $state); # we'll need these on the other side of the if block!
 	if ($translationOptions->{processAnswers}) {
 		
@@ -367,6 +392,29 @@ EOF
 		);
 		
 	}
+	
+	# after we're done translating, we may have to clean up after the
+	# translator:
+	
+	# HTML_dpng uses an ImageGenerator. We have to render the queued equations.
+	my $body_text_ref  = $translator->r_text;
+	if ($image_generator) {
+		my $sourceFile = $ce->{courseDirs}->{templates} . "/" . $problem->source_file;
+		my %mtimeOption = -e $sourceFile ? (mtime => (stat $sourceFile)[9]) : ();
+		
+		$image_generator->render(
+			refresh => $translationOptions->{refreshMath2img},
+			%mtimeOption,
+			body_text => $body_text_ref,
+		);
+	}
+	
+	# send any queued mail messages
+	if ($mailer) {
+		$mailer->send_messages;
+	}
+	
+	# end of cleanup phase
 	
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new", "", "end");
