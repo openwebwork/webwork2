@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.68 2006/08/24 21:16:36 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.70 2006/11/27 18:37:21 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -185,10 +185,11 @@ sub defineProblemEnvir {
 	}
 	
 	if (defined $extras->{mailer}) {
-		my $rmailer = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer},
-			qw/Open SendEnc Close Cancel skipped_recipients error error_msg/);
-		my $safe_hole = new Safe::Hole {};
-		$envir{mailer} = $safe_hole->wrap($rmailer);
+		#my $rmailer = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer},
+		#	qw/Open SendEnc Close Cancel skipped_recipients error error_msg/);
+		#my $safe_hole = new Safe::Hole {};
+		#$envir{mailer} = $safe_hole->wrap($rmailer);
+		$envir{mailer} = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer}, "add_message");
 	}
 	
 	#  ADDED: jsMath options
