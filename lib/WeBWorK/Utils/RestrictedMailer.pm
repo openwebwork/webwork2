@@ -1,3 +1,19 @@
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.2 2006/11/27 18:34:56 sh002i Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
 package WeBWorK::Utils::RestrictedMailer;
 use base "Mail::Sender";
 
@@ -67,6 +83,7 @@ use warnings;
 use Carp;
 use Scalar::Util qw/refaddr/;
 use Storable qw/dclone/;
+use WeBWorK::Utils qw/constituency_hash/;
 
 # params that all methods accept
 our @COMMON_PARAMS = qw/from fake_from reply replyto to fake_to cc fake_cc bcc
@@ -119,7 +136,7 @@ sub new {
 	my $self = $invocant->SUPER::new($params);
 	
 	# handle errors
-	return $self unless ref $self;
+	die $Mail::Sender::Error unless ref $self;
 	
 	# store the set of initial params for later perusal
 	$self->initial_params = $initial_params;
@@ -284,12 +301,6 @@ sub deq {
 			return 0;
 		}
 	}
-}
-
-sub constituency_hash {
-	my $hash = {};
-	@$hash{@_} = ();
-	return $hash;
 }
 
 1;

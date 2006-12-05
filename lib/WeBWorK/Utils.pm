@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.76 2006/09/15 17:53:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.77 2006/09/18 18:03:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -81,6 +81,7 @@ our @EXPORT_OK = qw(
 	dequote
 	undefstr
 	fisher_yates_shuffle
+	constituency_hash
 	sortByName
 );
 
@@ -897,6 +898,12 @@ sub fisher_yates_shuffle {
 		next if $i == $j;
 		@$array[$i,$j] = @$array[$j,$i];
 	}
+}
+
+sub constituency_hash {
+	my $hash = {};
+	@$hash{@_} = ();
+	return $hash;
 }
 
 ################################################################################
