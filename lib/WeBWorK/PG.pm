@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.70 2006/11/27 18:37:21 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.71 2006/12/05 20:59:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,7 +25,6 @@ API.
 
 use strict;
 use warnings;
-use Safe::Hole;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 use WeBWorK::Utils::RestrictedClosureClass;
