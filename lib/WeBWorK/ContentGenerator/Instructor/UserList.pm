@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.86 2006/08/26 12:56:40 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.87 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1267,6 +1267,8 @@ sub menuLabels {
 	return %result;
 }
 
+# FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
+# (we need a whole suite of higher-level import/export functions somewhere)
 sub importUsersFromCSV {
 	my ($self, $fileName, $createNew, $replaceExisting, @replaceList) = @_;
 	my $r     = $self->r;
@@ -1303,8 +1305,6 @@ sub importUsersFromCSV {
 		my %record = %$record;
 		my $user_id = $record{user_id};
 		
-		$record{status} = $default_status_abbrev unless defined($record{status}) and $record{status};
-		
 		if ($user_id eq $user) { # don't replace yourself!!
 			push @skipped, $user_id;
 			next;
@@ -1320,23 +1320,28 @@ sub importUsersFromCSV {
 			next;
 		}
 		
-		my $User = $db->newUser(%record);
-		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => 0);
-		my $Password = $db->newPassword(user_id => $user_id, password => cryptPassword($record{student_id}));
+		# set default status is status field is "empty"
+		$record{status} = $default_status_abbrev
+			unless defined $record{status} and $record{status} ne "";
 		
-		# use password and permission from record if there
-		if (exists $record{permission}) {
-			# make sure permission level is numeric
-			unless (defined($record{permission}) and $record{permission} =~ m/^[+\-]?\d*$/) {
-				$self->addbadmessage("permission levelÊ for user '$user_id' is not defined or is not an integer. Set the permission level to the default permission level '$default_permission_level'.\n");
-				$record{permission} = $default_permission_level;
+		# set password from student ID if password field is "empty"
+		if (not defined $record{password} or $record{password} eq "") {
+			if (defined $record{student_id} and $record{student_id} ne "") {
+				# crypt the student ID and use that
+				$record{password} = cryptPassword($record{student_id});
+			} else {
+				# an empty password field in the database disables password login
+				$record{password} = "";
 			}
-			$PermissionLevel->permission($record{permission});
 		}
 		
-		if (exists $record{password}) {
-			$Password->password($record{password});
-		}
+		# set default permission level if permission level is "empty"
+		$record{permission} = $default_permission_level
+			unless defined $record{status} and $record{status} ne "";
+		
+		my $User = $db->newUser(%record);
+		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
+		my $Password = $db->newPassword(user_id => $user_id, password => $record{password});
 		
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
