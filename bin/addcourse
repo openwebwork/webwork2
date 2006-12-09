@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/addcourse,v 1.18 2006/08/05 03:21:10 sh002i Exp $
+# $CVSHeader: webwork2/bin/addcourse,v 1.19 2006/09/08 14:20:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,16 +172,41 @@ if ($users) {
 	# Default status is enrolled -- fetch abbreviation for enrolled
 	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 	
+	# default permission level
+	my $default_permission_level = $ce->{default_permission_level};
+	
 	my @classlist = parse_classlist($users);
 	foreach my $record (@classlist) {
 		my %record = %$record;
 		my $user_id = $record{user_id};
 		
-		$record{status} = $default_status_abbrev unless defined($record{status}) and $record{status};
+		# set default status is status field is "empty"
+		$record{status} = $default_status_abbrev
+			unless defined $record{status} and $record{status} ne "";
 		
-		my $User = new $userClass(%record);
-		my $PermissionLevel = new $permissionClass(user_id => $user_id, permission => 0);
-		my $Password = new $passwordClass(user_id => $user_id, password => cryptPassword($record{student_id}));
+		# set password from student ID if password field is "empty"
+		if (not defined $record{password} or $record{password} eq "") {
+			if (defined $record{student_id} and $record{student_id} ne "") {
+				# crypt the student ID and use that
+				$record{password} = cryptPassword($record{student_id});
+			} else {
+				# an empty password field in the database disables password login
+				$record{password} = "";
+			}
+		}
+		
+		# set default permission level if pedefault_permission_levelrmission level is "empty"
+		if (not defined $record{status} and $record{status} ne "") {
+			if (exists $professors{$user_id}) {
+				$record{permission} = $ce->{userRoles}{professor}; # FIXME hardcoded role name is bad
+			} else {
+				$record{permission} = $default_permission_level;
+			}
+		}
+		
+		my $User = $userClass->new(%record);
+		my $PermissionLevel = $permissionClass->new(user_id => $user_id, permission => $record{permission});
+		my $Password = $passwordClass->new(user_id => $user_id, password => $record{password});
 		
 		if (exists $record{permission}) {
 			$PermissionLevel->permission($record{permission});
