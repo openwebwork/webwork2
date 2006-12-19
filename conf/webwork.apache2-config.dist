@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.3 2006/09/01 17:41:24 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.4 2006/09/13 23:40:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +22,8 @@
 # 
 # Customize the variable $webwork_dir below to match the location of your
 # WeBWorK installation.
+
+PerlModule mod_perl2
 
 <Perl>
 
