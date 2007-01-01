@@ -3,9 +3,10 @@
 #
 use XMLRPC::Lite;
   my $soap = XMLRPC::Lite
-   # ->uri('http://webwork-db.math.rochester.edu/Demo/')
-	-> proxy('http://devel.webwork.rochester.edu:8002/mod_xmlrpc/');
-    
+    -> proxy('https://math.webwork.rochester.edu:443/mod_xmlrpc/');
+   #-> proxy('https://devel.webwork.rochester.edu:8002/mod_xmlrpc/');
+   # -> proxy('http://localhost/mod_xmlrpc/');
+  
 	
   my $result = $soap->call("WebworkXMLRPC.hi");
   

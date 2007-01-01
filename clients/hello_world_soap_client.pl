@@ -3,9 +3,13 @@
 
 use SOAP::Lite;
 my $soap = SOAP::Lite
--> uri('http://devel.webwork.rochester.edu:8002/WebworkXMLRPC')
--> proxy('http://devel.webwork.rochester.edu:8002/mod_soap/WebworkWebservice')
-;
+-> uri('https://math.webwork.rochester.edu/WebworkXMLRPC')
+-> proxy('https://math.webwork.rochester.edu/mod_soap/WebworkWebservice');
+#-> uri('http://localhost/WebworkXMLRPC')
+#-> proxy('http://localhost/mod_soap/WebworkWebservice');
+
+#-> uri('https://devel.webwork.rochester.edu:8002/WebworkXMLRPC')
+#-> proxy('https://devel.webwork.rochester.edu:8002/mod_soap/WebworkWebservice');
 
 
 my $result = $soap->hi();
