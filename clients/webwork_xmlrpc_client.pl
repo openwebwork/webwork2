@@ -1,6 +1,21 @@
 #!/usr/bin/perl -w
 
+=pod
+
+This script will take a command and an input 
+file.
+
+It will list available libraries, list the contents of libraries
+or render the input file.
+
+All of this is done by contacting the webservice.
+
+
+
+=cut
+
 use XMLRPC::Lite;
+use MIME::Base64 qw( encode_base64 decode_base64);
 
 #  configuration section
 use constant  PROTOCOL         =>  'https';   # or 'http';
@@ -9,7 +24,10 @@ use constant  HOSTPORT         =>  '443';  # or 80
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      =>'mod_xmlrpc';
+use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html';
 use constant  COURSE           => 'daemon2_course';
+
+
 
 my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
 
@@ -22,8 +40,8 @@ my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf
 # ];
 use constant DISPLAYMODE   => 'images';
 
+
 # end configuration section
-use MIME::Base64 qw( encode_base64 decode_base64);
 
 
 print STDERR "inputs are ", join (" | ", @ARGV), "\n";
@@ -149,47 +167,27 @@ sub setInputTable {
 		mode                    => DISPLAYMODE(),
 		modules_to_evaluate     => [ qw( 
 Exporter
-
-DynaLoader
-
-								
+DynaLoader								
 GD
 WWPlot
 Fun
 Circle
-Label
-
-								
+Label								
 PGrandom
 Units
 Hermite
-
-List
-
-								
+List								
 Match
 Multiple
-Select
-
-								
+Select							
 AlgParser
-
-AnswerHash
-
-								
+AnswerHash							
 Fraction
-VectorField
-
-								
+VectorField							
 Complex1
-Complex
-
-								
-MatrixReal1 Matrix
-
-								
+Complex							
+MatrixReal1 Matrix							
 Distributions
-
 Regression
 
 		)], 

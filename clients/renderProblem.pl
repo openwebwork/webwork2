@@ -15,6 +15,7 @@ daemon running on webhost.math.rochester.edu
 
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+#require "webwork_xmlrpc_inc.pl";
 
 #  configuration section
 use constant  PROTOCOL         =>  'https';   # or 'http';
@@ -36,7 +37,7 @@ use constant  COURSE           => 'daemon2_course';
 # 	"jsMath",        # render TeX math expressions on the client side using jsMath
 # 	"asciimath",     # render TeX math expressions on the client side using ASCIIMathML
 # ];
-use constant DISPLAYMODE   => 'images';
+use constant DISPLAYMODE   => 'images'; # tex and jsMath  are other possibilities.
 
 
 my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -167,7 +168,7 @@ sub setInputTable {
 		                                ExprWithImplicitExpand AnswerEvaluator
 		                                AnswerEvaluatorMaker 
 		)],
-		mode                    => 'HTML_dpng',
+		mode                    => DISPLAMODE(),
 		modules_to_evaluate     => [ qw( 
 Exporter
 DynaLoader								
