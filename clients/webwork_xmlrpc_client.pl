@@ -1,13 +1,16 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 
 use XMLRPC::Lite;
 
 #  configuration section
-use constant  HOSTURL  =>  'devel.webwork.rochester.edu'; 
-use constant  HOSTPORT =>  8002;
+use constant  PROTOCOL         =>  'https';   # or 'http';
+use constant  HOSTURL          =>  'webwork.rochester.edu'; 
+use constant  HOSTPORT         =>  '443';  # or 80
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
-use constant  REQUEST_CLASS =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
-use constant  REQUEST_URI   =>'mod_xmlrpc';
+use constant  REQUEST_CLASS    =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
+use constant  REQUEST_URI      =>'mod_xmlrpc';
+use constant  COURSE           => 'daemon2_course';
+
 my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
 
 # $pg{displayModes} = [
@@ -51,7 +54,7 @@ sub xmlrpcCall {
 
 	  my $requestResult = TRANSPORT_METHOD
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
-			-> proxy('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
+			-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 		
 	  my $test = [3,4,5,6];     
 	  my $input = setInputTable();
@@ -123,7 +126,6 @@ sub pretty_print_rh {
 
 sub setInputTable_for_listLib {
 	$out = {
-		#password    =>  'geometry',
 		pw          =>   'geometry',
 		set         =>   'set0',
 		library_name =>  'rochesterLibrary',
@@ -134,18 +136,17 @@ sub setInputTable_for_listLib {
 }
 sub setInputTable {
 	$out = {
-		#password    =>  'geometry',
 		pw          =>   'geometry',
 		set         =>   'set0',
 		library_name =>  'rochesterLibrary',
 		command      =>  'all',
 		answer_form_submitted   => 1,
-		course                  => 'daemon_course',
+		course                  => COURSE(),
 		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
 		                                ExprWithImplicitExpand AnswerEvaluator
 		                                AnswerEvaluatorMaker 
 		)],
-		mode                    => 'HTML_dpng',
+		mode                    => DISPLAYMODE(),
 		modules_to_evaluate     => [ qw( 
 Exporter
 

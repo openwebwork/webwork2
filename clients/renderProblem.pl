@@ -18,11 +18,11 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 #  configuration section
 use constant  PROTOCOL         =>  'https';   # or 'http';
-use constant  HOSTURL          =>  'devel.webwork.rochester.edu'; 
-use constant  HOSTPORT         =>  8002;
+use constant  HOSTURL          =>  'webwork.rochester.edu'; 
+use constant  HOSTPORT         =>  443;
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
-use constant  REQUEST_CLASS    =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
-use constant  REQUEST_URI      =>'mod_xmlrpc';
+use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
+use constant  REQUEST_URI      => 'mod_xmlrpc';
 use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html';
 use constant  DISPLAY_COMMAND  => 'open -a safari ';
 use constant  COURSE           => 'daemon2_course';
