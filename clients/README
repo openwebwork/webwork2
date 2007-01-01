@@ -30,4 +30,22 @@ Frontier as a server, so be patient with it. :-)
 There is  currently much shared code between these scripts.  I'll clean it up 
 some day. :-)
 
+checkProblem.pl will take a problem source, send it to the webserver for checking
+and record the result.  It uses code in webwork_xmlrpc_inc.pl which is where
+the factored code for all of the clients will reside once I get to it.
+
+check_problems_in_dir.sh will apply checkProblem.pl to all .pg problems found
+underneath the current directory in which the command is executed.  I've used
+it to check  all the problems in a directory for warning errors.  There are more
+subtle checks that could be made, such as checking to see that correct
+answers work. 
+
+Typically one downloads a problem library from the CVS 
+(see http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS )
+and then uses check_problems_in_dir.sh to walk through it.  By modifying
+checkProblems and webwork_xmlrpc_inc.pl one could have the HTML version
+of each problem dumped to a text file, or by changing the DISPLAYMODE to 
+"tex" instead of image one could dump the TeX version of each file.
+
+
 -- Mike Gage 1/1/2007

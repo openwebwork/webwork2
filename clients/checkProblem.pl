@@ -13,10 +13,11 @@ All of this is done by contacting the webservice.
 
 
 =cut
+
 use constant LOG_FILE => '/Volumes/Riemann/webwork/problemLibraries/bad_problems.txt';
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
-require "/Volumes/Riemann/webwork/head/webwork2/clients/webwork_xmlrpc_inc.pl";
+require "webwork_xmlrpc_inc.pl"; # must be in the same directory
 
 our $source = '';
 
