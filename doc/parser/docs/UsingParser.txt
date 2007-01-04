@@ -36,7 +36,7 @@ A formula has a number of methods that you can call.  These include:
 			 method, but the documentation for the various
                          rules is not yet ready.
 
-    $f->substitue(x=>5)  Replace x by the value 5 throughout (you may want
+    $f->substitute(x=>5)  Replace x by the value 5 throughout (you may want
                          to reduce the result afterword, as this is not 
                          done automatically).  Note that you can replace a 
                          variable by another formula, if you wish.  To make 
@@ -335,7 +335,7 @@ To get the names of the defind variables, use
 
 Similarly, you can add a named constant via
 
-       $constant->constants->add(M=>1/log(10));
+       $context->constants->add(M=>1/log(10));
 
 and can change, remove or list the constants via methods like those
 used for variables above.  The command
