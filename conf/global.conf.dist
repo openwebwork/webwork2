@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.179 2006/10/19 17:35:25 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.180 2006/11/13 16:19:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -424,6 +424,7 @@ $moodle_dsn = "dbi:mysql:moodle";
 $moodle_username = $database_username;
 $moodle_password = $database_password;
 $moodle_table_prefix = "mdl_";
+$moodle17 = 0;
 
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
@@ -558,6 +559,7 @@ $authen{moodle_options} = {
 	username => $moodle_username,
 	password => $moodle_password,
 	table_prefix => $moodle_table_prefix,
+	moodle17 => $moodle17,
 };
 
 $authen{ldap_options} = {
