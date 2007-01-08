@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.180 2006/11/13 16:19:40 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.181 2007/01/08 20:35:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -280,6 +280,8 @@ $courseDirs{tmpEditFileDir}  = "$courseDirs{templates}/tmpEdit";
 # email feedback mechanism  will be replaced with a link to the given URL.
 # See also $feedback_button_name, above.
 $courseURLs{feedbackURL} = "";
+# mail merge status directory
+$courseDirs{mailmerge}   = "$courseDirs{DATA}/mailmerge";
 
 ################################################################################
 # System-wide files
