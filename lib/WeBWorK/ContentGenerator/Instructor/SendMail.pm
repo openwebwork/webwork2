@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.53 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.54 2006/10/30 20:47:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,6 +32,7 @@ use Mail::Sender;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+use WeBWorK::Utils qw/readFile readDirectory/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
 use mod_perl;
@@ -424,19 +425,48 @@ sub body {
 
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
-	} elsif (($response eq 'send_email')){
-		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
-		             ." by email when the task is completed.  This may take several minutes if the class is large."
-		);
-		$self->addgoodmessage($message);
-		$self->{message} .= $message;
-		
-		$self->print_form($setID);
+	#} elsif (($response eq 'send_email')){
+	#	my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
+	#	             ." by email when the task is completed.  This may take several minutes if the class is large."
+	#	);
+	#	$self->addgoodmessage($message);
+	#	$self->{message} .= $message;
+	#	
+	#	$self->print_form($setID);
 	} else {
+		$self->print_mailmerge_status;
 		$self->print_form($setID);
 	}
 
 }
+
+sub print_mailmerge_status {
+	my ($self) = @_;
+	
+	my $status_dir = $self->r->ce->{courseDirs}{mailmerge};
+	return unless -d $status_dir;
+	my @status_files = grep { -f "$status_dir/$_" and /^mailmerge-/ } readDirectory($status_dir);
+	return unless @status_files;
+	
+	print CGI::start_table();
+	foreach my $file (@status_files) {
+		my ($tag, $user, $time, $status, $id) = split /-/, $file;
+		my $time = $self->formatDateTime($time);
+		my $msg;
+		if ($status eq "running") {
+			$msg = "running...";
+		} elsif ($status eq "finished") {
+			my $result = eval { readFile("$status_dir/$file") };
+			$result = "[Read failed: $@]" if $@;
+			$msg = "finished: '$result'.";
+		} else {
+			$msg = "has unknown status '$status'.";
+		}
+		print CGI::Tr(CGI::td("A mail merge started $time by $user is $msg"));
+	}
+	print CGI::end_table();
+}
+
 sub print_preview {
 	my ($self)          = @_;
 	my $r               = $self->r;
@@ -575,6 +605,9 @@ sub print_form {
 					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
+				"Editor rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				" columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
+				CGI::br(),
 				CGI::submit(-name=>'action', -value=>$UPDATE_SETTINGS_BUTTON),
 				 
 			),
@@ -593,19 +626,13 @@ sub print_form {
 							CGI::i("Preview set to: "), $preview_record->last_name,
 							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
 					),
+	); # end Tr
+	
+	# second row, for reference popup menu
+	print CGI::Tr(
+			CGI::td({align=>'center',colspan=>2},
+
 				
-
-					
-
-
-	#############################################################################################
-	#	third column
-	#############################################################################################	
-			CGI::td({align=>'left'},
-
-				" Rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-				" Columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
-				CGI::br(),
 				#CGI::i('Press any action button to update display'),CGI::br(),
 			#show available macros
 				CGI::popup_menu(
@@ -625,8 +652,8 @@ sub print_form {
 							}
 				), "\n",
 			),
-
-	); # end Tr
+	);
+	
 	print CGI::end_table();	
 	#############################################################################################
 	#	end upper table
