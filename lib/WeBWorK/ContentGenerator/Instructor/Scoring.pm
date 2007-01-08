@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.59 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.60 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,6 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
-use WeBWorK::DB::Utils qw(initializeUserProblem);
 
 our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
