@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.10 2006/11/28 22:15:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.11 2006/11/28 22:29:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -39,17 +39,10 @@ use warnings;
 use Digest::MD5 qw/md5_hex/;
 use WeBWorK::Cookie;
 use WeBWorK::Debug;
-use WeBWorK::Utils;
+use Date::Parse; # for moodle 1.7 date parsing
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
-use constant MOODLE17 => (defined( $WeBWorK::Constants::MOODLE17) ) ? 
-                           $WeBWorK::Constants::MOODLE17 
-                           : 1;  # set to 0 if using moodle prior to moodle 1.7
-
-use constant SESSIONS =>(MOODLE17()) ? 'sessions2' :'sessions';
-     #name of moodle sessions table (was 'sessions' in moodle 1.6)
 
 sub new {
 	my $self = shift->SUPER::new(@_);
@@ -161,6 +154,11 @@ use constant DEFAULT_EXPIRY => 7200;
 sub init_mdl_session {
 	my $self = shift;
 	
+	# version-specific stuff
+	$self->{moodle17} = $self->{r}->ce->{authen}{moodle_options}{moodle_version};
+	$self->{sql_session_table} = $self->{moodle17} ? "sessions2" : "sessions";
+	$self->{sql_data_field} = $self->{moodle17} ? "sessdata" : "data";
+	
 	$self->{mdl_dbh} = DBI->connect_cached(
 		$self->{r}->ce->{authen}{moodle_options}{dsn},
 		$self->{r}->ce->{authen}{moodle_options}{username},
@@ -186,9 +184,9 @@ sub fetch_moodle_session {
 	my $cookie = $cookies{"MoodleSession"};
 	return unless $cookie;
 	
-	my $sessions = $self->prefix_table(SESSIONS());
-	my $data_field = MOODLE17 ? "sessdata" : "data";
-	my $stmt = "SELECT `expiry`,`$data_field` FROM `$sessions` WHERE `sesskey`=?";
+	my $session_table = $self->prefix_table($self->{sql_session_table});
+	my $data_field = $self->{sql_data_field};
+	my $stmt = "SELECT `expiry`,`$data_field` FROM `$session_table` WHERE `sesskey`=?";
 	my @bind_vals = $cookie->value;
 	
 	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
@@ -198,11 +196,10 @@ sub fetch_moodle_session {
 	return unless defined $row;
 	
 	my ($expires, $data_string) = @$row;
-	# convert expires to unix time
-    # FIXME -- there might be a more robust way to do this
-    
-    $expires = (MOODLE17()) ? Date::Parse::str2time($expires) : $expires;
-    
+	
+	# Moodle 1.7 stores expiry as a DATETIME, but WeBWorK wants a UNIX timestamp.
+	$expires = str2time($expires) if $self->{moodle17};
+	
 	my $data = unserialize_session($data_string);
 	my $username = $data->{"USER"}{"username"};
 	
@@ -219,15 +216,14 @@ sub update_moodle_session {
 	my $cookie = $cookies{"MoodleSession"};
 	return unless $cookie;
 	
-	my $sessions = $self->prefix_table(SESSIONS());
-	my $config = $self->prefix_table("config");
-	my $stmt = "UPDATE `$sessions`"
-		. ( (MOODLE17()) ? 
-		        " SET `expiry`= FROM_UNIXTIME(IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?) +?) ":
-		        " SET `expiry`= IFNULL((SELECT `value` FROM `$config` WHERE `name`=?),?)+?" )           
-		. " WHERE `sesskey`=?";
-	# FIXME new moodle format:  2006-11-25 18:27:45
-	my $formatted_time = (MOODLE17()) ? '2006-01-01 00:00:00' : time; 
+	my $config_table = $self->prefix_table("config");
+	my $value = "IFNULL((SELECT `value` FROM `$config_table` WHERE `name`=?),?)+?";
+	
+	# Moodle 1.7 stores expiry as a DATETIME, but WeBWorK supplies a UNIX timestamp.
+	$value = "FROM_UNIXTIME($value)" if $self->{moodle17};
+	
+	my $session_table = $self->prefix_table($self->{sql_session_table});
+	my $stmt = "UPDATE `$session_table` SET `expiry`=$value WHERE `sesskey`=?";
 	my @bind_vals = ("sessiontimeout", DEFAULT_EXPIRY, time, $cookie->value);
 	
 	my $sth = $self->{mdl_dbh}->prepare_cached($stmt, undef, 3); # 3: see DBI docs
