@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.54 2006/10/30 20:47:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.55 2007/01/08 22:51:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -451,7 +451,7 @@ sub print_mailmerge_status {
 	print CGI::start_table();
 	foreach my $file (@status_files) {
 		my ($tag, $user, $time, $status, $id) = split /-/, $file;
-		my $time = $self->formatDateTime($time);
+		$time = $self->formatDateTime($time);
 		my $msg;
 		if ($status eq "running") {
 			$msg = "running...";
