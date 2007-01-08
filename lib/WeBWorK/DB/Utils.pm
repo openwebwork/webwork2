@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.19 2006/10/12 22:02:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.20 2006/10/23 17:32:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -59,12 +59,13 @@ sub user2global($$) {
 # This function edits the record in place, so you can discard
 # the return value.
 sub initializeUserProblem {
-	my ($userProblem) = @_;
+	my ($userProblem, $seed) = @_;
+	$seed = int rand 5000 unless defined $seed;
 	$userProblem->status(0.0);
 	$userProblem->attempted(0);
 	$userProblem->num_correct(0);
 	$userProblem->num_incorrect(0);
-	$userProblem->problem_seed(int(rand(5000)));
+	$userProblem->problem_seed($seed);
 
 	return $userProblem;
 }

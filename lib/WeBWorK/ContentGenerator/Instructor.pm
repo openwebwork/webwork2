@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.60 2006/10/31 18:46:05 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.61 2006/12/01 17:08:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -159,22 +159,23 @@ sub unassignSetFromUser {
 	$db->deleteUserSet($userID, $setID);
 }
 
-=item assignProblemToUser($userID, $GlobalProblem)
+=item assignProblemToUser($userID, $GlobalProblem, $seed)
 
 Assigns the given problem to the given user. If the problem is already assigned
-to the user, an error string is returned.
+to the user, an error string is returned. If $seed is defined, the UserProblem
+will be given that seed.
 
 =cut
 
 sub assignProblemToUser {
-	my ($self, $userID, $GlobalProblem) = @_;
+	my ($self, $userID, $GlobalProblem, $seed) = @_;
 	my $db = $self->{db};
 	
 	my $UserProblem = $db->newUserProblem;
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($GlobalProblem->set_id);
 	$UserProblem->problem_id($GlobalProblem->problem_id);
-	initializeUserProblem($UserProblem);
+	initializeUserProblem($UserProblem, $seed);
 	
 	eval { $db->addUserProblem($UserProblem) };
 	if ($@) {
@@ -190,8 +191,9 @@ sub assignProblemToUser {
 	return ();
 }
 
+# $seed is optional -- if set, the UserProblem will be given that seed
 sub assignProblemToUserSetVersion {
-	my ($self, $userID, $userSet, $GlobalProblem, $groupProbRef) = @_;
+	my ($self, $userID, $userSet, $GlobalProblem, $groupProbRef, $seed) = @_;
 	my $db = $self->{db};
 	
 # conditional to allow selection of problems from a group of problems, 
@@ -254,7 +256,7 @@ sub assignProblemToUserSetVersion {
 	$UserProblem->set_id($userSet->set_id);
 	$UserProblem->problem_id($GlobalProblem->problem_id);
 	$UserProblem->source_file($GlobalProblem->source_file);
-	initializeUserProblem($UserProblem);
+	initializeUserProblem($UserProblem, $seed);
 	
 	eval { $db->addUserProblem($UserProblem) };
 	if ($@) {
