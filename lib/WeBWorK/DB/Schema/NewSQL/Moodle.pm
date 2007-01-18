@@ -230,7 +230,7 @@ sub _course_members_type {
 		if ($self->{params}{moodle17}) {
 			my $context_table = $self->sql->_table("context");
 			my $id_field = $self->sql->_quote("id");
-			my $instanceid_field = $self->sql->quote("instanceid");
+			my $instanceid_field = $self->sql->_quote("instanceid");
 			my $role_assignment_table = $self->sql->_table(ROLE_ASSIGNMENT_TABLE);
 			my $contextid_field = $self->sql->_quote("contextid");
 			push @joins, "JOIN $context_table ON $role_assignment_table.$contextid_field = $context_table.$id_field";
