@@ -134,11 +134,11 @@ use constant ROLE_TABLE => 'role';
 sub _role_to_permission {
 	my ($self) = @_;
 	
-	my $guest = $self->{params}{"guestPermissionLevel"};
-	my $student = $self->{params}{"studentPermissionLevel"};
-	my $teacher = $self->{params}{"teacherPermissionLevel"};
-	my $admin = $self->{params}{"adminPermissionLevel"};
-	
+	my $guest = $self->{params}->{"guestsPermissionLevel"};
+	my $student = $self->{params}{"studentsPermissionLevel"};
+	my $teacher = $self->{params}{"teachersPermissionLevel"};
+	my $admin = $self->{params}{"adminsPermissionLevel"};
+	warn "params are ",join(" ",%{$self->{params}});
 	return "CASE " . $self->sql->_quote(ROLE_ASSIGNMENT_TABLE.".roleid")
 		. " WHEN 1 THEN $admin"   # administrator
 		. " WHEN 2 THEN $admin"   # course creator
