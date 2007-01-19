@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.11 2006/11/28 22:29:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.12 2007/01/08 20:35:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -155,7 +155,7 @@ sub init_mdl_session {
 	my $self = shift;
 	
 	# version-specific stuff
-	$self->{moodle17} = $self->{r}->ce->{authen}{moodle_options}{moodle_version};
+	$self->{moodle17} = $self->{r}->ce->{authen}{moodle_options}{moodle17};
 	$self->{sql_session_table} = $self->{moodle17} ? "sessions2" : "sessions";
 	$self->{sql_data_field} = $self->{moodle17} ? "sessdata" : "data";
 	
