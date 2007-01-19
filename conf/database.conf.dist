@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.29 2007/01/08 20:35:54 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.30 2007/01/18 19:49:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -233,6 +233,7 @@ $dbLayouts{sql_moodle} = {
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $moodle_dsn,
 		params => { %moodleParams,
+			guestsPermissionLevel => -5,
 			studentsPermissionLevel => 0,
 			teachersPermissionLevel => 10,
 			adminsPermissionLevel => 10,
