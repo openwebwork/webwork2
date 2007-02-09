@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.182 2007/01/08 22:51:01 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.183 2007/01/19 21:57:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,8 +60,11 @@ $externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{tth}      = "/usr/bin/tth";
 
+####################################################
 # NetPBM - basic image manipulation utilities
-# most sites only need to configure $netpbm_prefix.
+#
+# Most sites only need to configure $netpbm_prefix.
+####################################################
 my $netpbm_prefix = "/usr/bin";
 $externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
 $externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
@@ -79,6 +82,8 @@ $externalPrograms{checkurl} = "/usr/local/bin/lwp-request -mHEAD "; # or "/usr/l
 #     we used to use `pnmdepth 1' instead of ppmtopgm as it creates a
 #     monochrome image (1 bit) rather than a greyscale image (8 bits).
 #     However, this was causing improper display of some sort in PDFs.
+################################################################################
+
 $externalPrograms{gif2eps}  = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{png2eps}  = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
 $externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
@@ -483,7 +488,7 @@ $webworkFiles{logs}{hosted_courses} = "$webworkDirs{logs}/hosted_courses.log";
 
 # The transaction log contains data from each recorded answer submission. This
 # is useful if the database becomes corrupted.
-$webworkFiles{logs}{transaction}    = "$courseDirs{logs}/transaction.log";
+$webworkFiles{logs}{transaction}    = "$webworkDirs{logs}/$coursename_transaction.log";
 
 # The answer log stores a history of all users' submitted answers.
 $courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
