@@ -1,5 +1,5 @@
 var wwLimitReloads = {
-  shortTime: 200,  // in microseconds.  Reloads faster than this will be flagged
+  shortTime: 200,  // in milliseconds.  Reloads faster than this will be flagged
   loadTime: new Date().getTime()
 };
 
