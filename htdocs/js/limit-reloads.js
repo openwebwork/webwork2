@@ -15,6 +15,13 @@
  *  a browser bug, in my opinion, but I can't do much
  *  about that.
  *
+ *  To install it, add the line
+ *
+ *    <script src="<!--#url type="webwork" name="htdocs"-->/js/limit-reloads.js"></script>
+ *
+ *  to the head of the system.template file that you are
+ *  using (in a webwork/conf/templates subdirectory).
+ *
  ********************************************************/
 
 var wwLimitReloads = {
