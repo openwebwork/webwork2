@@ -729,6 +729,7 @@ sub get_merge_file_names   {
 sub mail_message_to_recipients {
 	my $self                  = shift;
 	my $r                     = $self->r;
+	my $ce                    = $r->ce;
 	my $subject               = $self->{subject};
 	my $from                  = $self->{from};
 	my @recipients            = @{$self->{ra_send_to}};
@@ -751,11 +752,12 @@ sub mail_message_to_recipients {
 			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 			my $mailer = Mail::Sender->new({
-				from    =>   $from,
-				to      =>   $ur->email_address,
-				smtp    =>   $self->{smtpServer},
-				subject =>   $subject,
-				headers =>   "X-Remote-Host: ".$self->{remote_host},
+				from      => $ce->{mail}{smtpSender},
+				fake_from => $from,
+				to        => $ur->email_address,
+				smtp      => $self->{smtpServer},
+				subject   => $subject,
+				headers   => "X-Remote-Host: ".$self->{remote_host},
 			});
 			unless (ref $mailer) {
 				$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n";
