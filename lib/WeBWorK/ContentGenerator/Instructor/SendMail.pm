@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.55 2007/01/08 22:51:03 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.56 2007/01/08 23:56:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -425,46 +425,18 @@ sub body {
 
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
-	#} elsif (($response eq 'send_email')){
-	#	my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
-	#	             ." by email when the task is completed.  This may take several minutes if the class is large."
-	#	);
-	#	$self->addgoodmessage($message);
-	#	$self->{message} .= $message;
-	#	
-	#	$self->print_form($setID);
+	} elsif (($response eq 'send_email')){
+		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
+		             ." by email when the task is completed.  This may take several minutes if the class is large."
+		);
+		$self->addgoodmessage($message);
+		$self->{message} .= $message;
+		
+		$self->print_form($setID);
 	} else {
-		$self->print_mailmerge_status;
 		$self->print_form($setID);
 	}
 
-}
-
-sub print_mailmerge_status {
-	my ($self) = @_;
-	
-	my $status_dir = $self->r->ce->{courseDirs}{mailmerge};
-	return unless -d $status_dir;
-	my @status_files = grep { -f "$status_dir/$_" and /^mailmerge-/ } readDirectory($status_dir);
-	return unless @status_files;
-	
-	print CGI::start_table();
-	foreach my $file (@status_files) {
-		my ($tag, $user, $time, $status, $id) = split /-/, $file;
-		$time = $self->formatDateTime($time);
-		my $msg;
-		if ($status eq "running") {
-			$msg = "running...";
-		} elsif ($status eq "finished") {
-			my $result = eval { readFile("$status_dir/$file") };
-			$result = "[Read failed: $@]" if $@;
-			$msg = "finished: '$result'.";
-		} else {
-			$msg = "has unknown status '$status'.";
-		}
-		print CGI::Tr(CGI::td("A mail merge started $time by $user is $msg"));
-	}
-	print CGI::end_table();
 }
 
 sub print_preview {
