@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.12 2007/01/08 20:35:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.13 2007/01/19 16:20:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -79,6 +79,9 @@ sub get_credentials {
 		return 1;
 	} else {
 		debug("No moodle session found or moodle session expired. No credentials to be had.\n");
+		warn("No moodle session found or moodle sessioin expired.  If this happens repeatedly and you are constantly being asked
+		      to log back in ask your moodle admin to check that the Moodle item: 
+		      Server -> Session Handling -> dbsessions (Use database for session information) has been checked.");
 	}
 	
 	return 0;
