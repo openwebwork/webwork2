@@ -27,7 +27,6 @@ passwords and permission levels from Moodle.
 use strict;
 use warnings;
 use Carp qw(croak);
-use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 # only support particular tables (this overrides the version in NewSQL.pm)
 use constant TABLES => qw/password permission/;
