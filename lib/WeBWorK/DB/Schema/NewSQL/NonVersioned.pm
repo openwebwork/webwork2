@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use WeBWorK::DB::Utils qw/make_vsetID/;
 
-use constant TABLES => qw/set_user problem_user/; # problem_user? i think so...
+use constant TABLES => qw/set_user problem_user/;
 
 ################################################################################
 # where clause
