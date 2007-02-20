@@ -51,4 +51,20 @@ sub where_user_id_like {
 	return {user_id=>{LIKE=>$user_id},set_id=>{NOT_LIKE=>make_vsetID("%","%")}};
 }
 
+################################################################################
+# override keyparts_to_where to limit scope of where clauses
+################################################################################
+
+sub keyparts_to_where {
+	my ($self, @keyparts) = @_;
+	
+	my $where = $self->SUPER::keyparts_to_where(@keyparts);
+	
+	unless (exists $where->{set_id}) {
+		$where->{set_id} = {NOT_LIKE=>make_vsetID("%","%")};
+	}
+	
+	return $where;
+}
+
 1;
