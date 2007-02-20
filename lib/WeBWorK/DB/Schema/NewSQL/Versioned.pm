@@ -77,7 +77,29 @@ sub where_user_id_eq_set_id_eq_version_id_le {
 }
 
 ################################################################################
-# overloads to fake version_id field
+# override keyparts_to_where to limit scope of where clauses
+################################################################################
+
+sub keyparts_to_where {
+	my ($self, @keyparts) = @_;
+	
+	my $where = $self->SUPER::keyparts_to_where(@keyparts);
+	
+	if (exists $where->{set_id} and exists $where->{version_id}) {
+		$where->{set_id} = make_vsetID($where->{set_id}, $where->{version_id});
+		delete $where->{version_id};
+	} else {
+		my $set_id_part = exists $where->{set_id} ? $where->{set_id} : "%";
+		my $version_id_part = exists $where->{version_id} ? $where->{version_id} : "%";
+		$where->{set_id} = {LIKE => make_vsetID($set_id_part, $version_id_part)};
+		delete $where->{version_id};
+	}
+	
+	return $where;
+}
+
+################################################################################
+# overrides to fake version_id field
 ################################################################################
 
 # replace the virutal set_id and version_id fields with expressions that extract
@@ -216,24 +238,6 @@ sub _delete_fields_prep {
 	print STDERR "stmt=$stmt\norder=@order\n";
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	return $sth, @order;
-}
-
-sub keyparts_to_where {
-	my ($self, @keyparts) = @_;
-	
-	my $where = $self->SUPER::keyparts_to_where(@keyparts);
-	
-	if (exists $where->{set_id} and exists $where->{version_id}) {
-		$where->{set_id} = make_vsetID($where->{set_id}, $where->{version_id});
-		delete $where->{version_id};
-	} elsif (exists $where->{set_id} or exists $where->{version_id}) {
-		my $set_id_part = exists $where->{set_id} ? $where->{set_id} : "%";
-		my $version_id_part = exists $where->{version_id} ? $where->{version_id} : "%";
-		$where->{set_id} = {LIKE => make_vsetID($set_id_part, $version_id_part)};
-		delete $where->{version_id};
-	}
-	
-	return $where;
 }
 
 1;
