@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.20 2006/10/23 17:32:01 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.21 2007/01/08 20:22:45 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,11 +32,12 @@ our @EXPORT_OK = qw(
 	user2global
 	initializeUserProblem
 	make_vsetID
+	make_vsetID_sql
 	grok_vsetID
 	grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql
 );
-	
+
 sub global2user($$) {
 	my ($userRecordClass, $GlobalRecord) = @_;
 	my $UserRecord = $userRecordClass->new();
@@ -79,6 +80,11 @@ sub make_vsetID($$) {
 	return "$setID,v$versionID";
 }
 
+sub make_vsetID_sql {
+	my ($setID, $versionID) = @_;
+	return "CONCAT($setID,',v',$versionID)";
+}
+
 sub grok_vsetID($) {
 	my ($vsetID) = @_;
 	my ($setID, $versionID) = $vsetID =~ /([^,]+)(?:,v(.*))?/;
@@ -87,7 +93,7 @@ sub grok_vsetID($) {
 
 sub grok_setID_from_vsetID_sql($) {
 	my ($field) = @_;
-	return "SUBSTRING(`$field`,1,INSTR(`$field`,',v'))";
+	return "SUBSTRING(`$field`,1,INSTR(`$field`,',v')-1)";
 }
 
 sub grok_versionID_from_vsetID_sql($) {
