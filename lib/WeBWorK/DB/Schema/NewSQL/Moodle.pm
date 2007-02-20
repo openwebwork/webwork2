@@ -26,7 +26,6 @@ WeBWorK::DB::Schema::NewSQL::Moodle - Base class for Moodle schema modules.
 use strict;
 use warnings;
 use Carp qw(croak);
-#use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 use constant MOODLE_WEBWORK_BRIDGE_TABLE => 'wwassignment_bridge';
 
