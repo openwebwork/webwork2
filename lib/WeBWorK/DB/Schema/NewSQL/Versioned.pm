@@ -119,7 +119,7 @@ sub _insert_fields_prep {
 		# the array form allows raw SQL and bind values
 		$values{set_id} = [make_vsetID_sql("?","?"), @values{qw/set_id version_id/}];
 		delete $values{version_id};
-	} elsif (exists $values{set_id} != exists $values{version_id}) {
+	} elsif (exists $values{set_id} or exists $values{version_id}) {
 		die "can't re-create versioned set_id field without virtual set_id and version_id fields";
 	} else {
 		# neither set_id nor version_id present, so that's fine
@@ -157,9 +157,6 @@ sub update_where {
 		} else {
 			$version_id_part = grok_versionID_from_vsetID_sql("set_id");
 		}
-		print STDERR "set_id_part=$set_id_part\n";
-		print STDERR "version_id_part=$version_id_part\n";
-		print STDERR "bind=@bind\n";
 		$fieldvals{set_id} = [make_vsetID_sql($set_id_part, $version_id_part), @bind];
 		delete $fieldvals{version_id};
 	}
@@ -219,6 +216,24 @@ sub _delete_fields_prep {
 	print STDERR "stmt=$stmt\norder=@order\n";
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	return $sth, @order;
+}
+
+sub keyparts_to_where {
+	my ($self, @keyparts) = @_;
+	
+	my $where = $self->SUPER::keyparts_to_where(@keyparts);
+	
+	if (exists $where->{set_id} and exists $where->{version_id}) {
+		$where->{set_id} = make_vsetID($where->{set_id}, $where->{version_id});
+		delete $where->{version_id};
+	} elsif (exists $where->{set_id} or exists $where->{version_id}) {
+		my $set_id_part = exists $where->{set_id} ? $where->{set_id} : "%";
+		my $version_id_part = exists $where->{version_id} ? $where->{version_id} : "%";
+		$where->{set_id} = {LIKE => make_vsetID($set_id_part, $version_id_part)};
+		delete $where->{version_id};
+	}
+	
+	return $where;
 }
 
 1;
