@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.7 2006/10/19 17:37:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.8 2006/10/25 14:25:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,7 +30,6 @@ use Iterator;
 use Iterator::Util;
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
-use Data::Dumper; $Data::Dumper::Terse = 1; $Data::Dumper::Indent = 0;
 
 =head1 SUPPORTED PARAMS
 
@@ -225,6 +224,7 @@ sub exists_where {
 # returns a list of refs to arrays containing field values for each matching row
 sub get_fields_where {
 	my ($self, $fields, $where, $order) = @_;
+	$fields ||= [$self->fields];
 	
 	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
 	my @results = @{ $sth->fetchall_arrayref };
@@ -235,6 +235,7 @@ sub get_fields_where {
 # returns an Iterator that generates refs to arrays containg field values for each matching row
 sub get_fields_where_i {
 	my ($self, $fields, $where, $order) = @_;
+	$fields ||= [$self->fields];
 	
 	my $sth = $self->_get_fields_where_prepex($fields, $where, $order);
 	return new Iterator sub {
