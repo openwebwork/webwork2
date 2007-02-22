@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.30 2007/01/18 19:49:26 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.31 2007/01/19 21:58:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -129,7 +129,7 @@ $dbLayouts{sql_single} = {
 	},
 	set_user => {
 		record => "WeBWorK::DB::Record::UserSet",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		schema => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $database_dsn,
 		params => { %sqlParams,
@@ -147,6 +147,16 @@ $dbLayouts{sql_single} = {
 			merge      => [qw/set_user set/],
 		},
 	},
+	set_version => {
+		record => "WeBWorK::DB::Record::SetVersion",
+		schema => "WeBWorK::DB::Schema::NewSQL::Versioned",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			non_native => 1,
+			tableOverride => "${courseName}_set_user",
+		},
+	},
 	problem => {
 		record => "WeBWorK::DB::Record::Problem",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
@@ -158,7 +168,7 @@ $dbLayouts{sql_single} = {
 	},
 	problem_user => {
 		record => "WeBWorK::DB::Record::UserProblem",
-		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		schema => "WeBWorK::DB::Schema::NewSQL::NonVersioned",
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $database_dsn,
 		params => { %sqlParams,
@@ -174,6 +184,16 @@ $dbLayouts{sql_single} = {
 		params => { %sqlParams,
 			non_native => 1,
 			merge      => [qw/problem_user problem/],
+		},
+	},
+	problem_version => {
+		record => "WeBWorK::DB::Record::ProblemVersion",
+		schema => "WeBWorK::DB::Schema::NewSQL::Versioned",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			non_native => 1,
+			tableOverride => "${courseName}_problem_user",
 		},
 	},
 };
@@ -222,6 +242,7 @@ $dbLayouts{sql_moodle} = {
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $moodle_dsn,
 		params => { %moodleParams,
+			guestsPermissionLevel => -5,
 			studentsPermissionLevel => 0,
 			teachersPermissionLevel => 10,
 			adminsPermissionLevel => 10,
