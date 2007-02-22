@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.87 2006/11/13 17:27:51 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.88 2006/12/01 17:06:40 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -730,8 +730,8 @@ sub putGlobalSet {
 	}
 }
 
-# setID can be undefined if being called from this package
 sub deleteGlobalSet {
+	# setID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $setID) = shift->checkArgs(\@_, "set_id$U");
 	$self->deleteUserSet(undef, $setID);
@@ -768,8 +768,7 @@ sub countUserSets { return scalar shift->listUserSets(@_) }
 
 sub listUserSets {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	# VERSIONING -- only list non-versioned sets
-	my $where = [nonversionedset_user_id_eq => $userID];
+	my $where = [user_id_eq => $userID];
 	if (wantarray) {
 		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
 	} else {
@@ -822,15 +821,11 @@ sub putUserSet {
 	}
 }
 
-# userID and setID can be undefined if being called from this package
 sub deleteUserSet {
+	# userID and setID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
-	# VERSIONING - skipVersionDel flag
-	my ($self, $userID, $setID, $skipVersionDel) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "skipVersionDel!?");
-	# VERSIONING - delete versions for this user set
-	if (defined $setID and not $skipVersionDel) {
-		$self->deleteUserSetVersions($userID, $setID);
-	}
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, "user_id$U", "set_id$U");
+	$self->deleteSetVersion($userID, $setID, undef);
 	$self->deleteUserProblem($userID, $setID, undef);
 	return $self->{set_user}->delete($userID, $setID);
 }
@@ -904,8 +899,8 @@ sub putGlobalProblem {
 	}
 }
 
-# userID and setID can be null if being called from this package
 sub deleteGlobalProblem {
+	# userID and setID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, "set_id$U", "problem_id$U");
 	$self->deleteUserProblem(undef, $setID, $problemID);
@@ -1007,8 +1002,8 @@ sub putUserProblem {
 	}
 }
 
-# userID, setID, and problemID can be undefined if being called from this package
 sub deleteUserProblem {
+	# userID, setID, and problemID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "problem_id$U");
 	return $self->{problem_user}->delete($userID, $setID, $problemID);
@@ -1077,95 +1072,35 @@ sub getAllMergedUserProblems {
 }
 
 ################################################################################
-# versioned set_user functions
+# versioned set_user functions (OLD)
 ################################################################################
 
-sub countUserSetVersions { return scalar shift->listUserSetVersions(@_) }
+# USED NOWHERE
+sub countUserSetVersions {
+	croak "listUserSetVersions deprecated in favor of countSetVersionsWhere([user_id_eq=>\$userID])";
+}
 
+# USED IN Grades.pm, ProblemSets.pm
 sub listUserSetVersions {
-	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
-	my $where = [versionedset_user_id_eq => $userID];
-	if (wantarray) {
-		return map { @$_ } $self->{set_user}->get_fields_where(["set_id"], $where);
-	} else {
-		return $self->{set_user}->count_where($where);
-	}
+	croak "listUserSetVersions deprecated in favor of listSetVersionsWhere([user_id_eq=>\$userID])";
 }
 
-# in:  $uid is a userID, $sid is a setID, and $versionNum is a version number
-#	   userID has set versions 1 through $versionNum defined
-# out: an array of user set objects is returned for the indicated version 
-#	   numbers
+# USED IN GatewayQuiz.pm
 sub getUserSetVersions {
-	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
-	my $where = [versionedset_user_id_eq_set_id_eq_version_id_le => $userID,$setID,$versionID];
-	# FIXME this is a literal order clause, which defeats field translation
-	my $order = \(grok_versionID_from_vsetID_sql('set_id'));
-	return $self->{set_user}->get_records_where($where, $order);
+	croak "getUserSetVersions deprecated in favor of getSetVersionsWhere([user_id_eq_set_id_eq_version_id_le => \$userID,\$setID,\$versionID])";
 }
 
+# USED IN Instructor.pm
 sub addVersionedUserSet {
-	my ($self, $UserSet) = shift->checkArgs(\@_, qw/VREC:set_user/);
-	my ($setID, undef) = grok_vsetID($UserSet->set_id);
-		
-	croak "addUserSet: user ", $UserSet->user_id, " not found"
-		unless $self->{user}->exists($UserSet->user_id);
-	croak "addVersionedUserSet: set $setID not found"
-		unless $self->{set}->exists($setID);
-	
-	eval {
-		return $self->{set_user}->add($UserSet);
-	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
-		croak "addVersionedUserSet: versioned user set exists (perhaps you meant to use putVersionedUserSet?)";
-	}
+	croak "addVersionedUserSet deprecated in favor of addSetVersion";
 }
 
-# this exists separate from putUserSet only so that we can make it harder
-# for anyone else to use commas in setIDs
+# USED IN GatewayQuiz.pm, LoginProctor.pm
 sub putVersionedUserSet {
-	my ($self, $UserSet) = shift->checkArgs(\@_, qw/VSET:set_user/);
-	my $rows = $self->{set_user}->put($UserSet); # DBI returns 0E0 for 0.
-	if ($rows == 0) {
-		croak "putVersionedUserSet: user set not found (perhaps you meant to use putVersionedUserSet?)";
-	} else {
-		return $rows;
-	}
+	croak "putVersionedUserSet deprecated in favor of putSetVersion";
 }
 
-sub deleteUserSetVersions {
-	my ($self, $userID, $setID) = @_;
-
-# this only gets called from deleteUserSet, so we don't worry about $setID
-#	 not being defined 
-
-# make a list of all users to delete set versions for.	if we have a userID, 
-#	 then just delete versions for that user
-	my @allUsers = ();
-	if ( defined( $userID ) ) {
-		push( @allUsers, $userID );
-	} else {
-# otherwise, get a list of all users to whom the set is assigned, and delete
-#	 all versions for all of them
-		@allUsers = $self->listSetUsers( $setID );
-	}
-
-# skip version deletion when calling deleteUserSet from here
-	my $skipVersionDel = 1;
-
-# go through each userID and delete all versions of the set for each
-	foreach my $uid ( @allUsers ) {
-		my $setVersionNumber = $self->getUserSetVersionNumber($uid, $setID);
-		if ( $setVersionNumber ) {
-			for ( my $i=1; $i<=$setVersionNumber; $i++ ) {
-				eval { $self->deleteUserSet( $uid, "$setID,v$i",
-											 $skipVersionDel ) };
-				return $@ if ( $@ );
-			}
-		}
-	}
-}
-
+# USED IN GatewayQuiz.pm, Scoring.pm, StudentProgress.pm, Instructor.pm
 # in:  uid and sid are user and set ids.  the setID is the 'global' setID
 #	   for the user, not a versioned value
 # out: the latest version number of the set that has been assigned to the
@@ -1178,18 +1113,173 @@ sub getUserSetVersionNumber {
 	# go away once we move versioned sets into their own table, which is hopefully going to happen
 	# before we want to support other RDBMSs.
 	my $field = "IFNULL(MAX(" . grok_versionID_from_vsetID_sql("set_id") . "),0)";
-	my $where = [versionedset_user_id_eq_set_id_eq => $userID,$setID];
-	return ( $self->{set_user}->get_fields_where($field, $where) )[0]->[0];
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	return ( $self->{set_version}->get_fields_where($field, $where) )[0]->[0];
 }
 
-# a useful expression:
-# 
-# select user_id,substring(set_id,1,instr(set_id,',v')-1) as set_id,
-# substring(set_id,instr(set_id,',v')+2) as version_id from sam_course_set_user
-# where set_id like '%,v%';
+################################################################################
+# set_version functions (NEW)
+################################################################################
+
+BEGIN {
+	*SetVersion = gen_schema_accessor("set_version");
+	*newSetVersion = gen_new("set_version");
+	*countSetVersionsWhere = gen_count_where("set_version");
+	*existsSetVersionWhere = gen_exists_where("set_version");
+	*listSetVersionsWhere = gen_list_where("set_version");
+	*getSetVersionsWhere = gen_get_records_where("set_version");
+}
+
+# versioned analog of countUserSets
+sub countSetVersions { return scalar shift->listSetVersions(@_) }
+
+# versioned analog of listUserSets
+sub listSetVersions {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	if (wantarray) {
+		return grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
+	} else {
+		return $self->{set_version}->count_where($where);
+	}
+}
+
+# versioned analog of existsUserSet
+sub existsSetVersion {
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	return $self->{set_version}->exists($userID, $setID, $versionID);
+}
+
+# versioned analog of getUserSet
+sub getSetVersion {
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	return ( $self->getSetVersions([$userID, $setID, $versionID]) )[0];
+}
+
+# versioned analog of getUserSets
+sub getSetVersions {
+	my ($self, @setVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id/);
+	return $self->{set_version}->gets(@setVersionIDs);
+}
+
+# versioned analog of addUserSet
+sub addSetVersion {
+	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
+	
+	croak "addSetVersion: set ", $SetVersion->set_id, " not found for user ", $SetVersion->user_id
+		unless $self->{set_user}->exists($SetVersion->user_id, $SetVersion->set_id);
+	
+	eval {
+		return $self->{set_version}->add($SetVersion);
+	};
+	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+		croak "addSetVersion: set version exists (perhaps you meant to use putSetVersion?)";
+	}
+}
+
+# versioned analog of putUserSet
+sub putSetVersion {
+	my ($self, $SetVersion) = shift->checkArgs(\@_, qw/REC:set_version/);
+	my $rows = $self->{set_version}->put($SetVersion); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putSetVersion: set version not found (perhaps you meant to use addSetVersion?)";
+	} else {
+		return $rows;
+	}
+}
+
+# versioned analog of deleteUserSet
+sub deleteSetVersion {
+	# userID, setID, and versionID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "version_id$U");
+	$self->deleteProblemVersion($userID, $setID, $versionID, undef);
+	return $self->{set_version}->delete($userID, $setID, $versionID);
+}
 
 ################################################################################
-# versioned set_merged functions
+# problem_version functions (NEW)
+################################################################################
+
+BEGIN {
+	*ProblemVersion = gen_schema_accessor("problem_version");
+	*newProblemVersion = gen_new("problem_version");
+	*countProblemVersionsWhere = gen_count_where("problem_version");
+	*existsProblemVersionWhere = gen_exists_where("problem_version");
+	*listProblemVersionsWhere = gen_list_where("problem_version");
+	*getProblemVersionsWhere = gen_get_records_where("problem_version");
+}
+
+# versioned analog of countUserProblems
+sub countProblemVersions { return scalar shift->listProblemVersions(@_) }
+
+# versioned analog of listUserProblems
+sub listProblemVersions {
+	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+	my $where = [user_id_eq_set_id_eq_problem_id_eq => $userID,$setID,$problemID];
+	if (wantarray) {
+		return grep { @$_ } $self->{problem_version}->get_fields_where(["version_id"], $where);
+	} else {
+		return $self->{problem_version}->count_where($where);
+	}
+}
+
+# versioned analog of existsUserProblem
+sub existsProblemVersion {
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	return $self->{problem_version}->exists($userID, $setID, $versionID, $problemID);
+}
+
+# versioned analog of getUserProblem
+sub getProblemVersion {
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	return ( $self->getProblemVersions([$userID, $setID, $versionID, $problemID]) )[0];
+}
+
+# versioned analog of getUserProblems
+sub getProblemVersions {
+	my ($self, @problemVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id problem_id/);
+	return $self->{problem_version}->gets(@problemVersionIDs);
+}
+
+# versioned analog of addUserProblem
+sub addProblemVersion {
+	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
+	
+	croak "addProblemVersion: set version ", $ProblemVersion->version_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
+		unless $self->{set_version}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->version_id);
+	croak "addProblemVersion: problem ", $ProblemVersion->problem_id, " of set ", $ProblemVersion->set_id, " not found for user ", $ProblemVersion->user_id
+		unless $self->{problem_user}->exists($ProblemVersion->user_id, $ProblemVersion->set_id, $ProblemVersion->problem_id);
+	
+	eval {
+		return $self->{problem_version}->add($ProblemVersion);
+	};
+	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+		croak "addProblemVersion: problem version exists (perhaps you meant to use putProblemVersion?)";
+	}
+}
+
+# versioned analog of putUserProblem
+sub putProblemVersion {
+	my ($self, $ProblemVersion) = shift->checkArgs(\@_, qw/REC:problem_version/);
+	my $rows = $self->{problem_version}->put($ProblemVersion); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putProblemVersion: problem version not found (perhaps you meant to use addProblemVersion?)";
+	} else {
+		return $rows;
+	}
+}
+
+# versioned analog of deleteUserProblem
+sub deleteProblemVersion {
+	# userID, setID, versionID, and problemID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "version_id$U", "problem_id$U");
+	return $self->{problem_version}->delete($userID, $setID, $versionID, $problemID);
+}
+
+################################################################################
+# versioned set_merged functions (OLD)
 ################################################################################
 
 # getMergedVersionedSet( self, uid, sid [, versionNum] )
@@ -1275,7 +1365,35 @@ sub getMergedVersionedSets {
 }
 
 ################################################################################
-# versioned problem_merged functions
+# set_version_merged functions (NEW)
+################################################################################
+
+BEGIN {
+	*MergedSetVersion = gen_schema_accessor("set_version_merged");
+	#*newMergedSetVersion = gen_new("set_version_merged");
+	#*countMergedSetVersionsWhere = gen_count_where("set_version_merged");
+	*existsMergedSetVersionWhere = gen_exists_where("set_version_merged");
+	#*listMergedSetVersionsWhere = gen_list_where("set_version_merged");
+	*getMergedSetVersionsWhere = gen_get_records_where("set_version_merged");
+}
+
+sub existsMergedSetVersion {
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	return $self->{set_version_merged}->exists($userID, $setID, $versionID);
+}
+
+sub getMergedSetVersion {
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	return ( $self->getMergedSetVersions([$userID, $setID, $versionID]) )[0];
+}
+
+sub getMergedSetVersions {
+	my ($self, @setVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id/);
+	return $self->{set_version_merged}->gets(@setVersionIDs);
+}
+
+################################################################################
+# versioned problem_merged functions (OLD)
 ################################################################################
 
 # this exists distinct from getMergedProblem only to be able to include the setVersionID
@@ -1336,6 +1454,40 @@ sub getMergedVersionedProblems {
 	debug("DB: merge done!");
 	
 	return @versionUserProblems;
+}
+
+################################################################################
+# problem_version_merged functions (NEW)
+################################################################################
+
+BEGIN {
+	*MergedProblemVersion = gen_schema_accessor("problem_version_merged");
+	#*newMergedProblemVersion = gen_new("problem_version_merged");
+	#*countMergedProblemVersionsWhere = gen_count_where("problem_version_merged");
+	*existsMergedProblemVersionWhere = gen_exists_where("problem_version_merged");
+	#*listMergedProblemVersionsWhere = gen_list_where("problem_version_merged");
+	*getMergedProblemVersionsWhere = gen_get_records_where("problem_version_merged");
+}
+
+sub existsMergedProblemVersion {
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
+	return $self->{problem_version_merged}->exists($userID, $setID, $versionID, $problemID);
+}
+
+sub getMergedProblemVersion {
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+	return ( $self->getMergedProblemVersions([$userID, $setID, $versionID, $problemID]) )[0];
+}
+
+sub getMergedProblemVersions {
+	my ($self, @problemVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id problem_id/);
+	return $self->{problem_version_merged}->gets(@problemVersionIDs);
+}
+
+sub getAllMergedProblemVersions {
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
+	return $self->{problem_version_merged}->get_records_where($where);
 }
 
 ################################################################################

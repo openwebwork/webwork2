@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.17 2006/10/25 15:49:00 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.18 2006/10/31 18:53:01 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,6 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use WeBWorK::Utils qw/undefstr/;
-use WeBWorK::DB::Utils qw/make_vsetID/;
 
 use constant TABLES => qw(*);
 use constant STYLE  => "dbi";
@@ -35,6 +34,11 @@ use constant STYLE  => "dbi";
 ################################################################################
 # where clauses (not sure if this is where these belong...)
 ################################################################################
+
+# default where clause (does nothing)
+sub where_DEFAULT {
+	return {};
+}
 
 # can be used for user,password,permission,key,set_user,problem_user,vset_user
 sub where_user_id_eq {
@@ -122,36 +126,6 @@ sub where_user_id_eq_set_id_eq {
 	return {user_id=>$user_id,set_id=>$set_id};
 }
 
-# VERSIONING
-sub where_nonversionedset_user_id_eq {
-	my ($self, $flags, $user_id) = @_;
-	return {user_id=>$user_id,set_id=>{NOT_LIKE=>make_vsetID("%","%")}};
-}
-
-# VERSIONING
-sub where_versionedset_user_id_eq {
-	my ($self, $flags, $user_id) = @_;
-	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID("%","%")}};
-}
-
-# VERSIONING
-sub where_versionedset_user_id_eq_set_id_eq {
-	my ($self, $flags, $user_id, $set_id) = @_;
-	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID($set_id,"%")}};
-}
-
-# VERSIONING
-sub where_versionedset_user_id_eq_set_id_eq_version_id_le {
-	my ($self, $flags, $user_id, $set_id, $version_id) = @_;
-	if ($version_id >= 1) {
-		my @vsetIDs = map { make_vsetID($set_id,$_) } 1 .. $version_id;
-		return {user_id=>$user_id,set_id=>\@vsetIDs};
-	} else {
-		# nothing matches an invalid version id
-		return {-and=>\("0==1")};
-	}
-}
-
 ################################################################################
 # utility methods
 ################################################################################
@@ -198,7 +172,10 @@ sub unbox {
 sub conv_where {
 	my ($self, $where) = @_;
 	my $flags = {};
-	if (ref $where eq "ARRAY") {
+	if (not defined $where) {
+		# allow schema module to specify a default where clause
+		$where = $self->where_DEFAULT($flags);
+	} elsif (ref $where eq "ARRAY") {
 		my ($clause, @args) = @$where;
 		my $func = "where_$clause";
 		croak "Unrecognized where clause '$clause'" unless $self->can($func);
@@ -269,7 +246,7 @@ sub debug_stmt {
 
 sub bind {
 	my ($self, $stmt, @bind_vals) = @_;
-	$stmt =~ s/\?/@bind_vals ? $self->dbh->quote(shift @bind_vals) : "###NO BIND VALS###"/eg;
+	$stmt =~ s/\?/@bind_vals ? "?[".$self->dbh->quote(shift @bind_vals)."]" : "###NO BIND VALS###"/eg;
 	$stmt .= " ###EXTRA BIND VALS |@bind_vals|###" if @bind_vals;
 	return $stmt;
 }
