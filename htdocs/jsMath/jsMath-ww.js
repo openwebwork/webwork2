@@ -34,7 +34,10 @@ if (!window.jsMath || !window.jsMath.loaded) {
 
     wwProcess: function () {
       if (this.wwCount > 1) return;
-      window.onload = (this.wwCount? this.wwProcessMultiple: this.wwProcessSingle);
+      var onload = (this.wwCount? this.wwProcessMultiple: this.wwProcessSingle);
+      if (window.addEventListener) {window.addEventListener("load",onload,false)}
+      else if (window.attachEvent) {window.attachEvent("onload",onload)}
+      else {window.onload = onload}
       this.wwCount++;
     },
 
@@ -49,5 +52,11 @@ if (!window.jsMath || !window.jsMath.loaded) {
 
   //  Load actual jsMath code
   jsMath.wwSource();
+
+  //
+  //  Make sure answer boxes are above jsMath output (avoids deep
+  //  baselines in jsMath fonts)
+  //
+  document.write('<STYLE> .problem INPUT {position: relative; z-index: 2} </STYLE>');
 
 }
