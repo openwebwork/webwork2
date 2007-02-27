@@ -89,7 +89,9 @@ sub initialize {
 		my $setID = $setRecord->set_id;
 		# does the user want it to be assigned to the selected user
 		if (exists $selectedSets{$setID}) {
-				$self->assignSetToUser($editForUserID, $setRecord);
+		    # change by glarose, 2007/02/07: only assign set if the 
+		    # user doesn't already have the set assigned.
+				$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
 				#override dates
 				
 
@@ -116,7 +118,9 @@ sub initialize {
 		} else {
 			# user asked to NOT have the set assigned to the selected user
 			# debug("deleteUserSet($editForUserID, $setID)");
-			$db->deleteUserSet($editForUserID, $setID);
+		    # change by glarose, 2007/02/07: only do delete if user
+		    # had the set previously assigned
+			$db->deleteUserSet($editForUserID, $setID) if ( $userSets{$setID} );
 			# debug("done deleteUserSet($editForUserID, $setID)");
 		}
 	}
