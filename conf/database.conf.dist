@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.31 2007/01/19 21:58:11 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.32 2007/02/22 16:43:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -157,6 +157,18 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_set_user",
 		},
 	},
+	set_version_merged => {
+		record => "WeBWorK::DB::Record::SetVersion",
+		schema => "WeBWorK::DB::Schema::NewSQL::VersionedMerge",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		depend => [qw/set_version set_user set/],
+		params => { %sqlParams,
+			non_native => 1,
+			merge => [qw/set_version set_user set/],
+			tableOverride => "${courseName}_set_user",
+		},
+	},
 	problem => {
 		record => "WeBWorK::DB::Record::Problem",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
@@ -193,6 +205,18 @@ $dbLayouts{sql_single} = {
 		source => $database_dsn,
 		params => { %sqlParams,
 			non_native => 1,
+			tableOverride => "${courseName}_problem_user",
+		},
+	},
+	problem_version_merged => {
+		record => "WeBWorK::DB::Record::ProblemVersion",
+		schema => "WeBWorK::DB::Schema::NewSQL::VersionedMerge",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		depend => [qw/problem_version problem_user problem/],
+		params => { %sqlParams,
+			non_native => 1,
+			merge => [qw/problem_version problem_user problem/],
 			tableOverride => "${courseName}_problem_user",
 		},
 	},
