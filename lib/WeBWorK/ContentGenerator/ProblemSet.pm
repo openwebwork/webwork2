@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.85 2006/07/17 21:51:12 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.86 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,11 +61,17 @@ sub initialize {
 	
 	# because of the database fix, we have to split our invalidSet check into two parts
 	# First, if $set is undefined then $setName was never valid
+	# FIXME: unfortunately, this gets triggered when a version of a
+	# gateway/quiz is requested, which results in a rather uninformative
+	# error message.  
 	$self->{invalidSet} = not defined $set;
 	return if $self->{invalidSet};
 
-# now that the set is valid, make sure that GatewayQuiz assignments don't get 
-# entered through this module
+	# now that the set is valid, make sure that GatewayQuiz assignments 
+	# don't get entered through this module.  this gets triggered if 
+	# we try to take a new test through this module; it would be nice
+	# to set $self->{invalidSet} and error out in body(), but it's hard
+	# to send the message there, so we just die() instead.
 	die "set $setName is a GatewayQuiz.  Enter through the GatewayQuiz " .
 	    "module." if ( defined( $set->assignment_type() ) &&
 			   $set->assignment_type() =~ /gateway/ );
