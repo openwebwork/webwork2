@@ -9,6 +9,8 @@ my @modulesList = qw(
 	Apache::Cookie
 	Apache::Log
 	Apache::Request
+	Apache2::Request
+	Apache2::Cookie
 	Apache2::ServerRec
 	Apache2::ServerUtil
 	Benchmark
@@ -19,6 +21,7 @@ my @modulesList = qw(
 	Date::Format
 	Date::Parse
 	DateTime
+	DBD::mysql
 	DBI
 	Digest::MD5
 	Errno
@@ -32,8 +35,12 @@ my @modulesList = qw(
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
+	HTML::Tagset
 	IO::File
+	Iterator
+	Iterator::Util
 	Mail::Sender
+	MIME::Parser
 	MIME::Base64
 	Net::LDAPS
 	Net::SMTP
@@ -43,6 +50,7 @@ my @modulesList = qw(
 	Safe
 	SOAP::Lite 
 	Socket
+	SQL::Abstract
 	String::ShellQuote
 	Text::Wrap
 	Time::HiRes
@@ -74,38 +82,47 @@ my @applicationsList = qw(
 	pngtopnm
 );
 
-print "\nChecking your \$PATH for executables required by WeBWorK...\n";
-my @path = split(/:/, $ENV{PATH});
-print "\$PATH=", shift @path, "\n";
-print join ("\n", map("      $_", @path)), "\n\n";
-
-foreach my $app (@applicationsList)  {
-	my $result = `which $app`;
-	chomp($result);
-	if ($result) {
-		print "   $app found at $result\n";
-	} else {
-		print "** $app not found in \$PATH\n";
+check_apps(@applicationsList);
+check_modules(@modulesList);
+sub check_apps {
+	my @applicationsList = @_;
+	print "\nChecking your \$PATH for executables required by WeBWorK...\n";
+	my @path = split(/:/, $ENV{PATH});
+	print "\$PATH=", shift @path, "\n";
+	print join ("\n", map("      $_", @path)), "\n\n";
+	
+	foreach my $app (@applicationsList)  {
+		my $result = `which $app`;
+		chomp($result);
+		unless ($result =~ /\s*no/) {
+			print "   $app found at $result\n";
+		} else {
+			$result =~ s/\s*no//;
+			print "** $app not found in \$result\n";
+		}
 	}
+	
+	print "\nLoading Perl modules required by WeBWorK...\n";
+	my @inc = @INC;
+	print "\@INC=", shift @inc, "\n";
+	print join ("\n", map("     $_", @inc)), "\n\n";
 }
 
-print "\nLoading Perl modules required by WeBWorK...\n";
-my @inc = @INC;
-print "\@INC=", shift @inc, "\n";
-print join ("\n", map("     $_", @inc)), "\n\n";
-
-foreach my $module (@modulesList)  {
-	eval "use $module";
-	if ($@) {
-		my $file = $module;
-		$file =~ s|::|/|g;
-		$file .= ".pm";
-		if ($@ =~ /Can't locate $file in \@INC/) {
-			print "** $module not found in \@INC\n";
+sub check_modules {
+	my @modulesList = @_;
+	foreach my $module (@modulesList)  {
+		eval "use $module";
+		if ($@) {
+			my $file = $module;
+			$file =~ s|::|/|g;
+			$file .= ".pm";
+			if ($@ =~ /Can't locate $file in \@INC/) {
+				print "** $module not found in \@INC\n";
+			} else {
+				print "** $module found, but failed to load: $@";
+			}
 		} else {
-			print "** $module found, but failed to load: $@";
+			print "   $module found and loaded\n";
 		}
-	} else {
-		print "   $module found and loaded\n";
 	}
 }
