@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.7 2006/10/19 17:37:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.8 2006/10/31 18:52:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -74,6 +74,9 @@ sub merge_init {
 		my @fields = $db->{$table}->fields;
 		@{$sql_field_names{$table}}{@fields} = map { $db->{$table}->sql_field_name($_) } @fields;
 	}
+
+	# get rid of the versioned table if it exists
+	my $versioned_table = shift(@merge_tables) if ( $merge_tables[0] =~ /version$/ );
 	
 	my $pri = $merge_tables[0];
 	
@@ -182,9 +185,12 @@ sub _get_fields_where_prepex {
 	my $where_clause = @where ? "WHERE " . join(" AND ", @where) : "";
 	my $order_by_clause = $order ? $self->sql->_order_by($order) : "";
 	
-	my $stmt = $self->sql->select($self->{params}{merge}, $sql_fields)
+	my @merge_tables = @{$self->{params}{merge}};
+	# get rid of the versioned table if it exists
+	my $versioned_table = shift(@merge_tables) if ( $merge_tables[0] =~ /version$/ );
+
+	my $stmt = $self->sql->select(\@merge_tables, $sql_fields)
 		. " $where_clause $order_by_clause";
-	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	$self->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);	
