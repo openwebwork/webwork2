@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.88 2006/12/01 17:06:40 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.89 2007/02/22 17:44:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1138,7 +1138,11 @@ sub listSetVersions {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	if (wantarray) {
-		return grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
+# this returns a list of array refs, which is non-intuitive?  let's try the 
+# second version, which returns a list of version_ids
+#		return grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
+
+		return map { @$_ } grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
 	} else {
 		return $self->{set_version}->count_where($where);
 	}
@@ -1214,15 +1218,32 @@ BEGIN {
 sub countProblemVersions { return scalar shift->listProblemVersions(@_) }
 
 # versioned analog of listUserProblems
-sub listProblemVersions {
-	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
-	my $where = [user_id_eq_set_id_eq_problem_id_eq => $userID,$setID,$problemID];
+# for consistency, we should name this "listProblemVersions", but that is
+# confusing, as that sounds as if we're listing the versions of a problem.
+# however, that's nonsensical, so we appropriate it here and don't worry
+# about the confusion.
+sub listProblemVersions { 
+	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
 	if (wantarray) {
-		return grep { @$_ } $self->{problem_version}->get_fields_where(["version_id"], $where);
+		return map { @$_ } $self->{problem_version}->get_fields_where(["problem_id"], $where);
 	} else {
 		return $self->{problem_version}->count_where($where);
 	}
 }
+
+# this code returns a list of all problem versions with the given userID,
+# setID, and problemID, but that is (darn well ought to be) the same as 
+# listSetVersions, so it's not so useful as all that; c.f. above.
+# sub listProblemVersions {
+# 	my ($self, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+# 	my $where = [user_id_eq_set_id_eq_problem_id_eq => $userID,$setID,$problemID];
+# 	if (wantarray) {
+# 		return grep { @$_ } $self->{problem_version}->get_fields_where(["version_id"], $where);
+# 	} else {
+# 		return $self->{problem_version}->count_where($where);
+# 	}
+# }
 
 # versioned analog of existsUserProblem
 sub existsProblemVersion {
@@ -1241,6 +1262,14 @@ sub getProblemVersions {
 	my ($self, @problemVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id problem_id/);
 	return $self->{problem_version}->gets(@problemVersionIDs);
 }
+
+# versioned analog of getAllUserProblems
+sub getAllProblemVersions {
+	my ( $self, $userID, $setID, $versionID ) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
+	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
+	return $self->{problem_version_merged}->get_records_where($where);
+}
+
 
 # versioned analog of addUserProblem
 sub addProblemVersion {
@@ -1475,7 +1504,7 @@ sub existsMergedProblemVersion {
 }
 
 sub getMergedProblemVersion {
-	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id problem_id/);
+	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
 	return ( $self->getMergedProblemVersions([$userID, $setID, $versionID, $problemID]) )[0];
 }
 
