@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Merge.pm,v 1.7 2006/10/19 17:37:25 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Versioned.pm,v 1.4 2007/02/20 22:10:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,6 +75,24 @@ sub where_user_id_eq_set_id_eq_version_id_le {
 		return {-and=>\("0==1")};
 	}
 }
+
+# why doesn't this already exist?
+sub where_user_id_eq_set_id_eq_version_id_eq {
+	my ($self, $flags, $user_id, $set_id, $version_id) = @_;
+	if ($version_id >= 1) {
+		return {user_id=>$user_id,set_id=>make_vsetID($set_id,$version_id)};
+	} else {
+		# nothing matches an invalid version id
+		return {-and=>\("0==1")};
+	}
+}
+
+# this only occurs for versioned problems
+sub where_user_id_eq_set_id_eq_problem_id_eq {
+	my ( $self, $flags, $user_id, $set_id, $problem_id ) = @_;
+	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID($set_id,"%")},problem_id=>$problem_id};
+}
+
 
 ################################################################################
 # override keyparts_to_where to limit scope of where clauses
