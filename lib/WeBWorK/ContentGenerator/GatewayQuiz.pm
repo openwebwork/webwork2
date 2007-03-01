@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.31 2006/10/11 16:15:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.32 2006/12/01 17:19:30 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,9 +61,8 @@ sub templateName {
 
 sub can_showOldAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
-# FIXME: should just return ! $Set->hide_work()?  This would hide students' 
-# FIXME: work as they're working on the set, which is probably not what we 
-# FIXME: want; therefore, we'll use 
+# we'd like to use "! $Set->hide_work()", but that hides students' work 
+# as they're working on the set, which isn't quite right.  so use instead:
 	return( before( $Set->due_date() ) || ! $Set->hide_work() );
 }
 
@@ -441,7 +440,7 @@ sub pre_header_initialize {
 
 # we could be coming in with $setName = the versioned or nonversioned set
 # deal with that first
-    my $requestedVersion = ( $setName =~ /,v(\d+)$/ ) ? $1 : '';
+    my $requestedVersion = ( $setName =~ /,v(\d+)$/ ) ? $1 : 0;
     $setName =~ s/,v\d+$//;
 # note that if we're already working with a version we want to be sure to stick
 # with that version.  we do this after we've validated that the user is 
@@ -455,17 +454,18 @@ sub pre_header_initialize {
     my $tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
     die( "Set $setName hasn't been assigned to effective user " .
 	 $effectiveUserName ) unless( defined( $tmplSet ) );
-
-# ok, get the version number if we should be required to stay with a version
-    $requestedVersion = 
-	$db->getUserSetVersionNumber($effectiveUserName, $setName)
-	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
-	       $r->param("submitAnswers") || $r->param("newPage") ) 
-	     && ! $requestedVersion );
-    die("Requested version 0 when returning to problem?!") 
-	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
-	       $r->param("submitAnswers") || $r->param("newPage") ) 
-	     && ! $requestedVersion );
+#     warn("templSet parameters:\n");
+#     warn("user_id = ", $tmplSet->user_id, "\n");
+#     warn("set_id = ", $tmplSet->set_id, "\n");
+#     warn("psvn = ", $tmplSet->psvn, "\n");
+#     warn("set_header = ", $tmplSet->set_header, "\n");
+#     warn("open_date = ", $tmplSet->open_date, "\n");
+#     warn("published = ", $tmplSet->published, "\n");
+#     warn("assignment_type = ", $tmplSet->assignment_type, "\n");
+#     warn("attempts_per_version = ", $tmplSet->attempts_per_version, "\n");
+#     warn("time_interval = ", $tmplSet->time_interval, "\n");
+#     warn("versions_per_interval = ", $tmplSet->versions_per_interval, "\n");
+#     warn("version_time_limit = ", $tmplSet->version_time_limit, "\n");
 
 # FIXME should we be more subtle than just die()ing here?  c.f. Problem.pm, 
 #    which sets $self->{invalidSet} and lets body() deal with it.  for 
@@ -485,22 +485,48 @@ sub pre_header_initialize {
 #    the processing of proctor keys for graded proctored tests
     $self->{'assignment_type'} = $tmplSet->assignment_type();
 
-# to test for a proctored test, we need the set version, not the template,
-#    which allows for a finished proctored test to be checked as an 
-#    unproctored test.  so we get the versioned set here
-    my $set = $db->getMergedVersionedSet($effectiveUserName, $setName, 
-					 $requestedVersion);
 
-    unless (defined $set) {
-	my $userSetClass = $ce->{dbLayout}->{set_user}->{record};
+# next, get the latest (current) version of the set if we don't have a 
+# requested version number
+    my @allVersionIds = $db->listSetVersions($effectiveUserName, $setName);
+    my $latestVersion = ( @allVersionIds ? $allVersionIds[-1] : 0 );
+
+# double check that any requested version makes sense
+    $requestedVersion = $latestVersion if ($requestedVersion !~ /^\d+$/ ||
+					   $requestedVersion > $latestVersion ||
+					   $requestedVersion < 0);
+
+    die("No requested version when returning to problem?!") 
+	if ( ( $r->param("previewAnswers") || $r->param("checkAnswers") ||
+	       $r->param("submitAnswers") || $r->param("newPage") ) 
+	     && ! $requestedVersion );
+
+# to test for a proctored test, we need the set version, not the template,
+#    to allows a finished proctored test to be checked as an 
+#    unproctored test.  so we get the versioned set here
+    my $set;
+    if ( $requestedVersion ) { 
+# if a specific set version was requested, get that set
+	$set = $db->getMergedSetVersion($effectiveUserName, $setName, 
+					$requestedVersion);
+    } elsif ( $latestVersion ) {
+# otherwise, if there's a current version, which we take to be the 
+# latest version taken, we use that
+	$set = $db->getMergedSetVersion($effectiveUserName, $setName,
+					$latestVersion);
+    } else {
+# and if neither of those work, get a dummy set so that we have something
+# to work with
+	my $userSetClass = $ce->{dbLayout}->{set_version}->{record};
+# FIXME RETURN TO: should this be global2version?
 	$set = global2user($userSetClass, $db->getGlobalSet($setName));
 	die "set  $setName  not found."  unless $set;
 	$set->user_id($effectiveUserName);
 	$set->psvn('000');
-	$set->set_id("$setName,v0"); # set to establish the version number only
+	$set->set_id("$setName");  # redundant?
+	$set->version_id(0);
     }
-    my $setVersionName = $set->set_id();
-    my ($setVersionNumber) = ($setVersionName =~ /.*,v(\d+)$/);
+    my $setVersionNumber = $set->version_id();
 
 # proctor check to be sure that no one is trying to abuse the url path to sneak 
 #    in the back door on a proctored test
@@ -525,6 +551,7 @@ sub pre_header_initialize {
 
 # we get the open/close dates for the gateway from the template set.
 # note $isOpen/Closed give the open/close dates for the gateway as a whole
+# (that is, the merged user|global set)
     my $isOpen = after($tmplSet->open_date()) || 
 	$authz->hasPermissions($userName, "view_unopened_sets");
 
@@ -543,22 +570,26 @@ sub pre_header_initialize {
     my @setPNum = $db->listUserProblems($EffectiveUser->user_id, $setName);
     die("Set $setName contains no problems.") if ( ! @setPNum );
 
-# the Problem here might not be defined, if the set hasn't been versioned 
+# the Problem here can be undefined, if the set hasn't been versioned 
 #    to the user yet--this gets fixed when we assign the setVersion
-    my $Problem = 
-	$db->getMergedVersionedProblem($EffectiveUser->user_id, 
-				       $setName, $setVersionName, $setPNum[0]);
+    my $Problem = $setVersionNumber ? 
+	$db->getMergedProblemVersion($EffectiveUser->user_id, $setName, 
+				     $setVersionNumber, $setPNum[0]) :
+				     undef;
 
-# FIXME: is there any case where $maxAttemptsPerVersion shouldn't be 
-#    finite?  For the moment we don't deal with this here  FIXME
+# note that having $maxAttemptsPerVersion set to an infinite/0 value is
+#    nonsensical; if we did that, why have versions?
     my $maxAttemptsPerVersion = $tmplSet->attempts_per_version();
     my $timeInterval          = $tmplSet->time_interval();
     my $versionsPerInterval   = $tmplSet->versions_per_interval();
     my $timeLimit             = $tmplSet->version_time_limit();
-# what happens if someone didn't set one of these?  this shouldn't happen if
-# the database is feeding values back out properly, I think.
-    $timeInterval = 0 if ( ! defined($timeInterval) );
-    $versionsPerInterval = 0 if ( ! defined($versionsPerInterval) );
+
+# what happens if someone didn't set one of these?  I think this can 
+# happen if we're handed a malformed set, where the values in the database
+# are null.
+    $timeInterval = 0 if ( ! defined($timeInterval) || $timeInterval eq '' );
+    $versionsPerInterval = 0 if ( ! defined($versionsPerInterval) ||
+				  $versionsPerInterval eq '' );
 
 # these both work because every problem in the set must have the same
 #    submission characteristics
@@ -568,11 +599,9 @@ sub pre_header_initialize {
 # $maxAttempts turns into the maximum number of versions we can create; 
 #    if $Problem isn't defined, we can't have made any attempts, so it 
 #    doesn't matter
-# FIXME: I'm using max_attempts == 0, instead of -1; does this matter?
     my $maxAttempts           = ( defined($Problem) && 
-				  defined($Problem->max_attempts()) &&
-				  $Problem->max_attempts() != -1 ? 
-				  $Problem->max_attempts() : 0 );
+				  defined($Problem->max_attempts()) ? 
+				  $Problem->max_attempts() : -1 );
 
 # finding the number of versions per time interval is a little harder.  we
 #    interpret the time interval as a rolling interval: that is, if we allow
@@ -588,8 +617,8 @@ sub pre_header_initialize {
     my $totalNumVersions = 0;
 
     if ( $setVersionNumber ) {
-	my @setVersions = $db->getUserSetVersions($effectiveUserName,$setName,
-						  $setVersionNumber);
+	my @setVersionIDs = $db->listSetVersions($effectiveUserName, $setName);
+	my @setVersions = $db->getSetVersions(map {[$effectiveUserName, $setName,, $_]} @setVersionIDs);
 	foreach ( @setVersions ) {
 	    $totalNumVersions++;
 	    $currentNumVersions++
@@ -603,13 +632,14 @@ sub pre_header_initialize {
 
     my $versionIsOpen = 0;  # can we do anything to this version?
 
-    if ( $isOpen && ! $isClosed ) {  # this makes sense, really
+# recall $isOpen = timeNow > openDate and $isClosed = timeNow > dueDate
+    if ( $isOpen && ! $isClosed ) {
 
 # if no specific version is requested, we can create a new one if 
 #    need be
 	if ( ! $requestedVersion ) { 
 	    if ( 
-		 ( ! $maxAttempts || $totalNumVersions < $maxAttempts )
+		 ( $maxAttempts == -1 || $totalNumVersions < $maxAttempts )
 		 &&
 		 ( $setVersionNumber == 0 ||
 		   ( 
@@ -634,12 +664,11 @@ sub pre_header_initialize {
 		WeBWorK::ContentGenerator::Instructor::assignSetVersionToUser(
 				$self, $effectiveUserName, $setTmpl);
 		$setVersionNumber++;
-		$setVersionName = "$setName,v$setVersionNumber";
-		$set = $db->getMergedVersionedSet($userName,$setName,
-						  $setVersionNumber);
+		$set = $db->getMergedSetVersion($userName, $setName,
+						$setVersionNumber);
 
-		$Problem = $db->getMergedVersionedProblem($userName,$setName,
-							  $setVersionName,1);
+		$Problem = $db->getMergedProblemVersion($userName, $setName,
+							$setVersionNumber, 1);
     # because we're creating this on the fly, it should be published
 		$set->published(1);
     # set up creation time, open and due dates
@@ -652,16 +681,15 @@ sub pre_header_initialize {
     # put this new info into the database.  note that this means that -all- of
     #    the merged information gets put back into the database.  as long as
     #    the version doesn't have a long lifespan, this is ok...
-		$db->putVersionedUserSet( $set );
+		$db->putSetVersion( $set );
 
     # we have a new set version, so it's open
 		$versionIsOpen = 1;
 
-    # also reset the number of attempts for this set; this will be zero
-		$currentNumAttempts = $Problem->num_correct() + 
-		    $Problem->num_incorrect();
+    # also reset the number of attempts for this set to zero
+		$currentNumAttempts = 0;
 
-	    } elsif ( $maxAttempts && $totalNumVersions > $maxAttempts ) {
+	    } elsif ( $maxAttempts != -1 && $totalNumVersions > $maxAttempts ) {
 		$self->{invalidSet} = "No new versions of this assignment " .
 		    "are available,\nbecause you have already taken the " .
 		    "maximum number\nallowed.";
@@ -847,41 +875,36 @@ sub pre_header_initialize {
 # process problems
 ####################################
 
-    my @problemNumbers = $db->listUserProblems($effectiveUserName, 
-					       $setVersionName);
+    my @problemNumbers = $db->listProblemVersions($effectiveUserName, 
+						  $setName, $setVersionNumber);
     my @problems = ();
     my @pg_results = ();
+# pg errors are stored here; initialize it to empty to start
+    $self->{errors} = [ ];
 
+# FIXME SPEED UP: in the long run we want to reduce the translation of 
+# problems if we're not submitting; this will change this loop
     foreach my $problemNumber (sort {$a<=>$b } @problemNumbers) {
-	my $ProblemN = $db->getMergedVersionedProblem($effectiveUserName,
-						      $setName,
-						      $setVersionName,
-						      $problemNumber);
+	my $ProblemN = $db->getMergedProblemVersion($effectiveUserName,
+						    $setName,
+						    $setVersionNumber,
+						    $problemNumber);
+#	warn("ProblemN = " . ref($ProblemN) . "\n");
 
     # sticky answers are set up here
 	if ( not ( $submitAnswers or $previewAnswers or $checkAnswers or 
 		   $newPage ) and $will{showOldAnswers} ) {
-# FIXME: sorting out sticky answers on multiple page tests here
-# 	if ( not ( $submitAnswers or $previewAnswers or $checkAnswers ) 
-# 	     and $will{showOldAnswers} ) {
+
 	    my %oldAnswers = decodeAnswers( $ProblemN->last_answer );
 	    $formFields->{$_} = $oldAnswers{$_} foreach ( keys %oldAnswers );
-
-# 	    foreach ( keys %oldAnswers ) {
-# 		if ( ! $newPage || 
-# 		     ( $newPage && ( ! defined( $formFields->{$_} ) ||
-# 				     ! $formFields->{$_} ) ) ) {
-# 		if ( ! defined( $formFields->{$_} ) ) { 
-# 		    $formFields->{$_} = $oldAnswers{$_};
-# 		}
-# 	    }
 	}
 	push( @problems, $ProblemN );
 
     # this is the actual translation of each problem.  errors are stored in 
     #    @{$self->{errors}} in each case
-	my $pg = $self->getProblemHTML( $self->{effectiveUser}, $setVersionName,
-					$formFields, $ProblemN );
+	my $pg = $self->getProblemHTML($self->{effectiveUser}, $setName,
+				       $setVersionNumber, $formFields, 
+				       $ProblemN);
 	push(@pg_results, $pg);
     }
     $self->{ra_problems} = \@problems;
@@ -974,7 +997,7 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"},
 			CGI::p("The selected problem set (" . 
 			       $urlpath->arg("setID") . ") is not a valid set" .
-			       " for $effectiveUser."), 
+			       " for $effectiveUser."),
 			CGI::p("This is because: " . $self->{invalidSet}));
     }
 	
@@ -994,9 +1017,8 @@ sub body {
     my @pg_errors = @{ $self->{errors} };
     my $requestedVersion = $self->{requestedVersion};
 
-    my $setVersionName  = $set->set_id;
-    my ( $setName ) = ( $setVersionName =~ /(.*),v\d+$/ );
-    my ( $versionNumber ) = ( $setVersionName =~ /.*,v(\d+)$/ );
+    my $setName  = $set->set_id;
+    my $versionNumber = $set->version_id;
 
 # translation errors -- we use the same output routine as Problem.pm, but 
 #    play around to allow for errors on multiple translations because we 
@@ -1045,9 +1067,9 @@ sub body {
 
 	foreach my $i ( 0 .. $#problems ) {  # process each problem in g/w
     # this code is essentially that from Problem.pm
-	    my $pureProblem = $db->getUserProblem( $problems[$i]->user_id,
-						   $setVersionName,
-						   $problems[$i]->problem_id );
+	    my $pureProblem = $db->getProblemVersion($problems[$i]->user_id,
+						     $setName, $versionNumber,
+						     $problems[$i]->problem_id);
     # this should be defined unless it's not assigned yet, in which case 
     #    we should have die()ed earlier, but what's an extra conditional 
     #    between friends?
@@ -1069,11 +1091,13 @@ sub body {
 		      @extra_answer_names );
 		my $answerString = encodeAnswers( %answersToStore, 
 						  @answer_order );
-        # and store the last answer to the database
+        # and get the last answer 
 		$problems[$i]->last_answer( $answerString );
 		$pureProblem->last_answer( $answerString );
-		my $versioned = 1;
-		$db->putUserProblem( $pureProblem, $versioned );
+        # this results in us saving the last answer by clicking 'back'
+        # and then 'submit answers' even when we're out of attempts; we 
+	# therefore comment it out here
+	#	$db->putUserProblem( $pureProblem, $versioned );
 
         # next, store the state in the database if that makes sense
 		if ( $will{recordAnswers} ) {
@@ -1086,7 +1110,7 @@ sub body {
   $pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
 
-                    if ( $db->putUserProblem( $pureProblem, $versioned ) ) {
+                    if ( $db->putProblemVersion( $pureProblem ) ) {
 			$scoreRecordedMessage[$i] = "Your score on this " .
 			    "problem was recorded.";
 		    } else {
@@ -1207,7 +1231,7 @@ sub body {
 	     $set->assignment_type() eq 'proctored_gateway' ) {
 	    $set->assignment_type( 'gateway' );
 	}
-	$db->putVersionedUserSet( $set );
+	$db->putSetVersion( $set );
     }
 
 
@@ -1238,18 +1262,20 @@ sub body {
     my $totPossible = 0;
 #    foreach ( @pg_results ) {
     foreach ( @problems ) {
-# FIXME: this requires all problems to have weight 1
-	$totPossible++;
+# FIXME: update here to allow weights != 1
+	$totPossible += $_->value();
 #	$recordedScore += $_->{state}->{recorded_score} 
 #	    if ( defined( $_->{state}->{recorded_score} ) );
-	$recordedScore += $_->{status} if ( defined( $_->status ) );
+# FIXME: update here to allow weights != 1
+	$recordedScore += $_->{status}*$_->value() if ( defined( $_->status ) );
     }
 
     my $attemptScore = 0;
     if ( $submitAnswers || $checkAnswers ) {
 	foreach my $pg ( @pg_results ) {
 # to get the current result, we need to go through the parts of each problem
-# (is there a better way of doing this?)  FIXME: factor in problem weight
+# (is there a better way of doing this?)  
+# FIXME: does score factor in problem weight?  if not, do we need value?
 	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
 		$attemptScore += $pg->{answers}->{$_}->{score};
 	    }
@@ -1415,6 +1441,11 @@ sub body {
     my $action = $r->uri();
     $action =~ s/proctored_quiz_mode/quiz_mode/ 
 	if ( $set->assignment_type() eq 'gateway' );
+# we also want to be sure that if we're in a set, the 'action' in the form
+# points us to the same set.  
+    my $setname = $set->set_id;
+    my $setvnum = $set->version_id;
+    $action =~ s/(quiz_mode\/$setname)\//$1,v$setvnum\//;
 
 # now, we print out the rest of the page if we're not hiding submitted
 # answers
@@ -1702,12 +1733,13 @@ sub body {
 ############################################################################
 
 sub getProblemHTML {
-    my ( $self, $EffectiveUser, $setVersionName, $formFields, 
+    my ( $self, $EffectiveUser, $setName, $setVersionNumber, $formFields, 
 	 $mergedProblem, $pgFile ) = @_;
-# in:  $EffectiveUser is the effective user we're working as, $setVersionName
-#      the versioned set name (setID,vN), %$formFields the form fields from
-#      the input form that we need to worry about putting into the HTML we're
-#      generating, and $mergedProblem and $pgFile are what we'd expect.
+# in:  $EffectiveUser is the effective user we're working as, $setName
+#      the set name, $setVersionNumber the version number, %$formFields 
+#      the form fields from the input form that we need to worry about 
+#      putting into the HTML we're generating, and $mergedProblem and 
+#      $pgFile are what we'd expect.
 #      $pgFile is optional
 # out: the translated problem is returned
 
@@ -1721,25 +1753,25 @@ sub getProblemHTML {
 ##    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
     my $permissionLevel = $self->{permissionLevel};
-    my $set  = $db->getMergedVersionedSet( $EffectiveUser->user_id, 
-					   $setVersionName );
+    my $set  = $db->getMergedSetVersion( $EffectiveUser->user_id, 
+					 $setName, $setVersionNumber );
 
 # should this ever happen?  I think we should have die()ed way earlier than
 #    this if the set doesn't exist, but it can't hurt to try and die() here 
 #    too
-    die "set $setVersionName for effectiveUser " . $EffectiveUser->user_id . 
-	" not found." unless $set;
+    die "set $setName,v$setVersionNumber for effectiveUser " . 
+	$EffectiveUser->user_id . " not found." unless $set;
 
     my $psvn = $set->psvn();
-    my ($setName) = ($setVersionName =~ /^(.*),v\d+/);
 
     if ( defined($mergedProblem) && $mergedProblem->problem_id ) {
 # nothing needs to be done
 
     } elsif ($pgFile) {
 	$mergedProblem = 
-	    WeBWorK::DB::Record::UserProblem->new(
+	    WeBWorK::DB::Record::ProblemVersion->new(
 			set_id => $set->set_id,
+			version_id => $set->version_id,
 			problem_id => 0,
 			login_id => $EffectiveUser->user_id,
 			source_file => $pgFile,
@@ -1780,16 +1812,15 @@ sub getProblemHTML {
 # FIXME  I think problem_id will work, too
     if ($pg->{warnings} ne "") {
 	push @{$self->{warnings}}, {
-	    set     => $setVersionName,
+	    set     => "$setName,v$setVersionNumber",
 	    problem => $mergedProblem->problem_id,
 	    message => $pg->{warnings},
 	};
     }
 	
-    $self->{errors} = [];  # initialize this to no errors
     if ($pg->{flags}->{error_flag}) {
 	push @{$self->{errors}}, {
-	    set     => $setVersionName,
+	    set     => "$setName,v$setVersionNumber",
 	    problem => $mergedProblem->problem_id,
 	    message => $pg->{errors},
 	    context => $pg->{body_text},
