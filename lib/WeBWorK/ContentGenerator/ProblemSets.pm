@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.81 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.82 2006/12/01 17:09:40 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -135,13 +135,16 @@ sub body {
 # we have to get sets and versioned sets separately
 	# DBFIXME don't get ID lists, use WHERE clauses and iterators
 	my @setIDs = $db->listUserSets($effectiveUser);
-	my @vSetIDs = $db->listUserSetVersions($effectiveUser);
+# FIXME: new API change here
+# 	my @vSetIDs = $db->listUserSetVersions($effectiveUser);
 	
 	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
-	my @vUserSetIDs = map {[$effectiveUser, /(.*),v\d+$/, $_]} @vSetIDs;
+
 	debug("Begin collecting merged sets");
 	my @sets = $db->getMergedSets( @userSetIDs );
-	my @vSets = (@vSetIDs) ? $db->getMergedVersionedSets(@vUserSetIDs) : ();
+# FIXME: new API change here; move version set listing below
+#	my @vSets = (@vSetIDs)?$db->getMergedVersionedSets(@vUserSetIDs):();
+#	my @vSets = (@vSetIDs)?$db->getMergedSetVersions(@vUserSetIDs):();
 	
 	debug("Begin fixing merged sets");
 	
@@ -178,6 +181,13 @@ sub body {
 		push( @nonGWsets, $_ );
 	    }
 	}
+# FIXME: new API change here; now get all user set versions that we need
+	my @vSets = ();
+	foreach my $set ( @gwSets ) {
+	    my @setVer = $db->listSetVersions( $effectiveUser, $set->set_id );
+	    my @setVerIDs = map { [ $effectiveUser, $set->set_id, $_ ] } @setVer;
+	    push( @vSets, $db->getMergedSetVersions( @setVerIDs ) );
+	}
 
 # set sort method
 	$sort = "status" unless $sort eq "status" or $sort eq "name";
@@ -206,8 +216,8 @@ sub body {
 	    print CGI::Tr(
 		    CGI::th("Sel."),
 		    CGI::th($nameHeader),
-		    CGI::th("Score"),
-		    CGI::th("Date"),
+		    CGI::th("TestScore"),
+		    CGI::th("TestDate"),
 		    CGI::th($statusHeader),
 	        );
 	}
@@ -226,15 +236,25 @@ sub body {
 	@vSets = sortByName("set_id", @vSets);
 
 # put together a complete list of sorted sets to consider
-	@sets = (@nonGWsets, @gwSets, @vSets);
+	@sets = (@nonGWsets, @gwSets );
 	
 	debug("End preparing merged sets");
-	
+
+# we do regular sets and the gateway set templates separately
+# from the actual set-versions, to avoid managing a tricky test
+# for a version number that may not exist
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 		
 		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
+		}
+	}
+	foreach my $set (@vSets) {
+		die "set $set not defined" unless $set;
+		
+		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1);  # 1 = gateway, versioned set
 		}
 	}
 	
@@ -279,12 +299,16 @@ sub body {
 }
 
 sub setListRow {
-	my ($self, $set, $multiSet, $preOpenSets, $existVersions, $db) = @_;
+	my ($self, $set, $multiSet, $preOpenSets, $existVersions, $db,
+	    $gwtype) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
+	$gwtype = 0 if ( ! defined( $gwtype ) );
 	
 	my $name = $set->set_id;
+	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
+
 	my $courseName      = $urlpath->arg("courseID");
 	
 	my $problemSetPage;
@@ -292,15 +316,15 @@ sub setListRow {
 	if ( ! defined( $set->assignment_type() ) || 
 	     $set->assignment_type() !~ /gateway/ ) {
 	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
-				      courseID => $courseName, setID => $name);
+				      courseID => $courseName, setID => $urlname);
 	} elsif( $set->assignment_type() !~ /proctored/ ) {
 
 	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
-				      courseID => $courseName, setID => $name);
+				      courseID => $courseName, setID => $urlname);
 	} else {
 
 	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
-				      courseID => $courseName, setID => $name);
+				      courseID => $courseName, setID => $urlname);
 	}
 
 	my $interactiveURL = $self->systemLink($problemSetPage,
@@ -308,16 +332,20 @@ sub setListRow {
 													  showOldAnswers => $self->{will}->{showOldAnswers}
 										   }
 	);
-  # check for gateway and template gateway assignments
-	my $gwtype = 0;
-	if ( defined( $set->assignment_type() ) && 
-	     $set->assignment_type() =~ /gateway/ ) {
-	    if ( $name =~ /,v\d+$/ ) {
-		$gwtype = 1;
-	    } else {
-		$gwtype = 2;
-	    }
-	}
+
+  # check to see if this is a template gateway assignment
+	$gwtype = 2 if ( defined( $set->assignment_type() ) && 
+			 $set->assignment_type() =~ /gateway/ && ! $gwtype );
+  # and get problemRecords if we're dealing with a versioned set, so that
+  #    we can test status and scores
+  # FIXME: should we really have to get the merged 
+  # problem_versions here?  it looks that way, because
+  # otherwise we don't inherit things like the problem
+  # value properly.
+	my @problemRecords = 
+		$db->getAllProblemVersions($set->user_id(), $set->set_id(),
+					   $set->version_id()) 
+		if ( $gwtype == 1 );
 
   # the conditional here should be redundant.  ah well.
 	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
@@ -353,36 +381,45 @@ sub setListRow {
 # edit this a bit for gateways 
 	if ( $gwtype ) {
 	    if ( $gwtype == 1 ) {
-		my $sname = $name;
-		$sname =~ s/,v(\d+)$//;
+		my $vnum = $set->version_id;
 		$interactive = CGI::a({-href=>$interactiveURL}, 
-				      "$sname (test$1)");
+				      "$name (test$vnum)");
 	    } else {  # this is the case of a template URL
 		$interactive = CGI::a({-href=>$interactiveURL}, 
 				      "Take new $name test");
 	    }
 	}
 	
-# for gateways, we aren't as verbose about open/closed status, because 
-#    there's only one attempt and we default to showing answers once the 
-#    test is done.
+# for gateways, we have to do a bit of careful checking to figure out 
+#    what our status actually is
 	my $status;
 	if ( $gwtype ) {
-	    if ( $gwtype == 1 ) {
-		$status = ' ';  # for g/w, we only give one attempt per version,
-                                #    so by the time we're here it's closed
-	    } else {            
-		my $t = time();
-		if ( $t < $set->open_date() ) {
-		    $status = "will open on " . $self->formatDateTime($set->open_date);
-		    $control = "" unless $preOpenSets;
-		    $interactive = $name unless $preOpenSets;
-		} elsif ( $t < $set->due_date() ) {
-		    $status = "open, due " . $self->formatDateTime($set->due_date);
-		} else {
-		    $status = "closed";
+		if ( $gwtype == 1 ) {
+			if ( $problemRecords[0]->num_correct() + 
+			     $problemRecords[0]->num_incorrect() >= 
+			     $set->attempts_per_version() ) {
+				$status = "completed.";
+			} elsif ( $set->due_date() < time() + 
+				  $self->r->ce->{gatewayGracePeriod} ) {
+				$status = "over time: closed.";
+			} else {
+				$status = "open: complete by " . 
+					$self->formatDateTime($set->due_date());
+			}
+
+		} else {            
+			my $t = time();
+			if ( $t < $set->open_date() ) {
+				$status = "will open on " . $self->formatDateTime($set->open_date);
+				$control = "" unless $preOpenSets;
+				$interactive = $name unless $preOpenSets;
+			} elsif ( $t < $set->due_date() ) {
+				$status = "now open, due " . $self->formatDateTime($set->due_date);
+			} else {
+				$status = "closed";
+			}
 		}
-	    }
+
 # old conditional
 	} elsif (time < $set->open_date) {
 		$status = "will open on " . $self->formatDateTime($set->open_date);
@@ -417,26 +454,23 @@ sub setListRow {
 	    my ( $startTime, $score );
 
 		if ( defined( $set->assignment_type() ) && 
-		 $set->assignment_type() =~ /gateway/ &&
-		 $set->set_id() =~ /,v\d+$/ ) {
-			$startTime = localtime( $set->version_creation_time() );
+		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
+			$startTime = localtime($set->version_creation_time());
 
 			if ( ! $set->hide_score() ) {
 			# find score
+
 			# DBFIXME we can do this math in the database, i think
-				my @problemRecords = 
-				    $db->getAllUserProblems( $set->user_id(),
-							     $set->set_id() );
 				my $possible = 0;
 				$score = 0;
 				foreach my $pRec ( @problemRecords ) {
 			    		if ( defined( $pRec ) && 
 					     $score ne 'undef' ) {
-						$score += $pRec->status() || 0;
+						$score += $pRec->status()*$pRec->value() || 0;
 					} else {
 						$score = 'undef';
 					}
-					$possible++;
+					$possible += $pRec->value();
 				}
 				$score = "$score/$possible";
 			} else {
