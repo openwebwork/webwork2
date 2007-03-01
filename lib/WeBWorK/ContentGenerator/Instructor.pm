@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.61 2006/12/01 17:08:24 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.62 2007/01/08 20:22:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -98,22 +98,25 @@ sub assignSetVersionToUser {
     my $db = $self->{db};
 
 # figure out what version we're on, reset setID, get a new user set
-    my $setVersionNum = $db->getUserSetVersionNumber( $userID, $setID );
+# FIXME: old version; new call follows
+#    my $setVersionNum = $db->getUserSetVersionNumber( $userID, $setID );
+    my @allVersionIDs = $db->listSetVersions( $userID, $setID );
+    my $setVersionNum = ( @allVersionIDs ) ? $allVersionIDs[-1] : 0;
     $setVersionNum++;
-    my $setVersionID = "$setID,v$setVersionNum";
-    my $userSet = $db->newUserSet;
+    my $userSet = $db->newSetVersion;
     $userSet->user_id( $userID );
-    $userSet->set_id( $setVersionID );
+    $userSet->set_id( $setID );
+    $userSet->version_id( $setVersionNum );
 
     my @results = ();
     my $set_assigned = 0;
 
 # add the set to the database
-    eval { $db->addVersionedUserSet( $userSet ) };
+    eval { $db->addSetVersion( $userSet ) };
     if ( $@ ) {
 	if ( $@ =~ m/user set exists/ ) {
-	    push( @results, "set $setVersionID is already assigned to user " .
-		  "$userID" );
+	    push( @results, "set $setID,v$setVersionNum is already assigned" .
+		  "to user $userID" );
 	    $set_assigned = 1;
 	} else {
 	    die $@;
@@ -128,14 +131,12 @@ sub assignSetVersionToUser {
     my %groupProblems = ();
 
     foreach my $GlobalProblem ( @GlobalProblems ) {
-	$GlobalProblem->set_id( $setVersionID );
+	$GlobalProblem->set_id( $setID );
 # this is getting called from within ContentGenerator, so that $self
 #    isn't an Instructor object---therefore, calling $self->assign... 
 #    doesn't work.  the following is an ugly workaround that works b/c
 #    both Instructor and ContentGenerator objects have $self->{db}
 # FIXME  it would be nice to have a better solution to this
-#	my @result = 
-#	    $self->assignProblemToUser( $userID, $GlobalProblem );
 	my @result = 
 	    assignProblemToUserSetVersion( $self, $userID, $userSet,
 	    			           $GlobalProblem, \%groupProblems );
@@ -251,14 +252,15 @@ sub assignProblemToUserSetVersion {
 	}
 	
 # all set; do problem assignment
-	my $UserProblem = $db->newUserProblem;
+	my $UserProblem = $db->newProblemVersion;
 	$UserProblem->user_id($userID);
 	$UserProblem->set_id($userSet->set_id);
+	$UserProblem->version_id($userSet->version_id);
 	$UserProblem->problem_id($GlobalProblem->problem_id);
 	$UserProblem->source_file($GlobalProblem->source_file);
 	initializeUserProblem($UserProblem, $seed);
 	
-	eval { $db->addUserProblem($UserProblem) };
+	eval { $db->addProblemVersion($UserProblem) };
 	if ($@) {
 		if ($@ =~ m/user problem exists/) {
 			return "problem " . $GlobalProblem->problem_id
