@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils/SQLAbstractIdentTrans.pm,v 1.2 2006/10/06 20:18:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils/SQLAbstractIdentTrans.pm,v 1.3 2006/10/23 17:29:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,9 @@ sub _quote {
 sub _quote_table {
 	my $self  = shift;
 	my $label = shift;
+	
+	# if the table name is a scalar reference, leave it alone (but dereference it)
+	return $$label if ref $label eq "SCALAR";
 	
 	# call custom transform function
 	$label = $self->{transform_table}->($label)
