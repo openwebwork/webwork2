@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.91 2007/03/02 21:34:12 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.93 2007/03/02 23:25:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -191,6 +191,8 @@ sub init_table {
 	my $depend = $layout->{depend};
 	my $params = $layout->{params};
 	
+	# add a key for this table to the self hash, but don't define it yet
+	# this for loop detection
 	$self->{$table} = undef;
 	
 	if ($depend) {
