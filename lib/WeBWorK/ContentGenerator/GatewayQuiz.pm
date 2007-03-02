@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.32 2006/12/01 17:19:30 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.33 2007/03/01 22:18:56 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -141,6 +141,7 @@ sub can_recordAnswers {
 	}
 
 	if (before($Set->open_date, $submitTime)) {
+		    warn("case 0\n");
 		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
 	} elsif (between($Set->open_date, ($Set->due_date + $grace), $submitTime)) {
 
@@ -1257,28 +1258,29 @@ sub body {
 	    $#pg_results : $startProb + $numProbPerPage - 1;
     }
 
-# figure out score on this attempt, and recorded score for the set, if any
+# figure out recorded score for the set, if any, and score on this attempt
     my $recordedScore = 0;
     my $totPossible = 0;
-#    foreach ( @pg_results ) {
     foreach ( @problems ) {
-# FIXME: update here to allow weights != 1
 	$totPossible += $_->value();
-#	$recordedScore += $_->{state}->{recorded_score} 
-#	    if ( defined( $_->{state}->{recorded_score} ) );
-# FIXME: update here to allow weights != 1
 	$recordedScore += $_->{status}*$_->value() if ( defined( $_->status ) );
     }
 
+# to get the attempt score, we have to figure out what the score on each
+# part of each problem is, and multiply the total for the problem by the 
+# weight (value) of the problem.  it seems this should be easier to work 
+# out than this.
     my $attemptScore = 0;
     if ( $submitAnswers || $checkAnswers ) {
+	my $i=0;
 	foreach my $pg ( @pg_results ) {
-# to get the current result, we need to go through the parts of each problem
-# (is there a better way of doing this?)  
-# FIXME: does score factor in problem weight?  if not, do we need value?
+	    my $pValue = $problems[$i]->value();
+	    my $pScore = 0;
 	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
-		$attemptScore += $pg->{answers}->{$_}->{score};
+		$pScore += $pg->{answers}->{$_}->{score};
 	    }
+	    $attemptScore += $pScore*$pValue;
+	    $i++;
 	}
     }
 
@@ -1316,10 +1318,22 @@ sub body {
 	}
 
 	print CGI::start_div({class=>"$divClass"});
-	print CGI::strong("Your score on this test (number " .
-			  "$versionNumber) is $attemptScore / " .
-			  "$totPossible"), CGI::br() if (! $set->hide_score());
-	if ( $will{recordAnswers} ) {   # then this is a counted submission
+	if ( $can{recordAnswersNextTime} ) {
+	    my $numLeft = $set->attempts_per_version - $Problem->num_correct() -
+		$Problem->num_incorrect() - 1;
+	    print CGI::strong("Your score on this submission (test " .
+			      "$versionNumber) is $attemptScore / " .
+			      "$totPossible.  You have $numLeft " . 
+			      "submission(s) remaining." ), CGI::br()
+			      if ( ! $set->hide_score() );
+	} else {
+	    print CGI::strong("Your score on this test (number " .
+			      "$versionNumber) is $attemptScore / " .
+			      "$totPossible"), CGI::br() 
+			      if (! $set->hide_score());
+	}
+	if ( $will{recordAnswers} && ! $can{recordAnswersNextTime} ) {   
+# then this is a counted submission, and we can't submit it again
 	    print CGI::strong("Time taken: $elapsed min (allowed: $allowed)"),
 	        CGI::br();
 	}
@@ -1329,6 +1343,10 @@ sub body {
 	print CGI::start_div({class=>"gwMessage"});
 	print "Your score on this (checked, not recorded) submission " .
 	    "is $attemptScore / $totPossible", CGI::end_div();
+    } elsif ( $can{recordAnswersNextTime} && $set->attempts_per_version > 1 ) {
+	my $numLeft = $set->attempts_per_version - $Problem->num_correct() -
+	    $Problem->num_incorrect();
+	print CGI::em("You have $numLeft attempts remaining on this test.");
     }
 
     if ( ! $can{recordAnswersNextTime} ) {
@@ -1604,8 +1622,11 @@ sub body {
 
 		print CGI::start_div({class=>"gwProblem"});
 		my $i1 = $i+1;
+		my $points = ( $problems[$probOrder[$i]]->value() > 1 ) ? 
+		    " (" . $problems[$probOrder[$i]]->value() . " points)" : 
+		    " (1 point)";
 		print CGI::a({-name=>"#$i1"},"");
-		print CGI::strong("Problem $problemNumber."), "\n", $recordMessage;
+		print CGI::strong("Problem $problemNumber."), "$points\n", $recordMessage;
 		print CGI::p($pg->{body_text}),
 		CGI::p($pg->{result}->{msg} ? CGI::b("Note: ") : "", 
 		       CGI::i($pg->{result}->{msg}));
