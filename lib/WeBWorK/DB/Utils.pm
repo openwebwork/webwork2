@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.21 2007/01/08 20:22:45 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Utils.pm,v 1.22 2007/02/20 00:05:19 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,6 +80,8 @@ sub make_vsetID($$) {
 	return "$setID,v$versionID";
 }
 
+# does not quote $setID and $versionID, because they could be strings, qualified
+# or unqualified field names, or complex expression
 sub make_vsetID_sql {
 	my ($setID, $versionID) = @_;
 	return "CONCAT($setID,',v',$versionID)";
@@ -91,15 +93,19 @@ sub grok_vsetID($) {
 	return $setID, $versionID;
 }
 
+# does not quote $field, because it could be a string, a qualified or
+# unqualified field name, or a complex expression
 sub grok_setID_from_vsetID_sql($) {
 	my ($field) = @_;
-	return "SUBSTRING(`$field`,1,INSTR(`$field`,',v')-1)";
+	return "SUBSTRING($field,1,INSTR($field,',v')-1)";
 }
 
+# does not quote $field, because it could be a string, a qualified or
+# unqualified field name, or a complex expression
 sub grok_versionID_from_vsetID_sql($) {
 	my ($field) = @_;
 	# the "+0" casts the resulting value as a number
-	return "(SUBSTRING(`$field`,INSTR(`$field`,',v')+2)+0)";
+	return "(SUBSTRING($field,INSTR($field,',v')+2)+0)";
 }
 
 1;
