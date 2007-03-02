@@ -66,9 +66,6 @@ sub merge_init {
 	
 	my @merge_tables = @{$self->{params}{merge}};
 	
-	#my %sql_table_names;
-	#@sql_table_names{@merge_tables} = map { $db->{$_}->sql_table_name } @merge_tables;
-	
 	my %sql_table_aliases;
 	@sql_table_aliases{@merge_tables} = map { "merge$_" } 1 .. @merge_tables;
 	
@@ -116,7 +113,6 @@ sub merge_init {
 	}
 	
 	$self->{pri} = $pri;
-	#$self->{sql_table_names} = \%sql_table_names;
 	$self->{sql_table_aliases} = \%sql_table_aliases;
 	$self->{sql_field_names} = \%sql_field_names;
 	$self->{sql_fieldexprs} = \%sql_fieldexprs;
