@@ -93,6 +93,34 @@ sub where_user_id_eq_set_id_eq_problem_id_eq {
 }
 
 ################################################################################
+# override sql_field_expression to return SUBSTRING(...) expressions
+################################################################################
+
+# FIXME the rest of the places in this class that generate field lists (basically
+# anywhere that calls grok_*_from_vsetID_sql), should call this method instead.
+# this method can handle if the set_id field has a fieldOverride set for it, and
+# the other methods can't.
+sub sql_field_expression {
+	my ($self, $field, $table) = @_;
+	
+	if ($field eq "set_id" or $field eq "version_id") {
+		# this value will already be properly quoted
+		my $sql_field_name = $self->SUPER::sql_field_expression("set_id", $table);
+		
+		if ($field eq "set_id") {
+			return grok_setID_from_vsetID_sql($sql_field_name);
+		} elsif ($field eq "version_id") {
+			return grok_versionID_from_vsetID_sql($sql_field_name);
+		}
+	} else {
+		return $self->SUPER::sql_field_expression($field, $table);
+	}
+}
+
+# FIXME sql_field_expression will work in WHERE clauses, but do we need an
+# analogous routine for SET lvalues?
+
+################################################################################
 # override keyparts_to_where to limit scope of where clauses
 ################################################################################
 
