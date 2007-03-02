@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.89 2007/02/22 17:44:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.90 2007/03/01 22:15:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1137,12 +1137,13 @@ sub countSetVersions { return scalar shift->listSetVersions(@_) }
 sub listSetVersions {
 	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	my $order = [ 'version_id' ];
 	if (wantarray) {
 # this returns a list of array refs, which is non-intuitive?  let's try the 
 # second version, which returns a list of version_ids
 #		return grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
 
-		return map { @$_ } grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
+		return map { @$_ } grep { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where, $order );
 	} else {
 		return $self->{set_version}->count_where($where);
 	}
