@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Versioned.pm,v 1.4 2007/02/20 22:10:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Versioned.pm,v 1.5 2007/03/01 22:11:46 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,7 +76,6 @@ sub where_user_id_eq_set_id_eq_version_id_le {
 	}
 }
 
-# why doesn't this already exist?
 sub where_user_id_eq_set_id_eq_version_id_eq {
 	my ($self, $flags, $user_id, $set_id, $version_id) = @_;
 	if ($version_id >= 1) {
@@ -87,12 +86,11 @@ sub where_user_id_eq_set_id_eq_version_id_eq {
 	}
 }
 
-# this only occurs for versioned problems
+# for problem versions only (set versions don't have a problem_id field)
 sub where_user_id_eq_set_id_eq_problem_id_eq {
 	my ( $self, $flags, $user_id, $set_id, $problem_id ) = @_;
 	return {user_id=>$user_id,set_id=>{LIKE=>make_vsetID($set_id,"%")},problem_id=>$problem_id};
 }
-
 
 ################################################################################
 # override keyparts_to_where to limit scope of where clauses
@@ -129,10 +127,12 @@ sub _get_fields_where_prepex {
 		my @fields = @$fields; # don't want to mess up caller's copy
 		foreach my $field (@fields) {
 			if (lc $field eq "set_id") {
-				$field = grok_setID_from_vsetID_sql("set_id")
+				# FIXME use sql_field_expression here
+				$field = grok_setID_from_vsetID_sql($self->sql->_quote("set_id"))
 					. " AS " . $self->sql->_quote("set_id");
 			} elsif (lc $field eq "version_id") {
-				$field = grok_versionID_from_vsetID_sql("set_id")
+				# FIXME use sql_field_expression here
+				$field = grok_versionID_from_vsetID_sql($self->sql->_quote("set_id"))
 					. " AS " . $self->sql->_quote("version_id");
 			} else {
 				$field = $self->sql->_quote($field);
@@ -189,13 +189,15 @@ sub update_where {
 			$set_id_part = "?";
 			push @bind, $fieldvals{set_id};
 		} else {
-			$set_id_part = grok_setID_from_vsetID_sql("set_id");
+			# FIXME use sql_field_expression here?
+			$set_id_part = grok_setID_from_vsetID_sql($self->sql->_quote("set_id"));
 		}
 		if (exists $fieldvals{version_id}) {
 			$version_id_part = "?";
 			push @bind, $fieldvals{version_id};
 		} else {
-			$version_id_part = grok_versionID_from_vsetID_sql("set_id");
+			# FIXME use sql_field_expression here?
+			$version_id_part = grok_versionID_from_vsetID_sql($self->sql->_quote("set_id"));
 		}
 		$fieldvals{set_id} = [make_vsetID_sql($set_id_part, $version_id_part), @bind];
 		delete $fieldvals{version_id};
