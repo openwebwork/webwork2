@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.8 2006/10/25 14:25:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.9 2007/02/20 00:07:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -77,7 +77,7 @@ sub sql_init {
 			if ($label eq $self->{table}) {
 				return $self->{params}{tableOverride};
 			} else {
-				warn "can't transform unrecognized table name '$label'";
+				#warn "can't transform unrecognized table name '$label'";
 				return $label;
 			}
 		};
@@ -615,6 +615,7 @@ sub sql {
 	return shift->{sql};
 }
 
+# returns non-quoted SQL name of current table
 sub sql_table_name {
 	my ($self) = @_;
 	return defined $self->{params}{tableOverride}
@@ -622,11 +623,25 @@ sub sql_table_name {
 		: $self->table;
 }
 
+# returns non-quoted SQL name of given field
 sub sql_field_name {
 	my ($self, $field) = @_;
 	return defined $self->{params}{fieldOverride}{$field}
 		? $self->{params}{fieldOverride}{$field}
 		: $field;
+}
+
+# returns fully quoted expression refering to the specified field
+# if $include_table is true, the field name is prefixed with the table name
+sub sql_field_expression {
+	my ($self, $field, $table) = @_;
+	
+	# _quote will do native-to-SQL table/field name translation
+	if (defined $table) {
+		return $self->sql->_quote("$table.$field");
+	} else {
+		return $self->sql->_quote($field);
+	}
 }
 
 1;
