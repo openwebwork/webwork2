@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.31 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.32 2006/10/02 16:59:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,7 +61,7 @@ sub initialize {
  		my $setRecord  = $db->getGlobalSet($setName); # checked
 		die "global set $setName  not found." unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
-		$self->{setRecord}   = $setRecord; # FIXMEFIXME NEVER USED WHAT THE HELL!
+		$self->{setRecord}   = $setRecord;
  	}
 }
 
@@ -266,7 +266,7 @@ sub displaySets {
 	my $courseName       = $urlpath->arg("courseID");
 	my $setName          = $urlpath->arg("setID");
 	my $user             = $r->param('user');
-	my $setRecord        = $self->{setRecord};
+	my $GlobalSet        = $self->{setRecord};
 	my $root             = $ce->{webworkURLs}->{root};
 	
 	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
@@ -290,15 +290,15 @@ sub displaySets {
 
    	my @index_list                           = ();  # list of all student index 
 	my @score_list                           = ();  # list of all student total percentage scores 
-    my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
-    my %number_of_attempts_for_problem       = ();  # the total number of attempst for this problem (sum of above list)
-    my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
-    my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
+	my %attempts_list_for_problem            = ();  # a list of the number of attempts for each problem
+	my %number_of_attempts_for_problem       = ();  # the total number of attempst for this problem (sum of above list)
+	my %number_of_students_attempting_problem = ();  # the number of students attempting this problem.
+	my %correct_answers_for_problem          = ();  # the number of students correctly answering this problem (partial correctness allowed)
 	my $sort_method = sub {
 		my ($a,$b,$sort_method_name) = @_;
 		return 0 unless defined($sort_method_name);
-		return 	lc($a->{last_name}) cmp lc($b->{last_name}) if $sort_method_name eq 'last_name';
-		return 	lc($a->{first_name}) cmp lc($b->{first_name}) if $sort_method_name eq 'first_name';
+		return lc($a->{last_name}) cmp lc($b->{last_name}) if $sort_method_name eq 'last_name';
+		return lc($a->{first_name}) cmp lc($b->{first_name}) if $sort_method_name eq 'first_name';
 		return 	lc($a->{email_address}) cmp lc($b->{email_address}) if $sort_method_name eq 'email_address';
 		return $b->{score} <=> $a->{score} if $sort_method_name eq 'score';
 		return $b->{index} <=> $a->{index} if $sort_method_name eq 'index';
@@ -306,8 +306,8 @@ sub displaySets {
 		return lc($a->{recitation}) cmp lc($b->{recitation}) if $sort_method_name eq 'recitation';
 		return lc($a->{user_id}) cmp lc($b->{user_id}) if $sort_method_name eq 'user_id';
 		if ($sort_method_name =~/p(\d+)/) {
-		    my $left  =  $b->{problemData}->{$1} ||0;
-		    my $right =  $a->{problemData}->{$1} ||0;
+			my $left  =  $b->{problemData}->{$1} ||0;
+			my $right =  $a->{problemData}->{$1} ||0;
 			return $left <=> $right;  # sort by number of attempts.
 		}
 
@@ -324,25 +324,25 @@ sub displaySets {
 	);				
 
 # get versioning information
-    my $GlobalSet = $db->getGlobalSet($setName);
-    my $setIsVersioned = 
-	( defined($GlobalSet->assignment_type()) && 
-	  $GlobalSet->assignment_type() =~ /gateway/ ) ? 1 : 0;
+	my $setIsVersioned = 
+	    ( defined($GlobalSet->assignment_type()) && 
+	      $GlobalSet->assignment_type() =~ /gateway/ ) ? 1 : 0;
 
 # reset column view options based on whether the set is versioned and, if so,
 # the input parameters
-    if ( $setIsVersioned ) {
+	if ( $setIsVersioned ) {
   # the returning parameter lets us set defaults for versioned sets
-	my $ret = $r->param('returning');
-	$showColumns{'date'} = $ret ? $r->param('show_date') : 1;
-	$showColumns{'testtime'} = $ret ? $r->param('show_testtime') : 1;
-	$showColumns{'index'} = $ret ? $r->param('show_index') : 0;
-	$showColumns{'problems'} = $ret ? $r->param('show_problems') : 0;
-	$showColumns{'section'} = $ret? $r->param('show_section') : 0;
-	$showColumns{'recit'} = $ret ? $r->param('show_recitation') : 0;
-	$showColumns{'login'} = $ret ? $r->param('show_login') : 0;
-	$showBestOnly = $ret ? $r->param('show_best_only') : 0;
-    }
+		my $ret = defined($r->param('returning')) ? 
+			$r->param('returning') : 0;
+		$showColumns{'date'} = ($ret && defined($r->param('show_date'))) ? $r->param('show_date') : 1;
+		$showColumns{'testtime'} = ($ret && defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
+		$showColumns{'index'} = ($ret && defined($r->param('show_index'))) ? $r->param('show_index') : 0;
+		$showColumns{'problems'} = ($ret && defined($r->param('show_problems'))) ? $r->param('show_problems'):0;
+		$showColumns{'section'} = ($ret && defined($r->param('show_section'))) ? $r->param('show_section') : 0;
+		$showColumns{'recit'} = ($ret && defined($r->param('show_recitation'))) ? $r->param('show_recitation') : 0;
+		$showColumns{'login'} = ($ret && defined($r->param('show_login'))) ? $r->param('show_login') : 0;
+		$showBestOnly = ($ret && defined($r->param('show_best_only'))) ? $r->param('show_best_only') : 0;
+	}
 
 ###############################################################
 #  Print tables
@@ -387,186 +387,198 @@ sub displaySets {
 		$number_of_active_students++;
 
 # build list of versioned sets for this student user
-	    my @allSetNames = ();
-	    if ( $setIsVersioned ) {
-		my $numVersions = $db->getUserSetVersionNumber($student,$setName);
-		for ( my $i=1; $i<=$numVersions; $i++ ) { 
-		    $allSetNames[$i-1] = "$setName,v$i";
-		}
-	    } else {
-		@allSetNames = ( "$setName" );
-	    }
+		my @allSetNames = ();
+		my $notAssignedSet = 0;
+		if ( $setIsVersioned ) {
+			my @setVersions = $db->listSetVersions($student, $setName);
+			@allSetNames = map { "$setName,v$_" } @setVersions;
+			# if there aren't any set versions, is it because
+			#    the user isn't assigned the set (e.g., is a 
+			#    proctor), or because the user hasn't completed
+			#    any versions?
+			if ( ! @setVersions ) {
+				$notAssignedSet = 1 if (! $db->existsUserSet($student,$setName));
+			}
 
-  # for versioned sets, we might be keeping only the high score
+		} else {
+			@allSetNames = ( "$setName" );
+		}
+
+		# for versioned sets, we might be keeping only the high score
 		my $maxScore = -1;
 		my $max_hash = {};
-  # make this global to the student loop (there was a reason for this for
-  # versioned sets, at least, though I'm not seeing it now -glr)
-		my $act_as_student_url = '';
 
-	  foreach my $sN ( @allSetNames ) {
+		foreach my $sN ( @allSetNames ) {
 
-	    my $status          = 0;
-	    my $attempted       = 0;
-	    my $longStatus      = '';
-	    my $string          = '';
-	    my $twoString       = '';
-	    my $totalRight      = 0;
-	    my $total           = 0;
-		my $total_num_of_attempts_for_set = 0;
-		my %h_problemData   = ();
-		my $probNum         = 0;
+			my $status          = 0;
+#			my $attempted       = 0;
+			my $longStatus      = '';
+			my $string          = '';
+			my $twoString       = '';
+			my $totalRight      = 0;
+			my $total           = 0;
+			my $total_num_of_attempts_for_set = 0;
+			my %h_problemData   = ();
+			my $probNum         = 0;
+			my $act_as_student_url = '';
 		
-		debug("Begin obtaining problem records for user $student set $setName");
+			debug("Begin obtaining problem records for user $student set $setName");
 		
-		# DBFIXME sort in database
-		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedUserProblems( $student, $sN );
-		debug("End obtaining problem records for user $student set $setName");
-		my $num_of_problems = @problemRecords;
-		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
-	   ########################################
-		# Notes for factoring the calculation in this loop.
-		#
-		# Inputs include:
-		# 
-		#
-		# @problemRecords  
-		# returns
-		#       $num_of_attempts
-		#       $status
-		# updates
-		#     	$number_of_students_attempting_problem{$probID}++;
-		# 		@{ $attempts_list_for_problem{$probID} }   
-		# 		$number_of_attempts_for_problem{$probID}          
-		# 		$total_num_of_attempts_for_set                    
-		# 		$correct_answers_for_problem{$probID}   
-		#    
-		#       $string (formatting output)
-		#       $twoString (more formatted output)
-                #       $longtwo (a combination of $string and $twostring)
-		#       $total
-		#       $totalRight
-		###################################
+			# DBFIXME: to collect the problem records, we have 
+			#    to know which merge routines to call.  Should 
+			#    this really be an issue here?  That is, 
+			#    shouldn't the database deal with it invisibly 
+			#    by detecting what the problem types are?
+			# DBFIXME sort in database
+			my $userSet;
+			my @problemRecords = ();
+			if ( $setIsVersioned ) {
+				my ($setN,$vNum) = ($sN =~ /(.+),v(\d+)$/);
+				@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedProblemVersions( $student, $setN, $vNum );
+				# we'll also need information from the set
+				#    as we set up the display below, so get
+				#    the merged userset as well
+				$userSet = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
+
+			} else {
+				@problemRecords = sort {$a->problem_id <=> $b->problem_id} $db->getAllMergedUserProblems( $student, $sN );
+			}
+			debug("End obtaining problem records for user $student set $sN");
+			my $num_of_problems = @problemRecords;
+			$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
+			########################################
+			# Notes for factoring the calculation in this loop.
+			#
+			# Inputs include:
+			#   @problemRecords  
+			# returns
+			#   $num_of_attempts
+			#   $status
+			# updates
+			#   $number_of_students_attempting_problem{$probID}++;
+			#   @{ $attempts_list_for_problem{$probID} }   
+			#   $number_of_attempts_for_problem{$probID}
+			#   $total_num_of_attempts_for_set
+			#   $correct_answers_for_problem{$probID}   
+			#    
+			#   $string (formatting output)
+			#   $twoString (more formatted output)
+			#   $longtwo (a combination of $string and $twostring)
+			#   $total
+			#   $totalRight
+			###################################
    
-		foreach my $problemRecord (@problemRecords) {
-			next unless ref($problemRecord);
+			foreach my $problemRecord (@problemRecords) {
+				next unless ref($problemRecord);
 				# warn "Can't find record for problem $prob in set $setName for $student";
 				# FIXME check the legitimate reasons why a student record might not be defined
-			####################################################################
-			# Grab data from the database
-			####################################################################
-			# It's possible that $problemRecord->num_correct or $problemRecord->num_correct
-			# or $problemRecord->status is an empty 
-			# or blank string instead of 0.  The || clause fixes this and prevents 
-			# warning messages in the comparisons below.
+				###########################################
+				# Grab data from the database
+				###########################################
+				# It's possible that 
+				# $problemRecord->num_correct or 
+				# $problemRecord->num_correct
+				# or $problemRecord->status is an empty 
+				# or blank string instead of 0.  
+				# The || clause fixes this and prevents 
+				# warning messages in the comparisons below.
 			
-			my $probID             = $problemRecord->problem_id;
-			my $attempted          = $problemRecord->attempted;
-			my $num_correct        = $problemRecord->num_correct     || 0;
-			my $num_incorrect      = $problemRecord->num_incorrect   || 0;
-			my $num_of_attempts    = $num_correct + $num_incorrect;
-			
-		    # initialize the number of correct answers for this problem 
-		    # if the value has not been defined.
-	        $correct_answers_for_problem{$probID}  = 0 unless defined($correct_answers_for_problem{$probID});
-		
-	        
-			my $probValue          = $problemRecord->value;   ## This doesn't work - Fix it
-			# set default problem value here
-			$probValue             = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-			
-			my $status             = $problemRecord->status          || 0;
+				my $probID          = $problemRecord->problem_id;
+				my $attempted       = $problemRecord->attempted;
+				my $num_correct     = $problemRecord->num_correct     || 0;
+				my $num_incorrect   = $problemRecord->num_incorrect   || 0;
+				my $num_of_attempts = $num_correct + $num_incorrect;
+				# initialize the number of correct answers 
+				# for this problem if the value has not been 
+				# defined.
+				$correct_answers_for_problem{$probID} = 0 
+					unless defined($correct_answers_for_problem{$probID});
 
-			# sanity check that the status (score) is between 0 and 1
-	        my $valid_status       = ($status >= 0 and $status <=1 ) ? 1 : 0;
-	        
-	        ###################################################################
-	        # Determine the string $longStatus which will display the student's current score
-	        ###################################################################
-	        my $longStatus = '';
-			if (!$attempted){
-				$longStatus     = '.';
-			} elsif   ($valid_status) {
-				$longStatus     = int(100*$status+.5);
-                 # we change $longStatus to give more reasonable output for
-                 #   gateways (actually all versioned sets; this might get us
-                 #   into trouble at some later date).
-				if ( $longStatus == 100 ) {
-				    $longStatus = 'C';
-				} elsif ( $setIsVersioned ) {
-				    $longStatus = ( $longStatus == 0 ) ? 
-					'X' : $longStatus; 
+				## This doesn't work - Fix it
+				my $probValue = $problemRecord->value;
+				# set default problem value here
+				# FIXME?? set defaults here?
+				$probValue = 1 unless defined($probValue) and 
+					$probValue ne "";  
+			
+				my $status  = $problemRecord->status || 0;
+
+				# sanity check that the status (score) is 
+				# between 0 and 1
+				my $valid_status = ($status>=0 && $status<=1)?1:0;
+
+				###########################################
+				# Determine the string $longStatus which 
+				# will display the student's current score
+				###########################################
+				my $longStatus = '';
+				if (!$attempted){
+					$longStatus     = '.';
+				} elsif   ($valid_status) {
+					$longStatus     = int(100*$status+.5);
+					$longStatus='C' if ($longStatus==100);
+				} else	{
+					$longStatus 	= 'X';
 				}
-			} else	{
-				$longStatus 	= 'X';
+			
+				$string     .= threeSpaceFill($longStatus);
+				$twoString  .= threeSpaceFill($num_incorrect);
+
+				$total      += $probValue;
+				$totalRight += round_score($status*$probValue) 
+					if $valid_status;
+			
+				# add on the scores for this problem
+				if (defined($attempted) and $attempted) {
+					$number_of_students_attempting_problem{$probID}++;
+					push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+					$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+					$h_problemData{$probID}                               = $num_incorrect;
+					$total_num_of_attempts_for_set                       += $num_of_attempts;
+					$correct_answers_for_problem{$probID}                += $status;
+				}
+			
+			}  # end of problem record loop
+
+			# for versioned tests we might be displaying the 
+			# test date and test time
+			my $dateOfTest = '';
+			my $testTime = '';
+			if ( $setIsVersioned ) {
+				# if this isn't defined, something's wrong
+				if ( defined($userSet) ) {  
+					$dateOfTest = localtime($userSet->version_creation_time());
+					if ( defined($userSet->version_last_attempt_time()) && $userSet->version_last_attempt_time() ) {
+						$testTime = ($userSet->version_last_attempt_time() - $userSet->version_creation_time() ) / 60; 
+						my $timeLimit = $userSet->version_time_limit()/60;
+						$testTime = $timeLimit if ( $testTime > $timeLimit );
+						$testTime = sprintf("%3.1f min", $testTime);
+					} else {
+						$testTime = 'time limit ' .
+							'exceeded';
+					}
+				} else {
+					$dateOfTest = '???';
+					$testTime = '???';
+				}
 			}
-			
-			$string          .= threeSpaceFill($longStatus);
-			$twoString       .= threeSpaceFill($num_incorrect);
+		
+		
+			$act_as_student_url = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}), params=>{effectiveUser => $studentRecord->user_id});
+			my $email              = $studentRecord->email_address;
+			# FIXME  this needs formatting
 
-			$total           += $probValue;
-			$totalRight      += round_score($status*$probValue) if $valid_status;
-			
-			 # add on the scores for this problem
-			if (defined($attempted) and $attempted) {
-				$number_of_students_attempting_problem{$probID}++;
-				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-				$h_problemData{$probID}                               = $num_incorrect;
-				$total_num_of_attempts_for_set                       += $num_of_attempts;
-				$correct_answers_for_problem{$probID}                += $status;
-			}
-			
-		    }  # end of problem record loop
-
-    # for versioned tests we might be displaying the test date and test time
-	    my $dateOfTest = '';
-	    my $testTime = '';
-        # annoyingly, this is a set property, so get the set
-	    if ( $setIsVersioned && 
-		 ( $showColumns{'date'} || $showColumns{'testtime'} ) ) {
-		my @userSet = 
-		    $db->getMergedVersionedSets( [ $studentRecord->user_id, $setName, $sN ] );
-		if ( defined( $userSet[0] ) ) {  # if this isn't defined, something's wrong
-		    $dateOfTest = 
-			localtime( $userSet[0]->version_creation_time() );
-		    if ( defined( $userSet[0]->version_last_attempt_time() ) &&
-			 $userSet[0]->version_last_attempt_time() ) {
-			$testTime = ( $userSet[0]->version_last_attempt_time() -
-				      $userSet[0]->version_creation_time() ) / 
-				      60; 
-		# clean-up: if the testTime is > allowed (that is, the test was submitted in 
-		# the grace period), report just that the testTime is the maximum allowed
-			my $timeLimit = $userSet[0]->version_time_limit()/60;
-			$testTime = $timeLimit if ( $testTime > $timeLimit );
-			$testTime = sprintf("%3.1f min", $testTime);
-		    } else {
-			$testTime = 'time limit exceeded';
-		    }
-		} else {
-		    $dateOfTest = '???';
-		    $testTime = '???';
-		}
-	    }
+			# change to give better output for gateways with; 
+			# only one attempt per version: just reports the 
+			# result for each problem, not the number of attempts.
+			my $longtwo = ($setIsVersioned && 
+				       $userSet->attempts_per_version == 1) ? 
+				       $string : "$string\n$twoString";
 		
+			my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
+			my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 		
-		$act_as_student_url = $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}),
-		                                           params=>{effectiveUser => $studentRecord->user_id}
-		);
-		my $email              = $studentRecord->email_address;
-		# FIXME  this needs formatting
-
-    # change to give better output for gateways; this just reports the result
-    # for each problem, not the number of attempts.  if versioned sets are 
-    # used where multiple attempts are allowed per version this may not be 
-    # as desirable
- 	        my $longtwo = ( $setIsVersioned ) ? $string : 
-		    "$string\n$twoString";
-		
-		my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
-		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-		
-		my $temp_hash         = {         user_id        => $studentRecord->user_id,
+			my $temp_hash         = { user_id        => $studentRecord->user_id,
 		                                  last_name      => $studentRecord->last_name,
 		                                  first_name     => $studentRecord->first_name,
 		                                  score          => $totalRight,
@@ -580,55 +592,78 @@ sub displaySets {
 		                                  problemData    => {%h_problemData},
 						  date           => $dateOfTest,
 						  testtime       => $testTime,
-		}; 
+					      }; 
+			
+			# keep track of best score
+			if ( $totalRight > $maxScore ) {
+				$maxScore = $totalRight;
+				$max_hash = { %$temp_hash };
+			}
 
-    # keep track of best score
-	    if ( $totalRight > $maxScore ) {
-		$maxScore = $totalRight;
-		$max_hash = { %$temp_hash };
-	    }
+			# if we're showing all records, add it in to the list
+			if ( ! $showBestOnly ) {
+				# add this data to the list of total scores (out of 100)
+				# add this data to the list of success indices.
+				push( @index_list, $temp_hash->{index});
+				push( @score_list, ($temp_hash->{total}) ?$temp_hash->{score}/$temp_hash->{total} : 0 ) ;
+				push( @augmentedUserRecords, $temp_hash );
+			}
 
-    # if we're showing all records, add it in to the list
-	    if ( ! $showBestOnly ) {
-		# add this data to the list of total scores (out of 100)
-		# add this data to the list of success indices.
-		push( @index_list, $temp_hash->{index});
-		push( @score_list, ($temp_hash->{total}) ?$temp_hash->{score}/$temp_hash->{total} : 0 ) ;
-		push( @augmentedUserRecords, $temp_hash );
-	    }
+		} # this closes the loop through all set versions
 
-	} # this closes the loop through all set versions
+		# if we're showing only the best score, add the best score now
+		if ( $showBestOnly ) {
+			# if there's no %$max_hash, then we had no results
+			#    this occurs for proctors, for example
+			if ( $notAssignedSet ) {
+				next;
+			} elsif ( ! %$max_hash ) {
+				$max_hash = { 
+					user_id => $studentRecord->user_id(),
+					last_name=>$studentRecord->last_name(),
+					first_name=>$studentRecord->first_name(),
+					score => 0,
+					total => 'n/a',
+					index => 0,
+					section => $studentRecord->section(),
+					recitation=>$studentRecord->recitation(),
+					problemString => 'no attempt recorded',
+					act_as_student => $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}), params=>{effectiveUser => $studentRecord->user_id}),
+					email_address => $studentRecord->email_address(),
+					problemData => {},
+					date => 'none',
+					testtime => 'none',
+				};
+			}
 
-    # if we're showing only the best score, add the best score now
-	if ( $showBestOnly ) {
-	    if ( ! %$max_hash ) {  # then we have no tests---e.g., for proctors
-		next;              
-        # if we could exclude proctors and instructors, we might want to keep 
-        # these, e.g., with something like the following
-	#	$max_hash = { user_id => $studentRecord->user_id(),
-	#		      last_name => $studentRecord->last_name(),
-	#		      first_name => $studentRecord->first_name(),
-	#		      score => 0,
-	#		      total => 'n/a',
-	#		      index => 0,
-	#		      section => $studentRecord->section(),
-	#		      recitation => $studentRecord->recitation(),
-	#		      problemString => 'no attempt recorded',
-	#		      act_as_student => $act_as_student_url,
-	#		      email_address => $studentRecord->email_address(),
-	#		      problemData => {},
-	#		      date => 'none',
-	#		      testtime => 'none',
-	#		  }
-	    }
+			push( @index_list, $max_hash->{index} );
+			push( @score_list, 
+			      ($max_hash->{total} && $max_hash->{total} ne 'n/a') ? 
+			      $max_hash->{score}/$max_hash->{total} : 0 );
+			push( @augmentedUserRecords, $max_hash );
+		# if there were no set versions and the set was assigned
+		#    to the user, also keep the data
+		} elsif ( ! @allSetNames && ! $notAssignedSet ) {
+			my $dataH = { user_id => $studentRecord->user_id(),
+				      last_name=>$studentRecord->last_name(),
+				      first_name=>$studentRecord->first_name(),
+				      score => 0,
+				      total => 'n/a',
+				      index => 0,
+				      section => $studentRecord->section(),
+				      recitation=>$studentRecord->recitation(),
+				      problemString => 'no attempt recorded',
+				      act_as_student => $self->systemLink($urlpath->new(type=>'set_list',args=>{courseID=>$courseName}), params=>{effectiveUser => $studentRecord->user_id}),
+				      email_address => $studentRecord->email_address(),
+				      problemData => {},
+				      date => 'none',
+				      testtime => 'none',
+				  };
+			push( @index_list, 0 );
+			push( @score_list, 0 );
+			push( @augmentedUserRecords, $dataH );
 
-	    push( @index_list, $max_hash->{index} );
-	    push( @score_list, 
-		  ($max_hash->{total} && $max_hash->{total} ne 'n/a') ? 
-		  $max_hash->{score}/$max_hash->{total} : 0 );
-	    push( @augmentedUserRecords, $max_hash );
-		                                
-	}
+		}
 
         } # this closes the loop through all student records
 	
@@ -661,43 +696,41 @@ sub displaySets {
 # form header here, and make appropriate modifications
         my $verSelectors = '';
 	if ( $setIsVersioned ) {
-	    print CGI::start_form({'method' => 'post', 
-				   'action' => $self->systemLink($urlpath,
-								 authen=>0),
-				   'name' => 'StudentProgress'});
-	    print $self->hidden_authen_fields();
+		print CGI::start_form({'method' => 'post', 
+				       'action' => $self->systemLink($urlpath,authen=>0),'name' => 'StudentProgress'});
+		print $self->hidden_authen_fields();
 
 #	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-	    print CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-	        "Display options: Show ",
-		CGI::hidden(-name=>'returning', -value=>'1'),
-		CGI::checkbox(-name=>'show_best_only', -value=>'1', 
-			      -checked=>$showBestOnly, 
-			      -label=>' only best scores; '),
-		CGI::checkbox(-name=>'show_index', -value=>'1', 
-			      -checked=>$showColumns{'index'},
-			      -label=>' success indicator; '),
-		CGI::checkbox(-name=>'show_date', -value=>'1', 
-			      -checked=>$showColumns{'date'},
-			      -label=>' test date; '),
-		CGI::checkbox(-name=>'show_testtime', -value=>'1', 
-			      -checked=>$showColumns{'testtime'},
-			      -label=>' test time; '),
-		CGI::checkbox(-name=>'show_problems', -value=>'1', 
-			      -checked=>$showColumns{'problems'},
-			      -label=>'problems;'), "\n", CGI::br(), "\n",
-		CGI::checkbox(-name=>'show_section', -value=>'1', 
-			      -checked=>$showColumns{'section'}, 
-			      -label=>' section #; '),
-		CGI::checkbox(-name=>'show_recitation', -value=>'1', 
-			      -checked=>$showColumns{'recit'},
-			      -label=>' recitation #; '),
-		CGI::checkbox(-name=>'show_login', -value=>'1', 
-			      -checked=>$showColumns{'login'}, 
-			      -label=>'login'), "\n", CGI::br(), "\n",
-		CGI::submit(-value=>'Update Display'),
-	    );
-	    print CGI::end_form();
+		print CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
+			     "Display options: Show ",
+			     CGI::hidden(-name=>'returning', -value=>'1'),
+			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
+					   -checked=>$showBestOnly, 
+					   -label=>' only best scores; '),
+			     CGI::checkbox(-name=>'show_index', -value=>'1', 
+					   -checked=>$showColumns{'index'},
+					   -label=>' success indicator; '),
+			     CGI::checkbox(-name=>'show_date', -value=>'1', 
+					   -checked=>$showColumns{'date'},
+					   -label=>' test date; '),
+			     CGI::checkbox(-name=>'show_testtime', -value=>'1', 
+					   -checked=>$showColumns{'testtime'},
+					   -label=>' test time; '),
+			     CGI::checkbox(-name=>'show_problems', -value=>'1', 
+					   -checked=>$showColumns{'problems'},
+					   -label=>'problems;'), "\n", CGI::br(), "\n",
+			     CGI::checkbox(-name=>'show_section', -value=>'1', 
+					   -checked=>$showColumns{'section'}, 
+					   -label=>' section #; '),
+			     CGI::checkbox(-name=>'show_recitation', -value=>'1', 
+					   -checked=>$showColumns{'recit'},
+					   -label=>' recitation #; '),
+			     CGI::checkbox(-name=>'show_login', -value=>'1', 
+					   -checked=>$showColumns{'login'}, 
+					   -label=>'login'), "\n", CGI::br(), "\n",
+			     CGI::submit(-value=>'Update Display'),
+			     );
+		print CGI::end_form();
 	}
 
 #####################################################################################
@@ -728,7 +761,7 @@ sub displaySets {
 	%past_sort_methods = (secondary_sort => "$primary_sort_method_name",) if defined($primary_sort_method_name);
 	%past_sort_methods = (%past_sort_methods, ternary_sort => "$secondary_sort_method_name",) if defined($secondary_sort_method_name);
 
-	# continue with outputing of table
+	# continue with table output
 	if ( ! $setIsVersioned ) {
 	    print
 		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
@@ -757,7 +790,7 @@ sub displaySets {
 			show_testtime   => $showColumns{testtime},
 			show_problems   => $showColumns{problems},
 			show_section    => $showColumns{section},
-			show_recitation => $showColumns{recitation},
+			show_recitation => $showColumns{recit},
 			show_login      => $showColumns{login},
 		);
 		my %params = (%past_sort_methods, %display_options);
@@ -788,6 +821,11 @@ sub displaySets {
     # variables to keep track of versioned sets
 	my $prevFullName = '';
 	my $vNum = 1;
+    # and to make formatting nice for students who haven't taken any tests
+    #    (the total number of columns is two more than this; we want the 
+    #    number that missing record information should span)
+	my $numCol = 1 + $showColumns{'date'} + $showColumns{'testtime'} + 
+		$showColumns{'index'} + $showColumns{'problems'};
 
 	foreach my $rec (@augmentedUserRecords) {
 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
@@ -805,42 +843,59 @@ sub displaySets {
 			CGI::td($rec->{user_id}),			
 		    );
 		} else {
-            # separate versioned sets so that we can restrict what columns
+            # we separate versioned sets so that we can restrict what columns
             # we show
-		    my @cols = ();
-            # revise names to make versioned sets' format nicer
-		    my $nameEntry = '';
-		    if ( $fullName eq $prevFullName ) {
-			$vNum++;
-			$nameEntry = CGI::span({-style=>"text-align:right;"}, 
-					       "(v$vNum)");
-		    } else {
-			$nameEntry = 
-			    CGI::a({-href=>$rec->{act_as_student}},$fullName) . 
-			    ($setIsVersioned && ! $showBestOnly ? ' (v1)':' ') .
-			    CGI::br() . CGI::a({-href=>"mailto:$email"},$email);
-			$vNum = 1;
-			$prevFullName = $fullName;
-		    }
+		    # if total is 'n/a', then it's a user who hasn't taken
+		    #    any tests, which we treat separately
+			if ( $rec->{total} ne 'n/a' ) {
+				my @cols = ();
+				# make make versioned sets' name format nicer
+				my $nameEntry = '';
+				if ( $fullName eq $prevFullName ) {
+					$vNum++;
+					$nameEntry = "(v$vNum)";
+				} else {
+					$nameEntry = CGI::a({-href=>$rec->{act_as_student}},$fullName) . 
+						($setIsVersioned && ! $showBestOnly ? ' (v1)':' ') .
+						CGI::br() . CGI::a({-href=>"mailto:$email"},$email);
+					$vNum = 1;
+					$prevFullName = $fullName;
+				}
 		    
-	    # build columns to show
-		    push(@cols, $nameEntry, sprintf("%0.2f",$rec->{score}),
-			 $rec->{total});
-		    push(@cols, $self->nbsp($rec->{date})) 
-			if ($showColumns{'date'});
-		    push(@cols, $self->nbsp($rec->{testtime})) 
-			if ($showColumns{'testtime'});
-		    push(@cols, sprintf("%0.0f",$rec->{index})) 
-			if ($showColumns{'index'});
-		    push(@cols, $self->nbsp($rec->{problemString}))
-			if ($showColumns{'problems'});
-		    push(@cols, $self->nbsp($rec->{section})) 
-			if ($showColumns{'section'});
-		    push(@cols, $self->nbsp($rec->{recitation})) 
-			if ($showColumns{'recit'});
-		    push(@cols, $rec->{user_id}) if ($showColumns{'login'});
-		    
-		    print CGI::Tr( CGI::td( [ @cols ] ) );
+				# build columns to show
+				push(@cols, $nameEntry, 
+				     sprintf("%0.2f",$rec->{score}),
+				     $rec->{total});
+				push(@cols, $self->nbsp($rec->{date})) 
+				    if ($showColumns{'date'});
+				push(@cols, $self->nbsp($rec->{testtime})) 
+				    if ($showColumns{'testtime'});
+				push(@cols, sprintf("%0.0f",$rec->{index})) 
+				    if ($showColumns{'index'});
+				push(@cols, $self->nbsp($rec->{problemString}))
+				    if ($showColumns{'problems'});
+				push(@cols, $self->nbsp($rec->{section})) 
+				    if ($showColumns{'section'});
+				push(@cols, $self->nbsp($rec->{recitation})) 
+				    if ($showColumns{'recit'});
+				push(@cols, $rec->{user_id}) if ($showColumns{'login'});
+				print CGI::Tr( CGI::td( [ @cols ] ) );
+			} else {
+				my @cols = ( CGI::td( $fullName ),
+					     CGI::td( $rec->{score} ),
+					     CGI::td({colspan=>$numCol},
+						     CGI::em($self->nbsp("No tests taken."))) );
+				push(@cols, 
+				     CGI::td($self->nbsp($rec->{section})))
+					if ( $showColumns{'section'} );
+				push(@cols, 
+				     CGI::td($self->nbsp($rec->{recitation})))
+					if ( $showColumns{'recit'} );
+				push(@cols, 
+				     CGI::td($self->nbsp($rec->{user_id})))
+					if ( $showColumns{'login'} );
+				print CGI::Tr(@cols);
+			}
 		}
 	}
 
