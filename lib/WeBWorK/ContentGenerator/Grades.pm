@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.30 2006/11/30 01:29:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.31 2007/01/03 23:59:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -178,20 +178,63 @@ sub displayStudentStats {
 	die "record for user $studentName not found" unless $studentRecord;
 	my $root = $ce->{webworkURLs}->{root};
 	
-# listUserSets() excludes versioned sets, which we probably want to 
-# list here, so we also get the versioned sets
+	# first get all non-set-versions; listUserSets will return all 
+	#    homework assignments, plus the template gateway sets.
 	# DBFIXME use iterator instead of setIDs
-	my @setIDs    = sort(( $db->listUserSets($studentName),
-			       $db->listUserSetVersions($studentName) ));
+	my @setIDs    = sort( $db->listUserSets($studentName) );
+	# to figure out which of these are gateways (that is, versioned),
+	#    we need to also have the actual (merged) set objects
+	my @sets = $db->getMergedSets( map {[$studentName, $_]} @setIDs );
+	# to be able to find the set objects later, make a handy hash
+	my %setsByID = ( map {$_->set_id => $_} @sets );
 
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
 	my $effectiveUser = $studentRecord->user_id();
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
-	print CGI::h3($fullName ), 
+	# before going through the table generating loop, find all the 
+	#    set versions for the sets in our list
+	my %setVersionsByID = ();
+	my @allSetIDs = ();
+	foreach my $set ( @sets ) {
+		my $setName = $set->set_id();
+		#
+		# FIXME: Here, as in many other locations, we assume that
+		#    there is a one-to-one matching between versioned sets
+		#    and gateways.  we really should have two flags, 
+		#    $set->assignment_type and $set->versioned.  I'm not 
+		#    adding that yet, however, so this will continue to 
+		#    use assignment_type...
+		#
+		if ( defined($set->assignment_type) && 
+		     $set->assignment_type =~ /gateway/ ) { 
+			my @vList = $db->listSetVersions($studentName,$setName);
+			# we have to have the merged set versions to 
+			#    know what each of their assignment types 
+			#    are (because proctoring can change)
+			my @setVersions = $db->getMergedSetVersions( map {[$studentName, $setName, $_]} @vList );
+
+			# add the set versions to our list of sets
+			foreach ( @setVersions ) { 
+				$setsByID{$_->set_id . ",v" . $_->version_id} = $_; 
+			}
+			# flag the existence of set versions for this set
+			$setVersionsByID{$setName} = [ @vList ];
+			# and save the set names for display
+			push( @allSetIDs, $setName );
+			push( @allSetIDs, map { "$setName,v$_" } @vList );
+
+		} else {
+			push( @allSetIDs, $setName );
+			$setVersionsByID{$setName} = "None";
+		}
+	}
 
 	
+	# FIXME: why is the following not "print CGI::h3($fullName);"?  Hmm.
+	print CGI::h3($fullName ), 
+
 	###############################################################
 	#  Print table
 	###############################################################
@@ -202,44 +245,61 @@ sub displayStudentStats {
 	my @rows;
 	my $max_problems=0;
 	
-	foreach my $setName (@setIDs)   {
-	    my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
+	foreach my $setName (@allSetIDs)   {
+		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
+		my $set = $setsByID{ $setName };
+		my $setID = $set->set_id();
 
-       # get the set from the database so that we know if it's a gateway
-       # and if it's versioned, which determines how we display it.
-	    my $set;
-	    if ( $setName =~ /,v\d+$/ ) { # then it's versioned
-		$set = $db->getMergedVersionedSet( $effectiveUser, $setName );
-	    } else {
-		$set = $db->getMergedSet( $effectiveUser, $setName );
-	    }
-
-	    if ( defined( $set->assignment_type() ) && 
-		 $set->assignment_type() =~ /gateway/ ) {
-       # skip template sets
-		next if ( $setName !~ /,v\d+$/ );
-       # reset the URL for gateways
-		if ( $set->assignment_type() eq 'proctored_gateway' ) {
-		    $act_as_student_set_url =~ 
-			s/($courseName)\//$1\/proctored_quiz_mode\//;
-		} else {
-		    $act_as_student_set_url =~ 
-			s/($courseName)\//$1\/quiz_mode\//;
+		# now, if the set is a template gateway set and there 
+		#    are no versions, we acknowledge that the set exists
+		#    and the student hasn't attempted it; otherwise, we 
+		#    skip it and let the versions speak for themselves
+		if ( defined( $set->assignment_type() ) &&
+		     $set->assignment_type() =~ /gateway/ &&
+		     ref( $setVersionsByID{ $setName } ) ) {
+			if ( @{$setVersionsByID{$setName}} ) {
+				next;
+			} else {
+				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp($setID)), 
+						     CGI::td({colspan=>4}, CGI::em("No versions of this assignment have been taken."))) );
+				next;
+			}
 		}
-	    }
 
-	    my $status = 0;
-	    my $attempted = 0;
-	    my $longStatus = '';
-	    my $string     = '';
-	    my $twoString  = '';
-	    my $totalRight = 0;
-	    my $total      = 0;
+		# otherwise, if it's a gateway, adjust the act-as url
+		my $setIsVersioned = 0;
+		if ( defined( $set->assignment_type() ) && 
+		     $set->assignment_type() =~ /gateway/ ) {
+			$setIsVersioned = 1;
+			if ( $set->assignment_type() eq 'proctored_gateway' ) {
+				$act_as_student_set_url =~ s/($courseName)\//$1\/proctored_quiz_mode\//;
+			} else {
+				$act_as_student_set_url =~ s/($courseName)\//$1\/quiz_mode\//;
+			}
+		}
+
+		my $status = 0;
+		my $attempted = 0;
+		my $longStatus = '';
+		my $string     = '';
+		my $twoString  = '';
+		my $totalRight = 0;
+		my $total      = 0;
 		my $num_of_attempts = 0;
 	
 		debug("Begin collecting problems for set $setName");
-		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setName );
+		# DBFIXME: to collect the problem records, we have to know 
+		#    which merge routines to call.  Should this really be an 
+		#    issue here?  That is, shouldn't the database deal with 
+		#    it invisibly by detecting what the problem types are?  
+		#    oh well.
+		my @problemRecords = ();
+		if ( $setIsVersioned ) {
+			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
+		} else {
+			@problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
+		}
 		debug("End collecting problems for set $setName");
 		
 		# FIXME the following line doesn't sort the problemRecords
@@ -274,8 +334,14 @@ sub displayStudentStats {
 			if (!$attempted && ($status || $num_of_attempts)) {
 				$attempted = 1;
 				$problemRecord->attempted('1');
-				my $versioned = ( $setName =~ /,v\d+$/ ) ? 1 : 0;
-				$db->putUserProblem($problemRecord, $versioned);
+				# DBFIXME: this is another case where it 
+				#    seems we shouldn't have to check for 
+				#    which routine to use here...
+				if ( $setIsVersioned ) {
+					$db->putProblemVersion($problemRecord);
+				} else {
+					$db->putUserProblem($problemRecord );
+				}
 			}
 			
 			if (!$attempted){
