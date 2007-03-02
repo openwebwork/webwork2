@@ -66,17 +66,19 @@ sub merge_init {
 	
 	my @merge_tables = @{$self->{params}{merge}};
 	
-	my %sql_table_names;
-	@sql_table_names{@merge_tables} = map { $db->{$_}->sql_table_name } @merge_tables;
+	#my %sql_table_names;
+	#@sql_table_names{@merge_tables} = map { $db->{$_}->sql_table_name } @merge_tables;
 	
+	my %sql_table_aliases;
+	@sql_table_aliases{@merge_tables} = map { "merge$_" } 1 .. @merge_tables;
+	
+	my @sql_tableexprs;
 	my %sql_field_names;
 	foreach my $table (@merge_tables) {
+		push @sql_tableexprs, "`" . $db->{$table}->sql_table_name . "` AS `$sql_table_aliases{$table}`";
 		my @fields = $db->{$table}->fields;
 		@{$sql_field_names{$table}}{@fields} = map { $db->{$table}->sql_field_name($_) } @fields;
 	}
-
-	# get rid of the versioned table if it exists
-	my $versioned_table = shift(@merge_tables) if ( $merge_tables[0] =~ /version$/ );
 	
 	my $pri = $merge_tables[0];
 	
@@ -85,17 +87,19 @@ sub merge_init {
 	
 	foreach my $field ($db->{$pri}->fields) {
 		my $sql_field_name = $sql_field_names{$pri}{$field};
+		
 		if ($db->{$pri}->field_data->{$field}{key}) {
 			# if it's a keyfield, use the version from the primary table
 			# (they're all going to be the same anyway)
-			$sql_fieldexprs{$field} = "`$sql_table_names{$pri}`.`$sql_field_names{$pri}{$field}`";
-			# add this field to the where clause
+			$sql_fieldexprs{$field} = $db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri});
+			
+			# add this field to the where clause, by matching the value in the
+			# primary table to the values in all other tables that have that field
 			foreach my $table (@merge_tables[1..$#merge_tables]) {
 				next unless exists $db->{$table}->field_data->{$field};
-				push @sql_whereprefix, "`$sql_table_names{$pri}`"
-					. ".`$sql_field_names{$pri}{$field}`"
-					. "=`$sql_table_names{$table}`"
-					. ".`$sql_field_names{$table}{$field}`";
+				push @sql_whereprefix,
+					$db->{$pri}->sql_field_expression($field, $sql_table_aliases{$pri})
+					. "=" . $db->{$table}->sql_field_expression($field, $sql_table_aliases{$table});
 			}
 		} else {
 			# if it's not a keyfield, we use the COALESCE function to select a
@@ -103,17 +107,21 @@ sub merge_init {
 			my @coalesce;
 			foreach my $table (@merge_tables) {
 				next unless exists $db->{$table}->field_data->{$field};
-				push @coalesce, "`$sql_table_names{$table}`.`$sql_field_names{$table}{$field}`";
+				push @coalesce, $db->{$table}->sql_field_expression($field, $sql_table_aliases{$table});
 			}
+			# VERSIONING: we may need something other than COALESCE() here as well, because 
+			# it works with NULL/not-NULL, and SUBSTRING() returns empty strings if no match.
 			$sql_fieldexprs{$field} = "COALESCE(" . join(",", @coalesce) . ")";
 		}
 	}
 	
 	$self->{pri} = $pri;
-	$self->{sql_table_names} = \%sql_table_names;
+	#$self->{sql_table_names} = \%sql_table_names;
+	$self->{sql_table_aliases} = \%sql_table_aliases;
 	$self->{sql_field_names} = \%sql_field_names;
 	$self->{sql_fieldexprs} = \%sql_fieldexprs;
 	$self->{sql_whereprefix} = join(" AND ", @sql_whereprefix);
+	$self->{sql_tableexpr} = join(", ", @sql_tableexprs);
 }
 
 sub sql_init {
@@ -126,8 +134,8 @@ sub sql_init {
 	# structures, since they're so convoluted.)
 	my $transform_table = sub {
 		my $label = shift;
-		if (exists $self->{sql_table_names}{$label}) {
-			return $self->{sql_table_names}{$label};
+		if (exists $self->{sql_table_aliases}{$label}) {
+			return $self->{sql_table_aliases}{$label};
 		} else {
 			warn "can't transform unrecognized table name '$label'";
 			return $label;
@@ -185,16 +193,28 @@ sub _get_fields_where_prepex {
 	my $where_clause = @where ? "WHERE " . join(" AND ", @where) : "";
 	my $order_by_clause = $order ? $self->sql->_order_by($order) : "";
 	
-	my @merge_tables = @{$self->{params}{merge}};
-	# get rid of the versioned table if it exists
-	my $versioned_table = shift(@merge_tables) if ( $merge_tables[0] =~ /version$/ );
-
-	my $stmt = $self->sql->select(\@merge_tables, $sql_fields)
+	# scalar ref so _quote_table will leave table expression alone
+	my $stmt = $self->sql->select(\($self->{sql_tableexpr}), $sql_fields)
 		. " $where_clause $order_by_clause";
+	
 	my $sth = $self->dbh->prepare_cached($stmt, undef, 3); # 3: see DBI docs
 	$self->debug_stmt($sth, @bind_vals);
 	$sth->execute(@bind_vals);	
 	return $sth;
+}
+
+################################################################################
+# override where clause handlers to use versions from schema of primary table
+################################################################################
+
+sub conv_where {
+	my $self = shift;
+	return $self->{db}{$self->{pri}}->conv_where(@_);
+}
+
+sub keyparts_to_where {
+	my $self = shift;
+	return $self->{db}{$self->{pri}}->keyparts_to_where(@_);
 }
 
 ################################################################################
