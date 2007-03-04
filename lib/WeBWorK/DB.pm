@@ -864,32 +864,12 @@ sub getMergedSets {
 # versioned set_user functions (OLD)
 ################################################################################
 
-# USED NOWHERE
-sub countUserSetVersions {
-	croak "listUserSetVersions deprecated in favor of countSetVersionsWhere([user_id_eq=>\$userID])";
-}
-
-# USED IN Grades.pm, ProblemSets.pm
-sub listUserSetVersions {
-	croak "listUserSetVersions deprecated in favor of listSetVersionsWhere([user_id_eq=>\$userID])";
-}
-
-# USED IN GatewayQuiz.pm
-sub getUserSetVersions {
-	croak "getUserSetVersions deprecated in favor of getSetVersionsWhere([user_id_eq_set_id_eq_version_id_le => \$userID,\$setID,\$versionID])";
-}
-
-# USED IN Instructor.pm
-sub addVersionedUserSet {
-	croak "addVersionedUserSet deprecated in favor of addSetVersion";
-}
-
-# USED IN GatewayQuiz.pm, LoginProctor.pm
+# USED IN LoginProctor.pm
 sub putVersionedUserSet {
 	croak "putVersionedUserSet deprecated in favor of putSetVersion";
 }
 
-# USED IN GatewayQuiz.pm, Scoring.pm, StudentProgress.pm, Instructor.pm
+# USED IN Scoring.pm
 # in:  uid and sid are user and set ids.  the setID is the 'global' setID
 #	   for the user, not a versioned value
 # out: the latest version number of the set that has been assigned to the
