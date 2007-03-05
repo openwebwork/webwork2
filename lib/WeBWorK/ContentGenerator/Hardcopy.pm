@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.85 2006/09/08 20:28:54 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.86 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -359,9 +359,13 @@ sub display_form {
 	} else { # single user mode
 		#FIXME -- do a better job of getting the set and the user when in the single set mode
 		my $selected_set_id = $r->param("selected_sets");
+
 		my $selected_user_id = $Users[0]->user_id;
 		print CGI::hidden("selected_sets",   $selected_set_id ),
 		      CGI::hidden( "selected_users", $selected_user_id);
+
+	        # make display for versioned sets a bit nicer
+		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
 		
 		print CGI::p("Download hardcopy of set ", $selected_set_id, " for ", $Users[0]->first_name, " ",$Users[0]->last_name,"?");
 	
@@ -716,18 +720,20 @@ sub write_set_tex {
 	my $db = $r->db;
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
-	
-	# get set record; if it's a versioned set, getMergedVersionedSet
-	#   instead of getMergedSet
+
+	# get set record; we have to know if it's a versioned set to know
+	#    which merge routine to call, and to do that we need to get 
+	#    the merged userset
+	my $versioned = 0;
+	if ( $setID =~ /(.+),v(\d+)$/ ) {
+	    $setID = $1;
+	    $versioned = $2;
+	}
 	my $MergedSet;
-	my $versioned;
-	if ( $setID =~ /,v\d+$/ ) {
-	    $versioned = 1;
-	    $MergedSet = $db->getMergedVersionedSet($TargetUser->user_id,
-						    $setID);
+	if ( $versioned ) {
+		$MergedSet = $db->getMergedSetVersion($TargetUser->user_id, $setID, $versioned);
 	} else {
-	    $versioned = 0;
-	    $MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
+		$MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
 	}
 	# save versioned info for use in write_problem_tex
 	$self->{versioned} = $versioned;
@@ -819,9 +825,7 @@ sub write_problem_tex {
 		# a non-zero problem ID was given -- load that problem
 	        # we use $versioned to determine which merging routine to use
 		if ( $versioned ) {
-			my $baseSetID = $MergedSet->set_id();
-			$baseSetID =~ s/,v\d+$//;
-			$MergedProblem = $db->getMergedVersionedProblem($MergedSet->user_id, $baseSetID, $MergedSet->set_id, $problemID);
+			$MergedProblem = $db->getMergedProblemVersion($MergedSet->user_id, $MergedSet->set_id, $MergedSet->version_id, $problemID);
 
 		} else {
 			$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
@@ -855,7 +859,7 @@ sub write_problem_tex {
 	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
 	my $showHints           = $r->param("showHints")          || 0;
 	my $showSolutions       = $r->param("showSolutions")      || 0;
-	unless ($authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or ( time > $MergedSet->answer_date or ($versioned && $MergedProblem->num_correct() + $MergedProblem->num_incorrect() >= $MergedSet->attempts_per_version()) ) ) {
+	unless ($authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or ( time > $MergedSet->answer_date or ($versioned && $MergedProblem->num_correct() + $MergedProblem->num_incorrect() >= $MergedSet->attempts_per_version() && ($MergedSet->due_date == $MergedSet->answer_date) ) ) ) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
@@ -882,6 +886,8 @@ sub write_problem_tex {
 			print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
 		}
 	}
+
+	warn("problem ", $MergedProblem->problem_id, ": source = ", $MergedProblem->source_file, "\n");
 
 	my $pg = WeBWorK::PG->new(
 		$ce,
