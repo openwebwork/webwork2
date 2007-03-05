@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.77 2006/09/18 18:03:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.78 2006/12/05 20:57:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -914,11 +914,59 @@ sub constituency_hash {
 # The <=> and cmp operators return -1 if the left operand is less than the
 # right operand, 0 if they are equal, and +1 if the left operand is greater
 # than the right operand.
+#
+# FIXME: I've added the ability to do multiple field sorts, below; I'm 
+#    leaving this code, commented out, in case there's a good reason to 
+#    revert to this and do multiple field sorts differently.  -glr 2007/03/05
+# sub sortByName($@) {
+# 	my ($field, @items) = @_;
+# 	return sort {
+# 		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $a->$field : $a;
+# 		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $b->$field : $b;
+# 		while (@aParts and @bParts) {
+# 			my $aPart = shift @aParts;
+# 			my $bPart = shift @bParts;
+# 			my $aNumeric = $aPart =~ m/^\d*$/;
+# 			my $bNumeric = $bPart =~ m/^\d*$/;
+
+# 			# numbers should come before words
+# 			return -1 if     $aNumeric and not $bNumeric;
+# 			return +1 if not $aNumeric and     $bNumeric;
+
+# 			# both have the same type
+# 			if ($aNumeric and $bNumeric) {
+# 				next if $aPart == $bPart; # check next pair
+# 				return $aPart <=> $bPart; # compare numerically
+# 			} else {
+# 				next if $aPart eq $bPart; # check next pair
+# 				return $aPart cmp $bPart; # compare lexicographically
+# 			}
+# 		}
+# 		return +1 if @aParts; # a has more sections, should go second
+# 		return -1 if @bParts; # a had fewer sections, should go first
+# 	} @items;
+# }
+
 sub sortByName($@) {
 	my ($field, @items) = @_;
-	return sort {
-		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $a->$field : $a;
-		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, defined $field ? $b->$field : $b;
+
+	my %itemsByIndex = ();
+	if ( ref( $field ) eq 'ARRAY' ) {
+		foreach my $item ( @items ) {
+			my $key = '';
+			foreach ( @$field ) {
+		    		$key .= $item->$_;  # in this case we assume 
+			}                           #    all entries in @$field
+			$itemsByIndex{$key} = $item;  #  are defined.
+	    	}
+	} else {
+	    %itemsByIndex = map {(defined $field)?$_->$field:$_ => $_} @items;
+	}
+
+	my @sKeys = sort {
+		my @aParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $a;
+		my @bParts = split m/(?<=\D)(?=\d)|(?<=\d)(?=\D)/, $b;
+
 		while (@aParts and @bParts) {
 			my $aPart = shift @aParts;
 			my $bPart = shift @bParts;
@@ -940,7 +988,11 @@ sub sortByName($@) {
 		}
 		return +1 if @aParts; # a has more sections, should go second
 		return -1 if @bParts; # a had fewer sections, should go first
-	} @items;
+	} (keys %itemsByIndex);
+
+	return map{$itemsByIndex{$_}} @sKeys;
 }
+
+
 
 1;
