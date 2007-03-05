@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.35 2006/09/26 15:57:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.37 2006/09/29 19:39:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,6 +29,7 @@ use Carp;
 use DBI;
 use File::Path qw(rmtree);
 use File::Spec;
+use String::ShellQuote;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory);
@@ -258,9 +259,13 @@ sub addCourse {
 		
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}->{templates};
-			my $errno = system "/bin/cp -R $sourceDir/* $destDir";
-			if ($errno) {
-				warn "Failed to copy templates from course '$sourceCourse' (errno=$errno): $!\n";
+			my $cp_cmd = "2>&1 /bin/cp -R " . shell_quote($sourceDir) . "/* " . shell_quote($destDir);
+			my $cp_out = readpipe $cp_cmd;
+			if ($?) {
+				my $exit = $? >> 8;
+				my $signal = $? & 127;
+				my $core = $? & 128;
+				warn "Failed to copy templates from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
 			}
 		} else {
 			warn "Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
@@ -338,10 +343,15 @@ sub renameCourse {
 	##### step 1: move course directory #####
 	
 	# move top-level course directory
-	my $mvCmd = $oldCE->{externalPrograms}->{mv};
-	debug("moving course dir: $mvCmd $oldCourseDir $newCourseDir\n");
-	my $mvResult = system $mvCmd, $oldCourseDir, $newCourseDir;
-	$mvResult and die "failed to move course directory with command: '$mvCmd $oldCourseDir $newCourseDir' (errno: $mvResult): $!\n";
+	my $mv_cmd = "2>&1"." ".$oldCE->{externalPrograms}{mv}." ".shell_quote($oldCourseDir)." ".shell_quote($newCourseDir);
+	debug("moving course dir: $mv_cmd");
+	my $mv_out = readpipe $mv_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		die "Failed to move course directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
+	}
 	
 	# get new course environment
 	my $newCE = $oldCE->new(
@@ -397,8 +407,14 @@ sub renameCourse {
 			
 			# try to move the directory
 			debug("Going to move $oldDir to $newDir...\n");
-			my $mvResult = system $mvCmd, $oldDir, $newDir;
-			$mvResult and warn "$courseDirName: Failed to move directory with command: '$mvCmd $oldDir $newDir': $! (errno: $mvResult) You will have to move this directory manually.\n";
+			my $mv_cmd = "2>&1"." ".$oldCE->{externalPrograms}{mv}." ".shell_quote($oldDir)." ".shell_quote($newDir);
+			my $mv_out = readpipe $mv_cmd;
+			if ($?) {
+				my $exit = $? >> 8;
+				my $signal = $? & 127;
+				my $core = $? & 128;
+				warn "Failed to move directory with command '$mv_cmd' (exit=$exit signal=$signal core=$core): $mv_out\n";
+			}
 		} else {
 			debug("oldDir $oldDir was already moved.\n");
 		}
@@ -599,14 +615,18 @@ sub archiveCourse {
 	##### step 2: tar and gzip course directory #####
 	
 	# archive top-level course directory
-	#FIXME (check) don't follow links
-	#FIXME archive relative to the coursesDir
-	my $tarCmd = $ce->{externalPrograms}->{tar};
-	debug("archiving course dir: $tarCmd $archivePath $courseDir \n");
-	my $tarStatement = "cd $coursesDir && $tarCmd  -zcf   $archivePath  $courseID";
-	my $tarResult = system $tarStatement ;
-	$tarResult and die "Failed to tar course directory with command:<br>\n '$tarStatement ' <br>\n(errno: $tarResult): $!<br>\n";
-	
+	my $tar_cmd = "2>&1"." ".$ce->{externalPrograms}{tar}
+		. " -C " . shell_quote($coursesDir)
+		. " -czf " . shell_quote($archivePath)
+		. " " . shell_quote($courseID);
+	debug("archiving course dir: $tar_cmd\n");
+	my $tar_out = readpipe $tar_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		die "Failed to archive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+	}
 }
 
 ################################################################################
@@ -629,15 +649,21 @@ sub unarchiveCourse {
 	my $coursesDir  = $ce->{webworkDirs}->{courses};
 	
 	###############################################################
-	# RPC  call to system to tar and gzip the courses directory
+	# RPC call to tar and gzip the courses directory
 	###############################################################	
-	my $tarCmd = $ce->{externalPrograms}->{tar};	
-	debug("unarchiving course dir: cd $coursesDir && $tarCmd  -zxf   $archivePath  \n"); # the z is ignored.
-	my $tarStatement = "cd $coursesDir && $tarCmd  -zxf   $archivePath ";
-	my $tarResult = system $tarStatement ;
-	$tarResult and die "Failed to untar course directory with command: '$tarStatement ' (errno: $tarResult): $!\n";
+	my $tar_cmd = "2>&1"." ".$ce->{externalPrograms}{tar}
+		. " -C " . shell_quote($coursesDir)
+		. " -xzf " . shell_quote($archivePath);
+	debug("unarchiving course dir: $tar_cmd\n");
+	my $tar_out = readpipe $tar_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		die "Failed to unarchive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+	}
 	###############################################################
-	# End RPC  call to system to tar and gzip the courses directory
+	# End RPC call to tar and gzip the courses directory
 	###############################################################	
 	
 	# read the global.conf and course.conf files for the newly created course
