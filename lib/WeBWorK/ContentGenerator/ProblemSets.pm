@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.82 2006/12/01 17:09:40 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.83 2007/03/01 22:20:24 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -135,16 +135,10 @@ sub body {
 # we have to get sets and versioned sets separately
 	# DBFIXME don't get ID lists, use WHERE clauses and iterators
 	my @setIDs = $db->listUserSets($effectiveUser);
-# FIXME: new API change here
-# 	my @vSetIDs = $db->listUserSetVersions($effectiveUser);
-	
 	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
 
 	debug("Begin collecting merged sets");
 	my @sets = $db->getMergedSets( @userSetIDs );
-# FIXME: new API change here; move version set listing below
-#	my @vSets = (@vSetIDs)?$db->getMergedVersionedSets(@vUserSetIDs):();
-#	my @vSets = (@vSetIDs)?$db->getMergedSetVersions(@vUserSetIDs):();
 	
 	debug("Begin fixing merged sets");
 	
@@ -181,7 +175,7 @@ sub body {
 		push( @nonGWsets, $_ );
 	    }
 	}
-# FIXME: new API change here; now get all user set versions that we need
+# now get all user set versions that we need
 	my @vSets = ();
 	foreach my $set ( @gwSets ) {
 	    my @setVer = $db->listSetVersions( $effectiveUser, $set->set_id );
@@ -233,7 +227,7 @@ sub body {
 	}
 # we sort set versions by name; this at least in part relies on versions
 # being finished by the time they show up on the list here.
-	@vSets = sortByName("set_id", @vSets);
+	@vSets = sortByName(["set_id", "version_id"], @vSets);
 
 # put together a complete list of sorted sets to consider
 	@sets = (@nonGWsets, @gwSets );
@@ -377,22 +371,15 @@ sub setListRow {
 	}
 	
 	$name =~ s/_/&nbsp;/g;
+# this is the link to the homework assignment
 	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
-# edit this a bit for gateways 
-	if ( $gwtype ) {
-	    if ( $gwtype == 1 ) {
-		my $vnum = $set->version_id;
-		$interactive = CGI::a({-href=>$interactiveURL}, 
-				      "$name (test$vnum)");
-	    } else {  # this is the case of a template URL
-		$interactive = CGI::a({-href=>$interactiveURL}, 
-				      "Take new $name test");
-	    }
-	}
-	
-# for gateways, we have to do a bit of careful checking to figure out 
-#    what our status actually is
-	my $status;
+
+# we choose not to display the link to start a new gateway that we've just
+#    set up in the previous line if that's not available, so we work out here 
+#    if the set is open.  for gateways this is a bit more complicated than 
+#    for homework sets
+	my $setIsOpen = 0;
+	my $status = '';
 	if ( $gwtype ) {
 		if ( $gwtype == 1 ) {
 			if ( $problemRecords[0]->num_correct() + 
@@ -406,6 +393,8 @@ sub setListRow {
 				$status = "open: complete by " . 
 					$self->formatDateTime($set->due_date());
 			}
+			# we let people go back to old tests
+			$setIsOpen = 1;
 
 		} else {            
 			my $t = time();
@@ -415,6 +404,7 @@ sub setListRow {
 				$interactive = $name unless $preOpenSets;
 			} elsif ( $t < $set->due_date() ) {
 				$status = "now open, due " . $self->formatDateTime($set->due_date);
+				$setIsOpen = 1;
 			} else {
 				$status = "closed";
 			}
@@ -426,17 +416,31 @@ sub setListRow {
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-           if ( $set->set_id() !~ /,v\d+$/ ) {
 	        $status = "now open, due " . $self->formatDateTime($set->due_date);
-	    } else {
-		$status = "now open (if version attempts remain), due " . $self->formatDateTime($set->due_date);
-	    }
+		$setIsOpen = 1;
 	} elsif (time < $set->answer_date) {
 		$status = "closed, answers on " . $self->formatDateTime($set->answer_date);
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
 		$status = "closed, answers recently available";
 	} else {
 		$status = "closed, answers available";
+	}
+	
+
+# now edit the interactive link for gateways
+	if ( $gwtype ) {
+		if ( $gwtype == 1 ) {
+			my $vnum = $set->version_id;
+			$interactive = CGI::a({-href=>$interactiveURL}, 
+					      "$name (test$vnum)");
+		} else {  # this is the case of a template URL
+			if ( $setIsOpen ) {
+				$interactive = CGI::a({-href=>$interactiveURL}, 
+						      "Take $name test");
+			} else {
+				$interactive = "$name test";
+			}
+		}
 	}
 	
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
