@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.33 2007/03/01 22:18:56 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.34 2007/03/02 21:34:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1276,10 +1276,12 @@ sub body {
 	foreach my $pg ( @pg_results ) {
 	    my $pValue = $problems[$i]->value();
 	    my $pScore = 0;
+	    my $numParts = 0;
 	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
 		$pScore += $pg->{answers}->{$_}->{score};
+		$numParts++;
 	    }
-	    $attemptScore += $pScore*$pValue;
+	    $attemptScore += $pScore*$pValue/($numParts > 0 ? $numParts : 1);
 	    $i++;
 	}
     }
@@ -1360,7 +1362,8 @@ sub body {
 # printme link; left off if we're not showing past student work
 	if ( ! $set->hide_work() ) {
 	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
-		'/hardcopy/' . $set->set_id . '/?' . $self->url_authen_args;
+		'/hardcopy/' . $set->set_id . ',v' . $set->version_id . '/?' . 
+		$self->url_authen_args;
 	    my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
 				    CGI::a({-href=>$link}, "Print Test"));
 	    print $printmsg;
