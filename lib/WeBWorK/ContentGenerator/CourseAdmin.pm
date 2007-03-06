@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.59 2006/09/26 15:57:40 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.60 2006/11/10 17:55:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,6 +30,7 @@ use WeBWorK::CGI;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use IO::File;
+use String::ShellQuote;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
@@ -1279,12 +1280,15 @@ sub do_export_database {
 		
 		$outputFileHandle->close();
 	
-		my $gzipMessage = system( 'gzip', $exportFilePath);
-		if ( !$gzipMessage ) {
-			$self->addgoodmessage(CGI::p( "Database saved to templates/$exportFileName.gzip.  
-			You may download it with the file manager."));
+		my $gzip_cmd = "2>&1 ".$ce->{externalPrograms}{gzip}." ".shell_quote($exportFilePath);
+		my $gzip_out = readpipe $gzip_cmd;
+		if ($?) {
+			my $exit = $? >> 8;
+			my $signal = $? & 127;
+			my $core = $? & 128;
+			$self->addbadmessage(CGI::p("Failed to gzip file $exportFilePath with command '$gzip_cmd' (exit=$exit signal=$signal core=$core): $gzip_out"));
 		} else {
-			$self->addbadmessage(CGI::p( "Failed to gzip file $exportFilePath"));
+			$self->addgoodmessage(CGI::p("Database saved to templates/$exportFileName.gzip. You may download it with the file manager."));
 		}
 		unlink $exportFilePath;
 	} # end export of one course
@@ -1481,13 +1485,6 @@ sub do_import_database {
 	my $templateDir = $ce->{courseDirs}->{templates};
 	my $filePath = "$templateDir/$import_file";
 	
-	my $gunzipMessage = system( 'gunzip', $filePath);
-	#FIXME
-	#warn "gunzip ", $gunzipMessage;
-	$filePath =~ s/\.gz$//;
-	#warn "new file path is $filePath";
-	my $fileHandle = new IO::File("<$filePath");
-	# retrieve upload from upload cache
 # 	my ($id, $hash) = split /\s+/, $import_file;
 # 	my $upload = WeBWorK::Upload->retrieve($id, $hash,
 # 		dir => $ce->{webworkDirs}->{uploadCache}
@@ -1495,18 +1492,27 @@ sub do_import_database {
 	
 	my @errors;
 	
-	eval {
-		@errors = dbImport(
-			db => $db2,
-			# xml => $upload->fileHandle,
-			xml => $fileHandle,
-			tables => \@import_tables,
-			conflict => $import_conflict,
-		);
-	};
-	
-	push @errors, "Fatal exception: $@" if $@;
-	push @errors, $gunzipMessage if $gunzipMessage;
+	my $gzip_cmd = "2>&1 ".$ce->{externalPrograms}{gzip}." -d ".shell_quote($filePath);
+	my $gzip_out = readpipe $gzip_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		push @errors, "Failed to ungzip file $filePath with command '$gzip_cmd' (exit=$exit signal=$signal core=$core): $gzip_out";
+	} else {
+		$filePath =~ s/\.gz$//;
+		my $fileHandle = new IO::File("<$filePath");
+		eval {
+			@errors = dbImport(
+				db => $db2,
+				# xml => $upload->fileHandle,
+				xml => $fileHandle,
+				tables => \@import_tables,
+				conflict => $import_conflict,
+			);
+		};
+		push @errors, "Fatal exception: $@" if $@;
+	}
 	
 	if (@errors) {
 		print CGI::div({class=>"ResultsWithError"},
@@ -1519,7 +1525,9 @@ sub do_import_database {
 		);
 	}
 }
+
 ##########################################################################
+
 sub archive_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
