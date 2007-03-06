@@ -258,8 +258,8 @@ sub addCourse {
 		my $sourceDir = $sourceCE->{courseDirs}->{templates};
 		
 		if (-d $sourceDir) {
-			my $destDir = $ce->{courseDirs}->{templates};
-			my $cp_cmd = "2>&1 /bin/cp -R " . shell_quote($sourceDir) . "/* " . shell_quote($destDir);
+			my $destDir = $ce->{courseDirs}{templates};
+			my $cp_cmd = "2>&1 " . $ce->{externalPrograms}{cp} . " -R " . shell_quote($sourceDir) . "/* " . shell_quote($destDir);
 			my $cp_out = readpipe $cp_cmd;
 			if ($?) {
 				my $exit = $? >> 8;
