@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.60 2006/09/25 22:14:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.61 2006/11/13 16:48:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -221,7 +221,7 @@ sub do_verify {
 	return 0 unless $self->check_user;
 	
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
-	if ($self->{login_type} eq "guest"){
+	if (defined($self->{login_type}) && $self->{login_type} eq "guest"){
 		return $self->verify_practice_user;
 	} else {
 		return $self->verify_normal_user;
