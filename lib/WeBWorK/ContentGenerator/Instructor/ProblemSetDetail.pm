@@ -1256,15 +1256,14 @@ sub body {
 
 			$error{$header} = $self->checkFile($headerFile);
 			my $this_set = $db->getMergedSet($userToShow, $setID);
-			$this_set = '' if ( ! defined($this_set) || 
-					    ! ref($this_set) );
 			unless ($error{$header}) {
-				my @temp = renderProblems(	r=> $r, 
-								user => $db->getUser($userToShow),
-								displayMode=> $default_header_mode,
-								problem_number=> 0,
-								this_set => $this_set,
-								problem_list => [$headerFile],
+				my @temp = renderProblems(
+					r=> $r, 
+					user => $db->getUser($userToShow),
+					displayMode=> $default_header_mode,
+					problem_number=> 0,
+					this_set => $this_set,
+					problem_list => [$headerFile],
 				);
 				$header_html{$header} = $temp[0];
 			}
@@ -1388,17 +1387,16 @@ sub body {
 			
 			my $error = $self->checkFile($problemFile);
 			my $this_set = $db->getMergedSet($userToShow, $setID);
-			$this_set = '' if ( ! defined($this_set) || 
-					    ! ref($this_set) );
 			my @problem_html;
 			unless ($error) {
-				@problem_html = renderProblems(	r=> $r, 
-								user => $db->getUser($userToShow),
-								displayMode=> $default_problem_mode,
-								problem_number=> $problemID,
-								this_set => $this_set,
-								problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
-								problem_list => [$problemRecord->source_file],
+				@problem_html = renderProblems(
+					r=> $r, 
+					user => $db->getUser($userToShow),
+					displayMode=> $default_problem_mode,
+					problem_number=> $problemID,
+					this_set => $this_set,
+					problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
+					problem_list => [$problemRecord->source_file],
 				);
 			}
 
