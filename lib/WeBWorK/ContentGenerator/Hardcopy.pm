@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.86 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.87 2007/03/05 23:05:56 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -531,7 +531,7 @@ sub generate_hardcopy {
 	# try to move the hardcopy file out of the temp directory
 	# set $final_file_url accordingly
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
-	my $mv_cmd = "2>&1 /bin/mv " . shell_quote($final_file_path, $final_file_final_path);
+	my $mv_cmd = "2>&1 " . $ce->{externalPrograms}{mv} . " " . shell_quote($final_file_path, $final_file_final_path);
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
 		$self->add_errors("Failed to move hardcopy file '".CGI::code(CGI::escapeHTML($final_file_name))
@@ -557,7 +557,7 @@ sub generate_hardcopy {
 sub delete_temp_dir {
 	my ($self, $temp_dir_path) = @_;
 	
-	my $rm_cmd = "2>&1 /bin/rm -rf " . shell_quote($temp_dir_path);
+	my $rm_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{rm} . " -rf " . shell_quote($temp_dir_path);
 	my $rm_out = readpipe $rm_cmd;
 	if ($?) {
 		$self->add_errors("Failed to remove temporary directory '".CGI::code(CGI::escapeHTML($temp_dir_path))."':"
@@ -585,7 +585,7 @@ sub generate_hardcopy_tex {
 	# try to rename tex file
 	my $src_name = "hardcopy.tex";
 	my $dest_name = "$final_file_basename.tex";
-	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
+	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
 		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
@@ -608,9 +608,12 @@ sub generate_hardcopy_pdf {
 	my $pdflatex_cmd = "cd " . shell_quote($temp_dir_path) . " && "
 		. $self->r->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
-	if (system $pdflatex_cmd) {
+	if (my $rawexit = system $pdflatex_cmd) {
+		my $exit = $rawexit >> 8;
+		my $signal = $rawexit & 127;
+		my $core = $rawexit & 128;
 		$self->add_errors("Failed to convert TeX to PDF with command '"
-			.CGI::code(CGI::escapeHTML($pdflatex_cmd))."'.");
+			.CGI::code(CGI::escapeHTML($pdflatex_cmd))."' (exit=$exit signal=$signal core=$core).");
 		
 		# read hardcopy.log and report first error
 		my $hardcopy_log = "$temp_dir_path/hardcopy.log";
@@ -645,7 +648,7 @@ sub generate_hardcopy_pdf {
 	# try rename the pdf file
 	my $src_name = "hardcopy.pdf";
 	my $dest_name = "$final_file_basename.pdf";
-	my $mv_cmd = "2>&1 /bin/mv " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
+	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
 	my $mv_out = readpipe $mv_cmd;
 	if ($?) {
 		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
