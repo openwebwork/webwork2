@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.34 2007/03/02 21:34:54 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.35 2007/03/05 23:06:55 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -455,18 +455,6 @@ sub pre_header_initialize {
     my $tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
     die( "Set $setName hasn't been assigned to effective user " .
 	 $effectiveUserName ) unless( defined( $tmplSet ) );
-#     warn("templSet parameters:\n");
-#     warn("user_id = ", $tmplSet->user_id, "\n");
-#     warn("set_id = ", $tmplSet->set_id, "\n");
-#     warn("psvn = ", $tmplSet->psvn, "\n");
-#     warn("set_header = ", $tmplSet->set_header, "\n");
-#     warn("open_date = ", $tmplSet->open_date, "\n");
-#     warn("published = ", $tmplSet->published, "\n");
-#     warn("assignment_type = ", $tmplSet->assignment_type, "\n");
-#     warn("attempts_per_version = ", $tmplSet->attempts_per_version, "\n");
-#     warn("time_interval = ", $tmplSet->time_interval, "\n");
-#     warn("versions_per_interval = ", $tmplSet->versions_per_interval, "\n");
-#     warn("version_time_limit = ", $tmplSet->version_time_limit, "\n");
 
 # FIXME should we be more subtle than just die()ing here?  c.f. Problem.pm, 
 #    which sets $self->{invalidSet} and lets body() deal with it.  for 
@@ -1266,6 +1254,11 @@ sub body {
 	$recordedScore += $_->{status}*$_->value() if ( defined( $_->status ) );
     }
 
+# a handy noun for when referring to a test
+    my $testNoun = ( $set->attempts_per_version > 1 ) ? "submission" : "test";
+    my $testNounNum = ( $set->attempts_per_version > 1 ) ? 
+	"submission (test " : "test (";
+
 # to get the attempt score, we have to figure out what the score on each
 # part of each problem is, and multiply the total for the problem by the 
 # weight (value) of the problem.  it seems this should be easier to work 
@@ -1300,133 +1293,81 @@ sub body {
     } elsif ( $endTime > $set->due_date ) {
 	$exceededAllowedTime = 1;
     }
-    my $elapsed = int(($endTime - $set->open_date)/0.6 + 0.5)/100;
+    my $elapsedTime = int(($endTime - $set->open_date)/0.6 + 0.5)/100;
 
+# also get number of remaining attempts (important for sets with multiple
+# attempts per version)
+    my $numLeft = $set->attempts_per_version - $Problem->num_correct - 
+	$Problem->num_incorrect - 
+	($submitAnswers && $will{recordAnswers} ? 1 : 0);
+    my $attemptNumber = $Problem->num_correct + $Problem->num_incorrect;
+
+##### start output of test headers: 
+##### display information about recorded and checked scores
     if ( $submitAnswers ) {
-	my $divClass = '';
+	# the distinction between $can{recordAnswers} and ! $can{} has 
+	#    been dealt with above and recorded in @scoreRecordedMessage
+	my $divClass = 'ResultsWithoutError';
 	my $recdMsg = '';
-	foreach ( @scoreRecordedMessage ) { 
+	foreach ( @scoreRecordedMessage ) {
 	    if ( $_ ne 'Your score on this problem was recorded.' ) {
 		$recdMsg = $_;
+		$divClass = 'ResultsWithError';
 		last;
 	    }
 	}
+	print CGI::start_div({class=>$divClass});
+
 	if ( $recdMsg ) {
-	    $divClass = 'ResultsWithError';
-	    $recdMsg = "Your score on this test was NOT recorded.  " . $recdMsg;
+	    # then there was an error when saving the results
+	    print CGI::strong("Your score on this $testNounNum ",
+			      "$versionNumber) was NOT recorded.  ",
+			      $recdMsg), CGI::br();
 	} else {
-	    $divClass = 'ResultsWithoutError';
-	    $recdMsg = "Your score on this test was recorded.";
+	    # no error; print recorded message
+	    print CGI::strong("Your score on this $testNounNum ",
+			      "$versionNumber) WAS recorded."), 
+	    	CGI::br();
+
+	    # and show the score if we're allowed to do that
+	    if ( ! $set->hide_score ) {
+		print CGI::strong("Your score on this $testNoun is ",
+				  "$attemptScore/$totPossible.");
+	    }
 	}
 
-	print CGI::start_div({class=>"$divClass"});
-	if ( $can{recordAnswersNextTime} ) {
-	    my $numLeft = $set->attempts_per_version - $Problem->num_correct() -
-		$Problem->num_incorrect() - 1;
-	    print CGI::strong("Your score on this submission (test " .
-			      "$versionNumber) is $attemptScore / " .
-			      "$totPossible.  You have $numLeft " . 
-			      "submission(s) remaining." ), CGI::br()
-			      if ( ! $set->hide_score() );
-	} else {
-	    print CGI::strong("Your score on this test (number " .
-			      "$versionNumber) is $attemptScore / " .
-			      "$totPossible"), CGI::br() 
-			      if (! $set->hide_score());
-	}
-	if ( $will{recordAnswers} && ! $can{recordAnswersNextTime} ) {   
-# then this is a counted submission, and we can't submit it again
-	    print CGI::strong("Time taken: $elapsed min (allowed: $allowed)"),
-	        CGI::br();
-	}
-	print CGI::strong("$recdMsg"), CGI::br() if ( $recdMsg );
+	# finally, if there is another, recorded message, print that 
+	#    too so that we know what's going on
 	print CGI::end_div();
-    } elsif ( $checkAnswers && ! $set->hide_score() ) {
-	print CGI::start_div({class=>"gwMessage"});
-	print "Your score on this (checked, not recorded) submission " .
-	    "is $attemptScore / $totPossible", CGI::end_div();
-    } elsif ( $can{recordAnswersNextTime} && $set->attempts_per_version > 1 ) {
-	my $numLeft = $set->attempts_per_version - $Problem->num_correct() -
-	    $Problem->num_incorrect();
-	print CGI::em("You have $numLeft attempts remaining on this test.");
+	print CGI::start_div({class=>'gwMessage'});
+	if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
+	     $recordedScore != $attemptScore && ! $set->hide_score ) {
+	    print "The recorded score for this test is ",
+	    	"$recordedScore/$totPossible.";
+	}
+
+    } elsif ( $checkAnswers ) {
+	print CGI::start_div({class=>'gwMessage'});
+	if ( ! $set->hide_score ) {
+	    print CGI::strong("Your score on this (checked, not ",
+			      "recorded) submission is ",
+			      "$attemptScore/$totPossible."), CGI::br();
+	    print "The recorded score for this test is $recordedScore/" .
+		"$totPossible.  ";
+	}
     }
 
-    if ( ! $can{recordAnswersNextTime} ) {
-# if we can't record answers any more, then we want to add any message about
-# that, note if there's a recorded score, and be sure to flag any tests that 
-# are overtime.  (it's worth the effort to be careful about labeling tests 
-# this way mainly so that when students print a test and bring it in we know 
-# what's going on.)
+##### remaining output of test headers:
+##### display timer or information about elapsed time, "printme" link,
+##### and information about any recorded score if not submitAnswers or 
+##### checkAnswers
+    if ( $can{recordAnswersNextTime} ) {
+	# end the header
+	print CGI::end_div() if ( $submitAnswers || $checkAnswers );
 
-	my $timemsg = '';
-# printme link; left off if we're not showing past student work
-	if ( ! $set->hide_work() ) {
-	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
-		'/hardcopy/' . $set->set_id . ',v' . $set->version_id . '/?' . 
-		$self->url_authen_args;
-	    my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
-				    CGI::a({-href=>$link}, "Print Test"));
-	    print $printmsg;
-	}
-
-# if the test was submitted, just check to see if we should make a note about
-# the recorded score and time taken
-	if ( $submitAnswers ) {
-	    if ( $recordedScore ne $attemptScore || ! $will{recordAnswers} ) {
-		print CGI::start_div({class=>"gwMessage"});
-		if ( $recordedScore ne $attemptScore && ! $set->hide_score() ) {
-		    print CGI::strong("Your recorded score on this test " .
-				      "is $recordedScore / $totPossible.");
-		} elsif ( ! $will{recordAnswers} ) {
-		    print CGI::strong("Time taken: $elapsed min (allowed: " .
-					  "$allowed)");
-		}
-		print CGI::end_div();
-	    }
-
-# otherwise, go through more convoluted logic
-	} else {
-    # first case: the test isn't submitted, but it's out of time.  
-	    if ( ! $set->version_last_attempt_time && $exceededAllowedTime ) {
-		print CGI::start_div({class=>'ResultsWithError'});
-		print CGI::strong("You have exceeded the allowed time on " .
-				  "this test ($allowed min; elapsed time " .
-				  "is $elapsed min)."), CGI::br();
-
-    # second case: it has been submitted, and the score is zero, possibly  
-    # because it's over time
-	    } elsif ( $set->version_last_attempt_time && $exceededAllowedTime &&
-		      $recordedScore == 0 ) {
-		print CGI::start_div({class=>'gwMessage'});
-		print CGI::strong("Your recorded score on this test is " .
-				  "0 / $totPossible (possibly because you " .
-				  "exceeded the allowed time on the test). " .
-				  "Time taken: $elapsed min (allowed: " .
-				  "$allowed)"), CGI::br();
-
-    # last case: here we can't record answers, and if it's not submitted we 
-    # must be out of time (which was caught in the first case, above), which 
-    # means this last case is that it's been submitted and we are either out 
-    # of time or out of attempts
-	    } else {
-		my $recdmsg = ( $set->hide_score() ) ? "" : 
-		    "Your recorded score on this test is $recordedScore / " .
-		    "$totPossible.  ";
-		print CGI::start_div({class=>'gwMessage'});
-		print CGI::strong("${recdmsg}Time taken: $elapsed min " .
-				  "(allowed: $allowed)"), CGI::br();
-	    }
-	    print "The test (which is number $versionNumber) may no " .
-		"longer be submitted for a grade, but you may still " .
-		"check your answers." if ( ! $set->hide_work() );
-	    print CGI::end_div();
-	}
-
-    } else {
-
-# FIXME: This assumes that there IS a time limit!
-# FIXME: We need to drop this out gracefully if there isn't!
-# set up a timer
+	# print timer
+	# FIXME: in the long run, we want to allow a test to not be
+	#    timed.  This does not allow for that possibility
 	my $timeLeft = $set->due_date() - $timeNow;  # this is in seconds
 	print CGI::div({-id=>"gwTimer"},"\n");
 	print CGI::startform({-name=>"gwTimeData", -method=>"POST",
@@ -1436,14 +1377,6 @@ sub body {
 		"\n";
 	print CGI::endform();
 
-#	print CGI::startform({-name=>"gwtimer", -method=>"POST", 
-#			      -action=>$r->uri});
-#	print CGI::hidden({-name=>"gwpagetimeleft", -value=>$timeLeft}), "\n";
-#
-#	print CGI::strong("Time Remaining:"), "\n";
-#	print CGI::textfield({-name=>'gwtime', -default=>0, -size=>8}),
-#	      CGI::strong("min:sec"), CGI::br(), "\n";
-#	print CGI::endform();
 	if ( $timeLeft < 1 && $timeLeft > 0 ) {
 	    print CGI::span({-class=>"resultsWithError"}, 
 			    CGI::b("You have less than 1 minute to ",
@@ -1452,7 +1385,52 @@ sub body {
 	    print CGI::span({-class=>"resultsWithError"}, 
 			    CGI::b("You are out of time.  Press grade now!\n"));
 	}
-#	print CGI::end_div();
+	# if there are multiple attempts per version, indicate the number
+	#    remaining
+	if ( $set->attempts_per_version > 1 ) {
+	    print CGI::em("You have $numLeft attempt(s) remaining on this ",
+			  "test.");
+	}
+    } else {
+	if ( ! $checkAnswers && ! $submitAnswers ) {
+	    print CGI::start_div({class=>'gwMessage'});
+
+	    if ( ! $set->hide_score ) {
+		my $scMsg = "Your recorded score on this test (number " .
+		    "$versionNumber) is $recordedScore/" .
+		    "$totPossible";
+		if ( $exceededAllowedTime && $recordedScore == 0 ) {
+		    $scMsg .= ", because you exceeded the allowed time.";
+		} else {
+		    $scMsg .= ".  ";
+		}
+		print CGI::strong($scMsg), CGI::br();
+	    }
+	}
+
+	if ( $set->version_last_attempt_time ) {
+	    print "Time taken on test: $elapsedTime min ($allowed min " .
+		"allowed).";
+	} elsif ( $exceededAllowedTime && $recordedScore != 0 ) {
+	    print "(This test is overtime because it was not " .
+		"submitted in the allowed time.)";
+	}
+	print CGI::end_div();
+
+	print "The test (which is number $versionNumber) may no " .
+	    "longer be submitted for a grade, but you may still " .
+	    "check your answers." if ( ! $set->hide_work() );
+
+	# print a "printme" link if we're allowed to see our work
+	if ( ! $set->hide_work() ) {
+	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
+		'/hardcopy/' . $set->set_id . ',v' . $set->version_id . '/?' . 
+		$self->url_authen_args;
+	    my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
+				    CGI::a({-href=>$link}, "Print Test"));
+	    print $printmsg;
+	}
+
     }
 
 # this is a hack to get a URL that won't require a proctor login if we've
