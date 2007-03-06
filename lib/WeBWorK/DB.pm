@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.93 2007/03/02 23:25:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.95 2007/03/04 22:21:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -637,7 +637,12 @@ sub addKey {
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
 	
 	# PROCTORING -  check for both user and proctor
-	if ($Key->user_id =~ /([^,]+)(?:,(.*))?/) {
+	# we allow for two entries for proctor keys, one of the form 
+	#    userid,proctorid (which authorizes login), and the other 
+	#    of the form userid,proctorid,g (which authorizes grading)
+	# (having two of these means that a proctored test will require 
+	#    authorization for both login and grading).
+	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
 		my ($userID, $proctorID) = ($1, $2);
 		croak "addKey: user $userID not found"
 			unless $self->{user}->exists($userID);
@@ -864,11 +869,6 @@ sub getMergedSets {
 # versioned set_user functions (OLD)
 ################################################################################
 
-# USED IN LoginProctor.pm
-sub putVersionedUserSet {
-	croak "putVersionedUserSet deprecated in favor of putSetVersion";
-}
-
 # USED IN Scoring.pm
 # in:  uid and sid are user and set ids.  the setID is the 'global' setID
 #	   for the user, not a versioned value
@@ -908,7 +908,7 @@ sub listSetVersions {
 	my $where = [user_id_eq_set_id_eq => $userID,$setID];
 	my $order = [ 'version_id' ];
 	if (wantarray) {
-		return map { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where);
+		return map { @$_ } $self->{set_version}->get_fields_where(["version_id"], $where, $order);
 	} else {
 		return $self->{set_version}->count_where($where);
 	}
