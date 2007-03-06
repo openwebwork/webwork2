@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.7 2006/06/29 23:20:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.8 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -137,31 +137,49 @@ sub body {
   # for the last time we need to save the submission time.
 	if ( $submitAnswers ) {
 
-    # getMergedVersionedSet returns either the set requested (if the setID
-    #   is versioned, "setName,vN") or the latest set (if not).  This should
-    #   be by default the set we want.  
-	    $UserSet = $db->getMergedVersionedSet($effectiveUser, $setID);
-    # this should never error out, but we'll check anyway
-	    die("Proctor login generated for grade attempt on a nonexistent " .
-		"set?!\n") if ( ! defined($UserSet) );
+    # we need to get the set we're working with. if we enter with a setID
+    #    "setName,vN", we know which version to get; otherwise, get the 
+    #    highest version number available and go with that
+		my ($setName, $versionNum);
+		if ( $setID =~ /(.+),v(\d+)$/ ) {
+			$setName= $1;
+			$versionNum = $2;
+		} else {
+			$setName = $setID;
+		    # get a list of all available versions
+			my @setVersions = $db->listSetVersions($effectiveUser,
+							       $setName);
+			if ( @setVersions ) {
+				$versionNum = $setVersions[-1];
+			} else {
+				die("Proctor authorization requested to " .
+				    "grade a nonexistent set?\n");
+			}
+		}
+		# get the versioned set
+		$UserSet = $db->getMergedSetVersion($effectiveUser, $setName,
+						    $versionNum);
 
-    # we need these to get a problem from the set
-	    my $setVersionName = ( $setID =~ /,v(\d+)$/ ) ? $setID : 
-		$UserSet->set_id();
-	    $setID =~ s/,v\d+$//;
+		# let's just make sure that worked
+		die("Proctor authorization requested for a nonexistent " .
+		    "set?\n") if ( ! defined( $UserSet ) );
 
-    # we only save the submission time if the attempt will be recorded,
-    #   so we have to do some research to determine if that's the case
-	    my $PermissionLevel = $db->getPermissionLevel($user);
-	    my $Problem = 
-		$db->getMergedVersionedProblem($effectiveUser, $setID, 
-					       $setVersionName, 1);
+		# we save the submission time if the attempt will be recorded,
+		#   so we have to do some research to determine if that's 
+		#   the case
+		my $PermissionLevel = $db->getPermissionLevel($user);
+		my $Problem = 
+		    $db->getMergedProblemVersion($effectiveUser, $setName,
+						 $versionNum, 1);
     # set last_attempt_time if appropriate
-	    if ( WeBWorK::ContentGenerator::GatewayQuiz::can_recordAnswers($self,$User, $PermissionLevel, 
+		if ( WeBWorK::ContentGenerator::GatewayQuiz::can_recordAnswers($self, $User, $PermissionLevel, 
 			$EffectiveUser, $UserSet, $Problem) ) {
-		$UserSet->version_last_attempt_time( $timeNow );
-		$db->putVersionedUserSet( $UserSet );
-	    }
+			$UserSet->version_last_attempt_time( $timeNow );
+			# FIXME: this saves all of the merged set data into 
+			#    the set_user table.  we live with this in other
+			#    places for versioned sets, but it's not ideal
+			$db->putSetVersion( $UserSet );
+		}
 	}
 
 	
@@ -184,7 +202,7 @@ sub body {
 	    my $timeLimit = $UserSet->version_time_limit();
 	    my ($color, $msg) = ("#ddddff", "");
 
-	    if ( $dueTime < $timeNow ) {
+	    if ( $dueTime + $ce->{gatewayGracePeriod} < $timeNow ) {
 		$color = "#ffffaa";
 		$msg = CGI::br() . "\nThe time limit on this assignment " .
 		    "was exceeded.\nThe assignment may be checked, but " .
