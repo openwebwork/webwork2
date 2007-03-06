@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.183 2007/01/19 21:57:57 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.184 2007/02/09 01:12:40 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,10 +49,12 @@ $webwork_courses_dir = "/opt/webwork/courses";
 ################################################################################
 
 # system utilties
-$externalPrograms{mkdir}    = "/bin/mkdir";
-$externalPrograms{mv}       = "/bin/mv";
-$externalPrograms{mysql}    = "/usr/bin/mysql";
-$externalPrograms{tar}      = "/usr/bin/tar";
+$externalPrograms{mv}    = "/bin/mv";
+$externalPrograms{cp}    = "/bin/cp";
+$externalPrograms{rm}    = "/bin/rm";
+$externalPrograms{mkdir} = "/bin/mkdir";
+$externalPrograms{tar}   = "/usr/bin/tar";
+$externalPrograms{gzip}  = "/usr/bin/gzip";
 
 # equation rendering/hardcopy utiltiies
 $externalPrograms{latex}    = "/usr/bin/latex";
@@ -60,11 +62,8 @@ $externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
 $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{tth}      = "/usr/bin/tth";
 
-####################################################
 # NetPBM - basic image manipulation utilities
-#
 # Most sites only need to configure $netpbm_prefix.
-####################################################
 my $netpbm_prefix = "/usr/bin";
 $externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
 $externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
@@ -77,16 +76,13 @@ $externalPrograms{checkurl} = "/usr/local/bin/lwp-request -mHEAD "; # or "/usr/l
 
 # image conversions utiltiies
 # the source file is given on stdin, and the output expected on stdout.
-# 
-# Note on conversions pipelines:
-#     we used to use `pnmdepth 1' instead of ppmtopgm as it creates a
-#     monochrome image (1 bit) rather than a greyscale image (8 bits).
-#     However, this was causing improper display of some sort in PDFs.
-################################################################################
+$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
 
-$externalPrograms{gif2eps}  = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{png2eps}  = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{gif2png}  = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
+# mysql clients
+$externalPrograms{mysql}     = "/usr/bin/mysql";
+$externalPrograms{mysqldump} = "/usr/bin/mysqldump";
 
 ################################################################################
 # Mail settings
