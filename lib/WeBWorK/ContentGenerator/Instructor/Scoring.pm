@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.60 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.61 2007/01/08 18:32:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -380,9 +380,9 @@ sub scoreSet {
 	debug("pre-fetching user problems for set $setID");
 	my %UserProblems; # $UserProblems{$userID}{$problemID}
 
-  # Gateway change here: for non-gateway (non-versioned) sets, we just get each user's
-  # problems.  For gateway (versioned) sets, we get the user's best version and return
-  # that
+  # Gateway change here: for non-gateway (non-versioned) sets, we just 
+  # get each user's problems.  For gateway (versioned) sets, we get the 
+  # user's best version and return that
 	if ( ! defined( $setRecord->assignment_type() ) ||
 	     $setRecord->assignment_type() !~ /gateway/ ) {
 		foreach my $userID (@sortedUserIDs) {
@@ -394,13 +394,14 @@ sub scoreSet {
 
 		foreach my $userID (@sortedUserIDs) {
 			my $CurrUserProblems = {};
-			my $numVersions = $db->getUserSetVersionNumber( $userID, $setID );
+			my @versionNums = $db->listSetVersions($userID,$setID);
+
 			my $bestScore = -1;
 
-			if ( $numVersions ) {
-			    for ( my $i=1; $i<=$numVersions; $i++ ) {
+			if ( @versionNums ) {
+			    for my $i ( @versionNums ) {
 				my %versionUserProblems = map { $_->problem_id => $_ }
-					$db->getAllUserProblems( $userID, "$setID,v$i" );
+					$db->getAllMergedProblemVersions( $userID, $setID, $i );
 				my $score = 0;
 				foreach ( values ( %versionUserProblems ) ) {
 					my $status = $_->status || 0;
