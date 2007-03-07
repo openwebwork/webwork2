@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.95 2007/03/04 22:21:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.96 2007/03/06 22:02:28 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -380,6 +380,8 @@ sub addUser {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addUser: user exists (perhaps you meant to use putUser?)";
+	} elsif ($@) {
+		die $@;
 	}
 	# FIXME about these exceptions: eventually the exceptions should be part of
 	# WeBWorK::DB rather than WeBWorK::DB::Schema, and we should just let them
@@ -483,6 +485,8 @@ sub addPassword {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addPassword: password exists (perhaps you meant to use putPassword?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -574,6 +578,8 @@ sub addPermissionLevel {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addPermissionLevel: permission level exists (perhaps you meant to use putPermissionLevel?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -658,6 +664,8 @@ sub addKey {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addKey: key exists (perhaps you meant to use putKey?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -724,6 +732,8 @@ sub addGlobalSet {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -813,6 +823,8 @@ sub addUserSet {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -944,6 +956,8 @@ sub addSetVersion {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addSetVersion: set version exists (perhaps you meant to use putSetVersion?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -1137,6 +1151,8 @@ sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addGlobalProblem: global problem exists (perhaps you meant to use putGlobalProblem?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -1237,6 +1253,8 @@ sub addUserProblem {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
@@ -1378,6 +1396,8 @@ sub addProblemVersion {
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
 		croak "addProblemVersion: problem version exists (perhaps you meant to use putProblemVersion?)";
+	} elsif ($@) {
+		die $@;
 	}
 }
 
