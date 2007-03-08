@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.35 2007/03/05 23:06:55 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.36 2007/03/06 22:01:27 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -422,10 +422,7 @@ sub pre_header_initialize {
 	($r->param('previewingAnswersNow') && $r->param('newPage'));
     $r->param('previewAnswers', $prevOr) if ( defined( $prevOr ) );
 
-# we similarly hack checking answers
-    my $checkOr = $r->param('checkAnswers') || 
-	($r->param('checkingAnswersNow') && $r->param('newPage'));
-    $r->param('checkAnswers', $checkOr) if ( defined( $checkOr ) );
+# we similarly hack checkAnswers, below
 
     my $User = $db->getUser($userName);
     die "record for user $userName (real user) does not exist." 
@@ -769,6 +766,7 @@ sub pre_header_initialize {
     my $redisplay        = $r->param("redisplay");
     my $submitAnswers    = $r->param("submitAnswers");
     my $checkAnswers     = $r->param("checkAnswers");
+    my $checkingAnswersNow = $r->param("checkingAnswersNow") || 0;
     my $previewAnswers   = $r->param("previewAnswers");
 
     my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -810,7 +808,9 @@ sub pre_header_initialize {
 	 showSolutions      => $r->param("showSolutions") || 
 		               $ce->{pg}->{options}->{showSolutions},
 	 recordAnswers      => $submitAnswers,
-	 checkAnswers       => $checkAnswers,
+  # we also want to check answers if we were checking answers and are
+  #    switching between pages
+	 checkAnswers       => $checkAnswers || ($checkingAnswersNow && $newPage),
 	 );
 
   # are certain options enforced?
@@ -858,27 +858,90 @@ sub pre_header_initialize {
     $self->{must} = \%must;
     $self->{can}  = \%can;
     $self->{will} = \%will;
-	
+
+
+####################################
+# set up problem numbering and multipage variables
+####################################
+
+    my @problemNumbers = $db->listProblemVersions($effectiveUserName, 
+						  $setName, $setVersionNumber);
+
+# to speed up processing of long (multi-page) tests, we want to only 
+#    translate those problems that are being submitted or are currently 
+#    being displayed.  so work out here which problems are on the current
+#    page.
+    my ( $numPages, $pageNumber, $numProbPerPage ) = ( 1, 0, 0 );
+    my ( $startProb, $endProb ) = ( 0, $#problemNumbers );
+
+ # update startProb and endProb for multipage tests
+    if ( defined($set->problems_per_page) && $set->problems_per_page ) {
+	$numProbPerPage = $set->problems_per_page;
+	$pageNumber = ($newPage) ? $newPage : 1;
+
+	$numPages = scalar(@problemNumbers)/$numProbPerPage;
+	$numPages = int($numPages) + 1 if ( int($numPages) != $numPages );
+
+	$startProb = ($pageNumber - 1)*$numProbPerPage;
+	$startProb = 0 if ( $startProb < 0 || $startProb > $#problemNumbers );
+	$endProb = ($startProb + $numProbPerPage > $#problemNumbers) ? 
+	    $#problemNumbers : $startProb + $numProbPerPage - 1;
+    }
+
+
+# set up problem list for randomly ordered tests
+    my @probOrder = (0..$#problemNumbers);
+
+# there's a routine to do this somewhere, I think...
+    if ( defined( $set->problem_randorder ) && $set->problem_randorder ) {
+	my @newOrder = ();
+# we need to keep the random order the same each time the set is loaded!
+#    this requires either saving the order in the set definition, or being 
+#    sure that the random seed that we use is the same each time the same 
+#    set is called.  we'll do the latter by setting the seed to the psvn
+#    of the problem set.  we use a local PGrandom object to avoid mucking
+#    with the system seed.
+	my $pgrand = PGrandom->new();
+	$pgrand->srand( $set->psvn );
+	while ( @probOrder ) { 
+	    my $i = int($pgrand->rand(scalar(@probOrder)));
+	    push( @newOrder, $probOrder[$i] );
+	    splice(@probOrder, $i, 1);
+	}
+	@probOrder = @newOrder;
+    }
+# now $probOrder[i] = the problem number, numbered from zero, that's 
+#    displayed in the ith position on the test
+
+# make a list of those problems we're displaying
+    my @probsToDisplay = ();
+    for ( my $i=0; $i<@probOrder; $i++ ) {
+	push(@probsToDisplay, $probOrder[$i]) 
+	    if ( $i >= $startProb && $i <= $endProb );
+    }
+# FIXME: debug code
+#     warn("Start, end = $startProb, $endProb\n",
+# 	 "ProbOrder = @probOrder\n",
+# 	 "Probs to display = @probsToDisplay\n");
 
 ####################################
 # process problems
 ####################################
 
-    my @problemNumbers = $db->listProblemVersions($effectiveUserName, 
-						  $setName, $setVersionNumber);
     my @problems = ();
     my @pg_results = ();
 # pg errors are stored here; initialize it to empty to start
     $self->{errors} = [ ];
 
-# FIXME SPEED UP: in the long run we want to reduce the translation of 
-# problems if we're not submitting; this will change this loop
+#
+# process the problems as needed
     foreach my $problemNumber (sort {$a<=>$b } @problemNumbers) {
 	my $ProblemN = $db->getMergedProblemVersion($effectiveUserName,
 						    $setName,
 						    $setVersionNumber,
 						    $problemNumber);
-#	warn("ProblemN = " . ref($ProblemN) . "\n");
+    # pIndex numbers from zero
+	my $pIndex = $problemNumber - 1;
 
     # sticky answers are set up here
 	if ( not ( $submitAnswers or $previewAnswers or $checkAnswers or 
@@ -889,16 +952,28 @@ sub pre_header_initialize {
 	}
 	push( @problems, $ProblemN );
 
+    # if we don't have to translate this problem, just save the problem object
+	my $pg = $ProblemN;
     # this is the actual translation of each problem.  errors are stored in 
     #    @{$self->{errors}} in each case
-	my $pg = $self->getProblemHTML($self->{effectiveUser}, $setName,
-				       $setVersionNumber, $formFields, 
-				       $ProblemN);
+	if ( (grep /^$pIndex$/, @probsToDisplay) || $submitAnswers || 
+	     $checkAnswers ) {
+# FIXME: debug code
+#	    warn("translating problem $pIndex (number $problemNumber)\n");
+	    $pg = $self->getProblemHTML($self->{effectiveUser}, $setName,
+					$setVersionNumber, $formFields, 
+					$ProblemN);
+	}
 	push(@pg_results, $pg);
     }
     $self->{ra_problems} = \@problems;
     $self->{ra_pg_results}=\@pg_results;
 
+    $self->{startProb} = $startProb;
+    $self->{endProb} = $endProb;
+    $self->{numPages} = $numPages;
+    $self->{pageNumber} = $pageNumber;
+    $self->{ra_probOrder} = \@probOrder;
 }
 
 sub path {
@@ -1001,13 +1076,21 @@ sub body {
     my %can = %{ $self->{can} };
     my %must = %{ $self->{must} };
     my %will = %{ $self->{will} };
+
     my @problems = @{ $self->{ra_problems} };
     my @pg_results = @{ $self->{ra_pg_results} };
     my @pg_errors = @{ $self->{errors} };
     my $requestedVersion = $self->{requestedVersion};
 
+    my $startProb = $self->{startProb};
+    my $endProb = $self->{endProb};
+    my $numPages = $self->{numPages};
+    my $pageNumber = $self->{pageNumber};
+    my @probOrder = @{$self->{ra_probOrder}};
+
     my $setName  = $set->set_id;
     my $versionNumber = $set->version_id;
+    my $numProbPerPage = $set->problems_per_page;
 
 # translation errors -- we use the same output routine as Problem.pm, but 
 #    play around to allow for errors on multiple translations because we 
@@ -1229,23 +1312,6 @@ sub body {
 # output
 ####################################
 
-# set up variables to deal with multi-page tests
-    my ($numPages, $pageNumber, $numProbPerPage) = (0, 0, 0);
-    my ($startProb, $endProb) = (0, $#pg_results);
-# these are changed if the test is a multi-page test
-    if ( $set->problems_per_page() ) {
-	$numProbPerPage = $set->problems_per_page();
-	$pageNumber = ( $newPage ) ? $newPage : 1;
-
-	$numPages = scalar(@problems)/$numProbPerPage;
-	$numPages = int($numPages) + 1 if ( int($numPages) != $numPages );
-
-	$startProb = ($pageNumber - 1)*$numProbPerPage;
-	$startProb = 0 if ( $startProb < 0 || $startProb > $#pg_results );
-	$endProb = ($startProb + $numProbPerPage > $#pg_results) ? 
-	    $#pg_results : $startProb + $numProbPerPage - 1;
-    }
-
 # figure out recorded score for the set, if any, and score on this attempt
     my $recordedScore = 0;
     my $totPossible = 0;
@@ -1264,7 +1330,11 @@ sub body {
 # weight (value) of the problem.  it seems this should be easier to work 
 # out than this.
     my $attemptScore = 0;
-    if ( $submitAnswers || $checkAnswers ) {
+# FIXME: debug.  should this be if ( submit || check ) or if (will...)?
+#     it gets the case of checking answers and then switching pages of a 
+#     multipage test
+#    if ( $submitAnswers || $checkAnswers ) {
+    if ( $submitAnswers || ( $checkAnswers || $will{checkAnswers} ) ) {
 	my $i=0;
 	foreach my $pg ( @pg_results ) {
 	    my $pValue = $problems[$i]->value();
@@ -1346,7 +1416,9 @@ sub body {
 	    	"$recordedScore/$totPossible.";
 	}
 
-    } elsif ( $checkAnswers ) {
+# FIXME: debug.  do we want || will{checkanswers} too?  it gets the case
+#    of checking answers and then switching pages of a multipage test
+    } elsif ( $checkAnswers || $will{checkAnswers} ) {
 	print CGI::start_div({class=>'gwMessage'});
 	if ( ! $set->hide_score ) {
 	    print CGI::strong("Your score on this (checked, not ",
@@ -1392,7 +1464,9 @@ sub body {
 			  "test.");
 	}
     } else {
-	if ( ! $checkAnswers && ! $submitAnswers ) {
+    # FIXME: debug.  should this include the will{checkAnswers}?  this gets
+    #    the case of going between pages of a multipage test
+	if ( ! ($checkAnswers || $will{checkAnswers}) && ! $submitAnswers ) {
 	    print CGI::start_div({class=>'gwMessage'});
 
 	    if ( ! $set->hide_score ) {
@@ -1539,28 +1613,6 @@ sub body {
 #    $showAttemptAnswers), $showSummary, $showAttemptPreview (or-ed with zero)
 	my $problemNumber = 0;
 
-# deal with ordering
-	my @probOrder = ( 0 .. $#pg_results );
-
-# there's a routine to do this somewhere, I think...
-	if ( defined( $set->problem_randorder ) && $set->problem_randorder ) {
-	    my @newOrder = ();
-# we need to keep the random order the same each time the set is loaded!
-#    this requires either saving the order in the set definition, or being 
-#    sure that the random seed that we use is the same each time the same 
-#    set is called.  we'll do the latter by setting the seed to the psvn
-#    of the problem set.  we use a local PGrandom object to avoid mucking
-#    with the system seed.
-	    my $pgrand = PGrandom->new();
-	    $pgrand->srand( $set->psvn );
-	    while ( @probOrder ) { 
-		my $i = int($pgrand->rand(scalar(@probOrder)));
-		push( @newOrder, $probOrder[$i] );
-		splice(@probOrder, $i, 1);
-	    }
-	    @probOrder = @newOrder;
-	}
-	
 	foreach my $i ( 0 .. $#pg_results ) {
 	    my $pg = $pg_results[$probOrder[$i]];
 	    $problemNumber++;
@@ -1583,7 +1635,10 @@ sub body {
 					      $pg->{flags}->{showPartialCorrectAnswers},
 					      1, 1);
 		
-		} elsif ( $checkAnswers ) {
+            # FIXME: debug.  do we want || will{checkanswers} too?  it gets 
+            #    the case of checking answers and then switching pages of a 
+	    #    multipage test
+		} elsif ( $checkAnswers || $will{checkAnswers} ) {
 		    $recordMessage = CGI::span({class=>"resultsWithError"},
 					       "ANSWERS ONLY CHECKED -- ", 
 					       "ANSWERS NOT RECORDED");
@@ -1641,7 +1696,8 @@ sub body {
 
 	if ($can{showCorrectAnswers}) {
 	    print CGI::checkbox(-name    => "showCorrectAnswers",
-				-checked => $will{showCorrectAnswers},
+#				-checked => $will{showCorrectAnswers},
+				-checked => $want{showCorrectAnswers},
 				-label   => "Show correct answers",
 				);
 	}
