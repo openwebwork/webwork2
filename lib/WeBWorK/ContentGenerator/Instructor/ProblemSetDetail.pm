@@ -52,7 +52,8 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are 
 # FIXME: only used for gateways
 use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published assignment_type)];
-use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
+# use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
+use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -70,6 +71,7 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_li
 #				1 => "Yes",
 #				0 => "No",
 #		},
+#               convertby => 60,                # divide incoming database field values by this, and multiply when saving
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
@@ -141,32 +143,41 @@ use constant  FIELD_PROPERTIES => {
 				proctored_gateway => "proctored gateway/quiz",
 		},
 	},
-	attempts_per_version => {
-		name      => "Attempts per Version (untested for &gt; 1)",
-		type      => "edit",
-		size      => "3",
-		override  => "all",
-#		labels    => {	"" => 1 },
-	},
 	version_time_limit => {
-		name      => "Test Time Limit (sec)",
+		name      => "Test Time Limit (min)",
 		type      => "edit",
 		size      => "4",
 		override  => "any",
 		labels    => {	"" => 0 },  # I'm not sure this is quite right
+		convertby => 60,
+	},
+	time_limit_cap => {
+		name      => "Cap Test Time at Set Due Date?",
+		type      => "choose",
+		override  => "all",
+		choices   => [qw(0 1)],
+		labels    => { '0' => 'No', '1' => 'Yes' },
+	},
+	attempts_per_version => {
+		name      => "Number of Graded Submissions per Test",
+		type      => "edit",
+		size      => "3",
+		override  => "any",
+#		labels    => {	"" => 1 },
 	},
 	time_interval => {
-		name      => "Time Interval for New Versions (sec)",
+		name      => "Time Interval for New Test Versions (min; 0=infty)",
 		type      => "edit",
                 size      => "5",
-		override  => "all",
+		override  => "any",
 		labels    => {	"" => 0 },
+		convertby => 60,
 	},
 	versions_per_interval => {
-		name      => "Number of New Versions per Time Interval (0=infty)",
+		name      => "Number of Tests per Time Interval (0=infty)",
 		type      => "edit",
                 size      => "3",
-		override  => "all",
+		override  => "any",
 		default   => "0",
 #		labels    => {	"" => 0 },
 #		labels    => {	"" => 1 },
@@ -175,30 +186,30 @@ use constant  FIELD_PROPERTIES => {
 		name      => "Order Problems Randomly",
 		type      => "choose",
 		choices   => [qw( 0 1 )],
-		override  => "all",
+		override  => "any",
 		labels    => {	0 => "No", 1 => "Yes" },
 	},
 	problems_per_page => {
 	        name      => "Number of Problems per Page (0=all)",
 		type      => "edit",
 		size      => "3",
-		override  => "all",
+		override  => "any",
 		default   => "0",
 #		labels    => { "" => 0 },
 	},
 	hide_score        => {
-		name      => "Show score on finished assignments",
+		name      => "Show Score on Finished Assignments",
 		type      => "choose",
-		choices   => [ qw(0 1) ],
-		override  => "all",
-		labels    => { 0 => "Yes", 1 => "No" },
+		choices   => [ qw(0 1 2) ],
+		override  => "any",
+		labels    => { 0 => "Yes", 1 => "No", 2 => 'Only after set due date' },
 	},
 	hide_work         => {
-		name      => "Show student work on finished assignments",
+		name      => "Show Student Work on Finished Tests",
 		type      => "choose",
-		choices   => [ qw(0 1) ],
-		override  => "all",
-		labels    => { 0 => "Yes", 1 => "No" },
+		choices   => [ qw(0 1 2) ],
+		override  => "any",
+		labels    => { 0 => "Yes", 1 => "No", 2 => 'Only after set due date' },
 	},
 	# Problem information
 	source_file => {
@@ -325,8 +336,7 @@ sub FieldTable {
   # this is a rather artifical addition to include gateway fields, which we 
   # only want to show for gateways
 		$output .= "$gwoutput\n"
-		    if ( $field eq 'assignment_type' &&
-			 $globalRecord->assignment_type() =~ /gateway/ );
+		    if ( $field eq 'assignment_type' && $gwoutput );
 	} 
 
 	if (defined $problemID) {
@@ -387,6 +397,11 @@ sub FieldHTML {
 		$userValue = $self->formatDateTime($userValue) if defined $userValue && $userValue ne $labels{""};
 	}
 
+	if ( defined($properties{convertby}) && $properties{convertby} ) {
+		$globalValue = $globalValue/$properties{convertby} if $globalValue;
+		$userValue = $userValue/$properties{convertby} if $userValue;
+	}
+
 	# check to make sure that a given value can be overridden
 	my %canOverride = map { $_ => 1 } (@{ PROBLEM_FIELDS() }, @{ SET_FIELDS() });
 	my $check = $canOverride{$field};
@@ -419,11 +434,14 @@ sub FieldHTML {
 				name => "$recordType.$recordID.$field",
 				values => $properties{choices},
 				labels => \%labels,
-				default => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userRecord->$field : $globalRecord->$field),
+				default => $r->param("$recordType.$recordID.$field") || ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field),
 		});
 	}
 	
-	return (($forUsers && $edit && $check) ? CGI::checkbox({
+	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $properties{labels}->{$globalValue} : $globalValue;
+
+#	return (($forUsers && $edit && $check) ? CGI::checkbox({
+	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
 				label => "",
@@ -432,7 +450,7 @@ sub FieldHTML {
 		}) : "",
 		$properties{name},
 		$inputType,
-		$forUsers ? " $globalValue" : "",
+		$forUsers ? " $gDisplVal" : "",
 	);
 }
 
@@ -727,6 +745,9 @@ sub initialize {
 						if ($field =~ /_date/) {
 							$param = $self->parseDateTime($param) unless defined $unlabel;
 						}
+						if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
+							$param = $param*$properties{$field}->{convertby};
+						}
 						$record->$field($param);
 					} else {
 						$record->$field(undef);					
@@ -746,6 +767,9 @@ sub initialize {
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/) {
 					$param = $self->parseDateTime($param) unless defined $unlabel;
+				}
+				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
+					$param = $param*$properties{$field}->{convertby};
 				}
 				$setRecord->$field($param);
 			}
