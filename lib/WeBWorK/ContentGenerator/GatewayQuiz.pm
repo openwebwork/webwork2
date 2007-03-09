@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.36 2007/03/06 22:01:27 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.37 2007/03/08 21:50:05 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,10 +60,12 @@ sub templateName {
 # *** showing of correct answers after all attempts at a version are used
 
 sub can_showOldAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet ) = @_;
 # we'd like to use "! $Set->hide_work()", but that hides students' work 
 # as they're working on the set, which isn't quite right.  so use instead:
-	return( before( $Set->due_date() ) || ! $Set->hide_work() );
+	return( before( $Set->due_date() ) || 
+		( ! $Set->hide_work() || 
+		  ( $Set->hide_work() eq '2' && time > $tmplSet->due_date ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -577,8 +579,7 @@ sub pre_header_initialize {
     $versionsPerInterval = 0 if ( ! defined($versionsPerInterval) ||
 				  $versionsPerInterval eq '' );
 
-# these both work because every problem in the set must have the same
-#    submission characteristics
+# every problem in the set must have the same submission characteristics
     my $currentNumAttempts    = ( defined($Problem) ? $Problem->num_correct() +
 				  $Problem->num_incorrect() : 0 );
 
@@ -608,7 +609,8 @@ sub pre_header_initialize {
 	foreach ( @setVersions ) {
 	    $totalNumVersions++;
 	    $currentNumVersions++
-		if ( $_->version_creation_time() > ($timeNow - $timeInterval) );
+		if ( ! $timeInterval ||
+		     $_->version_creation_time() > ($timeNow - $timeInterval) );
 	}
     }
 
@@ -661,8 +663,8 @@ sub pre_header_initialize {
 		my $ansOffset = $set->answer_date() - $set->due_date();
 		$set->version_creation_time( $timeNow );
 		$set->open_date( $timeNow );
-		$set->due_date( $timeNow+$timeLimit );
-		$set->answer_date( $timeNow+$timeLimit+$ansOffset );
+		$set->due_date( $timeNow+$timeLimit ) if ( ! $set->time_limit_cap || $timeNow + $timeLimit < $set->due_date );
+		$set->answer_date( $set->due_date + $ansOffset );
 		$set->version_last_attempt_time( 0 );
     # put this new info into the database.  note that this means that -all- of
     #    the merged information gets put back into the database.  as long as
@@ -734,6 +736,7 @@ sub pre_header_initialize {
 ####################################
 
     my $psvn = $set->psvn();
+    $self->{tmplSet} = $tmplSet;
     $self->{set} = $set;
     $self->{problem} = $Problem;
     $self->{requestedVersion} = $requestedVersion;
@@ -824,8 +827,8 @@ sub pre_header_initialize {
 	 checkAnswers       => 0,
 	 );
 
-  # does the user have permission to use certain options?
-    my @args = ($User, $PermissionLevel, $EffectiveUser, $set, $Problem );
+    # does the user have permission to use certain options?
+    my @args = ($User, $PermissionLevel, $EffectiveUser, $set, $Problem, $tmplSet);
     my $sAns = ( $submitAnswers ? 1 : 0 );
     my %can = 
 	(showOldAnswers     => $self->can_showOldAnswers(@args), 
@@ -1065,6 +1068,7 @@ sub body {
 			CGI::p("This is because: " . $self->{invalidSet}));
     }
 	
+    my $tmplSet = $self->{tmplSet};
     my $set = $self->{set};
     my $Problem = $self->{problem};
     my $permissionLevel = $self->{permissionLevel};
@@ -1312,6 +1316,13 @@ sub body {
 # output
 ####################################
 
+# some convenient output variables
+    my $canShowScores = (! $set->hide_score || ($set->hide_score eq '2' && $timeNow>$tmplSet->due_date));
+    my $canShowWork = (! $set->hide_work || ($set->hide_work eq '2' && $timeNow>$tmplSet->due_date));
+
+#     warn("canshowscores = $canShowScores; set->hide_score =", $set->hide_score, "\n");
+#     warn("canshowwork = $canShowWork; set->hide_work =", $set->hide_work, "\n");
+
 # figure out recorded score for the set, if any, and score on this attempt
     my $recordedScore = 0;
     my $totPossible = 0;
@@ -1400,7 +1411,7 @@ sub body {
 	    	CGI::br();
 
 	    # and show the score if we're allowed to do that
-	    if ( ! $set->hide_score ) {
+	    if ( $canShowScores ) {
 		print CGI::strong("Your score on this $testNoun is ",
 				  "$attemptScore/$totPossible.");
 	    }
@@ -1409,23 +1420,25 @@ sub body {
 	# finally, if there is another, recorded message, print that 
 	#    too so that we know what's going on
 	print CGI::end_div();
-	print CGI::start_div({class=>'gwMessage'});
 	if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
-	     $recordedScore != $attemptScore && ! $set->hide_score ) {
+	     $recordedScore != $attemptScore && $canShowScores ) {
+	    print CGI::start_div({class=>'gwMessage'});
 	    print "The recorded score for this test is ",
 	    	"$recordedScore/$totPossible.";
+	    print CGI::end_div();
 	}
 
 # FIXME: debug.  do we want || will{checkanswers} too?  it gets the case
 #    of checking answers and then switching pages of a multipage test
     } elsif ( $checkAnswers || $will{checkAnswers} ) {
-	print CGI::start_div({class=>'gwMessage'});
-	if ( ! $set->hide_score ) {
+	if ( $canShowScores ) {
+	    print CGI::start_div({class=>'gwMessage'});
 	    print CGI::strong("Your score on this (checked, not ",
 			      "recorded) submission is ",
 			      "$attemptScore/$totPossible."), CGI::br();
 	    print "The recorded score for this test is $recordedScore/" .
 		"$totPossible.  ";
+	    print CGI::end_div();
 	}
     }
 
@@ -1434,8 +1447,6 @@ sub body {
 ##### and information about any recorded score if not submitAnswers or 
 ##### checkAnswers
     if ( $can{recordAnswersNextTime} ) {
-	# end the header
-	print CGI::end_div() if ( $submitAnswers || $checkAnswers );
 
 	# print timer
 	# FIXME: in the long run, we want to allow a test to not be
@@ -1466,10 +1477,12 @@ sub body {
     } else {
     # FIXME: debug.  should this include the will{checkAnswers}?  this gets
     #    the case of going between pages of a multipage test
-	if ( ! ($checkAnswers || $will{checkAnswers}) && ! $submitAnswers ) {
-	    print CGI::start_div({class=>'gwMessage'});
 
-	    if ( ! $set->hide_score ) {
+	print CGI::start_div({class=>'gwMessage'});
+
+	if ( ! ($checkAnswers || $will{checkAnswers}) && ! $submitAnswers ) {
+
+	    if ( $canShowScores ) {
 		my $scMsg = "Your recorded score on this test (number " .
 		    "$versionNumber) is $recordedScore/" .
 		    "$totPossible";
@@ -1493,10 +1506,10 @@ sub body {
 
 	print "The test (which is number $versionNumber) may no " .
 	    "longer be submitted for a grade, but you may still " .
-	    "check your answers." if ( ! $set->hide_work() );
+	    "check your answers." if ( $canShowWork );
 
 	# print a "printme" link if we're allowed to see our work
-	if ( ! $set->hide_work() ) {
+	if ( $canShowWork ) {
 	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
 		'/hardcopy/' . $set->set_id . ',v' . $set->version_id . '/?' . 
 		$self->url_authen_args;
@@ -1522,7 +1535,7 @@ sub body {
 
 # now, we print out the rest of the page if we're not hiding submitted
 # answers
-    if ( ! $can{recordAnswersNextTime} && $set->hide_work() ) {
+    if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
 	print CGI::start_div({class=>"gwProblem"});
 	print CGI::strong("Completed results for this assignment are " .
 			  "not available.");
