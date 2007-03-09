@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.83 2007/03/01 22:20:24 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.84 2007/03/05 23:06:34 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -177,10 +177,14 @@ sub body {
 	}
 # now get all user set versions that we need
 	my @vSets = ();
+# we need the template sets below, so also make an indexed list of those
+	my %gwSetsBySetID = ();
 	foreach my $set ( @gwSets ) {
-	    my @setVer = $db->listSetVersions( $effectiveUser, $set->set_id );
-	    my @setVerIDs = map { [ $effectiveUser, $set->set_id, $_ ] } @setVer;
-	    push( @vSets, $db->getMergedSetVersions( @setVerIDs ) );
+		$gwSetsBySetID{$set->set_id} = $set;
+
+		my @setVer = $db->listSetVersions( $effectiveUser, $set->set_id );
+		my @setVerIDs = map { [ $effectiveUser, $set->set_id, $_ ] } @setVer;
+		push( @vSets, $db->getMergedSetVersions( @setVerIDs ) );
 	}
 
 # set sort method
@@ -225,8 +229,7 @@ sub body {
 	    @nonGWsets = sort byUrgency  @nonGWsets;
 	    @gwSets = sort byUrgency @gwSets;
 	}
-# we sort set versions by name; this at least in part relies on versions
-# being finished by the time they show up on the list here.
+# we sort set versions by name
 	@vSets = sortByName(["set_id", "version_id"], @vSets);
 
 # put together a complete list of sorted sets to consider
@@ -248,7 +251,7 @@ sub body {
 		die "set $set not defined" unless $set;
 		
 		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
-			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1);  # 1 = gateway, versioned set
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$set->{set_id}} );  # 1 = gateway, versioned set
 		}
 	}
 	
@@ -294,11 +297,12 @@ sub body {
 
 sub setListRow {
 	my ($self, $set, $multiSet, $preOpenSets, $existVersions, $db,
-	    $gwtype) = @_;
+	    $gwtype, $tmplSet) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	$gwtype = 0 if ( ! defined( $gwtype ) );
+	$tmplSet = $set if ( ! defined( $tmplSet ) );
 	
 	my $name = $set->set_id;
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
@@ -461,7 +465,8 @@ sub setListRow {
 		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
 			$startTime = localtime($set->version_creation_time());
 
-			if ( ! $set->hide_score() ) {
+			if ( ! $set->hide_score() || 
+			     $set->hide_score eq '2' && time > $tmplSet->due_date() ) {
 			# find score
 
 			# DBFIXME we can do this math in the database, i think
