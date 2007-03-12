@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.56 2007/01/08 23:56:16 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.58 2007/02/14 19:29:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -371,29 +371,32 @@ sub initialize {
 	    
 	    # check that recipients have been selected.
 		my @recipients            = @{$self->{ra_send_to}};
-		$self->addbadmessage(CGI::p("No recipients selected ")) unless @recipients;
-		#  get merge file
-		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
-		my $delimiter       = ',';
-		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
-		unless (ref($rh_merge_data) ) {
-			$self->addbadmessage(CGI::p("No merge data file"));
-			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
-			return;
-		} ;
 		if (@recipients) {
-			$self->{rh_merge_data} = $rh_merge_data;
-			$self->{smtpServer}    = $ce->{mail}->{smtpServer};
-			my $post_connection_action = sub {
-				my $r = shift; 
-				my $result_message = $self->mail_message_to_recipients();
-				$self->email_notification($result_message);
-			};
-			if (MP2) {
-				$r->connection->pool->cleanup_register($post_connection_action);
-			} else {
-				$r->post_connection($post_connection_action);
+			#  get merge file
+			my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+			my $delimiter       = ',';
+			my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+			unless (ref($rh_merge_data) ) {
+				$self->addbadmessage(CGI::p("No merge data file"));
+				$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+				return;
+			} ;
+			if (@recipients) {
+				$self->{rh_merge_data} = $rh_merge_data;
+				$self->{smtpServer}    = $ce->{mail}->{smtpServer};
+				my $post_connection_action = sub {
+					my $r = shift; 
+					my $result_message = $self->mail_message_to_recipients();
+					$self->email_notification($result_message);
+				};
+				if (MP2) {
+					$r->connection->pool->cleanup_register($post_connection_action);
+				} else {
+					$r->post_connection($post_connection_action);
+				}
 			}
+		} else {
+			$self->addbadmessage(CGI::p("No recipients selected. Please select one or more recipients from the list below."));
 		}
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
@@ -425,8 +428,8 @@ sub body {
 
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
-	} elsif (($response eq 'send_email')){
-		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipients. You will be notified"
+	} elsif ($response eq 'send_email' and $self->{ra_send_to} and @{$self->{ra_send_to}}){
+		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipient(s). You will be notified"
 		             ." by email when the task is completed.  This may take several minutes if the class is large."
 		);
 		$self->addgoodmessage($message);
