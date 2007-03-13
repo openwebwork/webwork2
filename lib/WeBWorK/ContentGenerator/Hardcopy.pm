@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.88 2007/03/06 01:30:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.89 2007/03/13 15:45:31 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -90,6 +90,12 @@ our %HC_FORMATS = (
 #   write_problem_tex to determine which problem merging routine from 
 #   DB.pm to use, and to indicate what problem number in a versioned 
 #   test we're on
+#
+# canShowScore
+#   a reference to a hash { setID => boolean }, where setID is either the set 
+#   id or the fake versioned set id "setName,vN" depending on whether the 
+#   set is a versioned set or not, and the value of the boolean is determined 
+#   by the corresponding userSet's value of hide_score and the current time
 
 ################################################################################
 # UI subroutines
@@ -174,24 +180,47 @@ sub pre_header_initialize {
 		# to check if the set has a "hide_work" flag, we need the 
 		#    userset objects; if we've not failed validation yet, get
 		#    those to check on this
-		unless ($validation_failed || $perm_viewhidden) { 
+		my %canShowScore = ();
+		my %mergedSets = ();
+		unless ($validation_failed ) {
 			foreach my $sid ( @setIDs ) {
+				my($s,undef,$v) = ($sid =~ /([^,]+)(,v(\d+))?$/);
 				foreach my $uid ( @userIDs ) {
-					my $userSet = $db->getUserSet($uid,$sid);
-					if ( defined( $userSet->hide_work ) &&
-					     ( $userSet->hide_work eq 'Y' ||
-					       ( $userSet->hide_work eq 'BeforeDueDate' &&
-						 time < $userSet->due_date ) ) ) {
-						$validation_failed = 1;
-						$self->addbadmessage("You are not permitted to generate a hardcopy for a set with hidden work.");
-						last;
+					if ( $perm_viewhidden ) { 
+						$canShowScore{"$uid!$sid"} = 1;
+					} else {
+						my $userSet;
+						if ( defined($v) ) {
+							$userSet = $db->getMergedSetVersion($uid,$s,$v);
+						} else {
+							$userSet = $db->getMergedSet($uid,$s);
+						}
+						$mergedSets{"$uid!$sid"} = $userSet;
+						if ( defined( $userSet->hide_work ) &&
+						     ( $userSet->hide_work eq 'Y' ||
+						       ( $userSet->hide_work eq 'BeforeAnswerDate' &&
+							 time < $userSet->answer_date ) ) ) {
+							$validation_failed = 1;
+							$self->addbadmessage("You are not permitted to generate a hardcopy for a set with hidden work.");
+							last;
+						}
+					
+						$canShowScore{"$uid!$sid"} = 
+						    ! ( defined( $userSet->hide_score ) &&
+							( $userSet ->hide_score eq 'Y' ||
+							  ( $userSet->hide_score eq 'BeforeAnswerDate' &&
+							    time < $userSet->answer_date ) ) );
+# 	die("hide_score = ", $userSet->hide_score, "; canshow{$uid!$sid} = ", $canShowScore{"$uid!$sid"}, "\n");
+
 					}
+					last if $validation_failed;
 				}
-				last if $validation_failed;
 			}
 		}
 		
 		unless ($validation_failed) {
+			$self->{canShowScore} = \%canShowScore;
+			$self->{mergedSets} = \%mergedSets;
 			my ($final_file_url, %temp_file_map) = $self->generate_hardcopy($hardcopy_format, \@userIDs, \@setIDs);
 			if ($self->get_errors) {
 				# store the URLs in self hash so that body() can make a link to it
@@ -769,19 +798,26 @@ sub write_set_tex {
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
 
-	# get set record; we have to know if it's a versioned set to know
-	#    which merge routine to call, and to do that we need to get 
-	#    the merged userset
-	my $versioned = 0;
-	if ( $setID =~ /(.+),v(\d+)$/ ) {
-	    $setID = $1;
-	    $versioned = $2;
-	}
+	# we may already have the MergedSet from checking hide_work and 
+	#    hide_score in pre_header_initialize; check to see if that's true,
+	#    and otherwise, get the set.
+	my %mergedSets = %{$self->{mergedSets}};
+	my $uid = $TargetUser->user_id;
 	my $MergedSet;
-	if ( $versioned ) {
-		$MergedSet = $db->getMergedSetVersion($TargetUser->user_id, $setID, $versioned);
+	my $versioned = 0;
+	if ( defined( $mergedSets{"$uid!$setID"} ) ) {
+		$MergedSet = $mergedSets{"$uid!$setID"};
+		$versioned = ($setID =~ /,v(\d+)$/) ? $1 : 0;
 	} else {
-		$MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
+		if ( $setID =~ /(.+),v(\d+)$/ ) {
+			$setID = $1;
+			$versioned = $2;
+		}
+		if ( $versioned ) {
+			$MergedSet = $db->getMergedSetVersion($TargetUser->user_id, $setID, $versioned);
+		} else {
+			$MergedSet = $db->getMergedSet($TargetUser->user_id, $setID); # checked
+		}
 	}
 	# save versioned info for use in write_problem_tex
 	$self->{versioned} = $versioned;
@@ -864,6 +900,7 @@ sub write_problem_tex {
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
 	my $versioned = $self->{versioned};
+	my %canShowScore = %{$self->{canShowScore}};
 
 	my @errors;
 	
@@ -904,10 +941,19 @@ sub write_problem_tex {
 	
 	# figure out if we're allowed to get correct answers, hints, and solutions
 	# (eventually, we'd like to be able to use the same code as Problem)
+	my $versionName = $MergedSet->set_id . 
+		(( $versioned ) ?  ",v" . $MergedSet->version_id : '');
 	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
 	my $showHints           = $r->param("showHints")          || 0;
 	my $showSolutions       = $r->param("showSolutions")      || 0;
-	unless ($authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or ( time > $MergedSet->answer_date or ($versioned && $MergedProblem->num_correct() + $MergedProblem->num_incorrect() >= $MergedSet->attempts_per_version() && ($MergedSet->due_date == $MergedSet->answer_date) ) ) ) {
+	unless( ( $authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or
+		  ( time > $MergedSet->answer_date or 
+		    ( $versioned && 
+		      $MergedProblem->num_correct + 
+		      $MergedProblem->num_incorrect >= 
+		      $MergedSet->attempts_per_version &&
+		      $MergedSet->due_date == $MergedSet->answer_date ) ) ) &&
+		( $canShowScore{$MergedSet->user_id . "!$versionName"} ) ) {
 		$showCorrectAnswers = 0;
 		$showSolutions      = 0;
 	}
