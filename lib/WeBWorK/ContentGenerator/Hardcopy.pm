@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.87 2007/03/05 23:05:56 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.88 2007/03/06 01:30:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -153,6 +153,7 @@ sub pre_header_initialize {
 		# is the user allowed to request multiple sets/users at a time?
 		my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
 		my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
+		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
 		
 		if (@setIDs > 1 and not $perm_multiset) {
 			$self->addbadmessage("You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again.");
@@ -168,6 +169,26 @@ sub pre_header_initialize {
 			# FIXME -- download_hardcopy_multiuser controls both whether a user can generate hardcopy
 			# that contains sets for multiple users AND whether she can generate hardcopy that contains
 			# sets for users other than herself. should these be separate permission levels?
+		}
+
+		# to check if the set has a "hide_work" flag, we need the 
+		#    userset objects; if we've not failed validation yet, get
+		#    those to check on this
+		unless ($validation_failed || $perm_viewhidden) { 
+			foreach my $sid ( @setIDs ) {
+				foreach my $uid ( @userIDs ) {
+					my $userSet = $db->getUserSet($uid,$sid);
+					if ( defined( $userSet->hide_work ) &&
+					     ( $userSet->hide_work eq 'Y' ||
+					       ( $userSet->hide_work eq 'BeforeDueDate' &&
+						 time < $userSet->due_date ) ) ) {
+						$validation_failed = 1;
+						$self->addbadmessage("You are not permitted to generate a hardcopy for a set with hidden work.");
+						last;
+					}
+				}
+				last if $validation_failed;
+			}
 		}
 		
 		unless ($validation_failed) {
@@ -290,6 +311,27 @@ sub display_form {
 		@globalSetIDs = $db->listUserSets($eUserID);
 		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
 	}
+	# we also want to get the versioned sets for this user
+	# FIXME: this is another place where we assume that there is a 
+	#    one-to-one correspondence between assignment_type =~ gateway
+	#    and versioned sets.  I think we really should have a 
+	#    "is_versioned" flag on set objects instead.
+	my @versionedSets = grep {$_->assignment_type =~ /gateway/} @GlobalSets;
+	my @SetVersions = ();
+	foreach my $v (@versionedSets) {
+		my @usv = map { [$eUserID, $v->set_id, $_] } ( $db->listSetVersions( $eUserID, $v->set_id ) );
+		push( @SetVersions, $db->getSetVersions( @usv ) );
+	}
+	# FIXME: this is a hideous, horrible hack.  the identifying key for 
+	#    a global set is the set_id.  those for a set version are the 
+	#    set_id and version_id.  but this means that we have trouble 
+	#    displaying them both together in HTML::scrollingRecordList.  
+	#    so we brutally play tricks with the set_id here, which probably
+	#    is not very robust, and certainly is aesthetically displeasing.
+	#    yuck.
+	foreach ( @SetVersions ) { 
+		$_->set_id($_->set_id . ",v" . $_->version_id); 
+	}
 	
 	# filter out unwanted sets
 	my @WantedGlobalSets;
@@ -301,6 +343,9 @@ sub display_form {
 		}
 		next unless $Set->open_date <= time or $perm_unopened;
 		next unless $Set->published or $perm_unpublished;
+		# also skip gateway sets, for which we have to have a 
+		#    version to print something
+		next if $Set->assignment_type =~ /gateway/;
 		push @WantedGlobalSets, $Set;
 	}
 	
@@ -322,7 +367,7 @@ sub display_form {
 		default_filters => ["all"],
 		size => 20,
 		multiple => $perm_multiset,
-	}, @WantedGlobalSets);
+	}, @WantedGlobalSets, @SetVersions );
 	
 	# we change the text a little bit depending on whether the user has multiuser privileges
 	my $ss = $perm_multiuser ? "s" : "";
@@ -890,7 +935,7 @@ sub write_problem_tex {
 		}
 	}
 
-	warn("problem ", $MergedProblem->problem_id, ": source = ", $MergedProblem->source_file, "\n");
+#	warn("problem ", $MergedProblem->problem_id, ": source = ", $MergedProblem->source_file, "\n");
 
 	my $pg = WeBWorK::PG->new(
 		$ce,
