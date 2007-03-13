@@ -200,16 +200,16 @@ use constant  FIELD_PROPERTIES => {
 	hide_score        => {
 		name      => "Show Score on Finished Assignments",
 		type      => "choose",
-		choices   => [ qw(0 1 2) ],
+		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
-		labels    => { 0 => "Yes", 1 => "No", 2 => 'Only after set due date' },
+		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
 	},
 	hide_work         => {
 		name      => "Show Student Work on Finished Tests",
 		type      => "choose",
-		choices   => [ qw(0 1 2) ],
+		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
-		labels    => { 0 => "Yes", 1 => "No", 2 => 'Only after set due date' },
+		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
 	},
 	# Problem information
 	source_file => {
