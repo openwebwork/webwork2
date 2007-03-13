@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.38 2007/03/09 21:09:02 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.39 2007/03/13 15:44:21 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -61,18 +61,21 @@ sub templateName {
 
 sub can_showOldAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet ) = @_;
+	my $authz = $self->r->authz;
 # we'd like to use "! $Set->hide_work()", but that hides students' work 
 # as they're working on the set, which isn't quite right.  so use instead:
 	return( before( $Set->due_date() ) || 
-		( ! $Set->hide_work() || 
-		  ( $Set->hide_work() eq '2' && time > $tmplSet->due_date ) ) );
+		
+		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
+		( $Set->hide_work() eq 'N' || 
+		  ( $Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
 #   to be included if it's defined
 sub can_showCorrectAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
-	    $submitAnswers) = @_;
+	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	
 # gateway change here to allow correct answers to be viewed after all attempts
@@ -83,12 +86,15 @@ sub can_showCorrectAnswers {
 	my $attemptsUsed = $Problem->num_correct + $Problem->num_incorrect + 
 	    $addOne;
 
-	return ( ( after( $Set->answer_date ) || 
-		   ( $attemptsUsed >= $maxAttempts && 
-		     $Set->due_date() == $Set->answer_date() ) ) ||
-		 $authz->hasPermissions($User->user_id, 
-				"show_correct_answers_before_answer_date") )
-		 ;
+	return ( ( ( after( $Set->answer_date ) || 
+		     ( $attemptsUsed >= $maxAttempts && 
+		       $Set->due_date() == $Set->answer_date() ) ) ||
+		   $authz->hasPermissions($User->user_id, 
+				"show_correct_answers_before_answer_date") ) &&
+		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+		   ( $Set->hide_score eq 'N' || 
+		     ( $Set->hide_score eq 'BeforeAnswerDate' && 
+		       time > $tmplSet->answer_date ) ) ) );
 }
 
 sub can_showHints {
@@ -101,7 +107,7 @@ sub can_showHints {
 #   to be included if it's defined
 sub can_showSolutions {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
-	    $submitAnswers) = @_;
+	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
 # this is the same as can_showCorrectAnswers	
@@ -112,11 +118,15 @@ sub can_showSolutions {
 	my $maxAttempts = $Set->attempts_per_version();
 	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
-	return ( ( after( $Set->answer_date ) || 
-		   ( $attemptsUsed >= $maxAttempts &&
-		     $Set->due_date() == $Set->answer_date() ) ) ||
-		 $authz->hasPermissions($User->user_id, 
-				"show_correct_answers_before_answer_date") );
+	return ( ( ( after( $Set->answer_date ) || 
+		     ( $attemptsUsed >= $maxAttempts && 
+		       $Set->due_date() == $Set->answer_date() ) ) ||
+		   $authz->hasPermissions($User->user_id, 
+				"show_correct_answers_before_answer_date") ) &&
+		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+		   ( $Set->hide_score eq 'N' || 
+		     ( $Set->hide_score eq 'BeforeAnswerDate' && 
+		       time > $tmplSet->answer_date ) ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -127,7 +137,7 @@ sub can_showSolutions {
 #   submission time and the proctor authorization.
 sub can_recordAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
-	    $submitAnswers) = @_;
+	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
@@ -174,7 +184,7 @@ sub can_recordAnswers {
 #   submission time and the proctor authorization.
 sub can_checkAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
-	    $submitAnswers) = @_;
+	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
@@ -198,15 +208,44 @@ sub can_checkAnswers {
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
-			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
+			return ( $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts") &&
+				 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+				   $Set->hide_score eq 'N' ||
+				   ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				     $timeNow > $tmplSet->answer_date ) ) );
 		} else {
-			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
+			return ( $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts") && 
+				 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+				   $Set->hide_score eq 'N' ||
+				   ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				     $timeNow > $tmplSet->answer_date ) ) );
 		}
 	} elsif (between(($Set->due_date + $grace), $Set->answer_date, $submitTime)) {
-		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
+		return ( $authz->hasPermissions($User->user_id, "check_answers_after_due_date")  &&
+			 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+			   $Set->hide_score eq 'N' ||
+			   ( $Set->hide_score eq 'BeforeAnswerDate' &&
+			     $timeNow > $tmplSet->answer_date ) ) );
 	} elsif (after($Set->answer_date, $submitTime)) {
-		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
+		return ( $authz->hasPermissions($User->user_id, "check_answers_after_answer_date") &&
+			 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
+			   $Set->hide_score eq 'N' || 
+			   ( $Set->hide_score eq 'BeforeAnswerDate' &&
+			     $timeNow > $tmplSet->answer_date ) ) );
 	}
+}
+
+sub can_showScore {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
+	    $tmplSet, $submitAnswers) = @_;
+	my $authz = $self->r->authz;
+
+	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
+
+	return( $authz->hasPermissions($User->user_id,"view_hidden_work") ||
+		$Set->hide_score eq 'N' ||
+		( $Set->hide_score eq 'BeforeAnswerDate' && 
+		  $timeNow > $tmplSet->answer_date ) );
 }
 
 ################################################################################
@@ -839,8 +878,9 @@ sub pre_header_initialize {
 	 checkAnswers       => $self->can_checkAnswers(@args),
 	 recordAnswersNextTime => $self->can_recordAnswers(@args, $sAns),
 	 checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
+	 showScore          => $self->can_showScore(@args),
 	);
-	 
+
   # final values for options
 #     warn("back - next time, " . $can{recordAnswersNextTime} . "\n");
     my %will;
@@ -1504,12 +1544,13 @@ sub body {
 	}
 	print CGI::end_div();
 
-	print "The test (which is number $versionNumber) may no " .
-	    "longer be submitted for a grade, but you may still " .
-	    "check your answers." if ( $canShowWork );
+	if ( $canShowWork ) {
+	    print "The test (which is number $versionNumber) may no " .
+		"longer be submitted for a grade";
+	    print "" . (($canShowScores) ? ", but you may still " .
+		"check your answers." : ".") ;
 
 	# print a "printme" link if we're allowed to see our work
-	if ( $canShowWork ) {
 	    my $link = $ce->{webworkURLs}->{root} . '/' . $ce->{courseName} . 
 		'/hardcopy/' . $set->set_id . ',v' . $set->version_id . '/?' . 
 		$self->url_authen_args;
@@ -1645,8 +1686,8 @@ sub body {
 		    }
 		    $resultsTable = 
 			$self->attemptResults($pg, 1, $will{showCorrectAnswers},
-					      $pg->{flags}->{showPartialCorrectAnswers},
-					      1, 1);
+					      $pg->{flags}->{showPartialCorrectAnswers} && $can{showScore},
+					      $can{showScore}, 1);
 		
             # FIXME: debug.  do we want || will{checkanswers} too?  it gets 
             #    the case of checking answers and then switching pages of a 
@@ -1658,8 +1699,8 @@ sub body {
 
 		    $resultsTable = 
 			$self->attemptResults($pg, 1, $will{showCorrectAnswers},
-					      $pg->{flags}->{showPartialCorrectAnswers},
-					      1, 1);
+					      $pg->{flags}->{showPartialCorrectAnswers} && $can{showScore},
+					      $can{showScore}, 1);
 
 		} elsif ( $previewAnswers ) {
 		    $recordMessage = 

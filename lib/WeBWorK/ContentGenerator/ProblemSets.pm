@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.85 2007/03/09 21:08:08 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.86 2007/03/13 15:44:21 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -365,11 +365,12 @@ sub setListRow {
 		}
 	} else {
 		if ( $gwtype < 2 ) {
+			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
 			$control = CGI::radio_group(
 				-name=>"selected_sets",
-				-values=>[$name . ($gwtype ? ",v" . $set->version_id : '')],
+				-values=>[$n],
 				-default=>"-",
-				-labels=>{$name => ""},
+				-labels=>{$n => ""},
 			);
 		} else {
 			$control = '&nbsp;';
@@ -469,7 +470,7 @@ sub setListRow {
 
 			if ( $authz->hasPermissions($user, "view_hidden_work") || 
 			     ( $set->hide_score() eq 'N' || 
-			       $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
+			       ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) ) {
 			# find score
 
 			# DBFIXME we can do this math in the database, i think
