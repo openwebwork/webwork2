@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.8 2006/12/01 16:45:35 glarose Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.9 2007/03/09 21:07:35 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -206,7 +206,7 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 	}
 };
 
-$DB_VERSIONS[++$i]{desc} = "updates hide_score and hide_work in set and set_user tables to allow more possible values";
+$DB_VERSIONS[++$i]{desc} = "updates hide_score and hide_work in set and set_user tables to allow more (and more descriptive) possible values";
 $DB_VERSIONS[  $i]{course_code} = sub {
 	my $course = shift;
 	if ( exists $sql_tables{"${course}_set"} ) {
@@ -229,6 +229,20 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `time_limit_cap` ENUM('0','1')");
 	}
 };
+
+$DB_VERSIONS[++$i]{desc} = "updates hide_score and hide_work in set and set_user tables to have more descriptive values, set default values";
+$DB_VERSIONS[  $i]{course_code} = sub {
+	my $course = shift;
+	if ( exists $sql_tables{"${course}_set"} ) {
+		$dbh->do("ALTER TABLE `${course}_set` MODIFY COLUMN `hide_score` ENUM('N','Y','BeforeAnswerDate') DEFAULT 'N'");
+		$dbh->do("ALTER TABLE `${course}_set` MODIFY COLUMN `hide_work` ENUM('N','Y','BeforeAnswerDate') DEFAULT 'N'");
+	}
+	if ( exists $sql_tables{"${course}_set_user"} ) {
+		$dbh->do("ALTER TABLE `${course}_set_user` MODIFY COLUMN `hide_score` ENUM('N','Y','BeforeAnswerDate') DEFAULT 'N'");
+		$dbh->do("ALTER TABLE `${course}_set_user` MODIFY COLUMN `hide_work` ENUM('N','Y','BeforeAnswerDate') DEFAULT 'N'");
+	}
+};
+
 
 our $THIS_DB_VERSION = $i;
 
