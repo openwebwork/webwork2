@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.37 2007/03/08 21:50:05 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.38 2007/03/09 21:09:02 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1317,8 +1317,8 @@ sub body {
 ####################################
 
 # some convenient output variables
-    my $canShowScores = (! $set->hide_score || ($set->hide_score eq '2' && $timeNow>$tmplSet->due_date));
-    my $canShowWork = (! $set->hide_work || ($set->hide_work eq '2' && $timeNow>$tmplSet->due_date));
+    my $canShowScores = $authz->hasPermissions($user, "view_hidden_work") || ( $set->hide_score eq 'N' || ($set->hide_score eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date) );
+    my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") || ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
 #     warn("canshowscores = $canShowScores; set->hide_score =", $set->hide_score, "\n");
 #     warn("canshowwork = $canShowWork; set->hide_work =", $set->hide_work, "\n");

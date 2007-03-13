@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.31 2007/01/03 23:59:02 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.32 2007/03/02 21:35:13 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,6 +172,7 @@ sub displayStudentStats {
 	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
+	my $authz = $r->authz;
 	
 	my $courseName = $ce->{courseName};
 	my $studentRecord = $db->getUser($studentName); # checked
@@ -265,6 +266,16 @@ sub displayStudentStats {
 						     CGI::td({colspan=>4}, CGI::em("No versions of this assignment have been taken."))) );
 				next;
 			}
+		}
+		# if the set has hide_score set, then we need to skip printing
+		#    the score as well
+		if ( defined( $set->hide_score ) &&
+		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
+		       ( $set->hide_score eq 'Y' || 
+			 $set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date ) ) ) {
+			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp("${setID}_(test_" . $set->version_id . ")")), 
+					     CGI::td({colspan=>4}, CGI::em("Display of scores for this set is not allowed."))) );
+			next;
 		}
 
 		# otherwise, if it's a gateway, adjust the act-as url
@@ -372,6 +383,9 @@ sub displayStudentStats {
 
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+
+		# prettify versioned set display
+		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
 	
 		push @rows, CGI::Tr({},
 			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
