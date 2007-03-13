@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.84 2007/03/05 23:06:34 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.85 2007/03/09 21:08:08 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -300,6 +300,8 @@ sub setListRow {
 	    $gwtype, $tmplSet) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my $user = $r->param("user");
 	my $urlpath = $r->urlpath;
 	$gwtype = 0 if ( ! defined( $gwtype ) );
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
@@ -355,7 +357,7 @@ sub setListRow {
 		if ( $gwtype < 2 ) {
 			$control = CGI::checkbox(
 				-name=>"selected_sets",
-				-value=>$name,
+				-value=>$name . ($gwtype ? ",v" . $set->version_id : ''),
 				-label=>"",
 			);
 		} else {
@@ -365,7 +367,7 @@ sub setListRow {
 		if ( $gwtype < 2 ) {
 			$control = CGI::radio_group(
 				-name=>"selected_sets",
-				-values=>[$name],
+				-values=>[$name . ($gwtype ? ",v" . $set->version_id : '')],
 				-default=>"-",
 				-labels=>{$name => ""},
 			);
@@ -465,8 +467,9 @@ sub setListRow {
 		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
 			$startTime = localtime($set->version_creation_time());
 
-			if ( ! $set->hide_score() || 
-			     $set->hide_score eq '2' && time > $tmplSet->due_date() ) {
+			if ( $authz->hasPermissions($user, "view_hidden_work") || 
+			     ( $set->hide_score() eq 'N' || 
+			       $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
 			# find score
 
 			# DBFIXME we can do this math in the database, i think
