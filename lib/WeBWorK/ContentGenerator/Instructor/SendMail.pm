@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.59 2007/03/12 19:43:06 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.60 2007/03/14 17:29:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -413,8 +413,20 @@ sub initialize {
 		# FIXME we need to do a better job providing status notifications for long-running email jobs
 		my $post_connection_action = sub {
 			my $r = shift; 
-			my $result_message = $self->mail_message_to_recipients();
-			$self->email_notification($result_message);
+			# catch exceptions generated during the sending process
+			my $result_message = eval { $self->mail_message_to_recipients() };
+			if ($@) {
+				# add the die message to the result message
+				$result_message = "An error occurred while trying to send email.\n"
+					. "The error message is:\n\n$@\n\n";
+				# and also write it to the apache log
+				$self->r->log->error("An error occurred while trying to send email: $@");
+			}
+			# this could fail too...
+			eval { $self->email_notification($result_message) };
+			if ($@) {
+				$self->r->log->error("An error occured while trying to send the email notification: $@");
+			}
 		};
 		if (MP2) {
 			$r->connection->pool->cleanup_register($post_connection_action);
@@ -763,6 +775,7 @@ sub mail_message_to_recipients {
 	my $merge_file            = $self->{merge_file};  
 	my $result_message        = '';
 	my $failed_messages        = 0;
+	die "this is a fatal error -- will i get to see it?";
 	foreach my $recipient (@recipients) {
 			# warn "FIXME sending email to $recipient";
 			my $error_messages = '';
