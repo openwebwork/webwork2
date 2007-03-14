@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.61 2007/03/14 22:50:36 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.62 2007/03/14 23:38:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -506,7 +506,7 @@ sub print_preview {
 	   $msg , "\n"
 	);
 
-	return join("", '<pre>',$msg,"\n","\n",
+	return join("", '<pre>',wrap("","",$msg),"\n","\n",
 				   '</pre>', 
 				   CGI::p('Use browser back button to return from preview mode'),
 				   CGI::h3('Emails to be sent to the following:'), 
