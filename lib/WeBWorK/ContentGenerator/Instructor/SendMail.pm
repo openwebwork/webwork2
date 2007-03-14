@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.58 2007/02/14 19:29:32 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.59 2007/03/12 19:43:06 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
+use Email::Address;
 use HTML::Entities;
 use Mail::Sender;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
@@ -78,8 +79,8 @@ sub initialize {
 	my $ur = $self->{db}->getUser($user);
 
 	# store data
-	$self->{defaultFrom}            =   $ur->email_address . " (".$ur->first_name." ".$ur->last_name.")";
-	$self->{defaultReply}           =   $ur->email_address;
+	$self->{defaultFrom}            =   $ur->rfc822_mailbox;
+	$self->{defaultReply}           =   $ur->rfc822_mailbox;
 	$self->{defaultSubject}         =   $self->r->urlpath->arg("courseID") . " notice";
 
 	$self->{rows}                   =   (defined($r->param('rows'))) ? $r->param('rows') : $ce->{mail}->{editor_window_rows};
@@ -367,36 +368,58 @@ sub initialize {
 		$self->{response}         = 'preview';
 	
 	} elsif ($action eq 'Send Email') {
-		$self->{response}         = 'send_email';
-	    
+		# verify format of From address (one valid rfc2822 address)
+		my @parsed_from_addrs = Email::Address->parse($self->{from});
+		unless (@parsed_from_addrs == 1) {
+			$self->addbadmessage("From field must contain one valid email address.");
+			return;
+		}
+		
+		# verify format of Reply-to address (zero or more valid rfc2822 addresses)
+		if (defined $self->{replyTo} and $self->{replyTo} ne "") {
+			my @parsed_replyto_addrs = Email::Address->parse($self->{replyTo});
+			unless (@parsed_replyto_addrs > 0) {
+				$self->addbadmessage("Invalid Reply-to address.");
+				return;
+			}
+		}
+		
 	    # check that recipients have been selected.
 		my @recipients            = @{$self->{ra_send_to}};
-		if (@recipients) {
-			#  get merge file
-			my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
-			my $delimiter       = ',';
-			my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
-			unless (ref($rh_merge_data) ) {
-				$self->addbadmessage(CGI::p("No merge data file"));
-				$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
-				return;
-			} ;
-			if (@recipients) {
-				$self->{rh_merge_data} = $rh_merge_data;
-				$self->{smtpServer}    = $ce->{mail}->{smtpServer};
-				my $post_connection_action = sub {
-					my $r = shift; 
-					my $result_message = $self->mail_message_to_recipients();
-					$self->email_notification($result_message);
-				};
-				if (MP2) {
-					$r->connection->pool->cleanup_register($post_connection_action);
-				} else {
-					$r->post_connection($post_connection_action);
-				}
-			}
-		} else {
+		unless (@recipients) {
 			$self->addbadmessage(CGI::p("No recipients selected. Please select one or more recipients from the list below."));
+			return;
+		}
+		
+		#  get merge file
+		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+		my $delimiter       = ',';
+		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+		unless (ref($rh_merge_data) ) {
+			$self->addbadmessage(CGI::p("No merge data file"));
+			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+			return;
+		} ;
+		$self->{rh_merge_data} = $rh_merge_data;
+		
+		# we don't set the response until we're sure that email can be sent
+		$self->{response}         = 'send_email';
+		
+		# FIXME i'm not sure why we're pulling this out here -- mail_message_to_recipients does have
+		# access to the course environment and should just grab it directly
+		$self->{smtpServer}    = $ce->{mail}->{smtpServer};
+		
+		# do actual mailing in the cleanup phase, since it could take a long time
+		# FIXME we need to do a better job providing status notifications for long-running email jobs
+		my $post_connection_action = sub {
+			my $r = shift; 
+			my $result_message = $self->mail_message_to_recipients();
+			$self->email_notification($result_message);
+		};
+		if (MP2) {
+			$r->connection->pool->cleanup_register($post_connection_action);
+		} else {
+			$r->post_connection($post_connection_action);
 		}
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
