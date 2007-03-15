@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.96 2007/03/06 22:02:28 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.97 2007/03/07 17:43:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1378,7 +1378,8 @@ sub getProblemVersions {
 sub getAllProblemVersions {
 	my ( $self, $userID, $setID, $versionID ) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
 	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
-	return $self->{problem_version_merged}->get_records_where($where);
+	my $order = ["problem_id"];
+	return $self->{problem_version_merged}->get_records_where($where,$order);
 }
 
 
@@ -1515,7 +1516,8 @@ sub getMergedProblemVersions {
 sub getAllMergedProblemVersions {
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
 	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
-	return $self->{problem_version_merged}->get_records_where($where);
+	my $order = ["problem_id"];
+	return $self->{problem_version_merged}->get_records_where($where,$order);
 }
 
 ################################################################################
