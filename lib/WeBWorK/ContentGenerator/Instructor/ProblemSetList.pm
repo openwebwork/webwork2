@@ -211,16 +211,23 @@ use constant  FIELD_PROPERTIES => {
 		size => 10,
 		access => "readonly",
 	},
+	# hide_score and hide_work should be drop down selects with 
+	#    options 'N', 'Y' and 'BeforeAnswerDate'
 	hide_score => {
-		type => "checked",
-		size => 4,
+		type => "text",
+		size => 16,
 		access => "readwrite",
 	},	
 	hide_work => {
+		type => "text",
+		size => 16,
+		access => "readwrite",
+	},
+	time_limit_cap => {
 		type => "checked",
 		size => 4,
 		access => "readwrite",
-	},	
+	},
 };
 
 sub pre_header_initialize {
@@ -1416,7 +1423,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1455,6 +1462,7 @@ sub importSetsFromDef {
 		$newSetRecord->problems_per_page($problemsPerPage);
 		$newSetRecord->hide_score($hideScore);
 		$newSetRecord->hide_work($hideWork);
+		$newSetRecord->time_limit_cap($timeCap);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
@@ -1509,10 +1517,10 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage ) = 
-		 ('')x6;  # initialize these to ''
+	     $problemsPerPage, $timeCap ) = 
+		 ('')x7;  # initialize these to ''
 # additional fields currently used only by gateways; later, the world?
-	my ( $hideScore, $hideWork ) = ( 0, 0 );
+	my ( $hideScore, $hideWork, ) = ( 0, 0 );
 
 	my %setInfo;
 	if ( open (SETFILENAME, "$filePath") )    {
@@ -1562,9 +1570,11 @@ sub readSetDef {
 			} elsif ($item eq 'problemsPerPage') {
 				$problemsPerPage = $value;
 			} elsif ($item eq 'hideScore') {
-				$hideScore = ( $value ) ? 1 : 0;
+				$hideScore = ( $value ) ? $value : 'N';
 			} elsif ($item eq 'hideWork') {
-				$hideWork = ( $value ) ? 1 : 0;
+				$hideWork = ( $value ) ? $value : 'N';
+			} elsif ($item eq 'capTimeLimit') {
+				$timeCap = ( $value ) ? 1 : 0;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -1592,6 +1602,25 @@ sub readSetDef {
 		$versionTimeLimit = WeBWorK::Utils::timeToSec($versionTimeLimit)
 		    if ( $versionTimeLimit );
 
+		# check that the values for hideWork and hideScore are valid
+		if ( $hideScore ne 'N' && $hideScore ne 'Y' && 
+		     $hideScore ne 'BeforeAnswerDate' ) {
+			warn("The value $hideScore for the hideScore option " .
+			     "is not valid; it will be replaced with 'N'.\n");
+			$hideScore = 'N';
+		}
+		if ( $hideWork ne 'N' && $hideWork ne 'Y' && 
+		     $hideWork ne 'BeforeAnswerDate' ) {
+			warn("The value $hideWork for the hideWork option " .
+			     "is not valid; it will be replaced with 'N'.\n");
+			$hideWork = 'N';
+		}
+		if ( $timeCap ne '0' && $timeCap ne '1' ) {
+			warn("The value $timeCap for the capTimeLimit option " .
+			     "is not valid; it will be replaced with '0'.\n");
+			$timeCap = '0';
+		}
+		
 		#####################################################################
 		# Read and check list of problems for the set
 		#####################################################################
@@ -1632,6 +1661,7 @@ sub readSetDef {
 		 $problemsPerPage, 
 		 $hideScore,
 		 $hideWork,
+		 $timeCap,
 		);
 	} else {
 		warn "Can't open file $filePath\n";
@@ -1641,7 +1671,6 @@ sub readSetDef {
 sub exportSetsToDef {
     	my ($self, %filenames) = @_;
 
-# FIXME: gateway fields are currently not exported
 	my $r        = $self->r;
 	my $ce       = $r->ce;
 	my $db       = $r->db;
@@ -1695,17 +1724,43 @@ SET:	foreach my $set (keys %filenames) {
 			my $max_attempts  = $problemRecord->max_attempts();
 			$problemList     .= "$source_file, $value, $max_attempts \n";
 		}
+
+		# gateway fields
+		my $assignmentType = $setRecord->assignment_type;
+		my $gwFields = '';
+		if ( $assignmentType =~ /gateway/ ) {
+		    my $attemptsPerV = $setRecord->attempts_per_version;
+		    my $timeInterval = $setRecord->time_interval;
+		    my $vPerInterval = $setRecord->versions_per_interval;
+		    my $vTimeLimit   = $setRecord->version_time_limit;
+		    my $probPerPage  = $setRecord->problems_per_page;
+		    my $hideScore    = $setRecord->hide_score;
+		    my $hideWork     = $setRecord->hide_work;
+		    my $timeCap      = $setRecord->time_limit_cap;
+		    $gwFields =<<EOG;
+
+assignmentType      = $assignmentType
+attemptsPerVersion  = $attemptsPerV
+timeInterval        = $timeInterval
+versionsPerInterval = $vPerInterval
+versionTimeLimit    = $vTimeLimit
+problemsPerPage     = $probPerPage
+hideScore           = $hideScore
+hideWork            = $hideWork
+capTimeLimit        = $timeCap
+EOG
+		}
+
 		my $fileContents = <<EOF;
 
 openDate          = $openDate
 dueDate           = $dueDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
-screenHeaderFile  = $setHeader
+screenHeaderFile  = $setHeader$gwFields
 problemList       = 
 
 $problemList
-
 
 
 EOF
