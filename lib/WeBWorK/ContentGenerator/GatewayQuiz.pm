@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.39 2007/03/13 15:44:21 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.40 2007/03/13 21:18:18 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory before after between);
+	ref2string makeTempDirectory sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
@@ -453,18 +453,6 @@ sub pre_header_initialize {
     my $effectiveUserName = $r->param('effectiveUser');
     my $key = $r->param('key');
 
-# this is a hack manage previewing a page.  we set previewAnswers to 
-# yes if any of the following are true:
-#  1. the "previewAnswers" input is set (the "preview" button was clicked),
-#  2. the "previewHack" input is set (a preview link was used), or 
-#  3. the "previewingAnswersNow" and "newPage" inputs are set (the page
-#     is currently being previewed, and we're switching pages)
-    my $prevOr = $r->param('previewAnswers') || $r->param('previewHack') ||
-	($r->param('previewingAnswersNow') && $r->param('newPage'));
-    $r->param('previewAnswers', $prevOr) if ( defined( $prevOr ) );
-
-# we similarly hack checkAnswers, below
-
     my $User = $db->getUser($userName);
     die "record for user $userName (real user) does not exist." 
 	unless defined $User;
@@ -800,6 +788,16 @@ sub pre_header_initialize {
     my $newPage = $r->param("newPage");
     $self->{newPage} = $newPage;
 
+  # also get the current page, if it's given
+    my $currentPage = $r->param("currentPage") || 1;
+
+  # this is a hack manage previewing a page.  we set previewAnswers to 
+  # yes if either of the following are true:
+  #  1. the "previewAnswers" input is set (the "preview" button was clicked),
+  #  or 2. the "previewHack" input is set (a preview link was used)
+    my $prevOr = $r->param('previewAnswers') || $r->param('previewHack');
+    $r->param('previewAnswers', $prevOr) if ( defined( $prevOr ) );
+
 # *BeginPPM* ###################################################################
 
   # set options from form fields (see comment at top of file for names)
@@ -843,12 +841,14 @@ sub pre_header_initialize {
     my %want = 
 	(showOldAnswers     => $r->param("showOldAnswers") || 
 	                       $ce->{pg}->{options}->{showOldAnswers},
-  	 showCorrectAnswers => $r->param("showCorrectAnswers") || 
- 	                       $ce->{pg}->{options}->{showCorrectAnswers},
+  	 showCorrectAnswers => ($r->param("showCorrectAnswers") || 
+ 	                       $ce->{pg}->{options}->{showCorrectAnswers}) &&
+                               ($submitAnswers || $checkAnswers),
 	 showHints          => $r->param("showHints") || 
 		               $ce->{pg}->{options}->{showHints},
-	 showSolutions      => $r->param("showSolutions") || 
-		               $ce->{pg}->{options}->{showSolutions},
+	 showSolutions      => ($r->param("showSolutions") || 
+		               $ce->{pg}->{options}->{showSolutions}) &&
+                               ($submitAnswers || $checkAnswers),
 	 recordAnswers      => $submitAnswers,
   # we also want to check answers if we were checking answers and are
   #    switching between pages
@@ -895,7 +895,7 @@ sub pre_header_initialize {
 ## ##### fix hint/solution options #####
 ## $can{showHints}     &&= $pg->{flags}->{hintExists}  
 ##                     &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
-## $can{showSolutions} &&= $pg->{flags}->{solutionExists};
+##    $can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
     $self->{want} = \%want;
     $self->{must} = \%must;
@@ -920,7 +920,7 @@ sub pre_header_initialize {
  # update startProb and endProb for multipage tests
     if ( defined($set->problems_per_page) && $set->problems_per_page ) {
 	$numProbPerPage = $set->problems_per_page;
-	$pageNumber = ($newPage) ? $newPage : 1;
+	$pageNumber = ($newPage) ? $newPage : $currentPage;
 
 	$numPages = scalar(@problemNumbers)/$numProbPerPage;
 	$numPages = int($numPages) + 1 if ( int($numPages) != $numPages );
@@ -978,13 +978,19 @@ sub pre_header_initialize {
 
 #
 # process the problems as needed
+    my @mergedProblems = $db->getAllMergedProblemVersions($effectiveUserName,
+							  $setName,
+							  $setVersionNumber);
     foreach my $problemNumber (sort {$a<=>$b } @problemNumbers) {
-	my $ProblemN = $db->getMergedProblemVersion($effectiveUserName,
-						    $setName,
-						    $setVersionNumber,
-						    $problemNumber);
+
     # pIndex numbers from zero
 	my $pIndex = $problemNumber - 1;
+	if ( ! defined( $mergedProblems[$pIndex] ) ) {
+	    $self->{invalidSet} = "One or more of the problems in this " .
+		"set have not been assigned to you.";
+	    return;
+	}
+	my $ProblemN = $mergedProblems[$pIndex];
 
     # sticky answers are set up here
 	if ( not ( $submitAnswers or $previewAnswers or $checkAnswers or 
@@ -995,14 +1001,11 @@ sub pre_header_initialize {
 	}
 	push( @problems, $ProblemN );
 
-    # if we don't have to translate this problem, just save the problem object
-	my $pg = $ProblemN;
+    # if we don't have to translate this problem, just save the problem number
+	my $pg = $problemNumber;
     # this is the actual translation of each problem.  errors are stored in 
     #    @{$self->{errors}} in each case
-	if ( (grep /^$pIndex$/, @probsToDisplay) || $submitAnswers || 
-	     $checkAnswers ) {
-# FIXME: debug code
-#	    warn("translating problem $pIndex (number $problemNumber)\n");
+	if ( (grep /^$pIndex$/, @probsToDisplay) || $submitAnswers ) {
 	    $pg = $self->getProblemHTML($self->{effectiveUser}, $setName,
 					$setVersionNumber, $formFields, 
 					$ProblemN);
@@ -1134,6 +1137,7 @@ sub body {
 
     my $setName  = $set->set_id;
     my $versionNumber = $set->version_id;
+    my $setVName = "$setName,v$versionNumber";
     my $numProbPerPage = $set->problems_per_page;
 
 # translation errors -- we use the same output routine as Problem.pm, but 
@@ -1162,7 +1166,6 @@ sub body {
     my @scoreRecordedMessage = ('') x scalar(@problems);
 
     if ( $submitAnswers ) {
-
 # if we're submitting answers for a proctored exam, we want to delete
 #    the proctor keys that authorized that grading, so that it isn't possible
 #    to just log in and take another proctored test without getting 
@@ -1181,15 +1184,12 @@ sub body {
 	    }
 	}
 
+	my @pureProblems = $db->getAllProblemVersions($effectiveUser,$setName,
+						      $versionNumber);
 	foreach my $i ( 0 .. $#problems ) {  # process each problem in g/w
     # this code is essentially that from Problem.pm
-	    my $pureProblem = $db->getProblemVersion($problems[$i]->user_id,
-						     $setName, $versionNumber,
-						     $problems[$i]->problem_id);
-    # this should be defined unless it's not assigned yet, in which case 
-    #    we should have die()ed earlier, but what's an extra conditional 
-    #    between friends?
-	    if ( defined( $pureProblem ) ) {
+		my $pureProblem = $pureProblems[$i];
+
         # store answers in problem for sticky answers later
 		my %answersToStore;
 		my %answerHash = %{$pg_results[$i]->{answers}};
@@ -1284,41 +1284,63 @@ sub body {
 			    "recorded.";
 		    }
 		}
-	    } else {
-# I don't think this should ever happen, because we die() out of the 
-#    pre_header_initialize routine when we have the same situation
-		$scoreRecordedMessage[$i] = "Your score was not recorded, " .
-		    "because this problem set has not been assigned to you.";
-	    }
+	} # end loop through problems
+
+    } # end if submitAnswers conditional
+
+    ## finally, log student answers if we're submitting, previewing, or 
+    ##    changing pages, provided that we can record answers
+    ##    note that this should log an overtime submission (or any case
+    ##    where someone submits the test, or spoofs a request to submit
+    ##    a test)
+    if ( $submitAnswers || ( ( $previewAnswers || $newPage ) && 
+			     $can{recordAnswers} ) ) {
         # log student answers
 	    my $answer_log = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 
 	# this is carried over from Problem.pm
-	    if ( defined( $answer_log ) && defined( $pureProblem ) ) {
-		if ( $submitAnswers ) {
+	    if ( defined( $answer_log ) ) {
+		foreach my $i ( 0 .. $#problems ) {
 		    my $answerString = '';
-		    my %answerHash = %{ $pg_results[$i]->{answers} };
-            # FIXME fix carried over from Problem.pm for "line 552 error"
-
-		    foreach ( sort keys %answerHash ) {
-			my $student_ans = 
-			    $answerHash{$_}->{original_student_ans} || '';
-			$answerString .= $student_ans . "\t";
+		    my $scores = '';
+		    if ( ref( $pg_results[$probOrder[$i]] ) ) {
+			my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
+			foreach ( sortByName(undef, keys %answerHash) ) {
+			    my $sAns = $answerHash{$_}->{original_student_ans} || '';
+			    $answerString .= $sAns . "\t";
+			    $scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
+			}
+		    } else {
+			my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
+			my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
+			foreach ( @fields ) {
+			    $answerString .= $self->{formFields}->{$_} . "\t";
+			    $scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
+			}
 		    }
-		    $answerString = '' unless defined( $answerString );
+		    $answerString =~ s/\t+$/\t/;
+
+		    my $answerPrefix;
+		    if ( $submitAnswers )     { $answerPrefix = "[submit] ";  }
+		    elsif ( $previewAnswers ) { $answerPrefix = "[preview] "; }
+		    else                      { $answerPrefix = "[newPage] "; }
+		    warn("i, order, string = $i, $probOrder[$i], $answerString<\n");
+		    if ( ! $answerString || $answerString =~ /^\t$/ ) {
+			$answerString = "$answerPrefix" . "No answer entered\t";
+		    } else {
+			$answerString = "$answerPrefix$answerString";
+		    }
 
 		    writeCourseLog( $self->{ce}, "answer_log",
 				    join("", '|', $problems[$i]->user_id,
-					     '|', $problems[$i]->set_id,
-					     '|', $problems[$i]->problem_id,
-					     '|', "\t$timeNow\t",
-					     $answerString), 
+					     '|', $setVName,
+					     '|', ($i+1), '|', $scores, 
+					     "\t$timeNow\t",
+					     "$answerString"), 
 				    );
 		}
 	    }
-	} # end loop through problems
-
-    } # end if submitAnswers conditional
+    }
     debug("end answer processing");
 
 # additional set-level database manipulation: we want to save the time 
@@ -1363,37 +1385,46 @@ sub body {
 #     warn("canshowscores = $canShowScores; set->hide_score =", $set->hide_score, "\n");
 #     warn("canshowwork = $canShowWork; set->hide_work =", $set->hide_work, "\n");
 
-# figure out recorded score for the set, if any, and score on this attempt
+# for nicer answer checking on multi-page tests, we want to keep track of 
+#    any changes that someone made to a different page, and what their score
+#    was.  we use @probStatus to do this.  we initialize this to any known
+#    scores, and then update this when calculating the score for checked or
+#    submitted tests
+    my @probStatus = ();
+# we also figure out recorded score for the set, if any, and score on this 
+#    attempt
     my $recordedScore = 0;
     my $totPossible = 0;
     foreach ( @problems ) {
 	$totPossible += $_->value();
-	$recordedScore += $_->{status}*$_->value() if ( defined( $_->status ) );
+	$recordedScore += $_->status*$_->value() if ( defined( $_->status ) );
+	push( @probStatus, ($r->param("probstatus" . $_->problem_id) ||
+			    $_->status || 0) );
     }
-
-# a handy noun for when referring to a test
-    my $testNoun = ( $set->attempts_per_version > 1 ) ? "submission" : "test";
-    my $testNounNum = ( $set->attempts_per_version > 1 ) ? 
-	"submission (test " : "test (";
 
 # to get the attempt score, we have to figure out what the score on each
 # part of each problem is, and multiply the total for the problem by the 
-# weight (value) of the problem.  it seems this should be easier to work 
-# out than this.
+# weight (value) of the problem.  to make things even more interesting, we
+# are avoiding translating all of the problems when checking answers
     my $attemptScore = 0;
-# FIXME: debug.  should this be if ( submit || check ) or if (will...)?
-#     it gets the case of checking answers and then switching pages of a 
-#     multipage test
-#    if ( $submitAnswers || $checkAnswers ) {
-    if ( $submitAnswers || ( $checkAnswers || $will{checkAnswers} ) ) {
+
+    if ( $submitAnswers || $checkAnswers ) {
 	my $i=0;
 	foreach my $pg ( @pg_results ) {
 	    my $pValue = $problems[$i]->value();
 	    my $pScore = 0;
 	    my $numParts = 0;
-	    foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
-		$pScore += $pg->{answers}->{$_}->{score};
-		$numParts++;
+	    if ( ref( $pg ) ) {  # then we have a pg object
+		foreach ( @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} ) {
+		    $pScore += $pg->{answers}->{$_}->{score};
+		    $numParts++;
+		}
+		$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+
+	    } else {
+		# if we don't have a pg object, use any known problem status
+		#    (this defaults to zero)
+		$pScore = $probStatus[$i];
 	    }
 	    $attemptScore += $pScore*$pValue/($numParts > 0 ? $numParts : 1);
 	    $i++;
@@ -1422,6 +1453,11 @@ sub body {
 	$Problem->num_incorrect - 
 	($submitAnswers && $will{recordAnswers} ? 1 : 0);
     my $attemptNumber = $Problem->num_correct + $Problem->num_incorrect;
+
+# a handy noun for when referring to a test
+    my $testNoun = ( $set->attempts_per_version > 1 ) ? "submission" : "test";
+    my $testNounNum = ( $set->attempts_per_version > 1 ) ? 
+	"submission (test " : "test (";
 
 ##### start output of test headers: 
 ##### display information about recorded and checked scores
@@ -1468,9 +1504,7 @@ sub body {
 	    print CGI::end_div();
 	}
 
-# FIXME: debug.  do we want || will{checkanswers} too?  it gets the case
-#    of checking answers and then switching pages of a multipage test
-    } elsif ( $checkAnswers || $will{checkAnswers} ) {
+    } elsif ( $checkAnswers ) {
 	if ( $canShowScores ) {
 	    print CGI::start_div({class=>'gwMessage'});
 	    print CGI::strong("Your score on this (checked, not ",
@@ -1515,12 +1549,9 @@ sub body {
 			  "test.");
 	}
     } else {
-    # FIXME: debug.  should this include the will{checkAnswers}?  this gets
-    #    the case of going between pages of a multipage test
-
 	print CGI::start_div({class=>'gwMessage'});
 
-	if ( ! ($checkAnswers || $will{checkAnswers}) && ! $submitAnswers ) {
+	if ( ! $checkAnswers && ! $submitAnswers ) {
 
 	    if ( $canShowScores ) {
 		my $scMsg = "Your recorded score on this test (number " .
@@ -1592,8 +1623,10 @@ sub body {
 # hacks to use a javascript link to trigger previews and jump to 
 # subsequent pages of a multipage test
 	print CGI::hidden({-name=>'previewHack', -value=>''}), CGI::br();
-	print CGI::hidden({-name=>'newPage', -value=>''}) 
-	    if ( $numProbPerPage && $numPages > 1 );
+	if ( $numProbPerPage && $numPages > 1 ) { 
+	    print CGI::hidden({-name=>'newPage', -value=>''});
+	    print CGI::hidden({-name=>'currentPage',-value=>$pageNumber});
+	}
 
 # the link for a preview; for a multipage test, this also needs to 
 # keep track of what page we're on
@@ -1689,10 +1722,7 @@ sub body {
 					      $pg->{flags}->{showPartialCorrectAnswers} && $can{showScore},
 					      $can{showScore}, 1);
 		
-            # FIXME: debug.  do we want || will{checkanswers} too?  it gets 
-            #    the case of checking answers and then switching pages of a 
-	    #    multipage test
-		} elsif ( $checkAnswers || $will{checkAnswers} ) {
+		} elsif ( $checkAnswers ) {
 		    $recordMessage = CGI::span({class=>"resultsWithError"},
 					       "ANSWERS ONLY CHECKED -- ", 
 					       "ANSWERS NOT RECORDED");
@@ -1727,6 +1757,10 @@ sub body {
 		print $resultsTable if $resultsTable; 
 
 		print CGI::end_div();
+# finally, store the problem status for continued attempts recording
+		my $pNum = $probOrder[$i] + 1;
+		print CGI::hidden({-name=>"probstatus$pNum",
+				   -value=>$probStatus[$probOrder[$i]]});
 
 		print "\n", CGI::hr(), "\n";
 	    } else {
@@ -1734,12 +1768,17 @@ sub body {
 # keep the jump to anchors so that jumping to problem number 6 still
 # works, even if we're viewing only problems 5-7, etc.
 		print CGI::a({-name=>"#$i1"},""), "\n";
+# and print out hidden fields with the current last answers
 		my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
 		my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
 		foreach my $curr_field ( @curr_fields ) {
 		    print CGI::hidden({-name=>$curr_field, 
 				       -value=>$self->{formFields}->{$curr_field}});
 		}
+# finally, store the problem status for continued attempts recording
+		my $pNum = $probOrder[$i] + 1;
+		print CGI::hidden({-name=>"probstatus$pNum",
+				   -value=>$probStatus[$probOrder[$i]]});
 # 	    my $probid = 'Q' . sprintf("%04d", $probOrder[$i]+1) . "_AnSwEr1";
 # 	    my $probval = $self->{formFields}->{$probid};
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
@@ -1770,20 +1809,6 @@ sub body {
 				);
 	}
 
-# this solution results in not being able to turn off preview or whatever
-# should we be previewing or checking answers too?  we need this to 
-# preserve state when viewing multiple page tests
-	if ( $numProbPerPage && $numPages > 1 ) {
-	    print "\n";
-	    print CGI::hidden({-name=>"previewingAnswersNow", 
-			       -value=>"1"}), "\n" if $previewAnswers;
-	    print CGI::hidden({-name=>"checkingAnswersNow", 
-			       -value=>"1"}), "\n" if $checkAnswers || $submitAnswers;
-# should we allow this too?
-# 	print CGI::hidden({-name=>"submittingAnswersNow", 
-#                          -value=>"1"}), "\n" if $submitAnswers;
-	}
-	
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
 	    print CGI::br();
 	}
@@ -1807,6 +1832,25 @@ sub body {
 
 	print CGI::endform();
     }
+
+# finally, put in a show answers option if appropriate
+# print answer inspection button
+	if ($authz->hasPermissions($user, "view_answers")) {
+		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers",
+		courseID => $ce->{courseName});
+		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
+		print "\n",
+			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
+			$self->hidden_authen_fields,"\n",
+			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
+			CGI::hidden(-name => 'problemID', -value=>($startProb+1)), "\n",
+			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
+			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
+			CGI::p( {-align=>"left"},
+				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+			), "\n",
+			CGI::endform();
+	}
 
 # debugging verbiage
 #     if ( $can{checkAnswersNextTime} ) {
