@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.89 2007/03/13 15:45:31 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.90 2007/03/13 21:18:18 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -91,11 +91,20 @@ our %HC_FORMATS = (
 #   DB.pm to use, and to indicate what problem number in a versioned 
 #   test we're on
 #
+# mergedSets
+#   a reference to a hash { userID!setID => setObject }, where setID is 
+#   either the set id or the fake versioned set id "setName,vN" depending 
+#   on whether the set is a versioned set or not.  this may include the 
+#   sets for which the hardcopy is being generated (or may not), depending
+#   on whether they were needed to determine the required permissions for 
+#   generating a hardcopy
+#
 # canShowScore
-#   a reference to a hash { setID => boolean }, where setID is either the set 
-#   id or the fake versioned set id "setName,vN" depending on whether the 
-#   set is a versioned set or not, and the value of the boolean is determined 
-#   by the corresponding userSet's value of hide_score and the current time
+#   a reference to a hash { userID!setID => boolean }, where setID is either 
+#   the set id or the fake versioned set id "setName,vN" depending on whether 
+#   the set is a versioned set or not, and the value of the boolean is 
+#   determined by the corresponding userSet's value of hide_score and the 
+#   current time
 
 ################################################################################
 # UI subroutines
