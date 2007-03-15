@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.185 2007/03/06 01:34:16 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.186 2007/03/13 15:40:56 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,7 +30,7 @@
 # Set these variables to correspond to your configuration and preferences. You
 # will need to restart the webserver to reset the variables in this section.
 
-# URL of WeBWorK handler.
+# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "".
 $webwork_url         = "/webwork2";
 
 # Root directory of PG.

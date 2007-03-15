@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.14 2006/09/01 17:41:24 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.15 2006/09/13 23:40:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,41 +58,42 @@ $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 #     
 #     $webwork_courses_url    The base URL of the WeBWorK courses directory.
 #     $webwork_courses_dir    The path to the WeBWorK courses directory.
-# 
-# You may add additional Apache configuration directives, but keep in mind that
-# variable names are being interpolated (i.e. $foo, @bar).
-
-$PerlConfig = <<EOF;
 
 # Define the location that is handled by the Apache::WeBWorK module, and tell
 # Perl where to find the libraries Apache::WeBWorK needs to run.
 # 
-<Location $webwork_url>
-	SetHandler perl-script
-	PerlHandler Apache::WeBWorK
-</Location>
+$Location{$webwork_url} = {
+	SetHandler => "perl-script",
+	PerlHandler => "Apache::WeBWorK",
+};
 
 # Provide access to system-wide resources.
 # 
-Alias $webwork_htdocs_url $webwork_htdocs_dir
-<Directory $webwork_htdocs_dir>
-    Order Allow,Deny
-    Allow from All
-	Options FollowSymLinks
-	AllowOverride None
-</Directory>
+push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
+$Directory{$webwork_htdocs_dir} = {
+	Order => "allow,deny",
+	Allow => [qw/from all/],
+	Options => "FollowSymLinks",
+	AllowOverride => "None",
+};
 
 # Provide access to course-specific resources.
 # 
-AliasMatch $webwork_courses_url/([^/]*)/(.*) $webwork_courses_dir/\$1/html/\$2
-<Directory $webwork_courses_dir/*/html>
-    Order Allow,Deny
-    Allow from All
-	Options FollowSymLinks
-	AllowOverride None
-</Directory>
+push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
+$Directory{"$webwork_courses_dir/*/html"} = {
+	Order => "allow,deny",
+	Allow => [qw/from all/],
+	Options => "FollowSymLinks",
+	AllowOverride => "None",
+};
 
-EOF
+# If WeBWorK is on the root, exempt the static directories from being handled
+# by Apache::WeBWorK.
+# 
+if ($webwork_url eq "") {
+	$Location{$webwork_courses_url} = { SetHandler => "None" };
+	$Location{$webwork_htdocs_url} = { SetHandler => "None" };
+}
 
 # The following stanzas can be uncommented to enable various experimental
 # WeBWorK web services. These are still in testing and have not been audited
