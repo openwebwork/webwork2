@@ -3,16 +3,22 @@
 use strict;
 use warnings;
 
-my @modulesList = qw(
+my @apache1ModulesList = qw(
 	Apache
 	Apache::Constants 
 	Apache::Cookie
 	Apache::Log
 	Apache::Request
+);
+
+my @apache2ModulesList = qw(
 	Apache2::Request
 	Apache2::Cookie
 	Apache2::ServerRec
 	Apache2::ServerUtil
+);
+
+my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
@@ -65,6 +71,20 @@ my @modulesList = qw(
 # modules used by disabled code
 #	RQP::Render (RQP)
 #	SOAP::Lite (PG::Remote)
+
+my $apache_version = shift @ARGV;
+unless (defined $apache_version and $apache_version =~ /^apache[12]$/) {
+	warn "invalid apache version specified -- assuming apache1\n";
+	warn "usage: $0 { apache1 | apache2 }\n";
+	sleep 1;
+	$apache_version = "apache1";
+}
+
+if ($apache_version eq "apache1") {
+	push @modulesList, @apache1ModulesList;
+} elsif ($apache_version eq "apache2") {
+	push @modulesList, @apache2ModulesList;
+}
 
 my @applicationsList = qw(
 	mkdir
