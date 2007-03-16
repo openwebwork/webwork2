@@ -3,6 +3,22 @@
 use strict;
 use warnings;
 
+my @applicationsList = qw(
+	mkdir
+	mv
+	mysql
+	tar
+	latex
+	pdflatex
+	dvipng
+	tth
+	giftopnm
+	ppmtopgm
+	pnmtops
+	pnmtopng
+	pngtopnm
+);
+
 my @apache1ModulesList = qw(
 	Apache
 	Apache::Constants 
@@ -86,50 +102,42 @@ if ($apache_version eq "apache1") {
 	push @modulesList, @apache2ModulesList;
 }
 
-my @applicationsList = qw(
-	mkdir
-	mv
-	mysql
-	tar
-	latex
-	pdflatex
-	dvipng
-	tth
-	giftopnm
-	ppmtopgm
-	pnmtops
-	pnmtopng
-	pngtopnm
-);
-
+my @PATH = split(/:/, $ENV{PATH});
 check_apps(@applicationsList);
+
 check_modules(@modulesList);
+
 sub check_apps {
 	my @applicationsList = @_;
 	print "\nChecking your \$PATH for executables required by WeBWorK...\n";
-	my @path = split(/:/, $ENV{PATH});
-	print "\$PATH=", shift @path, "\n";
-	print join ("\n", map("      $_", @path)), "\n\n";
+	print "\$PATH=", shift @PATH, "\n";
+	print join ("\n", map("      $_", @PATH)), "\n\n";
 	
 	foreach my $app (@applicationsList)  {
-		my $result = `which $app`;
-		chomp($result);
-		unless ($result =~ /\s*no/) {
-			print "   $app found at $result\n";
+		my $found = which($app);
+		if ($found) {
+			print "   $app found at $found\n";
 		} else {
-			$result =~ s/\s*no//;
-			print "** $app not found in \$result\n";
+			print "** $app not found in \$PATH\n";
 		}
 	}
-	
-	print "\nLoading Perl modules required by WeBWorK...\n";
-	my @inc = @INC;
-	print "\@INC=", shift @inc, "\n";
-	print join ("\n", map("     $_", @inc)), "\n\n";
+}
+
+sub which {
+	my $app = shift;
+	foreach my $path (@PATH) {
+		return "$path/$app" if -e "$path/$app";
+	}
 }
 
 sub check_modules {
 	my @modulesList = @_;
+	
+	print "\nChecking your \@INC for modules required by WeBWorK...\n";
+	my @inc = @INC;
+	print "\@INC=", shift @inc, "\n";
+	print join ("\n", map("     $_", @inc)), "\n\n";
+	
 	foreach my $module (@modulesList)  {
 		eval "use $module";
 		if ($@) {
