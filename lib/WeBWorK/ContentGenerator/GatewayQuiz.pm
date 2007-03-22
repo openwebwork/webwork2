@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.40 2007/03/13 21:18:18 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.41 2007/03/15 22:06:16 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1324,7 +1324,7 @@ sub body {
 		    if ( $submitAnswers )     { $answerPrefix = "[submit] ";  }
 		    elsif ( $previewAnswers ) { $answerPrefix = "[preview] "; }
 		    else                      { $answerPrefix = "[newPage] "; }
-		    warn("i, order, string = $i, $probOrder[$i], $answerString<\n");
+#		    warn("i, order, string = $i, $probOrder[$i], $answerString<\n");
 		    if ( ! $answerString || $answerString =~ /^\t$/ ) {
 			$answerString = "$answerPrefix" . "No answer entered\t";
 		    } else {
