@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.14 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.15 2006/07/12 01:23:54 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,6 +33,7 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+	my $db = $r->db;
 	my $authen = $r->authen;
 	
 	# get rid of stored authentication info (this is kind of a hack. i have a better way
@@ -48,6 +49,40 @@ sub pre_header_initialize {
 		-secure => 0,
 	);
 	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+
+	my $userID = $r->param("user");
+	my $keyError = '';
+	eval { $db->deleteKey($userID) };
+	if ($@) {
+		$keyError .= "Something went wrong while logging out of " .
+			"WeBWorK: $@";
+	}
+
+	# also check to see if there is a proctor key associated with this 
+	#    login.  if there is a proctor user, then we must have a 
+	#    proctored test, so we try and delete the key
+	my $proctorID = defined($r->param("proctor_user")) ? 
+	    $r->param("proctor_user") : '';
+	if ( $proctorID ) {
+		eval { $db->deleteKey( "$userID,$proctorID" ); };
+		if ( $@ ) {
+			$keyError .= CGI::p( 
+				"Error when clearing proctor key: $@");
+		}
+	# we may also have a proctor key from grading the test
+		eval { $db->deleteKey( "$userID,$proctorID,g" ); };
+		if ( $@ ) {
+			$keyError .= CGI::p( 
+				"Error when clearing proctor grading key: $@");
+		}
+	}
+	$self->{keyError} = $keyError;
+
+	# if we have an authen redirect, all of those errors may be 
+	#    moot, but I think that's unavoidable (-glarose)
+	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
+		$self->reply_with_redirect( $authen->{redirect} );
+	}
 }
 
 ## This content generator is NOT logged in.
@@ -71,32 +106,9 @@ sub body {
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
-	
-	eval { $db->deleteKey($userID) };
-	if ($@) {
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p("Something went wrong while logging out of WeBWorK: $@")
-		);
-	}
 
-# also check to see if there is a proctor key associated with this login.  if
-#    there is a proctor user, then we must have a proctored test, so we try 
-#    and delete the key
-	my $proctorID = defined($r->param("proctor_user")) ? 
-	    $r->param("proctor_user") : '';
-	if ( $proctorID ) {
-	    eval { $db->deleteKey( "$userID,$proctorID" ); };
-	    if ( $@ ) {
-		print CGI::div({ class=> "ResultsWithError" }, 
-			       CGI::p("Error when clearing proctor key: $@"));
-	    }
-# we may also have a proctor key from grading the test
-	    eval { $db->deleteKey( "$userID,$proctorID,g" ); };
-	    if ( $@ ) {
-		print CGI::div({ class=> "ResultsWithError" }, 
-			       CGI::p("Error when clearing proctor grading " .
-				      "key: $@"));
-	    }
+	if ( $self->{keyError} ) { 
+		print CGI::div({class=>"ResultsWithError"}, $self->{keyError});
 	}
 	
 	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
