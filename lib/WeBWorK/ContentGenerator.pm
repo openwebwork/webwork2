@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.186 2006/11/13 18:05:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.187 2006/11/30 01:00:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -547,6 +547,9 @@ sub links {
 	my $setID     = $urlpath->arg("setID");
 	my $problemID = $urlpath->arg("problemID");
 	
+	my $prettySetID = $setID;
+	$prettySetID =~ s/_/ /g;
+	
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
 		# DBFIXME testing for existence by keyfields -- don't need fetch record
@@ -648,7 +651,7 @@ sub links {
 			if (defined $setID) {
 				print CGI::start_ul();
 				print CGI::start_li(); # $setID
-				print &$makelink("${pfx}ProblemSet", text=>"$setID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				# FIXME i think we only want this if the problem set is not a gateway quiz
 				if (defined $problemID) {
 					print CGI::start_ul();
@@ -683,7 +686,7 @@ sub links {
 				if (defined $setID) {
 					print CGI::start_ul();
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"$setID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
@@ -706,7 +709,7 @@ sub links {
 						print CGI::li(&$makelink("${pfx}Stats", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 					}
 					if (defined $setID) {
-						print CGI::li(&$makelink("${pfx}Stats", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
+						print CGI::li(&$makelink("${pfx}Stats", text=>"$prettySetID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
@@ -720,7 +723,7 @@ sub links {
 						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 					}
 					if (defined $setID) {
-						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$setID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
+						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$prettySetID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
