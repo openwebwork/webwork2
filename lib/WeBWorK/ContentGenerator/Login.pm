@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.43 2006/07/14 21:25:11 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.44 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -108,6 +108,11 @@ sub body {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+
+	# get the authen object to make sure that we should print
+	#    a login form or not
+	my $auth = $r->authen;
+	my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
 	
 	# get some stuff together
 	my $user = $r->param("user") || "";
@@ -130,86 +135,97 @@ sub body {
 			CGI::p($authen_error)
 		);
 	}
+
+	if ( $externalAuth ) {
+	    print CGI::p({}, CGI::b($course), "uses an external", 
+			 "authentication system.  You've authenticated",
+			 "through that system, but aren't allowed to log",
+			 "in to this course.");
+
+	} else {
+		print CGI::p({},"Please enter your username and password for ",CGI::b($course)," below:");
+		print CGI::p(dequote <<"		EOT");
+			If you check ${\( CGI::b("Remember Me") )} &nbsp;your 
+			login information will be remembered by the browser 
+			you are using, allowing you to visit WeBWorK pages 
+			without typing your user name and password (until your 
+			session expires). This feature is not safe for public 
+			workstations, untrusted machines, and machines over 
+			which you do not have direct control.
+		EOT
 	
-	print CGI::p({},"Please enter your username and password for ",CGI::b($course)," below:");
-	print CGI::p(dequote <<"	EOT");
-		If you check ${\( CGI::b("Remember Me") )} &nbsp;your login information will
-		be remembered by the browser you are using, allowing you to visit
-		WeBWorK pages without typing your user name and password (until your
-		session expires). This feature is not safe for public workstations,
-		untrusted machines, and machines over which you do not have direct
-		control.
-	EOT
-	
-	print CGI::startform({-method=>"POST", -action=>$r->uri});
+		print CGI::startform({-method=>"POST", -action=>$r->uri});
 
 	
-	# preserve the form data posted to the requested URI
-	my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
-	
-	#FIXME:  This next line can be removed in time.  MEG 1/27/2005
-	# warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
-	# the above test was an attempt to discover why "user" was being multiply defined.
-	# We caught that error, but this warning causes trouble with UserList.pm which now has 
-	# fields visible_users and prev_visible_users
-	
-	
-	# Important note. If hidden_fields is passed an empty array it prints ALL parameters as hidden fields.
-	# That is not what we want in this case, so we don't print at all if @fields_to_print is empty.
-	print $self->hidden_fields(@fields_to_print) if @fields_to_print > 0;
-	
-	print CGI::table({class=>"FormLayout"}, 
-	  CGI::Tr([
-		CGI::td([
-		  "Username:",
-		  CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
-		]),CGI::br(),
-		CGI::td([
-		  "Password:",
-		  CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
-		]),CGI::br(),
-		CGI::td([
-		  "",
-		  CGI::checkbox(
-			-name=>"send_cookie",
-			-label=>"Remember Me",
-		  ),
-		]),
-	  ])
-	);
-	
-	print CGI::input({-type=>"submit", -value=>"Continue"});
-	print CGI::endform();
-	
-	# figure out if there are any valid practice users
-	# DBFIXME do this with a WHERE clause
-	my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
-	my @GuestUsers = $db->getUsers(@guestUserIDs);
-	my @allowedGuestUsers;
-	foreach my $GuestUser (@GuestUsers) {
-		next unless defined $GuestUser->status;
-		next unless $GuestUser->status ne "";
-		push @allowedGuestUsers, $GuestUser
-			if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
-	}
-	
-	# form for guest login
-	if (@allowedGuestUsers) {
-		print CGI::startform({-method=>"POST", -action=>$r->uri});
-		
 		# preserve the form data posted to the requested URI
 		my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
-		print $self->hidden_fields(@fields_to_print);
-		
-		print CGI::p(dequote <<"		EOT");
-			This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
-			&nbsp;to log into this course as a guest.
-		EOT
-		print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
-	    
-	    print CGI::endform();
-	}
 	
+		#FIXME:  This next line can be removed in time.  MEG 1/27/2005
+		# warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
+		# the above test was an attempt to discover why "user" was 
+		# being multiply defined.  We caught that error, but this 
+		# warning causes trouble with UserList.pm which now has 
+		# fields visible_users and prev_visible_users
+	
+	
+		# Important note. If hidden_fields is passed an empty array 
+		# it prints ALL parameters as hidden fields.  That is not 
+		# what we want in this case, so we don't print at all if 
+		# @fields_to_print is empty.
+		print $self->hidden_fields(@fields_to_print) if @fields_to_print > 0;
+	
+		print CGI::table({class=>"FormLayout"}, 
+			CGI::Tr([
+				CGI::td([
+		  		"Username:",
+		  		CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
+				]),CGI::br(),
+				CGI::td([
+		  		"Password:",
+		  		CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
+				]),CGI::br(),
+				CGI::td([
+		  		"",
+		  		CGI::checkbox(
+				-name=>"send_cookie",
+				-label=>"Remember Me",
+		  		),
+				]),
+	  		])
+		);
+	
+		print CGI::input({-type=>"submit", -value=>"Continue"});
+		print CGI::endform();
+	
+		# figure out if there are any valid practice users
+		# DBFIXME do this with a WHERE clause
+		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
+		my @GuestUsers = $db->getUsers(@guestUserIDs);
+		my @allowedGuestUsers;
+		foreach my $GuestUser (@GuestUsers) {
+			next unless defined $GuestUser->status;
+			next unless $GuestUser->status ne "";
+			push @allowedGuestUsers, $GuestUser
+				if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
+		}
+	
+		# form for guest login
+		if (@allowedGuestUsers) {
+			print CGI::startform({-method=>"POST", -action=>$r->uri});
+		
+			# preserve the form data posted to the requested URI
+			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
+			print $self->hidden_fields(@fields_to_print);
+		
+			print CGI::p(dequote <<"			EOT");
+				This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
+				&nbsp;to log into this course as a guest.
+			EOT
+			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
+	    
+	    		print CGI::endform();
+		}
+	}
 	return "";
 }
 
