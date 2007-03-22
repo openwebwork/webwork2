@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.187 2006/11/30 01:00:15 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.188 2007/03/22 20:03:29 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -580,7 +580,7 @@ sub links {
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 		
 		defined $text or $text = $new_urlpath->name;
-		$text = sp2nbsp($text); # ugly hack to prevent text from wrapping
+		#$text = sp2nbsp($text); # ugly hack to prevent text from wrapping
 		
 		# try to set $active automatically by comparing 
 		if (not defined $active) {
@@ -957,7 +957,10 @@ sub title {
 	my $r = $self->r;
 	
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
-	print underscore2nbsp($r->urlpath->name);
+	#print underscore2nbsp($r->urlpath->name);
+	my $name = $r->urlpath->name;
+	$name =~ s/_/ /g;
+	print $name;
 	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	
 	return "";
