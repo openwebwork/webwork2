@@ -200,17 +200,17 @@ jsMath.Add(jsMath.tex2math,{
     } else {
       switch (match) {
         case '\\(':
-          if (this.search.end == null ||
-             (this.search.end != '$' && this.search.end != '$$') &&
+          if ((this.search.end == null ||
+             (this.search.end != '$' && this.search.end != '$$')) &&
               this.processSlashParens) {
             this.ScanMark('span',element,'\\)');
           }
           break;
 
         case '\\[':
-          if (this.search.end == null ||
-             (this.search.end != '$' && this.search.end != '$$') &&
-              this.processSlashBrackets) {
+          if ((this.search.end == null ||
+             (this.search.end != '$' && this.search.end != '$$')) &&
+               this.processSlashBrackets) {
             this.ScanMark('div',element,'\\]');
           }
           break;
@@ -250,7 +250,9 @@ jsMath.Add(jsMath.tex2math,{
       this.search.close = element;
       this.search.clength = match.length;
       this.search.cpos = this.pattern.lastIndex;
-      this.search.matched = 1;
+      if (match == this.inLineOpen || match == this.displayOpen) {
+        element = this.EncloseMath(element);
+      } else {this.search.matched = 1}
     } else if (match == this.inLineOpen) {
       if (this.search.matched) {element = this.EncloseMath(element)}
       this.ScanMark('span',element,this.inLineClose);
@@ -280,7 +282,7 @@ jsMath.Add(jsMath.tex2math,{
    *  SPAN or DIV element marked as CLASS="math".
    */
   EncloseMath: function (element) {
-    var search = this.search;
+    var search = this.search; search.end = null;
     var close = search.close;
     if (search.cpos == close.length) {close = close.nextSibling}
        else {close = close.splitText(search.cpos)}
@@ -347,7 +349,11 @@ jsMath.Add(jsMath.tex2math,{
   /*******************************************************************/
 
   Init: function () {
-    if (!jsMath.browser && document.all && !window.opera) {jsMath.browser = 'MSIE'}
+    if (!jsMath.browser && document.all && !window.opera) {
+      jsMath.browser = 'MSIE';
+      jsMath.platform = (navigator.platform.match(/Mac/) ? "mac" :
+                         navigator.platform.match(/Win/) ? "pc" : "unix");
+    }
     if (this.inited || !jsMath.browser) return;
     /*
      *  MSIE can't handle the DIV's properly, so we need to do it by
@@ -355,7 +361,7 @@ jsMath.Add(jsMath.tex2math,{
      *  has changed it, and get whether it is centered or indented
      *  so we can mirror that using a SPAN
      */
-    if (jsMath.browser == 'MSIE' && navigator.platform == 'Win32')
+    if (jsMath.browser == 'MSIE' && jsMath.platform == 'pc')
       {this.createMathTag = this.MSIEcreateMathTag}
     this.inited = 1;
   },

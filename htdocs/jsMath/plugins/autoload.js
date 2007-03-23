@@ -221,8 +221,9 @@ jsMath.Add(jsMath.Autoload,{
    */
   Check: function () {
     if (this.checked) return; this.checked = 1;
-    if (this.findTeXstrings || this.findLaTeXstrings ||
-        this.findCustomStrings || this.findCustomSettings) {
+    if ((this.findTeXstrings || this.findLaTeXstrings ||
+         this.findCustomStrings || this.findCustomSettings) &&
+         (!jsMath.tex2math || !jsMath.tex2math.loaded)) {
       this.Script.tex2math = 1;
       this.Script.Load('plugins/tex2math.js');
     } else {
