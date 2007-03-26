@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.188 2007/03/22 20:03:29 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.189 2007/03/22 22:37:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -548,7 +548,7 @@ sub links {
 	my $problemID = $urlpath->arg("problemID");
 	
 	my $prettySetID = $setID;
-	$prettySetID =~ s/_/ /g;
+	$prettySetID =~ s/_/ /g if defined $prettySetID;
 	
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
