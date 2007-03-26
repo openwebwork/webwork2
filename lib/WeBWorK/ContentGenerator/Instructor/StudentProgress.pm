@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.32 2006/10/02 16:59:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.33 2007/03/02 21:36:00 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -112,7 +112,9 @@ sub siblings {
 	foreach my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",
 			courseID => $courseID, setID => $setID,statType => 'set',);
-		print CGI::li({},CGI::a({href=>$self->systemLink($problemPage)}, WeBWorK::ContentGenerator::underscore2nbsp($setID)));
+		my $prettySetID = $setID;
+		$prettySetID =~ s/_/ /g;
+		print CGI::li({},CGI::a({href=>$self->systemLink($problemPage)}, $prettySetID));
 	}
 	
 	print CGI::end_ul();
@@ -222,7 +224,9 @@ sub index {
 	                                                      statType => 'set',
 	                                                      setID    => $set
 	    );
-		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, WeBWorK::ContentGenerator::underscore2nbsp($set));
+	    my $prettySetID = $set;
+	    $prettySetID =~ s/_/ /g;
+		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, $prettySetID);
 	}
 	
 	foreach my $studentRecord (@sortedStudentRecords) {
