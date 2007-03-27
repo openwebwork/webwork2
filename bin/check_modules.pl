@@ -64,6 +64,7 @@ my @modulesList = qw(
 	Mail::Sender
 	MIME::Parser
 	MIME::Base64
+	Net::IP
 	Net::LDAPS
 	Net::SMTP
 	Opcode

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.18 2006/10/31 18:53:01 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.19 2007/02/22 17:44:31 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -124,6 +124,23 @@ sub where_set_id_eq_problem_id_eq {
 sub where_user_id_eq_set_id_eq {
 	my ($self, $flags, $user_id, $set_id) = @_;
 	return {user_id=>$user_id,set_id=>$set_id};
+}
+
+# added where clauses for locations and set_locations
+
+sub where_location_id_eq { 
+	my ($self, $flags, $location_id) = @_;
+	return {location_id=>$location_id};
+}
+
+sub where_set_id_eq_location_id_eq {
+	my ($self, $flags, $set_id, $location_id) = @_;
+	return {set_id=>$set_id,location_id=>$location_id};
+}
+
+sub where_ip_mask_eq {
+	my ($self, $flags, $ip_mask) = @_;
+	return {ip_mask=>$ip_mask};
 }
 
 ################################################################################
