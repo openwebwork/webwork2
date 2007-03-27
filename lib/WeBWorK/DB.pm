@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.97 2007/03/07 17:43:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.98 2007/03/15 22:08:17 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -686,6 +686,186 @@ sub deleteKey {
 }
 
 ################################################################################
+# locations functions
+################################################################################
+# this database table is for ip restrictions by assignment
+# the locations table defines names of locations consisting of 
+#    lists of ip masks (found in the location_addresses table)
+#    to which assignments can be restricted to or denied from.
+
+BEGIN { 
+	*Location = gen_schema_accessor("locations");
+	*newLocation = gen_new("locations");
+	*countLocationsWhere = gen_count_where("locations");
+	*existsLocationWhere = gen_exists_where("locations");
+	*listLocationsWhere = gen_list_where("locations");
+	*getLocationsWhere = gen_get_records_where("locations");
+}
+
+sub countLocations { return scalar shift->listLocations(@_) }
+
+sub listLocations {
+	my ( $self ) = shift->checkArgs(\@_);
+	if ( wantarray ) {
+	    return map {@$_} $self->{locations}->get_fields_where(["location_id"]);
+	} else {
+		return $self->{locations}->count_where;
+	}
+}
+
+sub existsLocation { 
+	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
+	return $self->{locations}->exists($locationID);
+}
+
+sub getLocation { 
+	my ( $self, $locationID ) = shift->checkArgs(\@_, qw/location_id/);
+	return ( $self->getLocations($locationID) )[0];
+}
+
+sub getLocations {
+	my ( $self, @locationIDs ) = shift->checkArgs(\@_, qw/location_id*/);
+	return $self->{locations}->gets(map {[$_]} @locationIDs);
+}
+
+sub getAllLocations { 
+	my ( $self ) = shift->checkArgs(\@_);
+	return $self->{locations}->get_records_where();
+}
+
+sub addLocation { 
+	my ( $self, $Location ) = shift->checkArgs(\@_, qw/REC:locations/);
+
+	eval {
+		return $self->{locations}->add($Location);
+	};
+	if ( my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists ) {
+		croak "addLocation: location exists (perhaps you meant to use putLocation?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putLocation { 
+	my ($self, $Location) = shift->checkArgs(\@_, qw/REC:locations/);
+	my $rows = $self->{locations}->put($Location);
+	if ( $rows == 0 ) {
+		croak "putLocation: location not found (perhaps you meant to use addLocation?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteLocation {
+	# do we need to allow calls from this package?  I can't think of
+	#    any case where that would happen, but we include it for other
+	#    deletions, so I'll keep it here.
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ( $self, $locationID ) = shift->checkArgs(\@_, "location_id$U");
+	$self->deleteGlobalSetLocation(undef, $locationID);
+	$self->deleteUserSetLocation(undef, undef, $locationID);
+
+	# NOTE: the one piece of this that we don't address is if this 
+	#    results in all of the locations in a set's restriction being
+	#    cleared; in this case, we should probably also reset the 
+	#    set->restrict_ip setting as well.  but that requires going 
+	#    out and doing a bunch of manipulations that well exceed what
+	#    we want to do in this routine, so we'll assume that the user
+	#    is smart enough to deal with that on her own.
+
+	# addresses in the location_addresses table also need to be cleared
+	$self->deleteLocationAddresses($locationID, undef);
+
+	return $self->{locations}->delete($locationID);
+}
+
+################################################################################
+# location_addresses functions
+################################################################################
+# this database table is for ip restrictions by assignment
+# the location_addresses table defines the ipmasks associate 
+#    with the locations that are used for restrictions.
+
+BEGIN { 
+	*LocationAddress = gen_schema_accessor("location_addresses");
+	*newLocationAddress = gen_new("location_addresses");
+	*countLocationAddressesWhere = gen_count_where("location_addresses");
+	*existsLocationAddressWhere = gen_exists_where("location_addresses");
+	*listLocationAddressesWhere = gen_list_where("location_addresses");
+	*getLocationAddressesWhere = gen_get_records_where("location_addresses");
+}
+
+sub countAddressLocations { return scalar shift->listAddressLocations(@_) }
+
+sub listAddressLocations { 
+	my ($self, $ipmask) = shift->checkArgs(\@_, qw/ip_mask/);
+	my $where = [ip_mask_eq => $ipmask];
+	if ( wantarray ) {
+		return map {@$_} $self->{location_addresses}->get_fields_where(["location_id"],$where);
+	} else {
+		return $self->{location_addresses}->count_where($where);
+	}
+}
+
+sub countLocationAddresses { return scalar shift->listLocationAddresses(@_) }
+
+sub listLocationAddresses {
+	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
+	my $where = [location_id_eq => $locationID];
+	if ( wantarray ) { 
+		return map {@$_} $self->{location_addresses}->get_fields_where(["ip_mask"],$where);
+	} else {
+		return $self->{location_addresses}->count_where($where);
+	}
+}
+
+sub existsLocationAddress { 
+	my ($self, $locationID, $ipmask) = shift->checkArgs(\@_, qw/location_id ip_mask/);
+	return $self->{location_addresses}->exists($locationID, $ipmask);
+}
+
+# we wouldn't ever getLocationAddress or getLocationAddresses; to use those
+#   we would have to know all of the information that we're getting
+
+sub getAllLocationAddresses { 
+	my ($self, $locationID) = shift->checkArgs(\@_, qw/location_id/);
+	my $where = [location_id_eq => $locationID];
+	return $self->{location_addresses}->get_records_where($where);
+}
+
+sub addLocationAddress { 
+	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
+	croak "addLocationAddress: location ", $LocationAddress->location_id, " not found" 
+		unless $self->{locations}->exists($LocationAddress->location_id);
+	eval {
+		return $self->{location_addresses}->add($LocationAddress);
+	};
+	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+		croak "addLocationAddress: location address exists (perhaps you meant to use putLocationAddress?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putLocationAddress { 
+	my ($self, $LocationAddress) = shift->checkArgs(\@_, qw/REC:location_addresses/);
+	my $rows = $self->{location_addresses}->put($LocationAddress);
+	if ( $rows == 0 ) {
+		croak "putLocationAddress: location address not found (perhaps you meant to use addLocationAddress?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteLocationAddress { 
+	# allow for undef values
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $locationID, $ipmask) = shift->checkArgs(\@_, "location_id$U", "ip_mask$U");
+	return $self->{location_addresses}->delete($locationID, $ipmask);
+}
+
+
+################################################################################
 # set functions
 ################################################################################
 
@@ -728,6 +908,7 @@ sub addGlobalSet {
 	my ($self, $GlobalSet) = shift->checkArgs(\@_, qw/REC:set/);
 	
 	eval {
+
 		return $self->{set}->add($GlobalSet);
 	};
 	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
@@ -878,27 +1059,6 @@ sub getMergedSets {
 }
 
 ################################################################################
-# versioned set_user functions (OLD)
-################################################################################
-
-# USED IN Scoring.pm
-# in:  uid and sid are user and set ids.  the setID is the 'global' setID
-#	   for the user, not a versioned value
-# out: the latest version number of the set that has been assigned to the
-#	   user is returned.
-sub getUserSetVersionNumber {
-	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
-	# FIXME passing a literal SQL expression into SQL::Abstract prevents fieldoverride translation
-	# from occuring!
-	# FIXME the whole idea of constructing SQL here is evil and corrupt! fortunately, this will
-	# go away once we move versioned sets into their own table, which is hopefully going to happen
-	# before we want to support other RDBMSs.
-	my $field = "IFNULL(MAX(" . grok_versionID_from_vsetID_sql("set_id") . "),0)";
-	my $where = [user_id_eq_set_id_eq => $userID,$setID];
-	return ( $self->{set_version}->get_fields_where($field, $where) )[0]->[0];
-}
-
-################################################################################
 # set_version functions (NEW)
 ################################################################################
 
@@ -982,92 +1142,6 @@ sub deleteSetVersion {
 }
 
 ################################################################################
-# versioned set_merged functions (OLD)
-################################################################################
-
-# getMergedVersionedSet( self, uid, sid [, versionNum] )
-#	 in:  userID uid, setID sid, and optionally version number versionNum
-#	 out: the merged set version for the user; if versionNum is specified,
-#		  return that set version and otherwise the latest version.	 if 
-#		  no versioned set exists for the user, return undef.
-#	 note that sid can be setid,vN, thereby specifying the version number
-#	   explicitly.	if this is the case, any specified versionNum is ignored
-# we'd like to use getMergedSet to do the dirty work here, but that runs 
-#	 into problems because we want to merge with both the template set
-#	 (that is, the userSet setID) and the global set 
-sub getMergedVersionedSet {
-	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id!?/);
-	
-	# get version ID from $setID if $setID includes the version ID
-	# otherwise, use the explicit $versionID if given, or get the latest version
-	my ($using_setID, $using_versionID, $using_vsetID);
-	my ($grokked_setID, $grokked_versionID) = grok_vsetID($setID);
-	if ($grokked_versionID) {
-		# setID was versioned
-		$using_setID = $grokked_setID;
-		$using_versionID = $grokked_versionID;
-		$using_vsetID = $setID;
-	} else {
-		# setID was not versioned
-		$using_setID = $setID;
-		$using_versionID = $versionID || $self->getUserSetVersionNumber($userID, $setID);
-		$using_vsetID = make_vsetID($using_setID, $using_versionID);
-	}
-	
-	return ( $self->getMergedVersionedSets([$userID, $using_setID, $using_vsetID]) )[0];
-}
-
-sub getMergedVersionedSets {
-	my ($self, @userSetIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id vset_id/);
-
-	# these are [user_id, set_id] pairs
-	my @nonversionedUserSetIDs = map { [$_->[0], $_->[1]] } @userSetIDs;
-	
-	# these are [user_id, versioned_set_id] pairs
-	my @versionedUserSetIDs = map { [$_->[0], $_->[2]] } @userSetIDs;
-
-	# we merge the nonversioned ("template") user sets (user_id, set_id) and
-	#	 the global data into the versioned user sets		
-	debug("DB: getUserSets start (nonversioned)");
-	my @TemplateUserSets = $self->getUserSets(@nonversionedUserSetIDs);
-	
-	debug("DB: getUserSets start (versioned)");
-	# these are the actual user sets that we want to use
-	my @versionedUserSets = $self->getUserSets(@versionedUserSetIDs);
-	
-	debug("DB: pull out set IDs start");
-	my @globalSetIDs = map { $_->[1] } @userSetIDs;
-	
-	debug("DB: getGlobalSets start");
-	my @GlobalSets = $self->getGlobalSets(@globalSetIDs);
-	
-	debug("DB: calc common fields start");
-	my %globalSetFields = map { $_ => 1 } $self->newGlobalSet->FIELDS;
-	my @commonFields = grep { exists $globalSetFields{$_} } $self->newUserSet->FIELDS;
-	
-	debug("DB: merge start");
-	for (my $i = 0; $i < @TemplateUserSets; $i++) {
-		next unless( defined $versionedUserSets[$i] and 
-					 (defined $TemplateUserSets[$i] or
-					  defined $GlobalSets[$i]) );
-		foreach my $field (@commonFields) {
-			next if ( defined( $versionedUserSets[$i]->$field ) && 
-					  $versionedUserSets[$i]->$field ne '' );
-			$versionedUserSets[$i]->$field($GlobalSets[$i]->$field) if 
-				(defined($GlobalSets[$i]->$field) && 
-				 $GlobalSets[$i]->$field ne '');
-			$versionedUserSets[$i]->$field($TemplateUserSets[$i]->$field)
-				if (defined($TemplateUserSets[$i]) &&
-					defined($TemplateUserSets[$i]->$field) &&
-					$TemplateUserSets[$i]->$field ne '');
-		}
-	}
-	debug("DB: merge done!");
-		
-	return @versionedUserSets;
-}
-
-################################################################################
 # set_version_merged functions (NEW)
 ################################################################################
 
@@ -1094,6 +1168,214 @@ sub getMergedSetVersions {
 	my ($self, @setVersionIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id version_id/);
 	return $self->{set_version_merged}->gets(@setVersionIDs);
 }
+
+################################################################################
+# set_locations functions
+################################################################################
+# this database table is for ip restrictions by assignment
+# the set_locations table defines the association between a 
+#    global set and the locations to which the set may be 
+#    restricted or denied.
+
+BEGIN {
+	*GlobalSetLocation = gen_schema_accessor("set_locations");
+	*newGlobalSetLocation = gen_new("set_locations");
+	*countGlobalSetLocationsWhere = gen_count_where("set_locations");
+	*existsGlobalSetLocationWhere = gen_exists_where("set_locations");
+	*listGlobalSetLocationsWhere = gen_list_where("set_locations");
+	*getGlobalSetLocationsWhere = gen_get_records_where("set_locations");
+}
+
+sub countGlobalSetLocations { return scalar shift->listGlobalSetLocations(@_) }
+
+sub listGlobalSetLocations {
+	my ( $self, $setID ) = shift->checkArgs(\@_, qw/set_id/);
+	my $where = [set_id_eq => $setID];
+	if ( wantarray ) {
+		my $order = ['location_id'];
+		return map { @$_ } $self->{set_locations}->get_fields_where(["location_id"], $where, $order);
+	} else {
+		return $self->{set_user}->count_where( $where );
+	}
+}
+
+sub existsGlobalSetLocation { 
+	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
+	return $self->{set_locations}->exists( $setID, $locationID );
+}
+
+sub getGlobalSetLocation { 
+	my ( $self, $setID, $locationID ) = shift->checkArgs(\@_, qw/set_id location_id/);
+	return ( $self->getGlobalSetLocations([$setID, $locationID]) )[0];
+}
+
+sub getGlobalSetLocations {
+	my ( $self, @locationIDs ) = shift->checkArgsRefList(\@_, qw/set_id location_id/);
+	return $self->{set_locations}->gets(@locationIDs);
+}
+
+sub getAllGlobalSetLocations {
+	my ( $self, $setID ) = shift->checkArgs(\@_, qw/set_id/);
+	my $where = [set_id_eq => $setID];
+	return $self->{set_locations}->get_records_where( $where );
+}
+
+sub addGlobalSetLocation { 
+	my ( $self, $GlobalSetLocation ) = shift->checkArgs(\@_, qw/REC:set_locations/);
+	croak "addGlobalSetLocation: set ", $GlobalSetLocation->set_id, " not found"
+		unless $self->{set}->exists($GlobalSetLocation->set_id);
+	
+	eval {
+		return $self->{set_locations}->add($GlobalSetLocation);
+	};
+	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+		croak "addGlobalSetLocation: global set_location exists (perhaps you meant to use putGlobalSetLocation?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putGlobalSetLocation {
+	my ($self, $GlobalSetLocation) = shift->checkArgs(\@_, qw/REC:set_locations/);
+	my $rows = $self->{set_locations}->put($GlobalSetLocation); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putGlobalSetLocation: global problem not found (perhaps you meant to use addGlobalSetLocation?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteGlobalSetLocation {
+	# setID and locationID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $setID, $locationID) = shift->checkArgs(\@_, "set_id$U", "location_id$U");
+	$self->deleteUserSetLocation(undef, $setID, $locationID);
+	return $self->{set_locations}->delete($setID, $locationID);
+}
+
+################################################################################
+# set_locations_user functions
+################################################################################
+# this database table is for ip restrictions by assignment
+# the set_locations_user table defines the set_user level
+#    modifications to the set_locations defined for the 
+#    global set
+
+BEGIN {
+	*UserSetLocation = gen_schema_accessor("set_locations_user");
+	*newUserSetLocation = gen_new("set_locations_user");
+	*countUserSetLocationWhere = gen_count_where("set_locations_user");
+	*existsUserSetLocationWhere = gen_exists_where("set_locations_user");
+	*listUserSetLocationsWhere = gen_list_where("set_locations_user");
+	*getUserSetLocationsWhere = gen_get_records_where("set_locations_user");
+}
+
+sub countSetLocationUsers { return scalar shift->listSetLocationUsers(@_) }
+
+sub listSetLocationUsers {
+	my ($self, $setID, $locationID) = shift->checkArgs(\@_, qw/set_id location_id/);
+	my $where = [set_id_eq_location_id_eq => $setID,$locationID];
+	if (wantarray) {
+		return map { @$_ } $self->{set_locations_user}->get_fields_where(["user_id"], $where);
+	} else {
+		return $self->{set_locations_user}->count_where($where);
+	}
+}
+
+sub countUserSetLocations { return scalar shift->listUserSetLocations(@_) }
+
+sub listUserSetLocations {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	if (wantarray) {
+		return map { @$_ } $self->{set_locations_user}->get_fields_where(["location_id"], $where);
+	} else {
+		return $self->{set_locations_user}->count_where($where);
+	}
+}
+
+# FIXME: make these corrections in GlobalSetLocations too
+# FIXME: we won't ever use this because all fields are key fields
+sub existsUserSetLocations {
+	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, qw/user_id set_id location_id/);
+	return $self->{set_locations_user}->exists($userID,$setID,$locationID);
+}
+
+# FIXME: we won't ever use this because all fields are key fields
+sub getUserSetLocation {
+	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, qw/user_id set_id location_id/);
+	return( $self->getUserSetLocations([$userID, $setID, $locationID]) )[0];
+}
+
+# FIXME: we won't ever use this because all fields are key fields
+sub getUserSetLocations {
+	my ($self, @userSetLocationIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id location_id/);
+	return $self->{set_locations_user}->gets(@userSetLocationIDs);
+}
+
+sub getAllUserSetLocations {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+	my $where = [user_id_eq_set_id_eq => $userID,$setID];
+	return $self->{set_locations_user}->get_records_where($where);
+}
+
+sub addUserSetLocation {
+	# VERSIONING - accept versioned ID fields
+	my ($self, $UserSetLocation) = shift->checkArgs(\@_, qw/VREC:set_locations_user/);
+	
+	croak "addUserSetLocation: user set ", $UserSetLocation->set_id, " for user ", $UserSetLocation->user_id, " not found"
+		unless $self->{set_user}->exists($UserSetLocation->user_id, $UserSetLocation->set_id);
+	
+	eval {
+		return $self->{set_locations_user}->add($UserSetLocation);
+	};
+	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+		croak "addUserSetLocation: user set_location exists (perhaps you meant to use putUserSetLocation?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+# FIXME: we won't ever use this because all fields are key fields
+# versioned_ok is an optional argument which lets us slip versioned setIDs through checkArgs.
+sub putUserSetLocation {
+	my $V = $_[2] ? "V" : "";
+	my ($self, $UserSetLocation, undef) = shift->checkArgs(\@_, "${V}REC:set_locations_user", "versioned_ok!?");
+	
+	my $rows = $self->{set_locations_user}->put($UserSetLocation); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putUserSetLocation: user set location not found (perhaps you meant to use addUserSetLocation?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteUserSetLocation {
+	# userID, setID, and locationID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "set_locations_id$U");
+	return $self->{set_locations_user}->delete($userID,$setID,$locationID);
+}
+
+################################################################################
+# set_locations_merged functions
+################################################################################
+# this is different from other set_merged functions, because
+#    in this case the only data that we have are the set_id,
+#    location_id, and user_id, and we want to replace all 
+#    locations from GlobalSetLocations with those from 
+#    UserSetLocations if the latter exist.
+
+sub getAllMergedSetLocations {
+	my ($self, $userID, $setID) = shift->checkArgs(\@_, qw/user_id set_id/);
+
+	if ( $self->countUserSetLocations($userID, $setID) ) {
+		return $self->getAllUserSetLocations( $userID, $setID );
+	} else {
+		return $self->getAllGlobalSetLocations( $setID );
+	}
+}
+
 
 ################################################################################
 # problem functions
@@ -1419,70 +1701,6 @@ sub deleteProblemVersion {
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID, $setID, $versionID, $problemID) = shift->checkArgs(\@_, "user_id$U", "set_id$U", "version_id$U", "problem_id$U");
 	return $self->{problem_version}->delete($userID, $setID, $versionID, $problemID);
-}
-
-################################################################################
-# versioned problem_merged functions (OLD)
-################################################################################
-
-# this exists distinct from getMergedProblem only to be able to include the setVersionID
-sub getMergedVersionedProblem {
-	my ($self, $userID, $setID, $setVersionID, $problemID) = shift->checkArgs(\@_, qw/user_id set_id version_id problem_id/);
-	return ( $self->getMergedVersionedProblems([$userID, $setID, $setVersionID, $problemID]) )[0];
-}
-
-sub getMergedVersionedProblems {
-	my ($self, @userProblemIDs) = shift->checkArgsRefList(\@_, qw/user_id set_id vset_id problem_id/);
-	
-	debug("DB: getUserProblems start");
-	
-	# these are triples [user_id, set_id, problem_id]
-	my @nonversionedProblemIDs = map {[$_->[0],$_->[1],$_->[3]]} @userProblemIDs;
-	
-	# these are triples [user_id, versioned_set_id, problem_id]
-	my @versionedProblemIDs = map {[$_->[0],$_->[2],$_->[3]]} @userProblemIDs;
-	
-	# these are the actual user problems for the version
-	my @versionUserProblems = $self->getUserProblems(@versionedProblemIDs);
-	
-	# get global problems (no user_id, set_id = nonversioned set_id) and template
-	# problems (user_id, set_id = nonversioned set_id); we merge with both of these,
-	# replacing global values with template values and not taking either in the event
-	# that the versioned problem already has a value for the field in question
-	debug("DB: pull out set/problem IDs start");
-	my @globalProblemIDs = map { [ $_->[1], $_->[2] ] } @nonversionedProblemIDs;
-	
-	debug("DB: getGlobalProblems start");
-	my @GlobalProblems = $self->getGlobalProblems( @globalProblemIDs );
-	
-	debug("DB: getTemplateProblems start");
-	my @TemplateProblems = $self->getUserProblems( @nonversionedProblemIDs );
-	
-	debug("DB: calc common fields start");
-	my %globalProblemFields = map { $_ => 1 } $self->newGlobalProblem->FIELDS;
-	my @commonFields = grep { exists $globalProblemFields{$_} } $self->newUserProblem->FIELDS;
-	
-	debug("DB: merge start");
-	for (my $i = 0; $i < @versionUserProblems; $i++) {
-		my $UserProblem = $versionUserProblems[$i];
-		my $GlobalProblem = $GlobalProblems[$i];
-		my $TemplateProblem = $TemplateProblems[$i];
-		next unless defined $UserProblem and ( defined $GlobalProblem or
-											   defined $TemplateProblem );
-		foreach my $field (@commonFields) {
-			next if defined $UserProblem->$field && $UserProblem->$field ne '';
-			$UserProblem->$field($GlobalProblem->$field) 
-				if ( defined($GlobalProblem) && defined($GlobalProblem->$field)
-					 && $GlobalProblem->$field ne '' );
-			$UserProblem->$field($TemplateProblem->$field)
-				if ( defined($TemplateProblem) && 
-					 defined($TemplateProblem->$field) &&
-					 $TemplateProblem->$field ne '' );
-		}
-	}
-	debug("DB: merge done!");
-	
-	return @versionUserProblems;
 }
 
 ################################################################################

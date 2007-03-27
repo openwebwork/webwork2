@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.33 2007/03/01 22:07:11 glarose Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.34 2007/03/02 23:19:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,7 +17,7 @@
 
 =head1 NAME
 
-database.conf - define stantad database layouts
+database.conf - define standard database layouts
 
 =head1 SYNOPSIS
 
@@ -81,6 +81,24 @@ my %sqlParams = (
 );
 
 $dbLayouts{sql_single} = {
+        locations => {
+                record => "WeBWorK::DB::Record::Locations",
+                schema => "WeBWorK::DB::Schema::NewSQL::Std",
+                driver => "WeBWorK::DB::Driver::SQL",
+                source => $database_dsn,
+                params => { %sqlParams,
+                        non_native => 1,
+                },
+        },
+        location_addresses => {
+                record => "WeBWorK::DB::Record::LocationAddresses",
+                schema => "WeBWorK::DB::Schema::NewSQL::Std",
+                driver => "WeBWorK::DB::Driver::SQL",
+                source => $database_dsn,
+                params => { %sqlParams,
+                        non_native => 1,
+                },
+        },
 	password => {
 		record => "WeBWorK::DB::Record::Password",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
@@ -168,6 +186,24 @@ $dbLayouts{sql_single} = {
 			merge      => [qw/set_version set_user set/],
 		},
 	},
+        set_locations => {
+                record => "WeBWorK::DB::Record::SetLocations",
+                schema => "WeBWorK::DB::Schema::NewSQL::Std",
+                driver => "WeBWorK::DB::Driver::SQL",
+                source => $database_dsn,
+                params => { %sqlParams,
+                        tableOverride => "${courseName}_set_locations"
+                },
+        },
+        set_locations_user => {
+                record => "WeBWorK::DB::Record::UserSetLocations",
+                schema => "WeBWorK::DB::Schema::NewSQL::Std",
+                driver => "WeBWorK::DB::Driver::SQL",
+                source => $database_dsn,
+                params => { %sqlParams,
+                        tableOverride => "${courseName}_set_locations_user"
+                },
+        },
 	problem => {
 		record => "WeBWorK::DB::Record::Problem",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",

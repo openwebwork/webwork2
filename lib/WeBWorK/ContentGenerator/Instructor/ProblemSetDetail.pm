@@ -31,12 +31,15 @@ use WeBWorK::HTML::ComboBox qw/comboBox/;
 use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
+# IP RESTRICT
+use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_work)];
+# IP RESTRICT
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -51,7 +54,8 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are 
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published assignment_type)];
+# IP RESTRICT
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 
@@ -132,6 +136,18 @@ use constant  FIELD_PROPERTIES => {
 				1 => "Yes",
 				0 => "No",
 		},
+	},
+	restrict_ip => {
+		name      => "Restrict Access by IP",
+		type      => "choose",
+		override  => "any",
+		choices   => [qw( No RestrictTo DenyFrom )],
+		labels    => {
+				No => "No",
+				RestrictTo => "Restrict To",
+				DenyFrom => "Deny From",
+		},
+		default   => 'No',
 	},
 	assignment_type => {
 		name      => "Assignment type",
@@ -290,7 +306,14 @@ sub FieldTable {
 	my $forOneUser  = $forUsers == 1;
 
 	my @fieldOrder;
+
 	my $gwoutput = '';
+# IP RESTRICT
+	my $db = $r->{db};
+	my $ipSelector = '';
+	my $glIPlist;
+	my $orChecked;
+
 	if (defined $problemID) {
 		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
 	} else {
@@ -317,6 +340,37 @@ sub FieldTable {
 		    $gwoutput = "$gwhdr$gwoutput\n" .
 			"<!-- end gwoutput table -->\n";
 		}
+    # IP RESTRICT
+    # similarly, we only include an ip selector if restrict_ip is not 'No'
+		if ( ( ! $forUsers && $globalRecord->restrict_ip ne 'No' ) ||
+		     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
+			my @locations = sort {$a cmp $b} ($db->listLocations());
+			my @globalLocations = $db->listGlobalSetLocations($setID);
+
+			# what ip locations should be selected?
+			my @defaultLocations = ();
+			if ( $forUsers && 
+			     ! $db->countUserSetLocations($userID, $setID) ) { 
+				@defaultLocations = @globalLocations;
+				$orChecked = 0;
+			} elsif ( $forUsers ) {
+				@defaultLocations = $db->listUserSetLocations($userID, $setID);
+				$orChecked = 1;
+			} else {
+				@defaultLocations = @globalLocations;
+			}
+
+			$ipSelector = CGI::scrolling_list({
+						-name => "set.$setID.selected_ip_locations",
+						-values => [ @locations ], 
+						-default => [ @defaultLocations ], 
+						-size => 3,
+						-multiple => 'true'});
+
+			# also show global set location list when editing 
+			#    user sets
+			$glIPlist = join(', ', @globalLocations);
+		}
 	}
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
@@ -333,10 +387,30 @@ sub FieldTable {
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
+  # IP RESTRICT
+  # we insert the list of locations after the restrict_ip selector,
+  #    only if ip restrictions are turned on
+		if ( $field eq 'restrict_ip' && $ipSelector ) {
+# FIXME: need && $check for canoverride; requires adding selected_ip_locations
+# FIXME: to the field values hash, above
+			my $override = ($forUsers) ? 
+			    CGI::checkbox({ type => "checkbox",
+					    name => "set.$setID.selected_ip_locations.override",
+					    label => "",
+					    checked => $orChecked }) : '';
+			$output .= CGI::Tr({-valign=>'top'},
+				CGI::td({}, [ $override, 'Restrict Locations', 
+					      $ipSelector, 
+					      $forUsers ? " $glIPlist" : '', ]
+					),
+			);
+		}
+					      
   # this is a rather artifical addition to include gateway fields, which we 
   # only want to show for gateways
-		$output .= "$gwoutput\n"
-		    if ( $field eq 'assignment_type' && $gwoutput );
+		if ( $field eq 'assignment_type' && $gwoutput ) {
+			$output .= "$gwoutput\n";
+		}
 	} 
 
 	if (defined $problemID) {
@@ -756,6 +830,50 @@ sub initialize {
 				}
 				$db->putUserSet($record);
 			}
+
+			# IP RESTRICT
+			# the locations for ip restrictions are saved in the 
+			#    set_locations_user table, so we have to update 
+			#    these separately 
+# FIXME: need && $check for canoverride; requires adding selected_ip_locations
+# FIXME: to the field values hash, above
+			if ( $r->param("set.$setID.selected_ip_locations.override") ) {
+				foreach my $record ( @userRecords ) {
+					my $userID = $record->user_id;
+					my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
+					my @userSetLocations = $db->listUserSetLocations($userID,$setID);
+					my @addSetLocations = ();
+					my @delSetLocations = ();
+					foreach my $loc ( @selectedLocations ) {
+						push( @addSetLocations, $loc ) if ( ! grep( /^$loc$/, @userSetLocations ) );
+					}
+					foreach my $loc ( @userSetLocations ) {
+						push( @delSetLocations, $loc ) if ( ! grep( /^$loc$/, @selectedLocations ) );
+					}
+					# then update the user set_locations
+					foreach ( @addSetLocations ) {
+						my $Loc = $db->newUserSetLocation;
+						$Loc->set_id( $setID );
+						$Loc->user_id( $userID );
+						$Loc->location_id($_);
+						$db->addUserSetLocation($Loc);
+					}
+					foreach ( @delSetLocations ) {
+						$db->deleteUserSetLocation($userID,$setID,$_);
+					}
+				}
+			} else {
+				# if override isn't selected, then we want
+				#    to be sure that there are no 
+				#    set_locations_user entries setting around
+				foreach my $record ( @userRecords ) {
+					my $userID = $record->user_id;
+					my @userLocations = $db->listUserSetLocations($userID,$setID);
+					foreach ( @userLocations ) {
+						$db->deleteUserSetLocation($userID,$setID,$_);
+					}
+				}
+			}
 		} else {
 			foreach my $field ( @{ SET_FIELDS() } ) {
 				next unless canChange($forUsers, $field);
@@ -774,6 +892,40 @@ sub initialize {
 				$setRecord->$field($param);
 			}
 			$db->putGlobalSet($setRecord);
+
+			# IP RESTRICT
+			# the locations for ip restrictions are saved in the 
+			#    set_locations table, so we have to update these 
+			#    separately 
+# FIXME: need && $check for canoverride; requires adding selected_ip_locations
+# FIXME: to the field values hash, above
+			if ( $r->param("set.$setID.restrict_ip") ne 'No' ) {
+				my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
+				my @globalSetLocations = $db->listGlobalSetLocations($setID);
+				my @addSetLocations = ();
+				my @delSetLocations = ();
+				foreach my $loc ( @selectedLocations ) {
+					push( @addSetLocations, $loc ) if ( ! grep( /^$loc$/, @globalSetLocations ) );
+				}
+				foreach my $loc ( @globalSetLocations ) {
+					push( @delSetLocations, $loc ) if ( ! grep( /^$loc$/, @selectedLocations ) );
+				}
+				# then update the global set_locations
+				foreach ( @addSetLocations ) {
+					my $Loc = $db->newGlobalSetLocation;
+					$Loc->set_id( $setID );
+					$Loc->location_id($_);
+					$db->addGlobalSetLocation($Loc);
+				}
+				foreach ( @delSetLocations ) {
+					$db->deleteGlobalSetLocation($setID,$_);
+				}
+			} else {
+				my @globalSetLocations = $db->listGlobalSetLocations($setID);
+				foreach ( @globalSetLocations ) {
+					$db->deleteGlobalSetLocation($setID,$_);
+				}
+			}
 		}
 		
 		#####################################################################
