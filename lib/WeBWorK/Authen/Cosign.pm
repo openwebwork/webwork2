@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/Proctor.pm,v 1.1 2006/04/12 18:50:11 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/Cosign.pm,v 1.1 2007/03/22 13:50:07 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -75,7 +75,7 @@ sub site_checkPassword {
 	my ( $self, $userID, $clearTextPassword ) = @_;
 
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::site_checkPassword( @_ );
+		return $self->SUPER::checkPassword( @_ );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
 		# through cosign
