@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.205 2006/09/18 18:04:11 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.206 2006/10/11 16:15:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -403,15 +403,6 @@ sub pre_header_initialize {
 
 	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 
-# gateway check here: we want to be sure that someone isn't trying to take 
-# a GatewayQuiz through the regular problem/homework mechanism, thereby 
-# circumventing the versioning, time limits, etc.
-	if (defined $set and defined $set->assignment_type and $set->assignment_type() =~ /gateway/) {
-		unless ($editMode eq "temporaryFile" and $authz->hasPermissions($userName, "modify_student_data")) {
-			die('Invalid access attempt: the Problem ContentGenerator was called for a GatewayQuiz assignment.'	);
-		}
-	}
-	
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
 	# make sure published is set to 0 or 1
@@ -504,10 +495,8 @@ sub pre_header_initialize {
 		my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 		$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
 
-  # test for additional set validity if it's not already invalid
+  # test for additional problem validity if it's not already invalid
         } else {
-		# A set is valid if it exists and if it is either published or the user is privileged.
-		$self->{invalidSet} = !(defined $set and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
 		$self->{invalidProblem} = !(defined $problem and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
 		
 		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value and not $self->{invalidProblem};
@@ -547,11 +536,7 @@ sub pre_header_initialize {
 	return if $self->{invalidSet} || $self->{invalidProblem};
 	
 	##### permissions #####
-	
-	# are we allowed to view this problem?
-	$self->{isOpen} = after($set->open_date) || $authz->hasPermissions($userName, "view_unopened_sets");
-	return unless $self->{isOpen};
-	
+
 	# what does the user want to do?
 	#FIXME  There is a problem with checkboxes -- if they are not checked they are invisible.  Hence if the default mode in $ce is 1
 	# there is no way to override this.  Probably this is ok for the last three options, but it was definitely not ok for showing
@@ -655,8 +640,8 @@ sub if_errors($$) {
 
 sub head {
 	my ($self) = @_;
-	
-	return "" unless $self->{isOpen};
+
+	return "" if ( $self->{invalidSet} );
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
@@ -666,7 +651,6 @@ sub options {
 	
 	# don't show options if we don't have anything to show
 	return "" if $self->{invalidSet} or $self->{invalidProblem};
-	return "" unless $self->{isOpen};
 	
 	my $displayMode = $self->{displayMode};
 	my %can = %{ $self->{can} };
@@ -727,6 +711,8 @@ sub nav {
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 	
+	return "" if ( $self->{invalidSet} );
+
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id if !($self->{invalidSet});
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
@@ -792,20 +778,19 @@ sub body {
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
-	if ($self->{invalidSet}) {
+	if ( $self->{invalidSet} ) { 
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected homework set (" . $urlpath->arg("setID") . ") is not a valid set for " . $r->param("effectiveUser") . "."));
-	}	
+				CGI::p("The selected problem set (" .
+				       $urlpath->arg("setID") . ") is not " .
+				       "a valid set for $effectiveUser:"),
+				CGI::p($self->{invalidSet}));
+	}
 	
 	if ($self->{invalidProblem}) {
 		return CGI::div({class=>"ResultsWithError"},
 			CGI::p("The selected problem (" . $urlpath->arg("problemID") . ") is not a valid problem for set " . $self->{set}->set_id . "."));
 	}	
 
-	unless ($self->{isOpen}) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("This problem is not available because the homework set that contains it is not yet open."));
-	}
 	# unpack some useful variables
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};

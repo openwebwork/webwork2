@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.90 2007/03/13 21:18:18 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.91 2007/03/15 22:00:37 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -169,6 +169,7 @@ sub pre_header_initialize {
 		my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
 		my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
+		my $perm_viewfromip = $authz->hasPermissions($userID, "view_ip_restricted_sets");
 		
 		if (@setIDs > 1 and not $perm_multiset) {
 			$self->addbadmessage("You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again.");
@@ -186,16 +187,17 @@ sub pre_header_initialize {
 			# sets for users other than herself. should these be separate permission levels?
 		}
 
-		# to check if the set has a "hide_work" flag, we need the 
-		#    userset objects; if we've not failed validation yet, get
-		#    those to check on this
+		# to check if the set has a "hide_work" flag, or if we aren't
+		#    allowed to view the set from the user's IP address, we 
+		#    need the userset objects; if we've not failed validation 
+		#    yet, get those to check on this
 		my %canShowScore = ();
 		my %mergedSets = ();
 		unless ($validation_failed ) {
 			foreach my $sid ( @setIDs ) {
 				my($s,undef,$v) = ($sid =~ /([^,]+)(,v(\d+))?$/);
 				foreach my $uid ( @userIDs ) {
-					if ( $perm_viewhidden ) { 
+					if ( $perm_viewhidden && $perm_viewfromip ) { 
 						$canShowScore{"$uid!$sid"} = 1;
 					} else {
 						my $userSet;
@@ -205,7 +207,8 @@ sub pre_header_initialize {
 							$userSet = $db->getMergedSet($uid,$s);
 						}
 						$mergedSets{"$uid!$sid"} = $userSet;
-						if ( defined( $userSet->hide_work ) &&
+						if ( ! $perm_viewhidden &&
+						     defined( $userSet->hide_work ) &&
 						     ( $userSet->hide_work eq 'Y' ||
 						       ( $userSet->hide_work eq 'BeforeAnswerDate' &&
 							 time < $userSet->answer_date ) ) ) {
@@ -213,7 +216,16 @@ sub pre_header_initialize {
 							$self->addbadmessage("You are not permitted to generate a hardcopy for a set with hidden work.");
 							last;
 						}
-					
+
+						if ( $authz->invalidIPAddress($userSet) ) {
+							$validation_failed = 1;
+							$self->addbadmessage("You are not allowed to generate a " .
+									     "hardcopy for " . $userSet->set_id . 
+									     " from your IP address, " .
+									     $r->connection->remote_ip . ".");
+							last;
+						}
+
 						$canShowScore{"$uid!$sid"} = 
 						    ! ( defined( $userSet->hide_score ) &&
 							( $userSet ->hide_score eq 'Y' ||

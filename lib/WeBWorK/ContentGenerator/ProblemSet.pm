@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.86 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.87 2007/03/01 22:20:36 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,23 +58,6 @@ sub initialize {
 	# get result and send to message
 	my $status_message = $r->param("status_message");
 	$self->addmessage(CGI::p("$status_message")) if $status_message;
-	
-	# because of the database fix, we have to split our invalidSet check into two parts
-	# First, if $set is undefined then $setName was never valid
-	# FIXME: unfortunately, this gets triggered when a version of a
-	# gateway/quiz is requested, which results in a rather uninformative
-	# error message.  
-	$self->{invalidSet} = not defined $set;
-	return if $self->{invalidSet};
-
-	# now that the set is valid, make sure that GatewayQuiz assignments 
-	# don't get entered through this module.  this gets triggered if 
-	# we try to take a new test through this module; it would be nice
-	# to set $self->{invalidSet} and error out in body(), but it's hard
-	# to send the message there, so we just die() instead.
-	die "set $setName is a GatewayQuiz.  Enter through the GatewayQuiz " .
-	    "module." if ( defined( $set->assignment_type() ) &&
-			   $set->assignment_type() =~ /gateway/ );
 
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
@@ -86,8 +69,7 @@ sub initialize {
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
 	
-	# Second, a set is invalid if it is still unpublished and the user does not have the right permissions
-	$self->{invalidSet} = !($set->published || $authz->hasPermissions($userName, "view_unpublished_sets"));
+	# $self->{invalidSet} is set by ContentGenerator.pm
 	return if $self->{invalidSet};
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
@@ -203,8 +185,8 @@ sub info {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
-	return "" unless $self->{isOpen};
+
+	return "" if ( $self->{invalidSet} );
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $r->urlpath->arg("setID");
@@ -305,14 +287,11 @@ sub body {
 	# FIXME: this was already caught in initialize()
 	# die "set $setName for user $effectiveUser not found" unless $set;
 
-	if ($self->{invalidSet}) {
+	if ( $self->{invalidSet} ) { 
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected homework set ($setName) is not a valid set for $effectiveUser."));
-	}
-	
-	unless ($self->{isOpen}) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("This homework set is not available because it is not yet open."));
+				CGI::p("The selected problem set ($setName) " .
+				       "is not a valid set for $effectiveUser:"),
+				CGI::p($self->{invalidSet}));
 	}
 	
 	#my $hardcopyURL =
