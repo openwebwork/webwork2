@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.26 2006/02/02 22:29:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.27 2007/03/27 17:13:31 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -236,38 +236,42 @@ sub checkSet {
 	#    restrictions
 	return 0 unless (grep {/^$node_name$/} 
 			 (qw(problem_list problem_detail gateway_quiz
-			     proctored_gateway_quiz hardcopy_preselect_set)));
+			     proctored_gateway_quiz)));
 
 	# to check set restrictions we need a set and a user
 	my $setName = $urlPath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
+	# if there is no input userName, then the content generator will 
+	#    be forcing a login, so just bail 
+	return 0 if ( ! $userName || ! $effectiveUserName );
+
 	my $set;
 	if ( $setName =~ /,v(\d+)$/ ) {
 		my $verNum = $1;
 		$setName =~ s/,v\d+$//;
-		if ($db->existsSetVersion($userName,$setName,$verNum)) {
-			$set = $db->getMergedSetVersion($userName,$setName,$verNum);
+		if ($db->existsSetVersion($effectiveUserName,$setName,$verNum)) {
+			$set = $db->getMergedSetVersion($effectiveUserName,$setName,$verNum);
 		} else {
 			return "Requested version ($verNum) of set " .
 				"'$setName' is not assigned to user " .
-				"$userName.";
+				"$effectiveUserName.";
 		}
 		if ( ! $set ) {
 			return "Requested set '$setName' could not be found " .
-				"in the database for user $userName.";
+				"in the database for user $effectiveUserName.";
 		}
 	} else {
-		if ( $db->existsUserSet($userName,$setName) ) {
-			$set = $db->getMergedSet($userName,$setName);
+		if ( $db->existsUserSet($effectiveUserName,$setName) ) {
+			$set = $db->getMergedSet($effectiveUserName,$setName);
 		} else {
 			return "Requested set '$setName' is not assigned " .
-				"to user $userName.";
+				"to user $effectiveUserName.";
 		}
 		if ( ! $set ) {
 			return "Requested set '$setName' could not be found " .
-				"in the database for user $userName.";
+				"in the database for user $effectiveUserName.";
 		}
 	}
 	# cache the set for future use as needed.  this should probably 
@@ -277,7 +281,7 @@ sub checkSet {
 	# now we know that the set is assigned to the appropriate user; 
 	#    check to see if we're trying to access a set that's not open
 	if ( before($set->open_date) && 
-	     ! $self->hasPermissions($effectiveUserName, "view_unopened_sets") ) {
+	     ! $self->hasPermissions($userName, "view_unopened_sets") ) {
 		return "Requested set '$setName' is not yet open.";
 	} 
 
@@ -287,7 +291,7 @@ sub checkSet {
 	my $published = ( $set && $set->published ne '0' && 
 			  $set->published ne '1' ) ? 1 : $set->published;
 	if ( ! $published && 
-	     ! $self->hasPermissions($effectiveUserName, "view_unpublished_sets") ) { 
+	     ! $self->hasPermissions($userName, "view_unpublished_sets") ) { 
 		return "Requested set '$setName' is not available yet.";
 	}
 
@@ -298,7 +302,8 @@ sub checkSet {
 	    ($node_name eq 'problem_list' || $node_name eq 'problem_detail')) {
 		return "Requested set '$setName' is a test/quiz assignment " . 
 			"but the regular homework assignment content " .
-			"generator $node_name was called.";
+			"generator $node_name was called.  Try re-entering " .
+			"the set from the problem sets listing page.";
 	}
 	# and check that if we're entering a proctored assignment that we 
 	#    have a valid proctor login; this is necessary to make sure that
@@ -313,38 +318,61 @@ sub checkSet {
 	}
 
 	# and whether there are ip restrictions that we need to check
-	if ( $set->restrict_ip ne 'No' && ! $self->hasPermissions($effectiveUserName, 'view_ip_restricted_sets') ) {
+	my $badIP = $self->invalidIPAddress($set);
+	return $badIP if $badIP;
 
-		my $clientIP = new Net::IP($r->connection->remote_ip);
+	return 0;
+}
 
-		my $restrictType = $set->restrict_ip;
-		my @restrictLocations = $db->getAllMergedSetLocations($userName,$setName);
-		my @locationIDs = ( map {$_->location_id} @restrictLocations );
-		my @restrictAddresses = ( map {$db->listLocationAddresses($_)} @locationIDs );
+sub invalidIPAddress { 
+# this exists as a separate routine because we need to check multiple
+#    sets in Hardcopy; having this routine to check the set allows us to do
+#    that for all sets individually there.
 
-		# build a set of IP objects to match against
-		my @restrictIPs = ( map {new Net::IP($_)} @restrictAddresses );
+	my $self = shift;
+	my $set = shift;
 
-		# and check the clientAddress against these: is $clientIP
-		#    in @restrictIPs?
-		my $inRestrict = 0;
-		foreach my $rIP ( @restrictIPs ) {
-			if ($rIP->overlaps($clientIP) == $IP_B_IN_A_OVERLAP ||
-			    $rIP->overlaps($clientIP) == $IP_IDENTICAL) {
-				$inRestrict = 1;
-				last;
-			}
+	my $r = $self->{r};
+	my $db = $r->db;
+	my $urlPath = $r->urlpath;
+	my $setName = $urlPath->arg("setID");
+	my $userName = $r->param("user");
+	my $effectiveUserName = $r->param("effectiveUser");
+
+	return 0 if ($set->restrict_ip eq 'No' ||
+		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
+
+	my $clientIP = new Net::IP($r->connection->remote_ip);
+
+	my $restrictType = $set->restrict_ip;
+	my @restrictLocations = $db->getAllMergedSetLocations($userName,$setName);
+	my @locationIDs = ( map {$_->location_id} @restrictLocations );
+	my @restrictAddresses = ( map {$db->listLocationAddresses($_)} @locationIDs );
+
+	# build a set of IP objects to match against
+	my @restrictIPs = ( map {new Net::IP($_)} @restrictAddresses );
+
+	# and check the clientAddress against these: is $clientIP
+	#    in @restrictIPs?
+	my $inRestrict = 0;
+	foreach my $rIP ( @restrictIPs ) {
+		if ($rIP->overlaps($clientIP) == $IP_B_IN_A_OVERLAP ||
+		    $rIP->overlaps($clientIP) == $IP_IDENTICAL) {
+			$inRestrict = 1;
+			last;
 		}
+	}
 
-		if ( $restrictType eq 'RestrictTo' && ! $inRestrict ) {
-			return "Client ip address " . $clientIP->ip() . 
-				" is not in the list of addresses from " .
-				"which this assignment may be worked.";
-		} elsif ( $restrictType eq 'DenyFrom' && $inRestrict ) {
-			return "Client ip address " . $clientIP->ip() . 
-				" is in the list of addresses from " .
-				"which this assignment may not be worked.";		
-		}
+	if ( $restrictType eq 'RestrictTo' && ! $inRestrict ) {
+		return "Client ip address " . $clientIP->ip() . 
+			" is not in the list of addresses from " .
+			"which this assignment may be worked.";
+	} elsif ( $restrictType eq 'DenyFrom' && $inRestrict ) {
+		return "Client ip address " . $clientIP->ip() . 
+			" is in the list of addresses from " .
+			"which this assignment may not be worked.";		
+	} else {
+		return 0;
 	}
 }
 
