@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.26 2006/02/02 22:29:43 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,6 +60,10 @@ activity, regardless of their permission level.
 use strict;
 use warnings;
 use Carp qw/croak/;
+# FIXME SET: set-level auth add
+use WeBWorK::Utils qw(before after between);
+use WeBWorK::Authen::Proctor;
+use Net::IP;
 
 ################################################################################
 
@@ -214,6 +218,133 @@ sub hasPermissions {
 	} else {
 		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.";
 		return 0;
+	}
+}
+
+#### set-level authorization routines
+
+sub checkSet { 
+	my $self = shift;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlPath = $r->urlpath;
+
+	my $node_name = $urlPath->type;
+
+	# first check to see if we have to worried about set-level access
+	#    restrictions
+	return 0 unless (grep {/^$node_name$/} 
+			 (qw(problem_list problem_detail gateway_quiz
+			     proctored_gateway_quiz hardcopy_preselect_set)));
+
+	# to check set restrictions we need a set and a user
+	my $setName = $urlPath->arg("setID");
+	my $userName = $r->param("user");
+	my $effectiveUserName = $r->param("effectiveUser");
+
+	my $set;
+	if ( $setName =~ /,v(\d+)$/ ) {
+		my $verNum = $1;
+		$setName =~ s/,v\d+$//;
+		if ($db->existsSetVersion($userName,$setName,$verNum)) {
+			$set = $db->getMergedSetVersion($userName,$setName,$verNum);
+		} else {
+			return "Requested version ($verNum) of set " .
+				"'$setName' is not assigned to user " .
+				"$userName.";
+		}
+		if ( ! $set ) {
+			return "Requested set '$setName' could not be found " .
+				"in the database for user $userName.";
+		}
+	} else {
+		if ( $db->existsUserSet($userName,$setName) ) {
+			$set = $db->getMergedSet($userName,$setName);
+		} else {
+			return "Requested set '$setName' is not assigned " .
+				"to user $userName.";
+		}
+		if ( ! $set ) {
+			return "Requested set '$setName' could not be found " .
+				"in the database for user $userName.";
+		}
+	}
+	# cache the set for future use as needed.  this should probably 
+	#    be more sophisticated than this
+	$self->{merged_set} = $set;
+
+	# now we know that the set is assigned to the appropriate user; 
+	#    check to see if we're trying to access a set that's not open
+	if ( before($set->open_date) && 
+	     ! $self->hasPermissions($effectiveUserName, "view_unopened_sets") ) {
+		return "Requested set '$setName' is not yet open.";
+	} 
+
+	# also check to make sure that the set is published, or that we're
+	#    allowed to view unpublished setes
+	# (do we need to worry about published not being set at this point?)
+	my $published = ( $set && $set->published ne '0' && 
+			  $set->published ne '1' ) ? 1 : $set->published;
+	if ( ! $published && 
+	     ! $self->hasPermissions($effectiveUserName, "view_unpublished_sets") ) { 
+		return "Requested set '$setName' is not available yet.";
+	}
+
+	# check to be sure that gateways are being sent to the correct
+	#    content generator
+	if (defined($set->assignment_type) && 
+	    $set->assignment_type =~ /gateway/ && 
+	    ($node_name eq 'problem_list' || $node_name eq 'problem_detail')) {
+		return "Requested set '$setName' is a test/quiz assignment " . 
+			"but the regular homework assignment content " .
+			"generator $node_name was called.";
+	}
+	# and check that if we're entering a proctored assignment that we 
+	#    have a valid proctor login; this is necessary to make sure that
+	#    someone doesn't use the unproctored url path to obtain access
+	#    to a proctored assignment.
+	if (defined($set->assignment_type) && 
+	    $set->assignment_type =~ /proctored/ &&
+	    ! WeBWorK::Authen::Proctor->new($r,$ce,$db)->verify() ) {
+		return "Requested set '$setName' is a proctored test/quiz " .
+			"assignment, but no valid proctor authorization " .
+			"has been obtained.";
+	}
+
+	# and whether there are ip restrictions that we need to check
+	if ( $set->restrict_ip ne 'No' && ! $self->hasPermissions($effectiveUserName, 'view_ip_restricted_sets') ) {
+
+		my $clientIP = new Net::IP($r->connection->remote_ip);
+
+		my $restrictType = $set->restrict_ip;
+		my @restrictLocations = $db->getAllMergedSetLocations($userName,$setName);
+		my @locationIDs = ( map {$_->location_id} @restrictLocations );
+		my @restrictAddresses = ( map {$db->listLocationAddresses($_)} @locationIDs );
+
+		# build a set of IP objects to match against
+		my @restrictIPs = ( map {new Net::IP($_)} @restrictAddresses );
+
+		# and check the clientAddress against these: is $clientIP
+		#    in @restrictIPs?
+		my $inRestrict = 0;
+		foreach my $rIP ( @restrictIPs ) {
+			if ($rIP->overlaps($clientIP) == $IP_B_IN_A_OVERLAP ||
+			    $rIP->overlaps($clientIP) == $IP_IDENTICAL) {
+				$inRestrict = 1;
+				last;
+			}
+		}
+
+		if ( $restrictType eq 'RestrictTo' && ! $inRestrict ) {
+			return "Client ip address " . $clientIP->ip() . 
+				" is not in the list of addresses from " .
+				"which this assignment may be worked.";
+		} elsif ( $restrictType eq 'DenyFrom' && $inRestrict ) {
+			return "Client ip address " . $clientIP->ip() . 
+				" is in the list of addresses from " .
+				"which this assignment may not be worked.";		
+		}
 	}
 }
 

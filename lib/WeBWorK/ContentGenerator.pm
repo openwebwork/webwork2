@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.189 2007/03/22 22:37:52 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.190 2007/03/26 19:50:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -155,6 +155,12 @@ sub go {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+
+	# check to verify if there are set-level problems with running
+	#    this content generator (individual content generators must
+	#    check $self->{invalidSet} and react correctly)
+	my $authz = $r->authz;
+	$self->{invalidSet} = $authz->checkSet();
 	
 	my $returnValue = MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 	
