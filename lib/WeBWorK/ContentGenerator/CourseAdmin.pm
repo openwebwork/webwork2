@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.60 2006/11/10 17:55:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.57.2.1 2006/11/10 17:59:09 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,15 +27,17 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
+use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use IO::File;
-use String::ShellQuote;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
                                         listArchivedCourses unarchiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
+# needed for location management
+use Net::IP;
 
 use constant IMPORT_EXPORT_WARNING => "The ability to import and export
 databases is still under development. It seems to work but it is <b>VERY</b>
@@ -209,10 +211,18 @@ sub pre_header_initialize {
 				$method_to_call = "unarchive_course_form";
 			}
 		}
+		elsif ($subDisplay eq "manage_locations") {
+			if (defined ($r->param("manage_location_action"))) {
+				$method_to_call = 
+				    $r->param("manage_location_action");
+			}
+			else{
+				$method_to_call = "manage_location_form";
+			}
+		}
 		else {
 			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
 		}
-		
 	}
 	
 	$self->{errors} = \@errors;
@@ -300,6 +310,8 @@ sub body {
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, "Archive Course"),
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, "Unarchive Course"),
+		 "|",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, "Manage Locations"),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -650,7 +662,6 @@ sub do_add_course {
 	
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
-		# DBFIXME do the searching in the database, and grab user/passwd/perm. all at once with a join
 		foreach my $userID ($db->listUsers) {
 			if ($userID eq $add_initial_userID) {
 				$self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
@@ -754,7 +765,6 @@ sub do_add_course {
 			# add contact to admin course as student
 			# or if this contact and course already exist in a dropped status
 			# change the student's status to enrolled
-			# DBFIXME can use a REPLACE here?
 			if (my $oldUser = $db->getUser($composite_id) ) {
 				warn "Replacing old data for $composite_id  status: ". $oldUser->status;
 				$db->deleteUser($composite_id);
@@ -1088,7 +1098,6 @@ sub do_delete_course {
 	} else {
 	    # mark the contact person in the admin course as dropped.
 	    # find the contact person for the course by searching the admin classlist.
-	    # DBFIXME use a where clause, iterator
 	    my @contacts = grep /_$delete_courseID$/,  $db->listUsers;
 	    if (@contacts) {
 			die "Incorrect number of contacts for the course $delete_courseID". join(" ", @contacts) if @contacts !=1;
@@ -1280,15 +1289,12 @@ sub do_export_database {
 		
 		$outputFileHandle->close();
 	
-		my $gzip_cmd = "2>&1 ".$ce->{externalPrograms}{gzip}." ".shell_quote($exportFilePath);
-		my $gzip_out = readpipe $gzip_cmd;
-		if ($?) {
-			my $exit = $? >> 8;
-			my $signal = $? & 127;
-			my $core = $? & 128;
-			$self->addbadmessage(CGI::p("Failed to gzip file $exportFilePath with command '$gzip_cmd' (exit=$exit signal=$signal core=$core): $gzip_out"));
+		my $gzipMessage = system( 'gzip', $exportFilePath);
+		if ( !$gzipMessage ) {
+			$self->addgoodmessage(CGI::p( "Database saved to templates/$exportFileName.gzip.  
+			You may download it with the file manager."));
 		} else {
-			$self->addgoodmessage(CGI::p("Database saved to templates/$exportFileName.gzip. You may download it with the file manager."));
+			$self->addbadmessage(CGI::p( "Failed to gzip file $exportFilePath"));
 		}
 		unlink $exportFilePath;
 	} # end export of one course
@@ -1485,6 +1491,13 @@ sub do_import_database {
 	my $templateDir = $ce->{courseDirs}->{templates};
 	my $filePath = "$templateDir/$import_file";
 	
+	my $gunzipMessage = system( 'gunzip', $filePath);
+	#FIXME
+	#warn "gunzip ", $gunzipMessage;
+	$filePath =~ s/\.gz$//;
+	#warn "new file path is $filePath";
+	my $fileHandle = new IO::File("<$filePath");
+	# retrieve upload from upload cache
 # 	my ($id, $hash) = split /\s+/, $import_file;
 # 	my $upload = WeBWorK::Upload->retrieve($id, $hash,
 # 		dir => $ce->{webworkDirs}->{uploadCache}
@@ -1492,27 +1505,18 @@ sub do_import_database {
 	
 	my @errors;
 	
-	my $gzip_cmd = "2>&1 ".$ce->{externalPrograms}{gzip}." -d ".shell_quote($filePath);
-	my $gzip_out = readpipe $gzip_cmd;
-	if ($?) {
-		my $exit = $? >> 8;
-		my $signal = $? & 127;
-		my $core = $? & 128;
-		push @errors, "Failed to ungzip file $filePath with command '$gzip_cmd' (exit=$exit signal=$signal core=$core): $gzip_out";
-	} else {
-		$filePath =~ s/\.gz$//;
-		my $fileHandle = new IO::File("<$filePath");
-		eval {
-			@errors = dbImport(
-				db => $db2,
-				# xml => $upload->fileHandle,
-				xml => $fileHandle,
-				tables => \@import_tables,
-				conflict => $import_conflict,
-			);
-		};
-		push @errors, "Fatal exception: $@" if $@;
-	}
+	eval {
+		@errors = dbImport(
+			db => $db2,
+			# xml => $upload->fileHandle,
+			xml => $fileHandle,
+			tables => \@import_tables,
+			conflict => $import_conflict,
+		);
+	};
+	
+	push @errors, "Fatal exception: $@" if $@;
+	push @errors, $gunzipMessage if $gunzipMessage;
 	
 	if (@errors) {
 		print CGI::div({class=>"ResultsWithError"},
@@ -1525,9 +1529,7 @@ sub do_import_database {
 		);
 	}
 }
-
 ##########################################################################
-
 sub archive_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -1736,7 +1738,6 @@ sub do_archive_course {
 			} else {
 				# mark the contact person in the admin course as dropped.
 				# find the contact person for the course by searching the admin classlist.
-				# DBFIXME where clause, iterator
 				my @contacts = grep /_$archive_courseID$/,  $db->listUsers;
 				if (@contacts) {
 					die "Incorrect number of contacts for the course $archive_courseID". join(" ", @contacts) if @contacts !=1;
@@ -1929,6 +1930,462 @@ sub do_unarchive_course {
 		print CGI::div({style=>"text-align: center"},
 			CGI::a({href=>$newCourseURL}, "Log into $new_courseID"),
 		);
+	}
+}
+
+################################################################################
+## location management routines; added by DG [Danny Ginn] 20070215
+## revised by glarose
+
+sub manage_location_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+
+	# get a list of all existing locations
+	my @locations = sort {lc($a->location_id) cmp lc($b->location_id)}
+		$db->getAllLocations();
+	my %locAddr = map {$_->location_id => [ $db->listLocationAddresses($_->location_id) ]} @locations;
+
+	my @locationIDs = map { $_->location_id } @locations;
+	
+	print CGI::h2("Manage Locations");
+
+	print CGI::p({},CGI::strong("Currently defined locations are listed below."));
+
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+
+	# get a list of radio buttons to select an action
+	my @actionRadios = 
+		CGI::radio_group(-name => "manage_location_action",
+				 -values => ["edit_location_form",
+					     "add_location_handler",
+					     "delete_location_handler"],
+				 -labels => { edit_location_form => "",
+					      add_location_handler => "",
+					      delete_location_handler => "", },
+				 -default => $r->param("manage_location_action") ? $r->param("manage_location_action") : 'none');
+
+	print CGI::start_table({});
+	print CGI::Tr({}, CGI::th({-colspan=>4,-align=>"left"}, 
+				  "Select an action to perform:"));
+
+	# edit action
+	print CGI::Tr({}, 
+		CGI::td({},[ $actionRadios[0], "Edit Location:" ]),
+		CGI::td({-colspan=>2, -align=>"left"}, 
+			CGI::div({-style=>"width:25%;"},
+				  CGI::popup_menu(-name=>"edit_location",
+					-values=>[@locationIDs]))) );
+	# create action
+	print CGI::Tr({},
+		CGI::td({-align=>"left"},[ $actionRadios[1], 
+			"Create Location:" ]),
+		CGI::td({-colspan=>2},
+			"Location name: " .
+			CGI::textfield(-name=>"new_location_name",
+				       -size=>"10",
+				       -default=>$r->param("new_location_name")?$r->param("new_location_name"):'')));
+	print CGI::Tr({valign=>'top'},
+		CGI::td({}, ["&nbsp;", "Location description:"]),
+		CGI::td({-colspan=>2}, 
+			CGI::textfield(-name=>"new_location_description",
+				       -size=>"50",
+				       -default=>$r->param("new_location_description")?$r->param("new_location_description"):'')) );
+	print CGI::Tr({}, CGI::td({},"&nbsp;"),
+		CGI::td({-colspan=>3}, "Addresses for new location " .
+			"(enter one per line, as single IP addresses " .
+			"(e.g., 192.168.1.101), address masks (e.g., " .
+			"192.168.1.0/24), or IP ranges (e.g., " .
+			"192.168.1.101-192.168.1.150)):"));
+	print CGI::Tr({}, CGI::td({}, "&nbsp;"),
+		CGI::td({-colspan=>3},
+			CGI::textarea({-name=>"new_location_addresses",
+				       -rows=>5, -columns=>28,
+				       -default=>$r->param("new_location_addresses")?$r->param("new_location_addresses"):''})));
+
+	# delete action
+	print CGI::Tr({}, 
+		CGI::td({-colspan=>4}, 
+			CGI::div({-class=>"ResultsWithError"},
+				 CGI::em({}, "Deletion deletes all location " .
+					 "data and related addresses, and is" .
+
+ 					 " not undoable!"))));
+	print CGI::Tr({}, 
+		CGI::td({}, 
+			[ $actionRadios[2],
+			  CGI::div({-class=>"ResultsWithError"},
+				   "Delete location:") ]),
+		CGI::td({-colspan=>2}, 
+			CGI::popup_menu(-name=>"delete_location",
+					-values=>["no location",
+						  @locationIDs]) .
+			CGI::span({-style=>"color:#C33;"}, "  Confirm: ") . 
+			CGI::checkbox({-name=>"delete_confirm",
+				       -value=>"true",
+				       -label=>""}) ) );
+	print CGI::end_table();
+
+	print CGI::p({}, CGI::submit(-name=>"manage_locations", -value=>"Take Action!"));
+
+	print CGI::end_form();
+
+	# existing location table
+	# FIXME: the styles for this table should be off in a stylesheet 
+	#    somewhere
+	print CGI::start_div({align=>"center"}),
+		CGI::start_table({border=>1, cellpadding=>2});
+	print CGI::Tr({style=>"background-color:#e0e0e0;font-size:92%", align=>"left"}, 
+		      CGI::th({}, ["Location","Description","Addresses"]));
+	foreach my $loc ( @locations ) {
+		print CGI::Tr({valign=>'top',style=>"background-color:#eeeeee;"}, 
+			      CGI::td({style=>'font-size:85%;'},
+				      [ $loc->location_id,
+					$loc->description,
+					join(', ', @{$locAddr{$loc->location_id}}) ]));
+	}
+	print CGI::end_table(), CGI::end_div();
+
+}
+
+sub add_location_handler {
+	my $self = shift();
+	my $r = $self->r;
+	my $db = $r->db;
+
+	# the location data we're to add
+	my $locationID = $r->param("new_location_name");
+	my $locationDescr = $r->param("new_location_description");
+	my $locationAddr = $r->param("new_location_addresses");
+	# break the addresses up
+	$locationAddr =~ s/\s*-\s*/-/g;
+	$locationAddr =~ s/\s*\/\s*/\//g;
+	my @addresses = split(/\s+/, $locationAddr);
+
+	# sanity checks
+	my $badAddr = '';
+	foreach my $addr ( @addresses ) {
+		unless ( new Net::IP($addr) ) {
+			$badAddr .= "$addr, ";
+			$locationAddr =~ s/$addr\n//s;
+		}
+	}
+	$badAddr =~ s/, $//;
+
+	# a check to be sure that the location addresses don't already
+	#    exist
+	my $badLocAddr;
+	if ( ! $badAddr && $locationID ) {
+		if ( $db->countLocationAddresses( $locationID ) ) {
+			my @allLocAddr = $db->listLocationAddresses($locationID);
+			foreach my $addr ( @addresses ) {
+				$badLocAddr .= "$addr, " 
+					if ( grep {/^$addr$/} @allLocAddr );
+			}
+			$badLocAddr =~ s/, $//;
+		}
+	}
+
+	if ( ! @addresses || ! $locationID || ! $locationDescr ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "Missing required input data. Please check " .
+			       "that you have filled in all of the create " .
+			       "location fields and resubmit.");
+	} elsif ( $badAddr ) {
+		$r->param("new_location_addresses", $locationAddr);
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "Address(es) $badAddr is(are) not in a " .
+			       "recognized form.  Please check your " .
+			       "data entry and resubmit.");
+	} elsif ( $db->existsLocation( $locationID ) ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "A location with the name $locationID " .
+			       "already exists in the database.  Did " .
+			       "you mean to edit that location instead?");
+	} elsif ( $badLocAddr ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "Address(es) $badLocAddr already exist " .
+			       "in the database.  THIS SHOULD NOT HAPPEN!  " .
+			       "Please double check the integrity of " .
+			       "the WeBWorK database before continuing.");
+	} else {
+		# add the location
+		my $locationObj = $db->newLocation;
+		$locationObj->location_id( $locationID );
+		$locationObj->description( $locationDescr );
+		$db->addLocation( $locationObj );
+
+		# and add the addresses
+		foreach my $addr ( @addresses ) {
+			my $locationAddress = $db->newLocationAddress;
+			$locationAddress->location_id($locationID);
+			$locationAddress->ip_mask($addr);
+
+			$db->addLocationAddress( $locationAddress );
+		}
+		
+		# we've added the location, so clear those param 
+		#    entries
+		$r->param('manage_location_action','none');
+		$r->param('new_location_name','');
+		$r->param('new_location_description','');
+		$r->param('new_location_addresses','');
+
+		print CGI::div({-class=>"ResultsWithoutError"}, 
+			       "Location $locationID has been created, " .
+			       "with addresses " . join(', ', @addresses) .
+			       ".");
+	}
+
+	$self->manage_location_form;
+}
+
+sub delete_location_handler {
+	my $self = shift;
+	my $r = $self->r;
+	my $db = $r->db;
+
+	# what location are we deleting?
+	my $locationID = $r->param("delete_location");
+	# are we sure?
+	my $confirm = $r->param("delete_confirm");
+
+	if ( ! $locationID ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "Please provide a location name " . 
+			       "to delete.");
+
+	} elsif ( ! $db->existsLocation($locationID) ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "No location with name $locationID " . 
+			       "exists in the database.");
+
+	} elsif ( ! $confirm || $confirm ne 'true' ) {
+		print CGI::div({-class=>"ResultsWithError"}, 
+			       "Location deletion requires confirmation.");
+	} else {
+		$db->deleteLocation( $locationID );
+		print CGI::div({-class=>"ResultsWithoutError"},
+			       "Location $locationID has been deleted.");
+		$r->param('manage_location_action','none');
+		$r->param('delete_location','');
+	}
+	$self->manage_location_form;
+}
+
+sub edit_location_form {
+	my $self = shift;
+	my $r = $self->r;
+	my $db = $r->db;
+
+	my $locationID = $r->param("edit_location");
+	if ( $db->existsLocation( $locationID ) ) {
+		my $location = $db->getLocation($locationID);
+		# this doesn't give that nice a sort for IP addresses,
+		#    b/c there's the problem with 192.168.1.168 sorting 
+		#    ahead of 192.168.1.2.  we could do better if we 
+		#    either invoked Net::IP in the sort routine, or if
+		#    we insisted on dealing only with IPv4.  rather than
+		#    deal with either of those, we'll leave this for now
+		my @locAddresses = sort { $a cmp $b }
+			$db->listLocationAddresses($locationID);
+
+		print CGI::h2("Editing location ", $locationID);
+
+		print CGI::p({},"Edit the current value of the location ",
+			     "description, if desired, then add and select ",
+			     "addresses to delete, and then click the ", 
+			     "\"Take Action\" button to make all of your ",
+			     "changes.  Or, click \"Manage Locations\" ",
+			     "above to make no changes and return to the ",
+			     "Manage Locations page.");
+
+		print CGI::start_form(-method=>"POST",
+				      -action=>$r->uri);
+		print $self->hidden_authen_fields;
+		print $self->hidden_fields("subDisplay");
+		print CGI::hidden(-name=>'edit_location',
+				  -default=>$locationID);
+		print CGI::hidden(-name=>'manage_location_action',
+				  -default=>'edit_location_handler');
+
+		print CGI::start_table();
+		print CGI::Tr({-valign=>'top'},
+			CGI::td({-colspan=>3},
+				"Location description: ", CGI::br(),
+				CGI::textfield(-name=>"location_description",
+					       -size=>"50",
+					       -default=>$location->description)));
+		print CGI::Tr({-valign=>'top'},
+			CGI::td({-width=>"50%"},
+				"Addresses to add to the location " .
+				"(enter one per line, as single IP addresses " .
+				"(e.g., 192.168.1.101), address masks " .
+				"(e.g., 192.168.1.0/24), or IP ranges " .
+				"(e.g., 192.168.1.101-192.168.1.150)):" . 
+				CGI::br() .
+				CGI::textarea({-name=>"new_location_addresses",
+					       -rows=>5, -columns=>28})),
+			CGI::td({}, "&nbsp;"),
+			CGI::td({-width=>"50%"},
+				"Existing addresses for the location are " .
+				"given in the scrolling list below.  Select " .
+				"addresses from the list to delete them:" . 
+				CGI::br() .
+				CGI::scrolling_list(-name=>'delete_location_addresses',
+						    -values=>[@locAddresses],
+						    -size=>8,
+						    -multiple=>'multiple') .
+				CGI::br() . "or: " .
+				CGI::checkbox(-name=>'delete_all_addresses',
+					      -value=>'true',
+					      -label=>'Delete all existing addresses')
+				 ));
+
+		print CGI::end_table();
+
+		print CGI::p({},CGI::submit(-value=>'Take Action!'));
+
+	} else {
+		print CGI::div({-class=>"ResultsWithError"},
+			       "Location $locationID does not exist " .
+			       "in the WeBWorK database.  Please check " .
+			       "your input (perhaps you need to reload " .
+			       "the location management page?).");
+
+		$self->manage_location_form;
+	}
+}
+
+sub edit_location_handler { 
+	my $self = shift;
+	my $r = $self->r;
+	my $db = $r->db;
+
+	my $locationID = $r->param("edit_location");
+	my $locationDesc = $r->param("location_description");
+	my $addAddresses = $r->param("new_location_addresses");
+	my @delAddresses = $r->param("delete_location_addresses");
+	my $deleteAll = $r->param("delete_all_addresses");
+
+	# gut check
+	if ( ! $locationID ) {
+		print CGI::div({-class=>"ResultsWithError"},
+			       "No location specified to edit?! " .
+			       "Please check your input data.");
+		$self->manage_location_form;
+
+	} elsif ( ! $db->existsLocation( $locationID ) ) {
+		print CGI::div({-class=>"ResultsWithError"},
+			       "Location $locationID does not exist " .
+			       "in the WeBWorK database.  Please check " .
+			       "your input (perhaps you need to reload " .
+			       "the location management page?).");
+		$self->manage_location_form;
+	} else {
+		my $location = $db->getLocation($locationID);
+
+		# get the current location addresses.  if we're deleting
+		#   all of the existing addresses, we don't use this list 
+		#   to determine which addresses to add, however.
+		my @currentAddr = $db->listLocationAddresses($locationID);
+		my @compareAddr = ( ! $deleteAll || $deleteAll ne 'true' )
+			? @currentAddr : ();
+
+		my $doneMsg = '';
+
+		if ($locationDesc && $location->description ne $locationDesc) {
+			$location->description($locationDesc);
+			$db->putLocation($location);
+			$doneMsg .= CGI::p({},"Updated location description.");
+		}
+		# get the actual addresses to add out of the text field
+		$addAddresses =~ s/\s*-\s*/-/g;
+		$addAddresses =~ s/\s*\/\s*/\//g;
+		my @addAddresses = split(/\s+/, $addAddresses);
+
+		# make sure that we're adding and deleting only those 
+		#    addresses that are not yet/currently in the location
+		#    addresses
+		my @toAdd = ();  my @noAdd = ();
+		my @toDel = ();  my @noDel = ();
+		foreach my $addr ( @addAddresses ) {
+			if (grep {/^$addr$/} @compareAddr) {push(@noAdd,$addr);}
+			else { push(@toAdd, $addr); }
+		}
+		if ( $deleteAll && $deleteAll eq 'true' ) {
+			@toDel = @currentAddr;
+		} else {
+			foreach my $addr ( @delAddresses ) { 
+				if (grep {/^$addr$/} @currentAddr) {
+					push(@toDel,$addr);
+				} else { push(@noDel, $addr); }
+			}
+		}
+
+		# and make sure that all of the addresses we're adding are 
+		#    a sensible form
+		my $badAddr = '';
+		foreach my $addr ( @toAdd ) {
+			unless ( new Net::IP($addr) ) {
+				$badAddr .= "$addr, ";
+			}
+		}
+		$badAddr =~ s/, $//;
+
+		# delete addresses first, because we allow deletion of 
+		#    all existing addresses, then addition of addresses.
+		#    note that we don't allow deletion and then addition 
+		#    of the same address normally, however; in that case
+		#    we'll end up just deleting the address.
+		foreach ( @toDel ) {
+			$db->deleteLocationAddress($locationID, $_);
+		}
+		foreach ( @toAdd ) {
+			my $locAddr = $db->newLocationAddress;
+			$locAddr->location_id($locationID);
+			$locAddr->ip_mask($_);
+
+			$db->addLocationAddress($locAddr);
+		}
+
+		my $addrMsg = '';
+		$addrMsg .= "Deleted addresses " . join(', ', @toDel) .
+			" from location." . CGI::br() if ( @toDel );
+		$addrMsg .= "Added addresses " . join(', ', @toAdd) . 
+			" to location $locationID.  " if ( @toAdd );
+
+		my $badMsg = '';
+		$badMsg .= 'Address(es) ' . join(', ', @noAdd) .
+			" in the add list is(are) already in the " .
+			"location $locationID, and so were " .
+			"skipped." . CGI::br() if ( @noAdd );
+		$badMsg .= "Address(es) $badAddr is(are) not in a " .
+			"recognized form.  Please check your data " .
+			"entry and try again." . CGI::br() if ( $badAddr );
+		$badMsg .= 'Address(es) ' . join(', ', @noDel) . 
+			" in the delete list is(are) not in the " .
+			"location $locationID, and so were " .
+			"skipped." if ( @noDel );
+
+		print CGI::div({-class=>"ResultsWithError"}, $badMsg)
+			if ( $badMsg );
+		if ( $doneMsg || $addrMsg ) {
+			print CGI::div({-class=>"ResultsWithoutError"},
+				       CGI::p({}, $doneMsg, $addrMsg));
+		} else {
+			print CGI::div({-class=>"ResultsWithError"},
+				       "No valid changes submitted for ",
+				       "location $locationID.");
+		}
+
+		$self->edit_location_form;
 	}
 }
 

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.98 2007/03/15 22:08:17 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.99 2007/03/27 17:04:02 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -774,7 +774,7 @@ sub deleteLocation {
 	#    is smart enough to deal with that on her own.
 
 	# addresses in the location_addresses table also need to be cleared
-	$self->deleteLocationAddresses($locationID, undef);
+	$self->deleteLocationAddress($locationID, undef);
 
 	return $self->{locations}->delete($locationID);
 }
