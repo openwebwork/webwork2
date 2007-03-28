@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.27 2007/03/27 17:13:31 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.28 2007/03/27 20:12:13 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -304,7 +304,15 @@ sub checkSet {
 			"but the regular homework assignment content " .
 			"generator $node_name was called.  Try re-entering " .
 			"the set from the problem sets listing page.";
+	} elsif ( (! defined($set->assignment_type) ||
+		   $set->assignment_type eq 'homework') &&
+		  $node_name =~ /gateway/ ) {
+		return "Requested set '$setName' is a homework assignment " . 
+			"but the gateway/quiz content " .
+			"generator $node_name was called.  Try re-entering " .
+			"the set from the problem sets listing page.";
 	}
+		
 	# and check that if we're entering a proctored assignment that we 
 	#    have a valid proctor login; this is necessary to make sure that
 	#    someone doesn't use the unproctored url path to obtain access
