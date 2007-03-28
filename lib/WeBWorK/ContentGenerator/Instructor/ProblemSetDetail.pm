@@ -364,7 +364,7 @@ sub FieldTable {
 						-name => "set.$setID.selected_ip_locations",
 						-values => [ @locations ], 
 						-default => [ @defaultLocations ], 
-						-size => 3,
+						-size => 5,
 						-multiple => 'true'});
 
 			# also show global set location list when editing 
@@ -399,7 +399,8 @@ sub FieldTable {
 					    label => "",
 					    checked => $orChecked }) : '';
 			$output .= CGI::Tr({-valign=>'top'},
-				CGI::td({}, [ $override, 'Restrict Locations', 
+				CGI::td({}, [ $override, 
+					      'Restrict Locations', 
 					      $ipSelector, 
 					      $forUsers ? " $glIPlist" : '', ]
 					),
