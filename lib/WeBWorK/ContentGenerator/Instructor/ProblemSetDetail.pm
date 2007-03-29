@@ -76,6 +76,7 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap at
 #				0 => "No",
 #		},
 #               convertby => 60,                # divide incoming database field values by this, and multiply when saving
+#               format    => 'string'           # for edit entries, we require that the input data match /^string$/
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
@@ -164,8 +165,9 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "4",
 		override  => "any",
-		labels    => {	"" => 0 },  # I'm not sure this is quite right
+#		labels    => {	"" => 0 },  # I'm not sure this is quite right
 		convertby => 60,
+		format    => '[1-9]\d*',    # a non-zero integer
 	},
 	time_limit_cap => {
 		name      => "Cap Test Time at Set Due Date?",
@@ -179,6 +181,7 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "any",
+		format    => '[1-9]\d*',    # a non-zero integer
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
@@ -186,7 +189,8 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "5",
 		override  => "any",
-		labels    => {	"" => 0 },
+		format    => '[0-9]+',      # an integer, possibly zero
+#		labels    => {	"" => 0 },
 		convertby => 60,
 	},
 	versions_per_interval => {
@@ -195,6 +199,7 @@ use constant  FIELD_PROPERTIES => {
                 size      => "3",
 		override  => "any",
 		default   => "0",
+		format    => '[0-9]+',      # an integer, possibly zero
 #		labels    => {	"" => 0 },
 #		labels    => {	"" => 1 },
 	},
@@ -211,6 +216,7 @@ use constant  FIELD_PROPERTIES => {
 		size      => "3",
 		override  => "any",
 		default   => "0",
+		format    => '[0-9]+',      # an integer, possibly zero
 #		labels    => { "" => 0 },
 	},
 	hide_score        => {
@@ -312,6 +318,7 @@ sub FieldTable {
 	my $db = $r->{db};
 	my $ipSelector = '';
 	my $glIPlist;
+	my $numLocations = 0;
 	my $orChecked;
 
 	if (defined $problemID) {
@@ -341,12 +348,15 @@ sub FieldTable {
 			"<!-- end gwoutput table -->\n";
 		}
     # IP RESTRICT
-    # similarly, we only include an ip selector if restrict_ip is not 'No'
+    # similarly, we only include an ip selector if restrict_ip is not 'No'.  
+    #    we have to know if there are any locations to know if we should show
+    #    the restrict_ip option, however, so get those regardless
+		my @locations = sort {$a cmp $b} ($db->listLocations());
+		$numLocations = @locations;
+
 		if ( ( ! $forUsers && $globalRecord->restrict_ip ne 'No' ) ||
 		     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
-			my @locations = sort {$a cmp $b} ($db->listLocations());
-			my @globalLocations = $db->listGlobalSetLocations($setID);
-
+		        my @globalLocations = $db->listGlobalSetLocations($setID);
 			# what ip locations should be selected?
 			my @defaultLocations = ();
 			if ( $forUsers && 
@@ -381,18 +391,29 @@ sub FieldTable {
 			CGI::th({}, "Class values"),
 		);
 	}
-	
 	foreach my $field (@fieldOrder) {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
+
+		# IP RESTRICT
+		# we don't show the ip restriction option if there are 
+		#    no defined locations
+		next if ( $field eq 'restrict_ip' && ! $numLocations );
+
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
-  # IP RESTRICT
-  # we insert the list of locations after the restrict_ip selector,
-  #    only if ip restrictions are turned on
+
+		# IP RESTRICT
+		# we insert the list of locations after the restrict_ip 
+		#    selector, but only if ip restrictions are turned on
 		if ( $field eq 'restrict_ip' && $ipSelector ) {
-# FIXME: need && $check for canoverride; requires adding selected_ip_locations
-# FIXME: to the field values hash, above
+
+# FIXME: while the value of the restrict_ip field for the set is defined in 
+#    the field properties hash, above, the locations selector does not modify
+#    set table properties, and so doesn't.  this means that we're just 
+#    assuming that we can override it for users in any case where we're 
+#    editing the set for users.  in the long run this is probably not the
+#    best behavior.
 			my $override = ($forUsers) ? 
 			    CGI::checkbox({ type => "checkbox",
 					    name => "set.$setID.selected_ip_locations.override",
@@ -787,11 +808,30 @@ sub initialize {
 			$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
 			$error = $r->param('submit_changes');
 		}
-		
-		
-		if ($error) {
-			$self->addbadmessage("No changes were saved!");
+	}
+	#####################################################################
+	# Check for invalid input data
+	#####################################################################
+	# should this be done here?  
+	# 
+	if ( defined($r->param('submit_changes')) && ! $error ) {
+		foreach my $field ( @{ SET_FIELDS() } ) {
+			if ( $properties{$field}->{type} eq 'choose' &&
+			     ! grep {$r->param("set.$setID.$field") !~ /^$_$/} @{$properties{$field}->{choices}} ) {
+				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name} . " (valid values are " . join(', ', values(%{$properties{$field}->{labels}})) . ")");
+				$error = $r->param('submit_changes');
+			} elsif ( $properties{$field}->{type} eq 'edit' &&
+				  $properties{$field}->{format} && 
+				  $field !~ /_date$/ &&
+				  $r->param("set.$setID.$field") !~ /^$properties{$field}->{format}$/ ) {
+				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name});
+				$error = $r->param('submit_changes');
+			}
 		}
+	}
+
+	if ($error) {
+		$self->addbadmessage("No changes were saved!");
 	}
 	
 	if (defined $r->param('submit_changes') && !$error) {
