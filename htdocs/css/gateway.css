@@ -18,17 +18,38 @@ div.gwTiming {
 }
 div.gwWarning { background-color:#ffffdd; color: black; }
 
-div#gwTimer { 
+/* Louis Zulli's IE6 non-fixed positioning workaround follows */
+div#gwTimer {
 	background-color:#ffeeaa;
-	color: black; 
+	color: black;
 	font-family: Times serif;
-	position: fixed;
+	position: absolute; /* IE<7 sees this */
 	width: 15em;
 	right: 4em;
 	top: 4em;
 	border: dashed black 1px;
 	padding: 3px;
 	text-align: center;
+	z-index: 2;
+} 
+html>body #gwTimer {
+	position: fixed; /* IE 7 and other browsers see this */
+}
+div#gwScoreSummary {
+	background-color:#fcfccc;
+	color: black;
+	font-family:Times serif;
+	z-index: 1;
+	font-size: 85%;
+	border: black 3px outset;
+	width: 15em;
+	top: 8em;
+	right: 2em;
+	padding: 3px;
+	position: absolute;
+}
+html>body #gwScoreSummary {
+	position: fixed; /* IE 7 and other browsers see this */
 }
 
 span.resultsWithError { background-color: #ffcccc; color: black; }

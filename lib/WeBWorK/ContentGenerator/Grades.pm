@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.32 2007/03/02 21:35:13 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.33 2007/03/13 15:44:21 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -321,6 +321,28 @@ sub displayStudentStats {
 		my $num_of_problems  = @problemRecords;
 		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
 		
+		# for gateway/quiz assignments we have to be careful about 
+		#    the order in which the problems are displayed, because
+		#    they may be in a random order
+		if ( $set->problem_randorder ) {
+			my @newOrder = ();
+			my @probOrder = (0..$#problemRecords);
+			# we reorder using a pgrand based on the set psvn
+			my $pgrand = PGrandom->new();
+			$pgrand->srand( $set->psvn );
+			while ( @probOrder ) { 
+				my $i = int($pgrand->rand(scalar(@probOrder)));
+				push( @newOrder, $probOrder[$i] );
+				splice(@probOrder, $i, 1);
+			}
+			# now $newOrder[i] = pNum-1, where pNum is the problem
+			#    number to display in the ith position on the test
+			#    for sorting, invert this mapping:
+			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
+
+			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
+		}
+
 		# construct header
 		
 		foreach my $problemRecord (@problemRecords) {

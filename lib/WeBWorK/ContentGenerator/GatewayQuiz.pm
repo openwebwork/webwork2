@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.42 2007/03/22 13:28:46 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.43 2007/03/27 17:15:19 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -655,9 +655,8 @@ sub pre_header_initialize {
 			     )
 			     &&
 			     ( $effectiveUserName eq $userName ||
-			       $authz->hasPermissions($effectiveUserName, "record_answers_when_acting_as_student") )
+			       $authz->hasPermissions($userName, "record_answers_when_acting_as_student") )
 			     ) {
-
 				# assign set, get the right name, version 
 				#    number, etc., and redefine the $set 
 				#    and $Problem we're working with
@@ -703,9 +702,16 @@ sub pre_header_initialize {
 					"because you have already taken the " .
 					"maximum number\nallowed.";
 
+			} elsif ( $effectiveUserName ne $userName &&
+				  ! $authz->hasPermissions($userName, "record_answers_when_acting_as_student") ) {
+				$self->{invalidSet} = "User " .
+					"$effectiveUserName is being acted " .
+					"as.  When acting as another user, " .
+					"new versions of the set cannot be " .
+					"created.";
+
 			} elsif ($currentNumAttempts < $maxAttemptsPerVersion &&
 				 $timeNow < $set->due_date() + $grace ) {
-
 				if ( between($set->open_date(), 
 					     $set->due_date() + $grace, 
 					     $timeNow) ) {
@@ -727,6 +733,10 @@ sub pre_header_initialize {
 					"You may take the\ntest again after " .
 					"the time interval has expired.";
 
+			} elsif ( $effectiveUserName ne $userName ) {
+				$self->{invalidSet} = "You are acting as a " .
+					"student, and cannot start new " .
+					"versions of a set for the student.";
 			}
 
 		} else {
@@ -737,7 +747,7 @@ sub pre_header_initialize {
 			     ( $currentNumAttempts < $maxAttemptsPerVersion )
 			     && 
 			     ( $effectiveUserName eq $userName ||
-			       $authz->hasPermissions($effectiveUserName,
+			       $authz->hasPermissions($userName,
 						      "record_answers_when_acting_as_student") )
 			   ) {
 				if ( between($set->open_date(), 
@@ -931,7 +941,7 @@ sub pre_header_initialize {
 	my @probOrder = (0..$#problemNumbers);
 
 	# there's a routine to do this somewhere, I think...
-	if ( defined( $set->problem_randorder ) && $set->problem_randorder ) {
+	if ( $set->problem_randorder ) {
 		my @newOrder = ();
 	# we need to keep the random order the same each time the set is loaded!
 	#    this requires either saving the order in the set definition, or 
@@ -1546,10 +1556,30 @@ sub body {
 					       "Press grade now!\n"));
 		}
 		# if there are multiple attempts per version, indicate the 
-		#    number remaining
+		#    number remaining, and if we've submitted a multiple 
+		#    attempt multi-page test, show the score on the previous
+		#    submission
 		if ( $set->attempts_per_version > 1 ) {
 			print CGI::em("You have $numLeft attempt(s) remaining ",
 				      "on this test.");
+			if ( $numLeft < $set->attempts_per_version &&
+			     $numPages > 1 &&
+			     $canShowScores ) {
+				print CGI::start_div({-id=>"gwScoreSummary"}),
+					CGI::strong({},"Score summary for " .
+						    "last submit:");
+				print CGI::start_table({"border"=>0,
+							"cellpadding"=>0,
+							"cellspacing"=>0});
+				print CGI::Tr({},CGI::th({-align=>"left"},
+							 ["Prob","","Status","",
+							  "Result"]));
+				for ( my $i=0; $i<@probStatus; $i++ ) {
+					print CGI::Tr({},
+						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? "Correct" : "Incorrect"]));
+				}
+				print CGI::end_table(), CGI::end_div();
+			}
 		}
 	} else {
 		print CGI::start_div({class=>'gwMessage'});
