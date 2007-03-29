@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.88 2006/12/09 03:29:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.89 2007/01/24 22:20:35 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -167,9 +167,12 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	},
 	permission => {
-		type => "number",
-		size => 2,
+# this really should be read from $r->ce, but that's not available here
+		type => "permission",
 		access => "readwrite",
+#		type => "number",
+#		size => 2,
+#		access => "readwrite",
 	}
 };
 sub pre_header_initialize {
@@ -1474,6 +1477,24 @@ sub fieldEditHTML {
 			labels => \%labels,
 		});
 	}
+
+	if ($type eq "permission") {
+		my ($default, @values, %labels);
+		my %roles = %{$ce->{userRoles}};
+		foreach my $role (sort {$roles{$a}<=>$roles{$b}} keys(%roles) ) {
+			my $val = $roles{$role};
+
+			push(@values, $val);
+			$labels{$val} = $role;
+			$default = $val if ( $value eq $role );
+		}
+		return CGI::popup_menu({
+			name => $fieldName,
+			values => \@values,
+			default => $default,
+			labels => \%labels,
+		});
+	}
 }
 
 sub recordEditHTML {
@@ -1600,6 +1621,10 @@ sub recordEditHTML {
 	foreach my $field ($PermissionLevel->NONKEYFIELDS) {
 		my $fieldName = 'permission.' . $PermissionLevel->user_id . '.' . $field,
 		my $fieldValue = $PermissionLevel->$field;
+		# get name out of permission level 
+		if ( $field eq 'permission' ) {
+			($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
+		}
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = 'readonly' unless $editMode;
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
