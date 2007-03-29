@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.99 2007/03/27 17:04:02 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.100 2007/03/28 18:32:10 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1763,6 +1763,9 @@ sub checkKeyfields($;$) {
 		} elsif ($versioned and ($keyfield eq "set_id" or $keyfield eq "user_id")) {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
 				unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
+		} elsif ($keyfield eq "ip_mask") {
+			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-fA-F0-9_.:/])"
+				unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
 		} else {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.])"
 				unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
