@@ -212,7 +212,8 @@ use constant  FIELD_PROPERTIES => {
 		access => "readonly",
 	},
 	# hide_score and hide_work should be drop down selects with 
-	#    options 'N', 'Y' and 'BeforeAnswerDate'
+	#    options 'N', 'Y' and 'BeforeAnswerDate'.  in that we don't
+	#    allow editing of these fields in this module, this is moot.
 	hide_score => {
 		type => "text",
 		size => 16,
@@ -228,6 +229,12 @@ use constant  FIELD_PROPERTIES => {
 		size => 4,
 		access => "readwrite",
 	},
+	# this should be 'No', 'RestrictTo' or 'DenyFrom'
+	restrict_ip => { 
+		type => "text",
+		size => 10,
+		access => "readwrite",
+	}
 };
 
 sub pre_header_initialize {
@@ -1423,7 +1430,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1463,10 +1470,41 @@ sub importSetsFromDef {
 		$newSetRecord->hide_score($hideScore);
 		$newSetRecord->hide_work($hideWork);
 		$newSetRecord->time_limit_cap($timeCap);
+		$newSetRecord->restrict_ip($restrictIP);
+		$newSetRecord->relax_restrict_ip($relaxRestrictIP);
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
 		die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
+
+		#do we need to add locations to the set_locations table?
+		if ( $restrictIP ne 'No' && $restrictLoc ) {
+			if ($db->existsLocation( $restrictLoc ) ) {
+				if ( ! $db->existsGlobalSetLocation($setName,$restrictLoc) ) {
+					my $newSetLocation = $db->newGlobalSetLocation;
+					$newSetLocation->set_id( $setName );
+					$newSetLocation->location_id( $restrictLoc );
+					eval {$db->addGlobalSetLocation($newSetLocation)};
+					warn("error adding set location $restrictLoc " .
+					     "for set $setName: $@") if $@;
+				} else {
+					# this should never happen.
+					warn("input set location $restrictLoc" .
+					     " already exists for set " . 
+					     "$setName.\n");
+				}
+			} else { 
+				warn("restriction location $restrictLoc " .
+				     "does not exist.  IP restrictions have " .
+				     "been ignored.\n");
+				$newSetRecord->restrict_ip('No');
+				$newSetRecord->relax_restrict_ip('No');
+				eval { $db->putGlobalSet($newSetRecord) };
+				# we ignore error messages here; if the set
+				#    added without error before, we assume 
+				#    (ha) that it will put without trouble
+			}
+		}
 
 		debug("$set_definition_file: adding problems to database");
 		# add problems
@@ -1517,10 +1555,12 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $timeCap ) = 
-		 ('')x7;  # initialize these to ''
+	     $problemsPerPage, $timeCap, $restrictLoc,
+	     ) = 
+		 ('')x8;  # initialize these to ''
+	my ( $restrictIP, $relaxRestrictIP ) = ('No', 'No');
 # additional fields currently used only by gateways; later, the world?
-	my ( $hideScore, $hideWork, ) = ( 0, 0 );
+	my ( $hideScore, $hideWork, ) = ( 'N', 'N' );
 
 	my %setInfo;
 	if ( open (SETFILENAME, "$filePath") )    {
@@ -1575,6 +1615,12 @@ sub readSetDef {
 				$hideWork = ( $value ) ? $value : 'N';
 			} elsif ($item eq 'capTimeLimit') {
 				$timeCap = ( $value ) ? 1 : 0;
+			} elsif ($item eq 'restrictIP') {
+				$restrictIP = ( $value ) ? $value : 'No';
+			} elsif ($item eq 'restrictLocation' ) { 
+				$restrictLoc = ( $value ) ? $value : '';
+			} elsif ( $item eq 'relaxRestrictIP' ) {
+				$relaxRestrictIP = ( $value ) ? $value : 'No';
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -1620,6 +1666,25 @@ sub readSetDef {
 			     "is not valid; it will be replaced with '0'.\n");
 			$timeCap = '0';
 		}
+		if ( $restrictIP ne 'No' && $restrictIP ne 'DenyFrom' &&
+		     $restrictIP ne 'RestrictTo' ) {
+			warn("The value $restrictIP for the restrictIP " .
+			     "option is not valid; it will be replaced " . 
+			     "with 'No'.\n");
+			$restrictIP = 'No';
+			$restrictLoc = '';
+			$relaxRestrictIP = 'No';
+		}
+		if ( $relaxRestrictIP ne 'No' && 
+		     $relaxRestrictIP ne 'AfterAnswerDate' &&
+		     $relaxRestrictIP ne 'AfterVersionAnswerDate' ) {
+			warn("The value $relaxRestrictIP for the " .
+			     "relaxRestrictIP option is not valid; it will " . 
+			     "be replaced with 'No'.\n");
+			$relaxRestrictIP = 'No';
+		}
+		# to verify that restrictLoc is valid requires a database
+		#    call, so we defer that until we return to add the set
 		
 		#####################################################################
 		# Read and check list of problems for the set
@@ -1662,6 +1727,9 @@ sub readSetDef {
 		 $hideScore,
 		 $hideWork,
 		 $timeCap,
+		 $restrictIP,
+		 $restrictLoc,
+		 $relaxRestrictIP,
 		);
 	} else {
 		warn "Can't open file $filePath\n";
@@ -1749,6 +1817,20 @@ hideScore           = $hideScore
 hideWork            = $hideWork
 capTimeLimit        = $timeCap
 EOG
+		    chomp($gwFields);
+		}
+
+		# ip restriction fields
+		my $restrictIP = $setRecord->restrict_ip;
+		my $restrictFields = '';
+		if ( $restrictIP && $restrictIP ne 'No' ) {
+			# only store the first location
+			my $restrictLoc = ($db->listGlobalSetLocations($setRecord->set_id))[0];
+			my $relaxRestrict = $setRecord->relax_restrict_ip;
+			$restrictLoc || ($restrictLoc = '');
+			$restrictFields = "restrictIP          = $restrictIP" .
+			    "\nrestrictLocation    = $restrictLoc\n" . 
+			    "relaxRestrictIP     = $relaxRestrict\n";
 		}
 
 		my $fileContents = <<EOF;
@@ -1758,11 +1840,8 @@ dueDate           = $dueDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
-problemList       = 
-
+${restrictFields}problemList       = 
 $problemList
-
-
 EOF
 
 		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);

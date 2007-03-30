@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.100 2007/03/28 18:32:10 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.101 2007/03/29 15:12:49 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1294,9 +1294,7 @@ sub listUserSetLocations {
 	}
 }
 
-# FIXME: make these corrections in GlobalSetLocations too
-# FIXME: we won't ever use this because all fields are key fields
-sub existsUserSetLocations {
+sub existsUserSetLocation {
 	my ($self, $userID, $setID, $locationID) = shift->checkArgs(\@_, qw/user_id set_id location_id/);
 	return $self->{set_locations_user}->exists($userID,$setID,$locationID);
 }

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.62 2007/03/28 18:32:10 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.63 2007/03/30 14:21:14 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2024,10 +2024,11 @@ sub manage_location_form {
 				   "Delete location:") ]),
 		CGI::td({-colspan=>2}, 
 			CGI::popup_menu(-name=>"delete_location",
-					-values=>["no location",
+					-values=>["",
 						  "selected_locations",
 						  @locationIDs],
-					-labels=>{selected_locations => "locations selected below"}) .
+					-labels=>{selected_locations => "locations selected below",
+						  "" => "no location"}) .
 			CGI::span({-style=>"color:#C33;"}, "  Confirm: ") . 
 			CGI::checkbox({-name=>"delete_confirm",
 				       -value=>"true",

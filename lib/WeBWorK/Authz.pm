@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.29 2007/03/28 19:16:06 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.30 2007/03/30 13:02:05 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -247,27 +247,44 @@ sub checkSet {
 	#    be forcing a login, so just bail 
 	return 0 if ( ! $userName || ! $effectiveUserName );
 
-	my $set;
+	# do we have a cached set that we can use?
+	my $set = $self->{merged_set};
+
 	if ( $setName =~ /,v(\d+)$/ ) {
 		my $verNum = $1;
 		$setName =~ s/,v\d+$//;
-		if ($db->existsSetVersion($effectiveUserName,$setName,$verNum)) {
-			$set = $db->getMergedSetVersion($effectiveUserName,$setName,$verNum);
+
+		if ( $set && $set->set_id eq $setName && 
+		     $set->user_id eq $effectiveUserName &&
+		     $set->version_id eq $verNum ) {
+			# then we can just use this set and skip the rest
+
 		} else {
-			return "Requested version ($verNum) of set " .
-				"'$setName' is not assigned to user " .
-				"$effectiveUserName.";
+			if ($db->existsSetVersion($effectiveUserName,$setName,$verNum)) {
+				$set = $db->getMergedSetVersion($effectiveUserName,$setName,$verNum);
+			} else {
+				return "Requested version ($verNum) of set " .
+					"'$setName' is not assigned to user " .
+					"$effectiveUserName.";
+			}
 		}
 		if ( ! $set ) {
 			return "Requested set '$setName' could not be found " .
 				"in the database for user $effectiveUserName.";
 		}
 	} else {
-		if ( $db->existsUserSet($effectiveUserName,$setName) ) {
-			$set = $db->getMergedSet($effectiveUserName,$setName);
+
+		if ( $set && $set->set_id eq $setName &&
+		     $set->user_id eq $effectiveUserName ) {
+			# then we can just use this set, and skip the rest
+
 		} else {
-			return "Requested set '$setName' is not assigned " .
-				"to user $effectiveUserName.";
+			if ( $db->existsUserSet($effectiveUserName,$setName) ) {
+				$set = $db->getMergedSet($effectiveUserName,$setName);
+			} else {
+				return "Requested set '$setName' is not " .
+					"assigned to user $effectiveUserName.";
+			}
 		}
 		if ( ! $set ) {
 			return "Requested set '$setName' could not be found " .
@@ -359,6 +376,14 @@ sub invalidIPAddress {
 	my @locationIDs = ( map {$_->location_id} @restrictLocations );
 	my @restrictAddresses = ( map {$db->listLocationAddresses($_)} @locationIDs );
 
+	# if there are no addresses in the locations, return an error that
+	#    says this
+	return "Client ip address " . $clientIP->ip() . " is not allowed to " .
+	    "work this assignment, because the assignment has ip address " .
+	    "restrictions and there are no allowed locations associated " .
+	    "with the restriction.  Contact your professor to have this " .
+	    "problem resolved." if ( ! @restrictAddresses );
+
 	# build a set of IP objects to match against
 	my @restrictIPs = ( map {new Net::IP($_)} @restrictAddresses );
 
@@ -373,16 +398,46 @@ sub invalidIPAddress {
 		}
 	}
 
+	# this is slightly complicated by having to check relax_restrict_ip
+	my $badIP = '';
 	if ( $restrictType eq 'RestrictTo' && ! $inRestrict ) {
-		return "Client ip address " . $clientIP->ip() . 
+		$badIP = "Client ip address " . $clientIP->ip() . 
 			" is not in the list of addresses from " .
 			"which this assignment may be worked.";
 	} elsif ( $restrictType eq 'DenyFrom' && $inRestrict ) {
-		return "Client ip address " . $clientIP->ip() . 
+		$badIP = "Client ip address " . $clientIP->ip() . 
 			" is in the list of addresses from " .
 			"which this assignment may not be worked.";		
 	} else {
 		return 0;
+	}
+
+	# if we're here, we failed the IP check, and so need to consider
+	#    if ip restrictions were relaxed.  the set we were passed in 
+	#    is either the merged userset or the merged versioned userset,
+	#    depending on whether the set is versioned or not
+
+	my $relaxRestrict = $set->relax_restrict_ip;
+	return $badIP if ( $relaxRestrict eq 'No' );
+
+	if ( $set->assignment_type =~ /gateway/ ) {
+		if ( $relaxRestrict eq 'AfterAnswerDate' ) {
+			# in this case we need to go and get the userset,
+			#    not the versioned set (which we already have)
+			#    drat!
+			my $userset = $db->getMergedSet($set->user_id,$setName);
+			return( ! $userset || before($userset->answer_date) 
+				? $badIP : 0 );
+		} else {
+			# this is easier; just look at the current answer date
+			return( before($set->answer_date) ? $badIP : 0 );
+		}
+	} else {
+		# the set isn't versioned, so assume that $relaxRestrict
+		#    is 'AfterAnswerDate', regardless of what it actually
+		#    is; 'AfterVersionAnswerDate' doesn't make sense in 
+		#    this case
+		return( before($set->answer_date) ? $badIP : 0 );
 	}
 }
 

@@ -39,7 +39,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 
 # these constants determine which fields belong to what type of record
 # IP RESTRICT
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -55,7 +55,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are 
 # FIXME: only used for gateways
 # IP RESTRICT
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 
@@ -148,6 +148,18 @@ use constant  FIELD_PROPERTIES => {
 				No => "No",
 				RestrictTo => "Restrict To",
 				DenyFrom => "Deny From",
+		},
+		default   => 'No',
+	},
+	relax_restrict_ip => { 
+		name      => "Relax IP restrictions when?",
+		type      => "choose",
+		override  => "any",
+		choices   => [qw( No AfterAnswerDate AfterVersionAnswerDate )],
+		labels    => {
+				No => "Never",
+				AfterAnswerDate => "After set answer date",
+				AfterVersionAnswerDate => "(gw/quiz) After version answer date",
 		},
 		default   => 'No',
 	},
@@ -397,8 +409,12 @@ sub FieldTable {
 
 		# IP RESTRICT
 		# we don't show the ip restriction option if there are 
-		#    no defined locations
+		#    no defined locations, nor the relax_restrict_ip option
+		#    if we're not restricting ip access
 		next if ( $field eq 'restrict_ip' && ! $numLocations );
+		next if ($field eq 'relax_restrict_ip' && 
+			 ( ($forUsers && $userRecord->restrict_ip eq 'No') ||
+			   (! $forUsers && $globalRecord->restrict_ip eq 'No')));
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
