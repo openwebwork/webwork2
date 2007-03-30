@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.28 2007/03/27 20:12:13 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.29 2007/03/28 19:16:06 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -351,9 +351,11 @@ sub invalidIPAddress {
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
 	my $clientIP = new Net::IP($r->connection->remote_ip);
+	# make sure that we're using the non-versioned set name
+	$setName =~ s/,v\d+$//;
 
 	my $restrictType = $set->restrict_ip;
-	my @restrictLocations = $db->getAllMergedSetLocations($userName,$setName);
+	my @restrictLocations = $db->getAllMergedSetLocations($effectiveUserName,$setName);
 	my @locationIDs = ( map {$_->location_id} @restrictLocations );
 	my @restrictAddresses = ( map {$db->listLocationAddresses($_)} @locationIDs );
 
@@ -366,7 +368,7 @@ sub invalidIPAddress {
 	foreach my $rIP ( @restrictIPs ) {
 		if ($rIP->overlaps($clientIP) == $IP_B_IN_A_OVERLAP ||
 		    $rIP->overlaps($clientIP) == $IP_IDENTICAL) {
-			$inRestrict = 1;
+			$inRestrict = $rIP->ip();
 			last;
 		}
 	}
