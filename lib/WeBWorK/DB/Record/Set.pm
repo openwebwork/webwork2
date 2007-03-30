@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.17 2007/03/13 15:42:06 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.18 2007/03/27 17:04:01 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,9 +45,11 @@ BEGIN {
 		version_last_attempt_time => { type=>"BIGINT" },
 		problems_per_page         => { type=>"INT" },
                 hide_score                => { type=>"ENUM('N','Y','BeforeAnswerDate')" },
+                hide_score_by_problem     => { type=>"ENUM('N','Y')" },
                 hide_work                 => { type=>"ENUM('N','Y','BeforeAnswerDate')" },
 		time_limit_cap            => { type=>"ENUM('0','1')" },
 		restrict_ip               => { type=>"ENUM('No','RestrictTo','DenyFrom')" },
+		relax_restrict_ip         => { type=>"ENUM('No','AfterAnswerDate','AfterVersionAnswerDate') DEFAULT 'No'" },
 	);
 }
 

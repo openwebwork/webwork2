@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.10 2007/03/13 15:38:23 glarose Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.11 2007/03/27 17:04:01 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -243,7 +243,7 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 	}
 };
 
-$DB_VERSIONS[++$i]{desc} = "add locations, location_addresses, set_locations and set_locations_user tables to database, and add restrict_ip to set and set_user.";
+$DB_VERSIONS[++$i]{desc} = "adds locations, location_addresses, set_locations and set_locations_user tables to database, and add restrict_ip to set and set_user.";
 $DB_VERSIONS[  $i]{global_code} = sub {
 	$dbh->do("CREATE TABLE locations (location_id TINYBLOB NOT NULL, description TEXT, PRIMARY KEY (location_id(1000)))");
 	$dbh->do("CREATE TABLE location_addresses (location_id TINYBLOB NOT NULL, ip_mask TINYBLOB NOT NULL, PRIMARY KEY (location_id(500),ip_mask(500)))");
@@ -262,13 +262,27 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 	}
 };
 
-$DB_VERSIONS[++$i]{desc} = "update defaults for hide_work and hide_score in set_user tables.";
+$DB_VERSIONS[++$i]{desc} = "updates defaults for hide_work and hide_score in set_user tables.";
 $DB_VERSIONS[  $i]{course_code} = sub {
 	my $course = shift;
 
 	if ( exists $sql_tables{"${course}_set_user"} ) {
 		$dbh->do("ALTER TABLE `${course}_set_user` MODIFY COLUMN `hide_score` ENUM('N','Y','BeforeAnswerDate')");
 		$dbh->do("ALTER TABLE `${course}_set_user` MODIFY COLUMN `hide_work` ENUM('N','Y','BeforeAnswerDate')");
+	}
+};
+
+$DB_VERSIONS[++$i]{desc} = "adds relax_restrict_ip, hide_problem_score columns to set and set_user tables.";
+$DB_VERSIONS[  $i]{course_code} = sub {
+	my $course = shift;
+
+	if ( exists $sql_tables{"${course}_set"} ) {
+		$dbh->do("ALTER TABLE `${course}_set` ADD COLUMN `relax_restrict_ip` ENUM('No','AfterAnswerDate','AfterVersionAnswerDate') DEFAULT 'No'");
+		$dbh->do("ALTER TABLE `${course}_set` ADD COLUMN `hide_score_by_problem` ENUM('N','Y') DEFAULT 'N'");
+	}
+	if ( exists $sql_tables{"${course}_set_user"} ) {
+		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `relax_restrict_ip` ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')");
+		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `hide_score_by_problem` ENUM('N','Y')");
 	}
 };
 
