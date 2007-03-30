@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.57.2.1 2006/11/10 17:59:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.62 2007/03/28 18:32:10 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2025,7 +2025,9 @@ sub manage_location_form {
 		CGI::td({-colspan=>2}, 
 			CGI::popup_menu(-name=>"delete_location",
 					-values=>["no location",
-						  @locationIDs]) .
+						  "selected_locations",
+						  @locationIDs],
+					-labels=>{selected_locations => "locations selected below"}) .
 			CGI::span({-style=>"color:#C33;"}, "  Confirm: ") . 
 			CGI::checkbox({-name=>"delete_confirm",
 				       -value=>"true",
@@ -2034,23 +2036,28 @@ sub manage_location_form {
 
 	print CGI::p({}, CGI::submit(-name=>"manage_locations", -value=>"Take Action!"));
 
-	print CGI::end_form();
-
 	# existing location table
 	# FIXME: the styles for this table should be off in a stylesheet 
 	#    somewhere
 	print CGI::start_div({align=>"center"}),
 		CGI::start_table({border=>1, cellpadding=>2});
 	print CGI::Tr({style=>"background-color:#e0e0e0;font-size:92%", align=>"left"}, 
-		      CGI::th({}, ["Location","Description","Addresses"]));
+		      CGI::th({}, ["Select", "Location", "Description", 
+				   "Addresses"]));
 	foreach my $loc ( @locations ) {
+		my $editAddr = $self->systemLink($urlpath, params=>{subDisplay=>"manage_locations", manage_location_action=>"edit_location_form", edit_location=>$loc->location_id});
 		print CGI::Tr({valign=>'top',style=>"background-color:#eeeeee;"}, 
 			      CGI::td({style=>'font-size:85%;'},
-				      [ $loc->location_id,
+				      [ CGI::checkbox(-name=>"delete_selected",
+						      -value=>$loc->location_id,
+						      -label=>''),
+					CGI::a({href=>$editAddr}, $loc->location_id),
 					$loc->description,
 					join(', ', @{$locAddr{$loc->location_id}}) ]));
 	}
 	print CGI::end_table(), CGI::end_div();
+	print CGI::end_form();
+
 
 }
 
@@ -2153,30 +2160,50 @@ sub delete_location_handler {
 
 	# what location are we deleting?
 	my $locationID = $r->param("delete_location");
+	# check for selected deletions if appropriate
+	my @delLocations = ( $locationID );
+	if ( $locationID eq 'selected_locations' ) {
+		@delLocations = $r->param("delete_selected");
+		$locationID = @delLocations;
+	}
 	# are we sure?
 	my $confirm = $r->param("delete_confirm");
 
+	my $badID;
 	if ( ! $locationID ) {
 		print CGI::div({-class=>"ResultsWithError"}, 
 			       "Please provide a location name " . 
 			       "to delete.");
 
-	} elsif ( ! $db->existsLocation($locationID) ) {
+	} elsif ( $badID = $self->existsLocations_helper( @delLocations ) ) {
 		print CGI::div({-class=>"ResultsWithError"}, 
-			       "No location with name $locationID " . 
+			       "No location with name $badID " . 
 			       "exists in the database.");
 
 	} elsif ( ! $confirm || $confirm ne 'true' ) {
 		print CGI::div({-class=>"ResultsWithError"}, 
 			       "Location deletion requires confirmation.");
 	} else {
-		$db->deleteLocation( $locationID );
+		foreach ( @delLocations ) {
+			$db->deleteLocation( $_ );
+		}
 		print CGI::div({-class=>"ResultsWithoutError"},
-			       "Location $locationID has been deleted.");
+			       "Location" . (@delLocations > 1 ? 's ' : ' ') .
+			       join(', ', @delLocations) . 
+			       (@delLocations > 1 ? ' have ' : ' has ' ) . 
+			       'been deleted.');
 		$r->param('manage_location_action','none');
 		$r->param('delete_location','');
 	}
 	$self->manage_location_form;
+}
+sub existsLocations_helper {
+	my ($self, @locations) = @_;
+	my $db = $self->r->db;
+	foreach ( @locations ) {
+		return $_ if ( ! $db->existsLocation($_) );
+	}
+	return 0;
 }
 
 sub edit_location_form {
