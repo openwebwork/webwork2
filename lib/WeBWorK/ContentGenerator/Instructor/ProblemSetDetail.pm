@@ -77,6 +77,7 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap at
 #		},
 #               convertby => 60,                # divide incoming database field values by this, and multiply when saving
 #               format    => 'string'           # for edit entries, we require that the input data match /^string$/
+#                                               # format is not currently used
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
@@ -809,26 +810,31 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 	}
-	#####################################################################
-	# Check for invalid input data
-	#####################################################################
-	# should this be done here?  
-	# 
-	if ( defined($r->param('submit_changes')) && ! $error ) {
-		foreach my $field ( @{ SET_FIELDS() } ) {
-			if ( $properties{$field}->{type} eq 'choose' &&
-			     ! grep {$r->param("set.$setID.$field") !~ /^$_$/} @{$properties{$field}->{choices}} ) {
-				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name} . " (valid values are " . join(', ', values(%{$properties{$field}->{labels}})) . ")");
-				$error = $r->param('submit_changes');
-			} elsif ( $properties{$field}->{type} eq 'edit' &&
-				  $properties{$field}->{format} && 
-				  $field !~ /_date$/ &&
-				  $r->param("set.$setID.$field") !~ /^$properties{$field}->{format}$/ ) {
-				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name});
-				$error = $r->param('submit_changes');
-			}
-		}
-	}
+########
+# commented out
+#   this runs afoul of the conversion of a set to a gateway
+#   assignment, when perforce fields may be empty or zero.
+#   
+# 	#####################################################################
+# 	# Check for invalid input data
+# 	#####################################################################
+# 	# should this be done here?  
+# 	# 
+# 	if ( defined($r->param('submit_changes')) && ! $error ) {
+# 		foreach my $field ( @{ SET_FIELDS() } ) {
+# 			if ( $properties{$field}->{type} eq 'choose' &&
+# 			     ! grep {$r->param("set.$setID.$field") !~ /^$_$/} @{$properties{$field}->{choices}} ) {
+# 				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name} . " (valid values are " . join(', ', values(%{$properties{$field}->{labels}})) . ")");
+# 				$error = $r->param('submit_changes');
+# 			} elsif ( $properties{$field}->{type} eq 'edit' &&
+# 				  $properties{$field}->{format} && 
+# 				  $field !~ /_date$/ &&
+# 				  $r->param("set.$setID.$field") !~ /^$properties{$field}->{format}$/ ) {
+# 				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name});
+# 				$error = $r->param('submit_changes');
+# 			}
+# 		}
+# 	}
 
 	if ($error) {
 		$self->addbadmessage("No changes were saved!");
