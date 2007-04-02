@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.86 2007/03/13 15:44:21 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.87 2007/03/13 21:18:18 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -469,9 +469,10 @@ sub setListRow {
 			$startTime = localtime($set->version_creation_time());
 
 			if ( $authz->hasPermissions($user, "view_hidden_work") || 
-			     ( $set->hide_score() eq 'N' || 
-			       ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) ) {
-			# find score
+			     $set->hide_score_by_problem eq 'Y' ||
+			     $set->hide_score() eq 'N' || 
+			     ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
+				# find score
 
 			# DBFIXME we can do this math in the database, i think
 				my $possible = 0;
