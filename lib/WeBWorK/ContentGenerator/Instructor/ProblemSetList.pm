@@ -1555,10 +1555,10 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $timeCap, $restrictLoc,
+	     $problemsPerPage, $restrictLoc,
 	     ) = 
 		 ('')x8;  # initialize these to ''
-	my ( $restrictIP, $relaxRestrictIP ) = ('No', 'No');
+	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
 # additional fields currently used only by gateways; later, the world?
 	my ( $hideScore, $hideWork, ) = ( 'N', 'N' );
 
@@ -1801,6 +1801,7 @@ SET:	foreach my $set (keys %filenames) {
 		    my $timeInterval = $setRecord->time_interval;
 		    my $vPerInterval = $setRecord->versions_per_interval;
 		    my $vTimeLimit   = $setRecord->version_time_limit;
+		    my $probRandom   = $setRecord->problems_randorder;
 		    my $probPerPage  = $setRecord->problems_per_page;
 		    my $hideScore    = $setRecord->hide_score;
 		    my $hideWork     = $setRecord->hide_work;
@@ -1812,6 +1813,7 @@ attemptsPerVersion  = $attemptsPerV
 timeInterval        = $timeInterval
 versionsPerInterval = $vPerInterval
 versionTimeLimit    = $vTimeLimit
+problemRandOrder    = $probRandom
 problemsPerPage     = $probPerPage
 hideScore           = $hideScore
 hideWork            = $hideWork
