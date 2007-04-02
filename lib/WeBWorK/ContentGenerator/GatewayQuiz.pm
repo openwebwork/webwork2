@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.43 2007/03/27 17:15:19 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.44 2007/03/29 19:48:57 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -86,15 +86,24 @@ sub can_showCorrectAnswers {
 	my $attemptsUsed = $Problem->num_correct + $Problem->num_incorrect + 
 	    $addOne;
 
+# this is complicated by trying to address hiding scores by problem---that
+#    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
+#    then we should allow scores to be shown, but not show the score on 
+#    any individual problem.  to deal with this, we make 
+#    can_showCorrectAnswers give the least restrictive view of hiding, and 
+#    then filter scores for the problems themselves later
+	my $canShowScores = ( $Set->hide_score eq 'N' ||
+			      $Set->hide_score_by_problem eq 'Y' ||
+			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				after($tmplSet->answer_date) ) );
+
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
 		       $Set->due_date() == $Set->answer_date() ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
 		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-		   ( $Set->hide_score eq 'N' || 
-		     ( $Set->hide_score eq 'BeforeAnswerDate' && 
-		       time > $tmplSet->answer_date ) ) ) );
+		   $canShowScores ) );
 }
 
 sub can_showHints {
@@ -118,15 +127,24 @@ sub can_showSolutions {
 	my $maxAttempts = $Set->attempts_per_version();
 	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
+# this is complicated by trying to address hiding scores by problem---that
+#    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
+#    then we should allow scores to be shown, but not show the score on 
+#    any individual problem.  to deal with this, we make can_showSolutions 
+#    give the least restrictive view of hiding, and then filter scores for 
+#    the problems themselves later
+	my $canShowScores = ( $Set->hide_score eq 'N' ||
+			      $Set->hide_score_by_problem eq 'Y' ||
+			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				after($tmplSet->answer_date) ) );
+
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
 		       $Set->due_date() == $Set->answer_date() ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
 		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-		   ( $Set->hide_score eq 'N' || 
-		     ( $Set->hide_score eq 'BeforeAnswerDate' && 
-		       time > $tmplSet->answer_date ) ) ) );
+		   $canShowScores ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -195,6 +213,17 @@ sub can_checkAnswers {
 			   $Set->version_last_attempt_time() ) ? 
 			   $Set->version_last_attempt_time() : $timeNow;
 
+	# this is further complicated by trying to address hiding scores by 
+	#    problem---that is, if $set->hide_score_by_problem and 
+	#    $set->hide_score are both set, then we should allow scores to 
+	#    be shown, but not show the score on any individual problem.  
+	#    to deal with this, we use the least restrictive view of hiding 
+	#    here, and then filter for the problems themselves later
+	my $canShowScores = ( $Set->hide_score eq 'N' ||
+			      $Set->hide_score_by_problem eq 'Y' ||
+			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				after($tmplSet->answer_date) ) );
+
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, ($Set->due_date + $grace), $submitTime)) {
@@ -210,28 +239,20 @@ sub can_checkAnswers {
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
 			return ( $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts") &&
 				 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-				   $Set->hide_score eq 'N' ||
-				   ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				     $timeNow > $tmplSet->answer_date ) ) );
+				   $canShowScores ) );
 		} else {
 			return ( $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts") && 
 				 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-				   $Set->hide_score eq 'N' ||
-				   ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				     $timeNow > $tmplSet->answer_date ) ) );
+				   $canShowScores ) );
 		}
 	} elsif (between(($Set->due_date + $grace), $Set->answer_date, $submitTime)) {
 		return ( $authz->hasPermissions($User->user_id, "check_answers_after_due_date")  &&
 			 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-			   $Set->hide_score eq 'N' ||
-			   ( $Set->hide_score eq 'BeforeAnswerDate' &&
-			     $timeNow > $tmplSet->answer_date ) ) );
+			   $canShowScores ) );
 	} elsif (after($Set->answer_date, $submitTime)) {
 		return ( $authz->hasPermissions($User->user_id, "check_answers_after_answer_date") &&
 			 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
-			   $Set->hide_score eq 'N' || 
-			   ( $Set->hide_score eq 'BeforeAnswerDate' &&
-			     $timeNow > $tmplSet->answer_date ) ) );
+			   $canShowScores ) );
 	}
 }
 
@@ -242,10 +263,14 @@ sub can_showScore {
 
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
 
+	# address hiding scores by problem
+	my $canShowScores = ( $Set->hide_score eq 'N' ||
+			      $Set->hide_score_by_problem eq 'Y' ||
+			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
+				after($tmplSet->answer_date) ) );
+
 	return( $authz->hasPermissions($User->user_id,"view_hidden_work") ||
-		$Set->hide_score eq 'N' ||
-		( $Set->hide_score eq 'BeforeAnswerDate' && 
-		  $timeNow > $tmplSet->answer_date ) );
+		$canShowScores );
 }
 
 ################################################################################
@@ -1389,7 +1414,9 @@ sub body {
 	####################################
 
 	# some convenient output variables
-	my $canShowScores = $authz->hasPermissions($user, "view_hidden_work") || ( $set->hide_score eq 'N' || ($set->hide_score eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date) );
+	my $canShowProblemScores = $can{showScore} && 
+	    ($set->hide_score eq 'N' || $set->hide_score_by_problem eq 'N' ||
+	     $authz->hasPermissions($user, "view_hidden_work"));
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") || ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
 	# for nicer answer checking on multi-page tests, we want to keep 
@@ -1496,7 +1523,7 @@ sub body {
 			CGI::br();
 
 			# and show the score if we're allowed to do that
-			if ( $canShowScores ) {
+			if ( $can{showScore} ) {
 				print CGI::strong("Your score on this " .
 						  "$testNoun is ", 
 						  "$attemptScore/$totPossible.");
@@ -1507,7 +1534,7 @@ sub body {
 		#    too so that we know what's going on
 		print CGI::end_div();
 		if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
-		     $recordedScore != $attemptScore && $canShowScores ) {
+		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
 			print "The recorded score for this test is ",
 				"$recordedScore/$totPossible.";
@@ -1515,7 +1542,7 @@ sub body {
 		}
 
 	} elsif ( $checkAnswers ) {
-		if ( $canShowScores ) {
+		if ( $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
 			print CGI::strong("Your score on this (checked, not ",
 					  "recorded) submission is ",
@@ -1564,7 +1591,7 @@ sub body {
 				      "on this test.");
 			if ( $numLeft < $set->attempts_per_version &&
 			     $numPages > 1 &&
-			     $canShowScores ) {
+			     $can{showScore} ) {
 				print CGI::start_div({-id=>"gwScoreSummary"}),
 					CGI::strong({},"Score summary for " .
 						    "last submit:");
@@ -1586,7 +1613,7 @@ sub body {
 
 		if ( ! $checkAnswers && ! $submitAnswers ) {
 
-			if ( $canShowScores ) {
+			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
 					"$recordedScore/$totPossible";
@@ -1613,7 +1640,7 @@ sub body {
 		if ( $canShowWork ) {
 			print "The test (which is number $versionNumber) may " .
 				"no longer be submitted for a grade";
-			print "" . (($canShowScores) ? ", but you may still " .
+			print "" . (($can{showScore}) ? ", but you may still " .
 				    "check your answers." : ".") ;
 
 			# print a "printme" link if we're allowed to see our 
@@ -1757,8 +1784,8 @@ sub body {
 					}
 					$resultsTable = 
 					    $self->attemptResults($pg, 1, $will{showCorrectAnswers},
-								  $pg->{flags}->{showPartialCorrectAnswers} && $can{showScore},
-								  $can{showScore}, 1);
+								  $pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
+								  $canShowProblemScores, 1);
 					
 				} elsif ( $checkAnswers ) {
 					$recordMessage = CGI::span({class=>"resultsWithError"},
@@ -1767,8 +1794,8 @@ sub body {
 					
 					$resultsTable = 
 					    $self->attemptResults($pg, 1, $will{showCorrectAnswers},
-								  $pg->{flags}->{showPartialCorrectAnswers} && $can{showScore},
-								  $can{showScore}, 1);
+								  $pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
+								  $canShowProblemScores, 1);
 
 				} elsif ( $previewAnswers ) {
 					$recordMessage = 

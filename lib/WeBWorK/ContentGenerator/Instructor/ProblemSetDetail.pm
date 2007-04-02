@@ -38,8 +38,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-# IP RESTRICT
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -54,10 +53,9 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are 
 # FIXME: only used for gateways
-# IP RESTRICT
 use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
-use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
+use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_score_by_problem hide_work)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -233,11 +231,18 @@ use constant  FIELD_PROPERTIES => {
 #		labels    => { "" => 0 },
 	},
 	hide_score        => {
-		name      => "Show Score on Finished Assignments",
+		name      => "Show Scores on Finished Assignments?",
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
+	},
+	hide_score_by_problem => {
+		name      => "Show Total (but not scores on each problem)?",
+		type      => "choose",
+		choices   => [ qw(N Y) ],
+		override  => "any",
+		labels    => { 'N' => "Show no scores", 'Y' => "Show assignment total only", },
 	},
 	hide_work         => {
 		name      => "Show Student Work on Finished Tests",
@@ -326,8 +331,10 @@ sub FieldTable {
 
 	my @fieldOrder;
 
+	# needed for gateway output
 	my $gwoutput = '';
-# IP RESTRICT
+
+	# needed for ip restrictions
 	my $db = $r->{db};
 	my $ipSelector = '';
 	my $glIPlist;
@@ -339,12 +346,17 @@ sub FieldTable {
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
-    # gateway data fields are included only if the set is a gateway
+		# gateway data fields are included only if the set is a gateway
 		if ( $globalRecord->assignment_type() =~ /gateway/ ) {
 		    my $gwhdr = "\n<!-- begin gwoutput table -->\n";
 		    my $nF = 0;
 
 		    foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
+			# only display filtering of the hide_scores option to 
+			#    hide by problem if hide_scores is set
+			next if ( $gwfield eq 'hide_score_by_problem' &&
+				  ( ($forUsers && $userRecord->hide_score eq 'N') ||
+				    (! $forUsers && $globalRecord->hide_score eq 'N') ) );
 			my @fieldData = 
 			    ($self->FieldHTML($userID, $setID, $problemID, 
 					     $globalRecord, $userRecord, 
@@ -360,7 +372,6 @@ sub FieldTable {
 		    $gwoutput = "$gwhdr$gwoutput\n" .
 			"<!-- end gwoutput table -->\n";
 		}
-    # IP RESTRICT
     # similarly, we only include an ip selector if restrict_ip is not 'No'.  
     #    we have to know if there are any locations to know if we should show
     #    the restrict_ip option, however, so get those regardless
@@ -407,20 +418,19 @@ sub FieldTable {
 	foreach my $field (@fieldOrder) {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 
-		# IP RESTRICT
 		# we don't show the ip restriction option if there are 
 		#    no defined locations, nor the relax_restrict_ip option
 		#    if we're not restricting ip access
 		next if ( $field eq 'restrict_ip' && ! $numLocations );
 		next if ($field eq 'relax_restrict_ip' && 
-			 ( ($forUsers && $userRecord->restrict_ip eq 'No') ||
-			   (! $forUsers && $globalRecord->restrict_ip eq 'No')));
+			 (! $numLocations ||
+			  ($forUsers && $userRecord->restrict_ip eq 'No') ||
+			  (! $forUsers && $globalRecord->restrict_ip eq 'No')));
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
 
-		# IP RESTRICT
 		# we insert the list of locations after the restrict_ip 
 		#    selector, but only if ip restrictions are turned on
 		if ( $field eq 'restrict_ip' && $ipSelector ) {
@@ -829,7 +839,8 @@ sub initialize {
 ########
 # commented out
 #   this runs afoul of the conversion of a set to a gateway
-#   assignment, when perforce fields may be empty or zero.
+#   assignment, when perforce fields may be empty or zero, and dealing 
+#   with user sets, where we want to allow empty fields.
 #   
 # 	#####################################################################
 # 	# Check for invalid input data
@@ -891,10 +902,15 @@ sub initialize {
 					}
 				
 				}
+				# a check for hiding scores: if we have 
+				#    $set->hide_score eq 'N', we also want 
+				#    $set->hide_score_by_problem eq 'N'
+				if ( $record->hide_score eq 'N' ) {
+					$record->hide_score_by_problem('N');
+				}
 				$db->putUserSet($record);
 			}
 
-			# IP RESTRICT
 			# the locations for ip restrictions are saved in the 
 			#    set_locations_user table, so we have to update 
 			#    these separately 
@@ -954,9 +970,18 @@ sub initialize {
 				}
 				$setRecord->$field($param);
 			}
+			# a check for hiding scores: if we have 
+			#    $set->hide_score eq 'N', we also want 
+			#    $set->hide_score_by_problem eq 'N', and if it's
+			#    changed to 'Y' and hide_score_by_problem is Null,
+			#    give it a value 'N'
+			if ( $setRecord->hide_score eq 'N' ||
+			     ( ! defined($setRecord->hide_score_by_problem) ||
+			       $setRecord->hide_score_by_problem eq '' ) ) {
+				$setRecord->hide_score_by_problem('N');
+			}
 			$db->putGlobalSet($setRecord);
 
-			# IP RESTRICT
 			# the locations for ip restrictions are saved in the 
 			#    set_locations table, so we have to update these 
 			#    separately 
