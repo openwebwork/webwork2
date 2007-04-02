@@ -38,7 +38,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -55,7 +55,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # FIXME: only used for gateways
 use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
-use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_score_by_problem hide_work)];
+use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -230,20 +230,32 @@ use constant  FIELD_PROPERTIES => {
 		format    => '[0-9]+',      # an integer, possibly zero
 #		labels    => { "" => 0 },
 	},
-	hide_score        => {
+	'hide_score:hide_score_by_problem' => {
 		name      => "Show Scores on Finished Assignments?",
 		type      => "choose",
-		choices   => [ qw(N Y BeforeAnswerDate) ],
+		choices   => [ qw( N: Y:N BeforeAnswerDate:N Y:Y BeforeAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
+		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
-	hide_score_by_problem => {
-		name      => "Show Total (but not scores on each problem)?",
-		type      => "choose",
-		choices   => [ qw(N Y) ],
-		override  => "any",
-		labels    => { 'N' => "Show no scores", 'Y' => "Show assignment total only", },
-	},
+####################
+# FIXME: the above stanza replaces the following two, corresponding to a 
+#    single drop-down to set both variables
+#
+# 	hide_score        => {
+# 		name      => "Show Scores on Finished Assignments?",
+# 		type      => "choose",
+# 		choices   => [ qw(N Y BeforeAnswerDate) ],
+# 		override  => "any",
+# 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
+# 	},
+# 	hide_score_by_problem => {
+# 		name      => "Show Total (but not scores on each problem)?",
+# 		type      => "choose",
+# 		choices   => [ qw(N Y) ],
+# 		override  => "any",
+# 		labels    => { 'N' => "Show no scores", 'Y' => "Show assignment total only", },
+# 	},
+####################
 	hide_work         => {
 		name      => "Show Student Work on Finished Tests",
 		type      => "choose",
@@ -352,11 +364,16 @@ sub FieldTable {
 		    my $nF = 0;
 
 		    foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
-			# only display filtering of the hide_scores option to 
-			#    hide by problem if hide_scores is set
-			next if ( $gwfield eq 'hide_score_by_problem' &&
-				  ( ($forUsers && $userRecord->hide_score eq 'N') ||
-				    (! $forUsers && $globalRecord->hide_score eq 'N') ) );
+####################
+# FIXME: replaced with a single drop-down for all hide_scores options
+# 
+# 			# only display filtering of the hide_scores option to 
+# 			#    hide by problem if hide_scores is set
+# 			next if ( $gwfield eq 'hide_score_by_problem' &&
+# 				  ( ($forUsers && $userRecord->hide_score eq 'N') ||
+# 				    (! $forUsers && $globalRecord->hide_score eq 'N') ) );
+####################
+
 			my @fieldData = 
 			    ($self->FieldHTML($userID, $setID, $problemID, 
 					     $globalRecord, $userRecord, 
@@ -509,10 +526,27 @@ sub FieldHTML {
 	my $edit = ($properties{type} eq "edit") && ($properties{override} ne "none");
 	my $choose = ($properties{type} eq "choose") && ($properties{override} ne "none");
 	
-	my $globalValue = $globalRecord->{$field};
+# FIXME: allow one selector to set multiple fields
+#	my $globalValue = $globalRecord->{$field};
+# 	my $userValue = $userRecord->{$field};
+	my ($globalValue, $userValue) = ('', '');
+	my $blankfield = '';
+	if ( $field =~ /:/ ) {
+		foreach my $f ( split(/:/, $field) ) {
+			$globalValue .= $globalRecord->$f . ":";
+			$userValue .= $userRecord->$f . ":";
+			$blankfield .= ":";
+		}
+		$globalValue =~ s/:$//;
+		$userValue =~ s/:$//;
+		$blankfield =~ s/:$//;
+	} else {
+		$globalValue = $globalRecord->{$field};
+		$userValue = $userRecord->{$field};
+	}
+
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
 	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	my $userValue = $userRecord->{$field};
 	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : "";
 
 	if ($field =~ /_date/) {
@@ -553,23 +587,39 @@ sub FieldHTML {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
 		# so we have to use the actual db record field values to select our default here.
+
+		# FIXME: this allows us to set one selector from two (or more) fields
+		# if $field matches /:/, we have to get two fields to get the data we need here
+		my $value = $r->param("$recordType.$recordID.$field");
+		if ( ! $value && $field =~ /:/ ) { 
+			my @fields = split(/:/, $field);
+			$value = '';
+			foreach my $f ( @fields ) {
+				$value .= ($forUsers && $userRecord->$f ne '' ? $userRecord->$f : $globalRecord->$f) . ":";
+			}
+			$value =~ s/:$//;
+		} elsif ( ! $value ) {
+			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
+		}
+			
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
 				values => $properties{choices},
 				labels => \%labels,
-				default => $r->param("$recordType.$recordID.$field") || ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field),
+				default => $value,
 		});
 	}
 	
 	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $properties{labels}->{$globalValue} : $globalValue;
 
+	# FIXME: adding ":" in the checked => allows for multiple fields to be set by one selector
 #	return (($forUsers && $edit && $check) ? CGI::checkbox({
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
 				label => "",
 				value => $field,
-				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || "") ? 1 : 0),
+				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
 		}) : "",
 		$properties{name},
 		$inputType,
@@ -835,6 +885,7 @@ sub initialize {
 			$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
 			$error = $r->param('submit_changes');
 		}
+
 	}
 ########
 # commented out
@@ -896,18 +947,40 @@ sub initialize {
 						if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
 							$param = $param*$properties{$field}->{convertby};
 						}
-						$record->$field($param);
+						# special case; does field fill in multiple values?
+						if ( $field =~ /:/ ) {
+							my @values = split(/:/, $param);
+							my @fields = split(/:/, $field);
+							for ( my $i=0; $i<@values; $i++ ) { 
+								my $f=$fields[$i]; 
+								$record->$f($values[$i]); 
+							}
+						} else {
+							$record->$field($param);
+						}
 					} else {
-						$record->$field(undef);					
+						####################
+						# FIXME: allow one selector to set multiple fields
+						# 
+						if ( $field =~ /:/ ) {
+							foreach my $f ( split(/:/, $field) ) {
+								$record->$f(undef);
+							}
+						} else {
+							$record->$field(undef);
+						}
 					}
 				
 				}
+				####################
+				# FIXME: this is replaced by our allowing multiple fields to be set by one selector
 				# a check for hiding scores: if we have 
 				#    $set->hide_score eq 'N', we also want 
 				#    $set->hide_score_by_problem eq 'N'
-				if ( $record->hide_score eq 'N' ) {
-					$record->hide_score_by_problem('N');
-				}
+				# if ( $record->hide_score eq 'N' ) {
+				# 	$record->hide_score_by_problem('N');
+				# }
+				####################
 				$db->putUserSet($record);
 			}
 
@@ -968,18 +1041,33 @@ sub initialize {
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
 					$param = $param*$properties{$field}->{convertby};
 				}
-				$setRecord->$field($param);
+				# special case; does field fill in multiple values?
+				if ( $field =~ /:/ ) {
+					my @values = split(/:/, $param);
+					my @fields = split(/:/, $field);
+					for ( my $i=0; $i<@values; $i++ ) { 
+						my $f = $fields[$i];
+						$setRecord->$f($values[$i]); 
+					}
+				} else {
+					$setRecord->$field($param);
+				}
 			}
-			# a check for hiding scores: if we have 
-			#    $set->hide_score eq 'N', we also want 
-			#    $set->hide_score_by_problem eq 'N', and if it's
-			#    changed to 'Y' and hide_score_by_problem is Null,
-			#    give it a value 'N'
-			if ( $setRecord->hide_score eq 'N' ||
-			     ( ! defined($setRecord->hide_score_by_problem) ||
-			       $setRecord->hide_score_by_problem eq '' ) ) {
-				$setRecord->hide_score_by_problem('N');
-			}
+####################
+# FIXME: this is replaced by our setting both hide_score and hide_score_by_problem
+#    with a single drop down
+# 
+# 			# a check for hiding scores: if we have 
+# 			#    $set->hide_score eq 'N', we also want 
+# 			#    $set->hide_score_by_problem eq 'N', and if it's
+# 			#    changed to 'Y' and hide_score_by_problem is Null,
+# 			#    give it a value 'N'
+# 			if ( $setRecord->hide_score eq 'N' ||
+# 			     ( ! defined($setRecord->hide_score_by_problem) ||
+# 			       $setRecord->hide_score_by_problem eq '' ) ) {
+# 				$setRecord->hide_score_by_problem('N');
+# 			}
+####################
 			$db->putGlobalSet($setRecord);
 
 			# the locations for ip restrictions are saved in the 
