@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.45 2007/04/02 19:57:38 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.46 2007/04/04 15:05:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1688,12 +1688,12 @@ sub body {
 	#    form points us to the same set.  
 	my $setname = $set->set_id;
 	my $setvnum = $set->version_id;
-	$action =~ s/(quiz_mode\/$setname)\//$1,v$setvnum\//;
+	$action =~ s/(quiz_mode\/$setname)\/?$/$1,v$setvnum\//;  #"
 
 	# now, we print out the rest of the page if we're not hiding submitted
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
-		my $when = ( $set->hideWork eq 'BeforeAnswerDate' ) 
+		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
 			? ' until ' . formatDateTime($set->answer_date) 
 			: '';
 		print CGI::start_div({class=>"gwProblem"});
