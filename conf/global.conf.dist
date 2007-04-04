@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.187 2007/03/15 23:57:11 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.188 2007/03/27 17:04:01 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -410,6 +410,10 @@ $default_status = "Enrolled";
 		abbrevs => [qw/ D d drop withdraw /],
 		behaviors => [qw/  /],
 	},
+	Proctor => { 
+		abbrevs => [qw/ P p proctor /],
+		behaviors => [qw/  /],
+	},
 );
 
 ################################################################################
@@ -601,7 +605,8 @@ $authen{ldap_options} = {
 %userRoles = (
 	guest => -5,
 	student => 0,
-	proctor => 2,
+	login_proctor => 2,
+	grade_proctor => 3,
 	ta => 5,
 	professor => 10,
 );
@@ -618,7 +623,8 @@ $authen{ldap_options} = {
 	change_password                => "student",
 	change_email_address           => "student",
 	
-	proctor_quiz                   => "proctor",
+	proctor_quiz_login             => "login_proctor",
+	proctor_quiz_grade             => "grade_proctor",
 	view_proctored_tests           => "ta",
 	view_hidden_work               => "ta",
 	

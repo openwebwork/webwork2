@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.44 2007/03/29 19:48:57 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.45 2007/04/02 19:57:38 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,8 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory sortByName before after between);
+	ref2string makeTempDirectory sortByName before after between 
+	formatDateTime);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
@@ -506,8 +507,6 @@ sub pre_header_initialize {
 # get template set: the non-versioned set that's assigned to the user
 #    if this fails/failed in authz->checkSet, then $self->{invalidSet} is
 #    set
-## FIXME SET MANAGEMENT: we can get this merged set from $authz as well:
-##    if ( ! $requestedVersion ), then $authz->{merged_set} is the template
  	my $tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
 
 	# now we know that we're in a gateway test, save the assignment test 
@@ -539,7 +538,6 @@ sub pre_header_initialize {
 	if ( $requestedVersion ) { 
 	# if a specific set version was requested, it was stored in the $authz
 	#    object when we did the set check
-## FIXME SET MANAGEMENT: we can get this from $authz->{merged_set} 
 		$set = $db->getMergedSetVersion($effectiveUserName, $setName, 
 						$requestedVersion);
 	} elsif ( $latestVersion ) {
@@ -1195,16 +1193,32 @@ sub body {
 	#    getting reauthorized
 		if ( $self->{'assignment_type'} eq 'proctored_gateway' ) {
 			my $proctorID = $r->param('proctor_user');
-			eval{ $db->deleteKey( "$effectiveUser,$proctorID" ); };
-			# we should be more subtle than die()ing, but this is 
-			#    a potentially big problem
-			if ( $@ ) {
-				die("ERROR RESETTING PROCTOR KEY: $@\n");
+
+			# if we don't have attempts left, delete all
+			#    proctor keys for this user
+			if ( $set->attempts_per_version - 1 -
+			     $Problem->num_correct - $Problem->num_incorrect 
+			     <= 0 ) {	
+				eval{ $db->deleteAllProctorKeys( $effectiveUser ); };
+			} else {
+				# otherwise, delete only the grading key
+				eval{ $db->deleteKey("$effectiveUser,$proctorID,g"); };
+				# in this case we may have a past, login, 
+				#    proctor key that we can keep so that 
+				#    we don't have to get another login to
+				#    continue working the test
+				if ( $r->param("past_proctor_user") &&
+				     $r->param("past_proctor_key") ) {
+					$r->param("proctor_user", $r->param("past_proctor_user"));
+					$r->param("proctor_key", $r->param("past_proctor_key"));
+				}
 			}
-			eval{ $db->deleteKey("$effectiveUser,$proctorID,g"); };
+			# this is unsubtle, but we'd rather not have bogus 
+			#    keys sitting around
 			if ( $@ ) {
-				die("ERROR RESETTING PROCTOR GRADING KEY: $@\n");
+				die("ERROR RESETTING PROCTOR GRADING KEY(S): $@\n");
 			}
+
 		}
 
 		my @pureProblems = $db->getAllProblemVersions($effectiveUser,
@@ -1315,7 +1329,7 @@ sub body {
 	} # end if submitAnswers conditional
 
 	## finally, log student answers if we're submitting, previewing, or 
-	##    changing pages, provided that we can record answers
+	##    changing pages, provided that we can record answers.
 	##    note that this should log an overtime submission (or any case
 	##    where someone submits the test, or spoofs a request to submit
 	##    a test)
@@ -1406,7 +1420,6 @@ sub body {
 		}
 		$db->putSetVersion( $set );
 	}
-
 
 
 	####################################
@@ -1527,6 +1540,14 @@ sub body {
 				print CGI::strong("Your score on this " .
 						  "$testNoun is ", 
 						  "$attemptScore/$totPossible.");
+			} else {
+				my $when = 
+					($set->hide_score eq 'BeforeAnswerDate')
+					? ' until ' . formatDateTime($set->answer_date) 
+					: '';
+				print CGI::br() . 
+					"(Your score on this $testNoun " .
+					"is not available$when.)";
 			}
 		}
 
@@ -1672,9 +1693,12 @@ sub body {
 	# now, we print out the rest of the page if we're not hiding submitted
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
+		my $when = ( $set->hideWork eq 'BeforeAnswerDate' ) 
+			? ' until ' . formatDateTime($set->answer_date) 
+			: '';
 		print CGI::start_div({class=>"gwProblem"});
 		print CGI::strong("Completed results for this assignment are " .
-				  "not available.");
+				  "not available$when.");
 		print CGI::end_div();
 
 	# else: we're not hiding answers

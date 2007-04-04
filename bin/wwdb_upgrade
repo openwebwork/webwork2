@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.11 2007/03/27 17:04:01 glarose Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.12 2007/03/30 19:07:53 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -283,6 +283,20 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 	if ( exists $sql_tables{"${course}_set_user"} ) {
 		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `relax_restrict_ip` ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')");
 		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `hide_score_by_problem` ENUM('N','Y')");
+	}
+};
+
+$DB_VERSIONS[++$i]{desc} = "adds set and set_user fields to allow set-level proctor, updates permissions to allow finer-grained regulation of proctoring.";
+$DB_VERSIONS[  $i]{course_code} = sub {
+	my $course = shift;
+	if ( exists $sql_tables{"${course}_permission"} ) {
+		$dbh->do("UPDATE `${course}_permission` SET `permission`=3 where `permission`=2");
+	}
+	if ( exists $sql_tables{"${course}_set"} ) {
+		$dbh->do("ALTER TABLE `${course}_set` ADD COLUMN `restricted_login_proctor` ENUM('No','Yes') DEFAULT 'No'");
+	}
+	if ( exists $sql_tables{"${course}_set_user"} ) {
+		$dbh->do("ALTER TABLE `${course}_set_user` ADD COLUMN `restricted_login_proctor` ENUM('No','Yes')");
 	}
 };
 

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.8 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.9 2007/03/06 22:01:58 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,7 @@ use strict;
 use warnings;
 use CGI qw(-nosticky );
 use WeBWorK::Utils qw(readFile dequote);
+use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
 use mod_perl;
@@ -123,6 +124,11 @@ sub body {
 	my $setID = $urlpath->arg("setID");
 	my $timeNow = time();
 
+  # these are to manage the transition to, and possibly back from,
+  #    the grading proctor
+	my $pastProctorUser = $r->param("past_proctor_user") || $proctorUser;
+	my $pastProctorKey = $r->param("past_proctor_key") || $key;
+
   # data collection
 	my $submitAnswers = $r->param("submitAnswers");
 	my $EffectiveUser = $db->getUser($effectiveUser);
@@ -131,39 +137,49 @@ sub body {
 	my $effectiveUserFullName = $EffectiveUser->first_name() . " " . 
 	    $EffectiveUser->last_name();
 
-  # save the userset for use below
-	my $UserSet;  
-  # version_last_attempt_time conditional: if we're submitting the set
-  # for the last time we need to save the submission time.
-	if ( $submitAnswers ) {
-
-    # we need to get the set we're working with. if we enter with a setID
-    #    "setName,vN", we know which version to get; otherwise, get the 
-    #    highest version number available and go with that
-		my ($setName, $versionNum);
-		if ( $setID =~ /(.+),v(\d+)$/ ) {
-			$setName= $1;
-			$versionNum = $2;
+	# we need the UserSet to check for a set-restricted login proctor,
+	#    and to show and possibly save the submission time.
+	#    and to get the UserSet, we need to know what set and version
+	#    we're working with.  if the setName and versionName come in 
+	#    with the setID, we're ok; otherwise, get the highest version
+	#    number available and go with that
+	my ($setName, $versionNum) = grok_vsetID($setID);
+	my $noSetVersions = 0;
+	if ( ! $versionNum ) {
+		# get a list of all available versions
+		my @setVersions = $db->listSetVersions($effectiveUser,
+						       $setName);
+		if ( @setVersions ) {
+			$versionNum = $setVersions[-1];
 		} else {
-			$setName = $setID;
-		    # get a list of all available versions
-			my @setVersions = $db->listSetVersions($effectiveUser,
-							       $setName);
-			if ( @setVersions ) {
-				$versionNum = $setVersions[-1];
-			} else {
-				die("Proctor authorization requested to " .
-				    "grade a nonexistent set?\n");
-			}
+			# if there are no versions yet, we must be starting
+			#    the first one
+			$versionNum = 1;
+			$noSetVersions = 1;
 		}
-		# get the versioned set
+	}
+	# get the merged set; if we're not grading a test, 
+	#    get the merged template set instead
+	my $UserSet;
+	if ( $noSetVersions || ! $submitAnswers ) {
+		$UserSet = $db->getMergedSet($effectiveUser, $setName);
+	} else {
 		$UserSet = $db->getMergedSetVersion($effectiveUser, $setName,
 						    $versionNum);
+	}
 
-		# let's just make sure that worked
-		die("Proctor authorization requested for a nonexistent " .
-		    "set?\n") if ( ! defined( $UserSet ) );
-
+	# let's just make sure that worked
+	die("Proctor authorization requested for a nonexistent " .
+	    "set?\n") if ( ! defined( $UserSet ) );
+  
+	# now, if we're submitting the set we need to save the 
+	#    submission time.
+	if ( $submitAnswers ) {
+		# this shouldn't ever happen
+		if ( $noSetVersions ) {
+			die("Request to grade a set version before " .
+			    "any tests have been taken.");
+		}
 		# we save the submission time if the attempt will be recorded,
 		#   so we have to do some research to determine if that's 
 		#   the case
@@ -171,7 +187,7 @@ sub body {
 		my $Problem = 
 		    $db->getMergedProblemVersion($effectiveUser, $setName,
 						 $versionNum, 1);
-    # set last_attempt_time if appropriate
+		# set last_attempt_time if appropriate
 		if ( WeBWorK::ContentGenerator::GatewayQuiz::can_recordAnswers($self, $User, $PermissionLevel, 
 			$EffectiveUser, $UserSet, $Problem) ) {
 			$UserSet->version_last_attempt_time( $timeNow );
@@ -218,34 +234,60 @@ sub body {
 				       scalar(localtime($dueTime)), $msg));
 	}
 
-	print CGI::div({style=>"background-color:#ddddff;"},
-		       CGI::p("User's uniqname is: ", 
-			      CGI::strong("$effectiveUser"),"\n",
-			      CGI::br(),"User's name is: ", 
-			      CGI::strong("$effectiveUserFullName"),"\n")),"\n";
-
+	# start printing the form
 	print CGI::startform({-method=>"POST", -action=>$r->uri});
-
 	# write out the form data posted to the requested URI
-#	print $self->print_form_data('<input type="hidden" name="','" value="',"\"/>\n",qr/^(user|passwd|key|force_passwd_authen|procter_user|proctor_key|proctor_password)$/);
 	my @fields_to_print = 
-	    grep { ! /^(user)|(effectiveUser)|(passwd)|(key)|(force_password_authen)|(proctor_user)|(proctor_key)|(proctor_passwd)$/ } $r->param();
+	    grep { ! /^(user)|(effectiveUser)|(passwd)|(key)|(force_password_authen)|(proctor_user)|(proctor_key)|(proctor_password)$/ } $r->param();
 
 	print $self->hidden_fields(@fields_to_print) if ( @fields_to_print );
 	print $self->hidden_authen_fields,"\n";
-	
-	print CGI::table({class=>"FormLayout"}, 
-	  CGI::Tr([
-		CGI::td([
-		  "Proctor username:",
-		  CGI::input({-type=>"text", -name=>"proctor_user", -value=>""}),
-		]),
-		CGI::td([
-		  "Proctor password:",
-		  CGI::input({-type=>"password", -name=>"proctor_passwd", -value=>""}),
-		]),
-	 ])
-	);
+
+	print CGI::hidden(-name=>"past_proctor_user",
+			  -value=>$pastProctorUser);
+	print CGI::hidden(-name=>"past_proctor_key",
+			  -value=>$pastProctorKey);
+
+	# skip printing the user's name and all if we're doing a restricted
+	#    set login
+	my $userNameFields = '';
+	if ( $submitAnswers || 
+	     ( $UserSet->restricted_login_proctor eq '' ||
+	       $UserSet->restricted_login_proctor eq 'No' ) ) {
+		print CGI::div({style=>"background-color:#ddddff;"},
+			       CGI::p("User's username is: ", 
+				      CGI::strong("$effectiveUser"),"\n",
+				      CGI::br(),"User's name is: ", 
+				      CGI::strong("$effectiveUserFullName"),
+				      "\n")),"\n";
+		$userNameFields = CGI::td([
+					"Proctor username:",
+					CGI::input({-type=>"text", 
+						    -name=>"proctor_user", 
+						    -value=>""}),
+					]);
+	} else {
+		print CGI::start_div({style=>"background-color:#ddddff;"});
+		print CGI::em("This set has a set-level proctor ",
+			      "password to authorize logins. ",
+			      "Enter the password below.");
+		print CGI::end_div();
+		print CGI::hidden(-name=>'proctor_user',
+				  -value=>"set_id:$setName");
+	}
+
+	# then print out the table for the username, if needed, and 
+	#    password for the proctor
+	print CGI::start_table({class=>"FormLayout"});
+	print CGI::Tr( $userNameFields ) if ( $userNameFields );
+	print CGI::Tr( CGI::td([
+				"Proctor password:",
+				CGI::input({-type=>"password", 
+					    -name=>"proctor_passwd", 
+					    -value=>""}),
+				])
+		       );
+	print CGI::end_table();
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
 	print CGI::endform();

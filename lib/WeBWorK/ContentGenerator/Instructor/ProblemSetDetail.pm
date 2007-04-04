@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max);
+use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max cryptPassword);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -38,7 +38,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -74,8 +74,6 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap at
 #				0 => "No",
 #		},
 #               convertby => 60,                # divide incoming database field values by this, and multiply when saving
-#               format    => 'string'           # for edit entries, we require that the input data match /^string$/
-#                                               # format is not currently used
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
@@ -178,7 +176,6 @@ use constant  FIELD_PROPERTIES => {
 		override  => "any",
 #		labels    => {	"" => 0 },  # I'm not sure this is quite right
 		convertby => 60,
-		format    => '[1-9]\d*',    # a non-zero integer
 	},
 	time_limit_cap => {
 		name      => "Cap Test Time at Set Due Date?",
@@ -192,7 +189,6 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "any",
-		format    => '[1-9]\d*',    # a non-zero integer
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
@@ -200,7 +196,6 @@ use constant  FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "5",
 		override  => "any",
-		format    => '[0-9]+',      # an integer, possibly zero
 #		labels    => {	"" => 0 },
 		convertby => 60,
 	},
@@ -227,7 +222,6 @@ use constant  FIELD_PROPERTIES => {
 		size      => "3",
 		override  => "any",
 		default   => "0",
-		format    => '[0-9]+',      # an integer, possibly zero
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
@@ -237,25 +231,6 @@ use constant  FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
-####################
-# FIXME: the above stanza replaces the following two, corresponding to a 
-#    single drop-down to set both variables
-#
-# 	hide_score        => {
-# 		name      => "Show Scores on Finished Assignments?",
-# 		type      => "choose",
-# 		choices   => [ qw(N Y BeforeAnswerDate) ],
-# 		override  => "any",
-# 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
-# 	},
-# 	hide_score_by_problem => {
-# 		name      => "Show Total (but not scores on each problem)?",
-# 		type      => "choose",
-# 		choices   => [ qw(N Y) ],
-# 		override  => "any",
-# 		labels    => { 'N' => "Show no scores", 'Y' => "Show assignment total only", },
-# 	},
-####################
 	hide_work         => {
 		name      => "Show Student Work on Finished Tests",
 		type      => "choose",
@@ -263,6 +238,12 @@ use constant  FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
 	},
+	# in addition to the set fields above, there are a number of things
+	#    that are set but aren't in this table:
+	#    any set proctor information (which is in the user tables), and
+	#    any set location restriction information (which is in the 
+	#    location tables)
+	#
 	# Problem information
 	source_file => {
 		name      => "Source File",
@@ -344,84 +325,23 @@ sub FieldTable {
 	my @fieldOrder;
 
 	# needed for gateway output
-	my $gwoutput = '';
+	my $gwFields = '';
 
 	# needed for ip restrictions
-	my $db = $r->{db};
-	my $ipSelector = '';
-	my $glIPlist;
+	my $ipFields = '';
+	my $ipDefaults;
 	my $numLocations = 0;
-	my $orChecked;
+	my $ipOverride;
+
+	# needed for set-level proctor
+	my $procFields = '';
 
 	if (defined $problemID) {
 		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
-		# gateway data fields are included only if the set is a gateway
-		if ( $globalRecord->assignment_type() =~ /gateway/ ) {
-		    my $gwhdr = "\n<!-- begin gwoutput table -->\n";
-		    my $nF = 0;
-
-		    foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
-####################
-# FIXME: replaced with a single drop-down for all hide_scores options
-# 
-# 			# only display filtering of the hide_scores option to 
-# 			#    hide by problem if hide_scores is set
-# 			next if ( $gwfield eq 'hide_score_by_problem' &&
-# 				  ( ($forUsers && $userRecord->hide_score eq 'N') ||
-# 				    (! $forUsers && $globalRecord->hide_score eq 'N') ) );
-####################
-
-			my @fieldData = 
-			    ($self->FieldHTML($userID, $setID, $problemID, 
-					     $globalRecord, $userRecord, 
-					     $gwfield));
-			if ( @fieldData && defined($fieldData[1]) and $fieldData[1] ne '' ) {
-			    $nF = @fieldData if ( @fieldData > $nF );
-			    $gwoutput .= CGI::Tr({}, CGI::td({}, [@fieldData]));
-		    	}
-		    }
-		    $gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
-						 CGI::em("Gateway parameters")))
-			if ( $nF );
-		    $gwoutput = "$gwhdr$gwoutput\n" .
-			"<!-- end gwoutput table -->\n";
-		}
-    # similarly, we only include an ip selector if restrict_ip is not 'No'.  
-    #    we have to know if there are any locations to know if we should show
-    #    the restrict_ip option, however, so get those regardless
-		my @locations = sort {$a cmp $b} ($db->listLocations());
-		$numLocations = @locations;
-
-		if ( ( ! $forUsers && $globalRecord->restrict_ip ne 'No' ) ||
-		     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
-		        my @globalLocations = $db->listGlobalSetLocations($setID);
-			# what ip locations should be selected?
-			my @defaultLocations = ();
-			if ( $forUsers && 
-			     ! $db->countUserSetLocations($userID, $setID) ) { 
-				@defaultLocations = @globalLocations;
-				$orChecked = 0;
-			} elsif ( $forUsers ) {
-				@defaultLocations = $db->listUserSetLocations($userID, $setID);
-				$orChecked = 1;
-			} else {
-				@defaultLocations = @globalLocations;
-			}
-
-			$ipSelector = CGI::scrolling_list({
-						-name => "set.$setID.selected_ip_locations",
-						-values => [ @locations ], 
-						-default => [ @defaultLocations ], 
-						-size => 5,
-						-multiple => 'true'});
-
-			# also show global set location list when editing 
-			#    user sets
-			$glIPlist = join(', ', @globalLocations);
-		}
+		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
@@ -442,40 +362,22 @@ sub FieldTable {
 		next if ($field eq 'relax_restrict_ip' && 
 			 (! $numLocations ||
 			  ($forUsers && $userRecord->restrict_ip eq 'No') ||
-			  (! $forUsers && $globalRecord->restrict_ip eq 'No')));
+			  (! $forUsers && 
+			   ( $globalRecord->restrict_ip eq '' ||
+			     $globalRecord->restrict_ip eq 'No' ) ) ) );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
-		}
+	}
 
-		# we insert the list of locations after the restrict_ip 
-		#    selector, but only if ip restrictions are turned on
-		if ( $field eq 'restrict_ip' && $ipSelector ) {
-
-# FIXME: while the value of the restrict_ip field for the set is defined in 
-#    the field properties hash, above, the locations selector does not modify
-#    set table properties, and so doesn't.  this means that we're just 
-#    assuming that we can override it for users in any case where we're 
-#    editing the set for users.  in the long run this is probably not the
-#    best behavior.
-			my $override = ($forUsers) ? 
-			    CGI::checkbox({ type => "checkbox",
-					    name => "set.$setID.selected_ip_locations.override",
-					    label => "",
-					    checked => $orChecked }) : '';
-			$output .= CGI::Tr({-valign=>'top'},
-				CGI::td({}, [ $override, 
-					      'Restrict Locations', 
-					      $ipSelector, 
-					      $forUsers ? " $glIPlist" : '', ]
-					),
-			);
+		# finally, put in extra fields that are exceptions to the 
+		#    usual display mechanism
+		if ( $field eq 'restrict_ip' && $ipFields ) {
+			$output .= $ipFields;
 		}
 					      
-  # this is a rather artifical addition to include gateway fields, which we 
-  # only want to show for gateways
-		if ( $field eq 'assignment_type' && $gwoutput ) {
-			$output .= "$gwoutput\n";
+		if ( $field eq 'assignment_type' ) {
+			$output .= "$procFields\n$gwFields\n";
 		}
 	} 
 
@@ -533,8 +435,13 @@ sub FieldHTML {
 	my $blankfield = '';
 	if ( $field =~ /:/ ) {
 		foreach my $f ( split(/:/, $field) ) {
-			$globalValue .= $globalRecord->$f . ":";
-			$userValue .= $userRecord->$f . ":";
+			# hmm.  this directly references the data in the 
+			#    record rather than calling the access method, 
+			#    thereby avoiding errors if the userRecord is 
+			#    undefined.  that seems a bit suspect, but it's
+			#    used below so we'll leave it here.
+			$globalValue .= $globalRecord->{$f} . ":";
+			$userValue .= $userRecord->{$f} . ":";
 			$blankfield .= ":";
 		}
 		$globalValue =~ s/:$//;
@@ -625,6 +532,134 @@ sub FieldHTML {
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
+}
+
+# return weird fields that are non-native or which are displayed
+#    for only some sets
+sub extraSetFields {
+	my ($self,$userID,$setID,$globalRecord,$userRecord,$forUsers) = @_;
+	my $db = $self->r->{db};
+
+	my ($gwFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
+	    $procFields) = ( '', '', '', 0, '', '' );
+
+	# if we're dealing with a gateway, set up a table of gateway fields
+	my $nF = 0;  # this is the number of columns in the set field table
+	if ( $globalRecord->assignment_type() =~ /gateway/ ) {
+		my $gwhdr = "\n<!-- begin gwoutput table -->\n";
+
+		foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
+
+			my @fieldData = 
+			    ($self->FieldHTML($userID, $setID, undef, 
+					      $globalRecord, $userRecord, 
+					      $gwfield));
+			if ( @fieldData && defined($fieldData[1]) and 
+			     $fieldData[1] ne '' ) {
+				$nF = @fieldData if ( @fieldData > $nF );
+				$gwFields .= CGI::Tr({}, 
+					CGI::td({}, [@fieldData]));
+		    	}
+		}
+		$gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
+					     CGI::em("Gateway parameters")))
+		    if ( $nF );
+		$gwFields = "$gwhdr$gwFields\n" .
+			"<!-- end gwoutput table -->\n";
+	}
+
+	# if we have a proctored test, then also generate a proctored 
+	#    set password input 
+	if ( $globalRecord->assignment_type eq 'proctored_gateway' && ! $forUsers ) {
+		my $nfm1 = $nF - 1;
+		$procFields = CGI::Tr({},CGI::td({},''),
+			CGI::td({colspan=>$nfm1},
+				CGI::em("Proctored tests require proctor " .
+					"authorization to start and to " .
+					"grade.  Provide a password to have " .
+					"a single password for all students " .
+					"to start a proctored test.")));
+		# we use a routine other than FieldHTML because of getting
+		#    the default value here
+		my @fieldData = 
+			$self->proctoredFieldHTML($userID, $setID, 
+						  $globalRecord);
+		$procFields .= CGI::Tr({}, 
+			CGI::td({}, [@fieldData]));
+	}
+
+	# finally, figure out what ip selector fields we want to include
+	my @locations = sort {$a cmp $b} ($db->listLocations());
+	$numLocations = @locations;
+
+	if ( ( ! $forUsers && $globalRecord->restrict_ip &&
+	       $globalRecord->restrict_ip ne 'No' ) ||
+	     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
+
+		my @globalLocations = $db->listGlobalSetLocations($setID);
+		# what ip locations should be selected?
+		my @defaultLocations = ();
+		if ( $forUsers && 
+		     ! $db->countUserSetLocations($userID, $setID) ) { 
+			@defaultLocations = @globalLocations;
+			$ipOverride = 0;
+		} elsif ( $forUsers ) {
+			@defaultLocations = $db->listUserSetLocations($userID, $setID);
+			$ipOverride = 1;
+		} else {
+			@defaultLocations = @globalLocations;
+		}
+		my $ipDefaults = join(', ', @globalLocations);
+
+		my $ipSelector = CGI::scrolling_list({
+			-name => "set.$setID.selected_ip_locations",
+			-values => [ @locations ], 
+			-default => [ @defaultLocations ], 
+			-size => 5,
+			-multiple => 'true'});
+
+		my $override = ($forUsers) ? 
+			CGI::checkbox({ type => "checkbox",
+					name => "set.$setID.selected_ip_locations.override",
+					label => "",
+					checked => $ipOverride }) : '';
+		$ipFields .= CGI::Tr({-valign=>'top'},
+				     CGI::td({}, [ $override, 
+						   'Restrict Locations', 
+						   $ipSelector, 
+						   $forUsers ? 
+						   " $ipDefaults" : '', ]
+					),
+		);
+	}
+	return($gwFields, $ipFields, $numLocations, $procFields);
+}
+
+sub proctoredFieldHTML {
+	my ( $self, $userID, $setID, $globalRecord ) = @_;
+
+	my $r = $self->r;
+	my $db = $r->db;
+
+	# note that this routine assumes that the login proctor password
+	#    is something that can only be changed for the global set
+
+	# if the set doesn't require a login proctor, then we can assume
+	#    that one doesn't exist; otherwise, we need to check the 
+	#    database to find if there's an already defined password
+	my $value = '';
+	if ( $globalRecord->restricted_login_proctor eq 'Yes' &&
+	     $db->existsPassword("set_id:$setID") ) {
+		$value = '********';
+	}
+
+	return( ( '',
+		  'Password (Leave blank for regular proctoring)',
+		  CGI::input({ name=>"set.$setID.restricted_login_proctor_password",
+			       value=>$value,
+			       size=>10,
+		       }),
+		  '' ) );
 }
 
 # creates a popup menu of all possible problem numbers (for possible rearranging)
@@ -887,33 +922,6 @@ sub initialize {
 		}
 
 	}
-########
-# commented out
-#   this runs afoul of the conversion of a set to a gateway
-#   assignment, when perforce fields may be empty or zero, and dealing 
-#   with user sets, where we want to allow empty fields.
-#   
-# 	#####################################################################
-# 	# Check for invalid input data
-# 	#####################################################################
-# 	# should this be done here?  
-# 	# 
-# 	if ( defined($r->param('submit_changes')) && ! $error ) {
-# 		foreach my $field ( @{ SET_FIELDS() } ) {
-# 			if ( $properties{$field}->{type} eq 'choose' &&
-# 			     ! grep {$r->param("set.$setID.$field") !~ /^$_$/} @{$properties{$field}->{choices}} ) {
-# 				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name} . " (valid values are " . join(', ', values(%{$properties{$field}->{labels}})) . ")");
-# 				$error = $r->param('submit_changes');
-# 			} elsif ( $properties{$field}->{type} eq 'edit' &&
-# 				  $properties{$field}->{format} && 
-# 				  $field !~ /_date$/ &&
-# 				  $r->param("set.$setID.$field") !~ /^$properties{$field}->{format}$/ ) {
-# 				$self->addbadmessage("Error: invalid value given for " . $properties{$field}->{name});
-# 				$error = $r->param('submit_changes');
-# 			}
-# 		}
-# 	}
-
 	if ($error) {
 		$self->addbadmessage("No changes were saved!");
 	}
@@ -927,6 +935,12 @@ sub initialize {
 		#####################################################################
 
 		if ($forUsers) {
+			# note that we don't deal with the proctor user
+			#    fields here, with the assumption that it can't
+			#    be possible to change them for users.  this is
+			#    not the most robust treatment of the problem
+			#    (FIXME)
+
 			# DBFIXME use a WHERE clause, iterator
 			my @userRecords = $db->getUserSets(map { [$_, $setID] } @editForUser);
 			foreach my $record (@userRecords) {
@@ -984,11 +998,13 @@ sub initialize {
 				$db->putUserSet($record);
 			}
 
-			# the locations for ip restrictions are saved in the 
-			#    set_locations_user table, so we have to update 
-			#    these separately 
-# FIXME: need && $check for canoverride; requires adding selected_ip_locations
-# FIXME: to the field values hash, above
+		#######################################################
+		# Save IP restriction Location information
+		#######################################################
+		# FIXME: it would be nice to have this in the field values
+		#    hash, so that we don't have to assume that we can 
+		#    override this information for users
+
 			if ( $r->param("set.$setID.selected_ip_locations.override") ) {
 				foreach my $record ( @userRecords ) {
 					my $userID = $record->user_id;
@@ -1045,7 +1061,7 @@ sub initialize {
 				if ( $field =~ /:/ ) {
 					my @values = split(/:/, $param);
 					my @fields = split(/:/, $field);
-					for ( my $i=0; $i<@values; $i++ ) { 
+					for ( my $i=0; $i<@fields; $i++ ) { 
 						my $f = $fields[$i];
 						$setRecord->$f($values[$i]); 
 					}
@@ -1070,11 +1086,10 @@ sub initialize {
 ####################
 			$db->putGlobalSet($setRecord);
 
-			# the locations for ip restrictions are saved in the 
-			#    set_locations table, so we have to update these 
-			#    separately 
-# FIXME: need && $check for canoverride; requires adding selected_ip_locations
-# FIXME: to the field values hash, above
+		#######################################################
+		# Save IP restriction Location information
+		#######################################################
+
 			if ( $r->param("set.$setID.restrict_ip") ne 'No' ) {
 				my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
 				my @globalSetLocations = $db->listGlobalSetLocations($setID);
@@ -1100,6 +1115,85 @@ sub initialize {
 				my @globalSetLocations = $db->listGlobalSetLocations($setID);
 				foreach ( @globalSetLocations ) {
 					$db->deleteGlobalSetLocation($setID,$_);
+				}
+			}
+
+		#######################################################
+		# Save proctored problem proctor user information
+		#######################################################
+			if ($r->param("set.$setID.restricted_login_proctor_password") &&
+			    $setRecord->assignment_type eq 'proctored_gateway') {
+				# in this case we're adding a set-level proctor
+				#    or updating the password
+
+				my $procID = "set_id:$setID";
+				my $pass = $r->param("set.$setID.restricted_login_proctor_password");
+				# should we carefully check in this case that
+				#    the user and password exist?  the code 
+				#    in the add stanza is pretty careful to 
+				#    be sure that there's a one-to-one 
+				#    correspondence between the existence of 
+				#    the user and the setting of the set
+				#    restricted_login_proctor field, so we 
+				#    assume that just checking the latter 
+				#    here is sufficient.
+				if ( $setRecord->restricted_login_proctor eq 'Yes' ) {
+					# in this case we already have a set
+					#    level proctor, and so should be 
+					#    resetting the password
+					if ( $pass ne '********' ) {
+						# then we submitted a new 
+						#    password, so save it
+						my $dbPass;
+						eval { $dbPass = $db->getPassword($procID) };
+						if ( $@ ) {
+							$self->addbadmessage("Error getting old set-proctor password from the database: $@.  No update to the password was done.");
+						} else {
+							$dbPass->password(cryptPassword($pass));
+							$db->putPassword($dbPass);
+						}
+					}
+
+				} else {
+					$setRecord->restricted_login_proctor('Yes');
+					my $procUser = $db->newUser();
+					$procUser->user_id($procID);
+					$procUser->last_name("Proctor");
+					$procUser->first_name("Login");
+					$procUser->student_id("loginproctor");
+					$procUser->status($ce->status_name_to_abbrevs('Proctor'));
+					my $procPerm = $db->newPermissionLevel;
+					$procPerm->user_id($procID);
+					$procPerm->permission($ce->{userRoles}->{login_proctor});
+					my $procPass = $db->newPassword;
+					$procPass->user_id($procID);
+					$procPass->password(cryptPassword($pass));
+					# put these into the database
+					eval { $db->addUser($procUser) };
+					if ( $@ ) { 
+						$self->addbadmessage("Error " .
+							"adding set-level " .
+							"proctor: $@");
+					} else {
+						$db->addPermissionLevel($procPerm);
+						$db->addPassword($procPass);
+					}
+
+					# and set the restricted_login_proctor
+					#    set field
+					$db->putGlobalSet( $setRecord );
+				}
+
+			} else {
+				# if the parameter isn't set, or if the assignment
+				#    type is not 'proctored_gateway', then we need to be 
+				#    sure that there's no set-level proctor defined
+				if ( $setRecord->restricted_login_proctor eq 'Yes' ) {
+
+					$setRecord->restricted_login_proctor('No');
+					$db->deleteUser( "set_id:$setID" );
+					$db->putGlobalSet( $setRecord );
+
 				}
 			}
 		}
