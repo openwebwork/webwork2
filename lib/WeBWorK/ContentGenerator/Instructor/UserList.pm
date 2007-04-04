@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.89 2007/01/24 22:20:35 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.90 2007/03/29 17:42:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -291,7 +291,8 @@ sub body {
 	$self->{prettyFieldNames} = \%prettyFieldNames;
 	########## set initial values for state fields
 	
-	my @allUserIDs = $db->listUsers;
+	# exclude set-level proctors
+	my @allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
 	# DBFIXME count would work
 	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
 	$self->{allUserIDs} = \@allUserIDs;
@@ -384,7 +385,8 @@ sub body {
 	
 	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
 	# DBFIXME instead of re-listing, why not add added users to $self->{allUserIDs} ?
-	@allUserIDs = $db->listUsers; # recompute value in case some were added
+	# exclude set-level proctors
+	@allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers; # recompute value in case some were added
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
 	my @selectedUserIDs = @{ $self->{selectedUserIDs} };

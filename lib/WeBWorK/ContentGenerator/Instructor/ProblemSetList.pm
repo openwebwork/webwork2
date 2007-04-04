@@ -1017,6 +1017,26 @@ sub create_handler {
 			$_->set_id($newSetID); 
 			$db->addGlobalProblem($_);
 		}
+
+		# also copy any set_location restrictions and set-level proctor
+		#    information
+		foreach ($db->getAllGlobalSetLocations($oldSetID)) {
+			$_->set_id($newSetID);
+			$db->addGlobalSetLocation($_);
+		}
+		if ( $newSetRecord->restricted_login_proctor eq 'Yes' ) {
+			my $procUser = $db->getUser("set_id:$oldSetID");
+			$procUser->user_id("set_id:$newSetID");
+			eval { $db->addUser( $procUser ) };
+			if ( ! $@ ) {
+				my $procPerm = $db->getPermissionLevel("set_id:$oldSetID");
+				$procPerm->user_id("set_id:$newSetID");
+				$db->addPermissionLevel($procPerm);
+				my $procPass = $db->getPassword("set_id:$oldSetID");
+				$procPass->user_id("set_id:$newSetID");
+				$db->addPassword($procPass);
+			}
+		}
 	}
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;

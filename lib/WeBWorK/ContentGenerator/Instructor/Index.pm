@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.56 2006/07/14 21:22:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.57 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -296,7 +296,8 @@ sub body {
 	of your choice.");
 	
 	# DBFIXME shouldn't need to use list of IDs, use iterator for results, marks edits in WHERE clause
-	my @userIDs = $db->listUsers;
+	# the grep here prevents set-level proctors from being displayed here
+	my @userIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
 	my @Users = $db->getUsers(@userIDs);
 
 ## Mark's Edits for filtering
