@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.92 2007/03/27 20:12:14 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.93 2007/04/09 20:20:29 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -413,7 +413,7 @@ sub display_form {
 		name => "selected_sets",
 		request => $r,
 		default_sort => "set_id",
-		default_format => "set_id",
+		default_format => "sid",
 		default_filters => ["all"],
 		size => 20,
 		multiple => $perm_multiset,

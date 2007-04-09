@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/FormatRecords.pm,v 1.7 2004/10/22 22:59:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/FormatRecords.pm,v 1.8 2006/01/25 23:13:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -121,6 +121,12 @@ use constant PRESET_FORMATS => {
 		#	format_function => sub { sprintf("%s (%s)", $_[0], formatDateTime($_[1])) }
 		#},
 	},
+        "WeBWorK::DB::Record::SetVersion" => {
+                "sid" => {
+                        name => "set_id",
+                        field_order => [ qw/set_id/ ],
+                },
+        },
 };
 
 =head1 FUNCTIONS

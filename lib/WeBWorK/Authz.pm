@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.30 2007/03/30 13:02:05 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.31 2007/03/30 19:07:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -360,7 +360,8 @@ sub invalidIPAddress {
 	my $r = $self->{r};
 	my $db = $r->db;
 	my $urlPath = $r->urlpath;
-	my $setName = $urlPath->arg("setID");
+#	my $setName = $urlPath->arg("setID");  # not always defined
+	my $setName = $set->set_id;
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
