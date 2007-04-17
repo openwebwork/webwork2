@@ -1054,7 +1054,7 @@ sub initialize {
 				if ($field =~ /_date/) {
 					$param = $self->parseDateTime($param) unless defined $unlabel;
 				}
-				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
+				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};
 				}
 				# special case; does field fill in multiple values?
