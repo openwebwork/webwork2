@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4",  // change this if you edit the file, but don't edit this file
+  version: "3.4a",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -82,85 +82,85 @@ window.jsMath = {
   //  The styles needed for the TeX fonts
   //
   styles: {
-    '.math':              'font-family: serif; font-style: normal; font-weight: normal',
+    '.math':              'font-family:serif; font-style:normal; font-weight:normal',
 
-    '.typeset':           'font-family: serif; font-style: normal; font-weight: normal',
-    'div.typeset':        'text-align: center; margin: 1em 0px;',
-    'span.typeset':       'text-align: left',
-    '.typeset span':      'text-align: left; border:0px; margin:0px; padding:0px',
+    '.typeset':           'font-family:serif; font-style:normal; font-weight:normal; line-height:normal',
+    'div.typeset':        'text-align:center; margin:1em 0px;',
+    'span.typeset':       'text-align:left',
+    '.typeset span':      'text-align:left; border:0px; margin:0px; padding:0px',
     
-    '.typeset .normal':   'font-family: serif; font-style: normal; font-weight: normal',
+    '.typeset .normal':   'font-family:serif; font-style:normal; font-weight:normal',
     
-    '.typeset .size0':    'font-size: 50%',  // tiny (\scriptscriptsize)
-    '.typeset .size1':    'font-size: 60%',  //       (50% of \large for consistency)
-    '.typeset .size2':    'font-size: 70%',  // scriptsize
-    '.typeset .size3':    'font-size: 85%',  // small (70% of \large for consistency)
-    '.typeset .size4':    'font-size: 100%', // normalsize
-    '.typeset .size5':    'font-size: 120%', // large
-    '.typeset .size6':    'font-size: 144%', // Large
-    '.typeset .size7':    'font-size: 173%', // LARGE
-    '.typeset .size8':    'font-size: 207%', // huge
-    '.typeset .size9':    'font-size: 249%', // Huge
+    '.typeset .size0':    'font-size:50%',  // tiny (\scriptscriptsize)
+    '.typeset .size1':    'font-size:60%',  //       (50% of \large for consistency)
+    '.typeset .size2':    'font-size:70%',  // scriptsize
+    '.typeset .size3':    'font-size:85%',  // small (70% of \large for consistency)
+    '.typeset .size4':    'font-size:100%', // normalsize
+    '.typeset .size5':    'font-size:120%', // large
+    '.typeset .size6':    'font-size:144%', // Large
+    '.typeset .size7':    'font-size:173%', // LARGE
+    '.typeset .size8':    'font-size:207%', // huge
+    '.typeset .size9':    'font-size:249%', // Huge
   
-    '.typeset .cmr10':    'font-family: jsMath-cmr10, serif',
-    '.typeset .cmbx10':   'font-family: jsMath-cmbx10, jsMath-cmr10',
-    '.typeset .cmti10':   'font-family: jsMath-cmti10, jsMath-cmr10',
-    '.typeset .cmmi10':   'font-family: jsMath-cmmi10',
-    '.typeset .cmsy10':   'font-family: jsMath-cmsy10',
-    '.typeset .cmex10':   'font-family: jsMath-cmex10',
+    '.typeset .cmr10':    'font-family:jsMath-cmr10, serif',
+    '.typeset .cmbx10':   'font-family:jsMath-cmbx10, jsMath-cmr10',
+    '.typeset .cmti10':   'font-family:jsMath-cmti10, jsMath-cmr10',
+    '.typeset .cmmi10':   'font-family:jsMath-cmmi10',
+    '.typeset .cmsy10':   'font-family:jsMath-cmsy10',
+    '.typeset .cmex10':   'font-family:jsMath-cmex10',
     
-    '.typeset .textit':   'font-family: serif; font-style:italic',
-    '.typeset .textbf':   'font-family: serif; font-weight:bold',
+    '.typeset .textit':   'font-family:serif; font-style:italic',
+    '.typeset .textbf':   'font-family:serif; font-weight:bold',
     
-    '.typeset .link':     'text-decoration: none',
-    '.typeset .error':    'font-size: 10pt; font-style: italic; '
-                             + 'background-color: #FFFFCC; padding: 1px; '
-                             + 'border: 1px solid #CC0000',
+    '.typeset .link':     'text-decoration:none',
+    '.typeset .error':    'font-size:10pt; font-style:italic; '
+                             + 'background-color:#FFFFCC; padding:1px; '
+                             + 'border:1px solid #CC0000',
 
     '.typeset .blank':    'display:inline-block; overflow:hidden; border:0px none; width:0px; height:0px;',
     '.typeset .spacer':   'display:inline-block',
     
     '#jsMath_hiddenSpan':      'visibility:hidden; position:absolute; top:0px;left:0px; '
-                                  + 'line-height:1em; text-indent:0px',
+                                  + 'line-height:normal; text-indent:0px',
 
     '#jsMath_message':         'position:fixed; bottom:1px; left:2px; background-color:#E6E6E6; '
-                                 + 'border: solid 1px #959595; margin:0px; padding: 1px 8px; '
+                                 + 'border:solid 1px #959595; margin:0px; padding:1px 8px; '
                                  + 'z-index:102; color: black; font-size:small; width:auto;',
-    '#jsMath_panel':           'position:fixed; bottom:1.5em; right:1.5em; padding: .8em 1.6em; '
-                                 + 'background-color:#DDDDDD; border: outset 2px; '
+    '#jsMath_panel':           'position:fixed; bottom:1.5em; right:1.5em; padding:.8em 1.6em; '
+                                 + 'background-color:#DDDDDD; border:outset 2px; '
                                  + 'z-index:103; width:auto; color:black; font-size:10pt; font-style:normal',
     '#jsMath_panel .disabled': 'color:#888888',
     '#jsMath_panel .infoLink': 'font-size:85%',
-    '#jsMath_panel *':         'font-size:inherit; font-style:inherit; font-family:inherit; line-height:1em',
-    '#jsMath_panel div':       'background-color: inherit; color:inherit;',
-    '#jsMath_panel span':      'background-color: inherit; color:inherit;',
+    '#jsMath_panel *':         'font-size:inherit; font-style:inherit; font-family:inherit; line-height:normal',
+    '#jsMath_panel div':       'background-color:inherit; color:inherit;',
+    '#jsMath_panel span':      'background-color:inherit; color:inherit;',
     '#jsMath_panel td':        'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
     '#jsMath_panel tr':        'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
     '#jsMath_panel table':     'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
     
     '#jsMath_button':          'position:fixed; bottom:1px; right:2px; background-color:white; '
-                                 + 'border: solid 1px #959595; margin:0px; padding: 0px 3px 1px 3px; '
+                                 + 'border:solid 1px #959595; margin:0px; padding:0px 3px 1px 3px; '
                                  + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
                                  + 'width:auto; cursor:hand;',
-    '#jsMath_button *':        'padding:0px; border:0px; margin:0px; line-height:1em; '
+    '#jsMath_button *':        'padding:0px; border:0px; margin:0px; line-height:normal; '
                                  + 'font-size:inherit; font-style:inherit; font-family:inherit',
     
     '#jsMath_global':          'font-style:italic;',
     '#jsMath_float':           'position:absolute; top:0px; left:0px; max-width:80%; '
                                  + 'z-index:101; width:auto; height:auto;',
-    '#jsMath_float .drag':     'background-color:#DDDDDD; border: outset 1px; height:12px; font-size: 1px;',
-    '#jsMath_float .close':    'background-color:#E6E6E6; border: inset 1px; width:8px; height:8px; margin: 1px 2px;',
-    '#jsMath_float .source':   'background-color:#E2E2E2; border: outset 1px; '
-                                 + 'width:auto; height:auto; padding: 8px 15px; '
-                                 + 'font-family: courier, fixed; font-size: 90%',
+    '#jsMath_float .drag':     'background-color:#DDDDDD; border:outset 1px; height:12px; font-size:1px;',
+    '#jsMath_float .close':    'background-color:#E6E6E6; border:inset 1px; width:8px; height:8px; margin:1px 2px;',
+    '#jsMath_float .source':   'background-color:#E2E2E2; border:outset 1px; '
+                                 + 'width:auto; height:auto; padding:8px 15px; '
+                                 + 'font-family:courier, fixed; font-size:90%',
 
-    '#jsMath_noFont .message': 'text-align: center; padding: .8em 1.6em; border: 3px solid #DD0000; '
-                                  + 'background-color: #FFF8F8; color: #AA0000; font-size:small; width:auto;',
-    '#jsMath_noFont .link':    'padding: 0px 5px 2px 5px; border: 2px outset; background-color:#E8E8E8; '
+    '#jsMath_noFont .message': 'text-align: center; padding:.8em 1.6em; border:3px solid #DD0000; '
+                                  + 'background-color:#FFF8F8; color: #AA0000; font-size:small; width:auto;',
+    '#jsMath_noFont .link':    'padding:0px 5px 2px 5px; border:2px outset; background-color:#E8E8E8; '
                                   + 'color:black; font-size:80%; width:auto; cursor:hand;',
 
     '#jsMath_PrintWarning .message':
-                                 'text-align: center; padding: .8em 1.6em; border: 3px solid #DD0000; '
+                                 'text-align:center; padding:.8em 1.6em; border:3px solid #DD0000; '
                                    + 'background-color: #FFF8F8; color: #AA0000; font-size:x-small; width:auto;',
 
     '@media print':      '#jsMath_button {display:none}\n' +
@@ -183,8 +183,7 @@ window.jsMath = {
    */
   BBoxFor: function (s) {
     this.hidden.innerHTML = 
-      '<nobr><span class="typeset"'+jsMath.browser.msieInlineBlockFix+'>'
-         + '<span class="scale">'+s+'</span></span></nobr>';
+      '<nobr><span class="typeset"><span class="scale">'+s+'</span></span></nobr>';
     var bbox = {w: this.hidden.offsetWidth, h: this.hidden.offsetHeight};
     this.hidden.innerHTML = '';
     return bbox;
@@ -1171,7 +1170,7 @@ jsMath.Browser = {
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
-        this.msieSpaceFix = '<span style="display:inline-block"></span>';
+        if (!this.IE7) {this.msieSpaceFix = '<span style="display:inline-block"></span>'}
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
         if (!this.IE7 || this.quirks) {
@@ -1205,6 +1204,7 @@ jsMath.Browser = {
       } else if (jsMath.platform == 'mac') {
         this.msieAbsoluteBug = 1; this.msieButtonBug = 1;
         this.msieDivWidthBug = 1; this.msieBlankBug = 1;
+        this.quirks = 1;
         jsMath.Setup.Script('jsMath-msie-mac.js');
         jsMath.Parser.prototype.macros.angle = ['Replace','ord','<font face="Symbol">&#x8B;</font>','normal'];
         jsMath.styles['#jsMath_panel']  = 'width:42em; ' + jsMath.styles['#jsMath_panel'].replace(/width:auto/,"");
@@ -1529,7 +1529,7 @@ jsMath.Font = {
         }
       }
     }
-    if (cookie.font == 'unicode') {
+    if (cookie.font == 'unicode' || jsMath.noImgFonts) {
       if (data.fallback) {data.fallback(fontname,fontfam,data)}
       return;
     }
@@ -2609,13 +2609,22 @@ jsMath.HTML = {
     if (jsMath.Browser.msieAbsoluteBug) {           // for MSIE (Mac)
       html = '<span style="position:relative;">' + html + '</span>';
     }
-    html =   '<span style="position:relative;'
-           +     ' width: '+jsMath.HTML.Em(w)+';'   // for MSIE
-           +     ' height: '+jsMath.HTML.Em(H)+';'  // for MSIE
-           +     jsMath.Browser.msieInlineBlockFix  // for MSIE
-           +     '">'
+    if (jsMath.Browser.spanHeightVaries) {
+      var style = '';
+      style = jsMath.Browser.msieInlineBlockFix
+            + ' width:'+jsMath.HTML.Em(w)+';';
+      if (jsMath.Browser.quirks) {
+        style += ' height:'+jsMath.HTML.Em(H)+';'
+      } else {
+        style += ' height: 0px;'
+               + ' vertical-align:'+jsMath.HTML.Em(H)+';'
+      }
+      html = '<span style="position:relative;' + style + '">'
            +   html
            + '</span>';
+    } else {
+      html = '<span style="position:relative">' + html + '</span>';
+    }
     return html;
   }
 
@@ -2916,7 +2925,8 @@ jsMath.Add(jsMath.Box,{
     
     var w = top.w;
     if (nocenter) {h = top.h; y = 0} else {h = H/2 + a; y = h - top.h}
-    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,top.h);
+//    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,top.h);
+    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,jsMath.h);
     var box = new jsMath.Box('html',html,rep.w,h,H-h);
     box.bh = jsMath.TeX[font].h; box.bd = jsMath.TeX[font].d;
     return box;
@@ -3110,7 +3120,8 @@ jsMath.Add(jsMath.Box,{
 
     html = jsMath.HTML.Spacer(scale/6)+html+jsMath.HTML.Spacer(scale/6);
     if (jsMath.Browser.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
-    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
+//    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
+    html = jsMath.HTML.Absolute(html,w,h+d,d,y,h);
     var box = new jsMath.Box('html',html,w+scale/3,h,d);
     return box;
   },
