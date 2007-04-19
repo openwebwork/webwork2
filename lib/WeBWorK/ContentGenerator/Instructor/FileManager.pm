@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.24 2006/09/10 01:59:19 dpvc Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.22.2.3 2006/11/03 20:07:24 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,7 +17,7 @@
 package WeBWorK::ContentGenerator::Instructor::FileManager;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
-use WeBWorK::Utils qw(readDirectory readFile sortByName);
+use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
@@ -602,7 +602,7 @@ sub Delete {
 		#
 		foreach my $file (@files) {
 			if (defined $self->checkPWD("$pwd/$file",1)) {
-				if (-d "$dir/$file") {
+				if (-d "$dir/$file" && !-l "$dir/$file") {
 					my $removed = eval {rmtree("$dir/$file",0,1)};
 					if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
 					else {$self->addbadmessage("Directory '$file' not removed: $!")}
@@ -617,17 +617,51 @@ sub Delete {
 	} else {
 
 		#
+		#  Look up the files to be deleted, and for directories, add / and the contents of the directory
+		#
+		my @filelist = ();
+		foreach my $file (@files) {
+			if (defined $self->checkPWD("$pwd/$file",1)) {
+				if (-l "$dir/$file") {
+					push(@filelist,"$file@");
+				} elsif (-d "$dir/$file") {
+					my @contents = (); my $dcount = 0;
+					foreach my $item (readDirectory("$dir/$file")) {
+						next if $item eq "." || $item eq "..";
+						if (-l "$dir/$file/$item") {
+							push(@contents, "$item@");
+						} elsif (-d "$dir/$file/$item") {
+							my $count = scalar(listFilesRecursive("$dir/$file/$item",".*"));
+							my $s = ($count == 1 ? "" : "s"); $dcount += $count;
+							push (@contents, "$item/".CGI::small({style=>"float:right;margin-right:3em"},CGI::i("($count item$s)")));
+						} else {
+							push(@contents, $item);
+						}
+						$dcount += 1;
+					}
+					my $s = ($dcount == 1 ? "": "s");
+					@contents = (@contents[0..10],"&nbsp; .","&nbsp; .","&nbsp; .") if scalar(@contents) > 15;
+					push (@filelist,$file."/".
+								CGI::small({style=>"float:right;margin-right:4em"},CGI::i("($dcount item$s total)")).
+								CGI::div({style=>"margin-left:1ex"},join(CGI::br(),@contents)));
+				} else {
+					push(@filelist,$file);
+				}
+			}
+		}
+
+		#
 		# Put up the confirmation dialog box
 		#
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
 			  CGI::b("Warning:")," You have requested that the following items be deleted\n",
-			  CGI::ul(CGI::li(\@files)),
+			  CGI::ul(CGI::li(\@filelist)),
 			    ((grep { -d "$dir/$_" } @files)?
-			  CGI::p({style=>"width:500"},"Some of these files are directories. ",
-				 "Only delete directories if you really know what you are doing. ",
-				 "You can seriously damage your course if you delete the wrong thing."): ""),
+					 CGI::p({style=>"width:500"},"Some of these files are directories. ",
+									"Only delete directories if you really know what you are doing. ",
+									"You can seriously damage your course if you delete the wrong thing."): ""),
 			  CGI::p({style=>"color:red"},"There is no undo for deleting files or directories!"),
 			  CGI::p("Really delete the items listed above?"),
 			  CGI::div({style=>"float:left; padding-left:3ex"},
