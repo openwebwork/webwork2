@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.19 2007/02/22 17:44:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.20 2007/03/27 17:04:02 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,6 +80,12 @@ sub where_recitation_eq {
 sub where_section_eq_recitation_eq {
 	my ($self, $flags, $section, $recitation) = @_;
 	return {section=>$section,recitation=>$recitation};
+}
+
+# can be used for user
+sub where_student_id_eq {
+        my ($self, $flags, $student_id) = @_;
+        return {student_id=>$student_id};
 }
 
 # can be used for password
