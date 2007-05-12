@@ -24,8 +24,11 @@ jsMath.Easy = {
   //  be relative to the root of your server.  It is possible
   //  to be a relative URL, but it will be relative to the
   //  HTML page loading this file.
+  //  
+  //  If you leave this blank, jsMath will try to look it up from
+  //  the URL where it loaded this file, but that may not work.
   //
-  root: "/jsMath",
+  root: "",
   
   //
   //  The default scaling factor for mathematics compared to the
@@ -117,6 +120,12 @@ jsMath.Easy = {
 //
 /****************************************************************/
 /****************************************************************/
+
+if (jsMath.Easy.root == "") {
+  jsMath.Easy.root = document.getElementsByTagName("script");
+  jsMath.Easy.root = jsMath.Easy.root[jsMath.Easy.root.length-1].src.
+     replace(/\/(jsMath\/(easy\/)?)?[^\/]*$/,"/jsMath");
+}
 
 document.write('<SCRIPT SRC="'+jsMath.Easy.root+'/jsMath-easy-load.js"><'+'/SCRIPT>');
 
