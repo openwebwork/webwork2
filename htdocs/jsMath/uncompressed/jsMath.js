@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4a",  // change this if you edit the file, but don't edit this file
+  version: "3.4b",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -463,11 +463,15 @@ jsMath.Script = {
       this.request.open("GET",url,false);
       this.request.send(null);
     } catch (err) {
+      this.blocking = 0;
+      if (jsMath.Translate.restart && jsMath.Translate.asynchronous) {return ""}
       throw "jsMath can't load the file '"+url+"'\n"
           + "Message: "+err.message;
     }
     if (this.request.status && this.request.status >= 400) {
       // Do we need to deal with redirected links?
+      this.blocking = 0;
+      if (jsMath.Translate.restart && jsMath.Translate.asynchronous) {return ""}
       throw "jsMath can't load the file '"+url+"'\n"
           + "Error status: "+this.request.status;
     }
