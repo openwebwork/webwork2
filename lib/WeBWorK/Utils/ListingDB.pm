@@ -64,19 +64,18 @@ and case for an individual entry.
 =cut                                                                            
 
 sub kwtidy {
-        my $s = shift;
-        $s =~ s/\'//g;
-        $s =~ s/\"//g;
-        $s =~ s/\#//g;
-        $s = lc($s);
-        return($s);
+	my $s = shift;
+	$s =~ s/\W//g;
+	$s =~ s/_//g;
+	$s = lc($s);
+	return($s);
 }
 
 sub keywordCleaner {
-        my $string = shift;
-        my @spl1 = split /\s*,\s*/, $string;
-        my @spl2 = map(kwtidy($_), @spl1);
-        return(@spl2);
+	my $string = shift;
+	my @spl1 = split /\s*,\s*/, $string;
+	my @spl2 = map(kwtidy($_), @spl1);
+	return(@spl2);
 }
 
 sub makeKeywordWhere {
