@@ -434,19 +434,24 @@ sub FieldHTML {
 	my ($globalValue, $userValue) = ('', '');
 	my $blankfield = '';
 	if ( $field =~ /:/ ) {
+		my @gVals = ();
+		my @uVals = ();
+		my @bVals = ();
 		foreach my $f ( split(/:/, $field) ) {
 			# hmm.  this directly references the data in the 
 			#    record rather than calling the access method, 
 			#    thereby avoiding errors if the userRecord is 
 			#    undefined.  that seems a bit suspect, but it's
 			#    used below so we'll leave it here.
-			$globalValue .= $globalRecord->{$f} . ":";
-			$userValue .= $userRecord->{$f} . ":";
-			$blankfield .= ":";
+
+			push(@gVals, $globalRecord->{$f} );
+			push(@uVals, $userRecord->{$f} );    # (defined($userRecord->{$f})?$userRecord->{$f}:'') );
+			push(@bVals, '');
 		}
-		$globalValue =~ s/:$//;
-		$userValue =~ s/:$//;
-		$blankfield =~ s/:$//;
+		# I don't like this, but combining multiple values is a bit messy
+		$globalValue = (grep {defined($_)} @gVals) ? join(':', (map { defined($_) ? $_ : '' } @gVals )) : undef;
+		$userValue = (grep {defined($_)} @uVals) ? join(':', (map { defined($_) ? $_ : '' } @uVals )) : undef;
+		$blankfield = join(':', @bVals);
 	} else {
 		$globalValue = $globalRecord->{$field};
 		$userValue = $userRecord->{$field};
@@ -454,7 +459,7 @@ sub FieldHTML {
 
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
 	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : "";
+	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : $blankfield;
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue) if defined $globalValue && $globalValue ne $labels{""};
