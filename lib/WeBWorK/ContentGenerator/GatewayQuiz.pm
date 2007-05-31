@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.46 2007/04/04 15:05:26 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.47 2007/04/04 21:30:57 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1186,12 +1186,24 @@ sub body {
 
 	my @scoreRecordedMessage = ('') x scalar(@problems);
 
-	if ( $submitAnswers ) {
-	# if we're submitting answers for a proctored exam, we want to delete
-	#    the proctor keys that authorized that grading, so that it isn't 
-	#    possible to just log in and take another proctored test without 
-	#    getting reauthorized
-		if ( $self->{'assignment_type'} eq 'proctored_gateway' ) {
+	####################################
+	# save results to database as appropriate
+	####################################
+	if ( $submitAnswers || ( ($previewAnswers || $newPage) &&
+				 $can{recordAnswers} ) ) {
+		# if we're submitting answers, we have to save the problems
+		#    to the database.
+		# if we're previewing or switching pages and can still
+		#    record answers, we save the last answer for future 
+		#    reference
+
+		# first, if we're submitting answers for a proctored exam, 
+		#    we want to delete the proctor keys that authorized 
+		#    that grading, so that it isn't possible to just log 
+		#    in and take another proctored test without getting 
+		#    reauthorized
+		if ( $submitAnswers && 
+		     $self->{'assignment_type'} eq 'proctored_gateway' ) {
 			my $proctorID = $r->param('proctor_user');
 
 			# if we don't have attempts left, delete all
@@ -1230,19 +1242,33 @@ sub body {
 
 			# store answers in problem for sticky answers later
 			my %answersToStore;
-			my %answerHash = %{$pg_results[$i]->{answers}};
-			$answersToStore{$_} = 
-			    $self->{formFields}->{$_} foreach (keys %answerHash);
-			# check for extra answers that slipped by---e.g. for 
-			#    matrices, and get them from the original input form
-			my @extra_answer_names = 
-			    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
-			$answersToStore{$_} = 
-			    $self->{formFields}->{$_} foreach (@extra_answer_names);
-			# now encode all answers
-			my @answer_order = 
-			    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
-			      @extra_answer_names );
+
+			# we have to be a little careful about getting the
+			#    answers that we're saving, because we don't have
+			#    a pg_results object for all problems if we're not 
+			#    submitting
+			my %answerHash = ();
+			my @answer_order = ();
+			if ( ref( $pg_results[$i] ) ) {
+				%answerHash = %{$pg_results[$i]->{answers}};
+				$answersToStore{$_} = $self->{formFields}->{$_} 
+					foreach (keys %answerHash);
+				# check for extra answers that slipped 
+				#    by---e.g. for matrices, and get them 
+				#    from the original input form
+				my @extra_answer_names = 
+				    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
+				$answersToStore{$_} = 
+				    $self->{formFields}->{$_} foreach (@extra_answer_names);
+				@answer_order = 
+				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
+				      @extra_answer_names );
+			} else {
+				my $prefix = sprintf('Q%04d_',$i+1);
+				my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
+				%answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
+				@answer_order = @fields;
+			}
 			my $answerString = encodeAnswers( %answersToStore, 
 							  @answer_order );
 			# and get the last answer 
@@ -1251,7 +1277,7 @@ sub body {
 
 			# next, store the state in the database if that makes 
 			#    sense
-			if ( $will{recordAnswers} ) {
+			if ( $submitAnswers && $will{recordAnswers} ) {
   $problems[$i]->status($pg_results[$i]->{state}->{recorded_score});
   $problems[$i]->attempted(1);
   $problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
@@ -1287,7 +1313,10 @@ sub body {
 					  $problems[$i]->num_correct . "\t" .
 					  $problems[$i]->num_incorrect
 					  );
-			} else {
+			} elsif ( $submitAnswers ) {
+				# this is the case where we submitted answers
+				#    but can't save them; report an error 
+				#    message
 
 				if ($self->{isClosed}) {
 					$scoreRecordedMessage[$i] = "Your " .
@@ -1323,19 +1352,20 @@ sub body {
 					$scoreRecordedMessage[$i] = "Your " .
 						"score was not recorded.";
 				}
+			} else {
+				# finally, we must be previewing or switching
+				#    pages.  save only the last answer for the
+				#    problems
+				$db->putProblemVersion( $pureProblem );
 			}
 		} # end loop through problems
 
-	} # end if submitAnswers conditional
+		## finally, log student answers if we're submitting, 
+		##    previewing, or changing pages, provided that we can 
+		##    record answers.  note that this will log an overtime 
+		##    submission (or any case where someone submits the 
+		##    test, or spoofs a request to submit a test)
 
-	## finally, log student answers if we're submitting, previewing, or 
-	##    changing pages, provided that we can record answers.
-	##    note that this should log an overtime submission (or any case
-	##    where someone submits the test, or spoofs a request to submit
-	##    a test)
-	if ( $submitAnswers || ( ( $previewAnswers || $newPage ) && 
-				 $can{recordAnswers} ) ) {
-		# log student answers
 		my $answer_log = 
 			$self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 
@@ -1344,6 +1374,9 @@ sub body {
 			foreach my $i ( 0 .. $#problems ) {
 				my $answerString = '';
 				my $scores = '';
+				# note that we store these answers in the 
+				#    order that they are presented, not the 
+				#    actual problem order
 				if ( ref( $pg_results[$probOrder[$i]] ) ) {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
 					foreach ( sortByName(undef, keys %answerHash) ) {
