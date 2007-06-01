@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.188 2007/03/27 17:04:01 glarose Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.189 2007/04/04 15:05:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -225,7 +225,8 @@ $webworkURLs{docs}          = "http://webhost.math.rochester.edu/webworkdocs/doc
 $webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/";
 
 # Location of CSS
-$webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/ur.css";
+#$webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/ur.css";
+$webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/${defaultTheme}.css";
 
 # Location of jsMath script, used for the jsMath display mode.
 $webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
