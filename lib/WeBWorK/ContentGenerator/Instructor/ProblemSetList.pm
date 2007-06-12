@@ -1821,7 +1821,7 @@ SET:	foreach my $set (keys %filenames) {
 		    my $timeInterval = $setRecord->time_interval;
 		    my $vPerInterval = $setRecord->versions_per_interval;
 		    my $vTimeLimit   = $setRecord->version_time_limit;
-		    my $probRandom   = $setRecord->problems_randorder;
+		    my $probRandom   = $setRecord->problem_randorder;
 		    my $probPerPage  = $setRecord->problems_per_page;
 		    my $hideScore    = $setRecord->hide_score;
 		    my $hideWork     = $setRecord->hide_work;
