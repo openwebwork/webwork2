@@ -9,6 +9,9 @@
  *   
  *   <SCRIPT SRC="path-to-jsMath/easy/load.js"></SCRIPT>
  *   
+ *   (If you are including this file into your page via Server-Side
+ *   Includes, you should remove line above.)
+ *   
  *   You can make copies of this file with different settings
  *   if you need to have several different configurations.
  *   

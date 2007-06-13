@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4b",  // change this if you edit the file, but don't edit this file
+  version: "3.4c",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -2993,10 +2993,12 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  LayoutRelative: function (size,table,align,cspacing,rspacing,vspace) {
+  LayoutRelative: function (size,table,align,cspacing,rspacing,vspace,useStrut,addWidth) {
     if (align == null) {align = []}
     if (cspacing == null) {cspacing = []}
     if (rspacing == null) {rspacing = []}
+    if (useStrut == null) {useStrut = 1}
+    if (addWidth == null) {addWidth = 1}
     
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
@@ -3005,7 +3007,8 @@ jsMath.Add(jsMath.Box,{
     var i; var j; var row;
     for (i = 0; i < table.length; i++) {
       if (rspacing[i] == null) {rspacing[i] = 0}
-      row = table[i]; H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
+      row = table[i];
+      H[i] = useStrut*jsMath.h*scale; D[i] = useStrut*jsMath.d*scale;
       for (j = 0; j < row.length; j++) {
         row[j] = row[j].Remeasured();
         if (row[j].h > H[i]) {H[i] = row[j].h}
@@ -3020,7 +3023,7 @@ jsMath.Add(jsMath.Box,{
     if (bh == unset) {bh = 0}; if (bd == unset) {bd = 0}
 
     // lay out the columns
-    var HD = (jsMath.hd-.01)*scale;
+    var HD = useStrut*(jsMath.hd-.01)*scale;
     var dy = (vspace || 1) * scale/6;
     var html = ''; var pW = 0; var cW = 0;
     var w; var h; var y;
@@ -3054,9 +3057,9 @@ jsMath.Add(jsMath.Box,{
     
     // adjust the final row width, and vcenter the table
     //   (add 1/6em at each side for the \,)
-    html += jsMath.HTML.Spacer(cW-cspacing[W.length-1] + scale/6);
-    html = jsMath.HTML.Place(html,scale/6,h);
-    box = new jsMath.Box('html',html,w+scale/3,h,d);
+    html += jsMath.HTML.Spacer(cW-cspacing[W.length-1] + addWidth*scale/6);
+    html = jsMath.HTML.Place(html,addWidth*scale/6,h);
+    box = new jsMath.Box('html',html,w+addWidth*scale/3,h,d);
     box.bh = bh; box.bd = bd;
     return box;
   },
@@ -3068,14 +3071,16 @@ jsMath.Add(jsMath.Box,{
    *  ###  still need to allow users to specify row and column attributes,
    *       and do things like \span and \multispan  ###
    */
-  LayoutAbsolute: function (size,table,align,cspacing,rspacing,vspace) {
+  LayoutAbsolute: function (size,table,align,cspacing,rspacing,vspace,useStrut,addWidth) {
     if (align == null) {align = []}
     if (cspacing == null) {cspacing = []}
     if (rspacing == null) {rspacing = []}
+    if (useStrut == null) {useStrut = 1}
+    if (addWidth == null) {addWidth = 1}
     
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
-    var HD = (jsMath.hd-.01)*scale;
+    var HD = useStrut*(jsMath.hd-.01)*scale;
     var dy = (vspace || 1) * scale/6;
     var W = []; var H = []; var D = [];
     var w = 0; var h; var x; var y;
@@ -3083,7 +3088,7 @@ jsMath.Add(jsMath.Box,{
     for (i = 0; i < table.length; i++) {
       if (rspacing[i] == null) {rspacing[i] = 0}
       row = table[i];
-      H[i] = jsMath.h*scale; D[i] = jsMath.d*scale;
+      H[i] = useStrut*jsMath.h*scale; D[i] = useStrut*jsMath.d*scale;
       for (j = 0; j < row.length; j++) {
         row[j] = row[j].Remeasured();
         if (row[j].h > H[i]) {H[i] = row[j].h}
@@ -3100,7 +3105,7 @@ jsMath.Add(jsMath.Box,{
     h = y/2 + jsMath.TeX.axis_height; var d = y - h;
 
     // lay out the columns
-    var html = ''; var entry; w = scale/6;
+    var html = ''; var entry; w = addWidth*scale/6;
     for (j = 0; j < W.length; j++) {
       y = H[0]-h + rspacing[0];
       for (i = 0; i < table.length; i++) {
@@ -3119,14 +3124,13 @@ jsMath.Add(jsMath.Box,{
     }
     
     // get the full width
-    w = -cspacing[W.length-1]+scale/3;
+    w = -cspacing[W.length-1]+addWidth*scale/3;
     for (i = 0; i < W.length; i++) {w += W[i] + cspacing[i]}
 
-    html = jsMath.HTML.Spacer(scale/6)+html+jsMath.HTML.Spacer(scale/6);
+    html = jsMath.HTML.Spacer(addWidth*scale/6)+html+jsMath.HTML.Spacer(addWidth*scale/6);
     if (jsMath.Browser.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
-//    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
     html = jsMath.HTML.Absolute(html,w,h+d,d,y,h);
-    var box = new jsMath.Box('html',html,w+scale/3,h,d);
+    var box = new jsMath.Box('html',html,w+addWidth*scale/3,h,d);
     return box;
   },
 
@@ -3756,17 +3760,18 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     if (mitem.nuc.type == 'TeX') {
       var C = jsMath.TeX[mitem.nuc.font][mitem.nuc.c];
       if (isD && C.n) {mitem.nuc.c = C.n; C = jsMath.TeX[mitem.nuc.font][C.n]}
-      box = jsMath.Box.Set(mitem.nuc,style,size);
+      box = mitem.nuc = jsMath.Box.Set(mitem.nuc,style,size);
       if (C.ic) {
         mitem.delta = C.ic * TeX.scale;
-        if (mitem.limits || !mitem.sub || jsMath.Browser.msieIntegralBug) 
-          {box = jsMath.Box.SetList([box,jsMath.mItem.Space(mitem.delta)],style,size)}
+        if (mitem.limits || !mitem.sub || jsMath.Browser.msieIntegralBug) {
+          box = mitem.nuc = jsMath.Box.SetList([box,jsMath.mItem.Space(mitem.delta)],style,size);
+        }
       }
       box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height);
       if (Math.abs(box.y) < .0001) {box.y = 0}
     }
-
-    if (!box) {box = jsMath.Box.Set(mitem.nuc,style,size).Remeasured()}
+    
+    if (!box) {box = mitem.nuc = jsMath.Box.Set(mitem.nuc,style,size).Remeasured()}
     if (mitem.limits) {
       var W = box.w; var x = box.w;
       var mlist = [box]; var dh = 0; var dd = 0;
@@ -4297,7 +4302,8 @@ jsMath.Package(jsMath.Parser,{
     "\n":  'Space',
     "'":   'Prime',
     '%':   'HandleComment',
-    '&':   'HandleEntry'
+    '&':   'HandleEntry',
+    '#':   'Hash'
   },
 
   // the \mathchardef table (see Appendix B of the TeXbook).
@@ -4631,7 +4637,11 @@ jsMath.Package(jsMath.Parser,{
     overbrace:       ['Extension','leaders'],
     underbrace:      ['Extension','leaders'],
     overrightarrow:  ['Extension','leaders'],
+    underrightarrow: ['Extension','leaders'],
     overleftarrow:   ['Extension','leaders'],
+    underleftarrow:  ['Extension','leaders'],
+    overleftrightarrow:  ['Extension','leaders'],
+    underleftrightarrow: ['Extension','leaders'],
     overset:         ['Extension','underset-overset'],
     underset:        ['Extension','underset-overset'],
 
@@ -4688,6 +4698,7 @@ jsMath.Package(jsMath.Parser,{
     textrm:             ['Macro','\\mathord{\\hbox{#1}}',1],
     textit:             ['Macro','\\mathord{\\class{textit}{\\hbox{#1}}}',1],
     textbf:             ['Macro','\\mathord{\\class{textbf}{\\hbox{#1}}}',1],
+    pmb:                ['Macro','\\rlap{#1}\\kern1px{#1}',1],
 
     TeX:                ['Macro','T\\kern-.1667em\\lower.5ex{E}\\kern-.125em X'],
 
@@ -4796,8 +4807,9 @@ jsMath.Package(jsMath.Parser,{
     Huge:       ['HandleSize',9],
     dots:       ['Macro','\\ldots'],
     
-    newcommand: ['Extension','newcommand'],
-    def:        ['Extension','newcommand'],
+    newcommand:     ['Extension','newcommand'],
+    newenvironment: ['Extension','newcommand'],
+    def:            ['Extension','newcommand'],
 
     //  Extensions to TeX
     color:      ['Extension','HTML'],
@@ -4818,15 +4830,23 @@ jsMath.Package(jsMath.Parser,{
    *  LaTeX environments
    */
   environments: {
-    array:      'Array',
-    matrix:     ['Array',null,null,'c'],
-    pmatrix:    ['Array','(',')','c'],
-    bmatrix:    ['Array','[',']','c'],
-    Bmatrix:    ['Array','\\{','\\}','c'],
-    vmatrix:    ['Array','\\vert','\\vert','c'],
-    Vmatrix:    ['Array','\\Vert','\\Vert','c'],
-    cases:      ['Array','\\{','.','ll',null,2],
-    eqnarray:   ['Array',null,null,'rcl',[5/18,5/18],3,'D']
+    array:        'Array',
+    matrix:       ['Array',null,null,'c'],
+    pmatrix:      ['Array','(',')','c'],
+    bmatrix:      ['Array','[',']','c'],
+    Bmatrix:      ['Array','\\{','\\}','c'],
+    vmatrix:      ['Array','\\vert','\\vert','c'],
+    Vmatrix:      ['Array','\\Vert','\\Vert','c'],
+    cases:        ['Array','\\{','.','ll',null,2],
+    eqnarray:     ['Array',null,null,'rcl',[5/18,5/18],3,'D'],
+
+    align:        ['Extension','AMSmath'],
+    'align*':     ['Extension','AMSmath'],
+    multline:     ['Extension','AMSmath'],
+    'multline*':  ['Extension','AMSmath'],
+    split:        ['Extension','AMSmath'],
+    gather:       ['Extension','AMSmath'],
+    'gather*':    ['Extension','AMSmath']
   },
 
 
@@ -5260,6 +5280,7 @@ jsMath.Package(jsMath.Parser,{
     var data = this.mlist.data;
     this.mlist.Atomize(data.style,data.size);
     var box = this.mlist.Typeset(data.style,data.size);
+    box.entry = data.entry; delete data.entry; if (!box.entry) {box.entry = {}};
     this.row[this.row.length] = box;
     this.mlist = new jsMath.mList(null,null,data.size,data.style); 
   },
@@ -5309,7 +5330,7 @@ jsMath.Package(jsMath.Parser,{
     parse.matrix = name; parse.row = []; parse.table = []; parse.rspacing = [];
     parse.Parse(); if (parse.error) {this.Error(parse); return}
     parse.HandleRow(name,1);  // be sure the last row is recorded
-    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing,parse.rspacing,delim[4]);
+    var box = jsMath.Box.Layout(data.size,parse.table,columns,cspacing,parse.rspacing,delim[4],delim[6],delim[7]);
     // Add parentheses, if needed
     if (delim[0] && delim[1]) {
       var left  = jsMath.Box.Delimiter(box.h+box.d-jsMath.hd/4,this.delimiter[delim[0]],'T');
@@ -5501,6 +5522,13 @@ jsMath.Package(jsMath.Parser,{
   },
   
   /*
+   *  Error for # (must use \#)
+   */
+  Hash: function (name) {
+    this.Error("You can't use 'macro parameter character #' in math mode");
+  },
+  
+  /*
    *  Insert space for ~
    */
   Tilde: function (name) {
@@ -5521,7 +5549,7 @@ jsMath.Package(jsMath.Parser,{
    */
   HandleAtom: function (name,data) {
     var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
-    this.mlist.Add(jsMath.mItem.Atom(data,arg));
+    this.mlist.Add(jsMath.mItem.Atom(data[0],arg));
   },
 
 
