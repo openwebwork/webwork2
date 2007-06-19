@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.189 2007/04/04 15:05:26 glarose Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.190 2007/06/01 14:25:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,7 @@ $externalPrograms{mv}    = "/bin/mv";
 $externalPrograms{cp}    = "/bin/cp";
 $externalPrograms{rm}    = "/bin/rm";
 $externalPrograms{mkdir} = "/bin/mkdir";
-$externalPrograms{tar}   = "/usr/bin/tar";
+$externalPrograms{tar}   = "/bin/tar";
 $externalPrograms{gzip}  = "/usr/bin/gzip";
 
 # equation rendering/hardcopy utiltiies
