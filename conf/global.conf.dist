@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.191 2007/06/19 19:04:45 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.192 2007/06/22 18:57:40 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -158,6 +158,13 @@ $mail{editor_window_columns} = 100;
 
 # Use this to customize the text of the feedback button.
 $feedback_button_name = "Email instructor";
+
+################################################################################
+# Theme
+################################################################################
+
+$defaultTheme = "math";
+$defaultThemeTemplate = "system";
 
 ################################################################################
 # System-wide locations (directories and URLs)
@@ -526,13 +533,6 @@ $siteDefaults{timezone} = "";
 # The contents of the templates directory are copied from this course
 # to the new course being created.
 $siteDefaults{default_templates_course} ="modelCourse";
-
-################################################################################
-# Theme
-################################################################################
-
-$defaultTheme = "math";
-$defaultThemeTemplate = "system";
 
 ################################################################################
 # Authentication system
