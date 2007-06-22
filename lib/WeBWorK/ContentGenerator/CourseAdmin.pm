@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.63 2007/03/30 14:21:14 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.64 2007/03/30 19:07:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1289,9 +1289,9 @@ sub do_export_database {
 		
 		$outputFileHandle->close();
 	
-		my $gzipMessage = system( 'gzip', $exportFilePath);
+		my $gzipMessage = system($ce->{externalPrograms}{gzip}, $exportFilePath);
 		if ( !$gzipMessage ) {
-			$self->addgoodmessage(CGI::p( "Database saved to templates/$exportFileName.gzip.  
+			$self->addgoodmessage(CGI::p( "Database saved to templates/$exportFileName.gz.  
 			You may download it with the file manager."));
 		} else {
 			$self->addbadmessage(CGI::p( "Failed to gzip file $exportFilePath"));
