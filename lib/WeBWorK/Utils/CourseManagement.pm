@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.37 2006/09/29 19:39:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.39 2007/03/06 01:33:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -642,12 +642,54 @@ sub unarchiveCourse {
 	#    $dbLayoutName ($ce->{dbLayoutName})
 	#    %options ($dbOptions)
 	
-	my $courseID = $options{courseID};
+	my $newCourseID = $options{newCourseID};
+	my $oldCourseID = $options{oldCourseID};
 	my $archivePath = $options{archivePath};
 	my $ce = $options{ce};
 	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
 	my $coursesDir  = $ce->{webworkDirs}->{courses};
 	
+	# Double check that the new course does not exist
+	if (-e "$coursesDir/$newCourseID") {
+		die "Cannot overwrite existing course $coursesDir/$newCourseID";
+	}
+	my $restoreCourseData = undef;
+	##
+	# Temporarily rename the old course if it exists  -- saving data
+	##
+	if (-e "$coursesDir/$oldCourseID") {
+		my $tmpCourseID = "${oldCourseID}_tmp";
+		
+		debug("Moving $oldCourseID to $tmpCourseID");
+		my  $tmpce = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$tmpCourseID,
+		);
+		$restoreCourseData = {
+		                courseID    => $tmpCourseID,    # data for restoring from tmpCourse
+		                ce          => $tmpce,
+		                dbOptions   => undef,
+		                newCourseID => $oldCourseID,
+	    }; 
+	    renameCourse(
+	    	courseID    => $oldCourseID,
+	    	ce          => WeBWorK::CourseEnvironment->new(
+	    	                  $ce->{webworkDirs}->{root},
+							  $ce->{webworkURLs}->{root},
+							  $ce->{pg}->{directories}->{root},$oldCourseID,
+						  ),
+			dbOptions   => undef,
+			newCourseID => $tmpCourseID,	
+		);
+	}
+	##
+	# Unarchive the old course 
+	##
+	
+	
+	my $courseID = $oldCourseID;
 	###############################################################
 	# RPC call to tar and gzip the courses directory
 	###############################################################	
@@ -687,9 +729,37 @@ sub unarchiveCourse {
     # import database tables
  	my $unarchiveHelperResult = unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
  	die "$courseID: unable to import tables into database.\n" unless $unarchiveHelperResult;
-
-		
 	
+	##
+	# Change the unarchived course to the new course name if they are different
+	##
+	if ($courseID ne $newCourseID) {
+
+		debug("rename $courseID to $newCourseID");
+		my  $oldce = WeBWorK::CourseEnvironment->new(
+			$ce->{webworkDirs}->{root},
+			$ce->{webworkURLs}->{root},
+			$ce->{pg}->{directories}->{root},
+			$courseID,
+		);
+		renameCourse(
+			courseID     => $courseID,
+			ce           => $oldce,
+			dbOptions    => undef,
+			newCourseID  => $newCourseID,
+		);
+	}
+	if (defined($restoreCourseData) ) { 		
+	
+	##
+	# Rename the temporary old course back to old course
+ 	##
+		debug("rename ".$restoreCourseData->{courseID}. " to ". $restoreCourseData->{newCourseID});
+ 		renameCourse(
+ 			%{$restoreCourseData}
+ 		);
+
+	}
 }
 
 ################################################################################
