@@ -47,6 +47,7 @@ my @modulesList = qw(
 	DBD::mysql
 	DBI
 	Digest::MD5
+	Email::Address
 	Errno
 	File::Copy
 	File::Find
