@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.64 2007/03/30 19:07:54 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.65 2007/06/22 19:05:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1790,7 +1790,7 @@ sub unarchive_course_form {
         $courseLabels{$courseID} = $courseID;
 	}
 	
-	print CGI::h2("Unarchive Course -- not yet operational");
+	print CGI::h2("Unarchive Course -- not yet completely operational");
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -1812,8 +1812,12 @@ sub unarchive_course_form {
 				),
 			),
 		),
-	);
 	
+		CGI::Tr({},
+				CGI::th({class=>"LeftHeader"}, CGI::checkbox(-name => "create_newCourseID",-default=>'',-value=>1, -label=>'New Name:')),
+				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25)),
+			),
+	);
 	print CGI::p(
 		"Currently the unarchive facility is only available for mysql databases.
 		It depends on the mysqldump application."
@@ -1833,20 +1837,25 @@ sub unarchive_course_validate {
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
-	
+	my $unarchive_courseID                   = $r->param("unarchive_courseID")             || "";
+	my $create_newCourseID                   = $r->param("create_newCourseID")      || "";
+	my $new_courseID                         = $r->param("new_courseID")    || "";
 	my @errors;
+	#by default we use the archive name for the course
+	my $courseID = $unarchive_courseID; $courseID =~ s/\.tar\.gz$//;
 	
-	my $new_courseID = $unarchive_courseID; $new_courseID =~ s/\.tar\.gz$//;
-	
-	if ($new_courseID eq "") {
+	if ( $create_newCourseID) {
+		$courseID = $new_courseID;
+	}
+	debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
+
+	if ($courseID eq "") {
 		push @errors, "You must specify a course name.";
-	} elsif ( -d $ce->{webworkDirs}->{courses}."/$new_courseID" ) {
+	} elsif ( -d $ce->{webworkDirs}->{courses}."/$courseID" ) {
 	    #Check that a directory for this course doesn't already exist
-		push @errors, "A directory already exists with the name $new_courseID. 
+		push @errors, "A directory already exists with the name $courseID. 
 		 You must first delete this existing course before you can unarchive.";
 	}
-	
 
 	
 	return @errors;
@@ -1862,20 +1871,26 @@ sub unarchive_course_confirm {
 	
 	print CGI::h2("Unarchive Course");
 	
-	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
+	my $unarchive_courseID                    = $r->param("unarchive_courseID")     || "";
+	my $create_newCourseID                    = $r->param("create_newCourseID")      || "";
+	my $new_courseID                          = $r->param("new_courseID")           || "";
+
+	my $courseID = $unarchive_courseID; $courseID =~ s/\.tar\.gz$//;
 	
-    my $new_courseID = $unarchive_courseID; $new_courseID =~ s/\.tar\.gz$//;
+	if ( $create_newCourseID) {
+		$courseID = $new_courseID;
+	}	
 
-
+    debug(" unarchive_courseID $unarchive_courseID new_courseID $new_courseID ");
 
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print CGI::p($unarchive_courseID," to course ", 
-	             CGI::input({-name=>'new_courseID', -value=>$new_courseID})
+	             CGI::input({-name=>'new_courseID', -value=>$courseID})
 	);
 
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/unarchive_courseID/);
+	print $self->hidden_fields(qw/unarchive_courseID create_newCourseID/);
 	
 	print CGI::p({style=>"text-align: center"},
 		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't unarchive"),
@@ -1896,11 +1911,13 @@ sub do_unarchive_course {
 	my $new_courseID           = $r->param("new_courseID")           || "";
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
 	
+	my $old_courseID   = $unarchive_courseID; $old_courseID =~ s/.tar.gz//;
 	my %dbOptions;
 
 	eval {
 		unarchiveCourse(
-			courseID => $new_courseID,
+			newCourseID => $new_courseID,
+			oldCourseID => $old_courseID,
 			archivePath =>$ce->{webworkDirs}->{courses}."/$unarchive_courseID",
 			ce => $ce , #   $ce2,
 			dbOptions => undef,
