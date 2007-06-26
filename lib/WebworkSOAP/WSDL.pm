@@ -13,7 +13,7 @@ sub handler($) {
     my ($r) = @_;
     my $pod = new Pod::WSDL(
         source => 'WebworkSOAP',
-        location => 'HOSTNAME/webwork2_rpc',
+        location => 'http://128.151.231.20/webwork2_rpc',
         pretty => 1,
         withDocumentation => 1
         );
