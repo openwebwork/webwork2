@@ -5,6 +5,7 @@ use strict;
 use WeBWorK::Utils qw(pretty_print_rh);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse listArchivedCourses unarchiveCourse);
 use WeBWorK::DB;
+use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::ContentGenerator::Instructor;
 
@@ -691,14 +692,14 @@ sub put_global_problem {
 =begin WSDL
 _IN authenKey $string
 _IN courseName $string
-_IN problemID $string
+_IN setID $string
 _RETURN @string of names objects.
 =end WSDL
 =cut
 sub list_global_problems {
-    my ($self,$authenKey,$courseName,$problemID) = @_;
+    my ($self,$authenKey,$courseName,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    my @tempArray = $soapEnv->{db}->listGlobalProblems($problemID);
+    my @tempArray = $soapEnv->{db}->listGlobalProblems($setID);
     return \@tempArray;
 }
 
