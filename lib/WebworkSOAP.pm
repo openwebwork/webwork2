@@ -31,12 +31,14 @@ use constant {
 };
 
 our %SeedCE;
+$WebworkSOAP::SeedCE{soap_authen_key} = "123456789123456789";
+$WebworkSOAP::SeedCE{webwork_dir} = "/home/mleventi/webwork_projects/webwork/webwork2/";
 
 sub new {
     my($self,$authenKey,$courseName) = @_;
     $self = {};
     #Construct Course
-    my $ce = eval { new WeBWorK::CourseEnvironment({%WebworkSOAP::SeedCE, courseName => $courseName }) };
+    my $ce = eval { new WeBWorK::CourseEnvironment({%SeedCE, courseName => $courseName }) };
     $@ and soap_fault_major("Course Environment cannot be constructed.");
     #Authentication Check
     if($ce->{soap_authen_key} != $authenKey) {
@@ -90,12 +92,12 @@ _RETURN @string
 =cut
 sub list_courses {
     my ($self,$authenKey) = @_;
-
-    my $ce = eval { new WeBWorK::CourseEnvironment({%WebworkSOAP::SeedCE })};
-    $@ and soap_fault_major("Course Environment cannot be constructed.");
-    if($authenKey != $ce->{soap_authen_key}) {
+    my $ce = eval { new WeBWorK::CourseEnvironment({%WeBWorK::SeedCE })};
+    $@ and soap_fault_major("Internal Course Environment cannot be constructed.");
+    if($authenKey != $WebworkSOAP::SeedCE{soap_authen_key}) {
         soap_fault_authen;
     }
+    return $WebworkSOAP::SeedCE{soap_authen_key};
     $@ and soap_fault_major("Course Environment cannot be constructed.");
     my @test = listCourses($ce);
     return \@test;
@@ -158,8 +160,13 @@ sub assign_set_to_user {
 
     my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
     foreach my $GlobalProblem (@GlobalProblems) {
-    	my @result = $db->assignProblemToUser($userID, $GlobalProblem);
-    	push @results, @result if @result and not $set_assigned;
+        my $seed = int( rand( 2423) ) + 36;
+        my $UserProblem = $db->newUserProblem;
+	$UserProblem->user_id($userID);
+	$UserProblem->set_id($GlobalProblem->set_id);
+	$UserProblem->problem_id($GlobalProblem->problem_id);
+	initializeUserProblem($UserProblem, $seed);
+	eval { $db->addUserProblem($UserProblem) };
     }
     return @results;
 }
@@ -168,9 +175,9 @@ sub assign_set_to_user {
 ####################################################################
 ##FUNCTIONS DIRECTLY MAPPED TO FUNCTIONS IN DB.pm
 ####################################################################
-##################################################
+###############################################
 ##Password
-##################################################
+###############################################
 
 =pod
 =begin WSDL
@@ -618,7 +625,7 @@ sub get_global_sets {
 _IN authenKey $string
 _IN courseName $string
 _IN setID $string
-_RETURN $WebworkSOAP::Classes::GlobalSet of names objects.
+_RETURN $WebworkSOAP::Classes::GlobalSet
 =end WSDL
 =cut
 sub get_global_set {
@@ -640,7 +647,7 @@ _IN setID $string
 _RETURN $integer
 =end WSDL
 =cut
-sub delete_global_user {
+sub delete_global_set {
     my ($self,$authenKey,$courseName,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     return $soapEnv->{db}->deleteGlobalSet($setID);
