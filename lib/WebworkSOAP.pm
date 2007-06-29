@@ -33,7 +33,7 @@ use constant {
 
 our %SeedCE;
 $WebworkSOAP::SeedCE{soap_authen_key} = "123456789123456789";
-$WebworkSOAP::SeedCE{webwork_dir} = "/home/mleventi/webwork_projects/webwork/webwork2/";
+$WebworkSOAP::SeedCE{webwork_dir} = $ENV{WEBWORK_ROOT};
 
 sub new {
     my($self,$authenKey,$courseName) = @_;
