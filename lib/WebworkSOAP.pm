@@ -98,7 +98,6 @@ sub list_courses {
     if($authenKey != $WebworkSOAP::SeedCE{soap_authen_key}) {
         soap_fault_authen;
     }
-    return $WebworkSOAP::SeedCE{soap_authen_key};
     $@ and soap_fault_major("Course Environment cannot be constructed.");
     my @test = listCourses($ce);
     return \@test;
