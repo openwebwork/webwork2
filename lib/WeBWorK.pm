@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.94 2006/09/29 19:03:00 sh002i Exp $
+# $CVSHeader: /webwork/cvs/system/webwork-modperl/lib/WeBWorK.pm,v 1.92.2.2 2007/05/03 21:58:55 sh002i Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 =cut
 
-BEGIN { $main::VERSION = "2.x"; }
+BEGIN { $main::VERSION = "2.3.2"; }
 
 use strict;
 use warnings;
@@ -69,20 +69,6 @@ BEGIN {
 
 use constant LOGIN_MODULE => "WeBWorK::ContentGenerator::Login";
 use constant PROCTOR_LOGIN_MODULE => "WeBWorK::ContentGenerator::LoginProctor";
-
-BEGIN {
-	# pre-compile all content generators
-	# Login and LoginProctor need to be handled separately, since they don't have paths
-	map { eval "require $_"; die $@ if $@ }
-		WeBWorK::URLPath->all_modules,
-		LOGIN_MODULE,
-		PROCTOR_LOGIN_MODULE;
-	# other candidates for preloading:
-	# - DB Record, Schema, and Driver classes (esp. Driver::SQL as it loads DBI)
-	# - CourseManagement subclasses (ditto. sql_single.pm)
-	# - WeBWorK::PG::Local, which loads WeBWorK::PG::Translator
-	# - Authen subclasses
-}
 
 our %SeedCE;
 
@@ -185,6 +171,7 @@ sub dispatch($) {
 	#	debug("\t$key\n");
 	#	debug("\t\t$_\n") foreach $r->param($key);
 	#}
+
 	debug(("-" x 80) . "\n");
 
 	my $apache_hostname = $r->hostname;
