@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.15 2006/09/13 23:40:22 sh002i Exp $
+# $CVSHeader: webwork-modperl/conf/webwork.apache-config.dist,v 1.16 2007/03/15 23:57:11 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -71,8 +71,8 @@ $Location{$webwork_url} = {
 # 
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
 $Directory{$webwork_htdocs_dir} = {
-	Order => "allow,deny",
-	Allow => [qw/from all/],
+	Order => "Allow,Deny",
+	Allow => "from All",
 	Options => "FollowSymLinks",
 	AllowOverride => "None",
 };
@@ -82,7 +82,7 @@ $Directory{$webwork_htdocs_dir} = {
 push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
 $Directory{"$webwork_courses_dir/*/html"} = {
 	Order => "allow,deny",
-	Allow => [qw/from all/],
+	Allow => "from all",
 	Options => "FollowSymLinks",
 	AllowOverride => "None",
 };
