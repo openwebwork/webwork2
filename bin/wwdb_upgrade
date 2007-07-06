@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.12 2007/03/30 19:07:53 glarose Exp $
+# $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.13 2007/04/04 15:05:25 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,6 @@ BEGIN {
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils qw/runtime_use/;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
 our ($opt_v);
@@ -68,7 +67,9 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 };
 
 $DB_VERSIONS[++$i]{desc} = "adds depths table to keep track of dvipng depth information.";
-$DB_VERSIONS[  $i]{global_code} = sub {
+$DB_VERSIONS[  $i]{global_code} = sub {	my $vers_value_should_be = "This value should always be a positive integer.";
+	my $vers_stop_now = "You should stop now and take a closer look.";
+
 	$dbh->do("CREATE TABLE depths (md5 CHAR(33) NOT NULL, depth SMALLINT, PRIMARY KEY (md5))");
 	$sql_tables{depths} = ();
 };
@@ -300,15 +301,195 @@ $DB_VERSIONS[  $i]{course_code} = sub {
 	}
 };
 
+$DB_VERSIONS[++$i]{desc} = "adds per-course setting table";
+$DB_VERSIONS[  $i]{course_code} = sub {
+	my $course = shift;
+	$dbh->do("CREATE TABLE `${course}_setting` (`name` VARCHAR(255) NOT NULL PRIMARY KEY, `value` TEXT)");
+	$sql_tables{"${course}_setting"} = ();
+	$dbh->do("INSERT INTO `${course}_setting` (`name`, `value`) VALUES (?, ?)", {}, "db_version", $i);
+};
+our $FIRST_COURSE_DB_VERSION = $i;
+
 our $THIS_DB_VERSION = $i;
 
 ################################################################################
 
-my $ce = WeBWorK::CourseEnvironment->new({
-	webwork_dir => $ENV{WEBWORK_ROOT},
-});
+my @ww_courses;
+my %course_db_versions;
 
-my @ww_courses = listCourses($ce);
+sub get_sql_tables {
+	my $sql_tables_ref = $dbh->selectcol_arrayref("SHOW TABLES");
+	my %sql_tables; @sql_tables{@$sql_tables_ref} = ();
+	
+	return %sql_tables;
+}
+
+my $vers_value_should_be = "This value should always be a positive integer.";
+my $vers_stop_now = "You should stop now and take a closer look.";
+sub get_db_version {
+	my $course = shift;
+	my $table = defined $course ? "${course}_setting" : "dbupgrade";
+	if (exists $sql_tables{$table}) {
+		my $table_quoted = $dbh->quote_identifier($table);
+		my @record = $dbh->selectrow_array("SELECT `value` FROM $table_quoted WHERE `name`='db_version'");
+		if (@record) {
+			my $db_version = $record[0];
+			if (not defined $db_version) {
+				print "'db_version' exists, but it has a NULL value. $vers_value_should_be $vers_stop_now\n";
+				return;
+			} elsif ($db_version !~ /^-?\d+$/) {
+				print "'db_version' is set to the non-numeric value '$db_version'. $vers_value_should_be $vers_stop_now\n";
+				return;
+			} elsif ($db_version < 0) {
+				print "'db_version' is set to the negative value '$db_version'. $vers_value_should_be $vers_stop_now\n";
+				return;
+			} elsif ($db_version == 0) {
+				print "'db_version' is set to 0, which is reserved to indicate a pre-automatic-upgrade version. $vers_value_should_be $vers_stop_now\n";
+				return;
+			} else {
+				# db_version is positive! yay!
+				return $db_version;
+			}
+		} else {
+			print "The '$table' table exists, but doesn't contain a 'db_version' setting. $vers_stop_now\n";
+			return;
+		}
+	} else {
+		print "The '$table' table does not exist. $vers_stop_now\n";
+		return;
+	}
+}
+
+sub set_db_version {
+	my ($vers, $course) = @_;
+	my $table = defined $course ? "${course}_setting" : "dbupgrade";
+	my $table_quoted = $dbh->quote_identifier($table);
+	$dbh->do("UPDATE $table_quoted SET `value`=? WHERE `name`='db_version'", {}, $vers);
+}
+
+sub get_course_db_versions {
+	my %course_db_versions;
+	foreach my $course (@ww_courses) {
+		my $course_version = get_db_version($course);
+		if (defined $course_version) {
+			$course_db_versions{$course} = $course_version;
+		} else {
+			if ($THIS_DB_VERSION < $FIRST_COURSE_DB_VERSION) {
+				
+			} else {
+				print "Ignoring course '$course' since it doesn't have a valid database version.";
+			}
+		}
+	}
+	return %course_db_versions;
+}
+
+sub upgrade_to_version {
+	my $vers = shift;
+	my %info = %{$DB_VERSIONS[$vers]};
+	
+	print "\nUpgrading database from version " . ($vers-1) . " to $vers...\n";
+	my $desc = $info{desc} || "has no description.";
+	print "(Version $vers $desc)\n";
+	
+	if (exists $info{global_code}) {
+		eval { $info{global_code}->() };
+		if ($@) {
+			print "\nAn error occured while running the system upgrade code for version $vers:\n";
+			print "$@";
+			return 0 unless ask_permission("Ignore this error and keep going?", 0);
+		}
+	}
+	# upgrade system db version here!
+	
+	if (@ww_courses and exists $info{course_code}) {
+		my $actually_do_upgrade = 1;
+		my $update_version_field = 1;
+		foreach my $course (@ww_courses) {
+			my $course_vers;
+			if ($vers <= $FIRST_COURSE_DB_VERSION) {
+				# most, if not all, courses will have no version
+				# we assume that courses with no version are at $vers-1
+				# courses with a version >= $vers will be ignored
+				# no courses should have a version < $vers-1
+				# DON'T SET COURSE DB VERSIONS -- table doesn't exist yet
+				$course_vers = $course_db_versions{$course} || $vers-1;
+			} else {
+				# most, if not all, courses will have a version
+				# we skip courses without a version and complain loudly
+				# ignore courses with a version >= $vers
+				# DO SET COURSE DB VERSIONS
+				$course_vers = $course_db_versions{$course};
+				if (not defined $course_vers) {
+					print "Skipping course '$course' since it doesn't have a valid db_version.\n";
+					print "This course was probably exported from a pre-2.4.0 version of WeBWorK and will probably not be usable.\n";
+					return;
+				}
+			}
+			
+			if ($course_vers == $vers) {
+				print "Course '$course' already at version $vers. Not upgrading.\n";
+			} elsif ($course_vers > $vers) {
+				print "Course '$course' at version $course_vers, target version is $vers. Not upgrading.\n";
+			} elsif ($course_vers < $vers-1) {
+				print "Course '$course' at version $course_vers, which is too old to upgrade to $vers. This should never happen. Not upgrading.\n";
+			} else {
+				if ($actually_do_upgrade) {
+					eval { $info{course_code}->($course) };
+					if ($@) {
+						print "\nAn error occured while running the course upgrade code for version $vers on course $course:\n";
+						print "$@";
+						if (ask_permission("Update course's db_version to $vers anyway?", 1)) {
+							set_db_version($vers, $course);
+							print "OK, updated course's db version.\n";
+						}
+						my $actually_do_upgrade = ask_permission("Upgrade the remaining courses to version $vers?", 0);
+						if (not $actually_do_upgrade) {
+							print "OK, we'll skip upgrading the rest of the courses to version $vers.\n";
+							$update_version_field = ask_permission("Update the db_version for the courses we're skipping, as if we had upgraded them?", 1);
+						} else {
+							
+						}
+					} else {
+						# it worked!
+						set_db_version($vers, $course);
+					}
+				} else {
+					# not actually upgrading any more courses for this version
+					print "Skipping upgrading course '$course' to version $vers as per your request.\n";
+					if ($update_version_field) {
+						print "Updating db_version record for course '$course' anyway.\n";
+						set_db_version($vers, $course);
+					}
+				}
+			}
+		}
+	}
+	
+	print "Done.\n";
+	return 1;
+}
+
+sub ask_permission {
+	my ($prompt, $default) = @_;
+	
+	$default = 1 if not defined $default;
+	my $options = $default ? "[Y/n]" : "[y/N]";
+	
+	while (1) {
+		print "$prompt $options ";
+		my $resp = <STDIN>;
+		chomp $resp;
+		return $default if $resp eq "";
+		return 1 if lc $resp eq "y";
+		return 0 if lc $resp eq "n";
+		$prompt = 'Please enter "y" or "n".';
+	}
+}
+
+################################################################################
+
+my $ce = WeBWorK::CourseEnvironment->new({webwork_dir => $ENV{WEBWORK_ROOT}});
 
 $dbh = DBI->connect(
 	$ce->{database_dsn},
@@ -335,34 +516,49 @@ $dbh = DBI->connect(
 	}
 }
 
+@ww_courses = listCourses($ce);
 %sql_tables = get_sql_tables();
 
-my $db_version = exists $sql_tables{dbupgrade} ? get_db_version() : 0;
+my $system_db_version = exists $sql_tables{dbupgrade} ? get_db_version() : 0;
 
-if (not defined $db_version) {
-	print "Failed to get db_version -- can't continue.\n";
+if (not defined $system_db_version) {
+	print "Failed to get system db_version -- can't continue.\n";
 	exit 1;
 }
 
-verbose("Initial db_version is $db_version\n");
+verbose("Initial system db_version is $system_db_version\n");
 
-if ($db_version > $THIS_DB_VERSION) {
-	print "db_version is $db_version, but the current database version is only $THIS_DB_VERSION. This database was probably used with a newer version of WeBWorK.\n";
+if ($system_db_version > $THIS_DB_VERSION) {
+	print "System db_version is $system_db_version, but the current database version is only $THIS_DB_VERSION. This database was probably used with a newer version of WeBWorK.\n";
 	exit;
 }
 
-while ($db_version < $THIS_DB_VERSION) {
-	$db_version++;
-	unless (upgrade_to_version($db_version)) {
-		print "\nUpgrading from version ".($db_version-1)." to $db_version failed.\n\n";
+%course_db_versions = get_course_db_versions();
+my $lowest_db_version = $system_db_version;
+
+foreach my $course (keys %course_db_versions) {
+	my $vers = $course_db_versions{$course};
+	if ($vers > $THIS_DB_VERSION) {
+		print "Course '$course' has db_version $vers, but the current database version is only $THIS_DB_VERSION. This database was probably used with a newer version of WeBWorK. Course will be ignored during upgrade.\n";
+		delete $course_db_versions{$course};
+		next;
+	}
+	$lowest_db_version = $vers if $vers < $lowest_db_version;
+}
+
+#while ($lowest_db_version < $THIS_DB_VERSION) {
+foreach my $curr_vers ($lowest_db_version .. $THIS_DB_VERSION-1) {
+	my $target_vers = $curr_vers+1;
+	if (not upgrade_to_version($target_vers)) {
+		print "\nUpgrading from version $curr_vers to $target_vers failed.\n\n";
 		unless (ask_permission("Ignore this error and go on to the next version?", 0)) {
 			exit 3;
 		}
 	}
-	set_db_version($db_version);
+	#set_db_version($db_version);
 }
 
-print "\nDatabase is up-to-date at version $db_version.\n";
+print "\nDatabase is up-to-date at version $lowest_db_version.\n";
 
 END {
 	verbose("Releasing dbupgrade lock...\n");
@@ -379,96 +575,51 @@ END {
 	}
 }
 
-################################################################################
+=for comment
 
-sub get_sql_tables {
-	my $sql_tables_ref = $dbh->selectcol_arrayref("SHOW TABLES");
-	my %sql_tables; @sql_tables{@$sql_tables_ref} = ();
-	
-	return %sql_tables;
-}
+- add ${courseID}_setting table to dbLayout
+- add upgrade code to add table
+- don't bother adding "legacy" DB.pm methods -- just expose schema methods
 
-sub get_db_version {
-	my $vers_value_should_be = "This value should always be a positive integer.";
-	my $vers_stop_now = "You should stop now and take a closer look.";
-	
-	my @record = $dbh->selectrow_array("SELECT `value` FROM `dbupgrade` WHERE `name`='db_version'");
-	if (@record) {
-		my $db_version = $record[0];
-		if (not defined $db_version) {
-			print "'db_version' exists, but it has a NULL value. $vers_value_should_be $vers_stop_now\n";
-			return;
-		} elsif ($db_version !~ /^-?\d+$/) {
-			print "'db_version' is set to the non-numeric value '$db_version'. $vers_value_should_be $vers_stop_now\n";
-			return;
-		} elsif ($db_version < 0) {
-			print "'db_version' is set to the negative value '$db_version'. $vers_value_should_be $vers_stop_now\n";
-			return;
-		} elsif ($db_version == 0) {
-			print "'db_version' is set 0, which is reserved to indicate a pre-automatic-upgrade version. $vers_value_should_be $vers_stop_now\n";
-			return;
-		} else {
-			# db_version is positive! yay!
-			return $db_version;
-		}
+get all db_versions (system and all courses)
+foreach my $vers ($lowest+1 .. $current)
+	if $system_db_version < $vers
+		upgrade_to_version($vers)
+	foreach my $course (@ww_courses)
+		if $course->db_version < $vers
+			upgrade_course_to_version($course, $vers)
+
+if the system doesn't have a version, we assume version 0 ("before versioning")
+what if a course doesn't have a version? possibilities:
+
+(1) course was exported before version X, and imported after version X
+- i don't think we need to support this
+
+(2) course settings table was flushed
+- don't do it?
+- do we want to use a separate ${course}_db_upgrade table?
+
+what if the system db version is before the version at which courses started
+having versions?
+
+- Use the current behavior, where all courses are assumed to be at the same
+version as the system.
+- look at existing course versions and exempt courses that DO have a version.
+
+foreach my $vers ($lowest_db_version .. $THIS_DB_VERSION) {
+	if ($system_db_version < $FIRST_COURSE_DB_VERSION) {
+		# most, if not all, courses will have no version
+		# we assume that courses with no version are at $system_db_version
+		# courses with a version > $vers will be ignored
+		# no courses should have a version < $vers
+		# DON'T SET COURSE DB VERSIONS -- table doesn't exist yet
 	} else {
-		print "The 'dbupgrade' table exists, but doesn't contain a 'db_version' setting. $vers_stop_now\n";
-		return;
+		# most, if not all, courses will have a version
+		# we skip courses without a version and complain loudly
+		# ignore courses with a version > $vers
+		# DO SET COURSE DB VERSIONS
 	}
 }
 
-sub set_db_version {
-	my $vers = shift;
-	$dbh->do("UPDATE `dbupgrade` SET `value`=? WHERE `name`='db_version'", {}, $vers);
-}
+=cut
 
-sub upgrade_to_version {
-	my $vers = shift;
-	my %info = %{$DB_VERSIONS[$vers]};
-	
-	print "\nUpgrading database from version " . ($vers-1) . " to $vers...\n";
-	my $desc = $info{desc} || "has no description.";
-	print "(Version $vers $desc)\n";
-	
-	if (exists $info{global_code}) {
-		eval { $info{global_code}->() };
-		if ($@) {
-			print "\nAn error occured while running the system upgrade code for version $vers:\n";
-			print "$@";
-			return 0 unless ask_permission("Ignore this error and keep going?", 0);
-		}
-	}
-	
-	if (@ww_courses and exists $info{course_code}) {
-		foreach my $curr_course (@ww_courses) {
-			eval { $info{course_code}->($curr_course) };
-			if ($@) {
-				print "\nAn error occured while running the course upgrade code for version $vers on course $curr_course:\n";
-				print "$@";
-				next if ask_permission("Ignore this error and go on to the next course?", 0);
-			}
-		}
-	}
-	
-	print "Done.\n";
-	return 1;
-}
-
-################################################################################
-
-sub ask_permission {
-	my ($prompt, $default) = @_;
-	
-	$default = 1 if not defined $default;
-	my $options = $default ? "[Y/n]" : "[y/N]";
-	
-	while (1) {
-		print "$prompt $options ";
-		my $resp = <STDIN>;
-		chomp $resp;
-		return $default if $resp eq "";
-		return 1 if lc $resp eq "y";
-		return 0 if lc $resp eq "n";
-		$prompt = 'Please enter "y" or "n".';
-	}
-}
