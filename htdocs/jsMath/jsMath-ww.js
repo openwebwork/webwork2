@@ -57,6 +57,6 @@ if (!window.jsMath || !window.jsMath.loaded) {
   //  Make sure answer boxes are above jsMath output (avoids deep
   //  baselines in jsMath fonts)
   //
-  document.write('<STYLE> .problem INPUT {position: relative; z-index: 2} </STYLE>');
+  document.write('<STYLE> .problem INPUT, .problem TEXTAREA {position: relative; z-index: 2} </STYLE>');
 
 }
