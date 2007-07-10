@@ -113,7 +113,8 @@ check_modules(@modulesList);
 sub check_apps {
 	my @applicationsList = @_;
 	print "\nChecking your \$PATH for executables required by WeBWorK...\n";
-	print "\$PATH=", shift @PATH, "\n";
+#	print "\$PATH=", shift @PATH, "\n";    # this throws away the first item -- usually /bin
+        print "\$PATH=";
 	print join ("\n", map("      $_", @PATH)), "\n\n";
 	
 	foreach my $app (@applicationsList)  {
@@ -138,7 +139,7 @@ sub check_modules {
 	
 	print "\nChecking your \@INC for modules required by WeBWorK...\n";
 	my @inc = @INC;
-	print "\@INC=", shift @inc, "\n";
+	print "\@INC=";
 	print join ("\n", map("     $_", @inc)), "\n\n";
 	
 	foreach my $module (@modulesList)  {
