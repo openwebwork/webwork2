@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.33 2007/03/13 15:44:21 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.34 2007/03/29 19:48:57 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -272,7 +272,7 @@ sub displayStudentStats {
 		if ( defined( $set->hide_score ) &&
 		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
 		       ( $set->hide_score eq 'Y' || 
-			 $set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date ) ) ) {
+			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
 			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp("${setID}_(test_" . $set->version_id . ")")), 
 					     CGI::td({colspan=>4}, CGI::em("Display of scores for this set is not allowed."))) );
 			next;
