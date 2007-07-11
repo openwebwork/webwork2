@@ -1381,18 +1381,22 @@ sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
 # that the dates are always defined
 sub byOpenDate      { my $result = eval{$a->open_date      <=> $b->open_date };
                       return $result unless $@;
+                      warn "Open date not correctly defined.";
                       return 0;
 }
 sub byDueDate       { my $result = eval{$a->due_date       <=> $b->due_date    };      
                       return $result unless $@;
+                      warn "Due date not correctly defined.";
                       return 0;
 }
 sub byAnswerDate    { my $result = eval{$a->answer_date    <=> $b->answer_date };    
                       return $result unless $@;
+                      warn "Answer date not correctly defined.";
                       return 0;
 }
 sub byPublished     { my $result = eval{$a->published      cmp $b->published   };      
                       return $result unless $@;
+                      warn "Visibility status not correctly defined.";
                       return 0;
 }
 
