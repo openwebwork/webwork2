@@ -1095,7 +1095,7 @@ sub initialize {
 		# Save IP restriction Location information
 		#######################################################
 
-			if ( $r->param("set.$setID.restrict_ip") ne 'No' ) {
+			if ( defined($r->param("set.$setID.restrict_ip")) and $r->param("set.$setID.restrict_ip") ne 'No' ) {
 				my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
 				my @globalSetLocations = $db->listGlobalSetLocations($setID);
 				my @addSetLocations = ();
@@ -1337,29 +1337,39 @@ sub initialize {
 		# Add blank problem if needed
 		#####################################################################
 		if (defined($r->param("add_blank_problem") ) and $r->param("add_blank_problem") == 1) {
-					my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
-					##################################################
-					# make local copy of the blankProblem
-					##################################################
-					my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
-					my $problemContents       =  WeBWorK::Utils::readFile($blank_file_path);
-					my $new_file_path         =  "set$setID/".BLANKPROBLEM();
-					my $fullPath              =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'.$new_file_path);
-					local(*TEMPFILE);
-					open(TEMPFILE, ">$fullPath") or warn "Can't write to file $fullPath";
-					print TEMPFILE $problemContents;
-					close(TEMPFILE);
-					
-					#################################################
-					# Update problem record
-					#################################################
-					my $problemRecord  = $self->addProblemToSet(
-							   setName        => $setID,
-							   sourceFile     => $new_file_path, 
-							   problemID      => $targetProblemNumber, #added to end of set
-					);
-					$self->assignProblemToAllSetUsers($problemRecord);
-					$self->addgoodmessage("Added $new_file_path to ". $setID. " as problem $targetProblemNumber") ;
+		   # get number of problems to add and clean the entry
+		    my $newBlankProblems = (defined($r->param("add_n_problems")) ) ? $r->param("add_n_problems") :1;
+		    $newBlankProblems = int($newBlankProblems);
+		    my $MAX_NEW_PROBLEMS = 20;
+		    if ($newBlankProblems >=1 and $newBlankProblems <= $MAX_NEW_PROBLEMS ) {
+				foreach my $newProb (1..$newBlankProblems) {
+						my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+						##################################################
+						# make local copy of the blankProblem
+						##################################################
+						my $blank_file_path       =  $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
+						my $problemContents       =  WeBWorK::Utils::readFile($blank_file_path);
+						my $new_file_path         =  "set$setID/".BLANKPROBLEM();
+						my $fullPath              =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'.$new_file_path);
+						local(*TEMPFILE);
+						open(TEMPFILE, ">$fullPath") or warn "Can't write to file $fullPath";
+						print TEMPFILE $problemContents;
+						close(TEMPFILE);
+						
+						#################################################
+						# Update problem record
+						#################################################
+						my $problemRecord  = $self->addProblemToSet(
+								   setName        => $setID,
+								   sourceFile     => $new_file_path, 
+								   problemID      => $targetProblemNumber, #added to end of set
+						);
+						$self->assignProblemToAllSetUsers($problemRecord);
+						$self->addgoodmessage("Added $new_file_path to ". $setID. " as problem $targetProblemNumber") ;
+				}
+			} else {
+				$self->addbadmessage("Could not add $newBlankProblems problems to this set.  The number must be between 1 and $MAX_NEW_PROBLEMS");
+			}
 		}
 		
 		# Sets the specified header to "" so that the default file will get used.
@@ -1907,9 +1917,16 @@ EOF
 	}
 	# always allow one to add a new problem.
 	print 	CGI::checkbox({
-				  label=> "Add blank problem template to end of homework set",
+				  label=> "Add",
 				  name=>"add_blank_problem", value=>"1"}
-			),CGI::br(),CGI::br(),
+			),CGI::input({
+			               name=>"add_n_problems", 
+			               size=>2,
+			               value=>1
+			             },
+			           "blank problem template(s) to end of homework set"
+			),
+			CGI::br(),CGI::br(),
 			CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
 			CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
 			"(Any unsaved changes will be lost.)"
