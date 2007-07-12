@@ -171,6 +171,31 @@ sub assign_set_to_user {
     return @results;
 }
 
+=pod
+=begin WSDL
+_IN authenKey $string
+_IN courseName $string
+_IN userIDs @string
+_IN setID $string
+_RETURN @integer
+=end WSDL
+=cut
+sub grade_users_sets {
+    my ($self,$authenKey,$courseName,$userIDs,$setID) = @_;
+    my $soapEnv = new WebworkSOAP($authenKey,$courseName);
+    my @grades;
+    foreach my $userID (@{$userIDs}) {
+        my @problemData = $soapEnv->{db}->getAllUserProblems($userID,$setID);
+
+        my $grade = 0;
+        for(my $i=0;$i<@problemData;$i++) {
+                $grade += @problemData[$i]->status;
+        }
+        push(@grades,$grade);
+    }
+    return \@grades;
+}
+
 
 ####################################################################
 ##FUNCTIONS DIRECTLY MAPPED TO FUNCTIONS IN DB.pm
