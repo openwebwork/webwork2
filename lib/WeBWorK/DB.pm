@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.103 2007/04/02 19:55:14 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.104 2007/04/04 15:05:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,6 +97,7 @@ use strict;
 use warnings;
 use Carp;
 use Data::Dumper;
+use Scalar::Util qw/blessed/;
 use WeBWorK::DB::Schema;
 use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql/;
@@ -271,8 +272,40 @@ sub gen_get_records_where {
 	};
 }
 
+sub gen_insert_records {
+	my $table = shift;
+	return sub {
+		my ($self, @records) = @_;
+		if (@records == 1 and blessed $records[0] and $records[0]->isa("Iterator")) {
+			return $self->{$table}->insert_records_i($records[0]);
+		} else {
+			return $self->{$table}->insert_records(@records);
+		}
+	};
+}
+
+sub gen_update_records {
+	my $table = shift;
+	return sub {
+		my ($self, @records) = @_;
+		if (@records == 1 and blessed $records[0] and $records[0]->isa("Iterator")) {
+			return $self->{$table}->update_records_i($records[0]);
+		} else {
+			return $self->{$table}->update_records(@records);
+		}
+	};
+}
+
+sub gen_delete_where {
+	my $table = shift;
+	return sub {
+		my ($self, $where) = @_;
+		return $self->{$table}->delete_where($where);
+	};
+}
+
 ################################################################################
-# create/rename/delete tables
+# create/rename/delete/dump/restore tables
 ################################################################################
 
 sub create_tables {
@@ -328,6 +361,42 @@ sub delete_tables {
 			$schema_obj->delete_table;
 		} else {
 			warn "skipping deletion of '$table' table: no delete_table method\n";
+		}
+	}
+	
+	return 1;
+}
+
+sub dump_tables {
+	my ($self, $dump_dir) = @_;
+	
+	foreach my $table (keys %$self) {
+		next if $table =~ /^_/; # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		my $schema_obj = $self->{$table};
+		if ($schema_obj->can("dump_table")) {
+			my $dump_file = "$dump_dir/$table.sql";
+			$schema_obj->dump_table($dump_file);
+		} else {
+			warn "skipping dump of '$table' table: no dump_table method\n";
+		}
+	}
+	
+	return 1;
+}
+
+sub restore_tables {
+	my ($self, $dump_dir) = @_;
+	
+	foreach my $table (keys %$self) {
+		next if $table =~ /^_/; # skip non-table self fields (none yet)
+		next if $self->{$table}{params}{non_native}; # skip non-native tables
+		my $schema_obj = $self->{$table};
+		if ($schema_obj->can("restore_table")) {
+			my $dump_file = "$dump_dir/$table.sql";
+			$schema_obj->restore_table($dump_file);
+		} else {
+			warn "skipping restore of '$table' table: no restore_table method\n";
 		}
 	}
 	
@@ -690,6 +759,55 @@ sub deleteAllProctorKeys {
 	my $where = [user_id_like => "$userID,%"];
 
 	return $self->{key}->delete_where($where);
+}
+
+################################################################################
+# setting functions
+################################################################################
+
+BEGIN {
+	*Setting = gen_schema_accessor("setting");
+	*newSetting = gen_new("setting");
+	*countSettingsWhere = gen_count_where("setting");
+	*existsSettingWhere = gen_exists_where("setting");
+	*listSettingsWhere = gen_list_where("setting");
+	*getSettingsWhere = gen_get_records_where("setting");
+	*addSettings = gen_insert_records("setting");
+	*putSettings = gen_update_records("setting");
+	*deleteSettingsWhere = gen_delete_where("setting");
+}
+
+# minimal set of routines for basic setting operation
+# we don't need a full set, since the usage of settings is somewhat limited
+# we also don't want to bother with records, since a setting is just a pair
+
+sub settingExists {
+	my ($self, $name) = @_;
+	return $self->{setting}->exists_where([name_eq=>$name]);
+}
+
+sub getSettingValue {
+	my ($self, $name) = @_;
+	return map { @$_ } $self->{setting}->get_fields_where(['value'], [name_eq=>$name]);
+}
+
+# we totally don't care if a setting already exists (and in fact i find that
+# whole distinction somewhat annoying lately) so we hide the fact that we're
+# either calling insert or update. at some point we could stand to add a
+# method to Std.pm that used REPLACE INTO and then we'd be able to not care
+# at all whether a setting was already there
+sub setSettingValue {
+	my ($self, $name, $value) = @_;
+	if ($self->settingExists($name)) {
+		return $self->{setting}->update_where({value=>$value}, [name_eq=>$name]);
+	} else {
+		return $self->{setting}->insert_fields(['name','value'], [[$name,$value]]);
+	}
+}
+
+sub deleteSetting {
+	my ($self, $name) = shift->checkArgs(\@_, qw/name/);
+	return $self->{setting}->delete_where([name_eq=>$name]);
 }
 
 ################################################################################
