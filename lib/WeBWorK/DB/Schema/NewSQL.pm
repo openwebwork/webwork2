@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.20 2007/03/27 17:04:02 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.21 2007/04/20 17:58:15 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -148,6 +148,11 @@ sub where_ip_mask_eq {
 	my ($self, $flags, $ip_mask) = @_;
 	return {ip_mask=>$ip_mask};
 }
+
+sub where_name_eq {
+	my ($self, $flags, $name) = @_;
+	return {name=>$name};
+} # gotta get rid of this stupid way of specifying where clauses...
 
 ################################################################################
 # utility methods
