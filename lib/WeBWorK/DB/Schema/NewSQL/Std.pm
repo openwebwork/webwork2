@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.9 2007/02/20 00:07:16 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.10 2007/03/02 23:11:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,8 @@ use warnings;
 use Carp qw(croak);
 use Iterator;
 use Iterator::Util;
+use File::Temp;
+use String::ShellQuote;
 use WeBWorK::DB::Utils::SQLAbstractIdentTrans;
 use WeBWorK::Debug;
 
@@ -190,6 +192,90 @@ sub _delete_table_stmt {
 	
 	my $sql_table_name = $self->sql_table_name;
 	return "DROP TABLE `$sql_table_name`";
+}
+
+################################################################################
+# table dumping and restoring
+################################################################################
+
+# These are limited to mysql, since they use the mysql monitor and mysqldump.
+# An exception will be thrown if the table in question doesn't use mysql.
+# It also requires some additions to the params:
+#     mysqldump_path - path to mysqldump(1)
+#     mysql_path - path to mysql(1)
+
+sub dump_table {
+	my ($self, $dumpfile_path) = @_;
+	
+	my ($my_cnf, $database, $table) = $self->_get_db_info;
+	my $mysqldump = $self->{params}{mysqldump_path};
+	
+	# 2>&1 is specified first, which apparently makes stderr go to stdout
+	# and stdout (not including stderr) go to the dumpfile. see bash(1).
+	my $dump_cmd = "2>&1 " . shell_quote($mysqldump)
+		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+		. " " . shell_quote($database)
+		. " " . shell_quote($self->sql_table_name)
+		. " > " . shell_quote($dumpfile_path);
+	my $dump_out = readpipe $dump_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		die "Failed to dump table '".$self->sql_table_name."' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
+	}
+	
+	return 1;
+}
+
+sub restore_table {
+	my ($self, $dumpfile_path) = @_;
+	
+	my ($my_cnf, $database, $table) = $self->_get_db_info;
+	my $mysql = $self->{params}{mysql_path};
+	
+	my $restore_cmd = "2>&1 " . shell_quote($mysql)
+		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+		. " " . shell_quote($database)
+		. " < " . shell_quote($dumpfile_path);
+	my $restore_out = readpipe $restore_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		die "Failed to restore table '".$self->sql_table_name."' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
+	}
+	print $restore_cmd;
+	
+	return 1;
+}
+
+sub _get_db_info {
+	my ($self) = @_;
+	my $dsn = $self->{driver}{source};
+	my $username = $self->{params}{username};
+	my $password = $self->{params}{password};
+	
+	die "Can't call dump_table or restore_table on a table with a non-MySQL source"
+		unless $dsn =~ s/^dbi:mysql://i;
+	
+	# this is an internal function which we probably shouldn't be using here
+	# but it's quick and gets us what we want (FIXME what about sockets, etc?)
+	my %dsn;
+	DBD::mysql->_OdbcParse($dsn, \%dsn, ['database', 'host', 'port']);
+	die "no database specified in DSN!" unless defined $dsn{database};
+	
+	# doing this securely is kind of a hassle...
+	my $my_cnf = new File::Temp;
+	$my_cnf->unlink_on_destroy(1);
+	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!"; # File::Temp objects stringify with ->filename
+	print $my_cnf "[client]\n";
+	print $my_cnf "user=$username\n" if defined $username and length($username) > 0;
+	print $my_cnf "password=$password\n" if defined $password and length($password) > 0;
+	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
+	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
+	
+	return ($my_cnf, $dsn{database}, $self->sql_table_name);
 }
 
 ################################################################################
