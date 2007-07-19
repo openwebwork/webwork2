@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.13 2006/10/05 19:44:04 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.14 2006/10/06 04:33:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -103,3 +103,4 @@ sub dbi {
 }
 
 1;
+
