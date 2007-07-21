@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.52 2006/11/06 22:22:51 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Constants.pm,v 1.53 2007/07/21 16:35:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -134,7 +134,8 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme)',
-		  doc2 => 'There are currently three themes (or skins) to choose from: ur, math, moodle and union.  The theme specifies a unified look and feel for the WeBWorK course web pages.',
+		  doc2 => 'There are currently three themes (or skins) to choose from: ur, math, and moodle.  The theme 
+specifies a unified look and feel for the WeBWorK course web pages.',
 		  values => [qw(math ur moodle union)],
 		  type => 'popuplist'},
 		{ var => 'sessionKeyTimeout',
