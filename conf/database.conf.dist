@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.34 2007/03/02 23:19:55 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.35 2007/03/27 17:04:01 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -78,6 +78,9 @@ my %sqlParams = (
 	username => $database_username,
 	password => $database_password,
 	debug    => $database_debug,
+	# kinda hacky, but needed for table dumping
+	mysql_path     => $externalPrograms{mysql},
+	mysqldump_path => $externalPrograms{mysqldump},
 );
 
 $dbLayouts{sql_single} = {
