@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.39 2007/03/06 01:33:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.40 2007/06/25 12:10:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -284,6 +284,10 @@ sub addCourse {
  dbOptions => $dbOptions,
  newCourseID => $newCourseID,
 
+%options may also contain:
+
+ skipDBRename => $skipDBRename,
+
 Rename the course named $courseID to $newCourseID.
 
 $ce is a WeBWorK::CourseEnvironment object that describes the existing course's
@@ -301,6 +305,10 @@ are created in the current database, course data is copied from the old tables
 to the new tables, and the old tables are deleted.
 
 If the course's database layout is something else, no database changes are made.
+
+If $skipDBRename is true, no database changes are made. This is useful if a
+course is being unarchived and no database was found, or for renaming the
+modelCourse.
 
 Any errors encountered while renaming the course are returned.
 
@@ -321,6 +329,7 @@ sub renameCourse {
 	my $oldCE = $options{ce};
 	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
 	my $newCourseID = $options{newCourseID};
+	my $skipDBRename = $options{skipDBRename} || 0;
 	
 	# get the database layout out of the options hash
 	my $dbLayoutName = $oldCE->{dbLayoutName};
@@ -422,9 +431,11 @@ sub renameCourse {
 	
 	##### step 2: rename database #####
 	
-	my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
-	my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
-	die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
+	unless ($skipDBRename) {
+		my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
+		my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
+		die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
+	}
 }
 
 ################################################################################
@@ -531,235 +542,285 @@ sub deleteCourse {
 
 %options must contain:
 
- courseID    => $courseID,
- ce          => $ce,
- dbOptions   => $dbOptions,
- newCourseID => $newCourseID,
+ courseID  => $courseID,
+ ce        => $ce,
 
-Archive the course named $courseID  in the $webworkDirs{courses} directory
-as $webworkDirs{courses}/$courseID.tar.gz.  The data from the database is
-stored in several files at $courseID/DATA/$table_name.txt before the course's directories
-are tarred and gzipped.  The table names are $courseID_user, $courseID_set
-and so forth.  Only files and directories stored directly in the course directory
-are archived.  The contents of linked files is not archived although the symbolic links
+Creates a gzipped tar archive (.tar.gz) of the course $courseID in the WeBWorK
+courses directory. Before archiving, the course database is dumped into a
+subdirectory of the course's DATA directory.
+
+Only files and directories stored directly in the course directory are archived.
+The contents of linked files is not archived although the symbolic links
 themselves are saved.
 
-$ce is a WeBWorK::CourseEnvironment object that describes the existing course's
-environment.
+$courseID is the name of the course to archive.
 
-$dbOptions is a reference to a hash containing information required to create
-the course's new database and delete the course's old database. (Currently,
-no information is needed, so this should be an empty hash.)
+$ce is a WeBWorK::CourseEnvironment object that describes the course's
+environment. (This is used to access the course database and get path
+information.)
 
-If the course's database layout is C<sql_single>, the contents of 
-the courses database tables are exported to text files using the sql database's
-export facility.  Then the tables are deleted from the database.
-
-If the course's database layout is something else, no database changes are made.
-
-Any errors encountered while renaming the course are returned.
+If an error occurs, an exception is thrown.
 
 =cut
 
 sub archiveCourse {
 	my (%options) = @_;
-	
-	# archiveCourseHelper needs:
-	#    $fromCourseID ($oldCourseID)
-	#    $fromCE ($ce)
-	#    $toCourseID ($newCourseID)
-	#    $toCE (construct from $ce)
-	#    $dbLayoutName ($ce->{dbLayoutName})
-	#    %options ($dbOptions)
-	
 	my $courseID = $options{courseID};
 	my $ce = $options{ce};
-	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
-
 	
-	# get the database layout out of the options hash
-	my $dbLayoutName = $ce->{dbLayoutName};
+	# make sure the user isn't brain damaged
+	croak "The course environment supplied doesn't appear to describe the course $courseID. Can't proceed"
+		unless $ce->{courseName} eq $courseID;
 	
-	if (not ref getHelperRef("archiveCourseHelper", $dbLayoutName)) {
-		die "This database layout doesn't support course archiving. Sorry!\n"
-	}
+	# grab some values we'll need
+	my $course_dir = $ce->{courseDirs}{root};
+	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
+	my $data_dir = $ce->{courseDirs}{DATA};
+	my $dump_dir = "$data_dir/mysqldump";
 	
-	# collect some data
-	my $coursesDir  = $ce->{webworkDirs}->{courses};
-	my $courseDir   = "$coursesDir/$courseID";
-	my $dataDir     = "$courseDir/DATA";
-	my $archivePath = "$coursesDir/$courseID.tar.gz";
-	
-	# create DATA directory if it does not exist.
-	unless (-e $dataDir) {
-		mkdir "$dataDir" or die "Failed to create course directory $dataDir";
-	}
-	# fail if the target file already exists
-	if (-e $archivePath) {
-		croak "The course $courseID has already been archived at $archivePath";
-	}
 	
 	# fail if the source course does not exist
-	unless (-e $courseDir) {
+	unless (-e $course_dir) {
 		croak "$courseID: course not found";
 	}
 	
-	$dbOptions{archiveDatabasePath}   =  "$dataDir/${courseID}_mysql.database";
-	##### step 1: export database contents ######
-	# munge DB options to move new_database => database
-
+	# fail if a course archive already exists
+	# FIXME there could be an option to overwrite an existing archive
+	if (-e $archive_path) {
+		croak "The course '$courseID' has already been archived at '$archive_path'.\n";
+	}
 	
-	my $archiveHelperResult = archiveCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
-	die "$courseID: course database dump failed.\n" unless $archiveHelperResult;
-		
-	##### step 2: tar and gzip course directory #####
+	#### step 1: dump tables #####
 	
-	# archive top-level course directory
-	my $tar_cmd = "2>&1"." ".$ce->{externalPrograms}{tar}
-		. " -C " . shell_quote($coursesDir)
-		. " -czf " . shell_quote($archivePath)
+	unless (-e $dump_dir) {
+		mkdir $dump_dir or croak "Failed to create course database dump directory '$data_dir': $!";
+	}
+	
+	my $db = new WeBWorK::DB($ce->{dbLayout});
+	my $dump_db_result = $db->dump_tables($dump_dir);
+	unless ($dump_db_result) {
+		_archiveCourse_remove_dump_dir($ce, $dump_dir);
+		croak "$courseID: course database dump failed.\n";
+	}
+	
+	##### step 2: tar and gzip course directory (including dumped database) #####
+	
+	# we want tar to run from the parent directory of the course directory
+	my $chdir_to = "$course_dir/..";
+	
+	my $tar_cmd = "2>&1 " . $ce->{externalPrograms}{tar}
+		. " -C " . shell_quote($chdir_to)
+		. " -czf " . shell_quote($archive_path)
 		. " " . shell_quote($courseID);
-	debug("archiving course dir: $tar_cmd\n");
 	my $tar_out = readpipe $tar_cmd;
 	if ($?) {
 		my $exit = $? >> 8;
 		my $signal = $? & 127;
 		my $core = $? & 128;
-		die "Failed to archive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+		_archiveCourse_remove_dump_dir($ce, $dump_dir);
+		croak "Failed to archive course directory '$course_dir' with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
+	}
+	
+	##### step 3: remove database dump files from course directory #####
+	
+	_archiveCourse_remove_dump_dir($ce, $dump_dir);
+}
+
+sub _archiveCourse_remove_dump_dir {
+	my ($ce, $dump_dir) = @_;
+	my $rm_cmd = "2>&1 " . $ce->{externalPrograms}{rm}
+		. " -rf " . shell_quote($dump_dir);
+	my $rm_out = readpipe $rm_cmd;
+	if ($?) {
+		my $exit = $? >> 8;
+		my $signal = $? & 127;
+		my $core = $? & 128;
+		carp "Failed to remove course database dump directory '$dump_dir' with command '$rm_cmd' (exit=$exit signal=$signal core=$core): $rm_out\n";
 	}
 }
 
 ################################################################################
 
+=item unarchiveCourse(%options)
+
+%options must contain:
+
+ oldCourseID => $oldCourseID,
+ archivePath => $archivePath,
+ ce          => $ce,
+
+%options may also contain:
+
+ newCourseID => $newCourseID,
+
+Restores course $oldCourseID from a gzipped tar archive (.tar.gz) located at
+$archivePath. After unarchiving, the course database is restored from a
+subdirectory of the course's DATA directory.
+
+If $newCourseID is defined and differs from $oldCourseID, the course is renamed
+after unarchiving.
+
+$ce is a WeBWorK::CourseEnvironment object that describes the some course's
+environment. (Usually this would be the admin course.) This is used to access
+the course database and get path information.
+
+If an error occurs, an exception is thrown.
+
+=cut
+
 sub unarchiveCourse {
 	my (%options) = @_;
 	
-	# renameCourseHelper needs:
-	#    $fromCourseID ($oldCourseID)
-	#    $fromCE ($ce)
-	#    $toCourseID ($newCourseID)
-	#    $toCE (construct from $ce)
-	#    $dbLayoutName ($ce->{dbLayoutName})
-	#    %options ($dbOptions)
-	
 	my $newCourseID = $options{newCourseID};
-	my $oldCourseID = $options{oldCourseID};
+	my $currCourseID = $options{oldCourseID};
 	my $archivePath = $options{archivePath};
 	my $ce = $options{ce};
-	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
-	my $coursesDir  = $ce->{webworkDirs}->{courses};
+	
+	my $coursesDir  = $ce->{webworkDirs}{courses};
 	
 	# Double check that the new course does not exist
 	if (-e "$coursesDir/$newCourseID") {
 		die "Cannot overwrite existing course $coursesDir/$newCourseID";
 	}
-	my $restoreCourseData = undef;
-	##
-	# Temporarily rename the old course if it exists  -- saving data
-	##
-	if (-e "$coursesDir/$oldCourseID") {
-		my $tmpCourseID = "${oldCourseID}_tmp";
-		
-		debug("Moving $oldCourseID to $tmpCourseID");
-		my  $tmpce = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$tmpCourseID,
-		);
-		$restoreCourseData = {
-		                courseID    => $tmpCourseID,    # data for restoring from tmpCourse
-		                ce          => $tmpce,
-		                dbOptions   => undef,
-		                newCourseID => $oldCourseID,
-	    }; 
-	    renameCourse(
-	    	courseID    => $oldCourseID,
-	    	ce          => WeBWorK::CourseEnvironment->new(
-	    	                  $ce->{webworkDirs}->{root},
-							  $ce->{webworkURLs}->{root},
-							  $ce->{pg}->{directories}->{root},$oldCourseID,
-						  ),
-			dbOptions   => undef,
-			newCourseID => $tmpCourseID,	
-		);
-	}
-	##
-	# Unarchive the old course 
-	##
 	
+	##### step 1: move a conflicting course away #####
 	
-	my $courseID = $oldCourseID;
-	###############################################################
-	# RPC call to tar and gzip the courses directory
-	###############################################################	
-	my $tar_cmd = "2>&1"." ".$ce->{externalPrograms}{tar}
+	# if this function returns undef, it means there was no course in the way
+	my $restoreCourseData = _unarchiveCourse_move_away($ce, $currCourseID);
+	
+	##### step 2: crack open the tarball #####
+	
+	my $tar_cmd = "2>&1 " . $ce->{externalPrograms}{tar}
 		. " -C " . shell_quote($coursesDir)
 		. " -xzf " . shell_quote($archivePath);
-	debug("unarchiving course dir: $tar_cmd\n");
 	my $tar_out = readpipe $tar_cmd;
 	if ($?) {
 		my $exit = $? >> 8;
 		my $signal = $? & 127;
 		my $core = $? & 128;
+		_unarchiveCourse_move_back($restoreCourseData);
 		die "Failed to unarchive course directory with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
 	}
-	###############################################################
-	# End RPC call to tar and gzip the courses directory
-	###############################################################	
 	
-	# read the global.conf and course.conf files for the newly created course
-	debug( "Checking that course directory is at $coursesDir/$courseID: = ", -e "$coursesDir/$courseID");
-	my $ce2 = WeBWorK::CourseEnvironment->new(
+	##### step 3: read the course environment for this course #####
+	
+	my $ce2 = new WeBWorK::CourseEnvironment(
+		$ce->{webworkDirs}{root},
+		$ce->{webworkURLs}{root},
+		$ce->{pg}{directories}{root},
+		$currCourseID,
+	);
+	
+	# pull out some useful stuff
+	my $course_dir = $ce2->{courseDirs}{root};
+	my $data_dir = $ce2->{courseDirs}{DATA};
+	my $dump_dir = "$data_dir/mysqldump";
+	my $old_dump_file = "$data_dir/${currCourseID}_mysql.database";
+	
+	##### step 4: restore the database tables #####
+	
+	my $no_database;
+	my $restore_db_result = 1;
+	if (-e $dump_dir) {
+		my $db = new WeBWorK::DB($ce2->{dbLayout});
+		$restore_db_result = $db->restore_tables($dump_dir);
+	} elsif (-e $old_dump_file) {
+		my $dbLayoutName = $ce2->{dbLayoutName};
+		if (ref getHelperRef("unarchiveCourseHelper", $dbLayoutName)) {
+			eval {
+				$restore_db_result = unarchiveCourseHelper($currCourseID, $ce2, $dbLayoutName,
+					unarchiveDatabasePath=>$old_dump_file);
+			};
+			if ($@) {
+				warn "failed to unarchive course database from dump file '$old_dump_file: $@\n";
+			}
+		} else {
+			warn "course '$currCourseID' uses dbLayout '$dbLayoutName', which doesn't support restoring database tables. database tables will not be restored.\n";
+			$no_database = 1;
+		}
+	} else {
+		warn "course '$currCourseID' has no database dump in its data directory (checked for $dump_dir and $old_dump_file). database tables will not be restored.\n";
+		$no_database = 1;
+	}
+	
+	unless ($restore_db_result) {
+		warn "database restore of course '$currCourseID' failed: the course will probably not be usable.\n";
+	}
+	
+	##### step 5: delete dump_dir and/or old_dump_file #####
+	
+	if (-e $dump_dir) {
+		_archiveCourse_remove_dump_dir($ce, $dump_dir);
+	}
+	if (-e $old_dump_file) {
+		unlink $old_dump_file or carp "Failed to unlink course database dump file '$old_dump_file: $_\n";
+	}
+	
+	##### step 6: rename course #####
+	
+	if (defined $newCourseID and $newCourseID ne $currCourseID) {
+		renameCourse(
+			courseID     => $currCourseID,
+			ce           => $ce2,
+			newCourseID  => $newCourseID,
+			skipDBRename => $no_database,
+		);
+	}
+	
+	##### step 7: return conflicting course to its rightful place #####
+	
+	_unarchiveCourse_move_back($restoreCourseData);
+}
+
+sub _unarchiveCourse_move_away {
+	my ($ce, $courseID) = @_;
+	
+	# course environment for before the course is moved
+	my $ce2 = new WeBWorK::CourseEnvironment(
 		$ce->{webworkDirs}->{root},
 		$ce->{webworkURLs}->{root},
 		$ce->{pg}->{directories}->{root},
 		$courseID,
 	);
-	my $courseDir   = "$coursesDir/$courseID";
-	my $dataDir     = "$courseDir/DATA";
-
-	#get the database layout out of the options hash
-    my $dbLayoutName = $ce2->{dbLayoutName};
-    	
- 	if (not ref getHelperRef("unarchiveCourseHelper", $dbLayoutName)) {
- 		die "This database layout doesn't support course archiving. Sorry!\n"
- 	}
- 	$dbOptions{unarchiveDatabasePath}   =  "$dataDir/${courseID}_mysql.database";
-    # import database tables
- 	my $unarchiveHelperResult = unarchiveCourseHelper($courseID, $ce, $dbLayoutName, %dbOptions);
- 	die "$courseID: unable to import tables into database.\n" unless $unarchiveHelperResult;
 	
-	##
-	# Change the unarchived course to the new course name if they are different
-	##
-	if ($courseID ne $newCourseID) {
-
-		debug("rename $courseID to $newCourseID");
-		my  $oldce = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
-		renameCourse(
-			courseID     => $courseID,
-			ce           => $oldce,
-			dbOptions    => undef,
-			newCourseID  => $newCourseID,
-		);
-	}
-	if (defined($restoreCourseData) ) { 		
+	# if course directory doesn't exist, we don't have to do anything
+	return unless -e $ce2->{courseDirs}{root};
 	
-	##
-	# Rename the temporary old course back to old course
- 	##
-		debug("rename ".$restoreCourseData->{courseID}. " to ". $restoreCourseData->{newCourseID});
- 		renameCourse(
- 			%{$restoreCourseData}
- 		);
+	# temporary name for course
+	my $tmpCourseID = "${courseID}_tmp";
+	
+	debug("Temporarily moving $courseID to $tmpCourseID to make room for course unarchiving");
+	renameCourse(
+		courseID    => $courseID,
+		ce          => $ce2,
+		newCourseID => $tmpCourseID,
+	);
+	
+	# course environment for after the course is moved
+	my $ce3 = new WeBWorK::CourseEnvironment(
+		$ce->{webworkDirs}->{root},
+		$ce->{webworkURLs}->{root},
+		$ce->{pg}->{directories}->{root},
+		$tmpCourseID,
+	);
+	
+	# data to pass to renameCourse when moving the course back to it's original name
+	my $restore_course_data = {
+		courseID    => $tmpCourseID,
+		ce          => $ce3, # course environment for moved course
+		newCourseID => $courseID,
+	};
+	
+	return $restore_course_data;
+}
 
-	}
+sub _unarchiveCourse_move_back {
+	my ($restore_course_data) = @_;
+	
+	return unless $restore_course_data;
+	
+	debug("Moving $$restore_course_data{courseID} back to $$restore_course_data{newCourseID} after course unarchiving");
+	renameCourse(%$restore_course_data);
 }
 
 ################################################################################
