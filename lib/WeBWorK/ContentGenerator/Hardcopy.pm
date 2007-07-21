@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.93 2007/04/09 20:20:29 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.94 2007/04/09 21:01:51 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -454,6 +454,7 @@ sub display_form {
 	} else { # single user mode
 		#FIXME -- do a better job of getting the set and the user when in the single set mode
 		my $selected_set_id = $r->param("selected_sets");
+		$selected_set_id = '' unless defined $selected_set_id;
 
 		my $selected_user_id = $Users[0]->user_id;
 		print CGI::hidden("selected_sets",   $selected_set_id ),
