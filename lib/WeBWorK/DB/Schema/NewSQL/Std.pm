@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.10 2007/03/02 23:11:42 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.11 2007/07/19 21:01:44 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -207,7 +207,7 @@ sub _delete_table_stmt {
 sub dump_table {
 	my ($self, $dumpfile_path) = @_;
 	
-	my ($my_cnf, $database, $table) = $self->_get_db_info;
+	my ($my_cnf, $database) = $self->_get_db_info;
 	my $mysqldump = $self->{params}{mysqldump_path};
 	
 	# 2>&1 is specified first, which apparently makes stderr go to stdout
@@ -231,7 +231,7 @@ sub dump_table {
 sub restore_table {
 	my ($self, $dumpfile_path) = @_;
 	
-	my ($my_cnf, $database, $table) = $self->_get_db_info;
+	my ($my_cnf, $database) = $self->_get_db_info;
 	my $mysql = $self->{params}{mysql_path};
 	
 	my $restore_cmd = "2>&1 " . shell_quote($mysql)
@@ -245,7 +245,6 @@ sub restore_table {
 		my $core = $? & 128;
 		die "Failed to restore table '".$self->sql_table_name."' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
 	}
-	print $restore_cmd;
 	
 	return 1;
 }
@@ -275,7 +274,7 @@ sub _get_db_info {
 	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
 	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
 	
-	return ($my_cnf, $dsn{database}, $self->sql_table_name);
+	return ($my_cnf, $dsn{database});
 }
 
 ################################################################################
