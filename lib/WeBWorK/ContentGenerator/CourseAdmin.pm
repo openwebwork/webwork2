@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.65 2007/06/22 19:05:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.66 2007/06/25 12:09:58 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1529,7 +1529,8 @@ sub do_import_database {
 		);
 	}
 }
-##########################################################################
+################################################################################
+
 sub archive_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -1555,6 +1556,14 @@ sub archive_course_form {
 	}
 	
 	print CGI::h2("archive Course");
+	
+	print CGI::p(
+		"Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
+		courses directory. Before archiving, the course database is dumped into
+		a subdirectory of the course's DATA directory. Currently the archive
+		facility is only available for mysql databases. It depends on the
+		mysqldump application."
+	);
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -1589,12 +1598,6 @@ sub archive_course_form {
 			),
 		)
 	);
-	
-	print CGI::p(
-		"Currently the archive facility is only available for mysql databases.
-		It depends on the mysqldump application."
-	);
-
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course", -value=>"archive Course"));
 	
@@ -1770,7 +1773,9 @@ sub do_archive_course {
 # 		print CGI::end_form();
 	}
 }
+
 ##########################################################################
+
 sub unarchive_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -1790,7 +1795,14 @@ sub unarchive_course_form {
         $courseLabels{$courseID} = $courseID;
 	}
 	
-	print CGI::h2("Unarchive Course -- not yet completely operational");
+	print CGI::h2("Unarchive Course");
+	
+	print CGI::p(
+		"Restores a course from a gzipped tar archive (.tar.gz). After
+		unarchiving, the course database is restored from a subdirectory of the
+		course's DATA directory. Currently the archive facility is only
+		available for mysql databases. It depends on the mysqldump application."
+	);
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -1818,11 +1830,6 @@ sub unarchive_course_form {
 				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25)),
 			),
 	);
-	print CGI::p(
-		"Currently the unarchive facility is only available for mysql databases.
-		It depends on the mysqldump application."
-	);
-
 	
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"unarchive_course", -value=>"Unarchive Course"));
 	
@@ -1912,17 +1919,15 @@ sub do_unarchive_course {
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
 	
 	my $old_courseID   = $unarchive_courseID; $old_courseID =~ s/.tar.gz//;
-	my %dbOptions;
 
-	eval {
+	#eval {
 		unarchiveCourse(
 			newCourseID => $new_courseID,
 			oldCourseID => $old_courseID,
 			archivePath =>$ce->{webworkDirs}->{courses}."/$unarchive_courseID",
-			ce => $ce , #   $ce2,
-			dbOptions => undef,
+			ce => $ce,
 		);
-	};
+	#};
 	
 	if ($@) {
 		my $error = $@;
