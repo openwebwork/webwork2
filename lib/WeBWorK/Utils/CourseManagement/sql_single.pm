@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.13 2006/09/25 22:35:05 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Utils/CourseManagement/sql_single.pm,v 1.14 2006/09/29 19:39:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -86,7 +86,8 @@ sub archiveCourseHelper {
 	}
 	debug("Database tables to export are ",join(" ", @dataTables));
 	# this method would be mysql specific but it's a start
-	my $exportStatement = " mysqldump  --user=$username  ".
+	my $mysqldumpCommand = $ce->{externalPrograms}{mysqldump};
+	my $exportStatement = " $mysqldumpCommand  --user=$username  ".
 	"--password=$password " .
 	" webwork   ".
 	join(" ", @dataTables).
@@ -139,7 +140,8 @@ sub unarchiveCourseHelper {
 	
 
 	# this method would be mysql specific but it's a start
-	my $importStatement = " mysql  --user=$username  ".
+	my $mysqlCommand = $ce->{externalPrograms}{mysql};
+	my $importStatement = " $mysqlCommand  --user=$username  ".
 	"--password=$password " .
 	"-D webwork".        # specifies database name
 	"   <$unarchiveDatabasePath";
