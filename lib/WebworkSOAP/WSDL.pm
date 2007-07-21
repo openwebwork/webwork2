@@ -5,13 +5,13 @@ use Pod::WSDL;
 use WebworkSOAP;
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
+use constant RPC_URL => 'https://devel.webwork.rochester.edu:8002/webwork2_rpc';
 
 sub handler($) {
     my ($r) = @_;
     my $pod = new Pod::WSDL(
         source => 'WebworkSOAP',
-        location => 'http://128.151.231.20/webwork2_rpc',
+        location => RPC_URL,
         pretty => 1,
         withDocumentation => 0
         );
