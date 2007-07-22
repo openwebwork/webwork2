@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.21 2007/04/20 17:58:15 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.22 2007/07/19 21:00:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -180,6 +180,15 @@ sub fields {
 
 sub field_data {
 	return shift->{record}->FIELD_DATA;
+}
+
+sub initial_records {
+	my ($self) = @_;
+	if ($self->{record}->can("INITIAL_RECORDS")) {
+		return $self->{record}->INITIAL_RECORDS;
+	} else {
+		return ();
+	}
 }
 
 sub box {
