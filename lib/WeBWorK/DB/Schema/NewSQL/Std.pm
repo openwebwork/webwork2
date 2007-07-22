@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.11 2007/07/19 21:01:44 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.12 2007/07/21 19:12:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -110,7 +110,10 @@ sub create_table {
 	my ($self) = @_;
 	
 	my $stmt = $self->_create_table_stmt;
-	return $self->dbh->do($stmt);
+	$self->dbh->do($stmt);
+	my @fields = $self->fields;
+	my @rows = map { [ @$_{@fields} ] } $self->initial_records;
+	return $self->insert_fields(\@fields, \@rows);
 }
 
 # this is mostly ripped off from wwdb_check, which is pretty much a per-table

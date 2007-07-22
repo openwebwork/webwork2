@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.11 2006/10/06 20:17:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record.pm,v 1.12 2006/10/25 14:22:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -164,4 +164,14 @@ sub _fields {
 	}
 }
 
+sub _initial_records {
+	my $invocant = shift;
+	my $class = ref $invocant || $invocant;
+	my @initializers = @_;
+	
+	no strict 'refs';
+	*{$class."::INITIAL_RECORDS"} = sub { return @initializers };
+}
+
 1;
+
