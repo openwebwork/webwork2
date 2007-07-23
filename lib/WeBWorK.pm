@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.96 2007/06/29 17:12:03 mleventi Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.97 2007/06/29 19:54:19 sh002i Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -81,8 +81,9 @@ sub dispatch($) {
 	my $uri = $r->uri;
 	my $path_info = $r->path_info | "";
 	my $args = $r->args || "";
-	#my $webwork_root = $r->dir_config("webwork_root");
-	#my $pg_root = $r->dir_config("pg_root");
+	my $dir_config = $r->dir_config;
+	my %conf_vars = map { $_ => $dir_config->{$_} } grep { /^webwork_/ } keys %$dir_config;
+	@SeedCE{keys %conf_vars} = values %conf_vars;
 
 	debug("\n\n===> Begin " . __PACKAGE__ . "::dispatch() <===\n\n");
 	debug("Hi, I'm the new dispatcher!\n");
@@ -178,7 +179,7 @@ sub dispatch($) {
 	my $apache_port     = $r->get_server_port;
 	my $apache_is_ssl   = ($r->subprocess_env('https') ? 1 : "");
 	my $apache_root_url;
-	if ($r->subprocess_env('https')) {
+	if ($apache_is_ssl) {
 		$apache_root_url = "https://$apache_hostname";
 		$apache_root_url .= ":$apache_port" if $apache_port != 443;
 	} else {

@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.192 2007/06/22 18:57:40 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.193 2007/06/22 19:08:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +34,7 @@
 $webwork_url         = "/webwork2";
 
 # Root directory of PG.
-$pg_dir              = "/opt/webwork/pg";
+$webwork_pg_dir              = "/opt/webwork/pg";
 
 # URL and path to htdocs directory.
 $webwork_htdocs_url  = "/webwork2_files";
@@ -803,8 +803,8 @@ $pg{displayModeOptions}{jsMath} = {
 
 ##### Directories used by PG
 
-# The root of the PG directory tree (from pg_root in Apache config).
-$pg{directories}{root}   = "$pg_dir";
+# The root of the PG directory tree (from webwork_pg_dir in Apache config).
+$pg{directories}{root}   = "$webwork_pg_dir";
 $pg{directories}{lib}    = "$pg{directories}{root}/lib";
 $pg{directories}{macros} = "$pg{directories}{root}/macros";
 
@@ -928,3 +928,5 @@ $pg{ansEvalDefaults} = {
 $webworkRoot    = $webworkDirs{root};
 $webworkURLRoot = $webworkURLs{root};
 $pgRoot         = $pg{directories}{root};
+$pg_dir         = $pg{directories}{root};
+
