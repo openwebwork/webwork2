@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.8 2006/09/25 21:44:07 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.9 2006/10/30 20:46:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -176,8 +176,22 @@ sub urlpath {
 	return $self->{urlpath};
 }
 
+=item location()
+
+Overrides the location() method in Apache::Request (or Apache2::Request) so that
+if the location is "/", the empty string is returned.
+
+=cut
+
+sub location {
+	my $self = shift;
+	my $location = $self->SUPER::location;
+	return $location eq "/" ? "" : $location;
+}
+
 =back
 
 =cut
 
 1;
+
