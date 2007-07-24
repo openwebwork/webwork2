@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.193 2007/06/22 19:08:30 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.194 2007/07/23 04:06:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,30 +19,20 @@
 # requests. Values may be overwritten by the course.conf for a specific course.
 # All package variables set in this file are added to the course environment.
 # If you wish to set a variable here but omit it from the course environment,
-# use the "my" keyword. The $webwork_dir variable is set in the WeBWorK Apache
-# configuration file (webwork.apache-config) and is available for use here. In
+# use the "my" keyword. The following variables are set in the WeBWorK Apache
+# configuration file (webwork.apache-config for Apache 1.3 or
+# webwork.apache2-config for Apache 2) and are available for use here. In
 # addition, the $courseName variable holds the name of the current course.
-
-################################################################################
-# Seed variables
-################################################################################
-
-# Set these variables to correspond to your configuration and preferences. You
-# will need to restart the webserver to reset the variables in this section.
-
-# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "".
-$webwork_url         = "/webwork2";
-
-# Root directory of PG.
-$webwork_pg_dir              = "/opt/webwork/pg";
-
-# URL and path to htdocs directory.
-$webwork_htdocs_url  = "/webwork2_files";
-$webwork_htdocs_dir  = "$webwork_dir/htdocs";
-
-# URL and path to courses directory.
-$webwork_courses_url = "/webwork2_course_files";
-$webwork_courses_dir = "/opt/webwork/courses";
+# 
+#     $webwork_url            The base URL handled by Apache::WeBWorK.
+#     $webwork_dir            The path to the base webwork2 directory.
+#     $pg_dir                 The path to the base pg directory.
+#     
+#     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
+#     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
+#     
+#     $webwork_courses_url    The base URL of the WeBWorK courses directory.
+#     $webwork_courses_dir    The path to the WeBWorK courses directory.
 
 ################################################################################
 # Paths to external programs 
