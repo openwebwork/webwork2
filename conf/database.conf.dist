@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.35 2007/03/27 17:04:01 glarose Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.36 2007/07/21 19:15:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -255,6 +255,15 @@ $dbLayouts{sql_single} = {
 		params => { %sqlParams,
 			non_native => 1,
 			merge      => [qw/problem_version problem_user problem/],
+		},
+	},
+	setting => {
+		record => "WeBWorK::DB::Record::Setting",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			tableOverride => "${courseName}_setting"
 		},
 	},
 };
