@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.5 2006/12/19 22:25:39 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.9 2007/07/23 04:06:14 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,7 +60,6 @@ AliasMatch /webwork2_course_files/([^/]*)/(.*) /opt/webwork/courses/$1/html/$2
 	SetHandler None
 </Location>
 <Directory /opt/webwork/courses/*/html>
-    SetHandler None
     Options FollowSymLinks
     AllowOverride None
     Order Allow,Deny
