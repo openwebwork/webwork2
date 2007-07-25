@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.12 2007/07/21 19:12:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.13 2007/07/22 05:25:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -194,7 +194,7 @@ sub _delete_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
-	return "DROP TABLE `$sql_table_name`";
+	return "DROP TABLE IF EXISTS `$sql_table_name`";
 }
 
 ################################################################################
