@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.10 2006/09/26 15:57:41 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBUpgrade.pm,v 1.1 2007/07/22 05:24:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -602,7 +602,7 @@ sub upgrade_to_version {
 	my $do_upgrade = 1;
 	foreach my $course (@{$self->{ww_courses}}) {
 		if ($do_upgrade) {
-			my $result = upgrade_course_to_version($course, $vers);
+			my $result = $self->upgrade_course_to_version($course, $vers);
 			if ($result == ERROR) {
 				if ($self->ask_permission("Update course's stored db_version to $vers anyway?", 0)) {
 					set_db_version($vers, $course);
