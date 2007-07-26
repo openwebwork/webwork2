@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.8 2006/07/08 14:07:34 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm,v 1.9 2006/07/12 01:19:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -123,7 +123,7 @@ sub save_string {
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
 	# Remove quotes from the string, we will have a new type for text with quotes
-	$newval =~ s/['"`]//g;
+	$newval =~ s/['"`]//g; #`"'geditsucks
 	return('$'. $varname . " = '$newval';\n");
 }
 
@@ -137,7 +137,7 @@ sub save_string {
 	my $newval = $self->convert_newval_source($newvalsource);
 	my $displayoldval = $self->comparison_value($oldval);
 	# Remove quotes from the string, we will have a new type for text with quotes
-	$newval =~ s/['"`]//g;
+	$newval =~ s/['"`]//g; #`"'geditsucks
 	my $newval2 = eval($newval);
 	if($@) {
 		$self->{Module}->addbadmessage("Syntax error in numeric value '$newval' for variable \$$self->{var}.  Reverting to the system default value.");
@@ -256,7 +256,7 @@ sub save_string {
 	return '' if($newval eq $oldval);
 	# ok we really have a new value, now turn it back into a string
 	my @parts = split ',', $newval;
-	map { $_ =~ s/['"`]//g } @parts;
+	map { $_ =~ s/['"`]//g } @parts; #`"'geditsucks
 	@parts = map { "'". $_ ."'" } @parts;
 	$str = join(',', @parts);
 	$str = '$'. $varname . " = [$str];\n";
@@ -482,17 +482,20 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 
 	# Get a course environment without course.conf
-	$self->{default_ce} = WeBWorK::CourseEnvironment->new(
-		{ webwork_dir => $ce->{webworkDirs}->{root} });
+	$self->{default_ce} = WeBWorK::CourseEnvironment->new({
+		%WeBWorK::SeedCE,
+	});
 
 	$self->{ce_file_dir} = $ce->{courseDirs}->{root};
 
 	# Get a copy of the course environment which does not have simple.conf loaded
-	my $ce3 = eval { WeBWorK::CourseEnvironment->new(
-		{ webwork_dir => $ce->{webworkDirs}->{root}, 
-		  courseName => $ce->{courseName},
-		  web_config_filename => 'noSuchFilePlease',
-		}) };
+	my $ce3 = eval {
+		new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $ce->{courseName},
+			web_config_filename => 'noSuchFilePlease',
+		})
+	};
 	if($r->param("make_changes")) {
 		my $widget_count = 0;
 		my $fileoutput = "#!perl
@@ -571,12 +574,12 @@ sub body {
 
 	my $default_ce = $self->{default_ce};
 	# Get the current course environment again in case we just saved changes
-	my $ce4 = eval { WeBWorK::CourseEnvironment->new(
-		{ webwork_dir => $ce->{webworkDirs}->{root}, 
-		  webwork_url => $ce->{webwork_url},
-		  pg_dir => $ce->{pg_dir},
-		  courseName => $ce->{courseName},
-		}) };
+	my $ce4 = eval {
+		new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $ce->{courseName},
+		})
+	};
 
 	my $widget_count = 0;
 	if(scalar(@$ConfigValues) == 0) {

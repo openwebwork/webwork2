@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.40 2007/06/25 12:10:49 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.41 2007/07/21 19:13:07 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -249,12 +249,10 @@ sub addCourse {
 	
 	if (exists $options{templatesFrom}) {
 		my $sourceCourse = $options{templatesFrom};
-		my $sourceCE = new WeBWorK::CourseEnvironment(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$sourceCourse,
-		);
+		my $sourceCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $sourceCourse,
+		});
 		my $sourceDir = $sourceCE->{courseDirs}->{templates};
 		
 		if (-d $sourceDir) {
@@ -704,12 +702,10 @@ sub unarchiveCourse {
 	
 	##### step 3: read the course environment for this course #####
 	
-	my $ce2 = new WeBWorK::CourseEnvironment(
-		$ce->{webworkDirs}{root},
-		$ce->{webworkURLs}{root},
-		$ce->{pg}{directories}{root},
-		$currCourseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $currCourseID,
+	});
 	
 	# pull out some useful stuff
 	my $course_dir = $ce2->{courseDirs}{root};
@@ -776,12 +772,10 @@ sub _unarchiveCourse_move_away {
 	my ($ce, $courseID) = @_;
 	
 	# course environment for before the course is moved
-	my $ce2 = new WeBWorK::CourseEnvironment(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $courseID,
+	});
 	
 	# if course directory doesn't exist, we don't have to do anything
 	return unless -e $ce2->{courseDirs}{root};
@@ -797,12 +791,10 @@ sub _unarchiveCourse_move_away {
 	);
 	
 	# course environment for after the course is moved
-	my $ce3 = new WeBWorK::CourseEnvironment(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$tmpCourseID,
-	);
+	my $ce3 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $tmpCourseID,
+	});
 	
 	# data to pass to renameCourse when moving the course back to it's original name
 	my $restore_course_data = {

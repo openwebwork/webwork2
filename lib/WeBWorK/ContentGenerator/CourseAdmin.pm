@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.66 2007/06/25 12:09:58 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.67 2007/07/21 19:13:03 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -339,12 +339,10 @@ sub body {
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 			next if $courseID eq "admin"; # done already above
 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
-			my $tempCE = WeBWorK::CourseEnvironment->new(
-				$ce->{webworkDirs}->{root},
-				$ce->{webworkURLs}->{root},
-				$ce->{pg}->{directories}->{root},
-				$courseID,
-			);
+			my $tempCE = new WeBWorK::CourseEnvironment({
+				%WeBWorK::SeedCE,
+				courseName => $courseID,
+			});
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
 				CGI::code(
 					$tempCE->{dbLayoutName},
@@ -416,12 +414,10 @@ sub add_course_form {
 		(@ordered_layouts, @other_layouts);
 	};
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		"COURSENAME",
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => "COURSENAME",
+	});
 	
 	my @existingCourses = listCourses($ce);
 	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
@@ -637,12 +633,10 @@ sub do_add_course {
 	
 	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
 
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$add_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $add_courseID,
+	});
 	
 	my %courseOptions = ( dbLayoutName => $add_dbLayout );
 	
@@ -805,12 +799,10 @@ sub rename_course_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
+		my $tempCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $courseID,
+		});
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
@@ -878,12 +870,10 @@ sub rename_course_validate {
 		push @errors, "A course with ID $rename_newCourseID already exists.";
 	}
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$rename_oldCourseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $rename_oldCourseID,
+	});
 	
 	return @errors;
 }
@@ -899,12 +889,10 @@ sub do_rename_course {
 	my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$rename_oldCourseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $rename_oldCourseID,
+	});
 	
 	my $dbLayoutName = $ce->{dbLayoutName};
 	
@@ -957,12 +945,10 @@ sub delete_course_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
+		my $tempCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $courseID,
+		});
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
@@ -1013,12 +999,10 @@ sub delete_course_validate {
 		push @errors, "You cannot delete the course you are currently using.";
 	}
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$delete_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $delete_courseID,
+	});
 	
 	return @errors;
 }
@@ -1035,12 +1019,10 @@ sub delete_course_confirm {
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$delete_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $delete_courseID,
+	});
 	
 	print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
 		. "? All course files and data will be destroyed. There is no undo available.");
@@ -1069,12 +1051,10 @@ sub do_delete_course {
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$delete_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $delete_courseID,
+	});
 	
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
 	# below this line, we would grab values from getopt and put them in this hash
@@ -1154,12 +1134,10 @@ sub export_database_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
+		my $tempCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $courseID,
+		});
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
@@ -1245,12 +1223,10 @@ sub do_export_database {
 	
 	foreach my $export_courseID (@export_courseID) {
 
-		my $ce2 = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$export_courseID,
-		);
+		my $ce2 = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $export_courseID,
+		});
 		
 		my $db2 = new WeBWorK::DB($ce2->{dbLayout});
 		
@@ -1341,12 +1317,10 @@ sub import_database_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
+		my $tempCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $courseID,
+		});
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
@@ -1478,12 +1452,10 @@ sub do_import_database {
 	my @import_tables   = $r->param("import_tables");
 	my $import_conflict = $r->param("import_conflict") || "skip"; # need default -- not checked above
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$import_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $import_courseID,
+	});
 	
 	my $db2 = new WeBWorK::DB($ce2->{dbLayout});
 	
@@ -1546,12 +1518,10 @@ sub archive_course_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = WeBWorK::CourseEnvironment->new(
-			$ce->{webworkDirs}->{root},
-			$ce->{webworkURLs}->{root},
-			$ce->{pg}->{directories}->{root},
-			$courseID,
-		);
+		my $tempCE = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $courseID,
+		});
 		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
 	}
 	
@@ -1622,12 +1592,10 @@ sub archive_course_validate {
 		push @errors, "You cannot archive the course you are currently using.";
 	}
 	
-	#my $ce2 = WeBWorK::CourseEnvironment->new(
-	#	$ce->{webworkDirs}->{root},
-	#	$ce->{webworkURLs}->{root},
-	#	$ce->{pg}->{directories}->{root},
-	#	$archive_courseID,
-	#);
+	#my $ce2 = new WeBWorK::CourseEnvironment({
+	#	%WeBWorK::SeedCE,
+	#	courseName => $archive_courseID,
+	#});
 	
 	return @errors;
 }
@@ -1645,12 +1613,10 @@ sub archive_course_confirm {
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$archive_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $archive_courseID,
+	});
 	
 	if ($ce2->{dbLayoutName} ) {
 		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
@@ -1686,12 +1652,10 @@ sub do_archive_course {
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
-	my $ce2 = WeBWorK::CourseEnvironment->new(
-		$ce->{webworkDirs}->{root},
-		$ce->{webworkURLs}->{root},
-		$ce->{pg}->{directories}->{root},
-		$archive_courseID,
-	);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $archive_courseID,
+	});
 	
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
 	# below this line, we would grab values from getopt and put them in this hash
