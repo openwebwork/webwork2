@@ -43,7 +43,7 @@ sub new {
     $self = {};
     #Construct Course
     my $ce = eval { new WeBWorK::CourseEnvironment({%SeedCE, courseName => $courseName }) };
-    $@ and soap_fault_major("Course Environment cannot be constructed.");
+    $@ and soap_fault_major("Course Environment cannot be constructed.<br>$@");
     #Authentication Check
     if($ce->{soap_authen_key} != $authenKey) {
         soap_fault_authen();
