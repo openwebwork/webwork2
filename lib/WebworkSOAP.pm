@@ -180,7 +180,7 @@ _IN authenKey $string
 _IN courseName $string
 _IN userIDs @string
 _IN setID $string
-_RETURN @integer
+_RETURN @string
 =end WSDL
 =cut
 sub grade_users_sets {
@@ -199,6 +199,26 @@ sub grade_users_sets {
     return \@grades;
 }
 
+=pod
+=begin WSDL
+_IN authenKey $string
+_IN courseName $string
+_IN setID $string
+_RETURN @string
+=end WSDL
+=cut
+sub get_set_data {
+    my ($self,$authenKey,$courseName,$setID) = @_;
+    my $soapEnv = new WebworkSOAP($authenKey,$courseName);
+    my $setData = $soapEnv->{db}->getGlobalSet($setID);
+    if(not defined $setData) {
+        return -1;
+    }
+    my $set = new WebworkSOAP::Classes::GlobalSet($setData);
+    return $set;
+
+
+}
 
 ####################################################################
 ##FUNCTIONS DIRECTLY MAPPED TO FUNCTIONS IN DB.pm
@@ -212,7 +232,7 @@ sub grade_users_sets {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Password
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_password {
@@ -228,7 +248,7 @@ sub add_password {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Password
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_password {
@@ -298,7 +318,7 @@ sub get_password {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Permission
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_permission {
@@ -314,7 +334,7 @@ sub add_permission {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Permission
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_permission {
@@ -384,7 +404,7 @@ sub get_permission {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Key
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_key {
@@ -400,7 +420,7 @@ sub add_key {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::Key
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_key {
@@ -470,7 +490,7 @@ sub get_key {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::User
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_user {
@@ -486,7 +506,7 @@ sub add_user {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::User
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_user {
@@ -552,7 +572,7 @@ sub get_users {
 _IN authenKey $string
 _IN courseName $string
 _IN userID $string
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub delete_user {
@@ -570,7 +590,7 @@ sub delete_user {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::GlobalSet
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_global_set {
@@ -586,7 +606,7 @@ sub add_global_set {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::GlobalSet
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_global_set {
@@ -672,7 +692,7 @@ sub get_global_set {
 _IN authenKey $string
 _IN courseName $string
 _IN setID $string
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub delete_global_set {
@@ -690,7 +710,7 @@ sub delete_global_set {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::GlobalProblem
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_global_problem {
@@ -706,7 +726,7 @@ sub add_global_problem {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::GlobalProblem
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_global_problem {
@@ -794,7 +814,7 @@ _IN authenKey $string
 _IN courseName $string
 _IN setID $string
 _IN problemID $string
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub delete_global_problem {
@@ -812,7 +832,7 @@ sub delete_global_problem {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::UserProblem
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_user_problem {
@@ -828,7 +848,7 @@ sub add_user_problem {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::UserProblem
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_user_problem {
@@ -919,7 +939,7 @@ _IN courseName $string
 _IN userID $string
 _IN setID $string
 _IN problemID $string
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub delete_user_problem {
@@ -937,7 +957,7 @@ sub delete_user_problem {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::UserSet
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub add_user_set {
@@ -953,7 +973,7 @@ sub add_user_set {
 _IN authenKey $string
 _IN courseName $string
 _IN record $WebworkSOAP::Classes::UserSet
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub put_user_set {
@@ -1040,7 +1060,7 @@ _IN authenKey $string
 _IN courseName $string
 _IN userID $string
 _IN setID $string
-_RETURN $integer
+_RETURN $string
 =end WSDL
 =cut
 sub delete_user_set {

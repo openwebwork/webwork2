@@ -2,8 +2,8 @@ package WebworkSOAP::Classes::Password;
 
 =pod
 =begin WSDL
-        _ATTR user_id       $string
-        _ATTR password      $string
+        _ATTR user_id       $string user_id
+        _ATTR password      $string password
 =end WSDL
 =cut
 sub new {

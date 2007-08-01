@@ -2,10 +2,10 @@ package WebworkSOAP::Classes::GlobalProblem;
 =pod
 =begin WSDL
         _ATTR set_id        $string set_id
-        _ATTR problem_id    $integer
-        _ATTR source_file   $string
-        _ATTR value         $integer
-        _ATTR max_attempts  $integer
+        _ATTR problem_id    $string problem_id
+        _ATTR source_file   $string source_file
+        _ATTR value         $string value
+        _ATTR max_attempts  $string max_attempts
 =cut
 sub new {
     my $self = shift;
