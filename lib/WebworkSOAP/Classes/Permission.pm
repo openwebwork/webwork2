@@ -2,8 +2,8 @@ package WebworkSOAP::Classes::Permission;
 
 =pod
 =begin WSDL
-        _ATTR user_id       $string
-        _ATTR permission    $string
+        _ATTR user_id       $string user_id
+        _ATTR permission    $string permission
 =end WSDL
 =cut
 sub new {

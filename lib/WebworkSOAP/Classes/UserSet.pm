@@ -2,24 +2,24 @@ package WebworkSOAP::Classes::UserSet;
 
 =pod
 =begin WSDL
-        _ATTR user_id                   $string
+        _ATTR user_id                   $string user_id
         _ATTR set_id                    $string set_id
-        _ATTR psvn                      $integer
+        _ATTR psvn                      $string psvn
         _ATTR set_header                $string set_header
         _ATTR hardcopy_header           $string hardcopy_header
-        _ATTR open_date                 $integer open_date
-        _ATTR due_date                  $integer due_date
-        _ATTR answer_date               $integer answer_date
-        _ATTR published                 $integer published
+        _ATTR open_date                 $string open_date
+        _ATTR due_date                  $string due_date
+        _ATTR answer_date               $string answer_date
+        _ATTR published                 $string published
         _ATTR assignment_type           $string assignment_type
-        _ATTR attempts_per_version      $integer attempts_per_version
-        _ATTR time_interval             $integer time_interval
-        _ATTR versions_per_interval     $integer versions_per_interval
-        _ATTR version_time_limit        $integer version_time_limit
-        _ATTR version_creation_time     $integer version_creation_time
-        _ATTR problem_randorder         $integer
-        _ATTR version_last_attempt_time $integer
-        _ATTR problems_per_page         $integer
+        _ATTR attempts_per_version      $string attempts_per_version
+        _ATTR time_interval             $string time_interval
+        _ATTR versions_per_interval     $string versions_per_interval
+        _ATTR version_time_limit        $string version_time_limit
+        _ATTR version_creation_time     $string version_creation_time
+        _ATTR problem_randorder         $string problem_randorder
+        _ATTR version_last_attempt_time $string version_last_attempt_time
+        _ATTR problems_per_page         $string problems_per_page
 =cut
 sub new() {
         my $self = shift;

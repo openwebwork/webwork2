@@ -2,9 +2,9 @@ package WebworkSOAP::Classes::Key;
 
 =pod
 =begin WSDL
-        _ATTR user_id       $string
-        _ATTR key_not_a_keyboard $string
-        _ATTR timestamp     $string
+        _ATTR user_id       $string user_id
+        _ATTR key_not_a_keyboard $string key_not_a_keyboard
+        _ATTR timestamp     $string timestamp
 =end WSDL
 =cut
 sub new {
