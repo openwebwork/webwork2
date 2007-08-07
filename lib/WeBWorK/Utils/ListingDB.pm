@@ -49,9 +49,15 @@ use vars @EXPORT_OK;
 
 sub getDB {
 	my $ce = shift;
-	my $dbinfo = $ce->{problemLibrary};
-	my $dbh = DBI->connect_cached("dbi:mysql:$dbinfo->{sourceSQL}", 
-				  $dbinfo->{userSQL}, $dbinfo->{passwordSQL});
+	my $dbh = DBI->connect(
+		$ce->{problemLibrary_db}->{dbsource},
+		$ce->{problemLibrary_db}->{user},
+		$ce->{problemLibrary_db}->{passwd},
+		{
+			PrintError => 0,
+			RaiseError => 1,
+		},
+	);
 	die "Cannot connect to problem library database" unless $dbh;
 	return($dbh);
 }
@@ -139,8 +145,10 @@ sub getDBTextbooks {
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
 	
 	my $query = "SELECT DISTINCT $selectwhat
-          FROM textbook tbk, problem prob, pgfile_problem pg, pgfile pgf,
-            DBsection s, DBchapter c, DBsubject t, chapter tc, section ts
+          FROM `NPL-textbook` tbk, `NPL-problem` prob, 
+			`NPL-pgfile-problem` pg, `NPL-pgfile` pgf,
+            `NPL-DBsection` s, `NPL-DBchapter` c, `NPL-DBsubject` t,
+			`NPL-chapter` tc, `NPL-section` ts
           WHERE ts.section_id=prob.section_id AND 
             prob.problem_id=pg.problem_id AND
             s.DBchapter_id=c.DBchapter_id AND 
@@ -150,6 +158,8 @@ sub getDBTextbooks {
             ts.chapter_id=tc.chapter_id AND
             tc.textbook_id=tbk.textbook_id
             $extrawhere $textextrawhere ";
+#$query =~ s/\n/ /g;
+#warn $query;
 	my $text_ref = $dbh->selectall_arrayref($query);
 	my @texts = @{$text_ref};
 	if( $thing eq 'textbook') {
@@ -172,7 +182,7 @@ sub getAllDBsubjects {
 	my $r = shift;
 	my @results=();
 	my $row;
-	my $query = "SELECT DISTINCT name FROM DBsubject";
+	my $query = "SELECT DISTINCT name FROM `NPL-DBsubject`";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
@@ -195,7 +205,8 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT c.name FROM DBchapter c, DBsubject t
+	my $query = "SELECT DISTINCT c.name FROM `NPL-DBchapter` c, 
+				`NPL-DBsubject` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\"";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
@@ -217,8 +228,8 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT s.name FROM DBsection, DBsection s,
-                 DBchapter c, DBsubject t
+	my $query = "SELECT DISTINCT s.name FROM `NPL-DBsection` s,
+                 `NPL-DBchapter` c, `NPL-DBsubject` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\" AND c.name = \"$chapter\"";
@@ -282,17 +293,18 @@ sub getDBListings {
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
-	my $query = "SELECT $selectwhat from pgfile pgf, 
-         DBsection dbsc, DBchapter dbc, DBsubject dbsj $kw1
+	my $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
+         `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id 
               \n $extrawhere 
               $kw2";
 	if($haveTextInfo) {
-      $query = "SELECT $selectwhat from pgfile pgf, 
-         DBsection dbsc, DBchapter dbc, DBsubject dbsj, pgfile_problem pgp,
-         problem prob, textbook tbk , chapter tc, section ts $kw1
+      $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
+        `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj,
+		`NPL-pgfile-problem` pgp, `NPL-problem` prob, `NPL-textbook` tbk ,
+		`NPL-chapter` tc, `NPL-section` ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id AND
@@ -312,7 +324,7 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename FROM pgfile pgf, path p 
+		$query = "SELECT path, filename FROM `NPL-pgfile` pgf, `NPL-path` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
 		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
@@ -328,6 +340,11 @@ sub countDBListings {
 
 ##############################################################################
 # input expected: keywords,<keywords>,chapter,<chapter>,section,<section>,path,<path>,filename,<filename>,author,<author>,instituition,<instituition>,history,<history>
+#
+#
+# Warning - this function is out of date (but currently unused)
+#
+
 sub createListing {
 	my $ce = shift;
 	my %listing_data = @_; 
@@ -377,6 +394,10 @@ sub createListing {
 ##############################################################################
 # input expected any pair of: keywords,<keywords data>,chapter,<chapter data>,section,<section data>,filename,<filename data>,author,<author data>,instituition,<instituition data>
 # returns an array of hash references
+#
+# Warning - out of date (and unusued)
+#
+
 sub searchListings {
 	my $ce = shift;
 	my %searchterms = @_;
@@ -413,6 +434,10 @@ sub searchListings {
 }
 ##############################################################################
 # returns a list of chapters
+#
+# Warning - out of date
+#
+
 sub getAllChapters {
 	#print STDERR "ListingDB::getAllChapters\n";
 	my $ce = shift;
@@ -441,6 +466,10 @@ sub getAllChapters {
 ##############################################################################
 # input chapter
 # returns a list of sections
+#
+# Warning - out of date (and unused)
+#
+
 sub getAllSections {
 	#print STDERR "ListingDB::getAllSections\n";
 	my $ce = shift;
@@ -471,6 +500,10 @@ sub getAllSections {
 
 ##############################################################################
 # returns an array of hash references
+#
+# Warning - out of date (and unused)
+#
+
 sub getAllListings {
 	#print STDERR "ListingDB::getAllListings\n";
 	my $ce = shift;
@@ -492,6 +525,7 @@ sub getAllListings {
 	}
 	return @results;
 }
+
 ##############################################################################
 # input chapter, section
 # returns an array of hash references.
