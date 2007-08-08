@@ -257,7 +257,7 @@ sub getDBListings {
 	my $keywords = $r->param('library_keywords') || "";
 	my ($kw1, $kw2) = ('','');
 	if($keywords) {
-		$kw1 = ", keyword kw, pgfile_keyword pgkey";
+		$kw1 = ", `NPL-keyword` kw, `NPL-pgfile-keyword` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
 			 pgkey.pgfile_id=pgf.pgfile_id ". 
 			makeKeywordWhere($keywords)
