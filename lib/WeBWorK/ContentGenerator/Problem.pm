@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.206 2006/10/11 16:15:48 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -607,7 +607,7 @@ sub pre_header_initialize {
 			showHints       => $will{showHints},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
-			processAnswers  => 1,
+			processAnswers  => ($submitAnswers or $previewAnswers or $checkAnswers) ?1:0,
 		},
 	);
 	
