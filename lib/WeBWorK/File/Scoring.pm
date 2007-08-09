@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/File/Classlist.pm,v 1.6 2006/08/26 16:55:12 sh002i Exp $
+# $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -30,7 +30,7 @@ use IO::File;
 our $MIN_FIELDS = 6; # there are six "info" fields. we need at least those
 #our $MAX_FIELDS; # no maximum in scoring files
 
-our $KEY_INDEX = 1; # index of field to use for record key in resulting hash
+our $KEY_INDEX = 0; # index of field to use for record key in resulting hash
 
 our @EXPORT = qw/parse_scoring_file/;
 
