@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.32 2007/04/09 21:01:50 glarose Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/Authz.pm,v 1.33 2007/08/08 22:36:45 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -281,10 +281,12 @@ sub checkSet {
 		} else {
 			if ( $db->existsUserSet($effectiveUserName,$setName) ) {
 				$set = $db->getMergedSet($effectiveUserName,$setName);
-			} elsif ( $setName eq 'Undefined_Set' ) {
+			} elsif ( $setName eq 'Undefined_Set' and 
+				$self->hasPermissions($userName, "access_instructor_tools") ) {
 				# this is the weird case of the library
 				#   browser, when we don't actually have
-				#   a set to look at.
+				#   a set to look at, but this only happens among
+				#   instructor tool users.
 				return 0;
 			} else {
 				return "Requested set '$setName' is not " .
