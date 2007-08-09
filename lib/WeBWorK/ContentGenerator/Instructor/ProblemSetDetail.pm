@@ -1712,11 +1712,14 @@ sub body {
 		my %header_html;
 		
 		my %error;
+		my $this_set = $db->getMergedSet($userToShow, $setID);
+
 		foreach my $header (@headers) {
+
 			my $headerFile = $r->param("set.$setID.$header") || $setRecord->{$header} || $headerDefaults{$header};
 
 			$error{$header} = $self->checkFile($headerFile);
-			my $this_set = $db->getMergedSet($userToShow, $setID);
+
 			unless ($error{$header}) {
 				my @temp = renderProblems(
 					r=> $r, 
@@ -1738,6 +1741,20 @@ sub body {
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$header}, args => { courseID => $courseID, setID => $setID });
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 			
+			# this is a bit of a hack; the set header isn't shown
+			#    for gateway tests, and we run into trouble trying to 
+			#    edit/view it in this context, so we don't show this 
+			#    field for gateway tests
+			if ( $header eq 'set_header' && 
+		     	     $this_set->assignment_type =~ /gateway/ ) {
+				print CGI::Tr({}, CGI::td({}, 
+					      [ "Set Header", 
+					     	"Set headers are not used in " .
+						"display of gateway tests."]));
+				next;
+			}
+
+
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $properties{$header}->{name})) . 
