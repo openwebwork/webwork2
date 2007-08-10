@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.76 2006/10/30 20:51:25 sh002i Exp $
+# $CVSHeader: webwork-modperl/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.77 2007/01/03 22:47:30 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1349,7 +1349,9 @@ sub body {
 	}
 	if (scalar(@pg_files)>0) {
 		print CGI::p(($first_shown+1)."-".($last_shown+1)." of ".scalar(@pg_files).
-		 " shown.", $prev_button, " ", $next_button);
+			" shown.", $prev_button, " ", $next_button,
+			CGI::submit(-name=>"update", -style=>"width:15ex; font-weight:bold",
+					-value=>"Update Set"));
 	}
 	#	 }
 	print CGI::endform(), "\n";
