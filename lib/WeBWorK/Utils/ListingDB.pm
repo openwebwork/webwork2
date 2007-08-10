@@ -17,6 +17,7 @@ package WeBWorK::Utils::ListingDB;
 
 use strict;
 use DBI;
+use WeBWorK::Utils qw(sortByName);
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -92,7 +93,6 @@ sub makeKeywordWhere {
 	return "AND ( $where )";
 }
 
-
 =item getDBTextbooks($r)                                                    
 Returns textbook dependent entries.
                                                                                 
@@ -164,9 +164,13 @@ sub getDBTextbooks {
 	my @texts = @{$text_ref};
 	if( $thing eq 'textbook') {
 		@texts = grep { $_->[1] =~ /\S/ } @texts;
+		my @sortarray = map { $_->[1] . $_->[2] . $_->[3] } @texts;
+		@texts = indirectSortByName( \@sortarray, @texts );
 		return(\@texts);
 	} else {
 		@texts = grep { $_->[0] =~ /\S/ } @texts;
+		my @sortarray = map { $_->[0] } @texts;
+		@texts = indirectSortByName( \@sortarray, @texts );
 		return(\@texts);
 	}
 }
@@ -189,6 +193,7 @@ sub getAllDBsubjects {
 	while ($row = $sth->fetchrow_array()) {
 		push @results, $row;
 	}
+	@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -211,6 +216,7 @@ sub getAllDBchapters {
                  t.name = \"$subject\"";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
 	my @results = map { $_->[0] } @{$all_chaps_ref};
+	@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -235,6 +241,7 @@ sub getAllDBsections {
                  t.name = \"$subject\" AND c.name = \"$chapter\"";
 	my $all_sections_ref = $dbh->selectall_arrayref($query);
 	my @results = map { $_->[0] } @{$all_sections_ref};
+	@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -591,6 +598,25 @@ sub deleteListing {
 
 	return undef;
 }
+
+
+# Use sortByName($aref, @b) to sort list @b using parallel list @a.
+# Here, $aref is a reference to the array @a
+
+sub indirectSortByName {
+	my $aref = shift ;
+	my @a = @$aref;
+	my @b = @_;
+	my %pairs ;
+	for my $j (1..scalar(@a)) {
+		$pairs{$a[$j-1]} = $b[$j-1];
+	}
+	my @list = sortByName(undef, @a);
+	@list = map { $pairs{$_} } @list;
+	return(@list);
+}
+
+
 
 ##############################################################################
 1;
