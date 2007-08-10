@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/NonVersioned.pm,v 1.3 2007/02/20 22:10:09 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/NonVersioned.pm,v 1.4 2007/06/26 06:45:17 mleventi Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,6 @@ use warnings;
 use WeBWorK::DB::Utils qw/make_vsetID/;
 
 use constant TABLES => qw/set_user problem_user/;
-
 
 ################################################################################
 # where clause
