@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.35 2006/07/27 01:08:04 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.36 2007/07/23 04:06:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ and course.conf files.
  $ce = WeBWorK::CourseEnvironment->new({
  	webwork_url         => "/webwork2",
  	webwork_dir         => "/opt/webwork2",
- 	webwork_pg_dir      => "/opt/pg",
+ 	pg_dir              => "/opt/pg",
  	webwork_htdocs_url  => "/webwork2_files",
  	webwork_htdocs_dir  => "/opt/webwork2/htdocs",
  	webwork_courses_url => "/webwork2_course_files",
@@ -76,8 +76,7 @@ environment file. If found, the file is read and added to the environment.
 =item new(ROOT URLROOT PGROOT COURSENAME)
 
 A deprecated form of the constructor in which four seed variables are given
-explicitly: C<webwork_dir>, C<webwork_url>, C<webwork_pg_dir>, and
-C<courseName>.
+explicitly: C<webwork_dir>, C<webwork_url>, C<pg_dir>, and C<courseName>.
 
 =cut
 
@@ -110,7 +109,7 @@ sub new {
 		debug __PACKAGE__, ": deprecated four-argument form of new() used.\n";
 		$seedVars{webwork_dir}    = $rest[0];
 		$seedVars{webwork_url}    = $rest[1];
-		$seedVars{webwork_pg_dir} = $rest[2];
+		$seedVars{pg_dir}         = $rest[2];
 		$seedVars{courseName}     = $rest[3];
 	}
 	
