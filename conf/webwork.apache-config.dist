@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.16.2.1 2007/08/09 17:09:00 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,9 +45,8 @@ require Apache::WeBWorK; # force compilation of pretty much everything
 
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
-# Between the line below and the "EOF" line are the three configuration stanzas
-# that are used to link Apache with WeBWorK. The following variables may be
-# included in directives below:
+# At this point, the following configuration variables should be present for use
+# in wiring WeBWorK into Apache:
 # 
 #     $webwork_url            The base URL handled by Apache::WeBWorK.
 #     $webwork_dir            The path to the base webwork2 directory.
@@ -71,8 +70,8 @@ $Location{$webwork_url} = {
 # 
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
 $Directory{$webwork_htdocs_dir} = {
-	Order => "Allow,Deny",
-	Allow => "from All",
+	Order => "allow,deny",
+	Allow => "from all",
 	Options => "FollowSymLinks",
 	AllowOverride => "none",
 };
