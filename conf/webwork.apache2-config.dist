@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.9 2007/07/23 04:06:14 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.10 2007/07/24 17:48:22 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,65 +20,97 @@
 # 
 #     Include /path/to/webwork.apache2-config
 # 
-# Please read throught this file if you are not using the default paths or want
-# to use non-standard URLs.
-
-# Define the location that is handled by the Apache::WeBWorK module.
+# Customize the variable $webwork_dir below to match the location of your
+# WeBWorK installation.
 # 
-PerlSetVar webwork_dir /opt/webwork/webwork2
-PerlSetVar webwork_url /webwork2
-<Location /webwork2>
-    PerlHandler Apache::WeBWorK
-    SetHandler perl-script
-    Options FollowSymLinks
-    AllowOverride None
-    Order Allow,Deny
-    Allow from all
-</Location>
+# ATTENTION APACHE 2.2 USERS: There is a bug in mod_perl 2.0.2 that prevents the
+#                             FollowSymlinksOption from working when specified
+#                             in a <Perl> section. See below for workaround.
+
+PerlModule mod_perl2
+
+<Perl>
+
+# Set this variable to the path to your WeBWorK installation.
+my $webwork_dir = "/opt/webwork/webwork2";
+
+# This code reads global.conf and extracts the remaining configuration
+# variables. There is no need to modify it.
+eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
+my $webwork_url = $ce->{webwork_url};
+my $pg_dir = $ce->{pg_dir};
+my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
+my $webwork_courses_url = $ce->{webwork_courses_url};
+my $webwork_courses_dir = $ce->{webwork_courses_dir};
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+
+require Apache::WeBWorK; # force compilation of pretty much everything
+
+$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
+
+# At this point, the following configuration variables should be present for use
+# in wiring WeBWorK into Apache:
+# 
+#     $webwork_url            The base URL handled by Apache::WeBWorK.
+#     $webwork_dir            The path to the base webwork2 directory.
+#     $pg_dir                 The path to the base pg directory.
+#     
+#     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
+#     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
+#     
+#     $webwork_courses_url    The base URL of the WeBWorK courses directory.
+#     $webwork_courses_dir    The path to the WeBWorK courses directory.
+
+# Define the location that is handled by the Apache::WeBWorK module, and tell
+# Perl where to find the libraries Apache::WeBWorK needs to run.
+# 
+$Location{$webwork_url} = {
+	SetHandler => "perl-script",
+	PerlHandler => "Apache::WeBWorK",
+};
 
 # Provide access to system-wide resources.
 # 
-PerlSetVar webwork_htdocs_dir /opt/webwork/webwork2/htdocs
-PerlSetVar webwork_htdocs_url /webwork2_files
-Alias /webwork2_files /opt/webwork/webwork2/htdocs
-<Location /webwork2_files>
-    SetHandler None
-</Location>
-<Directory /opt/webwork/webwork2/htdocs>
-    Options FollowSymLinks
-    AllowOverride None
-    Order Allow,Deny
-    Allow from all
-</Directory>
+push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
+$Directory{$webwork_htdocs_dir} = {
+	Order => "allow,deny",
+	Allow => "from all",
+	# APACHE 2.2 USERS: comment out the following line.
+	Options => "FollowSymLinks",
+	AllowOverride => "none",
+};
 
-# Provide access to course-specific resources
+# Provide access to course-specific resources.
 # 
-PerlSetVar webwork_courses_dir /opt/webwork/courses
-PerlSetVar webwork_courses_url /webwork2_course_files
-AliasMatch /webwork2_course_files/([^/]*)/(.*) /opt/webwork/courses/$1/html/$2
-<Location /webwork2_course_files>
-	SetHandler None
-</Location>
-<Directory /opt/webwork/courses/*/html>
-    Options FollowSymLinks
-    AllowOverride None
-    Order Allow,Deny
-    Allow from all
-</Directory>
+push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
+$Directory{"$webwork_courses_dir/*/html"} = {
+	Order => "allow,deny",
+	Allow => "from all",
+	# APACHE 2.2 USERS: comment out the following line.
+	Options => "FollowSymLinks",
+	AllowOverride => "none",
+};
 
-# Make additional settings available to WeBWorK.
+# If WeBWorK is on the root, exempt the static directories from being handled
+# by Apache::WeBWorK.
 # 
-PerlSetVar webwork_pg_dir /opt/webwork/pg
+if ($webwork_url eq "") {
+	$Location{$webwork_courses_url} = { SetHandler => "none" };
+	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
+}
 
-# Include WeBWorK and PG lib directories. (We prefer PerlSwitches to "use lib"
-# in a startup.pl because it prevents us from having to specify paths in two
-# separate files.)
-# 
-PerlSwitches -I/opt/webwork/webwork2/lib
-PerlSwitches -I/opt/webwork/pg/lib
+</Perl>
 
-# Pre-load modules.
-# 
-PerlModule mod_perl2
-PerlModule Apache::WeBWorK
+# APACHE 2.2 USERS: uncomment the following lines and customize the paths.
+# The path for this block should be $webwork_htdocs_dir.
+#<Directory /opt/webwork/webwork2/htdocs>
+#    Options FollowSymLinks
+#</Directory>
+# The path for this block should be $webwork_courses_dir, followed by "/*/html".
+#<Directory /opt/webwork/courses/*/html>
+#    Options FollowSymLinks
+#</Directory>
 
