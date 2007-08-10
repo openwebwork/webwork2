@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBUpgrade.pm,v 1.1 2007/07/22 05:24:22 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBUpgrade.pm,v 1.2 2007/07/25 23:37:49 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -563,16 +563,17 @@ sub do_upgrade {
 	my $vers = $lowest_db_version;
 	while ($vers < $THIS_DB_VERSION) {
 		$vers++;
-		unless ($self->upgrade_to_version($system_db_version, $vers)) {
+		unless ($self->upgrade_to_version($vers)) {
 			print "\nUpgrading from version ".($vers-1)." to $vers failed.\n\n";
 			unless ($self->ask_permission("Ignore this error and go on to the next version?", 0)) {
 				exit 3;
 			}
 		}
 	}
+	
+	#### All done!
+	
 	print "\nDatabase is up-to-date at version $vers.\n";
-
-
 }
 
 ################################################################################
@@ -590,7 +591,10 @@ sub upgrade_to_version {
 	print "(Version $vers $desc)\n";
 	
 	if ($self->{system_db_version} < $vers and exists $info{global_code}) {
-		eval { $info{global_code}->() };
+		eval {
+			local $WeBWorK::Utils::DBUpgrade::self = $self;
+			$info{global_code}->();
+		};
 		if ($@) {
 			print "\nAn error occured while running the system upgrade code for version $vers:\n";
 			print "$@";
