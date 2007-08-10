@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.2 2006/11/27 18:34:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedClosureClass.pm,v 1.3 2006/12/05 20:56:58 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -114,3 +114,4 @@ sub AUTOLOAD {
 }
 
 1;
+
