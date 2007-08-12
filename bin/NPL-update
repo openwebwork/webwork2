@@ -48,21 +48,9 @@ BEGIN {
 	KEY (DBchapter_id),
 	PRIMARY KEY (DBsection_id)
 '],
-['NPL-institution', '
-	institution_id int (15) NOT NULL auto_increment,
-	name varchar (255) NOT NULL,
-	department varchar (255),
-	address varchar (255),
-	city varchar (255),
-	state char(2),
-	zipcode char(10),
-	website varchar (255),
-	KEY institution (name),
-	PRIMARY KEY (institution_id)
-'],
 ['NPL-author', '
 	author_id int (15) NOT NULL auto_increment,
-	institution_id int (15) NOT NULL,
+	institution tinyblob,
 	lastname varchar (100) NOT NULL,
 	firstname varchar (100) NOT NULL,
 	email varchar (255),
@@ -81,10 +69,9 @@ BEGIN {
 	pgfile_id int(15) NOT NULL auto_increment,
 	DBsection_id int(15) NOT NULL,
 	author_id int(15),
-	institution_id int(15),
+	institution tinyblob,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
-	history blob,
 	PRIMARY KEY (pgfile_id)
 '],
 ['NPL-keyword', '
@@ -98,11 +85,6 @@ BEGIN {
 	keyword_id int(15) DEFAULT 0 NOT NULL,
 	KEY pgfile_keyword (keyword_id, pgfile_id),
 	KEY pgfile (pgfile_id)
-'],
-['NPL-pgfile-institution', '
-	pgfile_id int(15) DEFAULT 0 NOT NULL,
-	institution_id int(15) DEFAULT 0 NOT NULL,
-	PRIMARY KEY (institution_id, pgfile_id)
 '],
 ['NPL-textbook', '
 	textbook_id int (15) NOT NULL auto_increment,
@@ -179,6 +161,12 @@ sub dbug {
 	#    if($cnt==5000) { print "\n"; $cnt=0;}
 	print "." if($verbose==1 and ($cnt % 100 == 0));
 }
+
+## Resetting the database tables.
+#  First take care of tables which are no longer used
+
+$dbh->do("DROP TABLE IF EXISTS `NPL-institution`");
+$dbh->do("DROP TABLE IF EXISTS `NPL-pgfile-institution`");
 
 for my $tableinfo (@create_tables) {
     my $tabname = $tableinfo->[0];
@@ -548,27 +536,6 @@ sub pgfiles {
 				$DBsection_id = $dbh->selectrow_array($query);
 			}
 
-			# institution table
-			#
-			$query = "SELECT institution_id FROM `NPL-institution` WHERE name = \"$institution\"";
-			my $institution_id = $dbh->selectrow_array($query);  
-			if (!defined($institution_id)) {
-				$dbh->do("INSERT INTO `NPL-institution`
-					VALUES(
-						\"\",
-						\"$institution\",
-						\"\",
-						\"\",
-						\"\",
-						\"\",
-						\"\",
-						\"\"
-					)"
-						);
-				dbug "INSERT INTO institution VALUES( \"\", \"$institution\", \"\", \"\", \"\", \"\", \"\", \"\")\n";
-				$institution_id = $dbh->selectrow_array($query);
-			}
-
 			# author table
 			#
 			$author =~ /(.*?)\s(\w+)\s*$/;
@@ -583,13 +550,13 @@ sub pgfiles {
 				$dbh->do("INSERT INTO `NPL-author`
 					VALUES(
 						\"\",
-						\"$institution_id\",
+						\"$institution\",
 						\"$lastname\",
 						\"$firstname\",
 						\"\"
 					)"
 						);
-				dbug "INSERT INTO author VALUES( \"\", \"$institution_id\", \"$lastname\", \"$firstname\", \"\" )\n";
+				dbug "INSERT INTO author VALUES( \"\", \"$institution\", \"$lastname\", \"$firstname\", \"\" )\n";
 				$author_id = $dbh->selectrow_array($query);
 			}
 
@@ -618,13 +585,12 @@ sub pgfiles {
 						\"\",
 						\"$DBsection_id\",
 						\"$author_id\",
-						\"$institution_id\",
+						\"$institution\",
 						\"$path_id\",
-						\"$pgfile\",
-						\"\"
+						\"$pgfile\"
 					)"
 					);
-			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution_id\", \"$path_id\", \"$pgfile\", \"\" )\n";
+			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
 			$query = "SELECT pgfile_id FROM `NPL-pgfile` WHERE filename = \"$pgfile\" and path_id=$path_id";
 			$pgfile_id = $dbh->selectrow_array($query);
 
@@ -657,21 +623,6 @@ sub pgfiles {
 					dbug "INSERT INTO pgfile_keyword VALUES( \"$pgfile_id\", \"$keyword_id\" )\n";
 				}
 			}					#end foreach keyword
-
-			# pgfile_institution table
-			#
-			$query = "SELECT institution_id FROM `NPL-pgfile-institution` WHERE pgfile_id = \"$pgfile_id\"";
-			my $pg_inst_id = $dbh->selectrow_array($query);
-			if (!defined($pg_inst_id)) {
-				$dbh->do("INSERT INTO `NPL-pgfile-institution`
-					VALUES(
-						\"$pgfile_id\",
-						\"$institution_id\"
-					)"
-						);
-				dbug "INSERT INTO `NPL-pgfile-institution` VALUES( \"$pgfile_id\", \"$institution_id\" )\n";
-				$pg_inst_id = $dbh->selectrow_array($query);
-			}
 
 			# Textbook section
 			# problem table contains textbook problems
