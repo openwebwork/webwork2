@@ -1,8 +1,8 @@
 #!/bin/sh
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2006 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.16 2006/05/29 21:57:06 sh002i Exp $
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/wwapachectl.dist,v 1.17 2006/05/31 18:25:18 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
