@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.88 2007/04/02 19:57:39 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.89 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -393,7 +393,7 @@ sub setListRow {
 			     $problemRecords[0]->num_incorrect() >= 
 			     $set->attempts_per_version() ) {
 				$status = "completed.";
-			} elsif ( $set->due_date() < time() + 
+			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
 				$status = "over time: closed.";
 			} else {
