@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.26 2007/04/19 22:17:13 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.27 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -245,7 +245,7 @@ sub Refresh {
 			var button = document.getElementById('MakeArchive');
 			button.value = 'Make Archive';
 			if (disabled) return;
-			if (!files.childNodes[files.selectedIndex].value.match(/\\.tgz\$/)) return;
+			if (!files.childNodes[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
 			  {if (files.childNodes[i].selected) return}
 			button.value = 'Unpack Archive';
@@ -711,8 +711,8 @@ sub MakeArchive {
 sub UnpackArchive {
 	my $self = shift;
 	my $archive = $self->getFile("unpack"); return unless $archive;
-	if ($archive !~ m/\.tgz$/) {
-		$self->addbadmessage("You can only unpack files ending in '.tgz'");
+	if ($archive !~ m/\.(tar|tar\.gz|tgz)$/) {
+		$self->addbadmessage("You can only unpack files ending in '.tgz', '.tar' or '.tar.gz'");
 	} else {
 		$self->unpack($archive);
 	}
@@ -721,9 +721,9 @@ sub UnpackArchive {
 
 sub unpack {
 	my $self = shift;
-	my $archive = shift;
+	my $archive = shift; my $z = 'z'; $z = '' if $archive =~ m/\.tar$/;
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
-	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vxzf ".shell_quote($archive);
+	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vx${z}f ".shell_quote($archive);
 	my @files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
@@ -855,7 +855,7 @@ sub Upload {
 
 	if (-e $file) {
 	  $self->addgoodmessage("$type file '$name' uploaded successfully");
-	  if ($name =~ m/\.tgz$/ && $self->getFlag('unpack')) {
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
 	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
