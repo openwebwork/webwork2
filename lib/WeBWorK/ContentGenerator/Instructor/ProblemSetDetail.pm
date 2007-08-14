@@ -1713,6 +1713,14 @@ sub body {
 		
 		my %error;
 		my $this_set = $db->getMergedSet($userToShow, $setID);
+		my $guaranteed_set = $this_set;
+		if ( ! $guaranteed_set ) { 
+			# in the header loop we need to have a set that 
+			#    we know exists, so if the getMergedSet failed
+			#    (that is, the set isn't assigned to the 
+			#    the current user), we get the global set instead
+			$guaranteed_set = $db->getGlobalSet( $setID );
+		}
 
 		foreach my $header (@headers) {
 
@@ -1746,7 +1754,7 @@ sub body {
 			#    edit/view it in this context, so we don't show this 
 			#    field for gateway tests
 			if ( $header eq 'set_header' && 
-		     	     $this_set->assignment_type =~ /gateway/ ) {
+		     	     $guaranteed_set->assignment_type =~ /gateway/ ) {
 				print CGI::Tr({}, CGI::td({}, 
 					      [ "Set Header", 
 					     	"Set headers are not used in " .
