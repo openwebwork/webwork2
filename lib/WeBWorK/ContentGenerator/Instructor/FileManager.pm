@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.27 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.28 2007/08/14 16:23:27 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -133,7 +133,7 @@ sub body {
 	$self->{courseRoot} = $courseRoot;
 	$self->{courseName} = $courseName;
 
-	my $action = $r->param('action') || $r->param('formAction') || 'Init';
+	my $action = $r->param('action') || $r->param('formAction') || $r->param("confirmed") || 'Init';
 
 	for ($action) {
 		/^Refresh/i    and do {$self->Refresh; last};
@@ -672,7 +672,7 @@ sub Delete {
 		);
 		print CGI::end_table();
 
-		print CGI::hidden({name=>"confirmed",value=>1});
+		print CGI::hidden({name=>"confirmed",value=>"Delete"});
 		foreach my $file (@files) {print CGI::hidden({name=>"files",value=>$file})}
 		$self->HiddenFlags;
 	}
@@ -892,7 +892,7 @@ sub Confirm {
 		),
 	      );
 	print CGI::end_table();
-	print CGI::hidden({name=>"confirmed", value=>1});
+	print CGI::hidden({name=>"confirmed", value=>$button});
 	$self->HiddenFlags;
 	print CGI::script("window.document.FileManager.name.focus()");
 }
