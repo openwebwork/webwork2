@@ -148,18 +148,15 @@ my $dbh = DBI->connect(
 my $passwd = $ce->{database_password};
 my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
-my $verbose =0;
-my $cnt = 0;
+my $verbose = 0;
 my $cnt2 = 0;
 
 $| = 1; # autoflush output
 
 sub dbug {
 	my $msg = shift;
-	$cnt++;
-	print $msg if($verbose>1);
-	#    if($cnt==5000) { print "\n"; $cnt=0;}
-	print "." if($verbose==1 and ($cnt % 100 == 0));
+	my $insignificance = shift || 2;
+	print $msg if($verbose>=$insignificance);
 }
 
 ## Resetting the database tables.
@@ -234,7 +231,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 				}
 			} else { # We have a chapter entry
 				if(defined($bookid)) {
-					my $query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$bookid\" AND name = \"$chapsec\"";
+					my $query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$bookid\" AND number = \"$chapsec\"";
 					my $chapid = $dbh->selectrow_array($query);
 					if (!defined($chapid)) {
 						$dbh->do("INSERT INTO `NPL-chapter`
@@ -246,7 +243,24 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 						\"\"
 					)"
 							);
-					dbug "INSERT INTO chapter VALUES(\"\", \"$bookid\", \"".$chapsec."\", \"$title\", \"\" )\n";
+						$chapid = $dbh->selectrow_array($query);
+
+						# Add dummy section entry for problems tagged to the chapter
+						# without a section
+						$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapid\" AND number = -1";
+						my $sectid = $dbh->selectrow_array($query);
+						if (!defined($sectid)) {
+							$dbh->do("INSERT INTO `NPL-section`
+						VALUES(
+							\"\",
+							\"$chapid\",
+							\"-1\",
+							\"\",
+							\"\"
+						)"
+								);
+						dbug "INSERT INTO section VALUES(\"\", \"$chapid\", \"-1\", \"\", \"\" )\n";
+						}
 					}
 				} else {
 					print "Cannot enter chapter $chapsec because textbook information is incomplete\n";
@@ -421,8 +435,7 @@ sub pgfiles {
 							$textinfo{$textno}->{section} = $2;
 						} else {
 							$textinfo{$textno}->{chapter} = $textsection;
-							$textinfo{$textno}->{section} = '';
-							# used to be: $chapnum = undef;	#no valid number assigned
+							$textinfo{$textno}->{section} = -1;
 						}
 
 					}
@@ -653,13 +666,13 @@ sub pgfiles {
 					)"
 							);
 					dbug "INSERT INTO textbook VALUES( \"\", \"$text\", \"$edition\", \"$textauthor\", \"\", \"\", \"\" )\n";
-#					print "\nLate add into NPL-textbook \"$text\", \"$edition\", \"$textauthor\"\n";
+					dbug "\nLate add into NPL-textbook \"$text\", \"$edition\", \"$textauthor\"\n", 1;
 					$textbook_id = $dbh->selectrow_array($query);
 				}
 
 				# chapter weak table of textbook
 				#
-				$query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$textbook_id\" AND name = \"$chapter\"";
+				$query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$textbook_id\" AND number = \"$chapnum\"";
 				my $chapter_id = $dbh->selectrow_array($query);
 				if (!defined($chapter_id)) {
 					$dbh->do("INSERT INTO `NPL-chapter`
@@ -671,13 +684,15 @@ sub pgfiles {
 						\"\"
 					)"
 							);
+					dbug "\nLate add into NPL-textchapter \"$text\", \"$edition\", \"$textauthor\", $chapnum $chapter from $name\n", 1;
 					dbug "INSERT INTO chapter VALUES(\"\", \"$textbook_id\", \"".$chapnum."\", \"$chapter\", \"\" )\n";
 					$chapter_id = $dbh->selectrow_array($query);
 				}
 
 				# section weak table of textbook
 				#
-				$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapter_id\" AND name = \"$section\"";
+				$section = '' if ($secnum < 0);
+				$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapter_id\" AND number = \"$secnum\"";
 				my $section_id = $dbh->selectrow_array($query);
 				if (!defined($section_id)) {
 					$dbh->do("INSERT INTO `NPL-section`
@@ -690,6 +705,7 @@ sub pgfiles {
 					)"
 							);
 					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$section\", \"\" )\n";
+					dbug "\nLate add into NPL-textsection \"$text\", \"$edition\", \"$textauthor\", $secnum $section from $name\n", 1;
 					$section_id = $dbh->selectrow_array($query);
 				}
 
@@ -725,10 +741,10 @@ sub pgfiles {
 					}
 				}
 
+				#reset tag vars, they may not match the next text/file
+				$date =""; $textauthor=""; $textsection="";
+				$chapter=""; $section="";
 			}
-			#reset tag vars, they may not match the next file
-			$date =""; $textauthor=""; $textsection="";
-			$chapter=""; $section="";
 		}
 		close(IN) or die "can not close: $!";
 	}
