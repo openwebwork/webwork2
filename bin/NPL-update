@@ -102,6 +102,8 @@ BEGIN {
 	number int(3),
 	name varchar(127) NOT NULL,
 	page int(4),
+	KEY (textbook_id, name),
+	KEY (number),
 	PRIMARY KEY (chapter_id)
 '],
 ['NPL-section', '
@@ -110,6 +112,8 @@ BEGIN {
 	number int(3),
 	name varchar(127) NOT NULL,
 	page int(4),
+	KEY (chapter_id, name),
+	KEY (number),
 	PRIMARY KEY section (section_id)
 '],
 ['NPL-problem', '
