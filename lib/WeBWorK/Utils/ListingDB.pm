@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/readURClassList.pl,v 1.2.2.1 2007/08/13 22:53:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/ListingDB.pm,v 1.19 2007/08/13 22:59:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -23,9 +23,9 @@ use WeBWorK::Utils qw(sortByName);
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
 	name => 'library_textbook', where => 'tbk.textbook_id'},
-	textchapter => { select => 'tc.name', name=>'library_textchapter',
+	textchapter => { select => 'tc.number,tc.name', name=>'library_textchapter',
 	where => 'tc.name'},
-	textsection => { select => 'ts.name', name=>'library_textsection',
+	textsection => { select => 'ts.number,ts.name', name=>'library_textsection',
 	where => 'ts.name'},
 	problem => { select => 'prob.name' },
 	};
@@ -137,6 +137,7 @@ sub getDBTextbooks {
 	}
 
 	my $textchap = $r->param('library_textchapter') || '';
+	$textchap =~ s/^\s*\d+\.\s*//;
 	if($textchap and $thing eq 'textsection') {
 		$textextrawhere .= " AND tc.name=\"$textchap\" ";
 	} else {
@@ -169,9 +170,10 @@ sub getDBTextbooks {
 		@texts = indirectSortByName( \@sortarray, @texts );
 		return(\@texts);
 	} else {
-		@texts = grep { $_->[0] =~ /\S/ } @texts;
-		my @sortarray = map { $_->[0] } @texts;
-		@texts = indirectSortByName( \@sortarray, @texts );
+		@texts = grep { $_->[1] =~ /\S/ } @texts;
+		my @sortarray = map { $_->[0] .". " . $_->[1] } @texts;
+		@texts = map { [ $_ ] } @sortarray;
+		@texts = indirectSortByName(\@sortarray, @texts);
 		return(\@texts);
 	}
 }
@@ -268,8 +270,7 @@ sub getDBListings {
 		$kw1 = ", `NPL-keyword` kw, `NPL-pgfile-keyword` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
 			 pgkey.pgfile_id=pgf.pgfile_id ". 
-			makeKeywordWhere($keywords)
-			;
+			makeKeywordWhere($keywords) ;
 	}
 
 	my $dbh = getDB($ce);
@@ -291,6 +292,7 @@ sub getDBListings {
     my $haveTextInfo=0;
 	for my $j (qw( textbook textchapter textsection )) {
 		my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+		$foo =~ s/^\s*\d+\.\s*//;
 		if($foo) {
             $haveTextInfo=1;
 			$foo =~ s/'/\\'/g;
