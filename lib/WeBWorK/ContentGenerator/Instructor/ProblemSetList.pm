@@ -1718,7 +1718,23 @@ sub readSetDef {
 			$line =~ s/(#.*)//;                             ## don't read past comments
 			unless ($line =~ /\S/) {next;}                  ## skip blank lines
 	
-			($name, $value, $attemptLimit, $continueFlag) = split (/\s*,\s*/,$line);
+			# commas are valid in filenames, so we have to handle commas
+			# using backslash escaping, so \X will be replaced with X
+			my @line = ();
+			my $curr = '';
+			for (my $i = 0; $i < length $line; $i++) {
+				my $c = substr($line,$i,1);
+				if ($c eq '\\') {
+					$curr .= substr($line,++$i,1);
+			    } elsif ($c eq ',') {
+					push @line, $curr;
+					$curr = '';
+				} else {
+					$curr .= $c;
+				}
+			}
+			($name, $value, $attemptLimit, $continueFlag) = @line;
+			
 			#####################
 			#  clean up problem values
 			###########################
@@ -1814,6 +1830,11 @@ SET:	foreach my $set (keys %filenames) {
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
+			
+			# backslash-escape commas in fields
+			$source_file =~ s/([,\\])/\\$1/g;
+			$value =~ s/([,\\])/\\$1/g;
+			$max_attempts =~ s/([,\\])/\\$1/g;
 			$problemList     .= "$source_file, $value, $max_attempts \n";
 		}
 
