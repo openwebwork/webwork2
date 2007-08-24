@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.78 2007/08/10 16:04:01 jj Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.79 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -70,7 +70,7 @@ use constant SUCCESS => (1 << 2);
 my %problib;	## filled in in global.conf
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
 );
 
 sub prepare_activity_entry {
