@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.105 2007/07/19 21:02:15 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.106 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -447,7 +447,7 @@ sub addUser {
 	eval {
 		return $self->{user}->add($User);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addUser: user exists (perhaps you meant to use putUser?)";
 	} elsif ($@) {
 		die $@;
@@ -552,7 +552,7 @@ sub addPassword {
 	eval {
 		return $self->{password}->add($Password);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addPassword: password exists (perhaps you meant to use putPassword?)";
 	} elsif ($@) {
 		die $@;
@@ -645,7 +645,7 @@ sub addPermissionLevel {
 	eval {
 		return $self->{permission}->add($PermissionLevel);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addPermissionLevel: permission level exists (perhaps you meant to use putPermissionLevel?)";
 	} elsif ($@) {
 		die $@;
@@ -731,7 +731,7 @@ sub addKey {
 	eval {
 		return $self->{key}->add($Key);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addKey: key exists (perhaps you meant to use putKey?)";
 	} elsif ($@) {
 		die $@;
@@ -864,7 +864,7 @@ sub addLocation {
 	eval {
 		return $self->{locations}->add($Location);
 	};
-	if ( my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists ) {
+	if ( my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists ) {
 		croak "addLocation: location exists (perhaps you meant to use putLocation?)";
 	} elsif ($@) {
 		die $@;
@@ -965,7 +965,7 @@ sub addLocationAddress {
 	eval {
 		return $self->{location_addresses}->add($LocationAddress);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addLocationAddress: location address exists (perhaps you meant to use putLocationAddress?)";
 	} elsif ($@) {
 		die $@;
@@ -1036,7 +1036,7 @@ sub addGlobalSet {
 
 		return $self->{set}->add($GlobalSet);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addGlobalSet: global set exists (perhaps you meant to use putGlobalSet?)";
 	} elsif ($@) {
 		die $@;
@@ -1127,7 +1127,7 @@ sub addUserSet {
 	eval {
 		return $self->{set_user}->add($UserSet);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addUserSet: user set exists (perhaps you meant to use putUserSet?)";
 	} elsif ($@) {
 		die $@;
@@ -1239,7 +1239,7 @@ sub addSetVersion {
 	eval {
 		return $self->{set_version}->add($SetVersion);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addSetVersion: set version exists (perhaps you meant to use putSetVersion?)";
 	} elsif ($@) {
 		die $@;
@@ -1353,7 +1353,7 @@ sub addGlobalSetLocation {
 	eval {
 		return $self->{set_locations}->add($GlobalSetLocation);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addGlobalSetLocation: global set_location exists (perhaps you meant to use putGlobalSetLocation?)";
 	} elsif ($@) {
 		die $@;
@@ -1452,7 +1452,7 @@ sub addUserSetLocation {
 	eval {
 		return $self->{set_locations_user}->add($UserSetLocation);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addUserSetLocation: user set_location exists (perhaps you meant to use putUserSetLocation?)";
 	} elsif ($@) {
 		die $@;
@@ -1554,7 +1554,7 @@ sub addGlobalProblem {	my ($self, $GlobalProblem) = shift->checkArgs(\@_, qw/REC
 	eval {
 		return $self->{problem}->add($GlobalProblem);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addGlobalProblem: global problem exists (perhaps you meant to use putGlobalProblem?)";
 	} elsif ($@) {
 		die $@;
@@ -1652,7 +1652,7 @@ sub addUserProblem {
 	eval {
 		return $self->{problem_user}->add($UserProblem);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addUserProblem: user problem exists (perhaps you meant to use putUserProblem?)";
 	} elsif ($@) {
 		die $@;
@@ -1796,7 +1796,7 @@ sub addProblemVersion {
 	eval {
 		return $self->{problem_version}->add($ProblemVersion);
 	};
-	if (my $ex = caught WeBWorK::DB::Schema::Exception::RecordExists) {
+	if (my $ex = caught WeBWorK::DB::Schema::Ex::RecordExists) {
 		croak "addProblemVersion: problem version exists (perhaps you meant to use putProblemVersion?)";
 	} elsif ($@) {
 		die $@;
