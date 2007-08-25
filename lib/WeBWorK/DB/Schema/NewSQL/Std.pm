@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.14 2007/07/25 23:51:48 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.15 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -60,6 +60,9 @@ sub new {
 	my $self = shift->SUPER::new(@_);
 	
 	$self->sql_init;
+	
+	# provide a custom error handler
+	$self->dbh->{HandleError} = \&handle_error;
 	
 	return $self;
 }
@@ -732,4 +735,24 @@ sub sql_field_expression {
 	}
 }
 
+# maps error numbers to exception classes for MySQL
+our %MYSQL_ERROR_CODES = (
+	1062 => 'WeBWorK::DB::Schema::Ex::RecordExists',
+);
+
+# turns MySQL error codes into excpetions -- WeBWorK::DB::Schema::Ex objects
+# for known error types, and normal die STRING exceptions for unknown errors.
+# This is one method you'd want to override if you were writing a subclass for
+# another RDBMS.
+sub handle_error {
+	my ($errmsg, $handle, $returned) = @_;
+	
+	if (exists $MYSQL_ERROR_CODES{$handle->err}) {
+		$MYSQL_ERROR_CODES{$handle->err}->throw;
+	} else {
+		die $errmsg;
+	}
+}
+
 1;
+
