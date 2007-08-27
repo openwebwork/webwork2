@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.199 2007/08/19 01:06:01 dpvc Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.200 2007/08/21 17:07:26 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -623,7 +623,7 @@ $authen{ldap_options} = {
 	
 	proctor_quiz_login             => "login_proctor",
 	proctor_quiz_grade             => "grade_proctor",
-	view_proctored_tests           => "ta",
+	view_proctored_tests           => "student",
 	view_hidden_work               => "ta",
 	
 	view_multiple_sets             => "ta",
