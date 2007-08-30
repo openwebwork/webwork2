@@ -5,7 +5,7 @@
 <!--
  | -----------------------------------------------------------
  | The following line loads and initializes jsMath.
- | You will need to edit the load.js file to set the
+ | You may need to edit the load.js file to set the
  | root URL for your site before this file will
  | display properly
  | -----------------------------------------------------------
@@ -36,7 +36,7 @@ If your browser supports JavaScript, be sure it is enabled.<B>
 This is a sample file showing you how to use jsMath to display mathematics 
 in your web pages.  Be sure you have followed the <A
 HREF="http://www.math.union.edu/locate/jsMath/authors/installation.html">installation
-instructions</A> before loading this file.  Also, you will need to edit the
+instructions</A> before loading this file.  Also, you may need to edit the
 <CODE>jsMath/easy/load.js</CODE> file to set the root URL for where jsMath 
 can be found on your web site.  The rest of this document gives examples of
 how to enter mathematics in your pages.  Depending on the settings in
@@ -93,18 +93,18 @@ of a page by enclosing it in a tag that is of
 paragraph is wrapped in a DIV tag with
 <CODE>CLASS="tex2math_ignore"</CODE>, and so no math delimiters will be
 processed:  $f\colon X\to Y$, \(x^2 \gt 5\), $$1\over 1+x^2$$ and
-\[\martrix{a& b\cr c& d}.\]
+\[\matrix{a& b\cr c& d}.\]
 Note that this includes the processing of escaped dollars (\$) and 
-to custom delimiters ([math]a \mapsto a^2[/math]) as well.
+custom delimiters ([math]a \mapsto a^2[/math]) as well.
 This makes it possible to produce examples of how to enter mathematics on
 your site, for instance.
 </DIV>
 <P>
-Note also that jsMath will automatically ignore the text within
+JsMath will automatically ignore the text within
 <CODE>PRE</CODE> tags, so you can easily enter examples that way as well:
 <PRE>
    $f\colon X\to Y$, \(x^2 \gt 5\),
-   $$1\over 1+x^2$$ and \[\martrix{a& b\cr c& d}.\]
+   $$1\over 1+x^2$$ and \[\matrix{a& b\cr c& d}.\]
 </PRE>
 <P>
 

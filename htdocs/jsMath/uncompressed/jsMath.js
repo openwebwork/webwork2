@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4c",  // change this if you edit the file, but don't edit this file
+  version: "3.4d",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -516,7 +516,7 @@ jsMath.Script = {
    *  If nothing is being loaded, do the pending commands.
    */
   Push: function (object,method,data) {
-//    this.debug('Pushing: '+method+' at '+this.queue.length);
+//  this.debug('Pushing: '+method+' at '+this.queue.length); // debug
     this.queue[this.queue.length] = [object,method,data];
     if (!(this.blocking || (this.needsBody && !jsMath.document.body))) this.Process();
   },
@@ -526,13 +526,28 @@ jsMath.Script = {
    */
   Process: function () {
     while (this.queue.length && !this.blocking) {
-      var call = this.queue[0]; var tmpQueue = this.queue.slice(1); this.queue = [];
+      var call = this.queue[0]; this.queue = this.queue.slice(1);
+      var savedQueue = this.SaveQueue();
       var object = call[0]; var method = call[1]; var data = call[2];
-//      this.debug('Calling: '+method+' ['+tmpQueue.length+']');
+//    this.debug('Calling: '+method+' ['+savedQueue.length+']'); // debug
       if (object) {object[method](data)} else if (method) {method(data)}
-//      this.debug('Done:    '+method+' ['+this.queue.length+' + '+tmpQueue.length+']');
-      this.queue = this.queue.concat(tmpQueue);
+//    this.debug('Done:    '+method+' ['+this.queue.length+' + '+savedQueue.length+'] ('+this.blocking+')'); // debug
+      this.RestoreQueue(savedQueue);
     }
+  },
+  
+  /*
+   *  Allows pushes to occur at the FRONT of the queue
+   *  (so a command acts as a single unit, including anything
+   *  that it pushes on to the command stack)
+   */
+  SaveQueue: function () {
+    var queue = this.queue;
+    this.queue = [];
+    return queue;
+  },
+  RestoreQueue: function (queue) {
+    this.queue = this.queue.concat(queue);
   },
   
   /*
@@ -622,15 +637,17 @@ jsMath.Script = {
       data[k] = d.join('');
     }
     window.eval(data.join(''));
-  }//,
+  }
   
   /*
    *  for debugging the event queue
    */
-//  debug: function (message) {
-//    if (jsMath.document.body && jsMath.window.debug) {jsMath.window.debug(message)}
-//      else {alert(message)}
-//  }
+  /* 
+   * ,debug: function (message) {
+   *   if (jsMath.document.body && jsMath.window.debug) {jsMath.window.debug(message)}
+   *     else {alert(message)}
+   * }
+   */
 
 };
 
@@ -904,11 +921,11 @@ jsMath.Setup = {
    *  Compute font parameters for various sizes
    */
   Sizes: function () {
-    jsMath.TeXparams = [];
-    for (var j=0; j < jsMath.sizes.length; j++) {jsMath.TeXparams[j] = {}}
-    for (var i in jsMath.TeX) {
+    jsMath.TeXparams = []; var i; var j;
+    for (j=0; j < jsMath.sizes.length; j++) {jsMath.TeXparams[j] = {}}
+    for (i in jsMath.TeX) {
       if (typeof(jsMath.TeX[i]) != 'object') {
-        for (var j=0; j < jsMath.sizes.length; j++) {
+        for (j=0; j < jsMath.sizes.length; j++) {
           jsMath.TeXparams[j][i] = jsMath.sizes[j]*jsMath.TeX[i]/100;
         }
       }
@@ -948,7 +965,7 @@ jsMath.Setup = {
    */
   Body: function () {
     if (this.inited) return;
-
+    
     this.inited = -1;
 
     jsMath.Setup.Hidden(); this.inited = -2;
@@ -1167,6 +1184,7 @@ jsMath.Browser = {
       if (jsMath.platform == 'pc') {
         this.IE7 = (window.XMLHttpRequest != null);
         this.quirks = (jsMath.document.compatMode == "BackCompat");
+        this.msieStandard6 = !this.quirks && !this.IE7;
         this.allowAbsoluteDelim = 1; this.separateSkips = 1;
         this.buttonCheck = 1; this.msieBlankBug = 1;
         this.msieDivWidthBug = 1; this.msiePositionFixedBug = 1;
@@ -1174,6 +1192,8 @@ jsMath.Browser = {
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
+        this.msieTeXfontBaselineBug = !jsMath.Browser.quirks;
+            jsMath.Controls.cookie.font == 'tex'
         if (!this.IE7) {this.msieSpaceFix = '<span style="display:inline-block"></span>'}
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
@@ -2405,7 +2425,6 @@ jsMath.Img = {
    */
   UpdateFonts: function () {
     var change = this.update; if (!this.loaded) return;
-    var best = this[jsMath.Img.fonts[this.best]];
     for (var font in change) {
       for (var i = 0; i < change[font].length; i++) {
         var c = change[font][i];
@@ -2614,16 +2633,11 @@ jsMath.HTML = {
       html = '<span style="position:relative;">' + html + '</span>';
     }
     if (jsMath.Browser.spanHeightVaries) {
-      var style = '';
-      style = jsMath.Browser.msieInlineBlockFix
-            + ' width:'+jsMath.HTML.Em(w)+';';
-      if (jsMath.Browser.quirks) {
-        style += ' height:'+jsMath.HTML.Em(H)+';'
-      } else {
-        style += ' height: 0px;'
-               + ' vertical-align:'+jsMath.HTML.Em(H)+';'
-      }
-      html = '<span style="position:relative;' + style + '">'
+      html = '<span style="position:relative;'
+           +   ' width:'+jsMath.HTML.Em(w)+';'
+           +   ' height:'+jsMath.HTML.Em(H)+';'
+           +   jsMath.Browser.msieInlineBlockFix
+           + '">'
            +   html
            + '</span>';
     } else {
@@ -2856,32 +2870,32 @@ jsMath.Add(jsMath.Box,{
     var bot = this.GetChar(C.delim.bot? C.delim.bot: C.delim.rep,font);
     var ext = jsMath.Typeset.AddClass(rep.tclass,rep.c);
     var w = rep.w; var h = rep.h+rep.d
-    var y; var dx;
+    var y; var Y; var html; var dx; var i; var n;
     if (C.delim.mid) {// braces
       var mid = this.GetChar(C.delim.mid,font);
-      var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d)-(bot.h+bot.d))/(2*(rep.h+rep.d)));
+      n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d)-(bot.h+bot.d))/(2*(rep.h+rep.d)));
       H = 2*n*(rep.h+rep.d) + (top.h+top.d) + (mid.h+mid.d) + (bot.h+bot.d);
-      if (nocenter) {y = 0} else {y = H/2+a}; var Y = y;
-      var html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
-               + jsMath.HTML.Place(jsMath.Typeset.AddClass(bot.tclass,bot.c),-(top.w+bot.w)/2,y-(H-bot.d))
-               + jsMath.HTML.Place(jsMath.Typeset.AddClass(mid.tclass,mid.c),-(bot.w+mid.w)/2,y-(H+mid.h-mid.d)/2);
+      if (nocenter) {y = 0} else {y = H/2+a}; Y = y;
+      html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
+           + jsMath.HTML.Place(jsMath.Typeset.AddClass(bot.tclass,bot.c),-(top.w+bot.w)/2,y-(H-bot.d))
+           + jsMath.HTML.Place(jsMath.Typeset.AddClass(mid.tclass,mid.c),-(bot.w+mid.w)/2,y-(H+mid.h-mid.d)/2);
       dx = (w-mid.w)/2; if (Math.abs(dx) < .0001) {dx = 0}
       if (dx) {html += jsMath.HTML.Spacer(dx)}
       y -= top.h+top.d + rep.h;
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
+      for (i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
       y -= H/2 - rep.h/2;
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
+      for (i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
     } else {// everything else
-      var n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d))/(rep.h+rep.d));
+      n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d))/(rep.h+rep.d));
       // make sure two-headed arrows have an extender
       if (top.h+top.d < .9*(rep.h+rep.d)) {n = Math.max(1,n)}
       H = n*(rep.h+rep.d) + (top.h+top.d) + (bot.h+bot.d);
-      if (nocenter) {y = 0} else {y = H/2+a}; var Y = y;
-      var html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
+      if (nocenter) {y = 0} else {y = H/2+a}; Y = y;
+      html = jsMath.HTML.Place(jsMath.Typeset.AddClass(top.tclass,top.c),0,y-top.h)
       dx = (w-top.w)/2; if (Math.abs(dx) < .0001) {dx = 0}
       if (dx) {html += jsMath.HTML.Spacer(dx)}
       y -= top.h+top.d + rep.h;
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
+      for (i = 0; i < n; i++) {html += jsMath.HTML.Place(ext,-w,y-i*h)}
       html += jsMath.HTML.Place(jsMath.Typeset.AddClass(bot.tclass,bot.c),-(w+bot.w)/2,Y-(H-bot.d));
     }
     if (nocenter) {h = top.h} else {h = H/2+a}
@@ -2902,28 +2916,29 @@ jsMath.Add(jsMath.Box,{
     var top = this.GetChar(C.delim.top? C.delim.top: C.delim.rep,font);
     var rep = this.GetChar(C.delim.rep,font);
     var bot = this.GetChar(C.delim.bot? C.delim.bot: C.delim.rep,font);
+    var n; var h; var y; var ext; var i;
     
     if (C.delim.mid) {// braces
       var mid = this.GetChar(C.delim.mid,font);
-      var n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d-.05)-(bot.h+bot.d-.05))/(2*(rep.h+rep.d-.05)));
+      n = Math.ceil((H-(top.h+top.d)-(mid.h+mid.d-.05)-(bot.h+bot.d-.05))/(2*(rep.h+rep.d-.05)));
       H = 2*n*(rep.h+rep.d-.05) + (top.h+top.d) + (mid.h+mid.d-.05) + (bot.h+bot.d-.05);
       
       html = jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(top.tclass,top.c),0,0);
-      var h = rep.h+rep.d - .05; var y = top.d-.05 + rep.h;
-      var ext = jsMath.Typeset.AddClass(font,rep.c)
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      h = rep.h+rep.d - .05; y = top.d-.05 + rep.h;
+      ext = jsMath.Typeset.AddClass(font,rep.c)
+      for (i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
       html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(mid.tclass,mid.c),0,y+n*h-rep.h+mid.h);
       y += n*h + mid.h+mid.d - .05;
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      for (i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
       html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(bot.tclass,bot.c),0,y+n*h-rep.h+bot.h);
     } else {// all others
-      var n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d-.05))/(rep.h+rep.d-.05));
+      n = Math.ceil((H - (top.h+top.d) - (bot.h+bot.d-.05))/(rep.h+rep.d-.05));
       H = n*(rep.h+rep.d-.05) + (top.h+top.d) + (bot.h+bot.d-.05);
 
       html = jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(top.tclass,top.c),0,0);
-      var h = rep.h+rep.d-.05; var y = top.d-.05 + rep.h;
-      var ext = jsMath.Typeset.AddClass(rep.tclass,rep.c);
-      for (var i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
+      h = rep.h+rep.d-.05; y = top.d-.05 + rep.h;
+      ext = jsMath.Typeset.AddClass(rep.tclass,rep.c);
+      for (i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
       html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(bot.tclass,bot.c),0,y+n*h-rep.h+bot.h);
     }
     
@@ -3129,6 +3144,7 @@ jsMath.Add(jsMath.Box,{
 
     html = jsMath.HTML.Spacer(addWidth*scale/6)+html+jsMath.HTML.Spacer(addWidth*scale/6);
     if (jsMath.Browser.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
+//    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
     html = jsMath.HTML.Absolute(html,w,h+d,d,y,h);
     var box = new jsMath.Box('html',html,w+addWidth*scale/3,h,d);
     return box;
@@ -3142,7 +3158,7 @@ jsMath.Add(jsMath.Box,{
     if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
     
     var i = 0; var k = 0; var c; var match = '';
-    var mlist = []; var parse; var html; var box;
+    var mlist = []; var parse;
     while (i < text.length) {
       c = text.charAt(i++);
       if (c == '$') {
@@ -3841,7 +3857,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     var num = jsMath.Box.Set(mitem.num,Cn,size).Remeasured();
     var den = jsMath.Box.Set(mitem.den,Cd,size).Remeasured();
 
-    var u; var v; var w;
+    var u; var v; var w; var p; var r;
     var H = (isD)? TeX.delim1 : TeX.delim2;
     var mlist = [jsMath.Box.Delimiter(H,mitem.left,style)]
     var right = jsMath.Box.Delimiter(H,mitem.right,style);
@@ -3860,13 +3876,13 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
       v = TeX.denom2;
     }
     if (t == 0) {// atop
-      var p = (isD)? 7*TeX.default_rule_thickness: 3*TeX.default_rule_thickness;
-      var r = (u - num.d) - (den.h - v);
+      p = (isD)? 7*TeX.default_rule_thickness: 3*TeX.default_rule_thickness;
+      r = (u - num.d) - (den.h - v);
       if (r < p) {u += (p-r)/2; v += (p-r)/2}
     } else {// over
-      var p = (isD)? 3*t: t; var a = TeX.axis_height;
-      var r = (u-num.d)-(a+t/2); if (r < p) {u += p-r}
-          r = (a-t/2)-(den.h-v); if (r < p) {v += p-r}
+      p = (isD)? 3*t: t; var a = TeX.axis_height;
+      r = (u-num.d)-(a+t/2); if (r < p) {u += p-r}
+      r = (a-t/2)-(den.h-v); if (r < p) {v += p-r}
       var rule = jsMath.Box.Rule(w,t); rule.x = -w; rule.y = a - t/2;
       mlist[mlist.length] = rule;
     }
@@ -5035,7 +5051,7 @@ jsMath.Package(jsMath.Parser,{
     var c = this.GetNext(); if (c != '[') return '';
     var start = ++this.i; var pcount = 0;
     while (this.i < this.string.length) {
-      var c = this.string.charAt(this.i++);
+      c = this.string.charAt(this.i++);
       if (c == '{') {pcount++}
       else if (c == '}') {
         if (pcount == 0)
@@ -5783,6 +5799,8 @@ jsMath.Package(jsMath.Parser,{
       if (jsMath.Browser.allowAbsolute) {
         var y = 0;
         if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
+        if (jsMath.Browser.msieTeXfontBaselineBug &&
+            jsMath.Controls.cookie.font == 'tex') {y -= jsMath.d}
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y,jsMath.h);
       } else if (jsMath.Browser.valignBug) {
         // remove line height
@@ -6028,6 +6046,7 @@ jsMath.Translate = {
    */
   ProcessElement: function (element) {
     this.restart = 0;
+    if (!element.className.match(/(^| )math( |$)/)) return; // don't reprocess elements
     var noCache = (element.className.toLowerCase().match(/(^| )nocache( |$)/) != null);
     try {
       if (element.tagName.toLowerCase() == 'div') {
@@ -6068,7 +6087,9 @@ jsMath.Translate = {
       jsMath.Script.blocking = 0;
       jsMath.Script.Process();
     } else {
+      var savedQueue = jsMath.Script.SaveQueue();
       this.ProcessElement(this.element[k]);
+      jsMath.Script.RestoreQueue(savedQueue);
       if (this.restart) {
         jsMath.Script.Push(this,'ProcessElements',k);
         jsMath.Script.blocking = 0;
@@ -6087,8 +6108,8 @@ jsMath.Translate = {
   Asynchronous: function (obj) {
     if (!jsMath.initialized) {jsMath.Init()}
     this.element = this.GetMathElements(obj);
-    this.cancel = 0; this.asynchronous = 1;
     jsMath.Script.blocking = 1;
+    this.cancel = 0; this.asynchronous = 1;
     jsMath.Message.Set('Processing Math: 0%',1);
     setTimeout('jsMath.Translate.ProcessElements(0)',jsMath.Browser.delay);
   },
@@ -6120,12 +6141,12 @@ jsMath.Translate = {
    *  put them in a list sorted from top to bottom of the page
    */
   GetMathElements: function (obj) {
-    var element = [];
+    var element = []; var k;
     if (!obj) {obj = jsMath.document}
     if (typeof(obj) == 'string') {obj = jsMath.document.getElementById(obj)}
     if (!obj.getElementsByTagName) return null;
     var math = obj.getElementsByTagName('div');
-    for (var k = 0; k < math.length; k++) {
+    for (k = 0; k < math.length; k++) {
       if (math[k].className && math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
@@ -6133,7 +6154,7 @@ jsMath.Translate = {
       }
     }
     math = obj.getElementsByTagName('span');
-    for (var k = 0; k < math.length; k++) {
+    for (k = 0; k < math.length; k++) {
       if (math[k].className && math[k].className.match(/(^| )math( |$)/)) {
         if (jsMath.Browser.renameOK && obj.getElementsByName) 
                {math[k].setAttribute('name','_jsMath_')}
@@ -6161,7 +6182,7 @@ jsMath.Translate = {
       }
     }
     jsMath.hidden = jsMath.hiddenTop;
-    this.element = [];
+    this.element = []; this.restart = null;
     if (!noMessage) {
       jsMath.Message.Set('Processing Math: Done');
       jsMath.Message.Clear();
