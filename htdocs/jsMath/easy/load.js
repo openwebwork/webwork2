@@ -126,9 +126,14 @@ jsMath.Easy = {
 
 if (jsMath.Easy.root == "") {
   jsMath.Easy.root = document.getElementsByTagName("script");
-  jsMath.Easy.root = jsMath.Easy.root[jsMath.Easy.root.length-1].src.
-     replace(/\/(jsMath\/(easy\/)?)?[^\/]*$/,"/jsMath");
+  jsMath.Easy.root = jsMath.Easy.root[jsMath.Easy.root.length-1].src
+  if (jsMath.Easy.root.match(/\/easy\/[^\/]*$/)) {
+    jsMath.Easy.root = jsMath.Easy.root.replace(/\/easy\/[^\/]*$/,"");
+  } else {
+    jsMath.Easy.root = jsMath.Easy.root.replace(/\/(jsMath\/(easy\/)?)?[^\/]*$/,"/jsMath");
+  }
 }
+jsMath.Easy.root = jsMath.Easy.root.replace(/\/$/,""); // trim trailing "/" if any
 
 document.write('<SCRIPT SRC="'+jsMath.Easy.root+'/jsMath-easy-load.js"><'+'/SCRIPT>');
 

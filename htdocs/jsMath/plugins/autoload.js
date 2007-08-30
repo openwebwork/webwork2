@@ -312,8 +312,10 @@ jsMath.Add(jsMath.Autoload,{
    *  and then do any pending commands.
    */
   LoadJsMath: function () {
+    if (this.loading) return;
     if (jsMath.loaded) {this.afterLoad(); return}
     if (this.root) {
+      this.loading = 1;
       this.setMessage('Loading jsMath...');
       this.Script.AfterLoad = this.afterLoad;
       this.Script.Load('jsMath.js');
@@ -322,6 +324,7 @@ jsMath.Add(jsMath.Autoload,{
     }
   },
   afterLoad: function () {
+    jsMath.Autoload.loading = 0;
     if (jsMath.tex2math.window) {jsMath.tex2math.window.jsMath = jsMath}
     //
     //  Handle MSIE bug where jsMath.window both is and is not the actual window
@@ -330,12 +333,12 @@ jsMath.Add(jsMath.Autoload,{
     var fonts = jsMath.Autoload.loadFonts;
     if (fonts) {
       if (typeof(fonts) != 'object') {fonts = [fonts]}
-      for (var i in fonts) {jsMath.Font.Load(fonts[i])}
+      for (var i = 0; i < fonts.length; i++) {jsMath.Font.Load(fonts[i])}
     }
     var files = jsMath.Autoload.loadFiles;
     if (files) {
       if (typeof(files) != 'object') {files = [files]}
-      for (var i in files) {jsMath.Setup.Script(files[i])}
+      for (var i = 0; i < files.length; i++) {jsMath.Setup.Script(files[i])}
     }
     jsMath.Synchronize(function () {jsMath.Autoload.Script.RunStack()});
     jsMath.Autoload.setMessage();
@@ -350,7 +353,7 @@ jsMath.Add(jsMath.Autoload,{
       if (!document.body.hasChildNodes) {document.body.appendChild(this.div)}
         else {document.body.insertBefore(this.div,document.body.firstChild)}
       var style = {
-        position:'absolute', bottom:'1px', left:'2px',
+        position:'fixed', bottom:'1px', left:'2px',
         backgroundColor:'#E6E6E6', border:'solid 1px #959595',
         margin:'0px', padding:'1px 8px', zIndex:102,
         color:'black', fontSize:'75%', width:'auto'
