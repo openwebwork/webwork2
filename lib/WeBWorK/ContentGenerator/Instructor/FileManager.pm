@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.28 2007/08/14 16:23:27 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.29 2007/08/14 18:34:35 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -472,6 +472,8 @@ sub Save {
 	my $data = $self->r->param("data");
 
 	if (defined($data)) {
+		$data =~ s/\r\n?/\n/g;  # convert DOS and Mac line ends to unix
+		local (*OUTFILE);
 		if (open(OUTFILE,">$file")) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage("Failed to save: $@")}
@@ -745,6 +747,7 @@ sub NewFile {
 	if ($self->r->param('confirmed')) {
 		my $name = $self->r->param('name');
 		if (my $file = $self->verifyName($name,"file")) {
+			local (*NEWFILE);
 			if (open(NEWFILE,">$file")) {
 				close(NEWFILE);
 				$self->RefreshEdit("",$name);
@@ -1186,12 +1189,12 @@ sub showHTML {
 ##################################################
 #
 # Check if a string is plain text
-# (i.e., doesn't contain three non-regular
+# (i.e., doesn't contain four non-regular
 # characters in a row.)
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[^\s\x20-\x7E]{3,}/;
+	return $string !~ m/[^\s\x20-\x7E]{4}/;
 }
 
 ##################################################
