@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.89 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.90 2007/08/14 20:16:16 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -139,7 +139,7 @@ sub body {
 
 	debug("Begin collecting merged sets");
 	my @sets = $db->getMergedSets( @userSetIDs );
-	
+
 	debug("Begin fixing merged sets");
 	
 	# Database fix (in case of undefined published values)
@@ -164,13 +164,15 @@ sub body {
 	my $existVersions = 0;
 	my @gwSets = ();
 	my @nonGWsets = ();
+	my %gwSetNames = ();  # this is necessary because we get a setname
+	                      #    for all versions of g/w tests
 	foreach ( @sets ) {
 	    if ( defined( $_->assignment_type() ) && 
 		 $_->assignment_type() =~ /gateway/ ) {
 		$existVersions = 1; 
-		push( @gwSets, $_ ) 
-		    if ( $_->assignment_type() !~ /proctored/ ||
-			 $authz->hasPermissions($user,"view_proctored_tests") );
+
+		push( @gwSets, $_ ) if ( ! defined($gwSetNames{$_->set_id}) );
+		$gwSetNames{$_->set_id} = 1;
 	    } else {
 		push( @nonGWsets, $_ );
 	    }
@@ -221,6 +223,11 @@ sub body {
 	}
 
 	debug("Begin sorting merged sets");
+
+# before building final set lists, exclude proctored gateway sets 
+#    for users without permission to view them
+	my $viewPr = $authz->hasPermissions( $user, "view_proctored_tests" );
+	@gwSets = grep {$_->assignment_type !~ /proctored/ || $viewPr} @gwSets;
 	
 	if ( $sort eq 'name' ) {
 	    @nonGWsets = sortByName("set_id", @nonGWsets);
