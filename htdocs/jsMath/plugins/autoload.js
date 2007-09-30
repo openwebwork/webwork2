@@ -98,14 +98,17 @@ jsMath.Add(jsMath.Autoload,{
 
     /*
      *  Get XMLHttpRequest object, if possible, and look up the URL root
+     *  (MSIE can't use xmlReuest to load local files, so avoid that)
      */
     Init: function () {
-      if (window.XMLHttpRequest) {try {this.request = new XMLHttpRequest} catch (err) {}}
-      if (!this.request && window.ActiveXObject) {
-        var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
-                   "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
-        for (var i = 0; i < xml.length && !this.request; i++) {
-          try {this.request = new ActiveXObject(xml[i])} catch (err) {}
+      if (!(document.URL && document.URL.match(/^file:\/\/.*\\/))) {
+        if (window.XMLHttpRequest) {try {this.request = new XMLHttpRequest} catch (err) {}}
+        if (!this.request && window.ActiveXObject) {
+          var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
+                     "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
+          for (var i = 0; i < xml.length && !this.request; i++) {
+            try {this.request = new ActiveXObject(xml[i])} catch (err) {}
+          }
         }
       }
       this.Root();
@@ -202,7 +205,7 @@ jsMath.Add(jsMath.Autoload,{
       if (script) {
         for (var i = 0; i < script.length; i++) {
           var src = script[i].src;
-          if (src && src.match('(^|/)plugins/autoload.js$')) {
+          if (src && src.match('(^|/|\\\\)plugins/autoload.js$')) {
             jsMath.Autoload.root = src.replace(/plugins\/autoload.js$/,'');
             break;
           }

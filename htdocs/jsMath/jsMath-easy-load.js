@@ -71,11 +71,12 @@ if (jsMath.Easy.processSingleDollars ||
     jsMath.Easy.fixEscapedDollars) {
 
   jsMath.Easy.findCustomSettings = {
-    processSingleDollars: jsMath.Easy.processSingleDollars,
-    processDoubleDollars: jsMath.Easy.processDoubleDollars,
-    processSlashParens:   jsMath.Easy.processSlashParens,
-    processSlashBrackets: jsMath.Easy.processSlashBrackets,
-    fixEscapedDollars:    jsMath.Easy.fixEscapedDollars,
+    processSingleDollars:     jsMath.Easy.processSingleDollars,
+    processDoubleDollars:     jsMath.Easy.processDoubleDollars,
+    processSlashParens:       jsMath.Easy.processSlashParens,
+    processSlashBrackets:     jsMath.Easy.processSlashBrackets,
+    processLaTeXenvironments: jsMath.Easy.processLaTeXenvironments,
+    fixEscapedDollars:        jsMath.Easy.fixEscapedDollars,
     custom: 0
   }
 }
@@ -101,6 +102,7 @@ if (jsMath.Easy.autoload) {
       jsMath.Easy.processDoubleDollars ||
       jsMath.Easy.processSlashParens ||
       jsMath.Easy.processSlashBrackets ||
+      jsMath.Easy.processLaTeXenvironments ||
       jsMath.Easy.fixEscapedDollars ||
       jsMath.Easy.customDelimiters);
 
