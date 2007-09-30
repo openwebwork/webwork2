@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4d",  // change this if you edit the file, but don't edit this file
+  version: "3.4e",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -213,8 +213,8 @@ window.jsMath = {
     if (!cache[this.em][s]) {
       var bbox = this.BBoxFor(s);
       if (s.match(/<i>|class=\"(icm|italic|igreek|iaccent)/i)) {
-        bbox.w = this.BBoxFor(s+jsMath.Browser.italicString).w
-                  - jsMath.Browser.italicCorrection;
+        bbox.w = bbox.Mw = this.BBoxFor(s+jsMath.Browser.italicString).w
+                             - jsMath.Browser.italicCorrection;
       }
       cache[this.em][s] = {w: bbox.w/this.em, h: bbox.h/this.em};
     }
@@ -422,7 +422,12 @@ jsMath.Script = {
    */
   Init: function () {
     if (!(jsMath.Controls.cookie.asynch && jsMath.Controls.cookie.progress)) {
-      if (window.XMLHttpRequest) {try {this.request = new XMLHttpRequest} catch (err) {}}
+      if (window.XMLHttpRequest && 
+         // MSIE can't use xmlRequest on local files, but we don't have 
+         // jsMath.browser yet to tell, so use this check
+         !(jsMath.document.URL && jsMath.document.URL.match(/^file:\/\/.*\\/))) {
+             try {this.request = new XMLHttpRequest} catch (err) {}
+      }
       if (!this.request && window.ActiveXObject) {
         var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
                    "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
@@ -805,22 +810,27 @@ jsMath.Setup = {
       if (script) {
         for (var i = 0; i < script.length; i++) {
           var src = script[i].src;
-          if (src && src.match('(^|/)jsMath.js$')) {
+          if (src && src.match('(^|/|\\\\)jsMath.js$')) {
             jsMath.root = src.replace(/jsMath.js$/,'');
-            i = script.length;
+            break;
           }
         }
       }
     }
+    if (jsMath.root.charAt(0) == '\\') {jsMath.root = jsMath.root.replace(/\\/g,'/')}
     if (jsMath.root.charAt(0) == '/') {
-      jsMath.root = jsMath.document.location.protocol + '//'
-                  + jsMath.document.location.host + jsMath.root;
-    } else if (!jsMath.root.match(/^[a-z]+:/i)) {
-      src = new String(jsMath.document.location);
-      jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
-      while (jsMath.root.match('/[^/]*/\\.\\./')) {
-        jsMath.root = jsMath.root.replace(new RegExp('/[^/]*/\\.\\./'),'/');
+      if (jsMath.root.charAt(1) != '/') {
+        if (jsMath.document.location.port)
+          {jsMath.root = ':' + jsMath.document.location.port + jsMath.root}
+        jsMath.root = '//' + jsMath.document.location.host + jsMath.root;
       }
+      jsMath.root = jsMath.document.location.protocol + jsMath.root;
+    } else if (!jsMath.root.match(/^[a-z]+:/i)) {
+      var src = new String(jsMath.document.location);
+      var pattern = new RegExp('/[^/]*/\\.\\./')
+      jsMath.root = src.replace(new RegExp('[^/]*$'),'') + jsMath.root;
+      while (jsMath.root.match(pattern))
+        {jsMath.root = jsMath.root.replace(pattern,'/')}
     }
     jsMath.Img.root = jsMath.root + "fonts/";
     jsMath.blank = jsMath.root + "blank.gif";
@@ -1187,15 +1197,18 @@ jsMath.Browser = {
         this.msieStandard6 = !this.quirks && !this.IE7;
         this.allowAbsoluteDelim = 1; this.separateSkips = 1;
         this.buttonCheck = 1; this.msieBlankBug = 1;
+        this.msieAccentBug = 1; this.msieRelativeClipBug = 1;
         this.msieDivWidthBug = 1; this.msiePositionFixedBug = 1;
         this.msieIntegralBug = 1; this.waitForImages = 1;
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
         this.msieTeXfontBaselineBug = !jsMath.Browser.quirks;
-            jsMath.Controls.cookie.font == 'tex'
         if (!this.IE7) {this.msieSpaceFix = '<span style="display:inline-block"></span>'}
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
+        jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
+        delete jsMath.Parser.prototype.mathchardef.mapstochar;
+        jsMath.Macro('mapstochar','\\rlap{\\mapstocharOrig\\,}\\kern1mu'),
         jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
         if (!this.IE7 || this.quirks) {
           // MSIE doesn't implement fixed positioning, so use absolute
@@ -2598,11 +2611,26 @@ jsMath.HTML = {
    *  also doesn't combine vertical and horizontal spacing well.
    *  Here the x and y positioning are done in separate <SPAN> tags
    */
-  PlaceSeparateSkips: function (html,x,y) {
+  PlaceSeparateSkips: function (html,x,y,mw,Mw,w) {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
-    if (y) {html = '<span style="position: relative; top:'+this.Em(-y)+';'
-                       + '">' + html + '</span>'}
+    if (y) {
+      var lw = 0; var rw = 0; var width = "";
+      if (mw != null) {
+        rw = Mw - w; lw = mw;
+        width = ' width:'+this.Em(Mw-mw)+';';
+      }
+      html = 
+        this.Spacer(lw-rw) +
+        '<span style="position: relative; '
+            + 'top:'+this.Em(-y)+';'
+            + 'left:'+this.Em(rw)+';'
+            + width + '">' +
+          this.Spacer(-lw) +
+          html +
+          this.Spacer(rw) +
+        '</span>'
+    }
     if (x) {html = this.Spacer(x) + html}
     return html;
   },
@@ -2610,12 +2638,20 @@ jsMath.HTML = {
   /*
    *  Place a SPAN with absolute coordinates
    */
-  PlaceAbsolute: function (html,x,y) {
+  PlaceAbsolute: function (html,x,y,mw,Mw,w) {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
-    html = '<span style="position:absolute; left:'+this.Em(x)+'; '
-              + 'top:'+this.Em(y)+';">' + html + '&nbsp;</span>';
-              //  space normalizes line height in script styles
+    var leftSpace = ""; var rightSpace = "";
+    if (jsMath.Browser.msieRelativeClipBug && mw != null) {
+      leftSpace  = this.Spacer(-mw); x += mw;
+      rightSpace = this.Spacer(Mw-w);
+    }
+    html =
+      '<span style="position:absolute; left:'+this.Em(x)+'; '
+            + 'top:'+this.Em(y)+';">' +
+        leftSpace + html + rightSpace +
+        '&nbsp;' + //  space normalizes line height in script styles
+      '</span>';
     return html;
   },
 
@@ -2659,7 +2695,7 @@ jsMath.Box = function (format,text,w,h,d) {
   if (d == null) {d = jsMath.d}
   this.type = 'typeset';
   this.w = w; this.h = h; this.d = d; this.bh = h; this.bd = d;
-  this.x = 0; this.y = 0;
+  this.x = 0; this.y = 0; this.mw = 0; this.Mw = w;
   this.html = text; this.format = format;
 };
 
@@ -3130,7 +3166,8 @@ jsMath.Add(jsMath.Box,{
           if (align[j] && align[j] == 'r') {x = W[j] - entry.w} else
             {x = (W[j] - entry.w)/2}
           html += jsMath.HTML.PlaceAbsolute(entry.html,w+x,
-                    y-Math.max(0,entry.bh-jsMath.h*scale));
+                    y-Math.max(0,entry.bh-jsMath.h*scale),
+                    entry.mw,entry.Mw,entry.w);
         }
         if (i+1 < table.length) {y += Math.max(HD,D[i]+H[i+1]) + dy + rspacing[i+1]}
       }
@@ -3558,7 +3595,7 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
   phantom: function (style,size,mitem) {
     var box = mitem.nuc = jsMath.Box.Set(mitem.phantom,style,size);
     if (mitem.h) {box.Remeasured(); box.html = jsMath.HTML.Spacer(box.w)}
-      else {box.html = '', box.w = 0}
+      else {box.html = '', box.w = box.Mw = box.mw = 0;}
     if (!mitem.v) {box.h = box.d = 0}
     box.bd = box.bh = 0;
     delete mitem.phantom;
@@ -3582,7 +3619,8 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
   raise: function (style,size,mitem) {
     mitem.nuc = jsMath.Box.Set(mitem.nuc,style,size);
     var y = mitem.raise;
-    mitem.nuc.html = jsMath.HTML.Place(mitem.nuc.html,0,y);
+    mitem.nuc.html =
+      jsMath.HTML.Place(mitem.nuc.html,0,y,mitem.nuc.mw,mitem.nuc.Mw,mitem.nuc.w);
     mitem.nuc.h += y; mitem.nuc.d -= y;
     mitem.type = 'ord'; mitem.atom = 1;
   },
@@ -3731,11 +3769,12 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     var TeX = jsMath.Typeset.TeX(style,size);
     var Cp = jsMath.Typeset.PrimeStyle(style);
     var box = jsMath.Box.Set(mitem.nuc,Cp,size);
-    var u = box.w; var s; var Font;
+    var u = box.w; var s; var Font; var ic = 0;
     if (mitem.nuc.type == 'TeX') {
       Font = jsMath.TeX[mitem.nuc.font];
       if (Font[mitem.nuc.c].krn && Font.skewchar)
         {s = Font[mitem.nuc.c].krn[Font.skewchar]}
+      ic = Font[mitem.nuc.c].ic; if (ic == null) {ic = 0}
     }
     if (s == null) {s = 0}
     
@@ -3754,7 +3793,9 @@ jsMath.Add(jsMath.mList.prototype.Atomize,{
     }
     var acc = jsMath.Box.TeX(c,font,style,size);
     acc.y = box.h - delta; acc.x = -box.w + s + (u-acc.w)/2;
-    if (Font[c].ic) {acc.x -= Font[c].ic * TeX.scale}
+    if (jsMath.Browser.msieAccentBug) 
+      {acc.html += jsMath.HTML.Spacer(.1); acc.w += .1; acc.Mw += .1}
+    if (Font[c].ic || ic) {acc.x += (ic - (Font[c].ic||0)) * TeX.scale}
 
     mitem.nuc = jsMath.Box.SetList([box,acc],style,size);
     if (mitem.nuc.w != box.w) {
@@ -4121,7 +4162,8 @@ jsMath.Package(jsMath.Typeset,{
    */
   Typeset: function (style,size) {
     this.style = style; this.size = size; var unset = -10000
-    this.w = 0; this.h = unset; this.d = unset;
+    this.w = 0; this.mw = 0; this.Mw = 0;
+    this.h = unset; this.d = unset;
     this.bh = this.h; this.bd = this.d;
     this.tbuf = ''; this.tx = 0; this.tclass = '';
     this.cbuf = ''; this.hbuf = ''; this.hx = 0;
@@ -4164,8 +4206,12 @@ jsMath.Package(jsMath.Typeset,{
         default:   // atom
           if (!mitem.atom && mitem.type != 'box') break;
           mitem.nuc.x += this.dx + this.GetSeparation(prev,mitem,this.style);
-          if (mitem.nuc.y || mitem.nuc.x) mitem.nuc.Styled();
+          if (mitem.nuc.x || mitem.nuc.y) mitem.nuc.Styled();
           this.dx = 0; this.x = this.x + this.w;
+          if (this.x + mitem.nuc.x + mitem.nuc.mw < this.mw) 
+            {this.mw = this.x + mitem.nuc.x + mitem.nuc.mw}
+          if (this.w + mitem.nuc.x + mitem.nuc.Mw > this.Mw)
+            {this.Mw = this.w + mitem.nuc.x + mitem.nuc.Mw}
           this.w += mitem.nuc.w + mitem.nuc.x;
           if (mitem.nuc.format == 'text') {
             if (this.tclass != mitem.nuc.tclass && this.tclass != '') this.FlushText();
@@ -4184,12 +4230,17 @@ jsMath.Package(jsMath.Typeset,{
     }
 
     this.FlushClassed(); // make sure scaling is included
-    if (this.dx) {this.hbuf += jsMath.HTML.Spacer(this.dx); this.w += this.dx}
+    if (this.dx) {
+      this.hbuf += jsMath.HTML.Spacer(this.dx); this.w += this.dx;
+      if (this.w > this.Mw) {this.Mw = this.w}
+      if (this.w < this.mw) {this.mw = this.w}
+    }
     if (this.hbuf == '') {return jsMath.Box.Null()}
     if (this.h == unset) {this.h = 0}
     if (this.d == unset) {this.d = 0}
     var box = new jsMath.Box('html',this.hbuf,this.w,this.h,this.d);
     box.bh = this.bh; box.bd = this.bd;
+    box.mw = this.mw; box.Mw = this.Mw;
     return box;
   },
 
@@ -4236,17 +4287,26 @@ jsMath.Package(jsMath.Typeset,{
    *  also doesn't combine vertical and horizontal spacing well.
    *  Here, the horizontal and vertical spacing are done separately.
    */
+
   PlaceSeparateSkips: function (item) {
     if (item.y) {
-      item.html = '<span style="position: relative; '
-                     + 'top:'+jsMath.HTML.Em(-item.y)+';'
-                     + '">' + item.html + '</span>'
+      var rw = item.Mw - item.w; var lw = item.mw;
+      var W = item.Mw - item.mw;
+      item.html = 
+        jsMath.HTML.Spacer(lw-rw) +
+        '<span style="position: relative; '
+            + 'top:'+jsMath.HTML.Em(-item.y)+';'
+            + 'left:'+jsMath.HTML.Em(rw)+'; width:'+jsMath.HTML.Em(W)+';">' +
+          jsMath.HTML.Spacer(-lw) +
+          item.html +
+          jsMath.HTML.Spacer(rw) + 
+        '</span>'
     }
     if (item.x) {item.html = jsMath.HTML.Spacer(item.x) + item.html}
     item.h += item.y; item.d -= item.y;
     item.x = 0; item.y = 0;
   }
-  
+
 });
 
 
@@ -5426,7 +5486,7 @@ jsMath.Package(jsMath.Parser,{
   Strut: function () {
     var size = this.mlist.data.size;
     var box = jsMath.Box.Text('','normal','T',size).Styled();
-    box.bh = box.bd = 0; box.h = .8; box.d = .3; box.w = 0;
+    box.bh = box.bd = 0; box.h = .8; box.d = .3; box.w = box.Mw = 0;
     this.mlist.Add(jsMath.mItem.Typeset(box));
   },
   
