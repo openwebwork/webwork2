@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/remove_stale_images,v 1.4 2006/01/25 23:13:45 sh002i Exp $
+# $CVSHeader: webwork2/bin/remove_stale_images,v 1.5 2007/08/13 22:59:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -65,6 +65,7 @@ use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use File::Find;
+use DBI;
 
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n"
@@ -87,7 +88,9 @@ my $num_removed = 0;
 my %kept = ();
 my %days=();
 my %week=();
+my %depths=();
 my $grandtotal=0;
+my $depthConnection;
 
 ##### get command-line options #####
 
@@ -155,6 +158,12 @@ sub wanted {
       }
       if($stat[$type]<$start or $stat[$type]>$end) {
 	$kept{$fullmd5} = '';
+	if($depthConnection) { # hold dvipng depths
+		my $fetchdepth = $depthConnection->selectall_arrayref("
+			SELECT depth FROM depths WHERE md5=\"$fullmd5\"");
+		my $fetchdepthval = $fetchdepth->[0]->[0];
+		$depths{$fullmd5} = $fetchdepthval if($fetchdepthval);
+	}
       } else {
         my $result = unlink($File::Find::name);
         if($result) {
@@ -211,10 +220,35 @@ my $cachePath = $ce->{webworkFiles}->{equationCacheDB};
 my $tmpdir = $ce->{webworkDirs}->{tmp};
 my $tmpfile = "$tmpdir/equationcache.tmp";
 
+# Prepare to handle depths database table
+my $alignType = $ce->{pg}->{displayModeOptions}->{images}->{dvipng_align};
+if($alignType eq 'mysql' and $deloption) {
+	my $dbinfo = $ce->{pg}->{displayModeOptions}->{images}->{dvipng_depth_db};
+	$depthConnection = DBI->connect_cached(
+		$dbinfo->{dbsource},
+		$dbinfo->{user},
+		$dbinfo->{passwd},
+		{ PrintError => 0, RaiseError => 1 },
+	);
+	print "Could not make database connection for dvipng image depths.\n" unless defined $depthConnection;
+}
+
 find({wanted => \&wanted, follow_fast => 1}, $dirHead);
 
 print "Removed $num_removed images.\n\n" if($deloption);
 count_report() if($reportoption);
+
+
+# For depth database, empty it and insert only values for the images
+# we kept.
+my $ent;
+if($depthConnection) { # clean out database and put back in good values
+	$depthConnection->do("TRUNCATE depths");
+	for my $ent (keys %depths) {
+		$depthConnection->do("INSERT INTO `depths` VALUES(
+			\"$ent\", \"$depths{$ent}\")");
+	}
+}
 
 ## The rest is updating the equation cache if we deleted images and there is a cache
 exit() unless($deloption and $num_removed);
@@ -223,7 +257,6 @@ print "Updating the equation cache\n";
 my ($perms, $uid, $groupID) = (stat $cachePath)[2,4,5]; #Get values from current cache file
 my $cachevalues = readFile($cachePath);
 my @cachelines = split "\n", $cachevalues;
-my $ent;
 for $ent (@cachelines) {
   chomp($ent);
   my $entmd5 = $ent;
@@ -247,7 +280,6 @@ rename($tmpfile, $cachePath);
 # the web server in which case it wasn't needed
 chmod $perms, $cachePath;
 chown $uid, $groupID, $cachePath;
-
 
 
 
