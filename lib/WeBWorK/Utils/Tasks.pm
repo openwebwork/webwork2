@@ -131,6 +131,8 @@ sub renderProblems {
   my $problem_seed = $args{'problem_seed'} || $r->param('problem_seed') || 0;
   my $displayMode = $args{displayMode} ||
     $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+  my $showHints = $args{showHints} || 0;
+  my $showSolutions = $args{showSolutions} || 0;
   my $problemNumber= $args{'problem_number'} || 1;
   $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble} = {
 	TeX=>'',
@@ -164,8 +166,8 @@ sub renderProblems {
                                 $formFields, 
                                 { # translation options 
                                  displayMode     => $displayMode, 
-                                 showHints       => 0, 
-                                 showSolutions   => 0, 
+                                 showHints       => $showHints, 
+                                 showSolutions   => $showSolutions, 
                                  refreshMath2img => 0, 
                                  processAnswers  => 0, 
                                 } 

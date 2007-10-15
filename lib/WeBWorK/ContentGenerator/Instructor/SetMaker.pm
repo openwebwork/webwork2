@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.79 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.80 2007/08/24 18:09:46 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,8 @@ use File::Find;
 
 require WeBWorK::Utils::ListingDB;
 
+use constant SHOW_HINTS_DEFAULT => 0;
+use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
 use constant SELECT_SET_STRING => 'Select a Set from this Course';
@@ -314,6 +316,11 @@ sub view_problems_line {
 		CGI::popup_menu(-name=> 'max_shown',
 		                -values=>[5,10,15,20,25,30,50,'All'],
 		                -default=> $defaultMax);
+	# Option of whether to show hints and solutions
+	my $defaultHints = $r->param('showHints') || SHOW_HINTS_DEFAULT;
+	$result .= "&nbsp;".CGI::checkbox(-name=>"showHints",-checked=>$defaultHints,-label=>"Hints");
+	my $defaultSolutions = $r->param('showSolutions') || SHOW_SOLUTIONS_DEFAULT;
+	$result .= "&nbsp;".CGI::checkbox(-name=>"showSolutions",-checked=>$defaultSolutions,-label=>"Solutions");
 	
 	return($result);
 }
@@ -1287,11 +1294,17 @@ sub body {
 	my @pg_files = @{$self->{pg_files}};
 	my @all_db_sets = @{$self->{all_db_sets}};
 
-	my @pg_html=($last_shown>=$first_shown) ?
-		renderProblems(r=> $r,
-									 user => $user,
-									 problem_list => [@pg_files[$first_shown..$last_shown]],
-									 displayMode => $r->param('mydisplayMode')) : ();
+	my @pg_html;
+	if ($last_shown >= $first_shown) {
+		@pg_html = renderProblems(
+			r=> $r,
+			user => $user,
+			problem_list => [@pg_files[$first_shown..$last_shown]],
+			displayMode => $r->param('mydisplayMode'),
+			showHints => $r->param('showHints'),
+			showSolutions => $r->param('showSolutions'),
+		);
+	}
 
 	my %isInSet;
 	my $setName = $r->param("local_sets");
