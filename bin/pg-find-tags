@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb,v 1.14 2007/08/13 22:59:50 sh002i Exp $
+# $CVSHeader: webwork2/bin/pg-find-tags,v 1.1 2007/10/17 16:56:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,8 +25,12 @@ use File::Find;
 use Getopt::Long;
 use IO::Handle;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib";
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::NPL qw/gen_find_tags/;
 
 sub main {
