@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/pg-pull,v 1.1 2007/10/17 16:56:16 sh002i Exp $
+# $CVSHeader: webwork2/bin/pg-pull,v 1.2 2007/10/17 16:58:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,6 +34,7 @@ use warnings;
 use Data::Dumper;
 use File::Path;
 use File::Spec;
+use File::Copy;
 use Getopt::Long;
 use IO::File;
 
@@ -109,7 +110,6 @@ sub get_texts {
 
 sub process_file {
 	my $file = shift;
-	print "$file\n";
 	
 	# ignoring volume here because we don't care about w32
 	(undef, my ($dir, $name)) = File::Spec->splitpath($file);
@@ -133,12 +133,14 @@ sub process_file {
 	my @files = ($target_name);
 	push @files, @{$tags{UsesAuxiliaryFiles}} if defined $tags{UsesAuxiliaryFiles};
 	
-	mkpath($target_dir);
+	#print "mkpath $target_dir\n" if $o{pretend} or $o{verbose};
+	mkpath($target_dir) unless $o{pretend};
+	
 	foreach my $curr (@files) {
 		my $src = File::Spec->catpath(undef, $dir, $curr);
 		my $dest = File::Spec->catpath(undef, $target_dir, $curr);
-		print "$src => $dest\n";
-		#copy($src, $dest);
+		print "copy $src $dest\n" if $o{pretend} or $o{verbose};
+		copy($src, $dest) unless $o{pretend};
 	}
 }
 
@@ -260,5 +262,7 @@ GetOptions(\%o,
 	'src-lib=s',
 	'stdin',
 	'suffix=s',
+	'pretend',
+	'verbose'
 );
 main(@ARGV);
