@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.200 2007/08/21 17:07:26 dpvc Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.201 2007/08/27 21:05:38 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -142,6 +142,7 @@ $mail{feedbackRecipients}    = [
 #   %r = recitation
 #   %% = literal percent sign
 # 
+
 $mail{feedbackSubjectFormat} = "[WWfeedback] course:%c user:%u set:%s prob:%p sec:%x rec:%r";
 
 # feedbackVerbosity:
@@ -203,7 +204,9 @@ $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
 #    $webworkDirs{valid_symlinks} = ["$webworkDirs{courses}/modelCourse/templates","/ww2/common/sets"];
 $webworkDirs{valid_symlinks}   = [];
 
+################################################################################
 ##### The following locations are web-accessible.
+################################################################################
 
 # The root URL (usually /webwork2), set by <Location> in Apache configuration.
 $webworkURLs{root}          = "$webwork_url";
@@ -226,7 +229,7 @@ $webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
 $webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
 
 # URL of general WeBWorK documentation.
-$webworkURLs{docs}          = "http://webhost.math.rochester.edu/webworkdocs/docs";
+$webworkURLs{docs}          = "http://webwork.maa.org";
 
 # URL of WeBWorK Bugzilla database.
 $webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/";
@@ -306,9 +309,10 @@ $webworkFiles{environment}                      = "$webworkDirs{conf}/global.con
 # don't want to use the equation cache file.
 $webworkFiles{equationCacheDB}                  = ""; # "$webworkDirs{DATA}/equationcache";
 
-##### Hardcopy snippets are used in constructing a TeX file for hardcopy output.
-##### They should contain TeX code unless otherwise noted.
-
+################################################################################
+# Hardcopy snippets are used in constructing a TeX file for hardcopy output.
+# They should contain TeX code unless otherwise noted.
+################################################################################
 # The preamble is the first thing in the TeX file.
 $webworkFiles{hardcopySnippets}{preamble}       = "$webworkDirs{conf}/snippets/hardcopyPreamble.tex";
 
@@ -336,7 +340,7 @@ $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/h
 $webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
 
 # A PG template for creation of new problems.
-$webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem.pg"; # screenSetHeader.pg"
+$webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem2.pg"; # screenSetHeader.pg"
 
 # A site info  "message of the day" file
 $webworkFiles{site_info}                       = "$webworkDirs{htdocs}/site_info.txt";
@@ -895,6 +899,8 @@ ${pg}{modules} = [
 	[qw(VectorField)],
 	[qw(Parser Value)],
 	[qw(Parser::Legacy)],
+#	[qw(SaveFile)],
+#	[qw(Applet FlashApplet)],
 ];
 
 ##### Answer evaluatior defaults
