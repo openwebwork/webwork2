@@ -84,13 +84,12 @@ jsMath.Easy = {
   //
   showFontWarnings: 1,
   
-  
   //
   //  Use "Process" or "ProcessBeforeShowing".  See the jsMath
   //  author's documentation for the difference between these
   //  two routines.
   //
-  method:  "Process",
+  method: "Process",
 
   //
   //  List of plug-ins and extensions that you want to be
@@ -107,6 +106,7 @@ jsMath.Easy = {
   
   //
   //  Allow jsMath to enter global mode?
+  //  (Uses frames, so may not always work with complex web sites)
   //
   allowGlobal: 1,
   

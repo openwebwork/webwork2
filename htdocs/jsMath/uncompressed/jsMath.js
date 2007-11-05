@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4e",  // change this if you edit the file, but don't edit this file
+  version: "3.4f",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -1203,7 +1203,8 @@ jsMath.Browser = {
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
-        this.msieTeXfontBaselineBug = !jsMath.Browser.quirks;
+        this.msieTeXfontBaselineBug = !this.quirks;
+        this.msieBorderBug = this.blankWidthBug = 1; // force these, since IE7 doesn't register it
         if (!this.IE7) {this.msieSpaceFix = '<span style="display:inline-block"></span>'}
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
@@ -2557,8 +2558,12 @@ jsMath.HTML = {
     }
     if (w == 0) {
       if (jsMath.Browser.blankWidthBug) {
-        style += 'width:1px;';
-        backspace = '<span class="spacer" style="margin-right:-1px"></span>'
+        if (jsMath.Browser.quirks) {
+          style += 'width:1px;';
+          backspace = '<span class="spacer" style="margin-right:-1px"></span>'
+        } else if (!isRule) {
+          style += 'width:1px;margin-right:-1px;';
+        }
       }
     } else {style += 'width:'+this.Em(w)+';'}
     if (d == null) {d = 0}
@@ -2655,7 +2660,7 @@ jsMath.HTML = {
     return html;
   },
 
-  Absolute: function(html,w,h,d,y,H) {
+  Absolute: function(html,w,h,d,y) {
     if (y != "none") {
       if (Math.abs(y) < .0001) {y = 0}
       html = '<span style="position:absolute; '
@@ -2668,17 +2673,9 @@ jsMath.HTML = {
     if (jsMath.Browser.msieAbsoluteBug) {           // for MSIE (Mac)
       html = '<span style="position:relative;">' + html + '</span>';
     }
-    if (jsMath.Browser.spanHeightVaries) {
-      html = '<span style="position:relative;'
-           +   ' width:'+jsMath.HTML.Em(w)+';'
-           +   ' height:'+jsMath.HTML.Em(H)+';'
-           +   jsMath.Browser.msieInlineBlockFix
-           + '">'
-           +   html
-           + '</span>';
-    } else {
-      html = '<span style="position:relative">' + html + '</span>';
-    }
+    html = '<span style="position:relative;'
+         +   jsMath.Browser.msieInlineBlockFix
+         + '">' + html + '</span>';
     return html;
   }
 
@@ -2980,8 +2977,7 @@ jsMath.Add(jsMath.Box,{
     
     var w = top.w;
     if (nocenter) {h = top.h; y = 0} else {h = H/2 + a; y = h - top.h}
-//    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,top.h);
-    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y,jsMath.h);
+    html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y);
     var box = new jsMath.Box('html',html,rep.w,h,H-h);
     box.bh = jsMath.TeX[font].h; box.bd = jsMath.TeX[font].d;
     return box;
@@ -3181,8 +3177,7 @@ jsMath.Add(jsMath.Box,{
 
     html = jsMath.HTML.Spacer(addWidth*scale/6)+html+jsMath.HTML.Spacer(addWidth*scale/6);
     if (jsMath.Browser.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
-//    html = jsMath.HTML.Absolute(html,w,h+d,d,y,H[0]);
-    html = jsMath.HTML.Absolute(html,w,h+d,d,y,h);
+    html = jsMath.HTML.Absolute(html,w,h+d,d,y);
     var box = new jsMath.Box('html',html,w+addWidth*scale/3,h,d);
     return box;
   },
@@ -3193,6 +3188,7 @@ jsMath.Add(jsMath.Box,{
   InternalMath: function (text,size) {
     text = text.replace(/@\(([^)]*)\)/g,'<$1>');
     if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
+    
     
     var i = 0; var k = 0; var c; var match = '';
     var mlist = []; var parse;
@@ -5859,9 +5855,7 @@ jsMath.Package(jsMath.Parser,{
       if (jsMath.Browser.allowAbsolute) {
         var y = 0;
         if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
-        if (jsMath.Browser.msieTeXfontBaselineBug &&
-            jsMath.Controls.cookie.font == 'tex') {y -= jsMath.d}
-        html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y,jsMath.h);
+        html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y);
       } else if (jsMath.Browser.valignBug) {
         // remove line height
         html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';">'
