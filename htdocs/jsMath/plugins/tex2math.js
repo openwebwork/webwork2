@@ -242,7 +242,7 @@ jsMath.Add(jsMath.tex2math,{
         default:
           if (match.substr(0,6) == '\\begin' && this.search.end == null &&
               this.processLaTeXenvironments) {
-            this.ScanMark('span',element,'\\end'+match.substr(6));
+            this.ScanMark('div',element,'\\end'+match.substr(6));
             this.search.olength = 0;
           }
           break;
