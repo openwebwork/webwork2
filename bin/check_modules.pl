@@ -49,6 +49,7 @@ my @modulesList = qw(
 	Digest::MD5
 	Email::Address
 	Errno
+	Exception::Class
 	File::Copy
 	File::Find
 	File::Path
