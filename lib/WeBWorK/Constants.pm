@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.54 2007/07/21 16:37:39 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.55 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -283,7 +283,7 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'
 		},
 		{ var => 'mail{allowedRecipients}',
-		  doc => 'E-mail addresses which can recieve e-mail from a pg problem',
+		  doc => 'E-mail addresses which can receive e-mail from a pg problem',
 		  doc2 => 'List of e-mail addresses to which e-mail can be sent by a problem. Professors need to be added to this list if questionaires are used, or other WeBWorK problems which send e-mail as part of their answer mechanism.',
 		  type => 'list'},
 		{ var => 'permissionLevels{receive_feedback}',
