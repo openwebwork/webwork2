@@ -1733,8 +1733,10 @@ sub readSetDef {
 					$curr .= $c;
 				}
 			}
-			($name, $value, $attemptLimit, $continueFlag) = @line;
+			## anything left?
+			push(@line, $curr) if ( $curr );
 			
+			($name, $value, $attemptLimit, $continueFlag) = @line;
 			#####################
 			#  clean up problem values
 			###########################
