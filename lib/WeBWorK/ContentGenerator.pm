@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.191 2007/03/27 17:13:31 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.192 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -549,7 +549,7 @@ sub links {
 	# grab some interesting data from the request
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param('user');
-	my $eUserID    = $r->param("effectiveUser");
+	my $eUserID   = $r->param("effectiveUser");
 	my $setID     = $urlpath->arg("setID");
 	my $problemID = $urlpath->arg("problemID");
 	
@@ -1297,29 +1297,29 @@ sub navMacro {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my %args = %$args;
-	
+
 	my $auth = $self->url_authen_args;
 	my $prefix = $ce->{webworkURLs}->{htdocs}."/images";
-	
+
 	my @result;
 	while (@links) {
 		my $name = shift @links;
 		my $url = shift @links;
 		my $img = shift @links;
 		my $html = 
-			($img && $args{style} eq "images") 
+			($img && $args{style} eq "images")
 			? CGI::img(
-				{src=>($prefix."/".$img.$args{imagesuffix}), 
+				{src=>($prefix."/".$img.$args{imagesuffix}),
 				border=>"",
 				alt=>"$name"})
 			: $name;
-		unless($img && !$url) {
+#		unless($img && !$url) {  ## these are now "disabled" versions in grey -- DPVC
 			push @result, $url
 				? CGI::a({-href=>"$url?$auth$tail"}, $html)
 				: $html;
-		}
+#		}
 	}
-	
+
 	return join($args{separator}, @result) . "\n";
 }
 
@@ -1519,7 +1519,7 @@ authentication.
 sub hidden_authen_fields {
 	my ($self) = @_;
 	
-	return $self->hidden_fields("user", "effectiveUser", "key");
+	return $self->hidden_fields("user", "effectiveUser", "key", "theme");
 }
 
 =item hidden_proctor_authen_fields()
@@ -1590,7 +1590,7 @@ authentication.
 sub url_authen_args {
 	my ($self) = @_;
 	
-	return $self->url_args("user", "effectiveUser", "key");
+	return $self->url_args("user", "effectiveUser", "key", "theme");
 }
 
 =item url_state_args()
@@ -1728,6 +1728,7 @@ sub systemLink {
 		$params{user}          = undef unless exists $params{user};
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
 		$params{key}           = undef unless exists $params{key};
+		$params{theme}         = undef unless exists $params{theme};
 	}
 	
 	my $url;

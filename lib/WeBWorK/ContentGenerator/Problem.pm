@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.209 2007/08/13 14:16:11 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.210 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -737,7 +737,7 @@ sub nav {
 			courseID => $courseID, setID => $setID, problemID => $prevID);
 		push @links, "Previous Problem", $r->location . $prevPage->path, "navPrev";
 	} else {
-		push @links, "Previous Problem", "", "navPrev";
+		push @links, "Previous Problem", "", "navPrevGrey";
 	}
 	
 	push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
@@ -747,7 +747,7 @@ sub nav {
 			courseID => $courseID, setID => $setID, problemID => $nextID);
 		push @links, "Next Problem", $r->location . $nextPage->path, "navNext";
 	} else {
-		push @links, "Next Problem", "", "navNext";
+		push @links, "Next Problem", "", "navNextGrey";
 	}
 	
 	my $tail = "";
