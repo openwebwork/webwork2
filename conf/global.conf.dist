@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.201 2007/08/27 21:05:38 glarose Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.202 2007/10/28 16:55:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -97,6 +97,9 @@ $mail{smtpServer}            = 'mail.yourschool.edu';
 # message. It can really be anything, but some mail servers require it contain
 # a valid mail domain, or at least be well-formed.
 $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+
+# Seconds to wait before timing out when connecting to the SMTP server.
+$mail{smtpTimeout}           = 30;
 
 # AllowedRecipients defines addresses that the PG system is allowed to send mail
 # to. this prevents subtle PG exploits. This should be set in course.conf to the

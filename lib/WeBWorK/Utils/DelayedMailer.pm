@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DelayedMailer.pm,v 1.1 2006/12/05 20:58:38 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/DelayedMailer.pm,v 1.2 2007/08/13 22:59:59 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -33,6 +33,7 @@ sub new {
 	# SMTP settings
 	$$self{smtp_server} = $options{smtp_server};
 	$$self{smtp_sender} = $options{smtp_sender};
+	$$self{smtp_timeout} = $options{smtp_timeout};
 	
 	# extra headers
 	$$self{headers} = $options{headers};
@@ -88,7 +89,7 @@ sub send_messages {
 	
 	return unless @{$$self{msgs}};
 	
-	my $smtp = new Net::SMTP($$self{smtp_server}, Timeout=>10)
+	my $smtp = new Net::SMTP($$self{smtp_server}, Timeout=>$$self{smtp_timeout})
 		or die "failed to create Net::SMTP object";
 	
 	my @results;
