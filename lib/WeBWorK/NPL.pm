@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwdb,v 1.14 2007/08/13 22:59:50 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/NPL.pm,v 1.1 2007/10/17 16:56:16 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -274,8 +274,8 @@ sub read_tags {
 			my $field = $1;
 			my $value = $2;
 			my ($parsed_value, $parse_errors) = parse_normal_list($field, $value);
-			if ($parse_errors) {
-				warn "error while parsing value \"$value\" in field $field:\n"
+			if (@$parse_errors) {
+				warn "error while parsing list value \"$value\" in field $field:\n"
 					. join('', @$parse_errors)
 					. "value may be incomplete. use with caution.\n"
 					. "(line $. of file $file)\n";
