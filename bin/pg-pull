@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/pg-pull,v 1.2 2007/10/17 16:58:12 sh002i Exp $
+# $CVSHeader: webwork2/bin/pg-pull,v 1.3 2007/10/22 20:32:38 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,8 +54,14 @@ sub main {
 	my (@files) = @_;
 	my $oldfh = select(STDERR); $|=1; select(STDOUT); $|=1; select($oldfh);
 	
+	if (defined $o{help}) {
+		print usage();
+		exit;
+	}
+	
 	my $dest_lib = $o{'dest-lib'};
-	$dest_lib = pop @files unless defined $dest_lib;
+	# using the last argument as dest-lib is too confusing
+	#$dest_lib = pop @files unless defined $dest_lib;
 	die "dest-lib not specified.\n" . usage() unless defined $dest_lib;
 	
 	die "no files specified (perhaps you meant to use --stdin?)\n" . usage()
@@ -125,7 +131,11 @@ sub process_file {
 		$target_dir_rel = File::Spec->abs2rel($dir, $o{'src-lib'});
 		$target_name = $name;
 	} else {
-		($target_dir_rel, $target_name) = tags_to_path(\%tags, '.pg');
+		($target_dir_rel, $target_name) = tags_to_path(\%tags, '.pg', $file);
+	}
+	
+	if ($o{'check-names'} and $name ne $target_name) {
+		warn "$file: name will be changed to $target_name\n";
 	}
 	
 	my $target_dir = File::Spec->catdir($o{'dest-lib'}, $target_dir_rel);
@@ -145,12 +155,12 @@ sub process_file {
 }
 
 sub tags_to_path {
-	my ($tags, $ext) = @_;
+	my ($tags, $ext, $file) = @_;
 	
 	# FIXME here is where we'd put in textbook matching
 	my $text = $tags->{textbooks}[0];
 	unless (defined $text) {
-		warn "no textbook tags\n";
+		warn "$file: no textbook tags\n";
 		return;
 	}
 	my %text = %$text;
@@ -162,7 +172,7 @@ sub tags_to_path {
 			or not defined $text{section}
 			or not defined $text{problem}
 			or @{$text{problem}} == 0) {
-		warn "incomplete textbook tags\n";
+		warn "$file: incomplete textbook tags\n";
 		return;
 	}
 	
@@ -177,16 +187,16 @@ sub tags_to_path {
 			if (defined $text_names{$text{chapter}}) {
 				$chapter_name .= sissy_filename(" $text_names{$text{chapter}}")
 			} else {
-				warn "no chapter name for $text{chapter}";
+				warn "$file: no chapter name for $text{chapter}";
 			}
 
 			if (defined $text_names{"$text{chapter}.$text{section}"}) {
 				$chapsec_name .= sissy_filename(" $text_names{qq|$text{chapter}.$text{section}|}");
 			} else {
-				warn "no section name for $text{chapter}.$text{section}";
+				warn "$file: no section name for $text{chapter}.$text{section}";
 			}
 		} else {
-			warn "can't find text $text{author}/$text{title}/$text{edition} in Textbooks file -- directories will be unnamed\n";
+			warn "$file: can't find text $text{author}/$text{title}/$text{edition} in Textbooks file -- directories will be unnamed\n";
 		}
 	}
 	
@@ -249,10 +259,14 @@ sub sissy_filename {
 
 sub usage {
 	return "USAGE:\n"
-		. "$0 --textbooks=PATH --suffix=STRING files... dest-lib\n"
-		. "$0 --textbooks=PATH --suffix=STRING --dest-lib=PATH files...\n"
-		. "$0 --orig-paths -src-lib=PATH files... dest-lib\n"
-		. "$0 --orig-paths -src-lib=PATH --dest-lib=PATH files...\n";
+		. "$0 [OPTIONS] --dest-lib=PATH [--textbooks=PATH] [--suffix=STRING] files...\n"
+		. "$0 [OPTIONS] --dest-lib=PATH --orig-paths --src-lib=PATH files...\n"
+		. "Options:\n"
+		. "\t--stdin\n"
+		. "\t--pretend\n"
+		. "\t--verbose\n"
+		. "\t--check-names\n"
+		;
 }
 
 GetOptions(\%o,
@@ -263,6 +277,8 @@ GetOptions(\%o,
 	'stdin',
 	'suffix=s',
 	'pretend',
-	'verbose'
+	'verbose',
+	'check-names',
+	'help',
 );
 main(@ARGV);
