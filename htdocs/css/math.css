@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader: webwork2/htdocs/css/math.css,v 1.10 2007/07/22 03:34:20 gage Exp $
+ * $CVSHeader: webwork2/htdocs/css/math.css,v 1.11 2007/08/13 22:59:52 sh002i Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -393,7 +393,14 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 /* the info escape emits a DIV with this id. (not that the same DIV has class
  * "info-box" which is given above in the "template styles" section. Regardless,
  * it is emitted by WW code! */
-#InfoPanel { font-size: smaller; float: right; width: 40%; overflow: auto; }
+#InfoPanel {
+	font-size: smaller;
+	float: right;
+	width: 40%;
+	overflow: auto;
+	margin-right: -1px;
+	background-color: #fff;
+}
 
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
@@ -411,7 +418,7 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.ResultsWithoutError { color: #096; background-color: inherit; } /* green */
+div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 
