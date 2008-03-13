@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.202 2007/10/28 16:55:13 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.203 2008/02/04 22:54:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -500,7 +500,7 @@ $webworkFiles{logs}{hosted_courses} = "$webworkDirs{logs}/hosted_courses.log";
 
 # The transaction log contains data from each recorded answer submission. This
 # is useful if the database becomes corrupted.
-$webworkFiles{logs}{transaction}    = "$webworkDirs{logs}/$coursename_transaction.log";
+$webworkFiles{logs}{transaction}    = "$webworkDirs{logs}/${courseName}_transaction.log";
 
 # The answer log stores a history of all users' submitted answers.
 $courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
