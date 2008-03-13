@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.203 2008/02/04 22:54:56 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.204 2008/03/13 17:53:12 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -162,6 +162,10 @@ $mail{editor_window_columns} = 100;
 
 # Use this to customize the text of the feedback button.
 $feedback_button_name = "Email instructor";
+
+# If this value is true, feedback will only be sent to users with the same
+# section as the user initiating the feedback.
+$feedback_by_section = 0;
 
 ################################################################################
 # Theme
