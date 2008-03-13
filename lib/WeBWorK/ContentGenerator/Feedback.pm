@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.43 2007/02/14 18:16:46 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm,v 1.44 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -148,7 +148,7 @@ sub body {
 	}
 	
 	# determine the recipients of the email
-	my @recipients = $self->getFeedbackRecipients();
+	my @recipients = $self->getFeedbackRecipients($user);
 	
 	unless (@recipients) {
 		$self->noRecipientsAvailable($returnURL);
@@ -359,7 +359,7 @@ sub feedbackForm {
 }
 
 sub getFeedbackRecipients {
-	my ($self) = @_;
+	my ($self, $user) = @_;
 	my $ce = $self->r->ce;
 	my $db = $self->r->db;
 	my $authz = $self->r->authz;
@@ -371,6 +371,9 @@ sub getFeedbackRecipients {
 	foreach my $rcptName ($db->listUsers()) {
 		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
 			my $rcpt = $db->getUser($rcptName); # checked
+			next if $ce->{feedback_by_section} and defined $user
+				and defined $rcpt->section and defined $user->section
+				and $rcpt->section ne $user->section;
 			if ($rcpt and $rcpt->email_address) {
 				push @recipients, $rcpt->rfc822_mailbox;
 			}
