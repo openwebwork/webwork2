@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.4f",  // change this if you edit the file, but don't edit this file
+  version: "3.5",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -84,10 +84,10 @@ window.jsMath = {
   styles: {
     '.math':              'font-family:serif; font-style:normal; font-weight:normal',
 
-    '.typeset':           'font-family:serif; font-style:normal; font-weight:normal; line-height:normal',
+    '.typeset':           'font-family:serif; font-style:normal; font-weight:normal; line-height:normal;',
     'div.typeset':        'text-align:center; margin:1em 0px;',
     'span.typeset':       'text-align:left',
-    '.typeset span':      'text-align:left; border:0px; margin:0px; padding:0px',
+    '.typeset span':      'text-align:left; border:0px; margin:0px; padding:0px;',
     
     '.typeset .normal':   'font-family:serif; font-style:normal; font-weight:normal',
     
@@ -236,11 +236,7 @@ window.jsMath = {
         jsMath.Setup.inited = 1;
       }
     }
-    this.em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:13em;height:1em"></span>').w/13;
-    if (this.em == 0) {
-      // handle older browsers
-      this.em = this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em"/>').w/13;
-    }
+    this.em = this.CurrentEm();
     var cache = jsMath.Global.cache.B;
     if (!cache[this.em]) {
       cache[this.em] = {};
@@ -253,7 +249,6 @@ window.jsMath = {
     var bb = cache[this.em].bb; var h = bb.h; var d = cache[this.em].d
     this.h = (h-d)/this.em; this.d = d/this.em;
     this.hd = this.h + this.d;
-    this.xWidth = bb.w;  // used to tell if scale has changed
 
     this.Setup.TeXfonts();
     
@@ -274,11 +269,20 @@ window.jsMath = {
   },
   
   /*
-   *  Get the xWidth size and if it has changed, reinitialize the sizes
+   *  Get the x size and if it has changed, reinitialize the sizes
    */
   ReInit: function () {
-    var w = this.BBoxFor('x').w;
-    if (w != this.xWidth) {this.Init()}
+    if (this.em != this.CurrentEm()) {this.Init()}
+  },
+  
+  /*
+   *  Find the em size in effect at the current text location
+   */
+  CurrentEm: function () {
+    var em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:13em;height:1em"></span>').w/13;
+    if (em > 0) {return em}
+    // handle older browsers
+    return this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em"/>').w/13;
   },
   
   /*
@@ -422,11 +426,25 @@ jsMath.Script = {
    */
   Init: function () {
     if (!(jsMath.Controls.cookie.asynch && jsMath.Controls.cookie.progress)) {
-      if (window.XMLHttpRequest && 
-         // MSIE can't use xmlRequest on local files, but we don't have 
-         // jsMath.browser yet to tell, so use this check
-         !(jsMath.document.URL && jsMath.document.URL.match(/^file:\/\/.*\\/))) {
-             try {this.request = new XMLHttpRequest} catch (err) {}
+      if (window.XMLHttpRequest) {
+        try {this.request = new XMLHttpRequest} catch (err) {}
+        // MSIE and FireFox3 can't use xmlRequest on local files,
+        // but we don't have jsMath.browser yet to tell, so use this check
+        if (this.request && jsMath.root.match(/^file:\/\//)) {
+          try {
+            this.request.open("GET",jsMath.root+"jsMath.js",false);
+            this.request.send(null);
+          } catch (err) {
+            this.request = null;
+            //  Firefox3 has window.postMessage for inter-window communication. 
+            //  It can be used to handle the new file:// security model,
+            //  so set up the listener.
+            if (window.postMessage) {
+              this.mustPost = 1;
+              jsMath.window.addEventListener("message",jsMath.Post.Listener,false);
+            }
+          }
+        }
       }
       if (!this.request && window.ActiveXObject) {
         var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
@@ -473,7 +491,7 @@ jsMath.Script = {
       throw "jsMath can't load the file '"+url+"'\n"
           + "Message: "+err.message;
     }
-    if (this.request.status && this.request.status >= 400) {
+    if (this.request.status != null && (this.request.status >= 400 || this.request.status < 0)) {
       // Do we need to deal with redirected links?
       this.blocking = 0;
       if (jsMath.Translate.restart && jsMath.Translate.asynchronous) {return ""}
@@ -500,7 +518,6 @@ jsMath.Script = {
 
   cancelTimeout: 30*1000,   // delay for canceling load (30 sec)
 
-  iframe: null,      // the hidden iframe
   blocking: 0,       // true when an asynchronous action is being performed
   cancelTimer: null, // timer to cancel load if it takes too long
   needsBody: 0,      // true if loading files requires BODY to be present
@@ -563,26 +580,28 @@ jsMath.Script = {
     this.Push(this,'startLoad',url);
   },
   startLoad: function (url) {
-    this.iframe = jsMath.document.createElement('iframe');
-    this.iframe.style.visibility = 'hidden';
-    this.iframe.style.position = 'absolute';
-    this.iframe.style.width = '0px';
-    this.iframe.style.height = '0px';
+    var iframe = jsMath.document.createElement('iframe');
+    iframe.style.visibility = 'hidden';
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
     if (jsMath.document.body.firstChild) {
-      jsMath.document.body.insertBefore(this.iframe,jsMath.document.body.firstChild);
+      jsMath.document.body.insertBefore(iframe,jsMath.document.body.firstChild);
     } else {
-      jsMath.document.body.appendChild(this.iframe);
+      jsMath.document.body.appendChild(iframe);
     }
     this.blocking = 1; this.url = url;
-    if (!url.match(/\.js$/)) {this.iframe.src = url}
-                        else {this.iframe.src = jsMath.root+"jsMath-loader.html"}
     if (url.substr(0,jsMath.root.length) == jsMath.root)
       {url = url.substr(jsMath.root.length)}
     jsMath.Message.Set("Loading "+url);
     this.cancelTimer = setTimeout('jsMath.Script.cancelLoad()',this.cancelTimeout);
+    if (this.mustPost)           {iframe.src = jsMath.Post.startLoad(url,iframe)}
+    else if (url.match(/\.js$/)) {iframe.src = jsMath.root+"jsMath-loader.html"}
+    else                         {iframe.src = this.url}
   },
   endLoad: function (action) {
-    if (this.cancelTimer) {clearTimeout(this.cancelTimer); this.cancelTimer = null;}
+    if (this.cancelTimer) {clearTimeout(this.cancelTimer); this.cancelTimer = null}
+    jsMath.Post.endLoad();
     jsMath.Message.Clear();
     if (action != 'cancel') {this.blocking = 0; this.Process()}
   },
@@ -599,10 +618,12 @@ jsMath.Script = {
   /*
    *  If the loading takes too long, cancel it and end the load.
    */
-  cancelLoad: function () {
-    this.cancelTimer = null;
-    jsMath.Message.Set("Can't load file");
-    this.endLoad("cancel");
+  cancelLoad: function (message,delay) {
+    if (this.cancelTimer) {clearTimeout(this.cancelTimer); this.cancelTimer = null}
+    if (message == null) {message = "Can't load file"}
+    if (delay == null) {delay = 2000}
+    jsMath.Message.Set(message);
+    setTimeout('jsMath.Script.endLoad("cancel")',delay);
   },
 
   /*
@@ -654,6 +675,45 @@ jsMath.Script = {
    * }
    */
 
+};
+
+/***************************************************************************/
+
+/*
+ *  Handle window.postMessage() events in Firefox3
+ */
+
+jsMath.Post = {
+  window: null,  // iframe we are listening to
+  
+  Listener: function (event) {
+    if (event.source != jsMath.Post.window) return;
+    var domain = event.origin; var ddomain = document.domain
+    if (domain == null || domain == "") {domain = "localhost"}
+    if (ddomain == null || ddomain == "") {ddomain = "localhost"}
+    if (domain != ddomain || !event.data.substr(0,6).match(/jsM(CP|LD):/)) return;
+    var type = event.data.substr(6,3).replace(/ /g,'');
+    var message = event.data.substr(10);
+    if (jsMath.Post.Commands[type]) (jsMath.Post.Commands[type])(message);
+    // cancel event?
+  },
+  
+  /*
+   *  Commands that can be performed by the listener
+   */
+  Commands: {
+    SCR: function (message) {jsMath.window.eval(message)},
+    ERR: function (message) {jsMath.Script.cancelLoad(message,3000)},
+    BGN: function (message) {jsMath.Script.Start()},
+    END: function (message) {if (message) jsMath.Script.End(); jsMath.Script.endLoad()}
+  },
+  
+  startLoad: function (url,iframe) {
+    this.window = iframe.contentWindow;
+    if (!url.match(/\.js$/)) {return jsMath.root+url}
+    return jsMath.root+"jsMath-loader-post.html?"+url;
+  },
+  endLoad: function () {this.window = null}
 };
 
 /***************************************************************************/
@@ -1205,7 +1265,7 @@ jsMath.Browser = {
         this.msieInlineBlockFix = ' display:inline-block;';
         this.msieTeXfontBaselineBug = !this.quirks;
         this.msieBorderBug = this.blankWidthBug = 1; // force these, since IE7 doesn't register it
-        if (!this.IE7) {this.msieSpaceFix = '<span style="display:inline-block"></span>'}
+        this.msieSpaceFix = '<span style="display:inline-block"></span>';
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
         delete jsMath.Parser.prototype.mathchardef.mapstochar;
@@ -1230,6 +1290,8 @@ jsMath.Browser = {
               jsMath.styles['.typeset .spacer'].replace(/display:inline-block/,'');
         // MSIE can't insert DIV's into text nodes, so tex2math must use SPAN's to fake DIV's
         jsMath.styles['.tex2math_div'] = jsMath.styles['div.typeset'] + '; width: 100%; display: inline-block';
+        // Reduce occurrance of zoom bug in IE7
+        jsMath.styles['.typeset'] += '; letter-spacing:0';
         // MSIE will rescale images if the DPIs differ
         if (screen.deviceXDPI && screen.logicalXDPI 
              && screen.deviceXDPI != screen.logicalXDPI) {
@@ -1265,7 +1327,7 @@ jsMath.Browser = {
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
       if (navigator.vendor == 'Firefox') {
         this.version = navigator.vendorSub;
-      } else if (navigator.userAgent.match(' Firefox/([0-9.]+)( |$)')) {
+      } else if (navigator.userAgent.match(' Firefox/([0-9.]+)([a-z ]|$)')) {
         this.version = RegExp.$1;
       }
     }
@@ -1412,8 +1474,11 @@ jsMath.Font = {
   CheckTeX: function () {
     var wh = jsMath.BBoxFor('<span style="font-family: '+jsMath.Font.testFont+', serif">'+jsMath.TeX.cmex10[1].c+'</span>');
     jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10',null,null,'jsMath-'));
-    if (jsMath.nofonts && (jsMath.platform != "mac" ||
-        jsMath.browser != 'Mozilla' || !jsMath.Browser.VersionAtLeast(1.5))) {
+    if (!jsMath.nofonts) return;
+    if (jsMath.browser != 'Mozilla' ||
+         (jsMath.platform == "mac" &&
+           (!jsMath.Browser.VersionAtLeast(1.5) || jsMath.Browser.VersionAtLeast(3.0))) ||
+         (jsMath.platform != "mac" && !jsMath.Browser.VersionAtLeast(3.0))) {
       wh = jsMath.BBoxFor('<span style="font-family: cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
       jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
       if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
@@ -1572,7 +1637,12 @@ jsMath.Font = {
       return;
     }
     //  Image fonts
-    var font = {}; font[fontname] = ['all'];
+    var font = {};
+    if (cookie.font == 'symbol' && data.symbol != null) {
+      font[fontname] = data.symbol(fontname,fontfam,data);
+    } else {
+      font[fontname] = ['all'];
+    }
     jsMath.Img.SetFont(font);
     jsMath.Img.LoadFont(fontname);
     if (jsMath.initialized) {
@@ -3188,8 +3258,7 @@ jsMath.Add(jsMath.Box,{
   InternalMath: function (text,size) {
     text = text.replace(/@\(([^)]*)\)/g,'<$1>');
     if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
-    
-    
+
     var i = 0; var k = 0; var c; var match = '';
     var mlist = []; var parse;
     while (i < text.length) {
@@ -4911,14 +4980,18 @@ jsMath.Package(jsMath.Parser,{
     Vmatrix:      ['Array','\\Vert','\\Vert','c'],
     cases:        ['Array','\\{','.','ll',null,2],
     eqnarray:     ['Array',null,null,'rcl',[5/18,5/18],3,'D'],
+    equation:     'Equation',
+    'equation*':  'Equation',
 
     align:        ['Extension','AMSmath'],
     'align*':     ['Extension','AMSmath'],
+    aligned:      ['Extension','AMSmath'],
     multline:     ['Extension','AMSmath'],
     'multline*':  ['Extension','AMSmath'],
     split:        ['Extension','AMSmath'],
     gather:       ['Extension','AMSmath'],
-    'gather*':    ['Extension','AMSmath']
+    'gather*':    ['Extension','AMSmath'],
+    gathered:     ['Extension','AMSmath']
   },
 
 
@@ -5431,6 +5504,14 @@ jsMath.Package(jsMath.Parser,{
     var env = this.GetArgument(this.cmd+name); if (this.error) return;
     this.Error(this.cmd+name+'{'+env+'} without matching '+this.cmd+'begin');
   },
+  
+  /*
+   *  LaTeX equation environment (just remove the environment)
+   */
+  Equation: function (name) {
+    var arg = this.GetEnd(name); if (this.error) return;
+    this.string = arg+this.string.slice(this.i); this.i = 0;
+  },
 
   /*
    *  Add a fixed amount of horizontal space
@@ -5518,7 +5599,7 @@ jsMath.Package(jsMath.Parser,{
     var a = (name.match(/[^acegm-su-z]/)) ? 1: 0;
     var d = (name.match(/[gjpqy]/)) ? .2: 0;
     if (data[1]) {name = data[1]}
-    var box = jsMath.mItem.TextAtom('op',name,'cmr10',a,d);
+    var box = jsMath.mItem.TextAtom('op',name,jsMath.TeX.fam[0],a,d);
     if (data[0] != null) {box.limits = data[0]}
     this.mlist.Add(box);
   },
@@ -6070,31 +6151,18 @@ jsMath.Translate = {
 
   
   /*
-   *  Typeset the contents of an element in \textstyle
+   *  Typeset the contents of an element in \textstyle or \displaystyle
    */
-  ConvertText: function (element,noCache) {
+  ConvertMath: function (style,element,noCache) {
     var text = this.GetElementText(element);
     this.ResetHidden(element);
     if (text.match(/^\s*\\nocache([^a-zA-Z])/))
       {noCache = true; text = text.replace(/\s*\\nocache/,'')}
-    text = this.Parse('T',text,noCache);
+    text = this.Parse(style,text,noCache);
     element.className = 'typeset';
     element.innerHTML = text;
   },
-  
-  /*
-   *  Typeset the contents of an element in \displaystyle
-   */
-  ConvertDisplay: function (element,noCache) {
-    var text = this.GetElementText(element);
-    this.ResetHidden(element);
-    if (text.match(/^\s*\\nocache([^a-zA-Z])/))
-      {noCache = true; text = text.replace(/\s*\\nocache/,'')}
-    text = this.Parse('D',text,noCache);
-    element.className = 'typeset';
-    element.innerHTML = text;
-  },
-  
+
   /*
    *  Process a math element
    */
@@ -6103,15 +6171,10 @@ jsMath.Translate = {
     if (!element.className.match(/(^| )math( |$)/)) return; // don't reprocess elements
     var noCache = (element.className.toLowerCase().match(/(^| )nocache( |$)/) != null);
     try {
-      if (element.tagName.toLowerCase() == 'div') {
-        this.ConvertDisplay(element,noCache);
-        element.onclick = jsMath.Click.CheckClick;
-        element.ondblclick = jsMath.Click.CheckDblClick;
-      } else if (element.tagName.toLowerCase() == 'span') {
-        this.ConvertText(element,noCache);
-        element.onclick = jsMath.Click.CheckClick;
-        element.ondblclick = jsMath.Click.CheckDblClick;
-      }
+      var style = (element.tagName.toLowerCase() == 'div' ? 'D' : 'T');
+      this.ConvertMath(style,element,noCache);
+      element.onclick = jsMath.Click.CheckClick;
+      element.ondblclick = jsMath.Click.CheckDblClick;
     } catch (err) {
       if (element.alt) {
         var tex = element.alt;

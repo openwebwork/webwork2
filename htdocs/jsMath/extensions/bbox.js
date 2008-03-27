@@ -125,30 +125,4 @@ jsMath.Package(jsMath.Parser,{
     }));
   }
 
-  /* 
-   * BBox: function (name) {
-   *   var extra = this.GetBrackets(this.cmd+name); if (this.error) return;
-   *   var arg = this.ProcessArg(this.cmd+name); if (this.error) return;
-   *   var color; var pad = 0; var style = '';
-   *   if (extra != '') {
-   *     var parts = extra.split(/,/);
-   *     for (var i in parts) {
-   *       if (parts[i].match(/^\s*([-+]?(\.\d+|\d+(\.\d*)?))(pt|em|ex|mu|px)\s*$/))
-   *         {pad = this.ParseDimen(parts[i],'',0,1)}
-   *       else if (parts[i].match(/:/)) {style = parts[i]}
-   *       else {color = parts[i]}
-   *     }
-   *   }
-   *   var box = jsMath.Box.Set(arg,this.mlist.data.style,this.mlist.data.size,1).Remeasured();
-   *   var frame = jsMath.HTML.BBox(box.w+2*pad,box.h+pad,box.d+pad,color,style);
-   *   if (jsMath.Browser.msieCenterBugFix) 
-   *     {box.html = '<span style="position:relative">'+box.html+'</span>'}
-   *   box.html = frame + jsMath.HTML.Spacer(-box.w-pad) + box.html;
-   *   if (pad) {box.html += jsMath.HTML.Spacer(pad)}
-   *   box.w += 2*pad; box.h += pad; box.d += pad;
-   *   box.bh = Math.max(box.bh,box.h); box.bd = Math.max(box.bd,box.d);
-   *   this.mlist.Add(jsMath.mItem.Atom('ord',box));
-   * }
-   */
-  
 });
