@@ -82,11 +82,13 @@ jsMath.Package(jsMath.Parser,{
   environments: {
     align:         ['Array',null,null,'rlrlrlrlrlrl',[5/18,2,5/18,2,5/18,2,5/18,2,5/18,2,5/18],1,'D'],
     'align*':      ['Array',null,null,'rlrlrlrlrlrl',[5/18,2,5/18,2,5/18,2,5/18,2,5/18,2,5/18],1,'D'],
+    aligned:       ['Array',null,null,'rlrlrlrlrlrl',[5/18,2,5/18,2,5/18,2,5/18,2,5/18,2,5/18],1,'D'],
     multline:     'Multline',
     'multline*':  'Multline',
     split:         ['Array',null,null,'rl',[5/18],1,'D'],
     gather:        ['Array',null,null,'c',null,1,'D'],
     'gather*':     ['Array',null,null,'c',null,1,'D'],
+    gathered:      ['Array',null,null,'c',null,1,'D'],
     subarray:      ['Array',null,null,null,[0,0,0,0],1,'S',0,.25],
     smallmatrix:   ['Array',null,null,'cccccccccc',[1/3,1/3,1/3,1/3,1/3,1/3,1/3,1/3,1/3,1/3],1,'S',0]
   },
@@ -174,7 +176,7 @@ jsMath.Package(jsMath.Parser,{
   },
   
   /*
-   *  Implement AMS generalizes fraction
+   *  Implement AMS generalized fraction
    */
   Genfrac: function (name,data) {
     var left = data[0]; var right = data[1];
