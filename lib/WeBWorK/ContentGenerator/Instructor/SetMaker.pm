@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.80 2007/08/24 18:09:46 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.81 2007/10/15 15:55:15 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -347,10 +347,18 @@ sub browse_local_panel {
 	}
 	debug("library is $lib and sets are $library_selected");
 	my $view_problem_line = view_problems_line('view_local_set', 'View Problems', $self->r);
+	my @popup_menu_args = (
+		-name => 'library_sets',
+		-values => $list_of_prob_dirs,
+		-default => $library_selected,
+	);
+	# make labels without the $lib prefix -- reduces the width of the popup menu
+	if (length($lib)) {
+		my %labels = map { my($l)=$_=~/^$lib\/(.*)$/;$_=>$l } @$list_of_prob_dirs;
+		push @popup_menu_args, -labels => \%labels;
+	}
 	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, "$name Problems: ",
-		              CGI::popup_menu(-name=> 'library_sets', 
-		                -values=>$list_of_prob_dirs, 
-		                -default=> $library_selected),
+		              CGI::popup_menu(@popup_menu_args),
 		              CGI::br(), 
 		              $view_problem_line,
 	));
