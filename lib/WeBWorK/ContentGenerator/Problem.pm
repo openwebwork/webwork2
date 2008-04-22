@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.210 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.211 2008/01/25 23:34:23 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -581,6 +581,7 @@ sub pre_header_initialize {
 	my %will;
 	foreach (keys %must) {
 		$will{$_} = $can{$_} && ($want{$_} || $must{$_});
+		#warn "final values for options $_ is can $can{$_}, want $want{$_}, must $must{$_}, will $will{$_}";
 	}
 	
 	##### sticky answers #####
@@ -1000,6 +1001,7 @@ sub body {
 			-name    => "showCorrectAnswers",
 			-checked => $will{showCorrectAnswers},
 			-label   => "Show correct answers",
+			-value   => 1,
 		);
 	}
 	if ($can{showHints}) {
@@ -1008,6 +1010,7 @@ sub body {
 				-name    => "showHints",
 				-checked => $will{showHints},
 				-label   => "Show Hints",
+				-value   =>1,
 			)
 		);
 	}
@@ -1016,6 +1019,7 @@ sub body {
 			-name    => "showSolutions",
 			-checked => $will{showSolutions},
 			-label   => "Show Solutions",
+			-value   => 1,
 		);
 	}
 	
