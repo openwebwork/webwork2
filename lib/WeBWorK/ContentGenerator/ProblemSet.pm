@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.88 2007/03/27 20:12:13 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.89 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -74,7 +74,7 @@ sub initialize {
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-	$self->addmessage(CGI::p("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $authz->hasPermissions($userName, "view_unpublished_sets");
+	$self->addmessage(CGI::span("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $authz->hasPermissions($userName, "view_unpublished_sets");
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
