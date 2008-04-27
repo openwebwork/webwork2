@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Form.pm,v 1.7 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Form.pm,v 1.8 2008/04/26 23:13:59 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -170,11 +170,20 @@ sub printable {
 # supported is being called in scalar context, which in CGI.pm returned a
 # tied hashref to the original form data.  WeBWorK didn't need that, so I
 # didn't add it.  If you're feeling industrious...
+
+#FIXME?  I originally changed   join("\0",....)  to join(\0, ....) since I'm pretty sure that what was desired
+# was a string separated by nulls.   If one of the items in the list began with a number  eg 14
+# you would get    \014....\0name...\0   etc.  I think \0name evaluates properly but I'm pretty
+# sure that \014 does not.
+#
+# Then I backed out of the change until this gets checked more thoroughly by Sam
+# -- Mike
+
 sub Vars {
 	my $self = shift;
 	my %varsFormat = ();
 	foreach my $key ($self->param) {
-		$varsFormat{$key} = join \0, $self->param($key);
+		$varsFormat{$key} = join "\0", $self->param($key);
 	}
 	
 	return %varsFormat;	
