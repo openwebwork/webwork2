@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/wwapache2ctl.dist,v 1.2 2006/07/07 23:40:31 sh002i Exp $
+# $CVSHeader: webwork2/bin/wwapache2ctl.dist,v 1.3 2007/08/13 22:59:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -89,6 +89,7 @@ case $1 in
 	stop)
 		checkpid
 		kill -TERM `cat "$PID"`
+		rm -f "$PID"
 		;;
 	restart)
 		checkpid
