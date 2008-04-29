@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.34 2006/09/29 19:02:31 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.35 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  logout                              /$courseID/logout/
  options                             /$courseID/options/
  #test                               /$courseID/test/
+ #render                              /$courseID/render/
  
  instructor_tools                    /$courseID/instructor/
  
@@ -239,6 +240,15 @@ our %pathTypes = (
 	#	capture => [ qw// ],
 	#	produce => 'test/',
 	#	display => 'WeBWorK::ContentGenerator::Test',
+	#},
+	#render => {
+	#	name    => 'Render',
+	#	parent  => 'set_list',
+	#	kids    => [ qw// ],
+	#	match   => qr|^render/|,
+	#	capture => [ qw// ],
+	#	produce => 'render/',
+	#	display => 'WeBWorK::ContentGenerator::ProblemRenderer',
 	#},
 	
 	################################################################################
