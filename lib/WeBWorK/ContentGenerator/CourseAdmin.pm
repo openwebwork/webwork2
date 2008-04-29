@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.68 2007/07/26 18:52:49 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.69 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -414,10 +414,11 @@ sub add_course_form {
 		(@ordered_layouts, @other_layouts);
 	};
 	
-	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
-		courseName => "COURSENAME",
-	});
+	# unused...
+	#my $ce2 = new WeBWorK::CourseEnvironment({
+	#	%WeBWorK::SeedCE,
+	#	courseName => "COURSENAME",
+	#});
 	
 	my @existingCourses = listCourses($ce);
 	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
