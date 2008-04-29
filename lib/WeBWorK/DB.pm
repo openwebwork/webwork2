@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.106 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.107 2007/08/25 18:16:33 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -103,6 +103,55 @@ use WeBWorK::DB::Utils qw/make_vsetID grok_vsetID grok_setID_from_vsetID_sql
 	grok_versionID_from_vsetID_sql/;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use);
+
+=for comment
+
+These exceptions will replace the ones in WeBWorK::DB::Schema and will be
+allowed to propagate out to calling code. The following callers will have to be
+changed to catch these exceptions instead of doing string matching:
+
+lib/WebworkSOAP.pm:     if ($@ =~ m/user set exists/) {
+lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user set exists/) {
+lib/WeBWorK/ContentGenerator/Instructor.pm:     if ( $@ =~ m/user set exists/ ) {
+lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user problem exists/) {
+lib/WeBWorK/ContentGenerator/Instructor.pm:             if ($@ =~ m/user problem exists/) {
+lib/WeBWorK/ContentGenerator/Instructor.pm:                     next if $@ =~ m/user set exists/;
+lib/WeBWorK/Utils/DBImportExport.pm:                            if ($@ =~ m/exists/) {
+lib/WeBWorK/DB.pm:                              if ($@ and $@ !~ m/password exists/) {
+lib/WeBWorK/DB.pm:                              if ($@ and $@ !~ m/permission level exists/) {
+
+How these exceptions should be used:
+
+* RecordExists is thrown by the DBI error handler (handle_error in
+Schema::NewSQL::Std) when in INSERT fails because a record exists. Thus it can
+be thrown via addUser, addPassword, etc.
+
+* RecordNotFound should be thrown when we try to UPDATE and zero rows were
+affected. Problem: Frank Wolfs (UofR PAS) may have a MySQL server that returns 0
+when updating even when a record was modified. What's up with that? There's some
+question as to where we should throw this: in this file's put* methods? In
+Std.pm's put method? Or in update_fields and update_fields_i?
+
+* DependencyNotFound should be throws when we check for a record that is needed
+to insert another record (e.g. password depends on user). These checks are done
+in this file, so we'll throw this exception from there.
+
+=cut
+
+use Exception::Class (
+	'WeBWorK::DB::Ex' => {},
+	'WeBWorK::DB::Ex::RecordExists' => {
+		isa => 'WeBWorK::DB::Ex',
+		fields => ['type', 'key'],
+	},
+	'WeBWorK::DB::Ex::RecordNotFound' => {
+		isa => 'WeBWorK::DB::Ex',
+		fields => ['type', 'key'],
+	},
+	'WeBWorK::DB::Ex::DependencyNotFound' => {
+		isa => 'WeBWorK::DB::Ex::RecordNotFound',
+	},
+);
 
 ################################################################################
 # constructor
@@ -452,15 +501,6 @@ sub addUser {
 	} elsif ($@) {
 		die $@;
 	}
-	# FIXME about these exceptions: eventually the exceptions should be part of
-	# WeBWorK::DB rather than WeBWorK::DB::Schema, and we should just let them
-	# through to the calling code. however, right now we have code that checks
-	# for the string "... exists" in the error message, so we need to convert
-	# here.
-	# 
-	# WeBWorK::DB::Ex::RecordExists
-	# WeBWorK::DB::Ex::DependencyNotFound - i.e. inserting a password for a nonexistent user
-	# ?
 }
 
 sub putUser {
