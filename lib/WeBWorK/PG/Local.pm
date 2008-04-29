@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.25 2007/08/13 22:59:58 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.26 2008/02/04 22:55:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -106,6 +106,7 @@ sub new_helper {
 	
 	# set the directory hash
 	#warn "PG: setting the directory hash\n";
+	# FIXME rh_directories does not appear to be used. ever.
 	$translator->rh_directories({
 		macrosPath             => $ce->{courseDirs}->{macrosPath},
 		templateDirectory      => $ce->{courseDirs}->{templates},
