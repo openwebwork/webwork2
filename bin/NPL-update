@@ -59,7 +59,7 @@ BEGIN {
 '],
 ['NPL-path', '
 	path_id int(15) NOT NULL auto_increment,
-	path varchar(127) NOT NULL,
+	path varchar(4096) NOT NULL,
 	machine varchar(127),
 	user varchar(127),
 	KEY (path),
