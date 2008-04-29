@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.81 2007/10/15 15:55:15 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.82 2008/04/04 19:22:30 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1293,6 +1293,9 @@ sub body {
 		CGI::em("You are not authorized to access the Instructor tools.")));
 	}
 
+	my $showHints = $r->param('showHints');
+	my $showSolutions = $r->param('showSolutions');
+	
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
@@ -1309,8 +1312,8 @@ sub body {
 			user => $user,
 			problem_list => [@pg_files[$first_shown..$last_shown]],
 			displayMode => $r->param('mydisplayMode'),
-			showHints => $r->param('showHints'),
-			showSolutions => $r->param('showSolutions'),
+			showHints => $showHints,
+			showSolutions => $showSolutions,
 		);
 	}
 
