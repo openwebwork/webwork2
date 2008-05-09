@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.69 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.70 2008/04/29 19:28:08 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,7 @@ use Data::Dumper;
 use File::Temp qw/tempfile/;
 use WeBWorK::CourseEnvironment;
 use IO::File;
+use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
@@ -220,6 +221,14 @@ sub pre_header_initialize {
 				$method_to_call = "manage_location_form";
 			}
 		}
+		elsif ($subDisplay eq "registration") {
+			if (defined ($r->param("register_site"))) {
+				$method_to_call =  "do_registration";
+			}
+			else{
+				$method_to_call = "registration_form";
+			}
+		}
 		else {
 			@errors = "Unrecognized sub-display @{[ CGI::b($subDisplay) ]}.";
 		}
@@ -316,6 +325,9 @@ sub body {
 		$methodMessage,
 		
 	);
+	
+	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
+	
 	
 	my @errors = @{$self->{errors}};
 	
@@ -2404,5 +2416,95 @@ sub edit_location_handler {
 	}
 }
 
+################################################################################
+#   registration forms added by Mike Gage 5-5-2008
+################################################################################
+
+our $registered_file_name = "registered_$main::VERSION";
+sub display_registration_form {
+my $self = shift;
+my $ce   = $self->r->ce;
+my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
+my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
+return 0  if $registeredQ or $registration_subDisplay;     #otherwise return registration form
+return  q!  
+<table class="messagebox" style="background-color:#FFFFCC;cellpadding:100px">
+<tr><td>
+!,
+CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
+CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
+WeBWorK  Since WeBWorK is open source and can be freely downloaded from http://www.openwebwork.org
+and http://webwork.maa.org  it is frequently difficult for us to give a reasonable answer to this 
+question."),
+CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
+questions (the ones you can answer easily) and send the email.  It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
+q!
+</td>
+</tr>
+<tr><td align="center">
+!,
+CGI::a({href=>$self->systemLink($self->r->urlpath, params=>{subDisplay=>"registration"})}, "Register"),
+q!
+</td></tr>
+</table>
+!;
+
+
+
+}
+sub registration_form {
+my $self = shift;
+print "<center>";
+print  "\n",CGI::p({style=>"text-align: left; width:60%"},
+"\nPlease ",
+CGI::a({href=>'mailto:gage@math.rochester.edu?'
+.'subject=WeBWorK%20Server%20Registration'
+.'&body='
+.uri_escape("Server URL: \n\n")
+.uri_escape("WeBWorK version: $main::VERSION \n\n")
+.uri_escape("Institution name (e.g. University of Rochester): \n\n")
+.uri_escape("Contact person name: \n\n")
+.uri_escape("Contact email: \n\n")
+.uri_escape("Approximate number of courses run each term: \n\n")
+.uri_escape("Approximate number of students using this server each term: \n\n")
+.uri_escape("Other institutions who use WeBWorK courses hosted on this server: \n\n")
+},
+'click here'),
+q! to open your email application.  There are a few questions, some of which have already
+been filled in for your installation.  Fill in the other questions which you can answer easily and send
+the email to gage\@math.rochester.edu
+!
+);
+
+
+
+print  "\n",CGI::p({style=>"text-align: left; width:60%"},,q!Once you have emailed your registration information you can hide the "registration" banner 
+for successive visits by clicking
+the button below.!)
+;
+
+print "</center>";
+print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+print $self->hidden_authen_fields;
+print $self->hidden_fields("subDisplay");
+print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", -label=>"Site has been registered"));
+print CGI::end_form();
+}
+
+sub registration_validate {
+
+print "\nregistration validate form";
+
+}
+
+sub do_registration {
+my $self = shift;
+my $ce   = $self->r->ce;
+my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
+# warn qq!`echo "info" >$registered_file_path`!;
+`echo "info" >$registered_file_path`;
+print "\n registration action done";
+
+}
 ################################################################################
 1;
