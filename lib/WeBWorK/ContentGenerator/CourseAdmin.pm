@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.71 2008/05/09 00:27:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.72 2008/05/09 00:42:24 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2426,9 +2426,10 @@ my $self = shift;
 my $ce   = $self->r->ce;
 my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
 my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
-return 0  if $registeredQ or $registration_subDisplay;     #otherwise return registration form
-return  q!  
-<table class="messagebox" style="background-color:#FFFFCC;cellpadding:100px">
+return 0  if $registeredQ or $self->r->param("register_site");     #otherwise return registration form
+return  q! 
+<center>
+<table class="messagebox" style="background-color:#FFFFCC;width:60%">
 <tr><td>
 !,
 CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
@@ -2447,6 +2448,7 @@ CGI::a({href=>$self->systemLink($self->r->urlpath, params=>{subDisplay=>"registr
 q!
 </td></tr>
 </table>
+</center>
 !;
 
 
@@ -2477,6 +2479,7 @@ list your institution as one that uses WeBWorK unless you tell us to keep that p
 .uri_escape("Approximate number of courses run each term: \n\n")
 .uri_escape("Approximate number of students using this server each term: \n\n")
 .uri_escape("Other institutions who use WeBWorK courses hosted on this server: \n\n")
+.uri_escape("Other comments: \n\n")
 },
 'click here'),
 q! to open your email application.  There are a few questions, some of which have already
@@ -2487,7 +2490,7 @@ the email to gage\@math.rochester.edu
 
 
 
-print  "\n",CGI::p({style=>"text-align: left; width:60%"},,q!Once you have emailed your registration information you can hide the "registration" banner 
+print  "\n",CGI::p({style=>"text-align: left; width:60%"},q!Once you have emailed your registration information you can hide the "registration" banner 
 for successive visits by clicking
 the button below.!)
 ;
@@ -2512,7 +2515,13 @@ my $ce   = $self->r->ce;
 my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
 # warn qq!`echo "info" >$registered_file_path`!;
 `echo "info" >$registered_file_path`;
-print "\n registration action done";
+print  "\n",CGI::p({style=>"text-align: center; width:60%"},q{Registration action completed.  Thank you very much!"});
+
+print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+print $self->hidden_authen_fields;
+#print $self->hidden_fields("subDisplay");
+print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"registration_completed", -label=>"Continue"));
+print CGI::end_form();
 
 }
 ################################################################################
