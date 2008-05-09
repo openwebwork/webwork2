@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.70 2008/04/29 19:28:08 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.71 2008/05/09 00:27:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2454,13 +2454,22 @@ q!
 }
 sub registration_form {
 my $self = shift;
+my $ce = $self->r->ce;
+
 print "<center>";
 print  "\n",CGI::p({style=>"text-align: left; width:60%"},
 "\nPlease ",
 CGI::a({href=>'mailto:gage@math.rochester.edu?'
 .'subject=WeBWorK%20Server%20Registration'
 .'&body='
-.uri_escape("Server URL: \n\n")
+.uri_escape("Thanks for registering your WeBWorK server.  We'd appreciate if you would answer
+as many of these questions as you can conveniently.  We need this data so we can better 
+answer questions such as 'How many institutions have webwork servers?' and 'How many students
+use WeBWorK?'.  Your email and contact information  will be kept private.  We will 
+list your institution as one that uses WeBWorK unless you tell us to keep that private as well.
+\n\nThank you. \n\n--Mike Gage \n\n
+")
+.uri_escape("Server URL: ".$ce->{apache_root_url}." \n\n")
 .uri_escape("WeBWorK version: $main::VERSION \n\n")
 .uri_escape("Institution name (e.g. University of Rochester): \n\n")
 .uri_escape("Contact person name: \n\n")
