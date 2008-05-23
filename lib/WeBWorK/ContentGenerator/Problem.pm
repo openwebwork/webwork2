@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.212 2008/04/22 11:40:18 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.213 2008/04/26 23:13:59 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -985,7 +985,7 @@ sub body {
 	
 	# main form
 	print "\n";
-	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onSubmit=>"submitAction()");
+	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
 	print "\n";
 	print CGI::start_div({class=>"problem"});
@@ -1037,7 +1037,10 @@ sub body {
 			# apply to the student's records, not the professor's.
 			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers for $effectiveUser");
 		} else {
-			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers");
+			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
+			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"");
+			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
+			# WFT???
 		}
 	}
 	
