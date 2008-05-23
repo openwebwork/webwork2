@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.23 2006/07/12 01:19:14 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.24 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw/cryptPassword/;
+use WeBWorK::Utils qw/cryptPassword trim_spaces/;
 
 sub initialize {
 	my ($self) = @_;
@@ -208,12 +208,7 @@ sub addStudentForm {
 }
 
 
-## Utility function to trim whitespace off the start and end of its input
-sub trim_spaces {
-	my $in = shift;
-	$in =~ s/^\s*(.*?)\s*$/$1/;
-	return($in);
-}
+
 
 1;
 

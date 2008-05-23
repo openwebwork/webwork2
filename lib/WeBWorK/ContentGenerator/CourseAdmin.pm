@@ -33,7 +33,7 @@ use WeBWorK::CourseEnvironment;
 use IO::File;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive);
+use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
                                         listArchivedCourses unarchiveCourse);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
@@ -312,10 +312,10 @@ sub body {
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
 		" | ",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
-		" | ",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
-		" | ",
+		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
+		# " | ",
+		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
+		# " | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, "Archive Course"),
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, "Unarchive Course"),
@@ -390,23 +390,26 @@ sub add_course_form {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
-	my $add_courseID                     = $r->param("add_courseID") || "";
-	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
-	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
+	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
+	my $add_courseInstitution            = trim_spaces( $r->param("add_courseInstitution") ) || "";
 	
-	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	my $add_admin_users                  = trim_spaces( $r->param("add_admin_users") ) || "";
 	
-	my $add_initial_userID               = $r->param("add_initial_userID") || "";
-	my $add_initial_password             = $r->param("add_initial_password") || "";
-	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
-	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
-	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
-	my $add_initial_email                = $r->param("add_initial_email") || "";
+	my $add_initial_userID               = trim_spaces( $r->param("add_initial_userID") ) || "";
+	my $add_initial_password             = trim_spaces( $r->param("add_initial_password") ) || "";
+	my $add_initial_confirmPassword      = trim_spaces( $r->param("add_initial_confirmPassword") ) || "";
+	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
+	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
+	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	
-	my $add_templates_course             = $r->param("add_templates_course") || "";
+	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
 	
-	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
+	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
+
+
+
 	my @dbLayouts = do {
 		my @ordered_layouts;
 		foreach my $layout (@{$ce->{dbLayout_order}}) {
@@ -551,22 +554,28 @@ sub add_course_validate {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
-	my $add_courseID                     = $r->param("add_courseID") || "";
-	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
-	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+
+	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
+	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
+	my $add_courseInstitution            = trim_spaces( $r->param("add_courseInstitution") ) || "";
 	
-	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	my $add_admin_users                  = trim_spaces( $r->param("add_admin_users") ) || "";
 	
-	my $add_initial_userID               = $r->param("add_initial_userID") || "";
-	my $add_initial_password             = $r->param("add_initial_password") || "";
-	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
-	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
-	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
-	my $add_initial_email                = $r->param("add_initial_email") || "";
+	my $add_initial_userID               = trim_spaces( $r->param("add_initial_userID") ) || "";
+	my $add_initial_password             = trim_spaces( $r->param("add_initial_password") ) || "";
+	my $add_initial_confirmPassword      = trim_spaces( $r->param("add_initial_confirmPassword") ) || "";
+	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
+	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
+	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	
-	my $add_templates_course             = $r->param("add_templates_course") || "";
+	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
 	
-	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
+	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
+	
+	
+
+	
+	######################
 	
 	my @errors;
 	
@@ -629,23 +638,23 @@ sub do_add_course {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $add_courseID                     = $r->param("add_courseID") || "";
-	my $add_courseTitle                  = $r->param("add_courseTitle") || "";
-	my $add_courseInstitution            = $r->param("add_courseInstitution") || "";
+	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
+	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
+	my $add_courseInstitution            = trim_spaces( $r->param("add_courseInstitution") ) || "";
 	
-	my $add_admin_users                  = $r->param("add_admin_users") || "";
+	my $add_admin_users                  = trim_spaces( $r->param("add_admin_users") ) || "";
 	
-	my $add_initial_userID               = $r->param("add_initial_userID") || "";
-	my $add_initial_password             = $r->param("add_initial_password") || "";
-	my $add_initial_confirmPassword      = $r->param("add_initial_confirmPassword") || "";
-	my $add_initial_firstName            = $r->param("add_initial_firstName") || "";
-	my $add_initial_lastName             = $r->param("add_initial_lastName") || "";
-	my $add_initial_email                = $r->param("add_initial_email") || "";
+	my $add_initial_userID               = trim_spaces( $r->param("add_initial_userID") ) || "";
+	my $add_initial_password             = trim_spaces( $r->param("add_initial_password") ) || "";
+	my $add_initial_confirmPassword      = trim_spaces( $r->param("add_initial_confirmPassword") ) || "";
+	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
+	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
+	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	
-	my $add_templates_course             = $r->param("add_templates_course") || "";
+	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
 	
-	my $add_dbLayout                     = $r->param("add_dbLayout") || "";
-
+	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
+	
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $add_courseID,
@@ -2503,11 +2512,7 @@ print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", 
 print CGI::end_form();
 }
 
-sub registration_validate {
 
-print "\nregistration validate form";
-
-}
 
 sub do_registration {
 my $self = shift;
@@ -2515,13 +2520,14 @@ my $ce   = $self->r->ce;
 my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
 # warn qq!`echo "info" >$registered_file_path`!;
 `echo "info" >$registered_file_path`;
-print  "\n",CGI::p({style=>"text-align: center; width:60%"},q{Registration action completed.  Thank you very much!"});
+
+print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration action completed.  Thank you very much for registering WeBWorK!"});
 
 print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
 print $self->hidden_authen_fields;
-#print $self->hidden_fields("subDisplay");
 print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"registration_completed", -label=>"Continue"));
 print CGI::end_form();
+print "</center>";
 
 }
 ################################################################################
