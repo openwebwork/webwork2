@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.79 2007/03/05 23:02:13 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.80 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -52,37 +52,38 @@ use constant DATE_FORMAT => "%m/%d/%Y at %I:%M%P %Z";
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
-	runtime_use
-	readFile
-	readDirectory
-	listFilesRecursive
-	surePathToFile
-	makeTempDirectory
-	removeTempDirectory
-	path_is_subdir
-	formatDateTime
-	parseDateTime
-	textDateTime
-	intDateTime
-	timeToSec
-	before
 	after
+	before
 	between
-	writeLog
-	writeCourseLog
-	writeTimingLogEntry
-	list2hash
-	ref2string
-	decodeAnswers
-	encodeAnswers
-	max
-	pretty_print_rh
-	cryptPassword
-	dequote
-	undefstr
-	fisher_yates_shuffle
 	constituency_hash
+	cryptPassword
+	decodeAnswers
+	dequote
+	encodeAnswers
+	fisher_yates_shuffle
+	formatDateTime
+	intDateTime
+	list2hash
+	listFilesRecursive
+	makeTempDirectory
+	max
+	parseDateTime
+	path_is_subdir
+	pretty_print_rh
+	readDirectory
+	readFile
+	ref2string
+	removeTempDirectory
+	runtime_use
 	sortByName
+	surePathToFile
+	textDateTime
+	timeToSec
+	trim_spaces
+	undefstr
+	writeCourseLog
+	writeLog
+	writeTimingLogEntry
 );
 
 =head1 FUNCTIONS
@@ -736,7 +737,12 @@ sub writeTimingLogEntry($$$$) {
 ################################################################################
 # Data munging
 ################################################################################
-
+## Utility function to trim whitespace off the start and end of its input
+sub trim_spaces {
+	my $in = shift;
+	$in =~ s/^\s*(.*?)\s*$/$1/;
+	return($in);
+}
 sub list2hash(@) {
 	map {$_ => "0"} @_;
 }
