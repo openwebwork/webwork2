@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader$
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.21 2007/08/13 22:59:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,6 +93,42 @@ if ($webwork_url eq "") {
 	$Location{$webwork_courses_url} = { SetHandler => "none" };
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
+
+$ENV{WEBWORK_ROOT} = $webwork_dir;
+
+$PerlConfig .= <<EOF;
+
+
+########## SOAP installation ##########
+# 
+
+# uncomment these three stanzas to use WeBWorK with Moodle
+
+# PerlModule WebworkSOAP
+
+# #WEBWORK SOAP CONFIGURATION
+# <Location /webwork2_rpc>
+#         PerlHandler Apache::SOAP
+#         SetHandler perl-script
+#         PerlSetVar dispatch_to "WebworkSOAP"
+#         PerlSetVar options "compress_threshold => 10000"
+#         Order Allow,Deny
+#         Allow from All
+# </Location>
+
+# #WEBWORK SOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
+# <Location /webwork2_wsdl>
+#         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
+#         PerlSetVar options "compress_threshold => 10000"
+#         PerlHandler WebworkSOAP::WSDL
+#         SetHandler perl-script
+#         Order Allow,Deny
+#         Allow from All
+# </Location>
+
+# end of WeBWorK -- Moodle stanzas
+
+EOF
 
 </Perl>
 
