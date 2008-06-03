@@ -18,9 +18,8 @@ use File::Basename;
 use Cwd;
 use DBI;
 
-#hack until mysqls are more up to date.
-
-use constant MAXVARCHARLENGTH=>255;   #(use 4096 for mysql > 5.0.3)
+ #(maximum varchar length is 255 for mysql version < 5.0.3.  
+ #You can increase path length to  4096 for mysql > 5.0.3)
 
 BEGIN {
         die "WEBWORK_ROOT not found in environment.\n"
@@ -63,7 +62,7 @@ BEGIN {
 '],
 ['NPL-path', '
 	path_id int(15) NOT NULL auto_increment,
-	path varchar(MAXVARCHARLENGTH) NOT NULL,
+	path varchar(255) NOT NULL,
 	machine varchar(127),
 	user varchar(127),
 	KEY (path),
