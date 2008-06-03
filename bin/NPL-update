@@ -18,6 +18,10 @@ use File::Basename;
 use Cwd;
 use DBI;
 
+#hack until mysqls are more up to date.
+
+use constant MAXVARCHARLENGTH=>255;   #(use 4096 for mysql > 5.0.3)
+
 BEGIN {
         die "WEBWORK_ROOT not found in environment.\n"
                 unless exists $ENV{WEBWORK_ROOT};
@@ -59,7 +63,7 @@ BEGIN {
 '],
 ['NPL-path', '
 	path_id int(15) NOT NULL auto_increment,
-	path varchar(4096) NOT NULL,
+	path varchar(MAXVARCHARLENGTH) NOT NULL,
 	machine varchar(127),
 	user varchar(127),
 	KEY (path),
@@ -200,7 +204,7 @@ my ($name,$pgfile,$pgpath);
 #### First read in textbook information
 
 if(open(IN, "$libraryRoot/Textbooks")) {
-	print "Reading in textbook data.\n";
+	print "Reading in textbook data from Textbooks in the library $libraryRoot.\n";
 	my %textinfo = ( TitleText => '', EditionText =>'', AuthorText=>'');
 	my $bookid = undef;
 	while (my $line = <IN>) {
@@ -307,7 +311,9 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 	}
 	close(IN);
 } else{
-	print "Textbooks file was not found.  Updating from cvs should fix this problem.\n";
+	print "Textbooks file was not found in library $libraryRoot. If the path to the problem library doesn't seem
+	correct, make modifications in webwork2/conf/global.conf (\$problemLibrary{root}).  If that is correct then
+	updating from cvs should download the Textbooks file.\n";
 }
 
 print "Converting data from tagged pgfiles into mysql.\n";
