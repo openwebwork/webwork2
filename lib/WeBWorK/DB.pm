@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.107 2007/08/25 18:16:33 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.108 2008/04/29 19:24:48 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1099,6 +1099,7 @@ sub deleteGlobalSet {
 	my ($self, $setID) = shift->checkArgs(\@_, "set_id$U");
 	$self->deleteUserSet(undef, $setID);
 	$self->deleteGlobalProblem($setID, undef);
+	$self->deleteGlobalSetLocation($setID, undef);
 	return $self->{set}->delete($setID);
 }
 
