@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.34 2007/03/26 20:26:57 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.35 2007/08/13 22:59:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -557,6 +557,8 @@ sub displaySets {
 						my $timeLimit = $userSet->version_time_limit()/60;
 						$testTime = $timeLimit if ( $testTime > $timeLimit );
 						$testTime = sprintf("%3.1f min", $testTime);
+					} elsif ( time() - $userSet->version_creation_time() < $userSet->version_time_limit() ) {
+						$testTime = 'still open';
 					} else {
 						$testTime = 'time limit ' .
 							'exceeded';
