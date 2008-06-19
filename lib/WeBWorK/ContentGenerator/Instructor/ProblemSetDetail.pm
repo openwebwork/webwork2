@@ -45,13 +45,16 @@ use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_inco
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
 use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts attempted last_answer num_correct num_incorrect)];
+# for gateway sets, we don't want to allow users to change max_attempts on a per
+#    problem basis, as that's nothing but confusing.
+use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
 
 # we exclude the gateway set fields from the set field order, because they
-# are only displayed for sets that are gateways.  this results in a bit of 
-# convoluted logic below, but it saves burdening people who are only using 
-# homework assignments with all of the gateway parameters
+#     are only displayed for sets that are gateways.  this results in a bit of
+#     convoluted logic below, but it saves burdening people who are only using
+#     homework assignments with all of the gateway parameters
 # FIXME: in the long run, we may want to let hide_score and hide_work be
-# FIXME: set for non-gateway assignments.  right now (11/30/06) they are 
+# FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
 use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date published restrict_ip relax_restrict_ip assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
@@ -315,7 +318,7 @@ use constant  FIELD_PROPERTIES => {
 # if only the setID is included, it creates a table of set information
 # if the problemID is included, it creates a table of problem information
 sub FieldTable {
-	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord) = @_;
+	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $isGWset) = @_;
 
 	my $r = $self->r;	
 	my @editForUser = $r->param('editForUser');
@@ -326,6 +329,8 @@ sub FieldTable {
 
 	# needed for gateway output
 	my $gwFields = '';
+	# $isGWset will come in undef if we don't need to worry about it
+	$isGWset = 0 if ( ! defined( $isGWset ) );
 
 	# needed for ip restrictions
 	my $ipFields = '';
@@ -337,7 +342,8 @@ sub FieldTable {
 	my $procFields = '';
 
 	if (defined $problemID) {
-		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
+		@fieldOrder = ($isGWset) ? @{ GATEWAY_PROBLEM_FIELD_ORDER() } :
+			@{ PROBLEM_FIELD_ORDER() };
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
@@ -1318,12 +1324,35 @@ sub initialize {
 		foreach my $problemID ($r->param('markCorrect')) {
 			# DBFIXME where clause, iterator
 			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
-			my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
-			foreach my $record (@userProblemRecords) {
-				if (defined $record && ($record->status eq "" || $record->status < 1)) {
-					$record->status(1);
-					$record->attempted(1);
-					$db->putUserProblem($record);
+			# if the set is not a gateway set, this requires going through the
+			#    user_problems and resetting their status; if it's a gateway set,
+			#    then we have to go through every *version* of every user_problem.
+			#    it may be that there is an argument for being able to get() all
+			#    problem versions for all users in one database call.  The current
+			#    code may be slow for large classes.
+			if ( $setRecord->assignment_type !~ /gateway/ ) {
+				my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
+				foreach my $record (@userProblemRecords) {
+					if (defined $record && ($record->status eq "" || $record->status < 1)) {
+						$record->status(1);
+						$record->attempted(1);
+						$db->putUserProblem($record);
+					}
+				}
+			} else {
+				my @userIDs = ( $forUsers ) ? @editForUser : $db->listProblemUsers($setID, $problemID);
+				foreach my $uid ( @userIDs ) {
+					my @versions = $db->listSetVersions( $uid, $setID );
+					my @userProblemVersionIDs = 
+						map{ [ $uid, $setID, $_, $problemID ]} @versions;
+					my @userProblemVersionRecords = $db->getProblemVersions(@userProblemVersionIDs);
+					foreach my $record (@userProblemVersionRecords) { 
+						if (defined $record && ($record->status eq "" || $record->status < 1)) {
+							$record->status(1);
+							$record->attempted(1);
+							$db->putProblemVersion($record);
+						}
+					}
 				}
 			}
 		}
@@ -1537,6 +1566,9 @@ sub body {
 	# if you make any changes to them they will be the same.
 	# if you're editing for one user, the problems shown should be his/hers
 	my $userToShow        = $forUsers ? $editForUser[0] : $userID;
+
+	# a useful gateway variable
+	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
 	
 	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
@@ -1719,7 +1751,8 @@ sub body {
 			#    we know exists, so if the getMergedSet failed
 			#    (that is, the set isn't assigned to the 
 			#    the current user), we get the global set instead
-			$guaranteed_set = $db->getGlobalSet( $setID );
+			# $guaranteed_set = $db->getGlobalSet( $setID );
+			$guaranteed_set = $setRecord;
 		}
 
 		foreach my $header (@headers) {
@@ -1835,6 +1868,7 @@ sub body {
 		
 		my %shownYet;
 		my $repeatFile;
+
 		foreach my $problemID (@problemIDList) {
 		
 			my $problemRecord;
@@ -1858,8 +1892,14 @@ sub body {
 			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 			my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
 
-			my @fields = @{ PROBLEM_FIELDS() };
-			push @fields, @{ USER_PROBLEM_FIELDS() } if $forOneUser;
+			###-----
+			### The array @fields never gets used in the following, so
+			###    I'm commenting it out.  If there's a reason it should
+			###    be here, someone else can add it back in and maybe
+			###    comment why.  Thanks, Gavin.  -glarose 6/19/08
+			### my @fields = @{ PROBLEM_FIELDS() };
+			### push @fields, @{ USER_PROBLEM_FIELDS() } if $forOneUser;
+			###-----
 
 			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
 
@@ -1895,7 +1935,7 @@ sub body {
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
 				CGI::end_table(),
-				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $UserProblems{$problemID}),
+				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $UserProblems{$problemID}, $isGatewaySet),
 # A comprehensive list of problems is just TOO big to be handled well
 #				comboBox({
 #					name => "set.$setID.$problemID",
