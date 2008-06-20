@@ -331,6 +331,8 @@ sub FieldTable {
 	my $gwFields = '';
 	# $isGWset will come in undef if we don't need to worry about it
 	$isGWset = 0 if ( ! defined( $isGWset ) );
+	# are we editing a set version?
+	my $setVersion = (defined($userRecord) && $userRecord->can("version_id")) ? 1 : 0;
 
 	# needed for ip restrictions
 	my $ipFields = '';
@@ -364,9 +366,9 @@ sub FieldTable {
 		# we don't show the ip restriction option if there are 
 		#    no defined locations, nor the relax_restrict_ip option
 		#    if we're not restricting ip access
-		next if ( $field eq 'restrict_ip' && ! $numLocations );
-		next if ($field eq 'relax_restrict_ip' && 
-			 (! $numLocations ||
+		next if ( $field eq 'restrict_ip' && ( ! $numLocations || $setVersion ) );
+		next if ($field eq 'relax_restrict_ip' &&
+			 (! $numLocations || $setVersion ||
 			  ($forUsers && $userRecord->restrict_ip eq 'No') ||
 			  (! $forUsers && 
 			   ( $globalRecord->restrict_ip eq '' ||
@@ -603,45 +605,48 @@ sub extraSetFields {
 	my @locations = sort {$a cmp $b} ($db->listLocations());
 	$numLocations = @locations;
 
-	if ( ( ! $forUsers && $globalRecord->restrict_ip &&
-	       $globalRecord->restrict_ip ne 'No' ) ||
-	     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
+	# we don't show ip selector fields if we're editing a set version
+	if ( defined( $userRecord ) && ! $userRecord->can("version_id") ) {
+		if ( ( ! $forUsers && $globalRecord->restrict_ip &&
+		       $globalRecord->restrict_ip ne 'No' ) ||
+		     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
 
-		my @globalLocations = $db->listGlobalSetLocations($setID);
-		# what ip locations should be selected?
-		my @defaultLocations = ();
-		if ( $forUsers && 
-		     ! $db->countUserSetLocations($userID, $setID) ) { 
-			@defaultLocations = @globalLocations;
-			$ipOverride = 0;
-		} elsif ( $forUsers ) {
-			@defaultLocations = $db->listUserSetLocations($userID, $setID);
-			$ipOverride = 1;
-		} else {
-			@defaultLocations = @globalLocations;
-		}
-		my $ipDefaults = join(', ', @globalLocations);
+			my @globalLocations = $db->listGlobalSetLocations($setID);
+			# what ip locations should be selected?
+			my @defaultLocations = ();
+			if ( $forUsers && 
+			     ! $db->countUserSetLocations($userID, $setID) ) { 
+				@defaultLocations = @globalLocations;
+				$ipOverride = 0;
+			} elsif ( $forUsers ) {
+				@defaultLocations = $db->listUserSetLocations($userID, $setID);
+				$ipOverride = 1;
+			} else {
+				@defaultLocations = @globalLocations;
+			}
+			my $ipDefaults = join(', ', @globalLocations);
 
-		my $ipSelector = CGI::scrolling_list({
-			-name => "set.$setID.selected_ip_locations",
-			-values => [ @locations ], 
-			-default => [ @defaultLocations ], 
-			-size => 5,
-			-multiple => 'true'});
+			my $ipSelector = CGI::scrolling_list({
+				-name => "set.$setID.selected_ip_locations",
+				-values => [ @locations ], 
+				-default => [ @defaultLocations ], 
+				-size => 5,
+				-multiple => 'true'});
 
-		my $override = ($forUsers) ? 
-			CGI::checkbox({ type => "checkbox",
+			my $override = ($forUsers) ? 
+				CGI::checkbox({ type => "checkbox",
 					name => "set.$setID.selected_ip_locations.override",
 					label => "",
 					checked => $ipOverride }) : '';
-		$ipFields .= CGI::Tr({-valign=>'top'},
-				     CGI::td({}, [ $override, 
+			$ipFields .= CGI::Tr({-valign=>'top'},
+					     CGI::td({}, [ $override, 
 						   'Restrict Locations', 
 						   $ipSelector, 
 						   $forUsers ? 
 						   " $ipDefaults" : '', ]
 					),
-		);
+			);
+		}
 	}
 	return($gwFields, $ipFields, $numLocations, $procFields);
 }
@@ -856,6 +861,15 @@ sub initialize {
 	my $authz     = $r->authz;
 	my $user      = $r->param('user');
 	my $setID   = $r->urlpath->arg("setID");
+
+	## we're now allowing setID to come in as setID,v# to edit a set
+	##    version; catch this first
+	my $editingSetVersion = 0;
+	if ( $setID =~ /,v(\d+)$/ ) {
+	    $editingSetVersion = $1;
+	    $setID =~ s/,v(\d+)$//;
+	}
+
 	my $setRecord = $db->getGlobalSet($setID); # checked
 	die "global set $setID  not found." unless $setRecord;
 
@@ -869,6 +883,9 @@ sub initialize {
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
 
+	## if we're editing a versioned set, it only makes sense to be
+	##    editing it for one user
+	return if ( $editingSetVersion && ! $forOneUser );
 
 	my %properties = %{ FIELD_PROPERTIES() };
 
@@ -954,6 +971,19 @@ sub initialize {
 
 			# DBFIXME use a WHERE clause, iterator
 			my @userRecords = $db->getUserSets(map { [$_, $setID] } @editForUser);
+			# if we're editing a set version, we want to edit
+			#    edit that instead of the userset, so get it
+			#    too.
+			my $userSet = $userRecords[0];
+			my $setVersion = 0;
+			if ( $editingSetVersion ) {
+				$setVersion =
+					$db->getSetVersion($editForUser[0],
+							   $setID,
+							   $editingSetVersion);
+				@userRecords = ( $setVersion );
+			}
+
 			foreach my $record (@userRecords) {
 				foreach my $field ( @{ SET_FIELDS() } ) {
 					next unless canChange($forUsers, $field);
@@ -1006,7 +1036,11 @@ sub initialize {
 				# 	$record->hide_score_by_problem('N');
 				# }
 				####################
-				$db->putUserSet($record);
+				if ( $editingSetVersion ) {
+					$db->putSetVersion( $record );
+				} else {
+					$db->putUserSet($record);
+				}
 			}
 
 		#######################################################
@@ -1016,40 +1050,47 @@ sub initialize {
 		#    hash, so that we don't have to assume that we can 
 		#    override this information for users
 
-			if ( $r->param("set.$setID.selected_ip_locations.override") ) {
-				foreach my $record ( @userRecords ) {
-					my $userID = $record->user_id;
-					my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
-					my @userSetLocations = $db->listUserSetLocations($userID,$setID);
-					my @addSetLocations = ();
-					my @delSetLocations = ();
-					foreach my $loc ( @selectedLocations ) {
-						push( @addSetLocations, $loc ) if ( ! grep( /^$loc$/, @userSetLocations ) );
+			## should we allow resetting set locations for set versions?  this
+			##    requires either putting in a new set of database routines
+			##    to deal with the versioned setID, or fudging it at this end
+			##    by manually putting in the versioned ID setID,v#.  neither
+			##    of these seems desirable, so for now it's not allowed
+			if ( ! $editingSetVersion ) {
+				if ( $r->param("set.$setID.selected_ip_locations.override") ) {
+					foreach my $record ( @userRecords ) {
+						my $userID = $record->user_id;
+						my @selectedLocations = $r->param("set.$setID.selected_ip_locations");
+						my @userSetLocations = $db->listUserSetLocations($userID,$setID);
+						my @addSetLocations = ();
+						my @delSetLocations = ();
+						foreach my $loc ( @selectedLocations ) {
+							push( @addSetLocations, $loc ) if ( ! grep( /^$loc$/, @userSetLocations ) );
+						}
+						foreach my $loc ( @userSetLocations ) {
+							push( @delSetLocations, $loc ) if ( ! grep( /^$loc$/, @selectedLocations ) );
+						}
+						# then update the user set_locations
+						foreach ( @addSetLocations ) {
+							my $Loc = $db->newUserSetLocation;
+							$Loc->set_id( $setID );
+							$Loc->user_id( $userID );
+							$Loc->location_id($_);
+							$db->addUserSetLocation($Loc);
+						}
+						foreach ( @delSetLocations ) {
+							$db->deleteUserSetLocation($userID,$setID,$_);
+						}
 					}
-					foreach my $loc ( @userSetLocations ) {
-						push( @delSetLocations, $loc ) if ( ! grep( /^$loc$/, @selectedLocations ) );
-					}
-					# then update the user set_locations
-					foreach ( @addSetLocations ) {
-						my $Loc = $db->newUserSetLocation;
-						$Loc->set_id( $setID );
-						$Loc->user_id( $userID );
-						$Loc->location_id($_);
-						$db->addUserSetLocation($Loc);
-					}
-					foreach ( @delSetLocations ) {
-						$db->deleteUserSetLocation($userID,$setID,$_);
-					}
-				}
-			} else {
-				# if override isn't selected, then we want
-				#    to be sure that there are no 
-				#    set_locations_user entries setting around
-				foreach my $record ( @userRecords ) {
-					my $userID = $record->user_id;
-					my @userLocations = $db->listUserSetLocations($userID,$setID);
-					foreach ( @userLocations ) {
-						$db->deleteUserSetLocation($userID,$setID,$_);
+				} else {
+					# if override isn't selected, then we want
+					#    to be sure that there are no
+					#    set_locations_user entries setting around
+					foreach my $record ( @userRecords ) {
+						my $userID = $record->user_id;
+						my @userLocations = $db->listUserSetLocations($userID,$setID);
+						foreach ( @userLocations ) {
+							$db->deleteUserSetLocation($userID,$setID,$_);
+						}
 					}
 				}
 			}
@@ -1226,9 +1267,18 @@ sub initialize {
 				# in the GlobalProblem record or for fields unique to the UserProblem record.
 								
 				my @userIDs = @editForUser;
-				my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
-				# DBFIXME where clause? iterator?
-				my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
+
+				my @userProblemRecords;
+				if ( ! $editingSetVersion ) {
+					my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
+					# DBFIXME where clause? iterator?
+					@userProblemRecords = $db->getUserProblems(@userProblemIDs);
+				} else {
+					## (we know that we're only editing for one user)
+					@userProblemRecords =
+						( $db->getMergedProblemVersion( $userIDs[0], $setID, $editingSetVersion, $problemID ) );
+				}
+
 				foreach my $record (@userProblemRecords) {
 
 					my $changed = 0; # keep track of any changes, if none are made, avoid unnecessary db accesses
@@ -1261,7 +1311,11 @@ sub initialize {
 						$changed ||= changed($record->$field, $param);
 						$record->$field($param);
 					}
-					$db->putUserProblem($record) if $changed;
+					if ( ! $editingSetVersion ) {
+						$db->putUserProblem($record) if $changed;
+					} else {
+						$db->putProblemVersion($record) if $changed;
+					}
 				}
 			} else { 
 				# Since we're editing for ALL set users, we will make changes to the GlobalProblem record.
@@ -1320,7 +1374,9 @@ sub initialize {
 			}
 		}
 		
-		# Mark the specified problems as correct for all users
+		# Mark the specified problems as correct for all users (not applicable when editing a set
+		#    version, because this only shows up when editing for users or editing the
+		#    global set/problem, not for one user)
 		foreach my $problemID ($r->param('markCorrect')) {
 			# DBFIXME where clause, iterator
 			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
@@ -1357,7 +1413,8 @@ sub initialize {
 			}
 		}
 		
-		# Delete all problems marked for deletion
+		# Delete all problems marked for deletion (not applicable when editing
+		#    for users)
 		foreach my $problemID ($r->param('deleteProblem')) {
 			$db->deleteGlobalProblem($setID, $problemID);
 		}
@@ -1523,6 +1580,16 @@ sub body {
 	my $urlpath     = $r->urlpath;
 	my $courseID    = $urlpath->arg("courseID");
 	my $setID       = $urlpath->arg("setID");
+
+	## we're now allowing setID to come in as setID,v# to edit a set
+	##    version; catch this first
+	my $editingSetVersion = 0;
+	my $fullSetID = $setID;
+	if ( $setID =~ /,v(\d+)$/ ) {
+	    $editingSetVersion = $1;
+	    $setID =~ s/,v(\d+)$//;
+	}
+
 	my $setRecord   = $db->getGlobalSet($setID) or die "No record for global set $setID.";
 
 	my $userRecord = $db->getUser($userID) or die "No record for user $userID.";
@@ -1534,6 +1601,9 @@ sub body {
 		unless $authz->hasPermissions($userRecord->user_id, "modify_problem_sets");
 
 	my @editForUser = $r->param('editForUser');
+
+	return CGI::div({class=>"ResultsWithError"}, "Versions of a set can only be " .
+			"edited for one user at a time.") if ( $editingSetVersion && @editForUser != 1 );
 
 	# Check that every user that we're editing for has a valid UserSet
 	my @assignedUsers;
@@ -1557,10 +1627,16 @@ sub body {
 			print CGI::div({class=>"ResultsWithError"}, "Global set data will be shown instead of user specific data");
 		}		
 	}
-	
+
 	# some useful booleans
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
+
+	# and check that if we're editing a set version for a user, that
+	#    it exists as well
+	if ( $editingSetVersion && ! $db->existsSetVersion( $editForUser[0], $setID, $editingSetVersion ) ) {
+		return CGI::div({class=>"ResultsWithError"}, "The set-version ($setID, version $editingSetVersion) is not assigned to user $editForUser[0].");
+	}
 
 	# If you're editing for users, initially their records will be different but
 	# if you make any changes to them they will be the same.
@@ -1574,7 +1650,8 @@ sub body {
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
 	my $setUserCount     = $db->countSetUsers($setID);
-	my $userSetCount     = $db->countUserSets($editForUser[0]) if $forOneUser;
+# if $forOneUser;
+	my $userSetCount     = ($forOneUser && @editForUser) ? $db->countUserSets($editForUser[0]) : 0;
 
 	
 	my $editUsersAssignedToSetURL = $self->systemLink(
@@ -1588,8 +1665,8 @@ sub body {
 
 
 	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $setID);
-	my $setDetailURL   = $self->systemLink($setDetailPage, authen=>0);
-
+	my $fullsetDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $fullSetID);
+	my $setDetailURL   = $self->systemLink($fullsetDetailPage, authen=>0);
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
 	my $setCountMessage = CGI::a({href=>$editSetsAssignedToUserURL}, $self->setCountMessage($userSetCount, $setCount)) if $forOneUser;
@@ -1603,25 +1680,43 @@ sub body {
 		##############################################
 		my @userLinks = ();
 		foreach my $userID (@editForUser) {
-		    my $u = $db->getUser($userID);
-		    my $email_address = $u->email_address;
-			my $line = $u->last_name.", ".$u->first_name."&nbsp;&nbsp;(".CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id."). Assigned to ";
-			my $editSetsAssignedToUserURL = $self->systemLink(
-	           $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::UserDetail",
-                  courseID => $courseID, userID => $u->user_id));
-            $line .= CGI::a({href=>$editSetsAssignedToUserURL}, 
-                     $self->setCountMessage($db->countUserSets($u->user_id), $setCount));
-            unshift @userLinks,$line;
+			my $u = $db->getUser($userID);
+			my $email_address = $u->email_address;
+			my $line = $u->last_name.", " . $u->first_name . "&nbsp;&nbsp;(" .
+				CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id .
+				"). ";
+			if ( ! $editingSetVersion ) {
+				$line .= "Assigned to ";
+				my $editSetsAssignedToUserURL = $self->systemLink(
+					$urlpath->newFromModule(
+						"WeBWorK::ContentGenerator::Instructor::UserDetail",
+                  				courseID => $courseID, userID => $u->user_id));
+            			$line .= CGI::a({href=>$editSetsAssignedToUserURL}, 
+                     			$self->setCountMessage($db->countUserSets($u->user_id), 
+						$setCount));
+			} else {
+				my $editSetLink = $self->systemLink( $setDetailPage,
+					params=>{effectiveUser=>$u->user_id,
+						 editForUser  =>$u->user_id} );
+				$line .= "Edit set " . CGI::a({href=>$editSetLink},$setID) .
+					" for this user.";
+			}
+			unshift @userLinks,$line;
 		}
 		@userLinks = sort @userLinks;
 	
+		# handy messages when editing gateway sets
+		my $gwmsg = ( $isGatewaySet && ! $editingSetVersion ) ?
+			CGI::br() . CGI::em("To edit a specific student version of this set, " .
+			    "edit (all of) her/his assigned sets.") : "";
+		my $vermsg = ( $editingSetVersion ) ? ", test $editingSetVersion" : "";
+
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
 				CGI::td([
-					 "Editing problem set ".CGI::strong($setID)." data for these individual students:".CGI::br(). 
+					 "Editing problem set ".CGI::strong($setID . $vermsg)." data for these individual students:".CGI::br(). 
 					                CGI::strong(join CGI::br(), @userLinks),
-					CGI::a({href=>$self->systemLink($setDetailPage) },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set."),
+					CGI::a({href=>$self->systemLink($setDetailPage) },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set.") . $gwmsg,
 				
 				])
 			)
@@ -1713,6 +1808,13 @@ sub body {
 	# pass it to FieldTable, so FieldTable can pass it to FieldHTML, so
 	# FieldHTML doesn't have to fetch it itself.
 	my $userSetRecord = $db->getUserSet($userToShow, $setID);
+
+	my $templateUserSetRecord;
+	# send in the set version if we're editing for versions
+	if ( $editingSetVersion ) {
+		$templateUserSetRecord = $userSetRecord;
+		$userSetRecord = $db->getSetVersion( $userToShow, $setID, $editingSetVersion );
+	}
 	
 	print CGI::Tr({}, CGI::td({}, [
 		$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord),
@@ -1852,7 +1954,12 @@ sub body {
 		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
 		# DBFIXME shouldn't need to get key list here
 		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
-		@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
+		if ( ! $editingSetVersion ) {
+			@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
+		} else {
+			my @userversionKeypartsRef = map { [$editForUser[0], $setID, $editingSetVersion, $_] } @problemIDList;
+			@MergedProblems{@problemIDList} = $db->getMergedProblemVersions(@userversionKeypartsRef);
+		}
 	}
 	
 	if (scalar @problemIDList) {
@@ -1879,12 +1986,18 @@ sub body {
 				#$problemRecord = $db->getGlobalProblem($setID, $problemID);
 				$problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
 			}
-			
+
 			#$self->addgoodmessage("");
 			#$self->addbadmessage($problemRecord->toString());
-			
-			
-			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+
+			# when we're editing a set version, we want to be sure to
+			#    use the merged problem in the edit, because we could
+			#    be using problem groups (for which the problem is generated
+			#    and then stored in the problem version)
+			my $problemToShow = ( $editingSetVersion ) ?
+				$MergedProblems{$problemID} : $UserProblems{$problemID};
+
+			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
             
             
@@ -1935,7 +2048,7 @@ sub body {
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
 				CGI::end_table(),
-				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $UserProblems{$problemID}, $isGatewaySet),
+				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $isGatewaySet),
 # A comprehensive list of problems is just TOO big to be handled well
 #				comboBox({
 #					name => "set.$setID.$problemID",
@@ -1950,7 +2063,7 @@ sub body {
 					$setID,
 					$problemID,
 					$GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
-					$UserProblems{$problemID}, # pass previously fetched user record to FieldHTML --sam
+					$problemToShow, # pass previously fetched user record to FieldHTML --sam
 					"source_file"
 				)) .
 			        	CGI::br() . 
@@ -1980,25 +2093,22 @@ EOF
 	} else {
 		print CGI::p(CGI::b("This set doesn't contain any problems yet."));
 	}
-	# always allow one to add a new problem.
-	print 	CGI::checkbox({
-				  label=> "Add",
-				  name=>"add_blank_problem", value=>"1"}
+	# always allow one to add a new problem, unless we're editing a set version
+	if ( ! $editingSetVersion ) {
+		print 	CGI::checkbox({ label=> "Add",
+					name=>"add_blank_problem", value=>"1"}
 			),CGI::input({
-			               name=>"add_n_problems", 
-			               size=>2,
-			               value=>1
-			             },
-			           "blank problem template(s) to end of homework set"
-			),
-			CGI::br(),CGI::br(),
-			CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
-			CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
-			"(Any unsaved changes will be lost.)"
-	;
+					name=>"add_n_problems",
+					size=>2,
+					value=>1 },
+					"blank problem template(s) to end of homework set"
+			);
+	}
+	print CGI::br(),CGI::br(),
+		CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
+		CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
+			"(Any unsaved changes will be lost.)";
 
-	
-	
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
     #my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
     # This next feature isn't fully supported and is causing problems.  Remove for now.  #FIXME
