@@ -297,6 +297,20 @@ sub body {
 	my %UserSetRecords = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
 	my @MergedSetRefs = map { [$editForUserID, $_] } sortByName(undef, @UserSetIDs);
 	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSets(@MergedSetRefs);
+
+	# get set versions of versioned sets
+	my %UserSetVersionRecords;
+	my %UserSetMergedVersionRecords;
+	foreach my $setid ( keys( %UserSetRecords ) ) {
+		if ( $GlobalSetRecords{$setid}->assignment_type =~ /gateway/ ) {
+			my @setVersionRefs = map { [$editForUserID, $setid, $_] }
+				$db->listSetVersions( $editForUserID, $setid );
+			if ( @setVersionRefs ) {
+				$UserSetVersionRecords{$setid} = [ $db->getSetVersions(@setVersionRefs) ];
+				$UserSetMergedVersionRecords{$setid} = [ $db->getMergedSetVersions(@setVersionRefs) ];
+			}
+		}
+	}
 	
 	########################################
 	# Print warning
@@ -332,32 +346,72 @@ sub body {
 			"Dates",
 		])
 	),"\n";
+
+	# get a list of sets to show
 	# DBFIXME already have this data
-	foreach my $setID (sortByName(undef, $db->listGlobalSets())) {
+	my @setsToShow = sortByName( undef, $db->listGlobalSets() );
+	# insert any set versions that we have
+	my $i = $#setsToShow;
+	if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+		push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
+			@{$UserSetVersionRecords{$setsToShow[$i]}} );
+	}
+	$i--;
+	my $numit = 0;
+	while ( $i>=0 ) {
+		if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+			splice( @setsToShow, $i+1, 0,
+				map{ $_->set_id . ",v" . $_->version_id }
+				@{$UserSetVersionRecords{$setsToShow[$i]}} );
+		}
+		$i--;
+		$numit++;
+		# just to be safe
+		last if $numit >= 150;
+	}
+	warn("Truncated display of sets at 150 in UserDetail.pm.  This is a " .
+	     "brake to avoid spiraling into the abyss.  If you really have " .
+	     "more than 150 sets in your course, reset the limit at line " .
+	     "370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.")
+		if ( $numit == 150 );
+
+	
+	foreach my $setID ( @setsToShow ) {
+		# catch the versioned sets that we just added
+		my $setVersion = 0;
+		my $fullSetID = $setID;
+		if ( $setID =~ /,v(\d+)$/ ) {
+			$setVersion = $1;
+			$setID =~ s/,v\d+$//;
+		}
+
 		my $GlobalSetRecord = $GlobalSetRecords{$setID};
-		my $UserSetRecord = $UserSetRecords{$setID};
-		my $MergedSetRecord = $MergedSetRecords{$setID};
+		my $UserSetRecord = (! $setVersion) ? $UserSetRecords{$setID} :
+			$UserSetVersionRecords{$setID}->[$setVersion-1];
+		my $MergedSetRecord = (! $setVersion) ?  $MergedSetRecords{$setID} :
+			$UserSetMergedVersionRecords{$setID}->[$setVersion-1];
 		my $setListPage = $urlpath->new(type =>'instructor_set_detail',
 					args =>{
 						courseID => $courseID,
-						setID    => $setID
+						setID    => $fullSetID
 	                }
-	    );
+		);
 		my $url = $self->systemLink($setListPage,
 		                      params =>{effectiveUser => $editForUserID,
 		                                editForUser   => $editForUserID,
 		});
 
+		my $setName = ( $setVersion ) ? "test $setVersion" : $setID;
+
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
-				CGI::checkbox({ type => 'checkbox',
+				($setVersion) ? "" : CGI::checkbox({ type => 'checkbox',
 								name => "set.$setID.assignment",
 								label => '',
 								value => 'assigned',
-                        		checked => (defined $MergedSetRecord)
-                }),
-				defined($MergedSetRecord) ? CGI::b(CGI::a({href=>$url},$setID, ) ) : CGI::b($setID, ),
-				join "\n", $self->DBFieldTable($GlobalSetRecord, $UserSetRecord, $MergedSetRecord, "set", $setID, \@dateFields,$rh_dateFieldLabels),
+								checked => (defined $MergedSetRecord)}),
+				defined($MergedSetRecord) ? CGI::b(CGI::a({href=>$url},$setName, ) ) : CGI::b($setID, ),
+				join "\n", $self->DBFieldTable($GlobalSetRecord, $UserSetRecord, $MergedSetRecord, "set", $setID, \@dateFields, $rh_dateFieldLabels),
 			])
 		),"\n";
 	}
@@ -467,7 +521,8 @@ sub checkDates {
 }
 
 sub DBFieldTable {
-	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType, $recordID, $fieldsRef,$rh_fieldLabels) = @_;
+	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType,
+	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 	
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
 	
