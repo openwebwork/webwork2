@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.48 2007/05/31 14:39:10 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.49 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -172,7 +172,7 @@ sub can_recordAnswers {
 	}
 
 	if (before($Set->open_date, $submitTime)) {
-		    warn("case 0\n");
+		#    warn("case 0\n");
 		return $authz->hasPermissions($User->user_id, "record_answers_before_open_date");
 	} elsif (between($Set->open_date, ($Set->due_date + $grace), $submitTime)) {
 
@@ -686,6 +686,13 @@ sub pre_header_initialize {
 				my $setTmpl = $db->getUserSet($effectiveUserName,$setName);
 				WeBWorK::ContentGenerator::Instructor::assignSetVersionToUser($self, $effectiveUserName, $setTmpl);
 				$setVersionNumber++;
+
+				# get a clean version of the set to save,
+				#    and the merged version to use in the 
+				#    rest of the routine
+				my $cleanSet = $db->getSetVersion($userName,
+								  $setName,
+								  $setVersionNumber);
 				$set = $db->getMergedSetVersion($userName, 
 								$setName,
 								$setVersionNumber);
@@ -704,12 +711,24 @@ sub pre_header_initialize {
 					    $timeNow+$timeLimit<$set->due_date);
 				$set->answer_date($set->due_date + $ansOffset);
 				$set->version_last_attempt_time( 0 );
-				# put this new info into the database.  note 
-				#    that this means that -all- of the merged 
-				#    information gets put back into the 
-				#    database.  as long as the version doesn't 
-				#    have a long lifespan, this is ok...
-				$db->putSetVersion( $set );
+
+				# put this new info into the database.  we 
+				#    put back that data which we need for the
+				#    version, and leave blank any information
+				#    that we'd like to inherit from the user
+				#    set or global set.  we set the data which
+				#    determines if a set is open, because we
+				#    don't want the set version to reopen after
+				#    it's complete
+				$cleanSet->version_creation_time( $set->version_creation_time );
+				$cleanSet->open_date( $set->open_date );
+				$cleanSet->due_date( $set->due_date );
+				$cleanSet->answer_date( $set->answer_date );
+				$cleanSet->version_last_attempt_time( $set->version_last_attempt_time );
+				$cleanSet->version_time_limit( $set->version_time_limit );
+				$cleanSet->attempts_per_version( $set->attempts_per_version );
+				$cleanSet->assignment_type( $set->assignment_type );
+				$db->putSetVersion( $cleanSet );
 
 				# we have a new set version, so it's open
 				$versionIsOpen = 1;
@@ -1440,7 +1459,7 @@ sub body {
 		my $setName = $set->set_id();
 
 	# save the submission time if we're recording the answer, or if the 
-	# first submission occurs after the due_date
+	#     first submission occurs after the due_date
 		if ( $submitAnswers && 
 		     ( $will{recordAnswers} || 
 		       ( ! $set->version_last_attempt_time() &&
@@ -1451,7 +1470,14 @@ sub body {
 		     $set->assignment_type() eq 'proctored_gateway' ) {
 			$set->assignment_type( 'gateway' );
 		}
-		$db->putSetVersion( $set );
+	# again, we save only parameters that are determine access to the
+	#    set version
+		my $cleanSet = $db->getSetVersion($effectiveUser,
+						$setName,
+						$versionNumber);
+		$cleanSet->assignment_type( $set->assignment_type );
+		$cleanSet->version_last_attempt_time( $set->version_last_attempt_time );
+		$db->putSetVersion( $cleanSet );
 	}
 
 
