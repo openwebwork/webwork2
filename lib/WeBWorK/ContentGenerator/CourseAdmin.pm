@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.72 2008/05/09 00:42:24 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.74 2008/05/23 14:54:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2430,104 +2430,106 @@ sub edit_location_handler {
 ################################################################################
 
 our $registered_file_name = "registered_$main::VERSION";
-sub display_registration_form {
-my $self = shift;
-my $ce   = $self->r->ce;
-my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
-my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
-return 0  if $registeredQ or $self->r->param("register_site");     #otherwise return registration form
-return  q! 
-<center>
-<table class="messagebox" style="background-color:#FFFFCC;width:60%">
-<tr><td>
-!,
-CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
-CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
-WeBWorK  Since WeBWorK is open source and can be freely downloaded from http://www.openwebwork.org
-and http://webwork.maa.org  it is frequently difficult for us to give a reasonable answer to this 
-question."),
-CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
-questions (the ones you can answer easily) and send the email.  It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
-q!
-</td>
-</tr>
-<tr><td align="center">
-!,
-CGI::a({href=>$self->systemLink($self->r->urlpath, params=>{subDisplay=>"registration"})}, "Register"),
-q!
-</td></tr>
-</table>
-</center>
-!;
 
+sub display_registration_form {
+	my $self = shift;
+	my $ce   = $self->r->ce;
+	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
+	#my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
+	return 0  if $registeredQ or $self->r->param("register_site");     #otherwise return registration form
+	return  q! 
+	<center>
+	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
+	<tr><td>
+	!,
+	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
+	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
+	WeBWorK  Since WeBWorK is open source and can be freely downloaded from http://www.openwebwork.org
+	and http://webwork.maa.org  it is frequently difficult for us to give a reasonable answer to this 
+	question."),
+	CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
+	questions (the ones you can answer easily) and send the email.  It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
+	q!
+	</td>
+	</tr>
+	<tr><td align="center">
+	!,
+	CGI::a({href=>$self->systemLink($self->r->urlpath, params=>{subDisplay=>"registration"})}, "Register"),
+	q!
+	</td></tr>
+	</table>
+	</center>
+	!;
+	
 
 
 }
+
 sub registration_form {
-my $self = shift;
-my $ce = $self->r->ce;
-
-print "<center>";
-print  "\n",CGI::p({style=>"text-align: left; width:60%"},
-"\nPlease ",
-CGI::a({href=>'mailto:gage@math.rochester.edu?'
-.'subject=WeBWorK%20Server%20Registration'
-.'&body='
-.uri_escape("Thanks for registering your WeBWorK server.  We'd appreciate if you would answer
-as many of these questions as you can conveniently.  We need this data so we can better 
-answer questions such as 'How many institutions have webwork servers?' and 'How many students
-use WeBWorK?'.  Your email and contact information  will be kept private.  We will 
-list your institution as one that uses WeBWorK unless you tell us to keep that private as well.
-\n\nThank you. \n\n--Mike Gage \n\n
-")
-.uri_escape("Server URL: ".$ce->{apache_root_url}." \n\n")
-.uri_escape("WeBWorK version: $main::VERSION \n\n")
-.uri_escape("Institution name (e.g. University of Rochester): \n\n")
-.uri_escape("Contact person name: \n\n")
-.uri_escape("Contact email: \n\n")
-.uri_escape("Approximate number of courses run each term: \n\n")
-.uri_escape("Approximate number of students using this server each term: \n\n")
-.uri_escape("Other institutions who use WeBWorK courses hosted on this server: \n\n")
-.uri_escape("Other comments: \n\n")
-},
-'click here'),
-q! to open your email application.  There are a few questions, some of which have already
-been filled in for your installation.  Fill in the other questions which you can answer easily and send
-the email to gage\@math.rochester.edu
-!
-);
-
-
-
-print  "\n",CGI::p({style=>"text-align: left; width:60%"},q!Once you have emailed your registration information you can hide the "registration" banner 
-for successive visits by clicking
-the button below.!)
-;
-
-print "</center>";
-print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
-print $self->hidden_authen_fields;
-print $self->hidden_fields("subDisplay");
-print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", -label=>"Site has been registered"));
-print CGI::end_form();
+	my $self = shift;
+	my $ce = $self->r->ce;
+	
+	print "<center>";
+	print  "\n",CGI::p({style=>"text-align: left; width:60%"},
+	"\nPlease ",
+	CGI::a({href=>'mailto:gage@math.rochester.edu?'
+	.'subject=WeBWorK%20Server%20Registration'
+	.'&body='
+	.uri_escape("Thanks for registering your WeBWorK server.  We'd appreciate if you would answer
+	as many of these questions as you can conveniently.  We need this data so we can better 
+	answer questions such as 'How many institutions have webwork servers?' and 'How many students
+	use WeBWorK?'.  Your email and contact information  will be kept private.  We will 
+	list your institution as one that uses WeBWorK unless you tell us to keep that private as well.
+	\n\nThank you. \n\n--Mike Gage \n\n
+	")
+	.uri_escape("Server URL: ".$ce->{apache_root_url}." \n\n")
+	.uri_escape("WeBWorK version: $main::VERSION \n\n")
+	.uri_escape("Institution name (e.g. University of Rochester): \n\n")
+	.uri_escape("Contact person name: \n\n")
+	.uri_escape("Contact email: \n\n")
+	.uri_escape("Approximate number of courses run each term: \n\n")
+	.uri_escape("Approximate number of students using this server each term: \n\n")
+	.uri_escape("Other institutions who use WeBWorK courses hosted on this server: \n\n")
+	.uri_escape("Other comments: \n\n")
+	},
+	'click here'),
+	q! to open your email application.  There are a few questions, some of which have already
+	been filled in for your installation.  Fill in the other questions which you can answer easily and send
+	the email to gage\@math.rochester.edu
+	!
+	);
+	
+	
+	
+	print  "\n",CGI::p({style=>"text-align: left; width:60%"},q!Once you have emailed your registration information you can hide the "registration" banner 
+	for successive visits by clicking
+	the button below.!)
+	;
+	
+	print "</center>";
+	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", -label=>"Site has been registered"));
+	print CGI::end_form();
 }
 
 
 
 sub do_registration {
-my $self = shift;
-my $ce   = $self->r->ce;
-my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
-# warn qq!`echo "info" >$registered_file_path`!;
-`echo "info" >$registered_file_path`;
-
-print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration action completed.  Thank you very much for registering WeBWorK!"});
-
-print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
-print $self->hidden_authen_fields;
-print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"registration_completed", -label=>"Continue"));
-print CGI::end_form();
-print "</center>";
+	my $self = shift;
+	my $ce   = $self->r->ce;
+	my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
+	# warn qq!`echo "info" >$registered_file_path`!;
+	`echo "info" >$registered_file_path`;
+	
+	print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration action completed.  Thank you very much for registering WeBWorK!"});
+	
+	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+	print $self->hidden_authen_fields;
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"registration_completed", -label=>"Continue"));
+	print CGI::end_form();
+	print "</center>";
 
 }
 ################################################################################
