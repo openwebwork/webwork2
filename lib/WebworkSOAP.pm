@@ -50,7 +50,7 @@ sub new {
     }
     #Construct DB handle
     my $db = eval { new WeBWorK::DB($ce->{dbLayout}); };
-    $@ and soap_fault_major("Failed to initialize database handle.");
+    $@ and soap_fault_major("Failed to initialize database handle.<br>$@");
     $self->{db} = $db;
     $self->{ce} = $ce;
     bless $self;
