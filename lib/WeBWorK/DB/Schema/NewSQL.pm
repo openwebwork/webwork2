@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.23 2007/07/22 05:25:18 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL.pm,v 1.24 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -334,7 +334,8 @@ sub AUTOLOAD {
 	if (exists $API{$2}) {
 		croak sprintf("%s does not implement &%s", $1, $2);
 	} else {
-		croak sprintf("Undefined subroutine &%s called", $AUTOLOAD);
+		warn caller();
+		croak sprintf("Undefined subroutine &%s called ", $AUTOLOAD);
 	}
 }
 
