@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.204 2008/03/13 17:53:12 sh002i Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.205 2008/03/13 22:22:23 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -677,6 +677,8 @@ $authen{ldap_options} = {
 	check_answers_after_open_date_without_attempts  => "guest",
 	check_answers_after_due_date                    => "guest",
 	check_answers_after_answer_date                 => "guest",
+	create_new_set_version_when_acting_as_student   => undef,
+	record_set_version_answers_when_acting_as_student => undef,
 	record_answers_when_acting_as_student           => undef,
 	# "record_answers_when_acting_as_student" takes precedence
 	# over the following for professors acting as students:
