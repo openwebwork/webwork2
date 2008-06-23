@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.90 2007/08/14 20:16:16 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.91 2007/09/14 15:21:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -389,8 +389,8 @@ sub setListRow {
 	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
 
 # we choose not to display the link to start a new gateway that we've just
-#    set up in the previous line if that's not available, so we work out here 
-#    if the set is open.  for gateways this is a bit more complicated than 
+#    set up in the previous line if that's not available, so we work out here
+#    if the set is open.  for gateways this is a bit more complicated than
 #    for homework sets
 	my $setIsOpen = 0;
 	my $status = '';
@@ -410,17 +410,36 @@ sub setListRow {
 			# we let people go back to old tests
 			$setIsOpen = 1;
 
-		} else {            
+			# reset the link to give the test number
+			my $vnum = $set->version_id;
+			$interactive = CGI::a({-href=>$interactiveURL},
+					      "$name (test$vnum)");
+		} else {
 			my $t = time();
 			if ( $t < $set->open_date() ) {
 				$status = "will open on " . $self->formatDateTime($set->open_date);
-				$control = "" unless $preOpenSets;
-				$interactive = $name unless $preOpenSets;
+				if ( $preOpenSets ) {
+					# reset the link
+					$interactive = CGI::a({-href=>$interactiveURL},
+							      "Take $name test");
+				} else {
+					$control = "";
+					$interactive = "$name test";
+				}
 			} elsif ( $t < $set->due_date() ) {
 				$status = "now open, due " . $self->formatDateTime($set->due_date);
 				$setIsOpen = 1;
+				$interactive = CGI::a({-href=>$interactiveURL},
+						      "Take $name test");
 			} else {
 				$status = "closed";
+
+				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
+					$interactive = CGI::a({-href=>$interactiveURL},
+							      "Take $name test");
+				} else {
+					$interactive = "$name test";
+				}
 			}
 		}
 
@@ -439,24 +458,7 @@ sub setListRow {
 	} else {
 		$status = "closed, answers available";
 	}
-	
 
-# now edit the interactive link for gateways
-	if ( $gwtype ) {
-		if ( $gwtype == 1 ) {
-			my $vnum = $set->version_id;
-			$interactive = CGI::a({-href=>$interactiveURL}, 
-					      "$name (test$vnum)");
-		} else {  # this is the case of a template URL
-			if ( $setIsOpen ) {
-				$interactive = CGI::a({-href=>$interactiveURL}, 
-						      "Take $name test");
-			} else {
-				$interactive = "$name test";
-			}
-		}
-	}
-	
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
 
 	$status = CGI::font({class=>$publishedClass}, $status) if $preOpenSets;
@@ -469,7 +471,7 @@ sub setListRow {
 		             $status,
 	    ]));
 	} else {
-	    my ( $startTime, $score );
+		my ( $startTime, $score );
 
 		if ( defined( $set->assignment_type() ) && 
 		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
