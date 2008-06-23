@@ -66,23 +66,27 @@ sub initialize {
 	foreach my $setID (@setIDs) {
 		push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
+
+	# note: assignedSets are those sets that are assigned in the submitted form
 	debug("assignedSets", join(" ", @assignedSets));
+
 	my %selectedSets = map { $_ => 1 } @assignedSets;
+
 	#debug ##########################
 		#print STDERR ("aSsigned sets", join(" ",@assignedSets));
         #my @params = $r->param();
         #print STDERR " parameters ", join(" ", @params);
     ###############
+
 	#Get the user(s) whose records are to be modified
 	#  for now: $editForUserID
 	# check the user exists?  Is this necessary?
 	my $editUserRecord = $db->getUser($editForUserID);
 	die "record not found for $editForUserID.\n" unless $editUserRecord;
-	
-	
+
 	#Perform the desired assignments or deletions
 	my %userSets = map { $_ => 1 } $db->listUserSets($editForUserID);
-			
+
 	# go through each possible set
 	debug(" parameters ", join(" ", $r->param()) );
 	foreach my $setRecord (@setRecords) {
@@ -91,29 +95,48 @@ sub initialize {
 		if (exists $selectedSets{$setID}) {
 		    # change by glarose, 2007/02/07: only assign set if the 
 		    # user doesn't already have the set assigned.
-				$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
-				#override dates
-				
+			$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
 
-				my $userSetRecord = $db->getUserSet($editForUserID, $setID);
-				# get the dates
-				
-
-
-				#do checks to see if new dates meet criteria
-				my $rh_dates = $self->checkDates($setRecord,$setID);
-				unless  ( $rh_dates->{error} ) { #returns 1 if error
-					# if no error update database
-					foreach my $field (keys %{DATE_FIELDS()}) {
-						if (defined $r->param("set.$setID.$field.override")) {
-							$userSetRecord->$field($rh_dates->{$field});		   
-						} else {
-							$userSetRecord->$field(undef); #stop override
-						}
+			#override dates
+			my $userSetRecord = $db->getUserSet($editForUserID, $setID);
+			# get the dates
+			#do checks to see if new dates meet criteria
+			my $rh_dates = $self->checkDates($setRecord,$setID);
+			unless  ( $rh_dates->{error} ) { #returns 1 if error
+				# if no error update database
+				foreach my $field (keys %{DATE_FIELDS()}) {
+					if (defined $r->param("set.$setID.$field.override")) {
+						$userSetRecord->$field($rh_dates->{$field});
+					} else {
+						$userSetRecord->$field(undef); #stop override
 					}
-					$db->putUserSet($userSetRecord);
-				
 				}
+				$db->putUserSet($userSetRecord);
+			}
+
+			# if the set is a gateway set, also check to see if we're
+			#    resetting the dates for any of the assigned set versions
+			if ( $setRecord->assignment_type =~ /gateway/ ) {
+				my @setVer = $db->listSetVersions( $editForUserID,
+								   $setID );
+				foreach my $ver ( @setVer ) {
+					my $setVersionRecord =
+						$db->getSetVersion( $editForUserID,
+								    $setID, $ver );
+					my $rh_dates = $self->checkDates($setVersionRecord,
+									 "$setID,v$ver");
+					unless ( $rh_dates->{error} ) {
+						foreach my $field ( keys %{DATE_FIELDS()} ) {
+							if ( defined( $r->param("set.$setID,v$ver.$field.override") ) ) {
+								$setVersionRecord->$field($rh_dates->{$field});
+							} else {
+								$setVersionRecord->$field(undef);
+							}
+						}
+						$db->putSetVersion( $setVersionRecord );
+					}
+				}
+			}
 
 		} else {
 			# user asked to NOT have the set assigned to the selected user
@@ -371,11 +394,11 @@ sub body {
 	}
 	warn("Truncated display of sets at 150 in UserDetail.pm.  This is a " .
 	     "brake to avoid spiraling into the abyss.  If you really have " .
-	     "more than 150 sets in your course, reset the limit at line " .
+	     "more than 150 sets in your course, reset the limit at about line " .
 	     "370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.")
 		if ( $numit == 150 );
 
-	
+
 	foreach my $setID ( @setsToShow ) {
 		# catch the versioned sets that we just added
 		my $setVersion = 0;
@@ -406,7 +429,7 @@ sub body {
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
 				($setVersion) ? "" : CGI::checkbox({ type => 'checkbox',
-								name => "set.$setID.assignment",
+								name => "set.$fullSetID.assignment",
 								label => '',
 								value => 'assigned',
 								checked => (defined $MergedSetRecord)}),
@@ -526,6 +549,12 @@ sub DBFieldTable {
 	
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
 	
+	# modify record name if we're dealing with versioned sets
+	if ( $recordType eq "set" && defined($MergedRecord) &&
+	     $MergedRecord->assignment_type =~ /gateway/ &&
+	     $MergedRecord->can( "version_id" ) ) {
+		$recordID .= ",v" . $MergedRecord->version_id;
+	}
 	my $r = $self->r;
 	my @fields = @$fieldsRef;
 	my @results;
