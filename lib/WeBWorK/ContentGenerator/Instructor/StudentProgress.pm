@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.35 2007/08/13 22:59:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.36 2008/06/19 19:34:31 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -553,11 +553,11 @@ sub displaySets {
 				if ( defined($userSet) ) {  
 					$dateOfTest = localtime($userSet->version_creation_time());
 					if ( defined($userSet->version_last_attempt_time()) && $userSet->version_last_attempt_time() ) {
-						$testTime = ($userSet->version_last_attempt_time() - $userSet->version_creation_time() ) / 60; 
+						$testTime = ($userSet->version_last_attempt_time() - $userSet->open_date() ) / 60; 
 						my $timeLimit = $userSet->version_time_limit()/60;
 						$testTime = $timeLimit if ( $testTime > $timeLimit );
 						$testTime = sprintf("%3.1f min", $testTime);
-					} elsif ( time() - $userSet->version_creation_time() < $userSet->version_time_limit() ) {
+					} elsif ( time() - $userSet->open_date() < $userSet->version_time_limit() ) {
 						$testTime = 'still open';
 					} else {
 						$testTime = 'time limit ' .
