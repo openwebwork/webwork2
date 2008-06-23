@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.49 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.50 2008/06/20 19:55:21 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -479,6 +479,11 @@ sub pre_header_initialize {
 	my $effectiveUserName = $r->param('effectiveUser');
 	my $key = $r->param('key');
 
+	# should we allow a new version to be created when
+	#    acting as a user?
+	my $verCreateOK = ( defined( $r->param('createnew_ok') ) ) ? 
+		$r->param('createnew_ok') : 0;
+
 	# user checks
 	my $User = $db->getUser($userName);
 	die "record for user $userName (real user) does not exist." 
@@ -614,12 +619,13 @@ sub pre_header_initialize {
 				      $Problem->num_correct() +
 				      $Problem->num_incorrect() : 0 );
 
-	# $maxAttempts turns into the maximum number of versions we can create; 
-	#    if $Problem isn't defined, we can't have made any attempts, so it 
+	# $maxAttempts turns into the maximum number of versions we can create;
+	#    if $Problem isn't defined, we can't have made any attempts, so it
 	#    doesn't matter
 	my $maxAttempts           = ( defined($Problem) && 
-				      defined($Problem->max_attempts()) ? 
-				      $Problem->max_attempts() : -1 );
+				      defined($Problem->max_attempts()) &&
+				      $Problem->max_attempts() ) ? 
+				      $Problem->max_attempts() : -1;
 
 	# finding the number of versions per time interval is a little harder.
 	#    we interpret the time interval as a rolling interval: that is, 
@@ -661,25 +667,27 @@ sub pre_header_initialize {
 
 	# if no specific version is requested, we can create a new one if 
 	#    need be
-		if ( ! $requestedVersion ) { 
-			if ( ( $maxAttempts == -1 || 
+		if ( ! $requestedVersion ) {
+			if ( ( $maxAttempts == -1 ||
 			       $totalNumVersions < $maxAttempts )
 			     &&
 			     ( $setVersionNumber == 0 ||
-			       ( 
-				 ( $currentNumAttempts>=$maxAttemptsPerVersion 
+			       (
+				 ( $currentNumAttempts>=$maxAttemptsPerVersion
 				   ||
 				   $timeNow >= $set->due_date + $grace )
 				 &&
 				 ( ! $versionsPerInterval 
 				   ||
-				   $currentNumVersions < $versionsPerInterval ) 
-				 ) 
+				   $currentNumVersions < $versionsPerInterval )
+				 )
 			     )
 			     &&
 			     ( $effectiveUserName eq $userName ||
-			       $authz->hasPermissions($userName, "record_answers_when_acting_as_student") )
-			     ) {
+			        ( $authz->hasPermissions($userName, "record_answers_when_acting_as_student") ||
+				  $verCreateOK ) )
+			       
+			   ) {
 				# assign set, get the right name, version 
 				#    number, etc., and redefine the $set 
 				#    and $Problem we're working with
@@ -751,6 +759,7 @@ sub pre_header_initialize {
 					"as.  When acting as another user, " .
 					"new versions of the set cannot be " .
 					"created.";
+				$self->{invalidVersionCreation} = 1;
 
 			} elsif ($currentNumAttempts < $maxAttemptsPerVersion &&
 				 $timeNow < $set->due_date() + $grace ) {
@@ -1143,11 +1152,26 @@ sub body {
 			}
 		}
 
+		my $newlink = '';
+		if ( defined( $self->{invalidVersionCreation} ) &&
+		     $self->{invalidVersionCreation} ) {
+			my $gwpage = $urlpath->newFromModule($urlpath->module,
+				courseID=>$urlpath->arg("courseID"),
+				setID=>$urlpath->arg("setID"));
+			my $link = $self->systemLink( $gwpage,
+				params=>{effectiveUser => $effectiveUser,
+					 user => $user,
+					 createnew_ok => 1} );
+			$newlink = CGI::p(CGI::a({href=>$link},
+				"Create new set version."));
+		}
+
 		return CGI::div({class=>"ResultsWithError"},
 				CGI::p("The selected problem set (" . 
 				       $urlpath->arg("setID") . ") is not " .
 				       "a valid set for $effectiveUser:"),
-				CGI::p($self->{invalidSet}));
+				CGI::p($self->{invalidSet}),
+				$newlink);
 	}
 	
 	my $tmplSet = $self->{tmplSet};
