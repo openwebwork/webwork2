@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.58 2007/04/04 15:05:27 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.59 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -204,7 +204,16 @@ sub pre_header_initialize {
 	defined param $r "act_as_user" and do {
 		if ($nusers == 1 and $nsets <= 1) {
 			if ($nsets) {
-				$module = "${pfx}::ProblemSet";
+				# unfortunately, we need to know what
+				#    type of set it is to figure out
+				#    the correct module
+				my $set = $db->getGlobalSet( $firstSetID );
+				if ( defined( $set ) &&
+				     $set->assignment_type =~ /gateway/ ) {
+					$module = "${pfx}::GatewayQuiz";
+				} else {
+					$module = "${pfx}::ProblemSet";
+				}
 				$args{setID} = $firstSetID;
 			} else {
 				$module = "${pfx}::ProblemSets";
