@@ -563,6 +563,13 @@ sub extraSetFields {
 
 		foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
 
+			# don't show template gateway fields when editing
+			#    set versions
+			next if ( ( $gwfield eq "time_interval" ||
+				    $gwfield eq "versions_per_interval" ) &&
+				  ( $forUsers &&
+				    $userRecord->can('version_id') ) );
+
 			my @fieldData = 
 			    ($self->FieldHTML($userID, $setID, undef, 
 					      $globalRecord, $userRecord, 
