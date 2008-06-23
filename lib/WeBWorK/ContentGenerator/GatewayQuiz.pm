@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.50 2008/06/20 19:55:21 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.51 2008/06/23 14:22:15 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -168,7 +168,21 @@ sub can_recordAnswers {
 			   $Set->version_last_attempt_time() : $timeNow;
 
 	if ($User->user_id ne $EffectiveUser->user_id) {
-		return $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
+		my $recordAsOther = $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
+		my $recordVersionsAsOther = $authz->hasPermissions($User->user_id, "record_set_version_answers_when_acting_as_student");
+
+		if ( $recordAsOther ) {
+			return $recordAsOther;
+		} elsif ( ! $recordVersionsAsOther ) {
+			return $recordVersionsAsOther;
+		}
+		## if we're not allowed to record answers as another user,
+		##    return that permission.  if we're allowed to record
+		##    only set version answers, then we allow that between
+		##    the open and close dates, and so drop out of this
+		##    conditional to the usual one.
+		## it isn't clear if this is the correct behavior, but I
+		##    think it's probably reasonable.
 	}
 
 	if (before($Set->open_date, $submitTime)) {
@@ -481,7 +495,7 @@ sub pre_header_initialize {
 
 	# should we allow a new version to be created when
 	#    acting as a user?
-	my $verCreateOK = ( defined( $r->param('createnew_ok') ) ) ? 
+	my $verCreateOK = ( defined( $r->param('createnew_ok') ) ) ?
 		$r->param('createnew_ok') : 0;
 
 	# user checks
@@ -502,7 +516,7 @@ sub pre_header_initialize {
 	my $requestedVersion = ( $setName =~ /,v(\d+)$/ ) ? $1 : 0;
 	$setName =~ s/,v\d+$//;
 # note that if we're already working with a version we want to be sure to stick
-# with that version.  we do this after we've validated that the user is 
+# with that version.  we do this after we've validated that the user is
 # assigned the set, below
 
 ###################################
@@ -685,8 +699,8 @@ sub pre_header_initialize {
 			     &&
 			     ( $effectiveUserName eq $userName ||
 			        ( $authz->hasPermissions($userName, "record_answers_when_acting_as_student") ||
-				  $verCreateOK ) )
-			       
+				  ( $authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student") && $verCreateOK ) ) )
+
 			   ) {
 				# assign set, get the right name, version 
 				#    number, etc., and redefine the $set 
@@ -698,14 +712,17 @@ sub pre_header_initialize {
 				# get a clean version of the set to save,
 				#    and the merged version to use in the 
 				#    rest of the routine
-				my $cleanSet = $db->getSetVersion($userName,
-								  $setName,
-								  $setVersionNumber);
-				$set = $db->getMergedSetVersion($userName, 
-								$setName,
-								$setVersionNumber);
+				my $cleanSet = $db->getSetVersion(
+					$effectiveUserName, $setName,
+					$setVersionNumber);
+				$set = $db->getMergedSetVersion(
+					$effectiveUserName, $setName,
+					$setVersionNumber );
 
-				$Problem = $db->getMergedProblemVersion($userName, $setName, $setVersionNumber, 1);
+				$Problem = $db->getMergedProblemVersion(
+					$effectiveUserName, $setName, 
+					$setVersionNumber, 1);
+
 				# because we're creating this on the fly, 
 				#    it should be published
 				$set->published(1);
@@ -753,13 +770,30 @@ sub pre_header_initialize {
 					"maximum number\nallowed.";
 
 			} elsif ( $effectiveUserName ne $userName &&
-				  ! $authz->hasPermissions($userName, "record_answers_when_acting_as_student") ) {
+				  $authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student") ) {
+				$self->{invalidSet} = "User " .
+					"$effectiveUserName is being acted " .
+					"as.  If you continue, you will " .
+					"create a new version of this set " .
+					"for that user, which will count " .
+					"against their allowed maximum " .
+					"number of versions for the current " .
+					"time interval.  IN GENERAL, THIS " .
+					"IS NOT WHAT YOU WANT TO DO.  " .
+					"Please be sure that you want to " .
+					"do this before clicking the \"" .
+					"Create new set version\" link " .
+					"below.  Alternately, PRESS THE " .
+					"\"BACK\" BUTTON and continue.";
+				$self->{invalidVersionCreation} = 1;
+
+			} elsif ( $effectiveUserName ne $userName ) {
 				$self->{invalidSet} = "User " .
 					"$effectiveUserName is being acted " .
 					"as.  When acting as another user, " .
 					"new versions of the set cannot be " .
 					"created.";
-				$self->{invalidVersionCreation} = 1;
+				$self->{invalidVersionCreation} = 2;
 
 			} elsif ($currentNumAttempts < $maxAttemptsPerVersion &&
 				 $timeNow < $set->due_date() + $grace ) {
@@ -784,10 +818,6 @@ sub pre_header_initialize {
 					"You may take the\ntest again after " .
 					"the time interval has expired.";
 
-			} elsif ( $effectiveUserName ne $userName ) {
-				$self->{invalidSet} = "You are acting as a " .
-					"student, and cannot start new " .
-					"versions of a set for the student.";
 			}
 
 		} else {
@@ -799,7 +829,7 @@ sub pre_header_initialize {
 			     && 
 			     ( $effectiveUserName eq $userName ||
 			       $authz->hasPermissions($userName,
-						      "record_answers_when_acting_as_student") )
+						      "record_set_version_answers_when_acting_as_student") )
 			   ) {
 				if ( between($set->open_date(), 
 					     $set->due_date() + $grace, 
@@ -1153,8 +1183,9 @@ sub body {
 		}
 
 		my $newlink = '';
+		my $usernote = '';
 		if ( defined( $self->{invalidVersionCreation} ) &&
-		     $self->{invalidVersionCreation} ) {
+		     $self->{invalidVersionCreation} == 1 ) {
 			my $gwpage = $urlpath->newFromModule($urlpath->module,
 				courseID=>$urlpath->arg("courseID"),
 				setID=>$urlpath->arg("setID"));
@@ -1164,12 +1195,17 @@ sub body {
 					 createnew_ok => 1} );
 			$newlink = CGI::p(CGI::a({href=>$link},
 				"Create new set version."));
+			$usernote = " (acted as by $user)";
+		} elsif ( defined( $self->{invalidVersionCreation} ) &&
+			  $self->{invalidVersionCreation} == 2 ) {
+			$usernote = " (acted as by $user)";
 		}
 
 		return CGI::div({class=>"ResultsWithError"},
 				CGI::p("The selected problem set (" . 
 				       $urlpath->arg("setID") . ") is not " .
-				       "a valid set for $effectiveUser:"),
+				       "a valid set for $effectiveUser" .
+				       "$usernote:"),
 				CGI::p($self->{invalidSet}),
 				$newlink);
 	}
@@ -1677,11 +1713,13 @@ sub body {
 				   -value=>$set->due_date()}), "\n";
 		print CGI::endform();
 
-		if ( $timeLeft < 1 && $timeLeft > 0 ) {
+		if ( $timeLeft < 1 && $timeLeft > 0 &&
+		     ! $authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
 			print CGI::span({-class=>"resultsWithError"}, 
 					CGI::b("You have less than 1 minute ",
 					       "to complete this test.\n"));
-		} elsif ( $timeLeft <= 0 ) { 
+		} elsif ( $timeLeft <= 0 &&
+			  ! $authz->hasPermissions($user, "record_answers_when_acting_as_student") ) {
 			print CGI::span({-class=>"resultsWithError"}, 
 					CGI::b("You are out of time.  ",
 					       "Press grade now!\n"));
