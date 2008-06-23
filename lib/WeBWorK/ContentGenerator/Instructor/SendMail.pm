@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.63 2007/03/14 23:52:43 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -496,6 +496,11 @@ sub print_preview {
 	
 	my $recipients  = join(" ",@{$self->{ra_send_to} });
 	my $errorMessage =  defined($self->{submit_message}) ?  CGI::i($self->{submit_message} ) : '' ; 
+	
+	# Format message keeping the preview_header lined up
+	$errorMessage = wrap("","",$errorMessage);
+	$msg = wrap("","",$msg);
+	
 	$msg = join("",
 	   $errorMessage,
 	   $preview_header,
@@ -506,7 +511,8 @@ sub print_preview {
 	   $msg , "\n"
 	);
 
-	return join("", '<pre>',wrap("","",$msg),"\n","\n",
+#	return join("", '<pre>',wrap("","",$msg),"\n","\n",
+	return join("", '<pre>',$msg,"\n","\n",
 				   '</pre>', 
 				   CGI::p('Use browser back button to return from preview mode'),
 				   CGI::h3('Emails to be sent to the following:'), 
@@ -633,7 +639,7 @@ sub print_form {
 		                                   -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
 		                                   -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list,
-							CGI::i("Preview set to: "), $preview_record->last_name,
+							CGI::i("Preview set to: "), $preview_record->last_name,'(', $preview_record->user_id,')',
 							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
 					),
 	); # end Tr
@@ -933,7 +939,7 @@ sub process_message {
 	if ($for_preview) {
 		my @preview_COL = @COL;
 		shift @preview_COL; ## shift back for preview
-		my $preview_header = 	CGI::pre({},data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
+		my $preview_header = 	CGI::p('',data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
 			                    CGI::h3( "This sample mail would be sent to $EMAIL");
 		return $msg, $preview_header;
 	} else {
