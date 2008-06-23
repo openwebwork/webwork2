@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.67 2006/10/02 16:59:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm,v 1.68 2007/08/13 22:59:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -335,8 +335,19 @@ sub displaySets {
 		debug("Begin obtaining problem records for user $student set $setName");
 		
 		# DBFIXME use an iterator
-		my @problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
+		my @problemRecords;
+		if ( $setRecord->assignment_type =~ /gateway/ ) {
+			my @setVersions = $db->listSetVersions($student, $setName);
+			foreach my $ver ( @setVersions ) {
+				push( @problemRecords,
+				      $db->getAllProblemVersions($student,
+								 $setName, $ver) );
+			}
+		} else {
+			@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllUserProblems( $student, $setName );
+		}
 		debug("End obtaining problem records for user $student set $setName");
+
 		my $num_of_problems = @problemRecords;
 		$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
 	   ########################################
