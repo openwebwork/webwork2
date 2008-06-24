@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/remove_stale_images,v 1.5 2007/08/13 22:59:50 sh002i Exp $
+# $CVSHeader: webwork2/bin/remove_stale_images,v 1.6 2007/10/08 19:31:42 jj Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -284,3 +284,4 @@ chown $uid, $groupID, $cachePath;
 
 
 
+1;
