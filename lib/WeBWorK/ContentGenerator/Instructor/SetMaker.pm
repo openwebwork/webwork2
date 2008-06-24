@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.82 2008/04/04 19:22:30 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.83 2008/04/29 19:29:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -747,7 +747,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
 
-	my $these_widths = "width: 23ex";
+	my $these_widths = "width: 25ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
@@ -786,7 +786,7 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
-		CGI::submit(-name=>"browse_library", -value=>"Problem Library", -style=>$these_widths, @dis1),
+		CGI::submit(-name=>"browse_library", -value=>"National Problem Library", -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, @dis3),
 		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, @dis4),
@@ -981,7 +981,7 @@ sub pre_header_initialize {
 
 	############# Default of which problem selector to display
 
-	my $browse_which = $r->param('browse_which') || 'browse_local';
+	my $browse_which = $r->param('browse_which') || 'browse_library';
 
 	
 
