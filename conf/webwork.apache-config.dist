@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.21 2007/08/13 22:59:51 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.22 2008/05/24 02:25:43 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,8 +20,14 @@
 # 
 #     Include /path/to/webwork.apache-config
 # 
-# Customize the variable $webwork_dir below to match the location of your
-# WeBWorK installation.
+# Customize the variables below to match your WeBWorK installation.
+
+# Uncomment the ScriptAliasMatch to allow access to show-source.cgi
+# This allows the "show source" button to work for demonstration "courses"
+# See for example Davide Cervone's Knoxville lectures on math objects
+
+#ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+
 
 <Perl>
 
@@ -94,16 +100,67 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
+
+# The following stanzas can be uncommented to enable various experimental
+# WeBWorK web services. These are still in testing and have not been audited
+# for security.
+
+# uncomment the line below if you use the XMLRPC, RQP, or SOAP installations below
+
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
-$PerlConfig .= <<EOF;
-
-
-########## SOAP installation ##########
+#$PerlConfig .= <<EOF;
+# ##### Sam's WeBWorK::Request-based XML-RPC testbed #####
+# #
+# #PerlModule WeBWorK::RPC
+# #<Location /webwork2_rpc>
+# #	SetHandler perl-script
+# #	PerlHandler Apache::XMLRPC::Lite
+# #	PerlSetVar dispatch_to "WeBWorK::RPC WeBWorK::RPC::CourseManagement"
+# #</Location>
 # 
-
-# uncomment these three stanzas to use WeBWorK with Moodle
-
+# ########## XMLRPC installation ##########
+# # 
+# #PerlModule WebworkWebservice
+# #<Location /mod_xmlrpc>
+# #	SetHandler perl-script
+# #	PerlHandler Apache::XMLRPC::Lite
+# #	PerlSetVar dispatch_to "WebworkXMLRPC"
+# #	PerlSetVar options "compress_threshold => 10000"
+# #	Order Allow,Deny
+# #	Allow from All
+# #</Location>
+# 
+# ##########  RQP installation ##########
+# # 
+# #PerlModule RQP
+# ##<Location /rqp>
+# ##	SetHandler perl-script
+# ##	PerlHandler Apache::SOAP
+# ##	PerlSetVar dispatch_to "RQP"
+# ##	PerlSetVar options "compress_threshold => 10000"
+# ##	Order Allow,Deny
+# ##	Allow from All
+# ##</Location>
+# #<Location /rqp>
+# #	SetHandler perl-script
+# #	PerlHandler MySOAP
+# #	Order Allow,Deny
+# #	Allow from All
+# #</Location>
+# 
+# ########## SOAP installation ##########
+# # 
+# #PerlModule WebworkWebservice
+# #<Location /mod_soap>
+# #	SetHandler perl-script
+# #	PerlHandler Apache::SOAP
+# #	PerlSetVar dispatch_to "WebworkXMLRPC" 
+# #	PerlSetVar options "compress_threshold => 10000"
+# #	Order Allow,Deny
+# #	Allow from All
+# #</Location>
+# 
 # PerlModule WebworkSOAP
 
 # #WEBWORK SOAP CONFIGURATION
@@ -125,10 +182,7 @@ $PerlConfig .= <<EOF;
 #         Order Allow,Deny
 #         Allow from All
 # </Location>
-
-# end of WeBWorK -- Moodle stanzas
-
-EOF
+#EOF
 
 </Perl>
 
