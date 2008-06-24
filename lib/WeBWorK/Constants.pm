@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.55 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.56 2008/01/08 14:44:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -88,7 +88,7 @@ $WeBWorK::PG::Local::TIMEOUT = 60;
 # but does not give transparent backgrounds. It does not work for version 1.2. It has not
 # been tested with other versions.
 #
-$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
+$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
 # 
@@ -134,9 +134,9 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme)',
-		  doc2 => 'There are currently three themes (or skins) to choose from: ur, math, and moodle.  The theme 
+		  doc2 => 'There are currently four themes (or skins) to choose from: ur, math, math2 and moodle.  The theme 
 specifies a unified look and feel for the WeBWorK course web pages.',
-		  values => [qw(math ur moodle union)],
+		  values => [qw(math math2 ur moodle union)],
 		  type => 'popuplist'},
 		{ var => 'sessionKeyTimeout',
 		  doc => 'Inactivity time before a user is required to login again',
