@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.192 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.193 2008/01/25 23:34:23 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -657,8 +657,17 @@ sub links {
 			if (defined $setID) {
 				print CGI::start_ul();
 				print CGI::start_li(); # $setID
-				print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-				# FIXME i think we only want this if the problem set is not a gateway quiz
+				# show a link if we're displaying a homework set, or a version
+				#    of a gateway assignment; to know if it's a gateway
+				#    assignment, we have to get the set record.
+				my ($globalSetID) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+				my $setRecord = $db->getGlobalSet( $globalSetID );
+				if ( $setRecord->assignment_type !~ /gateway/ ) {
+					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				} elsif ($setID =~ /,v(\d)+$/) {
+					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				}
+
 				if (defined $problemID) {
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
@@ -689,7 +698,8 @@ sub links {
 				
 				print CGI::start_li(); # Homework Set Editor
 				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if (defined $setID) {
+				## only show editor link for non-versioned sets
+				if (defined $setID && $setID !~ /,v\d+$/ ) {
 					print CGI::start_ul();
 					print CGI::start_li(); # $setID
 					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
@@ -715,7 +725,11 @@ sub links {
 						print CGI::li(&$makelink("${pfx}Stats", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 					}
 					if (defined $setID) {
-						print CGI::li(&$makelink("${pfx}Stats", text=>"$prettySetID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
+						# make sure we don't try to send a versioned
+						#    set id in to the stats link
+						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+						print CGI::li(&$makelink("${pfx}Stats", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
@@ -729,7 +743,11 @@ sub links {
 						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
 					}
 					if (defined $setID) {
-						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$prettySetID", urlpath_args=>{%args,statType=>"set",setID=>$setID}, systemlink_args=>\%systemlink_args));
+						# make sure we don't try to send a versioned
+						#    set id in to the stats link
+						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
