@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.90 2006/09/25 22:14:53 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.91 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -76,11 +76,11 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 #                  But it is used instead of set_header when producing a hardcopy of the problem set in the TeX format, instead of producing HTML
 #                  formatted version for use on the computer screen.
 #
-#  file_type eq 'course_info
+#  file_type eq 'course_info'
 #                 This allows editing of the course_info.txt file which gives general information about the course.  It is called from the
 #                 ProblemSets.pm module.
 #
-#  file_type eq 'options_info
+#  file_type eq 'options_info'
 #                 This allows editing of the options_info.txt file which gives general information about the course.  It is called from the
 #                 Options.pm module.
 #
@@ -144,16 +144,25 @@ sub pre_header_initialize {
 	$self->{setID}      = $r->urlpath->arg("setID") ;  # using $r->urlpath->arg("setID")  ||'' causes trouble with set 0!!!
 	$self->{problemID}  = $r->urlpath->arg("problemID");
 
+	# parse setID, which may come in with version data
+	my $fullSetID = $self->{setID};
+	if ( $fullSetID =~ /,v(\d+)$/ ) {
+		$self->{versionID} = $1;
+		$self->{setID} =~ s/,v\d+$//;
+	}
+        $self->{fullSetID} = $fullSetID;
+
 	my $submit_button   = $r->param('submit');  # obtain submit command from form
 	my $actionID        = $r->param('action');
 	my $file_type       = $r->param("file_type") || '';
 	my $setName         = $self->{setID};
+	my $versionedSetName = $self->{fullSetID};
 	my $problemNumber   = $self->{problemID};
-   
+
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_problem_sets"));
-   
+
  	##############################################################################
 	# displayMode   and problemSeed
 	#
@@ -246,7 +255,7 @@ sub pre_header_initialize {
     # Determine the path to the file
     #
     ###########################################
-    	$self->getFilePaths($setName, $problemNumber, $file_type);
+    	$self->getFilePaths($versionedSetName, $problemNumber, $file_type);
     	#defines $self->{editFilePath}   # path to the permanent file to be edited
     	#        $self->{tempFilePath}   # path to the permanent file to be edited  has .tmp suffix
     	#        $self->{inputFilePath}  # path to the file for input, (might be a .tmp file)
@@ -441,7 +450,8 @@ sub body {
     $setName            = defined($setName) ? $setName : '';  # we need this instead of using the || construction 
                                                               # to keep set 0 from being set to the 
                                                               # empty string.
-    $problemNumber      = defined($problemNumber) ? $problemNumber : '';
+	my $fullSetName = defined( $self->{fullSetID} ) ? $self->{fullSetID} : $setName;
+	$problemNumber      = defined($problemNumber) ? $problemNumber : '';
     
 	#########################################################################    
     # Construct url for reporting bugs:
@@ -500,7 +510,7 @@ sub body {
 
 	my $file_type = $self->{file_type};
 	my %titles = (
-		problem         => CGI::b("set $setName/problem $problemNumber"),
+		problem         => CGI::b("set $fullSetName/problem $problemNumber"),
 		blank_problem   => "blank problem",
 		set_header      => "header file",
 		hardcopy_header => "hardcopy header file",
@@ -778,6 +788,15 @@ sub getFilePaths {
     
 	$setName = '' unless defined $setName;
 	$problemNumber = '' unless defined $problemNumber;
+
+	# parse possibly versioned set names
+	my $fullSetName = $setName;
+	my $editSetVersion = 0;
+	if ( $setName =~ /,v(\d)+$/ ) {
+		$editSetVersion = $1;
+		$setName =~ s/,v\d+$//;
+	}
+
 	die 'Internal error to PGProblemEditor -- file type is not defined'  unless defined $file_type;
 	#$self->addgoodmessage("file type is $file_type");  #FIXME remove
 	##########################################################
@@ -865,7 +884,12 @@ sub getFilePaths {
 		($file_type eq 'problem') and do {			
 		
 			# first try getting the merged problem for the effective user
-			my $problem_record = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
+			my $problem_record;
+			if ( $editSetVersion ) {
+				$problem_record = $db->getMergedProblemVersion($effectiveUserName, $setName, $editSetVersion, $problemNumber); # checked
+			} else {
+				$problem_record = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
+			}
 			
 			# if that doesn't work (the problem is not yet assigned), get the global record
 			$problem_record = $db->getGlobalProblem($setName, $problemNumber) unless defined($problem_record); # checked
@@ -1142,6 +1166,7 @@ sub view_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
+	my $fullSetName     =  $self->{fullSetID};
 	my $problemNumber   =  $self->{problemID};
 	my $problemSeed     = ($actionParams->{'action.view.seed'}) ? 
 	                                $actionParams->{'action.view.seed'}->[0] 
@@ -1172,11 +1197,22 @@ sub view_handler {
 	
 	my $relativeTempFilePath = $self->getRelativeSourceFilePath($tempFilePath);
 	
-	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
-		);
-		
+	if ($file_type eq 'problem' or $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm or GatewayQuiz.pm
+
+		# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet( $setName );
+
+		my $problemPage;
+		if ( $globalSet->assignment_type =~ /gateway/ ) {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+			courseID => $courseName, setID => "Undefined_Set");
+			# courseID => $courseName, setID => $fullSetName);
+		} else {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+									courseID => $courseName, setID => $setName, problemID => $problemNumber
+			);
+		}
+
 		$viewURL = $self->systemLink($problemPage,
 			params => {
 				displayMode        => $displayMode,
@@ -1396,6 +1432,7 @@ sub save_handler {
 	#$self->addgoodmessage("save_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
+	my $fullSetName     =  $self->{fullSetID};
 	my $problemNumber   =  $self->{problemID};
 	my $displayMode     =  $self->{displayMode};
 	my $problemSeed     =  $self->{problemSeed};
@@ -1424,9 +1461,18 @@ sub save_handler {
 	# construct redirect URL and redirect
 	########################################################
 	if ($file_type eq 'problem' || $file_type eq 'source_path_for_problem_file') { # redirect to Problem.pm
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
-		);
+
+		# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet( $setName );
+		my $problemPage;
+		if ( $globalSet->assignment_type =~ /gateway/ ) {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+			courseID => $courseName, setID => "Undefined_Set");
+			# courseID => $courseName, setID => $fullSetName);
+		} else {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+									courseID => $courseName, setID => $setName, problemID => $problemNumber	);
+		}
 		
 		my $relativeEditFilePath = $self->getRelativeSourceFilePath($editFilePath);
 		
@@ -1540,14 +1586,6 @@ sub make_local_copy_form {
 }
 
 
-
-
-
-
-
-
-
-
 sub make_local_copy_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	foreach my $key (qw(target_file file_type saveMode source_file)) {
@@ -1566,6 +1604,7 @@ sub save_as_form {  # calls the save_as_handler
 	
 	my $templatesDir  =  $self->r->ce->{courseDirs}->{templates};
 	my $setID         = $self->{setID};
+	my $fullSetID     = $self->{fullSetID};
 	
 	
 	my $shortFilePath =  $editFilePath;
@@ -1591,7 +1630,7 @@ sub save_as_form {  # calls the save_as_handler
 				-checked => 1,
 				-onclick=>$onChange
 				).
-		     " use in ".CGI::b("set $setID$probNum")
+		     " use in ".CGI::b("set $fullSetID$probNum")
 		         if defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set' &&
 			    $self->{file_type} ne 'blank_problem';
 	return 'Create a copy at [TMPL]/'.
@@ -1610,9 +1649,11 @@ sub save_as_handler {
 	$self->{status_message} = ''; ## DPVC -- remove bogus old messages
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
+	my $fullSetName     =  $self->{fullSetID};
 	my $problemNumber   =  $self->{problemID};
 	my $displayMode     =  $self->{displayMode};
 	my $problemSeed     =  $self->{problemSeed};
+	my $effectiveUserName = $self->r->param('effectiveUser');
 	
 	my $do_not_save = 0;
 	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'save_a_copy';
@@ -1688,13 +1729,21 @@ sub save_as_handler {
 				  $self->addbadmessage("Unable to change the hardcopy header for set $setName. Unknown error.");
 				}
 			} else {
-				my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
+				my $problemRecord;
+				if ( $fullSetName =~ /,v(\d+)$/ ) {
+					$problemRecord = $self->r->db->getMergedProblemVersion($effectiveUserName, $setName, $1, $problemNumber);
+				} else {
+					$problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
+				}
 				$problemRecord->source_file($new_file_name);
-				if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
-					$self->addgoodmessage("The source file for 'set $setName / problem $problemNumber' has been changed from ".
+				my $result = ( $fullSetName =~ /,v(\d+)$/ ) ?
+					$self->r->db->putProblemVersion($problemRecord) :
+					$self->r->db->putGlobalProblem($problemRecord);
+				if  ( $result  ) {
+					$self->addgoodmessage("The source file for 'set $fullSetName / problem $problemNumber' has been changed from ".
 					$self->shortPath($sourceFilePath)." to '".$self->shortPath($outputFilePath)."'.") ;
 				} else {
-					$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
+					$self->addbadmessage("Unable to change the source file path for set $fullSetName, problem $problemNumber. Unknown error.");
 				}
 			}
 		} elsif ($saveMode eq 'save_a_copy') {
@@ -1741,6 +1790,7 @@ sub save_as_handler {
 	my $viewURL = $self->systemLink($problemPage, 
 								 params=>{
 									 sourceFilePath     => $relativeOutputFilePath, #The path relative to the templates directory is required.
+									 problemSeed        => $problemSeed,
 									 edit_level         => $edit_level,
 									 file_type          => $new_file_type,
 									 status_message     => uri_escape($self->{status_message})
