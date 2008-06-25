@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.51 2008/06/23 14:22:15 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.52 2008/06/23 19:54:46 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,9 +34,10 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory sortByName before after between 
-	formatDateTime);
+	ref2string makeTempDirectory path_is_subdir sortByName before after
+	between formatDateTime);
 use WeBWorK::DB::Utils qw(global2user user2global);
+use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use PGrandom;
@@ -158,6 +159,9 @@ sub can_recordAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+
+# easy first case: never record answers for undefined sets
+	return 0 if ( $Set->set_id eq "Undefined_Set" );
 
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
    # get the sag time after the due date in which we'll still grade the test
@@ -520,80 +524,167 @@ sub pre_header_initialize {
 # assigned the set, below
 
 ###################################
-# gateway content generator tests
+# gateway set and problem collection
 ###################################
+
+# we need the template (user) set, the merged set-version, and a 
+#    problem from the set to be able to test whether we're creating a 
+#    new set version.  assemble these
+	my ( $tmplSet, $set, $Problem ) = ( 0, 0, 0 );
+
+# if the set comes in as "Undefined_Set", then we're trying/editing a 
+#    single problem in a set, and so create a fake set with which to work
+#    if the user has the authorization to do that.
+	if ( $setName eq "Undefined_Set" ) {
+
+		# make sure these are defined
+		$requestedVersion = 1;
+		$self->{assignment_type} = 'gateway';
+
+		if ( ! $authz->hasPermissions($userName,
+					      "modify_problem_sets") ) {
+			$self->{invalidSet} = "You do not have the " .
+				"authorization level required to view/" .
+				"edit undefined sets.";
+
+			# define these so that we can drop through
+			#    to report the error in body()
+			$tmplSet = fake_set( $db );
+			$set     = fake_set_version( $db );
+			$Problem = fake_problem( $db );
+		} else {
+	# in this case we're creating a fake set from the input, so
+	#    the input must include a source file.
+			if ( ! $r->param("sourceFilePath") ) {
+				$self->{invalidSet} = "An Undefined_Set " .
+					"was requested, but no source " .
+					"file for the contained problem " .
+					"was provided.";
+
+				# define these so that we can drop through
+				#    to report the error in body()
+				$tmplSet = fake_set( $db );
+				$set     = fake_set_version( $db );
+				$Problem = fake_problem( $db );
+
+			} else {
+				my $sourceFPath = $r->param("sourceFilePath");
+				die("sourceFilePath is unsafe!") unless
+					path_is_subdir($sourceFPath,
+						$ce->{courseDirs}->{templates},
+						1);
+
+				$tmplSet = fake_set( $db );
+				$set     = fake_set_version( $db );
+				$Problem = fake_problem( $db );
+
+				$tmplSet->assignment_type( "gateway" );
+				$tmplSet->attempts_per_version( 0 );
+				$tmplSet->time_interval( 0 );
+				$tmplSet->versions_per_interval(1);
+				$tmplSet->version_time_limit( 0 );
+				$tmplSet->version_creation_time( time() );
+				$tmplSet->problem_randorder( 0 );
+				$tmplSet->problems_per_page( 1 );
+				$tmplSet->hide_score('N');
+				$tmplSet->hide_score_by_problem('N');
+				$tmplSet->hide_work('N');
+				$tmplSet->time_limit_cap('0');
+				$tmplSet->restrict_ip('No');
+
+				$set->assignment_type( "gateway" );
+				$set->time_interval( 0 );
+				$set->versions_per_interval(1);
+				$set->version_time_limit( 0 );
+				$set->version_creation_time( time() );
+				$set->time_limit_cap('0');
+
+				$Problem->problem_id(1);
+				$Problem->source_file($sourceFPath);
+				$Problem->user_id($effectiveUserName);
+				$Problem->value(1);
+				$Problem->problem_seed( $r->param("problemSeed") ) if ( $r->param("problemSeed") );
+			}
+		}
+	} else {
 
 # get template set: the non-versioned set that's assigned to the user
 #    if this fails/failed in authz->checkSet, then $self->{invalidSet} is
 #    set
- 	my $tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
+		$tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
 
 	# now we know that we're in a gateway test, save the assignment test 
 	#    for the processing of proctor keys for graded proctored tests; 
 	#    if we failed to get the set from the database, we store a fake 
 	#    value here to be able to continue
-	$self->{'assignment_type'} = $tmplSet->assignment_type() || 'gateway';
+		$self->{'assignment_type'} = $tmplSet->assignment_type() ||
+			'gateway';
 
 	# next, get the latest (current) version of the set if we don't have a 
 	#     requested version number
-	my @allVersionIds = $db->listSetVersions($effectiveUserName, $setName);
-	my $latestVersion = ( @allVersionIds ? $allVersionIds[-1] : 0 );
+		my @allVersionIds = $db->listSetVersions($effectiveUserName,
+							 $setName);
+		my $latestVersion = (@allVersionIds ? $allVersionIds[-1] : 0);
 
 	# double check that any requested version makes sense
-	$requestedVersion = $latestVersion 
-		if ( $requestedVersion !~ /^\d+$/ ||
-		     $requestedVersion > $latestVersion ||
-		     $requestedVersion < 0 );
+		$requestedVersion = $latestVersion 
+		  if ( $requestedVersion !~ /^\d+$/ ||
+		       $requestedVersion > $latestVersion ||
+		       $requestedVersion < 0 );
 
-	die("No requested version when returning to problem?!") 
-		if ( ($r->param("previewAnswers") || $r->param("checkAnswers") ||
-		      $r->param("submitAnswers") || $r->param("newPage")) 
-		     && ! $requestedVersion );
+		die("No requested version when returning to problem?!") 
+			if ( ( $r->param("previewAnswers") ||
+			       $r->param("checkAnswers") ||
+			       $r->param("submitAnswers") ||
+			       $r->param("newPage") ) && ! $requestedVersion );
 
 	# to test for a proctored test, we need the set version, not the 
 	#    template, to allow a finished proctored test to be checked as an 
 	#    unproctored test.  so we get the versioned set here
-	my $set;
-	if ( $requestedVersion ) { 
+		if ( $requestedVersion ) {
 	# if a specific set version was requested, it was stored in the $authz
 	#    object when we did the set check
-		$set = $db->getMergedSetVersion($effectiveUserName, $setName, 
-						$requestedVersion);
-	} elsif ( $latestVersion ) {
+			$set = $db->getMergedSetVersion($effectiveUserName,
+							$setName,
+							$requestedVersion);
+		} elsif ( $latestVersion ) {
 	# otherwise, if there's a current version, which we take to be the 
 	#    latest version taken, we use that
-		$set = $db->getMergedSetVersion($effectiveUserName, $setName,
-						$latestVersion);
-	} else {
+			$set = $db->getMergedSetVersion($effectiveUserName,
+							$setName,
+							$latestVersion);
+		} else {
 	# and if neither of those work, get a dummy set so that we have 
 	#    something to work with
-		my $userSetClass = $ce->{dbLayout}->{set_version}->{record};
+			my $userSetClass = $ce->{dbLayout}->{set_version}->{record};
 # FIXME RETURN TO: should this be global2version?
-		$set = global2user($userSetClass, $db->getGlobalSet($setName));
-		die "set  $setName  not found."  unless $set;
-		$set->user_id($effectiveUserName);
-		$set->psvn('000');
-		$set->set_id("$setName");  # redundant?
-		$set->version_id(0);
+			$set = global2user($userSetClass, 
+					   $db->getGlobalSet($setName));
+			die "set  $setName  not found."  unless $set;
+			$set->user_id($effectiveUserName);
+			$set->psvn('000');
+			$set->set_id("$setName");  # redundant?
+			$set->version_id(0);
+		}
 	}
-	my $setVersionNumber = $set->version_id();
+	my $setVersionNumber = ($set) ? $set->version_id() : 0;
 
 	#################################
 	# assemble gateway parameters
 	#################################
 
 	# we get the open/close dates for the gateway from the template set.
-	#    note $isOpen/Closed give the open/close dates for the gateway 
+	#    note $isOpen/Closed give the open/close dates for the gateway
 	#    as a whole (that is, the merged user|global set).  because the
 	#    set could be bad (if $self->{invalidSet}), we check ->open_date
 	#    before actually testing the date
-	my $isOpen = $tmplSet->open_date && 
+	my $isOpen = $tmplSet && $tmplSet->open_date && 
 		( after($tmplSet->open_date()) || 
 		  $authz->hasPermissions($userName, "view_unopened_sets") );
 
-	# FIXME for $isClosed, "record_answers_after_due_date" isn't quite 
+	# FIXME for $isClosed, "record_answers_after_due_date" isn't quite
 	#    the right description, but it seems reasonable
-	my $isClosed = $tmplSet->due_date &&
+	my $isClosed = $tmplSet && $tmplSet->due_date &&
 		( after($tmplSet->due_date()) &&
 		  ! $authz->hasPermissions($userName, "record_answers_after_due_date") );
 
@@ -604,15 +695,20 @@ sub pre_header_initialize {
 	#    problems will have the same number of attempts.  This means that 
 	#    if the set doesn't have any problems we're up a creek, so check 
 	#    for that here and bail if it's the case
-	my @setPNum = $db->listUserProblems($EffectiveUser->user_id, $setName);
+	my @setPNum = $setName eq "Undefined_Set" ? ( 1 ) :
+		$db->listUserProblems($EffectiveUser->user_id, $setName);
 	die("Set $setName contains no problems.") if ( ! @setPNum );
 
-	# the Problem here can be undefined, if the set hasn't been versioned 
-	#    to the user yet--this gets fixed when we assign the setVersion
-	my $Problem = $setVersionNumber ? 
-		$db->getMergedProblemVersion($EffectiveUser->user_id, $setName, 
-					     $setVersionNumber, $setPNum[0]) :
-					     undef;
+	# if we assigned a fake problem above, $Problem is already defined.
+	#    otherwise, we get the Problem, or define it to be undefined if
+	#    the set hasn't been versioned to the user yet--this gets fixed
+	#    when we assign the setVersion
+	if ( ! $Problem ) {
+		$Problem = $setVersionNumber ?
+			$db->getMergedProblemVersion($EffectiveUser->user_id,
+				$setName, $setVersionNumber, $setPNum[0]) :
+				undef;
+	}
 
 	# note that having $maxAttemptsPerVersion set to an infinite/0 value is
 	#    nonsensical; if we did that, why have versions?
@@ -621,8 +717,8 @@ sub pre_header_initialize {
 	my $versionsPerInterval   = $tmplSet->versions_per_interval();
 	my $timeLimit             = $tmplSet->version_time_limit();
 
-	# what happens if someone didn't set one of these?  I think this can 
-	# happen if we're handed a malformed set, where the values in the 
+	# what happens if someone didn't set one of these?  I think this can
+	# happen if we're handed a malformed set, where the values in the
 	# database are null.
 	$timeInterval = 0 if (! defined($timeInterval) || $timeInterval eq '');
 	$versionsPerInterval = 0 if (! defined($versionsPerInterval) ||
@@ -642,21 +738,23 @@ sub pre_header_initialize {
 				      $Problem->max_attempts() : -1;
 
 	# finding the number of versions per time interval is a little harder.
-	#    we interpret the time interval as a rolling interval: that is, 
-	#    if we allow two sets per day, that's two sets in any 24 hour 
+	#    we interpret the time interval as a rolling interval: that is,
+	#    if we allow two sets per day, that's two sets in any 24 hour
 	#    period.  this is probably not what we really want, but it's
-	#    more extensible to a limitation like "one version per hour", 
-	#    and we can set it to two sets per 12 hours for most "2ce daily" 
+	#    more extensible to a limitation like "one version per hour",
+	#    and we can set it to two sets per 12 hours for most "2ce daily"
 	#    type applications
 	my $timeNow = time();
 	my $grace = $ce->{gatewayGracePeriod};
 
-	my $currentNumVersions = 0;  # this is the number of versions in the 
+	my $currentNumVersions = 0;  # this is the number of versions in the
 	                             #    time interval
 	my $totalNumVersions = 0;
 
-	# we don't need to check this if $self->{invalidSet} is already set
-	if ( $setVersionNumber && ! $self->{invalidSet} ) {
+	# we don't need to check this if $self->{invalidSet} is already set,
+	#    or if we're working with an Undefined_Set
+	if ( $setVersionNumber && ! $self->{invalidSet} &&
+	     $setName ne "Undefined_Set" ) {
 		my @setVersionIDs = $db->listSetVersions($effectiveUserName, $setName);
 		my @setVersions = $db->getSetVersions(map {[$effectiveUserName, $setName,, $_]} @setVersionIDs);
 		foreach ( @setVersions ) {
@@ -832,7 +930,7 @@ sub pre_header_initialize {
 						      "record_set_version_answers_when_acting_as_student") )
 			   ) {
 				if ( between($set->open_date(), 
-					     $set->due_date() + $grace, 
+					     $set->due_date() + $grace,
 					     $timeNow) ) {
 					$versionIsOpen = 1;
 				} else {
@@ -857,7 +955,7 @@ sub pre_header_initialize {
 	$self->{set} = $set;
 	$self->{problem} = $Problem;
 	$self->{requestedVersion} = $requestedVersion;
-	
+
 	$self->{userName} = $userName;
 	$self->{effectiveUserName} = $effectiveUserName;
 	$self->{user} = $User;
@@ -869,7 +967,7 @@ sub pre_header_initialize {
 	$self->{versionIsOpen} = $versionIsOpen;
 
 	$self->{timeNow} = $timeNow;
-	
+
 	####################################
 	# form processing
 	####################################
@@ -900,7 +998,7 @@ sub pre_header_initialize {
 	my $previewAnswers   = $r->param("previewAnswers");
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-	
+
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
@@ -910,6 +1008,7 @@ sub pre_header_initialize {
 
 	# now that we've set all the necessary variables quit out if the set or 
 	#    problem is invalid
+
 	return if $self->{invalidSet} || $self->{invalidProblem};
 
 	# [End lifted section] ###############################################
@@ -917,9 +1016,10 @@ sub pre_header_initialize {
 	####################################
 	# permissions
 	####################################
-	
+
 	# bail without doing anything if the set isn't yet open for this user
-	return unless $self->{isOpen};
+	return unless $self->{isOpen} ||
+		$authz->hasPermissions($userName,"view_unopened_sets");
 
 	# what does the user want to do?
 	my %want = 
@@ -991,9 +1091,14 @@ sub pre_header_initialize {
 	# set up problem numbering and multipage variables
 	####################################
 
-	my @problemNumbers = $db->listProblemVersions($effectiveUserName, 
-						      $setName,
-						      $setVersionNumber);
+	my @problemNumbers;
+	if ( $setName eq "Undefined_Set" ) {
+		@problemNumbers = ( 1 );
+	} else {
+		@problemNumbers = $db->listProblemVersions($effectiveUserName,
+							   $setName,
+							   $setVersionNumber);
+	}
 
 	# to speed up processing of long (multi-page) tests, we want to only 
 	#    translate those problems that are being submitted or are currently 
@@ -1059,7 +1164,13 @@ sub pre_header_initialize {
 	$self->{errors} = [ ];
 
 	# process the problems as needed
-	my @mergedProblems = $db->getAllMergedProblemVersions($effectiveUserName, $setName, $setVersionNumber);
+	my @mergedProblems;
+	if ( $setName eq "Undefined_Set" ) {
+		@mergedProblems = ( $Problem );
+	} else {
+		@mergedProblems = $db->getAllMergedProblemVersions($effectiveUserName, $setName, $setVersionNumber);
+	}
+
 	foreach my $problemNumber (sort {$a<=>$b } @problemNumbers) {
 
 		# pIndex numbers from zero
@@ -1086,9 +1197,9 @@ sub pre_header_initialize {
 		# this is the actual translation of each problem.  errors are 
 		#    stored in @{$self->{errors}} in each case
 		if ( (grep /^$pIndex$/, @probsToDisplay) || $submitAnswers ) {
-			$pg = $self->getProblemHTML($self->{effectiveUser}, 
-						    $setName,$setVersionNumber, 
-						    $formFields, $ProblemN);
+			$pg = $self->getProblemHTML($self->{effectiveUser},
+						    $set, $formFields,
+						    $ProblemN);
 		}
 		push(@pg_results, $pg);
 	}
@@ -1209,7 +1320,7 @@ sub body {
 				CGI::p($self->{invalidSet}),
 				$newlink);
 	}
-	
+
 	my $tmplSet = $self->{tmplSet};
 	my $set = $self->{set};
 	my $Problem = $self->{problem};
@@ -1268,6 +1379,7 @@ sub body {
 	####################################
 	# save results to database as appropriate
 	####################################
+
 	if ( $submitAnswers || ( ($previewAnswers || $newPage) &&
 				 $can{recordAnswers} ) ) {
 		# if we're submitting answers, we have to save the problems
@@ -1779,7 +1891,7 @@ sub body {
 		}
 		print CGI::end_div();
 
-		if ( $canShowWork ) {
+		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
 			print "The test (which is number $versionNumber) may " .
 				"no longer be submitted for a grade";
 			print "" . (($can{showScore}) ? ", but you may still " .
@@ -2044,6 +2156,21 @@ sub body {
 				       CGI::b("all") . " problems, not just those " . 
 				       "on this page.") : " ") );
 
+		## save the source file, etc., if we're trying an undefined
+		##    set
+		# print( CGI::hidden(
+		# 		   -name   => 'sourceFilePath',
+		# 		   -value  =>  $self->{problem}->{source_file}
+		# 		  ))  if defined($self->{problem}->{source_file});
+		print( CGI::hidden(
+				   -name   => 'sourceFilePath',
+				   -value  =>  $r->param("sourceFilePath")
+				  ))  if defined($r->param("sourceFilePath"));
+		print( CGI::hidden(
+				   -name   => 'problemSeed',
+				   -value  =>  $r->param("problemSeed")
+				  ))  if defined($r->param("problemSeed"));
+
 		print CGI::endform();
 	}
 
@@ -2101,13 +2228,12 @@ sub body {
 ############################################################################
 
 sub getProblemHTML {
-	my ( $self, $EffectiveUser, $setName, $setVersionNumber, $formFields, 
+	my ( $self, $EffectiveUser, $set, $formFields,
 	     $mergedProblem, $pgFile ) = @_;
-# in:  $EffectiveUser is the effective user we're working as, $setName
-#      the set name, $setVersionNumber the version number, %$formFields 
-#      the form fields from the input form that we need to worry about 
-#      putting into the HTML we're generating, and $mergedProblem and 
-#      $pgFile are what we'd expect.
+# in:  $EffectiveUser is the effective user we're working as, $set is the
+#      merged set version, %$formFields the form fields from the input form
+#      that we need to worry about putting into the HTML we're generating,
+#      and $mergedProblem and $pgFile are what we'd expect.
 #      $pgFile is optional
 # out: the translated problem is returned
 
@@ -2115,21 +2241,9 @@ sub getProblemHTML {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $key =  $r->param('key');
-
-# this isn't good because it doesn't include the sticky answers that we 
-#    might want.  so off with its head!
-##    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-
+	my $setName = $set->set_id;
+	my $setVersionNumber = $set->version_id;
 	my $permissionLevel = $self->{permissionLevel};
-	my $set  = $db->getMergedSetVersion( $EffectiveUser->user_id, 
-					     $setName, $setVersionNumber );
-
-# should this ever happen?  I think we should have die()ed way earlier than
-#    this if the set doesn't exist, but it can't hurt to try and die() here 
-#    too
-	die "set $setName,v$setVersionNumber for effectiveUser " . 
-	    $EffectiveUser->user_id . " not found." unless $set;
-
 	my $psvn = $set->psvn();
 
 	if ( defined($mergedProblem) && $mergedProblem->problem_id ) {
@@ -2138,8 +2252,8 @@ sub getProblemHTML {
 	} elsif ($pgFile) {
 		$mergedProblem = 
 		    WeBWorK::DB::Record::ProblemVersion->new(
-					set_id => $set->set_id,
-					version_id => $set->version_id,
+					set_id => $setName,
+					version_id => $setVersionNumber,
 					problem_id => 0,
 					login_id => $EffectiveUser->user_id,
 					source_file => $pgFile,
@@ -2176,7 +2290,7 @@ sub getProblemHTML {
 			     );
 	
 # FIXME  is problem_id the correct thing in the following two stanzas?
-# FIXME  the original version had "problem number", which is what we want.  
+# FIXME  the original version had "problem number", which is what we want.
 # FIXME  I think problem_id will work, too
 	if ($pg->{warnings} ne "") {
 		push @{$self->{warnings}}, {
@@ -2185,7 +2299,7 @@ sub getProblemHTML {
 			message => $pg->{warnings},
 		};
 	}
-	
+
 	if ($pg->{flags}->{error_flag}) {
 		push @{$self->{errors}}, {
 			set     => "$setName,v$setVersionNumber",
