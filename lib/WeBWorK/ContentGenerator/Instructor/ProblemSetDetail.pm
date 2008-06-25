@@ -1557,6 +1557,7 @@ sub checkFile ($) {
 	my $ce = $r->ce;
 
 	return "No source file specified" unless $file;
+	return "Problem source is drawn from grouping set" if $file =~ /^group/;
 	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|;
 
 	my $text = "This source file ";
@@ -2004,13 +2005,33 @@ sub body {
 			my $problemToShow = ( $editingSetVersion ) ?
 				$MergedProblems{$problemID} : $UserProblems{$problemID};
 
-			my $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-			my $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-            
-            
+			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
+			     $viewProblemLink );
+			if ( $isGatewaySet ) {
+				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+				$viewProblemPage =
+					$urlpath->new(type =>'gateway_quiz',
+						      args => { courseID => $courseID,
+								setID => "Undefined_Set",
+								problemID => "1" } );
+
+				my $seed = $problemToShow ? $problemToShow->problem_seed : "";
+				my $file = $problemToShow ? $problemToShow->source_file : "";
+
+				$viewProblemLink =
+					$self->systemLink( $viewProblemPage,
+						params => { effectiveUser =>
+							    ($forOneUser ? $editForUser[0] : $userID),
+							    problemSeed => $seed,
+							    sourceFilePath => $file });
+			} else {
+				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
-			my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-			my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
+				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+				$viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
+			}
 
 			###-----
 			### The array @fields never gets used in the following, so
@@ -2046,11 +2067,22 @@ sub body {
 				);
 			}
 
+			# we want to show the "Try It" and "Edit It" links if there's a 
+			#    well defined problem to view; this is when we're editing a 
+			#    homework set, or if we're editing a gateway set version, or 
+			#    if we're editing a gateway set and the problem is not a 
+			#    group problem
+			my $showLinks = ( ! $isGatewaySet || 
+					  ( $editingSetVersion || $problemFile !~ /^group/ ));
+
+
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 1}) .
 					CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editProblemLink, target=>"WW_Editor"}, "Edit it"))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewProblemLink, target=>"WW_View"}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")))) .
+					CGI::Tr({}, CGI::td({}, 
+							    $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, "Edit it") : "" )) .
+					CGI::Tr({}, CGI::td({}, 
+							    $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
 					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => "Delete it?"})))) .
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
