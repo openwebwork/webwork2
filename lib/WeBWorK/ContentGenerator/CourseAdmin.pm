@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.74 2008/05/23 14:54:46 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.64.2.2.2.2 2008/06/25 14:36:12 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2444,8 +2444,9 @@ sub display_registration_form {
 	!,
 	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
 	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
-	WeBWorK  Since WeBWorK is open source and can be freely downloaded from http://www.openwebwork.org
-	and http://webwork.maa.org  it is frequently difficult for us to give a reasonable answer to this 
+	WeBWorK  Since WeBWorK is open source and can be freely downloaded from ".
+	CGI::a({href=>'http://www.openwebwork.org'},'http://www.openwebwork.org' ). " and ".
+	CGI::a({href=> 'http://webwork.maa.org'},'http://www.openwebwork.org'). ", it is frequently difficult for us to give a reasonable answer to this 
 	question."),
 	CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
 	questions (the ones you can answer easily) and send the email.  It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
@@ -2495,7 +2496,7 @@ sub registration_form {
 	'click here'),
 	q! to open your email application.  There are a few questions, some of which have already
 	been filled in for your installation.  Fill in the other questions which you can answer easily and send
-	the email to gage\@math.rochester.edu
+	the email to gage@math.rochester.edu
 	!
 	);
 	
@@ -2503,8 +2504,8 @@ sub registration_form {
 	
 	print  "\n",CGI::p({style=>"text-align: left; width:60%"},q!Once you have emailed your registration information you can hide the "registration" banner 
 	for successive visits by clicking
-	the button below.!)
-	;
+	the button below. It writes an empty file (!.CGI::code('registered_versionNumber').q!) to the directory !.CGI::code('..../courses/admin')
+	);
 	
 	print "</center>";
 	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
