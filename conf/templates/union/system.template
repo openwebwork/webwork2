@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2003 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/templates/ur.template,v 1.30 2004/06/16 02:00:35 gage Exp $
+# $CVSHeader: webwork2/conf/templates/union/system.template,v 1.1 2007/08/29 12:15:16 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,7 +24,7 @@
 <head>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
-<style type="text/css" media="all">@import "<!--#url type="webwork" name="stylesheet"-->";</style>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/union.css"/>
 </head>
 <body>
 <table width="100%" cellpadding="10" cellspacing="0" border="0">
