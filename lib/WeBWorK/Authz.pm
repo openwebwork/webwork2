@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.35 2007/08/09 21:47:28 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.36 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -259,6 +259,11 @@ sub checkSet {
 		     $set->version_id eq $verNum ) {
 			# then we can just use this set and skip the rest
 
+		} elsif ( $setName eq 'Undefined_Set' and 
+			  $self->hasPermissions($userName, "access_instructor_tools") ) {
+				# this is the case of previewing a problem
+				#    from a 'try it' link
+			return 0;
 		} else {
 			if ($db->existsSetVersion($effectiveUserName,$setName,$verNum)) {
 				$set = $db->getMergedSetVersion($effectiveUserName,$setName,$verNum);
