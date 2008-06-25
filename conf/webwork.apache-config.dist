@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.22 2008/05/24 02:25:43 gage Exp $
+# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.23 2008/06/24 22:54:04 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -109,7 +109,8 @@ if ($webwork_url eq "") {
 
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
-#$PerlConfig .= <<EOF;
+$PerlConfig .= <<EOF;
+
 # ##### Sam's WeBWorK::Request-based XML-RPC testbed #####
 # #
 # #PerlModule WeBWorK::RPC
@@ -182,7 +183,8 @@ $ENV{WEBWORK_ROOT} = $webwork_dir;
 #         Order Allow,Deny
 #         Allow from All
 # </Location>
-#EOF
+
+EOF
 
 </Perl>
 
