@@ -51,6 +51,7 @@ our @EXPORT    = ();
 our @EXPORT_OK = qw(
 	renderProblems
 	fake_set
+	fake_set_version
 	fake_problem
 	fake_user
 );
@@ -82,6 +83,30 @@ sub fake_set {
 	$set->answer_date(time());
 	$set->published(0); 
 	$set->hardcopy_header("");
+	return($set); 
+} 
+
+sub fake_set_version { 
+	my $db = shift; 
+ 
+	my $set = $db->newSetVersion(); 
+	# $set = global2user($db->{set_user}->{record}, $set); 
+	$set->psvn(123); 
+	$set->set_id(fakeSetName); 
+	$set->open_date(time());
+	$set->due_date(time());
+	$set->answer_date(time());
+	$set->published(0); 
+	$set->hardcopy_header("");
+	$set->version_id(1);
+	$set->attempts_per_version(0);
+	$set->problem_randorder(0);
+	$set->problems_per_page(0);
+	$set->hide_score('N');
+	$set->hide_score_by_problem('N');
+	$set->hide_work('N');
+	$set->restrict_ip('No');
+
 	return($set); 
 } 
 
