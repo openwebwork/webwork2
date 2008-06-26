@@ -1,6 +1,6 @@
 /* WeBWorK Online Homework Delivery System
  * Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
- * $CVSHeader: webwork2/htdocs/css/math.css,v 1.11 2007/08/13 22:59:52 sh002i Exp $
+ * $CVSHeader: webwork2/htdocs/css/math.css,v 1.12 2008/03/04 15:43:44 sh002i Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either: (a) the GNU General Public License as published by the
@@ -153,6 +153,9 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin-right: .5em;
 }
 
+.Message {
+background-color:#ddd;
+}
 /* --- Fisheye view (id) ---------------------------------------------------- */
 
 /* The "fisheye" view: a hierarchical view of the website to show the 
@@ -237,7 +240,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	padding: 0;
 	color: #fff;
 	border: 1px solid #000;
-	background-color: #000038;
+	background-color: #038;
 	/* [ww] we could have some sort of spider web image here. */
 	/*background-image: url("/images/mandel-wide.jpg");*/
 	background-repeat: repeat-x;
@@ -280,6 +283,9 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	padding: 0;
 	margin: 1ex .5em .1ex .1em;
 	font-size: smaller;
+}
+#masthead #loginstatus #Nav {
+	padding: 1ex;
 }
 
 /* "big-wrapper" contains everything other than the masthead.  It's merely 
@@ -390,9 +396,9 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
  * (These are mostly copied from ur.css right atm.)
  */
 
-/* the info escape emits a DIV with this id. (not that the same DIV has class
+/* the info escape emits a DIV with this id. (note that the same DIV has class
  * "info-box" which is given above in the "template styles" section. Regardless,
- * it is emitted by WW code! */
+ * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
 	font-size: smaller;
 	float: right;
@@ -418,6 +424,7 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
+div.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
