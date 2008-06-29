@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.193 2008/01/25 23:34:23 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.194 2008/06/25 15:33:39 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -480,6 +480,10 @@ sub content {
 	my $themesDir = $ce->{webworkDirs}{templates};
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	#$ce->{webworkURLs}->{stylesheet} = ($ce->{webworkURLs}->{htdocs})."/css/$theme.css";   # reset the style sheet
+	# the line above is clever -- but I think it is better to link directly to the style sheet from the system.template
+	# then the link between template and css is made in .template file instead of hard coded as above
+	# this means that the {stylesheet} option in global.conf is never used
 	my $template = $self->can("templateName") ? $self->templateName : $ce->{defaultThemeTemplate};
 	my $templateFile = "$themesDir/$theme/$template.template";
 	
