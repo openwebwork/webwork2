@@ -2017,7 +2017,8 @@ sub body {
 								problemID => "1" } );
 
 				my $seed = $problemToShow ? $problemToShow->problem_seed : "";
-				my $file = $problemToShow ? $problemToShow->source_file : "";
+				my $file = $problemToShow ? $problemToShow->source_file : 
+					$GlobalProblems{$problemID}->source_file;
 
 				$viewProblemLink =
 					$self->systemLink( $viewProblemPage,
