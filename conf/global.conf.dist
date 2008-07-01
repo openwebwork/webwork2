@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.207 2008/06/25 03:48:43 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.208 2008/06/27 15:25:15 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -386,9 +386,12 @@ $courseFiles{login_info}  = "login_info.txt";
 # 
 # would add two buttons, one for the Rochester library and one for the ASU
 # library, provided templates/rochester and templates/asu exists either as 
-# subdirectories or links to other directories.
+# subdirectories or links to other directories. The "NPL Directory" button
+# activated below gives access to all the directories in the National 
+# Problem Library.
 # 
 $courseFiles{problibs}    = {
+	Library          => "NPL Directory",
 # 	rochesterLibrary => "Rochester", 
 # 	asuLibrary       => "Arizona State",
 # 	dcdsLibrary      => "Detroit CDS",
