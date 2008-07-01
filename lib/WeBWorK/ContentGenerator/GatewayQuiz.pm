@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.52 2008/06/23 19:54:46 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.53 2008/06/25 14:41:00 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1018,8 +1018,11 @@ sub pre_header_initialize {
 	####################################
 
 	# bail without doing anything if the set isn't yet open for this user
-	return unless $self->{isOpen} ||
-		$authz->hasPermissions($userName,"view_unopened_sets");
+	if ( ! ( $self->{isOpen} ||
+		 $authz->hasPermissions($userName,"view_unopened_sets") ) ) {
+		$self->{invalidSet} = "This set is not yet open.";
+		return;
+	}
 
 	# what does the user want to do?
 	my %want = 
@@ -1283,7 +1286,7 @@ sub body {
 	# if $self->{invalidSet} is set, then we have an error and should
 	#    just bail with the appropriate error message
 
-	if ($self->{invalidSet}) {
+	if ($self->{invalidSet} || $self->{invalidProblem}) {
 	    # delete any proctor keys that are floating around
 		if ( $self->{'assignment_type'} eq 'proctored_gateway' ) {
 			my $proctorID = $r->param('proctor_user');
