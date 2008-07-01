@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.83 2008/04/29 19:29:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.84 2008/06/24 03:40:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -843,6 +843,19 @@ sub make_data_row {
 	$sourceFileName =~ s|^./||; # clean up top ugliness
 
 	my $urlpath = $self->r->urlpath;
+	my $db = $self->r->db;
+
+	## to set up edit and try links elegantly we want to know if
+	##    any target set is a gateway assignment or not
+	my $localSet = $self->r->param('local_sets');
+	my $setRecord;
+	if ( defined($localSet) && $localSet ne SELECT_SET_STRING &&
+	     $localSet ne NO_LOCAL_SET_STRING ) {
+		$setRecord = $db->getGlobalSet( $localSet );
+	}
+	my $isGatewaySet = ( defined($setRecord) && 
+			     $setRecord->assignment_type =~ /gateway/ );
+
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
 		: CGI::div({class=>"RenderSolo"}, $pg->{body_text});
@@ -862,19 +875,22 @@ sub make_data_row {
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
+	my $module = ( $isGatewaySet ) ? "GatewayQuiz" : "Problem";
+	my %pathArgs = ( courseID =>$urlpath->arg("courseID"),
+			setID=>"Undefined_Set" );
+	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
+
 	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
-			courseID =>$urlpath->arg("courseID"),
-			setID=>"Undefined_Set",
-			problemID=>"1"),
-		params =>{
-			effectiveUser => scalar($self->r->param('user')),
-			editMode => "SetMaker",
-			problemSeed=> $problem_seed,
-			sourceFilePath => "$sourceFileName",
-			displayMode => $displayMode,
-		}
-	), target=>"WW_View"}, "Try it");
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module",
+			%pathArgs ),
+			params =>{
+				effectiveUser => scalar($self->r->param('user')),
+				editMode => "SetMaker",
+				problemSeed=> $problem_seed,
+				sourceFilePath => "$sourceFileName",
+				displayMode => $displayMode,
+			}
+		), target=>"WW_View"}, "Try it");
 
 	my %add_box_data = ( -name=>"trial$cnt",-value=>1,-label=>"Add this problem to the target set on the next update");
 	if($mark & SUCCESS) {
