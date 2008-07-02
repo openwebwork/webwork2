@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.64.2.2.2.2 2008/06/25 14:36:12 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.76 2008/06/25 14:38:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -2445,8 +2445,8 @@ sub display_registration_form {
 	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
 	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
 	WeBWorK  Since WeBWorK is open source and can be freely downloaded from ".
-	CGI::a({href=>'http://www.openwebwork.org'},'http://www.openwebwork.org' ). " and ".
-	CGI::a({href=> 'http://webwork.maa.org'},'http://www.openwebwork.org'). ", it is frequently difficult for us to give a reasonable answer to this 
+	CGI::a({href=>'http://webwork.maa.org'},'http://webwork.maa.org' ). " and ".
+	CGI::a({href=> 'http://www.openwebwork.org'},'http://www.openwebwork.org'). ", it is frequently difficult for us to give a reasonable answer to this 
 	question."),
 	CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
 	questions (the ones you can answer easily) and send the email.  It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
