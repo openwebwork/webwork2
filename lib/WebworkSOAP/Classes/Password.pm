@@ -10,8 +10,8 @@ sub new {
     my $self = shift;
     my $data = shift;
     $self = {};
-    $self->{user_id} = $data->user_id;
-    $self->{password} = $data->password;
+    $self->{user_id} = SOAP::Data->type( 'string', $data->user_id );
+    $self->{password} = SOAP::Data->type( 'string', $data->password );
     bless $self;
     return $self;
 }
