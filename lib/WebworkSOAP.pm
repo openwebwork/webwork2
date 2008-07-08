@@ -57,6 +57,12 @@ sub new {
     return $self;
 }
 
+sub array_to_soap_string {
+	my @array = @_;
+	@array = map { SOAP::Data->type( 'string', $_ ) } @array;
+	return \@array;
+}
+
 sub soap_fault_authen {
     die SOAP::Fault->faultcode(SOAPERROR_AUTHEN_FAILED)
                     ->faultstring("SOAP Webservice Authentication Failed!");
@@ -103,7 +109,7 @@ sub list_courses {
     }
     $@ and soap_fault_major("Course Environment cannot be constructed.");
     my @test = listCourses($ce);
-    return \@test;
+    return array_to_soap_string( @test );
 }
 
 =pod
@@ -127,7 +133,7 @@ sub login_user {
     eval { $soapEnv->{db}->deleteKey($userID) };
     eval { $soapEnv->{db}->addKey($Key) };
     $@ and soap_fault(SOAPERROR_USER_NOT_FOUND,"User not found.");
-    return $newKey;
+    return SOAP::Data->type( 'string', $newKey );
 }
 
 =pod
@@ -171,7 +177,7 @@ sub assign_set_to_user {
 	initializeUserProblem($UserProblem, $seed);
 	eval { $db->addUserProblem($UserProblem) };
     }
-    return @results;
+    return array_to_soap_string( @results ); #FIXME WSDL says $string, not @string?
 }
 
 =pod
@@ -196,7 +202,7 @@ sub grade_users_sets {
         }
         push(@grades,$grade);
     }
-    return \@grades;
+    return array_to_soap_string( @grades );
 }
 
 =pod
@@ -204,7 +210,7 @@ sub grade_users_sets {
 _IN authenKey $string
 _IN courseName $string
 _IN setID $string
-_RETURN @string
+_RETURN $WebworkSOAP::Classes::GlobalSet
 =end WSDL
 =cut
 sub get_set_data {
@@ -216,8 +222,6 @@ sub get_set_data {
     }
     my $set = new WebworkSOAP::Classes::GlobalSet($setData);
     return $set;
-
-
 }
 
 ####################################################################
@@ -240,7 +244,7 @@ sub add_password {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newPassword = $soapEnv->{db}->newPassword;
     %$newPassword = %$record;
-    return $soapEnv->{db}->addPassword($newPassword);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addPassword($newPassword) );
 }
 
 =pod
@@ -254,7 +258,7 @@ _RETURN $string
 sub put_password {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putPassword($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putPassword($record) );
 }
 
 =pod
@@ -268,7 +272,7 @@ sub list_password {
     my ($self,$authenKey,$courseName) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listPasswords;
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -326,7 +330,7 @@ sub add_permission {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newPermissionLevel = $soapEnv->{db}->newPermissionLevel;
     %$newPermissionLevel = %$record;
-    return $soapEnv->{db}->addPermissionLevel($newPermissionLevel);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addPermissionLevel($newPermissionLevel) );
 }
 
 =pod
@@ -340,7 +344,7 @@ _RETURN $string
 sub put_permission {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putPermissionLevel($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putPermissionLevel($record) );
 }
 
 =pod
@@ -354,7 +358,7 @@ sub list_permissions {
     my ($self,$authenKey,$courseName) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listPermissionLevels;
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -412,7 +416,7 @@ sub add_key {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newKey = $soapEnv->{db}->newKey;
     %$newKey = %$record;
-    return $soapEnv->{db}->addKey($newKey);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addKey($newKey) );
 }
 
 =pod
@@ -426,7 +430,7 @@ _RETURN $string
 sub put_key {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putKey($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putKey($record) );
 }
 
 =pod
@@ -440,7 +444,7 @@ sub list_keys {
     my ($self,$authenKey,$courseName) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listKeys;
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -498,7 +502,7 @@ sub add_user {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newUser = $soapEnv->{db}->newUser;
     %$newUser = %$record;
-    return $soapEnv->{db}->addUser($newUser);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addUser($newUser) );
 }
 
 =pod
@@ -512,7 +516,7 @@ _RETURN $string
 sub put_user {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putUser($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putUser($record) );
 }
 
 =pod
@@ -526,7 +530,7 @@ sub list_users {
     my ($self,$authenKey,$courseName) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listUsers;
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -578,7 +582,7 @@ _RETURN $string
 sub delete_user {
     my ($self,$authenKey,$courseName,$userID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->deleteUser($userID);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->deleteUser($userID) );
 }
 
 ##################################################
@@ -598,7 +602,7 @@ sub add_global_set {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newGlobalSet = $soapEnv->{db}->newGlobalSet;
     %$newGlobalSet = %$record;
-    return $soapEnv->{db}->addGlobalSet($newGlobalSet);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addGlobalSet($newGlobalSet) );
 }
 
 =pod
@@ -612,7 +616,7 @@ _RETURN $string
 sub put_global_set {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putGlobalSet($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putGlobalSet($record) );
 }
 
 =pod
@@ -626,9 +630,8 @@ sub list_global_sets {
     my ($self,$authenKey,$courseName) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listGlobalSets;
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
-
 
 =pod
 =begin WSDL
@@ -698,7 +701,7 @@ _RETURN $string
 sub delete_global_set {
     my ($self,$authenKey,$courseName,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->deleteGlobalSet($setID);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->deleteGlobalSet($setID) );
 }
 
 ##################################################
@@ -718,7 +721,7 @@ sub add_global_problem {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newGlobalProblem = $soapEnv->{db}->newGlobalProblem;
     %$newGlobalProblem = %$record;
-    return $soapEnv->{db}->addGlobalProblem($newGlobalProblem);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addGlobalProblem($newGlobalProblem) );
 }
 
 =pod
@@ -732,7 +735,7 @@ _RETURN $string
 sub put_global_problem {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putGlobalProblem($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putGlobalProblem($record) );
 }
 
 =pod
@@ -747,7 +750,7 @@ sub list_global_problems {
     my ($self,$authenKey,$courseName,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listGlobalProblems($setID);
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -773,7 +776,7 @@ sub get_all_global_problems {
 =begin
 _IN authenKey $string
 _IN courseName $string
-_IN problemIDs @string
+_IN problemIDs @string An array reference: [userID setID problemID]
 _RETURN @WebworkSOAP::Classes::GlobalProblem Array of user objects
 =end WSDL
 =cut
@@ -783,7 +786,7 @@ sub get_global_problems {
     my @problemData = $soapEnv->{db}->getGlobalProblems(@$problemIDs);
     my @problems;
     for(my $i=0;$i<@problemData;$i++) {
-        push(@problems,new WebworkSOAP::Classes::GlobalProblem(@problemData[$i]));
+        push(@problems,new WebworkSOAP::Classes::GlobalProblem(@problemData[$i])); #FIXME $problemData[$i]? 
     }
     return \@problems;
 }
@@ -820,7 +823,7 @@ _RETURN $string
 sub delete_global_problem {
     my ($self,$authenKey,$courseName,$setID,$problemID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->deleteGlobalProblem($setID,$problemID);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->deleteGlobalProblem($setID,$problemID) );
 }
 
 ##################################################
@@ -840,7 +843,7 @@ sub add_user_problem {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newUserProblem = $soapEnv->{db}->newUserProblem;
     %$newUserProblem = %$record;
-    return $soapEnv->{db}->addUserProblem($newUserProblem);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addUserProblem($newUserProblem) );
 }
 
 =pod
@@ -854,7 +857,7 @@ _RETURN $string
 sub put_user_problem {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->putUserProblem($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->putUserProblem($record) );
 }
 
 =pod
@@ -862,14 +865,15 @@ sub put_user_problem {
 _IN authenKey $string
 _IN courseName $string
 _IN userID $string
+_IN setID $string
 _RETURN @string of names objects.
 =end WSDL
 =cut
 sub list_user_problems {
-    my ($self,$authenKey,$courseName,$userID) = @_;
+    my ($self,$authenKey,$courseName,$userID,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    my @tempArray = $soapEnv->{db}->listUserProblems($userID);
-    return \@tempArray;
+    my @tempArray = $soapEnv->{db}->listUserProblems($userID,$setID);
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -896,7 +900,7 @@ sub get_all_user_problems {
 =begin WSDL
 _IN authenKey $string
 _IN courseName $string
-_IN userProblemIDs @string
+_IN userProblemIDs @string A 3 element array: { user_ID, setID, problemID }
 _RETURN @WebworkSOAP::Classes::UserProblem of names objects.
 =end WSDL
 =cut
@@ -945,7 +949,7 @@ _RETURN $string
 sub delete_user_problem {
     my ($self,$authenKey,$courseName,$userID,$setID,$problemID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->deleteUserProblem($userID,$setID,$problemID);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->deleteUserProblem($userID,$setID,$problemID) );
 }
 
 ##################################################
@@ -965,7 +969,7 @@ sub add_user_set {
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my $newUserSet = $soapEnv->{db}->newUserSet;
     %$newUserSet = %$record;
-    return $soapEnv->{db}->addUserSet($newUserSet);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addUserSet($newUserSet) );
 }
 
 =pod
@@ -979,7 +983,7 @@ _RETURN $string
 sub put_user_set {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->addUserSet($record);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->addUserSet($record) );
 }
 
 =pod
@@ -994,7 +998,7 @@ sub list_user_sets {
     my ($self,$authenKey,$courseName,$userID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @tempArray = $soapEnv->{db}->listUserSets($userID);
-    return \@tempArray;
+    return array_to_soap_string( @tempArray );
 }
 
 =pod
@@ -1066,7 +1070,7 @@ _RETURN $string
 sub delete_user_set {
     my ($self,$authenKey,$courseName,$userID,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return $soapEnv->{db}->deleteUserSet($userID,$setID);
+    return SOAP::Data->type( 'string', $soapEnv->{db}->deleteUserSet($userID,$setID) );
 }
 
 
