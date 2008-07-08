@@ -17,15 +17,15 @@ sub new {
     my $self = shift;
     my $data = shift;
     $self = {};
-    $self->{user_id} = $data->user_id;
-    $self->{first_name} = $data->first_name;
-    $self->{last_name} = $data->last_name;
-    $self->{email_address} = $data->email_address;
-    $self->{student_id} = $data->student_id;
-    $self->{status} = $data->status;
-    $self->{section} = $data->section;
-    $self->{recitation} = $data->recitation;
-    $self->{comment} = $data->comment;
+	$self->{user_id} = SOAP::Data->type( 'string', $data->user_id );
+    $self->{first_name} = SOAP::Data->type( 'string', $data->first_name );
+    $self->{last_name} = SOAP::Data->type( 'string', $data->last_name );
+    $self->{email_address} = SOAP::Data->type( 'string', $data->email_address );
+    $self->{student_id} = SOAP::Data->type( 'string', $data->student_id );
+    $self->{status} = SOAP::Data->type( 'string', $data->status );
+    $self->{section} = SOAP::Data->type( 'string', $data->section );
+    $self->{recitation} = SOAP::Data->type( 'string', $data->recitation );
+    $self->{comment} = SOAP::Data->type( 'string', $data->comment );
     bless $self;
     return $self;
 }

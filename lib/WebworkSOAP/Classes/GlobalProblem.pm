@@ -11,11 +11,11 @@ sub new {
     my $self = shift;
     my $data = shift;
     $self = {};
-    $self->{set_id} = $data->set_id;
-    $self->{problem_id} = $data->problem_id;
-    $self->{source_file} = $data->source_file;
-    $self->{value} = $data->value;
-    $self->{max_attempts} = $data->max_attempts;
+    $self->{set_id} = SOAP::Data->type( 'string', $data->set_id );
+    $self->{problem_id} = SOAP::Data->type( 'string', $data->problem_id );
+    $self->{source_file} = SOAP::Data->type( 'string', $data->source_file );
+    $self->{value} = SOAP::Data->type( 'string', $data->value );
+    $self->{max_attempts} = SOAP::Data->type( 'string', $data->max_attempts );
     bless $self;
     return $self;
 }
