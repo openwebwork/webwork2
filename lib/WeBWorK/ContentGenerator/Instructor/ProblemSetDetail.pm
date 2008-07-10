@@ -373,6 +373,10 @@ sub FieldTable {
 			  (! $forUsers && 
 			   ( $globalRecord->restrict_ip eq '' ||
 			     $globalRecord->restrict_ip eq 'No' ) ) ) );
+		# skip the problem seed if we're editing a gateway set for users,
+		#    but aren't editing a set version
+		next if ( $field eq 'problem_seed'  &&
+			  ( $isGWset && $forUsers && ! $setVersion ) );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
@@ -1557,7 +1561,7 @@ sub checkFile ($) {
 	my $ce = $r->ce;
 
 	return "No source file specified" unless $file;
-	return "Problem source is drawn from grouping set" if $file =~ /^group/;
+	return "Problem source is drawn from a grouping set" if $file =~ /^group/;
 	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|;
 
 	my $text = "This source file ";
