@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.209 2008/07/01 14:06:30 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.208 2008/06/27 15:25:15 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -686,6 +686,7 @@ $authen{ldap_options} = {
 	check_answers_after_due_date                    => "guest",
 	check_answers_after_answer_date                 => "guest",
 	create_new_set_version_when_acting_as_student   => undef,
+	print_path_to_problem                           => "professor", # see "Special" PG environment variables
 	record_set_version_answers_when_acting_as_student => undef,
 	record_answers_when_acting_as_student           => undef,
 	# "record_answers_when_acting_as_student" takes precedence
@@ -852,7 +853,10 @@ $pg{directories}{appletPath} = [    # paths to search for applets (requires full
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 
 # Users for whom to print the file name of the PG file being processed.
-$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ "professor", ];
+$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR} = [ "professor", ];  
+   # ie file paths are printed for 'gage'
+$pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} = $userRoles{ $permissionLevels{print_path_to_problem} }; 
+   # (file paths are also printed for anyone with this permission or higher)
 
 # Locations of CAPA resources. (Only necessary if you need to use converted CAPA
 # problems.)
@@ -917,7 +921,7 @@ ${pg}{modules} = [
 	[qw(Parser Value)],
 	[qw(Parser::Legacy)],
 #	[qw(SaveFile)],
-    [qw(Chromatic)],
+#       [qw(Chromatic)],
 	[qw(Applet FlashApplet)],
 ];
 
