@@ -65,7 +65,6 @@ my @modulesList = qw(
 	Iterator
 	Iterator::Util
 	Mail::Sender
-	MIME::Parser
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
