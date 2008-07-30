@@ -13,7 +13,7 @@
 #  Special use of CARET to have it work in non-math mode
 #
 $CARET = MODES(
-  TeX => '\hbox{\texttt{\char`\^}}',
+  TeX => '\hbox{\texttt{\char94}}',
   Latex2HTML => '^',
   HTML => '^'
 );
