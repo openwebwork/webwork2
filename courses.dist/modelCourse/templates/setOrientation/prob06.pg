@@ -30,7 +30,7 @@ this:
 $PAR
 END_TEXT
 
-$BRACES = HTML('{}','\char`\{\char`\}');
+$BRACES =  HTML('{}','\char123\char125');
 
 BEGIN_TEXT
 

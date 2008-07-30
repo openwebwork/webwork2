@@ -46,8 +46,8 @@ ANS((($p0+$p1)/2)->cmp);
 
 $P = non_zero_point3D();
 
-$LANGLE = HTML('&lt;',"\char`\<");
-$RANGLE = HTML('&gt;',"\char`\>");
+$LANGLE = HTML('&lt;',"\char60 ");
+$RANGLE = HTML('&gt;',"\char62 ");
 
 Context()->flags->set(ijk=>1);
 Context()->texStrings;
