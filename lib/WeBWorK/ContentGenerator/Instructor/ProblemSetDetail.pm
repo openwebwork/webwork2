@@ -617,7 +617,8 @@ sub extraSetFields {
 	$numLocations = @locations;
 
 	# we don't show ip selector fields if we're editing a set version
-	if ( defined( $userRecord ) && ! $userRecord->can("version_id") ) {
+	if ( ! defined( $userRecord ) ||
+	     ( defined( $userRecord ) && ! $userRecord->can("version_id") ) ) {
 		if ( ( ! $forUsers && $globalRecord->restrict_ip &&
 		       $globalRecord->restrict_ip ne 'No' ) ||
 		     ( $forUsers && $userRecord->restrict_ip ne 'No' ) ) {
