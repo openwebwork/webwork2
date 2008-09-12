@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.97 2007/09/12 15:05:07 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.98 2008/08/06 16:03:36 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -993,6 +993,7 @@ sub write_problem_tex {
 			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
 			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
 			processAnswers  => $showCorrectAnswers ? 1 : 0,
+			permissionLevel => $db->getPermissionLevel($userID)->permission,
 		};
 	my $formFields = { };
 	if ( $versioned && $MergedProblem->problem_id != 0 ) {
