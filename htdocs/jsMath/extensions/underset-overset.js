@@ -30,8 +30,8 @@
 jsMath.Package(jsMath.Parser,{
 
   macros: {
-    overset:            'Overset',
-    underset:           'Underset'
+    overset:  'Overset',
+    underset: 'Underset'
   },
   
   Overset: function (name) {
