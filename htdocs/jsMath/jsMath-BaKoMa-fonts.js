@@ -418,11 +418,11 @@ if (jsMath.browser == "Mozilla" && jsMath.platform != "mac") {
 }
 
 jsMath.Setup.Styles({
-  '.typeset .cmr10':  'font-family: cmr10, serif',
-  '.typeset .cmbx10': 'font-family: cmbx10, cmr10',
-  '.typeset .cmti10': 'font-family: cmti10, cmr10',
-  '.typeset .cmmi10': 'font-family: cmmi10',
-  '.typeset .cmsy10': 'font-family: cmsy10',
-  '.typeset .cmex10': 'font-family: cmex10',
+  '.typeset .cmr10':  'font-family: CMR10, serif',
+  '.typeset .cmbx10': 'font-family: CMBX10, CMR10',
+  '.typeset .cmti10': 'font-family: CMTI10, CMR10',
+  '.typeset .cmmi10': 'font-family: CMMI10',
+  '.typeset .cmsy10': 'font-family: CMSY10',
+  '.typeset .cmex10': 'font-family: CMEX10',
   '.typeset .arial':  "font-family: 'Arial unicode MS'"
 });

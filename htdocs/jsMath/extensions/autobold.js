@@ -43,8 +43,8 @@ jsMath.Extension.Require("boldsymbol");
 
 jsMath.Translate.OldParse = jsMath.Translate.Parse;
 jsMath.Translate.Parse = function (style,text,noCache) {
-  if (jsMath.BBoxFor('</SPAN></SPAN>MMMMMMMMMM<SPAN><SPAN>').w >
-      jsMath.BBoxFor('</SPAN></SPAN><SPAN STYLE="font-weight:normal">MMMMMMMMMM</SPAN><SPAN><SPAN>').w) {
+  if (jsMath.BBoxFor('</SPAN></SPAN><SPAN STYLE="font-family:Times,serif">MMMMMMMMMM</SPAN><SPAN><SPAN>').w >
+      jsMath.BBoxFor('</SPAN></SPAN><SPAN STYLE="font-family:Times,serif; font-weight:normal">MMMMMMMMMM</SPAN><SPAN><SPAN>').w) {
     text = '\\boldsymbol{' + text + '}';
   }
   return jsMath.Translate.OldParse(style,text,noCache);

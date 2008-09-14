@@ -138,12 +138,6 @@ jsMath.Add(jsMath.Controls,{
 
     this.panel.style.display = "block";
     this.openMain = 0;
-
-    if (jsMath.Browser.msieMoveButtonHack) {
-      this.panel.style.left = "0px";
-      this.panel.style.top = "0px";
-      jsMath.Controls.MoveButton();
-    }
   },
 
   Options: function () {
@@ -251,10 +245,6 @@ jsMath.Add(jsMath.Controls,{
     jsMath.Global.Show();
   },
 
-  CheckVersion: function () {
-    jsMath.Script.delayedLoad('http://www.math.union.edu/locate/jsMath/jsMath/jsMath-version-check.js');
-  },
-
   NoAuto: function () {jsMath.Element("_autofont").checked = false}
 
 });
@@ -304,8 +294,6 @@ jsMath.Add(jsMath.Post.Commands,{
 <td align="center">
 <table border="0" cellspacing="0" cellpadding="0">
 <tr><td align="center" colspan="3">
-<input type="button" value="Check for jsMath Updates"
-       style="width:18em" onclick="jsMath.Controls.CheckVersion()" /><br />
 <input type="button" id="jsMath__resolution" value="Hi-Res Fonts for Printing"
        style="width:18em" onclick="jsMath.Controls.PrintResolution()" />
 </td></tr>
@@ -458,12 +446,12 @@ Use native Unicode fonts</td></tr>
   if (showWarning) {
     if (mustPost) {
       var scr = document.getElementById("jsMath_script");
-      window.parent.postMessage("jsMCP:SCR:"+scr.innerHTML);
+      window.parent.postMessage("jsMCP:SCR:"+scr.innerHTML,"*");
       var main = document.getElementById("jsMath_main");
-      window.parent.postMessage("jsMCP:PAN:"+main.innerHTML);
+      window.parent.postMessage("jsMCP:PAN:"+main.innerHTML,"*");
       var options = document.getElementById("jsMath_options");
-      window.parent.postMessage("jsMCP:OPT:"+options.innerHTML);
-      window.parent.postMessage("jsMCP:PST:");
+      window.parent.postMessage("jsMCP:OPT:"+options.innerHTML,"*");
+      window.parent.postMessage("jsMCP:PST:","*");
     }
   } else {
     jsMath.Controls.Main()

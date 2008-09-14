@@ -11,7 +11,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright 2005-2006 by Davide P. Cervone
+ *  Copyright 2005-2008 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,14 +28,44 @@
 
 /********************************************************************/
 
+if (jsMath.Click && jsMath.Click.styles) 
+  {jsMath.Click.oldStyles = jsMath.Click.styles}
+
 jsMath.Add(jsMath.Click,{
 
   dragging: 0,
+  
+  styles: {
+    // Floating windows for displaying TeX source
+    '#jsMath_float': {
+       position: 'absolute', top: '0px', left: '0px', 'z-index': '101',
+      'max-width': '80%', width: 'auto', height: 'auto',
+       padding: '0px', margin: '0px', 'font-size': '100%'
+    },
+    '#jsMath_float .drag': {
+      'background-color': '#DDDDDD',
+       border: 'outset 1px', padding: '0px', margin: '0px',
+       width: 'auto', height: '12px', 'font-size': '1px'
+    },
+    '#jsMath_float .close': {
+      'background-color': '#E6E6E6',
+       border: 'inset 1px', margin: '1px 2px', padding: '0px',
+       width: '8px', height: '8px'
+    },
+    '#jsMath_float .source': {
+      'background-color': '#E2E2E2',
+       border: 'outset 1px', margin: '0px', padding: '8px 15px',
+       width: 'auto', height: 'auto',
+      'font-family': 'courier, fixed', 'font-size': '90%'
+    }
+  },
   
   /*
    *  Create the hidden DIV used for the tex source window
    */
   Init: function () {
+    if (this.oldStyles) {jsMath.Insert(this.styles,this.oldStyles)}
+    jsMath.Setup.Styles(this.styles);
     this.source = jsMath.Setup.DIV("float",{display:'none'});
     this.source.innerHTML =
         '<div class="drag"><div class="close"></div></div>'
@@ -177,10 +207,10 @@ jsMath.Add(jsMath.Click,{
     jsMath.Click.dragging = 1;
     jsMath.Click.x = event.x + 2*event.X - jsMath.Click.left;
     jsMath.Click.y = event.y + 2*event.Y - jsMath.Click.top;
-    jsMath.Click.oldonmousemove = jsMath.document.body.onmousemove;
-    jsMath.Click.oldonmouseup = jsMath.document.body.onmouseup;
-    jsMath.document.body.onmousemove = jsMath.Click.DragSource;
-    jsMath.document.body.onmouseup = jsMath.Click.StopDragging;
+    jsMath.Click.oldonmousemove = jsMath.document.onmousemove;
+    jsMath.Click.oldonmouseup = jsMath.document.onmouseup;
+    jsMath.document.onmousemove = jsMath.Click.DragSource;
+    jsMath.document.onmouseup = jsMath.Click.StopDragging;
     return false;
   },
   
@@ -189,8 +219,8 @@ jsMath.Add(jsMath.Click,{
    */
   StopDragging: function (event) {
     if (jsMath.Click.dragging) {
-      jsMath.document.body.onmousemove = jsMath.Click.oldonmousemove;
-      jsMath.document.body.onmouseup   = jsMath.Click.oldonmouseup;
+      jsMath.document.onmousemove = jsMath.Click.oldonmousemove;
+      jsMath.document.onmouseup   = jsMath.Click.oldonmouseup;
       jsMath.Click.oldonmousemove = null;
       jsMath.Click.oldonmouseup   = null;
       jsMath.Click.dragging = 0;

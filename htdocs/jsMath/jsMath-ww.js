@@ -11,7 +11,7 @@ if (!window.jsMath || !window.jsMath.loaded) {
   var jsMath = {
 
     styles: {
-      '.math': 'font-family: serif; font-style: normal; color: grey33; font-size: 75%'
+      '.math': 'font-family: serif; font-style: normal; color: grey; font-size: 75%'
     },
     Controls: {cookie: {scale: 133}},
     Parser: {prototype: {macros: {

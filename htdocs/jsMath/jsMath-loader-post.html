@@ -47,14 +47,15 @@ if (url == 'http://www.math.union.edu/locate/jsMath/jsMath/jsMath-version-check.
   try {
     request.open("GET",url,false);
     request.send(null);
-    window.parent.postMessage(ID+":BGN:");
-    window.parent.postMessage(ID+":SCR:"+request.responseText);
-    window.parent.postMessage(ID+":END:1");
+    window.parent.postMessage(ID+":BGN:","*");
+    window.parent.postMessage(ID+":SCR:"+request.responseText,"*");
+    window.parent.postMessage(ID+":END:1","*");
   } catch (err) {
-    window.parent.postMessage(ID+":ERR:Can't load "+url+": "+err.message);
+alert(err.message);
+    window.parent.postMessage(ID+":ERR:Can't load "+url+": "+err.message,"*");
   }
 } else {
-  window.parent.postMessage(ID+":END:");
+  window.parent.postMessage(ID+":END:","*");
 }
 </script>
 
@@ -68,9 +69,9 @@ if (isCheck) {
   window.parent.postMessage(ID+":SCR:" +
     "jsMath.Controls.TestVersion = "+fn+";" +
     "jsMath.Message.Clear(); jsMath.Message.doClear();" +
-    "jsMath.Controls.TestVersion()"
+    "jsMath.Controls.TestVersion()","*"
   );
-  window.parent.postMessage(ID+":END:");
+  window.parent.postMessage(ID+":END:","*");
 }
 </script>
 

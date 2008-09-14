@@ -10,7 +10,7 @@
  *
  *  for the latest version, and for documentation on how to use jsMath.
  *
- *  Copyright 2004-2007 by Davide P. Cervone
+ *  Copyright 2004-2008 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.5",  // change this if you edit the file, but don't edit this file
+  version: "3.6",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -79,94 +79,215 @@ window.jsMath = {
   sizes: [50, 60, 70, 85, 100, 120, 144, 173, 207, 249],
 
   //
-  //  The styles needed for the TeX fonts
+  //  The styles needed for the TeX fonts and other jsMath elements
   //
   styles: {
-    '.math':              'font-family:serif; font-style:normal; font-weight:normal',
+    '.math': {                  // unprocessed mathematics
+      'font-family': 'serif',
+      'font-style':  'normal',
+      'font-weight': 'normal'
+    },
 
-    '.typeset':           'font-family:serif; font-style:normal; font-weight:normal; line-height:normal;',
-    'div.typeset':        'text-align:center; margin:1em 0px;',
-    'span.typeset':       'text-align:left',
-    '.typeset span':      'text-align:left; border:0px; margin:0px; padding:0px;',
+    '.typeset': {               // final typeset mathematics
+      'font-family': 'serif',
+      'font-style':  'normal',
+      'font-weight': 'normal',
+      'line-height': 'normal',
+      'text-indent': '0px'
+    },
     
-    '.typeset .normal':   'font-family:serif; font-style:normal; font-weight:normal',
+    '.typeset .normal': {       // \hbox contents style
+      'font-family': 'serif',
+      'font-style': 'normal',
+      'font-weight': 'normal'
+    },
     
-    '.typeset .size0':    'font-size:50%',  // tiny (\scriptscriptsize)
-    '.typeset .size1':    'font-size:60%',  //       (50% of \large for consistency)
-    '.typeset .size2':    'font-size:70%',  // scriptsize
-    '.typeset .size3':    'font-size:85%',  // small (70% of \large for consistency)
-    '.typeset .size4':    'font-size:100%', // normalsize
-    '.typeset .size5':    'font-size:120%', // large
-    '.typeset .size6':    'font-size:144%', // Large
-    '.typeset .size7':    'font-size:173%', // LARGE
-    '.typeset .size8':    'font-size:207%', // huge
-    '.typeset .size9':    'font-size:249%', // Huge
+    'div.typeset': {            // display mathematics
+      'text-align': 'center',
+       margin:       '1em 0px'
+    },
+    
+    'span.typeset': {           // in-line mathematics
+      'text-align': 'left'
+    },
+    
+    '.typeset span': {          // prevent outside CSS from setting these
+      'text-align': 'left',
+       border:       '0px',
+       margin:       '0px',
+       padding:      '0px'
+    },
+    
+    'a .typeset img, .typeset a img': {   // links in image mode
+       border: '0px',
+      'border-bottom': '1px solid blue;'
+    },
+
+    // Font sizes
+    '.typeset .size0': {'font-size': '50%'},  // tiny (\scriptscriptsize)
+    '.typeset .size1': {'font-size': '60%'},  //       (50% of \large for consistency)
+    '.typeset .size2': {'font-size': '70%'},  // scriptsize
+    '.typeset .size3': {'font-size': '85%'},  // small (70% of \large for consistency)
+    '.typeset .size4': {'font-size': '100%'}, // normalsize
+    '.typeset .size5': {'font-size': '120%'}, // large
+    '.typeset .size6': {'font-size': '144%'}, // Large
+    '.typeset .size7': {'font-size': '173%'}, // LARGE
+    '.typeset .size8': {'font-size': '207%'}, // huge
+    '.typeset .size9': {'font-size': '249%'}, // Huge
   
-    '.typeset .cmr10':    'font-family:jsMath-cmr10, serif',
-    '.typeset .cmbx10':   'font-family:jsMath-cmbx10, jsMath-cmr10',
-    '.typeset .cmti10':   'font-family:jsMath-cmti10, jsMath-cmr10',
-    '.typeset .cmmi10':   'font-family:jsMath-cmmi10',
-    '.typeset .cmsy10':   'font-family:jsMath-cmsy10',
-    '.typeset .cmex10':   'font-family:jsMath-cmex10',
+    // TeX fonts
+    '.typeset .cmr10':  {'font-family': 'jsMath-cmr10, serif'},
+    '.typeset .cmbx10': {'font-family': 'jsMath-cmbx10, jsMath-cmr10'},
+    '.typeset .cmti10': {'font-family': 'jsMath-cmti10, jsMath-cmr10'},
+    '.typeset .cmmi10': {'font-family': 'jsMath-cmmi10'},
+    '.typeset .cmsy10': {'font-family': 'jsMath-cmsy10'},
+    '.typeset .cmex10': {'font-family': 'jsMath-cmex10'},
     
-    '.typeset .textit':   'font-family:serif; font-style:italic',
-    '.typeset .textbf':   'font-family:serif; font-weight:bold',
+    '.typeset .textit': {'font-family': 'serif', 'font-style': 'italic'},
+    '.typeset .textbf': {'font-family': 'serif', 'font-weight': 'bold'},
     
-    '.typeset .link':     'text-decoration:none',
-    '.typeset .error':    'font-size:10pt; font-style:italic; '
-                             + 'background-color:#FFFFCC; padding:1px; '
-                             + 'border:1px solid #CC0000',
+    '.typeset .link':   {'text-decoration': 'none'},  // links in mathematics
 
-    '.typeset .blank':    'display:inline-block; overflow:hidden; border:0px none; width:0px; height:0px;',
-    '.typeset .spacer':   'display:inline-block',
+    '.typeset .error':  {      // in-line error messages
+      'font-size':        '90%',
+      'font-style':       'italic',
+      'background-color': '#FFFFCC',
+       padding:           '1px',
+       border:            '1px solid #CC0000'
+    },
+
+    '.typeset .blank': {       // internal use
+      display: 'inline-block',
+      overflow: 'hidden',
+      border: '0px none',
+      width: '0px',
+      height: '0px'
+    },
+    '.typeset .spacer': {      // internal use
+      display: 'inline-block'
+    },
     
-    '#jsMath_hiddenSpan':      'visibility:hidden; position:absolute; top:0px;left:0px; '
-                                  + 'line-height:normal; text-indent:0px',
+    '#jsMath_hiddenSpan': {    // used for measuring BBoxes
+       visibility:    'hidden',
+       position:      'absolute',
+       top:           '0px',
+       left:          '0px',
+      'line-height':  'normal',
+      'text-indent':  '0px'
+    },
 
-    '#jsMath_message':         'position:fixed; bottom:1px; left:2px; background-color:#E6E6E6; '
-                                 + 'border:solid 1px #959595; margin:0px; padding:1px 8px; '
-                                 + 'z-index:102; color: black; font-size:small; width:auto;',
-    '#jsMath_panel':           'position:fixed; bottom:1.5em; right:1.5em; padding:.8em 1.6em; '
-                                 + 'background-color:#DDDDDD; border:outset 2px; '
-                                 + 'z-index:103; width:auto; color:black; font-size:10pt; font-style:normal',
-    '#jsMath_panel .disabled': 'color:#888888',
-    '#jsMath_panel .infoLink': 'font-size:85%',
-    '#jsMath_panel *':         'font-size:inherit; font-style:inherit; font-family:inherit; line-height:normal',
-    '#jsMath_panel div':       'background-color:inherit; color:inherit;',
-    '#jsMath_panel span':      'background-color:inherit; color:inherit;',
-    '#jsMath_panel td':        'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
-    '#jsMath_panel tr':        'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
-    '#jsMath_panel table':     'border:0px; padding:0px; margin:0px; background-color:inherit; color:inherit;',
+    '#jsMath_message': {      // percentage complete message
+       position:   'fixed',
+       bottom:     '1px',
+       left:       '2px',
+      'background-color': '#E6E6E6',
+       border:     'solid 1px #959595',
+       margin:     '0px',
+       padding:    '1px 8px',
+      'z-index':   '102',
+       color:      'black',
+      'font-size': 'small',
+       width:      'auto'
+    },
+
+    '#jsMath_panel': {        // control panel
+       position:    'fixed',
+       bottom:      '1.75em',
+       right:       '1.5em',
+       padding:     '.8em 1.6em',
+      'background-color': '#DDDDDD',
+       border:      'outset 2px',
+      'z-index':    '103',
+       width:       'auto',
+       color:       'black',
+      'font-size':  '10pt',
+      'font-style': 'normal'
+    },
+    '#jsMath_panel .disabled': {color: '#888888'},   // disabled items in the panel
+    '#jsMath_panel .infoLink': {'font-size': '85%'}, // links to web pages
+
+    // avoid CSS polution from outside the panel
+    '#jsMath_panel *':  {
+      'font-size':   'inherit',
+      'font-style':  'inherit',
+      'font-family': 'inherit',
+      'line-height': 'normal'
+    },
+    '#jsMath_panel div':   {'background-color': 'inherit', color: 'inherit'},
+    '#jsMath_panel span':  {'background-color': 'inherit', color: 'inherit'},
+    '#jsMath_panel td': {
+       border: '0px', padding: '0px', margin: '0px',
+      'background-color': 'inherit', color: 'inherit'
+    },
+    '#jsMath_panel tr': {
+       border: '0px', padding: '0px', margin: '0px',
+      'background-color': 'inherit', color: 'inherit'
+    },
+    '#jsMath_panel table': {
+       border: '0px', padding: '0px', margin: '0px',
+      'background-color': 'inherit', color: 'inherit',
+       height: 'auto', width: 'auto'
+    },
     
-    '#jsMath_button':          'position:fixed; bottom:1px; right:2px; background-color:white; '
-                                 + 'border:solid 1px #959595; margin:0px; padding:0px 3px 1px 3px; '
-                                 + 'z-index:102; color:black; text-decoration:none; font-size:x-small; '
-                                 + 'width:auto; cursor:hand;',
-    '#jsMath_button *':        'padding:0px; border:0px; margin:0px; line-height:normal; '
-                                 + 'font-size:inherit; font-style:inherit; font-family:inherit',
+    '#jsMath_button': {  // the jsMath floating button (to open control panel)
+       position:   'fixed',
+       bottom:     '1px',
+       right:      '2px',
+      'background-color': 'white',
+       border:     'solid 1px #959595',
+       margin:     '0px',
+       padding:    '0px 3px 1px 3px',
+      'z-index':   '102',
+       color:      'black',
+      'text-decoration':  'none',
+      'font-size': 'x-small',
+       width:      'auto',
+       cursor:     'hand'
+    },
+    '#jsMath_button *': {
+      padding: '0px', border: '0px', margin: '0px', 'line-height': 'normal',
+      'font-size': 'inherit', 'font-style': 'inherit', 'font-family': 'inherit'
+    },
     
-    '#jsMath_global':          'font-style:italic;',
-    '#jsMath_float':           'position:absolute; top:0px; left:0px; max-width:80%; '
-                                 + 'z-index:101; width:auto; height:auto;',
-    '#jsMath_float .drag':     'background-color:#DDDDDD; border:outset 1px; height:12px; font-size:1px;',
-    '#jsMath_float .close':    'background-color:#E6E6E6; border:inset 1px; width:8px; height:8px; margin:1px 2px;',
-    '#jsMath_float .source':   'background-color:#E2E2E2; border:outset 1px; '
-                                 + 'width:auto; height:auto; padding:8px 15px; '
-                                 + 'font-family:courier, fixed; font-size:90%',
+    '#jsMath_global': {'font-style': 'italic'},  // 'global' in jsMath button
 
-    '#jsMath_noFont .message': 'text-align: center; padding:.8em 1.6em; border:3px solid #DD0000; '
-                                  + 'background-color:#FFF8F8; color: #AA0000; font-size:small; width:auto;',
-    '#jsMath_noFont .link':    'padding:0px 5px 2px 5px; border:2px outset; background-color:#E8E8E8; '
-                                  + 'color:black; font-size:80%; width:auto; cursor:hand;',
+    '#jsMath_noFont .message': {  // missing font message window
+      'text-align': 'center',
+       padding:     '.8em 1.6em',
+       border:      '3px solid #DD0000',
+      'background-color': '#FFF8F8',
+       color:       '#AA0000',
+      'font-size':  'small',
+       width:       'auto'
+    },
+    '#jsMath_noFont .link': {
+       padding:    '0px 5px 2px 5px',
+       border:     '2px outset',
+      'background-color': '#E8E8E8',
+       color:      'black',
+      'font-size': '80%',
+       width:      'auto',
+       cursor:     'hand'
+    },
 
-    '#jsMath_PrintWarning .message':
-                                 'text-align:center; padding:.8em 1.6em; border:3px solid #DD0000; '
-                                   + 'background-color: #FFF8F8; color: #AA0000; font-size:x-small; width:auto;',
+    '#jsMath_PrintWarning .message': {  // warning on print pages
+      'text-align': 'center',
+       padding: '.8em 1.6em',
+       border: '3px solid #DD0000',
+      'background-color': '#FFF8F8',
+       color: '#AA0000',
+      'font-size': 'x-small',
+       width: 'auto'
+    },
 
-    '@media print':      '#jsMath_button {display:none}\n' +
-                         '#jsMath_Warning {display:none}',
+    '@media print': {
+      '#jsMath_button': {display: 'none'},
+      '#jsMath_Warning': {display: 'none'}
+    },
                          
-    '@media screen':     '#jsMath_PrintWarning {display:none}'
+    '@media screen': {
+      '#jsMath_PrintWarning': {display:'none'}
+    }
 
   },
   
@@ -688,7 +809,8 @@ jsMath.Post = {
   
   Listener: function (event) {
     if (event.source != jsMath.Post.window) return;
-    var domain = event.origin; var ddomain = document.domain
+    var domain = event.origin.replace(/^file:\/\//,'');
+    var ddomain = document.domain.replace(/^file:\/\//,'');
     if (domain == null || domain == "") {domain = "localhost"}
     if (ddomain == null || ddomain == "") {ddomain = "localhost"}
     if (domain != ddomain || !event.data.substr(0,6).match(/jsM(CP|LD):/)) return;
@@ -735,14 +857,14 @@ jsMath.Message = {
   Init: function () {
     if (!jsMath.document.body || !jsMath.Controls.cookie.progress) return;
     if (jsMath.Setup.stylesReady) {
-      this.message = jsMath.Setup.DIV('message',{visibility:'hidden'});
+      this.message = jsMath.Setup.DIV('message',{visibility:'hidden'},jsMath.fixedDiv);
     } else {
       this.message = jsMath.Setup.DIV('message',{
         visibility:'hidden', position:'absolute', bottom:'1px', left:'2px',
         backgroundColor:'#E6E6E6', border:'solid 1px #959595',
         margin:'0px', padding:'1px 8px', zIndex:102,
         color:'black', fontSize:'small', width:'auto'
-      });
+      },jsMath.fixedDiv);
     }
     this.text = jsMath.document.createTextNode('');
     this.message.appendChild(this.text);
@@ -799,7 +921,7 @@ jsMath.Message = {
       position:(jsMath.Browser.msiePositionFixedBug? 'absolute': 'fixed'),
       top:'0px', left:'0px', bottom:'0px', right:'0px',
       zIndex:101, backgroundColor:'white'
-    });
+    },jsMath.fixedDiv);
     if (jsMath.Browser.msieBlankBug) {
       this.blank.innerHTML = '&nbsp;';
       this.blank.style.width = "110%";
@@ -827,12 +949,13 @@ jsMath.Setup = {
    *  Insert a DIV at the top of the page with given ID,
    *  attributes, and style settings
    */
-  DIV: function (id,styles) {
+  DIV: function (id,styles,parent) {
+    if (parent == null) {parent = jsMath.document.body}
     var div = jsMath.document.createElement('div');
     div.id = 'jsMath_'+id;
     for (var i in styles) {div.style[i]= styles[i]}
-    if (!jsMath.document.body.hasChildNodes) {jsMath.document.body.appendChild(div)}
-      else {jsMath.document.body.insertBefore(div,jsMath.document.body.firstChild)}
+    if (!parent.hasChildNodes) {parent.appendChild(div)}
+      else {parent.insertBefore(div,parent.firstChild)}
     return div;
   },
   
@@ -1009,16 +1132,41 @@ jsMath.Setup = {
   Styles: function (styles) {
     if (!styles) {
       styles = jsMath.styles;
-      styles['.typeset .scale'] = 'font-size:'+jsMath.Controls.cookie.scale+'%';
+      styles['.typeset .scale'] = {'font-size': jsMath.Controls.cookie.scale+'%'};
       this.stylesReady = 1;
     }
     jsMath.Script.Push(this,'AddStyleSheet',styles);
     if (jsMath.Browser.styleChangeDelay) {jsMath.Script.Push(jsMath.Script,'Delay',1)}
   },
   
+  /*
+   *  Make a style string from a hash of style definitions, which are
+   *  either strings themselves or hashes of style settings.
+   */
+  StyleString: function (styles) {
+    var styleString = {}, id;
+    for (id in styles) {
+      if (typeof styles[id] === 'string') {
+        styleString[id] = styles[id];
+      } else if (id.substr(0,1) === '@') {
+        styleString[id] = this.StyleString(styles[id]);
+      } else if (styles[id] != null) {
+        var style = [];
+        for (var name in styles[id]) {
+          if (styles[id][name] != null)
+            {style[style.length] = name + ': ' + styles[id][name]}
+        }
+        styleString[id] = style.join('; ');
+      }
+    }
+    var string = '';
+    for (id in styleString) {string += id + " {"+styleString[id]+"}\n"}
+    return string;
+  },
+  
   AddStyleSheet: function (styles) {
     var head = jsMath.document.getElementsByTagName('head')[0];
-    var string = ''; for (var id in styles) {string += id + ' {'+styles[id]+"}\n"}
+    var string = this.StyleString(styles);
     if (jsMath.document.createStyleSheet) {// check for MSIE
       head.insertAdjacentHTML('beforeEnd',
           '<span style="display:none">x</span>'  // MSIE needs this for some reason
@@ -1154,8 +1302,8 @@ jsMath.Browser = {
     this.block = "display:-moz-inline-box";
     this.hasInlineBlock = jsMath.BBoxFor('<span style="'+this.block+';width:10px;height:5px"></span>').w > 0;
     if (this.hasInlineBlock) {
-      jsMath.styles['.typeset .blank']  = jsMath.styles['.typeset .blank'].replace(/display:inline-block/,this.block);
-      jsMath.styles['.typeset .spacer'] = jsMath.styles['.typeset .spacer'].replace(/display:inline-block/,'');
+      jsMath.styles['.typeset .blank'].display = '-moz-inline-box';
+      delete jsMath.styles['.typeset .spacer'].display;
     } else {
       this.block = "display:inline-block";
       this.hasInlineBlock = jsMath.BBoxFor('<span style="'+this.block+';width:10px;height:5px"></span>').w > 0;
@@ -1270,28 +1418,31 @@ jsMath.Browser = {
         jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
         delete jsMath.Parser.prototype.mathchardef.mapstochar;
         jsMath.Macro('mapstochar','\\rlap{\\mapstocharOrig\\,}\\kern1mu'),
-        jsMath.styles['.typeset .arial'] = "font-family: 'Arial unicode MS'";
+        jsMath.styles['.typeset .arial'] = {'font-family': "'Arial unicode MS'"};
         if (!this.IE7 || this.quirks) {
           // MSIE doesn't implement fixed positioning, so use absolute
-          jsMath.styles['#jsMath_message'] =
-              jsMath.styles['#jsMath_message'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
-          jsMath.styles['#jsMath_panel'] =
-              jsMath.styles['#jsMath_panel'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
-          jsMath.styles['#jsMath_button'] = 'width:1px; '
-            + jsMath.styles['#jsMath_button'].replace(/position:fixed/,"position:absolute").replace(/width:auto/,"");
+          jsMath.styles['#jsMath_message'].position = 'absolute';
+          delete jsMath.styles['#jsMath_message'].width;
+          jsMath.styles['#jsMath_panel'].position = 'absolute';
+          delete jsMath.styles['#jsMath_panel'].width;
+          jsMath.styles['#jsMath_button'].width = '1px';
+          jsMath.styles['#jsMath_button'].position = 'absolute'
+          delete jsMath.styles['#jsMath_button'].width;
+          jsMath.fixedDiv = jsMath.Setup.DIV("fixedDiv",{position:'absolute', zIndex: 101});
           jsMath.window.attachEvent("onscroll",jsMath.Controls.MoveButton);
-          if (this.IE7) jsMath.window.attachEvent("onresize",jsMath.Controls.MoveButton);
-	  this.msieMoveButtonHack = this.IE7;
+          jsMath.window.attachEvent("onresize",jsMath.Controls.MoveButton);
+          jsMath.Controls.MoveButton();
 	}
         // Make MSIE put borders around the whole button
-        jsMath.styles['#jsMath_noFont .link'] += " display: inline-block;";
+        jsMath.styles['#jsMath_noFont .link'].display = "inline-block";
         // MSIE needs this NOT to be inline-block
-        jsMath.styles['.typeset .spacer'] =
-              jsMath.styles['.typeset .spacer'].replace(/display:inline-block/,'');
+        delete jsMath.styles['.typeset .spacer'].display;
         // MSIE can't insert DIV's into text nodes, so tex2math must use SPAN's to fake DIV's
-        jsMath.styles['.tex2math_div'] = jsMath.styles['div.typeset'] + '; width: 100%; display: inline-block';
+        jsMath.styles['.tex2math_div'] = {}; jsMath.Add(jsMath.styles['.tex2math_div'],jsMath.styles['div.typeset']);
+        jsMath.styles['.tex2math_div'].width = '100%';
+        jsMath.styles['.tex2math_div'].display = 'inline-block';
         // Reduce occurrance of zoom bug in IE7
-        jsMath.styles['.typeset'] += '; letter-spacing:0';
+        jsMath.styles['.typeset']['letter-spacing'] = '0';
         // MSIE will rescale images if the DPIs differ
         if (screen.deviceXDPI && screen.logicalXDPI 
              && screen.deviceXDPI != screen.logicalXDPI) {
@@ -1307,7 +1458,7 @@ jsMath.Browser = {
         this.quirks = 1;
         jsMath.Setup.Script('jsMath-msie-mac.js');
         jsMath.Parser.prototype.macros.angle = ['Replace','ord','<font face="Symbol">&#x8B;</font>','normal'];
-        jsMath.styles['#jsMath_panel']  = 'width:42em; ' + jsMath.styles['#jsMath_panel'].replace(/width:auto/,"");
+        jsMath.styles['#jsMath_panel'].width = '42em';
         jsMath.Controls.cookie.printwarn = 0; // MSIE/Mac doesn't handle '@media screen'
       }
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
@@ -1322,8 +1473,7 @@ jsMath.Browser = {
       jsMath.browser = 'Mozilla';
       if (jsMath.platform == 'pc') {this.alphaPrintBug = 1}
       this.allowAbsoluteDelim = 1;
-      jsMath.styles['#jsMath_button'] = jsMath.styles['#jsMath_button'].replace(/cursor:hand/,'cursor:pointer');
-      jsMath.styles['#jsMath_noFont .link'] = jsMath.styles['#jsMath_noFont .link'].replace(/cursor:hand/,'cursor:pointer');
+      jsMath.styles['#jsMath_button'].cursor = jsMath.styles['#jsMath_noFont .link'].cursor = 'pointer',
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
       if (navigator.vendor == 'Firefox') {
         this.version = navigator.vendorSub;
@@ -1359,6 +1509,9 @@ jsMath.Browser = {
       this.delay = 10;
       this.operaHiddenFix = '[Processing]';
       if (isOld) {jsMath.Setup.Script('jsMath-old-browsers.js')}
+      var version = navigator.appVersion.match(/^(\d+\.\d+)/);
+      if (!version) {vesion = 0};
+      this.operaAbsoluteWidthBug = this.operaLineHeightBug = (version[1] >= 9.5);
     }
   },
 
@@ -1380,7 +1533,7 @@ jsMath.Browser = {
       this.safariIFRAMEbug = version >= 312 && version < 412;
       this.safariButtonBug = version < 412;
       this.safariImgBug = 1; this.textNodeBug = 1;
-      this.buttonCheck = 1;
+      this.buttonCheck = version < 500;
       this.styleChangeDelay = 1;
     }
   },
@@ -1479,7 +1632,7 @@ jsMath.Font = {
          (jsMath.platform == "mac" &&
            (!jsMath.Browser.VersionAtLeast(1.5) || jsMath.Browser.VersionAtLeast(3.0))) ||
          (jsMath.platform != "mac" && !jsMath.Browser.VersionAtLeast(3.0))) {
-      wh = jsMath.BBoxFor('<span style="font-family: cmex10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
+      wh = jsMath.BBoxFor('<span style="font-family: CMEX10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
       jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
       if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
     }
@@ -1694,7 +1847,7 @@ jsMath.Controls = {
    *  Create the HTML needed for control panel
    */
   Init: function () {
-    this.panel = jsMath.Setup.DIV("panel",{display:'none'});
+    this.panel = jsMath.Setup.DIV("panel",{display:'none'},jsMath.fixedDiv);
     if (!jsMath.Browser.msieButtonBug) {this.Button()}
       else {setTimeout("jsMath.Controls.Button()",500)}
   },
@@ -1712,7 +1865,7 @@ jsMath.Controls = {
    *  Create the control panel button
    */
   Button: function () {
-    var button = jsMath.Setup.DIV("button",{});
+    var button = jsMath.Setup.DIV("button",{},jsMath.fixedDiv);
     button.title = ' Open jsMath Control Panel ';
     button.innerHTML = 
       '<span onclick="jsMath.Controls.Panel()">jsMath</span>';
@@ -1728,34 +1881,14 @@ jsMath.Controls = {
   /*
    *  Since MSIE doesn't handle position:float, we need to have the
    *  window repositioned every time the window scrolls.  We do that
-   *  by hiding then showing the window, which apparently causes MSIE
-   *  to recompute its location.  In MSIE7, that doesn't work anymore,
-   *  so we have to move the window by hand.
+   *  putting the floating elements into a window-sized DIV, but
+   *  absolutely positioned, and then move the DIV.
    */
   MoveButton: function () {
-    var controls = jsMath.Controls;
-    if (!controls.button) {controls.button = jsMath.Element("button")}
-    if (controls.button) controls.MoveElement(controls.button,3,2);
-    var dx = 20; var dy = 20;
-    if (controls.button) {dy = controls.button.offsetHeight + 6; dx = dy + 5}
-    if (controls.panel)  controls.MoveElement(controls.panel,dx,dy);
-  },
-  MoveElement: function (obj,dx,dy) {
-    if (jsMath.Browser.IE7) {
-      var body = document.body;
-      obj.style.right = "auto";
-      obj.style.bottom = "auto";
-      //
-      // This position can't be overridden by CSS (grr)
-      // (Perhaps we can look up the current position and which sides it's 
-      // attached to and use those.  What a pain.)
-      //
-      obj.style.left = body.clientWidth + body.scrollLeft - obj.offsetWidth - dx + "px";
-      obj.style.top = body.clientHeight + body.scrollTop -  obj.offsetHeight - dy + "px";
-    } else {
-      obj.style.visibility = "hidden";
-      obj.style.visibility = "visible";
-    }
+    jsMath.fixedDiv.style.left = document.body.scrollLeft + 'px';
+    jsMath.fixedDiv.style.top = document.body.scrollTop + 'px';
+    jsMath.fixedDiv.style.width = document.body.clientWidth + 'px';
+    jsMath.fixedDiv.style.height = document.body.clientHeight + 'px';
   },
 
   /*
@@ -2639,7 +2772,7 @@ jsMath.HTML = {
     if (d == null) {d = 0}
     if (h) {
       var H = this.Em(h+d);
-      if (isRule && h*jsMath.em < 1.5) {H = "1px"; h = 1/jsMath.em}
+      if (isRule && h*jsMath.em <= 1.5) {H = "1.5px"; h = 1.5/jsMath.em}
       style += 'height:'+H+';';
     }
     if (jsMath.Browser.mozInlineBlockBug) {d = -h}
@@ -2716,14 +2849,15 @@ jsMath.HTML = {
   PlaceAbsolute: function (html,x,y,mw,Mw,w) {
     if (Math.abs(x) < .0001) {x = 0}
     if (Math.abs(y) < .0001) {y = 0}
-    var leftSpace = ""; var rightSpace = "";
+    var leftSpace = ""; var rightSpace = ""; var width = "";
     if (jsMath.Browser.msieRelativeClipBug && mw != null) {
       leftSpace  = this.Spacer(-mw); x += mw;
       rightSpace = this.Spacer(Mw-w);
     }
+    if (jsMath.Browser.operaAbsoluteWidthBug) {width = " width: "+this.Em(w+2)}
     html =
       '<span style="position:absolute; left:'+this.Em(x)+'; '
-            + 'top:'+this.Em(y)+';">' +
+            + 'top:'+this.Em(y)+';'+width+'">' +
         leftSpace + html + rightSpace +
         '&nbsp;' + //  space normalizes line height in script styles
       '</span>';
@@ -3256,7 +3390,7 @@ jsMath.Add(jsMath.Box,{
    *  Look for math within \hbox and other non-math text
    */
   InternalMath: function (text,size) {
-    text = text.replace(/@\(([^)]*)\)/g,'<$1>');
+    if (!jsMath.safeHBoxes) {text = text.replace(/@\(([^)]*)\)/g,'<$1>')}
     if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
 
     var i = 0; var k = 0; var c; var match = '';
@@ -5031,7 +5165,7 @@ jsMath.Package(jsMath.Parser,{
    */
   trimSpaces: function (text) {
     if (typeof(text) != 'string') {return text}
-    return text.replace(/^\s+|\s+/g,'');
+    return text.replace(/^\s+|\s+$/g,'');
   },
 
   /*
@@ -5941,7 +6075,7 @@ jsMath.Package(jsMath.Parser,{
         // remove line height
         html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';">'
              +    html + '</span>';
-      } else {
+      } else if (!jsMath.Browser.operaLineHeightBug) {
         // remove line height and try to hide the depth
         var dy = jsMath.HTML.Em(Math.max(0,box.bd-jsMath.hd)/3);
         html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';'
@@ -6084,6 +6218,15 @@ jsMath.Add(jsMath,{
     jsMath.Setup.Body();
     var method = (jsMath.Controls.cookie.asynch ? "Asynchronous": "Synchronous");
     jsMath.Script.Push(jsMath.Translate,method,obj);
+  },
+  
+  /*
+   *  Process the contents of a single element.  It must be of
+   *  class "math".
+   */
+  ProcessElement: function (obj) {
+    jsMath.Setup.Body();
+    jsMath.Script.Push(jsMath.Translate,'ProcessOne',obj);
   }
   
 });
@@ -6116,6 +6259,10 @@ jsMath.Translate = {
    *  Return the text of a given DOM element
    */
   GetElementText: function (element) {
+    if (element.childNodes.length == 1 && element.childNodes[0].nodeName === "#comment") {
+      var result = element.childNodes[0].nodeValue.match(/^\[CDATA\[(.*)\]\]$/);
+      if (result != null) {return result[1]};
+    }
     var text = this.recursiveElementText(element);
     element.alt = text;
     if (text.search('&') >= 0) {
@@ -6127,8 +6274,11 @@ jsMath.Translate = {
     return text;
   },
   recursiveElementText: function (element) {
-    if (element.nodeValue != null) {return element.nodeValue}
-    if (element.childNodes.length == 0) {return " "}
+    if (element.nodeValue != null) {
+      if (element.nodeName !== "#comment") {return element.nodeValue}
+      return element.nodeValue.replace(/^\[CDATA\[(.*)\]\]$/,"$1");
+    }
+    if (element.childNodes.length === 0) {return " "}
     var text = '';
     for (var i = 0; i < element.childNodes.length; i++) 
       {text += this.recursiveElementText(element.childNodes[i])}
@@ -6141,7 +6291,7 @@ jsMath.Translate = {
    */
   ResetHidden: function (element) {
     element.innerHTML =
-      '<span class="jsMath_hiddenSpan" style="position:absolute"></span>'
+      '<span id="jsMath_hiddenSpan" style="position:absolute"></span>'
         + jsMath.Browser.operaHiddenFix; // needed by Opera in tables
     element.className = '';
     jsMath.hidden = element.firstChild;
@@ -6251,6 +6401,15 @@ jsMath.Translate = {
       i++;
     }
     this.ProcessComplete(1);
+  },
+
+  /*
+   *  Synchronously process the contents of a single element
+   */
+  ProcessOne: function (obj) {
+    if (!jsMath.initialized) {jsMath.Init()}
+    this.element = [obj];
+    this.Synchronous(null,0);
   },
   
   /*

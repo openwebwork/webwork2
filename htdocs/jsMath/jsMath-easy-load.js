@@ -32,6 +32,8 @@ if (!jsMath.tex2math) {jsMath.tex2math = {}}
 jsMath.tex2math.doubleDollarsAreInLine = jsMath.Easy.doubleDollarsAreInLine;
 jsMath.tex2math.allowDisableTag = jsMath.Easy.allowDisableTag;
 
+jsMath.safeHBoxes = jsMath.Easy.safeHBoxes;
+
 if (jsMath.Easy.scale) {
   if (!jsMath.Controls) {jsMath.Controls = {}}
   if (!jsMath.Controls.cookie) {jsMath.Controls.cookie = {}}

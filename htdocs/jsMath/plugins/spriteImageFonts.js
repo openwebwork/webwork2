@@ -26,16 +26,35 @@
 if (!window.jsMath) {window.jsMath = {}}
 if (!jsMath.styles) {jsMath.styles = []}
 
-jsMath.styles['.typeset .img']     = 'position:relative; display:inline-block; overflow:hidden; background-repeat: no-repeat';
-jsMath.styles['.typeset .img .xy'] = 'position:relative; left:0px; top:0px';
+jsMath.styles['.typeset .img'] = {
+   position: 'relative',
+   display: 'inline-block',
+   overflow: 'hidden',
+  'background-repeat': 'no-repeat'
+};
+jsMath.styles['.typeset .img .xy'] = {
+  position: 'relative',
+  left: '0px', top: '0px'
+};
 
 // for Mozilla
-jsMath.styles['.typeset .mimg']       = 'position:relative';
-jsMath.styles['.typeset .mimg .size'] = 'display:-moz-inline-box';
-jsMath.styles['.typeset .mimg .wh']   = 'position:absolute; left:0px; top:0px; overflow:hidden';
-jsMath.styles['.typeset .mimg .xy']   = 'position:relative; left:0px; top:0px';
+jsMath.styles['.typeset .mimg'] = {position: 'relative'};
+jsMath.styles['.typeset .mimg .size'] = {display: '-moz-inline-box'};
+jsMath.styles['.typeset .mimg .wh'] = {
+  position: 'absolute',
+  left: '0px', top: '0px',
+  overflow: 'hidden'
+};
+jsMath.styles['.typeset .mimg .xy'] = {
+  position: 'relative',
+  left: '0px', top: '0px'
+};
 // for MSIE
-jsMath.styles['.typeset .mimg .h']    = 'position:relative; display:inline-block; width:0px';
+jsMath.styles['.typeset .mimg .h'] = {
+  position: 'relative',
+  display: 'inline-block',
+  width: '0px'
+};
 
 /*
  *  Replace the TeXIMG function with one that uses the sprite fonts

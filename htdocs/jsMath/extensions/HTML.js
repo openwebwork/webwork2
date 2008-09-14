@@ -44,6 +44,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Color: function (name) {
     var color = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(color,name); if (this.error) return;
     // check that it looks like a color?
     this.AddHTML(name,['<span style="color: '+color+'">','</span>']);
   },
@@ -53,6 +54,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Href: function (name) {
     var href = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(href,name); if (this.error) return;
     this.AddHTML(name,['<a class="link" href="'+href+'">','</a>']);
   },
   
@@ -61,6 +63,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Class: function (name) {
     var clss = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(clss,name); if (this.error) return;
     this.AddHTML(name,['<span class="'+clss+'">','</span>']);
   },
   
@@ -69,6 +72,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Style: function (name) {
     var style = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(style,name); if (this.error) return;
     this.AddHTML(name,['<span style="'+style+'">','</span>']);
   },
   
@@ -77,6 +81,7 @@ jsMath.Package(jsMath.Parser,{
    */
   CSSId: function (name) {
     var id = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(id,name); if (this.error) return;
     this.AddHTML(name,['<span id="'+id+'">','</span>']);
   },
   
@@ -94,6 +99,11 @@ jsMath.Package(jsMath.Parser,{
     this.mlist.Add(jsMath.mItem.HTML(params[1]));
   },
   
+  CheckHTML: function (data,name) {
+    if (data.match(/[<>&"]/))
+      {this.Error("Can't include raw HTML in first argument of "+this.cmd+name)}
+  },
+  
   /*
    *  Insert a unicode reference as an Ord atom.  Its argument should
    *  be the unicode code point, e.g. \unicode{8211}, or \unicode{x203F}.
@@ -103,6 +113,7 @@ jsMath.Package(jsMath.Parser,{
    */
   Unicode: function (name) {
     var arg = this.GetArgument(this.cmd+name); if (this.error) return;
+    this.CheckHTML(arg,name); if (this.error) return;
     arg = arg.split(','); arg[0] = '&#'+arg[0]+';';
     if (!arg[1]) {arg[1] = 'normal'}
     this.mlist.Add(jsMath.mItem.TextAtom('ord',arg[0],arg[1],arg[2],arg[3]));

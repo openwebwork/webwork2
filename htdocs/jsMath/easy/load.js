@@ -73,6 +73,15 @@ jsMath.Easy = {
   //],
 
   //
+  //  Disallow the use of the @(...) mechanism for including raw HTML
+  //  in the contents of \hbox{}?  (If used in a content-management system
+  //  where users are allowed to enter mathematics, setting this to 0
+  //  would allow them to enter arbitrary HTML code within their
+  //  math formulas, and that poses a security risk.)
+  //
+  safeHBoxes: 1,
+
+  //
   //  Show TeX source when mathematics is double-clicked?
   //
   allowDoubleClicks: 1,

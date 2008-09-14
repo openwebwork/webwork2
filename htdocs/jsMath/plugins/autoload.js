@@ -86,7 +86,7 @@
  */
 if (!window.jsMath) {window.jsMath = {}}
 if (jsMath.Autoload == null) {jsMath.Autoload = {}}
-jsMath.Add = function (dst,src) {for (var id in src) {dst[id] = src[id]}},
+jsMath.Add = function (dst,src) {for (var id in src) {dst[id] = src[id]}};
 jsMath.document = document; // tex2math needs this
 
 jsMath.Add(jsMath.Autoload,{
@@ -241,11 +241,12 @@ jsMath.Add(jsMath.Autoload,{
    *  Handle window.postMessage() events in Firefox3
    */
   Post: {
-    window: null,  // iframe we are listening to
+    window: null,  // iframe we are ing to
   
     Listener: function (event) {
       if (event.source != jsMath.Autoload.Post.window) return;
-      var domain = event.origin; var ddomain = document.domain
+      var domain = event.origin.replace(/^file:\/\//,'');
+      var ddomain = document.domain.replace(/^file:\/\//,'');
       if (domain == null || domain == "") {domain = "localhost"}
       if (ddomain == null || ddomain == "") {ddomain = "localhost"}
       if (domain != ddomain || event.data.substr(0,6) != "jsMAL:") return;
@@ -325,6 +326,7 @@ jsMath.Add(jsMath.Autoload,{
     } else {
       jsMath.Process = function () {};
       jsMath.ProcessBeforeShowing = function () {};
+      jsMath.ProcessElement = function () {};
       jsMath.ConvertTeX = function () {};
       jsMath.ConvertTeX2 = function () {};
       jsMath.ConvertLaTeX = function () {};
@@ -435,6 +437,7 @@ jsMath.Add(jsMath.Autoload,{
   stubs: {
     Process: function (data) {jsMath.Autoload.Script.Push('Process',[data])},
     ProcessBeforeShowing: function (data) {jsMath.Autoload.Script.Push('ProcessBeforeShowing',[data])},
+    ProcessElement: function (data) {jsMath.Autoload.Script.Push('ProcessElement',[data])},
     ConvertTeX: function (data) {jsMath.Autoload.Script.Push('ConvertTeX',[data])},
     ConvertTeX2: function (data) {jsMath.Autoload.Script.Push('ConvertTeX2',[data])},
     ConvertLaTeX: function (data) {jsMath.Autoload.Script.Push('ConvertLaTeX',[data])},

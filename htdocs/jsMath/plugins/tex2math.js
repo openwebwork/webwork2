@@ -153,9 +153,9 @@ jsMath.Add(jsMath.tex2math,{
       } else {
         if (element.className == null) {element.className = ''}
         if (element.firstChild && element.className != 'math') {
-          var off = ignore || element.className == 'tex2math_ignore' ||
+          var off = ignore || element.className.match(/(^| )tex2math_ignore( |$)/) ||
              (element.tagName && element.tagName.match(/^(script|noscript|style|textarea|pre)$/i));
-          off = off && element.className != 'tex2math_process';
+          off = off && !element.className.match(/(^| )tex2math_process( |$)/);
           this.ScanElement(element.firstChild,off);
         }
       }
@@ -182,7 +182,8 @@ jsMath.Add(jsMath.tex2math,{
       if (this.search.matched) {element = this.EncloseMath(element)}
       if (!element) {return null}
       prev = element; element = element.nextSibling;
-      while (element && element.nodeName.toLowerCase() == 'br')
+      while (element && (element.nodeName.toLowerCase() == 'br' ||
+                         element.nodeName.toLowerCase() == "#comment"))
         {prev = element; element = element.nextSibling}
       if (!element || element.nodeName != '#text') {return prev}
     }
@@ -301,8 +302,15 @@ jsMath.Add(jsMath.tex2math,{
     if (element == search.close) {element = close}
     var math = search.open.splitText(search.pos);
     while (math.nextSibling && math.nextSibling != close) {
-      if (math.nextSibling.nodeValue) {math.nodeValue += math.nextSibling.nodeValue}
-        else {math.nodeValue += ' '}
+      if (math.nextSibling.nodeValue !== null) {
+        if (math.nextSibling.nodeName.toLowerCase() === "#comment") {
+          math.nodeValue += math.nextSibling.nodeValue.replace(/^\[CDATA\[(.*)\]\]$/,"$1");
+        } else {
+          math.nodeValue += math.nextSibling.nodeValue;
+        }
+      } else {
+        math.nodeValue += ' ';
+      }
       math.parentNode.removeChild(math.nextSibling);
     }
     var TeX = math.nodeValue.substr(search.olength,
