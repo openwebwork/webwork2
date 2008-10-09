@@ -50,6 +50,7 @@ variable by another formula, if you wish.  To make
 this easier, substitute will apply Formula() to 
 any string values automatically.  E.g.,
     Formula("x-1")->substitute(x=>"y")
+
 returns "y-1" as a formula.
 
 =item $f->string
@@ -353,7 +354,7 @@ Similarly, you can add a named constant via
 and can change, remove or list the constants via methods like those
 used for variables above.  The command
 
-    $M = $constant->constants->get('M');
+    $M = $context->constants->get('M');
 
 will return the value of the consant M.  (See the
 pg/lib/Value/Context/Data.pm file for more information on the methods
@@ -362,16 +363,23 @@ you can call for the various types of context data.)
 To add new predefined words (like 'NONE' and 'DNE'), use something
 like
 
-    $constant->strings->add(TRUE=>{},FALSE=>{});
+    $context->strings->add(TRUE=>{},FALSE=>{});
 
-Note that strings are case-sensitive, so you might want to add
+Strings are case-insensitive, unless you say otherwise.  To mark a
+string as being case-senstive, use
 
-    $constant->strings->add(
-        true => {alias=>'TRUE'},
-        false => {alias=>'FALSE'},
+    $context->strings->add(TRUE => {caseSensitive=>1});
+
+You may want to privide several forms for the same word; to do so,
+make the additional words into aliases:
+
+    $context->strings->add(
+        T => {alias=>'TRUE'},
+        F => {alias=>'FALSE'},
     );
 
-so that either "TRUE" or "true" will be interpreted as TRUE.
+so that either "TRUE" or "T" will be interpreted as TRUE, and
+similarly for "FALSE" and "F";
 
 There are a number of values stored in the context that control things
 like the tolerance used when comparing numbers, and so on.  You

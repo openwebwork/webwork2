@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.91 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.92 2008/06/25 14:43:16 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -578,7 +578,14 @@ EOF
 			CGI::a({-href=>'http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile',-target=>"manpage_window"},
 				'&nbsp;macro list&nbsp;',
 			)," | ",
-			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"manpage_window"},
+			CGI::a({-href=>'http://webwork.maa.org/wiki/Category:Authors',-target=>"wiki_window"},
+				'&nbsp;authoring&nbsp;info&nbsp;&amp; help&nbsp;',
+			)," | ",
+			CGI::a({-href=>'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',-target=>"lab_window",
+			     },
+				'&nbsp;testing&nbsp;lab&nbsp;'
+			)," | ",
+			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"doc_window"},
 				'&nbsp;pod docs&nbsp;',
 			)," | ",
 			CGI::a({-href=>$BUGZILLA,-target=>"bugs_window"},

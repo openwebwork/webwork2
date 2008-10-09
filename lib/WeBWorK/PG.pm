@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.73 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.74 2008/06/21 16:33:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -151,6 +151,8 @@ sub defineProblemEnvir {
     $envir{macrosPath}             = $ce->{pg}->{directories}{macrosPath};
     $envir{appletPath}             = $ce->{pg}->{directories}{appletPath};
     $envir{pgDirectories}          = $ce->{pg}->{directories};
+	$envir{webworkHtmlDirectory}   = $ce->{webworkDirs}->{htdocs}."/";
+	$envir{webworkHtmlURL}         = $ce->{webworkURLs}->{htdocs}."/";
 	$envir{htmlDirectory}          = $ce->{courseDirs}->{html}."/";
 	$envir{htmlURL}                = $ce->{courseURLs}->{html}."/";
 	$envir{templateDirectory}      = $ce->{courseDirs}->{templates}."/";

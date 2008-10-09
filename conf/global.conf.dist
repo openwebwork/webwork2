@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.208 2008/06/27 15:25:15 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.211 2008/07/24 14:47:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -448,6 +448,11 @@ $default_status = "Enrolled";
 
 # these variables are used by database.conf. we define them here so that editing
 # database.conf isn't necessary.
+
+# required permissions
+# GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
+# GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+
 $database_dsn = "dbi:mysql:webwork";
 $database_username = "webworkWrite";
 $database_password = "";
@@ -477,9 +482,8 @@ $dbLayoutName = "sql_single";
 ################################################################################
 
 # For configuration instructions, see:
-# http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/DatabaseProblemLibrary
-
-# The directory containing the problem library files. Set to "" if no problem
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
 $problemLibrary{root}        = "";
 
@@ -836,6 +840,10 @@ $pg{directories}{macrosPath} = [
    ".",                     # search the problem file's directory
    $courseDirs{macros},
    $pg{directories}{macros},
+   "$courseDirs{templates}/Library/macros/Dartmouth",
+   "$courseDirs{templates}/Library/macros/Union",
+   "$courseDirs{templates}/Library/macros/NAU",
+   "$courseDirs{templates}/Library/macros/Michigan",
 ];
 
 # The applet search path. If a full URL is given, it is used unmodified. If an
@@ -845,6 +853,7 @@ $pg{directories}{macrosPath} = [
 # and the local server is  "https://math.yourschool.edu",
 # then the URL "https://math.yourschool.edu/math/applets" will be used.
 # 
+
 $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
 	"$webworkURLs{htdocs}/applets",
 	"$courseURLs{html}/applets",
@@ -921,8 +930,9 @@ ${pg}{modules} = [
 	[qw(Parser Value)],
 	[qw(Parser::Legacy)],
 #	[qw(SaveFile)],
-#       [qw(Chromatic)],
-	[qw(Applet FlashApplet)],
+#   [qw(Chromatic)], # for Northern Arizona graph problems 
+#                    #  -- follow instructions at libraries/nau_problib/lib/README to install
+	[qw(Applet FlashApplet JavaApplet)],
 ];
 
 ##### Answer evaluatior defaults

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.56 2008/01/08 14:44:04 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.57 2008/06/24 03:39:39 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -144,7 +144,7 @@ specifies a unified look and feel for the WeBWorK course web pages.',
 		  type => 'number'},
 		{ var => 'siteDefaults{timezone}',
 		  doc => 'Timezone for the course',
-		  doc2 => 'Some servers handle courses taking place in different timezones.  If this course is not showing the correct timezone, enter the correct value here.  The format consists of unix times, such as "America/Chicago", "America/Phoenix", "America/Los_Angeles", "America/New_York", or "America/Denver".',
+		  doc2 => 'Some servers handle courses taking place in different timezones.  If this course is not showing the correct timezone, enter the correct value here.  The format consists of unix times, such as "America/New_York","America/Chicago", "America/Denver", "America/Phoenix" or "America/Los_Angeles". Complete list: <a href="http://cpan.uwinnipeg.ca/dist/DateTime-TimeZone">TimeZoneFiles</a>',
 		  type => 'text'},],
 	['Permissions',
 		{ var => 'permissionLevels{login}',

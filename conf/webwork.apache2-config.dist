@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.11 2007/08/10 01:02:17 sh002i Exp $
+# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.12 2007/08/13 22:59:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -26,6 +26,18 @@
 # ATTENTION APACHE 2.2 USERS: There is a bug in mod_perl 2.0.2 that prevents the
 #                             FollowSymlinksOption from working when specified
 #                             in a <Perl> section. See below for workaround.
+
+
+# Uncomment the ScriptAliasMatch to allow access to show-source.cgi
+# This allows the "show source" button to work for demonstration "courses"
+# See for example Davide Cervone's Knoxville lectures on math objects
+# It requires that a show-source.cgi script be customized and placed in 
+# the myCourse/html  directory of the course
+# The "show source" button is most useful for webwork "courses" used to train new authors
+# It is not desirable to expose the code of regular homework questions to students
+
+# ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+
 
 PerlModule mod_perl2
 
