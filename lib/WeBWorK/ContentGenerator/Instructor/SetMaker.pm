@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.84 2008/06/24 03:40:48 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -733,7 +733,7 @@ sub make_top_row {
 	my $library_selected = $self->{current_library_set};
 	my $set_selected = $r->param('local_sets');
 	my (@dis1, @dis2, @dis3, @dis4) = ();
-	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_library');	 
+	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_npl_library');	 
 	@dis2 =	 (-disabled=>1) if($browse_which eq 'browse_local');
 	@dis3 =	 (-disabled=>1) if($browse_which eq 'browse_mysets');
 	@dis4 =	 (-disabled=>1) if($browse_which eq 'browse_setdefs');
@@ -786,7 +786,7 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
-		CGI::submit(-name=>"browse_library", -value=>"National Problem Library", -style=>$these_widths, @dis1),
+		CGI::submit(-name=>"browse_npl_library", -value=>"National Problem Library", -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, @dis3),
 		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, @dis4),
@@ -800,7 +800,7 @@ sub make_top_row {
 		$self->browse_local_panel($library_selected);
 	} elsif ($browse_which eq 'browse_mysets') {
 		$self->browse_mysets_panel($library_selected, $list_of_local_sets);
-	} elsif ($browse_which eq 'browse_library') {
+	} elsif ($browse_which eq 'browse_npl_library') {
 		$self->browse_library_panel();
 	} elsif ($browse_which eq 'browse_setdefs') {
 		$self->browse_setdef_panel($library_selected);
@@ -862,7 +862,7 @@ sub make_data_row {
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 
-	#if($self->{r}->param('browse_which') ne 'browse_library') {
+	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
 		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
@@ -997,7 +997,7 @@ sub pre_header_initialize {
 
 	############# Default of which problem selector to display
 
-	my $browse_which = $r->param('browse_which') || 'browse_library';
+	my $browse_which = $r->param('browse_which') || 'browse_npl_library';
 
 	
 
@@ -1012,7 +1012,7 @@ sub pre_header_initialize {
 
 	########### Start the logic through if elsif elsif ...
     debug("browse_lib", $r->param("$browse_lib"));
-    debug("browse_library", $r->param("browse_library"));
+    debug("browse_npl_library", $r->param("browse_npl_library"));
     debug("browse_mysets", $r->param("browse_mysets"));
     debug("browse_setdefs", $r->param("browse_setdefs"));
 	##### Asked to browse certain problems
@@ -1020,8 +1020,8 @@ sub pre_header_initialize {
 		$browse_which = $browse_lib;
 		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
-	} elsif ($r->param('browse_library')) {
-		$browse_which = 'browse_library';
+	} elsif ($r->param('browse_npl_library')) {
+		$browse_which = 'browse_npl_library';
 		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_local')) {

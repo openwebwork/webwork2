@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.89 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.90 2008/04/26 23:13:59 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -385,7 +385,7 @@ sub problemListRow($$$) {
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $problemID");
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
-	my $remaining = $problem->max_attempts < 0
+	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
 		? "unlimited"
 		: $problem->max_attempts - $attempts;
 	my $rawStatus = $problem->status || 0;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.80 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.81 2008/05/23 14:54:45 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -740,6 +740,7 @@ sub writeTimingLogEntry($$$$) {
 ## Utility function to trim whitespace off the start and end of its input
 sub trim_spaces {
 	my $in = shift;
+	return '' unless $in;  # skip blank spaces
 	$in =~ s/^\s*(.*?)\s*$/$1/;
 	return($in);
 }

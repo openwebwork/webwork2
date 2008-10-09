@@ -1,1 +1,3 @@
+this information is written in the file:
 
+[coursesDirectory]/courseName/templates/course_info.txt

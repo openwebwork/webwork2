@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.16 2007/08/25 18:16:34 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.17 2008/07/23 03:22:27 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -228,7 +228,8 @@ sub dump_table {
 		my $exit = $? >> 8;
 		my $signal = $? & 127;
 		my $core = $? & 128;
-		warn "Failed to dump table '".$self->sql_table_name."' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
+		warn "Warning: Failed to dump table '".$self->sql_table_name."' with command '$dump_cmd' (exit=$exit signal=$signal core=$core): $dump_out\n";
+		warn "This can be expected if the course was created with an earlier version of WeBWorK.";
 	}
 	
 	return 1;
@@ -249,7 +250,7 @@ sub restore_table {
 		my $exit = $? >> 8;
 		my $signal = $? & 127;
 		my $core = $? & 128;
-		die "Failed to restore table '".$self->sql_table_name."' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
+		warn "Failed to restore table '".$self->sql_table_name."' with command '$restore_cmd' (exit=$exit signal=$signal core=$core): $restore_out\n";
 	}
 	
 	return 1;
