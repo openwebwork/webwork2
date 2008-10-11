@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.6",  // change this if you edit the file, but don't edit this file
+  version: "3.6a",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -560,14 +560,14 @@ jsMath.Script = {
             //  Firefox3 has window.postMessage for inter-window communication. 
             //  It can be used to handle the new file:// security model,
             //  so set up the listener.
-            if (window.postMessage) {
+            if (window.postMessage && window.addEventListener) {
               this.mustPost = 1;
               jsMath.window.addEventListener("message",jsMath.Post.Listener,false);
             }
           }
         }
       }
-      if (!this.request && window.ActiveXObject) {
+      if (!this.request && window.ActiveXObject && !this.mustPost) {
         var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
                    "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
         for (var i = 0; i < xml.length && !this.request; i++) {
@@ -1480,6 +1480,7 @@ jsMath.Browser = {
       } else if (navigator.userAgent.match(' Firefox/([0-9.]+)([a-z ]|$)')) {
         this.version = RegExp.$1;
       }
+      if (this.VersionAtLeast("3.0")) {this.mozImageSizeBug = 1}
     }
   },
   
@@ -1510,7 +1511,7 @@ jsMath.Browser = {
       this.operaHiddenFix = '[Processing]';
       if (isOld) {jsMath.Setup.Script('jsMath-old-browsers.js')}
       var version = navigator.appVersion.match(/^(\d+\.\d+)/);
-      if (!version) {vesion = 0};
+      if (version) {this.version = version[1]} else {this.vesion = 0}
       this.operaAbsoluteWidthBug = this.operaLineHeightBug = (version[1] >= 9.5);
     }
   },
@@ -1522,7 +1523,7 @@ jsMath.Browser = {
     if (navigator.appVersion.match(/Safari\//)) {
       jsMath.browser = 'Safari';
       var version = navigator.userAgent.match("Safari/([0-9]+)");
-      version = (version)? version[1] : 400;
+      version = (version)? version[1] : 400; this.version = version;
       for (var i = 0; i < jsMath.TeX.fam.length; i++) {
         if (jsMath.TeX.fam[i] && jsMath.TeX[jsMath.TeX.fam[i]])
           {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}
@@ -3011,13 +3012,15 @@ jsMath.Add(jsMath.Box,{
     var wadjust = (c.w == null || Math.abs(c.w-w) < .01)? "" : " margin-right:"+jsMath.HTML.Em(c.w-w)+';';
     var resize = ""; C = jsMath.Img.HexCode[C];
     if (!mustScale && !jsMath.Controls.cookie.scaleImg) {
-      if (2*w < h || (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha))
-         {resize = "height:"+(img[1]*jsMath.Browser.imgScale)+'px;'}
+      if (jsMath.Browser.mozImageSizeBug || 2*w < h || 
+         (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha))
+           {resize = "height:"+(img[1]*jsMath.Browser.imgScale)+'px;'}
       resize += " width:"+(img[0]*jsMath.Browser.imgScale)+'px;'
       v = -img[2]+'px';
     } else {
-      if (2*w < h || (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha))
-         {resize = "height:"+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+';'}
+      if (jsMath.Browser.mozImageSizeBug || 2*w < h ||
+         (jsMath.Browser.msieAlphaBug && jsMath.Controls.cookie.alpha))
+           {resize = "height:"+jsMath.HTML.Em(h*jsMath.Browser.imgScale)+';'}
       resize += " width:"+jsMath.HTML.Em(w*jsMath.Browser.imgScale)+';'
       v = jsMath.HTML.Em(d);
     }
@@ -3391,10 +3394,11 @@ jsMath.Add(jsMath.Box,{
    */
   InternalMath: function (text,size) {
     if (!jsMath.safeHBoxes) {text = text.replace(/@\(([^)]*)\)/g,'<$1>')}
-    if (!text.match(/\$|\\\(/)) {return this.Text(text,'normal','T',size).Styled()}
+    if (!text.match(/\$|\\\(/)) 
+      {return this.Text(this.safeHTML(text),'normal','T',size).Styled()}
 
     var i = 0; var k = 0; var c; var match = '';
-    var mlist = []; var parse;
+    var mlist = []; var parse, s;
     while (i < text.length) {
       c = text.charAt(i++);
       if (c == '$') {
@@ -3408,13 +3412,15 @@ jsMath.Add(jsMath.Box,{
           }
           match = ''; k = i;
         } else {
-          mlist[mlist.length] = this.Text(text.slice(k,i-1),'normal','T',size,1,.2);
+          s = this.safeHTML(this.slice(k,i-1));
+          mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
           match = '$'; k = i;
         }
       } else if (c == '\\') {
         c = text.charAt(i++);
         if (c == '(' && match == '') {
-          mlist[mlist.length] = this.Text(text.slice(k,i-2),'normal','T',size,1,.2);
+          s = this.safeHTML(this.slice(k,i-2));
+          mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
           match = ')'; k = i;
         } else if (c == ')' && match == ')') {
           parse = jsMath.Parse(text.slice(k,i-2),null,size);
@@ -3428,8 +3434,21 @@ jsMath.Add(jsMath.Box,{
         }
       }
     }
-    mlist[mlist.length] = this.Text(text.slice(k),'normal','T',size,1,.2);
+    s = this.safeHTML(this.slice(k));
+    mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
     return this.SetList(mlist,'T',size);
+  },
+  
+  /*
+   *  Quote HTML characters if we are in safe mode
+   */
+  safeHTML: function (s) {
+    if (jsMath.safeHBoxes) {
+      s = s.replace(/&/g,'&amp;')
+           .replace(/</g,'&lt;')
+           .replace(/>/g,'&gt;');
+    }
+    return s;
   },
   
   /*
@@ -5157,7 +5176,7 @@ jsMath.Package(jsMath.Parser,{
    *  Check if the next character is a space
    */
   nextIsSpace: function () {
-    return this.string.charAt(this.i) == ' ';
+    return this.string.charAt(this.i).match(/[ \n\r\t]/);
   },
   
   /*
@@ -6064,7 +6083,7 @@ jsMath.Package(jsMath.Parser,{
     if (box.bh > box.h && box.bh > jsMath.h+.001) {isSmall = 1}
     if (box.bd > box.d && box.bd > jsMath.d+.001) {isSmall = 1}
     if (box.h > jsMath.h || box.d > jsMath.d) {isBig = 1}
-
+    
     var html = box.html;
     if (isSmall) {// hide the extra size
       if (jsMath.Browser.allowAbsolute) {
@@ -6328,9 +6347,9 @@ jsMath.Translate = {
     } catch (err) {
       if (element.alt) {
         var tex = element.alt;
-        tex = tex.replace(/&/g,'&amp;');
-        tex = tex.replace(/</g,'&lt;');
-        tex = tex.replace(/>/g,'&gt;');
+        tex = tex.replace(/&/g,'&amp;')
+                 .replace(/</g,'&lt;')
+                 .replace(/>/g,'&gt;');
         element.innerHTML = tex;
         element.className = 'math';
         if (noCache) {element.className += ' nocache'}

@@ -116,14 +116,14 @@ jsMath.Add(jsMath.Autoload,{
             //  Firefox3 has window.postMessage for inter-window communication. 
             //  It can be used to handle the new file:// security model,
             //  so set up the listener.
-            if (window.postMessage) {
+            if (window.postMessage && window.addEventListener) {
               this.mustPost = 1;
               window.addEventListener("message",jsMath.Autoload.Post.Listener,false);
             }
           }
         }
       }
-      if (!this.request && window.ActiveXObject) {
+      if (!this.request && window.ActiveXObject && !this.mustPost) {
         var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
                    "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
         for (var i = 0; i < xml.length && !this.request; i++) {

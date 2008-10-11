@@ -24,7 +24,12 @@
 
 <SCRIPT>
   jsMath = {
-    Controls: {cookie: {scale: 133}},
+    Controls: {
+      cookie: {scale: 133},
+      CheckVersion: function () {
+        jsMath.Script.delayedLoad('http://www.math.union.edu/locate/jsMath/jsMath/jsMath-version-check.js');
+      }
+    },
     Parser: {prototype: {
       macros: {warning: ["Macro","\\color{##00CC00}{\\rm jsMath\\ appears\\ to\\ be\\  working!}",1]}
     }}
@@ -41,6 +46,10 @@ If your browser supports JavaScript, be sure it is enabled.<B>
 </NOSCRIPT>
 
 <BLOCKQUOTE>
+
+<DIV STYLE="float:right; width:auto; margin-top:.5em">
+<INPUT TYPE="button" VALUE="Check for Updates" ONCLICK="jsMath.Controls.CheckVersion()">
+</DIV>
 
 <H1>jsMath Test Page</H1>
 
@@ -89,7 +98,7 @@ jsMath.Process(document);
 <TD><SMALL>jsMath web pages<BR>
 Created:  14 Feb 2007<BR>
 <!-- hhmts start -->
-Last modified:  Mar 19, 2007 2:12:20 PM
+Last modified:  Sep 13, 2008 4:05:37 PM
 <!-- hhmts end -->
 <BR>
 Comments to:  <A HREF="mailto:dpvc@union.edu"><CODE>dpvc@union.edu</CODE></A><BR>
