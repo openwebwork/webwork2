@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.92 2008/06/25 14:43:16 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.93 2008/10/09 02:18:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1210,7 +1210,7 @@ sub view_handler {
 		my $globalSet = $self->r->db->getGlobalSet( $setName );
 
 		my $problemPage;
-		if ( $globalSet->assignment_type =~ /gateway/ ) {
+		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
 			courseID => $courseName, setID => "Undefined_Set");
 			# courseID => $courseName, setID => $fullSetName);
@@ -1472,7 +1472,7 @@ sub save_handler {
 		# we need to know if the set is a gateway set to determine the redirect
 		my $globalSet = $self->r->db->getGlobalSet( $setName );
 		my $problemPage;
-		if ( $globalSet->assignment_type =~ /gateway/ ) {
+		if ( defined( $globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
 			courseID => $courseName, setID => "Undefined_Set");
 			# courseID => $courseName, setID => $fullSetName);
