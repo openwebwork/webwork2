@@ -158,6 +158,7 @@ jsMath.EqnNumber = {
   
   environments: {
     'equation*': 'Star',
+    'eqnarray*': 'Star',
     'align*':    'Star',
     'multline*': 'Star',
     'gather*':   'Star',

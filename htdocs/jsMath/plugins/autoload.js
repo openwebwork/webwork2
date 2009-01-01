@@ -405,6 +405,16 @@ jsMath.Add(jsMath.Autoload,{
       if (typeof(files) != 'object') {files = [files]}
       for (var i = 0; i < files.length; i++) {jsMath.Setup.Script(files[i])}
     }
+    var macros = jsMath.Autoload.macros;
+    if (macros) {
+      for (var id in macros) {
+        if (typeof(macros[id]) == 'string') {
+          jsMath.Macro(id,macros[id]);
+        } else {
+          jsMath.Macro(id,macros[id][0],macros[id][1]);
+        }
+      }
+    }    
     jsMath.Synchronize(function () {jsMath.Autoload.Script.RunStack()});
     jsMath.Autoload.setMessage();
   },
