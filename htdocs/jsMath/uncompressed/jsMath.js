@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.6a",  // change this if you edit the file, but don't edit this file
+  version: "3.6b",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -98,21 +98,21 @@ window.jsMath = {
     
     '.typeset .normal': {       // \hbox contents style
       'font-family': 'serif',
-      'font-style': 'normal',
+      'font-style':  'normal',
       'font-weight': 'normal'
     },
     
     'div.typeset': {            // display mathematics
-      'text-align': 'center',
+      'text-align':  'center',
        margin:       '1em 0px'
     },
     
     'span.typeset': {           // in-line mathematics
-      'text-align': 'left'
+      'text-align':  'left'
     },
     
     '.typeset span': {          // prevent outside CSS from setting these
-      'text-align': 'left',
+      'text-align':  'left',
        border:       '0px',
        margin:       '0px',
        padding:      '0px'
@@ -157,11 +157,11 @@ window.jsMath = {
     },
 
     '.typeset .blank': {       // internal use
-      display: 'inline-block',
+      display:  'inline-block',
       overflow: 'hidden',
-      border: '0px none',
-      width: '0px',
-      height: '0px'
+      border:   '0px none',
+      width:    '0px',
+      height:   '0px'
     },
     '.typeset .spacer': {      // internal use
       display: 'inline-block'
@@ -400,7 +400,7 @@ window.jsMath = {
    *  Find the em size in effect at the current text location
    */
   CurrentEm: function () {
-    var em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:13em;height:1em"></span>').w/13;
+    var em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:27em;height:1em"></span>').w/27;
     if (em > 0) {return em}
     // handle older browsers
     return this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em"/>').w/13;
@@ -813,7 +813,7 @@ jsMath.Post = {
     var ddomain = document.domain.replace(/^file:\/\//,'');
     if (domain == null || domain == "") {domain = "localhost"}
     if (ddomain == null || ddomain == "") {ddomain = "localhost"}
-    if (domain != ddomain || !event.data.substr(0,6).match(/jsM(CP|LD):/)) return;
+    if (domain != ddomain || !event.data.substr(0,6).match(/jsM(CP|LD|AL):/)) return;
     var type = event.data.substr(6,3).replace(/ /g,'');
     var message = event.data.substr(10);
     if (jsMath.Post.Commands[type]) (jsMath.Post.Commands[type])(message);
@@ -1002,11 +1002,8 @@ jsMath.Setup = {
     }
     if (jsMath.root.charAt(0) == '\\') {jsMath.root = jsMath.root.replace(/\\/g,'/')}
     if (jsMath.root.charAt(0) == '/') {
-      if (jsMath.root.charAt(1) != '/') {
-        if (jsMath.document.location.port)
-          {jsMath.root = ':' + jsMath.document.location.port + jsMath.root}
-        jsMath.root = '//' + jsMath.document.location.host + jsMath.root;
-      }
+      if (jsMath.root.charAt(1) != '/') 
+        {jsMath.root = '//' + jsMath.document.location.host + jsMath.root}
       jsMath.root = jsMath.document.location.protocol + jsMath.root;
     } else if (!jsMath.root.match(/^[a-z]+:/i)) {
       var src = new String(jsMath.document.location);
@@ -1094,7 +1091,7 @@ jsMath.Setup = {
   TeXfont: function (name) {
     var font = jsMath.TeX[name]; if (font == null) return;
     var WH = jsMath.EmBoxFor('<span class="'+name+'">'+font[65].c+'</span>');
-    font.hd = WH.h; font.dh = .05;
+    font.hd = WH.h;
     font.d = jsMath.EmBoxFor('<span class="'+name+'">'+ font[65].c +
       jsMath.HTML.Rule(1,font.hd) + '</span>').h - font.hd;
     font.h = font.hd - font.d;
@@ -1428,10 +1425,10 @@ jsMath.Browser = {
           jsMath.styles['#jsMath_button'].width = '1px';
           jsMath.styles['#jsMath_button'].position = 'absolute'
           delete jsMath.styles['#jsMath_button'].width;
-          jsMath.fixedDiv = jsMath.Setup.DIV("fixedDiv",{position:'absolute', zIndex: 101});
-          jsMath.window.attachEvent("onscroll",jsMath.Controls.MoveButton);
-          jsMath.window.attachEvent("onresize",jsMath.Controls.MoveButton);
-          jsMath.Controls.MoveButton();
+	  jsMath.fixedDiv = jsMath.Setup.DIV("fixedDiv",{position:'absolute', zIndex: 101});
+	  jsMath.window.attachEvent("onscroll",jsMath.Controls.MoveButton);
+	  jsMath.window.attachEvent("onresize",jsMath.Controls.MoveButton);
+	  jsMath.Controls.MoveButton();
 	}
         // Make MSIE put borders around the whole button
         jsMath.styles['#jsMath_noFont .link'].display = "inline-block";
@@ -1462,6 +1459,7 @@ jsMath.Browser = {
         jsMath.Controls.cookie.printwarn = 0; // MSIE/Mac doesn't handle '@media screen'
       }
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
+      jsMath.Macro('angle','\\raise1.84pt{\\kern2.5mu\\rlap{\\scriptstyle/}\\kern.5pt\\rule{.4em}{-1.5pt}{1.84pt}\\kern2.5mu}');
     }
   },
 
@@ -1469,12 +1467,13 @@ jsMath.Browser = {
   //  Handle Netscape/Mozilla (any flavor)
   //
   Mozilla: function () {
-    if (jsMath.hidden.ATTRIBUTE_NODE) {
+    if (jsMath.hidden.ATTRIBUTE_NODE && jsMath.window.directories) {
       jsMath.browser = 'Mozilla';
       if (jsMath.platform == 'pc') {this.alphaPrintBug = 1}
       this.allowAbsoluteDelim = 1;
       jsMath.styles['#jsMath_button'].cursor = jsMath.styles['#jsMath_noFont .link'].cursor = 'pointer',
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
+      jsMath.Macro('angle','\\raise1.34pt{\\kern2.5mu\\rlap{\\scriptstyle/}\\rule{.4em}{-1pt}{1.34pt}\\kern2.5mu}');
       if (navigator.vendor == 'Firefox') {
         this.version = navigator.vendorSub;
       } else if (navigator.userAgent.match(' Firefox/([0-9.]+)([a-z ]|$)')) {
@@ -1522,14 +1521,10 @@ jsMath.Browser = {
   Safari: function () {
     if (navigator.appVersion.match(/Safari\//)) {
       jsMath.browser = 'Safari';
+      if (navigator.vendor.match(/Google/)) {jsMath.browser = 'Chrome'}
       var version = navigator.userAgent.match("Safari/([0-9]+)");
       version = (version)? version[1] : 400; this.version = version;
-      for (var i = 0; i < jsMath.TeX.fam.length; i++) {
-        if (jsMath.TeX.fam[i] && jsMath.TeX[jsMath.TeX.fam[i]])
-          {jsMath.TeX[jsMath.TeX.fam[i]].dh = .1}
-      }
       jsMath.TeX.axis_height += .05;
-      jsMath.TeX.default_rule_thickness += .025;
       this.allowAbsoluteDelim = version >= 125;
       this.safariIFRAMEbug = version >= 312 && version < 412;
       this.safariButtonBug = version < 412;
@@ -1887,9 +1882,10 @@ jsMath.Controls = {
    */
   MoveButton: function () {
     jsMath.fixedDiv.style.left = document.body.scrollLeft + 'px';
-    jsMath.fixedDiv.style.top = document.body.scrollTop + 'px';
+//    jsMath.fixedDiv.style.top = document.body.scrollTop + 'px';
+    jsMath.fixedDiv.style.top = document.body.scrollTop + document.body.clientHeight + 'px';
     jsMath.fixedDiv.style.width = document.body.clientWidth + 'px';
-    jsMath.fixedDiv.style.height = document.body.clientHeight + 'px';
+//    jsMath.fixedDiv.style.height = document.body.clientHeight + 'px';
   },
 
   /*
@@ -2940,8 +2936,7 @@ jsMath.Add(jsMath.Box,{
     if (c.d == null) {c.d = 0}; if (c.h == null) {c.h = 0}
     if (c.img != null && c.c != '') this.TeXIMG(font,C,jsMath.Typeset.StyleSize(style,size));
     var scale = jsMath.Typeset.TeX(style,size).scale;
-    var h = c.h + jsMath.TeX[font].dh
-    var box = new jsMath.Box('text',c.c,c.w*scale,h*scale,c.d*scale);
+    var box = new jsMath.Box('text',c.c,c.w*scale,c.h*scale,c.d*scale);
     box.style = style; box.size = size;
     if (c.tclass) {
       box.tclass = c.tclass;
@@ -3206,8 +3201,7 @@ jsMath.Add(jsMath.Box,{
     if (CFSH[2] == '')
       {return this.DelimExtend(H,CFSH[0],CFSH[1],TeX.axis_height,nocenter)}
     var box = jsMath.Box.TeX(CFSH[0],CFSH[1],CFSH[2],size).Styled();
-    if (nocenter) {box.y = -jsMath.TeX[CFSH[1]].dh*TeX.scale}
-      else {box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height)}
+    if (!nocenter) {box.y = -((box.h+box.d)/2 - box.d - TeX.axis_height)}
     if (Math.abs(box.y) < .0001) {box.y = 0}
     if (box.y) {box = jsMath.Box.SetList([box],CFSH[2],size)}
     return box;
@@ -3331,7 +3325,6 @@ jsMath.Add(jsMath.Box,{
     if (rspacing == null) {rspacing = []}
     if (useStrut == null) {useStrut = 1}
     if (addWidth == null) {addWidth = 1}
-    
     // get row and column maximum dimensions
     var scale = jsMath.sizes[size]/100;
     var HD = useStrut*(jsMath.hd-.01)*scale;
@@ -3412,14 +3405,14 @@ jsMath.Add(jsMath.Box,{
           }
           match = ''; k = i;
         } else {
-          s = this.safeHTML(this.slice(k,i-1));
+          s = this.safeHTML(text.slice(k,i-1));
           mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
           match = '$'; k = i;
         }
       } else if (c == '\\') {
         c = text.charAt(i++);
         if (c == '(' && match == '') {
-          s = this.safeHTML(this.slice(k,i-2));
+          s = this.safeHTML(text.slice(k,i-2));
           mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
           match = ')'; k = i;
         } else if (c == ')' && match == ')') {
@@ -3434,7 +3427,7 @@ jsMath.Add(jsMath.Box,{
         }
       }
     }
-    s = this.safeHTML(this.slice(k));
+    s = this.safeHTML(text.slice(k));
     mlist[mlist.length] = this.Text(s,'normal','T',size,1,.2);
     return this.SetList(mlist,'T',size);
   },
@@ -3513,7 +3506,10 @@ jsMath.Package(jsMath.Box,{
    *  Recompute the box width to make it more accurate.
    */
   Remeasured: function () {
-    if (this.w > 0) {this.w = jsMath.EmBoxFor(this.html).w}
+    if (this.w > 0) {
+      this.w = jsMath.EmBoxFor(this.html).w;
+      if (this.w > this.Mw) {this.Mw = this.w}
+    }
     return this;
   }
 
@@ -5071,7 +5067,8 @@ jsMath.Package(jsMath.Parser,{
 
     '_':        ['Replace','ord','_','normal',-.4,.1],
     ' ':        ['Replace','ord','&nbsp;','normal'],
-    angle:      ['Replace','ord','&#x2220;','normal'],
+//  angle:      ['Replace','ord','&#x2220;','normal'],
+    angle:      ['Macro','\\raise1.54pt{\\kern2.5mu\\rlap{\\scriptstyle\\char{cmsy10}{54}}\\kern1pt\\rule{.45em}{-1.2pt}{1.54pt}\\kern2.5mu}'],
         
     matrix:     'Matrix',
     array:      'Matrix',  // ### still need to do alignment options ###
@@ -5133,6 +5130,7 @@ jsMath.Package(jsMath.Parser,{
     Vmatrix:      ['Array','\\Vert','\\Vert','c'],
     cases:        ['Array','\\{','.','ll',null,2],
     eqnarray:     ['Array',null,null,'rcl',[5/18,5/18],3,'D'],
+    'eqnarray*':  ['Array',null,null,'rcl',[5/18,5/18],3,'D'],
     equation:     'Equation',
     'equation*':  'Equation',
 
@@ -5538,7 +5536,7 @@ jsMath.Package(jsMath.Parser,{
       jsMath.TeX[font] = [];
       this.Extension(null,[jsMath.Font.URL(font)]);
     } else {
-      this.mlist.Add(jsMath.mItem.Typeset(jsMath.Box.TeX(n-0,font,'T',this.mlist.data.size)));
+      this.mlist.Add(jsMath.mItem.Typeset(jsMath.Box.TeX(n-0,font,this.mlist.data.style,this.mlist.data.size)));
     }
   },
   
@@ -6295,7 +6293,7 @@ jsMath.Translate = {
   recursiveElementText: function (element) {
     if (element.nodeValue != null) {
       if (element.nodeName !== "#comment") {return element.nodeValue}
-      return element.nodeValue.replace(/^\[CDATA\[(.*)\]\]$/,"$1");
+      return element.nodeValue.replace(/^\[CDATA\[((.|\n)*)\]\]$/,"$1");
     }
     if (element.childNodes.length === 0) {return " "}
     var text = '';
@@ -6541,6 +6539,7 @@ try {
   }
 } catch (err) {}
 
+ 
 jsMath.Global.Register();
 jsMath.Loaded();
 jsMath.Controls.GetCookie();
