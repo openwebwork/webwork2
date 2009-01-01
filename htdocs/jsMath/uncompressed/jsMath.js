@@ -5068,7 +5068,7 @@ jsMath.Package(jsMath.Parser,{
     '_':        ['Replace','ord','_','normal',-.4,.1],
     ' ':        ['Replace','ord','&nbsp;','normal'],
 //  angle:      ['Replace','ord','&#x2220;','normal'],
-    angle:      ['Macro','\\raise1.54pt{\\kern2.5mu\\rlap{\\scriptstyle\\char{cmsy10}{54}}\\kern1pt\\rule{.45em}{-1.2pt}{1.54pt}\\kern2.5mu}'],
+    angle:      ['Macro','\\kern2.5mu\\raise1.54pt{\\rlap{\\scriptstyle \\char{cmsy10}{54}}\\kern1pt\\rule{.45em}{-1.2pt}{1.54pt}\\kern2.5mu}'],
         
     matrix:     'Matrix',
     array:      'Matrix',  // ### still need to do alignment options ###
