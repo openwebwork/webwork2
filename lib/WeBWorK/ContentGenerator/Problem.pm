@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.214 2008/05/23 14:51:03 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.215 2008/06/21 16:33:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -698,12 +698,12 @@ sub siblings {
 															})},  "Problem $problemID")
 	   );
 	}
-	
+
 	print CGI::end_ul();
 	#print CGI::end_li();
 	#print CGI::end_ul();
 	print CGI::end_div();
-	
+
 	return "";
 }
 
@@ -712,17 +712,17 @@ sub nav {
 	my $r = $self->r;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
-	
+
 	return "" if ( $self->{invalidSet} );
 
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id if !($self->{invalidSet});
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 	my $eUserID = $r->param("effectiveUser");
-	
+
 	my ($prevID, $nextID);
 
-	if (!$self->{invalidProblem}) {	
+	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
 		foreach my $id (@problemIDs) {
 			$prevID = $id if $id < $problemID
@@ -731,9 +731,9 @@ sub nav {
 				and (not defined $nextID or $id < $nextID);
 		}
 	}
-	
+
 	my @links;
-	
+
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $prevID);
@@ -741,9 +741,13 @@ sub nav {
 	} else {
 		push @links, "Previous Problem", "", "navPrevGrey";
 	}
-	
-	push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
-	
+
+	if (defined($setID) && $setID ne 'Undefined_Set') {
+		push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
+	} else {
+		push @links, "Problem List", "", "navProbListGrey";
+	}
+
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__,
 			courseID => $courseID, setID => $setID, problemID => $nextID);
@@ -751,9 +755,9 @@ sub nav {
 	} else {
 		push @links, "Next Problem", "", "navNextGrey";
 	}
-	
+
 	my $tail = "";
-	
+
 	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
@@ -766,7 +770,7 @@ sub title {
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	my $problemID = $self->r->urlpath->arg("problemID");
-	
+
 	return "$setID: Problem $problemID";
 }
 
