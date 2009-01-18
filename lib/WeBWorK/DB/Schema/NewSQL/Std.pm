@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.17 2008/07/23 03:22:27 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.18 2008/10/09 02:18:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -283,6 +283,25 @@ sub _get_db_info {
 	
 	return ($my_cnf, $dsn{database});
 }
+####################################################
+# checking Fields
+####################################################
+
+sub tableFieldExists {
+	my $self = shift;
+	my $field_name = shift;
+	my $stmt = $self->_exists_field_stmt($field_name);
+	return $self->dbh->do($stmt);
+}
+
+sub _exists_field_stmt {
+	my $self = shift;	
+	my $field_name=shift;
+	my $sql_table_name = $self->sql_table_name;
+	return "Describe `$sql_table_name` `$field_name`";
+}
+
+
 
 ################################################################################
 # counting/existence
