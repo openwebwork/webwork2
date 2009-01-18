@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.76 2008/06/25 14:38:19 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.77 2008/07/02 17:16:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,7 @@ use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
-                                        listArchivedCourses unarchiveCourse);
+                                        listArchivedCourses unarchiveCourse checkCourseTables updateCourseTables);
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 # needed for location management
 use Net::IP;
@@ -184,6 +184,14 @@ sub pre_header_initialize {
 					$method_to_call = "archive_course_form";
 				} else {
 					$method_to_call = "do_archive_course";
+				}
+			} elsif (defined $r->param("upgrade_course_tables") ){
+			    # upgrade and revalidate
+			    @errors = $self->archive_course_validate;
+				if (@errors) {
+					$method_to_call = "archive_course_form";
+				} else {
+					$method_to_call = "archive_course_confirm";
 				}
 			} else {
 				# form only
@@ -1639,28 +1647,100 @@ sub archive_course_confirm {
 		%WeBWorK::SeedCE,
 		courseName => $archive_courseID,
 	});
-	
-	if ($ce2->{dbLayoutName} ) {
-		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
-		. "? ");
-		print(CGI::p({-style=>'color:red; font-weight:bold'}, "Are you sure that you want to delete the course ".
-		CGI::b($archive_courseID). " after archiving?  This cannot be undone!")) if $delete_course_flag;
-		
-	
+	if ($r->param("missing_database_tables")) {
+		my @table_names = split(/\s+/, $r->param("missing_database_tables") );
+		warn "tables to be updated @table_names";
+		my $msg = updateCourseTables($archive_courseID, $ce2->{dbLayoutName},$ce2,[@table_names]);
+		print CGI::p({-style=>'color:black; font-weight:bold'}, $msg);
 	}
 	
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
-	print $self->hidden_authen_fields;
-	print $self->hidden_fields("subDisplay");
-	print $self->hidden_fields(qw/archive_courseID delete_course/);
-	
-	print CGI::p({style=>"text-align: center"},
-		CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
-		"&nbsp;",
-		CGI::submit(-name=>"confirm_archive_course", -value=>"archive"),
-	);
-	
-	print CGI::end_form();
+	my ($tables_ok,$both,$schema_only,$database_only);
+	my %missing_fields;
+	if ($ce2->{dbLayoutName} ) {
+	    ($tables_ok,$both,$schema_only,$database_only) = checkCourseTables($archive_courseID, $ce2->{dbLayoutName},$ce2); 
+		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
+		. "? ");
+		
+		print CGI::p({-style=>'color:black; font-weight:bold'},"These schema tables are also found in the database:");
+		my $str = '';
+		foreach my $table (sort keys %$both) {
+			my $ok = " ok ";
+			if ( $both->{$table} =~ /MISSING/) {
+				$missing_fields{$table} = $both->{$table};  # string containing schema fields and their corresponding database table names
+				$ok = " missing fields ";
+			}
+		    
+			$str .= CGI::b($table).$ok.CGI::br(); 
+			$str .= CGI::span( {-style=>'color:gray; font-weight:lighter'},$both->{$table} );
+		}
+		print CGI::p($str);
+		# print missing from database
+		if (%$schema_only) {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "These schema tables are missing from the database. 
+					Upgrading the database will create these tables." );
+			$str = '';
+			foreach my $table (sort keys %$schema_only) {
+				$str .= CGI::b($table)." missing from database".CGI::br(); 
+			}
+			print CGI::p($str);
+		}
+		# print missing from schema
+		if (%$database_only) {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "These database tables are missing from the schema. 
+						These tables wilthe database before archiving this course." );
+			$str = '';
+			foreach my $table (sort keys %$database_only) {
+				$str .= CGI::b($table)." exists in database but is missing from schema".CGI::br(); 
+			}
+			print CGI::p($str);
+		}
+		if ($tables_ok) {
+			print CGI::p({-style=>'color:black; font-weight:bold'},"Course $archive_courseID database is in order");
+			print(CGI::p({-style=>'color:red; font-weight:bold'}, "Are you sure that you want to delete the course ".
+			CGI::b($archive_courseID). " after archiving?  This cannot be undone!")) if $delete_course_flag;
+		} else {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "Course $archive_courseID databases must be updated before archiving this course.");
+		}
+		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print $self->hidden_authen_fields;
+		print $self->hidden_fields("subDisplay");
+		print $self->hidden_fields(qw/archive_courseID delete_course/);
+			# grab some values we'll need
+		my $course_dir   = $ce2->{courseDirs}{root};
+		my $archive_path = $ce2->{webworkDirs}{courses} . "/$archive_courseID.tar.gz";
+        # fail if the source course does not exist
+		unless (-e $course_dir) {
+			print CGI::p( "$archive_courseID: The directory for the course not found.");
+		}
+		
+		# fail if a course archive already exists
+		# FIXME there could be an option to overwrite an existing archive
+		if (-e $archive_path and -w $archive_path) {
+			print CGI::p({-style=>'color:red; font-weight:bold'},"The course '$archive_courseID' has already been archived at '$archive_path'.
+			  This earlier archive will be erased.  This cannot be undone.");
+		}
+		
+		
+		if ($tables_ok and not scalar(%missing_fields) ) { # no missing fields
+			print CGI::p({style=>"text-align: center"},
+				CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
+				"&nbsp;",
+				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
+			);
+		} else {
+				print CGI::p({style=>"text-align: center"},
+				CGI::hidden(-name => 'missing_database_tables',-value => join(" ",keys %$schema_only)),
+				CGI::hidden(-name => 'extra_database_tables',  -value => join(" ",keys %$database_only) ),
+				CGI::hidden(-name => 'missing_fields',         -value => join(" ", %missing_fields) ),
+				CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
+				"&nbsp;",
+				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+			);
+		}
+		print CGI::end_form();
+	} else {
+		print CGI::p({-style=>'color:red; font-weight:bold'},"Unable to find database layout for $archive_courseID");
+	}
 }
 
 sub do_archive_course {
