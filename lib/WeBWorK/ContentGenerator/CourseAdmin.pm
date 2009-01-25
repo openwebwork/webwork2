@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.77 2008/07/02 17:16:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.78 2009/01/18 03:24:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,8 @@ use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
-                                        listArchivedCourses unarchiveCourse checkCourseTables updateCourseTables);
+                                        listArchivedCourses unarchiveCourse);
+use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 # needed for location management
 use Net::IP;
@@ -1647,34 +1648,48 @@ sub archive_course_confirm {
 		%WeBWorK::SeedCE,
 		courseName => $archive_courseID,
 	});
-	if ($r->param("missing_database_tables")) {
-		my @table_names = split(/\s+/, $r->param("missing_database_tables") );
-		warn "tables to be updated @table_names";
-		my $msg = updateCourseTables($archive_courseID, $ce2->{dbLayoutName},$ce2,[@table_names]);
-		print CGI::p({-style=>'color:black; font-weight:bold'}, $msg);
-	}
+
 	
-	my ($tables_ok,$both,$schema_only,$database_only);
+	my ($tables_ok,$ok_tables,$schema_only,$database_only,$update_fields);
 	my %missing_fields;
 	if ($ce2->{dbLayoutName} ) {
-	    ($tables_ok,$both,$schema_only,$database_only) = checkCourseTables($archive_courseID, $ce2->{dbLayoutName},$ce2); 
+	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+		if ($r->param("missing_database_tables")) {
+			my @table_names = split(/\s+/, $r->param("missing_database_tables") );
+			my $msg = $CIchecker->updateCourseTables($archive_courseID, [@table_names]);
+			print CGI::p({-style=>'color:green; font-weight:bold'}, $msg);
+		}
+	    ($tables_ok,$ok_tables,$schema_only,$database_only,$update_fields) = $CIchecker->checkCourseTables($archive_courseID); 
 		print CGI::p("Are you sure you want to archive the course " . CGI::b($archive_courseID)
 		. "? ");
 		
-		print CGI::p({-style=>'color:black; font-weight:bold'},"These schema tables are also found in the database:");
+		print CGI::p({-style=>'color:black; font-weight:bold'},"These schema tables agree with those found in the database:");
 		my $str = '';
-		foreach my $table (sort keys %$both) {
-			my $ok = " ok ";
-			if ( $both->{$table} =~ /MISSING/) {
-				$missing_fields{$table} = $both->{$table};  # string containing schema fields and their corresponding database table names
-				$ok = " missing fields ";
-			}
-		    
-			$str .= CGI::b($table).$ok.CGI::br(); 
-			$str .= CGI::span( {-style=>'color:gray; font-weight:lighter'},$both->{$table} );
+		foreach my $table (sort keys %$ok_tables) {
+			$str .= CGI::b($table).CGI::br(); 
+			#$str .= CGI::span( {-style=>'color:gray; font-weight:lighter'},$both->{$table} );
 		}
 		print CGI::p($str);
-		# print missing from database
+		
+		# print tables with mismatched fields
+		my $all_fields_ok = 1;
+		if (%$update_fields) {
+			print CGI::p({-style=>'color:black; font-weight:bold'},"The field names for these tables don't 
+			              agree with those found in the database. <br/>These fields will need to be repaired by hand by 
+			              accessing the database directly.");
+		    $str='';
+		    foreach my $table (sort keys %$update_fields) {
+		        my ($field_ok, $fields_both, $fields_schema_only, $fields_database_only) = @{$update_fields->{$table}};
+				$str  .= " missing fields from database table <b>$table</b>: "
+				      . join(", ", map { "<br/>&nbsp;&nbsp; $_ => $$fields_schema_only{$_}" } keys %$fields_schema_only )
+				      . CGI::br(); 
+				$all_fields_ok = 0 unless $field_ok;
+			}
+			print CGI::p($str);
+		
+		}
+		
+		# print tables missing from database
 		if (%$schema_only) {
 			print CGI::p({-style=>'color:red; font-weight:bold'}, "These schema tables are missing from the database. 
 					Upgrading the database will create these tables." );
@@ -1684,16 +1699,18 @@ sub archive_course_confirm {
 			}
 			print CGI::p($str);
 		}
-		# print missing from schema
+		
+		# print tables missing from schema
 		if (%$database_only) {
 			print CGI::p({-style=>'color:red; font-weight:bold'}, "These database tables are missing from the schema. 
-						These tables wilthe database before archiving this course." );
+						These tables will be created in the database before archiving this course." );
 			$str = '';
 			foreach my $table (sort keys %$database_only) {
 				$str .= CGI::b($table)." exists in database but is missing from schema".CGI::br(); 
 			}
 			print CGI::p($str);
 		}
+		
 		if ($tables_ok) {
 			print CGI::p({-style=>'color:black; font-weight:bold'},"Course $archive_courseID database is in order");
 			print(CGI::p({-style=>'color:red; font-weight:bold'}, "Are you sure that you want to delete the course ".
@@ -1721,14 +1738,14 @@ sub archive_course_confirm {
 		}
 		
 		
-		if ($tables_ok and not scalar(%missing_fields) ) { # no missing fields
+		if ($tables_ok and $all_fields_ok ) { # no missing fields
 			print CGI::p({style=>"text-align: center"},
 				CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
 				"&nbsp;",
 				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
 			);
-		} else {
-				print CGI::p({style=>"text-align: center"},
+		} elsif ($all_fields_ok) {
+			print CGI::p({style=>"text-align: center"},
 				CGI::hidden(-name => 'missing_database_tables',-value => join(" ",keys %$schema_only)),
 				CGI::hidden(-name => 'extra_database_tables',  -value => join(" ",keys %$database_only) ),
 				CGI::hidden(-name => 'missing_fields',         -value => join(" ", %missing_fields) ),
@@ -1736,6 +1753,15 @@ sub archive_course_confirm {
 				"&nbsp;",
 				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
 			);
+		} else {
+			print CGI::p({style=>"text-align: center"},
+				CGI::hidden(-name => 'missing_database_tables',-value => join(" ",keys %$schema_only)),
+				CGI::hidden(-name => 'extra_database_tables',  -value => join(" ",keys %$database_only) ),
+				CGI::hidden(-name => 'missing_fields',         -value => join(" ", %missing_fields) ),
+				CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
+				"&nbsp;",
+				# CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+			);		
 		}
 		print CGI::end_form();
 	} else {
