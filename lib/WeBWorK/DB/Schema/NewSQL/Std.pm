@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.18 2008/10/09 02:18:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.19 2009/01/18 03:30:23 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -291,7 +291,8 @@ sub tableFieldExists {
 	my $self = shift;
 	my $field_name = shift;
 	my $stmt = $self->_exists_field_stmt($field_name);
-	return $self->dbh->do($stmt);
+	my $result = $self->dbh->do($stmt);
+	return  ($result eq "1") ? 1 : 0;    # failed result is 0E0
 }
 
 sub _exists_field_stmt {
@@ -300,7 +301,21 @@ sub _exists_field_stmt {
 	my $sql_table_name = $self->sql_table_name;
 	return "Describe `$sql_table_name` `$field_name`";
 }
+####################################################
+# checking Tables
+####################################################
+sub tableExists {
+	my $self = shift;
+	my $stmt = $self->_exists_table_stmt;
+	my $result = eval { $self->dbh->do($stmt); };
+	( caught WeBWorK::DB::Schema::Ex::TableMissing ) ? 0:1;
+}
 
+sub _exists_table_stmt {
+	my $self = shift;	
+	my $sql_table_name = $self->sql_table_name;
+	return "Describe `$sql_table_name` ";
+}
 
 
 ################################################################################
@@ -758,9 +773,10 @@ sub sql_field_expression {
 # maps error numbers to exception classes for MySQL
 our %MYSQL_ERROR_CODES = (
 	1062 => 'WeBWorK::DB::Schema::Ex::RecordExists',
+	1146 => 'WeBWorK::DB::Schema::Ex::TableMissing',
 );
 
-# turns MySQL error codes into excpetions -- WeBWorK::DB::Schema::Ex objects
+# turns MySQL error codes into exceptions -- WeBWorK::DB::Schema::Ex objects
 # for known error types, and normal die STRING exceptions for unknown errors.
 # This is one method you'd want to override if you were writing a subclass for
 # another RDBMS.

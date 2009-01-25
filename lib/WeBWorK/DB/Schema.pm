@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema.pm,v 1.11 2007/08/13 22:59:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema.pm,v 1.12 2007/08/25 18:16:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,6 +54,11 @@ use Exception::Class (
 	'WeBWorK::DB::Schema::Ex' => {},
 	'WeBWorK::DB::Schema::Ex::RecordExists' => {
 		isa => 'WeBWorK::DB::Schema::Ex',
+		description => "Record exists",
+	},
+    'WeBWorK::DB::Schema::Ex::TableMissing' => {
+    	isa => 'WeBWorK::DB::Schema::Ex',
+    	description =>"missing table",
 	},
 );
 
