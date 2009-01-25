@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.19 2009/01/18 03:30:23 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.20 2009/01/25 15:30:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -308,7 +308,7 @@ sub tableExists {
 	my $self = shift;
 	my $stmt = $self->_exists_table_stmt;
 	my $result = eval { $self->dbh->do($stmt); };
-	( caught WeBWorK::DB::Schema::Ex::TableMissing ) ? 0:1;
+	( caught WeBWorK::DB::Ex::TableMissing ) ? 0:1;
 }
 
 sub _exists_table_stmt {
@@ -772,8 +772,8 @@ sub sql_field_expression {
 
 # maps error numbers to exception classes for MySQL
 our %MYSQL_ERROR_CODES = (
-	1062 => 'WeBWorK::DB::Schema::Ex::RecordExists',
-	1146 => 'WeBWorK::DB::Schema::Ex::TableMissing',
+	1062 => 'WeBWorK::DB::Ex::RecordExists',
+	1146 => 'WeBWorK::DB::Ex::TableMissing',
 );
 
 # turns MySQL error codes into exceptions -- WeBWorK::DB::Schema::Ex objects
