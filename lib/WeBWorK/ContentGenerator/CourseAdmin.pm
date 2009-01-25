@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.78 2009/01/18 03:24:46 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.79 2009/01/25 15:29:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -109,8 +109,25 @@ sub pre_header_initialize {
 				if (@errors) {
 					$method_to_call = "rename_course_form";
 				} else {
+					$method_to_call = "rename_course_confirm";
+				}
+			} elsif (defined $r->param("confirm_rename_course")) {
+				# validate and delete
+				@errors = $self->rename_course_validate;
+				if (@errors) {
+					$method_to_call = "rename_course_form";
+				} else {
 					$method_to_call = "do_rename_course";
 				}
+			} elsif (defined $r->param("upgrade_course_tables") ){
+			    # upgrade and revalidate
+			    @errors = $self->rename_course_validate;
+				if (@errors) {
+					$method_to_call = "rename_course_form";
+				} else {
+					$method_to_call = "rename_course_confirm";
+				}
+
 			} else {
 				$method_to_call = "rename_course_form";
 			}
@@ -871,7 +888,124 @@ sub rename_course_form {
 	
 	print CGI::end_form();
 }
+sub rename_course_confirm {
 
+    my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+
+    my $rename_oldCourseID     = $r->param("rename_oldCourseID")     || "";
+	my $rename_newCourseID     = $r->param("rename_newCourseID")     || "";
+
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		%WeBWorK::SeedCE,
+		courseName => $rename_oldCourseID,
+	});
+	
+	my ($tables_ok,$ok_tables,$schema_only,$database_only,$update_fields);
+	my %missing_fields;
+	if ($ce2->{dbLayoutName} ) {
+	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+		if ($r->param("missing_database_tables")) {
+			my @table_names = split(/\s+/, $r->param("missing_database_tables") );
+			my $msg = $CIchecker->updateCourseTables($rename_oldCourseID, [@table_names]);
+			print CGI::p({-style=>'color:green; font-weight:bold'}, $msg);
+		}
+	    ($tables_ok,$ok_tables,$schema_only,$database_only,$update_fields) = $CIchecker->checkCourseTables($rename_oldCourseID); 
+		print CGI::p("Are you sure you want to rename the course " . CGI::b($rename_oldCourseID). " to ".CGI::b($rename_newCourseID)
+		. "? ");
+		
+		print CGI::p({-style=>'color:black; font-weight:bold'},"These schema tables agree with those found in the database:");
+		my $str = '';
+		foreach my $table (sort keys %$ok_tables) {
+			$str .= CGI::b($table).CGI::br(); 
+			#$str .= CGI::span( {-style=>'color:gray; font-weight:lighter'},$both->{$table} );
+		}
+		print CGI::p($str);
+		
+		# print tables with mismatched fields
+		my $all_fields_ok = 1;
+		if (%$update_fields) {
+			print CGI::p({-style=>'color:black; font-weight:bold'},"The field names for these tables don't 
+			              agree with those found in the database. <br/>These fields will need to be repaired by hand by 
+			              accessing the database directly.");
+		    $str='';
+		    foreach my $table (sort keys %$update_fields) {
+		        my ($field_ok, $fields_both, $fields_schema_only, $fields_database_only) = @{$update_fields->{$table}};
+				$str  .= " missing fields from database table <b>$table</b>: "
+				      . join(", ", map { "<br/>&nbsp;&nbsp; $_ => $$fields_schema_only{$_}" } keys %$fields_schema_only )
+				      . CGI::br(); 
+				$all_fields_ok = 0 unless $field_ok;
+			}
+			print CGI::p($str);
+		
+		}
+		
+		# print tables missing from database
+		if (%$schema_only) {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "These schema tables are missing from the database. 
+					Upgrading the database will create these tables." );
+			$str = '';
+			foreach my $table (sort keys %$schema_only) {
+				$str .= CGI::b($table)." missing from database".CGI::br(); 
+			}
+			print CGI::p($str);
+		}
+		
+		# print tables missing from schema
+		if (%$database_only) {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "These database tables are missing from the schema. 
+						These tables will be created in the database before archiving this course." );
+			$str = '';
+			foreach my $table (sort keys %$database_only) {
+				$str .= CGI::b($table)." exists in database but is missing from schema".CGI::br(); 
+			}
+			print CGI::p($str);
+		}
+				if ($tables_ok) {
+			print CGI::p({-style=>'color:black; font-weight:bold'},"Course $rename_oldCourseID database is in order");
+		} else {
+			print CGI::p({-style=>'color:red; font-weight:bold'}, "Course $rename_oldCourseID databases must be updated before renaming this course.");
+		}
+		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print $self->hidden_authen_fields;
+		print $self->hidden_fields("subDisplay");
+		print $self->hidden_fields(qw/rename_oldCourseID rename_newCourseID/);
+			# grab some values we'll need
+        # fail if the source course does not exist
+
+		
+		
+		if ($tables_ok and $all_fields_ok ) { # no missing fields
+			print CGI::p({style=>"text-align: center"},
+				CGI::submit(-name=>"decline_rename_course", -value=>"Don't rename"),
+				"&nbsp;",
+				CGI::submit(-name=>"confirm_rename_course", -value=>"Rename") ,
+			);
+		} elsif ($all_fields_ok) {
+			print CGI::p({style=>"text-align: center"},
+				CGI::hidden(-name => 'missing_database_tables',-value => join(" ",keys %$schema_only)),
+				CGI::hidden(-name => 'extra_database_tables',  -value => join(" ",keys %$database_only) ),
+				CGI::hidden(-name => 'missing_fields',         -value => join(" ", %missing_fields) ),
+				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
+				"&nbsp;",
+				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+			);
+		} else {
+			print CGI::p({style=>"text-align: center"},
+				CGI::hidden(-name => 'missing_database_tables',-value => join(" ",keys %$schema_only)),
+				CGI::hidden(-name => 'extra_database_tables',  -value => join(" ",keys %$database_only) ),
+				CGI::hidden(-name => 'missing_fields',         -value => join(" ", %missing_fields) ),
+				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
+				"&nbsp;",
+				# CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+			);		
+		}
+	}
+}
 sub rename_course_validate {
 	my ($self) = @_;
 	my $r = $self->r;
