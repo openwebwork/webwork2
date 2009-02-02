@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.20 2009/01/25 15:30:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.21 2009/01/25 22:12:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -300,6 +300,29 @@ sub _exists_field_stmt {
 	my $field_name=shift;
 	my $sql_table_name = $self->sql_table_name;
 	return "Describe `$sql_table_name` `$field_name`";
+}
+####################################################
+# adding Field column
+####################################################
+
+sub add_column_field {
+	my $self = shift;
+	my $field_name = shift;
+	my $stmt = $self->_add_column_field_stmt($field_name);
+	#warn "database command $stmt";
+	my $result = $self->dbh->do($stmt);
+	#warn "result of add column is $result";
+	#return  ($result eq "0E0") ? 0 : 1;    # failed result is 0E0
+	return 1;   #FIXME  how to determine if database update was successful???
+}
+
+sub _add_column_field_stmt {
+	my $self = shift;	
+	my $field_name=shift;
+	my $sql_table_name = $self->sql_table_name;
+	my $sql_field_name = $self->sql_field_name($field_name);
+	my $sql_field_type = $self->field_data->{$field_name}{type};		
+	return "Alter table `$sql_table_name` add column `$sql_field_name` $sql_field_type";
 }
 ####################################################
 # checking Tables

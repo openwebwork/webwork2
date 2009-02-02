@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/DBUpgrade.pm,v 1.4 2007/08/13 22:59:59 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.1 2009/01/25 15:32:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,6 +28,12 @@ use warnings;
 use WeBWorK::Debug;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
+use constant {             # constants describing the comparison of two hashes.
+           ONLY_IN_A=>0, 
+           ONLY_IN_B=>1,
+           DIFFER_IN_A_AND_B=>2, 
+           SAME_IN_A_AND_B=>3
+};
 ################################################################################
 
 sub new {
@@ -71,7 +77,7 @@ sub DESTROY {
 }
 
 ################################################################################
-=item checkCourseDirectories($courseName)
+=item  $CIchecker->checkCourseDirectories($courseName)
 
 Checks the course files and directories to make sure they exist and have the correct permissions.
 
@@ -79,7 +85,7 @@ Checks the course files and directories to make sure they exist and have the cor
 
 
 
-=item checkCourseTables($courseName, $dbLayoutName, $ce);
+=item $CIchecker->checkCourseTables($courseName);
 
 Checks the course tables in the mysql database and ensures that they are the 
 same as the ones specified by the databaseLayout
@@ -90,11 +96,9 @@ same as the ones specified by the databaseLayout
 sub checkCourseTables {
 	my ($self, $courseName) = @_;
 	my $str='';
-	my %ok_tables = ();
-	my %schema_only = ();
-	my %database_only = ();
-	my %update_fields = ();
-	##########################################################
+    my $tables_ok = 1;
+    my %dbStatus = ();
+    #################################
 	# fetch schema from course environment and search database
 	# for corresponding tables.
 	##########################################################
@@ -105,14 +109,16 @@ sub checkCourseTables {
 	    my $table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
 	    my $database_table_exists = ($db->{$table}->tableExists) ? 1:0;
 	    if ($database_table_exists ) { # exists means the table can be described;
-	       my( $fields_ok, $field_str,$fields_both, $fields_schema_only, $fields_database_only) = $self->checkTableFields($courseName, $table);
+	       my( $fields_ok, $fieldStatus) = $self->checkTableFields($courseName, $table);
 	       if ($fields_ok) {
-	       	     $ok_tables{$table_name} = 1;
+	       	     $dbStatus{$table} = [SAME_IN_A_AND_B()];
 	       } else {
-	       		$update_fields{$table_name}=[$fields_ok,$fields_both,$fields_schema_only,$fields_database_only]; 
+	       		$dbStatus{$table} = [DIFFER_IN_A_AND_B(),$fieldStatus];
+	       		$tables_ok=0;
 	       }
 	    } else {
-	    	$schema_only{$table_name} = 1;
+	    	$tables_ok=0;
+	    	$dbStatus{$table}=[ONLY_IN_A(),];
 	    }
 	}
 	##########################################################
@@ -128,40 +134,40 @@ sub checkCourseTables {
 	    next unless $table =~/^${courseName}\_(.*)/;  #double check that we only have our course tables
 	    my $schema_name = $1;
 		my $exists = exists($db->{$schema_name});
-		$database_only{$table}=1 unless $exists;
+        $tables_ok = 0 unless exists($db->{$schema_name});
+		$dbStatus{$schema_name} =[ONLY_IN_B] unless $exists;
 	}
-	my $tables_ok = (  scalar(%schema_only) || scalar(%database_only) ||scalar(%update_fields) ) ?0 :1; # count number of extraneous tables; no such tables makes $tables_ok true
 	$self->unlock_database;
-	return ($tables_ok,\%ok_tables, \%schema_only, \%database_only, \%update_fields); # table in both schema & database; found in schema only; found in database only
+	return ($tables_ok,\%dbStatus); # table in both schema & database; found in schema only; found in database only
 }
 
-=item updateCourseTables($courseName, $dbLayoutName, $ce, $table_names);
+=item $CIchecker-> updateCourseTables($courseName,  $table_names);
 
 Adds schema tables to the database that had been missing from the database.
 
 =cut
 
 sub updateCourseTables {
-	my ($self, $courseName, $table_names) = @_;
+	my ($self, $courseName, $schema_table_names) = @_;
 	my $db = $self->db;
 	$self->lock_database;
-	warn "Programmers: Pass reference to the array of table names to be updated." unless ref($table_names)=~/ARRAY/;
-	#warn "table names are ".join(" ", @$table_names);
+	warn "Programmers: Pass reference to the array of table names to be updated." unless ref($schema_table_names)=~/ARRAY/;
+	# warn "table names are ".join(" ", @$schema_table_names);
 	my $str='';
-	foreach my $table (sort @$table_names) {    # remainder copied from db->create_table
-		next if $table =~ /^_/; # skip non-table self fields (none yet)
-		#warn "not a non-table self field";
-		$table =~ /${courseName}_(.*)/;
-		my $schema_table_name = $1;
+	foreach my $schema_table_name (sort @$schema_table_names) {    # remainder copied from db->create_table
+		# next if $table =~ /^_/; # skip non-table self fields (none yet)
+		# warn "not a non-table self field";
 		next if $db->{$schema_table_name}{params}{non_native}; # skip non-native tables
 		#warn "not a non_native table";
 		my $schema_obj = $db->{$schema_table_name};
+		my $database_table_name = (exists $db->{$schema_table_name}->{params}->{tableOverride})? 
+		                   $db->{$schema_table_name}->{params}->{tableOverride}:$schema_table_name;
 		if ($schema_obj->can("create_table")) {
 		   # warn "creating table $schema_obj";
 			$schema_obj->create_table;
-			$str .= "Table $table created".CGI::br();
+			$str .= "Table $schema_table_name created as $database_table_name in database.".CGI::br();
 		} else {
-			warn "Skipping creation of '$table' table: no create_table method\n";
+			warn "Skipping creation of '$schema_table_name' table: no create_table method\n";
 		}
 	}
 	$self->unlock_database;
@@ -173,7 +179,7 @@ sub updateCourseTables {
 
 
 
-=item checkTableFields($courseName, $dbLayoutName, $ce, $table);
+=item  $CIchecker->checkTableFields($courseName, $table);
 
 Checks the course tables in the mysql database and insures that they are the same as the ones specified by the databaseLayout
 
@@ -183,10 +189,8 @@ Checks the course tables in the mysql database and insures that they are the sam
 
 sub checkTableFields {
 	my ($self,$courseName, $table) = @_;
-	my $str='&nbsp;&nbsp;';
-	my %both = ();
-	my %schema_only = ();
-	my %database_only = ();
+	my $fields_ok = 1;
+	my %fieldStatus = ();
 	##########################################################
 	# fetch schema from course environment and search database
 	# for corresponding tables.
@@ -200,12 +204,11 @@ sub checkTableFields {
 	    my $field_name  = $db->{$table}->{params}->{fieldOverride}->{$field} ||$field;
 	    $schema_override_field_names{$field_name}=$field;	
 	    my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
-	    if ($database_field_exists) {
-	    	$str.="$field =>$field_name, "; 
-	    	$both{$field}=1;
+	    if ($database_field_exists) { 
+	    	$fieldStatus{$field} =[SAME_IN_A_AND_B]
 	    } else {
-	    	$str.="$field =>MISSING, ";
-	    	$schema_only{$field}=1;
+            $fields_ok = 0;
+	    	$fieldStatus{$field} =[ONLY_IN_A];
 	    }
 	       
 	}
@@ -215,16 +218,50 @@ sub checkTableFields {
 	##########################################################
     
     my $dbh =$self->dbh;                        # grab any database handle
- 	my $stmt = "SHOW COLUMNS FROM $table_name";    # mysql request
+ 	my $stmt = "SHOW COLUMNS FROM `$table_name`";    # mysql request
  	my $result = $dbh->selectall_arrayref($stmt) ;
  	my %database_field_names =  map {${$_}[0]=>[$_]} @$result;             # drill down in the result to the field name level
                                                            #  result is array:  Field      | Type     | Null | Key | Default | Extra 
  	foreach my $field_name (sort keys %database_field_names) {
  		my $exists = exists($schema_override_field_names{$field_name} );
- 		$database_only{$table}=1 unless $exists;
+ 		$fields_ok=0 unless $exists;
+ 		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
  	}
- 	my $fields_ok = not (  %schema_only || %database_only ); # count number of extraneous tables; no such tables makes $fields_ok true
- 	return ($fields_ok, $str."<br/>",\%both, \%schema_only, \%database_only); # table in both schema & database; found in schema only; found in database only
+ 	
+
+ 	return ($fields_ok, \%fieldStatus); # table in both schema & database; found in schema only; found in database only
+}
+
+
+=item  $CIchecker->updateTableFields($courseName, $table);
+
+Checks the fields in the table in the mysql database and insures that they are the same as the ones specified by the databaseLayout
+
+
+=cut
+
+
+sub updateTableFields {
+	my ($self,$courseName, $table) = @_;
+	my $msg='';
+	##########################################################
+	# fetch schema from course environment and search database
+	# for corresponding tables.
+	##########################################################
+	my $db = $self->db;
+	my $table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
+	warn "$table_name is a non native table" if $db->{$table}{params}{non_native}; # skip non-native tables
+    my ($fields_ok, $fieldStatus) = $self->checkTableFields($courseName,$table);
+    # add fields
+    foreach my $field_name (keys %$fieldStatus) {
+     	next unless $fieldStatus->{$field_name}->[0] == ONLY_IN_A; 
+     	my $schema_obj = $db->{$table};
+     	if ( $schema_obj->can("add_column_field") ) {
+     		$msg.= "Added column '$field_name' to table '$table'".CGI::br() if $schema_obj->add_column_field($field_name);
+     	}
+    }
+	return $msg;
+	
 }
 
 ##############################################################################
@@ -306,6 +343,19 @@ sub ask_permission_stdio {
 		$prompt = 'Please enter "y" or "n".';
 	}
 }
+
+
+# 
+# 
+# =item checkCourseDirectories($courseName)
+# 
+# Checks the course files and directories to make sure they exist and have the correct permissions.
+# 
+# =cut
+# 
+# 
+# 
+
 
 
 1;
