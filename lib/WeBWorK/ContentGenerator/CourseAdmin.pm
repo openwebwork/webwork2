@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.80 2009/01/25 21:31:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.81 2009/02/02 03:18:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -383,13 +383,14 @@ sub body {
 			});
 		
 			my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$tempCE);
-			my ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($courseID);
+			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
+			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
 				CGI::code(
 					$tempCE->{dbLayoutName},
 				),
-				(-r $tempCE->{courseFiles}->{environment}) ? "" : CGI::i(", missing course.conf"),
-				($courseID eq "modelCourse" or $tables_ok  ) ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating"),
+				($courseID eq "modelCourse" or $directories_ok) ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
+				($courseID eq "modelCourse" or $tables_ok  ) ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
 			
 			);
 			 
@@ -908,9 +909,11 @@ sub rename_course_confirm {
 		%WeBWorK::SeedCE,
 		courseName => $rename_oldCourseID,
 	});
+#############################################################################
+# Check database
+#############################################################################
 	
 	my ($tables_ok,$dbStatus);
-	my %missing_fields;
 	if ($ce2->{dbLayoutName} ) {
 	     my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
 	    ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
@@ -981,6 +984,10 @@ sub rename_course_confirm {
 			$str.=CGI::br();
 			
 		}
+#############################################################################
+# Report on databases
+#############################################################################
+
 		print CGI::p($str);
 		if ($extra_database_tables) {
 				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  
@@ -989,12 +996,31 @@ sub rename_course_confirm {
 		if ($extra_database_fields) {
 				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database fields  which are not defined in the schema for at least one table.  
 				                                                     They can only be removed manually from the database.");
-		} 
+		} 		
 		if ($all_tables_ok) {
 			print CGI::p({-style=>'color:green; font-weight:bold'},"Course $rename_oldCourseID database is in order");
 		} else {
 			print CGI::p({-style=>'color:red; font-weight:bold'}, "Course $rename_oldCourseID databases must be updated before renaming this course.");
-		}
+		}	
+		
+#############################################################################
+# Check directories
+#############################################################################
+
+
+      my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories($ce2);
+      my $style = ($directories_ok)?"color:green" : "color:red";
+      print CGI::h2("Directory structure"), CGI::p($str2),
+      ($directories_ok)? CGI::p({style=>$style},"Directory structure is ok") :
+              CGI::p({style=>$style},"Directory structure is missing directories 
+                          or the webserver lacks sufficient privileges.");
+    
+#############################################################################
+# Print form for choosing next action.
+#############################################################################
+
+
+
 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
@@ -1004,17 +1030,22 @@ sub rename_course_confirm {
 
 		
 		
-		if ($all_tables_ok ) { # no missing tables or missing fields
+		if ($all_tables_ok && $directories_ok ) { # no missing tables or missing fields or directories
 			print CGI::p({style=>"text-align: center"},
 				CGI::submit(-name=>"decline_rename_course", -value=>"Don't rename"),
 				"&nbsp;",
 				CGI::submit(-name=>"confirm_rename_course", -value=>"Rename") ,
 			);
-		} else {
+		} elsif(  $directories_ok  ) {
 			print CGI::p({style=>"text-align: center"},
 				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
 				"&nbsp;",
 				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+			);
+		} else  {
+			print CGI::p({style=>"text-align: center"},
+				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
+				CGI::br(),"Directory structure needs to be repaired manually before renaming."
 			);
 		} 
 	}
@@ -1798,7 +1829,9 @@ sub archive_course_confirm {
 
 	
 	my ($tables_ok,$dbStatus);
-
+#############################################################################
+# Check database
+#############################################################################
 	my %missing_fields;
 	if ($ce2->{dbLayoutName} ) {
 	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
@@ -1870,6 +1903,10 @@ sub archive_course_confirm {
 			$str.=CGI::br();
 			
 		}
+#############################################################################
+# Report on databases
+#############################################################################
+
 		print CGI::p($str);
 		if ($extra_database_tables) {
 				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  
@@ -1889,6 +1926,25 @@ sub archive_course_confirm {
 			        must be upgraded before archiving this course."
 			);
 		}
+#############################################################################
+# Check directories
+#############################################################################
+
+
+      my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
+      my $style = ($directories_ok)?"color:green" : "color:red";
+      print CGI::h2("Directory structure"), CGI::p($str2),
+      ($directories_ok)? CGI::p({style=>$style},"Directory structure is ok") :
+              CGI::p({style=>$style},"Directory structure is missing directories 
+                          or the webserver lacks sufficient privileges.");
+    
+
+
+
+#############################################################################
+# Print form for choosing next action.
+#############################################################################
+
 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
@@ -1901,7 +1957,7 @@ sub archive_course_confirm {
 			print CGI::p( "$archive_courseID: The directory for the course not found.");
 		}
 		
-		if ($all_tables_ok  ) { # no missing fields
+		if ($all_tables_ok && $directories_ok ) { # no missing fields
 			# Warn about overwriting an existing archive
 			if (-e $archive_path and -w $archive_path) {
 				print CGI::p({-style=>'color:red; font-weight:bold'},"The course '$archive_courseID' has already been archived at '$archive_path'.
@@ -1913,13 +1969,19 @@ sub archive_course_confirm {
 				"&nbsp;",
 				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
 			);
-		} else  {
+		} elsif( $directories_ok)  {
 			print CGI::p({style=>"text-align: center"},
 			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
 				"&nbsp;",
 				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
 			);
-		} 
+		} else {
+			print CGI::p({style=>"text-align: center"},
+			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),CGI::br(),
+			"Directory structure needs to be repaired manually before archiving."
+			);
+		
+		}
 		print CGI::end_form();
 	} else {
 		print CGI::p({-style=>'color:red; font-weight:bold'},"Unable to find database layout for $archive_courseID");

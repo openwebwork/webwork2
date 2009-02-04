@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.1 2009/01/25 15:32:13 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.2 2009/02/02 03:18:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -262,6 +262,48 @@ sub updateTableFields {
     }
 	return $msg;
 	
+}
+
+
+
+
+
+=item $CIchecker->checkCourseDirectories($courseName);
+
+Checks the course directories to make sure they exist and have the correct
+permissions.
+
+
+=cut
+
+sub checkCourseDirectories {
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my @webworkDirectories = keys %{$ce->{webworkDirs}};
+    my @courseDirectories = keys %{$ce->{courseDirs}};
+    my $str = '';
+    my @results;
+    my $directories_ok =1;
+    foreach my $dir (sort @courseDirectories) {
+        my $path = $ce->{courseDirs}->{$dir};
+        my $status = (-e $path) ? 
+          ((-r $path)?'r':'-') . 
+    	  ((-w _ )?'w':'-'   ) .
+    	  ((-x _ )?'x':'-'   )    : "missing";
+ 
+    	#all directories should be readable, writable and executable
+    	my $style;
+	    if ($status eq 'rwx') {
+	    	$style = "color:green";
+	    } else {
+	    	$directories_ok = 0;
+	    	$style = "color:red";
+	    }
+	    	
+    	push @results, CGI::span({style=>$style},"$dir => $path $status <br/>\n");
+    }
+    $str = join(" ",@results);
+    return ( $directories_ok, $str);
 }
 
 ##############################################################################
