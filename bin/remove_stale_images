@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/bin/remove_stale_images,v 1.6 2007/10/08 19:31:42 jj Exp $
+# $CVSHeader: webwork2/bin/remove_stale_images,v 1.7 2008/06/24 22:54:03 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -197,12 +197,12 @@ sub wanted {
 sub count_report {
   my $j;
   print "Days\n";
-  for $j (sort keys(%days)) {
+  for $j (sort {$a <=> $b} keys(%days)) {
     print "$j  $days{$j}\n";
   }
 
   print "\nWeeks\n";
-  for $j (sort keys(%week)) {
+  for $j (sort {$a <=> $b} keys(%week)) {
     print " $j  $week{$j}\n";
   }
 
