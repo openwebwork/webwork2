@@ -98,7 +98,7 @@ function safe_applet_initialize(appletName, i) {
 		}
 		try{ 
 		
-			ww_applet.config;
+			ww_applet.config();
 			
 		} catch(e) {
 			var msg = "Unable to configure " + appletName + " \n " +e;  
@@ -223,8 +223,8 @@ ww_applet.prototype.config = function () {
         var appletName  = this.appletName;
 		var applet      = getApplet(appletName);
 		var configAlias = this.configAlias;
-        debug_add("   check " + appletName +"."+ config +"( " + this.base64_config + " ) to see if config function is defined: " 
-        );
+        debug_add("   Checking " + appletName +"."+ configAlias +"( " + this.base64_config + " ) to see if config function is defined. The data is" 
+        +    this.base64_config + " " +  Base64.decode(this.base64_config)    );
     	try {  
     	    if (( typeof(applet[configAlias])  == "function" ) ) {
     	        debug_add("  CONFIGURING " + appletName);
