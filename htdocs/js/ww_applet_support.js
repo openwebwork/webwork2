@@ -52,8 +52,8 @@ function submitAction()  {    // called from the submit button defined in Proble
 	};
 }
 
-function intializeAction() {  // deprecated call -- removed
-	alert("You are using an old template (stored at webwork2/conf/templates). The <body> tag in the template calls a function 'initializeAction()' -- this function name should be replaced by 'initializeWWquestion()'");
+function initializeAction() {  // deprecated call -- removed
+	alert("You might be using an old template (stored at webwork2/conf/templates). The <body> tag in the system.template calls a function 'initializeAction()' -- this function name should be replaced by 'initializeWWquestion()'. Please update to a recent version of system.template");
 	initializeWWquestion();
 }
 
@@ -361,6 +361,7 @@ ww_applet.prototype.submitAction = function () {
     var applet = getApplet(appletName);
 	if (! this.isReady  ) {
 		alert(appletName + " is not ready");
+		initializeAction();
 	}
           this.getState();      // have ww_applet retrieve state from applet and store in answerbox
           eval(this.submitActionScript);
