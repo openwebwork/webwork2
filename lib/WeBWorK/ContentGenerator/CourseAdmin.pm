@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.81 2009/02/02 03:18:09 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.82 2009/02/04 03:15:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -926,6 +926,7 @@ sub rename_course_confirm {
 				$msg .= $CIchecker->updateTableFields($rename_oldCourseID, $table_name);
 			}
 			print CGI::p({-style=>'color:green; font-weight:bold'}, $msg);
+			
 		}
  		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($rename_oldCourseID);
  
@@ -1846,6 +1847,13 @@ sub archive_course_confirm {
 			}
 			print CGI::p({-style=>'color:green; font-weight:bold'}, $msg);
 		}
+		if ($r->param("upgrade_course_tables") ) {
+			
+			$CIchecker -> updateCourseDirectories();   # needs more error messages
+		
+		
+		
+		}
  		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($archive_courseID);
  
 
@@ -1977,8 +1985,10 @@ sub archive_course_confirm {
 			);
 		} else {
 			print CGI::p({style=>"text-align: center"},
-			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),CGI::br(),
-			"Directory structure needs to be repaired manually before archiving."
+			CGI::br(),
+			"Directory structure needs to be repaired manually before archiving.",CGI::br(),
+			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
+			CGI::submit(-name => "upgrade_course_tables", -value => "Attempt to upgrade directories"),
 			);
 		
 		}
