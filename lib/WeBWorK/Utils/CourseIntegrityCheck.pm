@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.2 2009/02/02 03:18:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.3 2009/02/04 03:15:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use WeBWorK::Debug;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
+use WeBWorK::PG::IO;
 
 use constant {             # constants describing the comparison of two hashes.
            ONLY_IN_A=>0, 
@@ -305,6 +306,41 @@ sub checkCourseDirectories {
     $str = join(" ",@results);
     return ( $directories_ok, $str);
 }
+
+=item $CIchecker->updateCourseDirectories($courseName);
+
+Creates some course directories automatically.
+
+
+=cut
+
+sub updateCourseDirectories {
+	my ($self) = @_;
+	my $ce = $self->{ce};
+	my @webworkDirectories = keys %{$ce->{webworkDirs}};
+    my @courseDirectories = keys %{$ce->{courseDirs}};
+    
+    my %updateable_directories = (html_temp=>1);  #FIXME this is hardwired for the time being.
+    
+    foreach my $dir (sort @courseDirectories) {
+        next unless exists $updateable_directories{$dir};
+        my $path = $ce->{courseDirs}->{$dir};
+        unless ( -e $path) {   # if by some unlucky chance the tmpDirectory hasn't been created, create it.
+			my $parentDirectory =  $path;
+			$parentDirectory =~s|/$||;  # remove a trailing /
+			$parentDirectory =~s|/\w*$||; # remove last node
+			my ($perms, $groupID) = (stat $parentDirectory)[2,5];
+			WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
+					or warn "Failed to create directory at $path";
+		
+		}
+	}
+
+    return ( );
+}
+
+
+
 
 ##############################################################################
 # Database utilities -- borrowed from DBUpgrade.pm ??use or modify??? --MEG
