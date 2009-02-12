@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.93 2008/10/09 02:18:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.94 2008/11/19 16:49:20 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -118,7 +118,8 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view add_problem make_local_copy save save_as  revert)]; #[qw(view save save_as revert add_problem add_header make_local_copy)];
+use constant ACTION_FORMS => [qw(view add_problem save save_as  revert)]; 
+#[qw(view save save_as revert add_problem add_header make_local_copy)];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
@@ -372,13 +373,13 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must make a copy of this file using the 'make local editable copy at ...' action below.");
+		"To edit this text you must first make a copy of this file using the 'Save as' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use 'Create a copy' below to save it to another file.");
+                           use the 'Save as' action below to save it to another file.");
     }
 	
 }
@@ -681,7 +682,8 @@ sub determineLocalFilePath {
 	my $setID = $self->{setID};
 	$setID = int(rand(1000)) unless $setID =~/\S/;  # setID can be 0
 	if ($path =~ /Library/) {
-		$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
+		#$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
+		$path  =~ s|^.*?Library/|local/|;  # truncate the url up to a segment such as ...rochesterLibrary/....... and prepend local
  	} elsif ($path eq $default_screen_header_path) {
  		$path = "set$setID/setHeader.pg";
  	} elsif ($path eq $default_hardcopy_header_path) {
@@ -852,7 +854,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."First use 'Create a copy' below to make a local copy, then add the file to the current problem set, then edit the file."
+			                     ."Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
 			);
 			last CASE;
 		};
@@ -1582,8 +1584,13 @@ sub make_local_copy_form {
 	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of screen header
 	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of hardcopy header
 	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy -- can't be done in this case.
+	# make sure setID is well defined before allowing local copy
+	my $setID         = $self->{setID};
+	my $probNum       = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
+	return "" unless defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set';
+	
 	return join ("",
-		"Make local editable copy at: [TMPL]/".($self->determineLocalFilePath($editFilePath)),
+		"Save local editable copy as: [TMPL]/".($self->determineLocalFilePath($editFilePath)).CGI::br()." and use in ".CGI::b("set $setID$probNum"),
 		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>$self->determineLocalFilePath($editFilePath) ),
 		CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$editFilePath ),
 		CGI::hidden(-name=>'action.make_local_copy.file_type',-value=>$self->{file_type}),
@@ -1630,7 +1637,7 @@ sub save_as_form {  # calls the save_as_handler
 
 	my $probNum = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
 	my $andRelink = '';
-	$andRelink = ' and '.CGI::checkbox(
+	$andRelink = CGI::br().' and '.CGI::checkbox(
 				-name => "action.save_as.saveMode",
 				-value => "rename",
 				-label => "",
@@ -1640,9 +1647,9 @@ sub save_as_form {  # calls the save_as_handler
 		     " use in ".CGI::b("set $fullSetID$probNum")
 		         if defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set' &&
 			    $self->{file_type} ne 'blank_problem';
-	return 'Create a copy at [TMPL]/'.
+	return 'Save as [TMPL]/'.
 	        CGI::textfield(
-			       -name=>'action.save_as.target_file', -size=>30, -value=>"$shortFilePath",  #FIXME -- you might not be able to save to this default filepath
+			       -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  #FIXME -- you might not be able to save to this default filepath
 			       -onfocus=>$onChange
 			      ).
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
