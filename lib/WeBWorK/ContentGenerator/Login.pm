@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.45 2007/03/22 13:35:42 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.46 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,32 +45,12 @@ sub info {
 	my $ce = $r->ce;
 	
 	my $result;
-	
 	# This section should be kept in sync with the Home.pm version
-	my $site_info = $ce->{webworkFiles}->{site_info};
-	if (defined $site_info and $site_info) {
-		# deal with previewing a temporary file
-		# FIXME: DANGER: this code allows viewing of any file
-		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
-		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-		#		and defined $r->param("editFileSuffix")) {
-		#	$site_info .= $r->param("editFileSuffix");
-		#}
-		
-		if (-f $site_info) {
-			my $text = eval { readFile($site_info) };
-			if ($@) {
-				$result .= CGI::h2("Site Information");
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
-			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2("Site Information");
-				$result .= $text;
-			}
-		}
-	}
+	# list the login info first.
 	
-	# FIXME this is basically the same code as above... TIME TO REFACTOR!
+	# FIXME this is basically the same code as below... TIME TO REFACTOR!
 	my $login_info = $ce->{courseFiles}->{login_info};
+
 	if (defined $login_info and $login_info) {
 		# login info is relative to the templates directory, apparently
 		$login_info = $ce->{courseDirs}->{templates} . "/$login_info";
@@ -94,6 +74,30 @@ sub info {
 			}
 		}
 	}
+
+	my $site_info = $ce->{webworkFiles}->{site_info};
+	if (defined $site_info and $site_info) {
+		# deal with previewing a temporary file
+		# FIXME: DANGER: this code allows viewing of any file
+		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
+		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
+		#		and defined $r->param("editFileSuffix")) {
+		#	$site_info .= $r->param("editFileSuffix");
+		#}
+		
+		if (-f $site_info) {
+			my $text = eval { readFile($site_info) };
+			if ($@) {
+				$result .= CGI::h2("Site Information");
+				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+			} elsif ($text =~ /\S/) {
+				$result .= CGI::h2("Site Information");
+				$result .= $text;
+			}
+		}
+	}
+	
+
 	
 	if (defined $result and $result ne "") {
 		return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
