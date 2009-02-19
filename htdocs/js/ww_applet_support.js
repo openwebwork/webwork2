@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: pg/macros/AppletObjects.pl,v 1.16 2009/02/07 23:08:34 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.4 2009/02/08 15:16:14 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -174,14 +174,15 @@ function listQuestionElements() { // list all HTML input and textarea elements i
 function base64Q(str) {   /// determine whether an XML string has been base64 encoded.
 	return ( !str.match(/<XML/i) && !str.match(/<?xml/i));
 }
-function setEmptyState(appletName){
-	var newState = "<xml></xml>";
-	ww_applet_list[appletName].setState(newState);
+function setAppletStateToRestart(appletName){
+	var newState = "<xml>restart_applet</xml>";
+	//ww_applet_list[appletName].setState(newState);
 	getQE(appletName+"_state").value = newState;
 	getQE("previous_" + appletName + "_state").value = newState
 }
 
 function getQE(name1) { // get Question Element in problemMainForm by name
+    //alert("getting " + name1);
 	var isIE = navigator.appName.indexOf("Microsoft") != -1;
 	var obj = (isIE) ? document.getElementById(name1)
 						:document.problemMainForm[name1]; 
@@ -195,6 +196,7 @@ function getQE(name1) { // get Question Element in problemMainForm by name
 		};
 				
 	} else {
+	    //alert("found " +obj);
 		return( obj );
 	}
 	
@@ -278,6 +280,13 @@ ww_applet.prototype.setState = function(state) {
 	if ( base64Q(state) ) { 
 		state=Base64.decode(state);
 	}
+	// if we are restarting the applet bail -- we don't want to set the state.
+	
+	if (state.match(/^<xml>restart_applet<\/xml>/) )  {
+		alert("The applet " +appletName + "has been reset to its virgin state.");
+		ww_preserve_applet_state.value ="";  //Fixme? should we set the last answer to blank as well?
+		return(''); 
+	}
 	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // if state starts with <?xml
 	
 		debug_add("  Set (decoded) state for " + appletName + " to \n\n" + 
@@ -296,7 +305,7 @@ ww_applet.prototype.setState = function(state) {
 			alert(msg);
 		}
 	} else if (debug) {
-		debug_add("  new state was empty string or did not begin with <xml-- \n Applet state was not reset");
+		debug_add("  new state was empty string or did not begin with <xml> --  Applet state was not reset");
 	}
 	return('');
 };
@@ -372,15 +381,28 @@ ww_applet.prototype.initializeAction = function () {
 ww_applet.prototype.submitAction = function () {  
 	var appletName = this.appletName;
     // var getAnswer = this.getAnswerAlias;
+    var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden answer box preserving applet state
+	var saved_state =   ww_preserve_applet_state.value;
+
     if (debug) {debug_add("Begin submit action for applet " + appletName);}
     var applet = getApplet(appletName);
 	if (! this.isReady  ) {
 		alert(appletName + " is not ready");
 		initializeAction();
 	}
-          this.getState();      // have ww_applet retrieve state from applet and store in answerbox
-          eval(this.submitActionScript);
-		  //getQE(this.answerBox).value = applet.[getAnswer]();  //FIXME -- not needed in general?
+	// Check to see if we want to restart the applet
+	
+	if (saved_state.match(/^<xml>restart_applet<\/xml>/) )  {
+		if (debug) { debug_add("Restarting the applet "+appletName);}
+		setAppletStateToRestart(appletName);   // erases all of the saved state
+		return('');      
+	}
+	// if we are not restarting the applet save the state and submit
+	
+	this.getState();      // have ww_applet retrieve state from applet and store in answerbox
+	if (debug) {debug_add("Submit Action Script " + this.submitActionScript + "\n");}
+	eval(this.submitActionScript);
+	//getQE(this.answerBox).value = applet.[getAnswer]();  //FIXME -- not needed in general?
 	if (debug) {debug_add("Completed submitAction() for applet " + appletName+ "\n");}
 };
 
