@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.4 2009/02/08 15:16:14 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.5 2009/02/19 03:03:43 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -182,7 +182,6 @@ function setAppletStateToRestart(appletName){
 }
 
 function getQE(name1) { // get Question Element in problemMainForm by name
-    //alert("getting " + name1);
 	var isIE = navigator.appName.indexOf("Microsoft") != -1;
 	var obj = (isIE) ? document.getElementById(name1)
 						:document.problemMainForm[name1]; 
@@ -196,7 +195,6 @@ function getQE(name1) { // get Question Element in problemMainForm by name
 		};
 				
 	} else {
-	    //alert("found " +obj);
 		return( obj );
 	}
 	
