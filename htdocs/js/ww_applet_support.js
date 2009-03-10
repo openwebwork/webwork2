@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.6 2009/02/19 03:30:45 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.7 2009/03/10 12:07:15 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -252,14 +252,14 @@ ww_applet.prototype.config = function () {
         
         var appletName  = this.appletName;
 		var applet      = getApplet(appletName);
-		var configAlias = this.configAlias;
-        debug_add("   Calling " + appletName +"."+ configAlias +"( " + Base64.decode(this.base64_config) + " ) " );
+		var setConfigAlias = this.setConfigAlias;
+        debug_add("   Calling " + appletName +"."+ setConfigAlias +"( " + Base64.decode(this.base64_config) + " ) " );
     	try {  
-    	    if ( this.methodDefined(configAlias) ) {
-    			applet[configAlias](Base64.decode(this.base64_config));
+    	    if ( this.methodDefined(setConfigAlias) ) {
+    			applet[setConfigAlias](Base64.decode(this.base64_config));
     		} 
     	} catch(e) {
-    	    var msg = "Error in configuring  " + appletName + " using command " + configAlias + " : " + e ;
+    	    var msg = "Error in configuring  " + appletName + " using command " + setConfigAlias + " : " + e ;
 			alert(msg);
     	}
  };
