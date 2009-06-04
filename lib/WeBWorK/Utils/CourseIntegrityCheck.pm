@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.3 2009/02/04 03:15:51 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.4 2009/02/11 03:30:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -320,7 +320,7 @@ sub updateCourseDirectories {
 	my @webworkDirectories = keys %{$ce->{webworkDirs}};
     my @courseDirectories = keys %{$ce->{courseDirs}};
     
-    my %updateable_directories = (html_temp=>1);  #FIXME this is hardwired for the time being.
+    my %updateable_directories = (html_temp=>1,mailmerge=>1,tmpEditFileDir=>1);  #FIXME this is hardwired for the time being.
     
     foreach my $dir (sort @courseDirectories) {
         next unless exists $updateable_directories{$dir};
