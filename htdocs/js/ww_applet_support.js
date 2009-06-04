@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.8 2009/03/10 20:49:56 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.9 2009/03/22 18:31:38 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -67,9 +67,9 @@ function initializeWWquestion() {    // called from <body> tag defined in the we
 }
 
 // applet can set isReady flag by calling applet_loaded(appletName, loaded);
-function applet_loaded(appletName,loaded) {
-	debug_add("applet reporting that it has been loaded = " + loaded );
-	ww_applet_list[appletName].reportsLoaded = loaded; // 0 means not loaded
+function applet_loaded(appletName,ready) {
+	debug_add("applet reporting that it has been loaded = " + ready );
+	ww_applet_list[appletName].reportsLoaded = ready; // 0 means not loaded
 }
 
 
@@ -209,17 +209,21 @@ ww_applet.prototype.setConfig = function () {
 		var applet      = getApplet(appletName);
 		var setConfigAlias = this.setConfigAlias;
 
-        try {  
-    	    if ( this.methodDefined(setConfigAlias) ) {
+       
+	   try {
+		    if ( this.methodDefined(this.setConfigAlias) ) {
     			applet[setConfigAlias](this.configuration);
-    		} 
+    			this.debug_add("   Calling " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
+    		} else {
+    		    this.debug_add("  unable to execute " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
+    		}
     	
     	} catch(e) {
     	
     	    var msg = "Error in configuring  " + appletName + " using command " + setConfigAlias + " : " + e ;
 			alert(msg);
     	}
-    	this.debug_add("   Calling " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
+    	
   
  };
  
@@ -273,11 +277,15 @@ ww_applet.prototype.setState = function(state) {
 	if ( base64Q(state) ) { 
 		state=Base64.decode(state);
 	}
-	
-	if (state.match(/^<xml>restart_applet<\/xml>/) )  {
-		alert("The applet " +appletName + "has been reset to its virgin state." + this.initialState);
+	if (state.match(/^<xml>restart_applet<\/xml>/) || 
+	    state.match(/^\s*$/) ||
+	    state.match(/^<xml>\s*<\/xml>/ ) ) { 
+	                                                //blank state also restarts applet
 		ww_preserve_applet_state.value =this.initialState;  //Fixme? should we set the last answer to blank as well?
 		state = ww_preserve_applet_state.value;
+		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
+			alert("The applet " +appletName + "has been reset to its virgin state." + this.initialState);
+		}
 	}
 	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // if state starts with <?xml
 	
@@ -398,7 +406,7 @@ ww_applet.prototype.submitAction = function () {
 	eval(this.submitActionScript);
 	//getQE(this.answerBox).value = applet.[getAnswer]();  //FIXME -- not needed in general?
 	this.debug_add("Completed submitAction(" + this.submitActionScript + ") \nfor applet " + appletName+ "\n");
-	if (this.debugMode){alert(debugText); debugText="";}
+	if (this.debugMode>=2){alert(debugText); debugText="";}
 };
 
 
@@ -418,13 +426,23 @@ ww_applet.prototype.checkLoaded = function() {  // this function returns 0 unles
 	
 	this.debug_add("Test 4 methods to see if the applet " + appletName + " has been loaded: \n"); 
 
-	
-	if ( this.methodDefined(this.setConfigAlias) ) {
-		ready = 1;
+	try {
+		if ( this.methodDefined(this.setConfigAlias) ) {
+			ready = 1;
+		}
+	} catch(e) {
+		var msg = "Unable to find set configuration command in applet " + appletName;
+        alert(msg);
 	}
-	if ( this.methodDefined(this.setStateAlias) ) {
-		ready =1;
-	} 
+	
+	try {
+		if ( this.methodDefined(this.setStateAlias) ) {
+			ready =1;
+		} 
+	} catch(e) {
+		var msg = "Unable to set State command in applet " + appletName;
+        alert(msg);
+	}
 
 
 	if (typeof(this.reportsLoaded) !="undefined" && this.reportsLoaded != 0 ) {
@@ -449,7 +467,7 @@ ww_applet.prototype.checkLoaded = function() {  // this function returns 0 unles
 	return(ready);
 }
 ww_applet.prototype.debug_add = function(str) {
-	if (this.debugMode) {
+	if (this.debugMode>=2) {
 		debugText = debugText + "\n" +str; // a global text string
 	}
 }
@@ -475,7 +493,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 
 	if ( 0 < i && !applet_loaded ) { // wait until applet is loaded
 		this.debug_add("Applet " + appletName + " is not yet ready try again\n");
-		if (this.debugMode) {
+		if (this.debugMode>=2) {
 			alert(debugText ); 
 			debugText="";
 		}
@@ -492,11 +510,11 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		//alert("setDebug")
 		try{
 		
-			this.setDebug(this.debugMode); 
+			this.setDebug((this.debugMode) ? 1:0); 
 			
 		} catch(e) {
 			var msg = "Unable set debug in " + appletName + " \n " +e;  
-			if (this.debugMode) {this.debug_add(msg);} else {alert(msg)};
+			if (this.debugMode>=2) {this.debug_add(msg);} else {alert(msg)};
 		}
 
 		//alert("config applet");
@@ -506,7 +524,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			
 		} catch(e) {
 			var msg = "Unable to configure " + appletName + " \n " +e;  
-			if (this.debugMode) {this.debug_add(msg);} else {alert(msg)};
+			if (this.debugMode>=2) {this.debug_add(msg);} else {alert(msg)};
 		}
 
 		
@@ -517,20 +535,20 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			
 		} catch(e) {
 			var msg = "unable to initialize " + appletName + " \n " +e; 
-			if (this.debugMode) {
+			if (this.debugMode>=2) {
 				this.debug_add(msg);
 			} else {
 				alert(msg);
 			}
 		}
-		if (this.debugMode) {
+		if (this.debugMode>=2) {
 			alert("\nBegin debugmode\n " + debugText ); 
 			debugText="";
 		};
 	} else {
 		this.debug_add("Error: timed out waiting for applet " +appletName + " to load");
 		//alert("4 jsDebugMode " + jsDebugMode + " applet debugMode " +ww_applet.debugMode + " local debugMode " +debugMode);
-		if (this.debugMode) {
+		if (this.debugMode>=2) {
 			alert(" in safe applet " + debugText ); 
 			debugText="";
 		}
