@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.82 2009/02/04 03:15:51 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.83 2009/02/11 03:31:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -384,6 +384,7 @@ sub body {
 		
 			my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$tempCE);
 			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
+			$CIchecker->updateCourseDirectories();  #creates missing html_temp, mailmerge tmpEditFileDir directories;
 			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
 				CGI::code(
