@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.194 2008/06/25 15:33:39 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.195 2008/06/29 18:03:11 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -51,6 +51,7 @@ use Date::Format;
 use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::PG;
+use MIME::Base64;
 use WeBWorK::Template qw(template);
 
 use mod_perl;
@@ -1457,8 +1458,11 @@ sub feedbackMacro {
 	return "" unless $authz->hasPermissions($userID, "submit_feedback");
 	
 	my $feedbackURL = $r->ce->{courseURLs}{feedbackURL};
+	my $feedbackFormURL = $r->ce->{courseURLs}{feedbackFormURL};
 	if (defined $feedbackURL and $feedbackURL ne "") {
 		return $self->feedbackMacro_url($feedbackURL);
+	} elsif (defined $feedbackFormURL and $feedbackFormURL ne "") {
+		return $self->feedbackMacro_form($feedbackFormURL,%params);
 	} else {
 		return $self->feedbackMacro_email(%params);
 	}
@@ -1480,7 +1484,36 @@ sub feedbackMacro_email {
 	$result .= $self->hidden_authen_fields . "\n";
 	
 	while (my ($key, $value) = each %params) {
+	    next if $key eq 'pg_object';    # not used in internal feedback mechanism
 		$result .= CGI::hidden($key, $value) . "\n";
+	}
+	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -label=>$feedbackName));
+	$result .= CGI::endform() . "\n";
+	
+	return $result;
+}
+
+sub feedbackMacro_form {
+	my ($self, $feedbackFormURL, %params) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
+	
+	# feedback form url
+	my $feedbackName = $ce->{feedback_button_name} || "Email instructor";
+	
+	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
+	$result .= $self->hidden_authen_fields . "\n";
+	
+	while (my ($key, $value) = each %params) {
+	    if ($key eq 'pg_object') {
+	        my $tmp = $value->{body_text}; 
+	        $tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
+	        $result .= CGI::hidden($key, encode_base64($tmp, "") );
+	    } else {
+			$result .= CGI::hidden($key, $value) . "\n";
+		}
 	}
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -label=>$feedbackName));
 	$result .= CGI::endform() . "\n";
