@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.9 2009/03/22 18:31:38 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.10 2009/06/04 02:00:35 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -53,7 +53,7 @@ function submitAction()  {    // called from the submit button defined in Proble
 }
 
 function initializeAction() {  // deprecated call -- removed
-	alert("You might be using an old template (stored at webwork2/conf/templates). The <body> tag in the system.template calls a function 'initializeAction()' -- this function name should be replaced by 'initializeWWquestion()'. Please update to a recent version of system.template");
+	alert("You might be using an old template (stored at webwork2/conf/templates). The <body> tag in the system.template calls a function 'initializeAction()' instead of 'intializeWWquestion()'-- this function name should be replaced by 'initializeWWquestion()'. Please update to a recent version of system.template");
 	initializeWWquestion();
 }
 
