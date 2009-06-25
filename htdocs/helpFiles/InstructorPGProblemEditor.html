@@ -7,7 +7,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/htdocs/helpFiles/InstructorPGProblemEditor.html,v 1.3 2006/07/18 16:33:12 gage Exp $
+# $CVSHeader: webwork2/htdocs/helpFiles/InstructorPGProblemEditor.html,v 1.4 2007/08/13 22:59:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -29,7 +29,7 @@
 <h3>PG Problem Editor Help Page</h3>
 <blockquote>
 <p>
-This page allows to edit the contents of PG problem files (templates)
+This page allows one to edit the contents of PG problem files (templates)
 as well as set headers and other files.
 </p>
 <p>
@@ -41,8 +41,40 @@ have completely disappeared make sure that it is not hiding behind one of the ot
 <dl>
 		
 
-	<dt>| Manpages | macro list | pod docs | report problem bugs |</dt>
-		<dd>The first three links are to pages that give some information about writing problems: "Manpages" is an (incomplete) list of the most commonly used macros with a description of their parameters and how to use them; a complete list of macros is provided by the "macro list"; and details for many macros can be obtained using the "pod docs" link which links to documentation embedded in the macro files themselves.   If you find an error in a library problem please use the "Report problem bugs" link to notify us so that we can fix it.  You will need to register with an email address the first time you use bugzilla, but after that you will not. </dd>
+	<dt>| <a href="http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/">Manpages</a>
+	| <a href="http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile">
+			macro list</a>
+	| <a href="http://webwork.maa.org/wiki/Category:Authors">
+			authoring info and help</a> 
+	|  <a href="http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/">
+			testing lab</a>
+	| <a href="http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/">
+			pod docs</a>
+	| <a href="http://bugs.webwork.rochester.edu">Report problem bugs</a> 
+	|</dt>
+		<dd>The first five links are to pages that give some information about writing problems: 
+
+			<dl>
+			<dt><a href="http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/">Manpages</a></dt>
+				<dd>This links to an (incomplete) list of the most commonly used macros with a description of their parameters and how to use them; </dd>
+			<dt><a href="http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile">
+			macro list</a></dt>
+				<dd>This link provides a complete list of macros;</dd>
+
+			<dt><a href="http://webwork.maa.org/wiki/Category:Authors">
+			authoring info and help</a> </dt>
+				<dd>This link takes you to the authoring section of the WeBWorK wiki;</dd>
+			<dt><a href="http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/">
+			testing lab</a></dt>
+				<dd>This links to a WeBWorK "problem" which allows you to try out fragments of PG code.</dd>
+			<dt><a href="http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/">
+			pod docs</a></dt>
+				<dd>This link gives details for many macros. It links to documentation embedded in the macro files themselves;</dd>
+			<dt><a href="http://bugs.webwork.rochester.edu">Report problem bugs</a></dt>
+				<dd>If you find an error in a library problem please use the  link to notify us so that we can fix it.  You will need to register with an email address the first time you use bugzilla, but after that you will not. </dd>
+		   </dl>
+
+		</dd>
 	<dt>		The large text window</dt>
 		<dd>		This is where you edit the text of the problem template.  Nothing happens until you pick an action (below) and 
 		            click the "Take action!" button.</dd>
@@ -50,7 +82,7 @@ have completely disappeared make sure that it is not hiding behind one of the ot
 		
 <h4>Action items:</h4> <i>(If an action cannot be executed it will not appear as an action item.)
 </i>
-</dl>
+<dl>
 	<dt>		View using seed "12345" and display mode "image"</dt>
 		<dd>		Will bring up a window to show the results of your editing.  It does not change the permanent file on the disk. You can view
 		            different versions of the same problem by changing the seed (any number will do).  You can also change mannerin which the 
@@ -59,22 +91,23 @@ have completely disappeared make sure that it is not hiding behind one of the ot
 		<dd>		Add this problem as the last problem of an existing set, either as a problem or as the set header 
 		           (the text that appears on the home page of a homework set). You can rearrange the order of the problems later using 
 		            the "Hmwk Sets Editor"</dd>
-	<dt>		Create a copy at [TMPL]/"path"...</dt>
+	<dt>		Save as [TMPL]/"path"...</dt>
 		<dd>		Makes a new copy of the file you are editing at the location relative to the course's templates ([TMPL]) directory given by  "path".
-		            The checkbox allows you to replace the current problem with the new problem in the homework set. 
+		            The checkbox allows you to replace the current problem with the new problem in the current homework set. 
 		            <p> Check the checkbox if you want to edit the current problem without changing the original problem file.</p>
 		            <p> Leave the checkbox unchecked if you are using the current problem as a model for a brand new problem. You can add the
 		                new file to the homework set from the Library Browser.</p>
-		            <p>If the original problem could not be edited than you will have to change the path name
-		            before you will be allowed to save the problem. (Adding  "local/" to the beginning of the suggested path will work. All of your
-		            edited files will then appear in a subdirectory named "local". A new problem whose path ends in blankProblem.pg should be given
-		            a new name, for example, "myNewProblem.pg")</P.</dd>
+		            <p>If the original problem can not be edited than the path name
+		            must be changed in order to be allowed to save the problem. (Adding  "local/" to the beginning of the original path is the default solution. All locally created and 
+		            edited files will then appear in a subdirectory named "local". </p>
+		            <p>A new problem whose path ends in blankProblem.pg should be given a new name, for example, "myNewProblem.pg")</P></dd>
 	<dt>		Revert</dt>
 		<dd>		Reverts to the copy of the file saved on the disk -- all unsaved editing changes will be lost. 
 		            This option only appears when you have making
 		            provisional edits using the first option "View..." above</dd>
 	<dt>		Take action</dt>
-		<dd>		Executes the</dd> action item selected above. You can elect to have this action appear in a new window or not.
+		<dd>		Executes the action item selected above. You can elect to have the results of this action appear in a new window.
+		</dd>
 </dl>
 
 </blockquote>
