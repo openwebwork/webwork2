@@ -6,7 +6,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math2/system.template,v 1.1.2.3 2008/06/26 14:59:23 gage Exp $
+# $CVSHeader: webwork2/conf/templates/math2/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -28,7 +28,7 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white" onload="if (typeof(initializeAction) == 'function') {initializeAction()}">
+<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
 
 <div id="masthead">
 	<div id="loginstatus">
