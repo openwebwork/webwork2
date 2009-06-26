@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.83 2009/02/11 03:31:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.84 2009/06/04 01:36:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -599,9 +599,7 @@ sub add_course_validate {
 	my $add_initial_firstName            = trim_spaces( $r->param("add_initial_firstName") ) || "";
 	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
 	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
-	
 	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
-	
 	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
 	
