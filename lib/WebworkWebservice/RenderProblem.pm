@@ -42,7 +42,7 @@ our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
-our $HOSTURL      ="http://$HOST_NAME:8002"; #FIXME
+our $HOSTURL      ="http://$HOST_NAME:80"; 
 our $ce           =$WebworkWebservice::SeedCE;
 # create a local course environment for some course
     $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
