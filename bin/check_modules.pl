@@ -73,6 +73,7 @@ my @modulesList = qw(
 	PHP::Serialization
 	Pod::Usage
 	Safe
+	Scalar::Util
 	SOAP::Lite 
 	Socket
 	SQL::Abstract
