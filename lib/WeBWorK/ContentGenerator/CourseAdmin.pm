@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.84 2009/06/04 01:36:51 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.85 2009/06/26 00:44:27 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -376,6 +376,7 @@ sub body {
 		my @courseIDs = listCourses($ce);
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 			next if $courseID eq "admin"; # done already above
+			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
 			my $tempCE = new WeBWorK::CourseEnvironment({
 				%WeBWorK::SeedCE,
@@ -390,8 +391,8 @@ sub body {
 				CGI::code(
 					$tempCE->{dbLayoutName},
 				),
-				($courseID eq "modelCourse" or $directories_ok) ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
-				($courseID eq "modelCourse" or $tables_ok  ) ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
+				$directories_ok ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
+				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
 			
 			);
 			 
