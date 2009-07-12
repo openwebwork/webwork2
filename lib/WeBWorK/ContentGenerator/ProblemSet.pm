@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.90 2008/04/26 23:13:59 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.91 2008/10/09 02:18:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,10 +58,15 @@ sub initialize {
 	# get result and send to message
 	my $status_message = $r->param("status_message");
 	$self->addmessage(CGI::p("$status_message")) if $status_message;
-
+	
+	# $self->{invalidSet} is set by ContentGenerator.pm
+	return if $self->{invalidSet};
+	return unless defined($set);
+	
 	# Database fix (in case of undefined published values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
 	# make sure published is set to 0 or 1
+
 	if ($set->published ne "0" and $set->published ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
 		$globalSet->published("1");	# defaults to published
@@ -69,12 +74,11 @@ sub initialize {
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
 	
-	# $self->{invalidSet} is set by ContentGenerator.pm
-	return if $self->{invalidSet};
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
 	$self->addmessage(CGI::span("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $authz->hasPermissions($userName, "view_unpublished_sets");
+
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -131,32 +135,32 @@ sub siblings {
 				   $gs->assignment_type() !~ /gateway/} @setIDs;
 
 	} else {
-#		@setIDs    = grep {my $visible = $db->getGlobalSet( $_)->published; (defined($visible))? $visible : 1}
 		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-				   $gs->assignment_type() !~ /gateway/ && 
-				       ( defined($gs->published()) ? $gs->published() : 1 )}
-	                     @setIDs;
+				            $gs->assignment_type() !~ /gateway/ && 
+				            ( defined($gs->published()) ? $gs->published() : 1 )
+				           }   @setIDs;
 	}
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2("Sets");
-	#print CGI::start_ul({class=>"LinksMenu"});
-	#print CGI::start_li();
-	#print CGI::span({style=>"font-size:larger"}, "Homework Sets");
 	print CGI::start_ul();
 
-	# FIXME: setIDs contain no info on published/unpublished so unpublished sets are still printed
-	debug("Begin printing sets from listUserSets()");
+		debug("Begin printing sets from listUserSets()");
 	foreach my $setID (@setIDs) {
 		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
 			courseID => $courseID, setID => $setID);
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
-		print CGI::li(CGI::a({title=>$pretty_set_id, href=>$self->systemLink($setPage),
-		                            params=>{  displayMode => $self->{displayMode}, 
-									    showOldAnswers => $self->{will}->{showOldAnswers}
-									}}, $pretty_set_id)
-	    ) ;
+		print CGI::li(
+			     CGI::a({  href=>$self->systemLink($setPage,
+			                params=>{
+								displayMode    => $self->{displayMode}, 
+								showOldAnswers => $self->{will}->{showOldAnswers},
+							},
+					    ),
+					    id=>$pretty_set_id,
+			          }, $pretty_set_id)
+	          ) ;
 	}
 	debug("End printing sets from listUserSets()");
 
