@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.81 2008/05/23 14:54:45 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.82 2008/10/09 02:18:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -62,11 +62,13 @@ our @EXPORT_OK = qw(
 	encodeAnswers
 	fisher_yates_shuffle
 	formatDateTime
+	has_aux_files
 	intDateTime
 	list2hash
 	listFilesRecursive
 	makeTempDirectory
 	max
+	not_blank
 	parseDateTime
 	path_is_subdir
 	pretty_print_rh
@@ -895,6 +897,7 @@ sub undefstr($@) {
 	map { defined $_ ? $_ : $_[0] } @_[1..$#_];
 }
 
+
 # shuffle an array in place
 # Perl Cookbook, Recipe 4.17. Randomizing an Array
 sub fisher_yates_shuffle {
@@ -1000,6 +1003,30 @@ sub sortByName($@) {
 	return map{$itemsByIndex{$_}} @sKeys;
 }
 
+################################################################################
+# Validate strings and labels
+################################################################################
 
+sub not_blank ($) {     # check that a string exists and is not blank
+	my $str = shift;
+	return( defined($str) and $str =~/\S/ );
+}
+
+###########################################################
+    # If things have worked so far determine if the file might be accompanied by auxiliary files
+    
+    #
+sub has_aux_files ($) { #  determine whether a question has auxiliary files
+                        # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
+    my $path = shift;
+    if ( not_blank($path) ) {
+    	    my ($dir, $prob) = $path =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
+			return 1 if (defined($dir) and defined ($prob) and $dir eq $prob);
+    } else {
+    	warn "This subroutine cannot handle empty paths: |$path|",caller();
+    }
+    return 0;    # no aux files with this .pg file
+
+}
 
 1;
