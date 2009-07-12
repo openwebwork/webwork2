@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.94 2008/11/19 16:49:20 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.95 2009/02/12 20:04:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,9 +32,11 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
 use HTML::Entities;
 use URI::Escape;
-use WeBWorK::Utils;
+use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+
+
 
 ###########################################################
 # This editor will edit problem files or set header files or files, such as course_info
@@ -186,7 +188,7 @@ sub pre_header_initialize {
 	# inside saveFileChanges
 	$self->{problemSeed} = $r->param('problemSeed') if (defined $r->param('problemSeed'));	
 	# Make sure that the problem seed has some value
-	$self->{problemSeed} = '123456' unless defined $self->{problemSeed} and $self->{problemSeed} =~/\S/;
+	$self->{problemSeed} = '123456' unless not_blank($self->{problemSeed});
 	
 	##############################################################################
     #############################################################################
@@ -211,7 +213,7 @@ sub pre_header_initialize {
 	#
 	# If this has not been defined we are  dealing with a set header
 	# or regular problem
-	if (defined($file_type) and ($file_type =~/\S/)) { #file_type is defined and is not blank
+	if ( not_blank($file_type) ) { #file_type is defined and is not blank
 		# file type is already defined -- do nothing
 		#warn "file type already defined as $file_type"  #FIXME debug
 	} else {
@@ -222,7 +224,7 @@ sub pre_header_initialize {
 		# to the screen.
 		# If the problem number is not zero, we are dealing with a real problem
 		######################################
-		if ( defined($r->param('sourceFilePath') and $r->param('sourceFilePath') =~/\S/) ) {
+		if ( not_blank($r->param('sourceFilePath') )  ) {
 			$file_type ='source_path_for_problem_file';
 			$file_type = 'set_header' if $r->param('sourceFilePath') =~ m!/headers/|Header\.pg$!; #FIXME this need to be cleaned up
 		} elsif ( defined($problemNumber) ) {
@@ -236,7 +238,7 @@ sub pre_header_initialize {
 			           
 		}
 	}
-	die "The file_type variable has not been defined or is blank." unless defined($file_type) and $file_type =~/\S/;
+	die "The file_type variable |$file_type| has not been defined or is blank." unless not_blank($file_type);
 	# clean up sourceFilePath, just in case
 	# double check that sourceFilePath is relative to the templates file
 	if ($file_type eq 'source_path_for_problem_file' ) {	
@@ -326,7 +328,7 @@ sub pre_header_initialize {
 	# inside saveFileChanges
 	$self->{problemSeed} = $r->param('problemSeed') if (defined $r->param('problemSeed'));	
 	# Make sure that the problem seed has some value
-	$self->{problemSeed} = '123456' unless defined $self->{problemSeed} and $self->{problemSeed} =~/\S/;
+	$self->{problemSeed} = '123456' unless not_blank( $self->{problemSeed});
 	
 	##############################################################################
 	# Return 
@@ -460,12 +462,12 @@ sub body {
 
 # 	$editFilePath =~ m|([^/]*)Library|;    #find the path to the file
 # 	my $libraryName = $1;                  # find the library, if any exists in the path name (first library is picked)
-# 	$libraryName ='rochester' unless defined($libraryName) and $libraryName =~/\S/; # default library
+# 	$libraryName ='rochester' unless not_blank($libraryName) ; # default library
 	my $libraryName = '';
 	if ($editFilePath =~ m|([^/]*)Library|)   {  #find the path to the file
 		# find the library, if any exists in the path name (first library is picked)
 		my $tempLibraryName = $1;
-		$libraryName = ( defined($tempLibraryName) and $tempLibraryName =~/\S/ ) ? 
+		$libraryName = ( not_blank($tempLibraryName) ) ? 
 		                $tempLibraryName : "Library"; 
 		# things that start /Library/setFoo/probBar  are labeled as component "Library"
 		# which refers to the SQL based problem library. (is nationalLibrary a better name?)
@@ -538,7 +540,7 @@ sub body {
 	my $uri             = $r->uri;
 	my $edit_level      = $r->param('edit_level') || 0;
 	
-	my $force_field = (defined($self->{sourceFilePath}) and $self->{sourceFilePath} ne "") ?
+	my $force_field = (not_blank( $self->{sourceFilePath}) ) ? # path is  a non-blank string
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$self->{sourceFilePath}) : '';
 
@@ -919,7 +921,7 @@ sub getFilePaths {
 		      $self->addgoodmessage("the original path to the file is $forcedSourceFile");  #FIXME debug
 		  }
 		  # bail if no source path for the problem is found ;
-		  die "Cannot find a file path to save to" unless( defined($forcedSourceFile) and ($forcedSourceFile =~ /\S/)  );
+		  die "Cannot find a file path to save to" unless( not_blank($forcedSourceFile)   );
 		  $self->{problemSeed} = 1234;
 		  $editFilePath .= '/' . $forcedSourceFile;
 		  last CASE;
@@ -968,14 +970,14 @@ sub saveFileChanges {
  	my $r             = $self->r;
  	my $ce            = $r->ce;
 
-	my $action        = $self->{action}||'no action';
+	my $action          = $self->{action}||'no action';
 	# my $editFilePath  = $self->{editFilePath}; # not used??
-	my $sourceFilePath = $self->{sourceFilePath};
-	my $tempFilePath  = $self->{tempFilePath}; 	
+	my $sourceFilePath  = $self->{sourceFilePath};
+	my $tempFilePath    = $self->{tempFilePath}; 	
 	
 	if (defined($problemContents) and ref($problemContents) ) {
 		$problemContents = ${$problemContents};
-	} elsif( not defined($problemContents) or $problemContents =~/\S/ ) {
+	} elsif( ! not_blank($problemContents)  ) {      # if the problemContents is undefined or empty
 		$problemContents = ${$self->{r_problemContents}};
 	}
 	##############################################################################
@@ -985,7 +987,7 @@ sub saveFileChanges {
 	##############################################################################
 	
 
-    unless (defined($outputFilePath) and $outputFilePath =~/\S/ ) {
+    unless (not_blank($outputFilePath) ) {
     	$self->addbadmessage("You must specify an file name in order to save a new file.");
     	return "";
     }
@@ -999,7 +1001,7 @@ sub saveFileChanges {
 	##############################################################################
    
 	my $writeFileErrors;
-	if ( defined($outputFilePath) and $outputFilePath =~/\S/  ) {   # save file
+	if ( not_blank($outputFilePath)  ) {   # save file
 	    # Handle the problem of line endings.  
 		# Make sure that all of the line endings are of unix type.  
 		# Convert \r\n to \n
@@ -1060,12 +1062,8 @@ sub saveFileChanges {
     # If things have worked so far determine if the file might be accompanied by auxiliary files
     # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
     #
-    my $auxiliaryFilesExist = 0;
-    if (defined($outputFilePath) and $outputFilePath) {
-    	    my ($dir, $prob) = $outputFilePath =~ m|([^/]+)/([^/]+)\.pg$|;  # must be a problem file ending in .pg
-			$auxiliaryFilesExist = 1 if (defined($dir) and defined ($prob) and $dir eq $prob);
-    }
-    
+    my $auxiliaryFilesExist = has_aux_files($outputFilePath);
+
     if ($auxiliaryFilesExist and not $do_not_save ) {
         my $sourceDirectory = $sourceFilePath;
     	my $outputDirectory = $outputFilePath;
@@ -1086,7 +1084,7 @@ sub saveFileChanges {
 				#warn "copied from $fromPath to $toPath";
 				#warn "files are different ",system("diff $fromPath $toPath");
         	}
-        	$self->addbadmessage($writeFileErrors) if defined($writeFileErrors) and $writeFileErrors;
+        	$self->addbadmessage($writeFileErrors) if not_blank($writeFileErrors);
         	
 
         }
@@ -1215,8 +1213,7 @@ sub view_handler {
 		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
 			courseID => $courseName, setID => "Undefined_Set");
-			# courseID => $courseName, setID => $fullSetName);
-		} else {
+		}  else {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
 									courseID => $courseName, setID => $setName, problemID => $problemNumber
 			);
@@ -1573,43 +1570,42 @@ sub save_handler {
 
 
 
-sub make_local_copy_form {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
-	#warn "editFilePath $editFilePath inputFilePath",$self->{inputFilePath};
-	return "" unless -e $editFilePath;
-	return "" if -w $editFilePath;
-	return "" unless    $self->{file_type} eq 'problem'           # need problem structure to make local copy in most cases
-			 or $self->{file_type} eq 'blank_problem'   # $editFilePath eq  $self->r->cr->{webworkFiles}{screenSnippets}{blankProblem}
-	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of screen header
-	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of hardcopy header
-	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy -- can't be done in this case.
-	# make sure setID is well defined before allowing local copy
-	my $setID         = $self->{setID};
-	my $probNum       = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
-	return "" unless defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set';
-	
-	return join ("",
-		"Save local editable copy as: [TMPL]/".($self->determineLocalFilePath($editFilePath)).CGI::br()." and use in ".CGI::b("set $setID$probNum"),
-		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>$self->determineLocalFilePath($editFilePath) ),
-		CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$editFilePath ),
-		CGI::hidden(-name=>'action.make_local_copy.file_type',-value=>$self->{file_type}),
-		CGI::hidden(-name=>'action.make_local_copy.saveMode',-value=>'rename')
-	);
-
-}
-
-
-sub make_local_copy_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	foreach my $key (qw(target_file file_type saveMode source_file)) {
-		$actionParams->{"action.save_as.$key"}->[0] = $actionParams->{"action.make_local_copy.$key"}->[0];
-		#warn "action.make_local_copy.$key", @{$actionParams->{"action.make_local_copy.$key"}}
-	}
-  	save_as_handler($self, $genericParams, $actionParams, $tableParams);
-
-
-}
+# sub make_local_copy_form {
+# 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+# 	my $editFilePath    = $self->{editFilePath}; # path to the permanent file to be edited
+# 	#warn "editFilePath $editFilePath inputFilePath",$self->{inputFilePath};
+# 	return "" unless -e $editFilePath;
+# 	return "" if -w $editFilePath;
+# 	return "" unless    $self->{file_type} eq 'problem'           # need problem structure to make local copy in most cases
+# 			 or $self->{file_type} eq 'blank_problem'   # $editFilePath eq  $self->r->cr->{webworkFiles}{screenSnippets}{blankProblem}
+# 	                 or $self->{file_type} eq 'set_header'      # $editFilePath eq  $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}   # special case to make copy of screen header
+# 	                 or $self->{file_type} eq 'hardcopy_header';  #  $editFilePath eq  $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader}   ;  # special case to make copy of hardcopy header
+# 	                 #  or $self->{file_type} eq 'source_path_for_problem_file'; # need setID and problemID to make local copy -- can't be done in this case.
+# 	# make sure setID is well defined before allowing local copy
+# 	my $setID         = $self->{setID};
+# 	my $probNum       = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
+# 	return "" unless not_blank($setID) && $setID ne 'Undefined_Set';
+# 	
+# 	return join ("",
+# 		"Save local editable copy as: [TMPL]/".($self->determineLocalFilePath($editFilePath)).CGI::br()." and use in ".CGI::b("set $setID$probNum"),
+# 		CGI::hidden(-name=>'action.make_local_copy.target_file', -value=>$self->determineLocalFilePath($editFilePath) ),
+# 		CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$editFilePath ),
+# 		CGI::hidden(-name=>'action.make_local_copy.file_type',-value=>$self->{file_type}),
+# 		CGI::hidden(-name=>'action.make_local_copy.saveMode',-value=>'rename')
+# 	);
+# }
+# 
+# 
+# sub make_local_copy_handler {
+# 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+# 	foreach my $key (qw(target_file file_type saveMode source_file)) {
+# 		$actionParams->{"action.save_as.$key"}->[0] = $actionParams->{"action.make_local_copy.$key"}->[0];
+# 		#warn "action.make_local_copy.$key", @{$actionParams->{"action.make_local_copy.$key"}}
+# 	}
+#   	save_as_handler($self, $genericParams, $actionParams, $tableParams);
+# 
+# 
+# }
 sub save_as_form {  # calls the save_as_handler 
 	my ($self, $onChange, %actionParams) = @_;
 	my $editFilePath  = $self->{editFilePath};
@@ -1623,39 +1619,66 @@ sub save_as_form {  # calls the save_as_handler
 	
 	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
-	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
+	$shortFilePath   =  'local/'.$shortFilePath unless( $shortFilePath =~m|^local/|);  # suggest that modifications be saved to the "local" subdirectory
+	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
-### --- old menu-based apparoach ---
-#	my $allowedActions = (defined($setID) && $setID =~/\S/ && $setID ne 'Undefined_Set') ? ['save_a_copy','rename' ] : ['save_a_copy'];
-
-#	return CGI::popup_menu(
-#			       -name=>'action.save_as.saveMode', -values=>$allowedActions, 
-#			       -default=>'rename',-labels=>{save_a_copy=>'Create a copy of file at ', rename=>'Rename file path to'},
-#			       -onmousedown=>$onChange
-#			      ). " [TMPL]/".
-###
 
 	my $probNum = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
 	my $andRelink = '';
-	$andRelink = CGI::br().' and '.CGI::checkbox(
-				-name => "action.save_as.saveMode",
-				-value => "rename",
-				-label => "",
-				-checked => 1,
-				-onclick=>$onChange
-				).
-		     " use in ".CGI::b("set $fullSetID$probNum")
-		         if defined($setID) && $setID =~ m/\S/ && $setID ne 'Undefined_Set' &&
-			    $self->{file_type} ne 'blank_problem';
+# 	$andRelink = CGI::br().' and '.CGI::checkbox(
+# 				-name => "action.save_as.saveMode",
+# 				-value => "rename",
+# 				-label => "",
+# 				-checked => 1,
+# 				-onclick=>$onChange
+# 				).
+# 		     " use in ".CGI::b("set $fullSetID$probNum")
+# 		         if not_blank($setID)  && $setID ne 'Undefined_Set' &&
+# 			    $self->{file_type} ne 'blank_problem';
+
+    my $can_add_problem_to_set = not_blank($setID)  && $setID ne 'Undefined_Set' && $self->{file_type} ne 'blank_problem';
+    # don't addor replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
+    
+    my $replace_problem_in_set  = ($can_add_problem_to_set)?
+			 CGI::input({
+    			 -type      => 'radio',
+    			 -name      => "action.save_as.saveMode",
+    			 -value     => "rename",
+    			 -label     => '',
+			 },"and replace ".CGI::b("set $fullSetID$probNum").',')  : ''
+    ;
+    my $add_problem_to_set      = ($can_add_problem_to_set)?
+             CGI::input({
+    			 -type      => 'radio',
+    			 -name      => "action.save_as.saveMode",
+    			 -value     => 'add_to_set_as_new_problem',
+    			 -label     => '',
+    			 -onfocus   => $onChange,
+    		 },"and append to end of set $fullSetID",) : ''
+    ;  
+    my $rh_new_problem_options = {
+    			 -type      => 'radio',
+    			 -name      => "action.save_as.saveMode",
+    			 -value     => "new_independent_problem.",
+    			 -onfocus   => $onChange,
+    			 };
+    $rh_new_problem_options->{checked}=1 unless $can_add_problem_to_set;
+    my $create_new_problem       = CGI::input($rh_new_problem_options,"as a new independent problem");
+    
+    $andRelink = CGI::br(). $replace_problem_in_set . $add_problem_to_set . $create_new_problem;
+    			 
 	return 'Save as [TMPL]/'.
 	        CGI::textfield(
-			       -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  #FIXME -- you might not be able to save to this default filepath
+			       -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
 			       -onfocus=>$onChange
-			      ).
+			      ).",".
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
 			CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}).
 			$andRelink;
 }
+# suggestions for improvement
+# save as ......
+# ¥replacing foobar (rename) ¥ and add to set (add_new_problem) ¥ as an independent file (new_independent_problem)
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
@@ -1670,7 +1693,7 @@ sub save_as_handler {
 	my $effectiveUserName = $self->r->param('effectiveUser');
 	
 	my $do_not_save = 0;
-	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'save_a_copy';
+	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'no_save_mode_selected';
 	my $new_file_name  = $actionParams->{'action.save_as.target_file'}->[0] || '';
 	my $sourceFilePath = $actionParams->{'action.save_as.source_file'}->[0] || '';
 	my $file_type      = $actionParams->{'action.save_as.file_type'}->[0] || '';
@@ -1760,7 +1783,16 @@ sub save_as_handler {
 					$self->addbadmessage("Unable to change the source file path for set $fullSetName, problem $problemNumber. Unknown error.");
 				}
 			}
-		} elsif ($saveMode eq 'save_a_copy') {
+		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+			my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+			my $problemRecord  = $self->addProblemToSet(
+					   setName        => $setName,
+					   sourceFile     => $new_file_name, 
+					   problemID      => $targetProblemNumber, #added to end of set
+			);
+			$self->assignProblemToAllSetUsers($problemRecord);
+			$self->addgoodmessage("Added $new_file_name to ". $setName. " as problem $targetProblemNumber") ;
+		} elsif ($saveMode eq 'new_independent_problem') {
 		#################################################
 		# Don't modify source file path in problem -- just report 
 		#################################################
@@ -1782,7 +1814,8 @@ sub save_as_handler {
 	#################################################
 	my $problemPage;
 	my $new_file_type;
-	if ($saveMode eq 'save_a_copy' ) {
+
+	if ($saveMode eq 'new_independent_problem' ) {
 		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
 		);
@@ -1792,9 +1825,15 @@ sub save_as_handler {
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		$new_file_type = $file_type;
+	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+			courseID => $courseName, setID => $setName, problemID => $problemNumber
+		);
+		$new_file_type = $file_type;
 	} else {
-		$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
-		die "Don't recognize saveMode: |$saveMode|. Unknown error."
+		$self->addbadmessage(" Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |$saveMode|.");
+		# can't continue since paths have not been properly defined.
+		return "";
 	}
 
 	#warn "save mode is $saveMode";
@@ -1813,7 +1852,7 @@ sub save_as_handler {
 	);
 	
 	$self->reply_with_redirect($viewURL);
-return "";  # no redirect needed
+    return "";  # no redirect needed
 }
 sub revert_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -1840,124 +1879,6 @@ sub revert_handler {
 	# no redirect is needed
 }
 
-
-
-
-# sub make_local_copy_handler {
-# 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-# 	#$self->addgoodmessage("make_local_copy_handler called");
-# 
-# 	my $courseName      =  $self->{courseID};
-# 	my $setName         =  $self->{setID};
-# 	my $problemNumber   =  $self->{problemID};
-# 
-# 	my $displayMode     =  $self->{displayMode};
-# 	my $problemSeed     =  $self->{problemSeed};	
-# 	my $do_not_save     = 0;   #error flag
-# 
-# 	my $new_file_name = $actionParams->{'action.make_local_copy.target_file'}->[0] || '';
-# 	my $sourceFilePath = $actionParams->{'action.make_local_copy.source_file'}->[0] || ''; 
-# 	my $file_type      = $actionParams->{'action.make_local_copy.file_type'}->[0] ||'';
-# 	
-# 	my $templatesPath         =  $self->r->ce->{courseDirs}->{templates};
-# 	$sourceFilePath    =~ s|^$templatesPath/||; # make sure path relative to templates directory
-# 
-# 	if ( $new_file_name !~ /\S/) { # need a non-blank file name
-# 		# setting $self->{failure} stops saving and any redirects
-# 		$do_not_save = 1;
-# 		#warn "new file name is $new_file_name";
-# 		$self->addbadmessage(CGI::p("Error: File to save to not specified."));
-# 	}
-# 	
-# 	#################################################
-# 	# grab the problemContents from the form in order to save it to a new permanent file
-# 	# later we will unlink (delete) the current temporary file
-# 	#################################################
-# 
-# 	my $problemContents = fixProblemContents($self->r->param('problemContents'));
-# 	$self->{r_problemContents} = \$problemContents;
-# 	warn "problem contents is empty" unless $problemContents;
-# 	#################################################
-# 	# Construct the output file path
-# 	#################################################
-# 	my $outputFilePath = $self->r->ce->{courseDirs}->{templates} . '/' . 
-# 								 $new_file_name; 		
-# 	if (defined $outputFilePath and -e $outputFilePath) {
-# 		# setting $do_not_save stops saving and any redirects
-# 		$do_not_save = 1;
-# 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
-# 		File not saved. No changes have been made.
-# 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
-# 	} else {
-# 		#$self->addgoodmessage("Saving to file '".$self->shortPath($outputFilePath)."'.");
-# 	}
-# 
-# 	unless ($do_not_save ) {
-# 		$self->saveFileChanges($outputFilePath);	
-# 		#################################################
-# 		# Modify source file in problem
-# 		#################################################
-# 			if ($file_type eq 'set_header') {
-# 				my $setRecord = $self->r->db->getGlobalSet($setName);
-# 				$setRecord->set_header($new_file_name);
-# 				if ($self->r->db->putGlobalSet($setRecord)) {
-# 				  $self->addgoodmessage("The set header for set $setName has been renamed to '".$self->shortPath($outputFilePath)."'.") ;
-# 				} else {
-# 				  $self->addbadmessage("Unable to change the header for set $setName. Unknown error.");
-# 				}
-# 			} else {
-# 				my $problemRecord = $self->r->db->getGlobalProblem($setName,$problemNumber);
-# 				$problemRecord->source_file($new_file_name);
-# 				if  ( $self->r->db->putGlobalProblem($problemRecord)  ) {
-# 					$self->addgoodmessage("The current source file for problem $problemNumber has been renamed to '".$self->shortPath($outputFilePath)."'.") ;
-# 				} else {
-# 					$self->addbadmessage("Unable to change the source file path for set $setName, problem $problemNumber. Unknown error.");
-# 				}
-# 			}
-# 
-# 	}
-# 	my $edit_level = $self->r->param("edit_level") || 0;
-# 	$edit_level++;
-# 	#################################################
-# 	# Set up redirect
-# 	#################################################
-# 
-# 	my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
-# 		courseID => $courseName, setID => $setName, problemID => $problemNumber
-# 	);
-# 	my $viewURL = $self->systemLink($problemPage, 
-# 								 params=>{
-# 									 sourceFilePath     => $new_file_name, 
-# 									 edit_level         => $edit_level,
-# 									 file_type          => $self->{file_type},
-# 									 status_message     => uri_escape($self->{status_message})
-# 
-# 								 }
-# 	);
-# 	$self->reply_with_redirect($viewURL);
-# }
-
-# sub rename_form {  # see the save_as form
-# # 	my ($self, $onChange, %actionParams) = @_;
-# # 	my $problemPath = $self->{editFilePath};
-# # 	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
-# # 	#warn "problemPath $problemPath $templatesDir";
-# # 	$problemPath   =~ s|^$templatesDir/||;
-# # 	$problemPath  = '' if $problemPath =~ m|^/|;  # if it is still an absolute path don't suggest that you save to it.
-# # 	$self->addbadmessage("problem Path is $problemPath");
-# # 	return join("",
-# # 	       "Rename problem file to : [TMPL]/".CGI::textfield(-name=>'action.rename.target_file', -size=>40, -value=>$problemPath),
-# # 	       	CGI::hidden(-name=>'action.make_local_copy.source_file', -value=>$self->{editFilePath} ),
-# # 	);
-# 
-# 
-# }
-
-# sub rename_handler {
-#     my ($self, $genericParams, $actionParams, $tableParams) = @_;
-#     $actionParams->{'action.make_local_copy.target_file'}->[0] = $actionParams->{'action.rename.target_file'}->[0];
-# 	make_local_copy_handler($self, $genericParams, $actionParams, $tableParams);
-# }
 
 
 
