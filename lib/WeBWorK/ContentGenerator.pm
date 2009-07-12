@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.195 2008/06/29 18:03:11 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -590,7 +590,10 @@ sub links {
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 		
-		defined $text or $text = $new_urlpath->name;
+		defined $text or $text = $new_urlpath->name;  #too clever
+		
+		my $id = $text;
+		$id =~ s/\W/\_/g; 
 		#$text = sp2nbsp($text); # ugly hack to prevent text from wrapping
 		
 		# try to set $active automatically by comparing 
@@ -615,9 +618,9 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add <strong> for old browsers
-			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, class=>"active", %target}, $text));
+			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text));
 		} else {
-			$new_anchor = CGI::a({href=>$new_systemlink, %target}, $text);
+			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, %target}, "$text");
 		}
 		
 		return $new_anchor;
@@ -1289,9 +1292,11 @@ sub siblingsMacro {
 	while (@siblings) {
 		my $name = shift @siblings;
 		my $url = shift @siblings;
+		my $id = $name;
+		$id =~ s/\W/\_/g;
 		push @result, $url
-			? CGI::a({-href=>"$url?$auth"}, $name)
-			: $name;
+			? CGI::span( {id=>$id}, CGI::a({-href=>"$url?$auth"}, $name) )
+			: CGI::span( {id=>$id},$name );
 	}
 	
 	return join($sep, @result) . "\n";
