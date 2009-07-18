@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.216 2009/01/14 13:39:47 dpvc Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.217 2009/06/04 01:34:53 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -610,6 +610,7 @@ sub pre_header_initialize {
 			refreshMath2img => $will{showHints} || $will{showSolutions},
 			processAnswers  => 1,
 			permissionLevel => $db->getPermissionLevel($userName)->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 		},
 	);
 

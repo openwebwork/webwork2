@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.74 2008/06/21 16:33:53 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.75 2008/10/09 02:18:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -118,7 +118,9 @@ sub defineProblemEnvir {
 	$envir{studentLogin}     = $user->user_id;
 	$envir{studentName}      = $user->first_name . " " . $user->last_name;
 	$envir{studentID}        = $user->student_id;
-	$envir{permissionLevel}  = $options->{permissionLevel};
+	$envir{permissionLevel}  = $options->{permissionLevel};  # permission level of actual user
+	$envir{effectivePermissionLevel}  = $options->{effectivePermissionLevel}; # permission level of user assigned to this question
+	
 	
 	# Answer Information
 	# REMOVED: refSubmittedAnswers
