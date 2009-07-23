@@ -506,6 +506,24 @@ sub body {
 		$i++;
 	}
 	
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all sets',
+	       onClick => "for (i in document.problemsetlist.elements)  { 
+	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
+	                           document.problemsetlist.elements[i].checked = true
+	                       }
+	                    }" });
+   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all sets',
+	       onClick => "for (i in document.problemsetlist.elements)  { 
+	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
+	                          document.problemsetlist.elements[i].checked = false
+	                       }
+	                    }" });
+	unless ($editMode or $exportMode) {
+		print CGI::Tr({}, CGI::td({ colspan=>2, -align=>"center"},
+			$selectAll." ". $selectNone
+			)
+		);
+	}
 	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
 		CGI::submit(-value=>"Take Action!"))
 	);
