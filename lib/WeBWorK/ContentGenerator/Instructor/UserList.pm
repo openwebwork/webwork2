@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.91 2007/04/04 15:05:27 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.92 2007/08/13 22:59:56 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -530,9 +530,27 @@ sub body {
 		
 		$i++;
 	}
-	
-	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
-		CGI::submit(-value=>"Take Action!"))
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all users',
+	       onClick => "for (i in document.userlist.elements)  { 
+	                       if (document.userlist.elements[i].name =='selected_users') { 
+	                           document.userlist.elements[i].checked = true
+	                       }
+	                    }" });
+   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all users',
+	       onClick => "for (i in document.userlist.elements)  { 
+	                       if (document.userlist.elements[i].name =='selected_users') { 
+	                          document.userlist.elements[i].checked = false
+	                       }
+	                    }" });
+	unless ($editMode or $passwordMode) {
+		print CGI::Tr({}, CGI::td({ colspan=>2, -align=>"center"},
+			$selectAll." ". $selectNone
+			)
+		);
+	}
+	print CGI::Tr({}, CGI::td({ colspan=>2, -align=>"center"},
+		CGI::submit(-value=>"Take Action!") 
+		)
 	);
 	print CGI::end_table();
 	
@@ -804,6 +822,8 @@ sub sort_handler {
 	
 	return "Users sorted by $names{$primary}, then by $names{$secondary}, then by $names{$ternary}.";
 }
+
+
 
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
