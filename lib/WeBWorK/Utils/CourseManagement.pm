@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.45 2009/01/25 15:32:13 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.46 2009/02/02 03:18:10 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -256,8 +256,8 @@ sub addCourse {
 	if (exists $options{templatesFrom}) {
 		my $sourceCourse = $options{templatesFrom};
 		my $sourceCE = new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $sourceCourse,
+			get_SeedCE($ce),
+			courseName => $sourceCourse,        # override courseName
 		});
 		my $sourceDir = $sourceCE->{courseDirs}->{templates};
 		
@@ -714,7 +714,7 @@ sub unarchiveCourse {
 	##### step 3: read the course environment for this course #####
 	
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
+		get_SeedCE($ce),
 		courseName => $currCourseID,
 	});
 	
@@ -784,7 +784,7 @@ sub _unarchiveCourse_move_away {
 	
 	# course environment for before the course is moved
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
+		get_SeedCE($ce),
 		courseName => $courseID,
 	});
 	
@@ -803,7 +803,7 @@ sub _unarchiveCourse_move_away {
 	
 	# course environment for after the course is moved
 	my $ce3 = new WeBWorK::CourseEnvironment({
-		%WeBWorK::SeedCE,
+		get_SeedCE($ce),
 		courseName => $tmpCourseID,
 	});
 	
@@ -1168,6 +1168,14 @@ EOF
 }
 
 
-
-
+sub get_SeedCE {
+	my $ce = shift;
+	warn "get_SeedCE needs current Course environment to create seed CE" unless ref($ce) ;
+	my %seedCE=();
+	my @conf_items = qw( webwork_dir webwork_url pg_dir courseName)   ;
+	foreach my $item (@conf_items) {
+			$seedCE{$item} = $ce->{$item};
+	}
+    return( %seedCE);
+}
 1;
