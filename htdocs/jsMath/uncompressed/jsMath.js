@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.6b",  // change this if you edit the file, but don't edit this file
+  version: "3.6c",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -93,7 +93,8 @@ window.jsMath = {
       'font-style':  'normal',
       'font-weight': 'normal',
       'line-height': 'normal',
-      'text-indent': '0px'
+      'text-indent': '0px',
+      'white-space': 'normal'
     },
     
     '.typeset .normal': {       // \hbox contents style
@@ -403,7 +404,7 @@ window.jsMath = {
     var em = this.BBoxFor('<span style="'+jsMath.Browser.block+';width:27em;height:1em"></span>').w/27;
     if (em > 0) {return em}
     // handle older browsers
-    return this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em"/>').w/13;
+    return this.BBoxFor('<img src="'+jsMath.blank+'" style="width:13em;height:1em" />').w/13;
   },
   
   /*
@@ -411,7 +412,7 @@ window.jsMath = {
    */
   Loaded: function () {
     if (jsMath_old) {
-      var override = ['Process', 'ProcessBeforeShowing',
+      var override = ['Process', 'ProcessBeforeShowing','ProcessElement',
         'ConvertTeX','ConvertTeX2','ConvertLaTeX','ConvertCustom',
         'CustomSearch', 'Synchronize', 'Macro', 'document'];
       for (var i = 0; i < override.length; i++) {
@@ -492,7 +493,7 @@ jsMath.Global = {
      */
     Register: function () {
       var parent = jsMath.window.parent;
-      if (!jsMath.isCHMode)
+      if (!jsMath.isCHMmode)
         {jsMath.isCHMmode = (jsMath.window.location.protocol == 'mk:')}
       try {
         if (!jsMath.isCHMmode) this.Domain();
@@ -504,12 +505,17 @@ jsMath.Global = {
     /*
      *  If we're not the parent window, try to set the domain to
      *  match the parent's domain (so we can use the Global data
-     *  if the surrounding frame is a Global frame.
+     *  if the surrounding frame is a Global frame).
      */
     Domain: function () {
       // MSIE/Mac can't do domain changes, so don't bother trying
       if (navigator.appName == 'Microsoft Internet Explorer' &&
           jsMath.platform == 'mac' && navigator.userProfile != null) return;
+      // MSIE/PC can do domain change, but gets mixed up if we don't
+      //  find a domain that works, and then can't look in window.location
+      //  any longer.  So don't try, since we can't afford to leave it confused.
+      if (jsMath.document.all && !jsMath.window.opera) return;
+
       if (window == parent) return;
       var oldDomain = jsMath.document.domain;
       try {
@@ -609,15 +615,15 @@ jsMath.Script = {
     } catch (err) {
       this.blocking = 0;
       if (jsMath.Translate.restart && jsMath.Translate.asynchronous) {return ""}
-      throw "jsMath can't load the file '"+url+"'\n"
-          + "Message: "+err.message;
+      throw Error("jsMath can't load the file '"+url+"'\n"
+          + "Message: "+err.message);
     }
     if (this.request.status != null && (this.request.status >= 400 || this.request.status < 0)) {
       // Do we need to deal with redirected links?
       this.blocking = 0;
       if (jsMath.Translate.restart && jsMath.Translate.asynchronous) {return ""}
-      throw "jsMath can't load the file '"+url+"'\n"
-          + "Error status: "+this.request.status;
+      throw Error("jsMath can't load the file '"+url+"'\n"
+          + "Error status: "+this.request.status);
     }
     if (!url.match(/\.js$/)) {return(this.request.responseText)}
     var tmpQueue = this.queue; this.queue = [];
@@ -811,8 +817,8 @@ jsMath.Post = {
     if (event.source != jsMath.Post.window) return;
     var domain = event.origin.replace(/^file:\/\//,'');
     var ddomain = document.domain.replace(/^file:\/\//,'');
-    if (domain == null || domain == "") {domain = "localhost"}
-    if (ddomain == null || ddomain == "") {ddomain = "localhost"}
+    if (domain == null || domain == "" || domain == "null") {domain = "localhost"}
+    if (ddomain == null || ddomain == "" || ddomain == "null") {ddomain = "localhost"}
     if (domain != ddomain || !event.data.substr(0,6).match(/jsM(CP|LD|AL):/)) return;
     var type = event.data.substr(6,3).replace(/ /g,'');
     var message = event.data.substr(10);
@@ -856,15 +862,18 @@ jsMath.Message = {
    */
   Init: function () {
     if (!jsMath.document.body || !jsMath.Controls.cookie.progress) return;
-    if (jsMath.Setup.stylesReady) {
-      this.message = jsMath.Setup.DIV('message',{visibility:'hidden'},jsMath.fixedDiv);
-    } else {
-      this.message = jsMath.Setup.DIV('message',{
-        visibility:'hidden', position:'absolute', bottom:'1px', left:'2px',
-        backgroundColor:'#E6E6E6', border:'solid 1px #959595',
-        margin:'0px', padding:'1px 8px', zIndex:102,
-        color:'black', fontSize:'small', width:'auto'
-      },jsMath.fixedDiv);
+    this.message = jsMath.Element('message');
+    if (!this.message) {
+      if (jsMath.Setup.stylesReady) {
+        this.message = jsMath.Setup.DIV('message',{visibility:'hidden'},jsMath.fixedDiv);
+      } else {
+        this.message = jsMath.Setup.DIV('message',{
+          visibility:'hidden', position:'absolute', bottom:'1px', left:'2px',
+          backgroundColor:'#E6E6E6', border:'solid 1px #959595',
+          margin:'0px', padding:'1px 8px', zIndex:102,
+          color:'black', fontSize:'small', width:'auto'
+        },jsMath.fixedDiv);
+      }
     }
     this.text = jsMath.document.createTextNode('');
     this.message.appendChild(this.text);
@@ -1002,7 +1011,7 @@ jsMath.Setup = {
     }
     if (jsMath.root.charAt(0) == '\\') {jsMath.root = jsMath.root.replace(/\\/g,'/')}
     if (jsMath.root.charAt(0) == '/') {
-      if (jsMath.root.charAt(1) != '/') 
+      if (jsMath.root.charAt(1) != '/')
         {jsMath.root = '//' + jsMath.document.location.host + jsMath.root}
       jsMath.root = jsMath.document.location.protocol + jsMath.root;
     } else if (!jsMath.root.match(/^[a-z]+:/i)) {
@@ -1163,15 +1172,20 @@ jsMath.Setup = {
   
   AddStyleSheet: function (styles) {
     var head = jsMath.document.getElementsByTagName('head')[0];
-    var string = this.StyleString(styles);
-    if (jsMath.document.createStyleSheet) {// check for MSIE
-      head.insertAdjacentHTML('beforeEnd',
-          '<span style="display:none">x</span>'  // MSIE needs this for some reason
-          + '<style type="text/css">'+string+'</style>');
-    } else {
-      var style = jsMath.document.createElement('style'); style.type = "text/css";
-      style.appendChild(jsMath.document.createTextNode(string));
-      head.appendChild(style);
+    if (head) {
+      var string = this.StyleString(styles);
+      if (jsMath.document.createStyleSheet) {// check for MSIE
+        head.insertAdjacentHTML('beforeEnd',
+            '<span style="display:none">x</span>'  // MSIE needs this for some reason
+            + '<style type="text/css">'+string+'</style>');
+      } else {
+        var style = jsMath.document.createElement('style'); style.type = "text/css";
+        style.appendChild(jsMath.document.createTextNode(string));
+        head.appendChild(style);
+      }
+    } else if (!jsMath.noHEAD) {
+      jsMath.noHEAD = 1;
+      alert("Document is missing its <HEAD> section.  Style sheet can't be created without it.");
     }
   },
 
@@ -1410,7 +1424,7 @@ jsMath.Browser = {
         this.msieInlineBlockFix = ' display:inline-block;';
         this.msieTeXfontBaselineBug = !this.quirks;
         this.msieBorderBug = this.blankWidthBug = 1; // force these, since IE7 doesn't register it
-        this.msieSpaceFix = '<span style="display:inline-block"></span>';
+        this.msieSpaceFix = '<span style="margin-right:-1px"></span><span style="display:inline-block; width:1px"></span>';
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
         delete jsMath.Parser.prototype.mathchardef.mapstochar;
@@ -1511,7 +1525,7 @@ jsMath.Browser = {
       if (isOld) {jsMath.Setup.Script('jsMath-old-browsers.js')}
       var version = navigator.appVersion.match(/^(\d+\.\d+)/);
       if (version) {this.version = version[1]} else {this.vesion = 0}
-      this.operaAbsoluteWidthBug = this.operaLineHeightBug = (version[1] >= 9.5);
+      this.operaAbsoluteWidthBug = this.operaLineHeightBug = (version[1] >= 9.5 && version[1] < 9.6);
     }
   },
 
@@ -1531,6 +1545,7 @@ jsMath.Browser = {
       this.safariImgBug = 1; this.textNodeBug = 1;
       this.buttonCheck = version < 500;
       this.styleChangeDelay = 1;
+      jsMath.Macro('not','\\mathrel{\\rlap{\\kern3.25mu/}}');
     }
   },
   
@@ -2730,7 +2745,6 @@ jsMath.HTML = {
    *  using 0 when the value is near zero.
    */
   Em: function (m) {
-    var n = 5; if (m < 0) {n++}
     if (Math.abs(m) < .000001) {m = 0}
     var s = String(m); s = s.replace(/(\.\d\d\d).+/,'$1');
     return s+'em'
@@ -3507,8 +3521,9 @@ jsMath.Package(jsMath.Box,{
    */
   Remeasured: function () {
     if (this.w > 0) {
-      this.w = jsMath.EmBoxFor(this.html).w;
+      var w = this.w; this.w = jsMath.EmBoxFor(this.html).w;
       if (this.w > this.Mw) {this.Mw = this.w}
+      w = this.w/w; if (Math.abs(w-1) > .05) {this.h *= w; this.d *= w}
     }
     return this;
   }
@@ -5447,7 +5462,7 @@ jsMath.Package(jsMath.Parser,{
    */
   MoveLeftRight: function (name) {
     var x = this.GetDimen(this.cmd+name,1); if (this.error) return;
-    var box = this.ProcessArg(this.cmd+name); if (this.error) return;
+    var box = this.ProcessScriptArg(this.cmd+name); if (this.error) return;
     if (name == 'moveleft') {x = -x}
     this.mlist.Add(jsMath.mItem.Space(x));
     this.mlist.Add(jsMath.mItem.Atom('ord',box));
@@ -6373,12 +6388,13 @@ jsMath.Translate = {
     } else {
       var savedQueue = jsMath.Script.SaveQueue();
       this.ProcessElement(this.element[k]);
-      jsMath.Script.RestoreQueue(savedQueue);
       if (this.restart) {
         jsMath.Script.Push(this,'ProcessElements',k);
+	jsMath.Script.RestoreQueue(savedQueue);
         jsMath.Script.blocking = 0;
         setTimeout('jsMath.Script.Process()',jsMath.Browser.delay);
       } else {
+	jsMath.Script.RestoreQueue(savedQueue);
         k++; var p = Math.floor(100 * k / this.element.length);
         jsMath.Message.Set('Processing Math: '+p+'%');
         setTimeout('jsMath.Translate.ProcessElements('+k+')',jsMath.Browser.delay);
