@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.98 2008/08/06 16:03:36 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.99 2008/09/12 14:33:55 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -159,10 +159,15 @@ sub pre_header_initialize {
 		unless (@userIDs) {
 			$self->addbadmessage("Please select at least one user and try again.");
 			$validation_failed = 1;
-		}
-		unless (@setIDs) {
+		}	
+
+# when students don't select any sets the size of @setIDs is 1 with a null character in $setIDs[0].
+# when professors don't select any sets the size of @setIDs is 0. 
+# the following test "unless ((@setIDs) and ($setIDs[0] =~ /\S+/))" catches both cases and prevents
+# warning nessages in the case of a professor's empty array.
+		unless ((@setIDs) and ($setIDs[0] =~ /\S+/)) {
 			$self->addbadmessage("Please select at least one set and try again.");
-			$validation_failed = 1;
+			$validation_failed = 1;			
 		}
 		
 		# is the user allowed to request multiple sets/users at a time?
