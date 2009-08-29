@@ -164,7 +164,7 @@ sub pre_header_initialize {
 # when students don't select any sets the size of @setIDs is 1 with a null character in $setIDs[0].
 # when professors don't select any sets the size of @setIDs is 0. 
 # the following test "unless ((@setIDs) and ($setIDs[0] =~ /\S+/))" catches both cases and prevents
-# warning nessages in the case of a professor's empty array.
+# warning messages in the case of a professor's empty array.
 		unless ((@setIDs) and ($setIDs[0] =~ /\S+/)) {
 			$self->addbadmessage("Please select at least one set and try again.");
 			$validation_failed = 1;			
