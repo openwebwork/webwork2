@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.63 2007/03/01 22:19:40 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -518,6 +518,9 @@ sub assignProblemToAllSetUsers {
 sub addProblemToSet {
 	my ($self, %args) = @_;
 	my $db = $self->r->db;
+	my $value_default = $self->{ce}->{problemDefaults}->{value};
+	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
+	
 
 	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
 	my $setName = $args{setName};
@@ -526,8 +529,8 @@ sub addProblemToSet {
 		die "addProblemToSet called without specifying the sourceFile.";
 
 	# The rest of the arguments are optional
-	my $value = $args{value} || 1;
-	my $maxAttempts = $args{maxAttempts} || -1;
+	my $value = $args{value} || $value_default;
+	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $problemID = $args{problemID};
 
 	unless ($problemID) {
