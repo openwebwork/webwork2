@@ -1574,6 +1574,8 @@ sub readSetDef {
 	my ($self, $fileName) = @_;
 	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
 	my $filePath      = "$templateDir/$fileName";
+	my $value_default = $self->{ce}->{problemDefaults}->{value};
+	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
 
 	my $setName = '';
 
@@ -1761,10 +1763,10 @@ sub readSetDef {
 			$name =~ s/\s*//g;
 			$value = "" unless defined($value);
 			$value =~ s/[^\d\.]*//g;
-			unless ($value =~ /\d+/) {$value = 1;}
+			unless ($value =~ /\d+/) {$value = $value_default;}
 			$attemptLimit = "" unless defined($attemptLimit);
 			$attemptLimit =~ s/[^\d-]*//g;
-			unless ($attemptLimit =~ /\d+/) {$attemptLimit = -1;}
+			unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
 			$continueFlag = "0" unless( defined($continueFlag) && @problemData );  
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,

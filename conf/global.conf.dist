@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.212 2008/10/09 02:18:37 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.213 2009/07/07 18:08:39 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -935,6 +935,19 @@ ${pg}{modules} = [
 #                    #  -- follow instructions at libraries/nau_problib/lib/README to install
 	[qw(Applet FlashApplet JavaApplet)],
 ];
+
+##### Problem creation defaults
+
+# The default weight (also called value) of a problem to use when using the 
+# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# or when this value is left blank in an imported set definition file.
+$problemDefaults{value} = 1;  
+
+# The default max_attempts for a problem to use when using the 
+# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# or when this value is left blank in an imported set definition file.  Note that 
+# setting this to -1 gives students unlimited attempts.
+$problemDefaults{max_attempts} = -1;   
 
 ##### Answer evaluatior defaults
 
