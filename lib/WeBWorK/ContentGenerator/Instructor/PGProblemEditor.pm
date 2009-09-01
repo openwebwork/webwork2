@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.95 2009/02/12 20:04:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.96 2009/07/12 23:56:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -148,13 +148,16 @@ sub pre_header_initialize {
 	$self->{problemID}  = $r->urlpath->arg("problemID");
 
 	# parse setID, which may come in with version data
+	
 	my $fullSetID = $self->{setID};
-	if ( $fullSetID =~ /,v(\d+)$/ ) {
-		$self->{versionID} = $1;
-		$self->{setID} =~ s/,v\d+$//;
+	if (defined($fullSetID) ) {
+		
+		if ( $fullSetID =~ /,v(\d+)$/ ) {
+			$self->{versionID} = $1;
+			$self->{setID} =~ s/,v\d+$//;
+		}
+		$self->{fullSetID} = $fullSetID;
 	}
-        $self->{fullSetID} = $fullSetID;
-
 	my $submit_button   = $r->param('submit');  # obtain submit command from form
 	my $actionID        = $r->param('action');
 	my $file_type       = $r->param("file_type") || '';
