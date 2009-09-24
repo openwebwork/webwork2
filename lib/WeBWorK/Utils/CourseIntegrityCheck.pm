@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.4 2009/02/11 03:30:56 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.5.2.1 2009/06/26 00:37:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -104,6 +104,7 @@ sub checkCourseTables {
 	# for corresponding tables.
 	##########################################################
 	my $db = $self->db;
+	my $ce = $self->{ce};
 	$self->lock_database;
 	foreach my $table (sort keys %$db) {
 	    next if $db->{$table}{params}{non_native}; # skip non-native tables
@@ -131,8 +132,26 @@ sub checkCourseTables {
 	my $stmt = "show tables like '${courseName}%'";    # mysql request
 	my $result = $dbh->selectall_arrayref($stmt) ;
 	my @tableNames = map {@$_} @$result;             # drill down in the result to the table name level
+
+#  Table names are of the form courseID_table (with an underscore). So if we have two courses mth101 and mth101_fall09
+#  when we check the tables for mth101 we will inadvertantly pick up the tables for mth101_fall09.  Thus we find all 
+#  courseID's and exclude the extraneous tables.
+
+	my @courseIDs = listCourses($ce);
+	my @similarIDs =();
+	foreach my $courseID (@courseIDs) {
+	    next unless $courseID =~/^${courseName}\_(.*)/;
+	    push(@similarIDs, $courseID);
+	}
+
+	OUTER_LOOP:
 	foreach my $table (sort @tableNames) {
-	    next unless $table =~/^${courseName}\_(.*)/;  #double check that we only have our course tables
+	    next unless $table =~/^${courseName}\_(.*)/;  #double check that we only have our course tables and similar ones
+
+	    foreach my $courseID (@similarIDs) {          #exclude tables with similar but wrong names
+		next OUTER_LOOP if $table =~/^${courseID}\_(.*)/;
+	    }
+
 	    my $schema_name = $1;
 		my $exists = exists($db->{$schema_name});
         $tables_ok = 0 unless exists($db->{$schema_name});
