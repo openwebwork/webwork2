@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.37 2007/07/24 17:35:39 sh002i Exp $
+# $CVSHeader: webwork2/conf/database.conf.dist,v 1.38 2007/08/13 22:59:51 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -276,61 +276,61 @@ a Moodle database for user information and authentication.
 =cut
 
 # params used by moodle-backed tables
-my %moodleParams = (
-	non_native  => 1,
-	username    => $moodle_username,
-	password    => $moodle_password,
-	debug       => $database_debug,
-	tablePrefix => $moodle_table_prefix,
-	courseName  => $courseName,
-	moodle17    => $moodle17,
-);
-
-$dbLayouts{sql_moodle} = {
-	# start with sql_single table definitions
-	%{$dbLayouts{sql_single}},
-	
-	# then override user, password, and permission tables
-	# use the same record classes as sql_single
-	user => {
-		record => "WeBWorK::DB::Record::User",
-		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::User",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $moodle_dsn,
-		params => { %moodleParams,
-			statusDeletedAbbrevs    => $statuses{Drop}{abbrevs},
-			statusDeletedDefault    => $statuses{Drop}{abbrevs}[0],
-			statusNotDeletedAbbrevs => $statuses{Enrolled}{abbrevs},
-			statusNotDeletedDefault => $statuses{Enrolled}{abbrevs}[0],
-			#sectionPrefix          => "SEC_", # not implemented
-			#recitationPrefix       => "",  # not implemented
-		},
-	},
-	password => {
-		record => "WeBWorK::DB::Record::Password",
-		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $moodle_dsn,
-		params => { %moodleParams,
-			guestsPermissionLevel => -5,
-			studentsPermissionLevel => 0,
-			teachersPermissionLevel => 10,
-			adminsPermissionLevel => 10,
-		},
-	},
-	permission => {
-		record => "WeBWorK::DB::Record::PermissionLevel",
-		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
-		driver => "WeBWorK::DB::Driver::SQL",
-		source => $moodle_dsn,
-		params => { %moodleParams,
-			guestsPermissionLevel => -5,
-			studentsPermissionLevel => 0,
-			teachersPermissionLevel => 10,
-			adminsPermissionLevel => 10,
-		},
-	},
-};
+#my %moodleParams = (
+#	non_native  => 1,
+#	username    => $moodle_username,
+#	password    => $moodle_password,
+#	debug       => $database_debug,
+#	tablePrefix => $moodle_table_prefix,
+#	courseName  => $courseName,
+#	moodle17    => $moodle17,
+#);
+#
+#$dbLayouts{sql_moodle} = {
+#	# start with sql_single table definitions
+#	%{$dbLayouts{sql_single}},
+#	
+#	# then override user, password, and permission tables
+#	# use the same record classes as sql_single
+#	user => {
+#		record => "WeBWorK::DB::Record::User",
+#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::User",
+#		driver => "WeBWorK::DB::Driver::SQL",
+#		source => $moodle_dsn,
+#		params => { %moodleParams,
+#			statusDeletedAbbrevs    => $statuses{Drop}{abbrevs},
+#			statusDeletedDefault    => $statuses{Drop}{abbrevs}[0],
+#			statusNotDeletedAbbrevs => $statuses{Enrolled}{abbrevs},
+#			statusNotDeletedDefault => $statuses{Enrolled}{abbrevs}[0],
+#			#sectionPrefix          => "SEC_", # not implemented
+#			#recitationPrefix       => "",  # not implemented
+#		},
+#	},
+#	password => {
+#		record => "WeBWorK::DB::Record::Password",
+#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
+#		driver => "WeBWorK::DB::Driver::SQL",
+#		source => $moodle_dsn,
+#		params => { %moodleParams,
+#			guestsPermissionLevel => -5,
+#			studentsPermissionLevel => 0,
+#			teachersPermissionLevel => 10,
+#			adminsPermissionLevel => 10,
+#		},
+#	},
+#	permission => {
+#		record => "WeBWorK::DB::Record::PermissionLevel",
+#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
+#		driver => "WeBWorK::DB::Driver::SQL",
+#		source => $moodle_dsn,
+#		params => { %moodleParams,
+#			guestsPermissionLevel => -5,
+#			studentsPermissionLevel => 0,
+#			teachersPermissionLevel => 10,
+#			adminsPermissionLevel => 10,
+#		},
+#	},
+#};
 
 =head1 DATABASE LAYOUT METADATA
 
@@ -354,7 +354,7 @@ Hash mapping database layout names to textual descriptions.
 
 %dbLayout_descr = (
 	sql_single => "Uses a single SQL database to record WeBWorK data for all courses using this layout. This is the recommended layout for new courses.",
-	sql_moodle => "Simiar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
+#	sql_moodle => "Simiar to sql_single, but uses a Moodle database for user, password, and permission information. This layout should be used for courses used with wwmoodle.",
 );
 
 =back
