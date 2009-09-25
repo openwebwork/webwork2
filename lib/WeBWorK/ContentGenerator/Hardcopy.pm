@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.99 2008/09/12 14:33:55 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.101 2009/08/29 16:18:49 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -173,6 +173,7 @@ sub pre_header_initialize {
 		# is the user allowed to request multiple sets/users at a time?
 		my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
 		my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
+		
 		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
 		my $perm_viewfromip = $authz->hasPermissions($userID, "view_ip_restricted_sets");
 		
@@ -263,42 +264,57 @@ sub pre_header_initialize {
 
 sub body {
 	my ($self) = @_;
-	
+	my $userID = $self->r->param("user");
+	my $perm_view_errors = $self->r->authz->hasPermissions($userID, "download_hardcopy_view_errors");
+	$perm_view_errors = (defined($perm_view_errors) ) ? $perm_view_errors : 0;
 	if (my $num = $self->get_errors) {
 		my $final_file_url = $self->{final_file_url};
 		my %temp_file_map = %{$self->{temp_file_map}};
-		
-		my $errors_str = $num > 1 ? "errors" : "error";
-		print CGI::p("$num $errors_str occured while generating hardcopy:");
-		
-		print CGI::ul(CGI::li($self->get_errors_ref));
+		if($perm_view_errors) {
+			my $errors_str = $num > 1 ? "errors" : "error";
+			print CGI::p("$num $errors_str occured while generating hardcopy:");
+			
+			print CGI::ul(CGI::li($self->get_errors_ref));
+		}
 		
 		if ($final_file_url) {
 			print CGI::p(
-				"A hardcopy file was generated, but it may not be complete or correct: ",
-				CGI::a({href=>$final_file_url}, "Download Hardcopy")
+				"A hardcopy file was generated, but it may not be complete or correct.", 
+				"Please check that no problems are missing and that they are all legible." , 
+				"If not, please inform your instructor.<br />",
+				CGI::a({href=>$final_file_url}, "Download Hardcopy"),
 			);
-		}
+		} else {
+			print CGI::p(
+				"WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor. "
+			); 
 		
-		if (%temp_file_map) {
-			print CGI::start_p();
-			print "You can also examine the following temporary files: ";
-			my $first = 1;
-			while (my ($temp_file_name, $temp_file_url) = each %temp_file_map) {
-				if ($first) {
-					$first = 0;
-				} else {
-					print ", ";
+		}
+		if($perm_view_errors) {
+			if (%temp_file_map) {
+				print CGI::start_p();
+				print "You can also examine the following temporary files: ";
+				my $first = 1;
+				while (my ($temp_file_name, $temp_file_url) = each %temp_file_map) {
+					if ($first) {
+						$first = 0;
+					} else {
+						print ", ";
+					}
+					print CGI::a({href=>$temp_file_url}, " $temp_file_name");
 				}
-				print CGI::a({href=>$temp_file_url}, " $temp_file_name");
+				print CGI::end_p();
 			}
-			print CGI::end_p();
 		}
 		
 		print CGI::hr();
 	}
-	
-	$self->display_form();
+
+	# don't display the retry form if there are errors and the user doesn't have permission to view the errors.
+	unless ($self->get_errors and not $perm_view_errors) {
+		$self->display_form();
+	}
+	''; # return a blank
 }
 
 sub display_form {
