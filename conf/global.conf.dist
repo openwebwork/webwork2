@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.213 2009/07/07 18:08:39 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.214 2009/08/29 12:38:50 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,7 +49,7 @@ $webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the cour
 # Paths to external programs 
 ################################################################################
 
-# system utilties
+# system utilities
 $externalPrograms{mv}    = "/bin/mv";
 $externalPrograms{cp}    = "/bin/cp";
 $externalPrograms{rm}    = "/bin/rm";
@@ -161,12 +161,31 @@ $mail{feedbackVerbosity}     = 1;
 $mail{editor_window_rows}    = 15;
 $mail{editor_window_columns} = 100;
 
+###################################################
+# Customizing the action of the "Email your instructor" button
+###################################################
+
 # Use this to customize the text of the feedback button.
 $feedback_button_name = "Email instructor";
 
 # If this value is true, feedback will only be sent to users with the same
 # section as the user initiating the feedback.
 $feedback_by_section = 0;
+
+# If the variable below is set to a non-empty value (i.e. in course.conf), WeBWorK's usual
+# email feedback mechanism  will be replaced with a link to the given URL.
+# See also $feedback_button_name, above.
+
+$courseURLs{feedbackURL} = "";
+
+# If the variable below is set to a non-empty value (i.e. in course.conf), 
+# WeBWorK's usual email feedback mechanism  will be replaced with a link to the given URL and
+# a POST request with information about the problem including the HTML rendering
+# of the problem will be sent to that URL.
+# See also $feedback_button_name, above.
+
+#$courseURLs{feedbackFormURL} = "http://www.mathnerds.com/MathNerds/mmn/SDS/askQuestion.aspx";  #"http://www.tipjar.com/cgi-bin/test";
+$courseURLs{feedbackFormURL} = "";
 
 ################################################################################
 # Theme
@@ -299,10 +318,6 @@ $courseDirs{email}       = "$courseDirs{templates}/email";
 # Location of temporary editing files.
 $courseDirs{tmpEditFileDir}  = "$courseDirs{templates}/tmpEdit";
 
-# If this is set to a non-empty value (i.e. in course.conf), WeBWorK's usual
-# email feedback mechanism  will be replaced with a link to the given URL.
-# See also $feedback_button_name, above.
-$courseURLs{feedbackURL} = "";
 
 # mail merge status directory
 $courseDirs{mailmerge}   = "$courseDirs{DATA}/mailmerge";
@@ -709,6 +724,7 @@ $authen{ldap_options} = {
 	
 	download_hardcopy_multiuser  => "ta",
 	download_hardcopy_multiset   => "ta",
+	download_hardcopy_view_errors =>"professor",
 	download_hardcopy_format_pdf => "guest",
 	download_hardcopy_format_tex => "ta",
 );
