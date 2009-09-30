@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.92 2007/08/13 22:59:56 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.93 2009/07/23 13:52:56 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -823,8 +823,6 @@ sub sort_handler {
 	return "Users sorted by $names{$primary}, then by $names{$secondary}, then by $names{$ternary}.";
 }
 
-
-
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
 
@@ -1515,6 +1513,7 @@ sub fieldEditHTML {
 			values => \@values,
 			default => $default,
 			labels => \%labels,
+			override => 1,    # force default to be selected. (corrects bug on newer CGI
 		});
 	}
 }
