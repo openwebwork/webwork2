@@ -1168,11 +1168,11 @@ EOF
 }
 
 
-sub get_SeedCE {
+sub get_SeedCE {     # helper subroutine to produce a stripped down seed Course Environment from an arbitrary course environment
 	my $ce = shift;
 	warn "get_SeedCE needs current Course environment to create seed CE" unless ref($ce) ;
 	my %seedCE=();
-	my @conf_items = qw( webwork_dir webwork_url pg_dir courseName)   ;
+	my @conf_items = qw( webwork_dir webwork_url pg_dir courseName)   ;  # items to transfer. courseName is often overridden
 	foreach my $item (@conf_items) {
 			$seedCE{$item} = $ce->{$item};
 	}
