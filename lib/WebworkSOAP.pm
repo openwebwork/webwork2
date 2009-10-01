@@ -193,15 +193,21 @@ sub grade_users_sets {
     my ($self,$authenKey,$courseName,$userIDs,$setID) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
     my @grades;
-    foreach my $userID (@{$userIDs}) {
-        my @problemData = $soapEnv->{db}->getAllUserProblems($userID,$setID);
+    #open (LOG, ">>/opt/webwork/tmp_log") or die "Can't open log file";
+    #print LOG "\n\nhi there\n\n";
 
+    foreach my $userID (@{$userIDs}) {
+        my @problemData = $soapEnv->{db}->getAllMergedUserProblems($userID,$setID);
+        
         my $grade = 0;
         for(my $i=0;$i<@problemData;$i++) {
-                $grade += @problemData[$i]->status;
+                #print LOG "$userID problem Data",join(" ", %{$problemData[$i]}),"\n\n";
+                $grade += ($problemData[$i]->status)*($problemData[$i]->value);
+                #print LOG "grade is $grade\n";
         }
         push(@grades,$grade);
     }
+    #close(LOG);
     return array_to_soap_string( @grades );
 }
 
