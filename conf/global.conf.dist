@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.214 2009/08/29 12:38:50 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.215 2009/09/25 00:37:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -857,10 +857,13 @@ $pg{directories}{macrosPath} = [
    ".",                     # search the problem file's directory
    $courseDirs{macros},
    $pg{directories}{macros},
-   "$courseDirs{templates}/Library/macros/Dartmouth",
    "$courseDirs{templates}/Library/macros/Union",
-   "$courseDirs{templates}/Library/macros/NAU",
+   "$courseDirs{templates}/Library/macros/HughesHallett",
    "$courseDirs{templates}/Library/macros/Michigan",
+   "$courseDirs{templates}/Library/macros/CollegeOfIdaho",
+   "$courseDirs{templates}/Library/macros/TCNJ",
+   "$courseDirs{templates}/Library/macros/NAU",
+   "$courseDirs{templates}/Library/macros/Dartmouth",
 ];
 
 # The applet search path. If a full URL is given, it is used unmodified. If an
