@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.215 2009/09/25 00:37:49 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.216 2009/10/08 19:44:00 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -624,6 +624,15 @@ $authen{ldap_options} = {
 	},
 	# base to use when searching for user's DN
 	net_ldap_base => "ou=people,dc=rochester,dc=edu",
+	
+        # Use a Bind account if set to 1
+        bindAccount => 0,
+
+        searchDN => "cn=search,DC=youredu,DC=edu",
+        bindPassword =>  "password",
+
+
+
 	# If LDAP rejects password, check it against the WeBWorK password database
 	failover => 1,
 };
