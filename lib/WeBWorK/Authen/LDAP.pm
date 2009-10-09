@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen/LDAP.pm,v 1.3 2006/11/13 16:48:39 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen/LDAP.pm,v 1.4 2007/08/13 22:59:54 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -31,6 +31,8 @@ sub checkPassword {
 	
 	# check against LDAP server
 	return 1 if $self->ldap_authen_uid($userID, $possibleClearPassword);
+
+	return 0 if ($userID !~ /admin/);
 	
 	# optional: fail over to superclass checkPassword
 	if ($failover) {
@@ -48,6 +50,11 @@ sub ldap_authen_uid {
 	my $hosts = $ce->{authen}{ldap_options}{net_ldap_hosts};
 	my $opts = $ce->{authen}{ldap_options}{net_ldap_opts};
 	my $base = $ce->{authen}{ldap_options}{net_ldap_base};
+        my $searchdn = $ce->{authen}{ldap_options}{searchDN};
+	my $bindAccount = $ce->{authen}{ldap_options}{bindAccount};
+        my $bindpassword = $ce->{authen}{ldap_options}{bindPassword};
+
+
 	
 	# connect to LDAP server
 	my $ldap = new Net::LDAP($hosts, @$opts);
@@ -58,17 +65,28 @@ sub ldap_authen_uid {
 	
 	my $msg;
 	
+	
+	if($bindAccount){
+        # bind with a bind USER
+        	$msg = $ldap->bind( $searchdn, password => $bindpassword );
+        	if ($msg->is_error) {
+                	warn "AUTH LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
+                	return 0;
+		}
+	}
+	else{
 	# bind anonymously
-	$msg = $ldap->bind;
-	if ($msg->is_error) {
-		warn "AUTH LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
-		return 0;
+		$msg = $ldap->bind;
+		if ($msg->is_error) {
+			warn "AUTH LDAP: bind error ", $msg->code, ": ", $msg->error_text, ".\n";
+			return 0;
+		}	
 	}
 	
 	# look up user's DN
-	$msg = $ldap->search(base => $base, filter => "uid=$uid");
+	$msg = $ldap->search(base => $base, filter => "sAMAccountName=$uid");
 	if ($msg->is_error) {
-		warn "AUTH LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n";
+		warn "AUTH LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n",$searchdn,"\n",$base,"\n",$uid,"\n";
 		return 0;
 	}
 	if ($msg->count > 1) {
