@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.10 2006/10/02 15:04:27 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.11 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -42,6 +42,7 @@ BEGIN {
 		last_answer   => { type=>"TEXT" },
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
+		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
 	);
 }
 

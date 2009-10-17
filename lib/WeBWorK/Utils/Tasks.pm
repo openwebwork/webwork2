@@ -134,7 +134,8 @@ sub fake_problem {
 	$problem->problem_seed($options{'problem_seed'})
 		 if(defined($options{'problem_seed'}));
 
-	$problem->status(0); 
+	$problem->status(0);
+	$problem->sub_status(0); 
 	$problem->attempted(0); 
 	$problem->last_answer(""); 
 	$problem->num_correct(0); 

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.26 2008/02/04 22:55:23 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.27 2008/04/29 19:30:26 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -358,6 +358,7 @@ EOF
 		#warn "PG: retrieving the problem state and giving it to the translator\n";
 		$translator->rh_problem_state({
 			recorded_score =>       $problem->status,
+			sub_recorded_score =>   $problem->sub_status,
 			num_of_correct_ans =>   $problem->num_correct,
 			num_of_incorrect_ans => $problem->num_incorrect,
 		});
@@ -390,7 +391,7 @@ EOF
 		($result, $state) = $translator->grade_problem(
 			answers_submitted  => $translationOptions->{processAnswers},
 			ANSWER_ENTRY_ORDER => \@answerOrder,
-			%{$formFields},  #FIXME?  this is used by sequentialGrader is there a better way?
+			%{$formFields},  #FIXME?  this is used by sequentialGrader is there a better way
 		);
 		
 	}

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.91 2008/10/09 02:18:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.92 2009/07/12 23:52:39 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -308,6 +308,19 @@ sub body {
 	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
 	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
+
+
+	my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
+	if ($reducedScoringPeriod > 0) {
+		my $dueDate = $self->formatDateTime($set->due_date());
+		my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
+		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
+		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
+		my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
+		print CGI::div({class=>"ResultsAlert"},"This assignment has a Reduced Scoring Period that begins
+ $beginReducedScoringPeriod and ends on the due date, $dueDate.  During this period all additional
+ work done counts $reducedScoringPerCent\% of the original.");
+	}
 	
 	# DBFIXME use iterator
 	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);

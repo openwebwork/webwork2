@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.217 2009/06/04 01:34:53 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.218 2009/07/18 02:52:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -875,10 +875,12 @@ sub body {
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
 				$problem->status($pg->{state}->{recorded_score});
+				$problem->sub_status($pg->{state}->{sub_recorded_score});
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}->{num_of_correct_ans});
 				$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
 				$pureProblem->status($pg->{state}->{recorded_score});
+				$pureProblem->sub_status($pg->{state}->{sub_recorded_score});
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});

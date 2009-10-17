@@ -1,13 +1,13 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.58 2008/10/09 02:18:38 gage Exp $
-# 
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.59 2009/06/26 00:44:26 gage Exp $
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -30,27 +30,27 @@ use warnings;
 ################################################################################
 
 # If true, WeBWorK::Debug will print debugging output.
-# 
+#
 $WeBWorK::Debug::Enabled = 0;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
-# 
+#
 $WeBWorK::Debug::Logfile = "";
 
 # If defined, prevent subroutines matching the following regular expression from
 # logging.
-# 
+#
 # For example, this pattern prevents the dispatch() function from logging:
 #     $WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
-# 
+#
 $WeBWorK::Debug::DenySubroutineOutput = undef;
 
 # If defined, allow only subroutines matching the following regular expression
 # to log.
-# 
+#
 # For example, this pattern allow only some function being worked on to log:
 #     $WeBWorK::Debug::AllowSubroutineOutput = qr/^WeBWorK::SomePkg::myFunc$/;
-# 
+#
 $WeBWorK::Debug::AllowSubroutineOutput = undef;
 
 ################################################################################
@@ -58,7 +58,7 @@ $WeBWorK::Debug::AllowSubroutineOutput = undef;
 ################################################################################
 
 # If true, don't delete temporary files
-# 
+#
 $WeBWorK::ContentGenerator::Hardcopy::PreserveTempFiles = 0;
 
 ################################################################################
@@ -74,28 +74,28 @@ $WeBWorK::PG::Local::TIMEOUT = 60;
 ################################################################################
 
 # Arguments to pass to dvipng. This is dependant on the version of dvipng.
-# 
+#
 # For dvipng versions 0.x
 #     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-x4000.5 -bgTransparent -Q6 -mode toshiba -D180";
 # For dvipng versions 1.0 to 1.5
 #     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
-# 
+#
 # For dvipng versions 1.6 (and probably above)
 #     $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
-# Note: In 1.6 and later, bgTransparent gives alpha-channel transparency while 
+# Note: In 1.6 and later, bgTransparent gives alpha-channel transparency while
 # bgtransparent gives single-bit transparency. If you use alpha-channel transparency,
-# the images will not be viewable with MSIE.  bgtransparent works for version 1.5, 
+# the images will not be viewable with MSIE.  bgtransparent works for version 1.5,
 # but does not give transparent backgrounds. It does not work for version 1.2. It has not
 # been tested with other versions.
 #
 $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
-# 
+#
 $WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0;
 
 # TeX to prepend to equations to be processed.
-# 
+#
 $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
 \documentclass[12pt]{article}
 \nonstopmode
@@ -107,7 +107,7 @@ $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
 EOF
 
 # TeX to append to equations to be processed.
-# 
+#
 $WeBWorK::PG::ImageGenerator::TexPostamble = <<'EOF';
 \end{document}
 EOF
@@ -117,11 +117,11 @@ EOF
 ################################################################################
 
 # Configuation data
-# It is organized by section.  The allowable types are 
+# It is organized by section.  The allowable types are
 #  'text' for a text string (no quote marks allowed),
 #  'number' for a number,
 #  'list' for a list of text strings,
-#  'permission' for a permission value, 
+#  'permission' for a permission value,
 #  'boolean' for variables which really hold 0/1 values as flags.
 #  'checkboxlist' for variables which really hold a list of values which
 #      can be independently picked yes/no as checkboxes
@@ -134,7 +134,7 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme)',
-		  doc2 => 'There are currently four themes (or skins) to choose from: ur, math, math2 and moodle.  The theme 
+		  doc2 => 'There are currently four themes (or skins) to choose from: ur, math, math2 and moodle.  The theme
 specifies a unified look and feel for the WeBWorK course web pages.',
 		  values => [qw(math math2 ur moodle union)],
 		  type => 'popuplist'},
@@ -220,28 +220,28 @@ You must use at least one display mode.  If you select only one, then the option
 		  min  => 1,
 		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath", "LaTeXMathML"],
 		  type => 'checkboxlist'},
-		  
+
 		{ var => 'pg{options}{displayMode} ',
 		  doc => 'The default display mode',
 		  doc2 => 'Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions.',
 		  min  => 1,
 		  type => 'text'},
-		  
+
 		{ var => 'pg{ansEvalDefaults}{useBaseTenLog}',
 		  doc => 'Use log base 10 instead of base <i>e</i>',
 		  doc2 => 'Set to true for log to mean base 10 log and false for log to mean natural logarithm',
 		  type => 'boolean'},
-		  
+
 		{ var => 'pg{ansEvalDefaults}{useOldAnswerMacros}',
 		  doc => 'Use older answer checkers',
 		  doc2 => 'During summer 2005, a newer version of the answer checkers was implemented for answers which are functions and numbers.  The newer checkers allow more functions in student answers, and behave better in certain cases.  Some problems are specifically coded to use new (or old) answer checkers.  However, for the bulk of the problems, you can choose what the default will be here.  <p>Choosing <i>false</i> here means that the newer answer checkers will be used by default, and choosing <i>true</i> means that the old answer checkers will be used by default.',
 		  type => 'boolean'},
-		  
+
 		{ var => 'pg{ansEvalDefaults}{defaultDisplayMatrixStyle}',
 		  doc => 'Control string for displaying matricies',
 		  doc2 => 'String of three characters for defining the defaults for displaying matricies.  The first and last characters give the left and right delimiters of the matrix, so usually one of ([| for a left delimiter, and one of )]| for the right delimiter.  It is also legal to specify "." for no delimiter. <p> The middle character indicates how to display vertical lines in a matrix (e.g., for an augmented matrix).  This can be s for solid lines and d for dashed lines.  While you can specify the defaults, individual problems may override these values.',
 		  type => 'text'},
-		  
+
 		{ var => 'pg{ansEvalDefaults}{numRelPercentTolDefault}',
 		  doc => 'Allowed error, as a percentage, for numerical comparisons',
 		  doc2 => "When numerical answers are checked, most test if the student's answer
@@ -251,18 +251,42 @@ You must use at least one display mode.  If you select only one, then the option
 <p>
 A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'},
+		{ var => 'pg{ansEvalDefaults}{reducedScoringPeriod}',
+		  doc => 'Length of Reduced Scoring Period in minutes',
+		  doc2 => 'The Reduced Scoring Period is a period before the due date during which
+ all additional work done by the student counts at a reduced rate. Here is where 
+ you set the length of this period in minutes. If this value is greater than 0, a
+ message like "This assignment has a Reduced Scoring Period that begins 11/08/2009 
+ at 06:17pm EST and ends on the due date, 11/10/2009 at 06:17pm EST. During this 
+ period all additional work done counts 50% of the original." will be displayed.<p>
+ This works with the avg_problem_grader (which is the the default grader) and the 
+ std_problem_grader (the all or nothing grader).  It will work with custom graders
+ if they are written appropriately.' ,
+		  type => 'number'},
+		{ var => 'pg{ansEvalDefaults}{reducedScoringValue}',
+		  doc => 'Value of work done in Reduced Scoring Period' ,
+		  doc2 => 'The Reduced Scoring Period is a period before the due date during which
+ all additional work done by the student counts at a reduced rate. Here is where 
+ you set the reduced rate which must be a number in the interval [0,1]. 1 means no 
+ reduction. For example if this value is .5 and a student views a problem during the
+ Reduced Scoring Period, they will see the message "You are in the Reduced Scoring 
+ Period: All additional work done counts 50% of the original." <p>
+ This works with the avg_problem_grader (which is the the default grader) and the 
+ std_problem_grader (the all or nothing grader).  It will work with custom graders
+ if they are written appropriately.' ,
+		  type => 'number'},
 	],
 	['E-Mail',
 		{ var => 'mail{feedbackSubjectFormat}',
 		  doc => 'Format for the subject line in feedback e-mails',
-		  doc2 => 'When students click the <em>Email Instructor</em> button 
- to send feedback, WeBWorK fills in the subject line.  Here you can set the 
- subject line.  In it, you can have various bits of information filled in 
+		  doc2 => 'When students click the <em>Email Instructor</em> button
+ to send feedback, WeBWorK fills in the subject line.  Here you can set the
+ subject line.  In it, you can have various bits of information filled in
  with the following escape sequences.
 <p>
 <ul>
 <li> %c = course ID
-<li> %u = user ID  
+<li> %u = user ID
 <li> %s = set ID
 <li> %p = problem ID
 <li> %x = section
@@ -290,7 +314,7 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  doc => 'E-mail feedback from students automatically sent to this permission level and higher:',
 		  doc2 => 'Users with this permssion level or greater will automatically be sent feedback from students (generated when they use the "Contact instructor" button on any problem page).  In addition the feedback message will be sent to addresses listed below.  To send ONLY to addresses listed below set permission level to "nobody".',
 		  type => 'permission'},
-		  
+
 		{ var => 'mail{feedbackRecipients}',
 		  doc => 'Additional addresses for receiving feedback e-mail.',
 		  doc2 => 'By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas.',
