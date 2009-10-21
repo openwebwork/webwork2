@@ -72,6 +72,7 @@ my @modulesList = qw(
 	Opcode
 	PHP::Serialization
 	Pod::Usage
+	Pod::WSDL
 	Safe
 	Scalar::Util
 	SOAP::Lite 
