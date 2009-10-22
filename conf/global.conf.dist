@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.217 2009/10/09 20:17:13 mmhamric Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.218 2009/10/17 15:48:20 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -898,10 +898,10 @@ $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} = $userRoles{ $
 
 # Locations of CAPA resources. (Only necessary if you need to use converted CAPA
 # problems.)
-$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{macros}/CAPA_Tools/", 
-$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{macros}/CAPA_MCTools/",  
-$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{html}/CAPA_Graphics/", 
-$pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$courseURLs{html}/CAPA_Graphics/",   
+$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "/opt/webwork/CAPA/CAPA_Tools/",        
+$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "/opt/webwork/CAPA/CAPA_MCTools/",      
+$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$webworkDirs{htdocs}/CAPA_Graphics/",  
+$pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$webworkURLs{htdocs}/CAPA_Graphics/",   
 
 # Size in pixels of dynamically-generated images, i.e. graphs.
 $pg{specialPGEnvironmentVars}{onTheFlyImageSize}      = 400,
