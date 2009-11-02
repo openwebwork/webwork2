@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.75 2008/10/09 02:18:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.76 2009/07/18 02:52:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,7 +93,7 @@ sub defineProblemEnvir {
 	$envir{texDisposition}      = "pdf"; # in webwork2, we use pdflatex
 	
 	# Problem Information
-	# ADDED: courseName, formatedDueDate
+	# ADDED: courseName, formatedDueDate, enable_reduced_scoring
 	
 	$envir{openDate}            = $set->open_date;
 	$envir{formattedOpenDate}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone});
@@ -106,6 +106,7 @@ sub defineProblemEnvir {
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
+	$envir{enable_reduced_scoring} = $set->enable_reduced_scoring;
 	
 	# Student Information
 	# ADDED: studentID

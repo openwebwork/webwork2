@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.92 2009/07/12 23:52:39 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.93 2009/10/17 15:49:57 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -73,7 +73,14 @@ sub initialize {
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
-	
+
+	# When a set is created enable_reduced_scoring is null, so we have to set it 
+	if ($set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
+		my $globalSet = $db->getGlobalSet($set->set_id);
+		$globalSet->enable_reduced_scoring("0");	# defaults to disabled
+		$db->putGlobalSet($globalSet);
+		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
+	}
 
 	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
 	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
@@ -310,8 +317,9 @@ sub body {
 	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
 
 
+	my $enable_reduced_scoring = $set->enable_reduced_scoring;
 	my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-	if ($reducedScoringPeriod > 0) {
+	if ($reducedScoringPeriod > 0 and $enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};

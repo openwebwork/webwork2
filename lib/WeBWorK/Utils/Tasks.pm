@@ -81,7 +81,8 @@ sub fake_set {
 	$set->open_date(time());
 	$set->due_date(time());
 	$set->answer_date(time());
-	$set->published(0); 
+	$set->published(0);
+	$set->enable_reduced_scoring(0);
 	$set->hardcopy_header("");
 	return($set); 
 } 
@@ -96,7 +97,8 @@ sub fake_set_version {
 	$set->open_date(time());
 	$set->due_date(time());
 	$set->answer_date(time());
-	$set->published(0); 
+	$set->published(0);
+	$set->enable_reduced_scoring(); 
 	$set->hardcopy_header("");
 	$set->version_id(1);
 	$set->attempts_per_version(0);
