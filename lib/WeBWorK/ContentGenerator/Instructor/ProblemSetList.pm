@@ -86,14 +86,15 @@ use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortBy
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_PUBLISHED_STATE => 1;
+use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
 use constant ONE_WEEK => 60*60*24*7;  
 
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id published open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id published enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -162,6 +163,11 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	},
 	published => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
+	},	
+	enable_reduced_scoring => {
 		type => "checked",
 		size => 4,
 		access => "readwrite",
@@ -312,7 +318,8 @@ sub body {
 		open_date
 		due_date
 		answer_date
-		published	
+		published
+		enable_reduced_scoring	
 	)} = (
 		"Select",
 		"Edit<br> Problems",
@@ -324,7 +331,8 @@ sub body {
 		"Open Date", 
 		"Due Date", 
 		"Answer Date", 
-		"Visible", 
+		"Visible",
+		"Reduced Scoring<br> Enabled" 
 	);
 	
 	########## set initial values for state fields
@@ -533,6 +541,7 @@ sub body {
 	
 	########## first adjust heading if in editMode
 	$prettyFieldNames{set_id} = "Edit All <br> Set Data" if $editMode;
+	$prettyFieldNames{enable_reduced_scoring} = 'Enable Reduced<br>Scoring' if $editMode;
 	
 	
 	print CGI::p({},"Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
@@ -861,6 +870,74 @@ sub publish_handler {
 	return $result
 	
 }
+sub enable_reduced_scoring_form {
+	my ($self, $onChange, %actionParams) = @_;
+
+	return join ("",
+		"Make ",
+		CGI::popup_menu(
+			-name => "action.enable_reduced_scoring.scope",
+			-values => [ qw(none all selected) ],
+			-default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
+			-labels => {
+				none => "",
+				all => "all sets",
+#				visible => "visible sets",
+				selected => "selected sets",
+			},
+			-onchange => $onChange,
+		),
+		CGI::popup_menu(
+			-name => "action.enable_reduced_scoring.value",
+			-values => [ 0, 1 ],
+			-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+			-labels => {
+				0 => "disable",
+				1 => "enable",
+			},
+			-onchange => $onChange,
+		),
+		" reduced sccoring.",
+	);
+}
+
+sub enable_reduced_scoring_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+
+	my $r = $self->r;
+	my $db = $r->db;
+
+	my $result = "";
+	
+	my $scope = $actionParams->{"action.enable_reduced_scoring.scope"}->[0];
+	my $value = $actionParams->{"action.enable_reduced_scoring.value"}->[0];
+
+	my $verb = $value ? "enabled" : "disabled";
+	
+	my @setIDs;
+	
+	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
+		@setIDs = ();
+		$result = "No change made to any set.";
+	} elsif ($scope eq "all") {
+		@setIDs = @{ $self->{allSetIDs} };
+		$result = "Reduced Scoring $verb for all sets.";
+	} elsif ($scope eq "visible") {
+		@setIDs = @{ $self->{visibleSetIDs} };
+		$result = "Reduced Scoring $verb for visable sets.";
+	} elsif ($scope eq "selected") {
+		@setIDs = @{ $genericParams->{selected_sets} };
+		$result = "Reduced Scoring $verb for selected sets.";
+	}
+	
+	# can we use UPDATE here, instead of fetch/change/store?
+	my @sets = $db->getGlobalSets(@setIDs);
+	
+	map { $_->enable_reduced_scoring("$value") if $_; $db->putGlobalSet($_); } @sets;
+	
+	return $result
+	
+}
 
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -1023,6 +1100,7 @@ sub create_handler {
 		$newSetRecord->due_date(time + 2*ONE_WEEK );
 		$newSetRecord->answer_date(time + 2*ONE_WEEK );
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
+		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;
@@ -1498,6 +1576,7 @@ sub importSetsFromDef {
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);
+		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
 
 	# gateway/version data.  these should are all initialized to ''
         #   by readSetDef, so for non-gateway/versioned sets they'll just 
@@ -2020,6 +2099,7 @@ sub recordEditHTML {
 	my $setSelected = $options{setSelected};
 
 	my $publishedClass = $Set->published ? "Published" : "Unpublished";
+	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? 'Reduced Scoring Enabled' : 'Reduced Scoring Disabled';
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
@@ -2109,6 +2189,7 @@ sub recordEditHTML {
 		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /published/ and not $editMode;
+		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enable_reduced_scoring/ and not $editMode;
 		push @tableCells, CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 		#$fakeRecord{$field} = CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}

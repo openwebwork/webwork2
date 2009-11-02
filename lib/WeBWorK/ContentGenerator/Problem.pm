@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.218 2009/07/18 02:52:51 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.219 2009/10/17 15:49:32 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -415,6 +415,14 @@ sub pre_header_initialize {
 		# don't do anything just yet, maybe we're a professor and we're
 		# fabricating a set or haven't assigned it to ourselves just yet
 	}
+		# When a set is created enable_reduced_scoring is null, so we have to set it 
+	if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
+		my $globalSet = $db->getGlobalSet($set->set_id);
+		$globalSet->enable_reduced_scoring("0");	# defaults to disabled
+		$db->putGlobalSet($globalSet);
+		$set = $db->getMergedSet($effectiveUserName, $setName);
+	}
+	
 	
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked

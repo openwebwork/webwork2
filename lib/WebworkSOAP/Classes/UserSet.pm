@@ -11,6 +11,7 @@ package WebworkSOAP::Classes::UserSet;
         _ATTR due_date                  $string due_date
         _ATTR answer_date               $string answer_date
         _ATTR published                 $string published
+        _ATTR enable_reduced_scoring    $string enable_reduced_scoring
         _ATTR assignment_type           $string assignment_type
         _ATTR attempts_per_version      $string attempts_per_version
         _ATTR time_interval             $string time_interval
@@ -34,6 +35,7 @@ sub new() {
         $self->{due_date} = SOAP::Data->type( 'string', $data->due_date );
         $self->{answer_date} = SOAP::Data->type( 'string', $data->answer_date );
         $self->{published} = SOAP::Data->type( 'string', $data->published );
+        $self->{enable_reduced_scoring} = SOAP::Data->type( 'string', $data->enable_reduced_scoring );
         $self->{assignment_type} = SOAP::Data->type( 'string', $data->assignment_type );
         $self->{attempts_per_version} = SOAP::Data->type( 'string', $data->attempts_per_version );
         $self->{time_interval} = SOAP::Data->type( 'string', $data->time_interval );

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.91 2007/09/14 15:21:54 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.92 2008/06/23 19:58:11 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -151,6 +151,18 @@ sub body {
 		if ( $set and $set->published ne "0" and $set->published ne "1") {
 			my $globalSet = $db->getGlobalSet($set->set_id);
 			$globalSet->published("1");	# defaults to published
+			$db->putGlobalSet($globalSet);
+			$set = $db->getMergedSet($effectiveUser, $set->set_id);
+		} else {
+			die "set $set not defined" unless $set;
+		}
+	}
+
+	foreach my $set (@sets) {
+		# make sure enable_reduced_scoring is set to 0 or 1
+		if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
+			my $globalSet = $db->getGlobalSet($set->set_id);
+			$globalSet->enable_reduced_scoring("0");	# defaults to disabled
 			$db->putGlobalSet($globalSet);
 			$set = $db->getMergedSet($effectiveUser, $set->set_id);
 		} else {
