@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.59 2009/06/26 00:44:26 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.60 2009/10/17 15:48:59 apizer Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -259,6 +259,8 @@ A value such as 0.1 means 0.1 percent error is allowed.",
  message like "This assignment has a Reduced Scoring Period that begins 11/08/2009 
  at 06:17pm EST and ends on the due date, 11/10/2009 at 06:17pm EST. During this 
  period all additional work done counts 50% of the original." will be displayed.<p>
+ To use this, you also have to enable Reduced Scoring for individual assignments by
+ editing the set data using the Hmwk Sets Editor.<p>
  This works with the avg_problem_grader (which is the the default grader) and the 
  std_problem_grader (the all or nothing grader).  It will work with custom graders
  if they are written appropriately.' ,
@@ -271,6 +273,8 @@ A value such as 0.1 means 0.1 percent error is allowed.",
  reduction. For example if this value is .5 and a student views a problem during the
  Reduced Scoring Period, they will see the message "You are in the Reduced Scoring 
  Period: All additional work done counts 50% of the original." <p>
+ To use this, you also have to enable Reduced Scoring for individual assignments by
+ editing the set data using the Hmwk Sets Editor.<p>
  This works with the avg_problem_grader (which is the the default grader) and the 
  std_problem_grader (the all or nothing grader).  It will work with custom graders
  if they are written appropriately.' ,
