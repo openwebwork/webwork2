@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.5.2.1 2009/06/26 00:37:00 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.6 2009/09/24 17:31:17 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,9 +127,10 @@ sub checkCourseTables {
 	# fetch fetch corresponding tables in the database and
 	# search for corresponding schema entries.
 	##########################################################
-
-    my $dbh = $self->dbh;                            
-	my $stmt = "show tables like '${courseName}%'";    # mysql request
+ 
+	my $dbh = $self->dbh;
+	my $tablePrefix = "${courseName}\\_";   # _ represents any single character in the MySQL like statement so we escape it
+	my $stmt = "show tables like '${tablePrefix}%'";    # mysql request
 	my $result = $dbh->selectall_arrayref($stmt) ;
 	my @tableNames = map {@$_} @$result;             # drill down in the result to the table name level
 
