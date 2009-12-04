@@ -368,42 +368,42 @@ sub pgfiles {
 		$tagged = 0;
 		while (<IN>) {
 		SWITCH: {
-				if (/KEYWORDS\((.*)\)/i) {
+				if (/\bKEYWORDS\((.*)\)/i) {
 					@keyword = keywordcleaner($1);
 					last SWITCH;
 				}
-				if (/DBsubject\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsubject\(\s*'(.*?)'\s*\)/) {
 					$subject = $1;
 					$subject =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/DBchapter\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBchapter\(\s*'(.*?)'\s*\)/) {
 					$chapter = $1;
 					$chapter =~ s/'/\'/g;
 					$tagged = 1;
 					last SWITCH;
 				}
-				if (/DBsection\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsection\(\s*'(.*?)'\s*\)/) {
 					$section = $1;
 					$section =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/Date\(\s*'(.*?)'\s*\)/) {
+				if (/\bDate\(\s*'(.*?)'\s*\)/) {
 					$date = $1;
 					$date =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/Institution\(\s*'(.*?)'\s*\)/) {
+				if (/\bInstitution\(\s*'(.*?)'\s*\)/) {
 					$institution = $1;
 					$institution =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/Author\(\s*'(.*?)'\s*\)/) {
+				if (/\bAuthor\(\s*'(.*?)'\s*\)/) {
 					$author = $1;
 					$author =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/TitleText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bTitleText(\d+)\(\s*'(.*?)'\s*\)/) {
 					$textno = $1;
 					$text = $2;
 					$text =~ s/'/\'/g;
@@ -413,7 +413,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/EditionText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bEditionText(\d+)\(\s*'(.*?)'\s*\)/) {
 					$textno = $1;	
 					$edition = $2;
 					$edition =~ s/'/\'/g;
@@ -423,7 +423,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/AuthorText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bAuthorText(\d+)\(\s*'(.*?)'\s*\)/) {
 					$textno = $1;
 					$textauthor = $2;
 					$textauthor =~ s/'/\'/g;
@@ -433,7 +433,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/Section(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bSection(\d+)\(\s*'(.*?)'\s*\)/) {
 					$textno = $1;
 					$textsection = $2;
 					$textsection =~ s/'/\'/g;
@@ -450,7 +450,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/Problem(\d+)\(\s*(.*?)\s*\)/) {
+				if (/\bProblem(\d+)\(\s*(.*?)\s*\)/) {
 					$textno = $1;
 					$textproblem = $2;
 					$textproblem =~ s/\D/ /g;
