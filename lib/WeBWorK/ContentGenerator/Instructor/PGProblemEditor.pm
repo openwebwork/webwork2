@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.96 2009/07/12 23:56:16 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.97 2009/09/01 18:46:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,7 +17,7 @@
 package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
-
+use constant DEFAULT_SEED => 123456;  
 
 =head1 NAME
 
@@ -191,7 +191,7 @@ sub pre_header_initialize {
 	# inside saveFileChanges
 	$self->{problemSeed} = $r->param('problemSeed') if (defined $r->param('problemSeed'));	
 	# Make sure that the problem seed has some value
-	$self->{problemSeed} = '123456' unless not_blank($self->{problemSeed});
+	$self->{problemSeed} = DEFAULT_SEED() unless not_blank($self->{problemSeed});
 	
 	##############################################################################
     #############################################################################
@@ -331,7 +331,7 @@ sub pre_header_initialize {
 	# inside saveFileChanges
 	$self->{problemSeed} = $r->param('problemSeed') if (defined $r->param('problemSeed'));	
 	# Make sure that the problem seed has some value
-	$self->{problemSeed} = '123456' unless not_blank( $self->{problemSeed});
+	$self->{problemSeed} = DEFAULT_SEED() unless not_blank( $self->{problemSeed});
 	
 	##############################################################################
 	# Return 
@@ -925,7 +925,7 @@ sub getFilePaths {
 		  }
 		  # bail if no source path for the problem is found ;
 		  die "Cannot find a file path to save to" unless( not_blank($forcedSourceFile)   );
-		  $self->{problemSeed} = 1234;
+		  $self->{problemSeed} = DEFAULT_SEED();
 		  $editFilePath .= '/' . $forcedSourceFile;
 		  last CASE;
 		}; # end 'source_path_for_problem_file' case
@@ -1180,7 +1180,7 @@ sub view_handler {
 	my $problemNumber   =  $self->{problemID};
 	my $problemSeed     = ($actionParams->{'action.view.seed'}) ? 
 	                                $actionParams->{'action.view.seed'}->[0] 
-	                                : 1234;
+	                                : DEFAULT_SEED();
 	my $displayMode     = ($actionParams->{'action.view.displayMode'}) ? 
 	                                $actionParams->{'action.view.displayMode'}->[0]  
 	                                : $self->r->ce->{pg}->{options}->{displayMode};
