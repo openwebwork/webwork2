@@ -1573,7 +1573,8 @@ sub checkFile ($) {
 
 	return "No source file specified" unless $file;
 	return "Problem source is drawn from a grouping set" if $file =~ /^group/;
-	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|;
+#	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
+	$file = $ce->{courseDirs}->{templates} . '/' . $file ; # only files in template directory can be accessed
 
 	my $text = "This source file ";
 	my $fileError;
