@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.85 2009/06/26 00:44:27 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.86 2009/07/07 18:19:43 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1756,11 +1756,11 @@ sub archive_course_form {
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
 			CGI::td(
 				CGI::scrolling_list(
-					-name => "archive_courseID",
+					-name => "archive_courseIDs",
 					-values => \@courseIDs,
 					-default => $archive_courseID,
 					-size => 10,
-					-multiple => 0,
+					-multiple => 1,
 					-labels => \%courseLabels,
 				),
 			),
@@ -1792,14 +1792,15 @@ sub archive_course_validate {
 	#my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
-	my $archive_courseID     = $r->param("archive_courseID")     || "";
-	
+	my @archive_courseIDs     = $r->param("archive_courseIDs");
+	@archive_courseIDs        = () unless @archive_courseIDs;
 	my @errors;
-	
-	if ($archive_courseID eq "") {
-		push @errors, "You must specify a course name.";
-	} elsif ($archive_courseID eq $urlpath->arg("courseID")) {
-		push @errors, "You cannot archive the course you are currently using.";
+	foreach my $archive_courseID (@archive_courseIDs) {
+		if ($archive_courseID eq "") {
+			push @errors, "You must specify a course name.";
+		} elsif ($archive_courseID eq $urlpath->arg("courseID")) {
+			push @errors, "You cannot archive the course you are currently using.";
+		}
 	}
 	
 	#my $ce2 = new WeBWorK::CourseEnvironment({
@@ -1820,9 +1821,15 @@ sub archive_course_confirm {
 	
 	print CGI::h2("archive Course");
 	
-	my $archive_courseID     = $r->param("archive_courseID")     || "";
+	#my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
+	my @archive_courseIDs     = $r->param("archive_courseIDs");
+	@archive_courseIDs        = () unless @archive_courseIDs;
+   
+    my $archive_courseID  = shift @archive_courseIDs;
+    
+    
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $archive_courseID,
@@ -1956,7 +1963,9 @@ sub archive_course_confirm {
 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
-		print $self->hidden_fields(qw/archive_courseID delete_course/);
+		print $self->hidden_fields(qw/delete_course/);
+		print CGI::hidden('archive_courseID', $archive_courseID);
+		print CGI::hidden('archive_courseIDs',@archive_courseIDs);
 			# grab some values we'll need
 		my $course_dir   = $ce2->{courseDirs}{root};
 		my $archive_path = $ce2->{webworkDirs}{courses} . "/$archive_courseID.tar.gz";
@@ -1973,8 +1982,9 @@ sub archive_course_confirm {
 			}
 			# archive execute button
 			print CGI::p({style=>"text-align: center"},
-				CGI::submit(-name=>"decline_archive_course", -value=>"Don't archive"),
+				CGI::submit(-name=>"decline_archive_course", -value=>"Stop archiving"),
 				"&nbsp;",
+				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>"Skip archiving this course")."&nbsp;":'',
 				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
 			);
 		} elsif( $directories_ok)  {
@@ -2006,9 +2016,12 @@ sub do_archive_course {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
+    
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
-	
+	my @archive_courseIDs     = $r->param("archive_courseIDs");
+	@archive_courseIDs        = () unless @archive_courseIDs;
+
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $archive_courseID,
@@ -2084,14 +2097,25 @@ sub do_archive_course {
 		
 		
 		}
-	   
-# 		print CGI::start_form(-method=>"POST", -action=>$r->uri);
-# 		print $self->hidden_authen_fields;
-# 		print $self->hidden_fields("subDisplay");
-# 		
-# 		print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "OK"),);
-# 		
-# 		print CGI::end_form();
+		if (@archive_courseIDs) {	    
+			print CGI::start_form(-method=>"POST", -action=>$r->uri);
+			print $self->hidden_authen_fields;
+			print $self->hidden_fields("subDisplay");
+			print $self->hidden_fields(qw/delete_course/);
+
+			print CGI::hidden('archive_courseIDs',@archive_courseIDs);		
+			print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "Stop archiving courses"),
+				CGI::submit("archive_course", "archive next course")
+			);
+ 			print CGI::end_form();
+ 		} else {
+			print CGI::start_form(-method=>"POST", -action=>$r->uri);
+			print $self->hidden_authen_fields;
+			print $self->hidden_fields("subDisplay");
+			print CGI::hidden("archive_courseID",$archive_courseID);
+			print CGI::p( CGI::submit("decline_archive_course", "OK")  );
+			print CGI::end_form();
+		}
 	}
 }
 
@@ -2273,6 +2297,14 @@ sub do_unarchive_course {
 		print CGI::div({style=>"text-align: center"},
 			CGI::a({href=>$newCourseURL}, "Log into $new_courseID"),
 		);
+		
+		print CGI::start_form(-method=>"POST", -action=>$r->uri);
+		print $self->hidden_authen_fields;
+		print $self->hidden_fields("subDisplay");
+		print CGI::hidden("unarchive_courseID",$unarchive_courseID);
+		print CGI::p( CGI::submit("decline_unarchive_course", "unarchive next course")  );
+ 		print CGI::end_form();
+ 
 	}
 }
 
