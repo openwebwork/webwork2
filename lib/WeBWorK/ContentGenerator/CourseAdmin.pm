@@ -1821,13 +1821,12 @@ sub archive_course_confirm {
 	
 	print CGI::h2("archive Course");
 	
-	#my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
 	my @archive_courseIDs     = $r->param("archive_courseIDs");
 	@archive_courseIDs        = () unless @archive_courseIDs;
-   
-    my $archive_courseID  = shift @archive_courseIDs;
+    my $archive_courseID  = $r->param("archive_courseID"); 
+    $archive_courseID  = $archive_courseIDs[0] unless $archive_courseID;
     
     
 	my $ce2 = new WeBWorK::CourseEnvironment({
@@ -2097,6 +2096,7 @@ sub do_archive_course {
 		
 		
 		}
+		shift @archive_courseIDs;  # remove the course which has just been archived.
 		if (@archive_courseIDs) {	    
 			print CGI::start_form(-method=>"POST", -action=>$r->uri);
 			print $self->hidden_authen_fields;
