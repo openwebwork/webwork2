@@ -1,7 +1,7 @@
 // ################################################################################
 // # WeBWorK Online Homework Delivery System
 // # Copyright © 2000-2009 The WeBWorK Project, http://openwebwork.sf.net/
-// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.11 2009/06/25 17:28:00 gage Exp $
+// # $CVSHeader: webwork2/htdocs/js/ww_applet_support.js,v 1.12 2009/07/12 23:37:10 gage Exp $
 // # 
 // # This program is free software; you can redistribute it and/or modify it under
 // # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +22,8 @@
 
 
 	var  ww_applet_list                  = new Object;  // holds  java script version (jsApplet) ww_applet objects
+	
+	var TIMEOUT                          = 100;         // time delay between successive checks for applet readiness
 
     
 //////////////////////////////////////////////////////////
@@ -497,7 +499,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			alert(debugText ); 
 			debugText="";
 		}
-		window.setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",100);	
+		window.setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
 	} else if( 0 < i ) {                // now that applet is loaded configure it and initialize it with saved data.
 	    
 	    this.debug_add("  applet is ready = " + applet_loaded  );
