@@ -485,7 +485,8 @@ sub FieldHTML {
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue) if defined $globalValue && $globalValue ne $labels{""};
-		$userValue = $self->formatDateTime($userValue) if defined $userValue && $userValue ne $labels{""};
+		# this is still fragile, but the check for blank (as opposed to 0) $userValue seems to prevent errors when no user has been assigned.
+		$userValue = $self->formatDateTime($userValue) if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
 	}
 
 	if ( defined($properties{convertby}) && $properties{convertby} ) {
