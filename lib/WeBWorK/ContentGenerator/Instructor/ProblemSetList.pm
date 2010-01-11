@@ -1096,11 +1096,11 @@ sub create_handler {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("");
 		$newSetRecord->hardcopy_header("");
-		$newSetRecord->open_date(time + ONE_WEEK);
-		$newSetRecord->due_date(time + 2*ONE_WEEK );
-		$newSetRecord->answer_date(time + 2*ONE_WEEK );
-		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);	# don't want students to see an empty set
-		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
+		$newSetRecord->open_date(time + ONE_WEEK());
+		$newSetRecord->due_date(time + 2*ONE_WEEK() );
+		$newSetRecord->answer_date(time + 2*ONE_WEEK() );
+		$newSetRecord->published(DEFAULT_PUBLISHED_STATE());	# don't want students to see an empty set
+		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, "Failed to duplicate set: no set selected for duplication!") unless $oldSetID =~ /\S/;
