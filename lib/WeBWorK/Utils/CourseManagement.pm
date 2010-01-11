@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.46 2009/02/02 03:18:10 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.48 2009/10/01 21:28:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -588,8 +588,7 @@ sub archiveCourse {
 		croak "$courseID: course not found";
 	}
 	
-	# fail if a course archive already exists
-	# FIXME there could be an option to overwrite an existing archive
+    # replace previous archived file if it exists.
 	if (-e $archive_path) {
 		unlink($archive_path) if (-w $archive_path);
 		unless (-e $archive_path) {
@@ -602,7 +601,7 @@ sub archiveCourse {
 	#### step 1: dump tables #####
 	
 	unless (-e $dump_dir) {
-		mkdir $dump_dir or croak "Failed to create course database dump directory '$data_dir': $!";
+		mkdir $dump_dir or croak "Failed to create course database dump directory '$dump_dir': $!";
 	}
 	
 	my $db = new WeBWorK::DB($ce->{dbLayout});
