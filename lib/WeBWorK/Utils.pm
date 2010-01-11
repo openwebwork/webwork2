@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.82 2008/10/09 02:18:38 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.83 2009/07/12 23:48:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -477,6 +477,7 @@ sub unformatDateAndTime_error {
 
 sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
+	warn "time zone not defined".caller() unless defined($display_tz);
 	$display_tz ||= "local";
 	#warn "parseDateTime('$string', '$display_tz')\n";
 	
@@ -590,8 +591,8 @@ the datetime is converted from the server's timezone to the timezone specified.
 
 sub formatDateTime($;$) {
 	my ($dateTime, $display_tz) = @_;
+	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz and  $dateTime;
 	$display_tz ||= "local";
-	#warn "formatDateTime('$dateTime', '$display_tz')\n";
 	
 	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
 	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
