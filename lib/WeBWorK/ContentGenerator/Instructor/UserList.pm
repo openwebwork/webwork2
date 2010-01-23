@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.93 2009/07/23 13:52:56 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.94 2009/09/30 14:22:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1509,11 +1509,12 @@ sub fieldEditHTML {
 			$default = $val if ( $value eq $role );
 		}
 		return CGI::popup_menu({
-			name => $fieldName,
-			values => \@values,
-			default => $default,
-			labels => \%labels,
-			override => 1,    # force default to be selected. (corrects bug on newer CGI
+			-name => $fieldName,
+			-values => \@values,
+			-default => [$default], # force default of 0 to be a selector value (instead of 
+			                        # being considered as a null -- now works with CGI 3.42
+			-labels => \%labels,
+			-override => 1,    # force default value to be selected. (corrects bug on newer CGI
 		});
 	}
 }
