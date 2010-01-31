@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.92 2008/06/23 19:58:11 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.93 2009/11/02 16:54:32 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -461,7 +461,16 @@ sub setListRow {
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-	        $status = "now open, due " . $self->formatDateTime($set->due_date);
+			$status = "now open, due " . $self->formatDateTime($set->due_date);
+			my $enable_reduced_scoring = $set->enable_reduced_scoring;
+			my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
+			if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
+				my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
+				my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
+#				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
+				$status .= '. <div class="ResultsAlert">Reduced Credit starts ' . $beginReducedScoringPeriod . '</div>';
+
+			}
 		$setIsOpen = 1;
 	} elsif (time < $set->answer_date) {
 		$status = "closed, answers on " . $self->formatDateTime($set->answer_date);
