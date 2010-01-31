@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.93 2009/10/17 15:49:57 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.94 2009/11/02 16:54:15 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -325,9 +325,15 @@ sub body {
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
-		print CGI::div({class=>"ResultsAlert"},"This assignment has a Reduced Scoring Period that begins
- $beginReducedScoringPeriod and ends on the due date, $dueDate.  During this period all additional
- work done counts $reducedScoringPerCent\% of the original.");
+		if (time < $set->due_date()) {
+			print CGI::div({class=>"ResultsAlert"},"This assignment has a Reduced Credit Period that begins
+			$beginReducedScoringPeriod and ends on the due date, $dueDate.  During this period all additional
+			work done counts $reducedScoringPerCent\% of the original.");
+		} else {
+			print CGI::div({class=>"ResultsAlert"},"This assignment had a Reduced Credit Period that began
+			$beginReducedScoringPeriod and ended on the due date, $dueDate.  During that period all additional
+			work done counted $reducedScoringPerCent\% of the original.");
+		}
 	}
 	
 	# DBFIXME use iterator
