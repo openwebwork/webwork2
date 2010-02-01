@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.60 2009/10/17 15:48:59 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.61 2009/11/02 22:19:57 apizer Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -252,28 +252,28 @@ You must use at least one display mode.  If you select only one, then the option
 A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'},
 		{ var => 'pg{ansEvalDefaults}{reducedScoringPeriod}',
-		  doc => 'Length of Reduced Scoring Period in minutes',
-		  doc2 => 'The Reduced Scoring Period is a period before the due date during which
+		  doc => 'Length of Reduced Credit Period in minutes',
+		  doc2 => 'The Reduced Credit Period is a period before the due date during which
  all additional work done by the student counts at a reduced rate. Here is where 
  you set the length of this period in minutes. If this value is greater than 0, a
- message like "This assignment has a Reduced Scoring Period that begins 11/08/2009 
+ message like "This assignment has a Reduced Credit Period that begins 11/08/2009 
  at 06:17pm EST and ends on the due date, 11/10/2009 at 06:17pm EST. During this 
  period all additional work done counts 50% of the original." will be displayed.<p>
- To use this, you also have to enable Reduced Scoring for individual assignments by
+ To use this, you also have to enable Reduced Credit for individual assignments by
  editing the set data using the Hmwk Sets Editor.<p>
  This works with the avg_problem_grader (which is the the default grader) and the 
  std_problem_grader (the all or nothing grader).  It will work with custom graders
  if they are written appropriately.' ,
 		  type => 'number'},
 		{ var => 'pg{ansEvalDefaults}{reducedScoringValue}',
-		  doc => 'Value of work done in Reduced Scoring Period' ,
-		  doc2 => 'The Reduced Scoring Period is a period before the due date during which
+		  doc => 'Value of work done in Reduced Credit Period' ,
+		  doc2 => 'The Reduced Credit Period is a period before the due date during which
  all additional work done by the student counts at a reduced rate. Here is where 
  you set the reduced rate which must be a number in the interval [0,1]. 1 means no 
  reduction. For example if this value is .5 and a student views a problem during the
- Reduced Scoring Period, they will see the message "You are in the Reduced Scoring 
+ Reduced Credit Period, they will see the message "You are in the Reduced Credit 
  Period: All additional work done counts 50% of the original." <p>
- To use this, you also have to enable Reduced Scoring for individual assignments by
+ To use this, you also have to enable Reduced Credit for individual assignments by
  editing the set data using the Hmwk Sets Editor.<p>
  This works with the avg_problem_grader (which is the the default grader) and the 
  std_problem_grader (the all or nothing grader).  It will work with custom graders
