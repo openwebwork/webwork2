@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.61 2009/11/02 22:19:57 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Constants.pm,v 1.62 2010/02/01 01:57:56 apizer Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -253,7 +253,7 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'},
 		{ var => 'pg{ansEvalDefaults}{reducedScoringPeriod}',
 		  doc => 'Length of Reduced Credit Period in minutes',
-		  doc2 => 'The Reduced Credit Period is a period before the due date during which
+		  doc2 => 'The Reduced Credit Period (formally called the Reduced Scoring Period) is a period before the due date during which
  all additional work done by the student counts at a reduced rate. Here is where 
  you set the length of this period in minutes. If this value is greater than 0, a
  message like "This assignment has a Reduced Credit Period that begins 11/08/2009 
@@ -267,7 +267,7 @@ A value such as 0.1 means 0.1 percent error is allowed.",
 		  type => 'number'},
 		{ var => 'pg{ansEvalDefaults}{reducedScoringValue}',
 		  doc => 'Value of work done in Reduced Credit Period' ,
-		  doc2 => 'The Reduced Credit Period is a period before the due date during which
+		  doc2 => 'The Reduced Credit Period (formally called the Reduced Scoring Period) is a period before the due date during which
  all additional work done by the student counts at a reduced rate. Here is where 
  you set the reduced rate which must be a number in the interval [0,1]. 1 means no 
  reduction. For example if this value is .5 and a student views a problem during the
