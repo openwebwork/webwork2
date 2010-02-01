@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork-modperl/conf/global.conf.dist,v 1.219 2009/10/22 16:35:47 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.220 2009/11/05 13:15:16 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -997,7 +997,7 @@ $pg{ansEvalDefaults} = {
 	numZeroLevelTolDefault        => 1E-12,
 	useBaseTenLog                 => 0,
 	defaultDisplayMatrixStyle     => "[s]",
-	reducedScoringPeriod          => 0,	# Length of Reduced Scoring Period in minutes
+	reducedScoringPeriod          => 0,	# Length of Reduced Credit Period (formally Reduced Scoring Period) in minutes
 	reducedScoringValue			  => 1,	# A number in [0,1]. Students will be informed of the value as a percentage
 };
 
