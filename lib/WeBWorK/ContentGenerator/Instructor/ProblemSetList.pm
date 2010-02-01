@@ -332,7 +332,7 @@ sub body {
 		"Due Date", 
 		"Answer Date", 
 		"Visible",
-		"Reduced Scoring<br> Enabled" 
+		"Reduced Credit<br> Enabled" 
 	);
 	
 	########## set initial values for state fields
@@ -541,7 +541,7 @@ sub body {
 	
 	########## first adjust heading if in editMode
 	$prettyFieldNames{set_id} = "Edit All <br> Set Data" if $editMode;
-	$prettyFieldNames{enable_reduced_scoring} = 'Enable Reduced<br>Scoring' if $editMode;
+	$prettyFieldNames{enable_reduced_scoring} = 'Enable Reduced<br>Credit' if $editMode;
 	
 	
 	print CGI::p({},"Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
@@ -921,13 +921,13 @@ sub enable_reduced_scoring_handler {
 		$result = "No change made to any set.";
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
-		$result = "Reduced Scoring $verb for all sets.";
+		$result = "Reduced Credit $verb for all sets.";
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = "Reduced Scoring $verb for visable sets.";
+		$result = "Reduced Credit $verb for visable sets.";
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = "Reduced Scoring $verb for selected sets.";
+		$result = "Reduced Credit $verb for selected sets.";
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -2099,7 +2099,7 @@ sub recordEditHTML {
 	my $setSelected = $options{setSelected};
 
 	my $publishedClass = $Set->published ? "Published" : "Unpublished";
-	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? 'Reduced Scoring Enabled' : 'Reduced Scoring Disabled';
+	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? 'Reduced Credit Enabled' : 'Reduced Credit Disabled';
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};

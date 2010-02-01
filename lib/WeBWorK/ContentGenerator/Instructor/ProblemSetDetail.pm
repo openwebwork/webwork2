@@ -139,7 +139,7 @@ use constant  FIELD_PROPERTIES => {
 		},
 	},
 	enable_reduced_scoring => {
-		name      => "Reduced Scoring Enabled",
+		name      => "Reduced Credit Enabled",
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
