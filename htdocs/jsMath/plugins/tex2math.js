@@ -239,6 +239,9 @@ jsMath.Add(jsMath.tex2math,{
             this.pattern.lastIndex--;
           }
           break;
+          
+        case '\\\\':
+          break;
 
         default:
           if (match.substr(0,6) == '\\begin' && this.search.end == null &&
@@ -401,6 +404,6 @@ jsMath.Add(jsMath.tex2math,{
 if (jsMath.Controls.cookie.tex2math == null) {jsMath.Controls.cookie.tex2math = 1}
 if (jsMath.tex2math.allowDisableTag == null) {jsMath.tex2math.allowDisableTag = 1}
 jsMath.tex2math.TestPatterns();
-jsMath.tex2math.createPattern('stdPattern',/(\\[\(\)\[\]$]|\$\$|\$|\\(begin|end)\{[^}]+\})/g);
+jsMath.tex2math.createPattern('stdPattern',/(\\[\(\)\[\]$\\]|\$\$|\$|\\(begin|end)\{[^}]+\})/g);
 
 }
