@@ -10,7 +10,7 @@
  *
  *  for the latest version, and for documentation on how to use jsMath.
  *
- *  Copyright 2004-2008 by Davide P. Cervone
+ *  Copyright 2004-2010 by Davide P. Cervone
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.6c",  // change this if you edit the file, but don't edit this file
+  version: "3.6d",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -574,8 +574,8 @@ jsMath.Script = {
         }
       }
       if (!this.request && window.ActiveXObject && !this.mustPost) {
-        var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
-                   "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
+        var xml = ["MSXML2.XMLHTTP.6.0","MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0",
+                   "MSXML2.XMLHTTP.3.0","MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
         for (var i = 0; i < xml.length && !this.request; i++) {
           try {this.request = new ActiveXObject(xml[i])} catch (err) {}
         }
@@ -1289,6 +1289,7 @@ jsMath.Browser = {
                               //   for them to be available
 
   delay: 1,                   // delay for asynchronous math processing
+  processAtOnce: 16,          // number of math elements to process before screen update
   
   version: 0,                 // browser version number (when needed)
 
@@ -1412,6 +1413,7 @@ jsMath.Browser = {
       jsMath.browser = 'MSIE';
       if (jsMath.platform == 'pc') {
         this.IE7 = (window.XMLHttpRequest != null);
+        this.IE8 = (jsMath.BBoxFor("<!--[if gte IE 8]>hi<![endif]-->").w > 0);
         this.quirks = (jsMath.document.compatMode == "BackCompat");
         this.msieStandard6 = !this.quirks && !this.IE7;
         this.allowAbsoluteDelim = 1; this.separateSkips = 1;
@@ -1422,6 +1424,7 @@ jsMath.Browser = {
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
+        this.msie8HeightBug = (this.IE8 && !this.quirks);
         this.msieTeXfontBaselineBug = !this.quirks;
         this.msieBorderBug = this.blankWidthBug = 1; // force these, since IE7 doesn't register it
         this.msieSpaceFix = '<span style="margin-right:-1px"></span><span style="display:inline-block; width:1px"></span>';
@@ -1472,6 +1475,7 @@ jsMath.Browser = {
         jsMath.styles['#jsMath_panel'].width = '42em';
         jsMath.Controls.cookie.printwarn = 0; // MSIE/Mac doesn't handle '@media screen'
       }
+      this.processAtOnce = Math.max(Math.floor((this.processAtOnce+1)/2),1);
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3mu/}}');
       jsMath.Macro('angle','\\raise1.84pt{\\kern2.5mu\\rlap{\\scriptstyle/}\\kern.5pt\\rule{.4em}{-1.5pt}{1.84pt}\\kern2.5mu}');
     }
@@ -1493,7 +1497,7 @@ jsMath.Browser = {
       } else if (navigator.userAgent.match(' Firefox/([0-9.]+)([a-z ]|$)')) {
         this.version = RegExp.$1;
       }
-      if (this.VersionAtLeast("3.0")) {this.mozImageSizeBug = 1}
+      if (this.VersionAtLeast("3.0")) {this.mozImageSizeBug = this.lineBreakBug = 1}
     }
   },
   
@@ -1543,6 +1547,7 @@ jsMath.Browser = {
       this.safariIFRAMEbug = version >= 312 && version < 412;
       this.safariButtonBug = version < 412;
       this.safariImgBug = 1; this.textNodeBug = 1;
+      this.lineBreakBug = version >= 526;
       this.buttonCheck = version < 500;
       this.styleChangeDelay = 1;
       jsMath.Macro('not','\\mathrel{\\rlap{\\kern3.25mu/}}');
@@ -1566,12 +1571,12 @@ jsMath.Browser = {
       }
       //  Apparently, Konqueror wants the names without the hyphen
       jsMath.Add(jsMath.styles,{
-        '.typeset .cmr10':    'font-family: jsMath-cmr10, jsMath cmr10, serif',
-        '.typeset .cmbx10':   'font-family: jsMath-cmbx10, jsMath cmbx10, jsMath-cmr10, jsMath cmr10',
-        '.typeset .cmti10':   'font-family: jsMath-cmti10, jsMath cmti10, jsMath-cmr10, jsMath cmr10',
-        '.typeset .cmmi10':   'font-family: jsMath-cmmi10, jsMath cmmi10',
-        '.typeset .cmsy10':   'font-family: jsMath-cmsy10, jsMath cmsy10',
-        '.typeset .cmex10':   'font-family: jsMath-cmex10, jsMath cmex10'
+        '.typeset .cmr10':  'font-family: jsMath-cmr10, jsMath cmr10, serif',
+        '.typeset .cmbx10': 'font-family: jsMath-cmbx10, jsMath cmbx10, jsMath-cmr10, jsMath cmr10',
+        '.typeset .cmti10': 'font-family: jsMath-cmti10, jsMath cmti10, jsMath-cmr10, jsMath cmr10',
+        '.typeset .cmmi10': 'font-family: jsMath-cmmi10, jsMath cmmi10',
+        '.typeset .cmsy10': 'font-family: jsMath-cmsy10, jsMath cmsy10',
+        '.typeset .cmex10': 'font-family: jsMath-cmex10, jsMath cmex10'
       });
       jsMath.Font.testFont = "jsMath-cmex10, jsMath cmex10";
     }
@@ -1639,14 +1644,16 @@ jsMath.Font = {
     var wh = jsMath.BBoxFor('<span style="font-family: '+jsMath.Font.testFont+', serif">'+jsMath.TeX.cmex10[1].c+'</span>');
     jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10',null,null,'jsMath-'));
     if (!jsMath.nofonts) return;
-    if (jsMath.browser != 'Mozilla' ||
-         (jsMath.platform == "mac" &&
-           (!jsMath.Browser.VersionAtLeast(1.5) || jsMath.Browser.VersionAtLeast(3.0))) ||
-         (jsMath.platform != "mac" && !jsMath.Browser.VersionAtLeast(3.0))) {
-      wh = jsMath.BBoxFor('<span style="font-family: CMEX10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
-      jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
-      if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
-    }
+    /* 
+     * if (jsMath.browser != 'Mozilla' ||
+     *      (jsMath.platform == "mac" &&
+     *        (!jsMath.Browser.VersionAtLeast(1.5) || jsMath.Browser.VersionAtLeast(3.0))) ||
+     *      (jsMath.platform != "mac" && !jsMath.Browser.VersionAtLeast(3.0))) {
+     *   wh = jsMath.BBoxFor('<span style="font-family: CMEX10, serif">'+jsMath.TeX.cmex10[1].c+'</span>');
+     *   jsMath.nofonts = ((wh.w*3 > wh.h || wh.h == 0) && !this.Test1('cmr10'));
+     *   if (!jsMath.nofonts) {jsMath.Setup.Script("jsMath-BaKoMa-fonts.js")}
+     * }
+     */
   },
   
   /*
@@ -1896,11 +1903,12 @@ jsMath.Controls = {
    *  absolutely positioned, and then move the DIV.
    */
   MoveButton: function () {
-    jsMath.fixedDiv.style.left = document.body.scrollLeft + 'px';
-//    jsMath.fixedDiv.style.top = document.body.scrollTop + 'px';
-    jsMath.fixedDiv.style.top = document.body.scrollTop + document.body.clientHeight + 'px';
-    jsMath.fixedDiv.style.width = document.body.clientWidth + 'px';
-//    jsMath.fixedDiv.style.height = document.body.clientHeight + 'px';
+    var body = (jsMath.Browser.quirks ? document.body : document.documentElement);
+    jsMath.fixedDiv.style.left = body.scrollLeft + 'px';
+    jsMath.fixedDiv.style.top = body.scrollTop + body.clientHeight + 'px';
+    jsMath.fixedDiv.style.width = body.clientWidth + 'px';
+//    jsMath.fixedDiv.style.top = body.scrollTop + 'px';
+//    jsMath.fixedDiv.style.height = body.clientHeight + 'px';
   },
 
   /*
@@ -2884,13 +2892,15 @@ jsMath.HTML = {
              + '</span>';
     }
     if (d == "none") {d = 0}
-    html += this.Blank(w,h-d,d);
+    html += this.Blank((jsMath.Browser.lineBreakBug ? 0 : w),h-d,d);
     if (jsMath.Browser.msieAbsoluteBug) {           // for MSIE (Mac)
       html = '<span style="position:relative;">' + html + '</span>';
     }
-    html = '<span style="position:relative;'
+    html = '<span style="position:relative; '
          +   jsMath.Browser.msieInlineBlockFix
          + '">' + html + '</span>';
+    if (jsMath.Browser.lineBreakBug)
+      {html = '<span style="display:inline-block; width:'+jsMath.HTML.Em(w)+'">'+html+'</span>'}
     return html;
   }
 
@@ -6103,6 +6113,12 @@ jsMath.Package(jsMath.Parser,{
         var y = 0;
         if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y);
+        if (jsMath.Browser.msie8HeightBug) {
+          html = html.replace(/relative/,
+            "relative; height:"+jsMath.HTML.Em(jsMath.hd)+"; " +
+            "vertical-align:"+jsMath.HTML.Em(-jsMath.d)
+          );
+        }
       } else if (jsMath.Browser.valignBug) {
         // remove line height
         html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';">'
@@ -6373,33 +6389,37 @@ jsMath.Translate = {
 
   /*
    *  Asynchronously process all the math elements starting with
-   *  the k-th one
+   *  the k-th one.  Do them in blocks of 8 (more efficient than one
+   *  at a time, but still allows screen updates periodically).
    */
   ProcessElements: function (k) {
     jsMath.Script.blocking = 1;
-    if (k >= this.element.length || this.cancel) {
-      this.ProcessComplete();
-      if (this.cancel) {
-        jsMath.Message.Set("Process Math: Canceled");
-        jsMath.Message.Clear()
-      }
-      jsMath.Script.blocking = 0;
-      jsMath.Script.Process();
-    } else {
-      var savedQueue = jsMath.Script.SaveQueue();
-      this.ProcessElement(this.element[k]);
-      if (this.restart) {
-        jsMath.Script.Push(this,'ProcessElements',k);
-	jsMath.Script.RestoreQueue(savedQueue);
+    for (var i = 0; i < jsMath.Browser.processAtOnce; i++, k++) {
+      if (k >= this.element.length || this.cancel) {
+        this.ProcessComplete();
+        if (this.cancel) {
+          jsMath.Message.Set("Process Math: Canceled");
+          jsMath.Message.Clear()
+        }
         jsMath.Script.blocking = 0;
-        setTimeout('jsMath.Script.Process()',jsMath.Browser.delay);
+        jsMath.Script.Process();
+        return;
       } else {
-	jsMath.Script.RestoreQueue(savedQueue);
-        k++; var p = Math.floor(100 * k / this.element.length);
-        jsMath.Message.Set('Processing Math: '+p+'%');
-        setTimeout('jsMath.Translate.ProcessElements('+k+')',jsMath.Browser.delay);
+        var savedQueue = jsMath.Script.SaveQueue();
+        this.ProcessElement(this.element[k]);
+        if (this.restart) {
+          jsMath.Script.Push(this,'ProcessElements',k);
+          jsMath.Script.RestoreQueue(savedQueue);
+          jsMath.Script.blocking = 0;
+          setTimeout('jsMath.Script.Process()',jsMath.Browser.delay);
+          return;
+        }
       }
     }
+    jsMath.Script.RestoreQueue(savedQueue);
+    var p = Math.floor(100 * k / this.element.length);
+    jsMath.Message.Set('Processing Math: '+p+'%');
+    setTimeout('jsMath.Translate.ProcessElements('+k+')',jsMath.Browser.delay);
   },
 
   /*

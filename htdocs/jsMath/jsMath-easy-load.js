@@ -60,10 +60,18 @@ if (!jsMath.Easy.allowGlobal) {
 if (jsMath.Easy.noImageFonts) {
   jsMath.noImgFonts = 1;
   if (!jsMath.Font) {jsMath.Font = {}}
-  jsMath.Font.extra_message =
-    'Extra TeX fonts not found: <b><span id="jsMath_ExtraFonts"></span></b><br/>'
-      + 'Using unicode fonts instead.  This may be slow and might not print well.<br/>\n'
-      + 'Use the jsMath control panel to get additional information.';
+  if (!jsMath.Font.message) {
+    jsMath.Font.message =
+      '<b>No jsMath TeX fonts found</b> -- using unicode fonts instead.<br/>\n'
+        + 'This may be slow and might not print well.<br/>\n'
+        + 'Use the jsMath control panel to get additional information.';
+  }
+  if (!jsMath.Fonts.extra_message) {
+    jsMath.Font.extra_message =
+      'Extra TeX fonts not found: <b><span id="jsMath_ExtraFonts"></span></b><br/>'
+        + 'Using unicode fonts instead.  This may be slow and might not print well.<br/>\n'
+        + 'Use the jsMath control panel to get additional information.';
+  }
 }
 
 if (jsMath.Easy.processSingleDollars ||

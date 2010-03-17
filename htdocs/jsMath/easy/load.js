@@ -160,5 +160,5 @@ if (jsMath.Easy.root == "") {
 }
 jsMath.Easy.root = jsMath.Easy.root.replace(/\/$/,""); // trim trailing "/" if any
 
-document.write('<SCRIPT SRC="'+jsMath.Easy.root+'/jsMath-easy-load.js"><'+'/SCRIPT>');
+document.write('<script src="'+jsMath.Easy.root+'/jsMath-easy-load.js"><'+'/script>');
 

@@ -124,8 +124,8 @@ jsMath.Add(jsMath.Autoload,{
         }
       }
       if (!this.request && window.ActiveXObject && !this.mustPost) {
-        var xml = ["MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0","MSXML2.XMLHTTP.3.0",
-                   "MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
+        var xml = ["MSXML2.XMLHTTP.6.0","MSXML2.XMLHTTP.5.0","MSXML2.XMLHTTP.4.0",
+                   "MSXML2.XMLHTTP.3.0","MSXML2.XMLHTTP","Microsoft.XMLHTTP"];
         for (var i = 0; i < xml.length && !this.request; i++) {
           try {this.request = new ActiveXObject(xml[i])} catch (err) {}
         }
