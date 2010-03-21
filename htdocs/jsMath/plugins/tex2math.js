@@ -154,7 +154,7 @@ jsMath.Add(jsMath.tex2math,{
         if (element.className == null) {element.className = ''}
         if (element.firstChild && element.className != 'math') {
           var off = ignore || element.className.match(/(^| )tex2math_ignore( |$)/) ||
-             (element.tagName && element.tagName.match(/^(script|noscript|style|textarea|pre)$/i));
+             (element.tagName && element.tagName.match(/^(script|noscript|style|textarea|pre|code)$/i));
           off = off && !element.className.match(/(^| )tex2math_process( |$)/);
           this.ScanElement(element.firstChild,off);
         }
