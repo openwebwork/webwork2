@@ -67,7 +67,7 @@ if (!document.getElementById || !document.childNodes || !document.createElement)
 
 window.jsMath = {
   
-  version: "3.6d",  // change this if you edit the file, but don't edit this file
+  version: "3.6e",  // change this if you edit the file, but don't edit this file
   
   document: document,  // the document loading jsMath
   window: window,      // the window of the of loading document
@@ -306,7 +306,8 @@ window.jsMath = {
   BBoxFor: function (s) {
     this.hidden.innerHTML = 
       '<nobr><span class="typeset"><span class="scale">'+s+'</span></span></nobr>';
-    var bbox = {w: this.hidden.offsetWidth, h: this.hidden.offsetHeight};
+    var math = (jsMath.Browser.msieBBoxBug ? this.hidden.firstChild.firstChild : this.hidden);
+    var bbox = {w: math.offsetWidth, h: this.hidden.offsetHeight};
     this.hidden.innerHTML = '';
     return bbox;
   },
@@ -320,24 +321,6 @@ window.jsMath = {
     if (!cache[this.em]) {cache[this.em] = {}}
     if (!cache[this.em][s]) {
       var bbox = this.BBoxFor(s);
-      cache[this.em][s] = {w: bbox.w/this.em, h: bbox.h/this.em};
-    }
-    return cache[this.em][s];
-  },
-
-  /*
-   *  For browsers that don't handle sizes of italics properly (MSIE).
-   *  Check the cache first to see if we've already measured it.
-   */
-  EmBoxForItalics: function (s) {
-    var cache = jsMath.Global.cache.R;
-    if (!cache[this.em]) {cache[this.em] = {}}
-    if (!cache[this.em][s]) {
-      var bbox = this.BBoxFor(s);
-      if (s.match(/<i>|class=\"(icm|italic|igreek|iaccent)/i)) {
-        bbox.w = bbox.Mw = this.BBoxFor(s+jsMath.Browser.italicString).w
-                             - jsMath.Browser.italicCorrection;
-      }
       cache[this.em][s] = {w: bbox.w/this.em, h: bbox.h/this.em};
     }
     return cache[this.em][s];
@@ -363,9 +346,7 @@ window.jsMath = {
     if (!cache[this.em]) {
       cache[this.em] = {};
       cache[this.em].bb = this.BBoxFor('x'); var hh = cache[this.em].bb.h;
-      cache[this.em].d = this.BBoxFor('x'+jsMath.HTML.Rule(1,hh/jsMath.em)).h - hh;
-      if (jsMath.Browser.italicString) 
-        {cache[this.em].ic = jsMath.BBoxFor(jsMath.Browser.italicString).w}
+      cache[this.em].d = this.BBoxFor('x'+jsMath.HTML.Strut(hh/this.em)).h - hh;
     }
     jsMath.Browser.italicCorrection = cache[this.em].ic;
     var bb = cache[this.em].bb; var h = bb.h; var d = cache[this.em].d
@@ -1099,10 +1080,8 @@ jsMath.Setup = {
    */
   TeXfont: function (name) {
     var font = jsMath.TeX[name]; if (font == null) return;
-    var WH = jsMath.EmBoxFor('<span class="'+name+'">'+font[65].c+'</span>');
-    font.hd = WH.h;
-    font.d = jsMath.EmBoxFor('<span class="'+name+'">'+ font[65].c +
-      jsMath.HTML.Rule(1,font.hd) + '</span>').h - font.hd;
+    font.hd = jsMath.EmBoxFor('<span class="'+name+'">'+font[65].c+'</span>').h;
+    font.d  = jsMath.EmBoxFor('<span class="'+name+'">'+font[65].c+jsMath.HTML.Strut(font.hd)+'</span>').h - font.hd;
     font.h = font.hd - font.d;
     if (name == 'cmmi10') {font.skewchar = 0177} 
     else if (name == 'cmsy10') {font.skewchar = 060}
@@ -1298,7 +1277,7 @@ jsMath.Browser = {
    *  or varies with the height of the rest of the line (MSIE).
    */
   TestSpanHeight: function () {
-    jsMath.hidden.innerHTML = '<span><span style="'+this.block+';height:2em;width:1px"></span></span>';
+    jsMath.hidden.innerHTML = '<span><span style="'+this.block+';height:2em;width:1px"></span>x</span>';
     var span = jsMath.hidden.firstChild;
     var img  = span.firstChild;
     this.spanHeightVaries = (span.offsetHeight >= img.offsetHeight && span.offsetHeight > 0);
@@ -1328,11 +1307,12 @@ jsMath.Browser = {
        '<span style="'+this.block+';height:'+h+'px;width:1px;vertical-align:-'+h+'px"></span>').h > 2*h;
     this.widthAddsBorder = jsMath.BBoxFor('<span style="'+this.block+
         ';overflow:hidden;height:1px;width:10px;border-left:10px solid"></span>').w > 10;
-    this.msieBorderBug =
-      jsMath.BBoxFor('<span style="'+this.block+';height:'+h+'px;width:1px"></span>x').h !=
-      jsMath.BBoxFor('<span style="'+this.block+';height:'+h+'px;width:1px;border-left:1px solid"></span>x').h;
-    this.blankWidthBug = this.msieBorderBug ||
-      jsMath.BBoxFor('<span style="'+this.block+';height:2em;width:0px"></span>').h == 0;
+    var h1 = jsMath.BBoxFor('<span style="'+this.block+';height:'+h+'px;width:1px"></span>x').h,
+        h2 = jsMath.BBoxFor('<span style="'+this.block+';height:'+h+'px;width:1px;border-left:1px solid"></span>x').h,
+        h3 = jsMath.BBoxFor('<span style="'+this.block+';height:2em"></span>').h;
+    this.msieBlockDepthBug = (h1 == h);
+    this.msieRuleDepthBug = (h2 == h);
+    this.blankWidthBug = (h3 == 0);
   },
   
   /*
@@ -1409,12 +1389,14 @@ jsMath.Browser = {
   //  Handle bug-filled Internet Explorer
   //
   MSIE: function () {
-    if (this.spanHeightVaries && !this.spanHeightTooBig) {
+    if (jsMath.BBoxFor("<!--[if IE]>IE<![endif]-->").w) {
       jsMath.browser = 'MSIE';
       if (jsMath.platform == 'pc') {
         this.IE7 = (window.XMLHttpRequest != null);
-        this.IE8 = (jsMath.BBoxFor("<!--[if gte IE 8]>hi<![endif]-->").w > 0);
+        this.IE8 = (jsMath.BBoxFor("<!--[if gte IE 8]>IE8<![endif]-->").w > 0);
+        this.isReallyIE8 = (jsMath.document.documentMode != null);
         this.quirks = (jsMath.document.compatMode == "BackCompat");
+        this.msieMode = (jsMath.document.documentMode || (this.quirks ? 5 : 7));
         this.msieStandard6 = !this.quirks && !this.IE7;
         this.allowAbsoluteDelim = 1; this.separateSkips = 1;
         this.buttonCheck = 1; this.msieBlankBug = 1;
@@ -1424,10 +1406,11 @@ jsMath.Browser = {
         this.msieAlphaBug = !this.IE7; this.alphaPrintBug = !this.IE7;
         this.msieCenterBugFix = 'position:relative; ';
         this.msieInlineBlockFix = ' display:inline-block;';
-        this.msie8HeightBug = (this.IE8 && !this.quirks);
-        this.msieTeXfontBaselineBug = !this.quirks;
-        this.msieBorderBug = this.blankWidthBug = 1; // force these, since IE7 doesn't register it
-        this.msieSpaceFix = '<span style="margin-right:-1px"></span><span style="display:inline-block; width:1px"></span>';
+        this.msie8HeightBug = this.msieBBoxBug = (this.msieMode == 8);
+        this.blankWidthBug = (this.msieMode != 8);
+        this.msieSpaceFix = (this.isReallyIE8 ?
+            '<span style="display:inline-block; margin-right:-1px; width:1px"></span>' :
+            '<span style="margin-right:-1px; width:1px"></span>');
         jsMath.Macro('joinrel','\\mathrel{\\kern-5mu}'),
         jsMath.Parser.prototype.mathchardef.mapstocharOrig = jsMath.Parser.prototype.mathchardef.mapstochar;
         delete jsMath.Parser.prototype.mathchardef.mapstochar;
@@ -1463,9 +1446,8 @@ jsMath.Browser = {
           this.imgScale *= screen.logicalXDPI/screen.deviceXDPI;
           jsMath.Controls.cookie.alpha = 0;
         }
-        // Handle bug with getting width of italic text
-        this.italicString = '<i>x</i>';
-        jsMath.EmBoxFor = jsMath.EmBoxForItalics;
+        //  IE8 doesn't puts ALL boxes at the bottom rather than on the baseline
+        if (this.msieRuleDepthBug) {jsMath.HTML.Strut = jsMath.HTML.msieStrut}
       } else if (jsMath.platform == 'mac') {
         this.msieAbsoluteBug = 1; this.msieButtonBug = 1;
         this.msieDivWidthBug = 1; this.msieBlankBug = 1;
@@ -2795,7 +2777,7 @@ jsMath.HTML = {
       style += 'height:'+H+';';
     }
     if (jsMath.Browser.mozInlineBlockBug) {d = -h}
-    if (jsMath.Browser.msieBorderBug && !isRule) {d -= jsMath.d}
+    if (jsMath.Browser.msieBlockDepthBug && !isRule) {d -= jsMath.d}
     if (d) {style += 'vertical-align:'+this.Em(-d)}
     return backspace+'<span class="blank" style="'+style+'"></span>';
   },
@@ -2806,6 +2788,14 @@ jsMath.HTML = {
   Rule: function (w,h) {
     if (h == null) {h = jsMath.TeX.default_rule_thickness}
     return this.Blank(w,h,0,1);
+  },
+
+  /*
+   *  Create a strut for measuring position of baseline
+   */
+  Strut: function (h) {return this.Blank(1,h,0,1)},
+  msieStrut: function (h) {
+    return '<img style="width:1px; height:'+this.Em(h)+'"/>'
   },
   
   /*
@@ -2896,7 +2886,7 @@ jsMath.HTML = {
     if (jsMath.Browser.msieAbsoluteBug) {           // for MSIE (Mac)
       html = '<span style="position:relative;">' + html + '</span>';
     }
-    html = '<span style="position:relative; '
+    html = '<span style="position:relative;'
          +   jsMath.Browser.msieInlineBlockFix
          + '">' + html + '</span>';
     if (jsMath.Browser.lineBreakBug)
@@ -2998,7 +2988,7 @@ jsMath.Add(jsMath.Box,{
       var h = box.bd+box.bh;
       var html = jsMath.Typeset.AddClass(box.tclass,box.html);
           html = jsMath.Typeset.AddStyle(style,size,html);
-      box.bd = jsMath.EmBoxFor(html+jsMath.HTML.Blank(1,h)).h - h;
+      box.bd = jsMath.EmBoxFor(html + jsMath.HTML.Strut(h)).h - h;
       box.bh = h - box.bd;
       if (scale == 1) {c.bh = box.bh; c.bd = box.bd}
     }
@@ -3184,7 +3174,7 @@ jsMath.Add(jsMath.Box,{
       
       html = jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(top.tclass,top.c),0,0);
       h = rep.h+rep.d - .05; y = top.d-.05 + rep.h;
-      ext = jsMath.Typeset.AddClass(font,rep.c)
+      ext = jsMath.Typeset.AddClass(rep.tclass,rep.c)
       for (i = 0; i < n; i++) {html += jsMath.HTML.PlaceAbsolute(ext,0,y+i*h)}
       html += jsMath.HTML.PlaceAbsolute(jsMath.Typeset.AddClass(mid.tclass,mid.c),0,y+n*h-rep.h+mid.h);
       y += n*h + mid.h+mid.d - .05;
@@ -3203,6 +3193,10 @@ jsMath.Add(jsMath.Box,{
     
     var w = top.w;
     if (nocenter) {h = top.h; y = 0} else {h = H/2 + a; y = h - top.h}
+    if (jsMath.Controls.cookie.font === "unicode") {
+      if (jsMath.Browser.msie8HeightBug) {y -= jsMath.hd}
+      else if (jsMath.Browser.msieBlockDepthBug) {y += jsMath.d}
+    }
     html = jsMath.HTML.Absolute(html,w,Font.h,"none",-y);
     var box = new jsMath.Box('html',html,rep.w,h,H-h);
     box.bh = jsMath.TeX[font].h; box.bd = jsMath.TeX[font].d;
@@ -3401,6 +3395,7 @@ jsMath.Add(jsMath.Box,{
 
     html = jsMath.HTML.Spacer(addWidth*scale/6)+html+jsMath.HTML.Spacer(addWidth*scale/6);
     if (jsMath.Browser.spanHeightVaries) {y = h-jsMath.h} else {y = 0}
+    if (jsMath.Browser.msie8HeightBug) {y = d-jsMath.d}
     html = jsMath.HTML.Absolute(html,w,h+d,d,y);
     var box = new jsMath.Box('html',html,w+addWidth*scale/3,h,d);
     return box;
@@ -4534,7 +4529,7 @@ jsMath.Package(jsMath.Typeset,{
       item.html = 
         jsMath.HTML.Spacer(lw-rw) +
         '<span style="position: relative; '
-            + 'top:'+jsMath.HTML.Em(-item.y)+';'
+            + 'top:'+jsMath.HTML.Em(-item.y)+'; '
             + 'left:'+jsMath.HTML.Em(rw)+'; width:'+jsMath.HTML.Em(W)+';">' +
           jsMath.HTML.Spacer(-lw) +
           item.html +
@@ -6110,15 +6105,8 @@ jsMath.Package(jsMath.Parser,{
     var html = box.html;
     if (isSmall) {// hide the extra size
       if (jsMath.Browser.allowAbsolute) {
-        var y = 0;
-        if (box.bh > jsMath.h+.001) {y = jsMath.h - box.bh}
+        var y = (box.bh > jsMath.h+.001 ? jsMath.h - box.bh : 0);
         html = jsMath.HTML.Absolute(html,box.w,jsMath.h,0,y);
-        if (jsMath.Browser.msie8HeightBug) {
-          html = html.replace(/relative/,
-            "relative; height:"+jsMath.HTML.Em(jsMath.hd)+"; " +
-            "vertical-align:"+jsMath.HTML.Em(-jsMath.d)
-          );
-        }
       } else if (jsMath.Browser.valignBug) {
         // remove line height
         html = '<span style="line-height:'+jsMath.HTML.Em(jsMath.d)+';">'
