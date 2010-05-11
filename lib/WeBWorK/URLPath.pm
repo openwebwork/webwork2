@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.35 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,6 +45,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  root                                /
  
  course_admin                        /admin/ -> logout, options, instructor_tools
+ html2xml                            /html2xml/
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -110,7 +111,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin set_list/ ],
+		kids    => [ qw/course_admin  html2xml set_list / ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
@@ -127,7 +128,16 @@ our %pathTypes = (
 	},
 	
 	################################################################################
-	
+	html2xml => {
+		name    => 'html2xml',
+		parent  => 'root', #    'set_list',
+		kids    => [ qw// ],
+		match   => qr|^html2xml/|,
+		capture => [ qw// ],
+		produce => 'html2xml/',
+		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
+	},
+
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
