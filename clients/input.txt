@@ -25,7 +25,7 @@ $PAR
 This problem demonstrates how you enter numerical answers into WeBWorK. $PAR
 Evaluate the expression \(3($a )($b -$c -2($d ))\):
 
- \{==53; ans_rule(10) \}
+ \{ ans_rule(10) \}
 
 $BR
 END_TEXT
