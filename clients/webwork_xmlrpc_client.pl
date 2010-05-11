@@ -18,14 +18,14 @@ use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 #  configuration section
-use constant  PROTOCOL         =>  'https';   # or 'http';
-use constant  HOSTURL          =>  'webwork.rochester.edu'; 
-use constant  HOSTPORT         =>  '443';  # or 80
+use constant  PROTOCOL         =>  'http';   # or 'http';
+use constant  HOSTURL          =>  'localhost'; 
+use constant  HOSTPORT         =>  '80';  # or 80
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      =>'mod_xmlrpc';
 use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html';
-use constant  COURSE           => 'daemon2_course';
+use constant  COURSE           => 'gage_course';
 
 
 
@@ -74,7 +74,7 @@ sub xmlrpcCall {
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
 			-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 		
-	  my $test = [3,4,5,6];     
+	  # my $test = [3,4,5,6];     
 	  my $input = setInputTable();
 	  print "displayMode=",$input->{envir}->{displayMode},"\n";
 	  local( $result);
@@ -146,7 +146,7 @@ sub setInputTable_for_listLib {
 	$out = {
 		pw          =>   'geometry',
 		set         =>   'set0',
-		library_name =>  'rochesterLibrary',
+		library_name =>  'Library',
 		command      =>  'all',
 	};
 
@@ -156,7 +156,7 @@ sub setInputTable {
 	$out = {
 		pw          =>   'geometry',
 		set         =>   'set0',
-		library_name =>  'rochesterLibrary',
+		library_name =>  'Library',
 		command      =>  'all',
 		answer_form_submitted   => 1,
 		course                  => COURSE(),
