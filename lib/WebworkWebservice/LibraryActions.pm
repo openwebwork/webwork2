@@ -18,7 +18,7 @@ use strict;
 use sigtrap;
 use Carp;
 use Safe;
-use Apache;
+#use Apache;
 use WeBWorK::Utils;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
@@ -110,7 +110,7 @@ sub listLib {
 		$out->{error} = "Could not find library:".$rh->{library_name}.":";
 		return($out);
 	}
-    #warn "library directory path is $dirPath";
+    warn "library directory path is $dirPath";
 	my @outListLib;
 	my $wanted = sub {
 		my $name = $File::Find::name;
@@ -125,7 +125,7 @@ sub listLib {
 	my $command = $rh->{command};
 	$command = 'all' unless defined($command);
 			$command eq 'all' &&    do {
-										find({wanted=>$wanted,follow=>1 }, $dirPath);
+										find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
 										@outListLib = sort @outListLib;
 										$out->{ra_out} = \@outListLib;
 										$out->{text} = join("\n", @outListLib);
