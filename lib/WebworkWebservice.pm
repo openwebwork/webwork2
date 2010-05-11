@@ -4,49 +4,38 @@
 
 BEGIN {
     $main::VERSION = "2.1";
-    my $webwork_directory = $ENV{WEBWORK_ROOT};
-	
+    #use Apache;
+    use Cwd;
+	use WeBWorK::PG::Local;
+#     warn "my first webwork $webwork_directory";
+#  
+#     my $webwork_directory = $ENV{WEBWORK_ROOT};
+#     warn "my first webwork $webwork_directory";
+#     $webwork_directory2 =Cwd::cwd();
+#     chomp $webwork_directory2;
+#     $webwork_directory2 =~ s|/lib/?$||;  # this will usually get the right webwork home directory
+#     warn "Assuming webwork directory is |$webwork_directory| and |$webwork_directory2|", $webwork_directory eq $webwork_directory2;
+#     #WTF???  why don't these two methods give me the same directory name?
+
+    my $webwork_directory = '/opt/webwork/webwork2';
+  
 	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
 	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
  	my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
  	my $webwork_url = $ce->{webwork_url};
  	my $pg_dir = $ce->{pg_dir};
-#  	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-#  	my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
-#  	my $webwork_courses_url = $ce->{webwork_courses_url};
-#  	my $webwork_courses_dir = $ce->{webwork_courses_dir};
  	eval "use lib '$pg_dir/lib'"; die $@ if $@;
     
 	$WebworkWebservice::WW_DIRECTORY = $webwork_directory;
 	$WebworkWebservice::PG_DIRECTORY = $pg_dir;
 	$WebworkWebservice::SeedCE       = $ce;
-	$WebworkWebservice::HOST_NAME     = Apache->server->server_hostname;
-	$WebworkWebservice::HOST_PORT     = Apache->server->port;
-	$WebworkWebservice::PASSWORD      = 'geometry';
+	$WebworkWebservice::HOST_NAME     = 'localhost'; #Apache->server->server_hostname;
+	$WebworkWebservice::HOST_PORT     = '80'; #Apache->server->port;
+	$WebworkWebservice::PASSWORD      = 'xmluser';
 	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
 
 }
-use Apache;
-use WeBWorK::PG::Local;
-    
-#use lib '/home/gage/webwork/webwork-modperl/lib';
-#use lib '/home/gage/webwork/pg/lib';
 
-
-#$Webservice::HOST_PATH = "http://$Webservice::HOST_NAME";
-#$Webservice::HOST_PATH .= ":$Webservice::HOST_PORT" 
-#                 unless ($Webservice::HOST_PORT == 80 );
-
-# warn "webwork_directory = $WebworkWebservice::WW_DIRECTORY\n\t";
-# warn "pg_directory = $WebworkWebservice::PG_DIRECTORY\n\t";
-# warn "seedCE  = $WebworkWebservice::SeedCE\n\t";
-# warn "host name  = $WebworkWebservice::HOST_NAME\n\t";
-
-#FIXME  port is not being set!
-# warn "host port  = $Webservice::HOST_PORT\n\t";  
-
-# #warn "host path  = $Webservice::HOST_PATH\n\t";
-# warn " password  $WebworkWebservice::PASSWORD\n\t";
 
 use strict;
 ###############################################################################
@@ -57,7 +46,9 @@ sub pretty_print_rh {
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
 	my $indent = shift || 0;
+
 	my $out = "";
+	return $out if $indent>10;
 	my $type = ref($rh);
 
 	if (defined($type) and $type) {
