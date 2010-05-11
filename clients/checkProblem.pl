@@ -5,8 +5,7 @@
 This script will take a command and an input 
 file.
 
-It will list available libraries, list the contents of libraries
-or render the input file.
+It will render the input file.
 
 All of this is done by contacting the webservice.
 

@@ -1,10 +1,10 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 
 use SOAP::Lite;
 	
 #  configuration section
-use constant  HOSTURL  =>  'devel.webwork.rochester.edu'; 
-use constant  HOSTPORT =>  8002;
+use constant  HOSTURL  =>  'localhost'; 
+use constant  HOSTPORT =>  80;
 use constant  TRANSPORT_METHOD => 'SOAP::Lite';
 use constant  REQUEST_CLASS =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI   =>'mod_soap';

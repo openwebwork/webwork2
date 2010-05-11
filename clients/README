@@ -1,3 +1,26 @@
+2010.05.11
+
+At this point renderProblem.pl is the most up to date and works with BBedit to 
+to send a local file to an xmlserver (mod_xmlrpc) to be rendered.  In addition the returned'
+file's question form action url is pointed to the same server with the path ending in xml2html.
+This allows one to enter answers and test whether they work.  
+
+There were changes to webwork2/lib/WebworkWebservice.pm to make it work with Apache2.  
+There were also changes to webwork2/lib/WeBWorK/URLpath.pm  and a new 
+module webwork2/lib/WeBWorK/ContentGenerator/xmlViaHTTP.pm
+
+The webwork_xmplrp_client and webwork_soap_client.pl have not been updated, but may still work.
+
+to do:
+    add facilities for inspecting libraries via xmlrpc and html2xml links
+    figure out how to automate the configuration of these xmlrpc files
+    Apache2::ServerUtil should do this??  but I can't figure out how.
+    
+    I'm pretty sure that there is no security checking to insure that only appropriate 
+    people have access to the xmlrpc webservice.
+##############################################################################################
+
+
 These test clients will process these two commands:
 
 ./webwork_xmlrpc_client.pl renderProblem  input.txt >foo.txt
