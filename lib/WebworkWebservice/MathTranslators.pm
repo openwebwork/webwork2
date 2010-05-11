@@ -17,7 +17,7 @@ use strict;
 use sigtrap;
 use Carp;
 use Safe;
-use Apache;
+#use Apache;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::IO;
 use Benchmark;

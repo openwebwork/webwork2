@@ -21,7 +21,7 @@ use strict;
 use sigtrap;
 use Carp;
 use Safe;
-use Apache;
+#use Apache;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
@@ -358,10 +358,7 @@ sub renderProblem {
 		WARNINGS	   				=> encode_base64($pg->{warnings} ),
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
-		#PG_flag						=> $pg->{flags},
-		
-	
-	
+		PG_flag						=> $pg->{flags},
 	};
 	# Filter out bad reference types
 	###################
@@ -374,8 +371,8 @@ sub renderProblem {
 		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open $xmlDebugLog";
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
-	xml_filter($out2->{answers});
 	
+	$out2->{answers} = xml_filter($out2->{answers}); # check this -- it might not be working correctly
 	##################
 	close(DEBUGCODE) if $debugXmlCode;
 	###################
@@ -389,13 +386,13 @@ sub renderProblem {
 	         
 }
 
-
+#  insures proper conversion to xml structure.
 sub xml_filter {
 	my $input = shift;
 	my $level = shift || 0;
 	my $space="  ";
 	# Hack to filter out CODE references
-		my $type = ref($input);
+	my $type = ref($input);
 	if (!defined($type) or !$type ) {
 		print DEBUGCODE $space x $level." : scalar -- not converted\n" if $debugXmlCode;
 	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
@@ -410,11 +407,14 @@ sub xml_filter {
 	} elsif( $type=~/ARRAY/i or "$input"=~/ARRAY/i) {
 		print DEBUGCODE "  "x$level."ARRAY reference with ".@{$input}." elements will be investigated\n" if $debugXmlCode;
 		$level++;
+		my $tmp = [];
 		foreach my $item (@{$input}) {
 			$item = xml_filter($item,$level);
+			push @$tmp, $item;
 		}
+		$input = $tmp;
 		$level--;
-		print DEBUGCODE "  "x$level."ARRAY reference completed \n" if $debugXmlCode;
+		print DEBUGCODE "  "x$level."ARRAY reference completed",join(" ",@$input),"\n" if $debugXmlCode;
 	} elsif($type =~ /CODE/i or "$input" =~/CODE/i) {
 		$input = "CODE reference";
 		print DEBUGCODE "  "x$level."CODE reference, converted $input\n" if $debugXmlCode;
