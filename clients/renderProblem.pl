@@ -3,7 +3,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemRenderer.pm,v 1.1 2008/04/29 19:27:34 sh002i Exp $
+# $CVSHeader: webwork2/clients/renderProblem.pl,v 1.4 2010/05/11 15:44:05 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +27,7 @@ and evaluation of answers and then passed to a browser for printing.
 The formatting allows the browser presentation to be interactive with the 
 daemon running the script webwork2/lib/renderViaXMLRPC.pm
 
-
+Rembember to configure the local output file and display command !!!!!!!!
 
 =cut
 
@@ -42,6 +42,15 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 ##################################################
 #  configuration section for client
 ##################################################
+# configure the local output file and display command !!!!!!!!
+
+use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; # client only
+use constant  DISPLAY_COMMAND  => 'open -a firefox '; # mac client only opens tempoutputfile above
+# other command lines for opening the html file gnome-open  or firefox file.html 
+
+# the rest can be configured later to use a different server 
+
+# the rest can work!!
 # use constant  PROTOCOL         =>  'http';
 # use constant  HOSTNAME          =>  'localhost'; 
 # use constant  HOSTPORT         =>  80;
@@ -57,8 +66,7 @@ our $FORM_ACTION_URL           =   "$FULL_URL/webwork2/html2xml";  # server para
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
-use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; # client only
-use constant  DISPLAY_COMMAND  => 'open -a firefox '; # client only
+
 
 use constant  XML_PASSWORD      => 'xmlwebwork';
 use constant  XML_COURSE        => 'daemon_course';
