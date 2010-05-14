@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemRenderer.pm,v 1.1 2008/04/29 19:27:34 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/renderViaXMLRPC.pm,v 1.1 2010/05/11 15:27:08 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -24,10 +24,9 @@ front end for calls to the xmlrpc webservice
 use strict;
 use warnings;
 
+ 
 package WeBWorK::ContentGenerator::renderViaXMLRPC;
 use base qw(WeBWorK::ContentGenerator);
-
-
 
 #use Crypt::SSLeay;
 use XMLRPC::Lite;
@@ -37,17 +36,17 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 #  configuration section  -- point back to the current server to process answers
 ##################################################
 use constant  PROTOCOL         =>  'http';
-use constant  HOSTURL          =>  'localhost'; 
+use constant  HOSTNAME          => 'localhost'; 
 use constant  HOSTPORT         =>  80;
-our $FULL_URL                  =   PROTOCOL."://".HOSTURL;   # .":".HOSTPORT;
+our $FULL_URL                  =   PROTOCOL."://".HOSTNAME;   # .":".HOSTPORT;
 our $FORM_ACTION_URL           =  "/webwork2/html2xml";  # points back to current server
 
 
 # use constant  PROTOCOL         =>  'https';                         # or 'http';
-# use constant  HOSTURL          =>  'hosted2.webwork.rochester.edu'; # 'localhost'; 
+# use constant  HOSTNAME         =>  'hosted2.webwork.rochester.edu'; # 'localhost'; 
 # use constant  HOSTPORT         =>  443;  #( for secure https)       # 80;
-# our $FULL_URL                  =   PROTOCOL."://".HOSTURL;   # .":".HOSTPORT;
-# our $FORM_ACTION_URL           =   "$FULL_URL/webwork2/html2xml";  # points back to current server
+# our $FULL_URL                  =   PROTOCOL."://".HOSTNAME;   # .":".HOSTPORT;
+# our $FORM_ACTION_URL           =   "/webwork2/html2xml";  # points back to current server
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -112,7 +111,7 @@ sub xmlrpcCall {
 	$command        = 'listLibraries' unless $command;
 
 	  my $requestResult = TRANSPORT_METHOD
-	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
+	        #->uri('http://'.HOSTNAME.':'.HOSTPORT.'/'.REQUEST_CLASS)
 			-> proxy($FULL_URL.'/'.REQUEST_URI);
      
 	  my $input = $self->setInputTable();
