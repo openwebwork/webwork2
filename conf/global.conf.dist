@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.220 2009/11/05 13:15:16 gage Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.221 2010/02/01 01:49:15 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -467,7 +467,7 @@ $default_status = "Enrolled";
 
 # required permissions
 # GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
-# GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+# GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
 
 $database_dsn = "dbi:mysql:webwork";
 $database_username = "webworkWrite";
@@ -899,10 +899,10 @@ $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} = $userRoles{ $
 
 # Locations of CAPA resources. (Only necessary if you need to use converted CAPA
 # problems.)
-$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "/opt/webwork/CAPA/CAPA_Tools/",        
-$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "/opt/webwork/CAPA/CAPA_MCTools/",      
-$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$webworkDirs{htdocs}/CAPA_Graphics/",  
-$pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$webworkURLs{htdocs}/CAPA_Graphics/",   
+$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{macros}/CAPA_Tools/", 
+$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{macros}/CAPA_MCTools/",  
+$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{html}/CAPA_Graphics/", 
+$pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$courseURLs{html}/CAPA_Graphics/",   
 
 # Size in pixels of dynamically-generated images, i.e. graphs.
 $pg{specialPGEnvironmentVars}{onTheFlyImageSize}      = 400,
@@ -963,6 +963,7 @@ ${pg}{modules} = [
 #   [qw(Chromatic)], # for Northern Arizona graph problems 
 #                    #  -- follow instructions at libraries/nau_problib/lib/README to install
 	[qw(Applet FlashApplet JavaApplet)],
+	[qw(PGcore PGalias PGresource PGloadfiles PGanswergroup PGresponsegroup  Tie::IxHash)],
 ];
 
 ##### Problem creation defaults
