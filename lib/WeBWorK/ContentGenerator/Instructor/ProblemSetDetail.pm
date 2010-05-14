@@ -1794,14 +1794,6 @@ sub body {
 		1, 				# prune against path relative to $templates
 	);
 
-	# this just takes too much time to search
-#	my @problemFileList = listFilesRecursive(
-#		$templates,
-#		qr/\.pg$/i,			# problem files don't say problem
-#		qr/^(?:$skip|CVS)$/, 	# prune these directories
-#		0, 				# match against file name only
-#		1, 				# prune against path relative to $templates
-#	);
 
 	# Display a useful warning message
 	if ($forUsers) {
@@ -2051,15 +2043,7 @@ sub body {
 				$viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
 			}
 
-			###-----
-			### The array @fields never gets used in the following, so
-			###    I'm commenting it out.  If there's a reason it should
-			###    be here, someone else can add it back in and maybe
-			###    comment why.  Thanks, Gavin.  -glarose 6/19/08
-			### my @fields = @{ PROBLEM_FIELDS() };
-			### push @fields, @{ USER_PROBLEM_FIELDS() } if $forOneUser;
-			###-----
-
+	
 			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
 
 			# warn of repeat problems
