@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.221 2010/02/01 01:49:15 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.222 2010/05/14 00:47:22 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -559,8 +559,9 @@ $courseFiles{logs}{activity_log} = '';
 # 
 #     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
 # 
-# If left blank, the system timezone will be used. This is usually what you
-# want. You might want to set this if your server is NOT in the same timezone as
+# If left blank, the system timezone is supposed to be used. This is usually what you
+# want. However, people have had trouble with this so it's best to set your timezone here.
+# You might want to set this if your server is NOT in the same timezone as
 # your school. If just a few courses are in a different timezone, set this in
 # course.conf for the affected courses instead.
 # 
@@ -871,6 +872,7 @@ $pg{directories}{macrosPath} = [
    "$courseDirs{templates}/Library/macros/HughesHallett",
    "$courseDirs{templates}/Library/macros/Michigan",
    "$courseDirs{templates}/Library/macros/CollegeOfIdaho",
+   "$courseDirs{templates}/Library/macros/FortLewis",
    "$courseDirs{templates}/Library/macros/TCNJ",
    "$courseDirs{templates}/Library/macros/NAU",
    "$courseDirs{templates}/Library/macros/Dartmouth",
