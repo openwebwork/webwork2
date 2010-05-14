@@ -17,8 +17,18 @@ BEGIN {
 #     warn "Assuming webwork directory is |$webwork_directory| and |$webwork_directory2|", $webwork_directory eq $webwork_directory2;
 #     #WTF???  why don't these two methods give me the same directory name?
 
-    my $webwork_directory = '/opt/webwork/webwork2';
-  
+###############################################################################
+# Configuration -- set to top webwork directory (webwork2) (set in webwork.apache2-config)
+# Configuration -- set server name
+###############################################################################
+
+    my $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+
+	$WebworkWebservice::HOST_NAME     = 'localhost'; # Apache->server->server_hostname;
+	$WebworkWebservice::HOST_PORT     = '80';        # Apache->server->port;
+
+###############################################################################
+
 	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
 	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
  	my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
@@ -29,16 +39,19 @@ BEGIN {
 	$WebworkWebservice::WW_DIRECTORY = $webwork_directory;
 	$WebworkWebservice::PG_DIRECTORY = $pg_dir;
 	$WebworkWebservice::SeedCE       = $ce;
-	$WebworkWebservice::HOST_NAME     = 'localhost'; #Apache->server->server_hostname;
-	$WebworkWebservice::HOST_PORT     = '80'; #Apache->server->port;
+	
+###############################################################################
+
 	$WebworkWebservice::PASSWORD      = 'xmluser';
 	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
+	
+	warn "webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY;
 
 }
 
 
 use strict;
-###############################################################################
+
 
 package WebworkWebservice;
 
