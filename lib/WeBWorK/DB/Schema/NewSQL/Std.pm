@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.21 2009/01/25 22:12:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.22 2009/02/02 03:18:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -219,7 +219,8 @@ sub dump_table {
 	# 2>&1 is specified first, which apparently makes stderr go to stdout
 	# and stdout (not including stderr) go to the dumpfile. see bash(1).
 	my $dump_cmd = "2>&1 " . shell_quote($mysqldump)
-		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+# 		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+		. " --defaults-file=" . shell_quote($my_cnf->filename) # work around for mysqldump bug
 		. " " . shell_quote($database)
 		. " " . shell_quote($self->sql_table_name)
 		. " > " . shell_quote($dumpfile_path);
@@ -242,7 +243,8 @@ sub restore_table {
 	my $mysql = $self->{params}{mysql_path};
 	
 	my $restore_cmd = "2>&1 " . shell_quote($mysql)
-		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+# 		. " --defaults-extra-file=" . shell_quote($my_cnf->filename)
+		. " --defaults-file=" . shell_quote($my_cnf->filename) # work around for mysqldump bug
 		. " " . shell_quote($database)
 		. " < " . shell_quote($dumpfile_path);
 	my $restore_out = readpipe $restore_cmd;
