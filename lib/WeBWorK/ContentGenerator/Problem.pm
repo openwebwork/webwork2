@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.219 2009/10/17 15:49:32 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.220 2009/11/02 16:53:50 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1129,15 +1129,17 @@ sub body {
 			   -value   => $self->{editMode},
 		   )
 	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
-	print( CGI::hidden(
-		   		-name   => 'sourceFilePath',
-		   		-value  =>  $self->{problem}->{source_file}
-	))  if defined($self->{problem}->{source_file});
+	
+	# this is a security risk -- students can use this to find the source code for the problem
+# 	print( CGI::hidden(
+# 		   		-name   => 'sourceFilePath',
+# 		   		-value  =>  $self->{problem}->{source_file}
+# 	))  if defined($self->{problem}->{source_file});
 
-	print( CGI::hidden(
-		   		-name   => 'problemSeed',
-		   		-value  =>  $r->param("problemSeed")
-	))  if defined($r->param("problemSeed"));
+# 	print( CGI::hidden(
+# 		   		-name   => 'problemSeed',
+# 		   		-value  =>  $r->param("problemSeed")
+# 	))  if defined($r->param("problemSeed"));
 			
 	# end of main form
 	print CGI::endform();
@@ -1171,27 +1173,6 @@ sub body {
 			CGI::endform();
 	}
 	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
-	#	courseID => $courseName);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $set->set_id),"\n",
-	#	CGI::hidden("problem",            $problem->problem_id),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     $will{showOldAnswers}),"\n",
-	#	CGI::hidden("showCorrectAnswers", $will{showCorrectAnswers}),"\n",
-	#	CGI::hidden("showHints",          $will{showHints}),"\n",
-	#	CGI::hidden("showSolutions",      $will{showSolutions}),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::endform(),"\n";
 	
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
