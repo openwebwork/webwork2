@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.101 2008/06/21 16:26:44 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.102 2009/06/26 00:48:19 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -359,7 +359,7 @@ sub dispatch($) {
 	writeTimingLogEntry($ce, "[".$r->uri."]", sprintf("runTime = %.3f sec", $cg_duration)." ".$ce->{dbLayoutName}, "");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
-	
+	warn "this warning is needed to zero out \@LimitedPolynomial::BOP::ISA @LimitedPolynomial::BOP::ISA no-one knows why";
 	return $result;
 }
 

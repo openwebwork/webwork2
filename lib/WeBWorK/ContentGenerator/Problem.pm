@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.220 2009/11/02 16:53:50 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.221 2010/05/14 00:50:14 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1204,7 +1204,7 @@ sub body {
 			CGI::h3("PG object"),
 			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
 	}
-	
+	debug("leaving body of Problem.pm");
 	return "";
 }
 
