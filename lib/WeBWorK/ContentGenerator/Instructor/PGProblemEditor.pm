@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.98 2009/12/17 03:55:01 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1662,7 +1662,7 @@ sub save_as_form {  # calls the save_as_handler
     my $rh_new_problem_options = {
     			 -type      => 'radio',
     			 -name      => "action.save_as.saveMode",
-    			 -value     => "new_independent_problem.",
+    			 -value     => "new_independent_problem",
     			 -onfocus   => $onChange,
     			 };
     $rh_new_problem_options->{checked}=1 unless $can_add_problem_to_set;
