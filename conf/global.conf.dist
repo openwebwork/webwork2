@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.223 2010/05/14 21:30:29 apizer Exp $
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.224 2010/05/17 16:44:03 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -259,7 +259,7 @@ $webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
 $webworkURLs{docs}          = "http://webwork.maa.org";
 
 # URL of WeBWorK Bugzilla database.
-$webworkURLs{bugReporter}   = "http://bugs.webwork.rochester.edu/";
+$webworkURLs{bugReporter}   = "http://wwrk.maa.org/bugzilla3/enter_bug.cgi";
 
 # Location of CSS
 # $webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/${defaultTheme}.css";
