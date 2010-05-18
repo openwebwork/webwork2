@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.97 2009/09/01 18:46:41 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.98 2009/12/17 03:55:01 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -478,7 +478,7 @@ sub body {
 		$libraryName = 'rochester';  # make sure there is some default component defined.
 	}
 
-    my $BUGZILLA = "http://bugs.webwork.rochester.edu/enter_bug.cgi?product=Problem%20libraries".
+    my $BUGZILLA = "$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries".
                    "&component=$libraryName&bug_file_loc=${editFilePath}_with_problemSeed=".$self->{problemSeed};
 	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to intelligent reporting of bugs.
     
