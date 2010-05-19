@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.109 2008/06/18 19:20:55 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.110 2009/01/25 22:11:07 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1915,6 +1915,15 @@ sub getAllMergedProblemVersions {
 # utilities
 ################################################################################
 
+sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,]) 
+	my $value = shift;
+	if ($value =~ m/^[-a-zA-Z0-9_.]*,?(set_id:)?[-a-zA-Z0-9_.]*(,g)?$/ ) {
+		return 1;
+	} else {
+		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,])";
+		return 0;
+	}
+}
 # the (optional) second argument to checkKeyfields is to support versioned
 # (gateway) sets, which may include commas in certain fields (in particular,
 # set names (e.g., setDerivativeGateway,v1) and user names (e.g., 
@@ -1937,13 +1946,10 @@ sub checkKeyfields($;$) {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
 				unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
 		} elsif ($versioned and $keyfield eq "user_id") { 
-			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
-			    unless ( $value =~ m/^[-a-zA-Z0-9_.]*,?(set_id:)?[-a-zA-Z0-9_.]*(,g)?$/ );
+			check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
 		} elsif ($keyfield eq "ip_mask") {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-fA-F0-9_.:/])"
 				unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
-		} elsif ($keyfield eq "user_id") {
-			
 			    
 		} else {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.])"
@@ -1951,6 +1957,7 @@ sub checkKeyfields($;$) {
 		}
 	}
 }
+
 
 # checkArgs spec syntax:
 # 
