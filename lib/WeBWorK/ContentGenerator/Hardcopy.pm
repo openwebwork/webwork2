@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.101 2009/08/29 16:18:49 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.102 2009/09/25 00:39:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -568,6 +568,9 @@ sub generate_hardcopy {
 		$self->add_errors("Couldn't create temporary working directory: ".CGI::code(CGI::escapeHTML($@)));
 		return;
 	}
+	# make sure the directory can be read by other daemons e.g. lighttpd
+	chmod 0755, $temp_dir_path;
+
 	
 	# do some error checking
 	unless (-e $temp_dir_path) {
