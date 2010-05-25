@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.103 2010/05/15 18:22:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.104 2010/05/15 18:44:26 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -359,7 +359,7 @@ sub dispatch($) {
 	writeTimingLogEntry($ce, "[".$r->uri."]", sprintf("runTime = %.3f sec", $cg_duration)." ".$ce->{dbLayoutName}, "");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
-	@LimitedPolynomial::BOP::ISA; #FIXME this  is needed to zero out 
+	#    @LimitedPolynomial::BOP::ISA; #FIXME this  is needed to zero out 
 	    #\@LimitedPolynomial::BOP::ISA and prevent error messages of the form 
 	    #[Sat May 15 14:23:08 2010] [warn] [client 127.0.0.1] [/webwork2/gage_course/test_set/6/] 
 	    #Can't locate package LimitedPolynomial::BOP for @LimitedPolynomial::BOP::add::ISA at /opt/webwork/webwork2/lib/Apache/WeBWorK.pm line 115., referer: http://localhost/webwork2/gage_course/test_set/6/ no one knows why
