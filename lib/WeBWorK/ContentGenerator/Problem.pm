@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.222 2010/05/15 18:22:35 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.223 2010/05/25 18:22:12 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1131,9 +1131,9 @@ sub body {
 	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
 	
 	# this is a security risk -- students can use this to find the source code for the problem
+
 	my $permissionLevel = $db->getPermissionLevel($user)->permission;
 	my $professorPermissionLevel = $ce->{userRoles}->{professor};
-	warn "checking permssionlevel", $permissionLevel>= $professorPermissionLevel;
 	print( CGI::hidden(
 		   		-name   => 'sourceFilePath',
 		   		-value  =>  $self->{problem}->{source_file}
@@ -1143,6 +1143,7 @@ sub body {
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
+
 			
 	# end of main form
 	print CGI::endform();
