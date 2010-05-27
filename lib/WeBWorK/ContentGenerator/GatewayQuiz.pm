@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.53 2008/06/25 14:41:00 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -829,9 +829,13 @@ sub pre_header_initialize {
 					$set->due_date();
 				$set->version_creation_time( $timeNow );
 				$set->open_date( $timeNow );
-				$set->due_date( $timeNow+$timeLimit ) 
-					if (! $set->time_limit_cap || 
-					    $timeNow+$timeLimit<$set->due_date);
+				# figure out the due date, taking into account
+				#    any time limit cap
+				my $dueTime = 
+				    ( $set->time_limit_cap &&
+				      $timeNow+$timeLimit > $set->due_date ) ?
+				      $set->due_date : $timeNow+$timeLimit;
+				$set->due_date( $dueTime );
 				$set->answer_date($set->due_date + $ansOffset);
 				$set->version_last_attempt_time( 0 );
 
@@ -1677,8 +1681,9 @@ sub body {
 	my $recordedScore = 0;
 	my $totPossible = 0;
 	foreach ( @problems ) {
-		$totPossible += $_->value();
-		$recordedScore += $_->status*$_->value() if (defined($_->status));
+		my $pv = ( $_->value() ) ? $_->value() : 1;
+		$totPossible += $pv;
+		$recordedScore += $_->status*$pv if (defined($_->status));
 		push( @probStatus, ($r->param("probstatus" . $_->problem_id) ||
 				    $_->status || 0) );
 	}
@@ -1693,7 +1698,7 @@ sub body {
 	if ( $submitAnswers || $checkAnswers ) {
 		my $i=0;
 		foreach my $pg ( @pg_results ) {
-			my $pValue = $problems[$i]->value();
+			my $pValue = $problems[$i]->value() ? $problems[$i]->value() : 1;
 			my $pScore = 0;
 			my $numParts = 0;
 			if ( ref( $pg ) ) {  # then we have a pg object
@@ -1713,9 +1718,8 @@ sub body {
 		}
 	}
 
-	# we want to print elapsed and allowed times; allowed is easy (we assume
-	#    this is an even number of minutes)
-	my $allowed = ($set->due_date - $set->open_date)/60;
+	# we want to print elapsed and allowed times; allowed is easy
+	my $allowed = sprintf( "%.0f", 10*($set->due_date - $set->open_date)/6 )/100;
 	# elapsed is a little harder; we're counting to the last submission 
 	#    time, or to the current time if the test hasn't been submitted, 
 	#    and if the submission fell in the grace period round it to the 
@@ -2067,8 +2071,9 @@ sub body {
 				
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
-				my $points = ($problems[$probOrder[$i]]->value() > 1) ? 
-					" (" . $problems[$probOrder[$i]]->value() . " points)" : 
+				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
+				my $points = ($pv > 1) ? 
+					" (" . $$pv . " points)" : 
 					" (1 point)";
 				print CGI::a({-name=>"#$i1"},"");
 				print CGI::strong("Problem $problemNumber."), 
