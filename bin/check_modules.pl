@@ -70,6 +70,7 @@ my @modulesList = qw(
 	Net::LDAPS
 	Net::SMTP
 	Opcode
+	PadWalker
 	PHP::Serialization
 	Pod::Usage
 	Pod::WSDL
