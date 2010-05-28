@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.223 2010/05/25 18:22:12 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.224 2010/05/25 22:04:13 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -242,6 +242,7 @@ sub attemptResults {
 		my $preview       = ($showAttemptPreview
 		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
 		                    	: "");
+		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache);
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
@@ -260,8 +261,8 @@ sub attemptResults {
 		my $row;
 		#$row .= CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		$row .= $showAttemptPreview ? CGI::td($self->nbsp($preview))       : "";
-		$row .= $showCorrectAnswers ? CGI::td($self->nbsp($correctAnswer)) : "";
+		$row .= $showAttemptPreview ? CGI::td({title=>"$studentAnswer"}, $self->nbsp($preview))       : "";
+		$row .= $showCorrectAnswers ? CGI::td({title=> "$correctAnswerPreview"}, $self->nbsp($correctAnswer)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
 		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
@@ -320,6 +321,70 @@ sub previewAnswer {
 	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
 	
 	my $tex = $answerResult->{preview_latex_string};
+	
+	return "" unless defined $tex and $tex ne "";
+	
+	if ($displayMode eq "plainText") {
+		return $tex;
+	} elsif ($displayMode eq "formattedText") {
+		
+		# read the TTH preamble, or use the cached copy passed in from the caller
+		my $tthPreamble='';
+		if (defined $$tthPreambleCache) {
+			$tthPreamble = $$tthPreambleCache;
+		} else {
+			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
+			if (-r $tthPreambleFile) {
+				$tthPreamble = readFile($tthPreambleFile);
+				# thanks to Jim Martino. each line in the definition file should end with
+				#a % to prevent adding supurious paragraphs to output:
+				$tthPreamble =~ s/(.)\n/$1%\n/g;
+				# solves the problem if the file doesn't end with a return:
+				$tthPreamble .="%\n";
+				# store preamble in cache:
+				$$tthPreambleCache = $tthPreamble;
+			} else {
+			}
+		}
+		
+		# construct TTH command line
+		my $tthCommand = $ce->{externalPrograms}->{tth}
+			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+			. $tthPreamble . "\\[" . $tex . "\\]\n"
+			. "END_OF_INPUT\n";
+		
+		# call tth
+		my $result = `$tthCommand`;
+		if ($?) {
+			return "<b>[tth failed: $? $@]</b>";
+		} else {
+			#  avoid border problems in tables and remove unneeded initial <br>
+			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
+			$result =~ s!\s*<br clear="all" />!!;
+			return $result;
+		}
+		
+	} elsif ($displayMode eq "images") {
+		$imgGen->add($tex);
+	} elsif ($displayMode eq "jsMath") {
+		$tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
+		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
+	}
+}
+sub previewCorrectAnswer {
+	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
+	my $ce            = $self->r->ce;
+	my $effectiveUser = $self->{effectiveUser};
+	my $set           = $self->{set};
+	my $problem       = $self->{problem};
+	my $displayMode   = $self->{displayMode};
+	
+	# note: right now, we have to do things completely differently when we are
+	# rendering math from INSIDE the translator and from OUTSIDE the translator.
+	# so we'll just deal with each case explicitly here. there's some code
+	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	
+	my $tex = $answerResult->{correct_value}->TeX;
 	
 	return "" unless defined $tex and $tex ne "";
 	
