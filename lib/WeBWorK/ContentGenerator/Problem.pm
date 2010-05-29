@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.224 2010/05/25 22:04:13 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -383,6 +383,8 @@ sub previewCorrectAnswer {
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
 	# so we'll just deal with each case explicitly here. there's some code
 	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	
+	return "" unless defined(  $answerResult->{correct_value} ) and ref( $answerResult->{correct_value} );
 	
 	my $tex = $answerResult->{correct_value}->TeX;
 	
