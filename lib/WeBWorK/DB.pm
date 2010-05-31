@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.110 2009/01/25 22:11:07 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.111 2010/05/19 01:44:05 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1784,10 +1784,6 @@ BEGIN {
 sub countProblemVersions { return scalar shift->listProblemVersions(@_) }
 
 # versioned analog of listUserProblems
-# for consistency, we should name this "listProblemVersions", but that is
-# confusing, as that sounds as if we're listing the versions of a problem.
-# however, that's nonsensical, so we appropriate it here and don't worry
-# about the confusion.
 sub listProblemVersions { 
 	my ($self, $userID, $setID, $versionID) = shift->checkArgs(\@_, qw/user_id set_id version_id/);
 	my $where = [user_id_eq_set_id_eq_version_id_eq => $userID,$setID,$versionID];
@@ -1945,7 +1941,8 @@ sub checkKeyfields($;$) {
 		} elsif ($versioned and $keyfield eq "set_id") {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
 				unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
-		} elsif ($versioned and $keyfield eq "user_id") { 
+		# } elsif ($versioned and $keyfield eq "user_id") { 
+		} elsif ($keyfield eq "user_id") { 
 			check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
 		} elsif ($keyfield eq "ip_mask") {
 			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-fA-F0-9_.:/])"
