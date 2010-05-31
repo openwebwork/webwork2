@@ -38,7 +38,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date published enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -1557,7 +1557,6 @@ sub canChange ($$) {
 	my $forOneUser = $forUsers == 1;
 	
 	my $howManyCan = $properties{$field}->{override};
-	
 	return 0 if $howManyCan eq "none";
 	return 1 if $howManyCan eq "any";	
 	return 1 if $howManyCan eq "one" && $forOneUser;
