@@ -167,7 +167,7 @@ sub defineProblemEnvir {
 	$envir{jsMathURL}              = $ce->{webworkURLs}->{jsMath};
 	$envir{asciimathURL}	       = $ce->{webworkURLs}->{asciimath};
 	$envir{LaTeXMathMLURL}	       = $ce->{webworkURLs}->{LaTeXMathML};
-	$envir{server_root_url}        = $ce->{apache_root_url};
+	$envir{server_root_url}        = $ce->{apache_root_url}|| '';
 	
 	# Information for sending mail
 	

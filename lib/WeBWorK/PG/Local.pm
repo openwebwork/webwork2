@@ -97,8 +97,8 @@ sub new_helper {
 	
 	# install a local warn handler to collect warnings
 	my $warnings = "";
-	local $SIG{__WARN__} = sub { $warnings .= shift }
-		if $ce->{pg}->{options}->{catchWarnings};
+	local $SIG{__WARN__} = sub { $warnings .= shift()."<br/>\n"};
+		#if $ce->{pg}->{options}->{catchWarnings};
 	
 	# create a Translator
 	#warn "PG: creating a Translator\n"; 
@@ -326,8 +326,9 @@ EOF
 			result     => {},
 			state      => {},
 			errors     => "Failed to read the problem source file.",
-			warnings   => $warnings,
+			warnings   => "$warnings",
 			flags      => {error_flag => 1},
+			pgcore     => $translator->{rh_pgcore},
 		}, $class;
 	}
 	
@@ -435,6 +436,7 @@ EOF
 		errors     => $translator->errors,
 		warnings   => $warnings,
 		flags      => $translator->rh_flags,
+		pgcore     => $translator->{rh_pgcore},
 	}, $class;
 }
 

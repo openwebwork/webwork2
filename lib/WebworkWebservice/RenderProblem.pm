@@ -1,6 +1,20 @@
 #!/usr/local/bin/perl -w 
 
-# Copyright (C) 2001 Michael Gage 
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/lib/WebworkWebservice/RenderProblem.pm,v 1.11 2010/06/08 11:22:43 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
 
 
 
@@ -41,30 +55,36 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 our $WW_DIRECTORY = $WebworkWebservice::WW_DIRECTORY;
 our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
+our $PROTOCOL     = $WebworkWebservice::PROTOCOL;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
-our $HOSTURL      ="http://$HOST_NAME:80"; 
-our $ce           =$WebworkWebservice::SeedCE;
-# create a local course environment for some course
-    $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
-#print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
-
-
-#other services
-# File variables
-#our $WARNINGS='';
-
-
-# imported constants
-
-my $COURSE_TEMP_DIRECTORY 	= 	$ce->{courseDirs}->{html_tmp};
-my $COURSE_TEMP_URL 		= 	$HOSTURL.$ce->{courseURLs}->{html_tmp};
-
-my $pgMacrosDirectory 		= 	$ce->{pg_dir}.'/macros/';      
-my $macroDirectory			=	$ce->{courseDirs}->{macros}.'/'; 
-my $templateDirectory		= 	$ce->{courseDirs}->{templates}; 
-
-my %PG_environment          =   $ce->{pg}->{specialPGEnvironmentVars};
-
+our $PORT         = $WebworkWebservice::HOST_PORT;
+our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT"; 
+# 
+# #our $ce           = $WebworkWebservice::SeedCE;
+# # create a local course environment for some course
+# our $ce           = WeBWorK::CourseEnvironment->new(
+#                 {webwork_dir=> $WW_DIRECTORY,  courseName=>$COURSENAME} 
+#     );
+#     $ce->{apache_root_url} = $HOSTURL;
+# #print "\$ce = \n", WeBWorK::Utils::pretty_print_rh($ce);
+# 
+# 
+# #other services
+# # File variables
+# #our $WARNINGS='';
+# 
+# 
+# # imported constants
+# 
+# my $COURSE_TEMP_DIRECTORY 	= 	$ce->{courseDirs}->{html_tmp};
+# my $COURSE_TEMP_URL 		= 	$HOSTURL.$ce->{courseURLs}->{html_tmp};
+# 
+# my $pgMacrosDirectory 		= 	$ce->{pg_dir}.'/macros/';      
+# my $macroDirectory			=	$ce->{courseDirs}->{macros}.'/'; 
+# my $templateDirectory		= 	$ce->{courseDirs}->{templates}; 
+# 
+# my %PG_environment          =   $ce->{pg}->{specialPGEnvironmentVars};
+# 
 
 use constant DISPLAY_MODES => {
 	# display name   # mode name
@@ -118,19 +138,17 @@ sub renderProblem {
 	}
 	#FIXME  put in check to make sure the course exists.
 	eval {
-		$ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $courseName);
+		$ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
+		$ce->{apache_root_url}= $HOSTURL;
 	# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
 	};
 	# $ce->{pg}->{options}->{catchWarnings}=1;  #FIXME warnings aren't automatically caught 
 	# when using xmlrpc -- turn this on in the daemon2_course.
 	#^FIXME  need better way of determining whether the course actually exists.
-	if ($@) {
-		$ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
-		$db = WeBWorK::DB->new($ce->{dbLayout});
-	}
+	warn "Unable to create course $courseName. Error: $@" if $@;
 	my $user = $rh->{user};
-	$user    = 'gage' unless defined $user and $user =~/\S/;
+	$user    = 'practice1' unless defined $user and $user =~/\S/;
 	
 ###########################################
 # Authenticate this request
@@ -212,7 +230,7 @@ sub renderProblem {
 	my $problemValue  =  (defined($rh->{envir}->{problemValue}))   ? $rh->{envir}->{problemValue}  : 1 ;
 	my $num_correct   =  $rh->{problem_state}->{num_correct}   || 0 ;
 	my $num_incorrect =  $rh->{problem_state}->{num_incorrect} || 0 ;
-	my $problemAttempted = ($num_correct && $num_incorrect);
+	my $problemAttempted = ($num_correct || $num_incorrect);
 	my $lastAnswer    = '';
 	
 	my $setRecord = $db->getMergedSet($effectiveUserName, $setName);
@@ -291,11 +309,12 @@ sub renderProblem {
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
  		processAnswers  => 1,
+ 		catchWarnings   => 1,
         # methods for supplying the source, 
         r_source        => $r_problem_source, # reference to a source file string.
         # if reference is not defined then the path is obtained 
         # from the problem object.
-		r_envirOverrides    => $rh, 
+        permissionLevel => $rh->{envir}->{permissionLevel} || 0,
 	};
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -344,10 +363,12 @@ sub renderProblem {
 		$formFields,
 		# translation options
 		$translationOptions,
+# 		{ # extras
+# 				overrides       => $rh->{overrides}},
+#         }
 		
 	);
   
-
 
 	# new version of output:
 	my $out2   = {
@@ -355,11 +376,13 @@ sub renderProblem {
 		header_text 				=> encode_base64( $pg->{head_text} ),
 		answers 					=> $pg->{answers},
 		errors         				=> $pg->{errors},
-		WARNINGS	   				=> encode_base64($pg->{warnings} ),
+		WARNINGS	   				=> encode_base64( $pg->{warnings} ),
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
-		PG_flag						=> $pg->{flags},
+		flags						=> $pg->{flags},
+		internal_debug_messages     => $pg->{pgcore}->get_internal_debug_messages,
 	};
+	
 	# Filter out bad reference types
 	###################
 	# DEBUGGING CODE
@@ -377,7 +400,7 @@ sub renderProblem {
 	close(DEBUGCODE) if $debugXmlCode;
 	###################
 	
-	$out2->{PG_flag}->{PROBLEM_GRADER_TO_USE} = undef;
+	$out2->{flags}->{PROBLEM_GRADER_TO_USE} = undef;
 	my $endTime = new Benchmark;
 	$out2->{compute_time} = logTimingInfo($beginTime, $endTime);
 	# warn "flags are" , WebworkWebservice::pretty_print_rh($pg->{flags});

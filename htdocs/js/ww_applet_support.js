@@ -127,9 +127,13 @@ function setAppletStateToRestart(appletName){
 }
 
 function getQE(name1) { // get Question Element in problemMainForm by name
-	var isIE = navigator.appName.indexOf("Microsoft") != -1;
-	var obj = (isIE) ? document.getElementById(name1)
-						:document.problemMainForm[name1]; 
+	//var isIE = navigator.appName.indexOf("Microsoft") != -1;
+	//var obj = (isIE) ? document.getElementById(name1)
+	//					:document.problemMainForm[name1]; 
+	
+	var obj = document.getElementById(name1);
+	if (!obj) {document.problemMainForm[name1]}
+	
 	// needed for IE -- searches id and name space so it can be unreliable if names are not unique
 	if (!obj || obj.name != name1) {
 	    var msg = "Can't find element " + name1;
