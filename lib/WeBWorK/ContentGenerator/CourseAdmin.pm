@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.86 2009/07/07 18:19:43 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.91 2010/06/13 02:25:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -188,15 +188,22 @@ sub pre_header_initialize {
 		
 		elsif ($subDisplay eq "archive_course") {
 			if (defined $r->param("archive_course")) {
-				# validate or confirm
+				# validate -- if invalid, start over.
+				# if form is valid a page indicating the status of 
+				# database tables and directories is presented.
+				# If they are ok, then you can push archive button, otherwise
+				# you can quit or choose to upgrade the tables
 				@errors = $self->archive_course_validate;
 				if (@errors) {
 					$method_to_call = "archive_course_form";
 				} else {
-					$method_to_call = "archive_course_confirm";
+					$method_to_call = "archive_course_confirm"; #check tables & directories
 				}
 			} elsif (defined $r->param("confirm_archive_course")) {
 				# validate and archive
+				# the "archive it" button has been pushed and the 
+				# course will be archived
+				# a report on success or failure will be generated
 				@errors = $self->archive_course_validate;
 				if (@errors) {
 					$method_to_call = "archive_course_form";
@@ -205,11 +212,14 @@ sub pre_header_initialize {
 				}
 			} elsif (defined $r->param("upgrade_course_tables") ){
 			    # upgrade and revalidate
+			    # the "upgrade course" button has been pushed
+			    # after the course has been upgraded you are returned
+			    # to the confirm page.
 			    @errors = $self->archive_course_validate;
 				if (@errors) {
 					$method_to_call = "archive_course_form";
 				} else {
-					$method_to_call = "archive_course_confirm";
+					$method_to_call = "archive_course_confirm"; # upgrade and recheck tables & directories.
 				}
 			} else {
 				# form only
@@ -235,7 +245,33 @@ sub pre_header_initialize {
 				}
 			} else {
 				# form only
+				# start at the beginning -- get drop down list of courses to unarchive
 				$method_to_call = "unarchive_course_form";
+			}
+		}
+		elsif ($subDisplay eq "upgrade_course") {
+			if (defined $r->param("upgrade_course")) {
+				# validate or confirm
+				# if form is valid present details of analysis of the course structure
+				@errors = $self->upgrade_course_validate;
+				if (@errors) {
+					$method_to_call = "upgrade_course_form";
+				} else {
+					$method_to_call = "upgrade_course_confirm";
+				}
+			} elsif (defined $r->param("confirm_upgrade_course")) {
+				# validate and upgrade
+				# if form is valid upgrade the courses and present results
+				@errors = $self->upgrade_course_validate;
+				if (@errors) {
+					$method_to_call = "upgrade_course_form";
+				} else {
+					$method_to_call = "do_upgrade_course";
+				}
+			} else {
+				# form only
+				# start at the beginning -- get list of courses and their status
+				$method_to_call = "upgrade_course_form";
 			}
 		}
 		elsif ($subDisplay eq "manage_locations") {
@@ -346,6 +382,8 @@ sub body {
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, "Unarchive Course"),
 		 "|",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, "Upgrade courses"),
+		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, "Manage Locations"),
 		CGI::hr(),
 		$methodMessage,
@@ -377,22 +415,22 @@ sub body {
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 			next if $courseID eq "admin"; # done already above
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
-			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
-			my $tempCE = new WeBWorK::CourseEnvironment({
-				%WeBWorK::SeedCE,
-				courseName => $courseID,
-			});
-		
-			my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$tempCE);
-			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
-			$CIchecker->updateCourseDirectories();  #creates missing html_temp, mailmerge tmpEditFileDir directories;
-			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
+# 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+# 			my $tempCE = new WeBWorK::CourseEnvironment({
+# 				%WeBWorK::SeedCE,
+# 				courseName => $courseID,
+# 			});
+# 		
+# 			my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$tempCE);
+# 			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
+# 			$CIchecker->updateCourseDirectories();  #creates missing html_temp, mailmerge tmpEditFileDir directories;
+# 			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
-				CGI::code(
-					$tempCE->{dbLayoutName},
-				),
-				$directories_ok ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
-				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
+# 				CGI::code(
+# 					$tempCE->{dbLayoutName},
+# 				),
+# 				$directories_ok ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
+# 				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
 			
 			);
 			 
@@ -1941,7 +1979,7 @@ sub archive_course_confirm {
 			);
 		}
 #############################################################################
-# Check directories
+# Check directories and report
 #############################################################################
 
 
@@ -2307,6 +2345,306 @@ sub do_unarchive_course {
  
 	}
 }
+
+##########################################################################
+
+sub upgrade_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	#my $urlpath = $r->urlpath;
+	
+	
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all eligible courses',
+	       onClick => "for (i in document.courselist.elements)  { 
+	                       if (document.courselist.elements[i].name =='upgrade_courseIDs') { 
+	                           document.courselist.elements[i].checked = true
+	                       }
+	                    }" });
+   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all courses',
+	       onClick => "for (i in document.courselist.elements)  { 
+	                       if (document.courselist.elements[i].name =='upgrade_courseIDs') { 
+	                          document.courselist.elements[i].checked = false
+	                       }
+	                    }" });
+
+	my @courseIDs = listCourses($ce);
+	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+	
+	print CGI::h2("Upgrade Courses");
+	
+	print CGI::p(
+		"Update the checked directories?"
+	);
+	
+	print CGI::start_form(-method=>"POST", -action=>$r->uri, -id=>"courselist", -name=>"courselist"),
+	      CGI::p($selectAll, $selectNone);
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+		foreach my $courseID ( @courseIDs) {
+			next if $courseID eq "admin"; # done already above
+			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
+			next unless $courseID =~/\S/;  # skip empty courseIDs (there shouldn't be any
+			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+			my $tempCE;
+			eval{ $tempCE = new WeBWorK::CourseEnvironment({
+				%WeBWorK::SeedCE,
+				courseName => $courseID,
+			})};
+		    print "Can't create course environment for $courseID because $@" if $@;
+			my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$tempCE);
+			$CIchecker->updateCourseDirectories();  #creates missing html_temp, mailmerge tmpEditFileDir directories;
+			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
+			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
+			my $checked = ($tables_ok && $directories_ok)?0:1;   # don't check if everything is ok
+			my $checkbox_spot = "";
+			if ($checked) {  # only show checkbox if the course is not up-to-date
+	        	$checkbox_spot = CGI::checkbox({name=>"upgrade_courseIDs", label=>'upgrade', selected=>$checked,value=>$courseID});
+	        }
+			print CGI::li(
+			    $checkbox_spot,"&nbsp;",
+			    CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
+				CGI::code(
+					$tempCE->{dbLayoutName},
+				),
+				$directories_ok ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
+				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
+			
+			);
+			 
+		}
+		
+
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"upgrade_course", -value=>"Upgrade Courses"));
+	
+	print CGI::end_form();
+}
+
+sub upgrade_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my @upgrade_courseIDs     = $r->param("upgrade_courseIDs") ; 
+	@upgrade_courseIDs        = () unless  @upgrade_courseIDs;
+	#warn "validate: upgrade ids ", join("|",@upgrade_courseIDs);
+	my @errors;
+	foreach my $upgrade_courseID (@upgrade_courseIDs) {
+		if ($upgrade_courseID eq "") {
+			push @errors, "You must specify a course name.";
+		} 
+	}
+	
+	
+	return @errors;
+}
+
+sub upgrade_course_confirm {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+    
+	my @upgrade_courseIDs     = $r->param("upgrade_courseIDs");
+	@upgrade_courseIDs        = () unless @upgrade_courseIDs;
+    #my $upgrade_courseID      = $upgrade_courseIDs[0];
+    my %update_error_msg 	  = ();
+    print CGI::start_form(-method=>"POST", -action=>$r->uri);
+    foreach my $upgrade_courseID (@upgrade_courseIDs) {
+        next unless $upgrade_courseID =~/\S/;   # skip empty values
+    	##########################
+		# analyze one course
+		##########################
+		my $ce2 = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $upgrade_courseID,
+		});
+		#warn "upgrade_course_confirm: updating |$upgrade_courseID| from course list: " , join("|",@upgrade_courseIDs); 
+	
+		#############################################################################
+		# Create integrity checker
+		#############################################################################
+	
+		my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+	
+		#############################################################################
+		# Report on database status
+		#############################################################################
+	
+		my ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
+ 		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $str) = formatReportOnDatabaseTables($tables_ok, $dbStatus);
+ 		# prepend course name
+		$str = CGI::checkbox({name=>"upgrade_courseIDs", label=>'upgrade', selected=>1,value=>$upgrade_courseID}).
+		         "Report for course $upgrade_courseID:".CGI::br()."Database:".CGI::br(). $str;
+		 
+		#############################################################################
+		# Report on databases
+		#############################################################################
+	
+		print CGI::p($str);
+		if ($extra_database_tables) {
+				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  
+																	 They can only be removed manually from the database.");
+		} 
+		if ($extra_database_fields) {
+				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database fields  which are not defined in the schema for at least one table.  
+																	 They can only be removed manually from the database.");
+		} 
+	
+	   
+		#############################################################################
+		# Report on directory status
+		#############################################################################
+		my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
+		my $style = ($directories_ok)?"color:green" : "color:red";
+		print "Directory structure".CGI::br(), CGI::p($str2),
+		($directories_ok)? CGI::p({style=>$style},"Directory structure is ok") :
+			  CGI::p({style=>$style},"Directory structure is missing directories 
+						  or the webserver lacks sufficient privileges.");
+	}
+	#warn "upgrade_course_confirm:  now print form";
+	#############################################################################
+	# Print form for choosing next action.
+	#############################################################################
+    print CGI::h3("No course id defined") unless @upgrade_courseIDs;
+
+
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	#print CGI::hidden('upgrade_courseIDs',@upgrade_courseIDs);
+
+	####################################################################
+	# Submit buttons
+	# After presenting a detailed summary of status of selected courses the choice is made to
+	# upgrade the selected courses (confirm_upgrade_course is set
+	# or return to the beginning (decline_upgrade_course   is set           
+	
+	####################################################################
+	print CGI::p({style=>"text-align: center"},
+	    CGI::submit(-name =>"decline_upgrade_course", -value => "Don't upgrade"),
+		CGI::submit(-name=>"confirm_upgrade_course", -value=>"Upgrade") );
+		
+	print	CGI::h3("upgrade_course_confirm subroutine");
+
+	print CGI::end_form();
+
+}
+
+sub do_upgrade_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+    
+	my @upgrade_courseIDs     = $r->param("upgrade_courseIDs");
+	@upgrade_courseIDs        = () unless @upgrade_courseIDs;
+    my %update_error_msg 				  = ();
+    #warn "do_upgrade_course:  upgrade_courseIDs = ", join(" ", @upgrade_courseIDs);
+    foreach my $upgrade_courseID (@upgrade_courseIDs) {
+    	next unless $upgrade_courseID =~ /\S/; # omit blank course IDs
+ 
+		##########################
+		# update one course
+		##########################
+		my $ce2 = new WeBWorK::CourseEnvironment({
+			%WeBWorK::SeedCE,
+			courseName => $upgrade_courseID,
+		});
+		#warn "do_upgrade_course: updating |$upgrade_courseID| from" , join("|",@upgrade_courseIDs); 
+		#############################################################################
+		# Create integrity checker
+		#############################################################################
+	
+		my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+		
+		#############################################################################
+		# Add missing tables and missing fields to existing tables
+		#############################################################################
+	
+		my ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
+		my @schema_table_names = keys %$dbStatus;  # update tables missing from database;
+		my @tables_to_create = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A} @schema_table_names;	
+		my @tables_to_alter  = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B} @schema_table_names;
+		$update_error_msg{$upgrade_courseID} = $CIchecker->updateCourseTables($upgrade_courseID, [@tables_to_create]);
+		foreach my $table_name (@tables_to_alter) {	#warn "do_upgrade_course: adding new fields to table $table_name in course $upgrade_courseID";
+			$update_error_msg{$upgrade_courseID} .= $CIchecker->updateTableFields($upgrade_courseID, $table_name);
+		}
+		### $update_error_msg{$upgrade_courseID} is printed below
+		#############################################################################
+		# Add missing directories when it can be done safely
+		#############################################################################	#warn "do_upgrade_course: updating course directories for $upgrade_courseID";
+		$CIchecker -> updateCourseDirectories();   # needs more error messages
+	
+		
+		#############################################################################
+		# Analyze database status and prepare status report
+		#############################################################################
+	
+		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
+		  
+		my ($all_tables_ok, $extra_database_tables, $extra_database_fields, $str) 
+		      = formatReportOnDatabaseTables($tables_ok, $dbStatus);
+ 		# prepend course name
+		$str = CGI::br()."Database:".CGI::br(). $str;
+
+		#############################################################################
+		# Report on databases and report summary
+		#############################################################################
+	
+			
+			if ($extra_database_tables) {
+					$str .= CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  
+																		 They can only be removed manually from the database.");
+			} 
+			if ($extra_database_fields) {
+					$str .= CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database fields  which are not defined in the schema for at least one table.  
+																		 They can only be removed manually from the database.");
+			} 
+	   
+		#############################################################################
+		# Prepare report on directory status
+		#############################################################################
+		  my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
+		  my $style = ($directories_ok)?"color:green" : "color:red";
+		  my $dir_msg  = join ('', 
+		  	"Directory structure",CGI::br(), 
+		  	CGI::p($str2),
+		  	($directories_ok)? CGI::p({style=>$style},"Directory structure is ok") :
+				  CGI::p({style=>$style},"Directory structure is missing directories 
+							  or the webserver lacks sufficient privileges.")
+		  );
+	
+		#############################################################################
+		# Print status
+		#############################################################################
+		print " Report for course $upgrade_courseID:".CGI::br();
+		print CGI::p({-style=>'color:green; font-weight:bold'}, $update_error_msg{$upgrade_courseID});
+
+		print CGI::p($str);     # print message about tables
+		print CGI::p($dir_msg); # message about directories
+
+	}
+	#############################################################################
+	# Submit buttons -- return to beginning
+	#############################################################################
+	print CGI::h3("do_upgrade_course subroutine");
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);  #send back to this script
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_upgrade_course", -value=>"Continue") );
+	print CGI::end_form();
+}
+	
+	
 
 ################################################################################
 ## location management routines; added by DG [Danny Ginn] 20070215
@@ -2901,4 +3239,70 @@ sub do_registration {
 
 }
 ################################################################################
+# Utilities
+################################################################################
+sub formatReportOnDatabaseTables {
+	my ($tables_ok,$dbStatus) =  @_;
+	
+	# print db status
+	
+		my %msg =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A         => CGI::span({style=>"color:red"}," Table defined in schema but missing in database"),
+					  WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"}," Table defined in database but missing in schema"),
+					  WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"}," Table is ok "),
+					  WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database table definitions do not agree "),
+		);
+		my %msg2 =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A        => CGI::span({style=>"color:red"}," missing in database"),
+					  WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"}," missing in schema"),
+					  WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"}," is ok "),
+					  WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database field definitions do not agree "),
+		);
+		my $all_tables_ok=1;
+		my $extra_database_tables=0;
+		my $extra_database_fields=0;
+		my $str ='';
+		$str .= CGI::start_ul();
+		foreach my $table (sort keys %$dbStatus) {
+			my $table_status = $dbStatus->{$table}->[0];
+			$str .= CGI::li( CGI::b($table) .  $msg{ $table_status } );
+			
+			CASE: {
+				$table_status == WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B 
+					&& do{ last CASE;
+					};
+				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A
+					&& do{
+						   $all_tables_ok = 0; last CASE;
+					};
+				$table_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B
+					&& do{
+						   $extra_database_tables = 1; last CASE;
+					};
+				$table_status == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B
+					&& do{ 
+						my %fieldInfo = %{ $dbStatus->{$table}->[1] };
+						$str .=CGI::start_ul();
+						foreach my $key (keys %fieldInfo) {
+							my $field_status = $fieldInfo{$key}->[0];
+							CASE2: {
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B 
+									&& do{ 
+									   $extra_database_fields = 1; last CASE2;
+									};
+								$field_status == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A 
+									&& do{ 
+									   $all_tables_ok=0; last CASE2;
+									};						    
+							}
+							$str .= CGI::li("Field $key => ". $msg2{$field_status });
+						}
+						$str .= CGI::end_ul();
+					};
+			}
+			
+			
+		}
+		$str.=CGI::end_ul();
+		$str .= ($all_tables_ok)?CGI::p("Database tables are ok") : "";
+		return ($all_tables_ok, $extra_database_tables, $extra_database_fields, $str);
+}
 1;

@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.6 2009/09/24 17:31:17 apizer Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseIntegrityCheck.pm,v 1.8 2010/06/12 01:44:33 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -321,9 +321,9 @@ sub checkCourseDirectories {
 	    	$style = "color:red";
 	    }
 	    	
-    	push @results, CGI::span({style=>$style},"$dir => $path $status <br/>\n");
+    	push @results, CGI::li( "$dir =>".CGI::span({style=>$style}," $path $status <br/>\n")  );
     }
-    $str = join(" ",@results);
+    $str = CGI::start_ul(). join(" ",@results) .  CGI::end_ul();
     return ( $directories_ok, $str);
 }
 
@@ -335,7 +335,7 @@ Creates some course directories automatically.
 =cut
 
 sub updateCourseDirectories {
-	my ($self) = @_;
+	my $self = shift;
 	my $ce = $self->{ce};
 	my @webworkDirectories = keys %{$ce->{webworkDirs}};
     my @courseDirectories = keys %{$ce->{courseDirs}};

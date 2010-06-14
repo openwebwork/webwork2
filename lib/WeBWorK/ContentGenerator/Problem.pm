@@ -261,8 +261,14 @@ sub attemptResults {
 		my $row;
 		#$row .= CGI::td($name);
 		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		$row .= $showAttemptPreview ? CGI::td({title=>"$studentAnswer"}, $self->nbsp($preview))       : "";
-		$row .= $showCorrectAnswers ? CGI::td({title=> "$correctAnswerPreview"}, $self->nbsp($correctAnswer)) : "";
+		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
+		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+		                    $self->nbsp($preview))       : "";
+		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
+		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+		                  $self->nbsp($correctAnswerPreview)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
 		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
@@ -1023,6 +1029,10 @@ sub body {
 	}
 	
 	debug("end answer processing");
+	##### javaScripts #############
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
+	
 	
 	##### output #####
 	# custom message for editor
