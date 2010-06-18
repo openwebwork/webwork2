@@ -392,8 +392,7 @@ sub previewCorrectAnswer {
 	
 	return "" unless defined(  $answerResult->{correct_value} ) and ref( $answerResult->{correct_value} );
 	
-	my $tex = $answerResult->{correct_value}->TeX;
-	
+	my $tex = $answerResult->{correct_ans_latex_string};
 	return "" unless defined $tex and $tex ne "";
 	
 	if ($displayMode eq "plainText") {
