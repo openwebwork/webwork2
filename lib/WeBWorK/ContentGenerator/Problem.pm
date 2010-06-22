@@ -390,10 +390,9 @@ sub previewCorrectAnswer {
 	# so we'll just deal with each case explicitly here. there's some code
 	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
 	
-	return "" unless defined(  $answerResult->{correct_value} ) and ref( $answerResult->{correct_value} );
-	
 	my $tex = $answerResult->{correct_ans_latex_string};
-	return "" unless defined $tex and $tex ne "";
+	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
+	# return "" unless defined $tex and $tex ne "";
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
