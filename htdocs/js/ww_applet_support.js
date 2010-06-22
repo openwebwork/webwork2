@@ -84,16 +84,18 @@ function applet_loaded(appletName,ready) {
 ///////////////////////////////////////////////////////   
     
 
-function getApplet(appletName) {
-	  var isIE = navigator.appName.indexOf("Microsoft") != -1;
-	  var obj = (isIE) ? window[appletName] : window.document[appletName];
-	  //return window.document[appletName];
-	  if (obj && (obj.name = appletName)) {
-		  return( obj );
-	  } else {
-		  alert ("can't find applet " + appletName);		  
-	  }
- }	
+
+//  This has been replaced by defining the function in the classes
+// function getApplet(appletName) {
+// 	  var isIE = navigator.appName.indexOf("Microsoft") != -1;
+// 	  var obj = (isIE) ? window[appletName] : window.document[appletName];
+// 	  //return window.document[appletName];
+// 	  if (obj && (obj.name == appletName)) {   //RECENT FIX to ==
+// 		  return( obj );
+// 	  } else {
+// 		  alert ("can't find applet " + appletName);		  
+// 	  }
+//  }	
 
 function listQuestionElements() { // list all HTML input and textarea elements in main problem form
    var isIE = navigator.appName.indexOf("Microsoft") != -1;
