@@ -95,9 +95,9 @@ sub new_helper {
 # 		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
 # 		"begin");
 	
-	# install a local warn handler to collect warnings
+	# install a local warn handler to collect warnings  FIXME -- figure out what I meant to do here.
 	my $warnings = "";
-	local $SIG{__WARN__} = sub { $warnings .= shift()."<br/>\n"};
+	#local $SIG{__WARN__} = sub { $warnings .= shift()."<br/>\n"};
 		#if $ce->{pg}->{options}->{catchWarnings};
 	
 	# create a Translator
