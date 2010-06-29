@@ -415,7 +415,7 @@ sub body {
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 			next if $courseID eq "admin"; # done already above
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
-# 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+ 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
 # 			my $tempCE = new WeBWorK::CourseEnvironment({
 # 				%WeBWorK::SeedCE,
 # 				courseName => $courseID,
@@ -425,14 +425,14 @@ sub body {
 # 			my ($tables_ok,$dbStatus)   = $CIchecker->checkCourseTables($courseID);
 # 			$CIchecker->updateCourseDirectories();  #creates missing html_temp, mailmerge tmpEditFileDir directories;
 # 			my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories();
-			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID),
+			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
 # 				CGI::code(
 # 					$tempCE->{dbLayoutName},
 # 				),
 # 				$directories_ok ? "" : CGI::span({style=>"color:red"},"Directory structure or permissions need to be repaired. "),
 # 				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
 			
-			);
+#			);
 			 
 		}
 		
