@@ -433,7 +433,7 @@ sub body {
 # 				$tables_ok ? CGI::span({style=>"color:green"},"Database tables ok") : CGI::span({style=>"color:red"},"Database tables need updating."),
 			
 #			);
-			 
+
 		}
 		
 		print CGI::end_ol();
