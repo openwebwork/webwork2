@@ -1,0 +1,12 @@
+Information about the open source homework system WeBWorK can be found
+at <a href="http://webwork.maa.org">http://webwork.maa.org</a>
+
+<div style = "color:red; font-size:18">
+The courses on this machine will gradually be moved starting Monday, June 28
+to a new machine at http://courses.webwork.maa.org
+located at MAA headquarters.
+<p>
+There will may be occasional short periods of  downtime  as this change takes place.
+
+</div>
+

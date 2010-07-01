@@ -23,7 +23,7 @@
 
 	var  ww_applet_list                  = new Object;  // holds  java script version (jsApplet) ww_applet objects
 	
-	var TIMEOUT                          = 100;         // time delay between successive checks for applet readiness
+	var TIMEOUT                          = 1000;         // time delay between successive checks for applet readiness
 
     
 //////////////////////////////////////////////////////////
@@ -134,7 +134,7 @@ function getQE(name1) { // get Question Element in problemMainForm by name
 	//					:document.problemMainForm[name1]; 
 	
 	var obj = document.getElementById(name1);
-	if (!obj) {document.problemMainForm[name1]}
+	if (!obj) {obj = document.problemMainForm[name1]}
 	
 	// needed for IE -- searches id and name space so it can be unreliable if names are not unique
 	if (!obj || obj.name != name1) {
@@ -191,8 +191,12 @@ function ww_applet(appletName) {
 ww_applet.prototype.methodDefined = function(methodName) {
 	var appletName = this.appletName;
 	var applet     = getApplet(appletName);
+	//alert("applet is undefined = " + (typeof(applet)=="undefined"));
+	//alert("applet["+methodName+ "] is undefined " + (  typeof(applet[methodName]) == "undefined"  )      );
+	//alert ("applet method has type of " +typeof(applet[methodName]) );
 	try {
-		if (typeof(applet[methodName]) == "function" ) {
+		if (typeof(applet[methodName]) != "undefined" ) {  
+		    // ie8 returns "unknown" instead of "function" so we check for anything but "undefined"
 			this.debug_add("Method " + methodName + " is defined in " + appletName );
 			return(true);
 		} else {
@@ -467,10 +471,10 @@ ww_applet.prototype.checkLoaded = function() {  // this function returns 0 unles
 			ready =1;
 		} else {
 			this.debug_add( "*Applet " + appletName + " signals it is not active. -- \n it may still be loading data.\n");
-			ready = "still_loading";
+			ready = 0;
 		}
 	} 
-
+    //alert("set applet ready state to " +ready);
 	this.isReady = ready;
 	return(ready);
 }
@@ -483,31 +487,47 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
     //alert("begin safe_applet_initialize");
     var appletName = this.appletName;
     i--;
+    
+    /////////////////////////////////////////////////    
+    // Check whether the applet is has already loaded
+    /////////////////////////////////////////////////
 	this.debug_add("*  Try to initialize applet " + appletName +  ". Count down: " + i + ".\n" );
-
-	//alert("1 jsDebugMode " + jsDebugMode + " applet debugMode " +this.debugMode);
 	this.debug_add("entering checkLoaded subroutine");
 	var applet_loaded = this.checkLoaded();
-	this.debug_add("returning from checkLoaded subroutine with result " +applet_loaded);
-	if (applet_loaded=="still_loading" && !(i> 0) ) {
-		// it's possible that the isActive() response of the applet is not working properly
-		alert("*The isActive() method of applet " +appletName + " reports it is still loading! We'll ignore this.\n");
-		i=1;
-		applet_loaded=1;
-	} else if (applet_loaded=="still_loading") {
-		applet_loaded=0;  // keep trying
+	if ( ( applet_loaded != 0 ) && ( applet_loaded != 1 ) ) {
+		alert("Error: The applet_loaded variable has not been defined. " + applet_loaded);
 	}
+	this.debug_add("returning from checkLoaded subroutine with result " + applet_loaded);
 	
+    /////////////////////////////////////////////////    
+    // If applet has not loaded try again -- or announce that the applet can't be loaded
+    /////////////////////////////////////////////////
 
-	if ( 0 < i && !applet_loaded ) { // wait until applet is loaded
+	if ( applet_loaded==0 && (i> 0) ) { // wait until applet is loaded
 		this.debug_add("*Applet " + appletName + " is not yet ready try again\n");
 		if (this.debugMode>=2) {
 			alert(debugText ); 
 			debugText="";
 		}
-		window.setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
-	} else if( 0 < i ) {                // now that applet is loaded configure it and initialize it with saved data.
+		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
+        alert("we just set a setTimeout " +i);
+        return "";
+	} else if (applet_loaded==0 && !(i> 0) ) {
+		// it's possible that the isActive() response of the applet is not working properly
+		alert("*We haven't been able to verify that the applet " +appletName + " is loaded.  We'll try to use it anyway but it might not work.\n");
+		i=1;
+		applet_loaded=1; // FIXME -- give a choice as to whether to continue or not
+		this.isReady=1;
+		return "";
+	} 
+	
+	
+    /////////////////////////////////////////////////    
+    // If the applet is loaded try to configure it.
+    /////////////////////////////////////////////////
 	    
+	if( applet_loaded) {                // now that applet is loaded configure it and initialize it with saved data.
+	    // alert("configuring applet");
 	    this.debug_add("  applet is ready = " + applet_loaded  );
 
 		this.debug_add("*Applet "+ appletName + " initialization completed\n   with " + i 
@@ -557,6 +577,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		};
 	} else {
+	    alert("Error: applet "+ appletName + " has not been loaded");
 		this.debug_add("*Error: timed out waiting for applet " +appletName + " to load");
 		//alert("4 jsDebugMode " + jsDebugMode + " applet debugMode " +ww_applet.debugMode + " local debugMode " +debugMode);
 		if (this.debugMode>=2) {
@@ -564,7 +585,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 	}
-	
+	return "";
 }
 
 function iamhere() {
