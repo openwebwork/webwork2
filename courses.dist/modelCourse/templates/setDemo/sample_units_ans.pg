@@ -31,7 +31,7 @@ END_TEXT
 
 HINT(EV3(<<'EOT'));
 Remembering the Pythagorean theorem \( A^2 +B^2 = C^2 \), you can enter
-sqrt($fx^2 + $fy^2) m or  \{spf($ansxy, "%0.2f" )\} m or  \{spf($anscm, "%0.2f" )\} cm or ...
+sqrt(${fx}${CARET}2 + ${fy}${CARET}2) m or  \{spf($ansxy, "%0.2f" )\} m or  \{spf($anscm, "%0.2f" )\} cm or ...
 EOT
 
 BEGIN_TEXT
