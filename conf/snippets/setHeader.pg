@@ -91,7 +91,7 @@ enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2)
 of -1, \( e\wedge (ln(2)) \) instead of 2,
 \( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
  Here's the 
-\{ htmlLink(qq!http://webwork.math.rochester.edu/docs/docs/pglanguage/availableFunctions.html!,"list of the functions") \}
+\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"list of the functions") \}
  which WeBWorK understands.
 $PAR
 You can use the Feedback button on each problem
