@@ -1911,12 +1911,12 @@ sub getAllMergedProblemVersions {
 # utilities
 ################################################################################
 
-sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,]) 
+sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@]) 
 	my $value = shift;
-	if ($value =~ m/^[-a-zA-Z0-9_.]*,?(set_id:)?[-a-zA-Z0-9_.]*(,g)?$/ ) {
+	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/ ) {
 		return 1;
 	} else {
-		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,])";
+		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,@])";
 		return 0;
 	}
 }

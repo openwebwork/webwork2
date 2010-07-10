@@ -23,7 +23,7 @@
 
 	var  ww_applet_list                  = new Object;  // holds  java script version (jsApplet) ww_applet objects
 	
-	var TIMEOUT                          = 1000;         // time delay between successive checks for applet readiness
+	var TIMEOUT                          = 100;         // time delay between successive checks for applet readiness
 
     
 //////////////////////////////////////////////////////////
@@ -61,9 +61,12 @@ function initializeAction() {  // deprecated call -- removed
 
 function initializeWWquestion() {    // called from <body> tag defined in the webwork2/conf/template
 	for (var appletName in ww_applet_list)  {	
-	    var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
-	    // alert("Initialize each applet. \nUse up to " +maxInitializationAttempts + " cycles to load" +"\n");
-		ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
+	    if (!ww_applet_list[appletName].onInit) {
+	    	var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
+	    	//alert("Initialize each applet. \nUse up to " +maxInitializationAttempts + " cycles to load" +"\n");
+			ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
+		} 
+		// if onInit is defined then the onInit function will handle the initialization
 	}
 
 }
@@ -125,7 +128,7 @@ function setAppletStateToRestart(appletName){
 	var newState = "<xml>restart_applet</xml>";
 	//ww_applet_list[appletName].setState(newState);
 	getQE(appletName+"_state").value = newState;
-	getQE("previous_" + appletName + "_state").value = newState
+	getQE("previous_" + appletName + "_state").value = newState;
 }
 
 function getQE(name1) { // get Question Element in problemMainForm by name
@@ -194,6 +197,9 @@ ww_applet.prototype.methodDefined = function(methodName) {
 	//alert("applet is undefined = " + (typeof(applet)=="undefined"));
 	//alert("applet["+methodName+ "] is undefined " + (  typeof(applet[methodName]) == "undefined"  )      );
 	//alert ("applet method has type of " +typeof(applet[methodName]) );
+	if (!methodName) {  // no methodName is defined
+		return(false);
+	}
 	try {
 		if (typeof(applet[methodName]) != "undefined" ) {  
 		    // ie8 returns "unknown" instead of "function" so we check for anything but "undefined"
@@ -292,11 +298,21 @@ ww_applet.prototype.setState = function(state) {
 	if (state.match(/^<xml>restart_applet<\/xml>/) || 
 	    state.match(/^\s*$/) ||
 	    state.match(/^<xml>\s*<\/xml>/ ) ) { 
-	                                                //blank state also restarts applet
-		ww_preserve_applet_state.value =this.initialState;  //Fixme? should we set the last answer to blank as well?
-		state = ww_preserve_applet_state.value;
+	    
+	    //blank state also restarts applet
+		
 		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
-			alert("The applet " +appletName + "has been reset to its virgin state." + this.initialState);
+		    if(  this.initialState =="<xml></xml>" ) {
+		    	 alert("The applet " +appletName + "has been reset to its virgin state. (no intialState defined)"+this.initialState);
+				 return(''); // don't call the setStateAlias function at all.
+			} else {		     
+				 state = this.initialState;
+			     alert("The applet " +appletName + "has been reset to its virgin state." +state);
+				if ( base64Q(state) ) { 
+					state=Base64.decode(state);
+				}
+
+		    }
 		}
 	}
 	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // if state starts with <?xml
@@ -307,10 +323,10 @@ ww_applet.prototype.setState = function(state) {
 		try {
 		    
 			if ( this.methodDefined(setStateAlias)   ) {
-				applet[setStateAlias]( state );    // change the applets current state
+		        var result = applet[setStateAlias]( state );
 			} 
-		} catch(e) {
-			msg = "Error in setting state of " + appletName + " using command " + setStateAlias + " : " + e ;
+		} catch(err) {  // catching false positives?
+			var msg = "Error in setting state of " + appletName + " using command " + setStateAlias + " : " +err+err.number+ err.description ;
 			alert(msg);
 		}
 	} else if (jsDebugMode==1) {
@@ -388,16 +404,26 @@ ww_applet.prototype.setDebug = function(debugMode) {
 ////////////////////////////////////////////////////////////
     	
 ww_applet.prototype.initializeAction = function () {
-     var state = '';
      this.setState();
 };
 	
 ww_applet.prototype.submitAction = function () { 
 	var appletName = this.appletName;
     // var getAnswer = this.getAnswerAlias;
+    
+    // Don't do anything if the applet is hidden.
+    if(!ww_applet_list[appletName].visible) {return('')};   
+    
+    
     var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
 	var saved_state =   ww_preserve_applet_state.value;
-
+	
+	if (saved_state.match(/^<xml>restart_applet<\/xml>/) )  {
+		this.debug_add("Restarting the applet "+appletName);
+		setAppletStateToRestart(appletName);   // erases all of the saved state
+		if (this.debugMode>=2){alert(debugText); debugText="";}
+		return('');      
+	}
     this.debug_add("Begin submit action for applet " + appletName);
     var applet = getApplet(appletName);
 	if (! this.isReady  ) {
@@ -406,11 +432,7 @@ ww_applet.prototype.submitAction = function () {
 	}
 	// Check to see if we want to restart the applet
 	
-	if (saved_state.match(/^<xml>restart_applet<\/xml>/) )  {
-		this.debug_add("Restarting the applet "+appletName);
-		setAppletStateToRestart(appletName);   // erases all of the saved state
-		return('');      
-	}
+
 	// if we are not restarting the applet save the state and submit
 	
 	this.getState();      // have ww_applet retrieve state from applet and store in answerbox
@@ -498,11 +520,11 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		alert("Error: The applet_loaded variable has not been defined. " + applet_loaded);
 	}
 	this.debug_add("returning from checkLoaded subroutine with result " + applet_loaded);
-	
+
     /////////////////////////////////////////////////    
     // If applet has not loaded try again -- or announce that the applet can't be loaded
     /////////////////////////////////////////////////
-
+	
 	if ( applet_loaded==0 && (i> 0) ) { // wait until applet is loaded
 		this.debug_add("*Applet " + appletName + " is not yet ready try again\n");
 		if (this.debugMode>=2) {
@@ -510,7 +532,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
-        alert("we just set a setTimeout " +i);
+        alert("Oops, applet is not ready. " +(i-1) +" tries left");
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
 		// it's possible that the isActive() response of the applet is not working properly
@@ -525,7 +547,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
     /////////////////////////////////////////////////    
     // If the applet is loaded try to configure it.
     /////////////////////////////////////////////////
-	    
+	
 	if( applet_loaded) {                // now that applet is loaded configure it and initialize it with saved data.
 	    // alert("configuring applet");
 	    this.debug_add("  applet is ready = " + applet_loaded  );
@@ -538,7 +560,9 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 		// in-line handler -- configure and initialize
-		//alert("setDebug")
+		 /////////////////////////////////////////////////
+		 //alert("setDebug")
+		 /////////////////////////////////////////////////
 		try{
 		
 			this.setDebug((this.debugMode) ? 1:0); 
@@ -547,8 +571,9 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			var msg = "*Unable set debug in " + appletName + " \n " +e2;  
 			if (this.debugMode>=2) {this.debug_add(msg);} else {alert(msg)};
 		}
-
-		//alert("config applet");
+		 /////////////////////////////////////////////////
+		 //alert("config applet");
+		 /////////////////////////////////////////////////
 		try{ 
 	
 			this.setConfig();         // for applets that require a configuration (which doesn't change for a given WW question
@@ -558,8 +583,9 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			if (this.debugMode>=2) {this.debug_add(msg);} else {alert(msg)};
 		}
 
-		
+		/////////////////////////////////////////////////
 		//alert("initializeAction");
+		/////////////////////////////////////////////////
 		try{
 		    
 			this.initializeAction();  // this is often the setState action.

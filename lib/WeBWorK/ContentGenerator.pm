@@ -943,13 +943,19 @@ will give standard WeBWorK time format.  Wording and other formatting
 can be done in the template itself.
 =cut
 
+# sub timestamp {
+# 	my ($self, $args) = @_;
+# 	my $formatstring = "%l:%M%P on %b %e, %Y";
+# 	$formatstring = $args->{style} if(defined($args->{style}));
+# 	return(Date::Format::time2str($formatstring, time()));
+# }
 sub timestamp {
 	my ($self, $args) = @_;
-	my $formatstring = "%l:%M%P on %b %e, %Y";
-	$formatstring = $args->{style} if(defined($args->{style}));
-	return(Date::Format::time2str($formatstring, time()));
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $tz = $ce->{siteDefaults}{timezone};
+	return( $self->formatDateTime(time(), $tz) );
 }
-	
 =item message()
 
 Defined in this package.

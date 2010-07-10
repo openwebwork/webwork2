@@ -1187,8 +1187,21 @@ sub body {
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}
+
 	print CGI::end_div();
-		
+	print CGI::start_div();
+	
+	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{flags}->{DEBUG_messages}} );
+	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{flags}->{WARNING_messages}} );
+	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
+	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+	
+	print CGI::p({style=>"color:red;"}, "Checking additional error messages") if $pgerrordiv  ;
+ 	print CGI::p("pg debug<br/> $pgdebug"                   ) if $pgdebug ;
+	print CGI::p("pg warning<br/>$pgwarning"                ) if $pgwarning ;	
+	print CGI::p("pg internal errors<br/> $pginternalerrors") if $pginternalerrors;
+	print CGI::end_div()                                      if $pgerrordiv ;
+	
 	# save state for viewOptions
 	print  CGI::hidden(
 			   -name  => "showOldAnswers",
@@ -1225,13 +1238,6 @@ sub body {
 	
 	print  CGI::start_div({class=>"problemFooter"});
 	
-	## arguments for answer inspection button
-	#my $prof_url = $ce->{webworkURLs}->{oldProf};
-	#my $webworkURL = $ce->{webworkURLs}->{root};
-	#my $cgi_url = $prof_url;
-	#$cgi_url=~ s|/[^/]*$||;  # clip profLogin.pl
-	#my $authen_args = $self->url_authen_args();
-	#my $showPastAnswersURL = "$webworkURL/$courseName/instructor/show_answers/";
 	
 	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers",
 		courseID => $courseName);
