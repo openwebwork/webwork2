@@ -777,6 +777,12 @@ sub links {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
 				print CGI::li({}, $self->helpMacro('instructor_links','Help'),$self->help() );
+				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
+				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
+				    my %augmentedSystemLinks = %systemlink_args;
+				    $augmentedSystemLinks{params}->{archiveCourse}=1;
+					print CGI::li(&$makelink("${pfx}FileManager", text=>"Archive this Course",urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
+				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
