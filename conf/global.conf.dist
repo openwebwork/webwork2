@@ -261,7 +261,7 @@ $webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
 $webworkURLs{docs}          = "http://webwork.maa.org";
 
 # URL of WeBWorK Bugzilla database.
-$webworkURLs{bugReporter}   = "http://wwrk.maa.org/bugzilla3/enter_bug.cgi";
+$webworkURLs{bugReporter}   = "http://bugs.webwork.maa.org/enter_bug.cgi";
 
 # Location of CSS
 # $webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/${defaultTheme}.css";
@@ -889,7 +889,8 @@ $pg{directories}{macrosPath} = [
 
 $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
 	"$webworkURLs{htdocs}/applets",
-	"$courseURLs{html}/applets",
+	"$webworkURLs{htdocs}/applets/geogebra_stable"
+	#"$courseURLs{html}/applets",  # -- hack to prevent conflict of curl and apache2 only uses first entry
 ];
 
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
