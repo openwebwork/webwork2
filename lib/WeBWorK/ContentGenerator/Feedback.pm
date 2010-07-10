@@ -34,7 +34,7 @@ use WeBWorK::CGI;
 use Mail::Sender;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
-use WeBWorK::Utils qw/formatDateTime decodeAnswers/;
+use WeBWorK::Utils qw/ decodeAnswers/;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -420,9 +420,9 @@ sub format_userset {
 	$result .= "Hardcopy header file:      " . $Set->hardcopy_header . "\n";
 	
 	my $tz = $ce->{siteDefaults}{timezone};
-	$result .= "Open date:                 " . formatDateTime($Set->open_date, $tz) . "\n";
-	$result .= "Due date:                  " . formatDateTime($Set->due_date, $tz) . "\n";
-	$result .= "Answer date:               " . formatDateTime($Set->answer_date, $tz) . "\n";
+	$result .= "Open date:                 " . $self->formatDateTime($Set->open_date, $tz). "\n";
+	$result .= "Due date:                  " . $self->formatDateTime($Set->due_date, $tz). "\n";
+	$result .= "Answer date:               " . $self->formatDateTime($Set->answer_date, $tz) . "\n";
 	$result .= "Published:                 " . ($Set->published ? "yes" : "no") . "\n";
 	$result .= "Assignment type:           " . $Set->assignment_type . "\n";
 	if ($Set->assignment_type =~ /gateway/) {
@@ -430,7 +430,7 @@ sub format_userset {
 		$result .= "Time interval:             " . $Set->time_interval . "\n";
 		$result .= "Versions per interval:     " . $Set->versions_per_interval . "\n";
 		$result .= "Version time limit:        " . $Set->version_time_limit . "\n";
-		$result .= "Version creation time:     " . formatDateTime($Set->version_creation_time, $tz) . "\n";
+		$result .= "Version creation time:     " . $self->formatDateTime($Set->version_creation_time, $tz) . "\n";
 		$result .= "Problem randorder:         " . $Set->problem_randorder . "\n";
 		$result .= "Version last attempt time: " . $Set->version_last_attempt_time . "\n";
 	}
