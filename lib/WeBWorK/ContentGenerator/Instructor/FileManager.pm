@@ -35,6 +35,8 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 
+use WeBWorK::Utils::CourseManagement qw(archiveCourse);
+
 use constant HOME => 'templates';
 
 #
@@ -67,6 +69,13 @@ sub pre_header_initialize {
 	$self->Download if ($action && $action eq 'Download');
 	my $file = $r->param('download');
 	$self->downloadFile($file) if (defined $file);
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $courseID = $r->urlpath->arg("courseID");
+	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID/templates/archived_course_$courseID.tar.gz";
+	my %options = (courseID => $courseID, archive_path => $archive_path, ce=>$ce );
+	$self->{archive_options}= \%options;
+
 }
 
 ##################################################
@@ -159,7 +168,14 @@ sub body {
 		$self->addbadmessage("Unknown action.");
 		$self->Refresh;
 	}
-
+    if ($r->param('archiveCourse') ) {
+         my %options = %{$self->{archive_options}};
+        my $courseID = $options{courseID};
+        $self->addgoodmessage("Archiving course at archived_course_$courseID.tar.gz. Reload FileManager to see it.");
+    	WeBWorK::Utils::CourseManagement::archiveCourse(%options);
+    	$self->addgoodmessage("Course archived.");
+    	
+    }
 	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
 	print CGI::hidden({name=>'formAction',value=>""});
 	print CGI::end_form();
