@@ -475,7 +475,7 @@ sub body {
 		# things that start /Library/setFoo/probBar  are labeled as component "Library"
 		# which refers to the SQL based problem library. (is nationalLibrary a better name?)
 	} else {
-		$libraryName = 'rochester';  # make sure there is some default component defined.
+		$libraryName = 'Library';  # make sure there is some default component defined.
 	}
 
     my $BUGZILLA = "$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries".
