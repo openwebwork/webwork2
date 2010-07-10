@@ -58,6 +58,12 @@ BEGIN {
 	$WeBWorK::PG::Local::safeCache = new Safe;
 }
 
+sub alarm_handler {
+	my $msg = "Timeout after processing this problem for ". TIMEOUT. " seconds. Check for infinite loops in problem source.\n";
+	warn $msg;
+	CORE::die $msg;
+}
+
 sub new {
 	my $invocant = shift;
 	local $SIG{ALRM} = \&alarm_handler;
@@ -68,12 +74,7 @@ sub new {
 	return $result;
 }
 
-sub alarm_handler {
-	my $msg = "Timeout after processing this problem for ". TIMEOUT. " seconds. Check for infinite loops in problem source.\n";
-	warn $msg;
-	die $msg;
 
-}
 sub new_helper {
 	my $invocant = shift;
 	my $class = ref($invocant) || $invocant;
@@ -148,53 +149,7 @@ sub new_helper {
 		);
 	}
 	
-	#my $mailer = new WeBWorK::Utils::RestrictedMailer(
-	#	params => {
-	#		from => $ce->{mail}{smtpSender},
-	#		smtp => $ce->{mail}{smtpServer},
-	#		# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
-	#		# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
-	#		# put it in Utils! (or maybe in WW::Request?)
-	#		#headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
-	#		#	. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
-	#		#	# can't add user-related information because this is used for anonymous questionnaires
-	#		#	#. "X-WeBWorK-User: " . $user->user_id . "\n"
-	#		#	#. "X-WeBWorK-Section: " . $user->section . "\n"
-	#		#	#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
-	#		#	. "X-WeBWorK-Set: " . $set->set_id . "\n"
-	#		#	. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
-	#		#	. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
-	#		#debug => "/tmp/debug.txt",
-	#	},
-	#	lock_by_default => 1,
-	#	allow_change => [qw/fake_from to fake_to cc fake_cc bcc subject/],
-	#	allowed_recipients => $ce->{mail}{allowedRecipients},
-	#	fatal_errors => 1,
-	#);
-	
-	#my $mailer = new WeBWorK::Utils::DelayedMailer(
-	#	new_opts => {
-	#		from => $ce->{mail}{smtpSender},
-	#		smtp => $ce->{mail}{smtpServer},
-	#		# FIXME I'd like to have an X-Remote-Host header, but before I do that I have to
-	#		# factor out the remote host/remote port code from Feedback.pm and Authen.pm and
-	#		# put it in Utils! (or maybe in WW::Request?)
-	#		headers => "X-WeBWorK-Module: " . __PACKAGE__ . "\n"
-	#			. "X-WeBWorK-Course: " . $ce->{courseName} . "\n"
-	#			# can't add user-related information because this is used for anonymous questionnaires
-	#			#. "X-WeBWorK-User: " . $user->user_id . "\n"
-	#			#. "X-WeBWorK-Section: " . $user->section . "\n"
-	#			#. "X-WeBWorK-Recitation: " . $user->recitation . "\n"
-	#			. "X-WeBWorK-Set: " . $set->set_id . "\n"
-	#			. "X-WeBWorK-Problem: " . $problem->problem_id . "\n"
-	#			. "X-WeBWorK-PGSourceFile: " . $problem->source_file . "\n",
-	#		#debug => \*STDERR,
-	#	},
-	#	allowed_recipients => $ce->{mail}{allowedRecipients},
-	#	on_illegal_rcpt => "carp",
-	#	on_unsafe_arg => "carp",
-	#);
-	
+
 	my $mailer = new WeBWorK::Utils::DelayedMailer(
 		smtp_server => $ce->{mail}{smtpServer},
 		smtp_sender => $ce->{mail}{smtpSender},
@@ -275,7 +230,7 @@ sub new_helper {
 
 	# STANDARD LOADING CODE: for cached script files, this merely
 	# initializes the constants.
-	foreach (qw(PG.pl dangerousMacros.pl IO.pl)) {
+	foreach (qw(PG.pl )) {   # dangerousMacros.pl IO.pl
 		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
 		warn "Error while loading $macroPath: $err" if $err;

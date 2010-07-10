@@ -34,6 +34,7 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
 use WeBWorK::Utils::DBUpgrade;
+use PGcore; # for not_null() macro
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -578,9 +579,15 @@ sub archiveCourse {
 	
 	# grab some values we'll need
 	my $course_dir = $ce->{courseDirs}{root};
-	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
+#	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
 	my $data_dir = $ce->{courseDirs}{DATA};
 	my $dump_dir = "$data_dir/mysqldump";
+	my $archive_path;
+	if ( PGcore::not_null( $options{archive_path} ) ) {
+		$archive_path = $options{archive_path};
+	} else {
+		$archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
+	}
 	
 	
 	# fail if the source course does not exist

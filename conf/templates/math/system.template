@@ -5,7 +5,7 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/templates/math/system.template,v 1.11 2008/10/09 02:18:37 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -35,7 +35,8 @@
 		<!--#loginstatus-->
 	</div>
 	<div id="logo">
-		<img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" />
+                <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" /></a>&nbsp;
+                <a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo.png" alt="MAA" height="51" width="142" /></a>
 	</div>
 </div>
 <hr class="for-broken-browsers"/>
