@@ -957,12 +957,19 @@ can be done in the template itself.
 # }
 sub timestamp {
 	my ($self, $args) = @_;
+<<<<<<< .working
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $tz = $ce->{siteDefaults}{timezone};
+	return( $self->formatDateTime(time(), $tz) );
+=======
 # 	my $r = $self->r;
 # 	my $ce = $r->ce;
 # 	my $tz = $ce->{siteDefaults}{timezone};
 # 	warn "testing", $r, $ce, $tz;
     # need to use the formatDateTime in this file (some subclasses access Util's version.
 	return( $self->formatDateTime( time() ) );
+>>>>>>> .merge-right.r6354
 }
 =item message()
 
