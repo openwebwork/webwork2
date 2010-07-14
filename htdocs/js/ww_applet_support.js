@@ -50,7 +50,7 @@ function submitAction()  {    // called from the submit button defined in Proble
 	}
 	if (jsDebugMode==1) { debug_add("\n Done calling submitAction() on each applet.\n");}
 	if (jsDebugMode==1) {
-		alert(debugText); debugText="";
+		alert("DebugText:\n"+debugText); debugText="";
 	};
 }
 
@@ -64,11 +64,12 @@ function initializeWWquestion() {    // called from <body> tag defined in the we
 	    if (!ww_applet_list[appletName].onInit) {
 	    	var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
 	    	//alert("Initialize each applet. \nUse up to " +maxInitializationAttempts + " cycles to load" +"\n");
+	    	this.debug_add("initializing " + appletName);
 			ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
 		} 
 		// if onInit is defined then the onInit function will handle the initialization
 	}
-
+    this.debug_add("end of applet initialization");
 }
 
 // applet can set isReady flag by calling applet_loaded(appletName, loaded);
@@ -122,15 +123,24 @@ function listQuestionElements() { // list all HTML input and textarea elements i
 }
 
 function base64Q(str) {   /// determine whether an XML string has been base64 encoded.
-	return ( !str.match(/<XML/i) && !str.match(/<?xml/i));
+    if (! str ) {
+          return( 0 ); // the empty string is not a base64 string.
+    } else if (str.match(/[<>]+/ ) ) {
+    	  return( 0 );  // base64 can't contain <  or >  and xml strings contain lots of them
+    } else {
+    	  return(1);   // it's probably a non-empty base64 string.
+    }
 }
-function setAppletStateToRestart(appletName){ 
+function setHTMLAppletStateToRestart(appletName){ // resets the state stored on HTML page not in the applet
 	var newState = "<xml>restart_applet</xml>";
-	//ww_applet_list[appletName].setState(newState);
 	getQE(appletName+"_state").value = newState;
 	getQE("previous_" + appletName + "_state").value = newState;
 }
-
+function setHTMLAppletState(appletName, newState){ // resets the state stored on the HTML page
+	var newState = "<xml></xml>";
+	getQE(appletName+"_state").value = newState;
+	getQE("previous_" + appletName + "_state").value = newState;
+}
 function getQE(name1) { // get Question Element in problemMainForm by name
 	//var isIE = navigator.appName.indexOf("Microsoft") != -1;
 	//var obj = (isIE) ? document.getElementById(name1)
@@ -231,14 +241,14 @@ ww_applet.prototype.setConfig = function () {
 	   try {
 		    if ( this.methodDefined(this.setConfigAlias) ) {
     			applet[setConfigAlias](this.configuration);
-    			this.debug_add("   Calling " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
+    			this.debug_add("  Configuring applet: Calling " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
     		} else {
-    		    this.debug_add("  unable to execute " + appletName +"."+ setConfigAlias +"( " + this.configuration + " ) " );
+    		    this.debug_add("  Configuring applet: Unable to execute command |" + setConfigAlias + "| in the applet "+ appletName +" with data ( \"" + this.configuration + "\" ) " );
     		}
     	
     	} catch(e) {
     	
-    	    var msg = "Error in configuring  " + appletName + " using command " + setConfigAlias + " : " + e ;
+    	    var msg = "Error in configuring applet  " + appletName + " using command " + setConfigAlias + " : " + e ;
 			alert(msg);
     	}
     	
@@ -280,9 +290,11 @@ ww_applet.prototype.setState = function(state) {
 	var appletName      = this.appletName;
 	var applet          = getApplet(appletName);
 	var setStateAlias   = this.setStateAlias;
-
 	this.debug_add("\n++++++++++++++++++++++++++++++++++++++++\nBegin process of setting state for applet " + appletName);
-	
+////////////////////////////////////////////////////////// 
+// Obtain the state which will be sent to the applet and if it is encoded place it in plain xml text
+// Communication with the applet is in plain text,not in base64 code.
+////////////////////////////////////////////////////////// 
 	if (state) {
 		this.debug_add("Obtain state from calling parameter:\n " + state + "\n");
 	} else {
@@ -290,48 +302,87 @@ ww_applet.prototype.setState = function(state) {
 	
 		var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden answer box preserving applet state
 		state =   ww_preserve_applet_state.value;
+		this.debug_add("immediately on grabbing state from HTML cache state is " +state);
 	}
 	
 	if ( base64Q(state) ) { 
 		state=Base64.decode(state);
+		if (this.debugMode>=1) { //decode text for the text area box
+			ww_preserve_applet_state.value = state;
+		}
 	}
+	
+//////////////////////////////////////////////////////////
+// Handle the exceptional cases:
+//
+//If the state is blank, undefined, or explicitly defined as restart_applet
+// then we will not simply be restoring the state of the applet from HTML "memory"
+//
+// 1. For a restart we wipe the HTML state cache so that we won't restart again
+// 2. In the other "empty" cases we attempt to replace the state with the contents of the 
+// initialState variable. 
+//////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////
+// Exceptional cases
+//////////////////////////////////////////////////////////
 	if (state.match(/^<xml>restart_applet<\/xml>/) || 
 	    state.match(/^\s*$/) ||
 	    state.match(/^<xml>\s*<\/xml>/ ) ) { 
 	    
-	    //blank state also restarts applet
+	       this.debug_add("Beginning handling exceptional cases when the state is not simply restored from the HTML cache. State is: "+state);
 		
 		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
-		    if(  this.initialState =="<xml></xml>" ) {
-		    	 alert("The applet " +appletName + "has been reset to its virgin state. (no intialState defined)"+this.initialState);
+		    if (typeof(this.initialState) == "undefined") {this.initialState = "<xml></xml>";}
+		         debug_add("restart_applet has been called. the value of the initialState is " + this.initialState );
+		    if(  this.initialState.match(/^<xml>\s*<\/xml>/)  || this.initialState.match(/^\s*$/)  ){ // if the initial state is empty
+		    	 debug_add("The applet " +appletName + " has been restarted. There was no non-empty initialState value. \n  Nothing is sent to the applet.  \n  Done setting state");
+		    	 alert("the applet is being restarted with empty initialState");
+		    	 setHTMLAppletState(appletName,"<xml></xml>");  // so that the submit action will not be overridden by restart_applet.
 				 return(''); // don't call the setStateAlias function at all.
+				 /// quit because we know we will not transmitting any starting data to the applet
 			} else {		     
 				 state = this.initialState;
-			     alert("The applet " +appletName + "has been reset to its virgin state." +state);
 				if ( base64Q(state) ) { 
 					state=Base64.decode(state);
 				}
+			     debug_add("The applet " +appletName + "has been set to its virgin state value." +state);
+			     alert(" The applet is being set to its initialState.");
+			     setHTMLAppletState(appletName,this.initialState);   // store the state in the HTML variables just for safetey
+				
+				// if there was a viable state in the initialState variable we Can.
+				// now continue as if we had found a valid state in the HTML cache
 
 		    }
 		}
+	this.debug_add("Completed handling the exceptional cases.");
 	}
-	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // if state starts with <?xml
 	
-		this.debug_add("Set state for " + appletName + " to \n------------------------------\n" 
+	
+	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // state MUST be an xml string in plain text
+	
+		this.debug_add("Grab data from the HTML cache and set state for " + appletName + " to the data between the lines:" 
+		               + "\n------------------------------\n" 
 		               +  state + "\n------------------------------\n");
 		
 		try {
 		    
 			if ( this.methodDefined(setStateAlias)   ) {
 		        var result = applet[setStateAlias]( state );
+		        this.debug_add("State of applet " +appletName + "set from HTML cache");
 			} 
 		} catch(err) {  // catching false positives?
 			var msg = "Error in setting state of " + appletName + " using command " + setStateAlias + " : " +err+err.number+ err.description ;
 			alert(msg);
 		}
-	} else if (jsDebugMode==1) {
+	} else  {                
 		this.debug_add("  new state was empty string or did not begin with <xml> --  Applet state was not reset");
 	}
+//////////////////////////////////////////////////////////
+// Nothing is returned from this subroutine.  There are only side-effects.
+//////////////////////////////////////////////////////////
+    this.debug_add("Done setting state");
+    if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
 	return('');
 };
 	
@@ -413,34 +464,61 @@ ww_applet.prototype.submitAction = function () {
     
     // Don't do anything if the applet is hidden.
     if(!ww_applet_list[appletName].visible) {return('')};   
-    
-    
+    this.debug_add("submitAction" );
     var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
 	var saved_state =   ww_preserve_applet_state.value;
 	
+
+	
 	if (saved_state.match(/^<xml>restart_applet<\/xml>/) )  {
 		this.debug_add("Restarting the applet "+appletName);
-		setAppletStateToRestart(appletName);   // erases all of the saved state
-		if (this.debugMode>=2){alert(debugText); debugText="";}
+		setHTMLAppletStateToRestart(appletName);   // replace the saved state with <xml>restart_applet</xml>
+		if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
 		return('');      
 	}
+	this.debug_add("not restarting");
     this.debug_add("Begin submit action for applet " + appletName);
     var applet = getApplet(appletName);
 	if (! this.isReady  ) {
-		alert(appletName + " is not ready");
+		alert(appletName + " is not ready. The .isReady flag is false which is strange since we are resubmitting this page. There should have been plenty of time for the applet to load.");
 		this.initializeAction();
 	}
 	// Check to see if we want to restart the applet
 	
-
+    this.debug_add("about to get state");
 	// if we are not restarting the applet save the state and submit
 	
-	this.getState();      // have ww_applet retrieve state from applet and store in answerbox
+	this.getState();      // have ww_applet retrieve state from applet and store in HTML cache
+	
+	
 	this.debug_add("Submit Action Script " + this.submitActionScript + "\n");
 	eval(this.submitActionScript);
 	//getQE(this.answerBox).value = applet.[getAnswer]();  //FIXME -- not needed in general?
+	
+
 	this.debug_add("Completed submitAction(" + this.submitActionScript + ") \nfor applet " + appletName+ "\n");
-	if (this.debugMode>=2){alert(debugText); debugText="";}
+
+	// because the state has not always been perfectly preserved when storing the state in text area boxes
+	// we take a "belt && suspenders" approach by converting the value even of the text area state cache
+	// to base64 form
+
+	ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
+	saved_state =   ww_preserve_applet_state.value;
+	this.debug_add ("saved state looks like before encoding" +saved_state);
+	if (! base64Q(saved_state) ) {
+	    // preserve html entities untranslated!  Yeah!!!!!!!
+	    // FIXME -- this is not a perfect fix -- things are confused for a while when
+	    // you switch from debug to non debug modes
+	    //saved_state = saved_state.replace(/&quot;/g, '&amp;&quot;');	    
+		saved_state = Base64.encode(saved_state);		
+	}
+	ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
+	
+	ww_preserve_applet_state.value = saved_state;  // on submit the value of ww_preserve_applet_state.value is always in Base64.
+      this.debug_add("after encoding saved state looks like " + ww_preserve_applet_state.value);
+	
+
+	if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
 };
 
 
@@ -528,7 +606,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 	if ( applet_loaded==0 && (i> 0) ) { // wait until applet is loaded
 		this.debug_add("*Applet " + appletName + " is not yet ready try again\n");
 		if (this.debugMode>=2) {
-			alert(debugText ); 
+			alert("DebugText:\n"+debugText ); 
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
@@ -556,7 +634,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		               +  " possible attempts remaining. \n" +
 		               "------------------------------\n");  
 		if (this.debugMode>=2) {
-			alert(debugText ); 
+			alert("DebugText:\n"+debugText ); 
 			debugText="";
 		}
 		// in-line handler -- configure and initialize
@@ -591,23 +669,23 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			this.initializeAction();  // this is often the setState action.
 			
 		} catch(e) {
-			var msg = "*unable to initialize " + appletName + " \n " +e; 
+			var msg = "*unable to perform an explicit initialization action (e.g. setState) on applet  " + appletName + " because \n " +e; 
 			if (this.debugMode>=2) {
 				this.debug_add(msg);
 			} else {
 				alert(msg);
 			}
 		}
-		if (this.debugMode>=2) {
-			alert("\n*Begin debugmode\n " + debugText ); 
-			debugText="";
-		};
+	// 	if (this.debugMode>=2) {
+// 			alert("\n*Begin debugmode\n " + debugText ); 
+// 			debugText="";
+// 		};
 	} else {
 	    alert("Error: applet "+ appletName + " has not been loaded");
 		this.debug_add("*Error: timed out waiting for applet " +appletName + " to load");
 		//alert("4 jsDebugMode " + jsDebugMode + " applet debugMode " +ww_applet.debugMode + " local debugMode " +debugMode);
 		if (this.debugMode>=2) {
-			alert(" in safe applet " + debugText ); 
+			alert(" in safe applet initialize: " + debugText ); 
 			debugText="";
 		}
 	}
