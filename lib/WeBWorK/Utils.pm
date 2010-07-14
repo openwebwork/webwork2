@@ -35,6 +35,7 @@ use Time::Zone;
 use MIME::Base64;
 use Errno;
 use File::Path qw(rmtree);
+use Storable;
 use Carp;
 
 use constant MKDIR_ATTEMPTS => 10;
@@ -812,49 +813,72 @@ our $BASE64_ENCODED = 'base64_encoded:';
 #  use constant BASE64_ENCODED = 'base64_encoded;
 #  was not evaluated in the matching and substitution
 #  statements
-sub decodeAnswers($) {
-	my $string = shift;
-	return unless defined $string and $string;
+# sub decodeAnswers($) {
+# 	my $string = shift;
+# 	return unless defined $string and $string;
+# 	
+# 	if ($string =~/^$BASE64_ENCODED/o) {
+# 		$string =~ s/^$BASE64_ENCODED//o;
+# 		$string = decode_base64($string);
+# 	}
+# 
+# 	my @array = split m/##/, $string;
+# 	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
+# 	push @array, "" if @array%2;
+# 	return @array; # it's actually a hash ;)
+# }
 	
-	if ($string =~/^$BASE64_ENCODED/o) {
-		$string =~ s/^$BASE64_ENCODED//o;
-		$string = decode_base64($string);
+sub decodeAnswers($) {
+	my $serialized = shift;
+	return unless defined $serialized and $serialized;
+	my $array_ref = eval{ Storable::thaw($serialized) };
+	if ($@) {
+		warn "problem fetching answers -- possibly left over from base64 days.  $@";
+		return ();
+	} else {
+		return @{$array_ref};
 	}
-
-	my @array = split m/##/, $string;
-	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
-	push @array, "" if @array%2;
-	return @array; # it's actually a hash ;)
 }
 
 sub encodeAnswers(\%\@) {
-	my %hash = %{ shift() };
-	my @order = @{ shift() };
-	my $string = "";
-	foreach my $name (@order) {
-		my $value = defined $hash{$name} ? $hash{$name} : "";
-		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
-		$value =~ s/#/\\#\\/g; # and it's not my fault!
-		if ($value =~ m/\\$/) {
-			# if the value ends with a backslash, string2hash will
-			# interpret that as a normal escape sequence (not part
-			# of the weird pound escape sequence) if the next
-			# character is &. So we have to protect against this.
-			# will adding a spcae at the end of the last answer
-			# hurt anything? i don't think so...
-			$value .= " ";
-		}
-		$string .= "$name##$value##"; # this is also not my fault
+	my %hash = %{shift()};
+	my @order = @{shift()};
+	my @ordered_hash = ();
+	foreach my $key (@order) {
+		push @ordered_hash, $key, $hash{$key};
 	}
-	$string =~ s/##$//; # remove last pair of hashs
+	return Storable::freeze( \@ordered_hash);
 
-	$string = $BASE64_ENCODED.encode_base64($string, "");
-	# Empty string in second argument prevents end-of-line characters from being used.
-	# This is nice for examining database contents manually since it prevents newlines
-	# from being introduced into database records.
-
-	return $string;
 }
+
+# sub encodeAnswers(\%\@) {
+# 	my %hash = %{ shift() };
+# 	my @order = @{ shift() };
+# 	my $string = "";
+# 	foreach my $name (@order) {
+# 		my $value = defined $hash{$name} ? $hash{$name} : "";
+# 		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
+# 		$value =~ s/#/\\#\\/g; # and it's not my fault!
+# 		if ($value =~ m/\\$/) {
+# 			# if the value ends with a backslash, string2hash will
+# 			# interpret that as a normal escape sequence (not part
+# 			# of the weird pound escape sequence) if the next
+# 			# character is &. So we have to protect against this.
+# 			# will adding a spcae at the end of the last answer
+# 			# hurt anything? i don't think so...
+# 			$value .= " ";
+# 		}
+# 		$string .= "$name##$value##"; # this is also not my fault
+# 	}
+# 	$string =~ s/##$//; # remove last pair of hashs
+# 
+# 	$string = $BASE64_ENCODED.encode_base64($string, "");
+# 	# Empty string in second argument prevents end-of-line characters from being used.
+# 	# This is nice for examining database contents manually since it prevents newlines
+# 	# from being introduced into database records.
+# 
+# 	return $string;
+# }
 
 sub max(@) {
 	my $soFar;
