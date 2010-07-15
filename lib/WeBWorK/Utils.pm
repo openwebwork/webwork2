@@ -829,7 +829,6 @@ our $BASE64_ENCODED = 'base64_encoded:';
 # 	return @array; # it's actually a hash ;)
 # }
 
->>>>>>> .merge-right.r6370
 sub decodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
