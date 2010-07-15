@@ -302,14 +302,18 @@ ww_applet.prototype.setState = function(state) {
 	
 		var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden answer box preserving applet state
 		state =   ww_preserve_applet_state.value;
-		this.debug_add("immediately on grabbing state from HTML cache state is " +state);
+		var str = state;
+		this.debug_add("immediately on grabbing state from HTML cache state is " +state+"...");
 	}
 	
 	if ( base64Q(state) ) { 
 		state=Base64.decode(state);
+		this.debug_add("decode from " +state);
 		if (this.debugMode>=1) { //decode text for the text area box
 			ww_preserve_applet_state.value = state;
+			
 		}
+        this.debug_add("decoded to " + ww_preserve_applet_state.value);	
 	}
 	
 //////////////////////////////////////////////////////////
@@ -359,7 +363,7 @@ ww_applet.prototype.setState = function(state) {
 	}
 	
 	
-	if (state.match(/<xml/i) || state.match(/<?xml/i) ) {  // state MUST be an xml string in plain text
+	if (state.match(/\<xml/i) || state.match(/\<\?xml/i) ) {  // state MUST be an xml string in plain text
 	
 		this.debug_add("Grab data from the HTML cache and set state for " + appletName + " to the data between the lines:" 
 		               + "\n------------------------------\n" 
@@ -393,7 +397,7 @@ ww_applet.prototype.getState = function () {
 	var applet          = getApplet(appletName);
 	var getStateAlias   = this.getStateAlias;
 	
-	this.debug_add("   Begin getState for applet " + appletName );
+	this.debug_add("   Begin getState from applet " + appletName );
 
 	try {
 		if (this.methodDefined(getStateAlias)) {  // there may be no state function
@@ -413,7 +417,12 @@ ww_applet.prototype.getState = function () {
 	}
 	
 	if (this.debugMode==0) {
+	     //alert("encode1 " +state);
+	    if (! base64Q(state) ){    
+	        //alert("start the encoding")
 		state = Base64.encode(state);	
+		}
+		//alert("state encoded to" + state);
 	};   // replace state by encoded version unless in debug mode
 
 	this.debug_add("  state is \n    "+ state + "\n");                // state should still be in plain text
@@ -510,12 +519,14 @@ ww_applet.prototype.submitAction = function () {
 	    // FIXME -- this is not a perfect fix -- things are confused for a while when
 	    // you switch from debug to non debug modes
 	    //saved_state = saved_state.replace(/&quot;/g, '&amp;&quot;');	    
+	    //alert("encode " +saved_state);
 		saved_state = Base64.encode(saved_state);		
+		//alert("saved state encoded to " +saved_state);
 	}
 	ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
 	
 	ww_preserve_applet_state.value = saved_state;  // on submit the value of ww_preserve_applet_state.value is always in Base64.
-      this.debug_add("after encoding saved state looks like " + ww_preserve_applet_state.value);
+      this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value);
 	
 
 	if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
@@ -653,8 +664,9 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		 //alert("config applet");
 		 /////////////////////////////////////////////////
 		try{ 
-	
+	        //alert("setting configuration");
 			this.setConfig();         // for applets that require a configuration (which doesn't change for a given WW question
+			//alert("finished setting the configuration");
 			
 		} catch(e4) {
 			var msg = "*Unable to configure " + appletName + " \n " +e4;  
