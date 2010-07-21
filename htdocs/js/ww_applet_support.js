@@ -336,7 +336,7 @@ ww_applet.prototype.setState = function(state) {
 	    
 	       this.debug_add("Beginning handling exceptional cases when the state is not simply restored from the HTML cache. State is: "+state);
 		
-		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
+//		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
 		    if (typeof(this.initialState) == "undefined") {this.initialState = "<xml></xml>";}
 		         debug_add("restart_applet has been called. the value of the initialState is " + this.initialState );
 		    if(  this.initialState.match(/^<xml>\s*<\/xml>/)  || this.initialState.match(/^\s*$/)  ){ // if the initial state is empty
@@ -358,7 +358,7 @@ ww_applet.prototype.setState = function(state) {
 				// now continue as if we had found a valid state in the HTML cache
 
 		    }
-		}
+//		}
 	this.debug_add("Completed handling the exceptional cases.");
 	}
 	
