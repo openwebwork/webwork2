@@ -226,10 +226,14 @@ sub new_helper {
 # 		$ce->{pg}->{directories}->{macros}, 
 # 		#'PG.pl', 'dangerousMacros.pl','IO.pl','PGbasicmacros.pl','PGanswermacros.pl'
 # 	)};
-    warn "Error while preloading macro files: $@" if $@;
+#   warn "Error while preloading macro files: $@" if $@;
 
 	# STANDARD LOADING CODE: for cached script files, this merely
 	# initializes the constants.
+	#2010 -- in the new scheme PG.pl is the only file guaranteed
+	# initialization -- it reads in everything that dangerous macros
+	# and IO.pl
+	# did before.  Mostly it just defines access to the PGcore object
 	foreach (qw(PG.pl )) {   # dangerousMacros.pl IO.pl
 		my $macroPath = $ce->{pg}->{directories}->{macros} . "/$_";
 		my $err = $translator->unrestricted_load($macroPath);
