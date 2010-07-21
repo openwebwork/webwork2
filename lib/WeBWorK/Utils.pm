@@ -834,7 +834,7 @@ sub decodeAnswers($) {
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
 	if ($@) {
-		warn "problem fetching answers -- possibly left over from base64 days.  $@";
+		warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away for permanently this question.   $@";
 		return ();
 	} else {
 		return @{$array_ref};
