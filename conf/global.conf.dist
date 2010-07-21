@@ -75,7 +75,7 @@ $externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
 $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 
 # url checker
-$externalPrograms{checkurl} = "/usr/local/bin/lwp-request -mHEAD "; # or "/usr/local/bin/w3c -head "
+$externalPrograms{checkurl} = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
 
 # image conversions utiltiies
 # the source file is given on stdin, and the output expected on stdout.
