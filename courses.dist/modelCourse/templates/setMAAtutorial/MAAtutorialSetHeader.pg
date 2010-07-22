@@ -93,14 +93,6 @@ page to send e-mail to the professors.
 
 $END_ONE_COLUMN
 END_TEXT
-#<<<######################################################## 
-BEGIN_TEXT
-$HR
-You can view the
-\{ htmlLink(sourceAlias("links/set$setNumber/MAAtutorialSetHeader.html"),
-            "source", q!TARGET="source"!)\}
-for this header file.
-END_TEXT
-#########################################################>>> 
+
 ENDDOCUMENT();        # This should be the last executable line in the problem.
 
