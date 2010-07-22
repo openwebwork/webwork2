@@ -341,7 +341,9 @@ ww_applet.prototype.setState = function(state) {
 		         debug_add("restart_applet has been called. the value of the initialState is " + this.initialState );
 		    if(  this.initialState.match(/^<xml>\s*<\/xml>/)  || this.initialState.match(/^\s*$/)  ){ // if the initial state is empty
 		    	 debug_add("The applet " +appletName + " has been restarted. There was no non-empty initialState value. \n  Nothing is sent to the applet.  \n  Done setting state");
-		    	 alert("the applet is being restarted with empty initialState");
+		    	 if (state.match(/^<xml>restart_applet<\/xml>/) ) {
+		    	 	alert("the applet is being restarted with empty initialState");
+		    	 }
 		    	 setHTMLAppletState(appletName,"<xml></xml>");  // so that the submit action will not be overridden by restart_applet.
 				 return(''); // don't call the setStateAlias function at all.
 				 /// quit because we know we will not transmitting any starting data to the applet
@@ -351,7 +353,9 @@ ww_applet.prototype.setState = function(state) {
 					state=Base64.decode(state);
 				}
 			     debug_add("The applet " +appletName + "has been set to its virgin state value." +state);
-			     alert(" The applet is being set to its initialState.");
+			     if (state.match(/^<xml>restart_applet<\/xml>/) ) {
+			     	alert(" The applet is being reset to its initialState.");
+			     }
 			     setHTMLAppletState(appletName,this.initialState);   // store the state in the HTML variables just for safetey
 				
 				// if there was a viable state in the initialState variable we Can.
