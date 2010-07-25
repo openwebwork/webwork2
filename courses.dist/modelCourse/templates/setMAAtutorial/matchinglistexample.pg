@@ -117,7 +117,7 @@ $PAR
 END_TEXT
 ANS( str_cmp( $ml->ra_correct_ans )   ) ;
 # Finally add a last answer
-$ml ->makeLast("The derivative is $BR not provided");
+$ml ->makeLast("The derivative is not provided");
 BEGIN_TEXT
     \{ begintable(2) \}
     \{ row(   protect_enumerated_lists($ml->print_q, $ml ->print_a))\}
