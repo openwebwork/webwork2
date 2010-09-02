@@ -592,6 +592,7 @@ the datetime is converted from the server's timezone to the timezone specified.
 
 sub formatDateTime($;$) {
 	my ($dateTime, $display_tz) = @_;
+	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
 	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz and  $dateTime;
 	$display_tz ||= "local";
 	
