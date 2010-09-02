@@ -496,7 +496,7 @@ sub setListRow {
 
 		if ( defined( $set->assignment_type() ) && 
 		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
-			$startTime = localtime($set->version_creation_time());
+			$startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
 
 			if ( $authz->hasPermissions($user, "view_hidden_work") || 
 			     $set->hide_score_by_problem eq 'Y' ||
