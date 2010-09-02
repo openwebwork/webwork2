@@ -88,7 +88,7 @@ $WeBWorK::PG::Local::TIMEOUT = 60;
 # but does not give transparent backgrounds. It does not work for version 1.2. It has not
 # been tested with other versions.
 #
-$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgtransparent -D120 -q -depth";
+$WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
 #
