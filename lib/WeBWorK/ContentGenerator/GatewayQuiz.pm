@@ -35,7 +35,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after
-	between formatDateTime);
+	between);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
@@ -1934,7 +1934,7 @@ sub body {
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
 		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? ' until ' . formatDateTime($set->answer_date) 
+			? ' until ' . ($self->formatDateTime($set->answer_date)) 
 			: '';
 		print CGI::start_div({class=>"gwProblem"});
 		print CGI::strong("Completed results for this assignment are " .
