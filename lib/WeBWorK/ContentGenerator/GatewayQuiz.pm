@@ -1781,7 +1781,7 @@ sub body {
 			} else {
 				my $when = 
 					($set->hide_score eq 'BeforeAnswerDate')
-					? ' until ' . formatDateTime($set->answer_date) 
+					? ' until ' . ($self->formatDateTime($set->answer_date) )
 					: '';
 				print CGI::br() . 
 					"(Your score on this $testNoun " .
