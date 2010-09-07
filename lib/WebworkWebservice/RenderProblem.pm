@@ -93,6 +93,7 @@ use constant DISPLAY_MODES => {
 	formattedText => "HTML_tth",
 	images        => "HTML_dpng",
 	jsMath	      => "HTML_jsMath",
+	MathJax	      => "HTML_MathJax",
 	asciimath     => "HTML_asciimath",
 };
 
@@ -102,6 +103,7 @@ use constant DISPLAY_MODE_FAILOVER => {
 		HTML_tth       => [ "HTML", ],
 		HTML_dpng      => [ "HTML_tth", "HTML", ],
 		HTML_jsMath    => [ "HTML_dpng", "HTML_tth", "HTML", ],
+		HTML_MathJax    => [ "HTML_dpng", "HTML_tth", "HTML", ],
 		HTML_asciimath => [ "HTML_dpng", "HTML_tth", "HTML", ],
 		# legacy modes -- these are not supported, but some problems might try to
 		# set the display mode to one of these values manually and some macros may
@@ -569,7 +571,7 @@ sub new {
 # 	# Directories and URLs
 # 	# REMOVED: courseName
 # 	# ADDED: dvipngTempDir
-# 	# ADDED: jsMathURL
+# 	# ADDED: MathJaxURL
 # 	# ADDED: asciimathURL
 # 	
 # 	$envir{cgiDirectory}           = undef;
