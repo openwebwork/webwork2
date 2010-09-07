@@ -469,8 +469,10 @@ sub previewAnswer {
 		}
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
+	} elsif ($displayMode eq "MathJax") {
+		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
 	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
+		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
 		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
@@ -1934,7 +1936,7 @@ sub body {
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
 		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? ' until ' . ($self->formatDateTime($set->answer_date)) 
+			? ' until ' . ($self->formatDateTime($set->answer_date))
 			: '';
 		print CGI::start_div({class=>"gwProblem"});
 		print CGI::strong("Completed results for this assignment are " .
