@@ -36,6 +36,7 @@ use constant DISPLAY_MODES => {
 	formattedText => "HTML_tth",
 	images        => "HTML_dpng",
 	jsMath	      => "HTML_jsMath",
+	MathJax	      => "HTML_MathJax",
 	asciimath     => "HTML_asciimath",
 	LaTeXMathML   => "HTML_LaTeXMathML",
 };
@@ -143,6 +144,7 @@ sub defineProblemEnvir {
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir
 	# ADDED: jsMathURL
+	# ADDED: MathJaxURL
 	# ADDED: asciimathURL
 	# ADDED: macrosPath
 	# REMOVED: macrosDirectory, courseScriptsDirectory
@@ -165,7 +167,8 @@ sub defineProblemEnvir {
 	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
 	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
 	$envir{jsMathURL}              = $ce->{webworkURLs}->{jsMath};
-	$envir{asciimathURL}	       = $ce->{webworkURLs}->{asciimath};
+	$envir{MathJaxURL}             = $ce->{webworkURLs}->{MathJax};
+	$envir{asciimathURL}	         = $ce->{webworkURLs}->{asciimath};
 	$envir{LaTeXMathMLURL}	       = $ce->{webworkURLs}->{LaTeXMathML};
 	$envir{server_root_url}        = $ce->{apache_root_url}|| '';
 	

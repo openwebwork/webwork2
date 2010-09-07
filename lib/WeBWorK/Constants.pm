@@ -211,6 +211,7 @@ specifies a unified look and feel for the WeBWorK course web pages.',
 <li> images: produces images using the external programs LaTeX and dvipng.
 <li> jsMath: uses javascript to place symbols, which may come from fonts or images
  (the choice is configurable by the end user).
+<li> MathJax: a successor to jsMath, uses javascript to place render mathematics.
 <li> asciimath: renders formulas client side using ASCIIMathML
 <li> LaTeXMathML: renders formulas client side using LaTeXMathML
 </ul>
@@ -218,7 +219,7 @@ specifies a unified look and feel for the WeBWorK course web pages.',
 You must use at least one display mode.  If you select only one, then the options box will
  not give a choice of modes (since there will only be one active).',
 		  min  => 1,
-		  values => ["plainText", "formattedText", "images", "jsMath", "asciimath", "LaTeXMathML"],
+		  values => ["MathJax", "images", "plainText", "formattedText",  "jsMath",  "asciimath", "LaTeXMathML"],
 		  type => 'checkboxlist'},
 
 		{ var => 'pg{options}{displayMode} ',
