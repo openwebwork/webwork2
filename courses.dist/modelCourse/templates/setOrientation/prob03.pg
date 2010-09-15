@@ -12,8 +12,7 @@ loadMacros(
 
 $showPartialCorrectAnswers = 1;
 
-TEXT(beginproblem);
-
+TEXT(beginproblem());
 Title("Typing in Your Answers");
 
 ##############################################
