@@ -9,8 +9,7 @@ loadMacros(
   "PGcourse.pl",
 );
 
-TEXT(beginproblem);
-
+TEXT(beginproblem());
 Title("Matching Lists in $WW");
 
 ##############################################

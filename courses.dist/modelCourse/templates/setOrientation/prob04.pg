@@ -13,8 +13,7 @@ loadMacros(
 
 $showPartialCorrectAnswers = 1;
 
-TEXT(beginproblem);
-
+TEXT(beginproblem());
 Title("Rules of Precedence");
 
 ##############################################
