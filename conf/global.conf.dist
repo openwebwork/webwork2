@@ -670,7 +670,7 @@ $authen{ldap_options} = {
 # 
 %permissionLevels = (
 	login                          => "guest",
-	report_bugs                    => "student",
+	report_bugs                    => "ta",
 	submit_feedback                => "student",
 	change_password                => "student",
 	change_email_address           => "student",
