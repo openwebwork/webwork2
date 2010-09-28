@@ -384,7 +384,7 @@ sub initialize  {
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use the 'Save as' action below to save it to another file.");
+                           use the 'Save AS' action below to save it to another file.");
     }
 	
 }
@@ -1428,7 +1428,7 @@ sub save_form {
 		return "";  #Can't save blank problems without changing names
 	} elsif (-w $self->{editFilePath}) {
 
-		return "Save to ".CGI::b($self->shortPath($self->{editFilePath}))." and View";	
+		return "Save ".CGI::b($self->shortPath($self->{editFilePath}))." and View";	
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -1670,7 +1670,7 @@ sub save_as_form {  # calls the save_as_handler
     
     $andRelink = CGI::br(). $replace_problem_in_set . $add_problem_to_set . $create_new_problem;
     			 
-	return 'Save as [TMPL]/'.
+	return 'Save AS [TMPL]/'.
 	        CGI::textfield(
 			       -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
 			       -onfocus=>$onChange
@@ -1738,6 +1738,8 @@ sub save_as_handler {
 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
+		$self->addgoodmessage(CGI::p("The text box now contains the source of the original problem.".
+		" You can recover lost edits by using the Back button on your browser."));
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.
