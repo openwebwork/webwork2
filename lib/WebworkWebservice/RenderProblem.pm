@@ -332,7 +332,7 @@ sub renderProblem {
 # 		$key,
 # 		$setRecord,
 # 		$problemRecord,
-# 		$psvn,
+# 		$psvn,  #FIXME -- not used
 # 		$formFields,
 # 		$translationOptions,
 # 	));
@@ -371,7 +371,12 @@ sub renderProblem {
 		
 	);
   
-
+    my $internal_debug_messages;
+    if (ref ($pg->{pgcore}) ) {
+    	$internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
+    } else {
+    	$internal_debug_messages = ['Error in obtaining debug messages from PGcore'];
+    }
 	# new version of output:
 	my $out2   = {
 		text 						=> encode_base64( $pg->{body_text}  ),
@@ -382,7 +387,7 @@ sub renderProblem {
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
 		flags						=> $pg->{flags},
-		internal_debug_messages     => $pg->{pgcore}->get_internal_debug_messages,
+		internal_debug_messages     => $internal_debug_messages,
 	};
 	
 	# Filter out bad reference types
@@ -512,7 +517,7 @@ sub new {
 # 	#        refreshMath2img, texDisposition
 # 	
 # 	$envir{psvn}                = $set->psvn;
-# 	$envir{psvnNumber}          = $envir{psvn};
+# 	$envir{psvn}          = $envir{psvn};
 # 	$envir{probNum}             = $problem->problem_id;
 # 	$envir{questionNumber}      = $envir{probNum};
 # 	$envir{fileName}            = $problem->source_file;	 
