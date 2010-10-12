@@ -496,6 +496,11 @@ sub display_form {
 				CGI::br(),
 				CGI::b("Show:"), " ",
 				CGI::checkbox(
+					-name    => "printStudentAnswers",
+					-checked => defined($r->param("printStudentAnswers"))? $r->param("printStudentAnswers") : 1, # checked by default
+					-label   => "Student answers",
+				),
+				CGI::checkbox(
 					-name    => "showCorrectAnswers",
 					-checked => scalar($r->param("showCorrectAnswers")) || 0,
 					-label   => "Correct answers",
@@ -991,6 +996,7 @@ sub write_problem_tex {
 	my $versionName = $MergedSet->set_id . 
 		(( $versioned ) ?  ",v" . $MergedSet->version_id : '');
 	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
+	my $printStudentAnswers = $r->param("printStudentAnswers") || 0;
 	my $showHints           = $r->param("showHints")          || 0;
 	my $showSolutions       = $r->param("showSolutions")      || 0;
 	unless( ( $authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or
@@ -1016,18 +1022,19 @@ sub write_problem_tex {
 			displayMode     => "tex",
 			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
 			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
-			processAnswers  => $showCorrectAnswers ? 1 : 0,
+			processAnswers  => ($showCorrectAnswers || $printStudentAnswers) ? 1 : 0,
 			permissionLevel => $db->getPermissionLevel($userID)->permission,
 		};
-	my $formFields = { };
+
 	if ( $versioned && $MergedProblem->problem_id != 0 ) {
 		$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_';
-		if ( $showCorrectAnswers ) { 
+	}
+	my $formFields = { };
+	if ( $showCorrectAnswers ||$printStudentAnswers ) { 
 			my %oldAnswers = decodeAnswers($MergedProblem->last_answer);
 			$formFields->{$_} = $oldAnswers{$_} foreach (keys %oldAnswers);
 			print $FH "%% decoded old answers, saved. (keys = " . join(',', keys(%oldAnswers)) . "\n";
 		}
-	}
 
 #	warn("problem ", $MergedProblem->problem_id, ": source = ", $MergedProblem->source_file, "\n");
 
@@ -1107,14 +1114,9 @@ sub write_problem_tex {
 
 	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
 
-	# write the list of student answers if we're working with a versioned
-	#   set and showing the correct answers
-	if ( $versioned && $showCorrectAnswers && 
+	# print the list of student answers if it is requested
+	if (  $printStudentAnswers && 
 	     $MergedProblem->problem_id != 0 && @ans_entry_order ) {
-		my $stuAnswers = "\\par{\\small{\\it Answer submitted:}\n" .
-			"\\vspace{-\\parskip}\\begin{itemize}\n";
-		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
 			my $recScore = $pg->{state}->{recorded_score};
 			my $corrMsg = '';
 			if ( $recScore == 1 ) {
@@ -1124,10 +1126,15 @@ sub write_problem_tex {
 			} else {
 				$corrMsg = " (score $recScore)";
 			}
-			$stuAnswers .= "\\item\\begin{verbatim}$stuAns$corrMsg\\end{verbatim}\n";
+		my $stuAnswers = "\\par{\\small{\\it Answer(s) submitted:}\n" .
+			"\\vspace{-\\parskip}\\begin{itemize}\n";
+		for my $ansName ( @ans_entry_order ) {
+			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
+			
+			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
 		}
 
-		$stuAnswers .= "\\end{itemize}}\\par\n";
+		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
 	}
 	
