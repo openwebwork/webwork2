@@ -408,6 +408,7 @@ sub setListRow {
 	my $status = '';
 	if ( $gwtype ) {
 		if ( $gwtype == 1 ) {
+		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
 			     $set->attempts_per_version() ) {
