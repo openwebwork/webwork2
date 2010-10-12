@@ -84,7 +84,7 @@ sub new_helper {
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$psvn, #FIXME -- not used
 		$formFields, # in CGI::Vars format
 		$translationOptions, # hashref containing options for the
 		                     # translator, such as whether to show
@@ -178,7 +178,7 @@ sub new_helper {
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$psvn, #FIXME -- not used
 		$formFields,
 		$translationOptions,
 		{ #extras (this is kind of a hack, but not a serious one)

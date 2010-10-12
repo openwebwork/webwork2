@@ -38,7 +38,7 @@ sub new {
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$psvn, #FIXME -- not used
 		$formFields, # in CGI::Vars format
 		$translationOptions, # hashref containing options for the
 		                     # translator, such as whether to show
@@ -77,7 +77,7 @@ EOF
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$psvn, #FIXME -- not used
 		$formFields,
 		$translationOptions,
 	);

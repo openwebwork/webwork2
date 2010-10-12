@@ -61,7 +61,7 @@ sub defineProblemEnvir {
 		$key,
 		$set,
 		$problem,
-		$psvn,
+		$psvn,  #FIXME  -- not used
 		$formFields,
 		$options,
 		$extras,
@@ -80,7 +80,7 @@ sub defineProblemEnvir {
 	#        refreshMath2img, texDisposition
 	
 	$envir{psvn}                = $set->psvn;
-	$envir{psvnNumber}          = $envir{psvn};
+	$envir{psvnNumber}          = "psvnNumber-is-deprecated-Please-use-psvn-Instead"; #FIXME
 	$envir{probNum}             = $problem->problem_id;
 	$envir{questionNumber}      = $envir{probNum};
 	$envir{fileName}            = $problem->source_file;	 
@@ -342,7 +342,7 @@ passing!>
 
 =item PSVN
 
-the problem set version number
+the problem set version number: use variable $psvn
 
 =item FIELDS
 
