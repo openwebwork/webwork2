@@ -269,7 +269,7 @@ sub environment {
 		problemValue =>1,
 		probNum => 13,
 		psvn => 54321,
-		psvnNumber=> 54321,
+		psvn=> 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
 		sectionName => 'Gage',
