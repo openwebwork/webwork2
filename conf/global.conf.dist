@@ -33,6 +33,7 @@
 # URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
 # that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url         = "/webwork2";
+$apache_server_url   = "";  #  http://your.server.edu
 
 # Root directory of PG.
 $pg_dir              = "/opt/webwork/pg";
