@@ -49,9 +49,11 @@ PerlModule mod_perl2
 
 my $webwork_dir = "/opt/webwork/webwork2";
 # Cache this value for use by other scripts not necessarily in the Apache2 hierarchy
+# Different scripts use different locations :-)
 
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
+$WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
 print "webwork.apache2-config:  WeBWorK root directory set to $webwork_dir\n";
 
