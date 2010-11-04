@@ -277,7 +277,7 @@ sub environment {
 		problemValue =>1,
 		probNum => 13,
 		psvn => 54321,
-		psvnNumber=> 54321,
+		psvn=> 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
 		sectionName => 'Gage',
@@ -354,7 +354,7 @@ sub formatRenderedProblem {
 	$answerTemplate      .= q{</table> <hr>};
 
 	my $FULL_URL = $self->url;
-	my $FORM_ACTION_URL  =  "$FULL_URL/webwork2/html2xml";
+	my $FORM_ACTION_URL = $self->{form_action_url}  || "$FULL_URL/webwork2/html2xml" ;
 	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
 <html>
 <head>
