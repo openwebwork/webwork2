@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache2-config.dist,v 1.12 2007/08/13 22:59:51 sh002i Exp $
+# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,32 +35,52 @@
 # The "show source" button is most useful for webwork "courses" used to train new authors
 # It is not desirable to expose the code of regular homework questions to students
 
-# ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+
 
 
 PerlModule mod_perl2
 
 <Perl>
 
+#################################################################
 # Set this variable to the path to your WeBWorK installation.
-my $webwork_dir = "/opt/webwork/webwork2";
+#################################################################
 
-# This code reads global.conf and extracts the remaining configuration
+my $webwork_dir = "/opt/webwork/webwork2";
+# Cache this value for use by other scripts not necessarily in the Apache2 hierarchy
+
+$ENV{WEBWORK_ROOT} = $webwork_dir;
+$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
+
+print "webwork.apache2-config:  WeBWorK root directory set to $webwork_dir\n";
+
+#################################################################
+# The folloinwg code reads global.conf and extracts the remaining configuration
 # variables. There is no need to modify it.
+#################################################################
+
+# link to WeBWorK code libraries
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
+# grab course environment (by reading webwork2/conf/global.conf)
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
-my $webwork_url = $ce->{webwork_url};
-my $pg_dir = $ce->{pg_dir};
-my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
-my $webwork_courses_url = $ce->{webwork_courses_url};
-my $webwork_courses_dir = $ce->{webwork_courses_dir};
+
+#  set important configuration variables (from global.conf)
+
+my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
+my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg         
+my $webwork_htdocs_url = $ce->{webwork_htdocs_url};      # e.g.  /webwork2_files
+my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/webwork2/htdocs
+my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
+my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
+
+# link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 
-$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:
@@ -116,13 +135,65 @@ if ($webwork_url eq "") {
 
 </Perl>
 
-# APACHE 2.2 USERS: uncomment the following lines and customize the paths.
-# The path for this block should be $webwork_htdocs_dir.
-#<Directory /opt/webwork/webwork2/htdocs>
-#    Options FollowSymLinks
-#</Directory>
-# The path for this block should be $webwork_courses_dir, followed by "/*/html".
-#<Directory /opt/webwork/courses/*/html>
-#    Options FollowSymLinks
-#</Directory>
+####################################################################
+# WebworkSOAP handlers (for integration with moodle)
+####################################################################
+ PerlModule WebworkSOAP
 
+ # WebworkSOAP handler
+ <Location /webwork2_rpc>
+         PerlHandler Apache2::SOAP
+         SetHandler perl-script
+         PerlSetVar dispatch_to "WebworkSOAP"
+         PerlSetVar options "compress_threshold => 10000"
+         Order Allow,Deny
+         Allow from All
+ </Location>
+
+####################################################################
+# WebworkSOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
+####################################################################
+ <Location /webwork2_wsdl>
+         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
+         PerlSetVar options "compress_threshold => 10000"
+         PerlHandler WebworkSOAP::WSDL
+         SetHandler perl-script
+         Order Allow,Deny
+         Allow from All
+ </Location>
+
+
+####################################################################
+# WebworkWebservice handlers -- for integration with external editor
+####################################################################
+
+
+########### WebworkWebservice XMLRPC handler ##########
+
+PerlModule WebworkWebservice
+
+<Location /mod_xmlrpc>
+	SetHandler perl-script
+	PerlHandler Apache::XMLRPC::Lite
+	PerlSetVar dispatch_to "WebworkXMLRPC"
+	PerlSetVar options "compress_threshold => 10000"
+	Order Allow,Deny
+	Allow from All
+</Location>
+
+
+
+########## WebworkWebservice SOAP handler ##########
+
+#PerlModule WebworkWebservice
+#
+#<Location /mod_soap>
+#	SetHandler perl-script
+#	PerlHandler Apache::SOAP
+#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar options "compress_threshold => 10000"
+#	Order Allow,Deny
+#	Allow from All
+#</Location>
+
+# Include /opt/webwork/wwqs/conf/problemserver.apache-config
