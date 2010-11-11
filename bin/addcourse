@@ -71,22 +71,71 @@ use strict;
 use warnings;
 use Getopt::Long;
 
+
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n"
 		unless exists $ENV{WEBWORK_ROOT};
-	die "PG_ROOT not found in environment.\n"
-		unless exists $ENV{PG_ROOT};
+	  my $webwork_dir = $ENV{WEBWORK_ROOT};
+	  print "addcourse:  WeBWorK root directory set to $webwork_dir\n";
+
+	# link to WeBWorK code libraries
+      eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+      eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
+		
 }
+
+our $webwork_dir = $ENV{WEBWORK_ROOT};
+
 
 BEGIN { $main::VERSION = "2.4"; }  #hack to set version
 
-use lib "$ENV{WEBWORK_ROOT}/lib";
-use lib "$ENV{PG_ROOT}/lib";
+
+
+
+# link to WeBWorK code libraries
+eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
+#################################################################
+# The folloinwg code reads global.conf and extracts the remaining configuration
+# variables. There is no need to modify it.
+#################################################################
+
+# link to WeBWorK code libraries
+eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
+# grab course environment (by reading webwork2/conf/global.conf)
+my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
+
+#  set important configuration variables (from global.conf)
+
+my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
+my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg         
+
+#################################################################
+# report server setup when child process starts up -- for example when restarting the server
+#################################################################
+print "addcourse:  WeBWorK server is starting\n";
+print "addcourse:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
+print "addcourse:  The following locations and urls are set in webwork2/conf/global.conf\n";
+print "addcourse:  PG root directory set to $pg_dir\n";
+print "addcourse:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
+print "addcourse:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
+print "addcourse:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+
+
+# link to PG code libraries
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+
+eval q{
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
+}; die $@ if $@;
 
 sub usage {
 	print STDERR "usage: $0 [options] COURSEID\n";
@@ -136,7 +185,7 @@ my $courseID = shift;
 usage_error("must specify COURSEID.") unless $courseID;
 
 # bring up a minimal course environment
-my $ce = WeBWorK::CourseEnvironment->new({
+$ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID
 });
