@@ -625,7 +625,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
-        alert("Oops, applet is not ready. " +(i-1) +" tries left");
+        if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-2)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
 		// it's possible that the isActive() response of the applet is not working properly
