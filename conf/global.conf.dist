@@ -33,7 +33,13 @@
 # URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
 # that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url         = "/webwork2";
-$apache_server_url   = "";  #  http://your.server.edu
+$server_root_url   = "";  
+$server_userID     = "";      
+$server_groupID    = "";
+
+# In the apache configuration file (often called httpd.conf) you will find
+# User wwadmin   --- this is the $server_userID -- of course it may be wwhttpd or some other name
+# Group wwdata   --- this is the $server_groupID -- this will have different names also
 
 # Root directory of PG.
 $pg_dir              = "/opt/webwork/pg";
@@ -194,7 +200,7 @@ $courseURLs{feedbackFormURL} = "";
 # Theme
 ################################################################################
 
-$defaultTheme = "math";
+$defaultTheme = "math2";
 $defaultThemeTemplate = "system";
 
 ################################################################################
@@ -909,8 +915,8 @@ $pg{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} = $userRoles{ $
 
 # Locations of CAPA resources. (Only necessary if you need to use converted CAPA
 # problems.)
-$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "/opt/webwork/CAPA/CAPA_Tools/",
-$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "/opt/webwork/CAPA/CAPA_MCTools/",
+$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "/opt/webwork/libraries/CAPA/CAPA_Tools/",
+$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "/opt/webwork/libraries/CAPA/CAPA_MCTools/",
 $pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$webworkDirs{htdocs}/CAPA_Graphics/",
 $pg{specialPGEnvironmentVars}{CAPA_Graphics_URL}      = "$webworkURLs{htdocs}/CAPA_Graphics/",
 
@@ -969,6 +975,7 @@ ${pg}{modules} = [
 	[qw(VectorField)],
 	[qw(Parser Value)],
 	[qw(Parser::Legacy)],
+	[qw(Inequalities::common)],
 #	[qw(SaveFile)],
 #   [qw(Chromatic)], # for Northern Arizona graph problems 
 #                    #  -- follow instructions at libraries/nau_problib/lib/README to install
