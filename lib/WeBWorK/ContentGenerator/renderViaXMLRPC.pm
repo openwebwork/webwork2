@@ -99,10 +99,10 @@ unless ($webwork_dir) {
 # read the webwork2/conf/global.conf file to determine other parameters
 #
 my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
-my $apache_server_url = $seed_ce->{apache_server_url};
-unless ($apache_server_url) {
+my $server_root_url = $seed_ce->{server_root_url};
+unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$apache_server_url has been properly set in conf/global.com";
+	    "check that the variable \$server_root_url has been properly set in conf/global.com";
 }
 
 ############################
@@ -118,8 +118,8 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$XML_URL             =  "$apache_server_url/mod_xmlrpc";
-	$FORM_ACTION_URL     =  "$apache_server_url/webwork2/html2xml";
+	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
 use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
 
