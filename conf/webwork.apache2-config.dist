@@ -154,7 +154,7 @@ if ($webwork_url eq "") {
 ####################################################################
  PerlModule WebworkSOAP
 
- # WebworkSOAP handler
+ # WEBWORK SOAP CONFIGURATION
  <Location /webwork2_rpc>
          PerlHandler Apache2::SOAP
          SetHandler perl-script
@@ -209,5 +209,9 @@ PerlModule WebworkWebservice
 #	Order Allow,Deny
 #	Allow from All
 #</Location>
+
+####################################################################
+# WebworkSOAP  "bridge2" handler 
+####################################################################
 
 # Include /opt/webwork/wwqs/conf/problemserver.apache-config
