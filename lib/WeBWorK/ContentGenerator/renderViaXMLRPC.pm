@@ -89,11 +89,10 @@ use WebworkClient;
 # it specifies the address of the webwork root directory
 
 #my $webwork_dir  = $ENV{WEBWORK_ROOT};
-
 my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
 unless ($webwork_dir) {
 	die "renderViaXMLRPC.pm requires that the top WeBWorK directory be set in ".
-	"\$ENV{WEBWORK_ROOT} by webwork.apache-config or webwork.apache2-config\n";
+	"\$WeBWorK::Constants::WEBWORK_DIRECTORY by webwork.apache-config or webwork.apache2-config\n";
 }
 
 # read the webwork2/conf/global.conf file to determine other parameters
