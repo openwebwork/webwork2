@@ -34,44 +34,107 @@ Rembember to configure the local output file and display command !!!!!!!!
 use strict;
 use warnings;
 
-use lib '/opt/webwork/webwork2/lib';
-#use Crypt::SSLeay;  # needed for https
-use WebworkClient;
+
 
 ##################################################
 #  configuration section for client
 ##################################################
+
+# Use address to WeBWorK code library where WebworkClient.pm is located.
+use lib '/opt/webwork/webwork2/lib';
+#use Crypt::SSLeay;  # needed for https
+use WebworkClient;
+
+
+#############################################
+# Configure
+#############################################
+
+ ############################################################
 # configure the local output file and display command !!!!!!!!
+ ############################################################
+ 
+ # Path to a temporary file for storing the output of renderProblem.pl
+ use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
+ 
+ # Command line for displaying the temporary file in a browser.
+ use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
+ # use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
 
-use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; # client only
-#use constant  DISPLAY_COMMAND  => 'open -a firefox '; # mac client only opens tempoutputfile above
- use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ ############################################################
+ 
+ my $use_site;
+ $use_site = 'test_webwork';    # select a rendering site 
+ #$use_site = 'local';           # select a rendering site 
+ #$use_site = 'rochester_test';  # select a rendering site 
  
  
-# other command lines for opening the html file gnome-open  or firefox file.html 
+ ############################################################
+ 
+# To configure the target webwork server
+# two URLs are required
+# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+#    points to the Webservice.pm and Webservice/RenderProblem modules
+#    Is used by the client to send the original XML request to the webservice
+#
+# 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
+#    points to the renderViaXMLRPC.pm module.
+#
+#     This url is placed as form action url when the rendered HTML from the original
+#     request is returned to the client from Webservice/RenderProblem. The client
+#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
+#     pipes it through a local browser.
+#
+#     The browser uses this url to resubmit the problem (with answers) via the standard
+#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+#
+#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
+#     and the webservice.  It interprets the HTML form sent by the browser, 
+#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
+#     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
+#     which in turn passes it back to the browser.
+# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
+#     submitted directly by the browser.  
+#     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
+#     and returns the result to the browser. 
+#     The The client renderProblem.pl script is no longer involved.
+# 4.  Summary: renderProblem.pl is only involved in the first round trip
+#     of the submitted problem.  After that the communication is  between the browser and
+#     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
+#     module using XML_RPC.
+# 5.  The XML_PASSWORD is defined on the site.  In future versions a more secure password method
+#     may be implemented.  This is sufficient to keep out robots.
+# 6.  The course "daemon_course" must be a course that has been created on the server or an error will
+#     result. A different name can be used but the course must exist on the server.
 
-# the rest can be configured later to use a different server 
 
-my $use_local = 0;
-our ($PROTOCOL,$HOSTNAME, $HOSTPORT, $FULL_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
-if ($use_local) {
+our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
+if ($use_site eq 'local') {
 # the rest can work!!
-	$PROTOCOL         =  'http';
-	$HOSTNAME         =  'localhost'; 
-	$HOSTPORT         =  80;
+	$XML_URL      =  'http://localhost:80';
+	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
 	$XML_PASSWORD     =  'xmlwebwork';
 	$XML_COURSE       =  'daemon_course';
-} else {
-	$PROTOCOL         =  'https';                         # or 'https';
-	$HOSTNAME         =  "hosted2.webwork.rochester.edu"; # 'localhost'; 
-	$HOSTPORT         =  443;  #( for secure https)       # 80 or 443;
+} elsif ($use_site eq 'rochester_test') {  
+	
+	$XML_URL      =  'http://128.151.231.2';
+	$FORM_ACTION_URL  =  'http://128.151.231.2/webwork2/html2xml';
+ 	$XML_PASSWORD     = 'xmlwebwork';
+ 	$XML_COURSE       = 'daemon_course';
+	
+} elsif ($use_site eq 'test_webwork') {
+
+	$XML_URL      =  'https://test.webwork.maa.org';
+	$FORM_ACTION_URL  =  'https://test.webwork.maa.org/webwork2/html2xml';
 	$XML_PASSWORD     = 'xmlwebwork';
 	$XML_COURSE       = 'daemon_course';
 
 }
 
+##################################################
+#  END configuration section for client
+##################################################
 
-	$FULL_URL         =  "$PROTOCOL://$HOSTNAME:$HOSTPORT";
 
 
 use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
@@ -101,7 +164,8 @@ undef $/;
 $source   = <>; #slurp input
 $/ =1;
 $xmlrpc_client->encodeSource($source);
-$xmlrpc_client->url($FULL_URL);
+$xmlrpc_client->url($XML_URL);
+$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
 $xmlrpc_client->{displayMode}   = DISPLAYMODE();
 $xmlrpc_client->{user}          = 'xmluser';
 $xmlrpc_client->{password}      = $XML_PASSWORD;
