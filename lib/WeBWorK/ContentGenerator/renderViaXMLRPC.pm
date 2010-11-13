@@ -93,7 +93,7 @@ use WebworkClient;
 my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
 unless ($webwork_dir) {
 	die "renderViaXMLRPC.pm requires that the top WeBWorK directory be set in ".
-	"\$ENV{WEBWORK_ROOT} by webwork.apache-config or webwork.apache2.config";
+	"\$ENV{WEBWORK_ROOT} by webwork.apache-config or webwork.apache2-config\n";
 }
 
 # read the webwork2/conf/global.conf file to determine other parameters
@@ -102,7 +102,7 @@ my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 my $server_root_url = $seed_ce->{server_root_url};
 unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$server_root_url has been properly set in conf/global.com";
+	    "check that the variable \$server_root_url has been properly set in conf/global.com\n";
 }
 
 ############################
