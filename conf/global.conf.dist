@@ -962,7 +962,9 @@ ${pg}{modules} = [
 	[qw(Fraction)],
 	[qw(Fun)],
 	[qw(Hermite)],
+	[qw(Inequalities::common)],
 	[qw(Label)],
+	[qw(LimitedPolynomial)],
 	[qw(ChoiceList)],
 	[qw(Match)],
 	[qw(MatrixReal1)], # required by Matrix
@@ -975,7 +977,6 @@ ${pg}{modules} = [
 	[qw(VectorField)],
 	[qw(Parser Value)],
 	[qw(Parser::Legacy)],
-	[qw(Inequalities::common)],
 #	[qw(SaveFile)],
 #   [qw(Chromatic)], # for Northern Arizona graph problems 
 #                    #  -- follow instructions at libraries/nau_problib/lib/README to install
