@@ -213,8 +213,10 @@ sub info {
 	die "set $setID for effectiveUser $eUserID not found." unless $set;
 	
 	my $psvn = $set->psvn();
-	
-	my $screenSetHeader = $set->set_header || $ce->{webworkFiles}->{screenSnippets}->{setHeader};
+	my $screenSetHeader = ($set->set_header eq "defaultHeader") ?
+	      $ce->{webworkFiles}->{screenSnippets}->{setHeader} :
+	      $set->set_header;
+
 	my $displayMode     = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
 	
 	if ($authz->hasPermissions($userID, "modify_problem_sets")) {
