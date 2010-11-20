@@ -828,51 +828,6 @@ sub handle_problem_numbers {
 	return join(', ', map {$_->[0]} @sortme);
 }
 
-# swap index given with next bigger index
-# leftover from when we had up/down buttons
-# maybe we will bring them back
-
-#sub moveme {
-#	my $index = shift;
-#	my $db = shift;
-#	my $setID = shift;
-#	my (@problemIDList) = @_;
-#	my ($prob1, $prob2, $prob);
-#
-#	foreach my $problemID (@problemIDList) {
-#		my $problemRecord = $db->getGlobalProblem($setID, $problemID); # checked
-#		die "global $problemID for set $setID not found." unless $problemRecord;
-#		if ($problemRecord->problem_id == $index) {
-#			$prob1 = $problemRecord;
-#		} elsif ($problemRecord->problem_id == $index + 1) {
-#			$prob2 = $problemRecord;
-#		}
-#	}
-#	if (not defined $prob1 or not defined $prob2) {
-#		die "cannot find problem $index or " . ($index + 1);
-#	}
-#
-#	$prob1->problem_id($index + 1);
-#	$prob2->problem_id($index);
-#	$db->putGlobalProblem($prob1);
-#	$db->putGlobalProblem($prob2);
-#
-#	my @setUsers = $db->listSetUsers($setID);
-#
-#	my $user;
-#	foreach $user (@setUsers) {
-#		$prob1 = $db->getUserProblem($user, $setID, $index); #checked
-#		die " problem $index for set $setID and effective user $user not found"
-#			unless $prob1;
-#		$prob2 = $db->getUserProblem($user, $setID, $index+1); #checked
-#		die " problem $index for set $setID and effective user $user not found"
-#			unless $prob2;
-#    		$prob1->problem_id($index+1);
-#		$prob2->problem_id($index);
-#		$db->putUserProblem($prob1);
-#		$db->putUserProblem($prob2);
-#	}
-#}
 
 # primarily saves any changes into the correct set or problem records (global vs user)
 # also deals with deleting or rearranging problems
@@ -1483,7 +1438,7 @@ sub initialize {
 		
 		# Sets the specified header to "" so that the default file will get used.
 		foreach my $header ($r->param('defaultHeader')) {
-			$setRecord->$header("");
+			$setRecord->$header("defaultHeader");
 		}
 	}	
 	
@@ -1573,9 +1528,13 @@ sub checkFile ($) {
 
 	return "No source file specified" unless $file;
 	return "Problem source is drawn from a grouping set" if $file =~ /^group/;
-#	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
-	$file = $ce->{courseDirs}->{templates} . '/' . $file ; # only files in template directory can be accessed
-
+	if ( $file eq "defaultHeader" ) {
+		$file = $ce->{webworkFiles}{screenSnippets}{setHeader};
+	} else {
+	#	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
+		$file = $ce->{courseDirs}->{templates} . '/' . $file ; # only files in template directory can be accessed 
+	}
+    
 	my $text = "This source file ";
 	my $fileError;
 	return "" if -e $file && -f $file && -r $file;
@@ -1919,20 +1878,15 @@ sub body {
 					CGI::Tr({}, CGI::td({}, $properties{$header}->{name})) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, "Edit it"))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, "View it"))) .
-#					CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "defaultHeader", value => $header, label => "Use Default"}))) .
 				CGI::end_table(),
-#				"",
-#				CGI::input({ name => "set.$setID.$header", value => $setRecord->{$header}, size => 50}) .
-#				join ("\n", $self->FieldHTML($userToShow, $setID, $problemID, "source_file")) .
-#			        	CGI::br() . CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text}),
 
 				comboBox({
 					name => "set.$setID.$header",
 					request => $r,
 					default => $r->param("set.$setID.$header") || $setRecord->{$header},
 					multiple => 0,
-					values => ["", @headerFileList],
-					labels => { "" => "Use Default Header File" },
+					values => ["defaultHeader", @headerFileList],
+					labels => { "defaultHeader" => "Use Default Header File" },
 				}) .
 				($error{$header} ? 
 					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$header}) 
