@@ -39,6 +39,7 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 BEGIN {
 	if (MP2) {
 		require Apache2::Cookie;
+        require APR::Request::Error;
 		Apache2::Cookie->import;
 		push @WeBWorK::Cookie::ISA, "Apache2::Cookie";
 	} else {
