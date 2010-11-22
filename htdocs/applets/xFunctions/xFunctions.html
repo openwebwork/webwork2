@@ -1,0 +1,421 @@
+<html>
+	<head>
+	<meta name="generator" content="Frontier 6.1.1 MacOS">
+	<title>
+		xFunctions xPresso Educational Mathematics Applet
+	</title>
+	</head>
+	<body bgcolor="#FFFFEE" alink="#008000" vlink="#800080" link="#0000FF" text="#000000">
+<IMG SRC="/images/header.gif"  ALIGN=LEFT ALT = "math dept"  >
+<P ALIGN=RIGHT> 
+<A HREF="../index.html"  ><IMG SRC="/images/up.gif"   BORDER=1 ALT ="[Up]"  ></A> 
+<A HREF="/cgi-bin/feedback"><IMG SRC="/images/feedback.gif"   BORDER=1 ALT ="[Feedback]"  ></A>
+<BR CLEAR=ALL><HR NOSHADE>
+</P>
+
+This applet was created by David Eck (see below).  It is the web version
+of the graphing program which I often use in class.
+<hr>
+
+<br>
+<H2><font color="#990000">Quick Instructions</font></H2>
+
+<p>When the applet starts up, it is showing a "Main Screen" where you can see the graph of
+functions. The available functions are shown in a list on the left.  Click on
+a function to view its graph.  You can define your own functions to add to
+this list using the three buttons at the lower left of the Main Screen.
+There are three ways to define new functions:  using expressions (such as
+0.5*x^2+sin(3*x-2)), by giving the graph of the function, or by listing a
+table of (x,y) pairs.  There is a separate input screen for each of these input methods.
+To get back to the Main Screen from one of these input screens, you have
+to press a "Done" or "Cancel" button.
+The pop-up menu at the top of the applet can be used to go to seven other
+screens.  Each screen is a separate "utility" that allows you to play with
+functions in a different way.  When you enter functions into the utility
+screens, you can use any new functions that you have defined, as well as the built-in
+functions.</p>
+
+<p>In the "Launcher Version," you'll find a few extra functions in the list on the Main Screen.
+You'll also find some extra entries in the pop-up menu.  These extra entries are examples that
+will take to one of the utility screens, and load an example in to that screen.
+(Information about <b>making</b> examples for <font color="#990000">xFunctions</font>
+can be found <a href="using_examples.html">here</a> -- but to do that, you need to make your own Web pages.)</p>
+
+<p>Now, just go ahead and play!</p>
+
+<hr>
+
+<H2><font color="#990000">More Detailed Instructions</font></H2>
+
+<H3><font color="#990000">First some general ideas</font></h3>
+
+<ul>
+<LI><font color="#990000">Expressions</font>
+ in <font color="#990000">xFunctions</font> can include the operations +, -, *, /, and
+^, where ^ represents exponentiation (this is, x^3 is x*x*x).  You always have
+to type multiplication explicitly as *.  When you use a function such as
+sin or f in an expression, you have to put parentheses around its argument.
+That is, you have to say "<b>sin(x^2)</b>" rather than "<b>sin&nbsp;x^2</b>".
+You can use the constants <b>e</b> and <b>pi</b> in expressions.
+<LI><font color="#990000">Built-in functions</font> are shown on the main
+screen.  Some might not be obvious:  "<b>abs</b>" is absolute value. "<b>sqrt</b>"
+is square root and <b>cubert</b> is the cube root.  "<b>ln</b>" is the
+natural logarithm and "<b>exp</b>" is exponentiation in the base <b>e</b> (same as e^x).
+"<b>round(x)</b>" is the nearest integer to x, "<b>floor(x)</b>"  is the integer
+just below or equal to x, "<b>ceiling(x)</b>" is the integer just above or
+equal to x, and "<b>trunc(x)</b>" in the integral part of x after any decimal
+part is thrown away.
+<LI><font color="#990000">Graph limits</font> and other limits can be set by
+filling in the text boxes labeled <b>xmin</b>, <b>tmax</b>, and so on.  Usually,
+if you <b>press return</b> in any text box, the graph will be redrawn, so you
+don't have to use the buttons too much.  Many screens have buttons for zooming in 
+and out on the graph.  A "Restore" button will restore the original limits on the
+graph.  An "Equalize" button will reset the xy limits on the graph so that the
+scales on the horizontal and vertical axes are equal.  (This makes circles look
+like circles instead of ellipses, and it lets you estimate slope visually.)
+<LI><font color="#990000">The mouse</font> can be used for zooming on some of the applet's
+screens.  Click with the right mouse button at a point (or command-click on Macintosh)
+to zoom in on that point.  Click with the middle mouse button (or option-click or
+ALT-click) to zoom out from the point).
+<LI><font color="#990000">Error messages</font> are displayed in the same region of
+the screen where graphs are drawn. An error message will go away if you click on it.  Or, you
+can just fix the problem and the error message will go away the next time a
+graph is drawn.
+<LI><font color="#990000">Never trust a computer!</font>  Do not assume that
+what you see in this program is perfectly accurate.  For one thing, there are
+probably some bugs -- out and out programming errors.  More important, the methods
+used in computations are approximations and in some cases guesses.  Graphs are
+drawing by plotting a lot of points and connecting them with lines.  Since a lot
+of points are used, generally the results are pretty good, but if the graph 
+varies rapidly the results can be positively deceptive.
+</ul>
+
+
+<H3><font color="#990000">The Main Screen</font></H3>
+
+<p>The main screen is <b>not</b> the most interesting part of 
+<font color="#990000">xFunctions</font>!  The more interesting "utility screens" are described 
+below.  However, you have to use the main screen if you want to
+define new functions to use in the utility screens.</p>
+
+<p>The main screen shows a list of available functions on the left.
+Click on a function to see its graph.  To add to this list, click on one
+of the buttons "New Expr.", "New Table", or "New Graph" in the lower left
+corner.  This will take you to a screen where you can input a function.
+These input screens are describe below.  If the function that is hilited
+in the list is a user-defined function, as opposed to one of the
+built-in functions, then the "Edit" button is enabled.  If you click the
+"Edit" button, it will take you to the appropriate function input screen, 
+where you can modify the definition of the function.</p>
+
+<p>If you click on the graph, a cross-hair will appear marking a point on the
+graph.  The coordinates of the point will appear under the graph.
+There is also an input box under the graph where you can input an
+x-value.  This gives you much finer control of the x-value
+than you can get by clicking on the graph.
+Either press return in this box or click the "Set" button,
+and the corresponding point will be marked on the graph.  If you
+click-and-drag on the graph, the cross-hair will move as you drag 
+the mouse.</p>
+
+<p>Right-click on the graph to zoom in on a point.  Click with
+the middle-mouse button, or hold down the ALT key and <b>left</b>-click,
+to zoom out.  You can also control the ranges of values displayed on the 
+x- and y-axes with the controls along the right edge of the screen.</p>
+
+<H3><font color="#990000">The Utilities</font></H3>
+
+<p>The main point of <font color="#990000">xFunctions</font> is its
+seven "utilities."  Each utility is a screen that allows you to work
+with functions in a different way.  To go to a utility, select its name from 
+the pop-up menu at the top of the applet.  This pop-up menu is
+visible on the Main Screen and on each of the utility screens, so
+it is easy to move among these screens.  (The pop-up menu is <b>not</b>
+available on the function input screens.)  On other Web pages that use 
+<font color="#990000">xFunctions</font>, there might also be "examples" in this pop-up menu.  Selecting one of the
+examples will take you to one of the utility screens and load data for some
+example into that screen.</p>
+
+<p>Below, you'll find brief instructions for each of the seven utilities.
+However, much of the interface for the utilities is pretty self-explanatory.</p>
+
+<H3><font color="#990000">Expression Function Input Screen</font></H3>
+
+<p>When you click the "New Expr." button on the main screen, you will be
+taken to an input screen where you can define a function as an 
+expression such as "x^2+2*x+1".  You can also define <b>split</b>
+functions, which have different expressions on different parts of their
+domains.</p>
+
+<p>To define a function, set the
+name of the function in the input box the top of the screen (or just accept the
+name that is already provided there).  To define a function using just one 
+expression, just fill in the box labeled "Let&nbsp;y&nbsp;=".  
+If you want to limit the domain of the function, you can 
+enter a condition such as "x &gt; -1 and x &lt; 1" in
+the box labeled "provided:".  The condition can use the relational operators
+=, &lt;&gt;, &lt;, &gt;, &lt;=, and &gt;=, and it can use the logical operators
+"and", "or", and "not".  You can use any expression as part of the condition,
+such as "abs(sin(x)) &lt; 0.5".
+You can define a function by up to four cases
+by filling in more of the boxes labeled "or y=" and "provided".
+For example:  Let "<b>y = x^2</b>" provided "<b>abs(x) &lt; 1</b>" or "<b>y = x^3</b>" provided
+"<b>x &gt;= 1</b>" or "<b>y = 1</b>" provided "<b>x &lt;= -1</b>".</p>
+
+<p>Click the "Test" button to see the graph of your function.  The limits on the
+axes here do not limit the domain of the function.  They are only used to determine
+what part of the graph will be shown by default on the Main Screen.</p>
+
+<p>Click the "Done" button to define the function and go back to the Main Screen.
+You <b>must</b> click either the "Done" or "Cancel" button to get out of 
+the Expression Function Input Screen.</p>
+
+<H3><font color="#990000">Graph Function Input Screen</font></H3>
+
+<p>Functions don't have to be defined by expressions!  They can also be
+defined by graphs and by tables of values.  From the Main Screen, click
+the "New Graph" button to go to the Graph Function Input Screen, where
+you can define a function as a graph.  Technically, the graphs used here
+are Bezier functions, which are made up of segments.  Each segment is
+a piece of a cubic polynomial, which is completely determined by the
+two points at the ends of the segments and by the slopes at those two
+points.  It is possible to make graphs that have discontinuities,
+corners, and cusps.</p>
+
+<p>A new function is just a line segment on the x-axis, with a point at each
+end.  You can double-click the graph to introduce new points.  Each point
+has a "handle", shown as a black point nearby.  You can click-and-drag the
+points and the handles to modify the graph.  Other operations are described
+in the "Brief Instructions" at the top right of the screen.  If you want
+fine control over the x-value of a new endpoint, enter the x-value in the
+box labeled "at x =" and either press return or click the "Insert New Point"
+button.  Note that the x and y limits in the lower right do not affect
+the shape of the graph, just how the xy-values on the graph are interpreted.</p>
+
+<p>Click the "Done" or "Cancel" button to return to the main screen.</p>
+
+<H3><font color="#990000">Table Function Input Screen</font></H3>
+
+<p>Use the <b>Graph</b> Function Input Screen if you want to set the general
+shape of a graph by hand.  If you have a list of xy-points on the
+graph, enter them as a table in the <b>Table</b> Function Input Screen.
+You get to this screen by pressing the "New Table" button on the Main
+Screen.</p>
+
+<p>Just enter the pairs of xy-values one-by-one in the boxes labeled
+"Input x" and "Input y".  (You can press tab after entering the x-value,
+and press return after entering the y-value.)  The points will be shown 
+in a list in the upper right corner of the screen.  If you click on 
+a point in the list, it will be copied to the input boxes, so you can
+edit it.  There is a button for deleting the selected point from the 
+list.</p>
+
+<p>Just knowing some points on the graph doesn't tell you what the whole
+function looks like.  You have to specify what happens between the points.
+You have three choices: A "Step Function" has a constant value between
+two consecutive points from your list.  For a "Piecewise Linear Function",
+the points are connected by line segments.  A "Smooth Function" is 
+continuous and differentiable at all points.  (It's actually a Bezier function,
+defined by cubic polynomials between the points specified in your list.)</p>
+
+<p>A preview of the graph is shown in the lower right (but not until there are
+at least two points).  The limits on the axes are increased if necessary, and
+or can set them yourself.</p>
+
+<p>Click the "Done" or "Cancel" button to get back to the Main Screen.</p>
+
+<H3><font color="#990000">Multigraph Utility</font></H3>
+
+<p>The Multigraph Utility Screen let's you draw up to eight functions in different
+colors on the same set of axes.  You can select the number (1 to 8) of the
+function to be graphed with a pop-up menu near the lower left of the
+screen.  Each curve is a different color, shown in a
+colored patch next to the pop-up menu.
+Enter the function and press return (or click "Graph!")
+to graph the function.  Right-clicking on the graph will
+zoom in on a point.  Click with the middle mouse button, or
+hold down the ALT key and left-click, to zoom out.
+</p>
+
+<H3><font color="#990000">Animate Utility</font></H3>
+
+<p>The Animate Utility Screen lets you work with a function whose definition can
+contain the parameter k, as well as the variable x.  This is really a <b>family</b>
+of different functions, one for each value of k.  The Animate Utility
+plays a "movie" showing a sequence of the graphs for different values of k.
+There are input boxes where you can specify the values of k at the start and
+end of the movie.  You can also specify the number of intervals in the movie.
+(The number of frames is the number of intervals plus one.)  What happens
+when you get to the end of the movie?  The Animate Utility can either jump directly back
+to the beginning, or it can play the movie backwards. Which it does is controlled
+by a checkbox labeled "Loop Back and Forth."
+The "Go" button will start the animation.  The "Next" button will move the
+animation from one frame to the next.  You can use the mouse to zoom in out on the graph.</p>
+
+
+<H3><font color="#990000">Parametric Curves Utility</font></H3>
+
+<p>The Parametric Curves Utility draws parametric curves in the xy-plane.
+A parametric curve is a plot of xy-points where the x and y coordinates
+are functions of some parameter.  In this utility, the parameter is t.
+For example, the parametric curve defined by x=cos(t), y=sin(t) for
+t between 0 and 6.3 is a circle.  (6.3 is about 2*pi.)</p>
+
+<p>In this utility, you can enter x and y functions for up to eight
+parametric curves.  There is a pop-up menu near the bottom left corner
+of the screen that you can use to select the curve whose definition you
+want to enter/display.  Each curve is a different color, shown in a
+colored patch next to the pop-up menu.
+There are input boxes for specifying the 
+range of t-values to use for the curves.  You can also specify the
+number of points on each curve.  (Remember that <font color="#990000">xFunctions</font> draws graphs
+by plotting points and connecting them with lines.  The results for
+discontinuous or rapidly changing functions might not be great.  You might
+get a better curve by increasing the number of points.)</p>
+
+<p>There is a button labeled "Trace".  If you click this button, a crosshair
+will be moved along the curve whose number is specified in the pop-up menu.
+This lets you see how the point on the curve varies as t changes.  The crosshair
+disappears after the curve has been traced once.</p>
+
+<p>Zooming with the mouse will work in this utility.
+
+<H3><font color="#990000">Derivatives Utility</font></H3>
+
+<p>The Derivatives Utility will draw the graphs of a function, the
+first derivative of the function, and the second derivative of the
+function.  The three graphs are displayed in separate panels in
+the bottom half of the applet.  If you left-click and drag on the
+graph of the function, a tangent line to the graph will be displayed.
+At the same time, the corresponding point on the graph of the first
+derivative will be marked.  (You can also click and drag on the
+other graphs and see what happens.)  Mouse zooming will also work 
+in this utility.</p>
+
+<H3><font color="#990000">Riemann Sums Utility</font></H3>
+
+<p>The Riemann Sum Utility computes Riemann sums for a specified function on
+a specified interval.  The values of various Riemann sums, using
+different rules, are shown at the right.  (The trapezoid rule isn't 
+strictly a Riemann sum, but it's there as a choice anyway.)
+The area corresponding to <b>one</b> of the sums is displayed on the graph.  Use the pop-up
+menu at the lower right to select which area is displayed.  If you
+click on the graph, you get details about one of the
+rectangles or trapezoids in the sum.  (Click on the blue information box
+to get rid of it.)   Note that for the
+"~Circumscribed" and "~Inscribed" rules, the maximum and minimum
+of the function on a sub-interval is only computed approximately.
+(This explains the "~", which stands for "approximately.")  Mouse zooming does
+<b>not</b> work on this screen.</p>
+
+<H3><font color="#990000">Integral Curves Utility</font></H3>
+
+<p>The Integral Curves Utility draws direction fields and integral curves.
+An integral curve is the path followed by a point whose velocity
+at each point is given by a "vector field".  A vector field on the
+xy-plane is given by a pair of functions of x and y.  For the curve,
+these functions specify the derivatives dx/dt and dy/dt at each point.
+In the Integral Curves Utility, you can specify the functions dx/dt
+and dy/dt, and you can "drop" points onto the xy-plane and see the
+curves along which they move.  The utility also draws a grid of arrows.
+An arrow at a point shows the direction of the integral curve as it
+passes through that point.  (This is a "direction field" rather than a
+"vector field" because it shows only the direction of the curve,
+not the speed.)</p>
+
+<p>You can start a curve by clicking at a point on the graph.  Alternatively,
+for finer control, you can enter the x and y values of the starting
+point of the curve in the boxes labeled "Start x" and "Start y".  Then,
+click the "New Curve" button to start a curve at that point.
+You can have as many curves as you want.
+If you turn on the "Extend curves in both directions" option,
+you get to see how the point would move backwards in time as well as
+forwards.</p>
+
+<p>An integral curve is drawn by looking at the current position of
+the point and at the derivative functions at that point (and possibly
+at some nearby points for greater accuracy).  This is used to project
+the point forward "dt" time units into the future.  <b>This
+is only an approximation!</b>  A smaller value of dt will generally give
+a better approximation.  There is an input box where you can specify
+the value of dt.  The Integral Curves Utility can use 
+three different approximations:  Euler's Method, Runge-Kutta Order 2,
+and Runge-Kutta Order 4.  The utility has a set of radio buttons that
+you can use to select the method.  Runge-Kutta Order 4 is the most accurate
+method, and there is really no reason to use the other two unless you
+specifically interested in the method rather than in getting
+the best possible approximation of the true integral curve.</p>
+
+<p>Once a curve has been started, it uses the same method and the same
+value of dt forever.  This lets you start different curves from the
+same point, using different methods or different values of t, to compare them.</p>
+
+<p>In this utility, more than in others, you might want to use the
+"Equalize" button to equalize the scales on the x and y axes.  Otherwise,
+the arrow directions, as drawn, can be misleading.  You can use the
+mouse for zooming in this utility.</p>
+
+<H3><font color="#990000">Graph 3D Utility</font></H3>
+
+<p>The Graph 3D Utility draws three-dimensional graphs of functions
+of two variables.  The function to be graphed is of the form z=f(x,y),
+where f(x,y) is given as an expression that can contain variables x and y.
+The values of xmin, xmax, ymin, and ymax have a different interpretation
+in this utility:  They specify a rectangle in the xy-plane that is used
+as the domain over which the graph is drawn.  You can also enter
+zmin and zmax, which specify the range of z-values that you want to see.
+The scale on the graph is adjusted so that the specified ranges of x, y, and
+z are visible.  But since the image on the screen is a two-dimensional
+projection of a three dimensional object, there is not an exact correspondence
+between the ranges and the boundaries of the rectangle shown on the screen.</p>
+
+<p>To produce the graph, a rectangular grid of points in the domain is used.
+The function is evaluated at each point, and the resulting xyz-points
+are connected with lines.  You can enter the grid size -- that is, the
+number of points along each side of this grid of points.
+The utility can draw graphs in four different
+styles:  When only the lines between the points are drawn, the result is a
+so-called "wire-mesh model."  The second style also consists of just lines,
+but lines that are hidden by other parts of the graph are not shown.
+Instead of drawing the lines, the regions between the lines can be filled in
+with color, giving a "shaded model."  (The color used is determined by
+the orientation of the graph surface, so it looks as if the graph is
+illuminated from a certain direction.)  In the fourth style, both the
+lines and the shading are shown.  You can select among the four styles
+using a set of radio buttons under the graph.  The shaded model
+without lines only really looks good on a high color monitor using a
+large grid size.</p>
+
+<p>When the utility starts up, you will see a projection of the x-, y-,
+and z-axes along with a rectangle that frames the domain of the function 
+in the xy-plane.  When you press the "Graph it!" button or press return 
+in any input box, the graph will be drawn.  You get to see the graph
+being drawn, from back to front.  (This is deliberate -- for understanding
+the graph, seeing the drawing process is more effective than just seeing
+the final result.)</p>
+
+<p>You can rotate the axes and graph using two scroll bars.  The
+horizontal scroll bar rotates the graph around the z-axis.  The
+vertical scroll bar tilts the image towards you and away from you.</p>
+
+<p>Mouse zooming does <b>not</b> work in the Graph 3D Utility.  Do
+not expect Graph 3D to work well with most discontinuous functions.</p>
+
+<HR>
+<center><font size="-1"><a href="http://math.hws.edu/eck/index.html">David Eck</a>
+(<a href="mailto:eck@hws.edu"><a href="mailto:eck@hws.edu">eck@hws.edu</a></a>), 27 October 1999 </font></center>
+
+</blockquote>
+
+
+
+
+<HR NOSHADE>
+Last updated: <STRONG>Wednesday, April 12, 2000</STRONG>
+<BR>
+<TT>http://www.math.rochester.edu/courses/current/MTH163/xFunctions.html</TT>
+<h5>This page was built by <A HREF = "mailto:gage@math.rochester.edu">M.Gage</A> using <a href="http://www.scripting.com/frontier/">Frontier</a> </h5>
+</body>
+</html>
+</body>
+</html>
