@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<TITLE>Sample JCM Applet: SliderGraph</TITLE>
+</HEAD>
+<BODY bgcolor="#DDDDDD">
+
+
+<blockquote>
+
+<div align=right>[
+<a href="GraphApplet3.html">prev</a> |
+<a href="index.html">main</a> |
+<a href="TangentsApplet.html">next</a>
+]</div>
+
+
+
+<HR noshade>
+<H1 align=center><font color="#CC0000">Slider Graph</font></H1>
+<HR noshade>
+<br>
+
+<p>This applet that draws the graph of a function that can include<br>
+references to the "constants" a, b, and c.  The values of these<br>
+constants can be adjusted using the sliders at the bottom of the<br>
+applet.  The applet responds to the mouse actions click, shift-click,<br>
+click-and-drag, and right-click-and-drag.  I've added another<br>
+buttons to the limit control panel.  The "Equalize Axes" button<br>
+adjusts the x- and y-limits so that the scales on the two axes<br>
+are the same.
+</p>
+
+<p align=center><applet align=center code="SliderGraph.class" 
+        archive="jcm1.0-basic.jar" width=500 height=450></applet></p>
+         
+<p>The following source code shows how the applet is built from<br>
+JCM components.  Most of the comments are for features that were<br>
+not already covered in previous examples.
+</p>
+ 
+<hr noshade>
+
+<pre>
+
+import java.awt.*;
+import edu.hws.jcm.data.*;
+import edu.hws.jcm.draw.*;
+import edu.hws.jcm.awt.*;
+
+public class SliderGraph extends java.applet.Applet {
+
+   private DisplayCanvas canvas;
+   
+   public void stop() {
+      canvas.releaseResources();
+   }
+   
+   JCMPanel makeSliderPanel(VariableSlider v) {
+         <font color="#0000AA">// A small utility routing that makes a JCMPanel that contains</font>
+         <font color="#0000AA">// a VariableSlider and a DisplayLabel that shows the value</font>
+         <font color="#0000AA">// of the variable associated with that slider.</font>
+      JCMPanel p = new JCMPanel();
+      p.add(v, BorderLayout.CENTER);
+      p.add( new DisplayLabel(v.getName() + " = #", new Value[] { v } ), BorderLayout.EAST);
+      return p;
+   }
+   
+
+   public void init() {
+   
+      Parser parser = new Parser();
+      Variable x = new Variable("x");
+      parser.add(x);
+      
+        <font color="#0000AA">// Create the three VariableSliders.  In this case, the sliders have</font>
+        <font color="#0000AA">//   names.  There is also a Variable associated with each slider, </font>
+        <font color="#0000AA">//   which has the same name.  This variable is added to the parser</font>
+        <font color="#0000AA">//   which is passed as the fourth parameter to the constructor, making</font>
+        <font color="#0000AA">//   it possible to use "a", "b", and "c" in expressions parsed by the</font>
+        <font color="#0000AA">//   parser.  Adjusting the value on a slider changes the value of the</font>
+        <font color="#0000AA">//   associated variable, and therefore changes the value of any</font>
+        <font color="#0000AA">//   expression that refers to that variable.  The second and third</font>
+        <font color="#0000AA">//   parameters to the constructor give the minimum and maximum Values</font>
+        <font color="#0000AA">//   on the slider.  Passing "null,null" uses the defaults, namely</font>
+        <font color="#0000AA">//   new Constant(-5) and new Constant(5).</font>
+      VariableSlider a = new VariableSlider("a",null,null,parser);
+      VariableSlider b = new VariableSlider("b",null,null,parser);
+      VariableSlider c = new VariableSlider("c",null,null,parser);
+
+      canvas = new DisplayCanvas();
+      canvas.setHandleMouseZooms(true);
+      canvas.add(new Panner());
+      
+      LimitControlPanel limits =
+           new LimitControlPanel( LimitControlPanel.SET_LIMITS | LimitControlPanel.RESTORE
+                                    | LimitControlPanel.EQUALIZE,  false);
+      limits.addCoords(canvas);
+      
+      ExpressionInput input = new ExpressionInput("a*x^2 + b*x + c", parser);
+      Graph1D graph = new Graph1D(input.getFunction(x));
+      
+      ComputeButton button = new ComputeButton("Graph it!");
+      
+      canvas.add(new Axes());
+      canvas.add(graph);
+      canvas.add(new DrawBorder(Color.darkGray, 2));
+      
+      JCMPanel main = new JCMPanel();  <font color="#0000AA">// Build interface out of JCMPanels!</font>
+      main.setInsetGap(3);
+      main.add(canvas, BorderLayout.CENTER);
+      main.add(limits, BorderLayout.EAST);
+      JCMPanel bot = new JCMPanel(5,1);
+      main.add(bot, BorderLayout.SOUTH);
+      
+      bot.add(new Label("Enter a function f(x), which can use the constants a, b, and c:"));
+      JCMPanel inputPanel = new JCMPanel();
+      bot.add(inputPanel);      
+      inputPanel.add(input, BorderLayout.CENTER);
+      inputPanel.add(button, BorderLayout.EAST);
+      
+      bot.add( makeSliderPanel(a) );  <font color="#0000AA">// Create and add the sliders.</font>
+      bot.add( makeSliderPanel(b) );
+      bot.add( makeSliderPanel(c) );
+      
+      Controller controller = main.getController();  <font color="#0000AA">// Set up error reporting.</font>
+      controller.setErrorReporter(canvas);
+      limits.setErrorReporter(canvas);
+
+      main.gatherInputs();  <font color="#0000AA">// Set up main panel to respond to changes in input objects.</font>
+                            <font color="#0000AA">// This works since the interface is built of JCMPanels.  For</font>
+                            <font color="#0000AA">// the same reason, I don't have to add the objects the the</font>
+                            <font color="#0000AA">// controller.</font>
+                             
+      button.setOnUserAction(controller);  <font color="#0000AA">// Set controller to respond to button.</font>
+
+      setBackground(Color.lightGray);
+      setLayout(new BorderLayout());
+      add(main,BorderLayout.CENTER);
+
+   } <font color="#0000AA">// end init()</font>
+   
+} <font color="#0000AA">// end class SliderGraph</font>
+
+
+</pre>
+
+<hr noshade>
+<div align=center>[
+<a href="GraphApplet3.html">prev</a> |
+<a href="index.html">main</a> |
+<a href="TangentsApplet.html">next</a>
+]</div>
+
+</blockquote>
+</body>
+</HTML>
