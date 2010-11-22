@@ -1,0 +1,236 @@
+/*
+  Lets user sketch a graph by moving the mouse.
+  Origional Java App:
+  --David Eck, June 2000 (eck@hws.edu, http://math.hws.edu/eck/)
+  
+  Rewritten for WebWork in javascript with processingjs for html5 by David Gage 2010
+  see processingjs.org for info on processingjs
+  
+  Drag on the graph to change it.
+  The Y-values box will take numbers separated by commas and space them equaly on the graph.
+  Enjoy!!
+  */
+
+  double xGrid;
+  double yGrid;
+  
+  //show a tick mark every ? spaces
+  int tickEvery = 2
+  
+  //set the border color
+  color borderColor = color(0,0,0);
+  //set the color of the grid
+  color gridColor = color(150,150,150);
+  //set the color of the axes 
+  color axesColor = color(0,0,220);
+  //set the alternat color of the axes
+  color lightAxesColor = color(160,180,255);
+  //set the color of the graph
+  color graphColor = color(255, 0, 255);
+  
+  //set the border width
+  int borderWidth = 20;
+  
+  var padding = 0;
+  //-------------------  methods -------------------------------
+  
+  void setup(){
+    //set the canvas size
+
+    size( canvasWidth+padding, canvasHeight+padding );
+
+    strokeWeight( 1 );
+
+    frameRate( 15 );
+
+    gwidth = width-2*padding;
+    gheight = height -2*padding;
+    gheight = height;
+    xGrid = gwidth/(xmax - xmin);
+    yGrid = gheight/(ymax - ymin);
+    
+
+    //starting number of points
+    points = 101;
+    yValues = new int[points];
+    derivatives = new double[points];
+    for(int i = 0; i < points; i++){
+      yValues[i] = (abs(ymin)*yGrid)/gheight;
+      derivatives[i] = 0;
+    }
+
+  }  
+      
+  //processings draw loop
+
+  void draw() {
+    //background color clears the graph every draw
+    background(color(255,255,255));
+    drawGrid();
+
+    drawAxes();
+    drawGraph();
+  }
+  
+  void drawGrid() {
+    if (!showGrid)
+      return;
+    stroke(gridColor);
+    if (xGrid > 0) {
+      int left = 0.5+padding;
+      int right = left+gwidth;
+      int a     = left;
+      while (a < right) {
+        line(a,padding,a,gheight+padding);
+        a += xGrid;
+      }
+    }
+    //draw the right edge
+    line(right-1, padding, right-1, gheight);
+    if (yGrid > 0) {
+      int top = 0.5+padding;
+      int bottom    = top +gheight; 
+      int b = top;
+      while (b < bottom) {
+        line(padding,b,gwidth+padding,b);
+        b += yGrid;
+      }
+    }
+    //draw the bottom edge
+    line(padding, bottom-1, gwidth, bottom-1);
+  }
+  
+  //--------------------------- Axes ---------------------------------------
+  
+  void drawAxes() {
+  
+    if (ymax < 0 || ymin > 0)
+      stroke(lightAxesColor);
+    else 
+      stroke(axesColor);
+    line(padding, yGrid*abs(ymin)+padding, gwidth+padding, yGrid*abs(ymin)+padding);
+    //draw the x ticks
+    for(int i = 0; i < (xmax - xmin); i += tickEvery) {
+      line(xGrid*abs(xmin)+padding+xGrid*i, yGrid*abs(ymin)-2+padding, xGrid*abs(xmin)+padding + xGrid*i, yGrid*abs(ymin)+2+padding);
+      line(xGrid*abs(xmin)+padding-xGrid*i, yGrid*abs(ymin)-2+padding, xGrid*abs(xmin)+padding - xGrid*i, yGrid*abs(ymin)+padding);
+    }
+    if (xmax < 0 || xmin > 0)
+      stroke(lightAxesColor);
+    else 
+      stroke(axesColor);
+    line(xGrid*abs(xmin)+padding, padding, xGrid*abs(xmin)+padding, gheight+padding);
+    //draw the y ticks
+    for(int i = 0; i < (xmax - xmin); i += tickEvery) {
+      line(xGrid*abs(xmin)-2+padding, yGrid*abs(ymin)+padding+yGrid*i, xGrid*abs(xmin)+2+padding, yGrid*abs(ymin)+padding+yGrid*i);
+      line(xGrid*abs(xmin)-2+padding, yGrid*abs(ymin)+padding-yGrid*i, xGrid*abs(xmin)+2+padding, yGrid*abs(ymin)+padding-yGrid*i);
+    }
+  }
+  //--------------------------- Graph --------------------------------------
+  
+  int[] pixelX;
+  int[] pixelY;
+  
+  void drawGraph() {
+    makeGraphCoords();
+    makeDerivs();
+    stroke(graphColor);
+    //plot the points
+    for (int i = 1; i < pixelX.length; i++) {
+      line(pixelX[i-1], pixelY[i-1], pixelX[i], pixelY[i]);
+    }
+  }
+  
+  void makeGraphCoords() {
+    int pointCt = (gwidth);
+    if (pixelX == null || pixelX.length != pointCt) {
+      pixelX = new int[pointCt];
+      pixelY = new int[pointCt];
+    for (int i = 0; i < pointCt; i++)
+      pixelX[i] = i+padding;
+      pixelX[pointCt-1] = gwidth+padding;
+     
+    }
+    double dx = (xmax - xmin) / (gwidth);
+    double dy = (ymax - ymin) / (gheight);
+    for (int i = 0; i < pointCt; i++) {
+      double x = xmin + dx*(pixelX[i]);
+      double y = eval(x);
+      pixelY[i] = (ymax - y)/dy+padding;
+    }
+  }
+  //math from java applet
+  double eval(double x) {
+    // NOTE:  yvalues and derivatives are stored as if x and y range from 0 to 1!!!
+    double scaledx = (x-xmin)/(xmax-xmin);
+    int interval = (int)((points-1)*scaledx);
+    if (interval >= points-1)
+      return ymin + yValues[points-1]*(ymax-ymin);
+    double temp = 1.0/(points-1);
+    double a = yValues[interval+1]/(temp*temp*temp);
+    double b = derivatives[interval+1]/(temp*temp) - 3*a;
+    double d = -yValues[interval]/(temp*temp*temp);
+    double c = derivatives[interval]/(temp*temp) - 3*d;
+    double t1 = scaledx - interval*temp;
+    double t2 = t1*t1;
+    double t3 = t2*t1;
+    double s1 = scaledx - (interval+1)*temp;
+    double s2 = s1*s1;
+    double s3 = s2*s1;
+    double scaledy = a*t3 + b*t2*s1 + c*t1*s2 + d*s3;
+    
+    return ymin + scaledy*(ymax-ymin);
+  }
+  
+  //--------------------------- Mouse Handling -----------------------------
+  
+  int lastPointNum;
+  double lastY;
+  
+  //couldn't just use mouseDragged because of a bug if dragged off canvas
+  
+  
+  
+  void mouseDragged(){
+      jumpPoint(mouseX, mouseY);
+  }
+  
+  //math from java applet
+  void jumpPoint(int x, int y) {
+    y = min(gheight - 1, y);
+    int pointNum = (int)( ((x)/(gwidth-1))*(points-1) );
+    double newYVal = 1.0 - ((y))/(gheight-1);  // Scaled!
+    if (pointNum >= 0 && pointNum < points) 
+      yValues[pointNum] = newYVal;
+    if (isNaN(lastY) || abs(pointNum - lastPointNum) <= 1 ||abs(pointNum - lastPointNum) >= 20) {}
+    else if (pointNum > lastPointNum) {
+      double dy = (newYVal - lastY)/(pointNum - lastPointNum);
+      for (int i = lastPointNum + 1; i < pointNum && i < points; i++) {
+        if (i >= 0)
+          yValues[i] = lastY + (i-lastPointNum)*dy;
+      }
+    }
+    else {
+      double dy = (newYVal - lastY)/(pointNum - lastPointNum);
+      for (int i = lastPointNum - 1; i > pointNum && i >= 0; i--) {
+        if (i < points)
+          yValues[i] = lastY + (i-lastPointNum)*dy;
+      }
+    }
+    lastPointNum = pointNum;
+    lastY = newYVal;
+  }
+  
+  //math from java applet
+    void makeDerivs() {
+    double dx = 1.0 / (points - 1);
+    derivatives[0] = (yValues[1] - yValues[0])/dx;
+    for (int i = 1; i < points - 1; i++) {
+      double left = abs(yValues[i] - yValues[i-1]);
+      double right = abs(yValues[i+1] - yValues[i]);
+      if (left < 1e-20 || right < 1e-20)
+      derivatives[i] = 0;
+      else
+      derivatives[i] = ((1/right)*(yValues[i+1]-yValues[i]) - (1/left)*(yValues[i]-yValues[i-1]))/(2*dx*((1/right)+(1/left)));
+      }
+    derivatives[points-1] = (yValues[points-1] - yValues[points-2])/dx;
+  }
