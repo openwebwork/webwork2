@@ -619,13 +619,38 @@ sub fetchCookie {
 	my $courseID = $urlpath->arg("courseID");
 	
 	# AP2 - Apache2::Cookie needs $r, Apache::Cookie doesn't
-	my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
-	my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+    #my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
+    #my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
 	
+	my $cookie = undef;
+	if (MP2) {
+		use APR::Request::Error;
+		my $jar = undef;
+ 		eval {
+       			$jar = $r->jar; #table of cookies
+  		};
+  		if (ref $@ and $@->isa("APR::Request::Error") ) {
+			debug("Error parsing cookies, will use a partial result");
+     			$jar = $@->jar; # table of successfully parsed cookies
+  		};
+		if ($jar) {
+			$cookie = $jar->get("WeBWorKCourseAuthen.$courseID");
+		};
+	} else {
+		my %cookies = WeBWorK::Cookie->fetch();
+		$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+		if ($cookie) {
+			debug("found a cookie for this course: '", $cookie->as_string, "'");
+			$cookie = $cookie->value;
+		}
+	}
+
 	if ($cookie) {
-		debug("found a cookie for this course: '", $cookie->as_string, "'");
-		debug("cookie has this value: '", $cookie->value, "'");
-		my ($userID, $key) = split "\t", $cookie->value;
+        #debug("found a cookie for this course: '", $cookie->as_string, "'");
+        #debug("cookie has this value: '", $cookie->value, "'");
+        #my ($userID, $key) = split "\t", $cookie->value;
+        debug("cookie has this value: '", $cookie, "'");
+        my ($userID, $key) = split "\t", $cookie;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
 			return $userID, $key;
