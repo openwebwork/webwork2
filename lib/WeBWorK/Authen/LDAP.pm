@@ -32,7 +32,7 @@ sub checkPassword {
 	# check against LDAP server
 	return 1 if $self->ldap_authen_uid($userID, $possibleClearPassword);
 
-	return 0 if ($userID !~ /admin/);
+    #return 0 if ($userID !~ /admin/);
 	
 	# optional: fail over to superclass checkPassword
 	if ($failover) {
