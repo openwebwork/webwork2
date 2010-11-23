@@ -101,7 +101,7 @@ my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 my $server_root_url = $seed_ce->{server_root_url};
 unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$server_root_url has been properly set in conf/global.com\n";
+	    "check that the variable \$server_root_url has been properly set in conf/global.conf\n";
 }
 
 ############################
