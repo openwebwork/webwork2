@@ -1,0 +1,68 @@
+
+Sources for the applets used in WeBWork demos:
+
+=================================================
+
+Java Applets:
+=================================================
+
+xFunctions (from David Eck at Hobart and William Smith College)
+http://math.hws.edu/xFunctions/
+Doesn't connect directly to WeBWorK but can be useful for students
+
+==================================================
+
+geogebra (version 3.2.40+)
+This applet is updated frequently so you will not to get fresh versions at;
+http://www.geogebra.org/cms/en/installers (offline installers)    or
+http://www.geogebra.org/cms/en/download
+Information generaly about geogebra is at:   http://www.geogebra.org/cms/
+
+==================================================
+
+
+Image_and_Cursor -- liteApplet from Frank Wattenberg (West Point)
+http://mathdl.maa.org/images/upload_library/4/vol2/liteapplets/contents.html
+
+==================================================
+
+SketchGraph, SliderGraph, GummyGraph  -- David Eck
+Designed specifically to interact with webwork.  
+Source code for these applets is in the webwork2/htdocs/applets/source subdirectory
+Uses components from this repository:
+http://math.hws.edu/javamath/
+=================================================
+
+FlashApplets
+=================================================
+
+
+MutiPointGraph.swf, PointGraph.swf -- flash applets from Doug Ensley (Shippensburg U.)  and Mike Gage (UR)
+Designed for webwork.  Based on other mathematics applets illustrated at:
+http://www.flashandmath.com/mathlets/index.html
+and http://www.flashandmath.com/index.html for tutorials on using flash.
+See also http://webwork.maa.org/wiki/Simple_example for a description of the actionScript code for this flash applet
+
+=================================================
+
+
+Canvas Applets  
+-- a version of SketchGraph in html5 and javaScript by David Gage
+-- the code is in webwork2/js/sketchgraphhtml5b 
+-- html5 and javaScript is a relatively new technology but it is likely to become important 
+   particularly for mobile devices such as the iPad
+-- javaScript and actionScript have become fairly similar
+
+=================================================
+
+The existing applets are still mostly at the proof of concept stage. Find useful
+questions to build around them or create your own applets which are more flexible or 
+more useful.
+
+
+Examples of the use of thee applets are at:
+
+https://test.webwork.maa.org/webwork2/2010JMM_demo/
+https://test.webwork.maa.org/webwork2/2010geogebra_at_ithaca/
+https://courses.webwork.maa.org/webwork2/wikiExamples/
+
