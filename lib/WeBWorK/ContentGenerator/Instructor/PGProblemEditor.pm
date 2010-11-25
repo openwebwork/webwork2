@@ -459,6 +459,8 @@ sub body {
 	my $fullSetName = defined( $self->{fullSetID} ) ? $self->{fullSetID} : $setName;
 	$problemNumber      = defined($problemNumber) ? $problemNumber : '';
     
+    
+    
 	#########################################################################    
     # Construct url for reporting bugs:
 	#########################################################################
@@ -875,7 +877,7 @@ sub getFilePaths {
  				
 			my $header_file = "";
 			$header_file = $set_record->{$file_type};
-			if ($header_file && $header_file ne "") {
+			if ($header_file && $header_file ne "" && $header_file ne "defaultHeader") {
 					if ( $header_file =~ m|^/| ) { # if absolute address
 						$editFilePath  = $header_file;
 					} else {
