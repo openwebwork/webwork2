@@ -465,9 +465,6 @@ sub body {
     # Construct url for reporting bugs:
 	#########################################################################
 
-# 	$editFilePath =~ m|([^/]*)Library|;    #find the path to the file
-# 	my $libraryName = $1;                  # find the library, if any exists in the path name (first library is picked)
-# 	$libraryName ='rochester' unless not_blank($libraryName) ; # default library
 	my $libraryName = '';
 	if ($editFilePath =~ m|([^/]*)Library|)   {  #find the path to the file
 		# find the library, if any exists in the path name (first library is picked)
@@ -482,8 +479,65 @@ sub body {
 
     my $BUGZILLA = "$ce->{webworkURLs}{bugReporter}?product=Problem%20libraries".
                    "&component=$libraryName&bug_file_loc=${editFilePath}_with_problemSeed=".$self->{problemSeed};
-	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to intelligent reporting of bugs.
-    
+	#FIXME  # The construction of this URL is somewhat fragile.  A separate module could be devoted to 
+	# intelligent bug reporting.
+	
+	#########################################################################    
+    # Construct reference row for PGproblemEditor.
+	#########################################################################
+	
+       my @PG_Editor_Reference_Links = (
+   		{label 		=>	'Problem Techniques'	,
+   		 url 		=>  'http://webwork.maa.org/wiki/Category:Problem_Techniques' 	,
+   		 target     =>	'techniques_window'	,
+   		 tooltip 	=>	'Snippets of PG code illustrating specific techniques'	,
+   		},
+   		{label 		=>	'Math Objects'	,
+   		 url 		=>   'http://webwork.maa.org/wiki/Category:MathObjects'  	,
+   		 target		=>	'math_objects'	,
+   		 tooltip 	=>	'Wiki summary page for MathObjects'	,
+   		},   		
+   		{label 		=>	'POD'	,
+   		 url 		=>  'http://webwork.maa.org/pod/pg_TRUNK/'  	,
+   		 target		=>	'pod_docs'	,
+   		 tooltip 	=>	'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'	,
+   		},
+   		{label 		=>	'PGLab'	,
+   		 url 		=>  'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
+   		 target		=>	'PGLab'	,
+   		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
+   		},
+   		{label 		=>	'PGML'	,
+   		 url 		=>  'http://hosted2.webwork.rochester.edu/webwork2/cervone_course/PGML/1/?login_practice_user=true',
+   		 target		=>	'PGML'	,
+   		 tooltip 	=>	'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.'	,
+   		},
+   		{label 		=>	'Author Info'	,
+   		 url 		=>  'http://webwork.maa.org/wiki/Category:Authors'  	,
+   		 target		=>	'author_info'	,
+   		 tooltip 	=>	'Top level of author information on the wiki.'	,
+   		},
+   		{label 		=>	'report bugs in this problem'	,
+   		 url 		=>  $BUGZILLA  	,
+   		 target		=>	'bug_report'	,
+   		 tooltip 	=>	'Report bugs in a WeBWorK question/problem using this link. <br/> The very first time you do this you will need to register with an email address so that information on the bug fix can be reported back to you.'	,
+   		},
+   
+   
+   
+   );
+   my $PG_Editor_Reference_String = '';
+   foreach my $link (@PG_Editor_Reference_Links) {
+   		$PG_Editor_Reference_String .= ' | '. 
+   	       CGI::a({-href=>$link->{url} ,-target=> $link->{target},
+   	       -onmouseover=>q!Tip('! .  $link->{tooltip} . 
+   	       				    q!',SHADOW, true, 
+		                    DELAY, 100, FADEIN, 300, FADEOUT, 300, STICKY, 0, OFFSETX, -20,  CLICKCLOSE, true, 
+		                    BGCOLOR, '#F4FF91', TITLE, 'Reference:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!
+		        },
+		'&nbsp;'.$link->{label}.'&nbsp;');   
+   }
+   $PG_Editor_Reference_String .=' | ';
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
 	# or in the original file in the template directory
@@ -556,7 +610,8 @@ sub body {
 		$allSetNames[$j] =~ s|\.def||;
 	}
 	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
-
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
  		function setTarget(inWindow) {
 		  document.getElementById("newWindow").checked = inWindow;
@@ -571,7 +626,9 @@ sub body {
 		  setTarget(nw);
 		}
 EOF
- 
+	
+
+   
 	print CGI::p($header),
 
 		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
@@ -579,27 +636,27 @@ EOF
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
-		CGI::div({}," | ",
-			CGI::a({-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
-				'&nbsp;Manpages&nbsp;',
-			)," | ",
-			CGI::a({-href=>'http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile',-target=>"manpage_window"},
-				'&nbsp;macro list&nbsp;',
-			)," | ",
-			CGI::a({-href=>'http://webwork.maa.org/wiki/Category:Authors',-target=>"wiki_window"},
-				'&nbsp;authoring&nbsp;info&nbsp;&amp; help&nbsp;',
-			)," | ",
-			CGI::a({-href=>'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',-target=>"lab_window",
-			     },
-				'&nbsp;testing&nbsp;lab&nbsp;'
-			)," | ",
-			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"doc_window"},
-				'&nbsp;pod docs&nbsp;',
-			)," | ",
-			CGI::a({-href=>$BUGZILLA,-target=>"bugs_window"},
-				'&nbsp;report problem bugs&nbsp;',
-			)," | ",
-		),
+		CGI::div({},$PG_Editor_Reference_String),
+# 			CGI::a({-href=>'http://webwork.math.rochester.edu/docs/docs/pglanguage/manpages/',-target=>"manpage_window"},
+# 				'&nbsp;Manpages&nbsp;',
+# 			)," | ",
+# 			CGI::a({-href=>'http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/PGmacrosByFile',-target=>"manpage_window"},
+# 				'&nbsp;macro list&nbsp;',
+# 			)," | ",
+# 			CGI::a({-href=>'http://webwork.maa.org/wiki/Category:Authors',-target=>"wiki_window"},
+# 				'&nbsp;authoring&nbsp;info&nbsp;&amp; help&nbsp;',
+# 			)," | ",
+# 			CGI::a({-href=>'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',-target=>"lab_window",
+# 			     },
+# 				'&nbsp;testing&nbsp;lab&nbsp;'
+# 			)," | ",
+# 			CGI::a({-href=>'http://devel.webwork.rochester.edu/doc/cvs/pg_HEAD/',-target=>"doc_window"},
+# 				'&nbsp;pod docs&nbsp;',
+# 			)," | ",
+# 			CGI::a({-href=>$BUGZILLA,-target=>"bugs_window"},
+# 				'&nbsp;report problem bugs&nbsp;',
+# 			)," | ",
+# 		),
 		CGI::p(
 			CGI::textarea(
 				-name => 'problemContents', -default => $problemContents,
