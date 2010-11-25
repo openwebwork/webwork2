@@ -307,7 +307,7 @@ Safe - Compile and execute code in restricted compartments
 
 =head1 SYNOPSIS
 
-  use WWSafe;
+  use Safe;
 
   $compartment = new Safe;
 
