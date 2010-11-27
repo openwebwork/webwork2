@@ -68,6 +68,8 @@ BEGIN {
 		APR::SockAddr->import();
 		require Apache2::Connection;
 		Apache2::Connection->import();
+		require APR::Request::Error;
+		APR::Request::Error->import;
 	}
 }
 
@@ -624,7 +626,7 @@ sub fetchCookie {
 	
 	my $cookie = undef;
 	if (MP2) {
-		use APR::Request::Error;
+		
 		my $jar = undef;
  		eval {
        			$jar = $r->jar; #table of cookies
