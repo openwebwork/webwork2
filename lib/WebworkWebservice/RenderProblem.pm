@@ -34,7 +34,7 @@ BEGIN {
 use strict;
 use sigtrap;
 use Carp;
-use Safe;
+use WWSafe;
 #use Apache;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;

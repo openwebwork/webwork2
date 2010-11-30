@@ -53,7 +53,7 @@ safe compartment into a hash. This hash becomes the course environment.
 use strict;
 use warnings;
 use Carp;
-use Safe;
+use WWSafe;
 use WeBWorK::Utils qw(readFile);
 use WeBWorK::Debug;
 use Opcode qw(empty_opset);

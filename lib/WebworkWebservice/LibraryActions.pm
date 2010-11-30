@@ -17,7 +17,7 @@ use base qw(WebworkWebservice);
 use strict;
 use sigtrap;
 use Carp;
-use Safe;
+use WWSafe;
 #use Apache;
 use WeBWorK::Utils;
 use WeBWorK::CourseEnvironment;
