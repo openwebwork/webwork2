@@ -1,8 +1,10 @@
                                      WeBWorK                                    
                          Online Homework Delivery System                        
-                                   Version 2.4.x                                  
+                                   Version 2.4.9+
+                            	   Branch: system/trunk/webwork2
 
-                    Copyright 2000-2009, The WeBWorK Project
+	        http://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.4.9 
+                    Copyright 2000-2010, The WeBWorK Project
                              http://webwork.maa.org
                               All rights reserved.                              
 
