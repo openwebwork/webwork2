@@ -1580,7 +1580,7 @@ sub body {
 				if ( ref( $pg_results[$probOrder[$i]] ) ) {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
 					foreach ( sortByName(undef, keys %answerHash) ) {
-						my $sAns = $answerHash{$_}->{original_student_ans} || '';
+						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
 						$answerString .= $sAns . "\t";
 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
 					}
