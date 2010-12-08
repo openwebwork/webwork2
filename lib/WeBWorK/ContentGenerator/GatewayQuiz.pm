@@ -2075,7 +2075,7 @@ sub body {
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
 				my $points = ($pv > 1) ? 
-					" (" . $$pv . " points)" : 
+					" (" . $pv . " points)" : 
 					" (1 point)";
 				print CGI::a({-name=>"#$i1"},"");
 				print CGI::strong("Problem $problemNumber."), 
