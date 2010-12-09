@@ -550,10 +550,12 @@ sub DBFieldTable {
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
 	
 	# modify record name if we're dealing with versioned sets
+	my $isVersioned = 0;
 	if ( $recordType eq "set" && defined($MergedRecord) &&
 	     $MergedRecord->assignment_type =~ /gateway/ &&
 	     $MergedRecord->can( "version_id" ) ) {
 		$recordID .= ",v" . $MergedRecord->version_id;
+		$isVersioned = 1;
 	}
 	my $r = $self->r;
 	my @fields = @$fieldsRef;
@@ -570,7 +572,7 @@ sub DBFieldTable {
 					name => "$recordType.$recordID.$field.override",
 					label => "",
 					value => $field,
-					checked => $r->param("$recordType.$recordID.$field.override") || ($mergedValue ne $globalValue ? 1 : 0)
+					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || $isVersioned) ? 1 : 0
 				}) : "",
 				defined $UserRecord ? 
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
