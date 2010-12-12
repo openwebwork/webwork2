@@ -1,4 +1,4 @@
-package Safe;
+package WWSafe;
 
 use 5.003_11;
 use strict;
@@ -307,7 +307,7 @@ Safe - Compile and execute code in restricted compartments
 
 =head1 SYNOPSIS
 
-  use Safe;
+  use WWSafe;
 
   $compartment = new Safe;
 

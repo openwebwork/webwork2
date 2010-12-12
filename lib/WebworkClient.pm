@@ -99,6 +99,38 @@ use warnings;
 #     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
 #     module using XML_RPC.
 
+# To configure the target webwork server
+# two URLs are required
+# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+#    points to the Webservice.pm and Webservice/RenderProblem modules
+#    Is used by the client to send the original XML request to the webservice
+#
+# 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
+#    points to the renderViaXMLRPC.pm module.
+#
+#     This url is placed as form action url when the rendered HTML from the original
+#     request is returned to the client from Webservice/RenderProblem. The client
+#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
+#     pipes it through a local browser.
+#
+#     The browser uses this url to resubmit the problem (with answers) via the standard
+#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+#
+#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
+#     and the webservice.  It interprets the HTML form sent by the browser, 
+#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
+#     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
+#     which in turn passes it back to the browser.
+# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
+#     submitted directly by the browser.  
+#     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
+#     and returns the result to the browser. 
+#     The The client renderProblem.pl script is no longer involved.
+# 4.  Summary: renderProblem.pl is only involved in the first round trip
+#     of the submitted problem.  After that the communication is  between the browser and
+#     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
+#     module using XML_RPC.
+
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -421,6 +453,7 @@ sub formatRenderedProblem {
 	my $XML_URL      = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
+
 
 <html>
 <head>

@@ -184,20 +184,23 @@ associated warnings.
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
 	
+	$warnings = htmlEscape($warnings);
+	$exception = htmlEscape($exception);
+	
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 	$warnings = htmlWarningsList(@warnings);
-	$exception = htmlEscape($exception);
 	my $backtrace = htmlBacktrace(@backtrace);
 	
 	my $admin = ($ENV{SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
 		: "");
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
-	my $method = $r->method;
-	my $uri = $r->uri;
+	my $method = htmlEscape( $r->method  );
+	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
 		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
-		join("", map { "<tr><td><small>$_</small></td><td><small>$headers{$_}</small></td></tr>" } keys %headers);
+		join("", map { "<tr><td><small>" . htmlEscape($_). "</small></td><td><small>" .
+		                htmlEscape($headers{$_}) . " </small></td></tr>" } keys %headers);
 	};
 	
 	return <<EOF;

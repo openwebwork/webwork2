@@ -55,7 +55,7 @@ BEGIN {
 	# PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
 	# future calls have preloaded versions of these large files. This saves a
 	# significant amount of time.
-	$WeBWorK::PG::Local::safeCache = new Safe;
+	$WeBWorK::PG::Local::safeCache = new WWSafe;
 }
 
 sub alarm_handler {
