@@ -1270,6 +1270,12 @@ sub initialize {
 							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 							my $unlabel = $undoLabels{$field}->{$param};
 							$param = $unlabel if defined $unlabel;
+												#protect exploits with source_file
+							if ($field eq 'source_file') {
+								$param =~ s|^/||;       # prevent access to files above template
+								$param =~ s|\.\.||g;    # prevent access to files above template
+							}
+
 							$changed ||= changed($record->$field, $param);
 							$record->$field($param);
 						} else {
@@ -1286,6 +1292,12 @@ sub initialize {
 						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 						my $unlabel = $undoLabels{$field}->{$param};
 						$param = $unlabel if defined $unlabel;
+											#protect exploits with source_file
+						if ($field eq 'source_file') {
+							$param =~ s|^/||;       # prevent access to files above template
+							$param =~ s|\.\.||g;    # prevent access to files above template
+						}
+
 						$changed ||= changed($record->$field, $param);
 						$record->$field($param);
 					}
@@ -1309,6 +1321,12 @@ sub initialize {
 					$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
 					my $unlabel = $undoLabels{$field}->{$param};
 					$param = $unlabel if defined $unlabel;
+					
+					#protect exploits with source_file
+					if ($field eq 'source_file') {
+						$param =~ s|^/||;       # prevent access to files above template
+						$param =~ s|\.\.||g;    # prevent access to files above template
+					}
 					$changed ||= changed($problemRecord->$field, $param);
 					$problemRecord->$field($param);
 				}
@@ -1521,26 +1539,28 @@ sub canChange ($$) {
 
 # helper method that determines if a file is valid and returns a pretty error message
 sub checkFile ($) {
-	my ($self, $file) = @_;
+	my ($self, $filePath) = @_;
 
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	return "No source file specified" unless $file;
-	return "Problem source is drawn from a grouping set" if $file =~ /^group/;
-	if ( $file eq "defaultHeader" ) {
-		$file = $ce->{webworkFiles}{screenSnippets}{setHeader};
+	return "No source filePath specified" unless $filePath;
+	return "Problem source is drawn from a grouping set" if $filePath =~ /^group/;
+	
+
+	if ( $filePath eq "defaultHeader" ) {
+		$filePath = $ce->{webworkFiles}{screenSnippets}{setHeader};
 	} else {
-	#	$file = $ce->{courseDirs}->{templates} . '/' . $file unless $file =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
-		$file = $ce->{courseDirs}->{templates} . '/' . $file ; # only files in template directory can be accessed 
+	#	$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath unless $filePath =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
+		$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath ; # only filePaths in template directory can be accessed 
 	}
     
 	my $text = "This source file ";
 	my $fileError;
-	return "" if -e $file && -f $file && -r $file;
-	return $text . "is not readable!" if -e $file && -f $file;
-	return $text . "is a directory!" if -d $file;
-	return $text . "does not exist!" unless -e $file;
+	return "" if -e $filePath && -f $filePath && -r $filePath;
+	return $text . "is not readable!" if -e $filePath && -f $filePath;
+	return $text . "is a directory!" if -d $filePath;
+	return $text . "does not exist!" unless -e $filePath;
 	return $text . "is not a plain file!";
 }
 
@@ -1832,13 +1852,13 @@ sub body {
 			$guaranteed_set = $setRecord;
 		}
 
-		foreach my $header (@headers) {
+		foreach my $headerType (@headers) {
 
-			my $headerFile = $r->param("set.$setID.$header") || $setRecord->{$header} || $headerDefaults{$header};
+			my $headerFile = $r->param("set.$setID.$headerType") || $setRecord->{$headerType} || $headerType;
 
-			$error{$header} = $self->checkFile($headerFile);
+			$error{$headerType} = $self->checkFile($headerFile);
 
-			unless ($error{$header}) {
+			unless ($error{$headerType}) {
 				my @temp = renderProblems(
 					r=> $r, 
 					user => $db->getUser($userToShow),
@@ -1847,23 +1867,23 @@ sub body {
 					this_set => $this_set,
 					problem_list => [$headerFile],
 				);
-				$header_html{$header} = $temp[0];
+				$header_html{$headerType} = $temp[0];
 			}
 		}
 		
-		foreach my $header (@headers) {
+		foreach my $headerType (@headers) {
 	
 			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
-			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $header, make_local_copy => 1 });
+			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 		
-			my $viewHeaderPage = $urlpath->new(type => $headerModules{$header}, args => { courseID => $courseID, setID => $setID });
+			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 			
 			# this is a bit of a hack; the set header isn't shown
 			#    for gateway tests, and we run into trouble trying to 
 			#    edit/view it in this context, so we don't show this 
 			#    field for gateway tests
-			if ( $header eq 'set_header' && 
+			if ( $headerType eq 'set_header' && 
 		     	     $guaranteed_set->assignment_type =~ /gateway/ ) {
 				print CGI::Tr({}, CGI::td({}, 
 					      [ "Set Header", 
@@ -1875,22 +1895,22 @@ sub body {
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
-					CGI::Tr({}, CGI::td({}, $properties{$header}->{name})) . 
+					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, "Edit it"))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, "View it"))) .
 				CGI::end_table(),
 
 				comboBox({
-					name => "set.$setID.$header",
+					name => "set.$setID.$headerType",
 					request => $r,
-					default => $r->param("set.$setID.$header") || $setRecord->{$header},
+					default => $r->param("set.$setID.$headerType") || $setRecord->{$headerType},
 					multiple => 0,
 					values => ["defaultHeader", @headerFileList],
 					labels => { "defaultHeader" => "Use Default Header File" },
 				}) .
-				($error{$header} ? 
-					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$header}) 
-					: CGI::div({class=> "RenderSolo"}, $header_html{$header}->{body_text})
+				($error{$headerType} ? 
+					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$headerType}) 
+					: CGI::div({class=> "RenderSolo"}, $header_html{$headerType}->{body_text})
 				),
 			]));
 		}
@@ -1998,7 +2018,8 @@ sub body {
 
 	
 			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
-
+            $problemFile =~ s|^/||;
+            $problemFile =~ s|\.\.||g;
 			# warn of repeat problems
 			if (defined $shownYet{$problemFile}) {
 				$repeatFile = "This problem uses the same source file as number " . $shownYet{$problemFile} . ".";
@@ -2018,7 +2039,7 @@ sub body {
 					problem_number=> $problemID,
 					this_set => $this_set,
 					problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
-					problem_list => [$problemRecord->source_file],
+					problem_list => [$problemFile],     #  [$problemRecord->source_file],
 				);
 			}
 

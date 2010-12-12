@@ -45,7 +45,9 @@ BEGIN {
 	$WebworkWebservice::PASSWORD      = 'xmluser';
 	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
 	
-	print "WebworkWebservice: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY, "\n";
+
+	print "WebworkWebservice: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY, " via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
+
 }
 
 

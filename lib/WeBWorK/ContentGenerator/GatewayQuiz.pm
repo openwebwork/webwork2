@@ -84,7 +84,7 @@ sub can_showCorrectAnswers {
 #   at a version are exhausted as well as if it's after the answer date
 # $addOne allows us to count the current submission
 	my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
-	my $maxAttempts = $Set->attempts_per_version();
+	my $maxAttempts = $Set->attempts_per_version() || 0;
 	my $attemptsUsed = $Problem->num_correct + $Problem->num_incorrect + 
 	    $addOne;
 
@@ -713,11 +713,11 @@ sub pre_header_initialize {
 	}
 
 	# note that having $maxAttemptsPerVersion set to an infinite/0 value is
-	#    nonsensical; if we did that, why have versions?
-	my $maxAttemptsPerVersion = $tmplSet->attempts_per_version();
-	my $timeInterval          = $tmplSet->time_interval();
-	my $versionsPerInterval   = $tmplSet->versions_per_interval();
-	my $timeLimit             = $tmplSet->version_time_limit();
+	#    nonsensical; if we did that, why have versions? (might want to do it for one individual?)
+	my $maxAttemptsPerVersion = $tmplSet->attempts_per_version() || 0;
+	my $timeInterval          = $tmplSet->time_interval() || 0;
+	my $versionsPerInterval   = $tmplSet->versions_per_interval() || 0;
+	my $timeLimit             = $tmplSet->version_time_limit() || 0;
 
 	# what happens if someone didn't set one of these?  I think this can
 	# happen if we're handed a malformed set, where the values in the
@@ -727,9 +727,9 @@ sub pre_header_initialize {
 				     $versionsPerInterval eq '');
 
 	# every problem in the set must have the same submission characteristics
-	my $currentNumAttempts    = ( defined($Problem) ? 
+	my $currentNumAttempts    = ( defined($Problem) && $Problem->num_correct ) ? 
 				      $Problem->num_correct() +
-				      $Problem->num_incorrect() : 0 );
+				      $Problem->num_incorrect() : 0 ;
 
 	# $maxAttempts turns into the maximum number of versions we can create;
 	#    if $Problem isn't defined, we can't have made any attempts, so it

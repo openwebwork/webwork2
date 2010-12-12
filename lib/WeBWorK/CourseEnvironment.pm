@@ -113,7 +113,7 @@ sub new {
 		$seedVars{courseName}     = $rest[3];
 	}
 	
-	my $safe = Safe->new;
+	my $safe = WWSafe->new;
 	
 	# seed course environment with initial values
 	while (my ($var, $val) = each %seedVars) {

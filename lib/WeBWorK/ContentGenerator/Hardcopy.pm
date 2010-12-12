@@ -984,6 +984,8 @@ sub write_problem_tex {
 			set_id => $MergedSet->set_id,
 			problem_id => 0,
 			source_file => $pgFile,
+			num_correct   => 0,
+			num_incorrect => 0,
 		);
 		die "newUserProblem failed -- WTF?" unless $MergedProblem; # this should never happen
 	} else {
@@ -995,10 +997,12 @@ sub write_problem_tex {
 	# (eventually, we'd like to be able to use the same code as Problem)
 	my $versionName = $MergedSet->set_id . 
 		(( $versioned ) ?  ",v" . $MergedSet->version_id : '');
+
 	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
 	my $printStudentAnswers = $r->param("printStudentAnswers") || 0;
 	my $showHints           = $r->param("showHints")          || 0;
 	my $showSolutions       = $r->param("showSolutions")      || 0;
+
 	unless( ( $authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or
 		  ( time > $MergedSet->answer_date or 
 		    ( $versioned && 
@@ -1027,7 +1031,9 @@ sub write_problem_tex {
 		};
 
 	if ( $versioned && $MergedProblem->problem_id != 0 ) {
+
 		$transOpts->{QUIZ_PREFIX} = 'Q' . sprintf("%04d",$MergedProblem->problem_id()) . '_';
+
 	}
 	my $formFields = { };
 	if ( $showCorrectAnswers ||$printStudentAnswers ) { 
@@ -1130,10 +1136,8 @@ sub write_problem_tex {
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
-			
 			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
 		}
-
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
 	}

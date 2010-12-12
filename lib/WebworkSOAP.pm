@@ -1084,4 +1084,91 @@ sub delete_user_set {
 }
 
 
+###########################################
+# grading utilties -- to be moved to Utils::Grades
+############################################
+
+############################################
+# get_wwassignment_grade_for_one ($db $userID $setID);
+#input  $userID, $setID (or a UserSet record)?
+#output set grade for a homework problem or maximum grade for a gateway problem with several set versions
+############################################
+sub get_wwassignment_grade_for_one_user{
+	my($db, $userID, $setID) = @_;
+	my $user_set = $db->getMergedSet($userID,$setID);
+	print LOG "user $userID set $setID user_set ".ref($user_set)."\n";
+	return " " unless ref($user_set);  # return a blank grade if there is no user_set
+	warn " user $userID $setID ".ref($user_set)."\n";
+	my $setIsVersioned = ( defined($user_set->assignment_type) && $user_set->assignment_type =~ /gateway/)?1:0;
+	my @setVersions=();
+	if ( $setIsVersioned ) { 
+		my @vList = $db->listSetVersions($userID,$setID);
+		# we have to have the merged set versions to 
+		#    know what each of their assignment types 
+		#    are (because proctoring can change)
+		@setVersions = $db->getMergedSetVersions( map {[$userID, $setID, $_]} @vList );
+
+		# add the set versions to our list of sets
+# 		foreach ( @setVersions ) { 
+# 			$setsByID{$_->set_id . ",v" . $_->version_id} = $_; 
+# 		}
+# 		# flag the existence of set versions for this set
+# 		$setVersionsByID{$setName} = [ @vList ];
+# 		# and save the set names for display
+# 		push( @allSetIDs, $setName );
+# 		push( @allSetIDs, map { "$setName,v$_" } @vList );
+
+	} else {
+# 		push( @allSetIDs, $setName );
+# 		$setVersionsByID{$setName} = "None";
+	}
+	my $grade;
+	if ($setIsVersioned) {
+		if (@setVersions) {
+		    $grade =0;
+		    foreach my $setVersion (@setVersions) {  # get highest grade among versions
+				#print LOG "getting set $userID $setID version:".ref($setVersion)."\n";
+				my $current_grade = get_set_grade_for_UserSet($db, $setVersion);
+				$grade = $current_grade if $current_grade > $grade;
+				
+			}
+				
+		} else {
+			$grade = " ";
+		}
+	} else {  # not versioned
+	    $grade = get_set_grade_for_UserSet($db, $user_set);	
+	}
+	$grade;   # return grade
+}
+	
+############################################
+# get_set_grade_for_UserSet ($db, $user_set);
+#input  $userID, $setID (UserSet record);
+#output set grade for a homework problem or a single  set version of a gateway quiz
+############################################
+
+sub get_set_grade_for_UserSet{
+	my $db = shift;
+	my $user_set = shift;
+	warn "get_set_grade_for_UserSet(db, user_set); an argument is missing db: $db user_set $user_set" 
+	    unless ref($db) =~ /DB/  and ref($user_set) =~/Set/;
+	my $setIsVersioned = ( defined( $user_set->assignment_type() ) 
+	     && $user_set->assignment_type() =~ /gateway/ )? 1:0;
+	my @problemData=();
+	print LOG "get_set_grade_for_UserSet: getting set ".$user_set->set_id." "." for ".$user_set->user_id."\n";
+	if ($setIsVersioned) {	
+		@problemData = $db->getAllMergedProblemVersions( $user_set->user_id, $user_set->set_id, $user_set->version_id ) if $user_set->can('version_id');
+	} else {
+		@problemData = $db->getAllMergedUserProblems($user_set->user_id, $user_set->set_id);
+	}
+        
+        my $grade = 0;
+        for(my $i=0;$i<@problemData;$i++) {
+                #print LOG "$userID problem Data",join(" ", %{$problemData[$i]}),"\n\n";
+                $grade += ($problemData[$i]->status)*($problemData[$i]->value);
+                #print LOG "grade is $grade\n";
+        }
+	return $grade;
+}
 1;
