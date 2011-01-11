@@ -593,8 +593,9 @@ the datetime is converted from the server's timezone to the timezone specified.
 sub formatDateTime($;$) {
 	my ($dateTime, $display_tz) = @_;
 	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
-	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz and  $dateTime;
-	$display_tz ||= "local";
+	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
+	$dateTime = $dateTime ||0;  # do our best to provide default values
+	$display_tz ||= "local";    # do our best to provide default vaules
 	
 	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
 	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
@@ -835,7 +836,7 @@ sub decodeAnswers($) {
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
 	if ($@) {
-		warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away for permanently this question.   $@";
+		warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
 		return ();
 	} else {
 		return @{$array_ref};
