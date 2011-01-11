@@ -727,9 +727,10 @@ sub pre_header_initialize {
 				     $versionsPerInterval eq '');
 
 	# every problem in the set must have the same submission characteristics
-	my $currentNumAttempts    = ( defined($Problem) && $Problem->num_correct ) ? 
+	my $currentNumAttempts    = ( defined($Problem) && 
+				      $Problem->num_correct() ne '' ) ? 
 				      $Problem->num_correct() +
-				      $Problem->num_incorrect() : 0 ;
+				      $Problem->num_incorrect() : 0;
 
 	# $maxAttempts turns into the maximum number of versions we can create;
 	#    if $Problem isn't defined, we can't have made any attempts, so it
