@@ -33,7 +33,7 @@ use String::ShellQuote;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
-use WeBWorK::Utils::DBUpgrade;
+#use WeBWorK::Utils::DBUpgrade;
 use PGcore; # for not_null() macro
 
 our @EXPORT    = ();
@@ -46,6 +46,7 @@ our @EXPORT_OK = qw(
 	archiveCourse
 	unarchiveCourse
 	dbLayoutSQLSources
+	initNonNativeTables
 
 );
 
@@ -941,9 +942,49 @@ sub unarchiveCourseHelper {
 	return $result;
 }
 
-=back
+=item initNonNativeTables($ce, $db, $dbLayoutName, %options)
+
+Perform database-layout specific operations for initializing non-native database tables
+that are not associated with a particular course
 
 =cut
+
+sub initNonNativeTables {
+	my($ce, $dbLayoutName, %options) = @_;
+	my $str = '';
+	# Create a database handler
+	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	
+	 # lock database
+	 
+	# Find the names of the non-native database tables 
+	foreach my $table (sort keys %$db) {
+	    next unless $db->{$table}{params}{non_native}; # only look at non-native tables
+	    my $database_table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
+	    #warn "table is $table";
+	    #warn "checking $database_table_name";
+	    my $database_table_exists = ($db->{$table}->tableExists) ? 1:0;
+	    unless ($database_table_exists ) { # exists means the table can be described;
+	    	my $schema_obj = $db->{$table};
+	    	if ($schema_obj->can("create_table")) {
+			    #warn "creating table $database_table_name  with object $schema_obj";
+				$schema_obj->create_table;
+				$str .= "Table '$table' created as '$database_table_name' in database.".CGI::br();
+			} else {
+				# warn "Skipping creation of '$table' table: no create_table method\n";
+			}
+	    
+	    }
+	   
+	}
+	
+	# unlock database
+	$str;
+
+
+}
+
+
 
 ################################################################################
 # utilities

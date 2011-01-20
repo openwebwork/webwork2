@@ -77,12 +77,7 @@ sub DESTROY {
 	$self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
-################################################################################
-=item  $CIchecker->checkCourseDirectories($courseName)
-
-Checks the course files and directories to make sure they exist and have the correct permissions.
-
-=cut
+##################################################################
 
 
 
@@ -179,7 +174,6 @@ sub updateCourseTables {
 		# next if $table =~ /^_/; # skip non-table self fields (none yet)
 		# warn "not a non-table self field";
 		next if $db->{$schema_table_name}{params}{non_native}; # skip non-native tables
-		#warn "not a non_native table";
 		my $schema_obj = $db->{$schema_table_name};
 		my $database_table_name = (exists $db->{$schema_table_name}->{params}->{tableOverride})? 
 		                   $db->{$schema_table_name}->{params}->{tableOverride}:$schema_table_name;
@@ -366,10 +360,10 @@ sub updateCourseDirectories {
 # Database utilities -- borrowed from DBUpgrade.pm ??use or modify??? --MEG
 ##############################################################################
 
-sub lock_database {
+sub lock_database {   # lock named 'webwork.dbugrade' times out after 10 seconds
 	my $self =shift;
 	my $dbh = $self->dbh; 
-	my ($lock_status) = $dbh->selectrow_array("SELECT GET_LOCK('dbupgrade', 10)");
+	my ($lock_status) = $dbh->selectrow_array("SELECT GET_LOCK('webwork.dbupgrade', 10)");
 	if (not defined $lock_status) {
 		die "Couldn't obtain lock because an error occurred.\n";
 	}
@@ -382,7 +376,7 @@ sub lock_database {
 sub unlock_database {
 	my $self =shift;
 	my $dbh = $self->dbh;
-	my ($lock_status) = $dbh->selectrow_array("SELECT RELEASE_LOCK('dbupgrade')");
+	my ($lock_status) = $dbh->selectrow_array("SELECT RELEASE_LOCK('webwork.dbupgrade')");
 	if (not defined $lock_status) {
 		# die "Couldn't release lock because the lock does not exist.\n";
 	}elsif ($lock_status) {
