@@ -288,6 +288,22 @@ sub bind {
 	return $stmt;
 }
 
+####################################################
+# checking Tables
+####################################################
+sub tableExists {
+	my $self = shift;
+	my $stmt = $self->_exists_table_stmt;
+	my $result = eval { $self->dbh->do($stmt); };
+	( caught WeBWorK::DB::Ex::TableMissing ) ? 0:1;
+}
+
+sub _exists_table_stmt {
+	my $self = shift;	
+	my $sql_table_name = $self->sql_table_name;
+	return "Describe `$sql_table_name` ";
+}
+
 ################################################################################
 # null implementations (to provide slightly nicer error messages)
 ################################################################################
