@@ -187,7 +187,7 @@ sub htmlMessage($$$@) {
 	$warnings = htmlEscape($warnings);
 	$exception = htmlEscape($exception);
 	
-	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
+	my @warnings = defined $warnings ? split m|&lt;br /&gt;|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
 	
