@@ -102,6 +102,15 @@ $dbLayouts{sql_single} = {
                         non_native => 1,
                 },
         },
+        depths => {
+				record => "WeBWorK::DB::Record::Depths",
+				schema => "WeBWorK::DB::Schema::NewSQL::Std",
+				driver => "WeBWorK::DB::Driver::SQL",
+				source => $database_dsn,
+				params => { %sqlParams,
+					non_native => 1,
+		},
+	},
 	password => {
 		record => "WeBWorK::DB::Record::Password",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
