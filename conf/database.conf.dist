@@ -90,7 +90,7 @@ $dbLayouts{sql_single} = {
                 driver => "WeBWorK::DB::Driver::SQL",
                 source => $database_dsn,
                 params => { %sqlParams,
-#                        non_native => 1,
+                        non_native => 1,
                 },
         },
         location_addresses => {
@@ -99,7 +99,7 @@ $dbLayouts{sql_single} = {
                 driver => "WeBWorK::DB::Driver::SQL",
                 source => $database_dsn,
                 params => { %sqlParams,
-#                        non_native => 1,
+                        non_native => 1,
                 },
         },
         depths => {
@@ -108,7 +108,7 @@ $dbLayouts{sql_single} = {
 				driver => "WeBWorK::DB::Driver::SQL",
 				source => $database_dsn,
 				params => { %sqlParams,
-#					non_native => 1,
+					non_native => 1,
 		},
 	},
 	password => {
