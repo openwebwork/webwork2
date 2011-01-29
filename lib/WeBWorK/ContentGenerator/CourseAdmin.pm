@@ -70,9 +70,9 @@ sub pre_header_initialize {
     # Check that the non-native tables are present in the database
     # These are the tables which are not course specific
     
-    my $table_update_result = initNonNativeTables($ce, $ce->{dbLayoutName});
+    #my $table_update_result = initNonNativeTables($ce, $ce->{dbLayoutName});
     
-    $self->addgoodmessage(CGI::p("$table_update_result")) if $table_update_result;
+    #$self->addgoodmessage(CGI::p("$table_update_result")) if $table_update_result;
     
     
 	## if the user is asking for the downloaded database...
