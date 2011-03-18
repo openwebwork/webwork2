@@ -1272,8 +1272,12 @@ sub initialize {
 							$param = $unlabel if defined $unlabel;
 												#protect exploits with source_file
 							if ($field eq 'source_file') {
-								$param =~ s|^/||;       # prevent access to files above template
+								# add message
+								if ( $param =~ /\.\./ || $param =~ /^\// ) {
+									$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+								}
 								$param =~ s|\.\.||g;    # prevent access to files above template
+								$param =~ s|^/||;       # prevent access to files above template
 							}
 
 							$changed ||= changed($record->$field, $param);
@@ -1294,8 +1298,12 @@ sub initialize {
 						$param = $unlabel if defined $unlabel;
 											#protect exploits with source_file
 						if ($field eq 'source_file') {
-							$param =~ s|^/||;       # prevent access to files above template
+							# add message
+							if ( $param =~ /\.\./ || $param =~ /^\// ) {
+								$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+							}
 							$param =~ s|\.\.||g;    # prevent access to files above template
+							$param =~ s|^/||;       # prevent access to files above template
 						}
 
 						$changed ||= changed($record->$field, $param);
@@ -1324,8 +1332,12 @@ sub initialize {
 					
 					#protect exploits with source_file
 					if ($field eq 'source_file') {
-						$param =~ s|^/||;       # prevent access to files above template
+						# add message
+						if ( $param =~ /\.\./ || $param =~ /^\// ) {
+							$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+						}
 						$param =~ s|\.\.||g;    # prevent access to files above template
+						$param =~ s|^/||;       # prevent access to files above template
 					}
 					$changed ||= changed($problemRecord->$field, $param);
 					$problemRecord->$field($param);
