@@ -647,8 +647,13 @@ $authen{ldap_options} = {
         searchDN => "cn=search,DC=youredu,DC=edu",
         bindPassword =>  "password",
 
-	# If LDAP rejects password, check it against the WeBWorK password database
-	failover => 1,
+	# If failover = "all", then all LDAP failures will be checked
+	# against the WeBWorK database. If failover = "local", then only
+	# users who don't exist in LDAP will be checked against the WeBWorK
+	# database. If failover = 0, then no attempts will be checked
+	# against the WeBWorK database. failover = 1 is equivalent to
+	# failover = "all".
+	failover => "all",
 };
 
 ################################################################################

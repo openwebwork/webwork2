@@ -30,12 +30,13 @@ sub checkPassword {
 	debug("LDAP module is doing the password checking.\n");
 	
 	# check against LDAP server
-	return 1 if $self->ldap_authen_uid($userID, $possibleClearPassword);
+	my $ret = $self->ldap_authen_uid($userID, $possibleClearPassword);
+	return 1 if ($ret == 1);
 
     #return 0 if ($userID !~ /admin/);
 	
 	# optional: fail over to superclass checkPassword
-	if ($failover) {
+	if (($failover eq "all" or $failover == 1) || ($failover eq "local" and $ret < 0)) {
 		$self->write_log_entry("AUTH LDAP: authentication failed, deferring to superclass");
 		return $self->SUPER::checkPassword($userID, $possibleClearPassword);
 	}
@@ -95,7 +96,7 @@ sub ldap_authen_uid {
 	}
 	if ($msg->count == 0) {
 		$self->write_log_entry("AUTH LDAP: UID not found");
-		return 0;
+		return -1;
 	}
 	my $dn = $msg->shift_entry->dn;
 	if (not defined $dn) {
