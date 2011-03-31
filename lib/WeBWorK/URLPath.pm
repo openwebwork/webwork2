@@ -76,6 +76,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
+ instructor_set_maker2               /$courseID/instructor/setmaker2/
+ instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
+ instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
  instructor_compare                  /$courseID/instructor/compare/
  
@@ -268,7 +271,7 @@ our %pathTypes = (
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_set_maker instructor_compare
+			instructor_problem_editor instructor_set_maker instructor_set_maker2 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
@@ -386,6 +389,33 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
+	},
+	instructor_set_maker2 => {
+		name    => 'Library Browser 2',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmaker2/|,
+		capture => [ qw// ],
+		produce => 'setmaker2/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker2',
+	},
+	instructor_get_target_set_problems => {
+		name    => 'Get Target Set Problems',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^GetTargetSetProblems/|,
+		capture => [ qw// ],
+		produce => 'GetTargetSetProblems/',
+		display => 'WeBWorK::ContentGenerator::Instructor::GetTargetSetProblems',
+	},
+	instructor_get_library_set_problems => {
+		name    => 'Get Library Set Problems',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^GetLibrarySetProblems/|,
+		capture => [ qw// ],
+		produce => 'GetLibrarySetProblems/',
+		display => 'WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems',
 	},
 	instructor_file_manager => {
 		name    => 'File Manager',
