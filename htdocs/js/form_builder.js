@@ -357,17 +357,17 @@ function stringIsInArray(string, array){
   return false;
 }
 
-//returns the first instance of a class
-function getChildByClass(class, el){
+//returns the first instance of a myClass
+function getChildBymyClass(myClass, el){
   var children = el.childNodes;
   var result = false;
   for(var i = 0; i < children.length; i++){
-    if(hasClassName(children[i], class)){
-      console.log("Found "+children[i].className);
+    if(hasmyClassName(children[i], myClass)){
+      console.log("Found "+children[i].myClassName);
       result = children[i];
       break;
     } else if(children[i].childNodes.length > 0){
-      result = getChildByClass(class, children[i]);
+      result = getChildBymyClass(myClass, children[i]);
       if(result){
         break;
       }
