@@ -724,6 +724,7 @@ sub links {
 				print CGI::end_li(); # end Homework Set Editor
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>"Library Browser", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker2", text=>"Library Browser 2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);

@@ -134,9 +134,9 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme)',
-		  doc2 => 'There are currently four themes (or skins) to choose from: ur, math, math2 and moodle.  The theme
+		  doc2 => 'There are currently five themes (or skins) to choose from: ur, math, math2, dgage and moodle.  The theme
 specifies a unified look and feel for the WeBWorK course web pages.',
-		  values => [qw(math math2 ur moodle union)],
+		  values => [qw(math math2 ur dgage moodle union)],
 		  type => 'popuplist'},
 		{ var => 'sessionKeyTimeout',
 		  doc => 'Inactivity time before a user is required to login again',
