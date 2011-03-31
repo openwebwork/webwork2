@@ -963,18 +963,22 @@ sub make_top_row {
 		#            -value=>"Clear Problem Display"),
 	  #);
 	  
-	  print "<div class='inforPanel' style='float:left;'>
-	    <p style='margin-bottom:0'>Browse:</p>
-	    <select id='library_selector' size=4 onchange='changeLibrary(\"mainform\", \"".$r->uri."\", this, \"view_problems_spinner\")'>";
-	    foreach my $lib (sort(keys(%problib))) {
-	      print "<option value=\'browse_$lib\'>".$problib{$lib}."</option>"
-	    }
-	      print "<option value=\'browse_npl_library\'>National Problem Library</option>
-	            <option value=\'browse_local\'>Local Problems</option>
-	            <option value=\'edit_mysets\'>From this Course</option>
-	            <option value=\'browse_setdefs\'>Set Definition Files</option>";
+	print "<div class='inforPanel' style='float:left;'>
+	<p style='margin-bottom:0'>Browse:</p>
+	<select id='library_selector' size=4 onchange='changeLibrary(\"mainform\", \"".$r->uri."\", this, \"view_problems_spinner\")'>"
+	;
+	print "<option value=\'browse_npl_library\'>National Problem Library</option>
+			<option value=\'browse_local\'>Local Problems</option>
+			<option value=\'edit_mysets\'>From this Course</option>
+			<option value=\'browse_setdefs\'>Set Definition Files</option>"
+	;
+	foreach my $lib (sort(keys(%problib))) {
+	  print "<option value=\'browse_$lib\'>".$problib{$lib}."</option>"
+	}
+	
 	print "</select>
-	      </div>";
+	  </div>"
+	;
 	  
 }
 
