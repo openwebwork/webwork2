@@ -358,16 +358,16 @@ function stringIsInArray(string, array){
 }
 
 //returns the first instance of a myClass
-function getChildBymyClass(myClass, el){
+function getChildByClass(myClass, el){
   var children = el.childNodes;
   var result = false;
   for(var i = 0; i < children.length; i++){
-    if(hasmyClassName(children[i], myClass)){
-      console.log("Found "+children[i].myClassName);
+    if(hasClassName(children[i], class)){
+      console.log("Found "+children[i].className);
       result = children[i];
       break;
     } else if(children[i].childNodes.length > 0){
-      result = getChildBymyClass(myClass, children[i]);
+      result = getChildByClass(myClass, children[i]);
       if(result){
         break;
       }
