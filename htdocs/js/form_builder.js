@@ -362,7 +362,7 @@ function getChildByClass(myClass, el){
   var children = el.childNodes;
   var result = false;
   for(var i = 0; i < children.length; i++){
-    if(hasClassName(children[i], class)){
+    if(hasClassName(children[i], myClass)){
       console.log("Found "+children[i].className);
       result = children[i];
       break;
