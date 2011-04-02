@@ -7,7 +7,7 @@ package WebworkSOAP::Classes::GlobalSet;
         _ATTR open_date                 $string open_date
         _ATTR due_date                  $string due_date
         _ATTR answer_date               $string answer_date
-        _ATTR published                 $string published
+        _ATTR visible                   $string visible
         _ATTR enable_reduced_scoring    $string enable_reduced_scoring
         _ATTR assignment_type           $string assignment_type
         _ATTR attempts_per_version      $string attempts_per_version
@@ -29,7 +29,7 @@ sub new() {
         $self->{open_date} = SOAP::Data->type( 'string', $data->open_date );
         $self->{due_date} = SOAP::Data->type( 'string', $data->due_date );
         $self->{answer_date} = SOAP::Data->type( 'string', $data->answer_date );
-        $self->{published} = SOAP::Data->type( 'string', $data->published );
+        $self->{visible} = SOAP::Data->type( 'string', $data->visible );
         $self->{enable_reduced_scoring} = SOAP::Data->type( 'string', $data->enable_reduced_scoring );
         $self->{assignment_type} = SOAP::Data->type( 'string', $data->assignment_type );
         $self->{attempts_per_version} = SOAP::Data->type( 'string', $data->attempts_per_version );

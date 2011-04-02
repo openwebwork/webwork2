@@ -509,6 +509,10 @@ sub checkDates {
 	
 	my ($open_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
+    unless ($answer_date && $due_date && $open_date) {
+    	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
+    	 due date |$due_date|, open_date |$open_date|");
+	}
 	if ($answer_date < $due_date || $answer_date < $open_date) {		
 		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
 		$error = 1;

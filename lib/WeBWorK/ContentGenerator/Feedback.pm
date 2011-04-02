@@ -423,7 +423,7 @@ sub format_userset {
 	$result .= "Open date:                 " . $self->formatDateTime($Set->open_date, $tz). "\n";
 	$result .= "Due date:                  " . $self->formatDateTime($Set->due_date, $tz). "\n";
 	$result .= "Answer date:               " . $self->formatDateTime($Set->answer_date, $tz) . "\n";
-	$result .= "Published:                 " . ($Set->published ? "yes" : "no") . "\n";
+	$result .= "Visible:                   " . ($Set->visible ? "yes" : "no") . "\n";
 	$result .= "Assignment type:           " . $Set->assignment_type . "\n";
 	if ($Set->assignment_type =~ /gateway/) {
 		$result .= "Attempts per version:      " . $Set->assignment_type . "\n";

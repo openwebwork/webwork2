@@ -27,8 +27,8 @@ use warnings;
 
 BEGIN { 
 	__PACKAGE__->_fields(
-		location_id => { type=>"TINYBLOB NOT NULL", key=>1 },
-		ip_mask     => { type=>"TEXT" },
+		location_id => { type=>"TINYBLOB NOT NULL", key=> 1 },
+		ip_mask     => { type=>"VARCHAR(255)", key=> 1 },
 	);
 }
 

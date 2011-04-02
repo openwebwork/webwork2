@@ -29,9 +29,10 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
+#use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
-
+use WeBWorK::Utils::Grades qw/list_set_versions/;
+use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
@@ -385,37 +386,38 @@ sub displaySets {
 	else {@myUsers = @userRecords;}
 	foreach my $studentRecord (@myUsers)   {
 		next unless ref($studentRecord);
-		my $student = $studentRecord->user_id;
+		my $studentName = $studentRecord->user_id;
 		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next unless $ce->status_abbrev_has_behavior($studentRecord->status, "include_in_stats");
 		$number_of_active_students++;
 
 # build list of versioned sets for this student user
-		my @allSetNames = ();
-		my $notAssignedSet = 0;
-		if ( $setIsVersioned ) {
-			my @setVersions = $db->listSetVersions($student, $setName);
-			@allSetNames = map { "$setName,v$_" } @setVersions;
-			# if there aren't any set versions, is it because
-			#    the user isn't assigned the set (e.g., is a 
-			#    proctor), or because the user hasn't completed
-			#    any versions?
-			if ( ! @setVersions ) {
-				$notAssignedSet = 1 if (! $db->existsUserSet($student,$setName));
-			}
-
-		} else {
-			@allSetNames = ( "$setName" );
-		}
-
+# 		my @allSetNames = ();
+# 		my $notAssignedSet = 0;
+# 		if ( $setIsVersioned ) {
+# 			my @setVersions = $db->listSetVersions($studentName, $setName);
+# 			@allSetNames = map { "$setName,v$_" } @setVersions;
+# 			# if there aren't any set versions, is it because
+# 			#    the user isn't assigned the set (e.g., is a 
+# 			#    proctor), or because the user hasn't completed
+# 			#    any versions?
+# 			if ( ! @setVersions ) {
+# 				$notAssignedSet = 1 if (! $db->existsUserSet($studentName,$setName));
+# 			}
+# 
+# 		} else {
+# 			@allSetNames = ( "$setName" );
+# 		}
+        my( $ra_allSetVersionNames, $notAssignedSet) = list_set_versions($db, $studentName, $setName, $setIsVersioned);
+        my @allSetVersionNames = @{$ra_allSetVersionNames};
+        
 		# for versioned sets, we might be keeping only the high score
 		my $maxScore = -1;
 		my $max_hash = {};
 
-		foreach my $sN ( @allSetNames ) {
+		foreach my $setName ( @allSetVersionNames ) {
 
 			my $status          = 0;
-#			my $attempted       = 0;
 			my $longStatus      = '';
 			my $string          = '';
 			my $twoString       = '';
@@ -423,127 +425,180 @@ sub displaySets {
 			my $total           = 0;
 			my $total_num_of_attempts_for_set = 0;
 			my %h_problemData   = ();
-			my $probNum         = 0;
-			my $act_as_student_url = '';
-		
-			debug("Begin obtaining problem records for user $student set $setName");
-		
-			# DBFIXME: to collect the problem records, we have 
-			#    to know which merge routines to call.  Should 
-			#    this really be an issue here?  That is, 
-			#    shouldn't the database deal with it invisibly 
-			#    by detecting what the problem types are?
-			# DBFIXME sort in database
+			my $num_of_attempts;
+			my $num_of_problems;
+			
+			my $set;
 			my $userSet;
-			my @problemRecords = ();
-			if ( $setIsVersioned ) {
-				my ($setN,$vNum) = ($sN =~ /(.+),v(\d+)$/);
-				@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedProblemVersions( $student, $setN, $vNum );
+            if ( $setIsVersioned ) {
+				my ($setN,$vNum) = ($setName =~ /(.+),v(\d+)$/);
 				# we'll also need information from the set
 				#    as we set up the display below, so get
 				#    the merged userset as well
-				$userSet = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
-
+				$set = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
+				$userSet = $set;
+				$setName = $setN;
 			} else {
-				@problemRecords = sort {$a->problem_id <=> $b->problem_id} $db->getAllMergedUserProblems( $student, $sN );
+			    $set = $db->getMergedSet( $studentName, $setName );
+			
 			}
-			debug("End obtaining problem records for user $student set $sN");
-			my $num_of_problems = @problemRecords;
-			$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
-			########################################
-			# Notes for factoring the calculation in this loop.
-			#
-			# Inputs include:
-			#   @problemRecords  
-			# returns
-			#   $num_of_attempts
-			#   $status
-			# updates
-			#   $number_of_students_attempting_problem{$probID}++;
-			#   @{ $attempts_list_for_problem{$probID} }   
-			#   $number_of_attempts_for_problem{$probID}
-			#   $total_num_of_attempts_for_set
-			#   $correct_answers_for_problem{$probID}   
-			#    
-			#   $string (formatting output)
-			#   $twoString (more formatted output)
-			#   $longtwo (a combination of $string and $twostring)
-			#   $total
-			#   $totalRight
-			###################################
-   
-			foreach my $problemRecord (@problemRecords) {
-				next unless ref($problemRecord);
-				# warn "Can't find record for problem $prob in set $setName for $student";
-				# FIXME check the legitimate reasons why a student record might not be defined
-				###########################################
-				# Grab data from the database
-				###########################################
-				# It's possible that 
-				# $problemRecord->num_correct or 
-				# $problemRecord->num_correct
-				# or $problemRecord->status is an empty 
-				# or blank string instead of 0.  
-				# The || clause fixes this and prevents 
-				# warning messages in the comparisons below.
-			
-				my $probID          = $problemRecord->problem_id;
-				my $attempted       = $problemRecord->attempted;
-				my $num_correct     = $problemRecord->num_correct     || 0;
-				my $num_incorrect   = $problemRecord->num_incorrect   || 0;
-				my $num_of_attempts = $num_correct + $num_incorrect;
-				# initialize the number of correct answers 
-				# for this problem if the value has not been 
-				# defined.
-				$correct_answers_for_problem{$probID} = 0 
-					unless defined($correct_answers_for_problem{$probID});
+		     #FIXME -- this seems like over kill -- perhaps we only need to pass in the set_id.
+		     # that is the only aspect of $set that is used in grade set.
+		     # the problem_random order sequence is used in the corresponding routine in Grades.pm
+		     
+		    unless ( ref($set) ) {
+		    	$set = new WeBWorK::DB::Record::UserSet;
+		    	$set->set_id($setName);
+		    }
+		    
+           ( $status, 
+             $longStatus, 
+             $string,
+             $twoString, 
+             $totalRight,
+             $total, 
+             $num_of_attempts, 
+             $num_of_problems) = grade_set( $db, $set, $setName, $studentName, $setIsVersioned,
+									    \%number_of_students_attempting_problem,
+									    \%attempts_list_for_problem,
+										\%number_of_attempts_for_problem,
+										\%h_problemData,
+										\$total_num_of_attempts_for_set,
+										\%correct_answers_for_problem,
+						       );
+			my $probNum         = 0;
+			my $act_as_student_url = '';
 
-				## This doesn't work - Fix it
-				my $probValue = $problemRecord->value;
-				# set default problem value here
-				# FIXME?? set defaults here?
-				$probValue = 1 unless defined($probValue) and 
-					$probValue ne "";  
-			
-				my $status  = $problemRecord->status || 0;
 
-				# sanity check that the status (score) is 
-				# between 0 and 1
-				my $valid_status = ($status>=0 && $status<=1)?1:0;
+# 		
+# 			# add on the scores for this problem
+# 			if (defined($attempted) and $attempted) {
+# 				$number_of_students_attempting_problem{$probID}++;
+# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+# 				$h_problemData{$probID}                               = $num_incorrect;
+# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
+# 				$correct_answers_for_problem{$probID}                += $status;
+# 			}
 
-				###########################################
-				# Determine the string $longStatus which 
-				# will display the student's current score
-				###########################################
-				my $longStatus = '';
-				if (!$attempted){
-					$longStatus     = '.';
-				} elsif   ($valid_status) {
-					$longStatus     = int(100*$status+.5);
-					$longStatus='C' if ($longStatus==100);
-				} else	{
-					$longStatus 	= 'X';
-				}
-			
-				$string     .= threeSpaceFill($longStatus);
-				$twoString  .= threeSpaceFill($num_incorrect);
-
-				$total      += $probValue;
-				$totalRight += round_score($status*$probValue) 
-					if $valid_status;
-			
-				# add on the scores for this problem
-				if (defined($attempted) and $attempted) {
-					$number_of_students_attempting_problem{$probID}++;
-					push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-					$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-					$h_problemData{$probID}                               = $num_incorrect;
-					$total_num_of_attempts_for_set                       += $num_of_attempts;
-					$correct_answers_for_problem{$probID}                += $status;
-				}
-			
-			}  # end of problem record loop
-
+# 
+# 			# DBFIXME: to collect the problem records, we have 
+# 			#    to know which merge routines to call.  Should 
+# 			#    this really be an issue here?  That is, 
+# 			#    shouldn't the database deal with it invisibly 
+# 			#    by detecting what the problem types are?
+# 			# DBFIXME sort in database
+# 			my $userSet;
+# 			my @problemRecords = ();
+# 			if ( $setIsVersioned ) {
+# 				my ($setN,$vNum) = ($sN =~ /(.+),v(\d+)$/);
+# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedProblemVersions( $student, $setN, $vNum );
+# 				# we'll also need information from the set
+# 				#    as we set up the display below, so get
+# 				#    the merged userset as well
+# 				$userSet = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
+# 
+# 			} else {
+# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id} $db->getAllMergedUserProblems( $student, $sN );
+# 			}
+# 			debug("End obtaining problem records for user $student set $sN");
+# 			my $num_of_problems = @problemRecords;
+# 			$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
+# 			########################################
+# 			# Notes for factoring the calculation in this loop.
+# 			#
+# 			# Inputs include:
+# 			#   @problemRecords  
+# 			# returns
+# 			#   $num_of_attempts
+# 			#   $status
+# 			# updates
+# 			#   $number_of_students_attempting_problem{$probID}++;
+# 			#   @{ $attempts_list_for_problem{$probID} }   
+# 			#   $number_of_attempts_for_problem{$probID}
+# 			#   $total_num_of_attempts_for_set
+# 			#   $correct_answers_for_problem{$probID}   
+# 			#    
+# 			#   $string (formatting output)
+# 			#   $twoString (more formatted output)
+# 			#   $longtwo (a combination of $string and $twostring)
+# 			#   $total
+# 			#   $totalRight
+# 			###################################
+#    
+# 			foreach my $problemRecord (@problemRecords) {
+# 				next unless ref($problemRecord);
+# 				# warn "Can't find record for problem $prob in set $setName for $student";
+# 				# FIXME check the legitimate reasons why a student record might not be defined
+# 				###########################################
+# 				# Grab data from the database
+# 				###########################################
+# 				# It's possible that 
+# 				# $problemRecord->num_correct or 
+# 				# $problemRecord->num_correct
+# 				# or $problemRecord->status is an empty 
+# 				# or blank string instead of 0.  
+# 				# The || clause fixes this and prevents 
+# 				# warning messages in the comparisons below.
+# 			
+# 				my $probID          = $problemRecord->problem_id;
+# 				my $attempted       = $problemRecord->attempted;
+# 				my $num_correct     = $problemRecord->num_correct     || 0;
+# 				my $num_incorrect   = $problemRecord->num_incorrect   || 0;
+# 				my $num_of_attempts = $num_correct + $num_incorrect;
+# 				# initialize the number of correct answers 
+# 				# for this problem if the value has not been 
+# 				# defined.
+# 				$correct_answers_for_problem{$probID} = 0 
+# 					unless defined($correct_answers_for_problem{$probID});
+# 
+# 				## This doesn't work - Fix it
+# 				my $probValue = $problemRecord->value;
+# 				# set default problem value here
+# 				# FIXME?? set defaults here?
+# 				$probValue = 1 unless defined($probValue) and 
+# 					$probValue ne "";  
+# 			
+# 				my $status  = $problemRecord->status || 0;
+# 
+# 				# sanity check that the status (score) is 
+# 				# between 0 and 1
+# 				my $valid_status = ($status>=0 && $status<=1)?1:0;
+# 
+# 				###########################################
+# 				# Determine the string $longStatus which 
+# 				# will display the student's current score
+# 				###########################################
+# 				my $longStatus = '';
+# 				if (!$attempted){
+# 					$longStatus     = '.';
+# 				} elsif   ($valid_status) {
+# 					$longStatus     = int(100*$status+.5);
+# 					$longStatus='C' if ($longStatus==100);
+# 				} else	{
+# 					$longStatus 	= 'X';
+# 				}
+# 			
+# 				$string     .= threeSpaceFill($longStatus);
+# 				$twoString  .= threeSpaceFill($num_incorrect);
+# 
+# 				$total      += $probValue;
+# 				$totalRight += round_score($status*$probValue) 
+# 					if $valid_status;
+# 			
+# 				# add on the scores for this problem
+# 				if (defined($attempted) and $attempted) {
+# 					$number_of_students_attempting_problem{$probID}++;
+# 					push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+# 					$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+# 					$h_problemData{$probID}                               = $num_incorrect;
+# 					$total_num_of_attempts_for_set                       += $num_of_attempts;
+# 					$correct_answers_for_problem{$probID}                += $status;
+# 				}
+# 			
+# 			}  # end of problem record loop
+            
+            
 			# for versioned tests we might be displaying the 
 			# test date and test time
 			my $dateOfTest = '';
@@ -649,7 +704,7 @@ sub displaySets {
 			push( @augmentedUserRecords, $max_hash );
 		# if there were no set versions and the set was assigned
 		#    to the user, also keep the data
-		} elsif ( ! @allSetNames && ! $notAssignedSet ) {
+		} elsif ( ! @allSetVersionNames && ! $notAssignedSet ) {
 			my $dataH = { user_id => $studentRecord->user_id(),
 				      last_name=>$studentRecord->last_name(),
 				      first_name=>$studentRecord->first_name(),
@@ -713,9 +768,9 @@ sub displaySets {
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
 					   -checked=>$showBestOnly, 
 					   -label=>' only best scores; '),
-			     CGI::checkbox(-name=>'show_index', -value=>'1', 
-					   -checked=>$showColumns{'index'},
-					   -label=>' success indicator; '),
+#			     CGI::checkbox(-name=>'show_index', -value=>'1', 
+#					   -checked=>$showColumns{'index'},
+#					   -label=>' success indicator; '),
 			     CGI::checkbox(-name=>'show_date', -value=>'1', 
 					   -checked=>$showColumns{'date'},
 					   -label=>' test date; '),
@@ -746,11 +801,11 @@ sub displaySets {
 		CGI::p({},'A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates 
 		a problem has been answered 100% correctly, and a number from 0 to 99 
 		indicates the percentage of partial credit earned. The number on the 
-		second line gives the number of incorrect attempts.  The success indicator,'
-		,CGI::i('Ind'),', for each student is calculated as',
-		CGI::br(),
-		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
-		'or 0 if there are no attempts.'
+		second line gives the number of incorrect attempts.  ',
+#		'The success indicator,' ,CGI::i('Ind'),', for each student is calculated as',
+#		CGI::br(),
+#		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
+#		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
 		"Click on student's name to see the student's version of the homework set. &nbsp; &nbsp;&nbsp;
@@ -777,7 +832,7 @@ sub displaySets {
 			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},'Score'),
 			'Out'.CGI::br().'Of',
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
+#			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
 			'Problems'.CGI::br().$problem_header,
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},'Section'),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},'Recitation'),
@@ -791,7 +846,7 @@ sub displaySets {
 		my %display_options = (
 			returning       => 1,
 			show_best_only  => $showBestOnly,
-			show_index      => $showColumns{index},
+#			show_index      => $showColumns{index},
 			show_date       => $showColumns{date},
 			show_testtime   => $showColumns{testtime},
 			show_problems   => $showColumns{problems},
@@ -807,8 +862,8 @@ sub displaySets {
 	    push( @columnHdrs, 'Out'.CGI::br().'Of' );
 	    push( @columnHdrs, 'Date' ) if ( $showColumns{ 'date' } );
 	    push( @columnHdrs, 'TestTime' ) if ( $showColumns{ 'testtime' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %params})},'Ind') )
-		if ( $showColumns{ 'index' } );
+#	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %params})},'Ind') )
+#		if ( $showColumns{ 'index' } );
 	    push( @columnHdrs, 'Problems'.CGI::br().$problem_header )
 		if ( $showColumns{ 'problems' } );
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},'Section') )
@@ -831,7 +886,8 @@ sub displaySets {
     #    (the total number of columns is two more than this; we want the 
     #    number that missing record information should span)
 	my $numCol = 1 + $showColumns{'date'} + $showColumns{'testtime'} + 
-		$showColumns{'index'} + $showColumns{'problems'};
+#		$showColumns{'index'} +
+		$showColumns{'problems'};
 
 	foreach my $rec (@augmentedUserRecords) {
 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
@@ -842,7 +898,7 @@ sub displaySets {
 			CGI::td({},CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
 			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
 			CGI::td($rec->{total}), # out of 
-			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
+#			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
 			CGI::td($rec->{problemString}), # problems
 			CGI::td($self->nbsp($rec->{section})),
 			CGI::td($self->nbsp($rec->{recitation})),
@@ -876,8 +932,8 @@ sub displaySets {
 				    if ($showColumns{'date'});
 				push(@cols, $self->nbsp($rec->{testtime})) 
 				    if ($showColumns{'testtime'});
-				push(@cols, sprintf("%0.0f",$rec->{index})) 
-				    if ($showColumns{'index'});
+#				push(@cols, sprintf("%0.0f",$rec->{index})) 
+#				    if ($showColumns{'index'});
 				push(@cols, $self->nbsp($rec->{problemString}))
 				    if ($showColumns{'problems'});
 				push(@cols, $self->nbsp($rec->{section})) 
@@ -910,7 +966,212 @@ sub displaySets {
 	return "";
 }
 
+#############################################################
+# Grading utilities
+#############################################################
 
+
+# 			########################################
+# 			# Notes for factoring the calculation in this loop.
+# 			#
+# 			# Inputs include:
+# 			#   @problemRecords  
+# 			# returns
+# 			#   $num_of_attempts
+# 			#   $status
+# 			# updates
+# 			#   $number__studofents_attempting_problem{$probID}++;
+# 			#   @{ $attempts_list_for_problem{$probID} }   
+# 			#   $number_of_attempts_for_problem{$probID}
+# 			#   $total_num_of_attempts_for_set
+# 			#   $correct_answers_for_problem{$probID}   
+# 			#    
+# 			#   $string (formatting output)
+# 			#   $twoString (more formatted output)
+# 			#   $longtwo (a combination of $string and $twostring)
+# 			#   $total
+# 			#   $totalRight
+# 			###################################
+
+###############################################################
+# requires = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
+# returns   my ($status, 
+#            $longStatus, 
+#            $string,
+#            $twoString, 
+#            $totalRight,
+#            $total, 
+#            $num_of_attempts, 
+#            $num_of_problems) = grade_set(...);
+#########################
+
+sub grade_set {
+
+        my ($db, $set, $setName, $studentName, $setIsVersioned,
+        $rh_number_of_students_attempting_problem,
+        $rh_attempts_list_for_problem,
+        $rh_number_of_attempts_for_problem,
+        $rh_problemData,
+        $rh_total_num_of_attempts_for_set,
+        $rh_correct_answers_for_problem
+        ) = @_;
+
+        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+
+		my $status = 0;
+		my $longStatus = '';
+		my $string     = '';
+		my $twoString  = '';
+		my $totalRight = 0;
+		my $total      = 0;
+		my $num_of_attempts = 0;
+	
+		debug("Begin collecting problems for set $setName");
+		# DBFIXME: to collect the problem records, we have to know 
+		#    which merge routines to call.  Should this really be an 
+		#    issue here?  That is, shouldn't the database deal with 
+		#    it invisibly by detecting what the problem types are?  
+		#    oh well.
+		
+		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
+		my $num_of_problems  = @problemRecords || 0;
+		if ( $setIsVersioned ) {
+			@problemRecords =  $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
+		}
+		
+		
+		
+		
+		
+		
+		debug("End collecting problems for set $setName");
+
+	####################
+	# Resort records
+	#####################
+		@problemRecords = sort {$a->problem_id <=> $b->problem_id } @problemRecords;
+
+#    		
+# 		# for gateway/quiz assignments we have to be careful about 
+# 		#    the order in which the problems are displayed, because
+# 		#    they may be in a random order
+# 		if ( $set->problem_randorder ) {
+# 			my @newOrder = ();
+# 			my @probOrder = (0..$#problemRecords);
+# 			# we reorder using a pgrand based on the set psvn
+# 			my $pgrand = PGrandom->new();
+# 			$pgrand->srand( $set->psvn );
+# 			while ( @probOrder ) { 
+# 				my $i = int($pgrand->rand(scalar(@probOrder)));
+# 				push( @newOrder, $probOrder[$i] );
+# 				splice(@probOrder, $i, 1);
+# 			}
+# 			# now $newOrder[i] = pNum-1, where pNum is the problem
+# 			#    number to display in the ith position on the test
+# 			#    for sorting, invert this mapping:
+# 			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
+# 
+# 			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
+# 		}
+    
+    #######################################################
+	# construct header
+    
+		foreach my $problemRecord (@problemRecords) {
+			my $prob = $problemRecord->problem_id;
+			
+			unless (defined($problemRecord) ){
+				# warn "Can't find record for problem $prob in set $setName for $student";
+			# FIXME check the legitimate reasons why a student record might not be defined
+				next;
+			}
+			
+		    $status           = $problemRecord->status || 0;
+			my $attempted     = $problemRecord->attempted;
+			my $num_correct   = $problemRecord->num_correct || 0;
+			my $num_incorrect = $problemRecord->num_incorrect   || 0;
+			$num_of_attempts  = $num_correct + $num_incorrect;
+			
+#######################################################
+			# This is a fail safe mechanism that makes sure that
+			# the problem is marked as attempted if the status has
+			# been set or if the problem has been attempted
+			# DBFIXME this should happen in the database layer, not here!
+			if (!$attempted && ($status || $num_of_attempts)) {
+				$attempted = 1;
+				$problemRecord->attempted('1');
+				# DBFIXME: this is another case where it 
+				#    seems we shouldn't have to check for 
+				#    which routine to use here...
+				if ( $setIsVersioned ) {
+					$db->putProblemVersion($problemRecord);
+				} else {
+					$db->putUserProblem($problemRecord );
+				}
+			}
+######################################################			
+
+			# sanity check that the status (score) is 
+			# between 0 and 1
+			my $valid_status = ($status>=0 && $status<=1)?1:0;
+
+			###########################################
+			# Determine the string $longStatus which 
+			# will display the student's current score
+			###########################################
+
+			if (!$attempted){
+				$longStatus     = '.';
+			} elsif   ($valid_status) {
+				$longStatus     =  int(100*$status+.5) ;
+				$longStatus='C' if ($longStatus==100);
+			} else	{
+				$longStatus 	= 'X';
+			}
+		
+			$string         .= threeSpaceFill($longStatus);
+			$twoString      .= threeSpaceFill($num_incorrect);
+			my $probValue   =  $problemRecord->value;
+			$probValue      =  1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
+			$total          += $probValue;
+			$totalRight     += round_score($status*$probValue) if $valid_status;
+				
+# 				
+# 			# initialize the number of correct answers 
+# 			# for this problem if the value has not been 
+# 			# defined.
+# 			$correct_answers_for_problem{$probID} = 0 
+# 				unless defined($correct_answers_for_problem{$probID});
+			
+				
+		# add on the scores for this problem
+			if (defined($rh_correct_answers_for_problem ) ) {  #skip this if we are not updating records
+			    my $probID          = $problemRecord->problem_id;
+				$rh_correct_answers_for_problem->{$probID} = 0  	unless defined($rh_correct_answers_for_problem->{$probID});
+				if (defined($attempted) and $attempted) {
+					$rh_number_of_students_attempting_problem->{$probID}++;
+					push( @{ $rh_attempts_list_for_problem->{$probID} } ,     $num_of_attempts);
+					$rh_number_of_attempts_for_problem->{$probID}          += $num_of_attempts;
+					$rh_problemData->{$probID}                              = $num_incorrect;
+					$$rh_total_num_of_attempts_for_set                     += $num_of_attempts;
+					$rh_correct_answers_for_problem->{$probID}             += $status;
+				}
+			}
+		
+		}  # end of problem record loop
+
+
+
+		return($status,  
+			   $longStatus, 
+			   $string,
+			   $twoString, 
+			   $totalRight,
+			   $total, 
+			   $num_of_attempts, 
+			   $num_of_problems			
+		);
+}
 #################################
 # Utility function NOT a method
 #################################
@@ -921,6 +1182,7 @@ sub threeSpaceFill {
 	elsif (length($num)==2) {return "$num".'&nbsp;';}
 	else {return "## ";}
 }
+
 sub round_score{
 	return shift;
 }

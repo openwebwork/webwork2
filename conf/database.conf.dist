@@ -154,7 +154,8 @@ $dbLayouts{sql_single} = {
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $database_dsn,
 		params => { %sqlParams,
-			tableOverride => "${courseName}_set"
+			tableOverride => "${courseName}_set",
+			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 		},
 	},
 	set_user => {
@@ -163,7 +164,8 @@ $dbLayouts{sql_single} = {
 		driver => "WeBWorK::DB::Driver::SQL",
 		source => $database_dsn,
 		params => { %sqlParams,
-			tableOverride => "${courseName}_set_user"
+			tableOverride => "${courseName}_set_user",
+			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 		},
 	},
 	set_merged => {
@@ -185,6 +187,8 @@ $dbLayouts{sql_single} = {
 		params => { %sqlParams,
 			non_native => 1,
 			tableOverride => "${courseName}_set_user",
+			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
+
 		},
 	},
 	set_version_merged => {
@@ -277,69 +281,6 @@ $dbLayouts{sql_single} = {
 	},
 };
 
-=head2 THE SQL_MOODLE DATABASE LAYOUT
-
-The C<sql_moodle> layout is similar to the C<sql_single> layout, except it uses
-a Moodle database for user information and authentication.
-
-=cut
-
-# params used by moodle-backed tables
-#my %moodleParams = (
-#	non_native  => 1,
-#	username    => $moodle_username,
-#	password    => $moodle_password,
-#	debug       => $database_debug,
-#	tablePrefix => $moodle_table_prefix,
-#	courseName  => $courseName,
-#	moodle17    => $moodle17,
-#);
-#
-#$dbLayouts{sql_moodle} = {
-#	# start with sql_single table definitions
-#	%{$dbLayouts{sql_single}},
-#	
-#	# then override user, password, and permission tables
-#	# use the same record classes as sql_single
-#	user => {
-#		record => "WeBWorK::DB::Record::User",
-#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::User",
-#		driver => "WeBWorK::DB::Driver::SQL",
-#		source => $moodle_dsn,
-#		params => { %moodleParams,
-#			statusDeletedAbbrevs    => $statuses{Drop}{abbrevs},
-#			statusDeletedDefault    => $statuses{Drop}{abbrevs}[0],
-#			statusNotDeletedAbbrevs => $statuses{Enrolled}{abbrevs},
-#			statusNotDeletedDefault => $statuses{Enrolled}{abbrevs}[0],
-#			#sectionPrefix          => "SEC_", # not implemented
-#			#recitationPrefix       => "",  # not implemented
-#		},
-#	},
-#	password => {
-#		record => "WeBWorK::DB::Record::Password",
-#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
-#		driver => "WeBWorK::DB::Driver::SQL",
-#		source => $moodle_dsn,
-#		params => { %moodleParams,
-#			guestsPermissionLevel => -5,
-#			studentsPermissionLevel => 0,
-#			teachersPermissionLevel => 10,
-#			adminsPermissionLevel => 10,
-#		},
-#	},
-#	permission => {
-#		record => "WeBWorK::DB::Record::PermissionLevel",
-#		schema => "WeBWorK::DB::Schema::NewSQL::Moodle::PasswordPermission",
-#		driver => "WeBWorK::DB::Driver::SQL",
-#		source => $moodle_dsn,
-#		params => { %moodleParams,
-#			guestsPermissionLevel => -5,
-#			studentsPermissionLevel => 0,
-#			teachersPermissionLevel => 10,
-#			adminsPermissionLevel => 10,
-#		},
-#	},
-#};
 
 =head1 DATABASE LAYOUT METADATA
 

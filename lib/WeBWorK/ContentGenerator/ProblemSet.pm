@@ -63,13 +63,13 @@ sub initialize {
 	return if $self->{invalidSet};
 	return unless defined($set);
 	
-	# Database fix (in case of undefined published values)
-	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
-	# make sure published is set to 0 or 1
+	# Database fix (in case of undefined visible values)
+	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
+	# make sure visible is set to 0 or 1
 
-	if ($set->published ne "0" and $set->published ne "1") {
+	if ($set->visible ne "0" and $set->visible ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->published("1");	# defaults to published
+		$globalSet->visible("1");	# defaults to visible
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
@@ -82,9 +82,9 @@ sub initialize {
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
 
-	my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
-	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-	$self->addmessage(CGI::span("This set is " . CGI::font({class=>$publishedClass}, $publishedText))) if $authz->hasPermissions($userName, "view_unpublished_sets");
+	my $visiblityStateText = ($set->visible) ? "visible to students." : "hidden from students.";
+	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
+	$self->addmessage(CGI::span("This set is " . CGI::font({class=>$visiblityStateClass}, $visiblityStateText))) if $authz->hasPermissions($userName, "view_hidden_sets");
 
 
 	$self->{userName}        = $userName;
@@ -135,16 +135,16 @@ sub siblings {
 	# DBFIXME do filtering in WHERE clause, use iterator for results :)
 	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
 
-	# do not show unpublished siblings unless user is allowed to view unpublished sets, and 
+	# do not show hidden siblings unless user is allowed to view hidden sets, and 
         # exclude gateway tests in all cases
-	if ( $authz->hasPermissions($user, "view_unpublished_sets") ) {
+	if ( $authz->hasPermissions($user, "view_hidden_sets") ) {
 		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
 				   $gs->assignment_type() !~ /gateway/} @setIDs;
 
 	} else {
 		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
 				            $gs->assignment_type() !~ /gateway/ && 
-				            ( defined($gs->published()) ? $gs->published() : 1 )
+				            ( defined($gs->visible()) ? $gs->visible() : 1 )
 				           }   @setIDs;
 	}
 
@@ -171,13 +171,13 @@ sub siblings {
 	}
 	debug("End printing sets from listUserSets()");
 
-	# FIXME: when database calls are faster, this will get rid of unpublished sibling links
+	# FIXME: when database calls are faster, this will get rid of hidden sibling links
 	#debug("Begin printing sets from getMergedSets()");	
 	#my @userSetIDs = map {[$eUserID, $_]} @setIDs;
 	#my @sets = $db->getMergedSets(@userSetIDs);
 	#foreach my $set (@sets) {
 	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", courseID => $courseID, setID => $set->set_id);
-	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $authz->hasPermissions($user, "view_unpublished_sets"));
+	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->visible || $authz->hasPermissions($user, "view_hidden_sets"));
 	#}
 	#debug("Begin printing sets from getMergedSets()");
 	

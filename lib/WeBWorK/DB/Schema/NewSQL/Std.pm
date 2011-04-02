@@ -811,7 +811,9 @@ sub handle_error {
 	if (exists $MYSQL_ERROR_CODES{$handle->err}) {
 		$MYSQL_ERROR_CODES{$handle->err}->throw;
 	} else {
-		die $errmsg;
+	    my $error = $errmsg."\n".join("\n",caller(1),caller(2),caller(3));
+	    #$error =~ s|\n|<br/>|;
+		die $error ;
 	}
 }
 

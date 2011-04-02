@@ -2014,7 +2014,12 @@ sub parseDateTime {
 	my ($self, $string, $display_tz) = @_;
 	my $ce = $self->r->ce;
 	$display_tz ||= $ce->{siteDefaults}{timezone};
-	return WeBWorK::Utils::parseDateTime($string, $display_tz);
+	my $result = eval{ WeBWorK::Utils::parseDateTime($string, $display_tz) }; # trap thrown die and warn messages
+	my $error_msg = $@ if $@;
+	return $result unless $error_msg;
+	$error_msg =~ s|\n|<br/>|g;    # format for display in HTML -- replace \n characters with breaks
+	$self->addbadmessage($error_msg);
+	return 0; #   WeBWorK::Utils::parseDateTime('01/01/1970 at 12:00AM' , 'America/New_York');
 };
 
 =item $string = formatDateTime($dateTime, $display_tz)

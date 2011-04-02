@@ -202,6 +202,11 @@ sub attemptResults {
 	
 	my $ce = $self->r->ce;
 	
+	# for color coding the responses.
+	my @correct_ids = ();
+	my @incorrect_ids = ();
+
+
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
@@ -226,7 +231,7 @@ sub attemptResults {
 	
 	my $header;
 	#$header .= CGI::th("Part");
-	$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+	#$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
 	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("Result")   : "";
@@ -249,10 +254,13 @@ sub attemptResults {
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? "correct" :
+		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, "correct") :
 		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
-                                                       "incorrect";
+                                                       CGI::span({class=>"ResultsWithError"}, "incorrect");
 		$fully = 'completely ' if $answerScore >0 and $answerScore < 1;
+		
+		push @correct_ids,   $name if $answerScore == 1;
+		push @incorrect_ids, $name if $answerScore < 1;
 		
 		# get rid of the goofy prefix on the answer names (supposedly, the format
 		# of the answer names is changeable. this only fixes it for "AnSwEr"
@@ -260,7 +268,7 @@ sub attemptResults {
 		
 		my $row;
 		#$row .= CGI::td($name);
-		$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+		#$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
 		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
@@ -305,6 +313,10 @@ sub attemptResults {
 	} else {
 		$summary = $problemResult->{summary};   # summary has been defined by grader
 	}
+	
+	$self->{correct_ids}=[@correct_ids]       if @correct_ids;
+	$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
+
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
@@ -478,12 +490,12 @@ sub pre_header_initialize {
 
 	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 
-	# Database fix (in case of undefined published values)
-	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
-	# make sure published is set to 0 or 1
-	if ( $set and $set->published ne "0" and $set->published ne "1") {
+	# Database fix (in case of undefined visiblity state values)
+	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
+	# make sure visible is set to 0 or 1
+	if ( $set and $set->visible ne "0" and $set->visible ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->published("1");	# defaults to published
+		$globalSet->visible("1");	# defaults to visible
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $setName);
 	} else {
@@ -574,13 +586,13 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $publishedClass = ($set->published) ? "Published" : "Unpublished";
-		my $publishedText = ($set->published) ? "visible to students." : "hidden from students.";
-		$self->addmessage(CGI::span("This set is " . CGI::font({class=>$publishedClass}, $publishedText)));
+		my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
+		my $visiblityStateText = ($set->visible) ? "visible to students." : "hidden from students.";
+		$self->addmessage(CGI::span("This set is " . CGI::font({class=>$visiblityStateClass}, $visiblityStateText)));
 
   # test for additional problem validity if it's not already invalid
         } else {
-		$self->{invalidProblem} = !(defined $problem and ($set->published || $authz->hasPermissions($userName, "view_unpublished_sets")));
+		$self->{invalidProblem} = !(defined $problem and ($set->visible || $authz->hasPermissions($userName, "view_hidden_sets")));
 		
 		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value and not $self->{invalidProblem};
 	}
@@ -867,7 +879,6 @@ sub body {
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
-
 	if ( $self->{invalidSet} ) { 
 		return CGI::div({class=>"ResultsWithError"},
 				CGI::p("The selected problem set (" .
@@ -1033,9 +1044,8 @@ sub body {
 	debug("end answer processing");
 	##### javaScripts #############
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
-	
-	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+
 	##### output #####
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
@@ -1078,7 +1088,19 @@ sub body {
 	
 	print CGI::end_div();
 	
+	
+	###########################
+	# print style sheet for correct and incorrect answers
+	###########################
+
+	print CGI::start_style({type=>"text/css"});
+	print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+	print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+	print	CGI::end_style();
+    
+	###########################
 	# main form
+	###########################
 	print "\n";
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;

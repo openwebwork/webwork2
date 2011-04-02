@@ -33,15 +33,17 @@
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
+<!--
 		<!--#if can="nav"-->
 			<div id="Nav">
 				<!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
 			</div>
 		<!--#endif-->
-
+-->
 	</div>
 	<div id="logo">
-		<img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" />
+                <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" /></a>&nbsp;
+                <a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo.png" alt="MAA" height="51" width="449" /></a>
 	</div>
 </div>
 <hr class="for-broken-browsers"/>
@@ -50,10 +52,16 @@
 		<!--#path style="text" text=" &#x2192; "-->
 	</div>
 	<div id="content" >
-
+            <span style="font-size:larger; color:#00F; float:left;  width:60%;   ">
 			<!--#if can="title"-->
-				<span style="font-size:larger; color:#00F; float:left;  width:60%;   "><!--#title--></span>
+				<!--#title-->
 			<!--#endif-->
+			<!--#if can="nav"-->
+			    &nbsp;&nbsp;&nbsp;
+				<!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+			
+		    <!--#endif-->
+            </span>
 			<!--#if can="message"-->
 				<span class="Message" style=" float:right; width:40%; right:0;">
 					<!--#message-->
@@ -61,6 +69,7 @@
 			<!--#endif-->
 
 		    <hr style="clear:both"/>
+	
        		<!--#if can="info"-->
 			  <!--  styles could be different for different pages so they are not set here -->
 				<!--#info-->

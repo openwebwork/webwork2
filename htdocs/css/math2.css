@@ -431,6 +431,14 @@ div.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
+span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+span.ResultsWithError { color: #C33; background-color: inherit; } /* red */
+span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.correct { color: inherit; background-color: #8F8; } /* green */
+span.incorrect { color: #C33; background-color: inherit; } /* red */
+input.correct   { color:inherit; background-color: #8F8; } /* green */
+input.incorrect { color;inherit; background-color: #C33; } /* red */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -477,7 +485,7 @@ table.attemptResults td.Message {
 .attemptResultsSummary { font-style: italic; }
 .parsehilight { color: inherit; background-color: yellow; }
 
-/* the problem TEXT itself does in this box */
+/* the problem TEXT itself goes in this box */
 /* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
 div.problem {  }
 
@@ -494,9 +502,9 @@ div.NoFontMessage {
 	margin: 10px auto 10px 12%;
 }
 
-/* text colors for published and unpublished sets */
-font.Published   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.Unpublished { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
+/* text colors for visible and hidden sets */
+font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
+font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
 
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }

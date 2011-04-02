@@ -871,8 +871,9 @@ sub make_mysets_row {
 	my $myjs = 'document.getElementById(\"create_new_set\").style.display = \"none\";document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
 	## edited this, as a demo for the current set problem list
 	print CGI::div({-id=>"create_new_set", -class=>"InfoPanel shadowed"},
+	    CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-		-onclick=>$myjs
+		-onclick=>"document.mainform.selfassign.value=1"   #just assign it!!   # $myjs
 		),
 		"  ",
 		CGI::textfield(-name=>"new_set_name", 

@@ -112,7 +112,7 @@ unless ($server_root_url) {
 
 our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
-	$XML_PASSWORD        =  'xmlwebwork';
+	$XML_PASSWORD     	 =  'xmlwebwork';
 	$XML_COURSE          =  'daemon_course';
 
 

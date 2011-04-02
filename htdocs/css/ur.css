@@ -132,29 +132,31 @@ table.attemptResults td.Message {
 .attemptResultsSummary { font-style:italic; }
 .parsehilight { background-color:yellow; }
 
-/* the problem TEXT itself does in this box */
-div.problem { clear: both; background-color: #E0E0E0; color: black; }
+/* the problem TEXT itself goes in this box */
+/* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
+div.problem {  }
 
 /* jsMath emits this class when appropriate math fonts aren't available */
 div.NoFontMessage {
-	padding: 10;
+	padding: 10px;
 	border-style: solid;
-	border-width:3;
+	border-width: 3px;
 	border-color: #DD0000;
+	color: inherit;
 	background-color: #FFF8F8;
 	width: 75%;
 	text-align: left;
 	margin: 10px auto 10px 12%;
 }
 
-/* text colors for published and unpublished sets */
-font.Published   { font-style: normal; font-weight: normal; color: #000000; } /* black */
-font.Unpublished { font-style: italic; font-weight: normal; color: #aaaaaa; } /* light grey */
+/* text colors for visible and hidden sets */
+font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
+font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
 
 /* styles used when editing a temporary file */
 .temporaryFile {  background-color: #ff9900 ; font-style: italic; }
 
 /* text colors for Auditing, Current, and Dropped students */
-.Audit { font-style: normal; color: purple; }
-.Enrolled { font-weight: normal; color: black; }
-.Drop { font-style: italic; color: grey; }
+.Audit { font-style: normal; color: purple; background-color: inherit; }
+.Enrolled { font-weight: normal; color: black; background-color: inherit; }
+.Drop { font-style: italic; color: gray; background-color: inherit; }

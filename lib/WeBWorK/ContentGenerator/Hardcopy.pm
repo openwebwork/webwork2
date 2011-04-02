@@ -345,7 +345,7 @@ sub display_form {
 	my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	my $perm_texformat = $authz->hasPermissions($userID, "download_hardcopy_format_tex");
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
-	my $perm_unpublished = $authz->hasPermissions($userID, "view_unpublished_sets");
+	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	
 	# get formats
 	my @formats;
@@ -368,7 +368,7 @@ sub display_form {
 	}
 	
 	# get sets for selection
-	# DBFIXME should use WHERE clause to filter on open_date and published, rather then getting all
+	# DBFIXME should use WHERE clause to filter on open_date and visible, rather then getting all
 	my @globalSetIDs;
 	my @GlobalSets;
 	if ($perm_multiuser) {
@@ -414,7 +414,7 @@ sub display_form {
 			next;
 		}
 		next unless $Set->open_date <= time or $perm_unopened;
-		next unless $Set->published or $perm_unpublished;
+		next unless $Set->visible or $perm_view_hidden;
 		# also skip gateway sets, for which we have to have a 
 		#    version to print something
 		next if $Set->assignment_type =~ /gateway/;
@@ -593,7 +593,10 @@ sub generate_hardcopy {
 	my $tex_file_name = "hardcopy.tex";
 	my $tex_file_path = "$temp_dir_path/$tex_file_name";
 	
-	# write TeX
+	#######################################
+	# create TeX file  (callback  write_multiuser_tex,  or ??)
+	#######################################
+	
 	my $open_result = open my $FH, ">", $tex_file_path;
 	unless ($open_result) {
 		$self->add_errors("Failed to open file '".CGI::code(CGI::escapeHTML($tex_file_path))
@@ -619,12 +622,18 @@ sub generate_hardcopy {
 		return;
 	}
 	
+	##############################################
+	# end creation of TeX file
+	##############################################
+	
 	# determine base name of final file
 	my $final_file_user = @$userIDsRef > 1 ? "multiuser" : $userIDsRef->[0];
 	my $final_file_set = @$setIDsRef > 1 ? "multiset" : $setIDsRef->[0];
 	my $final_file_basename = "$courseID.$final_file_user.$final_file_set";
 	
-	# call format subroutine
+	###############################################
+	# call format subroutine  (call back)
+	###############################################
 	# $final_file_name is the name of final hardcopy file
 	# @temp_files is a list of temporary files of interest used by the subroutine
 	# (all are relative to $temp_dir_path)
@@ -635,7 +644,9 @@ sub generate_hardcopy {
 	#warn "final_file_name=$final_file_name\n";
 	#warn "temp_files=@temp_files\n";
 	
+	################################################
 	# calculate URLs for each temp file of interest
+	#################################################
 	# makeTempDirectory's interface forces us to reverse-engineer the name of the temp dir from the path
 	my $temp_dir_parent_url = $ce->{courseURLs}{html_temp} . "/hardcopy";
 	(my $temp_dir_url = $temp_dir_path) =~ s/^$temp_dir_parent_path/$temp_dir_parent_url/; 
@@ -646,7 +657,10 @@ sub generate_hardcopy {
 	
 	my $final_file_url;
 	
+	##################################################
 	# make sure final file exists
+	##################################################
+    # returns undefined unless $final_file_path points to a file
 	unless (-e $final_file_path) {
 		$self->add_errors("Final hardcopy file '".CGI::code(CGI::escapeHTML($final_file_path))
 			."' not found after calling '".CGI::code(CGI::escapeHTML($format_subr))."': "
@@ -654,7 +668,10 @@ sub generate_hardcopy {
 		return $final_file_url, %temp_file_map;
 	}
 	
+	##################################################	
 	# try to move the hardcopy file out of the temp directory
+	##################################################
+
 	# set $final_file_url accordingly
 	my $final_file_final_path = "$temp_dir_parent_path/$final_file_name";
 	my $mv_cmd = "2>&1 " . $ce->{externalPrograms}{mv} . " " . shell_quote($final_file_path, $final_file_final_path);
@@ -669,7 +686,10 @@ sub generate_hardcopy {
 		$final_file_url = "$temp_dir_parent_url/$final_file_name";
 	}
 	
+	##################################################	
 	# remove the temp directory if there are no errors
+	##################################################
+
 	unless ($self->get_errors or $PreserveTempFiles) {
 		$self->delete_temp_dir($temp_dir_path);
 	}
@@ -888,10 +908,10 @@ sub write_set_tex {
 			."' -- set is not yet open.");
 		return;
 	}
-	if (not $MergedSet->published and not $authz->hasPermissions($userID, "view_unpublished_sets")) {
+	if (not $MergedSet->visible and not $authz->hasPermissions($userID, "view_hidden_sets")) {
 		$self->addbadmessage("Can't generate hardcopy for set '".CGI::code(CGI::escapeHTML($setID))
 			."' for user '".CGI::code(CGI::escapeHTML($TargetUser->user_id))
-			."' -- set has not been published.");
+			."' -- set is not visible to students.");
 		return;
 	}
 	
