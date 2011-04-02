@@ -49,15 +49,15 @@
 <hr class="for-broken-browsers"/>
 <div id="big-wrapper">
 <div id="masthead">
+	<div id="loginstatus">
+		<!--#loginstatus-->
+    </div>
 	<div id="logo">
                 <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" /></a>&nbsp;
                 <a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo.png" alt="MAA" height="51" width="449" /></a>
 	</div>
-	<div id="loginstatus">
-		<!--#loginstatus-->
-	</div>
-</div>
-<div style="clear:both;"></div>
+ </div>
+ <div style="clear:both;"></div>
 	<div id="breadcrumbs">
 		<!--#path style="text" text=" &#x2192; "-->
 	</div>

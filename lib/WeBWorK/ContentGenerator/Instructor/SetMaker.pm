@@ -756,7 +756,7 @@ sub make_top_row {
 		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
 		$set_selected = SELECT_SET_STRING;
 	}
-	my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
+	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Add problems to ",
 		CGI::b("Target Set: "),
@@ -769,7 +769,7 @@ sub make_top_row {
 		CGI::br(), 
 		CGI::br(), 
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-		-onclick=>$myjs
+		-onclick=>"document.mainform.selfassign.value=1"      #       $myjs
 		),
 		"  ",
 		CGI::textfield(-name=>"new_set_name", 

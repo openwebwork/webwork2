@@ -142,15 +142,15 @@ sub body {
 
 	debug("Begin fixing merged sets");
 	
-	# Database fix (in case of undefined published values)
+	# Database fix (in case of undefined visible values)
 	# this may take some extra time the first time but should NEVER need to be run twice
-	# this is only necessary because some people keep holding to ww1.9 which did not have a published field
+	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
 	# DBFIXME this should be in the database layer (along with other "fixes" of its ilk)
 	foreach my $set (@sets) {
-		# make sure published is set to 0 or 1
-		if ( $set and $set->published ne "0" and $set->published ne "1") {
+		# make sure visible is set to 0 or 1
+		if ( $set and $set->visible ne "0" and $set->visible ne "1") {
 			my $globalSet = $db->getGlobalSet($set->set_id);
-			$globalSet->published("1");	# defaults to published
+			$globalSet->visible("1");	# defaults to visible
 			$db->putGlobalSet($globalSet);
 			$set = $db->getMergedSet($effectiveUser, $set->set_id);
 		} else {
@@ -262,14 +262,14 @@ sub body {
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 		
-		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
+		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
 		}
 	}
 	foreach my $set (@vSets) {
 		die "set $set not defined" unless $set;
 		
-		if ($set->published || $authz->hasPermissions($user, "view_unpublished_sets")) {
+		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$set->{set_id}} );  # 1 = gateway, versioned set
 		}
 	}
@@ -411,7 +411,7 @@ sub setListRow {
 		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
-			     $set->attempts_per_version() ) {
+			     ($set->attempts_per_version() || 0 ) ) {
 				$status = "completed.";
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
@@ -481,9 +481,9 @@ sub setListRow {
 		$status = "closed, answers available";
 	}
 
-	my $publishedClass = ($set->published) ? "Published" : "Unpublished";
+	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
 
-	$status = CGI::font({class=>$publishedClass}, $status) if $preOpenSets;
+	$status = CGI::font({class=>$visiblityStateClass}, $status) if $preOpenSets;
 	
 # check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {

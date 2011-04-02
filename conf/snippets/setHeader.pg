@@ -15,15 +15,20 @@ loadMacros(
 
 TEXT($BEGIN_ONE_COLUMN);
 
-TEXT(MODES(TeX =>EV3(<<'END_TEXT'),HTML=>""));
-
-\noindent {\large \bf $studentName}
-\hfill
-\noindent {\large \bf \{protect_underbar($courseName)\}  
-$sectionNumber   }
+TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
+\noindent \makebox[0.5\textwidth][l]{{\Large \textbf{\{protect_underbar($courseName)\}}}} 
+\makebox[0in][c]{{\Large \textbf{\{protect_underbar($setNumber)\} }}}
+\makebox[0.5\textwidth][r]{{\Large \textbf{$studentName}}}
 \par
+\noindent \makebox[0.5\textwidth][l]{Professor $sectionName}
+\makebox[0in][c]{Due
+ $formattedDueDate}
+\makebox[0.5\textwidth][r]{~}
+\par \bigskip
 
-END_TEXT
+\hrule
+\medskip
+EOT
 
 ##########################################################
 # 
@@ -39,7 +44,6 @@ BEGIN_TEXT
 
 $BBOLD WeBWorK  assignment number \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
 
-$PAR
 
 $PAR
 The 
@@ -79,12 +83,6 @@ END_TEXT
 ###########################################################
 BEGIN_TEXT
 
-The primary purpose of WeBWorK is to let you know that you are getting the correct answer or to alert
-you if you are making some kind of mistake. Usually you can attempt a problem as many times as you want before
-the due date.  However, if you are having trouble figuring out your error, you should
-consult the book, or ask a fellow student, one of the TA's or
-your professor for help.  Don't spend a lot of time guessing -- it's not very efficient or effective.
-$PAR
 Give 4 or 5  significant digits for (floating point) numerical answers.
 For most problems when entering numerical answers, you can if you wish
 enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2) \)instead

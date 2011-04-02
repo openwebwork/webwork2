@@ -480,8 +480,8 @@ sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
 	warn "time zone not defined".caller() unless defined($display_tz);
 	$display_tz ||= "local";
-	#warn "parseDateTime('$string', '$display_tz')\n";
-	
+
+
 	# use WeBWorK 1 date parsing routine
 	my ($second, $minute, $hour, $day, $month, $year, $zone) = unformatDateAndTime($string);
 	my $zone_str = defined $zone ? $zone : "UNDEF";

@@ -34,7 +34,8 @@ BEGIN {
 		value => { type=>"TEXT" },
 	);
 	__PACKAGE__->_initial_records(
-		{ name=>"db_version", value=>$WeBWorK::Utils::DBUpgrade::THIS_DB_VERSION },
+		{ name=>"db_version", value=> 3.1415926   # $WeBWorK::Utils::DBUpgrade::THIS_DB_VERSION 
+		},
 	);
 }
 

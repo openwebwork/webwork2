@@ -75,6 +75,8 @@ $Location{$webwork_url} = {
 # Provide access to system-wide resources.
 # 
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
+# make sure old alias is available even if we use lighttpd
+push @Alias, [ "/webwork2_files" => $webwork_htdocs_dir ];
 $Directory{$webwork_htdocs_dir} = {
 	Order => "allow,deny",
 	Allow => "from all",
@@ -110,7 +112,6 @@ if ($webwork_url eq "") {
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
 $PerlConfig .= <<EOF;
-
 # ##### Sam's WeBWorK::Request-based XML-RPC testbed #####
 # #
 # #PerlModule WeBWorK::RPC

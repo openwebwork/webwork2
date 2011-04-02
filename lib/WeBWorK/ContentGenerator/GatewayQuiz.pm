@@ -199,7 +199,7 @@ sub can_recordAnswers {
 # $addOne allows us to count the current submission
 	    my $addOne = ( defined( $submitAnswers ) && $submitAnswers ) ? 
 		1 : 0;
-	    my $max_attempts = $Set->attempts_per_version();
+	    my $max_attempts = $Set->attempts_per_version() || 0;
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_with_attempts");
@@ -825,8 +825,8 @@ sub pre_header_initialize {
 					$setVersionNumber, 1);
 
 				# because we're creating this on the fly, 
-				#    it should be published
-				$set->published(1);
+				#    it should be visible
+				$set->visible(1);
 				# set up creation time, open and due dates
 				my $ansOffset = $set->answer_date() - 
 					$set->due_date();
@@ -1739,14 +1739,14 @@ sub body {
 
 	# also get number of remaining attempts (important for sets with 
 	#    multiple attempts per version)
-	my $numLeft = $set->attempts_per_version - $Problem->num_correct - 
+	my $numLeft = ($set->attempts_per_version ||0 )- $Problem->num_correct - 
 		$Problem->num_incorrect - 
 		($submitAnswers && $will{recordAnswers} ? 1 : 0);
 	my $attemptNumber = $Problem->num_correct + $Problem->num_incorrect;
 
 	# a handy noun for when referring to a test
-	my $testNoun = ($set->attempts_per_version > 1) ? "submission" : "test";
-	my $testNounNum = ( $set->attempts_per_version > 1 ) ? 
+	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? "submission" : "test";
+	my $testNounNum = ( ( $set->attempts_per_version ||0 ) > 1 ) ? 
 		"submission (test " : "test (";
 
 	##### start output of test headers: 

@@ -314,13 +314,13 @@ sub checkSet {
 		return "Requested set '$setName' is not yet open.";
 	} 
 
-	# also check to make sure that the set is published, or that we're
-	#    allowed to view unpublished setes
-	# (do we need to worry about published not being set at this point?)
-	my $published = ( $set && $set->published ne '0' && 
-			  $set->published ne '1' ) ? 1 : $set->published;
-	if ( ! $published && 
-	     ! $self->hasPermissions($userName, "view_unpublished_sets") ) { 
+	# also check to make sure that the set is visible, or that we're
+	#    allowed to view hidden sets
+	# (do we need to worry about visible not being set at this point?)
+	my $visible = ( $set && $set->visible ne '0' && 
+			  $set->visible ne '1' ) ? 1 : $set->visible;
+	if ( ! $visible && 
+	     ! $self->hasPermissions($userName, "view_hidden_sets") ) { 
 		return "Requested set '$setName' is not available yet.";
 	}
 

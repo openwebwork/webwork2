@@ -178,8 +178,12 @@ sub displayStudentStats {
 	my $studentRecord = $db->getUser($studentName); # checked
 	die "record for user $studentName not found" unless $studentRecord;
 	my $root = $ce->{webworkURLs}->{root};
-	
-	# first get all non-set-versions; listUserSets will return all 
+
+######################################################################
+# Get all sets (including versions of gateway quizzes) assigned to this user
+######################################################################
+
+	# first get all non-versioned-sets; listUserSets will return all 
 	#    homework assignments, plus the template gateway sets.
 	# DBFIXME use iterator instead of setIDs
 	my @setIDs    = sort( $db->listUserSets($studentName) );
@@ -189,13 +193,18 @@ sub displayStudentStats {
 	# to be able to find the set objects later, make a handy hash
 	my %setsByID = ( map {$_->set_id => $_} @sets );
 
-	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
-	my $effectiveUser = $studentRecord->user_id();
-	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
-			"&effectiveUser=$effectiveUser&key=".$r->param("key");
-
-	# before going through the table generating loop, find all the 
-	#    set versions for the sets in our list
+######################################################
+# before going through the table generating loop, find all the 
+#    set versions for the sets in our list
+#
+# info for refactoring:
+# input:  list of regular sets (from $db->getMergedSets(studentID, setID )
+# input:  $db
+# input: \%setsByID
+# output: \%setVersionsByID  ---  a pointer to a list of version names.
+# update: \%setsByID ---  indexed by full set name, value is the set record
+# output: \@allSetIDs   -- full names of sets (the gateway template and the versioned tests)
+#############################################
 	my %setVersionsByID = ();
 	my @allSetIDs = ();
 	foreach my $set ( @sets ) {
@@ -231,6 +240,13 @@ sub displayStudentStats {
 			$setVersionsByID{$setName} = "None";
 		}
 	}
+	
+
+#########################################################################################
+	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
+	my $effectiveUser = $studentRecord->user_id();
+	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
+			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
 	
 	# FIXME: why is the following not "print CGI::h3($fullName);"?  Hmm.
@@ -250,7 +266,7 @@ sub displayStudentStats {
 		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 		my $set = $setsByID{ $setName };
-		my $setID = $set->set_id();
+		my $setID = $set->set_id();  #FIXME   setName and setID should be the same
 
 		# now, if the set is a template gateway set and there 
 		#    are no versions, we acknowledge that the set exists
@@ -289,9 +305,131 @@ sub displayStudentStats {
 				$act_as_student_set_url =~ s/($courseName)\//$1\/quiz_mode\//;
 			}
 		}
+	   ##############################################
+	   # this segment requires @problemRecords, $db, $set
+	   # and $studentName, $setName, 
+	   ##############################################
+       my ($status, 
+           $longStatus, 
+           $string,
+           $twoString, 
+           $totalRight,
+           $total, 
+           $num_of_attempts, 
+           $num_of_problems);
+           
+          ($status, 
+           $longStatus, 
+           $string,
+           $twoString, 
+           $totalRight,
+           $total, 
+           $num_of_attempts, 
+           $num_of_problems
+           )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
+
+# 		warn "status $status  longStatus $longStatus string $string twoString 
+# 		      $twoString totalRight $totalRight, total $total num_of_attempts $num_of_attempts 
+# 		      num_of_problems $num_of_problems setName $setName";
+
+		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
+		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+		
+		$max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
+		
+		# prettify versioned set display
+		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
+	
+		push @rows, CGI::Tr({},
+			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
+			CGI::td(sprintf("%0.2f",$totalRight)), # score
+			CGI::td($total), # out of 
+			#CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator -- leave this out
+			CGI::td("<pre>$string\n$twoString</pre>"), # problems
+			#CGI::td($studentRecord->section),
+			#CGI::td($studentRecord->recitation),
+			#CGI::td($studentRecord->user_id),			
+			
+		);
+	
+	}
+
+	my $problem_header = "";
+	foreach (1 .. $max_problems) {
+		$problem_header .= &threeSpaceFill($_);
+	}
+	
+	my $table_header = join("\n",
+		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+		CGI::Tr({},
+			CGI::th({ -align=>'center',},'Set'),
+			CGI::th({ -align=>'center', },'Score'),
+			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
+			#CGI::th({ -align=>'center', },'Ind'),  #  -- leave out indicator column
+			CGI::th({ -align=>'center', },'Problems'.CGI::br().CGI::pre($problem_header)),
+			#CGI::th({ -align=>'center', },'Section'),
+			#CGI::th({ -align=>'center', },'Recitation'),
+			#CGI::th({ -align=>'center', },'login_name'),
+			#CGI::th({ -align=>'center', },'ID'),
+		)
+	);
+	
+
+	
+	print $table_header;
+	print @rows;
+	print CGI::end_table();
+			
+	return "";
+}
+################
+# TASKS
+###################
+
+#  grading utility
+# provides a formatted line for presenting grades (
+###############################################################
+# 17-2-motion-velocity 	0.00 	7 	0 	.  .  .  .  .  .  .  
+#                                        0  0  0  0  0  0  0  
+###############################################################
+# requires = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
+# returns   my ($status, 
+#            $longStatus, 
+#            $string,
+#            $twoString, 
+#            $totalRight,
+#            $total, 
+#            $num_of_attempts, 
+#            $num_of_problems) = grade_set(...);
+#########################
+# 			########################################
+# 			# Notes for factoring the calculation in this loop.
+# 			#
+# 			# Inputs include:
+# 			#   @problemRecords  
+# 			# returns
+# 			#   $num_of_attempts
+# 			#   $status
+# 			# updates
+# 			#   $number_of_students_attempting_problem{$probID}++;
+# 			#   @{ $attempts_list_for_problem{$probID} }   
+# 			#   $number_of_attempts_for_problem{$probID}
+# 			#   $total_num_of_attempts_for_set
+# 			#   $correct_answers_for_problem{$probID}   
+# 			#    
+# 			#   $string (formatting output)
+# 			#   $twoString (more formatted output)
+# 			#   $longtwo (a combination of $string and $twostring)
+# 			#   $total
+# 			#   $totalRight
+# 			###################################
+sub grade_set {
+        
+        my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+
+        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
 
 		my $status = 0;
-		my $attempted = 0;
 		my $longStatus = '';
 		my $string     = '';
 		my $twoString  = '';
@@ -305,21 +443,21 @@ sub displayStudentStats {
 		#    issue here?  That is, shouldn't the database deal with 
 		#    it invisibly by detecting what the problem types are?  
 		#    oh well.
-		my @problemRecords = ();
+		
+		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
+		my $num_of_problems  = @problemRecords || 0;
+		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
+
 		if ( $setIsVersioned ) {
 			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-		} else {
-			@problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-		}
-		debug("End collecting problems for set $setName");
+		}   # use versioned problems instead (assume that each version has the same number of problems.
 		
-		# FIXME the following line doesn't sort the problemRecords
-		#my @problems = sort {$a <=> $b } map { $_->problem_id } @problemRecords;
-		debug("Begin sorting problems for set $setName");
+		debug("End collecting problems for set $setName");
+
+	####################
+	# Resort records
+	#####################
 		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
-		debug("End sorting problems for set $setName");
-		my $num_of_problems  = @problemRecords;
-		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
 		
 		# for gateway/quiz assignments we have to be careful about 
 		#    the order in which the problems are displayed, because
@@ -342,24 +480,27 @@ sub displayStudentStats {
 
 			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
 		}
-
-		# construct header
 		
+		
+    #######################################################
+	# construct header
+	
 		foreach my $problemRecord (@problemRecords) {
 			my $prob = $problemRecord->problem_id;
 			
-			my $valid_status    = 0;
 			unless (defined($problemRecord) ){
 				# warn "Can't find record for problem $prob in set $setName for $student";
 				# FIXME check the legitimate reasons why a student record might not be defined
 				next;
 			}
-		    	$status           = $problemRecord->status || 0;
-		        $attempted        = $problemRecord->attempted;
-			my $num_correct   = $problemRecord->num_incorrect || 0;
-			my $num_incorrect = $problemRecord->num_correct   || 0;
-			$num_of_attempts += $num_correct + $num_incorrect;
+			
+		    $status           = $problemRecord->status || 0;
+		    my  $attempted    = $problemRecord->attempted;
+			my $num_correct   = $problemRecord->num_correct || 0;
+			my $num_incorrect = $problemRecord->num_incorrect   || 0;
+			$num_of_attempts  += $num_correct + $num_incorrect;
 
+#######################################################
 			# This is a fail safe mechanism that makes sure that
 			# the problem is marked as attempted if the status has
 			# been set or if the problem has been attempted
@@ -376,88 +517,73 @@ sub displayStudentStats {
 					$db->putUserProblem($problemRecord );
 				}
 			}
-			
+######################################################			
+
+			# sanity check that the status (score) is 
+			# between 0 and 1
+			my $valid_status = ($status>=0 && $status<=1)?1:0;
+
+			###########################################
+			# Determine the string $longStatus which 
+			# will display the student's current score
+			###########################################			
+
 			if (!$attempted){
-				$longStatus     = '.  ';
-			}
-			elsif   ($status >= 0 and $status <=1 ) {
-				$valid_status   = 1;
+				$longStatus     = '.';
+			} elsif   ($valid_status) {
 				$longStatus     = int(100*$status+.5);
-				if ($longStatus == 100) {
-					$longStatus = 'C  ';
-				}
-				else {
-					$longStatus = &threeSpaceFill($longStatus);
-				}
-			}
-			else	{
-				$longStatus 	= 'X  ';
+				$longStatus='C' if ($longStatus==100);
+			} else	{
+				$longStatus 	= 'X';
 			}
 
-			$string          .=  $longStatus;
-			$twoString       .= threeSpaceFill($num_correct);
+			$string          .= threeSpaceFill($longStatus);
+			$twoString       .= threeSpaceFill($num_incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
 			$totalRight      += round_score($status*$probValue) if $valid_status;
-		}
-		
-
-		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
-		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-
-		# prettify versioned set display
-		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
-	
-		push @rows, CGI::Tr({},
-			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
-			CGI::td(sprintf("%0.2f",$totalRight)), # score
-			CGI::td($total), # out of 
-			CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator
-			CGI::td("<pre>$string\n$twoString</pre>"), # problems
-			#CGI::td($studentRecord->section),
-			#CGI::td($studentRecord->recitation),
-			#CGI::td($studentRecord->user_id),			
 			
+# 				
+# 			# initialize the number of correct answers 
+# 			# for this problem if the value has not been 
+# 			# defined.
+# 			$correct_answers_for_problem{$probID} = 0 
+# 				unless defined($correct_answers_for_problem{$probID});
+			
+# 				
+# 		# add on the scores for this problem
+# 			if (defined($attempted) and $attempted) {
+# 				$number_of_students_attempting_problem{$probID}++;
+# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+# 				$h_problemData{$probID}                               = $num_incorrect;
+# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
+# 				$correct_answers_for_problem{$probID}                += $status;
+# 			}
+
+		}  # end of problem record loop
+
+
+
+		return($status,  
+			   $longStatus, 
+			   $string,
+			   $twoString, 
+			   $totalRight,
+			   $total, 
+			   $num_of_attempts, 
+			   $num_of_problems			
 		);
-	
-	}
-	
-	my $problem_header = "";
-	foreach (1 .. $max_problems) {
-		$problem_header .= &threeSpaceFill($_);
-	}
-	
-	my $table_header = join("\n",
-		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
-		CGI::Tr({},
-			CGI::th({ -align=>'center',},'Set'),
-			CGI::th({ -align=>'center', },'Score'),
-			CGI::th({ -align=>'center', },'Out'.CGI::br().'Of'),
-			CGI::th({ -align=>'center', },'Ind'),
-			CGI::th({ -align=>'center', },'Problems'.CGI::br().CGI::pre($problem_header)),
-			#CGI::th({ -align=>'center', },'Section'),
-			#CGI::th({ -align=>'center', },'Recitation'),
-			#CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		)
-	);
-	
-	print $table_header;
-	print @rows;
-	print CGI::end_table();
-			
-	return "";
 }
-
 #################################
 # Utility function NOT a method
 #################################
 sub threeSpaceFill {
 	my $num = shift @_ || 0;
 
-	if (length($num)<=1) {return "$num".'  ';}
-	elsif (length($num)==2) {return "$num".' ';}
+	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
+	elsif (length($num)==2) {return "$num".'&nbsp;';}
 	else {return "## ";}
 }
 sub round_score{

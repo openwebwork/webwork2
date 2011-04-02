@@ -85,7 +85,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 500;
-use constant DEFAULT_PUBLISHED_STATE => 1;
+use constant DEFAULT_VISIBILITY_STATE => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
 use constant ONE_WEEK => 60*60*24*7;  
 
@@ -93,8 +93,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users published enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id published enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -120,12 +120,12 @@ use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_
 
 use constant SORT_SUBS => {
 	set_id		=> \&bySetID,
-	set_header	=> \&bySetHeader,
-	hardcopy_header	=> \&byHardcopyHeader,
+#	set_header	=> \&bySetHeader,  # can't figure out why these are useful
+#	hardcopy_header	=> \&byHardcopyHeader,  # can't figure out why these are useful
 	open_date	=> \&byOpenDate,
 	due_date	=> \&byDueDate,
 	answer_date	=> \&byAnswerDate,
-	published	=> \&byPublished,
+	visible	=> \&byVisible,
 
 };
 
@@ -162,7 +162,7 @@ use constant  FIELD_PROPERTIES => {
 		size => 26,
 		access => "readwrite",
 	},
-	published => {
+	visible => {
 		type => "checked",
 		size => 4,
 		access => "readwrite",
@@ -284,7 +284,8 @@ sub pre_header_initialize {
 
 }
 
-sub body {
+sub initialize {
+
 	my ($self)       = @_;
 	my $r            = $self->r;
 	my $urlpath      = $r->urlpath;
@@ -295,6 +296,7 @@ sub body {
 	my $setID        = $urlpath->arg("setID");       
 	my $user         = $r->param('user');
 	
+
 	my $root = $ce->{webworkURLs}->{root};
 
 	# templates for getting field names
@@ -302,38 +304,6 @@ sub body {
 	
 	return CGI::div({class => "ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
-	
-	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ } 
-		$setTemplate->FIELDS();
-	
-	@prettyFieldNames{qw(
-		select
-		problems
-		users
-		filename
-		set_id
-		set_header
-		hardcopy_header
-		open_date
-		due_date
-		answer_date
-		published
-		enable_reduced_scoring	
-	)} = (
-		"Select",
-		"Edit<br> Problems",
-		"Edit<br> Assigned Users",
-		"Set Definition Filename",
-		"Edit<br> Set Data", 
-		"Set Header", 
-		"Hardcopy Header", 
-		"Open Date", 
-		"Due Date", 
-		"Answer Date", 
-		"Visible",
-		"Reduced Credit<br> Enabled" 
-	);
 	
 	########## set initial values for state fields
 	
@@ -376,7 +346,11 @@ sub body {
 	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
 	
-	# DBFIXME shouldn't need set ID list
+	
+	#########################################
+	# collect date information from sets
+	#########################################
+
 	my @allSets = $db->getGlobalSets(@allSetIDs);
 
 	my (%open_dates, %due_dates, %answer_dates);
@@ -389,9 +363,12 @@ sub body {
 	$self->{due_dates} = \%due_dates;
 	$self->{answer_dates} = \%answer_dates;
 	
-	########## call action handler
+	#########################################
+	#  call action handler  
+	#########################################
 	
 	my $actionID = $r->param("action");
+	$self->{actionID} = $actionID;
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ EXPORT_FORMS() }) {
 			die "Action $actionID not found";
@@ -405,16 +382,83 @@ sub body {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			print CGI::div({class=>"Message"}, CGI::p("Results of last action performed: ", $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))), CGI::hr();
+			$self->addmessage( CGI::div({class=>"Message"}, "Results of last action performed: "));
+			$self->addmessage(
+			                     $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams), 
+			                     CGI::hr()
+			);
 		} else {
 			return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to perform this action."));
 		}
+		
+		
 
+	} else {
+	
+		$self->addgoodmessage("Please select action to be performed.");
 	}
 		
+
+}
+
+sub body {
+	my ($self)       = @_;
+	my $r            = $self->r;
+	my $urlpath      = $r->urlpath;
+	my $db           = $r->db;
+	my $ce           = $r->ce;
+	my $authz        = $r->authz;	
+	my $courseName   = $urlpath->arg("courseID");
+	my $setID        = $urlpath->arg("setID");       
+	my $user         = $r->param('user');
+	
+	my $root = $ce->{webworkURLs}->{root};
+
+	# templates for getting field names
+	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
+	
+	return CGI::div({class => "ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+		unless $authz->hasPermissions($user, "access_instructor_tools");
+	
+	# This table can be consulted when display-ready forms of field names are needed.
+	my %prettyFieldNames = map { $_ => $_ } 
+		$setTemplate->FIELDS();
+	
+	@prettyFieldNames{qw(
+		select
+		problems
+		users
+		filename
+		set_id
+		set_header
+		hardcopy_header
+		open_date
+		due_date
+		answer_date
+		visible
+		enable_reduced_scoring	
+	)} = (
+		"Select",
+		"Edit<br> Problems",
+		"Edit<br> Assigned Users",
+		"Set Definition Filename",
+		"Edit<br> Set Data", 
+		"Set Header", 
+		"Hardcopy Header", 
+		"Open Date", 
+		"Due Date", 
+		"Answer Date", 
+		"Visible",
+		"Reduced Credit<br> Enabled" 
+	);
+	
+
+
+	my $actionID = $self->{actionID};
+	
 	########## retrieve possibly changed values for member fields
 	
-	@allSetIDs = @{ $self->{allSetIDs} }; # do we need this one? YES, deleting or importing a set will change this.
+	my @allSetIDs = @{ $self->{allSetIDs} }; # do we need this one? YES, deleting or importing a set will change this.
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	my @prevVisibleSetIDs = @{ $self->{prevVisibleSetIDs} };
 	my @selectedSetIDs = @{ $self->{selectedSetIDs} };
@@ -427,6 +471,7 @@ sub body {
 	#warn "prevVisibleSetIDs=@prevVisibleSetIDs\n";
 	#warn "selectedSetIDs=@selectedSetIDs\n";
 	#warn "editMode=$editMode\n";
+	#warn "exportMode = $exportMode\n";
 	
 	########## get required users
 		
@@ -486,7 +531,7 @@ sub body {
 
 	print CGI::start_table({});
 	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
-	
+
 	my @formsToShow;
 	if ($editMode) {
 		@formsToShow = @{ EDIT_FORMS() };
@@ -604,14 +649,14 @@ sub filter_form {
 			"Show ",
 			CGI::popup_menu(
 				-name => "action.filter.scope",
-				-values => [qw(all none selected match_ids published unpublished)],
+				-values => [qw(all none selected match_ids visible unvisible)],
 				-default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
 				-labels => {
 					all => "all sets",
 					none => "no sets",
 					selected => "sets checked below",
-					published => "sets visible to students",
-					unpublished => "sets hidden from students", 
+					visible => "sets visible to students",
+					unvisible => "sets hidden from students", 
 					match_ids => "sets with matching set IDs:",
 				},
 				-onchange => $onChange,
@@ -685,16 +730,16 @@ sub filter_handler {
 	} elsif ($scope eq "match_answer_date") {
 		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
 		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
-	} elsif ($scope eq "published") {
+	} elsif ($scope eq "visible") {
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @publishedSetIDs = map { $_->published ? $_->set_id : ""} @setRecords;		
-		$self->{visibleSetIDs} = \@publishedSetIDs;
-	} elsif ($scope eq "unpublished") {
+		my @visibleSetIDs = map { $_->visible ? $_->set_id : ""} @setRecords;		
+		$self->{visibleSetIDs} = \@visibleSetIDs;
+	} elsif ($scope eq "unvisible") {
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @unpublishedSetIDs = map { (not $_->published) ? $_->set_id : ""} @setRecords;
-		$self->{visibleSetIDs} = \@unpublishedSetIDs;
+		my @unvisibleSetIDs = map { (not $_->visible) ? $_->set_id : ""} @setRecords;
+		$self->{visibleSetIDs} = \@unvisibleSetIDs;
 	}
 	
 	return $result;
@@ -706,7 +751,7 @@ sub sort_form {
 		"Primary sort: ",
 		CGI::popup_menu(
 			-name => "action.sort.primary",
-			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date published)],
+			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 			-labels => {
 				set_id		=> "Set Name",
@@ -715,14 +760,14 @@ sub sort_form {
 				open_date	=> "Open Date",
 				due_date	=> "Due Date",
 				answer_date	=> "Answer Date",
-				published	=> "Visibility",
+				visible	=> "Visibility",
 			},
 			-onchange => $onChange,
 		),
 		" Secondary sort: ",
 		CGI::popup_menu(
 			-name => "action.sort.secondary",
-			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date published)],
+			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
 			-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 			-labels => {
 				set_id		=> "Set Name",
@@ -731,7 +776,7 @@ sub sort_form {
 				open_date	=> "Open Date",
 				due_date	=> "Due Date",
 				answer_date	=> "Answer Date",
-				published	=> "Visibility",
+				visible	=> "Visibility",
 			},
 			-onchange => $onChange,
 		),
@@ -755,7 +800,7 @@ sub sort_handler {
 		open_date	=> "Open Date",
 		due_date	=> "Due Date",
 		answer_date	=> "Answer Date",
-		published	=> "Visibility",
+		visible	=> "Visibility",
 	);
 	
 	return "sort by $names{$primary} and then by $names{$secondary}.";
@@ -850,22 +895,22 @@ sub publish_handler {
 	
 	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
 		@setIDs = ();
-		$result = "No change made to any set.";
+		$result = CGI::div({class=>"ResultsWithError"},"No change made to any set.");
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
-		$result = "All sets $verb all students.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"All sets $verb all students.");
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = "All visible sets $verb all students.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"All visible sets $verb all students.");
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = "All selected sets $verb all students.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"All selected sets $verb all students.");
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	
-	map { $_->published("$value") if $_; $db->putGlobalSet($_); } @sets;
+	map { $_->visible("$value") if $_; $db->putGlobalSet($_); } @sets;
 	
 	return $result
 	
@@ -918,16 +963,16 @@ sub enable_reduced_scoring_handler {
 	
 	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
 		@setIDs = ();
-		$result = "No change made to any set.";
+		$result =  CGI::div({class=>"ResultsWithError"}, "No change made to any set.");
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
-		$result = "Reduced Credit $verb for all sets.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"Reduced Credit $verb for all sets.");
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = "Reduced Credit $verb for visable sets.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"Reduced Credit $verb for visable sets.");
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = "Reduced Credit $verb for selected sets.";
+		$result = CGI::div({class=>"ResultsWithoutError"},"Reduced Credit $verb for selected sets.");
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -1004,7 +1049,7 @@ sub delete_form {
 			CGI::popup_menu(
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
-				-default => $actionParams{"action.delete.scope"}->[0] || "none",
+				-default => "none", #  don't make it easy to delete # $actionParams{"action.delete.scope"}->[0] || "none",
 				-labels => {
 					none => "no sets.",
 					#visible => "visible sets.",
@@ -1048,7 +1093,9 @@ sub delete_handler {
 	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
 	
 	my $num = @setIDsToDelete;
-	return "deleted $num set" . ($num == 1 ? "" : "s");
+	 return CGI::div({class=>"ResultsWithoutError"},  "deleted $num set" .
+	                                           ($num == 1 ? "" : "s")
+	);
 }
 
 sub create_form {
@@ -1083,11 +1130,12 @@ sub create_handler {
 	my $r      = $self->r;
 	my $db     = $r->db;
 	
-	my $newSetRecord = $db->newGlobalSet;
-	my $oldSetID = $self->{selectedSetIDs}->[0];
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: no set name specified!") unless $newSetID =~ /\S/;
-	
+	return CGI::div({class => "ResultsWithError"}, "Set $newSetID exists.  No set created") if $db->existsGlobalSet($newSetID);
+	my $newSetRecord = $db->newGlobalSet;
+	my $oldSetID = $self->{selectedSetIDs}->[0];
+
 	my $type = $actionParams->{"action.create.type"}->[0];
 	# It's convenient to set the open date one week from now so that it is 
 	# not accidentally available to students.  We set the due and answer date
@@ -1099,7 +1147,7 @@ sub create_handler {
 		$newSetRecord->open_date(time + ONE_WEEK());
 		$newSetRecord->due_date(time + 2*ONE_WEEK() );
 		$newSetRecord->answer_date(time + 2*ONE_WEEK() );
-		$newSetRecord->published(DEFAULT_PUBLISHED_STATE());	# don't want students to see an empty set
+		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
@@ -1134,13 +1182,17 @@ sub create_handler {
 			}
 		}
 	}
+    #  Assign set to current active user
+     my $userName = $r->param('user'); # FIXME possible security risk
+     $self->assignSetToUser($userName, $newSetRecord); # cures weird date error when no-one assigned to set
+	 $self->addgoodmessage("Set $newSetID was assigned to $userName."); # not currently used
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} }, $newSetID;
 	
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new set: $@") if $@;
 	
-	return "Successfully created new set $newSetID";
+	 return CGI::div({class=>"ResultsWithoutError"},"Successfully created new set $newSetID" );
 	
 }
 
@@ -1224,9 +1276,12 @@ sub import_handler {
 	my $numAdded = @$added;
 	my $numSkipped = @$skipped;
 
-	return 	$numAdded . " set" . ($numAdded == 1 ? "" : "s") . " added, "
+   return CGI::div(
+		{class=>"ResultsWithoutError"},	
+		$numAdded . " set" . ($numAdded == 1 ? "" : "s") . " added, "
 		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped"
-		. " (" . join (", ", @$skipped) . ") ";
+		. " (" . join (", ", @$skipped) . ") "
+	);
 }
 
 sub export_form {
@@ -1268,7 +1323,7 @@ sub export_handler {
 	}
 	$self->{exportMode} = 1;
 	
-	return $result;
+	return   CGI::div({class=>"ResultsWithoutError"},  $result);
 }
 
 sub cancelExport_form {
@@ -1291,7 +1346,7 @@ sub cancelExport_handler {
 	}
 	$self->{exportMode} = 0;
 	
-	return "export abandoned";
+	return CGI::div({class=>"ResultsWithError"},  "export abandoned");
 }
 
 sub saveExport_form {
@@ -1322,12 +1377,15 @@ sub saveExport_handler {
 	
 	my $numExported = @$exported;
 	my $numSkipped = @$skipped;
+	my $resultFont = ($numSkipped)? "ResultsWithError" : "ResultsWithoutError";
 	
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
-	return 	$numExported . " set" . ($numExported == 1 ? "" : "s") . " exported, "
+	return 	CGI::div( {class=>$resultFont},
+	    $numExported . " set" . ($numExported == 1 ? "" : "s") . " exported, "
 		. $numSkipped . " set" . ($numSkipped == 1 ? "" : "s") . " skipped."
-		. (($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : "");
+		. (($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : "")
+		);
 
 }
 
@@ -1351,7 +1409,7 @@ sub cancelEdit_handler {
 	}
 	$self->{editMode} = 0;
 	
-	return "changes abandoned";
+	return CGI::div({class=>"ResultsWithError"}, "changes abandoned");
 }
 
 sub saveEdit_form {
@@ -1414,7 +1472,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return "changes saved";
+	return CGI::div({class=>"ResultsWithError"}, "changes saved" );
 }
 
 sub duplicate_form {
@@ -1471,26 +1529,30 @@ sub duplicate_handler {
 ################################################################################
 
 sub bySetID         { $a->set_id         cmp $b->set_id         }
-sub bySetHeader     { $a->set_header     cmp $b->set_header     }
-sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
+
+# I can't figure out why these are useful
+
+# sub bySetHeader     { $a->set_header     cmp $b->set_header     }
+# sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
 #FIXME  eventually we may be able to remove these checks, if we can trust 
 # that the dates are always defined
-sub byOpenDate      { my $result = eval{$a->open_date      <=> $b->open_date };
+# dates which are the empty string '' or undefined  are treated as 0
+sub byOpenDate      { my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
                       return $result unless $@;
                       warn "Open date not correctly defined.";
                       return 0;
 }
-sub byDueDate       { my $result = eval{$a->due_date       <=> $b->due_date    };      
+sub byDueDate       { my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
                       warn "Due date not correctly defined.";
                       return 0;
 }
-sub byAnswerDate    { my $result = eval{$a->answer_date    <=> $b->answer_date };    
+sub byAnswerDate    { my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };    
                       return $result unless $@;
                       warn "Answer date not correctly defined.";
                       return 0;
 }
-sub byPublished     { my $result = eval{$a->published      cmp $b->published   };      
+sub byVisible     { my $result = eval{$a->visible      cmp $b->visible   };      
                       return $result unless $@;
                       warn "Visibility status not correctly defined.";
                       return 0;
@@ -1575,7 +1637,7 @@ sub importSetsFromDef {
 		$newSetRecord->open_date($openDate);
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
-		$newSetRecord->published(DEFAULT_PUBLISHED_STATE);
+		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
 
 	# gateway/version data.  these should are all initialized to ''
@@ -1661,11 +1723,13 @@ sub readSetDef {
 	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
 		$setName = $1;
 	} else {
-		warn qq{The setDefinition file name must begin with   <CODE>set</CODE>},
+		$self->addbadmessage( 
+		    qq{The setDefinition file name must begin with   <CODE>set</CODE>},
 			qq{and must end with   <CODE>.def</CODE>  . Every thing in between becomes the name of the set. },
 			qq{For example <CODE>set1.def</CODE>, <CODE>setExam.def</CODE>, and <CODE>setsample7.def</CODE> },
 			qq{define sets named <CODE>1</CODE>, <CODE>Exam</CODE>, and <CODE>sample7</CODE> respectively. },
-			qq{The filename, $fileName, you entered is not legal\n };
+			qq{The filename, $fileName, you entered is not legal\n } 
+		);
 
 	}
 
@@ -2098,7 +2162,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $publishedClass = $Set->published ? "Published" : "Unpublished";
+	my $visibleClass = $Set->visible ? "visible" : "hidden";
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? 'Reduced Credit Enabled' : 'Reduced Credit Disabled';
 
 	my $users = $db->countSetUsers($Set->set_id);
@@ -2117,10 +2181,10 @@ sub recordEditHTML {
 	my $set_id = $Set->set_id;
 
 	$fakeRecord{select} = CGI::checkbox(-name => "selected_sets", -value => $set_id, -checked => $setSelected, -label => "", );
-#	$fakeRecord{set_id} = CGI::font({class=>$publishedClass}, $set_id) . ($editMode ? "" : $imageLink);
+#	$fakeRecord{set_id} = CGI::font({class=>$visibleClass}, $set_id) . ($editMode ? "" : $imageLink);
 	$fakeRecord{set_id} = $editMode 
 					? CGI::a({href=>$problemListURL}, "$set_id") 
-					: CGI::font({class=>$publishedClass}, $set_id) . $imageLink;
+					: CGI::font({class=>$visibleClass}, $set_id) . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 					? "$problems"
 					: CGI::a({href=>$problemListURL}, "$problems");
@@ -2147,7 +2211,7 @@ sub recordEditHTML {
 	if ($editMode) {
 		push @tableCells, CGI::a({href=>$problemListURL}, "$set_id");
 	} else {		
-	push @tableCells, CGI::font({class=>$publishedClass}, $set_id . $imageLink);
+	push @tableCells, CGI::font({class=>$visibleClass}, $set_id . $imageLink);
 	}
 
 	# Problems link
@@ -2188,10 +2252,10 @@ sub recordEditHTML {
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /published/ and not $editMode;
+		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enable_reduced_scoring/ and not $editMode;
-		push @tableCells, CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-		#$fakeRecord{$field} = CGI::font({class=>$publishedClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 
 	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;

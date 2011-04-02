@@ -863,10 +863,10 @@ sub get_version_zero_ww_table_data {
 			'sql_type' => 'BLOB',
 			'sql_name' => 'set_id'
 		  },
-		  'published' => {
+		  'visible' => {
 			'is_keyfield' => '',
 			'sql_type' => 'INT',
-			'sql_name' => 'published'
+			'sql_name' => 'visible'
 		  },
 		  'assignment_type' => {
 			'is_keyfield' => '',
@@ -907,7 +907,7 @@ sub get_version_zero_ww_table_data {
 		  'open_date',
 		  'due_date',
 		  'answer_date',
-		  'published',
+		  'visible',
 		  'assignment_type',
 		  'attempts_per_version',
 		  'time_interval',
@@ -956,10 +956,10 @@ sub get_version_zero_ww_table_data {
 			'sql_type' => 'TEXT',
 			'sql_name' => 'hardcopy_header'
 		  },
-		  'published' => {
+		  'visible' => {
 			'is_keyfield' => '',
 			'sql_type' => 'INT',
-			'sql_name' => 'published'
+			'sql_name' => 'visible'
 		  },
 		  'version_creation_time' => {
 			'is_keyfield' => '',
@@ -1007,7 +1007,7 @@ sub get_version_zero_ww_table_data {
 		  'open_date',
 		  'due_date',
 		  'answer_date',
-		  'published',
+		  'visible',
 		  'assignment_type',
 		  'attempts_per_version',
 		  'time_interval',

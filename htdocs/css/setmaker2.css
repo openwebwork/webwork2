@@ -80,9 +80,9 @@ div.problemList{
 }
 /*add extra space at the bottom 
 so we can add at end of list*/
-div#mysets_problems{
+/* div#mysets_problems{
 
-}
+} */
 
 div#mysets_problems div.myProblem:last-child {
   margin-bottom:200px;
@@ -117,6 +117,7 @@ div.ResultsWithError{
 
 select#myset_sets{
   background:none;
+  height:180px;
 }
 
 div#size_slider{
