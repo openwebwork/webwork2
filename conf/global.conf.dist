@@ -917,7 +917,13 @@ $pg{directories}{macrosPath} = [
 $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
 	"$webworkURLs{htdocs}/applets",
 	"$webworkURLs{htdocs}/applets/geogebra_stable"
-	#"$courseURLs{html}/applets",  # -- hack to prevent conflict of curl and apache2 only uses first entry
+	"$courseURLs{html}/applets",  
+	"$webworkURLs{htdocs}/applets/Xgraph",
+	"$webworkURLs{htdocs}/applets/PointGraph",
+	"$webworkURLs{htdocs}/applets/Xgraph",
+	"$webworkURLs{htdocs}/applets/liveJar",
+	"$webworkURLs{htdocs}/applets/Image_and_Cursor_All",
+	
 ];
 
 ##### "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
