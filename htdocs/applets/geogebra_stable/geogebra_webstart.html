@@ -1,5 +1,4 @@
 <html><head></head><body>
-<div id="applet1"><applet name="ggbApplet" code="geogebra%20Files/geogebra.html" archive="geogebra%20Files/geogebra.jar" height="475" width="878"><param name="framePossible" value="true"><param name="enableRightClick" value="true"><param name="enableShiftDragZoom" value="true"><param name="enableLabelDrags" value="true"><param name="showSpreadsheet" value="true"><param name="showAlgebraView" value="true"><param name="showResetIcon" value="true"><param name="showMenuBar" value="true"><param name="showToolBar" value="true"><param name="showToolBarHelp" value="true"><param name="showAlgebraInput" value="true">Sorry, the GeoGebra Applet could not be started. Please make sure that Java 1.4.2 (or later) is installed and activated.(<a href="http://java.sun.com/getjava">click here to install Java now</a>)</applet></div>
 
 
 <script type="text/javascript">
@@ -11,10 +10,6 @@ setWidthHeight();
 if (height < 500) height=500;
 if (width < 800) width=800;
 
-
-var applet1=document.getElementById('applet1');
-
-applet1.innerHTML=geogebra_applet(0.95*width,height*0.95,"",true,true,true,true,true,true,true,true,true,true,true,true);
 
 function geogebra_applet(width,height,filename,framePossible,enableRightClick,enableShiftDragZoom,showResetIcon,showMenuBar,showToolBar,showToolBarHelp,showAlgebraInput,enableLabelDrags,showSpreadsheet,showAlgebraView) {
  
@@ -60,6 +55,13 @@ function setWidthHeight() {
   width=myWidth;
   height=myHeight;
 }
+
+
+
+var applet1=document.getElementById('applet1');
+
+applet1.innerHTML=geogebra_applet(0.95*width,height*0.95,"",true,true,true,true,true,true,true,true,true,true,true,true);
+
 </script>
 
 
