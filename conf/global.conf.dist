@@ -916,7 +916,7 @@ $pg{directories}{macrosPath} = [
 
 $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
 	"$webworkURLs{htdocs}/applets",
-	"$webworkURLs{htdocs}/applets/geogebra_stable"
+	"$webworkURLs{htdocs}/applets/geogebra_stable",
 	"$courseURLs{html}/applets",  
 	"$webworkURLs{htdocs}/applets/Xgraph",
 	"$webworkURLs{htdocs}/applets/PointGraph",
