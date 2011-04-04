@@ -1092,11 +1092,14 @@ sub body {
 	###########################
 	# print style sheet for correct and incorrect answers
 	###########################
-
-	print CGI::start_style({type=>"text/css"});
-	print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-	print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-	print	CGI::end_style();
+	# always show colors for checkAnswers
+	# show colors for submit answer if 
+	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+		print CGI::start_style({type=>"text/css"});
+		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+		print	CGI::end_style();
+	}
     
 	###########################
 	# main form
