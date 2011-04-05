@@ -834,10 +834,10 @@ $pg{options}{showSolutions}      = 0;
 $pg{options}{catchWarnings}      = 0;
 
 # decorations for correct input blanks -- apparently you can't define and name attribute collections in a .css file
-$pg{options}{correct_answer} = "{background-color:#3F3}";
+$pg{options}{correct_answer} = "{background-color:#8F8}"; #matches resultsWithOutError class in math2.css
 
 # decorations for incorrect input blanks
-$pg{options}{incorrect_answer} = "{background-color:#FCC}";
+$pg{options}{incorrect_answer} = "{background-color:#FCC}"; #matches resultsWithError class in math2.css
 
 ##### Currently-selected renderer
 
