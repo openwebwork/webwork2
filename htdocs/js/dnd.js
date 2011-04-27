@@ -85,8 +85,8 @@ function fullWindowMode(){
 }
 
 function setup(){
-  console.log("app code name:" + navigator.appCodeName);
-  console.log("app name: " + navigator.appName);
+  //console.log("app code name:" + navigator.appCodeName);
+  //console.log("app name: " + navigator.appName);
   if(navigator.appCodeName != "Mozilla"){
     alert("Your browser may not be supported");
   }
@@ -157,7 +157,7 @@ function setup(){
   document.getElementById('problem_counter').innerHTML = document.getElementById('mysets_problems').childNodes.length;
   
   var pastGridded = document.getElementById('pastGridded');
-  console.log(pastGridded.value);
+  //console.log(pastGridded.value);
   if(pastGridded.value == "true"){
     gridify(false);
   }
@@ -195,7 +195,7 @@ function redoSetup(problemSet){
 /****** view problems functions ******/
 
 function selectAll(){
-  console.log("test");
+  //console.log("test");
   var libraryCheckboxes = document.querySelectorAll(".add_problem_checkbox");
   for(var i = 0; i < libraryCheckboxes.length; i++){
     libraryCheckboxes[i].checked = true;
@@ -305,7 +305,7 @@ function reorderDrop(event){
   if (event.preventDefault) event.preventDefault();
   if (event.stopPropagation) event.stopPropagation();
   var movedProblem = document.getElementById(event.dataTransfer.getData('Text'));
-  console.log(event.dataTransfer.getData('Text'));
+  //console.log(event.dataTransfer.getData('Text'));
   previewProblemEnd(event);
   //get problem dropped on
   var targetProblem = event.target;
@@ -318,13 +318,13 @@ function reorderDrop(event){
     return false;
   }
   if((hasClassName(movedProblem, 'myProblem') && !hasClassName(movedProblem, "removedProblem")) || hasClassName(movedProblem, "libProblem")){  
-    console.log("were just doing a reorder");
+    //console.log("were just doing a reorder");
     movedProblem.parentNode.removeChild(movedProblem);
     targetProblem.parentNode.insertBefore(movedProblem, targetProblem);
   } else {
     //cancel remove problem
     if(hasClassName(movedProblem, 'removedProblem')){
-      console.log("we're adding a problem back and reordering it");
+      //console.log("we're adding a problem back and reordering it");
       //have to disable a remove checkbox here as well
       var deleteProbBox = document.getElementById("deleted" + movedProblem.id);
       deleteProbBox.checked = false;
@@ -341,7 +341,7 @@ function reorderDrop(event){
     }
     //add library problem to target set
     else{
-      console.log("we're adding a new problem");
+      //console.log("we're adding a new problem");
       addClassName(movedProblem,"libProblem");
       //where the work needs to be done
       var toBeMoved = event.dataTransfer.getData('Move') == "true";
@@ -350,7 +350,7 @@ function reorderDrop(event){
         moveProbBox.checked = toBeMoved;
         moveProbBox.parentNode.style.display = "none";
       }
-      console.log("trial"+movedProblem.id);
+      //console.log("trial"+movedProblem.id);
       var addProbBox = document.getElementById("trial" + movedProblem.id);
       //only add problem if not moving
       addProbBox.checked = !toBeMoved || !moveProbBox;
@@ -389,7 +389,7 @@ function reorderDrop(event){
         }
       }
       else{ //move
-        console.log("we're moving a problem?");
+        //console.log("we're moving a problem?");
         //uncomment for reorder
         movedProblem.addEventListener('drop', reorderDrop, false);
         movedProblem.addEventListener('dragenter', dragEnter, false);
@@ -553,7 +553,7 @@ function singleAddDrop(event) {
   
   form.appendChild(currentFormElements['local_sets'].cloneNode(true));
   
-  console.log(parseInt(el.id));
+  //console.log(parseInt(el.id));
   for(var i = 1; i < parseInt(el.id); i++){
     var addedProblem = document.createElement('input');
     addedProblem.name = "filetrial" + i;
