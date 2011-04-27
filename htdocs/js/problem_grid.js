@@ -218,7 +218,7 @@ function fixMysetsGrid(){
 function onMouseOver(event){
   if(!viewing && !dragging){
     clearTimeout(timeoutID);
-    console.log("?");
+    //console.log("?");
     previewProblem = getProblem(event.target);
     if (previewProblem){
       timeoutID = setTimeout("previewProblemStart()", 250);
@@ -305,7 +305,7 @@ function dummyDrag(event){
   dragging = true;
   event.dataTransfer.effectAllowed = 'all';
   event.dataTransfer.setDragImage(previewProblem, previewProblem.clientWidth*(1/4), previewProblem.clientHeight*(1/4));
-  console.log("drag start for: "+previewProblem.id);
+  //console.log("drag start for: "+previewProblem.id);
   // store the ID of the element, and collect it on the drop later on
   event.dataTransfer.setData('Text', previewProblem.id);
   event.dataTransfer.setData('Move', event.shiftKey);

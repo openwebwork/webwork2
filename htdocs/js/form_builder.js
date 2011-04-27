@@ -3,7 +3,7 @@
 function viewSet(formID, uploadAddress, spinnerName){
   var weAreUpdating = "view_set";
   var activeSpinner = spinnerName;
-  console.log(uploadAddress);
+  //console.log(uploadAddress);
   document.getElementById(activeSpinner).style.display = "inline";
   var wantedElements = ["myset_sets", "local_sets", "mydisplayMode", "user", "key", "effectiveUser", "showHints", "showSolutions"];
   upload(document.getElementById(formID), uploadAddress, wantedElements, null, weAreUpdating, activeSpinner);
@@ -73,7 +73,7 @@ function upload(form, uploadAddress, wantedElements, inputName, weAreUpdating, a
 	//webkit
 	if(!(typeof FormData === "undefined")){
 		//var xhr = new XMLHttpRequest();
-	  console.log("FormData exists");
+	  //console.log("FormData exists");
 	  //make this more flexable
 	  //check if this works in ff4
 		var formData = new FormData(); //new FormData(form);//form.getFormData(); //  these work in ff and chrome but safari doesn't play nice yet
@@ -111,7 +111,7 @@ function upload(form, uploadAddress, wantedElements, inputName, weAreUpdating, a
 	}
 		//mozilla untill ff4
 	else{
-		console.log("FormData doesn't exist");
+		//console.log("FormData doesn't exist");
 		//build top of form
 		var boundary = '------WebKitFormBoundary' + (new Date).getTime();
 		var dashdash = '--';
@@ -125,7 +125,7 @@ function upload(form, uploadAddress, wantedElements, inputName, weAreUpdating, a
 		  //ignore the submits or we'll confuse perl...poor perl
 		  if(formElements[i].type != "submit" && formElements[i].name && (formElements[i].type != "checkbox" || formElements[i].checked) && stringIsInArray(formElements[i].name, wantedElements)){
 		    if(formElements[i].name.indexOf("all_past_list") == -1)
-		      console.log(formElements[i].name);
+		      //console.log(formElements[i].name);
 		    //build each input
 		    builder += dashdash;
 			  builder += boundary;
@@ -185,7 +185,7 @@ function upload(form, uploadAddress, wantedElements, inputName, weAreUpdating, a
 	  xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary);
 		xhr.send(builder);
 	}
-	console.log("uploaded finished");
+	//console.log("uploaded finished");
 }
 
 /****** event listeners ******/
@@ -193,16 +193,16 @@ function upload(form, uploadAddress, wantedElements, inputName, weAreUpdating, a
 function updateProgress(evt) {
   if (evt.lengthComputable) {
     var percentComplete = evt.loaded / evt.total;
-    console.log("Percent complete: "+precentComplete);
+    //console.log("Percent complete: "+precentComplete);
   } else {
     // Unable to compute progress information since the total size is unknown
-    console.log("Loading.. "+ evt.loaded + " out of " + evt.total);
+    //console.log("Loading.. "+ evt.loaded + " out of " + evt.total);
   }
 }
 
 function transferComplete(evt, weAreUpdating, activeSpinner) {
-  console.log("recieved response");
-  console.log(weAreUpdating);
+  //console.log("recieved response");
+  //console.log(weAreUpdating);
   var responseObject = HTMLParser(evt.target.responseText);
   //console.log(responseObject);
   switch (weAreUpdating)
@@ -225,7 +225,7 @@ function transferComplete(evt, weAreUpdating, activeSpinner) {
           fixMysetsGrid();
         }
       } else {
-				console.log(responseObject);
+				//console.log(responseObject);
         alert("There is an error in the response, see javascript console for details");
       }
       break;
@@ -248,13 +248,13 @@ function transferComplete(evt, weAreUpdating, activeSpinner) {
           fixMysetsGrid();
         }
       } else {
-        console.log(responseObject);
+        //console.log(responseObject);
         alert("There is an error in the response, see javascript console for details");
 			}
       break;
       
     case "lib_categories":
-      console.log("looking for categories");
+      //console.log("looking for categories");
       //console.log(getInnerElementId(responseObject, "control_panel"));
       var categories = getChildById("library_categories", responseObject);
       if(categories){
@@ -263,13 +263,13 @@ function transferComplete(evt, weAreUpdating, activeSpinner) {
         //redoSetup(document.getElementById("setmaker_library_problems"));
         categories = null;
       } else {
-        console.log(responseObject);
+        //console.log(responseObject);
         alert("There is an error in the response, see javascript console for details");
 			}
       break;
     
     case "libs":
-      console.log("looking for categories");
+      //console.log("looking for categories");
       //console.log(getInnerElementId(responseObject, "control_panel"));
       var categories = getChildById("library_categories", responseObject);
       if(categories){
@@ -278,7 +278,7 @@ function transferComplete(evt, weAreUpdating, activeSpinner) {
         //redoSetup(document.getElementById("setmaker_library_problems"));
         categories = null;
       } else {
-        console.log(responseObject);
+        //console.log(responseObject);
         alert("There is an error in the response, see javascript console for details");
 			}
       break;  
@@ -363,7 +363,7 @@ function getChildByClass(myClass, el){
   var result = false;
   for(var i = 0; i < children.length; i++){
     if(hasClassName(children[i], myClass)){
-      console.log("Found "+children[i].className);
+      //console.log("Found "+children[i].className);
       result = children[i];
       break;
     } else if(children[i].childNodes.length > 0){
