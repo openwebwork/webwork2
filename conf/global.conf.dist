@@ -285,7 +285,7 @@ $webworkURLs{bugReporter}   = "http://bugs.webwork.maa.org/enter_bug.cgi";
 $webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
 
 # Location of MathJax script, used for the MathJax display mode.
-$webworkURLs{MathJax}        = "$webworkURLs{htdocs}/mathjax/MathJax.js";
+$webworkURLs{MathJax}       = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-AMS_HTML-full";
 
 # Location of ASCIIMathML script, used for the asciimath display mode.
 $webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
