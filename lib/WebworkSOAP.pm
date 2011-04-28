@@ -354,7 +354,10 @@ _RETURN $string
 sub put_permission {
     my ($self,$authenKey,$courseName,$record) = @_;
     my $soapEnv = new WebworkSOAP($authenKey,$courseName);
-    return SOAP::Data->type( 'string', $soapEnv->{db}->putPermissionLevel($record) );
+    my $newPermissionLevel = $soapEnv->{db}->newPermissionLevel;
+    %$newPermissionLevel = %$record;
+    return SOAP::Data->type( 'string',
+        $soapEnv->{db}->putPermissionLevel($newPermissionLevel) );
 }
 
 =pod
