@@ -209,7 +209,7 @@ sub attemptResults {
 
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
+	#warn "answer names are ", join(" ", @answerNames);
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
 	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
@@ -259,12 +259,12 @@ sub attemptResults {
                                                        CGI::span({class=>"ResultsWithError"}, "incorrect");
 		$fully = 'completely ' if $answerScore >0 and $answerScore < 1;
 		
+		#warn "answer $name  score $answerScore";
 		push @correct_ids,   $name if $answerScore == 1;
 		push @incorrect_ids, $name if $answerScore < 1;
 		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		#$name =~ s/^AnSwEr//;
+		# need to capture auxiliary answers as well and identify their ids.
+		
 		
 		my $row;
 		#$row .= CGI::td($name);
@@ -302,7 +302,8 @@ sub attemptResults {
 				if ($numCorrect == scalar @answerNames) {
 					$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the answers above are correct.");
 				 } 
-				 unless ($numCorrect + $numBlanks == scalar( @answerNames)) {
+				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
+				 elsif ($numBlanks != scalar( @answerNames)) {
 					$summary .= CGI::div({class=>"ResultsWithError"},"At least one of the answers above is NOT ${fully}correct.");
 				 }
 				 if ($numBlanks) {
@@ -1096,8 +1097,19 @@ sub body {
 	# show colors for submit answer if 
 	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
 		print CGI::start_style({type=>"text/css"});
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+		my $string ="";
+		foreach my $ans_name (@{ $self->{correct_ids} }) {
+			$string .= '#'. ( $ans_name ). $ce->{pg}{options}{correct_answer}."\n";
+		}
+		print $string;
+		$string ="";
+		foreach my $ans_name (@{ $self->{incorrect_ids} }) {
+			$string .= '#'. ($ ans_name). $ce->{pg}{options}{incorrect_answer}."\n";
+		}
+		print $string;
+		# the above method keeps one bad array ID from ruining all of the assignments.
+		#print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer},"\n"   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+		#print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer},"\n" if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
 		print	CGI::end_style();
 	}
     
