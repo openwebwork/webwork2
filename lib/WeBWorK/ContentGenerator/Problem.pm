@@ -1097,19 +1097,20 @@ sub body {
 	# show colors for submit answer if 
 	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
 		print CGI::start_style({type=>"text/css"});
-		my $string ="";
-		foreach my $ans_name (@{ $self->{correct_ids} }) {
-			$string .= '#'. ( $ans_name ). $ce->{pg}{options}{correct_answer}."\n";
-		}
-		print $string;
-		$string ="";
-		foreach my $ans_name (@{ $self->{incorrect_ids} }) {
-			$string .= '#'. ($ ans_name). $ce->{pg}{options}{incorrect_answer}."\n";
-		}
-		print $string;
+		#FIXME -- this hack is no longer needed?
+		# my $string ="";
+# 		foreach my $ans_name (@{ $self->{correct_ids} }) {
+# 			$string .= '#'. ( $ans_name ). $ce->{pg}{options}{correct_answer}."\n";
+# 		}
+# 		print $string;
+# 		$string ="";
+# 		foreach my $ans_name (@{ $self->{incorrect_ids} }) {
+# 			$string .= '#'. ($ ans_name). $ce->{pg}{options}{incorrect_answer}."\n";
+# 		}
+# 		print $string;
 		# the above method keeps one bad array ID from ruining all of the assignments.
-		#print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer},"\n"   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		#print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer},"\n" if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer},"\n"   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer},"\n" if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
 		print	CGI::end_style();
 	}
     
