@@ -372,28 +372,28 @@ sub pgfiles {
 					@keyword = keywordcleaner($1);
 					last SWITCH;
 				}
-				if (/\bDBsubject\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsubject\s*\(\s*'(.*?)'\s*\)/) {
 					$subject = $1;
 					$subject =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDBchapter\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBchapter\s*\(\s*'(.*?)'\s*\)/) {
 					$chapter = $1;
 					$chapter =~ s/'/\'/g;
 					$tagged = 1;
 					last SWITCH;
 				}
-				if (/\bDBsection\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsection\s*\(\s*'(.*?)'\s*\)/) {
 					$section = $1;
 					$section =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDate\(\s*'(.*?)'\s*\)/) {
+				if (/\bDate\s*\(\s*'(.*?)'\s*\)/) {
 					$date = $1;
 					$date =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bInstitution\(\s*'(.*?)'\s*\)/) {
+				if (/\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
 					$institution = $1;
 					$institution =~ s/'/\'/g;
 					last SWITCH;
