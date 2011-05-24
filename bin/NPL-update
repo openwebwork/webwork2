@@ -372,18 +372,18 @@ sub pgfiles {
 					@keyword = keywordcleaner($1);
 					last SWITCH;
 				}
-				if (/\bDBsubject\s*\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
 					$subject = $1;
 					$subject =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDBchapter\s*\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
 					$chapter = $1;
 					$chapter =~ s/'/\'/g;
 					$tagged = 1;
 					last SWITCH;
 				}
-				if (/\bDBsection\s*\(\s*'(.*?)'\s*\)/) {
+				if (/\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
 					$section = $1;
 					$section =~ s/'/\'/g;
 					last SWITCH;
@@ -398,12 +398,12 @@ sub pgfiles {
 					$institution =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bAuthor\(\s*'(.*?)'\s*\)/) {
+				if (/\bAuthor\(\s*'?(.*?)'?\s*\)/) {
 					$author = $1;
 					$author =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bTitleText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$text = $2;
 					$text =~ s/'/\'/g;
@@ -413,7 +413,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bEditionText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;	
 					$edition = $2;
 					$edition =~ s/'/\'/g;
@@ -423,7 +423,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bAuthorText(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textauthor = $2;
 					$textauthor =~ s/'/\'/g;
@@ -433,7 +433,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bSection(\d+)\(\s*'(.*?)'\s*\)/) {
+				if (/\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textsection = $2;
 					$textsection =~ s/'/\'/g;
