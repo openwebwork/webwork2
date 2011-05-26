@@ -81,6 +81,7 @@ my @modulesList = qw(
 	SQL::Abstract
 	String::ShellQuote
 	Text::Wrap
+	Tie::IxHash
 	Time::HiRes
 	Time::Zone
 	URI::Escape
