@@ -32,17 +32,9 @@ $BBOLD 7. More graphics. $EBOLD An example of on-the-fly graphics.  Select the g
 $PAR
 $BBOLD 8. JavaScript example. $EBOLD I'm particularly fond of this example.  The computer provides an "oracle" function: give it  a number \(x\) and it will provide you with the value \(f(x)\) of the function at \(x\).  Using this, calculate the value of the derivative of \(f\) at 2. (i.e. \(f'(2)\) ).  Students are forced to use the Newton quotient, since there are no formulas to work with.  I don't think this problem could be asked as written homework.
 $PAR
-$BBOLD 9. Java example.    $EBOLD  This gives an example of incorporating a java applet which can be used experimentally to determine answers for WeBWorK questions.  This particular example is somewhat forced.  There is a lot of room for experimentation and improvement in combining these two technologies.
+$BBOLD 9. Java example.    $EBOLD  This gives an example of incorporating a java applet which can be used experimentally to determine answers for WeBWorK questions.  This example is of historical interest since it comes from the first site after Rochester, Johns Hopkins University, to use WeBWorK.  It currently gives an example of what happens when a WeBWorK problem called an applet residing on a server that no longer exists.
 $PAR
 $BBOLD 10. Palindrome. $EBOLD  To answer this problem enter any palindrome.  This problem illustrates the power of the "answer-evaluator" model.  For each problem the problem designer writes a function which accepts a student's answer and produces a 0 or 1 (for incorrect or correct).  Usually this is done by comparing with an answer given by the problem designer, but in this case the function checks if the answer is the same forward and backward.
-$PAR
-$BBOLD 11. Lite Applet. $EBOLD An example of using the map lite applet
-$PAR
-$PAR
-$BBOLD 12. Lite Applet. $EBOLD An example of using the map lite applet where the cities are 
-chosen randomly.l
-$PAR
-$BBOLD 13. JavaScript $EBOLD The Josephus problem.  Currently the javaScript is a bit too complicated, since it uses frames.  With a little more work one might be able to embed this in a PG problem.
 $PAR
 END_TEXT
 
@@ -75,10 +67,10 @@ of -1, e^(ln(2)) instead of 2,
 (2+tan(3))*(4-sin(5))^6-7/8 instead of 27620.3413, etc.
 $PAR 
  Here's the 
-\{ htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
+\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"list of the functions") \}
  which WeBWorK understands. 
 
-Along with the \{htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!, "list of units")\} which WeBWorK understands.  This can be useful in 
+Along with the \{htmlLink(qq!http://webwork.maa.org/wiki/Units!, "list of units")\} which WeBWorK understands.  This can be useful in 
 physics problems.
 END_TEXT
 
