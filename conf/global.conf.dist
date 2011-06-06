@@ -829,6 +829,11 @@ $pg{options}{showHints}          = 0;
 # Show solutions (when allowed) by default?
 $pg{options}{showSolutions}      = 0;
 
+# Display the "Entered" column which automatically shows the evaluated student answer, e.g. 1 if student input is sin(pi/2).
+# If this is set to 0, e.g. to save space in the response area, the student can still see their evaluated answer by hovering
+# the mouse pointer over the typeset version of their answer
+$pg{options}{showEvaluatedAnswers}      = 1;
+
 # Catch translation warnings internally by default? (We no longer need to do
 # this, since there is a global warnings handler. So this should be off.)
 $pg{options}{catchWarnings}      = 0;
