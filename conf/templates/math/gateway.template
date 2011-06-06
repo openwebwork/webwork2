@@ -90,7 +90,7 @@
 	<div id="footer">
 		<p id="last-modified">Page generated at <!--#timestamp--></p>
 		<div id="copyright">
-			WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
+			WeBWorK &#169; 1996-2011 <a href="http://webwork.maa.org/">The WeBWorK Project</a>
 		</div>
 	</div>
 	<!-- [gateway] removed left sidebar -->
