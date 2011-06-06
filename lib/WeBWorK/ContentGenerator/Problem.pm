@@ -229,9 +229,13 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
+	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers};
+
 	my $header;
 	#$header .= CGI::th("Part");
-	#$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+	if ($showEvaluatedAnswers) {
+		$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+	}	
 	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
 	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
 	$header .= $showAttemptResults ? CGI::th("Result")   : "";
@@ -268,7 +272,9 @@ sub attemptResults {
 		
 		my $row;
 		#$row .= CGI::td($name);
-		#$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+		if ($showEvaluatedAnswers) {
+		  $row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+		}
 		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
