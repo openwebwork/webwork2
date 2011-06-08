@@ -83,7 +83,7 @@ sub fake_set {
 	$set->answer_date(time());
 	$set->visible(0);
 	$set->enable_reduced_scoring(0);
-	$set->hardcopy_header("");
+	$set->hardcopy_header("defaultHeader");
 	return($set); 
 } 
 
@@ -99,7 +99,7 @@ sub fake_set_version {
 	$set->answer_date(time());
 	$set->visible(0);
 	$set->enable_reduced_scoring(); 
-	$set->hardcopy_header("");
+	$set->hardcopy_header("defaultHeader");
 	$set->version_id(1);
 	$set->attempts_per_version(0);
 	$set->problem_randorder(0);

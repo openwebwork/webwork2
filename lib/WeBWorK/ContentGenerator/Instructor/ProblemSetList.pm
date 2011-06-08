@@ -1142,8 +1142,8 @@ sub create_handler {
 	# to be two weeks from now.
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
-		$newSetRecord->set_header("");
-		$newSetRecord->hardcopy_header("");
+		$newSetRecord->set_header("defaultHeader");
+		$newSetRecord->hardcopy_header("defaultHeader");
 		$newSetRecord->open_date(time + ONE_WEEK());
 		$newSetRecord->due_date(time + 2*ONE_WEEK() );
 		$newSetRecord->answer_date(time + 2*ONE_WEEK() );

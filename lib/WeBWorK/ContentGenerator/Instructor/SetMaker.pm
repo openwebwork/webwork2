@@ -1149,8 +1149,8 @@ sub pre_header_initialize {
 				# DBFIXME use $db->newGlobalSet
 				$newSetRecord = $db->{set}->{record}->new();
 				$newSetRecord->set_id($newSetName);
-				$newSetRecord->set_header("");
-				$newSetRecord->hardcopy_header("");
+				$newSetRecord->set_header("defaultHeader");
+				$newSetRecord->hardcopy_header("defaultHeader");
 				$newSetRecord->open_date(time()+60*60*24*7); # in one week
 				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
