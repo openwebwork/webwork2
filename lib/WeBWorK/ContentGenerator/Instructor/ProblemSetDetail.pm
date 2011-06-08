@@ -1468,32 +1468,13 @@ sub initialize {
 			}
 		}
 		
-		# Sets the specified header to "" so that the default file will get used.
+		# Sets the specified header to "defaultHeader" so that the default file will get used.
 		foreach my $header ($r->param('defaultHeader')) {
 			$setRecord->$header("defaultHeader");
 		}
 	}	
 	
-# Leftover code from when there were up/down buttons
 
-#	} else {
-#		# Look for up and down buttons
-#		my $index = 2;
-#		while ($index <= scalar @problemList) {
-#			if (defined $r->param("move.up.$index.x")) {
-#				moveme($index-1, $db, $setID, @problemList);
-#			}
-#			$index++;
-#		}
-#		$index = 1;
-#		
-#		while ($index < scalar @problemList) {
-#			if (defined $r->param("move.down.$index.x")) {
-#				moveme($index, $db, $setID, @problemList);
-#			}
-#			$index++;
-#		}
-#	}
 
 
 	# This erases any sticky fields if the user saves changes, resets the form, or reorders problems
@@ -1561,7 +1542,6 @@ sub checkFile ($) {
 	return "No source filePath specified" unless $filePath;
 	return "Problem source is drawn from a grouping set" if $filePath =~ /^group/;
 	
-
 	if ( $filePath eq "defaultHeader" ) {
 		$filePath = $ce->{webworkFiles}{screenSnippets}{setHeader};
 	} else {

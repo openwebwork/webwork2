@@ -119,8 +119,8 @@ sub initializeDefaultSet {
 	my $setName       = 'set0';
 	my $setRecord   = fake_set($db);
 	$setRecord->set_id($setName);
-	$setRecord->set_header("");
-	$setRecord->hardcopy_header("");
+	$setRecord->set_header("defaultHeader");
+	$setRecord->hardcopy_header("defaultHeader");
 	$setRecord->open_date(time()-60*60*24*7); #  one week ago
 	$setRecord->due_date(time()+60*60*24*7*2); # in two weeks
 	$setRecord->answer_date(time()+60*60*24*7*3); # in three weeks

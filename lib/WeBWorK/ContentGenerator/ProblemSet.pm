@@ -213,6 +213,8 @@ sub info {
 	die "set $setID for effectiveUser $eUserID not found." unless $set;
 	
 	my $psvn = $set->psvn();
+	# hack to prevent errors from uninitialized set_headers.
+	$set->set_header("defaultHeader") unless $set->set_header =~/\S/; # (some non-white space character required)
 	my $screenSetHeader = ($set->set_header eq "defaultHeader") ?
 	      $ce->{webworkFiles}->{screenSnippets}->{setHeader} :
 	      $set->set_header;
