@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash listFilesRecursive max cryptPassword);
+use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -1761,12 +1761,12 @@ sub body {
 	my @headerFileList = listFilesRecursive(
 		$templates,
 		qr/header.*\.pg$/i, 		# match these files
-		qr/^(?:$skip|CVS)$/, 	# prune these directories
+		qr/^(?:$skip|svn)$/, 	# prune these directories
 		0, 				# match against file name only
 		1, 				# prune against path relative to $templates
 	);
-
-
+  @headerFileList = sortByName(undef,@headerFileList);
+ 
 	# Display a useful warning message
 	if ($forUsers) {
 		print CGI::p(CGI::b("Any changes made below will be reflected in the set for ONLY the student" . 
