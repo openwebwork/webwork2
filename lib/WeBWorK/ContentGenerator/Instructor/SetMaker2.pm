@@ -757,7 +757,7 @@ sub browse_library_panel2adv {
 					             -onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'view_problems_spinner\')"
 				)]),
 			CGI::div({-colspan=>2, -align=>"right"},
-				'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'lib_select_subject\', \'view_problems_spinner\')">Update Menus</button>'),
+				'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'lib_select_subject\', \'null\',\'view_problems_spinner\')">Update Menus</button>'),
 			CGI::div(["Chapter:",
 				CGI::popup_menu(-name=> 'library_chapters', 
 				              -size => 4,
@@ -766,30 +766,30 @@ sub browse_library_panel2adv {
 					             -onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'view_problems_spinner\')"
 		    )]),
 			CGI::div({-colspan=>2, -align=>"right"},
-					'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_reset\', \'view_problems_spinner\')">Reset</button>'),
+					'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_reset\', \'null\',\'view_problems_spinner\')">Reset</button>'),
 			CGI::div(["Section:",
 			CGI::popup_menu(-name=> 'library_sections', 
 			            -size => 4,
 					        -values=>\@sects,
 					        -default=> $selected{dbsection},
-							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'view_problems_spinner\')"
+							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'null\',\'view_problems_spinner\')"
 		    )]),
 			CGI::div({-colspan=>2, -align=>"right"},
-					'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_basic\', \'view_problems_spinner\')">Basic Search</button>'),
+					'<button type="button" style="'.$right_button_style.'" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_basic\', \'null\',\'view_problems_spinner\')">Basic Search</button>'),
 			CGI::div(["Textbook:", $text_popup]),
 			CGI::div(["Text chapter:",
 			CGI::popup_menu(-name=> 'library_textchapter', 
 			            -size => 4,
 					        -values=>\@textchaps,
 					        -default=> $selected{textchapter},
-							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'view_problems_spinner\')"
+							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'null\',\'view_problems_spinner\')"
 		    )]),
 			CGI::div(["Text section:",
 			CGI::popup_menu(-name=> 'library_textsection', 
 			            -size => 4,
 					        -values=>\@textsecs,
 					        -default=> $selected{textsection},
-							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'view_problems_spinner\')"
+							-onchange=>"updateLibCategories(\'mainform\', \'".$r->uri."\',\'null\',\'view_problems_spinner\')"
 		    )]),
 		     CGI::div("Keywords:"),CGI::div({-colspan=>2},
 			 CGI::textfield(-name=>"library_keywords",
@@ -1060,10 +1060,11 @@ sub make_data_row {
 	if(!($self->{isInSet}{$sourceFileName})){
 
   	print CGI::div({-class=>"problem libraryProblem", -align=>"left", -draggable=>"true", -href=>"#", -id=>"$cnt"},
-  		CGI::p({},"File name: $sourceFileName "), 
-  		CGI::p({}, $edit_link, " ", $try_link),
-  		CGI::p(CGI::checkbox(-id=>"hideme$cnt", -name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1)),
-  		CGI::p(CGI::checkbox((%add_box_data),-override=>1)),
+  		CGI::p(CGI::span({style=> 'float:left'},"File name: $sourceFileName "), 
+  		       CGI::span({style=>'float:right'}, $edit_link, "&nbsp;&nbsp;", $try_link,"&nbsp;")
+  		),CGI::br(),
+  		CGI::checkbox(-id=>"hideme$cnt", -name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
+  		CGI::br(),CGI::checkbox((%add_box_data),-override=>1),
   		CGI::p($move_box_data),
   		CGI::hidden(-id=>"filetrial$cnt", -name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
   		CGI::p($problem_output)
@@ -1732,7 +1733,12 @@ sub body {
 					'<p><div class="ResultsWithError" style="width:16px;height:16px;border:solid 1px;"></div><span>Errors</span></p>',
 				'</div>';
 				#'<p>In the target set you can drag problems to reorder them.<br/>The problem will be placed in front of the one you drop it on,<br/>or at the end of the list if you drop it on an empty space in the table.</p>',
-	print '<span><button type="button" style="float:right;" onclick="saveChanges(\'mainform\', \''.$r->uri.'\', \'save_changes_spinner\');">save changes</button><img id="save_changes_spinner" style="display:none;float:right;" src="/webwork2_files/images/ajax-loader-small.gif"></img></span>';
+	print '<span><button type="button" style="float:right;" onclick="saveChanges(\'mainform\', \''.$r->uri.'\', \'save_changes_spinner\');">save changes</button><img id="save_changes_spinner" style="display:none;float:right;" src="/webwork2_files/images/ajax-loader-small.gif"></img>
+	             <button type="button" style="float:right;" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'lib_select_subject\', \'null\',\'view_problems_spinner\')">Update Menus</button>
+	             <button type="button" style="float:right;" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_reset\', \'null\',\'view_problems_spinner\')">Reset</button>
+	             <button type="button" style="float:right;" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_advanced\', \'view_problems_spinner\')">Advanced Search</button>
+	             <button type="button" style="float:right;" onclick="updateLibCategories(\'mainform\', \''.$r->uri.'\', \'library_basic\', \'null\',\'view_problems_spinner\')">Basic Search</button>
+	      </span>';
 	print '<div id="editor-form">';
 	  print CGI::start_form({-id=>"mainform", -method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 	  	$self->hidden_authen_fields;
