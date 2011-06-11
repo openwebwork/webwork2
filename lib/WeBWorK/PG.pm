@@ -189,7 +189,7 @@ sub defineProblemEnvir {
 	if (defined $extras->{image_generator}) {
 		#$envir{imagegen} = $extras->{image_generator};
 		# only allow access to the add() method
-		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, "add");
+		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, 'add','addToTeXPreamble', 'refresh');
 	}
 	
 	if (defined $extras->{mailer}) {
