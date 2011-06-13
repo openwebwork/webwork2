@@ -8,7 +8,7 @@ DOCUMENT();
 loadMacros(
 "PG.pl",
 "PGbasicmacros.pl",
-"PGcourses.pl",
+
 );
 
 
