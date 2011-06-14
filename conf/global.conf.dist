@@ -359,8 +359,10 @@ $webworkFiles{equationCacheDB}                  = ""; # "$webworkDirs{DATA}/equa
 # The preamble is the first thing in the TeX file.
 $webworkFiles{hardcopySnippets}{preamble}       = "$webworkDirs{conf}/snippets/hardcopyPreamble.tex";
 
-# The setHeader preceeds each set. It is a PG file.
+# The setHeader preceeds each set in hardcopy output. It is a PG file.
+# This is the default file which is used if a specific files is not selected
 $webworkFiles{hardcopySnippets}{setHeader}      = "$webworkDirs{conf}/snippets/setHeader.pg";  # hardcopySetHeader.pg",
+#$webworkFiles{hardcopySnippets}{setHeader}     = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg"; # An alternate default header file
 
 # The problem divider goes between problems.
 $webworkFiles{hardcopySnippets}{problemDivider} = "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex";
@@ -380,7 +382,9 @@ $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/h
 ##### Screen snippets are used when displaying problem sets on the screen.
 
 # The set header is displayed on the problem set page. It is a PG file.
+# This is the default file which is used if a specific files is not selected
 $webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
+#$webworkFiles{screenSnippets}{setHeader}       = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default header file
 
 # A PG template for creation of new problems.
 $webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem2.pg"; # screenSetHeader.pg"
