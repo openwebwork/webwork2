@@ -919,6 +919,7 @@ sub write_set_tex {
 	my $header = $MergedSet->hardcopy_header
 		? $MergedSet->hardcopy_header
 		: $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
+  if ($header eq 'defaultHeader') {$header = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};}
 	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
 	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider};
 	
