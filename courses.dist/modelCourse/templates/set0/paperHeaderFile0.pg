@@ -1,4 +1,4 @@
-##Problem set header for set 0, Summer 2001
+##Problem set header for set 0
 
 &DOCUMENT;
 
@@ -15,12 +15,12 @@ TEXT(EV2(<<EOT));
 $BEGIN_ONE_COLUMN
 \noindent {\large \bf $studentName}
 \hfill
-\noindent {\large \bf MATH  Summer 2001}
+{\large \bf {\{protect_underbar($courseName)\}}}
 \par
-\noindent{\large \bf Homework Set $setNumber  due $dateTime}\par
-
-\noindent This first set (set 0) is designed to acquaint you with using WeBWorK. 
-{\bf Your score on this set will not be counted toward your final grade}
+\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
+\par\noindent
+This first set (set 0) is designed to acquaint you with using WeBWorK. 
+{\bf Your score on this set will not be counted toward your final grade.}
 \par
 \noindent You may need to give 4 or 5 significant digits for some (floating point) numerical answers in order to have them accepted by the computer.
 $END_ONE_COLUMN
