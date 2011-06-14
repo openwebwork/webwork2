@@ -529,7 +529,11 @@ sub addProblemToSet {
 		die "addProblemToSet called without specifying the sourceFile.";
 
 	# The rest of the arguments are optional
-	my $value = $args{value} || $value_default;
+	
+#	my $value = $args{value} || $value_default;
+	my $value = $value_default;
+	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}  
+
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $problemID = $args{problemID};
 
