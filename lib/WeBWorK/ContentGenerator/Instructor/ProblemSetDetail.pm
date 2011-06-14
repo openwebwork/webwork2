@@ -1854,7 +1854,9 @@ sub body {
 
 		foreach my $headerType (@headers) {
 
-			my $headerFile = $r->param("set.$setID.$headerType") || $setRecord->{$headerType} || $headerType;
+			my $headerFile = $r->param("set.$setID.$headerType") || $setRecord->{$headerType};
+
+			$headerFile = 'defaultHeader' unless $headerFile =~/\S/; # (some non-white space character required)
 
 			$error{$headerType} = $self->checkFile($headerFile,$headerType);
 
@@ -1892,7 +1894,6 @@ sub body {
 				next;
 			}
 
-
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
@@ -1903,7 +1904,7 @@ sub body {
 				comboBox({
 					name => "set.$setID.$headerType",
 					request => $r,
-					default => $r->param("set.$setID.$headerType") || $setRecord->{$headerType},
+					default => $r->param("set.$setID.$headerType") || $setRecord->{$headerType}  || "defaultHeader",
 					multiple => 0,
 					values => ["defaultHeader", @headerFileList],
 					labels => { "defaultHeader" => "Use Default Header File" },
