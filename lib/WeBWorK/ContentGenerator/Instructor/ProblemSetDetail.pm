@@ -1534,7 +1534,7 @@ sub canChange ($$) {
 
 # helper method that determines if a file is valid and returns a pretty error message
 sub checkFile ($) {
-	my ($self, $filePath) = @_;
+	my ($self, $filePath, $headerType) = @_;
 
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -1543,7 +1543,13 @@ sub checkFile ($) {
 	return "Problem source is drawn from a grouping set" if $filePath =~ /^group/;
 	
 	if ( $filePath eq "defaultHeader" ) {
-		$filePath = $ce->{webworkFiles}{screenSnippets}{setHeader};
+		if ($headerType eq 'set_header') {
+		  $filePath = $ce->{webworkFiles}{screenSnippets}{setHeader};
+		} elsif  ($headerType eq 'hardcopy_header') {
+			$filePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader};
+		}	else	{
+			return "Invalid headerType $headerType"	
+		}	
 	} else {
 	#	$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath unless $filePath =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
 		$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath ; # only filePaths in template directory can be accessed 
@@ -1850,9 +1856,9 @@ sub body {
 
 			my $headerFile = $r->param("set.$setID.$headerType") || $setRecord->{$headerType} || $headerType;
 
-			$error{$headerType} = $self->checkFile($headerFile);
+			$error{$headerType} = $self->checkFile($headerFile,$headerType);
 
-			unless ($error{$headerType}) {
+			unless ($error{$headerType}) {	    
 				my @temp = renderProblems(
 					r=> $r, 
 					user => $db->getUser($userToShow),
@@ -1861,7 +1867,7 @@ sub body {
 					this_set => $this_set,
 					problem_list => [$headerFile],
 				);
-				$header_html{$headerType} = $temp[0];
+				$header_html{$headerType} = $temp[0];	
 			}
 		}
 		
@@ -1869,8 +1875,8 @@ sub body {
 	
 			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
-		
-			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
+
+			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });	
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 			
 			# this is a bit of a hack; the set header isn't shown
@@ -2022,7 +2028,7 @@ sub body {
 				$repeatFile = "";
 			}
 			
-			my $error = $self->checkFile($problemFile);
+			my $error = $self->checkFile($problemFile, undef);
 			my $this_set = $db->getMergedSet($userToShow, $setID);
 			my @problem_html;
 			unless ($error) {
