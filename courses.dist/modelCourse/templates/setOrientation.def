@@ -2,7 +2,9 @@ setNumber=Orientation
 openDate = 6/26/04 at 11:30am
 dueDate = 4/4/15 at 12:20pm
 answerDate = 4/5/15 at 12:00pm
+paperHeaderFile = setOrientation/setHeader.pg
 screenHeaderFile = setOrientation/setHeader.pg
+
 problemList =
 setOrientation/prob01.pg, 1
 setOrientation/prob02.pg, 1
