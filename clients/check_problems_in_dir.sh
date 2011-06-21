@@ -1,1 +1,1 @@
-find . -name "*.pg" -exec /Volumes/Riemann/webwork/head/webwork2/clients/checkProblem.pl {} ';'
+find . -name "*.pg" -exec /opt/webwork/webwork2/clients/checkProblem2.pl {} ';'
