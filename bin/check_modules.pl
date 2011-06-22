@@ -85,6 +85,7 @@ my @modulesList = qw(
 	Time::HiRes
 	Time::Zone
 	URI::Escape
+	UUID::Tiny
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer

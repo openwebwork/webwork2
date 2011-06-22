@@ -1119,11 +1119,15 @@ sub body {
 		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer},"\n" if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
 		print	CGI::end_style();
 	}
-    
+	###########################
+	# post_header material
+	###########################
+    print CGI::p($pg->{post_header_text});
 	###########################
 	# main form
 	###########################
 	print "\n";
+	
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
 	print "\n";

@@ -16,8 +16,6 @@ to do:
     •figure out how to automate the configuration of these xmlrpc files
          Apache2::ServerUtil should do this??  but I can't figure out how.
     •I suspect that auxiliary html files and applets don't work yet.
-    •finish factoring the code into xmlrpc_clients_inc.pl
-    •get checkProblem working again.
     
     I'm pretty sure that there is no security checking to insure that only appropriate 
     people have access to the xmlrpc webservice.
@@ -44,7 +42,9 @@ The scripts renderProblem.pl and renderProblem_rawoutput.pl are versions of the
 xmlrpc_xmlrp_client which can be used as filters.  The were designed to be used with
 bbedit (Mac editor) to send a PG problem file of to a webservice to be rendered.
 
-The rawoutput version decodes the xml response and prints it as perl structures.
+The renderProblem_rawoutput version decodes the xml response and prints it as perl structures
+through "less".
+
 The renderProblem.pl pipes the HTML part of the response through safari (other browsers could
 be used) for viewing. This is usually what is wanted for testing.  Currently the error recovery
 is minimal, so error messages sent from the server may totally confuse the client (which
@@ -53,12 +53,9 @@ to a responder at webhost.math.rochester.edu.  When that server is working you c
 actually submit an answer and have it evaluated.  It's a very old, tired PC running 
 Frontier as a server, so be patient with it. :-)
 
-There is  currently much shared code between these scripts.  I'll clean it up 
-some day. :-)
 
 checkProblem.pl will take a problem source, send it to the webserver for checking
-and record the result.  It uses code in webwork_xmlrpc_inc.pl which is where
-the factored code for all of the clients will reside once I get to it.
+and record the result in a log file.  It is very similar to renderProblem.pl.
 
 check_problems_in_dir.sh will apply checkProblem.pl to all .pg problems found
 underneath the current directory in which the command is executed.  I've used
@@ -66,8 +63,7 @@ it to check  all the problems in a directory for warning errors.  There are more
 subtle checks that could be made, such as checking to see that correct
 answers work. 
 
-Typically one downloads a problem library from the CVS 
-(see http://devel.webwork.rochester.edu/twiki/bin/view/Webwork/WeBWorKCVS )
+Typically one downloads a problem library from the SVN 
 and then uses check_problems_in_dir.sh to walk through it.  By modifying
 checkProblems and webwork_xmlrpc_inc.pl one could have the HTML version
 of each problem dumped to a text file, or by changing the DISPLAYMODE to 
