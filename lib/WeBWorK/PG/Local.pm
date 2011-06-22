@@ -277,6 +277,7 @@ sub new_helper {
 		return bless {
 			translator => $translator,
 			head_text  => "", 
+			post_header_text => "",
 			body_text  => <<EOF,
 WeBWorK::Utils::readFile($sourceFilePath) says: 
 $@
@@ -385,10 +386,13 @@ EOF
 	# return an object which contains the translator and the results of
 	# the translation process. this is DIFFERENT from the "format expected
 	# by Webwork.pm (and I believe processProblem8, but check.)"
+
+	
 	return bless {
 		translator => $translator,
 		head_text  => ${ $translator->r_header },
-		body_text  => ${ $body_text_ref },
+		post_header_text => ${ $translator->r_post_header},
+		body_text  => ${ $body_text_ref } ,
 		answers    => $translator->rh_evaluated_answers,
 		result     => $result,
 		state      => $state,

@@ -54,8 +54,12 @@ use WebworkClient;
 # configure the local output file and display command !!!!!!!!
  ############################################################
  
+use constant LOG_FILE => '/opt/webwork/libraries/t/bad_problems.txt';
+
+use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+
  # Path to a temporary file for storing the output of renderProblem.pl
- use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
+# use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
  
  # Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
@@ -136,9 +140,6 @@ if ($use_site eq 'local') {
 ##################################################
 
 
-use constant LOG_FILE => '/opt/webwork/libraries/t/bad_problems.txt';
-
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -166,7 +167,7 @@ $xmlrpc_client->{course}        = $XML_COURSE;
 
 our $source = '';
 our $output;
-
+our $return_string;
 if (@ARGV) {
 	local(*FH);
 	open(FH, ">>".LOG_FILE()) || die "Can't open log file ". LOG_FILE();
@@ -174,24 +175,47 @@ if (@ARGV) {
     $xmlrpc_client->encodeSource($source);
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem') )    {
 	        $output = $xmlrpc_client->{output};
-		if (defined($output->{WARNINGS}) and $output->{WARNINGS} ) {
-			$output = "0\t $ARGV[0] has warnings\n";
+		if (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+			$return_string = "0\t $ARGV[0] has errors\n";
 		} elsif (defined($output->{errors}) and $output->{errors} ){
-			$output = "0\t $ARGV[0] has syntax errors\n";
+			$return_string = "0\t $ARGV[0] has syntax errors\n";
 		} else {
-			$output = "1\t $ARGV[0] is ok\n";
-			# $output = pretty_print( $xmlrpc_client->{output} );
+			# 
+			if (defined($output->{flags}->{DEBUG_messages}) ) {
+				my @debug_messages = @{$output->{flags}->{DEBUG_messages}};
+				$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
+				if (@debug_messages) {
+					$return_string .= join(" ", @debug_messages);
+		} else {
+					$return_string = "";
+		}
+			}
+			if (defined($output->{flags}->{WARNING_messages}) ) {
+				my @warning_messages = @{$output->{flags}->{WARNING_messages}};
+				$return_string .= (pop @warning_messages)||''; #avoid error if array was empty
+					$@=undef;
+				if (@warning_messages) {
+					$return_string .= join(" ", @warning_messages);
+	} else {
+					$return_string = "";
+				}
+	}
+			$return_string = "0\t ".$return_string."\n" if $return_string;   # add a 0 if there was an warning or debug message.
+		}
+		unless ($return_string) {
+			$return_string = "1\t $ARGV[0] is ok\n";
 		}
 	} else {
 		
-		$output = "1\t $ARGV[0] has undetermined errors -- could not be read perhaps?\n";
+		$return_string = "0\t $ARGV[0] has undetermined errors -- could not be read perhaps?\n";
 	}
-	print FH $output;
+	print FH $return_string;
 	close(FH);
 } else {
     print "0 $ARGV[0]  something went wrong -- could not render file\n";
 	print STDERR "Useage: ./checkProblem.pl    [file_name]\n";
 	print STDERR "For example: ./checkProblem.pl    input.txt\n";
+	print STDERR "Output is sent to the log file: ",LOG_FILE();
 	
 }
 

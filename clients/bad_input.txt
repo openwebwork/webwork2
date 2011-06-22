@@ -18,7 +18,14 @@ $b = random(1,11,1);
 $c = random(1,11,1);
 $d = random(1,11,1);
 
+
 =123;
+
+#warn "foobar";
+
+#DEBUG_MESSAGE("this is a debuggin message.");
+
+#WARN_MESSAGE("this is a warning message.");
 
 BEGIN_TEXT
 $PAR
