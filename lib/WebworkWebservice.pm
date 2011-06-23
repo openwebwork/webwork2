@@ -3,26 +3,20 @@
 
 
 BEGIN {
-    $main::VERSION = "2.1";
-    #use Apache;
+    $main::VERSION = "2.4.9";
     use Cwd;
 	use WeBWorK::PG::Local;
-#     warn "my first webwork $webwork_directory";
-#  
-#     my $webwork_directory = $ENV{WEBWORK_ROOT};
-#     warn "my first webwork $webwork_directory";
-#     $webwork_directory2 =Cwd::cwd();
-#     chomp $webwork_directory2;
-#     $webwork_directory2 =~ s|/lib/?$||;  # this will usually get the right webwork home directory
-#     warn "Assuming webwork directory is |$webwork_directory| and |$webwork_directory2|", $webwork_directory eq $webwork_directory2;
-#     #WTF???  why don't these two methods give me the same directory name?
+
+	use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 ###############################################################################
 # Configuration -- set to top webwork directory (webwork2) (set in webwork.apache2-config)
 # Configuration -- set server name
 ###############################################################################
 
-    my $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+    our $webwork_directory = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+	print "WebworkWebservice: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY,
+	      " via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
 
 	$WebworkWebservice::HOST_NAME     = 'localhost'; # Apache->server->server_hostname;
 	$WebworkWebservice::HOST_PORT     = '80';        # Apache->server->port;
@@ -46,12 +40,20 @@ BEGIN {
 	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
 	
 
-	print "WebworkWebservice: webwork_directory set to ", $WeBWorK::Constants::WEBWORK_DIRECTORY, " via \$WeBWorK::Constants::WEBWORK_DIRECTORY set in webwork.apache2-config\n";
 
 }
 
 
 use strict;
+use warnings;
+
+
+	
+
+	
+###############################################################################
+###############################################################################
+
 
 
 package WebworkWebservice;

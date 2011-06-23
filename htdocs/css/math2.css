@@ -427,18 +427,18 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #F55; padding: 3px 3px 3px 3px; }
+div.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #F55; background-color: inherit; } /* red */
+div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-span.WarningMessage { background-color: #F55; padding: 3px 3px 3px 3px; }
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #F55; background-color: inherit; } /* red */
+span.ResultsWithError { color: #C33; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-span.correct { color: inherit; background-color: #8F8; } /* green */
-span.incorrect { color: #F55; background-color: inherit; } /* red */
-input.correct   { color:inherit; background-color: #8F8; } /* green */
-input.incorrect { color;inherit; background-color: #F55; } /* red */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -485,7 +485,7 @@ table.attemptResults td.Message {
 .attemptResultsSummary { font-style: italic; }
 .parsehilight { color: inherit; background-color: yellow; }
 
-/* the problem TEXT itself goes in this box */
+/* the problem TEXT itself does in this box */
 /* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
 div.problem {  }
 

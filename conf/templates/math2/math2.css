@@ -431,6 +431,14 @@ div.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+span.ResultsWithError { color: #C33; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
