@@ -1,11 +1,16 @@
+# ASimpleCombinedHeaderFile.pg
+# This header file can be used for both the screen and hardcopy output
+
+
 DOCUMENT();
 
 loadMacros(
 	"PG.pl",
 	"PGbasicmacros.pl",
-	
+
 );
 
+TEXT($BEGIN_ONE_COLUMN);
 
 ####################################################
 #
@@ -13,91 +18,70 @@ loadMacros(
 #
 ####################################################
 
-TEXT($BEGIN_ONE_COLUMN);
+
 
 TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
-\noindent \makebox[0.5\textwidth][l]{{\Large \textbf{\{protect_underbar($courseName)\}}}} 
-\makebox[0in][c]{{\Large \textbf{\{protect_underbar($setNumber)\} }}}
-\makebox[0.5\textwidth][r]{{\Large \textbf{$studentName}}}
-\par
-\noindent \makebox[0.5\textwidth][l]{Professor $sectionName}
-\makebox[0in][c]{Due
- $formattedDueDate}
-\makebox[0.5\textwidth][r]{~}
-\par \bigskip
 
-\hrule
-\medskip
+\noindent {\large \bf $studentName}
+\hfill
+{\large \bf {\{protect_underbar($courseName)\}}}
+% Uncomment the line below if this course has sections. Note that this is a comment in TeX mode since this is only processed by LaTeX
+%   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
+\par
+\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
+\par\noindent \bigskip
+% Uncomment and edit the line below if this course has a web page. Note that this is a comment in TeX mode.
+%See the course web page for information http://yoururl/yourcourse
+
 EOT
 
-##########################################################
+####################################################
+#
+# End of hardcopy only output.
+#
+####################################################
+
+
+####################################################
+#
+# The items below are printed out only when set is displayed on screen
 # 
-# Items printed both to the screen when a hardcopy is made.
-#
-# You can insert a url pointing to your course's home page 
-# a few lines below.  Remove the comment (#) symbol from the line
-# to make it active.
-#
-##########################################################
+####################################################
+TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
-BEGIN_TEXT
-
-$BBOLD WeBWorK  assignment number \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
-
-
+$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
 $PAR
-The 
-$BR
-\{ 
-htmlLink(qq!http://webwork.math.rochester.edu!,
-"(* replace with url for the course home page *)") 
-\} 
-$BR
-for the course contains the syllabus, grading policy and other information.  
-$PAR
-END_TEXT
-###########################################################
-#
-# This is a good place to issue instructions or give comments
-# for this problem set.
-#
-# EDIT BELOW 'BEGIN_TEXT'
-###########################################################
-BEGIN_TEXT
-$HR
-$PAR
-This file is /conf/snippets/setHeader.pg   you can use it as 
-a model for creating files which introduce each problem set.
-$PAR
-$HR
-END_TEXT
-###########################################################
-# EDIT ABOVE 'END_TEXT'
-###########################################################
-
-###########################################################
-#
-# The item below will be printed for both the screen version and the
-# hardcopy version.
-#
-###########################################################
-BEGIN_TEXT
-
-Give 4 or 5  significant digits for (floating point) numerical answers.
-For most problems when entering numerical answers, you can if you wish
-enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2) \)instead
-of -1, \( e\wedge (ln(2)) \) instead of 2,
-\( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
- Here's the 
-\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"list of the functions") \}
+Here's the list of 
+\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
  which WeBWorK understands.
-$PAR
-You can use the Feedback button on each problem
-page to send e-mail to the professors. 
+$BR
+EOT
 
+####################################################
+# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode. 
+# IMPORTANT: Make sure the EOT at the bottom is at the beginning of a line with no spaces preceeding it.
+#TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
+#See the course web page for information \{ htmlLink(qq!http://yoururl/yourcourse!,"your course name") \}
+#EOT
+####################################################
 
+####################################################
+#
+# End of screen only output.
+#
+####################################################
+
+####################################################
+#
+# Anything between the BEGIN_TEXT AND END_TEXT lines
+# will be printed in both screen and hardcopy output
+#
+####################################################
+
+BEGIN_TEXT
 
 END_TEXT
+
 
 TEXT($END_ONE_COLUMN);
 
