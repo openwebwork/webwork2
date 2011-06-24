@@ -240,8 +240,12 @@ sub renderProblems {
 	my %args = @_;
 	my $r = $args{r};
 	my $db = $r->db;
-	my $ce = $r->ce;
-	
+	my $ce = $r->ce; 
+
+	# Don't print file names as part of the problem to avoid redundant 
+	# paths in Library Browser and Homework Sets editor
+	$ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR}=[];
+
 	my @problem_list = @{$args{problem_list}};
 	my $displayMode = $args{displayMode}
     	|| $r->param('displayMode')
