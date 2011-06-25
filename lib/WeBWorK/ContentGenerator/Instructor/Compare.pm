@@ -111,15 +111,18 @@ sub body {
 	print '<hr size="5" color="blue" />';
 	if (scalar(@pathlist)>1) {
 		print CGI::h2('Diff output');
-		# Here we call diff.  Basic version first
-		my $diffout = `diff -u $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
-		print "\n<pre>\n";
-		print $diffout;
-		print "</pre>\n";
-
-		# If you have hdiff installed, you can get colorized diffs
-		#my $diffout = `hdiff -t " " -c "File 1" -C "File 2" -N $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
-		#print $diffout;
+		my $use_hdiff = 0;
+		if($use_hdiff) {
+			# If you have hdiff installed, you can get colorized diffs
+			my $diffout = `hdiff -t " " -c "File 1" -C "File 2" -N $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
+			print $diffout;
+		} else { 
+			# Here we call diff.  Basic version first
+			my $diffout = `diff -u $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
+			print "\n<pre>\n";
+			print $diffout;
+			print "</pre>\n";
+		}
 	}
 
 	return "";	
