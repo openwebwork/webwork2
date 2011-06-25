@@ -378,7 +378,8 @@ our %pathTypes = (
 		kids    => [ qw// ],
 		match   => qr|^compare/|,
 		capture => [ qw// ],
-		produce => 'comp/',
+		#produce => 'comp/',
+		produce => 'compare/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Compare',
 	},
 	instructor_set_maker => {
