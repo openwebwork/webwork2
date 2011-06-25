@@ -1140,6 +1140,8 @@ sub create_handler {
 	# It's convenient to set the open date one week from now so that it is 
 	# not accidentally available to students.  We set the due and answer date
 	# to be two weeks from now.
+
+
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("defaultHeader");
@@ -1246,11 +1248,11 @@ sub import_form {
 			"assigning this set to " .
 			CGI::popup_menu(
 				-name => "action.import.assign",
-				-value => [qw(all none)],
-				-default => $actionParams{"action.import.assign"}->[0] || "none",
+				-value => [qw(user all)],
+				-default => $actionParams{"action.import.assign"}->[0] || "user",
 				-labels => {
 					all => "all current users.",
-					none => "no users.",
+					user => "only $user.",
 				},
 				-onchange => $onChange,
 			)
@@ -1705,8 +1707,11 @@ sub importSetsFromDef {
 		if ($assign eq "all") {
 			$self->assignSetToAllUsers($setName);
 		}
+		else {
+			my $userName = $r->param('user');
+			$self->assignSetToUser($userName, $newSetRecord); ## always assign set to instructor
+		}
 	}
-
 
 	return \@added, \@skipped;
 }
