@@ -747,7 +747,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
 
-	my $these_widths = "width: 25ex";
+	my $these_widths = "width: 24ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [NO_LOCAL_SET_STRING];
@@ -810,6 +810,20 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 
+    # For next/previous buttons
+	my ($next_button, $prev_button, $shown_msg) = ("", "", "");
+	my $first_shown = $self->{first_shown};
+	my $last_shown = $self->{last_shown}; 
+	my @pg_files = @{$self->{pg_files}};
+	if ($first_shown > 0) {
+		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
+						 -value=>"Previous page");
+	}
+	if ((1+$last_shown)<scalar(@pg_files)) {
+		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
+						 -value=>"Next page");
+	}
+
 	print CGI::Tr({},
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
 		      CGI::start_table({-border=>"0"}),
@@ -818,17 +832,20 @@ sub make_top_row {
 			            -value=>"Mark All For Adding"),
 			       CGI::submit(-name=>"select_none", -style=>$these_widths,
 			            -value=>"Clear All Marks"),
+		           CGI::submit(-name=>"cleardisplay", 
+		                -style=>$these_widths,
+		                -value=>"Clear Problem Display")
 		     )), 
 		CGI::Tr({}, 
 		 CGI::td({},
 			CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
 			            -value=>"Update Set"),
+
+			$prev_button, " ", $next_button,
+
 		    CGI::submit(-name=>"rerandomize", 
 		                -style=>$these_widths,
 		                -value=>"Rerandomize"),
-		    CGI::submit(-name=>"cleardisplay", 
-		            -style=>$these_widths,
-		            -value=>"Clear Problem Display")
 	)), 
 	CGI::end_table()));
 }
