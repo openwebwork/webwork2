@@ -625,6 +625,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
+		// warn about loading after two failed attempts or if there is only one attempt left
         if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-2)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
