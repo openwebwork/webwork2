@@ -83,9 +83,13 @@ For most problems when entering numerical answers, you can if you wish
 enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2) \)instead
 of -1, \( e\wedge (ln(2)) \) instead of 2,
 \( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
- Here's the
-\{ htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
- which WeBWorK understands.
+$PAR
+ Here's the 
+\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"list of the functions") \}
+ which WeBWorK understands. 
+
+Along with the \{htmlLink(qq!http://webwork.maa.org/wiki/Units!, "list of units")\} which WeBWorK understands.  This can be useful in 
+physics problems.
 $PAR
 You can use the Feedback button on each problem
 page to send e-mail to the professors. 
