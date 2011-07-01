@@ -508,7 +508,7 @@ sub body {
    		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
    		},
    		{label 		=>	'PGML'	,
-   		 url 		=>  'http://hosted2.webwork.rochester.edu/webwork2/cervone_course/PGML/1/?login_practice_user=true',
+   		 url 		=>  'https://courses.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
    		 target		=>	'PGML'	,
    		 tooltip 	=>	'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.'	,
    		},
