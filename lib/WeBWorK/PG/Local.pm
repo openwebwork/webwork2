@@ -108,11 +108,11 @@ sub new_helper {
 	# set the directory hash
 	#warn "PG: setting the directory hash\n";
 	# FIXME rh_directories does not appear to be used. ever.
-	$translator->rh_directories({
-		macrosPath             => $ce->{courseDirs}->{macrosPath},
-		templateDirectory      => $ce->{courseDirs}->{templates},
-		tempDirectory          => $ce->{courseDirs}->{html_temp},
-	});
+#	$translator->rh_directories({
+#		macrosPath             => $ce->{courseDirs}->{macrosPath},
+#		templateDirectory      => $ce->{courseDirs}->{templates},
+#		tempDirectory          => $ce->{courseDirs}->{html_temp},
+#	});
 	
 	# evaluate modules and "extra packages"
 	#warn "PG: evaluating modules and \"extra packages\"\n";
