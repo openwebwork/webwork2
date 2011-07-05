@@ -33,6 +33,7 @@ use String::ShellQuote;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
+use UUID::Tiny qw(create_uuid_as_string);
 #use WeBWorK::Utils::DBUpgrade;
 use PGcore; # for not_null() macro
 
@@ -575,12 +576,19 @@ sub archiveCourse {
 	my $ce = $options{ce};
 	
 	# make sure the user isn't brain damaged
-	croak "The course environment supplied doesn't appear to describe the course $courseID. Can't proceed"
+	croak "The course environment supplied doesn't appear to match the course $courseID. Can't proceed"
 		unless $ce->{courseName} eq $courseID;
 	
 	# grab some values we'll need
 	my $course_dir = $ce->{courseDirs}{root};
-#	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
+	
+	# tmp_archive_path is used as the target of the tar.gz operation
+	# After this is done the final tar.gz file is moved either to the course directory
+	# or the course/myCourse/templates   directory (when saving individual courses)
+	# this prevents us from tarring a directory to which we have just added a file
+	# see bug #2022 -- for error messages on some operating systems
+	my $uuidStub = create_uuid_as_string();
+	my $tmp_archive_path = $ce->{webworkDirs}{courses} . "/ ${uuidStub}_$courseID.tar.gz";
 	my $data_dir = $ce->{courseDirs}{DATA};
 	my $dump_dir = "$data_dir/mysqldump";
 	my $archive_path;
@@ -626,7 +634,7 @@ sub archiveCourse {
 	
 	my $tar_cmd = "2>&1 " . $ce->{externalPrograms}{tar}
 		. " -C " . shell_quote($chdir_to)
-		. " -czf " . shell_quote($archive_path)
+		. " -czf " . shell_quote($tmp_archive_path)
 		. " " . shell_quote($courseID);
 	my $tar_out = readpipe $tar_cmd;
 	if ($?) {
@@ -637,8 +645,14 @@ sub archiveCourse {
 		croak "Failed to archive course directory '$course_dir' with command '$tar_cmd' (exit=$exit signal=$signal core=$core): $tar_out\n";
 	}
 	
-	##### step 3: remove database dump files from course directory #####
+	##### step 3: cleanup -- remove database dump files from course directory #####
 	
+	unless (-e $archive_path) {
+		rename $tmp_archive_path, $archive_path;
+	} else {  
+		croak "Failed to create archived file at  '$archive_path'. File already exists.";
+		unlink($tmp_archive_path);  #clean up	
+	}
 	_archiveCourse_remove_dump_dir($ce, $dump_dir);
 }
 

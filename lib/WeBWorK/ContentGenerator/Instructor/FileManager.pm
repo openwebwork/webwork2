@@ -72,7 +72,8 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $courseID = $r->urlpath->arg("courseID");
-	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID/templates/archived_course_$courseID.tar.gz";
+	# removed archived_course_ prefix -- it is important that path matches the $courseID for consitency with the database dump
+	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID/templates/$courseID.tar.gz";
 	my %options = (courseID => $courseID, archive_path => $archive_path, ce=>$ce );
 	$self->{archive_options}= \%options;
 
@@ -171,7 +172,7 @@ sub body {
     if ($r->param('archiveCourse') ) {
          my %options = %{$self->{archive_options}};
         my $courseID = $options{courseID};
-        $self->addgoodmessage("Archiving course at archived_course_$courseID.tar.gz. Reload FileManager to see it.");
+        $self->addgoodmessage("Archiving course as $courseID.tar.gz. Reload FileManager to see it.");
     	WeBWorK::Utils::CourseManagement::archiveCourse(%options);
     	$self->addgoodmessage("Course archived.");
     	
