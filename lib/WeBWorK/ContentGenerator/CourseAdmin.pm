@@ -1842,7 +1842,8 @@ sub unarchive_course_validate {
 	my $new_courseID                         = $r->param("new_courseID")    || "";
 	my @errors;
 	#by default we use the archive name for the course
-	my $courseID = $unarchive_courseID; $courseID =~ s/\.tar\.gz$//;
+	my $courseID = $unarchive_courseID; 
+	$courseID =~ s/\.tar\.gz$//;
 	
 	if ( $create_newCourseID) {
 		$courseID = $new_courseID;
@@ -1872,7 +1873,7 @@ sub unarchive_course_confirm {
 	print CGI::h2("Unarchive Course");
 	
 	my $unarchive_courseID                    = $r->param("unarchive_courseID")     || "";
-	my $create_newCourseID                    = $r->param("create_newCourseID")      || "";
+	my $create_newCourseID                    = $r->param("create_newCourseID")     || "";
 	my $new_courseID                          = $r->param("new_courseID")           || "";
 
 	my $courseID = $unarchive_courseID; $courseID =~ s/\.tar\.gz$//;
@@ -1911,7 +1912,8 @@ sub do_unarchive_course {
 	my $new_courseID           = $r->param("new_courseID")           || "";
 	my $unarchive_courseID     = $r->param("unarchive_courseID")     || "";
 	
-	my $old_courseID   = $unarchive_courseID; $old_courseID =~ s/.tar.gz//;
+	my $old_courseID   = $unarchive_courseID; 
+	$old_courseID =~ s/.tar.gz//;
 
 	#eval {
 		unarchiveCourse(
