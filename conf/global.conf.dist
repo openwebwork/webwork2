@@ -843,10 +843,10 @@ $pg{options}{showEvaluatedAnswers}      = 1;
 $pg{options}{catchWarnings}      = 0;
 
 # decorations for correct input blanks -- apparently you can't define and name attribute collections in a .css file
-$pg{options}{correct_answer} = "{border-width:1;border-style:solid;border-color:#8F8}"; #matches resultsWithOutError class in math2.css
+$pg{options}{correct_answer} = "{border-width:2;border-style:solid;border-color:#8F8}"; #matches resultsWithOutError class in math2.css
 
 # decorations for incorrect input blanks
-$pg{options}{incorrect_answer} = "{border-width:1;border-style:solid;border-color:#F55}"; #matches resultsWithError class in math2.css
+$pg{options}{incorrect_answer} = "{border-width:2;border-style:solid;border-color:#F55}"; #matches resultsWithError class in math2.css
 
 ##### Currently-selected renderer
 
